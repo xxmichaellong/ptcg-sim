@@ -62,6 +62,10 @@ metadata, not the bearer; guest paste is intercepted before DOM insertion and
 held only by a private in-memory custodian through successful ticket exchange.
 The visible Room ID remains discovery metadata. Player copies rotate, repeat
 spectators receive distinct claims, and a room code alone never authorizes.
+The accepted path is now wired behind the production-built, non-default
+`?room-lobby=1` route. Manual Room ID state is bounded to the public code
+alphabet, drops are rejected, a failed replacement paste disarms the prior
+claim, and component ownership closes creator/guest runtimes on teardown.
 
 ## Major alternatives
 

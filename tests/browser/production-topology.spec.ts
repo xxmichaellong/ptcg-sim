@@ -82,6 +82,19 @@ test('built SPA and room authority share one production-like Worker origin', asy
   });
   expect(authorityRequests).toEqual([]);
 
+  const lobbyResponse = await page.goto('/?room-lobby=1&renderer=dom');
+  expect(lobbyResponse?.status()).toBe(200);
+  await expect(
+    page.locator('[data-app-route="remote-room-lobby"]')
+  ).toBeVisible();
+  await expect(page.locator('#nameInput')).toBeVisible();
+  await expect(page.locator('#roomIdInput')).toBeVisible();
+  await expect(page.locator('#generateIdButton')).toBeVisible();
+  await expect(page.locator('#copyButton')).toBeVisible();
+  await expect(page.locator('#joinRoomButton')).toBeVisible();
+  await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
+  expect(authorityRequests).toEqual([]);
+
   const entryModuleUrl = await page
     .locator('script[type="module"][src]')
     .first()

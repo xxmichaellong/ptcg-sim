@@ -101,7 +101,12 @@ the relevant product decisions and phase exit criteria.
   native guest paste prevents DOM insertion and retains it only in a private
   non-serializing custodian, player copies rotate, and repeat spectators receive
   distinct claims. An isolated five-browser-context Chromium journey covers the
-  secure path. Visible create/join wiring remains the next parity slice. The
+  custody path. The production-built `?room-lobby=1` slice now preserves the
+  familiar multiplayer controls while driving real create/copy/paste/join,
+  input bounding, safe status messages, role reflection, creator/guest ownership,
+  initial coaching consent, and teardown. A second four-context journey drives
+  that visible path. Normal traffic still receives the renderer harness, so
+  neither v1 nor the public/default v2 route is cut over. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus
   SPA fallback. A separate production-build Chromium lane proves that one-origin

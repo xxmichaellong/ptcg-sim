@@ -576,8 +576,11 @@ Work:
   written without returning the bearer to UI code, native paste prevents DOM
   insertion, private guest custody survives a retry and clears on success, a
   room code alone never authorizes, player copies rotate, and spectator copies
-  are distinct. Wire the unchanged lobby shape only after its isolated-context
-  browser gate is green.
+  are distinct. The unchanged lobby shape is now wired behind the isolated
+  production-built `?room-lobby=1` flag with bounded Room ID input, safe status,
+  role reflection, initial coaching-consent submission, and lifecycle ownership;
+  its direct-custody and visible-control multi-context browser gates must remain
+  green before broader rollout.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,
@@ -629,7 +632,7 @@ Work:
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented
   `RemoteRoomRuntime`/`RemoteRoomRoute` by completing normal sidebar actions,
-  chat, create/join form wiring, navigation, and focus/keyboard/visual parity.
+  chat, navigation, and focus/keyboard/visual parity.
   Reuse the implemented ADR-018 browser ticket bootstrap, mounted legacy chrome,
   presentation surface, bounded stores, keyed feed, serial consumers, and
   live-region dwell.

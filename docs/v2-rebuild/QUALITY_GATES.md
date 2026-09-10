@@ -199,8 +199,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   owner before the neutral document mounts; persisted pagehide preservation is
   pinned in the unit layer. ADR-020's separate five-context Chromium path covers
   rotated player invitation transfer plus two distinct spectator claims without
-  URL, document, or storage exposure. Deployed navigation and physical BFCache
-  restoration remain outstanding.
+  URL, document, or storage exposure. A four-context companion drives the
+  production-built lobby's actual Generate, Copy, native paste, role reflection,
+  Join, rotated rejection, player-two/spectator connection, and safe-DOM path.
+  The production-topology lane separately proves the query-gated lobby chunk is
+  reachable from the built SPA without creating a room on mount. Deployed
+  navigation and physical BFCache restoration remain outstanding.
 - Schema-v7 admission now makes solo replay disclosure structurally safe by
   persisting a one-player ceiling and rejecting a second human through every
   credential path. The protocol, Worker, client bootstrap, and hidden

@@ -15,6 +15,10 @@ const RemoteRoomRoute = lazy(async () => ({
   default: (await import('./session/RemoteRoomRoute.js')).RemoteRoomRoute,
 }));
 
+const RemoteRoomLobby = lazy(async () => ({
+  default: (await import('./session/RemoteRoomLobby.js')).RemoteRoomLobby,
+}));
+
 const initialRenderer = (): RendererKind =>
   readRendererKind(new URLSearchParams(window.location.search).get('renderer'));
 
@@ -78,6 +82,11 @@ const RendererSpikeApp = () => {
 export type AppRoute =
   | { readonly kind: 'renderer-spike' }
   | {
+      readonly kind: 'remote-room-lobby';
+      readonly buildId: string;
+      readonly rendererKind: RendererKind;
+    }
+  | {
       readonly kind: 'remote-room';
       readonly runtime: RemoteRoomRuntime;
       readonly rendererKind: RendererKind;
@@ -87,18 +96,37 @@ export const App = ({
   route = { kind: 'renderer-spike' },
 }: {
   readonly route?: AppRoute;
-}) =>
-  route.kind === 'remote-room' ? (
-    <Suspense
-      fallback={
-        <main className="app-shell" data-app-route="remote-room-loading" />
-      }
-    >
-      <RemoteRoomRoute
-        runtime={route.runtime}
-        rendererKind={route.rendererKind}
-      />
-    </Suspense>
-  ) : (
-    <RendererSpikeApp />
-  );
+}) => {
+  if (route.kind === 'remote-room') {
+    return (
+      <Suspense
+        fallback={
+          <main className="app-shell" data-app-route="remote-room-loading" />
+        }
+      >
+        <RemoteRoomRoute
+          runtime={route.runtime}
+          rendererKind={route.rendererKind}
+        />
+      </Suspense>
+    );
+  }
+  if (route.kind === 'remote-room-lobby') {
+    return (
+      <Suspense
+        fallback={
+          <main
+            className="app-shell"
+            data-app-route="remote-room-lobby-loading"
+          />
+        }
+      >
+        <RemoteRoomLobby
+          buildId={route.buildId}
+          rendererKind={route.rendererKind}
+        />
+      </Suspense>
+    );
+  }
+  return <RendererSpikeApp />;
+};

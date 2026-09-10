@@ -13,6 +13,7 @@ body,
 
 body,
 button,
+input,
 select {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -273,6 +274,147 @@ select {
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.legacy-lobby-sidebox #p2ExplanationBox {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.legacy-explanation-gap {
+  margin-top: 0.5em;
+}
+
+.legacy-lobby-sidebox #lobby {
+  width: 100%;
+  margin-top: 5%;
+}
+
+.legacy-lobby-sidebox #nameInput {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 2vh;
+}
+
+.legacy-lobby-sidebox #roomId {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.legacy-lobby-sidebox #roomIdInput {
+  width: 80%;
+  padding: 1vh;
+  border: 0;
+  border-radius: 10px;
+  font-size: 2vh;
+}
+
+.legacy-lobby-sidebox #copyButton {
+  display: flex;
+  margin: 10px;
+  padding: 0.5vh;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+}
+
+.legacy-lobby-sidebox #copyButton svg {
+  width: 4vh;
+  height: 4vh;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.legacy-lobby-sidebox #copyButton.copied {
+  background-color: #b7d9b8;
+  color: #333;
+}
+
+.legacy-lobby-sidebox #generateIdButton {
+  padding: 1vh;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  font-size: 2vh;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.legacy-lobby-sidebox #generateIdButton:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
+}
+
+.legacy-lobby-sidebox #coachingModeLabel,
+.legacy-lobby-sidebox #spectatorModeLabel {
+  margin-bottom: 0.3vh;
+  font-size: medium;
+}
+
+.legacy-lobby-sidebox #spectatorModeLabel {
+  margin-bottom: 1.5vh;
+}
+
+.legacy-lobby-sidebox label {
+  cursor: pointer;
+}
+
+.legacy-lobby-sidebox #coachingModeLabel span {
+  font-size: smaller;
+  font-style: italic;
+}
+
+.legacy-lobby-sidebox #joinRoomButton {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #666, #4c4b46);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  font-size: 2.5vh;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.legacy-lobby-sidebox #joinRoomButton:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #555, #333);
+}
+
+.legacy-lobby-sidebox button:disabled,
+.legacy-lobby-sidebox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.legacy-lobby-sidebox #lobby[aria-busy='true'] button:disabled,
+.legacy-lobby-sidebox #lobby[aria-busy='true'] input:disabled {
+  cursor: wait;
+}
+
+.legacy-lobby-sidebox .lobby-status {
+  width: 100%;
+  margin: 1rem 0 0;
+  padding: 0.5rem;
+  overflow-wrap: anywhere;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1.75vh;
 }
 
 /* Shared by the mounted room replay shell and later normal sidebox actions. */

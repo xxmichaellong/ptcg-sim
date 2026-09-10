@@ -573,8 +573,9 @@ retroactively deleted. See the documented
 [Durable Object lifecycle](https://developers.cloudflare.com/durable-objects/concepts/durable-object-lifecycle/)
 and [alarm API](https://developers.cloudflare.com/durable-objects/api/alarms/).
 
-ADR-020 selects a manual foreground clipboard handoff before visible create/join
-wiring. The v1 room ID is both discovery and authorization; retaining that
+ADR-020 selects a manual foreground clipboard handoff, now wired through the
+explicit isolated v2 lobby route. The v1 room ID is both discovery and
+authorization; retaining that
 behavior would negate SEC-001/SEC-003. V2 serializes a strict branded, bounded
 invitation envelope only into an explicitly initiated clipboard write. Creator
 custody returns safe role/room/expiry metadata rather than the bearer. A native
@@ -969,8 +970,12 @@ its public result contains only a safe receipt. Native paste places a validated
 handoff in `RemoteRoomInvitationJoinCustody`, which exposes only receipt metadata
 and exchanges its private claim through the same ticket path. Failed exchange
 retains private custody for bounded retry; success and disposal clear it. The
-renderer-spike entry remains the default until the legacy-shaped lobby is wired,
-so the current UI/UX remains unchanged.
+legacy-shaped `RemoteRoomLobby` canonicalizes manual Room ID text to the public
+12-character alphabet, rejects drops, disarms an older claim before a malformed
+replacement paste, serializes operations, and owns creator/guest teardown across
+StrictMode and navigation. It is production-built behind `?room-lobby=1`; the
+renderer-spike entry remains the default, so the current v1 and normal v2 UI/UX
+remain unchanged.
 
 The Worker now publishes only the closed `ptcgsim-server-telemetry-v2` union.
 Its safe facts cover route status/latency, room lifecycle and bounded counts,

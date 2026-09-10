@@ -25,6 +25,15 @@ const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([
   // Vite 8/Rolldown emits this source-free interop helper without a source map.
   // Any toolchain change must be audited before its replacement is admitted.
   'bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a',
+  // Same pinned Vite/Rolldown version with the isolated lobby route added to
+  // the dynamic graph. The generated interop surface is still source-free.
+  '580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021',
+]);
+
+const SOURCE_FREE_WEB_PRELOAD_DIGESTS = new Set([
+  // Vite 8 emits this CSP-aware dynamic-module/CSS preload helper once the
+  // production graph has multiple lazy room routes. It has no source map.
+  'aba87f2a53e45ecdc9113fc30387d16e449d1676428cf5f82dd624c1df97d152',
 ]);
 
 // Compatibility packages remain operator/test-only until their evidence gate
@@ -350,7 +359,13 @@ const checkJavaScriptSourceMaps = async (repoRoot, kind, files, failures) => {
       SOURCE_FREE_WEB_RUNTIME_DIGESTS.has(
         createHash('sha256').update(bytes).digest('hex')
       );
-    if (!sourceFreeFacade && !sourceFreeRuntime) {
+    const sourceFreePreload =
+      kind === 'web' &&
+      basename(path).startsWith('preload-helper-') &&
+      SOURCE_FREE_WEB_PRELOAD_DIGESTS.has(
+        createHash('sha256').update(bytes).digest('hex')
+      );
+    if (!sourceFreeFacade && !sourceFreeRuntime && !sourceFreePreload) {
       failures.push(`${repoRelative(repoRoot, path)} has no source map`);
     }
   }

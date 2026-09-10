@@ -1,6 +1,6 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App.js';
+import { App, type AppRoute } from './App.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
 import './styles.css';
 
@@ -24,6 +24,14 @@ const roomMode =
   parameters.get('room-mode') === 'solo' ? 'solo' : 'multiplayer';
 const devRoomRequested =
   DevRoomHost !== null && parameters.get('dev-room') === '1';
+const roomLobbyRequested = parameters.get('room-lobby') === '1';
+const roomLobbyRoute: AppRoute | undefined = roomLobbyRequested
+  ? {
+      kind: 'remote-room-lobby',
+      buildId: import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2-web',
+      rendererKind,
+    }
+  : undefined;
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');
@@ -43,7 +51,7 @@ createRoot(root).render(
         />
       </Suspense>
     ) : (
-      <App />
+      <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
     )}
   </StrictMode>
 );

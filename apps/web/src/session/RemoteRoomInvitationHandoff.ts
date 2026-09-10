@@ -69,6 +69,12 @@ export class RemoteRoomInvitationJoinCustody {
    */
   acceptPaste(event: ForegroundPasteEvent): RemoteRoomInvitationHandoffReceipt {
     event.preventDefault();
+    this.assertAvailable();
+    this.assertIdle();
+    // A new foreground paste attempt replaces the prior user intent. Clear
+    // first so malformed, unreadable, or expired replacement text cannot
+    // silently leave an older claim armed behind an error message.
+    this.#handoff = undefined;
     let text: unknown;
     try {
       text = event.clipboardData?.getData('text/plain');
@@ -79,8 +85,6 @@ export class RemoteRoomInvitationJoinCustody {
   }
 
   private acceptText(text: unknown): RemoteRoomInvitationHandoffReceipt {
-    this.assertAvailable();
-    this.assertIdle();
     const parsed = parseRoomInvitationHandoffText(text);
     if (!parsed.ok) {
       throw new RemoteRoomInvitationHandoffError('invalid_handoff');

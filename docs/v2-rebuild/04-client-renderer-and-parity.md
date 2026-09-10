@@ -1567,10 +1567,13 @@ It validates and normalizes room input, exchanges the caller's in-memory
 long-lived capability in a same-origin no-store POST, rejects redirects and
 malformed/expired responses, derives a credential-free WebSocket URL, and gives
 only the short-lived ticket to `RemoteRoomRuntime`. React receives the runtime
-and route descriptor, never either credential. `main.tsx` still selects the
-renderer spike until the existing create/join form can supply the bootstrap
-input. Normal live sidebar actions, the visible chat input, navigation, and complete
-focus/keyboard/visual parity remain later slices.
+and route descriptor, never either credential. `RemoteRoomLobby` now supplies
+that input through the legacy-shaped controls behind `?room-lobby=1`; creator
+and guest owners transfer directly into `RemoteRoomRoute`, and initial coaching
+consent waits for a ready authoritative player projection. `main.tsx` still
+selects the renderer spike for normal traffic. Normal live sidebar actions, the
+visible chat input, navigation, and complete focus/keyboard/visual parity remain
+later slices.
 
 ## Rendering cadence and performance
 

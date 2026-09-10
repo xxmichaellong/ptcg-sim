@@ -101,6 +101,18 @@ describe('remote room foreground invitation handoff', () => {
     expect(JSON.stringify(custody)).toBe('{}');
   });
 
+  it('disarms an older claim before rejecting a malformed replacement paste', async () => {
+    const custody = new RemoteRoomInvitationJoinCustody(() => 10_000);
+    paste(custody, handoffText);
+
+    expect(() => paste(custody, 'not-an-invitation')).toThrow(
+      RemoteRoomInvitationHandoffError
+    );
+    await expect(custody.bootstrap(joinInput)).rejects.toMatchObject({
+      code: 'missing_invitation',
+    });
+  });
+
   it('retains private custody after a failed exchange so a bounded retry can rotate its ticket', async () => {
     const custody = new RemoteRoomInvitationJoinCustody(() => 10_000);
     paste(custody, handoffText);

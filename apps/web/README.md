@@ -4,6 +4,16 @@ The default route is an isolated renderer decision harness. It does not replace
 or alter the v1 production client. Use `?renderer=pixi` or `?renderer=dom` to
 mount the same deterministic 61-card scene behind either adapter.
 
+`?room-lobby=1&renderer=dom` mounts the isolated, production-built v2
+multiplayer lobby. It preserves the existing Name, Room ID, Generate, Copy,
+coaching, spectator, and Join shape while routing those controls through the
+real authority. Generate creates and privately owns a multiplayer room; Copy
+mints a role-bound temporary invitation; Room ID paste is intercepted before
+the bearer reaches the DOM; and Join transfers the owned creator or guest
+runtime into the connected room route. This explicit query remains a rollout
+flag: normal v2 traffic still receives the renderer harness, and the v1 client
+is unchanged.
+
 `RemoteRoomBootstrap` exchanges an explicitly supplied in-memory seat or
 spectator capability through a same-origin, no-store POST and constructs the
 room runtime with only the returned short-lived ticket. Neither credential is
@@ -19,8 +29,8 @@ handoffs when spectator custody exists. Player invitations rotate; spectator
 invitations are independently bounded. The guest
 bootstrap validates an untrusted handoff and exchanges its invitation through
 the existing short-lived ticket boundary. `main.tsx` selects the renderer spike
-for normal traffic until ADR-020 chooses how that handoff moves between browsers
-and the existing visible create/join workflow is ported.
+for normal traffic and the accepted ADR-020 lobby only through the explicit
+`room-lobby` flag.
 
 ## Development full-stack route
 
@@ -63,8 +73,8 @@ retains the stronger 20-cycle ownership/teardown proof.
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
 legacy replay controls, and externally owned route teardown. Normal sidebar
-actions, the visible chat input, deck/settings navigation, and create/join form
-wiring remain later slices.
+actions, the visible chat input, and deck/settings navigation remain later
+slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

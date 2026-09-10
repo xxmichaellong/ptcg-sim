@@ -3,7 +3,8 @@
 - Status: **ACCEPTED**
 - Decision date: 2026-09-10
 - Scope: anonymous player-two and spectator invitation transfer
-- Production wiring: not yet enabled
+- Production wiring: enabled only on the isolated `?room-lobby=1` v2 route;
+  default/public cutover remains disabled
 
 ## Context
 
@@ -54,7 +55,14 @@ the same claim for a bounded retry; the server rotates any prior linked ticket.
 Concurrent join attempts, use after dispose, malformed input, expiry, and a
 room-code-only join fail closed.
 
-The familiar controls retain these semantics when the lobby is wired:
+The Room ID control also canonicalizes manual input to the bounded 12-character
+public room-code alphabet and rejects text drops. This prevents a copied bearer
+from entering React/DOM state through character entry, autofill-like input, or
+drag-and-drop around the native paste handler. A malformed replacement paste
+disarms any older claim before reporting the error, so the UI cannot silently
+join with a previously accepted invitation.
+
+The familiar controls retain these semantics in the isolated lobby:
 
 1. **Generate** creates a multiplayer room and establishes creator custody.
 2. **Copy** mints and copies a player invitation by default. Selecting the
@@ -116,12 +124,16 @@ redacted failures, private retry custody, serialized joining, disposal, and
 successful clearing. A Chromium journey uses five isolated browser contexts to
 prove player-claim rotation, player-two admission, two distinct spectator
 claims, correct projected roles, and absence of envelope text from URLs,
-document HTML, and browser storage.
+document HTML, and browser storage. A second journey drives the actual lobby
+controls in four isolated contexts, including native clipboard copy/paste,
+rotated-player rejection, player-two and spectator admission, safe rendered
+receipts, and connected-route handoff. The built-production topology lane proves
+the lobby chunk is reachable only through its explicit flag and creates no room
+on mount.
 
-Production lobby wiring is a separate reversible slice. Until it lands, the
-existing application entry remains unchanged. Rollback removes the presentation
-adapter and route wiring without weakening or migrating the existing authority,
-invitation, ticket, or persistence protocols.
+The normal v2 entry and the v1 application remain unchanged. Rollback removes
+the query-route branch and lobby presentation adapter without weakening or
+migrating the existing authority, invitation, ticket, or persistence protocols.
 
 ## References
 
