@@ -1871,6 +1871,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      restore the prior value. Focused unit/import tests and the randomized
      authority/reconnect/replay model are green. The v2 deck-builder and
      card-back entry controls remain a separate visible-parity checkpoint.
+122. The visible control's browser boundary is now isolated without changing
+     the route. It preserves the source prompt and case-insensitive `default`
+     choice, directly preloads any bounded player URL through a native `Image`,
+     retains the exact selected string, and reports a decode/load failure before
+     command submission. A latest-request/unmount owner aborts stale callbacks;
+     the paired hook emits only `SetCardBack`, with an optional explicit target
+     for the later Solo P2 control. Unit/component tests pin arbitrary unlisted
+     and data URLs, the 4,096-code-unit bound, default mapping, failure, stale
+     completion, teardown, and exact commands. Mounting the source-shaped Deck
+     panel remains the next visible-parity slice.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
