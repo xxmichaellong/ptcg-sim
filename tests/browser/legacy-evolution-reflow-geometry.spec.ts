@@ -17,6 +17,8 @@ import oracle from '../legacy-fixtures/renderer/evolution-reflow-v1.json' with {
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
+  SOURCE_CARD_PAINT_COMPARISON_OPTIONS,
+  SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO,
 } from './support/foreground-paint-comparison.js';
 import {
   isolateCandidateCardPaint,
@@ -75,13 +77,10 @@ const modularDegreesBetween = (left: number, right: number): number => {
   return Math.min(distance, 360 - distance);
 };
 
-const PAINT_SPATIAL_TOLERANCE = 3;
-const PAINT_CHANNEL_TOLERANCE = 24;
 // The structured gate below retains the exact 2 px / 1% geometry contract.
 // This paint-only layer allows a three-pixel antialiasing neighborhood and a
 // 24/255 channel fringe across the iframe and normalized-DOM compositors, then
 // requires at least 97.5% of foreground pixels to agree in both directions.
-const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const createCandidateEvolutionScene = () => {
   const base = createRendererSpikeView();
@@ -554,10 +553,7 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
     page,
     sourcePaint,
     candidatePaint,
-    {
-      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
-      channelTolerance: PAINT_CHANNEL_TOLERANCE,
-    }
+    SOURCE_CARD_PAINT_COMPARISON_OPTIONS
   );
   await attachForegroundPaintComparison(
     testInfo,
@@ -576,13 +572,13 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
       paintComparison.unmatchedSourceRatio,
       `source card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
   expect
     .soft(
       paintComparison.unmatchedCandidateRatio,
       `candidate card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 
   for (const sourceCard of capture.cards) {
     const candidate = candidateScene.cards.find(

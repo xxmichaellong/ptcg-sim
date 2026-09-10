@@ -18,6 +18,8 @@ import oracle from '../legacy-fixtures/renderer/two-energy-attachment-compaction
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
+  SOURCE_CARD_PAINT_COMPARISON_OPTIONS,
+  SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO,
 } from './support/foreground-paint-comparison.js';
 import {
   isolateCandidateCardPaint,
@@ -42,10 +44,6 @@ type Point = { readonly x: number; readonly y: number };
 type Role = 'base' | 'energy1' | 'energy2';
 type HitRegion =
   'allCardOverlap' | 'attachmentOverlap' | 'outermostAttachment' | 'baseOnly';
-
-const PAINT_SPATIAL_TOLERANCE = 3;
-const PAINT_CHANNEL_TOLERANCE = 24;
-const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const createCandidateTwoEnergyScene = () => {
   const base = createRendererSpikeView();
@@ -829,10 +827,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
     page,
     sourcePaint,
     candidatePaint,
-    {
-      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
-      channelTolerance: PAINT_CHANNEL_TOLERANCE,
-    }
+    SOURCE_CARD_PAINT_COMPARISON_OPTIONS
   );
   await attachForegroundPaintComparison(
     testInfo,
@@ -851,13 +846,13 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
       paintComparison.unmatchedSourceRatio,
       `source card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
   expect
     .soft(
       paintComparison.unmatchedCandidateRatio,
       `candidate card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 
   const candidateEvidence: {
     cards: Array<{

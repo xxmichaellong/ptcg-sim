@@ -6,6 +6,14 @@ export interface ForegroundPaintComparisonOptions {
   readonly foregroundChannelThreshold?: number;
 }
 
+export const SOURCE_CARD_PAINT_COMPARISON_OPTIONS = Object.freeze({
+  spatialTolerance: 3,
+  channelTolerance: 24,
+  foregroundChannelThreshold: 250,
+}) satisfies ForegroundPaintComparisonOptions;
+
+export const SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO = 0.025;
+
 export interface ForegroundPaintComparison {
   readonly width: number;
   readonly height: number;

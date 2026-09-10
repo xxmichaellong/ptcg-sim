@@ -17,6 +17,8 @@ import oracle from '../legacy-fixtures/renderer/energy-attachment-reflow-v1.json
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
+  SOURCE_CARD_PAINT_COMPARISON_OPTIONS,
+  SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO,
 } from './support/foreground-paint-comparison.js';
 import {
   isolateCandidateCardPaint,
@@ -61,10 +63,6 @@ const modularDegreesBetween = (left: number, right: number): number => {
   const distance = Math.abs(left - right) % 360;
   return Math.min(distance, 360 - distance);
 };
-
-const PAINT_SPATIAL_TOLERANCE = 3;
-const PAINT_CHANNEL_TOLERANCE = 24;
-const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const expectStructuredNumber = (
   actual: number,
@@ -431,10 +429,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
     page,
     sourcePaint,
     candidatePaint,
-    {
-      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
-      channelTolerance: PAINT_CHANNEL_TOLERANCE,
-    }
+    SOURCE_CARD_PAINT_COMPARISON_OPTIONS
   );
   await attachForegroundPaintComparison(
     testInfo,
@@ -453,13 +448,13 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       paintComparison.unmatchedSourceRatio,
       `source card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
   expect
     .soft(
       paintComparison.unmatchedCandidateRatio,
       `candidate card paint: ${paintEvidence}`
     )
-    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 
   const candidateEvidence: {
     cards: Array<{
