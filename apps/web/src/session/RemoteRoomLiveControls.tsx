@@ -3,7 +3,7 @@ import type {
   RemoteGameSession,
 } from '@ptcgsim/client-session';
 import { MAX_CHAT_CODE_UNITS } from '@ptcgsim/protocol';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
 import { resolveTableAction } from '../board/resolveTableAction.js';
@@ -13,6 +13,7 @@ import {
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
+import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useGameSession } from './useGameSession.js';
 
 export type RemoteRoomLiveSession = Pick<
@@ -53,9 +54,7 @@ export const RemoteRoomLiveControls = ({
 }) => {
   const state = useGameSession(session);
   const [message, setMessage] = useState('');
-  const [optionsOpen, setOptionsOpen] = useState(false);
-  const optionsButton = useRef<HTMLButtonElement>(null);
-  const optionsMenu = useRef<HTMLDivElement>(null);
+  const options = useDismissibleRoomOptions();
   const playerId = ownPlayerId(state);
   const playerControls = playerId !== undefined;
   const ready = state.phase === 'ready';
@@ -84,23 +83,6 @@ export const RemoteRoomLiveControls = ({
     event.preventDefault();
     sendMessage();
   };
-
-  useEffect(() => {
-    if (!optionsOpen) return;
-    const dismiss = (event: MouseEvent): void => {
-      const target = event.target;
-      if (
-        target instanceof Node &&
-        (optionsButton.current?.contains(target) ||
-          optionsMenu.current?.contains(target))
-      ) {
-        return;
-      }
-      setOptionsOpen(false);
-    };
-    globalThis.document.addEventListener('mousedown', dismiss);
-    return () => globalThis.document.removeEventListener('mousedown', dismiss);
-  }, [optionsOpen]);
 
   return (
     <>
@@ -182,21 +164,21 @@ export const RemoteRoomLiveControls = ({
         )}
         <button
           id="p2OptionsButton"
-          ref={optionsButton}
+          ref={options.buttonRef}
           type="button"
           className="neutral-color"
-          aria-expanded={optionsOpen}
+          aria-expanded={options.open}
           aria-controls="optionsContextMenu"
-          onClick={() => setOptionsOpen((open) => !open)}
+          onClick={() => options.setOpen((open) => !open)}
         >
           Options
         </button>
       </div>
       <div
         id="optionsContextMenu"
-        ref={optionsMenu}
+        ref={options.menuRef}
         role="menu"
-        hidden={!optionsOpen}
+        hidden={!options.open}
       >
         <button
           id="exportLog"
@@ -207,7 +189,7 @@ export const RemoteRoomLiveControls = ({
               'battle-log.txt',
               serializeBattleLog(presentation.activityFeed.getSnapshot().items)
             );
-            setOptionsOpen(false);
+            options.setOpen(false);
           }}
         >
           Export battle log
@@ -218,7 +200,7 @@ export const RemoteRoomLiveControls = ({
           role="menuitem"
           onClick={() => {
             presentation.clearActivity();
-            setOptionsOpen(false);
+            options.setOpen(false);
           }}
         >
           Clear battle log
@@ -229,7 +211,7 @@ export const RemoteRoomLiveControls = ({
           role="menuitem"
           onClick={() => {
             requestFullscreen();
-            setOptionsOpen(false);
+            options.setOpen(false);
           }}
         >
           Full screen

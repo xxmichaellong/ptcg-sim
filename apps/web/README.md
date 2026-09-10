@@ -82,9 +82,10 @@ retains the stronger 20-cycle ownership/teardown proof.
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
 legacy replay controls, authenticated live sidebox controls, and externally
-owned route teardown. Live Options now restores recipient-safe battle-log
-export, local log clearing, and browser full screen; object URLs are revoked
-after the foreground download. Game-state/replay import and export,
+owned route teardown. Live and replay Options now restore recipient-safe
+battle-log export and browser full screen, while Clear battle log remains live
+only as in v1; object URLs are revoked after the foreground download.
+Game-state/replay import and export,
 deck/settings navigation, and the remaining focus/visual parity remain later
 slices.
 

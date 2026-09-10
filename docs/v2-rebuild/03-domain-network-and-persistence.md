@@ -983,12 +983,12 @@ mounts those live controls. Confirmed Leave disposes the creator result or guest
 runtime, which sends the durable `Leave` before closing transport, clears the
 consumed join custody, and installs a fresh private custodian before the lobby
 returns.
-The connected Options subset is deliberately local: battle-log export
+The live/replay Options subset is deliberately local: battle-log export
 serializes only the bounded recipient-safe activity model and revokes its
 temporary object URL, Clear battle log resets presentation without touching
-canonical state or dispatcher cursors, and Full screen calls the document API
-inside the click. No save, replay-file, authority, or telemetry payload is
-created.
+canonical state or dispatcher cursors and remains hidden during replay, and Full
+screen calls the document API inside the click. No save, replay-file, authority,
+or telemetry payload is created.
 
 The Worker now publishes only the closed `ptcgsim-server-telemetry-v2` union.
 Its safe facts cover route status/latency, room lifecycle and bounded counts,

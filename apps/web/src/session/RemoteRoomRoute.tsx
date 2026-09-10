@@ -1,6 +1,5 @@
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { useState } from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import { LegacyPresentationSurface } from '../presentation/LegacyPresentationSurface.js';
@@ -11,6 +10,12 @@ import {
 } from './RemoteSessionBoard.js';
 import { RemoteRoomLiveControls } from './RemoteRoomLiveControls.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import {
+  downloadBrowserTextFile,
+  requestBrowserFullscreen,
+  serializeBattleLog,
+} from './browser-room-options.js';
+import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
@@ -23,6 +28,8 @@ export interface RemoteRoomRouteProps {
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  readonly downloadTextFile?: (filename: string, contents: string) => boolean;
+  readonly requestFullscreen?: () => boolean;
 }
 
 /**
@@ -35,8 +42,10 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  downloadTextFile = downloadBrowserTextFile,
+  requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const options = useDismissibleRoomOptions();
 
   return (
     <ReplayModeShell coordinator={runtime.replay}>
@@ -48,7 +57,7 @@ export const RemoteRoomRoute = ({
             ? `Room ${runtime.roomCode}`
             : state.sessionPhase);
         const leaveReplay = (): void => {
-          setOptionsOpen(false);
+          options.setOpen(false);
           exitReplay();
         };
 
@@ -136,6 +145,8 @@ export const RemoteRoomRoute = ({
                     session={runtime.session}
                     presentation={runtime.presentation}
                     {...(onLeave ? { onLeave } : {})}
+                    downloadTextFile={downloadTextFile}
+                    requestFullscreen={requestFullscreen}
                   />
                 )}
                 {controls && (
@@ -146,18 +157,52 @@ export const RemoteRoomRoute = ({
                     {controls}
                     <button
                       id="optionsButton"
+                      ref={options.buttonRef}
                       type="button"
                       className="neutral-color"
-                      aria-expanded={optionsOpen}
+                      aria-expanded={options.open}
                       aria-controls="optionsContextMenu"
-                      onClick={() => setOptionsOpen((open) => !open)}
+                      onClick={() => options.setOpen((open) => !open)}
                     >
                       Options
                     </button>
                   </div>
                 )}
                 {chrome.visibility.exitReplay && (
-                  <div id="optionsContextMenu" hidden={!optionsOpen}>
+                  <div
+                    id="optionsContextMenu"
+                    ref={options.menuRef}
+                    role="menu"
+                    hidden={!options.open}
+                  >
+                    <button
+                      id="exportLog"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        downloadTextFile(
+                          'battle-log.txt',
+                          serializeBattleLog(
+                            runtime.presentation.activityFeed.getSnapshot()
+                              .items
+                          )
+                        );
+                        options.setOpen(false);
+                      }}
+                    >
+                      Export battle log
+                    </button>
+                    <button
+                      id="fullscreenButton"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        requestFullscreen();
+                        options.setOpen(false);
+                      }}
+                    >
+                      Full screen
+                    </button>
                     <button id="exitReplay" type="button" onClick={leaveReplay}>
                       Exit replay mode
                     </button>

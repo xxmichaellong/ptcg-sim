@@ -1578,11 +1578,12 @@ atomic resolvers; spectators see only flower, authenticated chat, and Leave.
 Chat clears after a successful session send but retains failed text, IME
 composition does not submit, replay hides the entire live-control group, and
 confirmed leave returns the lobby to fresh custody after disposing the route
-owner. The live Options button restores the existing Export battle log, Clear
-battle log, and Full screen labels. Export reads the bounded activity source
-rather than DOM, uses the legacy numbered text format, and revokes the object
-URL; Clear is local presentation only; Full screen retains the foreground
-gesture and vendor fallbacks. Game-state/replay import and export, navigation,
+owner. Live and replay Options restore Export battle log and Full screen; Clear
+battle log remains live-only exactly as the replay visibility contract requires.
+Export reads the bounded effective activity source rather than DOM, uses the
+legacy numbered text format, and revokes the object URL; Clear is local
+presentation only; Full screen retains the foreground gesture and vendor
+fallbacks. Game-state/replay import and export, navigation,
 and complete focus/keyboard/visual parity remain later slices.
 
 ## Rendering cadence and performance

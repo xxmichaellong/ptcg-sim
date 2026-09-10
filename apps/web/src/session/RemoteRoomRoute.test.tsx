@@ -149,6 +149,8 @@ describe('RemoteRoomRoute', () => {
     });
     const onIntent = vi.fn();
     const onSubmission = vi.fn();
+    const downloadTextFile = vi.fn(() => true);
+    const requestFullscreen = vi.fn(() => true);
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -160,6 +162,8 @@ describe('RemoteRoomRoute', () => {
           rendererKind="dom"
           onIntent={onIntent}
           onSubmission={onSubmission}
+          downloadTextFile={downloadTextFile}
+          requestFullscreen={requestFullscreen}
         />
       )
     );
@@ -321,6 +325,38 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#optionsContextMenu') as HTMLElement).hidden
     ).toBe(false);
+    expect(host.querySelector('#clearLog')).toBeNull();
+    await act(async () =>
+      (host.querySelector('#exportLog') as HTMLButtonElement).click()
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      'battle-log.txt',
+      '1: Blue flipped heads\n\n'
+    );
+    expect(
+      (host.querySelector('#optionsContextMenu') as HTMLElement).hidden
+    ).toBe(true);
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
+    await act(async () =>
+      (host.querySelector('#fullscreenButton') as HTMLButtonElement).click()
+    );
+    expect(requestFullscreen).toHaveBeenCalledOnce();
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
+    await act(async () =>
+      document.body.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true })
+      )
+    );
+    expect(
+      (host.querySelector('#optionsContextMenu') as HTMLElement).hidden
+    ).toBe(true);
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
     await act(async () =>
       (host.querySelector('#exitReplay') as HTMLButtonElement).click()
     );

@@ -1667,6 +1667,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      its safe contents, clears the live feed, and observes the fullscreen call.
      Canonical game-state/replay import-export remains gated on its existing
      format/privacy decisions, and the default route remains unchanged.
+102. Replay Options now reuse the same recipient-safe battle-log and foreground
+     full-screen adapters. Export reads the effective seek-synchronized replay
+     activity, Full screen preserves the native click, and Clear log remains
+     absent in replay exactly as the v1 visibility map requires. The live and
+     replay menus share one `useDismissibleRoomOptions` hook, so outside-press
+     ownership and teardown cannot drift. Route integration coverage enters a
+     real assembled replay, advances its frame, verifies exact exported text and
+     hidden Clear, delegates full screen, dismisses outside, exits through the
+     existing coordinator, and confirms live continuity. State/replay file
+     import-export remains deliberately unwired.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

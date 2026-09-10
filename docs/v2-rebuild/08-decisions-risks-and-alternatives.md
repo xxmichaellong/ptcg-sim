@@ -72,10 +72,11 @@ atomic commands from the recipient projection, replay hides live inputs, and
 confirmed Leave disposes the runtime and replaces private join custody before
 showing the lobby. This does not expose room authority or change the default
 route.
-The restored live Options subset does not resolve ADR-012: it exports only the
-already-visible bounded activity feed, clears only local presentation, and
-requests browser full screen. Canonical game-state export and multiplayer
-continuation stay unavailable until their privacy/capability decision is made.
+The restored live/replay Options subset does not resolve ADR-012: it exports only
+the already-visible effective bounded activity feed, clears only local live
+presentation, and requests browser full screen. Canonical game-state export and
+multiplayer continuation stay unavailable until their privacy/capability
+decision is made.
 
 ## Major alternatives
 
