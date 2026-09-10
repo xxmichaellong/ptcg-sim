@@ -59,10 +59,10 @@ interface NonzeroFixture {
  * recorded quarter turns, BREAK flags and inline margins to what v1 actually
  * produces.
  *
- * The one fixture deliberately left out is
- * `compound-lower-nonzero-group-refresh-after-single-v1`: its trace contains a
- * board reconstruct and a `replay-rotate`, which is a different mechanism from
- * the direct operation replay here and needs its own gate.
+ * The refresh-after-single fixture uses a different mechanism from this direct
+ * operation replay: its companion browser gate executes the real v1
+ * `refreshBoard` reconstruction and validates the synchronous and settled
+ * phases separately.
  */
 const FIXTURES: readonly (readonly [string, NonzeroFixture])[] = [
   ['group single', groupSingle as NonzeroFixture],

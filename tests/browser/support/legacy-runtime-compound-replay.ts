@@ -12,6 +12,20 @@ export interface ReplayedPhase {
   readonly inlineMargins: readonly [string, string];
 }
 
+export interface ReplayedRefreshLifecycle {
+  readonly synchronousWrapperCount: number;
+  readonly oldWrapperConnectedImmediately: boolean;
+  readonly stableWrapperCount: number;
+  readonly oldWrapperConnectedAfterSettle: boolean;
+  readonly wrapperIdentityChanged: boolean;
+  readonly cardNodeIdentityPreserved: boolean;
+}
+
+export interface ReplayedRefresh {
+  readonly phases: readonly ReplayedPhase[];
+  readonly lifecycle: ReplayedRefreshLifecycle;
+}
+
 /**
  * Replays a fixture's own `operationTraceByScenario` script inside the real v1
  * client and reports what actually happened.
@@ -217,6 +231,250 @@ export const replayCompoundTrace = async (
       return samples;
     },
     { zoneId: slot, operations: trace, phases: phaseCount }
+  );
+
+/**
+ * Replays the refresh fixture through v1's real `refreshBoard` reconstruction.
+ *
+ * The earlier direct-operation gate deliberately ignores `refresh:` trace
+ * annotations because most fixtures use them only to describe the implicit
+ * reset performed by evolution. This fixture is different: its final refresh
+ * is the behavior under test, and the following `replay-rotate:` records are
+ * effects that `refreshBoard` must reproduce itself. Capture therefore stops
+ * before the last refresh annotation, samples the synchronous reconstruction,
+ * then samples again after the legacy empty-wrapper observer settles.
+ */
+export const replayCompoundRefreshTrace = async (
+  page: Page,
+  slot: CompoundSlot,
+  trace: readonly string[]
+): Promise<ReplayedRefresh> =>
+  page.evaluate(
+    async ({ zoneId, operations }) => {
+      const load = (specifier: string): Promise<Record<string, never>> =>
+        import(/* @vite-ignore */ specifier);
+      const [
+        cardModule,
+        placementModule,
+        zoneModule,
+        bundleModule,
+        rotateModule,
+        refreshModule,
+      ] = await Promise.all([
+        load('/src/setup/deck-constructor/card.js'),
+        load('/src/actions/move-card-bundle/initialize-active-bench-card.js'),
+        load('/src/setup/zones/get-zone.js'),
+        load('/src/actions/move-card-bundle/move-card-bundle.js'),
+        load('/src/actions/general/rotate-card.js'),
+        load('/src/setup/sizing/refresh-board.js'),
+      ]);
+
+      interface LegacyImage extends HTMLImageElement {
+        readonly attached?: boolean;
+        readonly PokémonBreak?: boolean;
+      }
+      interface LegacyCard {
+        readonly name: string;
+        readonly image: LegacyImage;
+      }
+      interface LegacyZone {
+        readonly element: HTMLElement;
+        readonly array: LegacyCard[];
+      }
+      const Card = (
+        cardModule as unknown as {
+          readonly Card: new (
+            user: string,
+            name: string,
+            type: string,
+            imageUrl: string
+          ) => LegacyCard;
+        }
+      ).Card;
+      const { initializeActiveBenchCard } = placementModule as unknown as {
+        readonly initializeActiveBenchCard: (
+          user: string,
+          card: LegacyCard,
+          zoneId: string,
+          zone: LegacyZone
+        ) => void;
+      };
+      const { getZone } = zoneModule as unknown as {
+        readonly getZone: (user: string, zoneId: string) => LegacyZone;
+      };
+      const { moveCardBundle } = bundleModule as unknown as {
+        readonly moveCardBundle: (
+          user: string,
+          initiator: string,
+          oZoneId: string,
+          dZoneId: string,
+          index: number,
+          targetIndex: number,
+          action: string,
+          emit?: boolean
+        ) => void;
+      };
+      const { rotateCard } = rotateModule as unknown as {
+        readonly rotateCard: (
+          user: string,
+          zoneId: string,
+          index: number,
+          single?: boolean,
+          emit?: boolean
+        ) => void;
+      };
+      const { refreshBoard } = refreshModule as unknown as {
+        readonly refreshBoard: () => void;
+      };
+
+      for (const candidateZoneId of ['active', 'bench']) {
+        const candidate = getZone('self', candidateZoneId);
+        candidate.array.length = 0;
+        candidate.element.replaceChildren();
+      }
+      const zone = getZone('self', zoneId);
+      const hand = getZone('self', 'hand');
+      hand.array.length = 0;
+      hand.element.replaceChildren();
+
+      const make = async (name: string): Promise<LegacyCard> => {
+        const card = new Card(
+          'self',
+          name,
+          'Pokémon',
+          `${location.origin}/src/assets/cardback.png`
+        );
+        await card.image.decode();
+        return card;
+      };
+      const frames = () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+      const byRole = new Map<string, LegacyCard>();
+      const base = await make('base');
+      byRole.set('base', base);
+      zone.array.push(base);
+      initializeActiveBenchCard('self', base, zoneId, zone);
+      await frames();
+
+      const quarterTurns = (image: HTMLImageElement): number => {
+        const degrees =
+          Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
+          0;
+        return (((degrees / 90) % 4) + 4) % 4;
+      };
+      const container = (): HTMLElement => {
+        const element = byRole.get('base')?.image.parentElement;
+        if (!(element instanceof HTMLElement)) {
+          throw new Error('Real-v1 compound card has no play container');
+        }
+        return element;
+      };
+      const sample = () => {
+        const turns: Record<string, number> = {};
+        const flags: Record<string, boolean> = {};
+        for (const role of ['base', 'middle', 'top'] as const) {
+          const card = byRole.get(role);
+          turns[role] = card ? quarterTurns(card.image) : 0;
+          flags[role] = Boolean(card?.image.PokémonBreak);
+        }
+        const element = container();
+        return {
+          quarterTurns: turns,
+          breakFlags: flags,
+          inlineMargins: [
+            element.style.marginRight,
+            element.style.marginLeft,
+          ] as const,
+        };
+      };
+      const execute = async (operation: string): Promise<void> => {
+        const evolve = /^evolve:([a-z]+)->([a-z]+)$/u.exec(operation);
+        if (evolve) {
+          const [, parentName, childName] = evolve;
+          const child = await make(childName!);
+          byRole.set(childName!, child);
+          hand.array.push(child);
+          const targetIndex = zone.array.findIndex(
+            (card) => card.name === parentName
+          );
+          moveCardBundle(
+            'self',
+            'self',
+            'hand',
+            zoneId,
+            hand.array.length - 1,
+            targetIndex,
+            'evolve',
+            false
+          );
+          await frames();
+          return;
+        }
+        const rotate = /^rotate:[a-z]+:index=(\d+):single=(true|false):/u.exec(
+          operation
+        );
+        if (rotate) {
+          const [, index, single] = rotate;
+          rotateCard(
+            'self',
+            zoneId,
+            Number.parseInt(index!, 10),
+            single === 'true',
+            false
+          );
+          await frames();
+          return;
+        }
+        if (operation.startsWith('refresh:')) return;
+        throw new Error(`Unreplayable pre-refresh operation: ${operation}`);
+      };
+
+      const refreshIndex = operations.findLastIndex((operation) =>
+        operation.startsWith('refresh:')
+      );
+      if (refreshIndex < 0) {
+        throw new Error('Refresh fixture trace has no refresh boundary');
+      }
+      for (const operation of operations.slice(0, refreshIndex)) {
+        await execute(operation);
+      }
+
+      const originalImages = new Map(
+        [...byRole].map(([role, card]) => [role, card.image])
+      );
+      const oldWrapper = container();
+      const phases = [sample()];
+      refreshBoard();
+      const newWrapper = container();
+      phases.push(sample());
+      const synchronousWrapperCount = zone.element.querySelectorAll(
+        ':scope > .play-container'
+      ).length;
+      const oldWrapperConnectedImmediately = oldWrapper.isConnected;
+      const wrapperIdentityChanged = oldWrapper !== newWrapper;
+      const cardNodeIdentityPreserved = [...originalImages].every(
+        ([role, image]) => byRole.get(role)?.image === image
+      );
+      await frames();
+      phases.push(sample());
+
+      return {
+        phases,
+        lifecycle: {
+          synchronousWrapperCount,
+          oldWrapperConnectedImmediately,
+          stableWrapperCount: zone.element.querySelectorAll(
+            ':scope > .play-container'
+          ).length,
+          oldWrapperConnectedAfterSettle: oldWrapper.isConnected,
+          wrapperIdentityChanged,
+          cardNodeIdentityPreserved,
+        },
+      };
+    },
+    { zoneId: slot, operations: trace }
   );
 
 /** Opens one real-v1 page for a whole fixture's worth of replays. */

@@ -951,6 +951,17 @@ collision dependencies. Real KeyR image reload/cache/network behavior, later
 actions, alternative histories/layouts, candidate parity, and production/
 domain/protocol/schema/UI changes remain excluded.
 
+The companion
+`legacy-runtime-compound-lower-nonzero-refresh-oracle.spec.ts` removes the
+fixture's transcription as its own source of truth. It replays all twelve
+semantic histories into the real v1 module graph for both active and bench,
+then invokes the shipped `refreshBoard`. The resulting seventy-two
+pre/synchronous/settled state samples must equal the recorded turns, BREAK
+flags, and margins, while each replay independently verifies synchronous two-
+wrapper replacement, stable card nodes, and settled old-wrapper removal. This
+does not promote the legacy defect into candidate behavior; it proves that the
+source-only evidence accurately describes the client being replaced.
+
 `legacy-compound-lower-nonzero-same-lower-group-after-single-layout.test.ts`
 then pins plain R on the same lower card that produced each checkpoint-eighteen
 q1/q2/q3 divergence. Forty-eight independent histories cross ordinary/top-

@@ -1749,6 +1749,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      and zero session effects; the multi-context browser journey intercepts and
      renders an actual external URL for one player only and retains it after
      Leave.
+110. The last self-referential compound lower-card oracle now has an independent
+     real-v1 execution gate. Twelve ordinary/top-BREAK q1/q2/q3 histories cross
+     middle/base divergence and active/bench placement, then execute the actual
+     `refreshBoard` reconstruction rather than the TypeScript transcription.
+     Seventy-two pre-refresh, same-task, and settled samples must match the
+     recorded quarter turns, BREAK flags, and inline margins. Every one of the
+     twenty-four runtime replays also pins the source's two-to-one wrapper
+     settlement, old-wrapper lifetime, wrapper replacement, and stable card
+     nodes. Together with the direct-operation companion, all fifteen
+     lower-nonzero fixtures are now falsifiable against the client they claim to
+     describe; candidate production behavior remains intentionally outside this
+     source-only defect evidence.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1769,7 +1781,11 @@ the real-runtime marker controls live in
 transfer lives in
 `tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts`. Real
 flip/resize/fullscreen behavior lives in
-`tests/browser/legacy-runtime-layout-interactions.spec.ts`. The geometry suites
+`tests/browser/legacy-runtime-layout-interactions.spec.ts`. Independent
+real-client compound-history execution lives in
+`tests/browser/legacy-runtime-compound-lower-nonzero-oracle.spec.ts` and
+`tests/browser/legacy-runtime-compound-lower-nonzero-refresh-oracle.spec.ts`.
+The geometry suites
 continue with
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the

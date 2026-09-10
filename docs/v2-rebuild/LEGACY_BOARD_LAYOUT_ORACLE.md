@@ -1200,6 +1200,16 @@ reload/cache/network behavior, later rotation or movement, extra siblings or
 attachments, candidate parity, and production/domain/protocol/schema/UI paths
 remain excluded.
 
+`tests/browser/legacy-runtime-compound-lower-nonzero-refresh-oracle.spec.ts`
+now validates that state and wrapper lifecycle independently against the real
+v1 module graph. It reconstructs all twelve semantic traces in active and
+bench, calls the shipped `refreshBoard`, and compares all seventy-two
+pre/synchronous/settled samples plus twenty-four wrapper-lifecycle results to
+the fixture. The direct lower-nonzero companion covers the other fourteen
+fixtures through real `moveCardBundle` and `rotateCard` execution. The
+transcribed capture remains useful for its richer geometry, but it is no longer
+the only executable witness for any fixture in this family.
+
 The twenty-fourth source checkpoint is split across
 `tests/browser/legacy-compound-lower-nonzero-same-lower-group-after-single-ordinary-geometry.spec.ts`
 and
