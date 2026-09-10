@@ -9,6 +9,7 @@ import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   createRendererSpikeView,
   type BoardIntent,
+  type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -31,6 +32,7 @@ const boardHarness = vi.hoisted(() => ({
         readonly view: { readonly revision: number };
         readonly allowRevisionRegression?: boolean;
         readonly sessionReady?: boolean;
+        readonly preferences?: BoardPreferences;
         readonly onIntent: (intent: BoardIntent) => void;
         readonly submitCommand: (command: WireGameCommand) => unknown;
       }
@@ -134,6 +136,11 @@ describe('RemoteSessionBoard replay binding', () => {
     const replay = new ReplaySessionCoordinator(session);
     const onSubmission = vi.fn();
     const onIntent = vi.fn();
+    const preferences: BoardPreferences = {
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+    };
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -156,12 +163,14 @@ describe('RemoteSessionBoard replay binding', () => {
           rendererKind="dom"
           onIntent={onIntent}
           onSubmission={onSubmission}
+          preferences={preferences}
         />
       )
     );
     expect(host.textContent).toBe('10');
     expect(boardHarness.props?.allowRevisionRegression).toBe(false);
     expect(boardHarness.props?.sessionReady).toBe(true);
+    expect(boardHarness.props?.preferences).toBe(preferences);
     expect(boardHarness.props?.submitCommand(command)).toMatchObject({
       queued: true,
     });

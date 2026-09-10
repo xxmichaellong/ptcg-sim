@@ -3,7 +3,7 @@ import {
   type SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import type { BoardIntent } from '@ptcgsim/renderer-contract';
+import type { BoardIntent, BoardPreferences } from '@ptcgsim/renderer-contract';
 import { useCallback } from 'react';
 
 import {
@@ -29,6 +29,7 @@ export const RemoteSessionBoard = ({
   rendererKind,
   onIntent,
   onSubmission,
+  preferences,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -38,6 +39,7 @@ export const RemoteSessionBoard = ({
     command: WireGameCommand,
     result: RemoteBoardSubmissionResult
   ) => void;
+  readonly preferences?: BoardPreferences;
 }) => {
   const state = useReplaySession(replay);
   const replaySubmissionsBlocked =
@@ -89,6 +91,7 @@ export const RemoteSessionBoard = ({
       submitCommand={submitCommand}
       allowRevisionRegression={state.mode === 'replay'}
       sessionReady={state.sessionPhase === 'ready'}
+      {...(preferences ? { preferences } : {})}
     />
   );
 };

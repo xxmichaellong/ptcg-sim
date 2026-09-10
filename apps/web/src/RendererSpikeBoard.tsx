@@ -3,10 +3,12 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardScene,
   createBoardLayoutSnapshot,
+  DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_BOARD_PRESENTATION,
   LEGACY_BOARD_SHELL_V1,
   type BoardIntent,
+  type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationUpdate,
   type BoardRenderer,
@@ -79,6 +81,7 @@ export const RendererSpikeBoard = ({
   submitCommand,
   allowRevisionRegression = false,
   sessionReady = true,
+  preferences,
 }: {
   readonly view: MatchViewState;
   readonly rendererKind: RendererKind;
@@ -88,6 +91,8 @@ export const RendererSpikeBoard = ({
   readonly allowRevisionRegression?: boolean;
   /** Cancels presentation state retained across a live transport interruption. */
   readonly sessionReady?: boolean;
+  /** Optional route-owned local preferences; omitted callers retain defaults. */
+  readonly preferences?: BoardPreferences;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
@@ -96,6 +101,8 @@ export const RendererSpikeBoard = ({
   const onIntentRef = useRef(onIntent);
   const submitCommandRef = useRef(submitCommand);
   const allowRevisionRegressionRef = useRef(allowRevisionRegression);
+  const preferencesRef = useRef(preferences ?? DEFAULT_BOARD_PREFERENCES);
+  const hasExplicitPreferencesRef = useRef(preferences !== undefined);
   const presentationRef = useRef(DEFAULT_BOARD_PRESENTATION);
   const installedRef = useRef<{
     readonly view: MatchViewState;
@@ -105,6 +112,8 @@ export const RendererSpikeBoard = ({
   onIntentRef.current = onIntent;
   submitCommandRef.current = submitCommand;
   allowRevisionRegressionRef.current = allowRevisionRegression;
+  preferencesRef.current = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  hasExplicitPreferencesRef.current = preferences !== undefined;
   const [status, setStatus] = useState<BoardRendererStatus>({
     kind: 'mounting',
   });
@@ -191,6 +200,9 @@ export const RendererSpikeBoard = ({
       try {
         await renderer.mount(host, initial.scene, presentationRef.current);
         if (disposed) return;
+        if (hasExplicitPreferencesRef.current) {
+          renderer.setPreferences(preferencesRef.current);
+        }
         rendererRef.current = renderer;
         installSize = () => {
           if (!renderer || disposed) return;
@@ -254,6 +266,12 @@ export const RendererSpikeBoard = ({
       installedRef.current = null;
     };
   }, [rendererKind]);
+
+  useEffect(() => {
+    rendererRef.current?.setPreferences(
+      preferences ?? DEFAULT_BOARD_PREFERENCES
+    );
+  }, [preferences]);
 
   useEffect(() => {
     const renderer = rendererRef.current;

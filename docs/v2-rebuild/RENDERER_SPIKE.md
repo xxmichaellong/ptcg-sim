@@ -1693,6 +1693,13 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      unchanged, and still closes through its existing focus/outside boundaries.
      Component coverage reproduces focused-item pointer exit; the original
      single-attempt browser path remains the end-to-end regression gate.
+105. `RendererSpikeBoard` and `RemoteSessionBoard` now accept an optional,
+     renderer-neutral `BoardPreferences` value owned by their composing route.
+     Explicit preferences are installed after asynchronous renderer mount and
+     update in place without replacing the renderer, session, replay, scene, or
+     presentation owners; omitted callers retain the renderer defaults without
+     an extra repaint. This is a UI-neutral Settings foundation only: no panel,
+     storage, server command, custom background, or new preference is wired.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

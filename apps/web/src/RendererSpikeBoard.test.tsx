@@ -2,7 +2,9 @@
 
 import {
   DEFAULT_BOARD_PRESENTATION,
+  DEFAULT_BOARD_PREFERENCES,
   createRendererSpikeView,
+  type BoardPreferences,
   type BoardRendererAdapters,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -79,6 +81,7 @@ describe('RendererSpikeBoard application boundary', () => {
     });
     expect(rendererHarness.mount).toHaveBeenCalledTimes(1);
     expect(rendererHarness.create).toHaveBeenCalledTimes(1);
+    expect(rendererHarness.setPreferences).not.toHaveBeenCalled();
 
     const secondView = { ...firstView, revision: firstView.revision + 1 };
     await act(async () => {
@@ -140,6 +143,48 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(readRendererKind('dom')).toBe('dom');
     expect(readRendererKind('pixi')).toBe('pixi');
     expect(readRendererKind('unsupported')).toBe('dom');
+  });
+
+  it('installs explicit local preferences after mount and updates without remounting', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const view = createRendererSpikeView();
+    const dark: BoardPreferences = {
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+    };
+    const light: BoardPreferences = { ...dark, darkMode: false };
+    const props = {
+      view,
+      rendererKind: 'dom' as const,
+      onIntent: vi.fn(),
+      submitCommand: vi.fn(),
+    };
+
+    await act(async () => {
+      root.render(<RendererSpikeBoard {...props} preferences={dark} />);
+      await Promise.resolve();
+    });
+    expect(rendererHarness.setPreferences).toHaveBeenCalledWith(dark);
+    expect(rendererHarness.mount).toHaveBeenCalledOnce();
+
+    await act(async () =>
+      root.render(<RendererSpikeBoard {...props} preferences={light} />)
+    );
+    expect(rendererHarness.setPreferences).toHaveBeenLastCalledWith(light);
+    expect(rendererHarness.mount).toHaveBeenCalledOnce();
+    expect(rendererHarness.destroy).not.toHaveBeenCalled();
+
+    await act(async () => root.render(<RendererSpikeBoard {...props} />));
+    expect(rendererHarness.setPreferences).toHaveBeenLastCalledWith(
+      DEFAULT_BOARD_PREFERENCES
+    );
+    expect(rendererHarness.mount).toHaveBeenCalledOnce();
+
+    await act(async () => root.unmount());
+    expect(rendererHarness.destroy).toHaveBeenCalledOnce();
   });
 
   it('cancels stale local presentation once when a live session stops being ready', async () => {

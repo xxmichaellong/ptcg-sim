@@ -1587,6 +1587,12 @@ legacy numbered text format, and revokes the object URL; Clear is local
 presentation only; Full screen retains the foreground gesture and vendor
 fallbacks. Game-state/replay import and export, Deck/Settings navigation,
 and complete focus/keyboard/visual parity remain later slices.
+`RendererSpikeBoard` and `RemoteSessionBoard` now carry an optional
+renderer-neutral `BoardPreferences` value from their composing route. Explicit
+preferences install after asynchronous mount and update in place; removing the
+value restores the renderer defaults, while callers that never opt in incur no
+extra repaint. No Settings panel, browser storage, server command, or custom
+background boundary is implied by this seam.
 
 ## Rendering cadence and performance
 

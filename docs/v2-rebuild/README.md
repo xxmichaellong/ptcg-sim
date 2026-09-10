@@ -123,7 +123,9 @@ the relevant product decisions and phase exit criteria.
   foreground click; Clear battle log remains live-only and local. Game-state/replay import and
   export formats plus Deck/Settings navigation remain later parity work. The
   live Solo header tab retains its separate v1 confirmation text and delegates
-  to the same durable route teardown as Leave Room.
+  to the same durable route teardown as Leave Room. The board composition now
+  accepts optional route-owned local preferences across live and replay without
+  remounting its renderer; the Settings panel/store remains unwired.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
