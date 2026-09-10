@@ -25,6 +25,7 @@ import {
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
 import { findCardLocation } from './location.js';
+import { MAX_IMAGE_URL_CODE_UNITS } from './model.js';
 import type { CardInstance, CardZone, MatchState, PlayStack } from './model.js';
 import {
   cardSourceSnapshot,
@@ -761,6 +762,24 @@ const applyEventInternal = (
   deferredConcealment?: DeferredConcealment
 ): MatchState => {
   switch (event.type) {
+    case 'PlayerCardBackSet': {
+      const player = state.players[event.playerId];
+      if (
+        !player ||
+        typeof event.cardBackUrl !== 'string' ||
+        event.cardBackUrl.length < 1 ||
+        event.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
+      ) {
+        throw new Error('Player card-back event is malformed');
+      }
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [event.playerId]: { ...player, cardBackUrl: event.cardBackUrl },
+        },
+      };
+    }
     case 'DeckLoaded': {
       if (
         !state.players[event.playerId] ||

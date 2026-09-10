@@ -70,8 +70,8 @@ actual supported-host matrix, or the release browser matrix. A separate
 controlled Chromium card-failure gate uses an intercepted external hostname to
 prove native no-CORS image success, missing and corrupt response containment,
 stable neutral fallback paint/input, stable keyed-node recovery, and an HTTP
-redirect to a decoded asset. Oversized resources, real third-party availability,
-and the final privacy/host policy remain open. A canonical-state-to-projection-
+redirect to a decoded asset. Oversized resources and real third-party
+availability remain open; ADR-013 accepts the direct-host privacy policy. A canonical-state-to-projection-
 to-scene browser oracle separately covers the private-image request scan with
 deterministic same-origin SVGs: it permits only authorized board-tier faces
 across reveal/cover and private inspection/close, rejects every hidden canonical

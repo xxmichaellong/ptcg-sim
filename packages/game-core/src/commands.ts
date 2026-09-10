@@ -40,6 +40,11 @@ export type GameCommand =
       readonly playerId: PlayerId;
       readonly entries: readonly DeckEntry[];
     }
+  | {
+      readonly type: 'SetCardBack';
+      readonly playerId: PlayerId;
+      readonly cardBackUrl: string;
+    }
   | { readonly type: 'ResetPlayer'; readonly playerId: PlayerId }
   | { readonly type: 'SetupPlayer'; readonly playerId: PlayerId }
   | {

@@ -1,3 +1,5 @@
+import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/game-core';
+
 import type {
   LegacyActionRecord,
   LegacyExportUser,
@@ -8,6 +10,7 @@ export interface LegacyV1CardBackAction {
   readonly type: 'changeCardBack';
   readonly recordIndex: number;
   readonly player: LegacyExportUser;
+  readonly sourceUrl: string;
 }
 
 export type LegacyV1CardBackActionDecodeIssueCode =
@@ -55,8 +58,8 @@ const failure = (
 });
 
 /**
- * Validates V1's saved custom-card-back tuple without retaining its URL. The
- * public byte transaction installs the approved canonical asset instead.
+ * Validates and retains V1's saved custom-card-back URL for an ordered
+ * canonical PlayerCardBackSet transition. The importer never fetches it.
  */
 export const decodeLegacyV1CardBackActions = (
   parsed: ParsedLegacyExport
@@ -86,12 +89,12 @@ export const decodeLegacyV1CardBackActions = (
         'changeCardBack source URL must be a string'
       );
     }
-    if (sourceUrl.length === 0) {
+    if (sourceUrl.length === 0 || sourceUrl.length > MAX_IMAGE_URL_CODE_UNITS) {
       return failure(
         'invalid_card_back_url',
         actionIndex,
         '.parameters[0]',
-        'changeCardBack source URL cannot be empty'
+        `changeCardBack source URL must contain 1 to ${MAX_IMAGE_URL_CODE_UNITS} code units`
       );
     }
 
@@ -99,6 +102,7 @@ export const decodeLegacyV1CardBackActions = (
       type: 'changeCardBack',
       recordIndex: actionIndex + 1,
       player: action.user,
+      sourceUrl,
     });
   }
   return { ok: true, actions: decoded };

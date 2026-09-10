@@ -1860,7 +1860,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      page, or unexpected console errors; failure screenshots and exact request
      evidence are attached. This preserves arbitrary DOM image URLs and closes
      controlled failure/recovery behavior, not the real supported-host,
-     oversized-resource, privacy-policy, non-Chromium, or physical-network gate.
+     oversized-resource, non-Chromium, or physical-network gate.
+121. The accepted ADR-013 card-back policy now has an end-to-end canonical
+     state path. `SetCardBack` retains any nonempty 4,096-code-unit value,
+     emits `PlayerCardBackSet`, replays through the normal event reducer, and
+     projects the exact public back URL. Authority restricts multiplayer users
+     to their own seat while allowing either side under a solo controller; stale
+     revisions, spectators, and missing targets fail closed. Legacy conversion
+     emits the same ordered event, retains saved URLs, and lets whole-match undo
+     restore the prior value. Focused unit/import tests and the randomized
+     authority/reconnect/replay model are green. The v2 deck-builder and
+     card-back entry controls remain a separate visible-parity checkpoint.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

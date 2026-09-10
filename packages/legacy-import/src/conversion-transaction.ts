@@ -78,8 +78,7 @@ export interface LegacyConversionIssue {
 export type LegacyDroppedPresentationFieldReason =
   | 'initiator_was_presentation_only'
   | 'message_flag_was_presentation_only'
-  | 'target_relationship_was_validation_only'
-  | 'custom_card_back_url_was_normalized';
+  | 'target_relationship_was_validation_only';
 
 export interface LegacyDroppedPresentationField {
   readonly recordIndex: number;
@@ -89,8 +88,7 @@ export interface LegacyDroppedPresentationField {
 
 export type LegacyConversionWarningCode =
   | 'legacy_transport_metadata_not_persisted'
-  | 'presentation_fields_not_persisted'
-  | 'custom_card_back_urls_normalized';
+  | 'presentation_fields_not_persisted';
 
 export interface LegacyConversionWarning {
   readonly code: LegacyConversionWarningCode;
@@ -215,13 +213,6 @@ const droppedPresentationFields = (
         reason: 'target_relationship_was_validation_only',
       });
     }
-    if (action.action === 'changeCardBack') {
-      dropped.push({
-        recordIndex,
-        path: `$[${recordIndex}].parameters[0]`,
-        reason: 'custom_card_back_url_was_normalized',
-      });
-    }
   }
   return dropped;
 };
@@ -230,9 +221,6 @@ const warningsFor = (
   actionCount: number,
   droppedFields: readonly LegacyDroppedPresentationField[]
 ): readonly LegacyConversionWarning[] => {
-  const normalizedCardBackCount = droppedFields.filter(
-    (field) => field.reason === 'custom_card_back_url_was_normalized'
-  ).length;
   return [
     {
       code: 'legacy_transport_metadata_not_persisted',
@@ -248,16 +236,6 @@ const warningsFor = (
             count: droppedFields.length,
             message:
               'Validated V1-only presentation fields are listed separately and are not persisted in canonical state.',
-          },
-        ]),
-    ...(normalizedCardBackCount === 0
-      ? []
-      : [
-          {
-            code: 'custom_card_back_urls_normalized' as const,
-            count: normalizedCardBackCount,
-            message:
-              'Legacy custom card-back URLs were replaced by the approved canonical V2 card back.',
           },
         ]),
   ];

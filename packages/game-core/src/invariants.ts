@@ -1,7 +1,11 @@
 import type { CardInstanceId, StackId } from './ids.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
-import { MATCH_STATE_SCHEMA_VERSION, type MatchState } from './model.js';
+import {
+  MATCH_STATE_SCHEMA_VERSION,
+  MAX_IMAGE_URL_CODE_UNITS,
+  type MatchState,
+} from './model.js';
 
 export class MatchInvariantError extends Error {
   readonly problems: readonly string[];
@@ -42,6 +46,12 @@ export const collectInvariantProblems = (
     const player = state.players[playerId];
     if (!player) problems.push(`missing player ${playerId}`);
     else {
+      if (
+        !player.cardBackUrl ||
+        player.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
+      ) {
+        problems.push(`player ${playerId} has invalid card-back URL`);
+      }
       if (typeof player.coachingConsent !== 'boolean') {
         problems.push(`player ${playerId} has invalid coaching consent`);
       }
@@ -80,7 +90,10 @@ export const collectInvariantProblems = (
     if (!definition.name || definition.name.length > 256) {
       problems.push(`definition ${definition.id} has invalid name`);
     }
-    if (!definition.imageUrl || definition.imageUrl.length > 4096) {
+    if (
+      !definition.imageUrl ||
+      definition.imageUrl.length > MAX_IMAGE_URL_CODE_UNITS
+    ) {
       problems.push(`definition ${definition.id} has invalid image URL`);
     }
   }

@@ -92,6 +92,7 @@ export const resolveWireCommand = (
       wire.type === 'SetupPlayer' ||
       wire.type === 'ResetPlayer' ||
       wire.type === 'LoadDeck' ||
+      wire.type === 'SetCardBack' ||
       wire.type === 'ApplySoloUndo' ||
       wire.type === 'SetPublicReveal' ||
       wire.type === 'SetZonePublicReveal' ||
@@ -131,6 +132,23 @@ export const resolveWireCommand = (
             },
             count: entry.count,
           })),
+        },
+      };
+    }
+    case 'SetCardBack': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (targetPlayerId !== actorId && undoContext.mode !== 'solo') {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'SetCardBack',
+          playerId: targetPlayerId,
+          cardBackUrl: wire.cardBackUrl,
         },
       };
     }

@@ -1,3 +1,4 @@
+import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
 import { decodeLegacyV1CardBackActions } from './decode-card-back-actions.js';
@@ -25,7 +26,7 @@ const decode = (...actions: unknown[]) => {
 };
 
 describe('legacy v1 card-back positional decoder', () => {
-  it('decodes either player without retaining the arbitrary source URL', () => {
+  it('decodes either player while retaining each arbitrary source URL exactly', () => {
     const result = decode(
       action('self', 'changeCardBack', [
         'https://private.example/self-secret.png',
@@ -36,12 +37,20 @@ describe('legacy v1 card-back positional decoder', () => {
     expect(result).toEqual({
       ok: true,
       actions: [
-        { type: 'changeCardBack', recordIndex: 3, player: 'self' },
-        { type: 'changeCardBack', recordIndex: 4, player: 'opp' },
+        {
+          type: 'changeCardBack',
+          recordIndex: 3,
+          player: 'self',
+          sourceUrl: 'https://private.example/self-secret.png',
+        },
+        {
+          type: 'changeCardBack',
+          recordIndex: 4,
+          player: 'opp',
+          sourceUrl: 'data:image/png;base64,c2VjcmV0',
+        },
       ],
     });
-    expect(JSON.stringify(result)).not.toContain('private.example');
-    expect(JSON.stringify(result)).not.toContain('c2VjcmV0');
   });
 
   it.each([{ parameters: [] }, { parameters: ['/one.png', '/two.png'] }])(
@@ -78,19 +87,22 @@ describe('legacy v1 card-back positional decoder', () => {
     }
   );
 
-  it('rejects an empty source URL', () => {
-    expect(decode(action('self', 'changeCardBack', ['']))).toEqual({
-      ok: false,
-      issues: [
-        {
-          code: 'invalid_card_back_url',
-          recordIndex: 3,
-          path: '$[3].parameters[0]',
-          message: 'changeCardBack source URL cannot be empty',
-        },
-      ],
-    });
-  });
+  it.each(['', 'x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1)])(
+    'rejects an empty or oversized source URL',
+    (sourceUrl) => {
+      expect(decode(action('self', 'changeCardBack', [sourceUrl]))).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_card_back_url',
+            recordIndex: 3,
+            path: '$[3].parameters[0]',
+            message: `changeCardBack source URL must contain 1 to ${MAX_IMAGE_URL_CODE_UNITS} code units`,
+          },
+        ],
+      });
+    }
+  );
 
   it('ignores every other allowlisted action family', () => {
     expect(

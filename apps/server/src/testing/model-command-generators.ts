@@ -204,6 +204,11 @@ export const MODEL_COMMAND_GENERATORS = {
     targetPlayerId: actorId(context),
     entries: generatedDeck(context),
   }),
+  SetCardBack: (context) => ({
+    type: 'SetCardBack',
+    ...(context.random.boolean() ? { targetPlayerId: actorId(context) } : {}),
+    cardBackUrl: `https://model-player-images.invalid/${context.seed}.png`,
+  }),
   ResetPlayer: (context) => ({
     type: 'ResetPlayer',
     targetPlayerId: actorId(context),

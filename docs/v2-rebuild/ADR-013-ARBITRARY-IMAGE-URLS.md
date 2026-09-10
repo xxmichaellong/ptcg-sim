@@ -4,9 +4,10 @@
 - Decision date: 2026-09-10
 - Scope: player-selected room backgrounds, custom card faces, custom card
   backs, native DOM image loading, and renderer selection
-- Production wiring: the page-background path and renderer failure containment
-  are implemented; v2 deck-builder/card-back controls and legacy card-back
-  conversion remain behind their parity gates
+- Production wiring: the page-background path, renderer failure containment,
+  bounded card-back command/event/projection path, multiplayer/solo authority,
+  and ordered legacy card-back conversion are implemented; the v2 deck-builder
+  and card-back entry controls remain behind their parity gates
 
 ## Context
 

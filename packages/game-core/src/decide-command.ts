@@ -26,7 +26,7 @@ import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
-import { MAX_DECK_CARDS } from './model.js';
+import { MAX_DECK_CARDS, MAX_IMAGE_URL_CODE_UNITS } from './model.js';
 import type {
   CardDefinition,
   CardInstance,
@@ -1013,6 +1013,25 @@ export const decideCommand = (
   switch (command.type) {
     case 'LoadDeck':
       return decideLoadDeck(state, command, context);
+    case 'SetCardBack': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      if (
+        typeof command.cardBackUrl !== 'string' ||
+        command.cardBackUrl.length < 1 ||
+        command.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
+      ) {
+        return reject(
+          'invalid_command',
+          `Card-back URL must contain 1 to ${MAX_IMAGE_URL_CODE_UNITS} code units`
+        );
+      }
+      return accept({
+        type: 'PlayerCardBackSet',
+        playerId: command.playerId,
+        cardBackUrl: command.cardBackUrl,
+      });
+    }
     case 'ResetPlayer': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;

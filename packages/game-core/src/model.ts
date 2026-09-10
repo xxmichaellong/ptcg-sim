@@ -17,6 +17,8 @@ export const MATCH_STATE_SCHEMA_VERSION = 3 as const;
  * value.
  */
 export const MAX_DECK_CARDS = 200;
+/** Shared bound for player-selected face and card-back image source strings. */
+export const MAX_IMAGE_URL_CODE_UNITS = 4_096;
 
 export type CardCategory = 'Pokémon' | 'Trainer' | 'Energy' | 'Unknown';
 export type CardFace = 'up' | 'down';

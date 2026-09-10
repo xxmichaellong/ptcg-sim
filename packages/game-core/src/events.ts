@@ -29,6 +29,11 @@ export type DomainEvent =
       readonly deckOrder: readonly CardInstanceId[];
     }
   | {
+      readonly type: 'PlayerCardBackSet';
+      readonly playerId: PlayerId;
+      readonly cardBackUrl: string;
+    }
+  | {
       readonly type: 'PlayerReset';
       readonly playerId: PlayerId;
       readonly deckOrder: readonly CardInstanceId[];

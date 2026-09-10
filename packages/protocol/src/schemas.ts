@@ -3,6 +3,7 @@ import {
   MAX_CHAT_CODE_UNITS,
   MAX_DECK_CARDS,
   MAX_DECK_ENTRIES,
+  MAX_IMAGE_URL_CODE_UNITS,
   MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
   PROTOCOL_VERSION,
@@ -12,7 +13,7 @@ import {
 const boundedString = (maximum: number, minimum = 1) =>
   v.pipe(v.string(), v.minLength(minimum), v.maxLength(maximum));
 const IdentifierSchema = boundedString(128);
-const UrlSchema = boundedString(4_096);
+const UrlSchema = boundedString(MAX_IMAGE_URL_CODE_UNITS);
 const SafeIntegerSchema = v.pipe(v.number(), v.safeInteger());
 const NonNegativeIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(0));
 const PositiveIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(1));
@@ -116,6 +117,11 @@ export const WireGameCommandSchema = v.variant('type', [
         'Deck exceeds the maximum card count'
       )
     ),
+  }),
+  v.object({
+    type: v.literal('SetCardBack'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    cardBackUrl: UrlSchema,
   }),
   v.object({
     type: v.literal('ResetPlayer'),

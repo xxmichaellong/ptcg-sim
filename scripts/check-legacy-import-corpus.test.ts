@@ -95,9 +95,7 @@ describe('legacy import corpus evidence tool', () => {
       { action: 'loadDeckData', count: 4 },
     ]);
     assert.deepEqual(first.summary.warningCounts, [
-      { code: 'custom_card_back_urls_normalized', count: 2 },
       { code: 'legacy_transport_metadata_not_persisted', count: 6 },
-      { code: 'presentation_fields_not_persisted', count: 2 },
     ]);
     assert.deepEqual(
       first.cases.map((entry) => entry.caseId),

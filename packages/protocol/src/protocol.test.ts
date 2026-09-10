@@ -1,9 +1,13 @@
-import { MAX_DECK_CARDS as GAME_CORE_MAX_DECK_CARDS } from '@ptcgsim/game-core';
+import {
+  MAX_DECK_CARDS as GAME_CORE_MAX_DECK_CARDS,
+  MAX_IMAGE_URL_CODE_UNITS as GAME_CORE_MAX_IMAGE_URL_CODE_UNITS,
+} from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 import * as v from 'valibot';
 import {
   MAX_CLIENT_FRAME_CODE_UNITS,
   MAX_DECK_CARDS,
+  MAX_IMAGE_URL_CODE_UNITS,
   MAX_REPLAY_FRAMES,
   PROTOCOL_VERSION,
 } from './constants.js';
@@ -28,6 +32,10 @@ import { PresentationEventSchema } from './schemas.js';
 describe('cross-package wire limits', () => {
   it('keeps the aggregate deck cap aligned with the game reducer', () => {
     expect(MAX_DECK_CARDS).toBe(GAME_CORE_MAX_DECK_CARDS);
+  });
+
+  it('keeps image-reference bounds aligned with the game reducer', () => {
+    expect(MAX_IMAGE_URL_CODE_UNITS).toBe(GAME_CORE_MAX_IMAGE_URL_CODE_UNITS);
   });
 });
 
@@ -896,6 +904,34 @@ describe('client protocol ingress', () => {
     ).toBe(true);
     expect(
       parseCommand({ type: 'LoadDeck', targetPlayerId: '', entries: [] }).ok
+    ).toBe(false);
+    const customBackUrl =
+      'https://unlisted-player-images.example/custom-back.png?variant=one';
+    expect(
+      parseCommand({ type: 'SetCardBack', cardBackUrl: customBackUrl }).ok
+    ).toBe(true);
+    expect(
+      parseCommand({
+        type: 'SetCardBack',
+        targetPlayerId: 'target-player',
+        cardBackUrl: customBackUrl,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseCommand({
+        type: 'SetCardBack',
+        targetPlayerId: '',
+        cardBackUrl: customBackUrl,
+      }).ok
+    ).toBe(false);
+    expect(parseCommand({ type: 'SetCardBack', cardBackUrl: '' }).ok).toBe(
+      false
+    );
+    expect(
+      parseCommand({
+        type: 'SetCardBack',
+        cardBackUrl: 'x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1),
+      }).ok
     ).toBe(false);
     expect(
       parseCommand({

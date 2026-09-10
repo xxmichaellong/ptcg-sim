@@ -775,6 +775,7 @@ const commandCounters = <Key>(
 const commandVariant = (command: WireGameCommand): string => {
   switch (command.type) {
     case 'LoadDeck':
+    case 'SetCardBack':
     case 'ResetPlayer':
     case 'SetupPlayer':
       return `${command.type}:target=${command.targetPlayerId ? 'explicit' : 'omitted'}`;
@@ -1564,7 +1565,7 @@ describe('named model scenarios', () => {
     expect(() => parseIntegerEnvironment('MODEL_TEST', '1.5', 7, 10)).toThrow(
       'MODEL_TEST must be an integer from 1 through 10'
     );
-    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(51);
+    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(52);
     expect(new Set(Object.keys(MODEL_COMMAND_GENERATORS))).toEqual(
       new Set(Object.keys(MODEL_COMMAND_REGISTRY))
     );

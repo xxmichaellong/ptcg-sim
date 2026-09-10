@@ -922,9 +922,12 @@ export const buildLegacyV1Candidate = (
         break;
       }
       case 'changeCardBack': {
-        // The byte transaction forces both seats to the approved canonical
-        // card back. Preserve this source record for ordering/undo evidence,
-        // but never retain or apply its arbitrary presentation URL.
+        const problem = apply({
+          type: 'SetCardBack',
+          playerId,
+          cardBackUrl: action.sourceUrl,
+        });
+        if (problem) return problem;
         break;
       }
       case 'undo': {

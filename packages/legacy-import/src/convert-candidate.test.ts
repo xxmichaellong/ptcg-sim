@@ -10544,34 +10544,60 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
-  it('retains card-back history as URL-free zero-batch records', () => {
+  it('preserves ordered card-back URLs as replayable and undoable state', () => {
     const selfSecret = 'https://private.example/self-card-back.png';
     const opponentSecret = 'data:image/png;base64,c2VjcmV0LWJhY2s=';
+    const revertedSelfSecret = 'https://private.example/reverted-back.png';
     const result = buildLegacyV1Candidate(
       parse(
         payload(
           '',
           '',
           action('self', 'changeCardBack', [selfSecret]),
-          action('opp', 'changeCardBack', [opponentSecret])
+          action('opp', 'changeCardBack', [opponentSecret]),
+          action('self', 'changeCardBack', [revertedSelfSecret]),
+          action('self', 'undo', [null])
         )
       ),
       target
     );
-    expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.issues[0]?.message);
-    expect(result.records.slice(2)).toEqual([
-      { recordIndex: 3, action: 'changeCardBack', batches: [] },
-      { recordIndex: 4, action: 'changeCardBack', batches: [] },
+    expect(result.ok).toBe(true);
+    expect(
+      result.records.slice(2).map((record) => ({
+        recordIndex: record.recordIndex,
+        action: record.action,
+        eventTypes: record.batches.flatMap((batch) =>
+          batch.events.map((event) => event.type)
+        ),
+      }))
+    ).toEqual([
+      {
+        recordIndex: 3,
+        action: 'changeCardBack',
+        eventTypes: ['PlayerCardBackSet'],
+      },
+      {
+        recordIndex: 4,
+        action: 'changeCardBack',
+        eventTypes: ['PlayerCardBackSet'],
+      },
+      {
+        recordIndex: 5,
+        action: 'changeCardBack',
+        eventTypes: ['PlayerCardBackSet'],
+      },
+      { recordIndex: 6, action: 'undo', eventTypes: ['UndoApplied'] },
     ]);
     expect(result.state.players[target.selfSeat.playerId]?.cardBackUrl).toBe(
-      target.selfSeat.cardBackUrl
+      selfSecret
     );
     expect(
       result.state.players[target.opponentSeat.playerId]?.cardBackUrl
-    ).toBe(target.opponentSeat.cardBackUrl);
-    expect(JSON.stringify(result)).not.toContain(selfSecret);
-    expect(JSON.stringify(result)).not.toContain(opponentSecret);
+    ).toBe(opponentSecret);
+    expect(JSON.stringify(result)).toContain(selfSecret);
+    expect(JSON.stringify(result)).toContain(opponentSecret);
+    expect(JSON.stringify(result)).toContain(revertedSelfSecret);
   });
 
   it('lifts invalid card-back tuples without creating state', () => {

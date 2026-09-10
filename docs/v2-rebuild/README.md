@@ -151,7 +151,9 @@ the relevant product decisions and phase exit criteria.
   authorized to see that face and public player-selected card backs. Those
   synchronized images also load directly through native DOM without an
   allowlist, proxy, or CORS requirement; the shipped card back remains the
-  default.
+  default. The bounded owner-authorized `SetCardBack` transition and ordered
+  legacy-import conversion now preserve exact custom-back URLs across event
+  replay and undo; visible entry controls remain in the deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

@@ -433,14 +433,11 @@ The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
 semantic conversion with `non_exported_action` if injected. The final genuine
-saved family, `changeCardBack`, currently validates its exact
-one-nonempty-string tuple without retaining or fetching the source URL. That
-unwired checkpoint forces both seat backs to `/v2/assets/cardback.png` and
-reports normalization. Broadened ADR-013 supersedes it: ordered bounded back
-URLs must become canonical replayable transitions with exact undo/final-state
-tests before route installation. Unprovable cross-owner play remains
-fail-closed; that correction, representative real-user corpus evidence, and
-route installation remain before Phase 3 can exit.
+saved family, `changeCardBack`, now retains its exact bounded URL and emits an
+ordered canonical card-back event; replay and whole-match undo preserve the
+prior/final values without any server or importer fetch. Unprovable cross-owner
+play remains fail-closed; that correction, representative real-user corpus
+evidence, and route installation remain before Phase 3 can exit.
 
 Work:
 

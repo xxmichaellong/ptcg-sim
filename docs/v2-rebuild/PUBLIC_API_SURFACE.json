@@ -402,6 +402,10 @@
               "kind": "value"
             },
             {
+              "name": "MAX_IMAGE_URL_CODE_UNITS",
+              "kind": "value"
+            },
+            {
               "name": "OncePerGameMarkers",
               "kind": "type"
             },
@@ -675,6 +679,10 @@
             },
             {
               "name": "MAX_DECK_ENTRIES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_IMAGE_URL_CODE_UNITS",
               "kind": "value"
             },
             {

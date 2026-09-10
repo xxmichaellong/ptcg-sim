@@ -12,6 +12,11 @@ export const MAX_DECK_ENTRIES = 200;
  * protocol.test.ts enforces equality across the package boundary.
  */
 export const MAX_DECK_CARDS = 200;
+/**
+ * Mirrors game-core's image-reference limit without coupling protocol schemas
+ * to the reducer package. protocol.test.ts enforces equality.
+ */
+export const MAX_IMAGE_URL_CODE_UNITS = 4_096;
 /** One base projection plus at most 128 accepted revision projections. */
 export const MAX_REPLAY_FRAMES = 129;
 /**

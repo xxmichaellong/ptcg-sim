@@ -177,7 +177,7 @@ describe('legacy conversion transaction and report', () => {
     });
   });
 
-  it('normalizes arbitrary saved card backs to the canonical asset with explicit evidence', async () => {
+  it('preserves arbitrary saved card backs as deterministic canonical events', async () => {
     const selfSecret = 'https://private.example/self-secret-card-back.png';
     const opponentSecret = 'data:image/png;base64,b3Bwb25lbnQtc2VjcmV0';
     const bytes = encoder.encode(
@@ -212,49 +212,62 @@ describe('legacy conversion transaction and report', () => {
     expect(first.ok).toBe(true);
     if (!first.ok) throw new Error('Expected conversion');
     expect(first.state.players[target.selfSeat.playerId]?.cardBackUrl).toBe(
-      '/v2/assets/cardback.png'
+      selfSecret
     );
     expect(first.state.players[target.opponentSeat.playerId]?.cardBackUrl).toBe(
-      '/v2/assets/cardback.png'
+      opponentSecret
     );
-    expect(first.records.slice(2)).toEqual([
-      { recordIndex: 3, action: 'changeCardBack', batches: [] },
-      { recordIndex: 4, action: 'changeCardBack', batches: [] },
+    expect(
+      first.records.slice(2).map((record) => ({
+        recordIndex: record.recordIndex,
+        action: record.action,
+        events: record.batches.flatMap((batch) => batch.events),
+      }))
+    ).toEqual([
+      {
+        recordIndex: 3,
+        action: 'changeCardBack',
+        events: [
+          {
+            type: 'PlayerCardBackSet',
+            playerId: target.selfSeat.playerId,
+            cardBackUrl: selfSecret,
+          },
+        ],
+      },
+      {
+        recordIndex: 4,
+        action: 'changeCardBack',
+        events: [
+          {
+            type: 'PlayerCardBackSet',
+            playerId: target.opponentSeat.playerId,
+            cardBackUrl: opponentSecret,
+          },
+        ],
+      },
     ]);
     expect(first.report).toMatchObject({
       status: 'converted',
       summary: {
         sourceActionCount: 4,
         convertedRecordCount: 4,
-        batchCount: 2,
-        eventCount: 2,
-        zeroBatchRecordCount: 2,
+        batchCount: 4,
+        eventCount: 4,
+        zeroBatchRecordCount: 0,
       },
       warnings: [
         {
           code: 'legacy_transport_metadata_not_persisted',
           count: 4,
         },
-        { code: 'presentation_fields_not_persisted', count: 2 },
-        { code: 'custom_card_back_urls_normalized', count: 2 },
       ],
-      droppedPresentationFields: [
-        {
-          recordIndex: 3,
-          path: '$[3].parameters[0]',
-          reason: 'custom_card_back_url_was_normalized',
-        },
-        {
-          recordIndex: 4,
-          path: '$[4].parameters[0]',
-          reason: 'custom_card_back_url_was_normalized',
-        },
-      ],
+      droppedPresentationFields: [],
       issues: [],
     });
     const serializedResult = JSON.stringify(first);
-    expect(serializedResult).not.toContain(selfSecret);
-    expect(serializedResult).not.toContain(opponentSecret);
+    expect(serializedResult).toContain(selfSecret);
+    expect(serializedResult).toContain(opponentSecret);
     expect(serializedResult).not.toContain('/unapproved-target-self.png');
     expect(serializedResult).not.toContain('/unapproved-target-opponent.png');
   });
