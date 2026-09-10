@@ -73,6 +73,7 @@ packages/deck-core/
   src/card-search.ts       pure normalization/planning/local controls
   src/index.ts             reviewed minimal public API
 apps/web/src/features/deck/
+  deck-builder-store.ts        independent main/alternate edit transactions
   tcgdex-card-catalog.ts        browser catalog orchestration and public seam
   tcgdex-catalog-contract.ts    provider limits, types, and typed failures
   tcgdex-catalog-http.ts        bounded direct-browser JSON transport
@@ -82,8 +83,8 @@ apps/web/src/features/deck/
 
 The package has no runtime dependencies and uses an ES-only TypeScript project.
 It is a root project reference and a reviewed public-API entrypoint. The web app
-declares it only for the isolated catalog adapter; no route imports either one,
-so neither enters the production module graph yet.
+declares it only for the isolated deck adapters; no route imports them, so they
+do not enter the production module graph yet.
 
 ## TCGdex catalog adapter checkpoint
 
@@ -130,6 +131,38 @@ during hydration. A read-only live smoke on 2026-09-10 returned and normalized
 all 12 current `Furret` summaries; its first card's set date was hydrated through
 the set endpoint. This live observation is evidence, not a CI dependency.
 
+## Headless deck-builder store checkpoint
+
+`deck-builder-store.ts` owns only editor state and install acknowledgement. It
+has no React, DOM, file, network, board, or room dependencies. Main and
+alternate decks keep independent immutable snapshots, edit revisions, installed
+revisions, dirty flags, and in-flight install generations. Target switching
+therefore cannot move one target's unsaved flag onto the other target.
+
+Closing the eventual panel can drain dirty installs in deterministic main, then
+alternate order, with only one authority command in flight so the second cannot
+carry a revision made stale by the first. An empty edited deck remains an
+explicit install receipt; it is not silently marked clean and discarded. A
+successful receipt marks only the exact submitted revision installed. If the
+player edits again while that request is in flight, the newer revision stays
+dirty and becomes a later receipt. Failure stays retryable, duplicate begins are
+suppressed, copied or foreign acknowledgements are rejected, and an
+authoritative external sync invalidates the older in-flight receipt
+transactionally.
+
+Multiplayer construction disables alternate selection and edits while retaining
+the same main-deck behavior. Solo construction permits either target. External
+deck synchronization does not switch the visible target, and all ingress decks
+are cloned before being published as stable frozen snapshots suitable for
+`useSyncExternalStore` later.
+
+Thirteen deterministic tests cover independent target edits, selection and
+multiplayer denial, no-op mutations, immutable add/remove/clear behavior,
+uncloneable input rollback, external synchronization, dual and empty install
+receipts, success/failure/retry, edits during an in-flight install, stale and
+foreign acknowledgements, stable snapshots, and subscription teardown. The
+store is still unmounted, so it changes no current route or UI behavior.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -146,15 +179,14 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. add a headless main/alternate deck-builder store with dirty-state semantics;
-2. add file/download/unload and canonical deck-install adapters;
-3. reconstruct the existing Deck panel in React without changing its controls,
+1. add file/download/unload and canonical deck-install adapters;
+2. reconstruct the existing Deck panel in React without changing its controls,
    labels, layout, target-main/alternate behavior, or keyboard flow;
-4. connect the already prepared custom-card-back chooser at its original Deck
+3. connect the already prepared custom-card-back chooser at its original Deck
    panel location; and
-5. activate the panel only after component, browser, multiplayer, solo, import,
+4. activate the panel only after component, browser, multiplayer, solo, import,
    and accessibility parity evidence is green.
 
-Rollback for this checkpoint is removal of the unused package and its project,
-lockfile, documentation, and public-API entries. No saved, wire, canonical, or
-production runtime format is changed.
+Rollback for these checkpoints is removal of the unused package and unmounted
+web adapters plus their project, lockfile, documentation, and public-API
+entries. No saved, wire, canonical, or production runtime format is changed.
