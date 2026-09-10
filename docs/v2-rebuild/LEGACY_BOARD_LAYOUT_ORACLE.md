@@ -840,6 +840,15 @@ DOM/Pixi lifecycle and real owner/opponent/spectator projection tests cover
 stable IDs, cleanup, no asset churn, equal normalized geometry, distinct stable
 opaque marker/parent aliases, and the stable public stack ID.
 
+After the rotation/observer history records its zero-node cleanup and the
+harness disconnects its source observers, an optional paint path restores the
+pristine q0 wrapper, card, damage circle, and ability tab on each side. The
+browser hides the unrelated React active controls, pins both candidate card
+definitions to the digest-matched card back, and compares the two bench cards
+plus four markers over white. Attached screenshots and foreground metrics must
+meet the shared 97.5%, three-pixel, 24/255-channel contract in both directions.
+This does not claim rotated or observer-transition paint.
+
 Additional bench siblings/flex contention, all rotated production paths,
 BREAK/compound and attachment rotation, marker editing, alternate layouts, and
 Pixi-native paint/hit parity are still deferred.

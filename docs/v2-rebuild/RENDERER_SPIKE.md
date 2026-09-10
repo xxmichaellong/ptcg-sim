@@ -1829,6 +1829,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      intentional pointer-policy assertions; rotated/history-dependent marker
      paint, editing interactions, alternate assets, and Pixi paint remain
      excluded.
+118. The pristine bench-marker checkpoint now applies the same post-cleanup
+     screenshot proof independently to the smaller sole-bench layout. Its two
+     marked card images, two damage circles, and two ability-used tabs pass the
+     shared source-to-React paint contract while the active control cards stay
+     hidden. The existing observer, zero-special-condition, geometry,
+     typography, append-order, hit-through, and teardown assertions remain in
+     force; rotated/contention states, editing, alternate assets, and Pixi paint
+     remain excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

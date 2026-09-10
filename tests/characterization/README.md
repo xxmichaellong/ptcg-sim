@@ -276,6 +276,12 @@ opponent, and spectator projections protect distinct stable opaque card
 marker/parent aliases, the stable public stack ID, and identical normalized
 geometry.
 
+The source-to-React browser path also reconstructs pristine q0 only after the
+source cleanup and observer evidence are recorded. It hides the unrelated
+active controls and compares the two bench cards plus their four damage/ability
+markers over white using the shared 97.5%, three-pixel, 24-channel-value
+foreground contract.
+
 Additional bench siblings/contention, rotated production q1/q2/q3, source DOM
 history, BREAK/compound stacks and rotation, marker editing, alternate layouts,
 and Pixi-native paint/hit parity remain deferred.

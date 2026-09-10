@@ -23,6 +23,16 @@ import {
   type CapturedRect,
   type LegacyFixtureSide,
 } from './support/legacy-source-board.js';
+import {
+  attachForegroundPaintComparison,
+  compareForegroundScreenshots,
+  SOURCE_CARD_PAINT_COMPARISON_OPTIONS,
+  SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO,
+} from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -158,6 +168,13 @@ const createCandidatePristineBenchMarkerScene = () => {
   const view: MatchViewState = {
     ...base,
     revision: base.revision + 1,
+    definitions: {
+      ...base.definitions,
+      [pokemonDefinition.id]: {
+        ...pokemonDefinition,
+        imageUrl: '/v2/assets/cardback.png',
+      },
+    },
     zones: Object.fromEntries(
       Object.entries(base.zones).map(([id, zone]) => [
         id,
@@ -674,7 +691,9 @@ test('pristine source bench markers match the strict React DOM candidate', async
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
-  const capture = await captureLegacySourceBenchMarkerRotationFixture(page);
+  const capture = await captureLegacySourceBenchMarkerRotationFixture(page, {
+    retainStablePaint: true,
+  });
   await testInfo.attach('legacy-source-to-react-bench-marker-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
@@ -698,6 +717,15 @@ test('pristine source bench markers match the strict React DOM candidate', async
     LegacyFixtureSide,
     (typeof capture.cases)[number]['phases'][number]
   >;
+
+  await isolateLegacyIframeCardPaint(
+    page,
+    ':is(img[data-legacy-bench-marker-card-id], [data-legacy-bench-marker-id])'
+  );
+  const sourcePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
 
   for (const side of ['local', 'opponent'] as const) {
     const source = sourceBySide[side];
@@ -992,6 +1020,46 @@ test('pristine source bench markers match the strict React DOM candidate', async
       expect(hitOrder).toEqual([cardId]);
     }
   }
+
+  await isolateCandidateCardPaint(
+    page,
+    '[data-bench-marker-candidate-host]',
+    ':is([data-card-id$="-bench-marker-card"], [data-marker-id])'
+  );
+  const candidatePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
+  const paintComparison = await compareForegroundScreenshots(
+    page,
+    sourcePaint,
+    candidatePaint,
+    SOURCE_CARD_PAINT_COMPARISON_OPTIONS
+  );
+  await attachForegroundPaintComparison(
+    testInfo,
+    'legacy-bench-marker-paint',
+    sourcePaint,
+    candidatePaint,
+    paintComparison
+  );
+  expect(paintComparison.width).toBe(1600);
+  expect(paintComparison.height).toBe(900);
+  expect(paintComparison.sourceForegroundPixels).toBeGreaterThan(10_000);
+  expect(paintComparison.candidateForegroundPixels).toBeGreaterThan(10_000);
+  const paintEvidence = JSON.stringify(paintComparison);
+  expect
+    .soft(
+      paintComparison.unmatchedSourceRatio,
+      `source card/marker paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
+  expect
+    .soft(
+      paintComparison.unmatchedCandidateRatio,
+      `candidate card/marker paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 
   const teardown = await page.evaluate(async () => {
     const candidateWindow = window as typeof window & {

@@ -13127,7 +13127,8 @@ type RawBenchMarkerRotationCase = Omit<
  * while the bench wrapper owns an additional native ResizeObserver path.
  */
 export const captureLegacySourceBenchMarkerRotationFixture = async (
-  page: Page
+  page: Page,
+  options: { readonly retainStablePaint?: boolean } = {}
 ): Promise<LegacySourceBenchMarkerRotationFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const rawCases: Array<{
@@ -13670,6 +13671,16 @@ export const captureLegacySourceBenchMarkerRotationFixture = async (
           nativeBenchResizeObserver.harnessDisconnectCalls =
             nativeResizeObserverDisconnectCalls;
           wrapperObserver.disconnect();
+          if (input.retainStablePaint) {
+            wrapper.style.marginRight = initialWrapperMargins.inlineRight;
+            wrapper.style.marginLeft = initialWrapperMargins.inlineLeft;
+            image.style.transform = 'rotate(0deg)';
+            bench.append(wrapper);
+            wrapper.append(image);
+            addDamageCounter('130', 'rotation');
+            addAbilityCounter('rotation');
+            await waitForStableLayout();
+          }
 
           return {
             id: `${input.side}-bench-marker-rotation`,
@@ -13681,7 +13692,7 @@ export const captureLegacySourceBenchMarkerRotationFixture = async (
             cleanup,
           };
         },
-        { side }
+        { side, retainStablePaint: options.retainStablePaint ?? false }
       );
     rawCases.push({ side, value });
   }
