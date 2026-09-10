@@ -471,6 +471,16 @@ describe('legacy board overlays', () => {
     });
     expect(document.activeElement).toBe(choices[4]);
     await act(async () => {
+      trigger.parentElement?.dispatchEvent(
+        new MouseEvent('mouseout', {
+          bubbles: true,
+          relatedTarget: document.body,
+        })
+      );
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[4]);
+    await act(async () => {
       choices[4]!.dispatchEvent(
         new KeyboardEvent('keydown', {
           key: 'Escape',

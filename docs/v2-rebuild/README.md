@@ -121,7 +121,9 @@ the relevant product decisions and phase exit criteria.
   release gate. Live and replay Options now export the bounded recipient-safe
   battle log without reading DOM and start browser full screen from the
   foreground click; Clear battle log remains live-only and local. Game-state/replay import and
-  export formats plus normal navigation remain later parity work.
+  export formats plus Deck/Settings navigation remain later parity work. The
+  live Solo header tab retains its separate v1 confirmation text and delegates
+  to the same durable route teardown as Leave Room.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

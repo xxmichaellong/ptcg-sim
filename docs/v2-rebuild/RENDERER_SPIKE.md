@@ -1677,6 +1677,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      hidden Clear, delegates full screen, dismisses outside, exits through the
      existing coordinator, and confirms live continuity. State/replay file
      import-export remains deliberately unwired.
+103. The connected live room's `p1Button` now restores its source-specific
+     meaning: selecting Solo asks the exact v1 battle-log-erasure confirmation
+     and delegates acceptance to the same route-owned durable Leave teardown.
+     Rejection is inert, and the selected Replay tab never invokes the live-room
+     confirmation or Leave callback. Route integration coverage pins all three
+     branches without changing the tab's label, class, width, or placement.
+     Deck and Settings remain inert pending their separate state and capability
+     slices.
+104. Exact-head replay-Options Chromium validation passed 241 cases and exposed
+     one unrelated protected-input focus race: focusing the off-screen fifth
+     Move submenu item can scroll it into view and synthesize `mouseleave`
+     between native Enter keydown and keyup. The submenu now treats contained
+     keyboard focus as continuing ownership, leaves pointer-only dismissal
+     unchanged, and still closes through its existing focus/outside boundaries.
+     Component coverage reproduces focused-item pointer exit; the original
+     single-attempt browser path remains the end-to-end regression gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

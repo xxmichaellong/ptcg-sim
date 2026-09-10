@@ -401,7 +401,16 @@ const ContextSubmenu = <Value extends string>({
       data-submenu-open={open ? 'true' : undefined}
       role="none"
       onMouseEnter={() => onOpenChange(true)}
-      onMouseLeave={() => onOpenChange(false)}
+      onMouseLeave={(event) => {
+        if (
+          event.currentTarget.contains(
+            event.currentTarget.ownerDocument.activeElement
+          )
+        ) {
+          return;
+        }
+        onOpenChange(false);
+      }}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           onOpenChange(false);

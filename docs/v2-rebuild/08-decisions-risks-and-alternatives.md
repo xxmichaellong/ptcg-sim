@@ -70,8 +70,10 @@ The connected sidebox now uses the same route owner: authenticated chat/flower
 remain available to players and spectators, player-only buttons form existing
 atomic commands from the recipient projection, replay hides live inputs, and
 confirmed Leave disposes the runtime and replaces private join custody before
-showing the lobby. This does not expose room authority or change the default
-route.
+showing the lobby. The live Solo header tab retains its separate exact source
+confirmation and delegates acceptance to the same teardown; rejection and the
+selected Replay tab do nothing. This does not expose room authority or change
+the default route.
 The restored live/replay Options subset does not resolve ADR-012: it exports only
 the already-visible effective bounded activity feed, clears only local live
 presentation, and requests browser full screen. Canonical game-state export and

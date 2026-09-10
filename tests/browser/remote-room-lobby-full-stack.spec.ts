@@ -340,6 +340,17 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await playerTwo.page.locator('#clearLog').click();
     await expect(playerTwo.page.locator('#p2Chatbox')).toBeEmpty();
 
+    playerTwo.page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toBe(
+        'Are you sure you want to leave the room? Battle log will be erased.'
+      );
+      await dialog.dismiss();
+    });
+    await playerTwo.page.locator('#p1Button').click();
+    await expect(
+      playerTwo.page.locator('[data-app-route="remote-room"]')
+    ).toBeVisible();
+
     playerTwo.page.once('dialog', (dialog) => dialog.accept());
     await playerTwo.page.locator('#leaveRoomButton').click();
     await expect(

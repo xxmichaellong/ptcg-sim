@@ -584,10 +584,12 @@ Work:
   Attack, Pass, flower, chat, Set Up, Reset, and Leave Room controls to
   authenticated session APIs, with spectator mutation controls absent, replay
   isolation, failed-chat retention, the exact leave confirmation, durable leave,
-  and fresh post-leave custody. The local live/replay Options subset additionally
+  and fresh post-leave custody. The live Solo header tab also retains its
+  distinct source confirmation and delegates to that same teardown without
+  affecting Replay. The local live/replay Options subset additionally
   exports the recipient-safe effective battle log and requests browser full
   screen; Clear remains live-only and resets only local presentation.
-  Save/replay import-export and navigation remain later work.
+  Save/replay import-export and Deck/Settings navigation remain later work.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,

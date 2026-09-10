@@ -85,9 +85,10 @@ legacy replay controls, authenticated live sidebox controls, and externally
 owned route teardown. Live and replay Options now restore recipient-safe
 battle-log export and browser full screen, while Clear battle log remains live
 only as in v1; object URLs are revoked after the foreground download.
-Game-state/replay import and export,
-deck/settings navigation, and the remaining focus/visual parity remain later
-slices.
+The connected Solo header tab also retains its v1 confirmed-leave behavior and
+uses the same route-owned durable teardown as Leave Room. Game-state/replay
+import and export, Deck/Settings navigation, and the remaining focus/visual
+parity remain later slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

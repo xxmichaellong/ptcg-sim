@@ -149,6 +149,8 @@ describe('RemoteRoomRoute', () => {
     });
     const onIntent = vi.fn();
     const onSubmission = vi.fn();
+    const onLeave = vi.fn();
+    const confirmHeaderLeave = vi.fn(() => false);
     const downloadTextFile = vi.fn(() => true);
     const requestFullscreen = vi.fn(() => true);
     const host = document.createElement('div');
@@ -162,6 +164,8 @@ describe('RemoteRoomRoute', () => {
           rendererKind="dom"
           onIntent={onIntent}
           onSubmission={onSubmission}
+          onLeave={onLeave}
+          confirmHeaderLeave={confirmHeaderLeave}
           downloadTextFile={downloadTextFile}
           requestFullscreen={requestFullscreen}
         />
@@ -201,6 +205,18 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
+
+    await act(async () =>
+      (host.querySelector('#p1Button') as HTMLButtonElement).click()
+    );
+    expect(confirmHeaderLeave).toHaveBeenCalledOnce();
+    expect(onLeave).not.toHaveBeenCalled();
+    confirmHeaderLeave.mockReturnValue(true);
+    await act(async () =>
+      (host.querySelector('#p1Button') as HTMLButtonElement).click()
+    );
+    expect(confirmHeaderLeave).toHaveBeenCalledTimes(2);
+    expect(onLeave).toHaveBeenCalledOnce();
 
     await act(async () => {
       socket.serverMessage({
@@ -271,6 +287,11 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p1Button')?.className).toBe('selected-page');
     expect(host.querySelector('#p2Button')).toBeNull();
     expect(host.querySelector('#deckImportButton')).toBeNull();
+    await act(async () =>
+      (host.querySelector('#p1Button') as HTMLButtonElement).click()
+    );
+    expect(confirmHeaderLeave).toHaveBeenCalledTimes(2);
+    expect(onLeave).toHaveBeenCalledOnce();
     expect(host.querySelector('#p1Box')).not.toBeNull();
     expect(host.querySelector('#p1Box')?.classList).not.toContain(
       'legacy-room-sidebox--live'

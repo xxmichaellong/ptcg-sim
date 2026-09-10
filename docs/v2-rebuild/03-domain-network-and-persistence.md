@@ -982,7 +982,9 @@ from a ready player projection and form existing atomic commands. Replay never
 mounts those live controls. Confirmed Leave disposes the creator result or guest
 runtime, which sends the durable `Leave` before closing transport, clears the
 consumed join custody, and installs a fresh private custodian before the lobby
-returns.
+returns. The live Solo header tab preserves its distinct v1 battle-log-erasure
+confirmation and delegates acceptance to that same route owner; rejection and
+the selected Replay tab are inert.
 The live/replay Options subset is deliberately local: battle-log export
 serializes only the bounded recipient-safe activity model and revokes its
 temporary object URL, Clear battle log resets presentation without touching

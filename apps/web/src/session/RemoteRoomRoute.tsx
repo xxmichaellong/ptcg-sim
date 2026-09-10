@@ -18,6 +18,10 @@ import {
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
+const confirmConnectedRoomExit = (): boolean =>
+  globalThis.confirm(
+    'Are you sure you want to leave the room? Battle log will be erased.'
+  );
 
 export interface RemoteRoomRouteProps {
   readonly runtime: RemoteRoomRuntime;
@@ -28,6 +32,7 @@ export interface RemoteRoomRouteProps {
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  readonly confirmHeaderLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
 }
@@ -42,6 +47,7 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  confirmHeaderLeave = confirmConnectedRoomExit,
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
@@ -86,6 +92,13 @@ export const RemoteRoomRoute = ({
                   }
                   style={{ width: chrome.primaryTabWidth }}
                   aria-current={chrome.active ? 'page' : undefined}
+                  onClick={
+                    !chrome.active && onLeave
+                      ? () => {
+                          if (confirmHeaderLeave()) onLeave();
+                        }
+                      : undefined
+                  }
                 >
                   {chrome.primaryTabLabel}
                 </button>
