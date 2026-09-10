@@ -184,7 +184,11 @@ export class RemoteRoomInvitationCustody {
       signals.length === 1 ? signals[0]! : AbortSignal.any(signals);
     let response: Response;
     try {
-      response = await this.#fetch(
+      // A browser-native fetch is receiver-sensitive in some runtimes. Copy it
+      // to a local before invocation rather than calling the private field as
+      // though it were a custody method.
+      const fetchImplementation = this.#fetch;
+      response = await fetchImplementation(
         new URL(
           `/v2/rooms/${encodeURIComponent(this.#roomCode)}/invitations`,
           this.#origin

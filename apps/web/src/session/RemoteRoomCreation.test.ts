@@ -359,6 +359,33 @@ describe('remote room creation bootstrap', () => {
 });
 
 describe('remote room invitation custody', () => {
+  it('invokes a retained browser fetch without rebinding its receiver', async () => {
+    const receivers: unknown[] = [];
+    const fetchImplementation = vi.fn(function (this: unknown) {
+      receivers.push(this);
+      return Promise.resolve(
+        Response.json(
+          {
+            invitation: playerInvitation,
+            requestedRole: 'player',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    });
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+      now: () => 10_000,
+    });
+
+    await custody.copyPlayerInvitation(capturingClipboard().writer);
+    expect(receivers).toEqual([undefined]);
+  });
+
   it('does not serialize secrets and clears every master credential on dispose', async () => {
     const custody = new RemoteRoomInvitationCustody({
       roomCode: 'ABCDEFGH2345',
