@@ -568,6 +568,14 @@ boxes, rotations, z ranks, and four native hit regions to the stable source
 within 2 px / 1% / 0.1 degrees. Legacy wrapper and sibling identity are not a
 candidate requirement.
 
+For paint evidence, the source harness optionally reconstructs and retains one
+fresh stable inner-departure prestate per side only after every departure case
+has recorded its zero-node cleanup result. The browser gate isolates those six
+base/Energy images and the candidate equivalents over white, attaches both
+screenshots and foreground metrics, and applies the shared 97.5%, three-pixel,
+24/255-channel match contract. This does not claim paint parity for the
+transient removal, synchronous ghost-wrapper, or settled one-Energy phases.
+
 Both departures converge on the existing one-Energy source state and select its
 strict production geometry after authoritative state compaction. The immediate
 drift and synchronous ghost wrapper remain source-only diagnostics: no renderer

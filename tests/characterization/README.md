@@ -128,7 +128,10 @@ Its browser companion also compares the stable pre-departure two-Energy source
 boxes, rotations, z ranks, and four hit regions with a narrowly gated production
 scene and separately mounted React DOM renderer. This comparison does not apply
 to the diagnostic departure/ghost phases or claim transition animation,
-candidate wrapper/sibling identity, or Pixi paint/hit parity. Mixed/Tool
+candidate wrapper/sibling identity, or Pixi paint/hit parity. The stable
+pre-departure browser path now also retains an isolated six-card source paint
+scene and attaches source/candidate screenshots plus foreground metrics under
+the shared 97.5%, three-pixel, and 24-channel-value contract. Mixed/Tool
 attachments, three or more Energy, category history, evolution or base
 departures, staged restore, bench/flex contention, markers, BREAK/rotation,
 alternate layouts and assets, destination UX, candidate click/drag behavior,

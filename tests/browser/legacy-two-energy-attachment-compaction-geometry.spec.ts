@@ -16,6 +16,14 @@ import oneEnergyOracle from '../legacy-fixtures/renderer/energy-attachment-reflo
 import oracle from '../legacy-fixtures/renderer/two-energy-attachment-compaction-v1.json' with { type: 'json' };
 
 import {
+  attachForegroundPaintComparison,
+  compareForegroundScreenshots,
+} from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
+import {
   captureLegacySourceTwoEnergyCompactionFixture,
   type LegacyTwoEnergyCompactionFixtureCase,
   type LegacyTwoEnergyCompactionFixturePhase,
@@ -34,6 +42,10 @@ type Point = { readonly x: number; readonly y: number };
 type Role = 'base' | 'energy1' | 'energy2';
 type HitRegion =
   'allCardOverlap' | 'attachmentOverlap' | 'outermostAttachment' | 'baseOnly';
+
+const PAINT_SPATIAL_TOLERANCE = 3;
+const PAINT_CHANNEL_TOLERANCE = 24;
+const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const createCandidateTwoEnergyScene = () => {
   const base = createRendererSpikeView();
@@ -89,6 +101,17 @@ const createCandidateTwoEnergyScene = () => {
   const view: MatchViewState = {
     ...base,
     revision: base.revision + 1,
+    definitions: {
+      ...base.definitions,
+      [pokemonDefinition.id]: {
+        ...pokemonDefinition,
+        imageUrl: '/v2/assets/cardback.png',
+      },
+      [energyDefinition.id]: {
+        ...energyDefinition,
+        imageUrl: '/v2/assets/cardback.png',
+      },
+    },
     zones: Object.fromEntries(
       Object.entries(base.zones).map(([id, zone]) => [
         id,
@@ -682,7 +705,9 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
   );
   const candidateScene = createCandidateTwoEnergyScene();
   await page.setViewportSize(oracle.input.viewport);
-  const capture = await captureLegacySourceTwoEnergyCompactionFixture(page);
+  const capture = await captureLegacySourceTwoEnergyCompactionFixture(page, {
+    retainStablePaint: true,
+  });
   const sourceCases = (['local', 'opponent'] as const).map((side) => {
     const fixtureCase = capture.cases.find(
       (candidate) => candidate.side === side && candidate.branch === 'inner'
@@ -701,6 +726,15 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
     new Set(sourceCards.map((card) => card.id))
   );
   expect(candidateScene.markers).toEqual([]);
+
+  await isolateLegacyIframeCardPaint(
+    page,
+    'img[data-legacy-two-energy-paint-card-id]'
+  );
+  const sourcePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
 
   await page.unrouteAll({ behavior: 'wait' });
   const candidateRuntimeErrors: string[] = [];
@@ -781,6 +815,49 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
   await expect(
     candidateHost.locator('[data-card-id="local-inner-base"]')
   ).toBeVisible();
+
+  await isolateCandidateCardPaint(
+    page,
+    '[data-two-energy-candidate-host]',
+    '[data-card-id*="-inner-"]'
+  );
+  const candidatePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
+  const paintComparison = await compareForegroundScreenshots(
+    page,
+    sourcePaint,
+    candidatePaint,
+    {
+      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
+      channelTolerance: PAINT_CHANNEL_TOLERANCE,
+    }
+  );
+  await attachForegroundPaintComparison(
+    testInfo,
+    'legacy-two-energy-card-paint',
+    sourcePaint,
+    candidatePaint,
+    paintComparison
+  );
+  expect(paintComparison.width).toBe(1600);
+  expect(paintComparison.height).toBe(900);
+  expect(paintComparison.sourceForegroundPixels).toBeGreaterThan(20_000);
+  expect(paintComparison.candidateForegroundPixels).toBeGreaterThan(20_000);
+  const paintEvidence = JSON.stringify(paintComparison);
+  expect
+    .soft(
+      paintComparison.unmatchedSourceRatio,
+      `source card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+  expect
+    .soft(
+      paintComparison.unmatchedCandidateRatio,
+      `candidate card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
 
   const candidateEvidence: {
     cards: Array<{

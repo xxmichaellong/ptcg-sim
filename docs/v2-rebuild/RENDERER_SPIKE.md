@@ -1793,6 +1793,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      z-order, and common/Tool-only/base-only/authored-only hit regions. Mixed
      categories, multiple Tools, transition history, alternate assets, and Pixi
      paint remain excluded.
+114. The stable two-Energy pre-departure checkpoint now retains a dedicated
+     source paint scene after independently recording and cleaning up the inner-
+     and outer-departure histories. Its six local/opponent base, inner-Energy,
+     and outer-Energy cards then run through the shared isolated screenshot
+     gate against React DOM. The 97.5%, three-pixel, 24-channel-value paint
+     contract supplements the existing three-card geometry, z/DOM order, and
+     four native-hit regions; the source-only transient removal and refresh
+     phases remain numeric diagnostics. Mixed categories, three-plus
+     attachments, alternate assets, and Pixi paint remain excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

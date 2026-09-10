@@ -3119,7 +3119,8 @@ interface RawTwoEnergyCompactionCase {
  * unconditional refreshBoard reconstruction.
  */
 export const captureLegacySourceTwoEnergyCompactionFixture = async (
-  page: Page
+  page: Page,
+  options: { readonly retainStablePaint?: boolean } = {}
 ): Promise<LegacySourceTwoEnergyCompactionFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const frameTransforms = {
@@ -3624,9 +3625,39 @@ export const captureLegacySourceTwoEnergyCompactionFixture = async (
               },
             });
           }
+          if (input.retainStablePaint) {
+            active.replaceChildren();
+            const prefix = `${input.side}-inner`;
+            const stackId = `${prefix}-two-energy-stack`;
+            const base = makeImage(`${prefix}-base`);
+            const energyOne = makeImage(`${prefix}-energy-1`);
+            const energyTwo = makeImage(`${prefix}-energy-2`);
+            const logicalCards = [base, energyOne, energyTwo];
+            const initialStack = makeStack(stackId);
+            initialStack.append(base);
+            active.append(initialStack);
+            await Promise.all(logicalCards.map((image) => image.decode()));
+            attachEnergy(energyOne, base, initialStack);
+            attachEnergy(energyTwo, base, initialStack);
+            const stablePaintRefresh = reconstruct(
+              initialStack,
+              stackId,
+              logicalCards
+            );
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+            stablePaintRefresh.observer.disconnect();
+            for (const image of logicalCards) {
+              image.dataset.legacyTwoEnergyPaintCardId =
+                image.dataset.legacyTwoEnergyCardId;
+            }
+          }
           return results;
         },
-        { side }
+        { side, retainStablePaint: options.retainStablePaint ?? false }
       );
     rawCases.push(...sideCases.map((value) => ({ side, value })));
   }
