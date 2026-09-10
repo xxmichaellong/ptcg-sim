@@ -62,14 +62,14 @@ export const importDeckCsvFile = async (
     : { ok: false, reason: 'invalid_csv', issues: parsed.issues };
 };
 
-interface DeckCsvDownloadDependencies {
+export interface DeckCsvDownloadDependencies {
   readonly document?: Document;
   readonly url?: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
 }
 
-/** Downloads the legacy-compatible CSV and always releases its object URL. */
-export const downloadDeckCsv = (
-  deck: Deck,
+/** Downloads already-serialized deck CSV and always releases its object URL. */
+export const downloadDeckCsvText = (
+  source: string,
   dependencies: DeckCsvDownloadDependencies = {}
 ): boolean => {
   const documentObject = dependencies.document ?? globalThis.document;
@@ -86,7 +86,7 @@ export const downloadDeckCsv = (
   let link: HTMLAnchorElement | undefined;
   try {
     objectUrl = urlObject.createObjectURL(
-      new Blob([serializeDeckToSimCsv(deck)], {
+      new Blob([source], {
         type: 'text/csv;charset=utf-8',
       })
     );
@@ -104,6 +104,12 @@ export const downloadDeckCsv = (
     if (objectUrl !== undefined) urlObject.revokeObjectURL(objectUrl);
   }
 };
+
+/** Downloads the legacy-compatible CSV and always releases its object URL. */
+export const downloadDeckCsv = (
+  deck: Deck,
+  dependencies: DeckCsvDownloadDependencies = {}
+): boolean => downloadDeckCsvText(serializeDeckToSimCsv(deck), dependencies);
 
 export type DeckBeforeUnloadTarget = Pick<
   Window,

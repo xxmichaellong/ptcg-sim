@@ -203,6 +203,13 @@ describe('importPastedDecklist', () => {
     expect(unavailable).toEqual({
       ok: false,
       reason: 'request_failed',
+      draftRows: [
+        {
+          quantity: 1,
+          name: 'Mystery Card',
+          cardType: 'Unknown',
+        },
+      ],
       rowNumbers: [1],
       status: 503,
     });
@@ -216,6 +223,13 @@ describe('importPastedDecklist', () => {
     expect(invalid).toEqual({
       ok: false,
       reason: 'invalid_response',
+      draftRows: [
+        {
+          quantity: 1,
+          name: 'Mystery Card',
+          cardType: 'Unknown',
+        },
+      ],
       rowNumbers: [1],
     });
 
@@ -228,6 +242,13 @@ describe('importPastedDecklist', () => {
     expect(unresolved).toEqual({
       ok: false,
       reason: 'incomplete_metadata',
+      draftRows: [
+        {
+          quantity: 1,
+          name: 'Mystery Card',
+          cardType: 'Unknown',
+        },
+      ],
       rowNumbers: [1],
     });
   });
@@ -326,7 +347,7 @@ describe('importPastedDecklist', () => {
       }
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
       reason: 'image_load_failed',
       rowNumbers: [2],

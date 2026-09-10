@@ -157,9 +157,11 @@ the relevant product decisions and phase exit criteria.
   custom-face entry, is reconstructed but remains unmounted. The pure pasted
   deck-list parser now covers the complete checked-in sample corpus while
   remaining DOM/network-free. Its bounded Limitless completion and native
-  image-preload transaction are also isolated; popular-deck loading,
-  right-side navigation/card-back controls, composition, and route activation
-  remain in the deck-builder workstream.
+  image-preload transaction are also isolated. The exact 168-deck corpus is
+  now behind a validated lazy chunk, and the source-shaped right-side Deck,
+  review-table, language, and card-back controls are reconstructed but remain
+  unmounted; session composition and route activation remain in the
+  deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

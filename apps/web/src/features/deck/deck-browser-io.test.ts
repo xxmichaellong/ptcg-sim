@@ -8,6 +8,7 @@ import {
   DECK_CSV_FILENAME,
   MAX_DECK_CSV_FILE_BYTES,
   downloadDeckCsv,
+  downloadDeckCsvText,
   importDeckCsvFile,
   installDeckBeforeUnloadGuard,
 } from './deck-browser-io.js';
@@ -122,6 +123,14 @@ describe('deck browser I/O', () => {
       'QTY,Name,Type,URL\n2,Pikachu,Pokémon,custom+unsafe://player-host/card.png?exact=yes'
     );
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:deck');
+
+    expect(
+      downloadDeckCsvText('QTY,Name,Type,URL\n1,Editable,,,', {
+        document,
+        url: { createObjectURL, revokeObjectURL },
+      })
+    ).toBe(true);
+    expect(await blob?.text()).toBe('QTY,Name,Type,URL\n1,Editable,,,');
   });
 
   it('contains unavailable and throwing download APIs while still cleaning up', () => {

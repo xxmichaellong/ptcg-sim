@@ -134,6 +134,11 @@ export type PastedDecklistImportResult =
       readonly ok: false;
       readonly reason: PastedDecklistImportFailureReason;
       readonly issues?: readonly PastedDecklistIssue[];
+      /**
+       * Bounded transient rows that the source-shaped review table may repair.
+       * They are never installed or published until that separate confirmation.
+       */
+      readonly draftRows?: readonly PastedDecklistRow[];
       /** One-based positions in the parsed row list, never raw player input. */
       readonly rowNumbers?: readonly number[];
       readonly status?: number;

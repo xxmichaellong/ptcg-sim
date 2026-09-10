@@ -263,6 +263,7 @@ export const importPastedDecklist = async (
       ? {
           ok: false,
           reason: providerFailure.code,
+          draftRows: rows,
           rowNumbers: freezeRowNumbers(unresolved),
           ...(providerFailure.status === undefined
             ? {}
@@ -271,6 +272,7 @@ export const importPastedDecklist = async (
       : {
           ok: false,
           reason: 'incomplete_metadata',
+          draftRows: rows,
           rowNumbers: freezeRowNumbers(unresolved),
         };
   }
@@ -283,6 +285,7 @@ export const importPastedDecklist = async (
     return {
       ok: false,
       reason: 'invalid_response',
+      draftRows: rows,
       rowNumbers: freezeRowNumbers(oversizedImages),
     };
   }
@@ -292,5 +295,9 @@ export const importPastedDecklist = async (
     ...(options.createImage ? { createImage: options.createImage } : {}),
     ...(options.signal ? { signal: options.signal } : {}),
   });
-  return preloaded.ok ? { ok: true, format: parsed.format, rows } : preloaded;
+  return preloaded.ok
+    ? { ok: true, format: parsed.format, rows }
+    : preloaded.reason === 'aborted'
+      ? preloaded
+      : { ...preloaded, draftRows: rows };
 };

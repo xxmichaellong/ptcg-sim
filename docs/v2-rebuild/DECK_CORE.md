@@ -80,6 +80,10 @@ packages/deck-core/
 apps/web/src/features/deck/
   LegacyDeckBuilderWorkspace.tsx  unmounted source-shaped React workspace
   LegacyDeckBuilderWorkspace.css  source-equivalent light/dark workspace skin
+  LegacyDeckImportPanel.tsx  unmounted source-shaped right panel/review table
+  LegacyDeckImportPanel.css  source-equivalent panel/menu/review-table skin
+  popular-decklists.ts       lazy validated/cached sample-corpus boundary
+  popular-decklists-data.json  exact dynamically imported v1 sample data
   pasted-decklist-import.ts   local parse/provider merge/native preload transaction
   limitless-decklist-contract.ts  provider limits, result types, typed failures
   limitless-decklist-http.ts      bounded credential-free JSON POST transport
@@ -149,7 +153,10 @@ transaction. It first calls the pure local parser, sends only unresolved
 quantity/name rows to the source Limitless deck-list endpoint, merges matching
 metadata without replacing local row identity, applies the source's final
 Pocket Trainer fallback, and then requires every resolved image to emit a
-native browser `load` event. No partial rows are published on failure.
+native browser `load` event. No partial rows are published on failure. When the
+source workflow expects manual correction, a failure may carry the same frozen,
+bounded rows as an explicitly transient review draft; that draft cannot enter
+the deck store or authority without the separate review-table confirmation.
 
 The provider edge is explicit and narrow:
 
@@ -346,6 +353,45 @@ metadata, modal keyboard/focus behavior, deck-row event isolation and preview,
 and teardown cancellation. This module and its CSS remain unimported by any
 route, so the checkpoint changes no production UI or bundle.
 
+## Right-side Deck panel and popular-corpus checkpoint
+
+`LegacyDeckImportPanel.tsx` reconstructs the source's remaining right 24% Deck
+surface without mounting it in a route. It retains the `deckImport`, P1/P2,
+main/alternate textarea, book, Import, Confirm, Cancel, Save, wand, status,
+language, card-back, and four-column review-table IDs and visible labels. Main
+and alternate text remain independent, the selected target and language are
+captured before asynchronous import, multiplayer keeps P2 disabled with the
+source `Solo only!` notice, and every pending provider/sample operation has
+explicit teardown ownership.
+
+The imported candidate is held in a transient review transaction. Successful
+provider rows and bounded incomplete/failing rows can be corrected in the same
+QTY/Name/Type/URL table used by v1. Save downloads that draft without
+publishing it. Cancel discards it. Confirm runs the hardened CSV boundary and
+then atomically replaces only the target captured when Import began. In
+particular, a player can fill an unresolved URL cell with any nonempty string
+within the shared 4,096-code-unit bound; no parser, host/scheme allowlist,
+rewrite, proxy, application fetch, or CORS setting is added, and the trimmed
+exact string reaches the deck store only on Confirm.
+
+The 22 historical menu groups and all 168 source decks are copied exactly into
+`popular-decklists-data.json`. The source file is pinned by SHA-256
+`88cfc37dc8d9251f31dedc2217376c46dca53a4978753e8c7328f1f2144fb526`.
+The small source adapter dynamically imports the 125,609-code-unit corpus only
+on first book/wand use, validates and freezes it under explicit group, deck,
+name, per-list, and aggregate bounds, shares concurrent decoding, retries
+failures, and preserves v1's ordered two-random-draw selection. An aborted
+caller cannot cancel or poison the shared local-module result.
+
+Seven panel tests and six sample-source tests cover exact defaults and labels,
+closed inertness, target isolation/denial, lazy book selection, random target
+custody, language/target capture, transient incomplete-row editing, arbitrary
+image strings, Save/Cancel/Confirm publication boundaries, download content,
+deduplicated loading, cancellation, exact corpus order/count/provenance, all
+168 locally complete 60-card parses, source-equivalent random selection,
+malformed/resource failures, retry, freezing, and shared-load abort behavior.
+The panel, corpus, and review table remain absent from production output.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -362,12 +408,9 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. move the existing popular sample decks behind a lazy seam, reconstruct the
-   right-side Deck panel, and connect the already prepared custom-card-back
-   chooser at its original location;
-2. compose panel open/close, dirty-install draining, authoritative deck sync,
+1. compose panel open/close, dirty-install draining, authoritative deck sync,
    and current-route ownership without activating the replacement; and
-3. activate it only after source-browser layout, arbitrary-image, multiplayer,
+2. activate it only after source-browser layout, arbitrary-image, multiplayer,
    solo, import, install, recovery, and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
