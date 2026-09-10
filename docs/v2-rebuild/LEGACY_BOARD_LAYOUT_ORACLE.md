@@ -424,6 +424,16 @@ common/middle/base overlap hit order directly with the source capture within
 the candidate need not reproduce the legacy wrapper or top/base/middle DOM
 sibling implementation detail.
 
+The browser companion also isolates those twelve card images over white and
+attaches source/candidate screenshots plus a bidirectional foreground-pixel
+comparison. Both paths use card-back files with the same SHA-256 digest. At
+least 97.5% of foreground pixels must find a match within three pixels and a
+24/255 per-channel fringe allowance; this accommodates the iframe-versus-DOM
+compositor boundary without weakening the structured geometry thresholds.
+React DOM preserves the source card-edge paint as well: local cards use a
+`0.275rem` radius, opponent cards `0.3rem`, shared cards `0.375rem`, and only
+shared cards use the stronger `0.5` shadow alpha rather than `0.3`.
+
 The evolution fixture does not execute the networked modules. It excludes
 Energy/Trainer/Tool and unrelated attachments, markers, BREAK/rotation,
 multiple-stack flex shrink and overflow, resize/flip,

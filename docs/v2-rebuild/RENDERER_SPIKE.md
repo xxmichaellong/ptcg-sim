@@ -1761,6 +1761,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      lower-nonzero fixtures are now falsifiable against the client they claim to
      describe; candidate production behavior remains intentionally outside this
      source-only defect evidence.
+111. The ordinary three-card evolution checkpoint now adds source-to-candidate
+     screenshot evidence to its existing structured geometry and native-hit
+     contract. The test isolates the twelve evolution card images on white and
+     uses byte-identical v1/v2 card-back assets. A reusable bidirectional
+     foreground comparator requires at least 97.5% agreement with a three-pixel
+     spatial neighborhood and a 24/255 channel tolerance for iframe-versus-DOM
+     compositor fringes; both screenshots and the numeric comparison are
+     attached to the browser result. The stricter 2 px / 1% / 0.1-degree box
+     and rotation checks remain unchanged. React DOM also restores the source's
+     local, opponent, and shared card border radii and shadow opacity, with
+     focused unit coverage for all three sides. This closes ordinary-evolution
+     card-image paint only; other card modes, overlays, alternate assets, and
+     Pixi paint remain separately gated.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1938,7 +1951,8 @@ The following still require controlled browser/device runs before production
 wiring:
 
 - expand the source-driven geometry checkpoint to painted/interactable frames,
-  handles and controls, cards/stacks, screenshots, browser-level candidate
+  handles and controls, remaining card/stack modes and screenshots,
+  browser-level candidate
   split/flip/fullscreen controls, and the remaining structured 2 px / 1%
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now

@@ -274,6 +274,42 @@ describe('React DOM board renderer', () => {
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
   });
 
+  it('preserves the legacy card edge paint for each board side', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+
+    for (const [side, borderRadius, boxShadow] of [
+      ['local', '0.275rem', '0 2px 4px rgba(0, 0, 0, 0.3)'],
+      ['opponent', '0.3rem', '0 2px 4px rgba(0, 0, 0, 0.3)'],
+      ['shared', '0.375rem', '0 2px 4px rgba(0, 0, 0, 0.5)'],
+    ] as const) {
+      const scene = createScene();
+      act(() =>
+        renderer.installScene(
+          {
+            ...scene,
+            cards: scene.cards.map((card) => ({ ...card, side })),
+          },
+          []
+        )
+      );
+      const card = host.querySelector<HTMLElement>('[data-card-id]');
+      expect(card?.style.borderRadius).toBe(borderRadius);
+      expect(card?.style.boxShadow).toBe(boxShadow);
+    }
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('hides only zone paint while preserving the same accessible hit region', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

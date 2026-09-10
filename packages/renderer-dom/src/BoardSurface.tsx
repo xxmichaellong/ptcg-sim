@@ -172,6 +172,16 @@ const CardNode = memo(function CardNode({
         y: drag.y - card.bounds.height / 2,
       }
     : card.bounds;
+  const legacyBorderRadius =
+    card.side === 'local'
+      ? '0.275rem'
+      : card.side === 'opponent'
+        ? '0.3rem'
+        : '0.375rem';
+  const legacyShadow =
+    card.side === 'shared'
+      ? '0 2px 4px rgba(0, 0, 0, 0.5)'
+      : '0 2px 4px rgba(0, 0, 0, 0.3)';
   const context = (event: ReactMouseEvent) => {
     event.preventDefault();
     emitIntent({ kind: 'CardContextRequested', cardId: card.id });
@@ -194,11 +204,11 @@ const CardNode = memo(function CardNode({
           : hovered
             ? '3px solid rgba(90, 110, 188, 0.864)'
             : 0,
-        borderRadius: '0.375rem',
+        borderRadius: legacyBorderRadius,
         background: '#777',
         boxShadow: targetable
           ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
-          : '0 2px 4px rgba(0, 0, 0, 0.5)',
+          : legacyShadow,
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,

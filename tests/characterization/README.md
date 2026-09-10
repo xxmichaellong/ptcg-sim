@@ -73,7 +73,13 @@ transient phase is diagnostic rather than user-visible. Attachments, counters,
 BREAK/rotation, overflow/flex shrink, history-dependent restore paths, face
 hide/reveal/source mutation, and Pixi parity remain excluded. Its browser
 companion now compares the exact stable three-card boundary with a separately
-mounted React DOM candidate; this does not broaden the source oracle's scope.
+mounted React DOM candidate. It also isolates the twelve source and candidate
+card images over white, attaches both screenshots and a JSON comparison, and
+requires 97.5% bidirectional foreground agreement within a three-pixel,
+24-channel-value compositor tolerance while retaining the structured
+2 px / 1% / 0.1-degree gate. The reusable comparator lives in
+`tests/browser/support/foreground-paint-comparison.ts`. This does not broaden
+the source oracle's scope.
 
 `legacy-energy-attachment-reflow-layout.test.ts` pins the next, smaller
 attachment boundary separately from the older mixed five-card transcription.
