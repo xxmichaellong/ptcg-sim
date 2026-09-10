@@ -73,6 +73,8 @@ packages/deck-core/
   src/card-search.ts       pure normalization/planning/local controls
   src/index.ts             reviewed minimal public API
 apps/web/src/features/deck/
+  LegacyDeckBuilderWorkspace.tsx  unmounted source-shaped React workspace
+  LegacyDeckBuilderWorkspace.css  source-equivalent light/dark workspace skin
   deck-builder-store.ts        independent main/alternate edit transactions
   deck-browser-io.ts           bounded CSV file/download/unload ownership
   deck-install-adapter.ts      canonical conversion and acknowledged drain
@@ -212,6 +214,43 @@ unload teardown, outbox waiting, dual-target drains, in-flight edits, external
 sync, local/authority/session failures, and disposal. Both adapters remain
 unmounted and absent from the production module graph.
 
+## React workspace reconstruction checkpoint
+
+`LegacyDeckBuilderWorkspace.tsx` reconstructs the current full-height Deck
+workspace in React without mounting it in either production route. It retains
+the source IDs, labels, control order, default search/filter/sort values,
+main/alternate target colors, summary and validation text, empty state,
+right-click search preview, deck-row preview and add/remove controls, CSV
+controls, clear confirmation, Play control, custom-card dialog, and light/dark
+layout. The extracted stylesheet keeps the current dimensions and visual rules;
+the v2 dark-route selector is the only selector-context translation.
+
+The component consumes the already isolated catalog, transactional store, and
+browser I/O boundaries. Rendering is a pure projection of stable store
+snapshots. Main and alternate target state cannot alias, an import is applied
+to the target selected when its file read began, a newer search aborts and
+supersedes an older one, and unmount aborts both catalog and file work. The
+closed off-canvas workspace is inert and hidden from accessibility APIs, the
+custom dialog supports Escape and returns focus to its trigger, and async
+notices use live regions. These changes do not alter the visible open-workspace
+flow.
+
+Custom-card image entry intentionally has no URL parser, scheme check, host
+allowlist, proxy, application fetch, `crossOrigin` attribute, or CORS opt-in.
+After legacy-compatible whitespace trimming and the shared 4,096-code-unit
+resource bound, the exact string is assigned to a native `<img>`. The browser's
+foreground `load` event remains required before the card can be added, as
+required by ADR-013. The same string is then retained in all card image fields
+and in the legacy-shaped custom card ID.
+
+Nine deterministic component tests cover source DOM/default parity, closed
+inertness, search and local filtering, stale-search cancellation, target-stable
+import/export/clear/Play behavior, multiplayer alternate-target denial,
+arbitrary-scheme native image assignment and load gating, exact custom-card
+metadata, modal keyboard/focus behavior, deck-row event isolation and preview,
+and teardown cancellation. This module and its CSS remain unimported by any
+route, so the checkpoint changes no production UI or bundle.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -228,12 +267,12 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. reconstruct the existing Deck panel in React without changing its controls,
-   labels, layout, target-main/alternate behavior, or keyboard flow;
-2. connect the already prepared custom-card-back chooser at its original Deck
-   panel location; and
-3. activate the panel only after component, browser, multiplayer, solo, import,
-   and accessibility parity evidence is green.
+1. reconstruct the existing right-side Deck panel controls and connect the
+   already prepared custom-card-back chooser at its original location;
+2. compose panel open/close, dirty-install draining, authoritative deck sync,
+   and current-route ownership without activating the replacement; and
+3. activate it only after source-browser layout, arbitrary-image, multiplayer,
+   solo, import, install, recovery, and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
 web adapters plus their project, lockfile, documentation, and public-API
