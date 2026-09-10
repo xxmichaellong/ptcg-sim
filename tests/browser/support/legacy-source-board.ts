@@ -11192,7 +11192,8 @@ type RawMixedStackMovementCase = Omit<
  * digest-pinned source to remain reviewable alongside the fixture.
  */
 export const captureLegacySourceMixedStackMovementFixture = async (
-  page: Page
+  page: Page,
+  options: { readonly retainStablePaint?: boolean } = {}
 ): Promise<LegacySourceMixedStackMovementFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const frameTransforms = {
@@ -12286,9 +12287,33 @@ export const captureLegacySourceMixedStackMovementFixture = async (
             });
           }
 
+          if (input.retainStablePaint) {
+            const state = await newState('reverse-round-trip');
+            buildReverseRestore(state, 'retained reverse restore');
+            await twoAnimationFrames();
+            moveCardBundle(
+              state,
+              'active',
+              'bench',
+              state.arrays.active.indexOf(state.base),
+              undefined,
+              'retained active to occupied bench without target'
+            );
+            await twoAnimationFrames();
+            moveCardBundle(
+              state,
+              'bench',
+              'active',
+              state.arrays.bench.indexOf(state.base),
+              state.arrays.active.indexOf(state.controlBase),
+              'retained targeted mixed return to occupied active'
+            );
+            await twoAnimationFrames();
+          }
+
           return cases;
         },
-        { side }
+        { side, retainStablePaint: options.retainStablePaint ?? false }
       );
     rawCases.push(...captured.map((value) => ({ side, value })));
   }

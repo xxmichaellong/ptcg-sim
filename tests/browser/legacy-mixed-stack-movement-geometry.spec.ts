@@ -23,6 +23,16 @@ import {
   type LegacyMixedStackMovementRole,
   type LegacyMixedStackMovementScenario,
 } from './support/legacy-source-board.js';
+import {
+  attachForegroundPaintComparison,
+  compareForegroundScreenshots,
+  SOURCE_CARD_PAINT_COMPARISON_OPTIONS,
+  SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO,
+} from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
 
 type RectTuple = readonly [number, number, number, number];
 
@@ -157,6 +167,21 @@ const createCandidateMixedMovementScenes = (): {
     const view: MatchViewState = {
       ...base,
       revision,
+      definitions: {
+        ...base.definitions,
+        [pokemonDefinition.id]: {
+          ...pokemonDefinition,
+          imageUrl: '/v2/assets/cardback.png',
+        },
+        [energyDefinition.id]: {
+          ...energyDefinition,
+          imageUrl: '/v2/assets/cardback.png',
+        },
+        [trainerDefinition.id]: {
+          ...trainerDefinition,
+          imageUrl: '/v2/assets/cardback.png',
+        },
+      },
       zones: Object.fromEntries(
         Object.entries(base.zones).map(([id, zone]) => [
           id,
@@ -560,7 +585,9 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     }
   });
 
-  const capture = await captureLegacySourceMixedStackMovementFixture(page);
+  const capture = await captureLegacySourceMixedStackMovementFixture(page, {
+    retainStablePaint: true,
+  });
   await testInfo.attach('legacy-mixed-stack-movement-category-cycle.json', {
     body: JSON.stringify(capture, null, 2),
     contentType: 'application/json',
@@ -786,6 +813,15 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
   expect(capture.sourceFulfillment).toEqual(oracle.sourceFulfillment);
   expect(blockedNetworkDiagnostics.length).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+
+  await isolateLegacyIframeCardPaint(
+    page,
+    'img[data-legacy-mixed-movement-card-id]:not([data-legacy-mixed-movement-card-id$="-control-base"])'
+  );
+  const sourcePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
 
   const candidateScenes = createCandidateMixedMovementScenes();
   const sourcePhases = Object.fromEntries(
@@ -1245,6 +1281,46 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     candidateScenes.active,
     sourcePhases.active
   );
+
+  await isolateCandidateCardPaint(
+    page,
+    '[data-mixed-movement-candidate-host]',
+    '[data-card-id*="-reverse-round-trip-"]:not([data-card-id$="-control-base"])'
+  );
+  const candidatePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
+  const paintComparison = await compareForegroundScreenshots(
+    page,
+    sourcePaint,
+    candidatePaint,
+    SOURCE_CARD_PAINT_COMPARISON_OPTIONS
+  );
+  await attachForegroundPaintComparison(
+    testInfo,
+    'legacy-mixed-stack-card-paint',
+    sourcePaint,
+    candidatePaint,
+    paintComparison
+  );
+  expect(paintComparison.width).toBe(1600);
+  expect(paintComparison.height).toBe(900);
+  expect(paintComparison.sourceForegroundPixels).toBeGreaterThan(20_000);
+  expect(paintComparison.candidateForegroundPixels).toBeGreaterThan(20_000);
+  const paintEvidence = JSON.stringify(paintComparison);
+  expect
+    .soft(
+      paintComparison.unmatchedSourceRatio,
+      `source card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
+  expect
+    .soft(
+      paintComparison.unmatchedCandidateRatio,
+      `candidate card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 
   await testInfo.attach('react-dom-mixed-stack-movement-parity.json', {
     body: Buffer.from(JSON.stringify(candidateEvidence, null, 2)),

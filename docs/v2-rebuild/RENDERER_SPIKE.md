@@ -1811,6 +1811,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      24-channel-value gate alongside the existing eight-state geometry and
      owner-orientation proof. Cover-open behavior, opened-zone contents,
      undersized/noncanonical assets, and Pixi paint remain excluded.
+116. The settled mixed-stack checkpoint now retains the source state after a
+     complete active-to-bench-to-active round trip and isolates the six
+     local/opponent base, Energy, and rotated Trainer-as-Tool images. The
+     candidate uses the same digest-pinned card-back bytes, so the combined
+     overlap, z-order, Tool overflow, and opponent-frame half-turn pass the
+     shared 97.5%, three-pixel, 24-channel-value screenshot gate in addition to
+     the existing active/bench structured geometry and native-hit assertions.
+     Transient wrappers, category-cycle paint, alternate assets, and Pixi paint
+     remain excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1850,8 +1859,9 @@ source-backed stable two-Energy comparison plus departure capture in
 the separate source-only mixed Energy/Trainer order and departure check in
 `tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`,
 plus the whole-stack/category-history source and React comparison in
-`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`, the source-backed
-marker/rotation history and pristine-q0 React comparison in
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`, including the
+source-backed settled mixed-stack paint. Marker/rotation history and
+pristine-q0 React comparison live in
 `tests/browser/legacy-marker-rotation-geometry.spec.ts`, and the separate
 sole-bench marker history plus strict pristine-q0 React comparison in
 `tests/browser/legacy-bench-marker-rotation-geometry.spec.ts`, plus the

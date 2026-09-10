@@ -723,6 +723,15 @@ replacement and without texture churn. A real multiplayer projection test
 confirms identical normalized geometry and stable, distinct aliases for owner,
 opponent, and spectator through movement and a current-category cycle.
 
+The source harness can also reconstruct and retain the settled returned-active
+state only after all six histories have recorded their cleanup. The browser
+gate isolates its six local/opponent base, Energy, and Trainer-as-Tool images
+and the candidate equivalents over white. Both use the digest-pinned card back;
+attached screenshots and foreground metrics must satisfy the shared 97.5%,
+three-pixel, 24/255-channel match contract in both directions. This paint layer
+covers the canonical combined overlap and rotated Tool overflow, not transient
+or category-cycle paint.
+
 This does not make transient wrappers renderer state or justify persisting DOM
 provenance or pixel offsets. Bench reordering, multiple bench controls, the
 legacy case-3 target branch, extra/evolution attachments, bases whose current
@@ -1533,8 +1542,9 @@ renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
-ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
-fixtures feed and compare their strict production geometries. The compound
+ordinary-evolution, single-Energy, Trainer-as-Tool, stable two-Energy, and
+settled mixed-stack fixtures feed and compare their strict production
+geometries and isolated card paint. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
 Alt-R, its same-card follow-up, and immediate top-, same-lower-, different-
 lower-, repeated-same-lower-, repeated-same-other-lower-, repeated-top-, third-

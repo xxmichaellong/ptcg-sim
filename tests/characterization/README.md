@@ -197,7 +197,10 @@ equivalence without turning legacy reflow history into game state. The browser
 test now also mounts React for only the settled sole-bench and returned-active
 movement phases on both sides. It compares all mixed-card scene/pre-transform
 and painted boxes, q1/q3 Tool rotation, z `300/299/298`, renderer order, and four
-native hit regions within 2 px / 1% / 0.1 degrees.
+native hit regions within 2 px / 1% / 0.1 degrees. After all cleanup records are
+captured, the harness retains a fresh returned-active scene and the test
+compares its six base/Energy/Trainer images to React over white using the shared
+97.5%, three-pixel, 24-channel-value foreground paint contract.
 
 The strict gate uses only the exact public current shape: one known same-owner
 face-up Pokémon base plus `[Energy, Trainer]`, all unrotated/marker-free, in the
