@@ -74,6 +74,8 @@ packages/deck-core/
   src/index.ts             reviewed minimal public API
 apps/web/src/features/deck/
   deck-builder-store.ts        independent main/alternate edit transactions
+  deck-browser-io.ts           bounded CSV file/download/unload ownership
+  deck-install-adapter.ts      canonical conversion and acknowledged drain
   tcgdex-card-catalog.ts        browser catalog orchestration and public seam
   tcgdex-catalog-contract.ts    provider limits, types, and typed failures
   tcgdex-catalog-http.ts        bounded direct-browser JSON transport
@@ -163,6 +165,53 @@ receipts, success/failure/retry, edits during an in-flight install, stale and
 foreign acknowledgements, stable snapshots, and subscription teardown. The
 store is still unmounted, so it changes no current route or UI behavior.
 
+## Browser I/O and canonical install checkpoint
+
+`deck-browser-io.ts` owns the browser-only edges excluded from `deck-core`.
+Foreground CSV import rejects a file above 3,000,003 bytes before calling
+`File.text()`, contains read failures and cancellation, and then delegates the
+authoritative one-million-code-unit/all-or-nothing parse to
+`parseSimCsvResult`. It does not inspect the filename, MIME type, URL scheme, or
+host. Download retains `ptcg-sim-deck.csv` and
+`text/csv;charset=utf-8`, removes its temporary anchor, and revokes its object
+URL on both success and failure. The separately installed `beforeunload` guard
+requests the browser-native confirmation only while either store slot is dirty
+and has idempotent teardown.
+
+`deck-install-adapter.ts` is the only permissive-deck-to-wire boundary. It
+walks every actual variant instead of trusting cached group totals, aggregates
+equal definitions, normalizes `Pokemon` to the canonical `Pokémon` category,
+maps other unsupported types to `Unknown`, and enforces the protocol's 200-card
+and 200-entry limits before submission. Large and optional small image strings
+remain code-unit-for-code-unit exact; they receive only the shared
+nonempty/4,096
+code-unit resource checks and no parsing, rewriting, preload, CORS, scheme, or
+host policy.
+
+Canonical definition IDs are `deck:sha256:<digest>` over the exact visible
+name/category/large-image/small-image tuple. This keeps IDs stable across
+targets and reloads without embedding player text. Missing Web Crypto, digest
+failure, malformed output, or a detected within-deck collision fails closed;
+there is no weaker hash fallback.
+
+`DeckInstallCoordinator` holds one store receipt through conversion, remote
+submission, authority result, and its covering publication. It waits for an
+empty client outbox before stamping each `LoadDeck`, preventing an earlier
+queued command from making its revision stale. Main, alternate, and edits made
+during an in-flight install then drain one at a time. Local submission failure,
+authority rejection, terminal session state, disposal, conversion failure, and
+external synchronization all release the receipt without incorrectly marking
+the deck clean; the exact dirty revision remains retryable. Failure reporting
+is typed and cannot mutate transaction state even if its UI callback throws.
+
+Seventeen focused tests cover arbitrary non-web URL preservation, deterministic
+definition identity, category mapping, aggregation, empty decks, wire/resource
+bounds, malformed structures, digest/collision/cancellation failures, bounded
+file reads, transactional parser errors, exact download and cleanup, dirty
+unload teardown, outbox waiting, dual-target drains, in-flight edits, external
+sync, local/authority/session failures, and disposal. Both adapters remain
+unmounted and absent from the production module graph.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -179,12 +228,11 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. add file/download/unload and canonical deck-install adapters;
-2. reconstruct the existing Deck panel in React without changing its controls,
+1. reconstruct the existing Deck panel in React without changing its controls,
    labels, layout, target-main/alternate behavior, or keyboard flow;
-3. connect the already prepared custom-card-back chooser at its original Deck
+2. connect the already prepared custom-card-back chooser at its original Deck
    panel location; and
-4. activate the panel only after component, browser, multiplayer, solo, import,
+3. activate the panel only after component, browser, multiplayer, solo, import,
    and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
