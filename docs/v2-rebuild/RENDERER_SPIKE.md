@@ -1837,6 +1837,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      typography, append-order, hit-through, and teardown assertions remain in
      force; rotated/contention states, editing, alternate assets, and Pixi paint
      remain excluded.
+119. The existing 100-cycle React DOM lifecycle checkpoint now enforces, rather
+     than merely records, its post-collection V8 heap evidence. After priming the
+     retained host, React, and V8 through one equal 100-cycle warm-up batch,
+     Chromium captures a CDP heap baseline, runs the measured 100 complete
+     renderer lifecycles, forces collection, and requires retained `usedSize` to
+     remain at or below 110% of baseline. DOM documents, nodes, listeners,
+     surfaces, host children, renderer diagnostics, and exact status sequences
+     retain their stricter zero-growth/zero-resource assertions in both batches.
+     This is a renderer-component leak gate, not the broader
+     route/setup/open-zone churn or physical-device memory sign-off.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

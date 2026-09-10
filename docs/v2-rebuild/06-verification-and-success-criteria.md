@@ -102,6 +102,16 @@ emitting the browser's resolution-media event, so the test injects only that
 missing event. Physical background freezing/BFCache and non-Chromium monitor
 transitions remain required release evidence.
 
+The React DOM component also has an enforced 100-cycle mount/clear/destroy leak
+gate. It primes the retained host and lazy runtime state with an equal 100-cycle
+batch, collects through CDP, runs the measured 100-cycle batch, collects again,
+and requires V8 `usedSize` to remain within 10% of the steady-state baseline.
+Documents, DOM nodes, event listeners, rendered diagnostics, surfaces, and host
+children must return to their exact or lower baseline bounds, and both batches
+must preserve the exact lifecycle/resource invariants. This advances the
+renderer-local heap budget; representative setup/reset/open-zone route churn
+and physical-device retained-heap evidence remain release requirements.
+
 The developer creator route also has a three-cycle Chromium document-navigation
 gate against real local Vite and Wrangler processes. It pins one distinct room,
 one ticket exchange, one credential-free native socket, one ready DOM renderer,
