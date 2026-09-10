@@ -15,3 +15,10 @@ isolated source/candidate card paint in addition to exact structured
 geometry and hit order. The pristine active-marker gate applies the same
 comparison to card/marker compositing and typography, with an independent
 smaller-card bench-marker companion.
+
+Card image loading stays native so arbitrary external URLs retain v1-compatible
+DOM behavior without a CORS opt-in. Each stable keyed image is hidden behind the
+neutral card surface while a URL is pending or failed and becomes visible only
+after browser decode succeeds. Missing and corrupt responses cannot remove card
+input, and a later successful direct or redirected URL recovers the same button
+and image nodes.

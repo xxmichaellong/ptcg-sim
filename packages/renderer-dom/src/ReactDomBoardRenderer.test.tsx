@@ -310,6 +310,60 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('keeps a stable neutral card surface across image failure and recovery', async () => {
+    const emitIntent = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent,
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+
+    const card = host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+    const image = card.querySelector<HTMLImageElement>('img')!;
+    image.dispatchEvent(new Event('error'));
+    expect(image.dataset.cardImageState).toBe('failed');
+    expect(image.style.visibility).toBe('hidden');
+    expect(card.style.background).toBe('#777');
+
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(emitIntent).toHaveBeenCalledWith({
+      kind: 'CardSelected',
+      cardId,
+    });
+
+    const recovered = createScene(2);
+    act(() =>
+      renderer.installScene(
+        {
+          ...recovered,
+          cards: recovered.cards.map((candidate) => ({
+            ...candidate,
+            imageUrl: '/recovered.png',
+          })),
+        },
+        []
+      )
+    );
+    const stableCard = host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+    const stableImage = stableCard.querySelector<HTMLImageElement>('img')!;
+    expect(stableCard).toBe(card);
+    expect(stableImage).toBe(image);
+    expect(stableImage.src).toContain('/recovered.png');
+    expect(stableImage.style.visibility).toBe('hidden');
+
+    stableImage.dispatchEvent(new Event('load'));
+    expect(stableImage.dataset.cardImageState).toBe('ready');
+    expect(stableImage.style.visibility).toBe('visible');
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('hides only zone paint while preserving the same accessible hit region', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

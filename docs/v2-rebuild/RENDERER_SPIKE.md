@@ -1847,6 +1847,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      retain their stricter zero-growth/zero-resource assertions in both batches.
      This is a renderer-component leak gate, not the broader
      route/setup/open-zone churn or physical-device memory sign-off.
+120. The selected DOM card image boundary now contains failed native loads
+     without restricting the source URL. A keyed image starts hidden over the
+     existing neutral card surface, becomes visible only after browser decode,
+     and returns to the neutral surface on error while its card remains enabled.
+     A Chromium gate drives one stable card through an intercepted arbitrary
+     external hostname with a missing response, corrupt PNG body, successful
+     no-CORS PNG, and HTTP redirect to the shipped decoded card back. The same
+     button and image nodes survive every phase and recover without renderer,
+     page, or unexpected console errors; failure screenshots and exact request
+     evidence are attached. This preserves arbitrary DOM image URLs and closes
+     controlled failure/recovery behavior, not the real supported-host,
+     oversized-resource, privacy-policy, non-Chromium, or physical-network gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -2034,9 +2046,12 @@ wiring:
 - a manual screen-reader audit beyond the automated replay-local and transformed
   stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
   focus-visible paint/return, exact face assets, and stable geometry;
-- actual external card-face/back hosts, redirects, CORS failures,
-  oversized/corrupt assets, and their controlled proxy/hybrid policy outside
-  ADR-013's accepted player-selected page-background exception;
+- actual supported card-face/back hosts, cross-origin redirect chains,
+  oversized assets, and their final privacy/proxy/hybrid policy outside
+  ADR-013's accepted player-selected page-background exception (the controlled
+  DOM gate now covers an intercepted external hostname, no-CORS success,
+  missing/corrupt containment, same-origin redirect completion, and stable-node
+  recovery);
 - physical background freeze/resume and BFCache behavior plus non-Chromium
   monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
   any future Pixi rollout;

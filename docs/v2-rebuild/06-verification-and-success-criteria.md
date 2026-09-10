@@ -66,12 +66,17 @@ The selected DOM renderer's current deterministic Chromium evidence covers the
 request completion, browser-visible decode/dimensions, stable keyed-node cache
 reuse, fresh-host cache reuse without refetch, and teardown. It does not replace
 the representative real-raster decoded-byte/retained-heap run, route-host churn,
-external-host failures, or the release browser matrix. A separate canonical-
-state-to-projection-to-scene browser oracle covers the private-image request
-scan with deterministic same-origin SVGs: it permits only authorized board-tier
-faces across reveal/cover and private inspection/close, rejects every hidden
-canonical token and full-tier request, and proves a delayed face response cannot
-restore a covered card.
+actual supported-host matrix, or the release browser matrix. A separate
+controlled Chromium card-failure gate uses an intercepted external hostname to
+prove native no-CORS image success, missing and corrupt response containment,
+stable neutral fallback paint/input, stable keyed-node recovery, and an HTTP
+redirect to a decoded asset. Oversized resources, real third-party availability,
+and the final privacy/host policy remain open. A canonical-state-to-projection-
+to-scene browser oracle separately covers the private-image request scan with
+deterministic same-origin SVGs: it permits only authorized board-tier faces
+across reveal/cover and private inspection/close, rejects every hidden canonical
+token and full-tier request, and proves a delayed face response cannot restore a
+covered card.
 
 ## Required test layers
 

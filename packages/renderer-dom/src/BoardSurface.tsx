@@ -165,6 +165,7 @@ const CardNode = memo(function CardNode({
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
 }) {
+  const imageRef = useRef<HTMLImageElement>(null);
   const bounds = drag
     ? {
         ...card.bounds,
@@ -186,6 +187,12 @@ const CardNode = memo(function CardNode({
     event.preventDefault();
     emitIntent({ kind: 'CardContextRequested', cardId: card.id });
   };
+  useLayoutEffect(() => {
+    const image = imageRef.current;
+    if (!image) return;
+    image.dataset.cardImageState = 'loading';
+    image.style.visibility = 'hidden';
+  }, [card.imageUrl]);
   return (
     <button
       type="button"
@@ -226,9 +233,18 @@ const CardNode = memo(function CardNode({
       onContextMenu={context}
     >
       <img
+        ref={imageRef}
         src={card.imageUrl}
         alt=""
         draggable={false}
+        onLoad={(event) => {
+          event.currentTarget.dataset.cardImageState = 'ready';
+          event.currentTarget.style.visibility = 'visible';
+        }}
+        onError={(event) => {
+          event.currentTarget.dataset.cardImageState = 'failed';
+          event.currentTarget.style.visibility = 'hidden';
+        }}
         style={{
           width: '100%',
           height: '100%',
