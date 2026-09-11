@@ -5,8 +5,6 @@ import {
   type DeckCsvIssue,
 } from '@ptcgsim/deck-core';
 
-import type { DeckBuilderStore } from './deck-builder-store.js';
-
 /**
  * UTF-8 can require three bytes for one JavaScript code unit; the final three
  * bytes allow its optional BOM. The parser owns the authoritative
@@ -116,12 +114,16 @@ export type DeckBeforeUnloadTarget = Pick<
   'addEventListener' | 'removeEventListener'
 >;
 
+export interface DeckDirtyStateSource {
+  getSnapshot(): { readonly hasDirtyDecks: boolean };
+}
+
 /**
  * Requests the browser's native leave confirmation only while either editor
  * slot is dirty. Browsers intentionally own the displayed prompt text.
  */
 export const installDeckBeforeUnloadGuard = (
-  store: Pick<DeckBuilderStore, 'getSnapshot'>,
+  store: DeckDirtyStateSource,
   target: DeckBeforeUnloadTarget | undefined = globalThis.window
 ): (() => void) => {
   if (!target) return () => undefined;

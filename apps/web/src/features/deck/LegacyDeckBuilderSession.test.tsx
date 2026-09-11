@@ -14,6 +14,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { BrowserCardBackRequest } from '../../session/browser-card-back.js';
 import { LegacyDeckBuilderSession } from './LegacyDeckBuilderSession.js';
+import {
+  CardBackCustodyStore,
+  type CardBackInstallFailure,
+} from './card-back-custody.js';
 import type { DeckBeforeUnloadTarget } from './deck-browser-io.js';
 import { DeckBuilderStore } from './deck-builder-store.js';
 import type {
@@ -176,6 +180,7 @@ afterEach(async () => {
 const renderSession = async (options: {
   readonly session?: FakeSession;
   readonly store?: DeckBuilderStore;
+  readonly cardBackStore?: CardBackCustodyStore;
   readonly open: boolean;
   readonly alternateEnabled?: boolean;
   readonly installOnSessionAttach?: boolean;
@@ -183,6 +188,7 @@ const renderSession = async (options: {
   readonly requestCardBack?: BrowserCardBackRequest;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
+  readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
 }) => {
   root ??= createRoot(host);
   await act(async () =>
@@ -197,6 +203,9 @@ const renderSession = async (options: {
         samples={samples}
         digest={digest}
         {...(options.store ? { store: options.store } : {})}
+        {...(options.cardBackStore
+          ? { cardBackStore: options.cardBackStore }
+          : {})}
         {...(options.requestCardBack
           ? { requestCardBack: options.requestCardBack }
           : {})}
@@ -205,6 +214,9 @@ const renderSession = async (options: {
           : {})}
         {...(options.onInstallFailure
           ? { onInstallFailure: options.onInstallFailure }
+          : {})}
+        {...(options.onCardBackInstallFailure
+          ? { onCardBackInstallFailure: options.onCardBackInstallFailure }
           : {})}
       />
     )
@@ -342,6 +354,7 @@ describe('LegacyDeckBuilderSession', () => {
       type: 'SetCardBack',
       cardBackUrl: 'custom+unsafe://player-back/main',
     });
+    act(() => session.completeLatest(true));
 
     await click('#altImportHeaderButton');
     await click('#changeCardBackButton');
@@ -353,6 +366,7 @@ describe('LegacyDeckBuilderSession', () => {
       targetPlayerId: alternatePlayerId,
       cardBackUrl: 'custom+unsafe://player-back/alternate',
     });
+    act(() => session.completeLatest(true));
 
     await click('#changeCardBackButton');
     await act(async () => root?.unmount());
@@ -362,21 +376,143 @@ describe('LegacyDeckBuilderSession', () => {
     expect(session.commands).toHaveLength(2);
   });
 
-  it('does not prompt or submit card-back work before a player view is ready', async () => {
+  it('retains a loaded card back before readiness and submits it once the player view is ready', async () => {
     const session = new FakeSession();
     session.setPhase('connecting');
+    const cardBackStore = new CardBackCustodyStore();
     const requestCardBack = vi.fn<BrowserCardBackRequest>(
-      async () => '/unused.png'
+      async () => 'custom+unsafe://offline-before-ready/back'
     );
     await renderSession({
       session,
+      cardBackStore,
       open: true,
       requestCardBack,
     });
 
     await click('#changeCardBackButton');
-    expect(requestCardBack).not.toHaveBeenCalled();
+    expect(requestCardBack).toHaveBeenCalledOnce();
     expect(session.commands).toHaveLength(0);
+    expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+      url: 'custom+unsafe://offline-before-ready/back',
+      dirty: true,
+      installingRevision: 1,
+    });
+
+    act(() => session.setPhase('ready'));
+    expect(session.commands).toEqual([
+      {
+        type: 'SetCardBack',
+        cardBackUrl: 'custom+unsafe://offline-before-ready/back',
+      },
+    ]);
+  });
+
+  it('retains an offline card back and reapplies it to every new authority binding', async () => {
+    const cardBackStore = new CardBackCustodyStore();
+    const requestCardBack = vi.fn<BrowserCardBackRequest>(
+      async () => 'custom+unsafe://player-back/retained-exactly'
+    );
+    await renderSession({
+      cardBackStore,
+      open: true,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+
+    await click('#changeCardBackButton');
+    expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+      revision: 1,
+      installedRevision: 0,
+      dirty: true,
+      url: 'custom+unsafe://player-back/retained-exactly',
+    });
+
+    const firstSession = new FakeSession();
+    await renderSession({
+      session: firstSession,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+    expect(firstSession.commands).toEqual([
+      {
+        type: 'SetCardBack',
+        cardBackUrl: 'custom+unsafe://player-back/retained-exactly',
+      },
+    ]);
+    act(() => firstSession.completeLatest(true));
+    expect(cardBackStore.getSnapshot().slots.main.dirty).toBe(false);
+
+    await renderSession({
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+    const secondSession = new FakeSession();
+    await renderSession({
+      session: secondSession,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+    expect(secondSession.commands).toEqual([
+      {
+        type: 'SetCardBack',
+        cardBackUrl: 'custom+unsafe://player-back/retained-exactly',
+      },
+    ]);
+    expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+      revision: 2,
+      installedRevision: 1,
+      dirty: true,
+      installingRevision: 2,
+    });
+    expect(firstSession.listenerCount()).toBe(0);
+  });
+
+  it('serializes retained card backs before retained decks on session attach', async () => {
+    const store = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
+    const requestCardBack = vi.fn<BrowserCardBackRequest>(
+      async () => '/ordered-card-back.png'
+    );
+    await renderSession({
+      store,
+      cardBackStore,
+      open: true,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+    act(() => store.addCard(card('Ordered Deck')));
+    await click('#changeCardBackButton');
+
+    const session = new FakeSession();
+    await renderSession({
+      session,
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      requestCardBack,
+    });
+    expect(session.commands).toEqual([
+      { type: 'SetCardBack', cardBackUrl: '/ordered-card-back.png' },
+    ]);
+
+    act(() => session.completeLatest(true));
+    await vi.waitFor(() => expect(session.commands).toHaveLength(2));
+    expect(session.commands[1]).toMatchObject({
+      type: 'LoadDeck',
+      targetPlayerId: ownPlayerId,
+      entries: [{ definition: { name: 'Ordered Deck' } }],
+    });
+    act(() => session.completeLatest(true));
+    expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+    expect(store.getSnapshot().hasDirtyDecks).toBe(false);
   });
 
   it('retains offline deck edits and installs them when authority attaches', async () => {
@@ -491,18 +627,20 @@ describe('LegacyDeckBuilderSession', () => {
     };
     const session = new FakeSession();
     const store = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
     await renderSession({
       session,
       store,
+      cardBackStore,
       open: true,
       beforeUnloadTarget: target,
     });
-    expect(session.listenerCount()).toBe(1);
+    expect(session.listenerCount()).toBe(2);
     const clean = new Event('beforeunload', { cancelable: true });
     listener?.(clean as BeforeUnloadEvent);
     expect(clean.defaultPrevented).toBe(false);
 
-    act(() => store.addCard(card()));
+    act(() => cardBackStore.replace('main', '/unsaved-card-back.png'));
     const dirty = new Event('beforeunload', { cancelable: true });
     listener?.(dirty as BeforeUnloadEvent);
     expect(dirty.defaultPrevented).toBe(true);

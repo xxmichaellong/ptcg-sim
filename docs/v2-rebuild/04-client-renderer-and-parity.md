@@ -1597,12 +1597,16 @@ fallbacks. Perspective-safe game-state/replay export is now wired for both live
 and replay mode; replay-file import, server-held continuation, Deck navigation,
 and complete focus/keyboard/visual parity remain later slices.
 The unmounted Deck composition no longer requires a live network session. Its
-store retains offline main/alternate edits, applies changing solo/multiplayer
-ownership without deleting the alternate deck, invalidates stale receipts, and
-requeues each clean nonempty retained deck when a fresh authority session is
-attached. Dirty empty decks remain intentional clears, while clean empty decks
-do not create room traffic. This closes deck custody only; pre-room custom
-card-back custody and production Deck navigation remain separate checkpoints.
+stores retain offline main/alternate deck edits and browser-loaded card-back
+choices, apply changing solo/multiplayer ownership without deleting either
+alternate value, invalidate stale receipts, and requeue each retained value
+when a fresh authority session is attached. Card backs drain before decks
+through the shared acknowledged outbox. Dirty empty decks remain intentional
+clears, while clean empty decks and absent card-back choices do not create room
+traffic. Exact bounded arbitrary URLs retain the accepted native-image policy;
+the application adds no parser, allowlist, proxy, fetch, or CORS requirement.
+This closes both pre-room custody prerequisites; production Deck navigation
+remains a separate checkpoint.
 `RendererSpikeBoard` and `RemoteSessionBoard` now carry an optional
 renderer-neutral `BoardPreferences` value from their composing route. Explicit
 preferences install after asynchronous mount and update in place; removing the

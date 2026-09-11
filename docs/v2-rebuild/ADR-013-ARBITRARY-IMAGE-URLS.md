@@ -6,9 +6,10 @@
   backs, native DOM image loading, and renderer selection
 - Production wiring: the page-background path, renderer failure containment,
   bounded card-back command/event/projection path, multiplayer/solo authority,
-  ordered legacy card-back conversion, and source-shaped foreground card-back
-  browser chooser are implemented; the v2 deck-builder and visible card-back
-  entry controls remain behind their parity gates
+  ordered legacy card-back conversion, source-shaped foreground card-back
+  browser chooser, and independent pre-room card-back custody are implemented;
+  the v2 deck-builder and visible card-back entry controls remain behind their
+  route-activation gate
 
 ## Context
 

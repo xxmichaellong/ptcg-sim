@@ -1,4 +1,3 @@
-import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useCallback, useEffect, useRef } from 'react';
 
 import {
@@ -6,30 +5,29 @@ import {
   type BrowserCardBackRequest,
 } from './browser-card-back.js';
 
-export interface CardBackSelectionOptions {
-  readonly submit: (command: WireGameCommand) => unknown;
+export interface CardBackSelectionOptions<Target = string> {
+  readonly applySelection: (
+    cardBackUrl: string,
+    target: Target | undefined
+  ) => unknown;
   readonly requestCardBack?: BrowserCardBackRequest;
 }
 
 /** Owns the latest foreground card-back preload and makes stale work inert. */
-export const useCardBackSelection = ({
-  submit,
+export const useCardBackSelection = <Target>({
+  applySelection,
   requestCardBack = requestBrowserCardBack,
-}: CardBackSelectionOptions) => {
+}: CardBackSelectionOptions<Target>) => {
   const requestAbortRef = useRef<AbortController | undefined>(undefined);
   const chooseCardBack = useCallback(
-    (targetPlayerId?: string): void => {
+    (target?: Target): void => {
       requestAbortRef.current?.abort();
       const abort = new AbortController();
       requestAbortRef.current = abort;
       void requestCardBack({ signal: abort.signal })
         .then((cardBackUrl) => {
           if (!cardBackUrl || abort.signal.aborted) return;
-          submit({
-            type: 'SetCardBack',
-            ...(targetPlayerId ? { targetPlayerId } : {}),
-            cardBackUrl,
-          });
+          applySelection(cardBackUrl, target);
         })
         .catch(() => undefined)
         .finally(() => {
@@ -38,7 +36,7 @@ export const useCardBackSelection = ({
           }
         });
     },
-    [requestCardBack, submit]
+    [applySelection, requestCardBack]
   );
 
   useEffect(
@@ -46,7 +44,7 @@ export const useCardBackSelection = ({
       requestAbortRef.current?.abort();
       requestAbortRef.current = undefined;
     },
-    [requestCardBack, submit]
+    [applySelection, requestCardBack]
   );
 
   return { chooseCardBack } as const;

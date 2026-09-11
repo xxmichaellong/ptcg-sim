@@ -161,8 +161,11 @@ the relevant product decisions and phase exit criteria.
   now behind a validated lazy chunk, and the source-shaped right-side Deck,
   review-table, language, and card-back controls are reconstructed but remain
   unmounted. A route-neutral owner now composes both surfaces with one editor,
-  catalog, acknowledged install drain, dirty-page guard, and card-back
-  lifecycle; route activation remains in the deck-builder workstream.
+  catalog, acknowledged deck/card-back drains, combined dirty-page guard, and
+  independent pre-room card-back custody. Exact browser-loaded arbitrary URLs
+  are retained across fresh room bindings without adding an application fetch,
+  proxy, allowlist, or CORS requirement; route activation remains in the
+  deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

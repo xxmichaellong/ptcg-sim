@@ -1,4 +1,3 @@
-import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   useCallback,
   useEffect,
@@ -11,6 +10,11 @@ import {
   useCardBackSelection,
   type CardBackSelectionOptions,
 } from '../../session/useCardBackSelection.js';
+import {
+  CardBackCustodyStore,
+  CardBackInstallCoordinator,
+  type CardBackInstallFailure,
+} from './card-back-custody.js';
 import { LegacyDeckBuilderWorkspace } from './LegacyDeckBuilderWorkspace.js';
 import {
   LegacyDeckImportPanel,
@@ -44,36 +48,22 @@ export interface LegacyDeckBuilderSessionProps {
   readonly installOnSessionAttach?: boolean;
   readonly onRequestClose: () => void;
   readonly store?: DeckBuilderStore;
+  readonly cardBackStore?: CardBackCustodyStore;
   readonly catalog?: TcgdexCardCatalog;
   readonly samples?: PopularDecklistSource;
   readonly importDecklist?: PastedDecklistImporter;
-  readonly requestCardBack?: CardBackSelectionOptions['requestCardBack'];
+  readonly requestCardBack?: CardBackSelectionOptions<DeckBuilderTarget>['requestCardBack'];
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly digest?: DeckDefinitionDigest;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
+  readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
 }
-
-const otherPlayerId = (
-  session: DeckInstallSession,
-  target: DeckBuilderTarget
-): string | undefined => {
-  const state = session.getSnapshot();
-  const view = state.view;
-  if (
-    target === 'main' ||
-    state.phase !== 'ready' ||
-    view?.viewer.kind !== 'player'
-  ) {
-    return undefined;
-  }
-  const viewerPlayerId = view.viewer.playerId;
-  return view.playerOrder.find((playerId) => playerId !== viewerPlayerId);
-};
 
 /**
  * Route-neutral owner for the complete Deck surface. Route navigation supplies
  * only open/close state; this boundary owns editor/catalog lifetime, guarded
- * dirty state, acknowledged installs, and foreground card-back requests.
+ * dirty state, retained card backs, acknowledged installs, and foreground
+ * card-back requests.
  */
 export const LegacyDeckBuilderSession = ({
   session,
@@ -82,6 +72,7 @@ export const LegacyDeckBuilderSession = ({
   installOnSessionAttach = false,
   onRequestClose,
   store: suppliedStore,
+  cardBackStore: suppliedCardBackStore,
   catalog: suppliedCatalog,
   samples = popularDecklistSource,
   importDecklist,
@@ -89,6 +80,7 @@ export const LegacyDeckBuilderSession = ({
   beforeUnloadTarget,
   digest,
   onInstallFailure,
+  onCardBackInstallFailure,
 }: LegacyDeckBuilderSessionProps) => {
   const [ownedStore] = useState(
     () => suppliedStore ?? new DeckBuilderStore({ alternateEnabled })
@@ -96,72 +88,116 @@ export const LegacyDeckBuilderSession = ({
   const [ownedCatalog] = useState(
     () => suppliedCatalog ?? createTcgdexCardCatalog()
   );
+  const [ownedCardBackStore] = useState(
+    () =>
+      suppliedCardBackStore ?? new CardBackCustodyStore({ alternateEnabled })
+  );
   const store = suppliedStore ?? ownedStore;
+  const cardBackStore = suppliedCardBackStore ?? ownedCardBackStore;
   const catalog = suppliedCatalog ?? ownedCatalog;
   const coordinator = useRef<DeckInstallCoordinator | undefined>(undefined);
+  const cardBackCoordinator = useRef<CardBackInstallCoordinator | undefined>(
+    undefined
+  );
   const preparedBinding = useRef<
     | {
         readonly session: DeckInstallSession;
         readonly store: DeckBuilderStore;
+        readonly cardBackStore: CardBackCustodyStore;
       }
     | undefined
   >(undefined);
   const failureHandler = useRef(onInstallFailure);
+  const cardBackFailureHandler = useRef(onCardBackInstallFailure);
   const wasOpen = useRef(open);
   failureHandler.current = onInstallFailure;
+  cardBackFailureHandler.current = onCardBackInstallFailure;
 
   useLayoutEffect(() => {
     store.setAlternateEnabled(alternateEnabled);
-  }, [alternateEnabled, store]);
+    cardBackStore.setAlternateEnabled(alternateEnabled);
+  }, [alternateEnabled, cardBackStore, store]);
 
   useEffect(() => {
     if (!session) {
       preparedBinding.current = undefined;
       coordinator.current = undefined;
+      cardBackCoordinator.current = undefined;
       return;
     }
     if (installOnSessionAttach) {
       const isNewBinding =
         preparedBinding.current?.session !== session ||
-        preparedBinding.current.store !== store;
-      preparedBinding.current = { session, store };
-      if (isNewBinding) store.prepareForNewSession();
+        preparedBinding.current.store !== store ||
+        preparedBinding.current.cardBackStore !== cardBackStore;
+      preparedBinding.current = { session, store, cardBackStore };
+      if (isNewBinding) {
+        cardBackStore.prepareForNewSession();
+        store.prepareForNewSession();
+      }
     } else {
       preparedBinding.current = undefined;
     }
-    const current = new DeckInstallCoordinator({
+    const currentCardBack = new CardBackInstallCoordinator({
+      store: cardBackStore,
+      session,
+      onFailure: (failure) => cardBackFailureHandler.current?.(failure),
+    });
+    const currentDeck = new DeckInstallCoordinator({
       store,
       session,
       ...(digest ? { digest } : {}),
       onFailure: (failure) => failureHandler.current?.(failure),
     });
-    coordinator.current = current;
-    if (installOnSessionAttach) current.flush();
+    cardBackCoordinator.current = currentCardBack;
+    coordinator.current = currentDeck;
+    if (installOnSessionAttach) {
+      currentCardBack.flush();
+      currentDeck.flush();
+    }
     return () => {
-      if (coordinator.current === current) coordinator.current = undefined;
-      current.dispose();
+      if (coordinator.current === currentDeck) coordinator.current = undefined;
+      if (cardBackCoordinator.current === currentCardBack) {
+        cardBackCoordinator.current = undefined;
+      }
+      currentDeck.dispose();
+      currentCardBack.dispose();
     };
-  }, [digest, installOnSessionAttach, session, store]);
+  }, [cardBackStore, digest, installOnSessionAttach, session, store]);
 
   useEffect(
-    () => installDeckBeforeUnloadGuard(store, beforeUnloadTarget),
-    [beforeUnloadTarget, store]
+    () =>
+      installDeckBeforeUnloadGuard(
+        {
+          getSnapshot: () => ({
+            hasDirtyDecks:
+              store.getSnapshot().hasDirtyDecks ||
+              cardBackStore.getSnapshot().hasDirtyCardBacks,
+          }),
+        },
+        beforeUnloadTarget
+      ),
+    [beforeUnloadTarget, cardBackStore, store]
   );
 
-  const submit = useCallback(
-    (command: WireGameCommand) =>
-      session?.submit(command) ?? { queued: false, reason: 'not_ready' },
-    [session]
+  const applyCardBackSelection = useCallback(
+    (cardBackUrl: string, target: DeckBuilderTarget | undefined): void => {
+      if (cardBackStore.replace(target ?? 'main', cardBackUrl)) {
+        cardBackCoordinator.current?.flush();
+      }
+    },
+    [cardBackStore]
   );
-  const { chooseCardBack } = useCardBackSelection({
-    submit,
+  const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
+    applySelection: applyCardBackSelection,
     ...(requestCardBack ? { requestCardBack } : {}),
   });
 
-  const flush = useCallback(
-    (): boolean => coordinator.current?.flush() ?? false,
-    []
-  );
+  const flush = useCallback((): boolean => {
+    const cardBackStarted = cardBackCoordinator.current?.flush() ?? false;
+    const deckStarted = coordinator.current?.flush() ?? false;
+    return cardBackStarted || deckStarted;
+  }, []);
 
   useEffect(() => {
     if (wasOpen.current && !open) flush();
@@ -175,19 +211,9 @@ export const LegacyDeckBuilderSession = ({
 
   const changeCardBack = useCallback(
     (target: DeckBuilderTarget): void => {
-      if (!session) return;
-      const state = session.getSnapshot();
-      if (state.phase !== 'ready' || state.view?.viewer.kind !== 'player') {
-        return;
-      }
-      if (target === 'main') {
-        chooseCardBack();
-        return;
-      }
-      const targetPlayerId = otherPlayerId(session, target);
-      if (targetPlayerId) chooseCardBack(targetPlayerId);
+      chooseCardBack(target);
     },
-    [chooseCardBack, session]
+    [chooseCardBack]
   );
 
   return (

@@ -409,40 +409,51 @@ pre-room edits stay in editor custody instead of being coupled to a socket.
 Room capability changes dynamically disable or restore the solo-only alternate
 target without deleting its retained deck or leaving a stale install receipt.
 
-The boundary owns one `DeckInstallCoordinator` and one browser-native dirty-page
-guard. Editing while Deck is open does not emit room traffic. A true-to-false
-open transition or the workspace Play button begins the deterministic main,
-then alternate drain. The editor remains dirty until the exact `LoadDeck`
-command receives its authority result and covering state publication; failures
-release in-flight ownership, report through a contained typed callback, and
-leave the same revision retryable. Unmount disposes coordinator, session
-subscription, pending ownership, unload listener, catalog/search/import work,
-and card-back selection outside-in.
+The boundary owns one `DeckInstallCoordinator`, one
+`CardBackInstallCoordinator`, and one browser-native dirty-page guard. Editing
+while Deck is open does not emit deck traffic. A true-to-false open transition
+or the workspace Play button begins the deterministic card-back, then deck
+drain, with main ordered before alternate inside each kind. Each retained value
+remains dirty until its exact command receives an authority result and covering
+state publication; failures release in-flight ownership, report through a
+contained typed callback, and leave the same revision retryable. Both
+coordinators share the session outbox rather than racing commands. Unmount
+disposes both coordinators, session subscriptions, pending ownership, unload
+listener, catalog/search/import work, and foreground image selection
+outside-in.
 
 The source Change Card Back control now reaches the already isolated foreground
-hook through this composition seam. It refuses to prompt until a ready player
-projection exists, resolves the other side from the captured projection for a
-solo alternate request, and otherwise submits for the actor. The hook retains
-the accepted arbitrary-URL behavior and makes superseded/unmounted requests
-inert.
+hook through this composition seam even before a room exists. A browser-loaded
+choice enters a dedicated main/alternate custody store as the exact trimmed,
+bounded string; no parser, host/scheme allowlist, proxy, application fetch,
+`crossOrigin` opt-in, or CORS requirement is added. The coordinator resolves
+the current player or solo alternate only at submission time, waits for a ready
+player projection and empty session outbox, and publishes `SetCardBack` through
+the same acknowledged authority lifecycle as decks. Superseded or unmounted
+foreground loads remain inert.
 
 When opted into route-owned attach behavior, a fresh authority binding queues
-each retained clean nonempty deck exactly once and immediately drains existing
-dirty work. Disconnect or coordinator replacement releases in-flight ownership
-without losing the revision, while reconnecting the same retained store to a
-new session deliberately installs it again. Clean empty slots do not create
+each retained clean nonempty deck and each retained card-back choice exactly
+once, then immediately drains existing dirty work. Disconnect or coordinator
+replacement releases in-flight ownership without losing the revision, while
+reconnecting the same retained stores to a new session deliberately installs
+them again. Clean empty deck slots and absent card-back choices do not create
 traffic; an explicitly cleared dirty deck remains an intentional install. A
-multiplayer-disabled alternate stays locally dirty and guarded but cannot edit
-or install until its capability is restored.
+multiplayer-disabled alternate deck or back stays retained locally and guarded
+but cannot edit or install until its capability is restored.
 
-Eight composition tests plus the directly adjacent store, install, browser-I/O,
+Ten composition tests plus the directly adjacent store, install, browser-I/O,
 workspace, panel, sample, pasted-import, and card-back suites cover shared
 target state, dynamic multiplayer denial/restoration, offline edit retention,
-fresh-session reinstallation, closed-state traffic silence, close/Play
-flushing, authority-publication acknowledgement, retryable rejection, exact
-arbitrary card backs for both sides, not-ready refusal, unload guarding, and
-teardown. The composed module remains absent from production output, so this
-checkpoint still changes no current route, control, bundle, UI, or UX.
+fresh-session deck/card-back reinstallation, card-back-before-deck command
+serialization, closed-state traffic silence, close/Play flushing,
+authority-publication acknowledgement, retryable rejection, exact arbitrary
+card backs for both sides, pre-ready retention, combined unload guarding, and
+teardown. Eight dedicated custody/coordinator tests additionally pin bounds,
+alternate capability revocation, in-flight edits, submission/authority/session
+failure recovery, and listener disposal. The composed module remains absent
+from production output, so this checkpoint still changes no current route,
+control, bundle, UI, or UX.
 
 ## Source-browser composition checkpoint
 
@@ -503,12 +514,12 @@ This checkpoint is complete when:
 
 ## Remaining deck slices
 
-The source-browser and deck-session-custody prerequisites are now green.
-Production route activation remains a separate, reviewable checkpoint after
-pre-room card-back custody is isolated: replace the current Deck navigation
-ownership with this composed surface, prove bundle/route isolation and the full
-offline/live solo/multiplayer/reconnect matrix, and retain the legacy route as
-the rollback boundary.
+The source-browser, deck-session-custody, and pre-room card-back-custody
+prerequisites are now green. Production route activation remains a separate,
+reviewable checkpoint: replace the current Deck navigation ownership with this
+composed surface, prove bundle/route isolation and the full offline/live
+solo/multiplayer/reconnect matrix, and retain the legacy route as the rollback
+boundary.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
 web adapters plus their project, lockfile, documentation, and public-API
