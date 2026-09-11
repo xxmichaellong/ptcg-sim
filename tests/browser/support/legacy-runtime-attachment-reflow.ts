@@ -672,6 +672,13 @@ export const captureAttachmentDeparture = async (
         hitOrder('stablePostRefresh');
 
       const removedImage = departing.image;
+      // Moving into discard calls v1 `sort`, whose redraw workaround assigns
+      // `image.src` to itself. The image can therefore be connected with a
+      // transient zero natural size even though its original decode completed.
+      // Wait for that source-owned redraw before asserting the recorded stable
+      // asset state; the four stack phases above remain sampled at their exact
+      // move/refresh boundaries.
+      await removedImage.decode();
       const removedCardAfterDeparture: RemovedCardState = {
         naturalWidth: removedImage.naturalWidth,
         naturalHeight: removedImage.naturalHeight,

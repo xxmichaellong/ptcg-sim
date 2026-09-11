@@ -1894,6 +1894,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      also exposed and closed a fresh-host cache-hit bug: a complete decoded
      native image now enters `ready` immediately instead of being hidden after
      its already-fired load event. The default route and v1 remain unchanged.
+124. The first hosted run of the expanded real-v1 fixture matrix exposed two
+     portability races in the new two-Energy compaction oracle while every
+     structured geometry, layer, DOM-order, and compaction assertion remained
+     green. Chromium may omit a fully occluded negative-z descendant from the
+     deeper `elementsFromPoint` list, so the interaction contract now pins the
+     topmost element that an actual click receives and preserves the relative
+     order of any deeper roles the browser reports; exact bounds and z-indices
+     still pin every card. Separately, v1's discard sorter reassigns an image's
+     `src` to itself as a redraw workaround, so the removed-card asset assertion
+     now waits for that source-owned redraw after all four timing-sensitive
+     phases have already been captured. Eighty consecutive headless-shell
+     compaction cases and all thirteen affected source/candidate attachment
+     cases pass without changing application code or fixture geometry.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

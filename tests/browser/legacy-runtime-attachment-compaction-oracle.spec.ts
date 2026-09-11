@@ -181,20 +181,25 @@ for (const [side, branch] of CASES) {
         );
       }
 
-      // Hit order is what a click actually lands on, so it is measured by
-      // hit-testing the recorded points rather than recomputed from geometry.
+      // The first hit is what a click actually lands on. Chromium may omit a
+      // fully occluded negative-z descendant from the deeper
+      // `elementsFromPoint` list even when its geometry and paint order are
+      // unchanged, so only the top hit is a portable interaction contract.
+      // Retain the relative order of any deeper roles the browser does report;
+      // bounds and exact z-index assertions above still pin every card.
       const preHitOrder = recorded['stablePreDeparture']!['roleHitOrder'] as
         Record<string, readonly string[]> | undefined;
       if (preHitOrder) {
         for (const [region, roles] of Object.entries(preHitOrder)) {
+          const actual =
+            capture.hitOrderByPhaseAndRegion['stablePreDeparture']![region]!;
+          expect(actual[0], `${side} ${branch} top hit ${region}`).toBe(
+            roles[0]
+          );
           expect(
-            [
-              ...capture.hitOrderByPhaseAndRegion['stablePreDeparture']![
-                region
-              ]!,
-            ].sort(),
-            `${side} ${branch} hit order ${region}`
-          ).toEqual([...roles].sort());
+            actual,
+            `${side} ${branch} reported hit order ${region}`
+          ).toEqual(roles.filter((role) => actual.includes(role)));
         }
       }
 
