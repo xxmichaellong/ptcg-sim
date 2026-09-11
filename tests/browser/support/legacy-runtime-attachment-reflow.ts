@@ -218,15 +218,59 @@ export const captureReflow = async (
        * it; this reproduces that instead of assuming one refresh is enough.
        */
       const settle = async (): Promise<void> => {
-        let previous = -1;
-        for (let attempt = 0; attempt < 8; attempt += 1) {
+        let previous = '';
+        for (let attempt = 0; attempt < 16; attempt += 1) {
           refreshBoard();
           await frames();
-          const width = container().clientWidth;
-          if (width === previous && width > 0) return;
-          previous = width;
+          const images = [...container().querySelectorAll('img')];
+          await Promise.all(
+            images.map((image) =>
+              image.complete && image.naturalWidth > 0
+                ? Promise.resolve()
+                : image.decode()
+            )
+          );
+          // A cached image can finish decoding between style/layout passes.
+          // Give Chromium one more paint before deciding the source runtime is
+          // stable, then require the entire card geometry signature—not only
+          // the wrapper width—to agree across two refreshes.
+          await frames();
+          const element = container();
+          const signature = JSON.stringify({
+            width: element.clientWidth,
+            cards: images.map((image) => {
+              const bounds = image.getBoundingClientRect();
+              return [
+                image.clientWidth,
+                image.clientHeight,
+                image.naturalWidth,
+                image.naturalHeight,
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+              ];
+            }),
+          });
+          const ready =
+            element.clientWidth > 0 &&
+            images.length > 0 &&
+            images.every((image) => {
+              const bounds = image.getBoundingClientRect();
+              return (
+                image.complete &&
+                image.naturalWidth > 0 &&
+                image.naturalHeight > 0 &&
+                image.clientWidth > 0 &&
+                image.clientHeight > 0 &&
+                bounds.width > 0 &&
+                bounds.height > 0
+              );
+            });
+          if (ready && signature === previous) return;
+          previous = signature;
         }
-        throw new Error('Real-v1 play container never settled to a width');
+        throw new Error('Real-v1 play container never settled its card layout');
       };
 
       // The fixtures record an attachment landing on a settled stack, so the
@@ -540,15 +584,55 @@ export const captureAttachmentDeparture = async (
       const container = (): HTMLElement =>
         base.image.parentElement as HTMLElement;
       const settle = async (): Promise<void> => {
-        let previous = -1;
-        for (let attempt = 0; attempt < 8; attempt += 1) {
+        let previous = '';
+        for (let attempt = 0; attempt < 16; attempt += 1) {
           refreshBoard();
           await frames();
-          const width = container().clientWidth;
-          if (width === previous && width > 0) return;
-          previous = width;
+          const images = [...container().querySelectorAll('img')];
+          await Promise.all(
+            images.map((image) =>
+              image.complete && image.naturalWidth > 0
+                ? Promise.resolve()
+                : image.decode()
+            )
+          );
+          await frames();
+          const element = container();
+          const signature = JSON.stringify({
+            width: element.clientWidth,
+            cards: images.map((image) => {
+              const bounds = image.getBoundingClientRect();
+              return [
+                image.clientWidth,
+                image.clientHeight,
+                image.naturalWidth,
+                image.naturalHeight,
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+              ];
+            }),
+          });
+          const ready =
+            element.clientWidth > 0 &&
+            images.length > 0 &&
+            images.every((image) => {
+              const bounds = image.getBoundingClientRect();
+              return (
+                image.complete &&
+                image.naturalWidth > 0 &&
+                image.naturalHeight > 0 &&
+                image.clientWidth > 0 &&
+                image.clientHeight > 0 &&
+                bounds.width > 0 &&
+                bounds.height > 0
+              );
+            });
+          if (ready && signature === previous) return;
+          previous = signature;
         }
-        throw new Error('Real-v1 play container never settled to a width');
+        throw new Error('Real-v1 play container never settled its card layout');
       };
       await settle();
       for (const role of attachmentOrder) {

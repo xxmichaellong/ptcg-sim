@@ -1907,6 +1907,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      phases have already been captured. Eighty consecutive headless-shell
      compaction cases and all thirteen affected source/candidate attachment
      cases pass without changing application code or fixture geometry.
+125. The follow-up hosted run exposed the remaining form of the same source
+     redraw race: a play-container width can be stable while one cached card is
+     still between decode and layout, leaving zero card geometry or a pre-reflow
+     attachment position. The real-v1 reflow barrier now requires every current
+     image to be decoded with positive natural, client, and bounding-box
+     dimensions, and requires the complete card-geometry signature to agree
+     across consecutive source `refreshBoard` passes. It still samples the
+     compaction fixture's transient and synchronous phases at their exact
+     boundaries and does not relax any fixture coordinate, width, layer, order,
+     or hit-recipient expectation. All six affected oracles pass once and all
+     120 repeated local/opponent Energy/Tool/inner/outer cases pass in the Nix
+     Chromium gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
