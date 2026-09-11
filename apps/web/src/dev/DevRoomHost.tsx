@@ -95,7 +95,10 @@ export const DevRoomHost = ({
           // smoke test without a lobby UI. Never reachable in a production
           // build: the whole module is behind `import.meta.env.DEV`.
           (globalThis as Record<string, unknown>)[DEV_ROOM_HANDLE] = result;
-          setState({ kind: 'connected', route: result.route });
+          setState({
+            kind: 'connected',
+            route: { ...result.route, roomMode: result.mode },
+          });
         })
         .catch((error: unknown) => {
           if (timeout !== undefined) clearTimeout(timeout);

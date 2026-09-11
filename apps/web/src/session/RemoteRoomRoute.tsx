@@ -8,9 +8,12 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
+import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
+import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import { LegacyPresentationSurface } from '../presentation/LegacyPresentationSurface.js';
 import { ReplayModeShell } from '../replay/ReplayModeShell.js';
 import {
@@ -25,6 +28,7 @@ import {
   type BrowserRoomBackgroundRequest,
   type RoomBackground,
 } from './browser-room-background.js';
+import type { BrowserCardBackRequest } from './browser-card-back.js';
 import {
   downloadBrowserTextFile,
   requestBrowserFullscreen,
@@ -32,6 +36,11 @@ import {
 } from './browser-room-options.js';
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useRoomBackground } from './useRoomBackground.js';
+
+const LegacyDeckBuilderSession = lazy(async () => ({
+  default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
+    .LegacyDeckBuilderSession,
+}));
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 const confirmConnectedRoomExit = (): boolean =>
@@ -42,6 +51,14 @@ const confirmConnectedRoomExit = (): boolean =>
 export interface RemoteRoomRouteProps {
   readonly runtime: RemoteRoomRuntime;
   readonly rendererKind: RendererKind;
+  readonly roomMode?: 'solo' | 'multiplayer';
+  /** Retained above the route when lobby/room transitions share Deck custody. */
+  readonly deckStore?: DeckBuilderStore;
+  readonly cardBackStore?: CardBackCustodyStore;
+  readonly requestCardBack?: BrowserCardBackRequest;
+  readonly deckSurfaceActivated?: boolean;
+  readonly onDeckSurfaceActivate?: () => void;
+  readonly onDeckCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
   readonly onIntent?: (intent: BoardIntent) => void;
   readonly onSubmission?: (
     command: WireGameCommand,
@@ -70,6 +87,13 @@ export interface RemoteRoomRouteProps {
 export const RemoteRoomRoute = ({
   runtime,
   rendererKind,
+  roomMode = 'multiplayer',
+  deckStore,
+  cardBackStore,
+  requestCardBack,
+  deckSurfaceActivated = false,
+  onDeckSurfaceActivate,
+  onDeckCustodyChange,
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
@@ -90,7 +114,16 @@ export const RemoteRoomRoute = ({
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
     ...(requestBackground ? { requestBackground } : {}),
   });
-  const [activePanel, setActivePanel] = useState<'room' | 'settings'>('room');
+  const [activePanel, setActivePanel] = useState<'room' | 'deck' | 'settings'>(
+    'room'
+  );
+  const [locallyActivatedDeck, setLocallyActivatedDeck] = useState(false);
+  const deckActivated = deckSurfaceActivated || locallyActivatedDeck;
+  const openDeck = (): void => {
+    setLocallyActivatedDeck(true);
+    onDeckSurfaceActivate?.();
+    setActivePanel('deck');
+  };
   const [localPreferences, setLocalPreferences] = useState<
     BoardPreferences | undefined
   >(ownedPreferences);
@@ -230,7 +263,13 @@ export const RemoteRoomRoute = ({
                   <button
                     id="deckImportButton"
                     type="button"
-                    className="not-selected-page"
+                    className={
+                      activePanel === 'deck'
+                        ? 'selected-page'
+                        : 'not-selected-page'
+                    }
+                    aria-current={activePanel === 'deck' ? 'page' : undefined}
+                    onClick={openDeck}
                   >
                     Deck
                   </button>
@@ -365,6 +404,23 @@ export const RemoteRoomRoute = ({
                 onHideOpponentHandChange={setHideOpponentHand}
                 onChangeBackground={backgroundSelection.chooseBackground}
               />
+              {deckActivated && (
+                <Suspense fallback={null}>
+                  <LegacyDeckBuilderSession
+                    session={runtime.session}
+                    open={!chrome.active && activePanel === 'deck'}
+                    alternateEnabled={roomMode === 'solo'}
+                    installOnSessionAttach
+                    onRequestClose={() => setActivePanel('room')}
+                    {...(onDeckCustodyChange
+                      ? { onCustodyChange: onDeckCustodyChange }
+                      : {})}
+                    {...(deckStore ? { store: deckStore } : {})}
+                    {...(cardBackStore ? { cardBackStore } : {})}
+                    {...(requestCardBack ? { requestCardBack } : {})}
+                  />
+                </Suspense>
+              )}
             </aside>
           </main>
         );

@@ -13,7 +13,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { BrowserCardBackRequest } from '../../session/browser-card-back.js';
-import { LegacyDeckBuilderSession } from './LegacyDeckBuilderSession.js';
+import {
+  LegacyDeckBuilderSession,
+  type LegacyDeckBuilderCustody,
+} from './LegacyDeckBuilderSession.js';
 import {
   CardBackCustodyStore,
   type CardBackInstallFailure,
@@ -189,6 +192,7 @@ const renderSession = async (options: {
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
+  readonly onCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
 }) => {
   root ??= createRoot(host);
   await act(async () =>
@@ -218,6 +222,9 @@ const renderSession = async (options: {
         {...(options.onCardBackInstallFailure
           ? { onCardBackInstallFailure: options.onCardBackInstallFailure }
           : {})}
+        {...(options.onCustodyChange
+          ? { onCustodyChange: options.onCustodyChange }
+          : {})}
       />
     )
   );
@@ -230,6 +237,19 @@ const click = async (selector: string): Promise<void> => {
 };
 
 describe('LegacyDeckBuilderSession', () => {
+  it('reports the exact owned custody once and preserves it across rerenders', async () => {
+    const observed: LegacyDeckBuilderCustody[] = [];
+    const onCustodyChange = (custody: LegacyDeckBuilderCustody): void => {
+      observed.push(custody);
+    };
+    await renderSession({ open: false, onCustodyChange });
+    await renderSession({ open: true, onCustodyChange });
+
+    expect(observed).toHaveLength(1);
+    expect(observed[0]?.store).toBeInstanceOf(DeckBuilderStore);
+    expect(observed[0]?.cardBackStore).toBeInstanceOf(CardBackCustodyStore);
+  });
+
   it('shares one target store across both legacy surfaces and disables P2 for multiplayer ownership', async () => {
     const session = new FakeSession();
     await renderSession({

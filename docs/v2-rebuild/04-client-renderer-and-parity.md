@@ -1403,17 +1403,23 @@ display tree in React state. Derived selectors are memoized only after profiling
 identifies a need.
 
 The deck builder ports the existing pure `.mjs` core into `deck-core`, preserving
-the current UI. Its state must distinguish main and alternate/opponent deck dirty
+the current UI. Its state distinguishes main and alternate/opponent deck dirty
 status, validate empty/unload transitions, and use a robust CSV parser/serializer
-with compatibility fixtures. The unmounted composed React surface now has a
+with compatibility fixtures. The composed React surface has a
 direct-import-only Chromium harness that compares it with the complete v1
 runtime at 1600×900: exact control content, 12 geometry landmarks within two CSS
 pixels, and bidirectional foreground paint under a 0.5% ceiling in main,
 alternate, and dark-alternate states. Separate browser flows pin direct native
 arbitrary-image assignment, import/install acknowledgement and retry,
 multiplayer alternate denial, focus return, closed inertness, and teardown.
-Nothing imports the harness or Deck composition from a production entry point;
-route activation and its live-session matrix remain a later checkpoint.
+The harness remains excluded from production. The opt-in `?room-lobby=1` route
+reaches the composition through a first-use lazy boundary, retains exact store
+custody across lobby/live/Leave, disables the alternate target in multiplayer,
+and installs card backs before decks through the acknowledged session outbox.
+The default route remains unchanged. A multi-context route gate proves exact
+arbitrary public-back propagation and private-face request isolation; the
+production-topology gate proves no Deck resource is fetched before the first
+Deck click.
 
 ### Presentation effect routing
 
@@ -1594,9 +1600,9 @@ Export reads the bounded effective activity source rather than DOM, uses the
 legacy numbered text format, and revokes the object URL; Clear is local
 presentation only; Full screen retains the foreground gesture and vendor
 fallbacks. Perspective-safe game-state/replay export is now wired for both live
-and replay mode; replay-file import, server-held continuation, Deck navigation,
-and complete focus/keyboard/visual parity remain later slices.
-The unmounted Deck composition no longer requires a live network session. Its
+and replay mode; replay-file import, server-held continuation, and complete
+focus/keyboard/visual parity remain later slices.
+The lazy Deck composition does not require a live network session. Its
 stores retain offline main/alternate deck edits and browser-loaded card-back
 choices, apply changing solo/multiplayer ownership without deleting either
 alternate value, invalidate stale receipts, and requeue each retained value
@@ -1605,8 +1611,10 @@ through the shared acknowledged outbox. Dirty empty decks remain intentional
 clears, while clean empty decks and absent card-back choices do not create room
 traffic. Exact bounded arbitrary URLs retain the accepted native-image policy;
 the application adds no parser, allowlist, proxy, fetch, or CORS requirement.
-This closes both pre-room custody prerequisites; production Deck navigation
-remains a separate checkpoint.
+The opt-in lobby and connected route mount this custody only after first Deck
+use. A production-like browser journey proves pre-room import/back choice, room
+attachment, card-back-before-deck draining, authority publication, and
+retention on return to the lobby without changing the default route.
 `RendererSpikeBoard` and `RemoteSessionBoard` now carry an optional
 renderer-neutral `BoardPreferences` value from their composing route. Explicit
 preferences install after asynchronous mount and update in place; removing the

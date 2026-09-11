@@ -145,6 +145,9 @@ one fresh DOM board or no board as appropriate. It also proves:
   browser subresource request does not fall back to HTML;
 - built entry JavaScript advertises no map URL and guessed map paths cannot
   return source-map JSON; and
+- the query-gated lobby fetches no Deck implementation or CSS before the first
+  Deck click, then loads the isolated first-use chunk and renders the surface;
+  and
 - no authority request is triggered by the production app merely because the
   development query flag is present.
 
@@ -206,8 +209,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   durable Leave, fresh-lobby return, battle-log download/clear, foreground full
   screen, and safe-DOM path.
   The production-topology lane separately proves the query-gated lobby chunk is
-  reachable from the built SPA without creating a room on mount. Deployed
-  navigation and physical BFCache restoration remain outstanding.
+  reachable from the built SPA without creating a room on mount, and that the
+  Deck implementation is absent before first activation and loaded afterward.
+  Deployed navigation and physical BFCache restoration remain outstanding.
 - Schema-v7 admission now makes solo replay disclosure structurally safe by
   persisting a one-player ceiling and rejecting a second human through every
   credential path. The protocol, Worker, client bootstrap, and hidden

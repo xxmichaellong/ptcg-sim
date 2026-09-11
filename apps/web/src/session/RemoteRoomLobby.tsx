@@ -3,7 +3,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent as ReactClipboardEvent } from 'react';
 
 import {
@@ -11,6 +11,7 @@ import {
   type RendererKind,
 } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
+import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import {
   createRemoteRoom,
   type RemoteRoomCreationResult,
@@ -26,7 +27,13 @@ import {
   roomBackgroundCssImage,
   type BrowserRoomBackgroundRequest,
 } from './browser-room-background.js';
+import type { BrowserCardBackRequest } from './browser-card-back.js';
 import { useRoomBackground } from './useRoomBackground.js';
+
+const LegacyDeckBuilderSession = lazy(async () => ({
+  default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
+    .LegacyDeckBuilderSession,
+}));
 
 const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Froakie',
@@ -101,6 +108,7 @@ export interface RemoteRoomLobbyDependencies {
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
   readonly fallbackDisplayName: () => string;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
+  readonly requestCardBack?: BrowserCardBackRequest;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
@@ -115,6 +123,7 @@ const defaultDependencies: RemoteRoomLobbyDependencies = {
 interface ConnectedRoom {
   readonly runtime: RemoteRoomRuntime;
   readonly rendererKind: RendererKind;
+  readonly mode: 'solo' | 'multiplayer';
   readonly coachingConsent: boolean;
 }
 
@@ -231,7 +240,11 @@ export const RemoteRoomLobby = ({
   const [status, setStatus] = useState<string>();
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
-  const [activePanel, setActivePanel] = useState<'lobby' | 'settings'>('lobby');
+  const [activePanel, setActivePanel] = useState<'lobby' | 'deck' | 'settings'>(
+    'lobby'
+  );
+  const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
+  const [deckCustody, setDeckCustody] = useState<LegacyDeckBuilderCustody>();
   const [preferences, setPreferences] = useState<
     BoardPreferences | undefined
   >();
@@ -425,6 +438,7 @@ export const RemoteRoomLobby = ({
       setConnected({
         runtime: creator.result.runtime,
         rendererKind,
+        mode: creator.result.mode,
         coachingConsent,
       });
       return;
@@ -455,6 +469,7 @@ export const RemoteRoomLobby = ({
       setConnected({
         runtime: result.runtime,
         rendererKind,
+        mode: 'multiplayer',
         coachingConsent,
       });
     } catch (error) {
@@ -499,6 +514,16 @@ export const RemoteRoomLobby = ({
         <RemoteRoomRoute
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}
+          roomMode={connected.mode}
+          {...(deckCustody
+            ? {
+                deckStore: deckCustody.store,
+                cardBackStore: deckCustody.cardBackStore,
+              }
+            : {})}
+          deckSurfaceActivated={deckSurfaceActivated}
+          onDeckSurfaceActivate={() => setDeckSurfaceActivated(true)}
+          onDeckCustodyChange={setDeckCustody}
           onLeave={handleLeave}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
@@ -510,6 +535,9 @@ export const RemoteRoomLobby = ({
           onBackgroundChange={backgroundSelection.setBackground}
           {...(dependencies.requestBackground
             ? { requestBackground: dependencies.requestBackground }
+            : {})}
+          {...(dependencies.requestCardBack
+            ? { requestCardBack: dependencies.requestCardBack }
             : {})}
         />
       </>
@@ -570,7 +598,14 @@ export const RemoteRoomLobby = ({
           <button
             id="deckImportButton"
             type="button"
-            className="not-selected-page"
+            className={
+              activePanel === 'deck' ? 'selected-page' : 'not-selected-page'
+            }
+            aria-current={activePanel === 'deck' ? 'page' : undefined}
+            onClick={() => {
+              setDeckSurfaceActivated(true);
+              setActivePanel('deck');
+            }}
           >
             Deck
           </button>
@@ -688,6 +723,26 @@ export const RemoteRoomLobby = ({
           onHideOpponentHandChange={setHideOpponentHand}
           onChangeBackground={backgroundSelection.chooseBackground}
         />
+        {deckSurfaceActivated && (
+          <Suspense fallback={null}>
+            <LegacyDeckBuilderSession
+              open={activePanel === 'deck'}
+              alternateEnabled={false}
+              installOnSessionAttach
+              onRequestClose={() => setActivePanel('lobby')}
+              onCustodyChange={setDeckCustody}
+              {...(deckCustody
+                ? {
+                    store: deckCustody.store,
+                    cardBackStore: deckCustody.cardBackStore,
+                  }
+                : {})}
+              {...(dependencies.requestCardBack
+                ? { requestCardBack: dependencies.requestCardBack }
+                : {})}
+            />
+          </Suspense>
+        )}
       </aside>
     </main>
   );

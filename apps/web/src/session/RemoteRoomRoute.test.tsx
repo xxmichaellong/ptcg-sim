@@ -22,6 +22,8 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LegacyAnnouncementScheduler } from '../presentation/LegacyGamePresentationRuntime.js';
+import { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
@@ -123,6 +125,14 @@ const flushConsumers = async (): Promise<void> => {
   await Promise.resolve();
 };
 
+const openDeck = async (host: ParentNode): Promise<void> => {
+  await act(async () => {
+    (host.querySelector('#deckImportButton') as HTMLButtonElement).click();
+    await import('../features/deck/LegacyDeckBuilderSession.js');
+    await flushConsumers();
+  });
+};
+
 describe('RemoteRoomRoute', () => {
   beforeEach(() => {
     document.body.replaceChildren();
@@ -200,6 +210,34 @@ describe('RemoteRoomRoute', () => {
     expect(
       host.querySelector('#roomHeaderText')?.getAttribute('data-session-phase')
     ).toBe('connecting');
+    expect(host.querySelector('#deckImport')).toBeNull();
+
+    await openDeck(host);
+    expect(host.querySelector('#deckImportButton')?.className).toBe(
+      'selected-page'
+    );
+    expect(
+      host.querySelector('#deckImportButton')?.getAttribute('aria-current')
+    ).toBe('page');
+    expect((host.querySelector('#deckImport') as HTMLElement).hidden).toBe(
+      false
+    );
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(true);
+    expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(true);
+    expect(
+      host
+        .querySelector('#altImportHeaderButton')
+        ?.getAttribute('aria-disabled')
+    ).toBe('true');
+    expect(socketFactory.socket?.sent).toHaveLength(0);
+
+    await act(async () =>
+      (host.querySelector('#p2Button') as HTMLButtonElement).click()
+    );
+    expect((host.querySelector('#deckImport') as HTMLElement).hidden).toBe(
+      true
+    );
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(false);
 
     const socket = socketFactory.socket!;
     await act(async () => {
@@ -595,6 +633,162 @@ describe('RemoteRoomRoute', () => {
     expect(socket.close).toHaveBeenCalledWith(1000, 'Client left room');
   });
 
+  it('installs a pre-ready arbitrary card back and a local deck through the live route', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = new RemoteRoomRuntime({
+      connection: {
+        url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
+        buildId: 'route-deck-client',
+        roomCode: 'ABCDEFGH2345',
+        displayName: 'Blue',
+        requestedRole: 'player',
+        admissionTicket,
+        resumeToken,
+      },
+      session: {
+        socketFactory,
+        scheduler: new FakeSessionScheduler(),
+      },
+    });
+    const deckStore = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
+    const exactCardBack = 'custom+unsafe://route-card-back?exact=yes';
+    const requestCardBack = vi.fn(async () => exactCardBack);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () =>
+      root.render(
+        <RemoteRoomRoute
+          runtime={runtime}
+          rendererKind="dom"
+          deckStore={deckStore}
+          cardBackStore={cardBackStore}
+          requestCardBack={requestCardBack}
+        />
+      )
+    );
+    await openDeck(host);
+    await act(async () => {
+      (
+        host.querySelector('#changeCardBackButton') as HTMLButtonElement
+      ).click();
+      await flushConsumers();
+    });
+    expect(requestCardBack).toHaveBeenCalledOnce();
+    expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+      url: exactCardBack,
+      dirty: true,
+      installingRevision: 1,
+    });
+
+    const socket = socketFactory.socket!;
+    expect(socket.sent).toHaveLength(0);
+    await act(async () => {
+      socket.serverOpen();
+      socket.serverMessage(welcome());
+    });
+    expect(socket.sent).toHaveLength(2);
+    const cardBackFrame = JSON.parse(socket.sent[1]!) as {
+      readonly commandId: string;
+      readonly clientSequence: number;
+      readonly command: WireGameCommand;
+    };
+    expect(cardBackFrame).toMatchObject({
+      type: 'Command',
+      command: { type: 'SetCardBack', cardBackUrl: exactCardBack },
+    });
+
+    const installedBack = {
+      ...view,
+      revision: view.revision + 1,
+      players: {
+        ...view.players,
+        'spike-blue': {
+          ...view.players['spike-blue']!,
+          cardBackUrl: exactCardBack,
+        },
+      },
+    };
+    await act(async () => {
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: cardBackFrame.commandId,
+        clientSequence: cardBackFrame.clientSequence,
+        accepted: true,
+        revision: installedBack.revision,
+      });
+      socket.serverMessage({
+        type: 'StatePublication',
+        protocolVersion: PROTOCOL_VERSION,
+        coveringCommandId: cardBackFrame.commandId,
+        executedClientSequence: cardBackFrame.clientSequence,
+        snapshot: installedBack,
+      });
+    });
+    expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+
+    act(() =>
+      deckStore.addCard({
+        name: 'Route Pikachu',
+        supertype: 'Pokémon',
+        image: 'data:image/not-filtered',
+      })
+    );
+    await act(async () =>
+      (host.querySelector('#p2Button') as HTMLButtonElement).click()
+    );
+    await vi.waitFor(() => expect(socket.sent).toHaveLength(3));
+    const deckFrame = JSON.parse(socket.sent[2]!) as {
+      readonly commandId: string;
+      readonly clientSequence: number;
+      readonly command: WireGameCommand;
+    };
+    expect(deckFrame).toMatchObject({
+      type: 'Command',
+      command: {
+        type: 'LoadDeck',
+        targetPlayerId: 'spike-blue',
+        entries: [
+          {
+            count: 1,
+            definition: {
+              name: 'Route Pikachu',
+              imageUrl: 'data:image/not-filtered',
+            },
+          },
+        ],
+      },
+    });
+    const installedDeck = {
+      ...installedBack,
+      revision: installedBack.revision + 1,
+    };
+    await act(async () => {
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: deckFrame.commandId,
+        clientSequence: deckFrame.clientSequence,
+        accepted: true,
+        revision: installedDeck.revision,
+      });
+      socket.serverMessage({
+        type: 'StatePublication',
+        protocolVersion: PROTOCOL_VERSION,
+        coveringCommandId: deckFrame.commandId,
+        executedClientSequence: deckFrame.clientSequence,
+        snapshot: installedDeck,
+      });
+    });
+    expect(deckStore.getSnapshot().hasDirtyDecks).toBe(false);
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('renders a safe terminal session failure without exposing admission data', async () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = new RemoteRoomRuntime({
@@ -616,8 +810,19 @@ describe('RemoteRoomRoute', () => {
     document.body.append(host);
     const root = createRoot(host);
     await act(async () =>
-      root.render(<RemoteRoomRoute runtime={runtime} rendererKind="dom" />)
+      root.render(
+        <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      )
     );
+    await openDeck(host);
+    await vi.waitFor(() =>
+      expect(host.querySelector('#altImportHeaderButton')).not.toBeNull()
+    );
+    expect(
+      host
+        .querySelector('#altImportHeaderButton')
+        ?.getAttribute('aria-disabled')
+    ).toBe('false');
 
     const socket = socketFactory.socket!;
     await act(async () => {

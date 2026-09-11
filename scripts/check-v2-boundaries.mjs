@@ -297,6 +297,7 @@ const allowedBundleSource = (kind, source) => {
     return (
       source.startsWith('apps/web/src/') ||
       source.startsWith('packages/client-session/src/') ||
+      source.startsWith('packages/deck-core/src/') ||
       source.startsWith('packages/protocol/src/') ||
       source.startsWith('packages/renderer-contract/src/') ||
       source.startsWith('packages/renderer-dom/src/') ||

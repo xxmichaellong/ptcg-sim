@@ -7,9 +7,9 @@
 - Production wiring: the page-background path, renderer failure containment,
   bounded card-back command/event/projection path, multiplayer/solo authority,
   ordered legacy card-back conversion, source-shaped foreground card-back
-  browser chooser, and independent pre-room card-back custody are implemented;
-  the v2 deck-builder and visible card-back entry controls remain behind their
-  route-activation gate
+  browser chooser, independent pre-room card-back custody, and lazy Deck surface
+  are implemented on the opt-in v2 lobby/live route; the default route remains
+  unchanged
 
 ## Context
 
@@ -125,6 +125,12 @@ projection or network boundary; card-back URLs are intentionally public.
 Browser tests retain direct cross-origin success, redirect, missing/corrupt
 containment, stable input, and recovery coverage. Background tests retain
 local-only, latest-request, failure, CSS-escaping, and teardown coverage.
+The multi-context room-route gate additionally proves a pre-room arbitrary back
+is loaded directly, retained through room attachment, published unchanged,
+rendered for both players and a spectator, and retained after Leave, while only
+the authorized player requests their private custom card face. The
+production-topology gate proves the Deck module is not fetched before its first
+tab activation.
 
 This policy can be rolled back only through a new product/privacy ADR because a
 host restriction would deliberately break accepted parity. Operationally, an

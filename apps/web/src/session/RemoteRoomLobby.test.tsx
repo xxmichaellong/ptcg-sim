@@ -4,11 +4,14 @@ import {
   createRendererSpikeView,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
+import type { DeckCard } from '@ptcgsim/deck-core';
 import { StrictMode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { RemoteRoomCreationResult } from './RemoteRoomCreation.js';
 import {
   RemoteRoomLobby,
@@ -32,6 +35,9 @@ const roomRouteHarness = vi.hoisted(() => ({
   background: undefined as RoomBackground | undefined,
   onBackgroundChange: undefined as
     ((background: RoomBackground) => void) | undefined,
+  roomMode: undefined as 'solo' | 'multiplayer' | undefined,
+  deckStore: undefined as DeckBuilderStore | undefined,
+  cardBackStore: undefined as CardBackCustodyStore | undefined,
 }));
 
 vi.mock('../RendererSpikeBoard.js', () => ({
@@ -51,6 +57,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onHideOpponentHandChange,
     background,
     onBackgroundChange,
+    roomMode,
+    deckStore,
+    cardBackStore,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -60,6 +69,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onHideOpponentHandChange?: (hidden: boolean) => void;
     readonly background?: RoomBackground;
     readonly onBackgroundChange?: (background: RoomBackground) => void;
+    readonly roomMode?: 'solo' | 'multiplayer';
+    readonly deckStore?: DeckBuilderStore;
+    readonly cardBackStore?: CardBackCustodyStore;
   }) => {
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
@@ -67,6 +79,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onHideOpponentHandChange = onHideOpponentHandChange;
     roomRouteHarness.background = background;
     roomRouteHarness.onBackgroundChange = onBackgroundChange;
+    roomRouteHarness.roomMode = roomMode;
+    roomRouteHarness.deckStore = deckStore;
+    roomRouteHarness.cardBackStore = cardBackStore;
     return (
       <main data-app-route="test-remote-room">
         {runtime.label}
@@ -221,13 +236,15 @@ const creationResult = (roomRuntime = runtime({ label: 'creator' })) => {
 const lobbyDependencies = (
   invitationCustody: ReturnType<typeof custody>,
   createRoom: ReturnType<typeof vi.fn>,
-  requestBackground?: RemoteRoomLobbyDependencies['requestBackground']
+  requestBackground?: RemoteRoomLobbyDependencies['requestBackground'],
+  requestCardBack?: RemoteRoomLobbyDependencies['requestCardBack']
 ): RemoteRoomLobbyDependencies => ({
   createRoom:
     createRoom as unknown as RemoteRoomLobbyDependencies['createRoom'],
   createInvitationJoinCustody: () => invitationCustody,
   fallbackDisplayName: () => 'Froakie',
   ...(requestBackground ? { requestBackground } : {}),
+  ...(requestCardBack ? { requestCardBack } : {}),
 });
 
 const mount = async (
@@ -260,6 +277,14 @@ const element = <ElementType extends Element>(
   return found;
 };
 
+const openDeck = async (host: ParentNode): Promise<void> => {
+  await act(async () => {
+    element<HTMLButtonElement>(host, '#deckImportButton').click();
+    await import('../features/deck/LegacyDeckBuilderSession.js');
+    await flush();
+  });
+};
+
 describe('remote room lobby wiring', () => {
   beforeEach(() => {
     document.body.replaceChildren();
@@ -271,6 +296,9 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.onHideOpponentHandChange = undefined;
     roomRouteHarness.background = undefined;
     roomRouteHarness.onBackgroundChange = undefined;
+    roomRouteHarness.roomMode = undefined;
+    roomRouteHarness.deckStore = undefined;
+    roomRouteHarness.cardBackStore = undefined;
   });
 
   it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
@@ -308,6 +336,21 @@ describe('remote room lobby wiring', () => {
     expect(element(host, '#joinRoomButton').tagName).toBe('BUTTON');
     expect(createRoom).not.toHaveBeenCalled();
     expect(host.innerHTML).not.toContain('PTCGSIM2-INVITE:');
+
+    await openDeck(host);
+    expect(element(host, '#deckImportButton').className).toBe('selected-page');
+    expect(element<HTMLElement>(host, '#deckImport').hidden).toBe(false);
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
+    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
+    expect(
+      element(host, '#altImportHeaderButton').getAttribute('aria-disabled')
+    ).toBe('true');
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2Button').click()
+    );
+    expect(element<HTMLElement>(host, '#deckImport').hidden).toBe(true);
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#settingsButton').click()
@@ -591,10 +634,21 @@ describe('remote room lobby wiring', () => {
     const invitation = custody();
     const created = creationResult();
     const createRoom = vi.fn(async () => created.value);
+    const exactCardBack = 'custom+unsafe://pre-room/player-back?exact=yes';
+    const requestCardBack = vi.fn(async () => exactCardBack);
     const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
+      lobbyDependencies(invitation, createRoom, undefined, requestCardBack)
     );
 
+    await openDeck(host);
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#changeCardBackButton').click();
+      await flush();
+    });
+    expect(requestCardBack).toHaveBeenCalledOnce();
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2Button').click()
+    );
     await act(async () => {
       inputValue(element(host, '#nameInput'), 'Blue');
       element<HTMLInputElement>(host, '#coachingModeCheckbox').click();
@@ -614,6 +668,12 @@ describe('remote room lobby wiring', () => {
       type: 'SetCoachingConsent',
       consent: true,
     });
+    expect(roomRouteHarness.roomMode).toBe('multiplayer');
+    expect(roomRouteHarness.deckStore).toBeDefined();
+    expect(roomRouteHarness.cardBackStore).toBeDefined();
+    expect(
+      roomRouteHarness.cardBackStore?.getSnapshot().slots.main
+    ).toMatchObject({ url: exactCardBack, dirty: true });
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
@@ -638,6 +698,11 @@ describe('remote room lobby wiring', () => {
       requestBackground,
     };
     const { host, root } = await mount(dependencies);
+
+    await openDeck(host);
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2Button').click()
+    );
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#settingsButton').click()
@@ -677,6 +742,13 @@ describe('remote room lobby wiring', () => {
       kind: 'image',
       url: 'https://images.example.test/retained.png',
     });
+    const retainedDeckStore = roomRouteHarness.deckStore!;
+    const retainedCard: DeckCard = {
+      name: 'Retained Through Leave',
+      supertype: 'Pokémon',
+      image: '/retained-through-leave.png',
+    };
+    act(() => retainedDeckStore.addCard(retainedCard));
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#testLeaveRoom').click()
@@ -700,6 +772,10 @@ describe('remote room lobby wiring', () => {
       element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style
         .backgroundImage
     ).toBe('url("https://images.example.test/retained.png")');
+    await openDeck(host);
+    expect(
+      element(host, '#nativeDeckBuilderSummaryPanel').textContent
+    ).toContain('Total: 1');
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();

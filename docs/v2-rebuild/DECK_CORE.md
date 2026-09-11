@@ -105,8 +105,9 @@ tests/browser/
 
 The package has no runtime dependencies and uses an ES-only TypeScript project.
 It is a root project reference and a reviewed public-API entrypoint. The web app
-declares it only for the isolated deck adapters; no route imports them, so they
-do not enter the production module graph yet.
+declares it for the isolated deck adapters and the query-gated v2 room route.
+The production provenance gate permits only this reviewed package path; frozen
+v1 roots and every server-authority package remain forbidden from web output.
 
 ## Pasted deck-list parser checkpoint
 
@@ -194,8 +195,9 @@ tests plus one new core resolver test cover no-request local completion,
 request custody, normalized metadata merge, arbitrary TPC regions, Pocket
 classification and outage containment, status/decoder/resource failures,
 parse/empty/row limits, exact arbitrary native image assignment, load failure,
-concurrency, and abort cleanup. The seam remains unmounted and absent from
-production output.
+concurrency, and abort cleanup. The seam remains absent from the initial
+production route graph; it is emitted only inside the Deck surface's first-use
+lazy chunk.
 
 ## TCGdex catalog adapter checkpoint
 
@@ -318,13 +320,14 @@ definition identity, category mapping, aggregation, empty decks, wire/resource
 bounds, malformed structures, digest/collision/cancellation failures, bounded
 file reads, transactional parser errors, exact download and cleanup, dirty
 unload teardown, outbox waiting, dual-target drains, in-flight edits, external
-sync, local/authority/session failures, and disposal. Both adapters remain
-unmounted and absent from the production module graph.
+sync, local/authority/session failures, and disposal. Both adapters are reached
+only through the first-use Deck chunk on the query-gated v2 room route.
 
 ## React workspace reconstruction checkpoint
 
 `LegacyDeckBuilderWorkspace.tsx` reconstructs the current full-height Deck
-workspace in React without mounting it in either production route. It retains
+workspace in React. The query-gated v2 lobby/live route mounts it only after the
+player activates Deck; the default route remains untouched. It retains
 the source IDs, labels, control order, default search/filter/sort values,
 main/alternate target colors, summary and validation text, empty state,
 right-click search preview, deck-row preview and add/remove controls, CSV
@@ -395,16 +398,16 @@ image strings, Save/Cancel/Confirm publication boundaries, download content,
 deduplicated loading, cancellation, exact corpus order/count/provenance, all
 168 locally complete 60-card parses, source-equivalent random selection,
 malformed/resource failures, retry, freezing, and shared-load abort behavior.
-The panel, corpus, and review table remain absent from production output.
+The panel and review table live in the on-demand Deck chunk. The much larger
+corpus remains a second lazy chunk and is requested only after book/wand use.
 
 ## Deck session-composition checkpoint
 
 `LegacyDeckBuilderSession.tsx` joins the previously isolated pieces behind one
-route-neutral React boundary without importing that boundary from a production
-route. It creates one editor store and TCGdex catalog for the component
+route-neutral React boundary. It creates one editor store and TCGdex catalog for the component
 lifetime, shares the store across the right import panel and full-height
 workspace, and accepts only `open` plus `onRequestClose` navigation ownership
-from its eventual route. It may remain mounted without a network session, so
+from its route. It may remain mounted without a network session, so
 pre-room edits stay in editor custody instead of being coupled to a socket.
 Room capability changes dynamically disable or restore the solo-only alternate
 target without deleting its retained deck or leaving a stale install receipt.
@@ -442,7 +445,7 @@ traffic; an explicitly cleared dirty deck remains an intentional install. A
 multiplayer-disabled alternate deck or back stays retained locally and guarded
 but cannot edit or install until its capability is restored.
 
-Ten composition tests plus the directly adjacent store, install, browser-I/O,
+Eleven composition tests plus the directly adjacent store, install, browser-I/O,
 workspace, panel, sample, pasted-import, and card-back suites cover shared
 target state, dynamic multiplayer denial/restoration, offline edit retention,
 fresh-session deck/card-back reinstallation, card-back-before-deck command
@@ -451,18 +454,17 @@ authority-publication acknowledgement, retryable rejection, exact arbitrary
 card backs for both sides, pre-ready retention, combined unload guarding, and
 teardown. Eight dedicated custody/coordinator tests additionally pin bounds,
 alternate capability revocation, in-flight edits, submission/authority/session
-failure recovery, and listener disposal. The composed module remains absent
-from production output, so this checkpoint still changes no current route,
-control, bundle, UI, or UX.
+failure recovery, and listener disposal. The composition now also reports the
+exact stores it owns, allowing a lazy first mount to transfer custody upward
+without eagerly importing or constructing Deck state in the lobby chunk.
 
 ## Source-browser composition checkpoint
 
 `LegacyDeckBuilderBrowserHarness.tsx` mounts that complete session only when a
 Playwright test directly imports it from the Vite development server. It builds
 the source-shaped application shell and uses a publication-capable fake client
-session, but no application entry point imports the harness or composed Deck
-surface. Production bundle provenance therefore remains the route-activation
-boundary rather than relying on a runtime feature flag.
+session. No application entry point imports the harness; production reaches the
+composed Deck surface only through the separately reviewed lazy route boundary.
 
 The browser gate opens the checked-in complete v1 runtime and the React
 candidate side by side at 1600×900. It compares every visible control's tag,
@@ -493,9 +495,43 @@ Two additional browser workflows exercise behavior that screenshots cannot:
   denial, closed inertness, focus return, and idempotent teardown all retain
   their intended custody.
 
-The three Playwright scenarios pass together with no page or console errors.
-The direct-import harness, browser spec, session composition, and Deck feature
-modules remain absent from the production module graph.
+The three direct parity scenarios pass together with no page or console errors.
+The harness and browser-only support remain absent from the production module
+graph; the Deck feature modules are isolated in first-use production chunks.
+
+## Query-gated route-activation checkpoint
+
+The opt-in `?room-lobby=1` production route now gives the existing Deck tab its
+source-shaped behavior in both the pre-room lobby and connected live room. The
+normal/default application route and frozen v1 website are unchanged. React
+`lazy`/`Suspense` keeps the editor, stores, catalog adapter, and Deck CSS out of
+the lobby and live-room startup chunks. The production-topology browser gate
+asserts that no `LegacyDeckBuilderSession` resource has loaded before the first
+Deck click and that the resource appears only after activation.
+
+The first lazy session owns its `DeckBuilderStore` and `CardBackCustodyStore`,
+then reports those exact objects to `RemoteRoomLobby`. That parent retains them
+across lobby → room → Leave → fresh-lobby transitions and supplies them back to
+later session mounts. Entering a new room marks retained values for a new
+authority binding; card backs drain before decks through the one acknowledged
+session outbox. Multiplayer keeps alternate controls disabled without deleting
+their state; a solo-mode route enables them. Replay continues to hide Deck
+navigation and never installs editor state into replay playback.
+
+The multi-context Wrangler/Vite browser journey imports a deck and accepts an
+arbitrary player-pasted card-back URL before joining. It proves the exact URL is
+assigned to a native image, retained across the route transition, published by
+authority, and visibly rendered for both players and the spectator. Only the
+owning player requests the private custom face. No URL parser, scheme/host
+allowlist, proxy, application fetch, `crossOrigin` assignment, or CORS opt-in is
+introduced; trim, the shared 4,096-code-unit bound, and native image load remain
+the complete card-back admission behavior.
+
+The local production build at this checkpoint transforms 844 modules and keeps
+startup gzip at 59.91 KiB for the default entry, 13.93 KiB for the room lobby,
+and 17.71 KiB for the live room. The first-use Deck JavaScript is 28.11 KiB gzip
+with 3.82 KiB of lazy CSS; the 168-deck corpus remains a later 22.47 KiB gzip
+chunk. Bundle provenance passes over 23 web maps plus the Worker map.
 
 ## Verification and success criteria
 
@@ -507,20 +543,26 @@ This checkpoint is complete when:
 3. the complete repository quality and build gates pass;
 4. the generated public API baseline contains only the deliberately exported
    deck operations and value types; and
-5. production bundle output is unchanged because no route imports the package;
-   and
+5. the default route remains unchanged and the opt-in lobby/live startup chunks
+   do not fetch Deck code before the first Deck activation;
 6. the real-v1/candidate browser composition gate passes control, geometry,
-   paint, arbitrary-image, recovery, multiplayer, focus, and teardown evidence.
+   paint, arbitrary-image, recovery, multiplayer, focus, and teardown evidence;
+   and
+7. the real multi-context route gate passes pre-room retention, acknowledged
+   card-back-before-deck installation, exact public-back propagation, and
+   private-face request isolation.
 
 ## Remaining deck slices
 
-The source-browser, deck-session-custody, and pre-room card-back-custody
-prerequisites are now green. Production route activation remains a separate,
-reviewable checkpoint: replace the current Deck navigation ownership with this
-composed surface, prove bundle/route isolation and the full offline/live
-solo/multiplayer/reconnect matrix, and retain the legacy route as the rollback
-boundary.
+The source-browser, deck/session custody, card-back custody, and query-gated
+route activation slices are implemented. Remaining Deck-adjacent product work
+is deliberate and separate: canonical save/replay import-export/continuation,
+the visible production solo-mode selector, broader rollout of the opt-in v2
+route, and the non-Chromium/device release matrix. None requires narrowing the
+accepted arbitrary-image behavior.
 
-Rollback for these checkpoints is removal of the unused package and unmounted
-web adapters plus their project, lockfile, documentation, and public-API
-entries. No saved, wire, canonical, or production runtime format is changed.
+Rollback for route activation is removal of the lobby/route lazy composition
+wiring while retaining the isolated package, adapters, and parity harness. The
+default route already remains the operational rollback boundary. No saved or
+canonical persistence format is changed; the existing bounded `LoadDeck` and
+`SetCardBack` wire contracts are reused.

@@ -95,6 +95,23 @@ test('built SPA and room authority share one production-like Worker origin', asy
   await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
   expect(authorityRequests).toEqual([]);
 
+  const loadedDeckResources = (): Promise<string[]> =>
+    page.evaluate(() =>
+      performance
+        .getEntriesByType('resource')
+        .map((entry) => entry.name)
+        .filter((url) => url.includes('LegacyDeckBuilderSession-'))
+    );
+  expect(await loadedDeckResources()).toEqual([]);
+  await page.locator('#deckImportButton').click();
+  await expect(page.locator('#deckImport')).toBeVisible();
+  await expect
+    .poll(async () => (await loadedDeckResources()).length)
+    .toBeGreaterThan(0);
+  await page.locator('#p2Button').click();
+  await expect(page.locator('#p2Box')).toBeVisible();
+  expect(authorityRequests).toEqual([]);
+
   const entryModuleUrl = await page
     .locator('script[type="module"][src]')
     .first()

@@ -90,6 +90,7 @@ export type AppRoute =
       readonly kind: 'remote-room';
       readonly runtime: RemoteRoomRuntime;
       readonly rendererKind: RendererKind;
+      readonly roomMode?: 'solo' | 'multiplayer';
     };
 
 export const App = ({
@@ -107,6 +108,7 @@ export const App = ({
         <RemoteRoomRoute
           runtime={route.runtime}
           rendererKind={route.rendererKind}
+          {...(route.roomMode ? { roomMode: route.roomMode } : {})}
         />
       </Suspense>
     );

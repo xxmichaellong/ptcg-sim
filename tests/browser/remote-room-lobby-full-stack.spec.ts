@@ -5,6 +5,10 @@ const EXPECTED_ROTATION_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 403 (Forbidden)';
 const CUSTOM_BACKGROUND_URL =
   'https://images.example.test/player-two-background.png';
+const CUSTOM_CARD_BACK_URL =
+  'https://images.example.test/player-two-card-back.png?route=exact';
+const ROUTE_DECK_FACE_URL =
+  'https://private-face.example.test/must-never-be-requested.png';
 const ONE_PIXEL_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg==',
   'base64'
@@ -98,7 +102,30 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       contexts.map(openLobby)
     )) as [OpenedLobby, OpenedLobby, OpenedLobby, OpenedLobby];
     const lobbies = [creator, rotatedGuest, playerTwo, spectator];
+    const customCardBackRequests = new Map<Page, number>();
+    const privateFaceRequests = new Map<Page, number>();
     for (const { page } of lobbies) {
+      customCardBackRequests.set(page, 0);
+      privateFaceRequests.set(page, 0);
+      await page.route(ROUTE_DECK_FACE_URL, async (route) => {
+        privateFaceRequests.set(page, (privateFaceRequests.get(page) ?? 0) + 1);
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/png',
+          body: ONE_PIXEL_PNG,
+        });
+      });
+      await page.route(CUSTOM_CARD_BACK_URL, async (route) => {
+        customCardBackRequests.set(
+          page,
+          (customCardBackRequests.get(page) ?? 0) + 1
+        );
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/png',
+          body: ONE_PIXEL_PNG,
+        });
+      });
       page.on('request', (request) => {
         const url = new URL(request.url());
         if (url.pathname.startsWith('/v2/')) requestUrls.push(url.href);
@@ -160,6 +187,40 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Join as spectator'
     );
 
+    await playerTwo.page.locator('#deckImportButton').click();
+    await expect(playerTwo.page.locator('#deckImportButton')).toHaveClass(
+      'selected-page'
+    );
+    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
+    await expect(playerTwo.page.locator('#p2Box')).toBeHidden();
+    await expect(
+      playerTwo.page.locator('#altImportHeaderButton')
+    ).toHaveAttribute('aria-disabled', 'true');
+    await playerTwo.page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+      name: 'retained-before-room.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(
+        [
+          'QTY,Name,Type,URL',
+          `1,Pre-room Pikachu,Pokémon,${ROUTE_DECK_FACE_URL}`,
+        ].join('\n')
+      ),
+    });
+    await expect(
+      playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
+    ).toContainText('Total: 1');
+    playerTwo.page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toBe("Paste your image URL or type 'default':");
+      await dialog.accept(CUSTOM_CARD_BACK_URL);
+    });
+    await playerTwo.page.locator('#changeCardBackButton').click();
+    await expect
+      .poll(() => customCardBackRequests.get(playerTwo.page) ?? 0)
+      .toBe(1);
+    await playerTwo.page.locator('#p2Button').click();
+    await expect(playerTwo.page.locator('#deckImport')).toBeHidden();
+    await expect(playerTwo.page.locator('#p2Box')).toBeVisible();
+
     await creator.page.locator('#nameInput').fill('Blue');
     await creator.page.locator('#generateIdButton').click();
     await expect(creator.page.locator('#roomIdInput')).toHaveValue(ROOM_CODE);
@@ -203,6 +264,22 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await joinReadyRoom(spectator.page);
     await joinReadyRoom(creator.page);
+
+    for (const { page } of [creator, playerTwo, spectator]) {
+      await expect(
+        page.locator(`img[src="${CUSTOM_CARD_BACK_URL}"]`).first()
+      ).toBeVisible();
+    }
+    expect(customCardBackRequests.get(playerTwo.page)).toBeGreaterThanOrEqual(
+      2
+    );
+    expect(customCardBackRequests.get(creator.page)).toBeGreaterThanOrEqual(1);
+    expect(customCardBackRequests.get(spectator.page)).toBeGreaterThanOrEqual(
+      1
+    );
+    expect(privateFaceRequests.get(playerTwo.page)).toBeGreaterThanOrEqual(1);
+    expect(privateFaceRequests.get(creator.page)).toBe(0);
+    expect(privateFaceRequests.get(spectator.page)).toBe(0);
 
     const connectedChrome = await creator.page.evaluate(() => {
       const bounds = (selector: string) => {
@@ -531,6 +608,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);
+    await playerTwo.page.locator('#deckImportButton').click();
+    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
+    await expect(
+      playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
+    ).toContainText('Total: 1');
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);

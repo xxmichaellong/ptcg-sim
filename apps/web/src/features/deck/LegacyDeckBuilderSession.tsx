@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -49,6 +50,7 @@ export interface LegacyDeckBuilderSessionProps {
   readonly onRequestClose: () => void;
   readonly store?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
+  readonly onCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
   readonly catalog?: TcgdexCardCatalog;
   readonly samples?: PopularDecklistSource;
   readonly importDecklist?: PastedDecklistImporter;
@@ -57,6 +59,11 @@ export interface LegacyDeckBuilderSessionProps {
   readonly digest?: DeckDefinitionDigest;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
+}
+
+export interface LegacyDeckBuilderCustody {
+  readonly store: DeckBuilderStore;
+  readonly cardBackStore: CardBackCustodyStore;
 }
 
 /**
@@ -73,6 +80,7 @@ export const LegacyDeckBuilderSession = ({
   onRequestClose,
   store: suppliedStore,
   cardBackStore: suppliedCardBackStore,
+  onCustodyChange,
   catalog: suppliedCatalog,
   samples = popularDecklistSource,
   importDecklist,
@@ -94,6 +102,10 @@ export const LegacyDeckBuilderSession = ({
   );
   const store = suppliedStore ?? ownedStore;
   const cardBackStore = suppliedCardBackStore ?? ownedCardBackStore;
+  const custody = useMemo(
+    () => Object.freeze({ store, cardBackStore }),
+    [cardBackStore, store]
+  );
   const catalog = suppliedCatalog ?? ownedCatalog;
   const coordinator = useRef<DeckInstallCoordinator | undefined>(undefined);
   const cardBackCoordinator = useRef<CardBackInstallCoordinator | undefined>(
@@ -112,6 +124,10 @@ export const LegacyDeckBuilderSession = ({
   const wasOpen = useRef(open);
   failureHandler.current = onInstallFailure;
   cardBackFailureHandler.current = onCardBackInstallFailure;
+
+  useLayoutEffect(() => {
+    onCustodyChange?.(custody);
+  }, [custody, onCustodyChange]);
 
   useLayoutEffect(() => {
     store.setAlternateEnabled(alternateEnabled);

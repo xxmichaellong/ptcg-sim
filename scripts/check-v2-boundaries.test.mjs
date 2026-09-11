@@ -184,6 +184,21 @@ test('rejects server-authority provenance in a web source map', async () => {
   );
 });
 
+test('allows reviewed deck-core provenance in a production web source map', async () => {
+  const root = await temporaryRepo();
+  const dist = join(root, 'apps/web/dist');
+  await mkdir(dist, { recursive: true });
+  await writeFile(
+    join(dist, 'chunk.js.map'),
+    JSON.stringify({
+      version: 3,
+      sources: ['../../../packages/deck-core/src/deck-state.ts'],
+      mappings: '',
+    })
+  );
+  await assert.doesNotReject(checkBundleProvenance(root, 'web', dist));
+});
+
 test('rejects developer-only modules in a production web source map', async () => {
   const root = await temporaryRepo();
   const dist = join(root, 'apps/web/dist');

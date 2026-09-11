@@ -124,8 +124,9 @@ the relevant product decisions and phase exit criteria.
   ADR-012 now also wires the existing Export game state action to a versioned,
   SHA-256 integrity-checked, non-resumable perspective replay. A live export
   requests a fresh authority artifact without entering replay mode; an active
-  replay exports its exact installed artifact. Replay-file import, canonical
-  server-held continuation, and Deck navigation remain later parity work. The
+  replay exports its exact installed artifact. Replay-file import and canonical
+  server-held continuation remain later parity work. Deck navigation is now
+  active only on the opt-in v2 room route; the default route remains unchanged. The
   live Solo header tab retains its separate v1 confirmation text and delegates
   to the same durable route teardown as Leave Room. The board composition now
   accepts optional route-owned local preferences across live and replay without
@@ -154,18 +155,20 @@ the relevant product decisions and phase exit criteria.
   default. The bounded owner-authorized `SetCardBack` transition and ordered
   legacy-import conversion now preserve exact custom-back URLs across event
   replay and undo. The source-shaped React Deck workspace, including direct
-  custom-face entry, is reconstructed but remains unmounted. The pure pasted
+  custom-face entry, is reconstructed and mounted only after first Deck use on
+  the opt-in v2 room route. The pure pasted
   deck-list parser now covers the complete checked-in sample corpus while
   remaining DOM/network-free. Its bounded Limitless completion and native
   image-preload transaction are also isolated. The exact 168-deck corpus is
-  now behind a validated lazy chunk, and the source-shaped right-side Deck,
-  review-table, language, and card-back controls are reconstructed but remain
-  unmounted. A route-neutral owner now composes both surfaces with one editor,
+  now behind a validated second lazy chunk, and the source-shaped right-side
+  Deck, review-table, language, and card-back controls are reconstructed behind
+  a first-use lazy boundary. A route-neutral owner composes both surfaces with one editor,
   catalog, acknowledged deck/card-back drains, combined dirty-page guard, and
   independent pre-room card-back custody. Exact browser-loaded arbitrary URLs
-  are retained across fresh room bindings without adding an application fetch,
-  proxy, allowlist, or CORS requirement; route activation remains in the
-  deck-builder workstream.
+  are retained across lobby, live-room, Leave, and fresh room bindings without
+  adding an application fetch, proxy, allowlist, or CORS requirement.
+  Production/browser gates pin startup chunk isolation, authority
+  acknowledgement, public-back propagation, and private-face request isolation.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
@@ -213,7 +216,7 @@ a manual tabletop simulator.
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
-| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, unmounted React workspace, and remaining integration slices         |
+| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
 | [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
 | [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |

@@ -586,8 +586,10 @@ Work:
   affecting Replay. The local live/replay Options subset additionally
   exports the recipient-safe effective battle log and requests browser full
   screen; Clear remains live-only and resets only local presentation.
-  Perspective replay export is implemented; replay-file import, server-held
-  continuation, and Deck navigation remain later work. The first
+  Perspective replay export is implemented; replay-file import and server-held
+  continuation remain later work. Deck navigation is live behind the same
+  opt-in query-gated route, with first-use chunk isolation and retained
+  deck/card-back custody across lobby/live/Leave. The first
   Settings slice restores tab ownership plus page-local Dark mode and Hide
   containers across lobby/live/replay without authority or storage traffic;
   the follow-on slice restores the source Solo-only hand checkbox as an explicit
@@ -595,10 +597,11 @@ Work:
   third-party image request. Accepted ADR-013 restores Change background through
   a direct player-selected, preloaded, page-local DOM/CSS image. The URL is never
   synchronized or persisted; the selecting browser's direct contact with that
-  host is an explicitly accepted parity tradeoff. The broadened ADR also binds
-  later Deck work to direct arbitrary custom-card faces and public custom card
+  host is an explicitly accepted parity tradeoff. The broadened ADR binds the
+  active Deck route to direct arbitrary custom-card faces and public custom card
   backs through native DOM loading; it rejects a mandatory allowlist, proxy, or
-  CORS opt-in.
+  CORS opt-in. Exact URL, publication, recipient-visibility, and hidden-face
+  request gates cover that route.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,

@@ -88,7 +88,11 @@ only as in v1; object URLs are revoked after the foreground download.
 The connected Solo header tab also retains its v1 confirmed-leave behavior and
 uses the same route-owned durable teardown as Leave Room. Game-state/replay
 perspective export is implemented; replay-file import, server-held continuation,
-Deck navigation, and the remaining focus/visual parity remain later slices. An
+and the remaining focus/visual parity remain later slices. Deck navigation is
+now active in the opt-in lobby and live-room route, while the default route is
+unchanged. The Deck implementation and CSS load only after its first tab click;
+the first lazy mount transfers its exact deck/card-back stores to the lobby so
+edits survive room entry and Leave without coupling them to a socket. An
 optional route-owned `BoardPreferences` seam now
 crosses the live/replay wrapper and updates either renderer in place. The
 isolated lobby and connected route restore Settings-tab ownership plus the
@@ -103,9 +107,11 @@ under accepted ADR-013: `blank`, randomized `theme`, and
 arbitrary player-pasted URLs preload in the browser and paint only the local
 route. The URL is not persisted or sent to the renderer, room, replay, server,
 peer, or telemetry; direct host contact is the explicitly accepted parity
-tradeoff. ADR-013 also requires future v2 deck tooling to preserve direct
-arbitrary custom-card faces for authorized viewers and public custom card backs
-without an allowlist, proxy, or CORS requirement. The renderer-neutral
+tradeoff. ADR-013 also requires v2 deck tooling to preserve direct arbitrary
+custom-card faces for authorized viewers and public custom card backs without
+an allowlist, proxy, or CORS requirement. The query-gated route enforces that
+contract: the exact trimmed/bounded value is assigned directly to a native
+`<img>`, and the application does not fetch or rewrite it. The renderer-neutral
 preferences include default-visible zone/stadium
 outlines: hiding them removes only the legacy translucent paint while retaining
 the same accessible hit regions.
