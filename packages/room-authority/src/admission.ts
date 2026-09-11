@@ -575,7 +575,15 @@ export const expireDisconnectedRoomSessions = async (
   );
   const expiredSessions = disconnected
     .filter((session) => session.reconnectExpiresAt! <= now)
-    .sort((left, right) => left.id.localeCompare(right.id));
+    // Code-unit order, not collation. The transition invariant compares the
+    // declared ids against their own `.sort()`, and session ids are
+    // `session_<base64url>` -- an alphabet that spans the case boundary, where
+    // collation and code-unit order disagree. Sorting by `localeCompare` here
+    // made the commit throw whenever two due ids differed first across that
+    // boundary, which left every session in the sweep holding its seat.
+    .sort((left, right) =>
+      left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+    );
   const nextReconnectExpiresAt = disconnected
     .filter((session) => session.reconnectExpiresAt! > now)
     .reduce<number | undefined>(
