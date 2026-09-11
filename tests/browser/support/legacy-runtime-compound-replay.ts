@@ -12,6 +12,11 @@ export interface ReplayedPhase {
   readonly inlineMargins: readonly [string, string];
 }
 
+export interface ReplayedGeometryPhase extends ReplayedPhase {
+  /** Frame-local x of the play container, as the fixtures record it. */
+  readonly stackX: number;
+}
+
 export interface ReplayedRefreshLifecycle {
   readonly synchronousWrapperCount: number;
   readonly oldWrapperConnectedImmediately: boolean;
@@ -19,6 +24,11 @@ export interface ReplayedRefreshLifecycle {
   readonly oldWrapperConnectedAfterSettle: boolean;
   readonly wrapperIdentityChanged: boolean;
   readonly cardNodeIdentityPreserved: boolean;
+}
+
+export interface ReplayedRefresh {
+  readonly phases: readonly ReplayedPhase[];
+  readonly lifecycle: ReplayedRefreshLifecycle;
 }
 
 export interface ReplayedReconstruct {
@@ -29,237 +39,66 @@ export interface ReplayedReconstruct {
   readonly wrapperIdentityChanged: boolean;
 }
 
-export interface ReplayedRefresh {
-  readonly phases: readonly ReplayedPhase[];
-  readonly lifecycle: ReplayedRefreshLifecycle;
+export interface ReplayedPhaseTrace {
+  readonly phases: readonly ReplayedGeometryPhase[];
+  /** `zone.array` order, which is what v1 indexes rotations by. */
+  readonly logicalRoles: readonly string[];
+  /** Child order inside the play container. */
+  readonly domRoles: readonly string[];
+  readonly reconstructionCount: number;
+  readonly wrapperIdentityChanged: boolean;
 }
 
 /**
- * Replays a fixture's own `operationTraceByScenario` script inside the real v1
- * client and reports what actually happened.
+ * How a trace is executed and where it is sampled.
  *
- * The compound-lower fixtures record a complete, ordered operation script per
- * scenario, which makes them replayable against the source they claim to
- * describe. Feeding that script back through v1's real `moveCardBundle` and
- * `rotateCard` turns each fixture from a self-recorded assertion into a
- * falsifiable one: if the recorded indices, rotations or BREAK flags disagree
- * with v1, the replay diverges.
- *
- * The trace's `refresh:` entries are the `resetRotation` side effect of an
- * evolution rather than operations of their own, so only `evolve:` and
- * `rotate:` steps are executed.
+ * - `direct` treats every `refresh:` as the implicit reset an evolution
+ *   performs and never calls `refreshBoard`.
+ * - `reconstruct` additionally runs a real `refreshBoard` for any `refresh:`
+ *   that is not an evolution's own reset.
+ * - `refreshBoundary` stops before the trace's last `refresh:` and measures
+ *   that reconstruction itself, synchronously and after it settles.
+ * - `everyPhase` runs like `reconstruct` but samples after every executed step
+ *   rather than only around one transition.
  */
-export const replayCompoundTrace = async (
+type ReplayMode = 'direct' | 'reconstruct' | 'refreshBoundary' | 'everyPhase';
+
+interface ReplayResult {
+  readonly phases: readonly ReplayedGeometryPhase[];
+  readonly lifecycle: ReplayedRefreshLifecycle | null;
+  readonly logicalRoles: readonly string[];
+  readonly domRoles: readonly string[];
+  readonly reconstructionCount: number;
+  readonly wrapperIdentityChanged: boolean;
+}
+
+/**
+ * Replays a fixture's own recorded operation script inside the real v1 client
+ * and reports what actually happened.
+ *
+ * The compound fixtures record a complete, ordered script per scenario, which
+ * makes them replayable against the source they claim to describe. Feeding that
+ * script back through v1's real `moveCardBundle`, `rotateCard` and
+ * `refreshBoard` turns each fixture from a self-recorded assertion into a
+ * falsifiable one: if the recorded indices, rotations, BREAK flags or geometry
+ * disagree with v1, the replay diverges.
+ *
+ * Across every checked-in compound trace a `refresh:` that immediately follows
+ * an `evolve:` is the implicit `resetRotation` that evolution performs, and any
+ * other `refresh:` is a genuine reconstruction -- which is what the modes above
+ * distinguish. A `replay-rotate:` is never executed: it records a rotation
+ * `refreshBoard` reapplies by itself, so replaying it by hand would turn the
+ * stack twice and hide a reconstruction that failed to restore it.
+ */
+const runCompoundReplay = (
   page: Page,
   slot: CompoundSlot,
   trace: readonly string[],
+  mode: ReplayMode,
   phaseCount: number
-): Promise<readonly ReplayedPhase[]> =>
+): Promise<ReplayResult> =>
   page.evaluate(
-    async ({ zoneId, operations, phases }) => {
-      const load = (specifier: string): Promise<Record<string, never>> =>
-        import(/* @vite-ignore */ specifier);
-      const [
-        cardModule,
-        placementModule,
-        zoneModule,
-        bundleModule,
-        rotateModule,
-      ] = await Promise.all([
-        load('/src/setup/deck-constructor/card.js'),
-        load('/src/actions/move-card-bundle/initialize-active-bench-card.js'),
-        load('/src/setup/zones/get-zone.js'),
-        load('/src/actions/move-card-bundle/move-card-bundle.js'),
-        load('/src/actions/general/rotate-card.js'),
-      ]);
-
-      interface LegacyCard {
-        readonly name: string;
-        readonly image: HTMLImageElement;
-      }
-      interface LegacyZone {
-        readonly element: HTMLElement;
-        readonly array: LegacyCard[];
-      }
-      const Card = (
-        cardModule as unknown as {
-          readonly Card: new (
-            user: string,
-            name: string,
-            type: string,
-            imageUrl: string
-          ) => LegacyCard;
-        }
-      ).Card;
-      const { initializeActiveBenchCard } = placementModule as unknown as {
-        readonly initializeActiveBenchCard: (
-          user: string,
-          card: LegacyCard,
-          zoneId: string,
-          zone: LegacyZone
-        ) => void;
-      };
-      const { getZone } = zoneModule as unknown as {
-        readonly getZone: (user: string, zoneId: string) => LegacyZone;
-      };
-      const { moveCardBundle } = bundleModule as unknown as {
-        readonly moveCardBundle: (
-          user: string,
-          initiator: string,
-          oZoneId: string,
-          dZoneId: string,
-          index: number,
-          targetIndex: number,
-          action: string,
-          emit?: boolean
-        ) => void;
-      };
-      const { rotateCard } = rotateModule as unknown as {
-        readonly rotateCard: (
-          user: string,
-          zoneId: string,
-          index: number,
-          single?: boolean,
-          emit?: boolean
-        ) => void;
-      };
-
-      const zone = getZone('self', zoneId);
-      const hand = getZone('self', 'hand');
-      zone.array.length = 0;
-      zone.element.replaceChildren();
-      hand.array.length = 0;
-      hand.element.replaceChildren();
-
-      const make = async (name: string): Promise<LegacyCard> => {
-        const card = new Card(
-          'self',
-          name,
-          'Pokémon',
-          `${location.origin}/src/assets/cardback.png`
-        );
-        await card.image.decode();
-        return card;
-      };
-
-      const byRole = new Map<string, LegacyCard>();
-      const base = await make('base');
-      byRole.set('base', base);
-      zone.array.push(base);
-      initializeActiveBenchCard('self', base, zoneId, zone);
-
-      const frames = () =>
-        new Promise((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(resolve))
-        );
-      await frames();
-
-      const quarterTurns = (image: HTMLImageElement): number => {
-        const degrees =
-          Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
-          0;
-        return (((degrees / 90) % 4) + 4) % 4;
-      };
-      const container = (): HTMLElement =>
-        byRole.get('base')!.image.parentElement as HTMLElement;
-      const sample = () => {
-        const roles = ['base', 'middle', 'top'] as const;
-        const turns = {} as Record<string, number>;
-        const flags = {} as Record<string, boolean>;
-        for (const role of roles) {
-          const card = byRole.get(role);
-          turns[role] = card ? quarterTurns(card.image) : 0;
-          flags[role] = Boolean(
-            card &&
-            (card.image as unknown as { PokémonBreak?: boolean })[
-              'PokémonBreak'
-            ]
-          );
-        }
-        const element = container();
-        return {
-          quarterTurns: turns,
-          breakFlags: flags,
-          inlineMargins: [
-            element.style.marginRight,
-            element.style.marginLeft,
-          ] as const,
-        };
-      };
-
-      // Every two-phase trace captures immediately before its final operation
-      // and again after it; the final operation is the transition the fixture
-      // is named for.
-      const boundary = operations.length - (phases - 1);
-      const samples: ReturnType<typeof sample>[] = [];
-
-      for (const [index, operation] of operations.entries()) {
-        if (index === boundary) samples.push(sample());
-        const evolve = /^evolve:([a-z]+)->([a-z]+)$/u.exec(operation);
-        if (evolve) {
-          const [, parentName, childName] = evolve;
-          const child = await make(childName!);
-          byRole.set(childName!, child);
-          hand.array.push(child);
-          hand.element.append(child.image);
-          const targetIndex = zone.array.findIndex(
-            (card) => card.name === parentName
-          );
-          moveCardBundle(
-            'self',
-            'self',
-            'hand',
-            zoneId,
-            hand.array.length - 1,
-            targetIndex,
-            'evolve',
-            false
-          );
-          await frames();
-          continue;
-        }
-        const rotate = /^rotate:[a-z]+:index=(\d+):single=(true|false):/u.exec(
-          operation
-        );
-        if (rotate) {
-          const [, index_, single] = rotate;
-          rotateCard(
-            'self',
-            zoneId,
-            Number.parseInt(index_!, 10),
-            single === 'true',
-            false
-          );
-          await frames();
-          continue;
-        }
-        if (operation.startsWith('refresh:')) continue;
-        throw new Error(`Unreplayable trace operation: ${operation}`);
-      }
-      samples.push(sample());
-      return samples;
-    },
-    { zoneId: slot, operations: trace, phases: phaseCount }
-  );
-
-/**
- * Replays the refresh fixture through v1's real `refreshBoard` reconstruction.
- *
- * The earlier direct-operation gate deliberately ignores `refresh:` trace
- * annotations because most fixtures use them only to describe the implicit
- * reset performed by evolution. This fixture is different: its final refresh
- * is the behavior under test, and the following `replay-rotate:` records are
- * effects that `refreshBoard` must reproduce itself. Capture therefore stops
- * before the last refresh annotation, samples the synchronous reconstruction,
- * then samples again after the legacy empty-wrapper observer settles.
- */
-export const replayCompoundRefreshTrace = async (
-  page: Page,
-  slot: CompoundSlot,
-  trace: readonly string[]
-): Promise<ReplayedRefresh> =>
-  page.evaluate(
-    async ({ zoneId, operations }) => {
+    async ({ zoneId, operations, replayMode, expectedPhases }) => {
       const load = (specifier: string): Promise<Record<string, never>> =>
         import(/* @vite-ignore */ specifier);
       const [
@@ -279,8 +118,7 @@ export const replayCompoundRefreshTrace = async (
       ]);
 
       interface LegacyImage extends HTMLImageElement {
-        readonly attached?: boolean;
-        readonly PokémonBreak?: boolean;
+        PokémonBreak?: boolean;
       }
       interface LegacyCard {
         readonly name: string;
@@ -336,13 +174,10 @@ export const replayCompoundRefreshTrace = async (
         readonly refreshBoard: () => void;
       };
 
-      for (const candidateZoneId of ['active', 'bench']) {
-        const candidate = getZone('self', candidateZoneId);
-        candidate.array.length = 0;
-        candidate.element.replaceChildren();
-      }
       const zone = getZone('self', zoneId);
       const hand = getZone('self', 'hand');
+      zone.array.length = 0;
+      zone.element.replaceChildren();
       hand.array.length = 0;
       hand.element.replaceChildren();
 
@@ -356,34 +191,39 @@ export const replayCompoundRefreshTrace = async (
         await card.image.decode();
         return card;
       };
-      const frames = () =>
-        new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-        );
+
       const byRole = new Map<string, LegacyCard>();
       const base = await make('base');
       byRole.set('base', base);
       zone.array.push(base);
       initializeActiveBenchCard('self', base, zoneId, zone);
+
+      const frames = () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        );
       await frames();
 
-      const quarterTurns = (image: HTMLImageElement): number => {
+      const quarterTurns = (image: LegacyImage): number => {
         const degrees =
           Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
           0;
         return (((degrees / 90) % 4) + 4) % 4;
       };
+      // Resolved fresh on every use: a reconstruction replaces the wrapper. The
+      // cards live in the self-player iframe, so presence is the correct
+      // structural guard -- a top-window `instanceof HTMLElement` rejects a
+      // valid cross-realm element.
       const container = (): HTMLElement => {
         const element = byRole.get('base')?.image.parentElement;
-        // The cards live in the self-player iframe. A top-window
-        // `instanceof HTMLElement` check rejects valid cross-realm elements,
-        // so presence is the correct structural guard here.
         if (!element) {
           throw new Error('Real-v1 compound card has no play container');
         }
         return element as HTMLElement;
       };
-      const sample = () => {
+      const wrapperCount = () =>
+        zone.element.querySelectorAll(':scope > .play-container').length;
+      const sample = (): ReplayedGeometryPhase => {
         const turns: Record<string, number> = {};
         const flags: Record<string, boolean> = {};
         for (const role of ['base', 'middle', 'top'] as const) {
@@ -399,9 +239,26 @@ export const replayCompoundRefreshTrace = async (
             element.style.marginRight,
             element.style.marginLeft,
           ] as const,
+          stackX: element.getBoundingClientRect().x,
         };
       };
-      const execute = async (operation: string): Promise<void> => {
+
+      let reconstructionCount = 0;
+      let wrapperIdentityChanged = false;
+
+      const reconstruct = async (): Promise<void> => {
+        const before = container();
+        refreshBoard();
+        reconstructionCount += 1;
+        if (container() !== before) wrapperIdentityChanged = true;
+        await frames();
+      };
+
+      /** Runs one operation. Returns whether it produced a phase boundary. */
+      const execute = async (
+        operation: string,
+        previous: string
+      ): Promise<boolean> => {
         const evolve = /^evolve:([a-z]+)->([a-z]+)$/u.exec(operation);
         if (evolve) {
           const [, parentName, childName] = evolve;
@@ -423,7 +280,7 @@ export const replayCompoundRefreshTrace = async (
             false
           );
           await frames();
-          return;
+          return false;
         }
         const rotate = /^rotate:[a-z]+:index=(\d+):single=(true|false):/u.exec(
           operation
@@ -438,566 +295,220 @@ export const replayCompoundRefreshTrace = async (
             false
           );
           await frames();
-          return;
+          return true;
         }
-        if (operation.startsWith('refresh:')) return;
-        throw new Error(`Unreplayable pre-refresh operation: ${operation}`);
+        if (operation.startsWith('refresh:')) {
+          // Only a refresh that is not an evolution's own reset is a real
+          // reconstruction, and only `direct` declines to run it.
+          if (replayMode === 'direct' || previous.startsWith('evolve:')) {
+            return false;
+          }
+          await reconstruct();
+          return true;
+        }
+        if (operation.startsWith('replay-rotate:')) {
+          if (replayMode === 'direct') {
+            throw new Error(`Unreplayable trace operation: ${operation}`);
+          }
+          return false;
+        }
+        throw new Error(`Unreplayable trace operation: ${operation}`);
       };
 
-      const refreshIndex = operations.findLastIndex((operation) =>
-        operation.startsWith('refresh:')
-      );
-      if (refreshIndex < 0) {
-        throw new Error('Refresh fixture trace has no refresh boundary');
-      }
-      for (const operation of operations.slice(0, refreshIndex)) {
-        await execute(operation);
+      const previousOf = (index: number) =>
+        index > 0 ? operations[index - 1]! : '';
+
+      if (replayMode === 'refreshBoundary') {
+        // The trace's last refresh is the behaviour under test, so everything
+        // before it is setup and the reconstruction is measured directly.
+        const refreshIndex = operations.findLastIndex((operation) =>
+          operation.startsWith('refresh:')
+        );
+        if (refreshIndex < 0) {
+          throw new Error('Refresh fixture trace has no refresh boundary');
+        }
+        for (const [index, operation] of operations
+          .slice(0, refreshIndex)
+          .entries()) {
+          await execute(operation, previousOf(index));
+        }
+
+        const originalImages = new Map(
+          [...byRole].map(([role, card]) => [role, card.image])
+        );
+        const oldWrapper = container();
+        const phases = [sample()];
+        refreshBoard();
+        reconstructionCount += 1;
+        const newWrapper = container();
+        phases.push(sample());
+        const synchronousWrapperCount = wrapperCount();
+        const oldWrapperConnectedImmediately = oldWrapper.isConnected;
+        wrapperIdentityChanged = oldWrapper !== newWrapper;
+        const cardNodeIdentityPreserved = [...originalImages].every(
+          ([role, image]) => byRole.get(role)?.image === image
+        );
+        await frames();
+        phases.push(sample());
+
+        return {
+          phases,
+          lifecycle: {
+            synchronousWrapperCount,
+            oldWrapperConnectedImmediately,
+            stableWrapperCount: wrapperCount(),
+            oldWrapperConnectedAfterSettle: oldWrapper.isConnected,
+            wrapperIdentityChanged,
+            cardNodeIdentityPreserved,
+          },
+          logicalRoles: zone.array.map((card) => card.name),
+          domRoles: [...container().querySelectorAll('img')].map((image) => {
+            for (const [role, card] of byRole) {
+              if (card.image === image) return role;
+            }
+            return 'unknown';
+          }),
+          reconstructionCount,
+          wrapperIdentityChanged,
+        };
       }
 
-      const originalImages = new Map(
-        [...byRole].map(([role, card]) => [role, card.image])
-      );
-      const oldWrapper = container();
-      const phases = [sample()];
-      refreshBoard();
-      const newWrapper = container();
-      phases.push(sample());
-      const synchronousWrapperCount = zone.element.querySelectorAll(
-        ':scope > .play-container'
-      ).length;
-      const oldWrapperConnectedImmediately = oldWrapper.isConnected;
-      const wrapperIdentityChanged = oldWrapper !== newWrapper;
-      const cardNodeIdentityPreserved = [...originalImages].every(
-        ([role, image]) => byRole.get(role)?.image === image
-      );
-      await frames();
-      phases.push(sample());
+      const phases: ReplayedGeometryPhase[] = [];
+      // `everyPhase` samples after each executed step, starting from a pristine
+      // sample once the stack is built; the others sample only around the
+      // transition their fixture is named for.
+      const boundary =
+        replayMode === 'everyPhase'
+          ? -1
+          : operations.length - (expectedPhases - 1);
+      let built = false;
+
+      for (const [index, operation] of operations.entries()) {
+        const previous = previousOf(index);
+        if (replayMode !== 'everyPhase' && index === boundary) {
+          phases.push(sample());
+        }
+        if (
+          replayMode === 'everyPhase' &&
+          !built &&
+          !operation.startsWith('evolve:') &&
+          !operation.startsWith('refresh:')
+        ) {
+          // No settling refresh is forced here. `evolveCard` sizes the play
+          // container from `movingCard.image.clientWidth`, which is still 0 for
+          // a freshly inserted image, so the container's width before the
+          // trace's own first reconstruction depends on when layout and v1's
+          // empty-wrapper observer happen to run -- and that timing lands
+          // differently for the active and bench slots. Callers should treat
+          // pre-reconstruction stack x as unsettled; everything from the first
+          // reconstruction on is stable and exact.
+          phases.push(sample());
+          built = true;
+        }
+        const isBoundary = await execute(operation, previous);
+        if (replayMode === 'everyPhase' && isBoundary) {
+          phases.push(sample());
+        }
+      }
+      if (replayMode !== 'everyPhase') phases.push(sample());
 
       return {
         phases,
-        lifecycle: {
-          synchronousWrapperCount,
-          oldWrapperConnectedImmediately,
-          stableWrapperCount: zone.element.querySelectorAll(
-            ':scope > .play-container'
-          ).length,
-          oldWrapperConnectedAfterSettle: oldWrapper.isConnected,
-          wrapperIdentityChanged,
-          cardNodeIdentityPreserved,
-        },
+        lifecycle: null,
+        logicalRoles: zone.array.map((card) => card.name),
+        domRoles: [...container().querySelectorAll('img')].map((image) => {
+          for (const [role, card] of byRole) {
+            if (card.image === image) return role;
+          }
+          return 'unknown';
+        }),
+        reconstructionCount,
+        wrapperIdentityChanged,
       };
     },
-    { zoneId: slot, operations: trace }
+    {
+      zoneId: slot,
+      operations: trace,
+      replayMode: mode,
+      expectedPhases: phaseCount,
+    }
   );
 
 /**
- * Replays a trace whose `refresh:` entries include real board reconstructions
- * partway through, rather than only the implicit reset that evolution performs.
+ * Replays a trace whose `refresh:` entries are only the implicit reset that
+ * evolution performs, sampling around the transition it is named for.
+ */
+export const replayCompoundTrace = async (
+  page: Page,
+  slot: CompoundSlot,
+  trace: readonly string[],
+  phaseCount: number
+): Promise<readonly ReplayedPhase[]> =>
+  (await runCompoundReplay(page, slot, trace, 'direct', phaseCount)).phases;
+
+/**
+ * Replays a trace whose final `refresh:` is the behaviour under test, through
+ * v1's real `refreshBoard`, sampling before it, synchronously after it, and
+ * again once the legacy empty-wrapper observer settles.
+ */
+export const replayCompoundRefreshTrace = async (
+  page: Page,
+  slot: CompoundSlot,
+  trace: readonly string[]
+): Promise<ReplayedRefresh> => {
+  const result = await runCompoundReplay(
+    page,
+    slot,
+    trace,
+    'refreshBoundary',
+    3
+  );
+  if (!result.lifecycle) {
+    throw new Error('Refresh replay returned no reconstruction evidence');
+  }
+  return { phases: result.phases, lifecycle: result.lifecycle };
+};
+
+/**
+ * Replays a trace that reconstructs the board partway through and then carries
+ * on, sampling around the transition it is named for.
  *
- * Across every checked-in compound trace a `refresh:` that immediately follows
- * an `evolve:` is that implicit reset, and any other `refresh:` is a genuine
- * `refreshBoard` reconstruction. This executes the latter for real and skips
- * the `replay-rotate:` records that follow one, because those describe
- * rotations `refreshBoard` reapplies by itself; replaying them by hand would
- * rotate the stack twice.
- *
- * Note what the resulting phase samples can and cannot show. A
- * rotate/refresh/replay-rotate run is state-neutral by construction, so the
- * samples alone would look identical if `refreshBoard` did nothing at all.
- * The reconstruction evidence returned alongside them is what makes the call
- * load-bearing, and callers should assert it.
+ * Note what those samples can and cannot show. A rotate/refresh/replay-rotate
+ * run is state-neutral by construction, so they would look identical if
+ * `refreshBoard` did nothing at all. The reconstruction evidence returned
+ * alongside them is what makes the call load-bearing, and callers should
+ * assert it.
  */
 export const replayCompoundReconstructTrace = async (
   page: Page,
   slot: CompoundSlot,
   trace: readonly string[],
   phaseCount: number
-): Promise<ReplayedReconstruct> =>
-  page.evaluate(
-    async ({ zoneId, operations, phases }) => {
-      const load = (specifier: string): Promise<Record<string, never>> =>
-        import(/* @vite-ignore */ specifier);
-      const [
-        cardModule,
-        placementModule,
-        zoneModule,
-        bundleModule,
-        rotateModule,
-        refreshModule,
-      ] = await Promise.all([
-        load('/src/setup/deck-constructor/card.js'),
-        load('/src/actions/move-card-bundle/initialize-active-bench-card.js'),
-        load('/src/setup/zones/get-zone.js'),
-        load('/src/actions/move-card-bundle/move-card-bundle.js'),
-        load('/src/actions/general/rotate-card.js'),
-        load('/src/setup/sizing/refresh-board.js'),
-      ]);
-
-      interface LegacyCard {
-        readonly name: string;
-        readonly image: HTMLImageElement;
-      }
-      interface LegacyZone {
-        readonly element: HTMLElement;
-        readonly array: LegacyCard[];
-      }
-      const Card = (
-        cardModule as unknown as {
-          readonly Card: new (
-            user: string,
-            name: string,
-            type: string,
-            imageUrl: string
-          ) => LegacyCard;
-        }
-      ).Card;
-      const { initializeActiveBenchCard } = placementModule as unknown as {
-        readonly initializeActiveBenchCard: (
-          user: string,
-          card: LegacyCard,
-          zoneId: string,
-          zone: LegacyZone
-        ) => void;
-      };
-      const { getZone } = zoneModule as unknown as {
-        readonly getZone: (user: string, zoneId: string) => LegacyZone;
-      };
-      const { moveCardBundle } = bundleModule as unknown as {
-        readonly moveCardBundle: (
-          user: string,
-          initiator: string,
-          oZoneId: string,
-          dZoneId: string,
-          index: number,
-          targetIndex: number,
-          action: string,
-          emit?: boolean
-        ) => void;
-      };
-      const { rotateCard } = rotateModule as unknown as {
-        readonly rotateCard: (
-          user: string,
-          zoneId: string,
-          index: number,
-          single?: boolean,
-          emit?: boolean
-        ) => void;
-      };
-      const { refreshBoard } = refreshModule as unknown as {
-        readonly refreshBoard: () => void;
-      };
-
-      const zone = getZone('self', zoneId);
-      const hand = getZone('self', 'hand');
-      zone.array.length = 0;
-      zone.element.replaceChildren();
-      hand.array.length = 0;
-      hand.element.replaceChildren();
-
-      const make = async (name: string): Promise<LegacyCard> => {
-        const card = new Card(
-          'self',
-          name,
-          'Pokémon',
-          `${location.origin}/src/assets/cardback.png`
-        );
-        await card.image.decode();
-        return card;
-      };
-
-      const byRole = new Map<string, LegacyCard>();
-      const base = await make('base');
-      byRole.set('base', base);
-      zone.array.push(base);
-      initializeActiveBenchCard('self', base, zoneId, zone);
-
-      const frames = () =>
-        new Promise((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(resolve))
-        );
-      await frames();
-
-      const quarterTurns = (image: HTMLImageElement): number => {
-        const degrees =
-          Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
-          0;
-        return (((degrees / 90) % 4) + 4) % 4;
-      };
-      // The reconstruction replaces the wrapper, so the container is resolved
-      // fresh from a live card rather than cached across the replay. The cards
-      // live in the self-player iframe, so presence is the correct structural
-      // guard -- a top-window `instanceof HTMLElement` rejects valid
-      // cross-realm elements.
-      const container = (): HTMLElement => {
-        const element = byRole.get('base')?.image.parentElement;
-        if (!element) {
-          throw new Error('Real-v1 compound card has no play container');
-        }
-        return element as HTMLElement;
-      };
-      const sample = () => {
-        const turns = {} as Record<string, number>;
-        const flags = {} as Record<string, boolean>;
-        for (const role of ['base', 'middle', 'top'] as const) {
-          const card = byRole.get(role);
-          turns[role] = card ? quarterTurns(card.image) : 0;
-          flags[role] = Boolean(
-            card &&
-            (card.image as unknown as { PokémonBreak?: boolean })[
-              'PokémonBreak'
-            ]
-          );
-        }
-        const element = container();
-        return {
-          quarterTurns: turns,
-          breakFlags: flags,
-          inlineMargins: [
-            element.style.marginRight,
-            element.style.marginLeft,
-          ] as const,
-        };
-      };
-
-      const boundary = operations.length - (phases - 1);
-      const samples: ReturnType<typeof sample>[] = [];
-      let reconstructionCount = 0;
-      let wrapperIdentityChanged = false;
-
-      for (const [index, operation] of operations.entries()) {
-        if (index === boundary) samples.push(sample());
-        const previous = index > 0 ? operations[index - 1]! : '';
-
-        const evolve = /^evolve:([a-z]+)->([a-z]+)$/u.exec(operation);
-        if (evolve) {
-          const [, parentName, childName] = evolve;
-          const child = await make(childName!);
-          byRole.set(childName!, child);
-          hand.array.push(child);
-          hand.element.append(child.image);
-          const targetIndex = zone.array.findIndex(
-            (card) => card.name === parentName
-          );
-          moveCardBundle(
-            'self',
-            'self',
-            'hand',
-            zoneId,
-            hand.array.length - 1,
-            targetIndex,
-            'evolve',
-            false
-          );
-          await frames();
-          continue;
-        }
-        const rotate = /^rotate:[a-z]+:index=(\d+):single=(true|false):/u.exec(
-          operation
-        );
-        if (rotate) {
-          const [, rotateIndex, single] = rotate;
-          rotateCard(
-            'self',
-            zoneId,
-            Number.parseInt(rotateIndex!, 10),
-            single === 'true',
-            false
-          );
-          await frames();
-          continue;
-        }
-        if (operation.startsWith('refresh:')) {
-          // Only a refresh that is not an evolution's implicit reset is a real
-          // reconstruction.
-          if (!previous.startsWith('evolve:')) {
-            const wrapperBefore = container();
-            refreshBoard();
-            reconstructionCount += 1;
-            if (container() !== wrapperBefore) wrapperIdentityChanged = true;
-            await frames();
-          }
-          continue;
-        }
-        // Reproduced by the reconstruction itself, never replayed by hand.
-        if (operation.startsWith('replay-rotate:')) continue;
-        throw new Error(`Unreplayable trace operation: ${operation}`);
-      }
-      samples.push(sample());
-      return { phases: samples, reconstructionCount, wrapperIdentityChanged };
-    },
-    { zoneId: slot, operations: trace, phases: phaseCount }
+): Promise<ReplayedReconstruct> => {
+  const result = await runCompoundReplay(
+    page,
+    slot,
+    trace,
+    'reconstruct',
+    phaseCount
   );
-
-export interface ReplayedGeometryPhase extends ReplayedPhase {
-  /** Frame-local x of the play container, as the fixtures record it. */
-  readonly stackX: number;
-}
-
-export interface ReplayedPhaseTrace {
-  readonly phases: readonly ReplayedGeometryPhase[];
-  /** `zone.array` order, which is what v1 indexes rotations by. */
-  readonly logicalRoles: readonly string[];
-  /** Child order inside the play container. */
-  readonly domRoles: readonly string[];
-  readonly reconstructionCount: number;
-  readonly wrapperIdentityChanged: boolean;
-}
+  return {
+    phases: result.phases,
+    reconstructionCount: result.reconstructionCount,
+    wrapperIdentityChanged: result.wrapperIdentityChanged,
+  };
+};
 
 /**
- * Replays a trace capturing a sample at every phase boundary rather than only
- * around one transition.
- *
- * Fixtures that record a whole rotation cycle name one phase per executed step:
- * a pristine sample after the stack is built, then one after each rotation and
- * each real reconstruction. `replay-rotate:` produces no phase because it is
- * reapplied by the reconstruction rather than executed.
+ * Replays a trace that records one named phase per executed step, sampling at
+ * every one of them and reporting the stack topology alongside.
  */
 export const replayCompoundPhaseTrace = async (
   page: Page,
   slot: CompoundSlot,
   trace: readonly string[]
 ): Promise<ReplayedPhaseTrace> =>
-  page.evaluate(
-    async ({ zoneId, operations }) => {
-      const load = (specifier: string): Promise<Record<string, never>> =>
-        import(/* @vite-ignore */ specifier);
-      const [
-        cardModule,
-        zoneModule,
-        bundleModule,
-        rotateModule,
-        refreshModule,
-      ] = await Promise.all([
-        load('/src/setup/deck-constructor/card.js'),
-        load('/src/setup/zones/get-zone.js'),
-        load('/src/actions/move-card-bundle/move-card-bundle.js'),
-        load('/src/actions/general/rotate-card.js'),
-        load('/src/setup/sizing/refresh-board.js'),
-      ]);
-
-      interface LegacyCard {
-        readonly name: string;
-        readonly image: HTMLImageElement;
-      }
-      interface LegacyZone {
-        readonly element: HTMLElement;
-        readonly array: LegacyCard[];
-      }
-      const Card = (
-        cardModule as unknown as {
-          readonly Card: new (
-            user: string,
-            name: string,
-            type: string,
-            imageUrl: string
-          ) => LegacyCard;
-        }
-      ).Card;
-      const { getZone } = zoneModule as unknown as {
-        readonly getZone: (user: string, zoneId: string) => LegacyZone;
-      };
-      const { moveCardBundle } = bundleModule as unknown as {
-        readonly moveCardBundle: (
-          user: string,
-          initiator: string,
-          oZoneId: string,
-          dZoneId: string,
-          index: number,
-          targetIndex: number,
-          action: string,
-          emit?: boolean
-        ) => void;
-      };
-      const { rotateCard } = rotateModule as unknown as {
-        readonly rotateCard: (
-          user: string,
-          zoneId: string,
-          index: number,
-          single?: boolean,
-          emit?: boolean
-        ) => void;
-      };
-      const { refreshBoard } = refreshModule as unknown as {
-        readonly refreshBoard: () => void;
-      };
-
-      const zone = getZone('self', zoneId);
-      const hand = getZone('self', 'hand');
-      zone.array.length = 0;
-      zone.element.replaceChildren();
-      hand.array.length = 0;
-      hand.element.replaceChildren();
-
-      const make = async (name: string): Promise<LegacyCard> => {
-        const card = new Card(
-          'self',
-          name,
-          'Pokémon',
-          `${location.origin}/src/assets/cardback.png`
-        );
-        await card.image.decode();
-        return card;
-      };
-
-      const byRole = new Map<string, LegacyCard>();
-      const base = await make('base');
-      byRole.set('base', base);
-      // Placed through the same real path a player uses, rather than by
-      // calling initializeActiveBenchCard directly. moveCardBundle runs a
-      // refreshBoard of its own afterwards, and skipping it leaves the play
-      // container half a card width off where v1 actually settles.
-      hand.array.push(base);
-      hand.element.append(base.image);
-      moveCardBundle('self', 'self', 'hand', zoneId, 0, -1, 'play', false);
-
-      const frames = () =>
-        new Promise((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(resolve))
-        );
-      await frames();
-
-      const quarterTurns = (image: HTMLImageElement): number => {
-        const degrees =
-          Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
-          0;
-        return (((degrees / 90) % 4) + 4) % 4;
-      };
-      // Resolved fresh every time: a reconstruction replaces the wrapper. The
-      // cards live in the self-player iframe, so presence is the correct
-      // structural guard rather than a top-window `instanceof`.
-      const container = (): HTMLElement => {
-        const element = byRole.get('base')?.image.parentElement;
-        if (!element) {
-          throw new Error('Real-v1 compound card has no play container');
-        }
-        return element as HTMLElement;
-      };
-      const roleOf = (image: Element): string => {
-        for (const [role, card] of byRole) {
-          if (card.image === image) return role;
-        }
-        return 'unknown';
-      };
-      const sample = (): {
-        quarterTurns: Record<string, number>;
-        breakFlags: Record<string, boolean>;
-        inlineMargins: readonly [string, string];
-        stackX: number;
-      } => {
-        const turns = {} as Record<string, number>;
-        const flags = {} as Record<string, boolean>;
-        for (const role of ['base', 'middle', 'top'] as const) {
-          const card = byRole.get(role);
-          turns[role] = card ? quarterTurns(card.image) : 0;
-          flags[role] = Boolean(
-            card &&
-            (card.image as unknown as { PokémonBreak?: boolean })[
-              'PokémonBreak'
-            ]
-          );
-        }
-        const element = container();
-        return {
-          quarterTurns: turns,
-          breakFlags: flags,
-          inlineMargins: [
-            element.style.marginRight,
-            element.style.marginLeft,
-          ] as const,
-          stackX: element.getBoundingClientRect().x,
-        };
-      };
-
-      const phases: ReturnType<typeof sample>[] = [];
-      let reconstructionCount = 0;
-      let wrapperIdentityChanged = false;
-      let built = false;
-
-      for (const [index, operation] of operations.entries()) {
-        const previous = index > 0 ? operations[index - 1]! : '';
-
-        const evolve = /^evolve:([a-z]+)->([a-z]+)$/u.exec(operation);
-        if (evolve) {
-          const [, parentName, childName] = evolve;
-          const child = await make(childName!);
-          byRole.set(childName!, child);
-          hand.array.push(child);
-          hand.element.append(child.image);
-          const targetIndex = zone.array.findIndex(
-            (card) => card.name === parentName
-          );
-          moveCardBundle(
-            'self',
-            'self',
-            'hand',
-            zoneId,
-            hand.array.length - 1,
-            targetIndex,
-            'evolve',
-            false
-          );
-          await frames();
-          continue;
-        }
-        // The pristine sample belongs after the stack is fully built, which is
-        // the first operation that is neither an evolution nor its reset.
-        //
-        // No settling refresh is forced here. `evolveCard` sizes the play
-        // container from `movingCard.image.clientWidth`, which is still 0 for a
-        // freshly inserted image, so the container's width before the trace's
-        // own first reconstruction depends on when layout and v1's
-        // empty-wrapper observer happen to run -- and that timing lands
-        // differently for the active and bench slots. Callers should treat
-        // pre-reconstruction stack x as unsettled; everything from the first
-        // reconstruction on is stable and exact.
-        if (!built && !operation.startsWith('refresh:')) {
-          phases.push(sample());
-          built = true;
-        }
-
-        const rotate = /^rotate:[a-z]+:index=(\d+):single=(true|false):/u.exec(
-          operation
-        );
-        if (rotate) {
-          const [, rotateIndex, single] = rotate;
-          rotateCard(
-            'self',
-            zoneId,
-            Number.parseInt(rotateIndex!, 10),
-            single === 'true',
-            false
-          );
-          await frames();
-          phases.push(sample());
-          continue;
-        }
-        if (operation.startsWith('refresh:')) {
-          if (!previous.startsWith('evolve:')) {
-            const wrapperBefore = container();
-            refreshBoard();
-            reconstructionCount += 1;
-            if (container() !== wrapperBefore) wrapperIdentityChanged = true;
-            await frames();
-            phases.push(sample());
-          }
-          continue;
-        }
-        if (operation.startsWith('replay-rotate:')) continue;
-        throw new Error(`Unreplayable trace operation: ${operation}`);
-      }
-
-      return {
-        phases,
-        logicalRoles: zone.array.map((card) => card.name),
-        domRoles: [...container().querySelectorAll('img')].map((image) =>
-          roleOf(image)
-        ),
-        reconstructionCount,
-        wrapperIdentityChanged,
-      };
-    },
-    { zoneId: slot, operations: trace }
-  );
+  runCompoundReplay(page, slot, trace, 'everyPhase', 0);
 
 /** Opens one real-v1 page for a whole fixture's worth of replays. */
 export const withLegacyRuntimePage = async <Value>(
