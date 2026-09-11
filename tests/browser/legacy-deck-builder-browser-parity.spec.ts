@@ -98,6 +98,7 @@ interface SurfaceCapture {
         readonly tag: string;
         readonly text: string;
         readonly placeholder: string | null;
+        readonly textareaFontFamily: string | null;
       }
     >
   >;
@@ -160,6 +161,7 @@ const collectSurface = (page: Page): Promise<SurfaceCapture> =>
           tag: string;
           text: string;
           placeholder: string | null;
+          textareaFontFamily: string | null;
         }
       > = {};
       for (const id of controlIds) {
@@ -179,6 +181,10 @@ const collectSurface = (page: Page): Promise<SurfaceCapture> =>
               ?.split('\n')
               .map((line) => line.trimEnd())
               .join('\n') ?? null,
+          textareaFontFamily:
+            element instanceof HTMLTextAreaElement
+              ? getComputedStyle(element).fontFamily
+              : null,
         };
       }
       const geometry: Record<

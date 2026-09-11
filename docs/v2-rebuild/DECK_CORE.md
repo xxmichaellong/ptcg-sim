@@ -447,10 +447,13 @@ label, select options, and placeholder; checks 12 panel/workspace landmarks
 within two CSS pixels; and applies a bidirectional foreground-paint comparison
 to main, alternate, and dark-alternate states. The paint ceiling is 0.5% in
 each direction with three-pixel spatial and 24-channel color tolerance. This
-gate found and corrected two source-parity gaps before route activation: CSS
+gate found and corrected three source-parity gaps before route activation: CSS
 percentage padding had been resolved against the new sidebar instead of the
 source viewport containing block, and one source inline whitespace node between
-the card-back and language controls had been omitted.
+the card-back and language controls had been omitted. The hosted Linux browser
+also exposed that the candidate's textarea was missing the v1 form-control font
+rule and therefore fell back to the user-agent monospace face; the component now
+pins the same `Segoe UI` fallback stack as the source.
 
 Two additional browser workflows exercise behavior that screenshots cannot:
 

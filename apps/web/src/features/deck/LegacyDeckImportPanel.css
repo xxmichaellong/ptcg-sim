@@ -68,6 +68,7 @@
   padding: 2vh;
   border-radius: 5px 5px 10px 10px;
   outline: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 1.75vh;
   resize: none;
 }
