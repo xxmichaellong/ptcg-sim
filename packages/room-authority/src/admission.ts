@@ -393,7 +393,8 @@ const projectAdmissionViews = (
       snapshot.state,
       projectionSession.viewer,
       identities,
-      dependencies.opaqueIds
+      dependencies.opaqueIds,
+      snapshot.mode
     );
     identities = projected.identities;
     if (projectionSession.id === admittedSessionId) {

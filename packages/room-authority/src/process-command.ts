@@ -248,7 +248,8 @@ const projectForSessions = (
       snapshot.state,
       session.viewer,
       identities,
-      dependencies.opaqueIds
+      dependencies.opaqueIds,
+      snapshot.mode
     );
     identities = projected.identities;
     deliveries.push({
@@ -340,7 +341,8 @@ export const processAuthorityCommand = async (
           current.state,
           session.viewer,
           current.identities,
-          dependencies.opaqueIds
+          dependencies.opaqueIds,
+          current.mode
         )
       );
       replayDeliveries.push({

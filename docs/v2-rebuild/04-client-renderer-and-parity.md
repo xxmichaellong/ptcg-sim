@@ -1642,9 +1642,12 @@ background URLs remain behind ADR-013.
 The follow-on source-shape slice restores the existing Solo-only hide-hand
 checkbox plus the static keybind reminder and contact block. It was introduced
 while the route was multiplayer-only and retains its local checked state across
-the same lobby/room/replay lifetime. The later opt-in Solo selector does not yet
-make it transform the server-projected opponent hand; it sends no command and
-never enters `BoardPreferences`.
+the same lobby/room/replay lifetime. The live Solo authority now exposes the
+opposing hand to its sole player, and this checkbox derives a transient covered
+view using the opponent's public card back while retaining the same opaque card
+aliases. Unchecked restores the authority-projected faces. The transform is
+live-Solo-only, sends no command, never enters `BoardPreferences`, and is not
+applied to multiplayer, spectator, or replay views.
 The contact link retains its source URL while its exact source Twitter SVG is
 inlined, eliminating the former third-party image fetch.
 The final Settings slice implements accepted ADR-013 for the source Change
@@ -1796,7 +1799,13 @@ whether a specific session has already received its clean values: a new room is
 prepared and reinstalled, while a parked-room remount flushes only edits made
 while it was offscreen. The renderer likewise recognizes a complete decoded
 native image on fresh mount, preventing cached card backs from remaining hidden
-after the route returns. The default v2 renderer route and frozen v1 client are
+after the route returns. The authority now projects the opposing hand as known
+only to this persisted Solo player, using the card's concealment-generation
+opaque alias and a viewer-scoped definition alias. The existing hide-hand
+checkbox locally swaps those faces to the public opponent back without changing
+the alias or revision, then restores them in place; moving one of those cards is
+resolved against the persisted Solo mode. Spectators and multiplayer recipients
+remain concealed. The default v2 renderer route and frozen v1 client are
 unchanged.
 
 ## Accessibility preservation and minimum improvement

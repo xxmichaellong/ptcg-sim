@@ -214,6 +214,96 @@ const loadDeck = (sessionId = 'session-player-one'): CommandEnvelope =>
   });
 
 describe('authoritative room command transaction', () => {
+  it('publishes and resolves the opposing hand only for the Solo controller', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const entries = Array.from({ length: 14 }, (_, index) => ({
+      definition: {
+        id: `solo-opponent-definition-${index}`,
+        name: `Solo opponent card ${index}`,
+        category: 'Trainer' as const,
+        imageUrl: `https://solo-cards.example/${index}.png`,
+      },
+      count: 1,
+    }));
+    const loaded = await processAuthorityCommand(
+      createSoloSnapshot(),
+      command('session-player-one', 1, 'load-solo-opponent', {
+        type: 'LoadDeck',
+        targetPlayerId: p2,
+        entries,
+      }),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-solo-opponent',
+        { type: 'SetupPlayer', targetPlayerId: p2 },
+        loaded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const playerPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    const spectatorPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-spectator' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (
+      playerPublication?.type !== 'StatePublication' ||
+      spectatorPublication?.type !== 'StatePublication'
+    ) {
+      throw new Error('Solo setup omitted a recipient publication');
+    }
+    const handId = playerZoneId(p2, 'hand');
+    const playerHand = playerPublication.snapshot.zones[handId]!.cards;
+    const spectatorHand = spectatorPublication.snapshot.zones[handId]!.cards;
+    expect(playerHand).toHaveLength(7);
+    expect(
+      playerHand.every(
+        (card) =>
+          card.kind === 'known' && card.face === 'up' && !card.publiclyRevealed
+      )
+    ).toBe(true);
+    expect(spectatorHand.every((card) => card.kind === 'concealed')).toBe(true);
+    expect(
+      Object.keys(playerPublication.snapshot.definitions).some((id) =>
+        id.startsWith('solo-opponent-definition-')
+      )
+    ).toBe(false);
+
+    const moved = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'move-solo-opponent-hand',
+        {
+          type: 'MoveCard',
+          cardId: playerHand[0]!.id,
+          expectedSourceZoneId: handId,
+          destinationZoneId: playerZoneId(p2, 'discard'),
+        },
+        setup.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(moved.committed).toBe(true);
+    expect(
+      moved.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: true });
+    expect(moved.snapshot.state.zones[handId]!.cardIds).toHaveLength(6);
+  });
+
   it('commits the event, new state, frontier, and outcome before ordered delivery', async () => {
     const persistence = createPersistence();
     const current = createSnapshot();

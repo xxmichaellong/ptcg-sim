@@ -1,6 +1,7 @@
 import {
   asViewCardId,
   asViewDefinitionId,
+  findCardLocation,
   isCardKnownToViewer,
   projectMatch,
   type CardDefinitionId,
@@ -33,6 +34,9 @@ export interface ProjectionIdentityState {
 export interface OpaqueIdSource {
   readonly nextOpaqueId: (kind: 'card' | 'definition') => string;
 }
+
+/** Persisted authority mode, supplied only by the room boundary. */
+type RecipientProjectionMode = 'solo' | 'multiplayer';
 
 export const emptyProjectionIdentityState = (): ProjectionIdentityState => ({
   cardAliases: [],
@@ -77,7 +81,8 @@ export const projectRecipient = (
   state: MatchState,
   viewer: ViewerRole,
   identities: ProjectionIdentityState,
-  source: OpaqueIdSource
+  source: OpaqueIdSource,
+  mode: RecipientProjectionMode = 'multiplayer'
 ): ProjectedRecipient => {
   const viewerKey = viewerIdentityKey(viewer);
   const cardByKey = new Map(
@@ -138,7 +143,83 @@ export const projectRecipient = (
     },
   };
 
-  const snapshot = projectMatch(state, viewer, adapter);
+  const ordinarySnapshot = projectMatch(state, viewer, adapter);
+  // Solo is backed by a persisted one-player admission ceiling. That sole
+  // player controls both source boards, so expose the opposing hand through
+  // the player's existing concealment-generation aliases. Multiplayer and
+  // spectators retain the ordinary least-privileged projection.
+  const snapshot =
+    mode === 'solo' && viewer.kind === 'player'
+      ? (() => {
+          let changed = false;
+          const definitions = { ...ordinarySnapshot.definitions };
+          const zones = Object.fromEntries(
+            Object.entries(ordinarySnapshot.zones).map(([zoneId, zone]) => {
+              if (zone.kind !== 'hand' || zone.ownerId === viewer.playerId) {
+                return [zoneId, zone];
+              }
+              const canonicalZone = state.zones[zoneId];
+              if (
+                !canonicalZone ||
+                canonicalZone.kind !== 'hand' ||
+                canonicalZone.ownerId !== zone.ownerId ||
+                canonicalZone.cardIds.length !== zone.cards.length
+              ) {
+                throw new Error(
+                  'Solo opponent-hand disclosure diverged from canonical state'
+                );
+              }
+              let zoneChanged = false;
+              const cards = zone.cards.map((projectedCard, index) => {
+                if (projectedCard.kind === 'known') return projectedCard;
+                const card = state.cards[canonicalZone.cardIds[index]!];
+                const definition = card
+                  ? state.definitions[card.definitionId]
+                  : undefined;
+                if (!card || !definition || card.ownerId !== zone.ownerId) {
+                  throw new Error(
+                    'Solo opponent-hand card diverged from canonical state'
+                  );
+                }
+                const definitionId = adapter.viewDefinitionId({
+                  viewerKey,
+                  definitionId: definition.id,
+                });
+                if (!definitions[definitionId]) {
+                  definitions[definitionId] = {
+                    id: definitionId,
+                    name: definition.name,
+                    category: definition.category,
+                    imageUrl: definition.imageUrl,
+                    ...(definition.imageUrlSmall
+                      ? { imageUrlSmall: definition.imageUrlSmall }
+                      : {}),
+                  };
+                }
+                changed = true;
+                zoneChanged = true;
+                return {
+                  kind: 'known' as const,
+                  id: projectedCard.id,
+                  definitionId,
+                  ownerId: card.ownerId,
+                  category: card.currentCategory,
+                  face: 'up' as const,
+                  orientationQuarterTurns: card.orientationQuarterTurns,
+                  abilityUsed: card.abilityUsed,
+                  publiclyRevealed: false as const,
+                };
+              });
+              return zoneChanged
+                ? [zoneId, { ...zone, cards }]
+                : [zoneId, zone];
+            })
+          );
+          return changed
+            ? { ...ordinarySnapshot, definitions, zones }
+            : ordinarySnapshot;
+        })()
+      : ordinarySnapshot;
   return {
     snapshot,
     identities: {
@@ -160,7 +241,8 @@ export const resolveViewCard = (
   state: MatchState,
   identities: ProjectionIdentityState,
   viewer: ViewerRole,
-  alias: string
+  alias: string,
+  mode: RecipientProjectionMode = 'multiplayer'
 ): CardAlias | undefined => {
   const viewerKey = viewerIdentityKey(viewer);
   const entry = identities.cardAliases.find(
@@ -175,5 +257,11 @@ export const resolveViewCard = (
   ) {
     return undefined;
   }
-  return entry;
+  if (mode !== 'solo' || viewer.kind !== 'player' || entry.known) return entry;
+  const location = findCardLocation(state, card.id);
+  if (location?.kind !== 'zone') return entry;
+  const zone = state.zones[location.zoneId];
+  return zone?.kind === 'hand' && zone.ownerId !== viewer.playerId
+    ? { ...entry, known: true }
+    : entry;
 };

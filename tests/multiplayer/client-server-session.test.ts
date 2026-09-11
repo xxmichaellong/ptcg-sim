@@ -3858,6 +3858,129 @@ describe('client/server multiplayer contract', () => {
     expect(room.store.commandCommits).toHaveLength(4);
   });
 
+  it('discloses and controls the opponent hand only for the admitted solo player', async () => {
+    const room = await fixture('solo');
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Solo',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    const playerView = player.session.getSnapshot().view;
+    const opponentId = playerView?.playerOrder.find((id) => id !== playerId);
+    if (!playerId || !playerView || !opponentId) {
+      throw new Error('Missing solo player identities');
+    }
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        targetPlayerId: opponentId,
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `solo-opponent-definition-${index}`,
+            name: `Visible opponent card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/visible-opponent-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(
+      player.session.submit({
+        type: 'SetupPlayer',
+        targetPlayerId: opponentId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const disclosedView = player.session.getSnapshot().view;
+    const disclosedHand = Object.values(disclosedView?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'hand'
+    );
+    expect(disclosedView?.revision).toBe(2);
+    expect(disclosedHand?.cards).toHaveLength(7);
+    expect(disclosedHand?.cards.every((card) => card.kind === 'known')).toBe(
+      true
+    );
+
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const spectatorBefore = spectator.session.getSnapshot().view;
+    const concealedHand = Object.values(spectatorBefore?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'hand'
+    );
+    expect(spectatorBefore?.revision).toBe(2);
+    expect(concealedHand?.cards).toHaveLength(7);
+    expect(
+      concealedHand?.cards.every((card) => card.kind === 'concealed')
+    ).toBe(true);
+    expect(JSON.stringify(spectatorBefore)).not.toContain(
+      'Visible opponent card'
+    );
+    expect(JSON.stringify(spectatorBefore)).not.toContain(
+      '/visible-opponent-card-'
+    );
+
+    const disclosedCard = disclosedHand?.cards[0];
+    if (!disclosedHand || disclosedCard?.kind !== 'known') {
+      throw new Error('Solo opponent card was not disclosed');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCard',
+        cardId: disclosedCard.id,
+        expectedSourceZoneId: disclosedHand.id,
+        destinationZoneId: `zone:${opponentId}:discard`,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const playerAfter = player.session.getSnapshot();
+    const spectatorAfter = spectator.session.getSnapshot().view;
+    const publicDiscard = spectatorAfter?.zones[`zone:${opponentId}:discard`];
+    expect(playerAfter).toMatchObject({
+      view: { revision: 3 },
+      pendingCommands: [],
+    });
+    expect(playerAfter.completedCommands.at(-1)).toMatchObject({
+      accepted: true,
+      revision: 3,
+    });
+    expect(publicDiscard?.cards).toHaveLength(1);
+    const publicCard = publicDiscard?.cards[0];
+    if (publicCard?.kind !== 'known') {
+      throw new Error('Moved opponent card was not published publicly');
+    }
+    expect(spectatorAfter?.definitions[publicCard.definitionId]?.name).toMatch(
+      /^Visible opponent card /
+    );
+    expect(room.store.commandCommits).toHaveLength(3);
+
+    const canonicalState = room.store.snapshot?.state;
+    if (!canonicalState) throw new Error('Missing solo canonical state');
+    const serializedPlayerView = JSON.stringify(playerAfter.view);
+    for (const privateId of [
+      ...Object.keys(canonicalState.cards),
+      ...Object.keys(canonicalState.definitions),
+    ]) {
+      expect(serializedPlayerView).not.toContain(privateId);
+    }
+
+    player.session.disconnect();
+    spectator.session.disconnect();
+    await Promise.all([player.factory.flush(), spectator.factory.flush()]);
+  });
+
   it('publishes admitted player metadata to an existing peer without a game revision', async () => {
     const room = await fixture();
     const spectatorCapability = room.credentials.spectatorCapability;

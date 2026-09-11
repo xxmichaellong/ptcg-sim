@@ -143,10 +143,12 @@ the relevant product decisions and phase exit criteria.
   checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
   paint while preserving stable nodes, geometry, accessibility, and input. The
   source Solo-only hide-hand checkbox and static keybind/contact block are also
-  restored; it remains local and cannot yet transform the server-projected view
-  even after the opt-in Solo selector, and the source Twitter mark is inlined to
-  remove its third-party fetch. Safe live-Solo opponent-hand disclosure remains
-  a later parity slice. The final Change background control preserves the source
+  restored. The persisted one-player Solo authority now discloses the opposing
+  hand only to its player through opaque aliases, while spectators and every
+  multiplayer projection remain concealed. The checkbox covers or uncovers those
+  cards only in the live Solo display, preserves their stable interaction IDs,
+  and emits no command. The source Twitter mark is inlined to remove its
+  third-party fetch. The final Change background control preserves the source
   prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
   URLs under accepted ADR-013. Images preload before the
   route background changes and remain page-local across lobby/live/replay/Leave;

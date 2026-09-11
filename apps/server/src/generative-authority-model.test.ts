@@ -490,7 +490,8 @@ const assertSnapshotProofAndReplay = (result: AuthorityProcessResult): void => {
         nextOpaqueId: () => {
           throw new Error('Publication omitted a required recipient alias');
         },
-      }
+      },
+      result.snapshot.mode
     ).snapshot;
     expect(stableSerialize(delivered)).toBe(
       stableSerialize(independentlyProjected)
@@ -561,7 +562,8 @@ const bootstrapHarness = async (
       harness.coordinator.currentSnapshot().state,
       { kind: 'player', playerId },
       emptyProjectionIdentityState(),
-      harness.authoritySource
+      harness.authoritySource,
+      harness.coordinator.currentSnapshot().mode
     ).snapshot;
     const load = MODEL_COMMAND_GENERATORS.LoadDeck({
       view,
@@ -1039,7 +1041,8 @@ const reconstructHarness = async (harness: ModelHarness): Promise<void> => {
       restored.currentSnapshot().state,
       session.viewer,
       identities,
-      noNewAliases
+      noNewAliases,
+      restored.currentSnapshot().mode
     );
     identities = projected.identities;
     expect(stableSerialize(projected.snapshot)).toBe(

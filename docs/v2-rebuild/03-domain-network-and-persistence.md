@@ -666,6 +666,17 @@ also revalidate the sending generation, phase, session, and command head before
 scheduling reconnect, so the close handler remains the sole owner of that
 recovery attempt.
 
+The live recipient projection also uses the persisted mode boundary. Only a
+player in a `mode: "solo"` authority receives the opposing hand as known cards;
+multiplayer recipients and spectators retain the ordinary concealed projection.
+The disclosure reuses each card's concealment-generation opaque alias and adds
+only viewer-scoped definition aliases, so the canonical card and definition IDs
+remain private and moving a hand card into a public zone still rotates to its
+ordinary known alias. Command resolution promotes that alias to controllable
+only when the same persisted Solo mode is supplied by the authority. The
+permission is never inferred from connection count, a client field, or the
+local hide-hand preference.
+
 Solo player replay may additionally carry an optional replay-local disclosure
 catalog on `ReplayStarted` and an alias-keyed disclosure record on every
 `ReplayFrame`. This is not canonical state and is never merged into the

@@ -223,6 +223,8 @@ export const RemoteRoomRoute = ({
                 onIntent={onIntent}
                 {...(onSubmission ? { onSubmission } : {})}
                 {...(preferences ? { preferences } : {})}
+                roomMode={roomMode}
+                hideOpponentHand={hideOpponentHand}
               />
             </section>
             <aside className="legacy-sidebar legacy-room-sidebar">

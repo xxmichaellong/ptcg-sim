@@ -4,7 +4,7 @@ import {
 } from '@ptcgsim/client-session';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import type { BoardIntent, BoardPreferences } from '@ptcgsim/renderer-contract';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   RendererSpikeBoard,
@@ -12,6 +12,7 @@ import {
 } from '../RendererSpikeBoard.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
 import { useReplaySession } from '../replay/useReplaySession.js';
+import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
 
 export type ReplayBlockedSubmissionResult = {
   readonly queued: false;
@@ -30,6 +31,8 @@ export const RemoteSessionBoard = ({
   onIntent,
   onSubmission,
   preferences,
+  roomMode = 'multiplayer',
+  hideOpponentHand = false,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -40,8 +43,17 @@ export const RemoteSessionBoard = ({
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly preferences?: BoardPreferences;
+  readonly roomMode?: 'solo' | 'multiplayer';
+  readonly hideOpponentHand?: boolean;
 }) => {
   const state = useReplaySession(replay);
+  const displayView = useMemo(
+    () =>
+      state.view && state.mode === 'live' && roomMode === 'solo'
+        ? applySoloOpponentHandVisibility(state.view, hideOpponentHand)
+        : state.view,
+    [hideOpponentHand, roomMode, state.mode, state.view]
+  );
   const replaySubmissionsBlocked =
     state.mode === 'replay' || state.requestPhase !== 'idle';
   const submissionsBlocked =
@@ -64,7 +76,7 @@ export const RemoteSessionBoard = ({
     [onSubmission, replaySubmissionsBlocked, session]
   );
 
-  if (!state.view) {
+  if (!displayView) {
     return (
       <div className="board-spike-host">
         <span
@@ -80,12 +92,12 @@ export const RemoteSessionBoard = ({
 
   return (
     <RendererSpikeBoard
-      key={`${state.view.matchId}:${
-        state.view.viewer.kind === 'player'
-          ? state.view.viewer.playerId
+      key={`${displayView.matchId}:${
+        displayView.viewer.kind === 'player'
+          ? displayView.viewer.playerId
           : 'spectator'
       }`}
-      view={state.view}
+      view={displayView}
       rendererKind={rendererKind}
       onIntent={forwardIntent}
       submitCommand={submitCommand}

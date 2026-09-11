@@ -105,7 +105,13 @@ export const resolveWireCommand = (
   }
 
   const resolveCard = (alias: string) => {
-    return resolveViewCard(state, identities, session.viewer, alias);
+    return resolveViewCard(
+      state,
+      identities,
+      session.viewer,
+      alias,
+      undoContext.mode
+    );
   };
 
   switch (wire.type) {

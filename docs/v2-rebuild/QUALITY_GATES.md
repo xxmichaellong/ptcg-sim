@@ -219,8 +219,11 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   real solo replay. The query-gated production room shell now reuses that exact
   `mode: "solo"` request from its existing Solo tab. Its one-context Chromium
   journey proves one creation, p1 control shape, accepted solo undo, serialized
-  both-side reset, alternate deck/back authority, and same-runtime tab parking;
-  the default route and v1 remain unchanged.
+  both-side reset, alternate deck/back authority, live opponent-hand disclosure,
+  local revision-neutral cover/uncover, an accepted opponent-hand move, and
+  same-runtime tab parking. Authority tests separately prove spectators and
+  multiplayer stay concealed and canonical IDs never enter the projection; the
+  default route and v1 remain unchanged.
 - The keyboard parity lane includes a deny-by-default real-v1 oracle for Enter,
   Alt-Enter, and Slash loose-board actions plus a selected-DOM candidate case.
   The source pages pin destination and shuffled-deck arrays, outer action and

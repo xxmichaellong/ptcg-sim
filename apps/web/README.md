@@ -109,9 +109,10 @@ existing Dark mode and Hide containers controls. Preferences stay above room
 ownership so they survive lobby/room/replay navigation, but they emit no
 protocol traffic and reset on document reload. The source Solo-only hand
 checkbox and static keybind/contact content are also restored; on this
-query-gated route the hand value is still explicitly local in both modes and
-cannot alter the server-projected view. Safe live-Solo opponent-hand disclosure
-remains a later parity slice. Its source Twitter mark is inline rather than a
+query-gated route the persisted Solo authority exposes the opponent hand only
+to its sole player through opaque aliases. The value covers or uncovers those cards
+only in the live Solo display and emits no command; multiplayer and spectator
+projections remain concealed. Its source Twitter mark is inline rather than a
 third-party image request. The source Change background control is also restored
 under accepted ADR-013: `blank`, randomized `theme`, and
 arbitrary player-pasted URLs preload in the browser and paint only the local

@@ -5,6 +5,7 @@ import type {
   ProjectedReplayArtifact,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
+import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   createRendererSpikeView,
@@ -29,7 +30,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const boardHarness = vi.hoisted(() => ({
   props: undefined as
     | {
-        readonly view: { readonly revision: number };
+        readonly view: MatchViewState;
         readonly allowRevisionRegression?: boolean;
         readonly sessionReady?: boolean;
         readonly preferences?: BoardPreferences;
@@ -48,6 +49,39 @@ vi.mock('../RendererSpikeBoard.js', () => ({
 
 const baseView = createRendererSpikeView();
 const atRevision = (revision: number) => ({ ...baseView, revision });
+
+const withDisclosedOpponentHand = (): MatchViewState => {
+  if (baseView.viewer.kind !== 'player')
+    throw new Error('player view required');
+  const hand = Object.values(baseView.zones).find(
+    (zone) =>
+      zone.kind === 'hand' &&
+      zone.ownerId !== null &&
+      zone.ownerId !== baseView.viewer.playerId
+  );
+  const definition = Object.values(baseView.definitions)[0];
+  if (!hand || !definition) throw new Error('opponent hand fixture required');
+  return {
+    ...baseView,
+    zones: {
+      ...baseView.zones,
+      [hand.id]: {
+        ...hand,
+        cards: hand.cards.map((card) => ({
+          kind: 'known' as const,
+          id: card.id,
+          definitionId: definition.id,
+          ownerId: card.ownerId,
+          category: definition.category,
+          face: 'up' as const,
+          orientationQuarterTurns: 0 as const,
+          abilityUsed: false,
+          publiclyRevealed: false as const,
+        })),
+      },
+    },
+  };
+};
 
 const initialState = (): ClientSessionState => ({
   phase: 'ready',
@@ -248,6 +282,62 @@ describe('RemoteSessionBoard replay binding', () => {
     boardHarness.props?.onIntent(selectionIntent);
     expect(onIntent).toHaveBeenCalledTimes(1);
     expect(onIntent).toHaveBeenCalledWith(selectionIntent);
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('applies the hide-hand preference only to a live Solo display view', async () => {
+    const disclosed = withDisclosedOpponentHand();
+    const session = new FakeRemoteBoardSession({
+      ...initialState(),
+      view: disclosed,
+    });
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const render = async (
+      roomMode: 'solo' | 'multiplayer',
+      hideOpponentHand: boolean
+    ) =>
+      act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            rendererKind="dom"
+            roomMode={roomMode}
+            hideOpponentHand={hideOpponentHand}
+            onIntent={vi.fn()}
+          />
+        )
+      );
+    const opponentHand = Object.values(disclosed.zones).find(
+      (zone) =>
+        zone.kind === 'hand' &&
+        zone.ownerId !== null &&
+        disclosed.viewer.kind === 'player' &&
+        zone.ownerId !== disclosed.viewer.playerId
+    )!;
+
+    await render('solo', true);
+    const covered = boardHarness.props!.view.zones[opponentHand.id]!.cards;
+    expect(covered.every((card) => card.kind === 'concealed')).toBe(true);
+    expect(covered.map((card) => card.id)).toEqual(
+      opponentHand.cards.map((card) => card.id)
+    );
+
+    await render('solo', false);
+    expect(boardHarness.props!.view).toBe(disclosed);
+    expect(
+      boardHarness.props!.view.zones[opponentHand.id]!.cards.every(
+        (card) => card.kind === 'known'
+      )
+    ).toBe(true);
+
+    await render('multiplayer', true);
+    expect(boardHarness.props!.view).toBe(disclosed);
 
     await act(async () => root.unmount());
     replay.dispose();

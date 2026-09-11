@@ -129,6 +129,95 @@ const concealedAliasesFor = (
 // deck. These pin that contract directly rather than relying on the broader
 // generative model to happen to cover it.
 describe('projection identity registry', () => {
+  it('discloses only the persisted Solo controller opponent hand', () => {
+    const loaded = loadedMatch();
+    const opponentDeckId = playerZoneId(p2, 'deck');
+    const opponentHandId = playerZoneId(p2, 'hand');
+    const cardId = loaded.state.zones[opponentDeckId]!.cardIds[0]!;
+    const state = run(
+      loaded.state,
+      {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: opponentDeckId,
+        destinationZoneId: opponentHandId,
+      },
+      loaded.context
+    );
+    const source = createIdSource();
+    const ordinary = projectRecipient(
+      state,
+      asPlayer(p1),
+      emptyProjectionIdentityState(),
+      source
+    );
+    const ordinaryCard = ordinary.snapshot.zones[opponentHandId]!.cards[0]!;
+    expect(ordinaryCard).toMatchObject({
+      kind: 'concealed',
+      ownerId: p2,
+      cardBackUrl: '/red.png',
+    });
+
+    const solo = projectRecipient(
+      state,
+      asPlayer(p1),
+      ordinary.identities,
+      source,
+      'solo'
+    );
+    const disclosed = solo.snapshot.zones[opponentHandId]!.cards[0]!;
+    expect(disclosed).toMatchObject({
+      kind: 'known',
+      id: ordinaryCard.id,
+      ownerId: p2,
+      face: 'up',
+      publiclyRevealed: false,
+    });
+    expect(
+      disclosed.kind === 'known'
+        ? solo.snapshot.definitions[disclosed.definitionId]
+        : undefined
+    ).toMatchObject({
+      name: 'red 0',
+      imageUrl: '/red-0.png',
+    });
+    expect(
+      Object.keys(solo.snapshot.definitions),
+      'canonical definition IDs must remain authority-private'
+    ).not.toContain('red-definition-0');
+
+    expect(
+      projectRecipient(state, spectator, solo.identities, source, 'solo')
+        .snapshot.zones[opponentHandId]!.cards[0]
+    ).toMatchObject({ kind: 'concealed' });
+    expect(
+      projectRecipient(
+        state,
+        asPlayer(p1),
+        solo.identities,
+        source,
+        'multiplayer'
+      ).snapshot.zones[opponentHandId]!.cards[0]
+    ).toMatchObject({ kind: 'concealed' });
+
+    const ordinaryResolution = resolveViewCard(
+      state,
+      solo.identities,
+      asPlayer(p1),
+      ordinaryCard.id
+    );
+    expect(ordinaryResolution).toMatchObject({ known: false });
+    expect(
+      resolveViewCard(
+        state,
+        solo.identities,
+        asPlayer(p1),
+        ordinaryCard.id,
+        'solo'
+      )
+    ).toMatchObject({ known: true, cardId });
+  });
+
   it('reuses one alias while a card keeps its visibility generation', () => {
     const { state } = loadedMatch();
     const source = createIdSource();

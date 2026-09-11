@@ -1919,6 +1919,26 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      or hit-recipient expectation. All six affected oracles pass once and all
      120 repeated local/opponent Energy/Tool/inner/outer cases pass in the Nix
      Chromium gate.
+126. Live Solo now restores the source assumption that one player can see and
+     control both hands without weakening multiplayer projection. The persisted
+     one-player authority mode promotes only its player's opposing hand through
+     existing concealment-generation card aliases and viewer-scoped definition
+     aliases; spectators and all multiplayer recipients remain concealed, and
+     command resolution recognizes the promoted alias only under the same Solo
+     mode. The existing hide-hand checkbox derives a live-only covered view with
+     the opponent's public card back, retaining aliases and revision and sending
+     no command. Unit tests pin disclosure, canonical-ID exclusion, spectator
+     and multiplayer denial, alias resolution, immutability, and route scoping.
+     The in-memory client/server contract independently admits the Solo player
+     and a spectator, carries the disclosed opaque alias through the normal
+     command queue, and observes the moved card through the spectator's public
+     discard projection.
+     The real Worker/Chromium journey loads P2's arbitrary face/back, sets up its
+     hand, covers and restores the same card at one revision, moves it to P2's
+     discard with one accepted revision, and returns through the parked runtime.
+     The complete local gate passes 79 frozen-v1 tests, 2,109 v2 tests, 17
+     Worker-runtime tests, all static/build/provenance checks, all 289 Chromium
+     regressions in 10.6 minutes, and the production-like topology case.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

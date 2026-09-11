@@ -128,6 +128,128 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   ).toBeVisible();
   expect(cardBackRequests).toBe(1);
 
+  await page.locator('#setupBothButton').click();
+  await expect(
+    page.locator('#chatbox [data-event-type="PlayerSetup"]')
+  ).toHaveCount(2);
+  await expect(page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`)).toBeVisible();
+  const disclosedHandCard = await page.evaluate((faceUrl) => {
+    const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+    const card = scene?.cards.find(
+      (candidate) =>
+        candidate.side === 'opponent' &&
+        candidate.role === 'zone' &&
+        candidate.parentId.endsWith(':hand') &&
+        candidate.imageUrl === faceUrl &&
+        !candidate.concealed
+    );
+    if (!card) throw new Error('Solo opponent hand was not disclosed');
+    return { cardId: card.id, imageUrl: card.imageUrl };
+  }, SOLO_CARD_FACE_URL);
+  const revisionBeforeLocalCover = Number(
+    await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
+  );
+
+  await page.locator('#settingsButton').click();
+  await page.locator('#hideHandCheckbox').check();
+  await expect
+    .poll(() =>
+      page.evaluate((cardId) => {
+        const card = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+          (candidate) => candidate.id === cardId
+        );
+        return {
+          concealed: card?.concealed,
+          imageUrl: card?.imageUrl,
+        };
+      }, disclosedHandCard.cardId)
+    )
+    .toEqual({ concealed: true, imageUrl: SOLO_CARD_BACK_URL });
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    String(revisionBeforeLocalCover)
+  );
+  await page.locator('#hideHandCheckbox').uncheck();
+  await expect
+    .poll(() =>
+      page.evaluate((cardId) => {
+        const card = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+          (candidate) => candidate.id === cardId
+        );
+        return {
+          concealed: card?.concealed,
+          imageUrl: card?.imageUrl,
+        };
+      }, disclosedHandCard.cardId)
+    )
+    .toEqual({ concealed: false, imageUrl: disclosedHandCard.imageUrl });
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    String(revisionBeforeLocalCover)
+  );
+  await page.locator('#hideHandCheckbox').check();
+  await expect
+    .poll(() =>
+      page.evaluate((cardId) => {
+        const card = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+          (candidate) => candidate.id === cardId
+        );
+        return card?.concealed;
+      }, disclosedHandCard.cardId)
+    )
+    .toBe(true);
+
+  await page.locator('#p1Button').click();
+  const opponentMove = await page.evaluate((cardId) => {
+    const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+    const source = scene?.cards.find((candidate) => candidate.id === cardId);
+    const target = scene?.zones.find(
+      (zone) => zone.side === 'opponent' && zone.kind === 'discard'
+    );
+    if (!source || !target) {
+      throw new Error('Solo opponent-hand move nodes were not rendered');
+    }
+    return {
+      start: {
+        x: source.bounds.x + source.bounds.width / 2,
+        y: source.bounds.y + source.bounds.height / 2,
+      },
+      end: {
+        x: target.bounds.x + target.bounds.width / 2,
+        y: target.bounds.y + target.bounds.height / 2,
+      },
+    };
+  }, disclosedHandCard.cardId);
+  await page.mouse.move(opponentMove.start.x, opponentMove.start.y);
+  await page.mouse.down();
+  await page.mouse.move(opponentMove.end.x, opponentMove.end.y, { steps: 8 });
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-dragging',
+    'true'
+  );
+  await page.mouse.up();
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    String(revisionBeforeLocalCover + 1)
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (faceUrl) =>
+          Boolean(
+            window.__PTCG_RENDERER_SPIKE__?.scene.cards.some(
+              (card) =>
+                card.side === 'opponent' &&
+                card.parentId.endsWith(':discard') &&
+                card.imageUrl === faceUrl &&
+                !card.concealed
+            )
+          ),
+        SOLO_CARD_FACE_URL
+      )
+    )
+    .toBe(true);
+
   await page.locator('#p2Button').click();
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
@@ -148,7 +270,7 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
   ).toHaveCount(1);
   await expect(
-    page.locator(`img[src="${SOLO_CARD_BACK_URL}"]`).first()
+    page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`).first()
   ).toBeVisible();
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
   expect(errors).toEqual([]);
