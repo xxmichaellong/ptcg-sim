@@ -246,6 +246,26 @@ const runCompoundReplay = (
       let reconstructionCount = 0;
       let wrapperIdentityChanged = false;
 
+      /**
+       * Refreshes until the container's width stops changing.
+       *
+       * `evolveCard` sizes the container from an image that has not been laid
+       * out yet, so a stack built in one synchronous burst starts zero-width
+       * and even the first refresh after it can still measure zero. In a live
+       * session every later action refreshes the board again and settles it.
+       */
+      const settle = async (): Promise<void> => {
+        let previous = -1;
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          refreshBoard();
+          await frames();
+          const width = container().clientWidth;
+          if (width === previous && width > 0) return;
+          previous = width;
+        }
+        throw new Error('Real-v1 play container never settled to a width');
+      };
+
       const reconstruct = async (): Promise<void> => {
         const before = container();
         refreshBoard();
@@ -394,14 +414,11 @@ const runCompoundReplay = (
           !operation.startsWith('evolve:') &&
           !operation.startsWith('refresh:')
         ) {
-          // No settling refresh is forced here. `evolveCard` sizes the play
-          // container from `movingCard.image.clientWidth`, which is still 0 for
-          // a freshly inserted image, so the container's width before the
-          // trace's own first reconstruction depends on when layout and v1's
-          // empty-wrapper observer happen to run -- and that timing lands
-          // differently for the active and bench slots. Callers should treat
-          // pre-reconstruction stack x as unsettled; everything from the first
-          // reconstruction on is stable and exact.
+          // The stack is settled before the pristine sample. `evolveCard`
+          // sizes the container from an image that has not been laid out yet,
+          // so a stack built in one synchronous burst is zero-width until
+          // refreshed, and the fixtures record a settled board.
+          await settle();
           phases.push(sample());
           built = true;
         }
