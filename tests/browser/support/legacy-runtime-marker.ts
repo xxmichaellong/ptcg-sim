@@ -441,3 +441,286 @@ export const captureMarkerRotation = async (
       phaseNames: options.phaseNames,
     }
   );
+
+export interface MarkerMovementPhase {
+  readonly name: string;
+  /** The zone the card is in when this phase is sampled. */
+  readonly zone: string;
+  /** Which marker kinds the card carries, in a stable order. */
+  readonly markerKinds: readonly string[];
+  readonly activeWrapperCount: number;
+  readonly benchWrapperCount: number;
+}
+
+export interface MarkerMovementCapture {
+  readonly phases: readonly MarkerMovementPhase[];
+  readonly cleanup: {
+    readonly markerCount: number;
+    readonly activeWrapperCount: number;
+    readonly benchWrapperCount: number;
+    readonly cardConnected: boolean;
+    readonly cardPointersAreNull: boolean;
+  };
+}
+
+/**
+ * Marks a card in the active slot, demotes it to the bench, reconstructs the
+ * board, and promotes it back.
+ *
+ * What this measures is which markers survive the journey. A special condition
+ * belongs to the Active Pokemon, so leaving the active slot drops it while the
+ * damage and ability counters follow the card and are reflowed into their new
+ * home -- and the fixture records exactly that as a marker-kind list per phase.
+ */
+export const captureMarkerMovement = async (
+  page: Page,
+  options: {
+    readonly side: MarkerSide;
+    readonly damage: string;
+    readonly specialCondition: string;
+    readonly phaseNames: readonly string[];
+  }
+): Promise<MarkerMovementCapture> =>
+  page.evaluate(
+    async ({ user, damage, specialCondition, phaseNames }) => {
+      const load = (specifier: string): Promise<Record<string, never>> =>
+        import(/* @vite-ignore */ specifier);
+      const [
+        cardModule,
+        zoneModule,
+        placementModule,
+        bundleModule,
+        refreshModule,
+        damageModule,
+        conditionModule,
+        abilityModule,
+      ] = await Promise.all([
+        load('/src/setup/deck-constructor/card.js'),
+        load('/src/setup/zones/get-zone.js'),
+        load('/src/actions/move-card-bundle/initialize-active-bench-card.js'),
+        load('/src/actions/move-card-bundle/move-card-bundle.js'),
+        load('/src/setup/sizing/refresh-board.js'),
+        load('/src/actions/counters/damage-counter.js'),
+        load('/src/actions/counters/special-condition.js'),
+        load('/src/actions/counters/ability-counter.js'),
+      ]);
+
+      interface LegacyImage extends HTMLImageElement {
+        damageCounter?: HTMLElement | null;
+        specialCondition?: HTMLElement | null;
+        abilityCounter?: HTMLElement | null;
+      }
+      interface LegacyCard {
+        readonly name: string;
+        readonly image: LegacyImage;
+      }
+      interface LegacyZone {
+        readonly element: HTMLElement;
+        readonly array: LegacyCard[];
+      }
+      const Card = (
+        cardModule as unknown as {
+          readonly Card: new (
+            user: string,
+            name: string,
+            type: string,
+            imageUrl: string
+          ) => LegacyCard;
+        }
+      ).Card;
+      const { getZone } = zoneModule as unknown as {
+        readonly getZone: (user: string, zoneId: string) => LegacyZone;
+      };
+      const { initializeActiveBenchCard } = placementModule as unknown as {
+        readonly initializeActiveBenchCard: (
+          user: string,
+          card: LegacyCard,
+          zoneId: string,
+          zone: LegacyZone
+        ) => void;
+      };
+      const { moveCardBundle } = bundleModule as unknown as {
+        readonly moveCardBundle: (
+          user: string,
+          initiator: string,
+          oZoneId: string,
+          dZoneId: string,
+          index: number,
+          targetIndex: number,
+          action: string,
+          emit?: boolean
+        ) => void;
+      };
+      const { refreshBoard } = refreshModule as unknown as {
+        readonly refreshBoard: () => void;
+      };
+      const { addDamageCounter, removeDamageCounter } =
+        damageModule as unknown as {
+          readonly addDamageCounter: (
+            user: string,
+            zoneId: string,
+            index: number,
+            amount: string,
+            emit?: boolean
+          ) => void;
+          readonly removeDamageCounter: (
+            user: string,
+            zoneId: string,
+            index: number,
+            emit?: boolean
+          ) => void;
+        };
+      const { addSpecialCondition, updateSpecialCondition } =
+        conditionModule as unknown as {
+          readonly addSpecialCondition: (
+            user: string,
+            zoneId: string,
+            index: number,
+            emit?: boolean
+          ) => void;
+          readonly updateSpecialCondition: (
+            user: string,
+            zoneId: string,
+            index: number,
+            text: string,
+            emit?: boolean
+          ) => void;
+        };
+      const { addAbilityCounter, removeAbilityCounter } =
+        abilityModule as unknown as {
+          readonly addAbilityCounter: (
+            user: string,
+            zoneId: string,
+            index: number
+          ) => void;
+          readonly removeAbilityCounter: (
+            user: string,
+            zoneId: string,
+            index: number,
+            emit?: boolean
+          ) => void;
+        };
+
+      const clearZone = (owner: string, id: string) => {
+        const target = getZone(owner, id);
+        target.array.length = 0;
+        for (const image of [...target.element.querySelectorAll('img')]) {
+          image.remove();
+        }
+        for (const wrapper of [
+          ...target.element.querySelectorAll('.play-container'),
+        ]) {
+          wrapper.remove();
+        }
+      };
+      for (const owner of ['self', 'opp']) {
+        for (const id of ['active', 'bench', 'hand', 'discard']) {
+          clearZone(owner, id);
+        }
+      }
+      const active = getZone(user, 'active');
+      const bench = getZone(user, 'bench');
+
+      const frames = () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        );
+      const card = new Card(
+        user,
+        'moved',
+        'Pokémon',
+        `${location.origin}/src/assets/cardback.png`
+      );
+      await card.image.decode();
+      active.array.push(card);
+      initializeActiveBenchCard(user, card, 'active', active);
+      for (
+        let attempt = 0;
+        attempt < 20 && card.image.clientWidth === 0;
+        attempt += 1
+      ) {
+        await frames();
+      }
+
+      const wrapperCount = (zone: LegacyZone) =>
+        zone.element.querySelectorAll(':scope > .play-container').length;
+      const zoneOf = () =>
+        active.array.includes(card)
+          ? 'active'
+          : bench.array.includes(card)
+            ? 'bench'
+            : 'none';
+      const sample = (name: string): MarkerMovementPhase => ({
+        name,
+        zone: zoneOf(),
+        markerKinds: [
+          ...(card.image.damageCounter ? ['damage'] : []),
+          ...(card.image.specialCondition ? ['specialCondition'] : []),
+          ...(card.image.abilityCounter ? ['ability'] : []),
+        ],
+        activeWrapperCount: wrapperCount(active),
+        benchWrapperCount: wrapperCount(bench),
+      });
+
+      addDamageCounter(user, 'active', 0, damage, false);
+      addSpecialCondition(user, 'active', 0, false);
+      updateSpecialCondition(user, 'active', 0, specialCondition, false);
+      addAbilityCounter(user, 'active', 0);
+      await frames();
+      const phases: MarkerMovementPhase[] = [sample(phaseNames[0]!)];
+
+      // Demote to the bench. moveCardBundle refreshes on its own, which is
+      // what reflows the counters into their new home.
+      moveCardBundle(user, 'self', 'active', 'bench', 0, -1, 'move', false);
+      await frames();
+      phases.push(sample(phaseNames[1]!));
+
+      refreshBoard();
+      await frames();
+      phases.push(sample(phaseNames[2]!));
+
+      moveCardBundle(user, 'self', 'bench', 'active', 0, -1, 'move', false);
+      await frames();
+      phases.push(sample(phaseNames[3]!));
+
+      const zoneId = zoneOf();
+      if (zoneId !== 'none') {
+        removeDamageCounter(user, zoneId, 0, false);
+        removeAbilityCounter(user, zoneId, 0, false);
+      }
+      const home = zoneId === 'none' ? active : getZone(user, zoneId);
+      const index = home.array.indexOf(card);
+      if (index >= 0) {
+        home.array.splice(index, 1);
+        card.image.parentElement?.remove();
+        card.image.remove();
+      }
+      await frames();
+
+      return {
+        phases,
+        cleanup: {
+          markerCount:
+            active.element.querySelectorAll(
+              '.self-circle, .opp-circle, .self-ability-counter, .opp-ability-counter'
+            ).length +
+            bench.element.querySelectorAll(
+              '.self-circle, .opp-circle, .self-ability-counter, .opp-ability-counter'
+            ).length,
+          activeWrapperCount: wrapperCount(active),
+          benchWrapperCount: wrapperCount(bench),
+          cardConnected: card.image.isConnected,
+          cardPointersAreNull:
+            !card.image.damageCounter &&
+            !card.image.specialCondition &&
+            !card.image.abilityCounter,
+        },
+      };
+    },
+    {
+      user: options.side === 'local' ? 'self' : 'opp',
+      damage: options.damage,
+      specialCondition: options.specialCondition,
+      phaseNames: options.phaseNames,
+    }
+  );
