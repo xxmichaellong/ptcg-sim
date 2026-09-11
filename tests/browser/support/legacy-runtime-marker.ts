@@ -50,6 +50,8 @@ export interface MarkerCapture {
       readonly right: string;
       readonly left: string;
     };
+    /** `[inlineRight, inlineLeft, computedRightPx, computedLeftPx]`. */
+    readonly initialWrapperMargins: readonly [string, string, number, number];
   };
   readonly phases: readonly MarkerPhase[];
   /** `[input, textContent, backgroundColor, color]` per special condition. */
@@ -361,6 +363,7 @@ export const captureMarkerRotation = async (
         };
       };
 
+      const initialComputed = getComputedStyle(container());
       const initialCard = {
         frameLocalBounds: rectOf(card.image),
         clientWidth: card.image.clientWidth,
@@ -369,22 +372,33 @@ export const captureMarkerRotation = async (
           right: container().style.marginRight,
           left: container().style.marginLeft,
         },
+        initialWrapperMargins: [
+          container().style.marginRight,
+          container().style.marginLeft,
+          Number.parseFloat(initialComputed.marginRight) || 0,
+          Number.parseFloat(initialComputed.marginLeft) || 0,
+        ] as const,
       };
 
       addDamageCounter(user, zoneId, 0, damageInitial, false);
       updateDamageCounter(user, zoneId, 0, damageUpdated, false);
-      addSpecialCondition(user, zoneId, 0, false);
+      // Only added when the fixture cycles one. The bench fixture marks a card
+      // with damage and an ability and never gives it a condition, so adding
+      // one would change the stacking this gate is here to measure.
       const paletteTrace: [string, string, string, string][] = [];
-      for (const input of specialConditionInputs) {
-        updateSpecialCondition(user, zoneId, 0, input, false);
-        const node = card.image.specialCondition!;
-        const style = getComputedStyle(node);
-        paletteTrace.push([
-          input,
-          node.textContent ?? '',
-          style.backgroundColor,
-          style.color,
-        ]);
+      if (specialConditionInputs.length > 0) {
+        addSpecialCondition(user, zoneId, 0, false);
+        for (const input of specialConditionInputs) {
+          updateSpecialCondition(user, zoneId, 0, input, false);
+          const node = card.image.specialCondition!;
+          const style = getComputedStyle(node);
+          paletteTrace.push([
+            input,
+            node.textContent ?? '',
+            style.backgroundColor,
+            style.color,
+          ]);
+        }
       }
       addAbilityCounter(user, zoneId, 0);
       await frames();
@@ -397,7 +411,9 @@ export const captureMarkerRotation = async (
       }
 
       removeDamageCounter(user, zoneId, 0, false);
-      removeSpecialCondition(user, zoneId, 0, false);
+      if (specialConditionInputs.length > 0) {
+        removeSpecialCondition(user, zoneId, 0, false);
+      }
       removeAbilityCounter(user, zoneId, 0, false);
       await frames();
 
