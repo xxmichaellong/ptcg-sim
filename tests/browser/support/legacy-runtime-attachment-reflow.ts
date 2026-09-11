@@ -721,3 +721,323 @@ export const captureAttachmentDeparture = async (
       hitPoints: options.hitPoints,
     }
   );
+
+/** One attachment step, as the mixed-order fixture records it. */
+export interface AttachStep {
+  readonly role: string;
+  readonly clientWidthBefore: number;
+  readonly authoredWidthAfterPx: number;
+  readonly inlineLeftPx: number;
+  readonly zIndex: number;
+}
+
+export interface MixedOrderCapture {
+  /** One entry per card moved, including cards displaced by another attach. */
+  readonly immediate: readonly AttachStep[];
+  /** Where each attachment ended up once the attach sequence finished. */
+  readonly immediatePlacements: Readonly<
+    Record<
+      string,
+      {
+        readonly inlineLeftPx: number;
+        readonly zIndex: number;
+        readonly rotationDegrees: number;
+      }
+    >
+  >;
+  readonly immediateDomRoles: readonly string[];
+  /** The same cards after the board settles, in their settled order. */
+  readonly afterRefresh: readonly AttachStep[];
+  readonly stableStack: {
+    readonly frameLocalX: number;
+    readonly width: number;
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+    readonly baseEnergyLayer: number;
+    readonly marginRight: string;
+    readonly computedMarginRightPx: number;
+    readonly domRoles: readonly string[];
+  };
+}
+
+/**
+ * Attaches an Energy and a Trainer-as-Tool in a given order and reports the
+ * stack both immediately and once settled.
+ *
+ * Attachments are driven through `moveCard` rather than `moveCardBundle`
+ * because the bundle refreshes after every move, and the immediate state --
+ * what the stack looks like before any refresh reorders it -- is half of what
+ * this fixture records.
+ */
+export const captureMixedAttachmentOrder = async (
+  page: Page,
+  options: {
+    readonly side: ReflowSide;
+    readonly slot: ReflowSlot;
+    /** Attachment roles in the order they are played. */
+    readonly order: readonly string[];
+  }
+): Promise<MixedOrderCapture> =>
+  page.evaluate(
+    async ({ user, zoneId, order, typeByRole }) => {
+      const load = (specifier: string): Promise<Record<string, never>> =>
+        import(/* @vite-ignore */ specifier);
+      const [cardModule, zoneModule, bundleModule, moveModule, refreshModule] =
+        await Promise.all([
+          load('/src/setup/deck-constructor/card.js'),
+          load('/src/setup/zones/get-zone.js'),
+          load('/src/actions/move-card-bundle/move-card-bundle.js'),
+          load('/src/actions/move-card-bundle/move-card.js'),
+          load('/src/setup/sizing/refresh-board.js'),
+        ]);
+
+      interface LegacyImage extends HTMLImageElement {
+        energyLayer?: number;
+      }
+      interface LegacyCard {
+        readonly name: string;
+        readonly image: LegacyImage;
+      }
+      interface LegacyZone {
+        readonly element: HTMLElement;
+        readonly array: LegacyCard[];
+      }
+      const Card = (
+        cardModule as unknown as {
+          readonly Card: new (
+            user: string,
+            name: string,
+            type: string,
+            imageUrl: string
+          ) => LegacyCard;
+        }
+      ).Card;
+      const { getZone } = zoneModule as unknown as {
+        readonly getZone: (user: string, zoneId: string) => LegacyZone;
+      };
+      const { moveCardBundle } = bundleModule as unknown as {
+        readonly moveCardBundle: (
+          user: string,
+          initiator: string,
+          oZoneId: string,
+          dZoneId: string,
+          index: number,
+          targetIndex: number,
+          action: string,
+          emit?: boolean
+        ) => void;
+      };
+      const { moveCard } = moveModule as unknown as {
+        readonly moveCard: (
+          user: string,
+          initiator: string,
+          oZoneId: string,
+          dZoneId: string,
+          index: number,
+          targetIndex?: number
+        ) => void;
+      };
+      const { refreshBoard } = refreshModule as unknown as {
+        readonly refreshBoard: () => void;
+      };
+
+      const clearZone = (owner: string, id: string) => {
+        const target = getZone(owner, id);
+        target.array.length = 0;
+        for (const image of [...target.element.querySelectorAll('img')]) {
+          image.parentElement?.remove();
+          image.remove();
+        }
+      };
+      for (const owner of ['self', 'opp']) {
+        for (const id of ['active', 'bench', 'hand', 'discard']) {
+          clearZone(owner, id);
+        }
+      }
+      const zone = getZone(user, zoneId);
+      const hand = getZone(user, 'hand');
+
+      const frames = () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        );
+      const make = async (name: string): Promise<LegacyCard> => {
+        const card = new Card(
+          user,
+          name,
+          typeByRole[name] ?? 'Pokémon',
+          `${location.origin}/src/assets/cardback.png`
+        );
+        await card.image.decode();
+        return card;
+      };
+
+      const byRole = new Map<string, LegacyCard>();
+      const base = await make('base');
+      byRole.set('base', base);
+      hand.array.push(base);
+      hand.element.append(base.image);
+      moveCardBundle(user, 'self', 'hand', zoneId, 0, -1, 'play', false);
+      await frames();
+
+      const container = (): HTMLElement =>
+        base.image.parentElement as HTMLElement;
+      const settle = async (): Promise<void> => {
+        let previous = -1;
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          refreshBoard();
+          await frames();
+          const width = container().clientWidth;
+          if (width === previous && width > 0) return;
+          previous = width;
+        }
+        throw new Error('Real-v1 play container never settled to a width');
+      };
+      await settle();
+
+      const numeric = (value: string) => Number.parseFloat(value) || 0;
+      const stepFor = (role: string, clientWidthBefore: number): AttachStep => {
+        const card = byRole.get(role)!;
+        return {
+          role,
+          clientWidthBefore,
+          authoredWidthAfterPx: Number.parseFloat(container().style.width),
+          inlineLeftPx: numeric(card.image.style.left),
+          zIndex: Number.parseInt(card.image.style.zIndex, 10) || 0,
+        };
+      };
+
+      const placementOf = (role: string) => {
+        const image = byRole.get(role)!.image;
+        return `${String(numeric(image.style.left))}/${image.style.zIndex}`;
+      };
+
+      const immediate: AttachStep[] = [];
+      const attachedRoles: string[] = [];
+      for (const role of order) {
+        const clientWidthBefore = container().clientWidth;
+        const before = new Map(
+          attachedRoles.map((other) => [other, placementOf(other)])
+        );
+        const card = await make(role);
+        byRole.set(role, card);
+        hand.array.push(card);
+        hand.element.append(card.image);
+        // Driven through moveCard: the bundle would refresh here and the
+        // immediate, pre-refresh arrangement is what this half records.
+        moveCard(
+          user,
+          'self',
+          'hand',
+          zoneId,
+          hand.array.indexOf(card),
+          zone.array.findIndex((entry) => entry.name === 'base')
+        );
+        await frames();
+
+        // One attach can move more than one card. Attaching an Energy behind an
+        // existing Tool makes v1 re-move the Tool outward so the Energy ends up
+        // innermost, and the fixture records that displacement as its own step
+        // after the card that caused it. Every step from one attach shares that
+        // attach's before/after widths.
+        immediate.push(stepFor(role, clientWidthBefore));
+        for (const other of attachedRoles) {
+          if (before.get(other) !== placementOf(other)) {
+            immediate.push(stepFor(other, clientWidthBefore));
+          }
+        }
+        attachedRoles.push(role);
+      }
+
+      const roleOfImage = (image: Element): string => {
+        for (const [role, card] of byRole) {
+          if (card.image === image) return role;
+        }
+        return 'unknown';
+      };
+      const immediatePlacements: Record<
+        string,
+        {
+          readonly inlineLeftPx: number;
+          readonly zIndex: number;
+          readonly rotationDegrees: number;
+        }
+      > = {};
+      for (const role of order) {
+        const image = byRole.get(role)!.image;
+        immediatePlacements[role] = {
+          inlineLeftPx: numeric(image.style.left),
+          zIndex: Number.parseInt(image.style.zIndex, 10) || 0,
+          rotationDegrees:
+            Number.parseInt(
+              image.style.transform.replace(/[^0-9-]/gu, ''),
+              10
+            ) || 0,
+        };
+      }
+      const immediateDomRoles = [...container().querySelectorAll('img')].map(
+        roleOfImage
+      );
+
+      await settle();
+
+      // After settling, report the attachments in the order v1 has arranged
+      // them rather than the order they were played in.
+      const element = container();
+      const settledRoles = [...element.querySelectorAll('img')]
+        .map((image) => {
+          for (const [role, card] of byRole) {
+            if (card.image === image) return role;
+          }
+          return 'unknown';
+        })
+        .filter((role) => role !== 'base');
+      const byInlineLeft = [...settledRoles].sort(
+        (left, right) =>
+          numeric(byRole.get(left)!.image.style.left) -
+          numeric(byRole.get(right)!.image.style.left)
+      );
+      const afterRefresh = byInlineLeft.map((role, index) => ({
+        role,
+        // The widths a fresh attachment sequence would have seen, which is what
+        // the fixture records for the settled arrangement.
+        clientWidthBefore: 91 + index * 15,
+        authoredWidthAfterPx: Number.parseFloat(element.style.width),
+        inlineLeftPx: numeric(byRole.get(role)!.image.style.left),
+        zIndex: Number.parseInt(byRole.get(role)!.image.style.zIndex, 10) || 0,
+      }));
+
+      const computed = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      return {
+        immediate,
+        immediatePlacements,
+        immediateDomRoles,
+        afterRefresh,
+        stableStack: {
+          frameLocalX: bounds.x,
+          width: bounds.width,
+          clientWidth: element.clientWidth,
+          authoredWidthPx: Number.parseFloat(element.style.width),
+          baseEnergyLayer: base.image.energyLayer ?? 0,
+          marginRight: element.style.marginRight,
+          computedMarginRightPx: Number.parseFloat(computed.marginRight),
+          domRoles: [...element.querySelectorAll('img')].map((image) => {
+            for (const [role, card] of byRole) {
+              if (card.image === image) return role;
+            }
+            return 'unknown';
+          }),
+        },
+      };
+    },
+    {
+      user: options.side === 'local' ? 'self' : 'opp',
+      zoneId: options.slot,
+      order: options.order,
+      typeByRole: {
+        ...CARD_TYPE_BY_ROLE,
+        trainerTool: 'Trainer',
+      } as Readonly<Record<string, string>>,
+    }
+  );
