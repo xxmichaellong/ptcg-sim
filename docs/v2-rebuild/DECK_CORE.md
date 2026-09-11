@@ -404,8 +404,10 @@ route-neutral React boundary without importing that boundary from a production
 route. It creates one editor store and TCGdex catalog for the component
 lifetime, shares the store across the right import panel and full-height
 workspace, and accepts only `open` plus `onRequestClose` navigation ownership
-from its eventual route. Multiplayer construction disables the alternate slot;
-solo construction preserves both targets.
+from its eventual route. It may remain mounted without a network session, so
+pre-room edits stay in editor custody instead of being coupled to a socket.
+Room capability changes dynamically disable or restore the solo-only alternate
+target without deleting its retained deck or leaving a stale install receipt.
 
 The boundary owns one `DeckInstallCoordinator` and one browser-native dirty-page
 guard. Editing while Deck is open does not emit room traffic. A true-to-false
@@ -424,13 +426,23 @@ solo alternate request, and otherwise submits for the actor. The hook retains
 the accepted arbitrary-URL behavior and makes superseded/unmounted requests
 inert.
 
-Six composition tests plus the 73 directly adjacent store, install, browser-I/O,
-workspace, panel, sample, pasted-import, and card-back tests cover shared target
-state, multiplayer denial, closed-state traffic silence, close/Play flushing,
-authority-publication acknowledgement, retryable rejection, exact arbitrary
-card backs for both sides, not-ready refusal, unload guarding, and teardown.
-The composed module remains absent from production output, so this checkpoint
-still changes no current route, control, bundle, UI, or UX.
+When opted into route-owned attach behavior, a fresh authority binding queues
+each retained clean nonempty deck exactly once and immediately drains existing
+dirty work. Disconnect or coordinator replacement releases in-flight ownership
+without losing the revision, while reconnecting the same retained store to a
+new session deliberately installs it again. Clean empty slots do not create
+traffic; an explicitly cleared dirty deck remains an intentional install. A
+multiplayer-disabled alternate stays locally dirty and guarded but cannot edit
+or install until its capability is restored.
+
+Eight composition tests plus the directly adjacent store, install, browser-I/O,
+workspace, panel, sample, pasted-import, and card-back suites cover shared
+target state, dynamic multiplayer denial/restoration, offline edit retention,
+fresh-session reinstallation, closed-state traffic silence, close/Play
+flushing, authority-publication acknowledgement, retryable rejection, exact
+arbitrary card backs for both sides, not-ready refusal, unload guarding, and
+teardown. The composed module remains absent from production output, so this
+checkpoint still changes no current route, control, bundle, UI, or UX.
 
 ## Source-browser composition checkpoint
 
@@ -447,13 +459,18 @@ label, select options, and placeholder; checks 12 panel/workspace landmarks
 within two CSS pixels; and applies a bidirectional foreground-paint comparison
 to main, alternate, and dark-alternate states. The paint ceiling is 0.5% in
 each direction with three-pixel spatial and 24-channel color tolerance. This
-gate found and corrected three source-parity gaps before route activation: CSS
+gate found and corrected four source-parity gaps before route activation: CSS
 percentage padding had been resolved against the new sidebar instead of the
 source viewport containing block, and one source inline whitespace node between
 the card-back and language controls had been omitted. The hosted Linux browser
 also exposed that the candidate's textarea was missing the v1 form-control font
 rule and therefore fell back to the user-agent monospace face; the component now
-pins the same `Segoe UI` fallback stack as the source.
+pins the same `Segoe UI` fallback stack as the source. A second hosted run
+exposed that the candidate workspace could paint over the panel and tab bar in
+their intentional eight-pixel overlap; their source z-index and left-border
+stacking are now explicit. The adjacent real-v1 attachment oracle preloads its
+synthetic images before a synchronous mutation/capture task so a live resize
+listener cannot alter an earlier measurement between attachments.
 
 Two additional browser workflows exercise behavior that screenshots cannot:
 
@@ -486,11 +503,12 @@ This checkpoint is complete when:
 
 ## Remaining deck slices
 
-The source-browser prerequisite is now green. Production route activation
-remains a separate, reviewable checkpoint: replace the current Deck navigation
+The source-browser and deck-session-custody prerequisites are now green.
+Production route activation remains a separate, reviewable checkpoint after
+pre-room card-back custody is isolated: replace the current Deck navigation
 ownership with this composed surface, prove bundle/route isolation and the full
-live solo/multiplayer session matrix, and retain the legacy route as the
-rollback boundary.
+offline/live solo/multiplayer/reconnect matrix, and retain the legacy route as
+the rollback boundary.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
 web adapters plus their project, lockfile, documentation, and public-API

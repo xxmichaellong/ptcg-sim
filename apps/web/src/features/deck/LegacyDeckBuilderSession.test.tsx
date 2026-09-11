@@ -174,10 +174,11 @@ afterEach(async () => {
 });
 
 const renderSession = async (options: {
-  readonly session: FakeSession;
+  readonly session?: FakeSession;
   readonly store?: DeckBuilderStore;
   readonly open: boolean;
   readonly alternateEnabled?: boolean;
+  readonly installOnSessionAttach?: boolean;
   readonly onRequestClose?: () => void;
   readonly requestCardBack?: BrowserCardBackRequest;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
@@ -190,6 +191,7 @@ const renderSession = async (options: {
         session={options.session}
         open={options.open}
         alternateEnabled={options.alternateEnabled ?? true}
+        installOnSessionAttach={options.installOnSessionAttach ?? false}
         onRequestClose={options.onRequestClose ?? vi.fn()}
         catalog={catalog}
         samples={samples}
@@ -375,6 +377,108 @@ describe('LegacyDeckBuilderSession', () => {
     await click('#changeCardBackButton');
     expect(requestCardBack).not.toHaveBeenCalled();
     expect(session.commands).toHaveLength(0);
+  });
+
+  it('retains offline deck edits and installs them when authority attaches', async () => {
+    const store = new DeckBuilderStore();
+    await renderSession({
+      store,
+      open: true,
+      installOnSessionAttach: true,
+    });
+    act(() => store.addCard(card('Offline Pikachu')));
+
+    await renderSession({
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      revision: 1,
+      installedRevision: 0,
+      dirty: true,
+    });
+    expect(store.getSnapshot().slots.main.installingRevision).toBeUndefined();
+
+    const firstSession = new FakeSession();
+    await renderSession({
+      session: firstSession,
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await vi.waitFor(() => expect(firstSession.commands).toHaveLength(1));
+    expect(firstSession.commands[0]).toMatchObject({
+      type: 'LoadDeck',
+      entries: [
+        {
+          definition: {
+            name: 'Offline Pikachu',
+            imageUrl: 'custom+unsafe://player-host/Offline Pikachu',
+          },
+        },
+      ],
+    });
+    act(() => firstSession.completeLatest(true));
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
+
+    await renderSession({
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    const secondSession = new FakeSession();
+    await renderSession({
+      session: secondSession,
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await vi.waitFor(() => expect(secondSession.commands).toHaveLength(1));
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      revision: 2,
+      installedRevision: 1,
+      dirty: true,
+      installingRevision: 2,
+    });
+    expect(firstSession.listenerCount()).toBe(0);
+  });
+
+  it('tracks changing room ownership while preserving the offline alternate deck', async () => {
+    const store = new DeckBuilderStore({
+      alternateDeck: {
+        Eevee: {
+          cards: [{ data: card('Eevee'), count: 1 }],
+          totalCount: 1,
+        },
+      },
+    });
+    store.selectTarget('alternate');
+
+    await renderSession({
+      store,
+      open: true,
+      alternateEnabled: false,
+    });
+    expect(store.getSnapshot()).toMatchObject({
+      target: 'main',
+      alternateEnabled: false,
+    });
+    expect(store.getSnapshot().slots.alternate.deck.Eevee?.totalCount).toBe(1);
+    expect(
+      host
+        .querySelector('#nativeDeckBuilderTargetAlt')
+        ?.getAttribute('aria-disabled')
+    ).toBe('true');
+
+    await renderSession({
+      store,
+      open: true,
+      alternateEnabled: true,
+    });
+    expect(store.getSnapshot().alternateEnabled).toBe(true);
+    act(() => expect(store.selectTarget('alternate')).toBe(true));
+    expect(store.getSnapshot().slots.alternate.deck.Eevee?.totalCount).toBe(1);
   });
 
   it('installs and removes one dirty-page guard with the composed lifetime', async () => {

@@ -391,6 +391,41 @@ describe('DeckInstallCoordinator', () => {
     coordinator.dispose();
   });
 
+  it('makes an alternate install inert while multiplayer ownership is revoked', async () => {
+    const store = new DeckBuilderStore();
+    store.addCard(card('Eevee'), 'alternate');
+    const session = new FakeInstallSession();
+    session.setUnrelatedPending(true);
+    const coordinator = new DeckInstallCoordinator({
+      store,
+      session,
+      digest: deterministicDigest,
+    });
+
+    coordinator.flush();
+    await vi.waitFor(() =>
+      expect(store.getSnapshot().slots.alternate.installingRevision).toBe(1)
+    );
+    store.setAlternateEnabled(false);
+    session.setUnrelatedPending(false);
+    await vi.waitFor(() =>
+      expect(
+        store.getSnapshot().slots.alternate.installingRevision
+      ).toBeUndefined()
+    );
+    expect(session.commands).toHaveLength(0);
+    expect(store.getSnapshot().slots.alternate.dirty).toBe(true);
+
+    store.setAlternateEnabled(true);
+    coordinator.flush();
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+    expect(session.commands[0]).toMatchObject({
+      type: 'LoadDeck',
+      targetPlayerId: alternatePlayerId,
+    });
+    coordinator.dispose();
+  });
+
   it('reports conversion and authority failures without cleaning the deck', async () => {
     const invalid: Deck = {
       Broken: {

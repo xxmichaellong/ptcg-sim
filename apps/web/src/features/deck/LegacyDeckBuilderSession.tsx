@@ -1,5 +1,11 @@
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   useCardBackSelection,
@@ -32,9 +38,10 @@ import { createTcgdexCardCatalog } from './tcgdex-card-catalog.js';
 import type { TcgdexCardCatalog } from './tcgdex-catalog-contract.js';
 
 export interface LegacyDeckBuilderSessionProps {
-  readonly session: DeckInstallSession;
+  readonly session?: DeckInstallSession;
   readonly open: boolean;
   readonly alternateEnabled: boolean;
+  readonly installOnSessionAttach?: boolean;
   readonly onRequestClose: () => void;
   readonly store?: DeckBuilderStore;
   readonly catalog?: TcgdexCardCatalog;
@@ -72,6 +79,7 @@ export const LegacyDeckBuilderSession = ({
   session,
   open,
   alternateEnabled,
+  installOnSessionAttach = false,
   onRequestClose,
   store: suppliedStore,
   catalog: suppliedCatalog,
@@ -91,11 +99,36 @@ export const LegacyDeckBuilderSession = ({
   const store = suppliedStore ?? ownedStore;
   const catalog = suppliedCatalog ?? ownedCatalog;
   const coordinator = useRef<DeckInstallCoordinator | undefined>(undefined);
+  const preparedBinding = useRef<
+    | {
+        readonly session: DeckInstallSession;
+        readonly store: DeckBuilderStore;
+      }
+    | undefined
+  >(undefined);
   const failureHandler = useRef(onInstallFailure);
   const wasOpen = useRef(open);
   failureHandler.current = onInstallFailure;
 
+  useLayoutEffect(() => {
+    store.setAlternateEnabled(alternateEnabled);
+  }, [alternateEnabled, store]);
+
   useEffect(() => {
+    if (!session) {
+      preparedBinding.current = undefined;
+      coordinator.current = undefined;
+      return;
+    }
+    if (installOnSessionAttach) {
+      const isNewBinding =
+        preparedBinding.current?.session !== session ||
+        preparedBinding.current.store !== store;
+      preparedBinding.current = { session, store };
+      if (isNewBinding) store.prepareForNewSession();
+    } else {
+      preparedBinding.current = undefined;
+    }
     const current = new DeckInstallCoordinator({
       store,
       session,
@@ -103,11 +136,12 @@ export const LegacyDeckBuilderSession = ({
       onFailure: (failure) => failureHandler.current?.(failure),
     });
     coordinator.current = current;
+    if (installOnSessionAttach) current.flush();
     return () => {
       if (coordinator.current === current) coordinator.current = undefined;
       current.dispose();
     };
-  }, [digest, session, store]);
+  }, [digest, installOnSessionAttach, session, store]);
 
   useEffect(
     () => installDeckBeforeUnloadGuard(store, beforeUnloadTarget),
@@ -115,7 +149,8 @@ export const LegacyDeckBuilderSession = ({
   );
 
   const submit = useCallback(
-    (command: WireGameCommand) => session.submit(command),
+    (command: WireGameCommand) =>
+      session?.submit(command) ?? { queued: false, reason: 'not_ready' },
     [session]
   );
   const { chooseCardBack } = useCardBackSelection({
@@ -140,6 +175,7 @@ export const LegacyDeckBuilderSession = ({
 
   const changeCardBack = useCallback(
     (target: DeckBuilderTarget): void => {
+      if (!session) return;
       const state = session.getSnapshot();
       if (state.phase !== 'ready' || state.view?.viewer.kind !== 'player') {
         return;

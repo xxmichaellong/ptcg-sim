@@ -90,6 +90,96 @@ describe('DeckBuilderStore', () => {
     expect(slotCount(store, 'alternate')).toBe(1);
   });
 
+  it('dynamically revokes alternate ownership without losing its retained deck', () => {
+    const store = new DeckBuilderStore({
+      alternateDeck: deckWith(card('Eevee')),
+    });
+    store.selectTarget('alternate');
+    store.addCard(card('Ditto'));
+    const receipt = store.beginNextDirtyInstall();
+
+    expect(receipt?.target).toBe('alternate');
+    expect(store.setAlternateEnabled(false)).toBe(true);
+    expect(store.getSnapshot()).toMatchObject({
+      target: 'main',
+      alternateEnabled: false,
+      hasDirtyDecks: true,
+      slots: {
+        alternate: {
+          revision: 1,
+          installedRevision: 0,
+          dirty: true,
+        },
+      },
+    });
+    expect(
+      store.getSnapshot().slots.alternate.installingRevision
+    ).toBeUndefined();
+    expect(slotCount(store, 'alternate')).toBe(2);
+    expect(store.settleInstall(receipt!, 'installed')).toBe(false);
+    expect(store.addCard(card('Mew'), 'alternate')).toBe(false);
+    expect(store.setAlternateEnabled(false)).toBe(false);
+
+    expect(store.setAlternateEnabled(true)).toBe(true);
+    expect(store.selectTarget('alternate')).toBe(true);
+    expect(store.addCard(card('Mew'))).toBe(true);
+    expect(slotCount(store, 'alternate')).toBe(3);
+  });
+
+  it('queues clean nonempty custody once for each fresh authority session', () => {
+    const store = new DeckBuilderStore({
+      mainDeck: deckWith(card('Pikachu')),
+      alternateDeck: deckWith(card('Eevee')),
+    });
+
+    expect(store.prepareForNewSession()).toBe(true);
+    expect(store.getSnapshot().slots).toMatchObject({
+      main: { revision: 1, installedRevision: 0, dirty: true },
+      alternate: { revision: 1, installedRevision: 0, dirty: true },
+    });
+    const prepared = store.getSnapshot();
+    expect(store.prepareForNewSession()).toBe(false);
+    expect(store.getSnapshot()).toBe(prepared);
+
+    const receipt = store.beginNextDirtyInstall();
+    expect(receipt?.target).toBe('main');
+    expect(store.prepareForNewSession()).toBe(true);
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      revision: 1,
+      installedRevision: 0,
+      dirty: true,
+    });
+    expect(store.getSnapshot().slots.main.installingRevision).toBeUndefined();
+    expect(store.settleInstall(receipt!, 'installed')).toBe(false);
+  });
+
+  it('does not invent installs for clean empty or disabled alternate custody', () => {
+    const empty = new DeckBuilderStore();
+    expect(empty.prepareForNewSession()).toBe(false);
+
+    const explicitlyCleared = new DeckBuilderStore({
+      mainDeck: deckWith(card('Pikachu')),
+    });
+    explicitlyCleared.clearDeck('main');
+    const dirtyEmpty = explicitlyCleared.getSnapshot();
+    expect(explicitlyCleared.prepareForNewSession()).toBe(false);
+    expect(explicitlyCleared.getSnapshot()).toBe(dirtyEmpty);
+
+    const multiplayer = new DeckBuilderStore({
+      alternateEnabled: false,
+      alternateDeck: deckWith(card('Eevee')),
+    });
+    expect(multiplayer.prepareForNewSession()).toBe(false);
+    expect(multiplayer.getSnapshot().slots.alternate).toMatchObject({
+      revision: 0,
+      installedRevision: 0,
+      dirty: false,
+    });
+    multiplayer.setAlternateEnabled(true);
+    expect(multiplayer.prepareForNewSession()).toBe(true);
+    expect(multiplayer.getSnapshot().slots.alternate.dirty).toBe(true);
+  });
+
   it('does not dirty or publish for invalid additions and missing removals', () => {
     const store = new DeckBuilderStore();
     const listener = vi.fn();

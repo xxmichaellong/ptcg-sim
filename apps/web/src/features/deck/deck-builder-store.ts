@@ -104,7 +104,7 @@ const createSnapshot = (
  * acknowledgement generation-safe, so edits made during a load stay dirty.
  */
 export class DeckBuilderStore {
-  readonly #alternateEnabled: boolean;
+  #alternateEnabled: boolean;
   readonly #listeners = new Set<Listener>();
   #pending?: DeckInstallReceipt;
   #state: DeckBuilderSnapshot;
@@ -134,6 +134,91 @@ export class DeckBuilderStore {
       this.#listeners.delete(listener);
     };
   };
+
+  /**
+   * Applies the current room's ownership capability without discarding an
+   * offline alternate deck. Disabling the alternate target also invalidates
+   * any receipt captured for it, because that work can no longer be owned by
+   * the attached session.
+   */
+  setAlternateEnabled(enabled: boolean): boolean {
+    if (enabled === this.#alternateEnabled) return false;
+
+    let alternate = this.#state.slots.alternate;
+    if (!enabled && this.#pending?.target === 'alternate') {
+      this.#pending = undefined;
+      alternate = createSlot(
+        alternate.deck,
+        alternate.revision,
+        alternate.installedRevision
+      );
+    }
+    this.#alternateEnabled = enabled;
+    this.#publish(
+      createSnapshot(
+        !enabled && this.#state.target === 'alternate'
+          ? 'main'
+          : this.#state.target,
+        enabled,
+        this.#state.slots.main,
+        alternate
+      )
+    );
+    return true;
+  }
+
+  /**
+   * Transfers retained editor state to a fresh authority generation. Clean,
+   * nonempty decks become dirty so the new session receives them; existing
+   * dirty work (including an intentional empty deck) keeps its exact revision.
+   * Disabled alternate state remains retained locally until solo ownership is
+   * restored.
+   */
+  prepareForNewSession(): boolean {
+    const prepare = (
+      slot: DeckBuilderSlotSnapshot,
+      enabled: boolean
+    ): DeckBuilderSlotSnapshot => {
+      const settled =
+        slot.installingRevision === undefined
+          ? slot
+          : createSlot(slot.deck, slot.revision, slot.installedRevision);
+      if (
+        !enabled ||
+        settled.dirty ||
+        getDeckCounts(settled.deck).total === 0
+      ) {
+        return settled;
+      }
+      return createSlot(
+        settled.deck,
+        nextRevision(settled.revision),
+        settled.installedRevision
+      );
+    };
+
+    const main = prepare(this.#state.slots.main, true);
+    const alternate = prepare(
+      this.#state.slots.alternate,
+      this.#alternateEnabled
+    );
+    if (
+      main === this.#state.slots.main &&
+      alternate === this.#state.slots.alternate
+    ) {
+      return false;
+    }
+    this.#pending = undefined;
+    this.#publish(
+      createSnapshot(
+        this.#state.target,
+        this.#alternateEnabled,
+        main,
+        alternate
+      )
+    );
+    return true;
+  }
 
   selectTarget(target: DeckBuilderTarget): boolean {
     if (
