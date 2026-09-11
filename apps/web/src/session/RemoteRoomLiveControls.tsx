@@ -3,9 +3,10 @@ import type {
   RemoteGameSession,
 } from '@ptcgsim/client-session';
 import { MAX_CHAT_CODE_UNITS } from '@ptcgsim/protocol';
-import { useState, type KeyboardEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
+import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
 import { resolveTableAction } from '../board/resolveTableAction.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
@@ -37,6 +38,7 @@ const ownPlayerId = (state: ClientSessionState): string | undefined =>
 export const RemoteRoomLiveControls = ({
   session,
   presentation,
+  roomMode = 'multiplayer',
   onLeave,
   onExportState,
   confirmLeave = () =>
@@ -48,6 +50,7 @@ export const RemoteRoomLiveControls = ({
 }: {
   readonly session: RemoteRoomLiveSession;
   readonly presentation: RemoteRoomLivePresentation;
+  readonly roomMode?: 'solo' | 'multiplayer';
   readonly onLeave?: () => void;
   readonly onExportState?: () => void;
   readonly confirmLeave?: () => boolean;
@@ -56,9 +59,15 @@ export const RemoteRoomLiveControls = ({
 }) => {
   const state = useGameSession(session);
   const [message, setMessage] = useState('');
+  const [pendingBoth, setPendingBoth] = useState<{
+    readonly commandId: string;
+    readonly action: 'setup' | 'reset';
+    readonly targetPlayerId: string;
+  }>();
   const options = useDismissibleRoomOptions();
   const playerId = ownPlayerId(state);
   const playerControls = playerId !== undefined;
+  const solo = roomMode === 'solo';
   const ready = state.phase === 'ready';
 
   const submitTable = (action: 'attack' | 'pass'): void => {
@@ -71,6 +80,54 @@ export const RemoteRoomLiveControls = ({
     const resolution = resolveLifecycleAction(state.view, playerId, action);
     if (resolution.ok) session.submit(resolution.command);
   };
+  const submitBothLifecycle = (action: 'setup' | 'reset'): void => {
+    if (!playerId || !state.view || !solo || pendingBoth) return;
+    const targets = [
+      playerId,
+      ...state.view.playerOrder.filter((candidate) => candidate !== playerId),
+    ];
+    const firstPlayerId = targets[0];
+    const secondPlayerId = targets[1];
+    if (!firstPlayerId) return;
+    const resolution = resolveLifecycleAction(
+      state.view,
+      firstPlayerId,
+      action
+    );
+    if (!resolution.ok) return;
+    const submission = session.submit(resolution.command);
+    if (submission.queued && secondPlayerId) {
+      setPendingBoth({
+        commandId: submission.commandId,
+        action,
+        targetPlayerId: secondPlayerId,
+      });
+    }
+  };
+  const submitSoloUndo = (): void => {
+    if (!playerId || !state.view || !solo) return;
+    const resolution = resolveSoloUndoAction(state.view, playerId);
+    if (resolution.ok) session.submit(resolution.command);
+  };
+  useEffect(() => {
+    if (!pendingBoth) return;
+    if (state.phase !== 'ready') {
+      setPendingBoth(undefined);
+      return;
+    }
+    const completed = state.completedCommands.find(
+      (candidate) => candidate.commandId === pendingBoth.commandId
+    );
+    if (!completed) return;
+    setPendingBoth(undefined);
+    if (!completed.accepted || !state.view) return;
+    const resolution = resolveLifecycleAction(
+      state.view,
+      pendingBoth.targetPlayerId,
+      pendingBoth.action
+    );
+    if (resolution.ok) session.submit(resolution.command);
+  }, [pendingBoth, session, state]);
   const sendMessage = (): void => {
     const normalized = message.trim();
     if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
@@ -88,11 +145,14 @@ export const RemoteRoomLiveControls = ({
 
   return (
     <>
-      <div id="p2ChatboxButtonContainer" className="chat-button-container">
+      <div
+        id={solo ? 'chatboxButtonContainer' : 'p2ChatboxButtonContainer'}
+        className="chat-button-container"
+      >
         {playerControls && (
           <>
             <button
-              id="p2AttackButton"
+              id={solo ? 'attackButton' : 'p2AttackButton'}
               type="button"
               className="self-color"
               onClick={() => submitTable('attack')}
@@ -100,17 +160,27 @@ export const RemoteRoomLiveControls = ({
               Attack
             </button>
             <button
-              id="p2PassButton"
+              id={solo ? 'passButton' : 'p2PassButton'}
               type="button"
               className="self-color"
               onClick={() => submitTable('pass')}
             >
               Pass
             </button>
+            {solo && (
+              <button
+                id="undoButton"
+                type="button"
+                className="self-color"
+                onClick={submitSoloUndo}
+              >
+                Undo
+              </button>
+            )}
           </>
         )}
         <button
-          id="p2FREEBUTTON"
+          id={solo ? 'FREEBUTTON' : 'p2FREEBUTTON'}
           type="button"
           className={playerControls ? 'self-color' : 'spectator-color'}
           disabled={!ready}
@@ -121,7 +191,7 @@ export const RemoteRoomLiveControls = ({
         </button>
       </div>
       <input
-        id="p2MessageInput"
+        id={solo ? 'messageInput' : 'p2MessageInput'}
         type="text"
         placeholder="Type your message here..."
         aria-label="Chat message"
@@ -131,11 +201,14 @@ export const RemoteRoomLiveControls = ({
         onChange={(event) => setMessage(event.target.value)}
         onKeyDown={handleMessageKeyDown}
       />
-      <div id="p2BottomButtonContainer" className="sidebox-button-container">
+      <div
+        id={solo ? 'bottomP1ButtonContainer' : 'p2BottomButtonContainer'}
+        className="sidebox-button-container"
+      >
         {playerControls && (
           <>
             <button
-              id="p2SetupButton"
+              id={solo ? 'setupButton' : 'p2SetupButton'}
               type="button"
               className="self-color"
               onClick={() => submitLifecycle('setup')}
@@ -143,16 +216,38 @@ export const RemoteRoomLiveControls = ({
               Set Up
             </button>
             <button
-              id="p2ResetButton"
+              id={solo ? 'resetButton' : 'p2ResetButton'}
               type="button"
               className="self-color"
               onClick={() => submitLifecycle('reset')}
             >
               Reset
             </button>
+            {solo && (
+              <>
+                <button
+                  id="setupBothButton"
+                  type="button"
+                  className="neutral-color"
+                  disabled={pendingBoth !== undefined}
+                  onClick={() => submitBothLifecycle('setup')}
+                >
+                  Set Up Both
+                </button>
+                <button
+                  id="resetBothButton"
+                  type="button"
+                  className="neutral-color"
+                  disabled={pendingBoth !== undefined}
+                  onClick={() => submitBothLifecycle('reset')}
+                >
+                  Reset Both
+                </button>
+              </>
+            )}
           </>
         )}
-        {onLeave && (
+        {onLeave && !solo && (
           <button
             id="leaveRoomButton"
             type="button"
@@ -165,7 +260,7 @@ export const RemoteRoomLiveControls = ({
           </button>
         )}
         <button
-          id="p2OptionsButton"
+          id={solo ? 'optionsButton' : 'p2OptionsButton'}
           ref={options.buttonRef}
           type="button"
           className="neutral-color"

@@ -1640,10 +1640,11 @@ listener occurs. Hide opponent hand, Change background, and the remaining
 static Settings content are not part of this bounded slice; arbitrary live
 background URLs remain behind ADR-013.
 The follow-on source-shape slice restores the existing Solo-only hide-hand
-checkbox plus the static keybind reminder and contact block. The route is
-multiplayer-only, so the checkbox retains its local checked state across the
-same lobby/room/replay lifetime but deliberately never transforms the
-server-projected opponent hand, sends a command, or enters `BoardPreferences`.
+checkbox plus the static keybind reminder and contact block. It was introduced
+while the route was multiplayer-only and retains its local checked state across
+the same lobby/room/replay lifetime. The later opt-in Solo selector does not yet
+make it transform the server-projected opponent hand; it sends no command and
+never enters `BoardPreferences`.
 The contact link retains its source URL while its exact source Twitter SVG is
 inlined, eliminating the former third-party image fetch.
 The final Settings slice implements accepted ADR-013 for the source Change
@@ -1771,6 +1772,32 @@ face response. The browser requests only authorized board-tier faces and cannot
 restore one after concealment. This closes the deterministic hidden/private
 request gate; real-raster resource accounting, arbitrary external hosts and
 failures, and the release browser matrix remain open.
+
+## Query-gated Solo composition
+
+The existing Solo tab on `?room-lobby=1` now creates the already-defined durable
+one-player authority with an explicit `mode: "solo"` request and enters the
+source p1 sidebox. It does not infer mode from socket count and does not add a
+second rules implementation. The live shell keeps the original p1 IDs for
+Attack, Pass, Undo, flower, chat, Set Up, Reset, Set Up Both, Reset Both, and
+Options. Solo deck composition enables both retained deck/card-back targets.
+
+Both-side lifecycle controls are deliberately serialized. The first command is
+submitted against the current projection; only an accepted completion and its
+installed successor projection permit derivation of the second-side command. A
+rejection, disconnect, or unmount cancels the local tail. This preserves the v1
+button meaning without issuing two revision-sensitive commands from one stale
+snapshot.
+
+Selecting Multiplayer parks rather than destroys the live Solo runtime.
+Selecting Solo restores the same authority, session, presentation history,
+preferences, and deck custody without another creation POST. Deck custody tracks
+whether a specific session has already received its clean values: a new room is
+prepared and reinstalled, while a parked-room remount flushes only edits made
+while it was offscreen. The renderer likewise recognizes a complete decoded
+native image on fresh mount, preventing cached card backs from remaining hidden
+after the route returns. The default v2 renderer route and frozen v1 client are
+unchanged.
 
 ## Accessibility preservation and minimum improvement
 

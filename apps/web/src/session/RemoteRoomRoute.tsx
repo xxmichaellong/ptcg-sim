@@ -59,12 +59,16 @@ export interface RemoteRoomRouteProps {
   readonly deckSurfaceActivated?: boolean;
   readonly onDeckSurfaceActivate?: () => void;
   readonly onDeckCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
+  readonly deckSessionPrepared?: boolean;
+  readonly onDeckSessionAttach?: () => void;
   readonly onIntent?: (intent: BoardIntent) => void;
   readonly onSubmission?: (
     command: WireGameCommand,
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  /** Parks a live solo authority while the source Multiplayer tab is open. */
+  readonly onMultiplayerNavigate?: () => void;
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
@@ -94,9 +98,12 @@ export const RemoteRoomRoute = ({
   deckSurfaceActivated = false,
   onDeckSurfaceActivate,
   onDeckCustodyChange,
+  deckSessionPrepared = false,
+  onDeckSessionAttach,
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  onMultiplayerNavigate,
   preferences: ownedPreferences,
   onPreferencesChange,
   hideOpponentHand: ownedHideOpponentHand,
@@ -173,7 +180,8 @@ export const RemoteRoomRoute = ({
   return (
     <ReplayModeShell coordinator={runtime.replay}>
       {({ state, chrome, controls, exitReplay }) => {
-        const feedId = chrome.active ? 'chatbox' : 'p2Chatbox';
+        const soloLive = !chrome.active && roomMode === 'solo';
+        const feedId = chrome.active || soloLive ? 'chatbox' : 'p2Chatbox';
         const status =
           state.failure?.message ??
           (state.sessionPhase === 'ready'
@@ -190,6 +198,7 @@ export const RemoteRoomRoute = ({
               effectivePreferences.darkMode ? ' remote-room-route--dark' : ''
             }`}
             data-app-route="remote-room"
+            data-session-phase={soloLive ? state.sessionPhase : undefined}
             data-dark-mode={String(effectivePreferences.darkMode)}
             data-room-background={
               backgroundSelection.background?.kind ?? 'default'
@@ -226,16 +235,20 @@ export const RemoteRoomRoute = ({
                   id="p1Button"
                   type="button"
                   className={
-                    chrome.active && activePanel === 'room'
+                    (chrome.active || soloLive) && activePanel === 'room'
                       ? 'selected-page'
                       : 'not-selected-page'
                   }
                   style={{ width: chrome.primaryTabWidth }}
                   aria-current={
-                    chrome.active && activePanel === 'room' ? 'page' : undefined
+                    (chrome.active || soloLive) && activePanel === 'room'
+                      ? 'page'
+                      : undefined
                   }
                   onClick={() => {
                     if (chrome.active) {
+                      setActivePanel('room');
+                    } else if (soloLive) {
                       setActivePanel('room');
                     } else if (onLeave && confirmHeaderLeave()) {
                       onLeave();
@@ -249,12 +262,17 @@ export const RemoteRoomRoute = ({
                     id="p2Button"
                     type="button"
                     className={
-                      activePanel === 'room'
+                      !soloLive && activePanel === 'room'
                         ? 'selected-page'
                         : 'not-selected-page'
                     }
-                    aria-current={activePanel === 'room' ? 'page' : undefined}
-                    onClick={() => setActivePanel('room')}
+                    aria-current={
+                      !soloLive && activePanel === 'room' ? 'page' : undefined
+                    }
+                    onClick={() => {
+                      if (soloLive) onMultiplayerNavigate?.();
+                      else setActivePanel('room');
+                    }}
                   >
                     Multiplayer
                   </button>
@@ -290,23 +308,24 @@ export const RemoteRoomRoute = ({
                 </button>
               </nav>
               <section
-                id={chrome.active ? 'p1Box' : 'p2Box'}
+                id={chrome.active || soloLive ? 'p1Box' : 'p2Box'}
                 className={`legacy-room-sidebox${
-                  chrome.active ? '' : ' legacy-room-sidebox--live'
+                  chrome.active || soloLive ? '' : ' legacy-room-sidebox--live'
                 }`}
                 data-replay-active={String(chrome.active)}
                 hidden={activePanel !== 'room'}
               >
-                {!chrome.active && (
-                  <div id="roomHeader">
-                    <div
-                      id="roomHeaderText"
-                      data-session-phase={state.sessionPhase}
-                    >
-                      {status}
+                {!chrome.active &&
+                  (!soloLive || state.sessionPhase !== 'ready') && (
+                    <div id="roomHeader">
+                      <div
+                        id="roomHeaderText"
+                        data-session-phase={state.sessionPhase}
+                      >
+                        {status}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 <LegacyPresentationSurface
                   key={feedId}
                   runtime={runtime.presentation}
@@ -317,6 +336,7 @@ export const RemoteRoomRoute = ({
                   <RemoteRoomLiveControls
                     session={runtime.session}
                     presentation={runtime.presentation}
+                    roomMode={roomMode}
                     {...(onLeave ? { onLeave } : {})}
                     onExportState={exportLivePerspective}
                     downloadTextFile={downloadTextFile}
@@ -411,6 +431,8 @@ export const RemoteRoomRoute = ({
                     open={!chrome.active && activePanel === 'deck'}
                     alternateEnabled={roomMode === 'solo'}
                     installOnSessionAttach
+                    prepareForNewSessionOnAttach={!deckSessionPrepared}
+                    onSessionAttach={onDeckSessionAttach}
                     onRequestClose={() => setActivePanel('room')}
                     {...(onDeckCustodyChange
                       ? { onCustodyChange: onDeckCustodyChange }

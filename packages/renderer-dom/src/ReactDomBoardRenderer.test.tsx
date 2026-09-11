@@ -364,6 +364,36 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('reveals an already decoded cache hit on a fresh card mount', async () => {
+    const complete = vi
+      .spyOn(HTMLImageElement.prototype, 'complete', 'get')
+      .mockReturnValue(true);
+    const naturalWidth = vi
+      .spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get')
+      .mockReturnValue(1);
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+
+    try {
+      await mountInAct(renderer, host, createScene());
+      const image = host.querySelector<HTMLImageElement>('[data-card-id] img')!;
+      expect(image.dataset.cardImageState).toBe('ready');
+      expect(image.style.visibility).toBe('visible');
+    } finally {
+      await act(async () => {
+        renderer.destroy();
+        await Promise.resolve();
+      });
+      complete.mockRestore();
+      naturalWidth.mockRestore();
+    }
+  });
+
   it('hides only zone paint while preserving the same accessible hit region', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

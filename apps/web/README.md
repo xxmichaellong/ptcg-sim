@@ -4,24 +4,27 @@ The default route is an isolated renderer decision harness. It does not replace
 or alter the v1 production client. Use `?renderer=pixi` or `?renderer=dom` to
 mount the same deterministic 61-card scene behind either adapter.
 
-`?room-lobby=1&renderer=dom` mounts the isolated, production-built v2
-multiplayer lobby. It preserves the existing Name, Room ID, Generate, Copy,
-coaching, spectator, and Join shape while routing those controls through the
-real authority. Generate creates and privately owns a multiplayer room; Copy
-mints a role-bound temporary invitation; Room ID paste is intercepted before
-the bearer reaches the DOM; and Join transfers the owned creator or guest
-runtime into the connected room route. This explicit query remains a rollout
-flag: normal v2 traffic still receives the renderer harness, and the v1 client
-is unchanged.
+`?room-lobby=1&renderer=dom` mounts the isolated, production-built v2 room
+shell. It preserves the existing Solo, Multiplayer, Deck, and Settings tabs plus
+the Name, Room ID, Generate, Copy, coaching, spectator, and Join shape while
+routing them through the real authority. Solo creates an explicitly one-player
+room and enters the source p1 sidebox. Generate creates and privately owns a
+multiplayer room; Copy mints a role-bound temporary invitation; Room ID paste is
+intercepted before the bearer reaches the DOM; and Join transfers the owned
+creator or guest runtime into the connected room route. This explicit query
+remains a rollout flag: normal v2 traffic still receives the renderer harness,
+and the v1 client is unchanged.
 
-The connected route now mounts the existing Attack, Pass, flower, chat, Set Up,
-Reset, and Leave Room controls with their original IDs and role visibility.
-Player mutations resolve to atomic authority commands, while player and
-spectator chat uses the authenticated ephemeral session channel so the browser
-never supplies attribution. Replay hides the live controls. Leave retains the
-legacy confirmation text, sends the durable session leave through runtime
-disposal, clears the old private invitation custody, and returns to a fresh
-lobby owner.
+The connected route mounts the existing mode-specific controls with their
+original IDs and role visibility. Multiplayer retains Attack, Pass, flower,
+chat, Set Up, Reset, and Leave Room. Solo uses the p1 IDs and additionally
+restores Undo, Set Up Both, and Reset Both; each “both” action waits for the
+first acknowledged projection before deriving the second command, so it cannot
+submit a stale revision. Player mutations resolve to authority commands, while
+chat uses the authenticated ephemeral session channel so the browser never
+supplies attribution. Replay hides the live controls. Leave retains the legacy
+confirmation text, sends the durable session leave through runtime disposal,
+clears the old private invitation custody, and returns to a fresh lobby owner.
 
 `RemoteRoomBootstrap` exchanges an explicitly supplied in-memory seat or
 spectator capability through a same-origin, no-store POST and constructs the
@@ -62,8 +65,8 @@ the web app. Override the Worker origin with `PTCGSIM_V2_SERVER_ORIGIN` when it
 is not listening at `http://127.0.0.1:8787`.
 
 Add `&room-mode=solo` to exercise persisted single occupancy and solo replay;
-the hidden route defaults to `multiplayer`. This is development-only protocol
-coverage, not a visible mode selector.
+the hidden route defaults to `multiplayer`. This remains the direct development
+harness; the separately query-gated room shell now owns the visible Solo tab.
 
 This seam is deliberately available only under `import.meta.env.DEV`; it does
 not choose an ADR-020 invitation transport or expose the player-two/spectator
@@ -85,14 +88,20 @@ legacy replay controls, authenticated live sidebox controls, and externally
 owned route teardown. Live and replay Options now restore recipient-safe
 battle-log export and browser full screen, while Clear battle log remains live
 only as in v1; object URLs are revoked after the foreground download.
-The connected Solo header tab also retains its v1 confirmed-leave behavior and
-uses the same route-owned durable teardown as Leave Room. Game-state/replay
+The connected multiplayer Solo header tab retains its v1 confirmed-leave
+behavior and uses the same route-owned durable teardown as Leave Room. A live
+Solo authority instead keeps Solo selected; selecting Multiplayer parks that
+same runtime, and selecting Solo again restores it without a second room or
+deck installation. Game-state/replay
 perspective export is implemented; replay-file import, server-held continuation,
 and the remaining focus/visual parity remain later slices. Deck navigation is
 now active in the opt-in lobby and live-room route, while the default route is
 unchanged. The Deck implementation and CSS load only after its first tab click;
 the first lazy mount transfers its exact deck/card-back stores to the lobby so
-edits survive room entry and Leave without coupling them to a socket. An
+edits survive room entry and Leave without coupling them to a socket. Deck
+custody distinguishes a genuinely new authority from a remount of the parked
+one: the former requeues retained values, while the latter flushes only edits
+made while parked. An
 optional route-owned `BoardPreferences` seam now
 crosses the live/replay wrapper and updates either renderer in place. The
 isolated lobby and connected route restore Settings-tab ownership plus the
@@ -100,8 +109,9 @@ existing Dark mode and Hide containers controls. Preferences stay above room
 ownership so they survive lobby/room/replay navigation, but they emit no
 protocol traffic and reset on document reload. The source Solo-only hand
 checkbox and static keybind/contact content are also restored; on this
-multiplayer-only route the hand value is explicitly local and cannot alter the
-server-projected view. Its source Twitter mark is inline rather than a
+query-gated route the hand value is still explicitly local in both modes and
+cannot alter the server-projected view. Safe live-Solo opponent-hand disclosure
+remains a later parity slice. Its source Twitter mark is inline rather than a
 third-party image request. The source Change background control is also restored
 under accepted ADR-013: `blank`, randomized `theme`, and
 arbitrary player-pasted URLs preload in the browser and paint only the local

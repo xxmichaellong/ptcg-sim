@@ -79,7 +79,7 @@ const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Sycamore',
 ]);
 
-type LobbyOperation = 'generate' | 'copy' | 'join';
+type LobbyOperation = 'solo' | 'generate' | 'copy' | 'join';
 
 interface InvitationJoinCustody {
   readonly acceptPaste: RemoteRoomInvitationJoinCustody['acceptPaste'];
@@ -174,6 +174,9 @@ const safeFailureMessage = (
     }
     return 'Could not join the room. Please try again.';
   }
+  if (operation === 'solo') {
+    return 'Could not start Solo mode. Please try again.';
+  }
   return 'Could not generate a room. Please try again.';
 };
 
@@ -231,6 +234,7 @@ export const RemoteRoomLobby = ({
 }) => {
   const boardView = useMemo(createRendererSpikeView, []);
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
+  const preparedDeckSessions = useRef(new WeakSet<object>());
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [coachingConsent, setCoachingConsent] = useState(false);
@@ -240,6 +244,7 @@ export const RemoteRoomLobby = ({
   const [status, setStatus] = useState<string>();
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
+  const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
   const [activePanel, setActivePanel] = useState<'lobby' | 'deck' | 'settings'>(
     'lobby'
   );
@@ -325,8 +330,10 @@ export const RemoteRoomLobby = ({
       }
       const previous = active.owner.creator;
       active.owner.creator = { result, displayName };
-      active.owner.guestRuntime = undefined;
+      active.owner.guestRuntime?.dispose();
+      delete active.owner.guestRuntime;
       previous?.result.dispose();
+      setParkedSolo(undefined);
       active.owner.invitation.clear();
       setName(displayName);
       setRoomCode(result.invitations.roomCode);
@@ -336,6 +343,59 @@ export const RemoteRoomLobby = ({
     } catch (error) {
       if (!active.owner.disposed) {
         setStatus(safeFailureMessage('generate', error));
+      }
+    } finally {
+      endOperation(active.owner);
+    }
+  };
+
+  const handleSolo = async (): Promise<void> => {
+    setActivePanel('lobby');
+    if (parkedSolo) {
+      setParkedSolo(undefined);
+      setConnected(parkedSolo);
+      return;
+    }
+    const active = beginOperation('solo');
+    if (!active) return;
+    const displayName = normalizeDisplayName(
+      name,
+      dependencies.fallbackDisplayName
+    );
+    setStatus('Starting Solo mode…');
+    try {
+      const result = await dependencies.createRoom({
+        buildId,
+        displayName,
+        mode: 'solo',
+        rendererKind,
+        signal: active.abort.signal,
+      });
+      if (active.owner.disposed || ownerRef.current !== active.owner) {
+        result.dispose();
+        return;
+      }
+      const previous = active.owner.creator;
+      active.owner.creator = { result, displayName };
+      active.owner.guestRuntime?.dispose();
+      delete active.owner.guestRuntime;
+      previous?.result.dispose();
+      active.owner.invitation.clear();
+      setName(displayName);
+      setRoomCode('');
+      setReceipt(undefined);
+      setCoachingConsent(false);
+      setCopyConfirmed(false);
+      setStatus(undefined);
+      setConnected({
+        runtime: result.runtime,
+        rendererKind,
+        mode: result.mode,
+        coachingConsent: false,
+      });
+    } catch (error) {
+      if (!active.owner.disposed) {
+        setStatus(safeFailureMessage('solo', error));
       }
     } finally {
       endOperation(active.owner);
@@ -465,6 +525,7 @@ export const RemoteRoomLobby = ({
       active.owner.guestRuntime = result.runtime;
       active.owner.creator?.result.dispose();
       active.owner.creator = undefined;
+      setParkedSolo(undefined);
       setName(displayName);
       setConnected({
         runtime: result.runtime,
@@ -501,16 +562,30 @@ export const RemoteRoomLobby = ({
     setCoachingConsent(false);
     setCopyConfirmed(false);
     setConnected(undefined);
+    setParkedSolo(undefined);
     setStatus('Left room.');
+  };
+
+  const handleMultiplayerNavigate = (): void => {
+    if (!connected || connected.mode !== 'solo') return;
+    setParkedSolo(connected);
+    setConnected(undefined);
+    setActivePanel('lobby');
+    setReceipt(undefined);
+    setRoomCode('');
+    setCopyConfirmed(false);
+    setStatus('Solo game remains active. Select Solo to return.');
   };
 
   if (connected) {
     return (
       <>
-        <InitialCoachingConsent
-          runtime={connected.runtime}
-          consent={connected.coachingConsent}
-        />
+        {connected.mode === 'multiplayer' && (
+          <InitialCoachingConsent
+            runtime={connected.runtime}
+            consent={connected.coachingConsent}
+          />
+        )}
         <RemoteRoomRoute
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}
@@ -524,7 +599,14 @@ export const RemoteRoomLobby = ({
           deckSurfaceActivated={deckSurfaceActivated}
           onDeckSurfaceActivate={() => setDeckSurfaceActivated(true)}
           onDeckCustodyChange={setDeckCustody}
+          deckSessionPrepared={preparedDeckSessions.current.has(
+            connected.runtime.session
+          )}
+          onDeckSessionAttach={() =>
+            preparedDeckSessions.current.add(connected.runtime.session)
+          }
           onLeave={handleLeave}
+          onMultiplayerNavigate={handleMultiplayerNavigate}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
           hideOpponentHand={hideOpponentHand}
@@ -581,7 +663,13 @@ export const RemoteRoomLobby = ({
           className="legacy-tabs legacy-room-tabs"
           aria-label="Application sections"
         >
-          <button id="p1Button" type="button" className="not-selected-page">
+          <button
+            id="p1Button"
+            type="button"
+            className="not-selected-page"
+            disabled={busy}
+            onClick={() => void handleSolo()}
+          >
             Solo
           </button>
           <button
@@ -727,7 +815,7 @@ export const RemoteRoomLobby = ({
           <Suspense fallback={null}>
             <LegacyDeckBuilderSession
               open={activePanel === 'deck'}
-              alternateEnabled={false}
+              alternateEnabled={parkedSolo?.mode === 'solo'}
               installOnSessionAttach
               onRequestClose={() => setActivePanel('lobby')}
               onCustodyChange={setDeckCustody}

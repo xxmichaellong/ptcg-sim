@@ -161,6 +161,10 @@ select {
   display: none;
 }
 
+#p1Box {
+  border-radius: 0 10px 0 0;
+}
+
 .legacy-room-settings #settingsToggles {
   display: block;
   width: 100%;
@@ -255,7 +259,8 @@ select {
 .remote-room-route--dark .legacy-lobby-sidebox #p2ExplanationBox,
 .remote-room-route--dark .legacy-lobby-sidebox #nameInput,
 .remote-room-route--dark .legacy-lobby-sidebox #roomIdInput,
-.remote-room-route--dark #p2MessageInput {
+.remote-room-route--dark #p2MessageInput,
+.remote-room-route--dark #messageInput {
   background: rgb(8 18 18);
   color: #fff;
 }
@@ -599,15 +604,18 @@ select {
   background-color: rgb(217 200 117);
 }
 
-#p2AttackButton {
+#p2AttackButton,
+#attackButton {
   border-radius: 0 0.5vw 0.5vw 0;
 }
 
-#p2FREEBUTTON {
+#p2FREEBUTTON,
+#FREEBUTTON {
   border-radius: 0.5vw 0 0 0.5vw;
 }
 
-#p2MessageInput {
+#p2MessageInput,
+#messageInput {
   width: 100%;
   padding: 10px;
   box-sizing: border-box;
@@ -615,7 +623,19 @@ select {
   border-radius: 0 0 10px 10px;
 }
 
-#p2BottomButtonContainer {
+#messageInput {
+  outline: none;
+  background: #f9f9f9;
+  color: #333;
+  font-size: 2vh;
+}
+
+#messageInput::placeholder {
+  color: #999;
+}
+
+#p2BottomButtonContainer,
+#bottomP1ButtonContainer {
   width: 100%;
 }
 

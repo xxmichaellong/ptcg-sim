@@ -47,6 +47,9 @@ export interface LegacyDeckBuilderSessionProps {
   readonly open: boolean;
   readonly alternateEnabled: boolean;
   readonly installOnSessionAttach?: boolean;
+  /** False when remounting against an authority this custody already served. */
+  readonly prepareForNewSessionOnAttach?: boolean;
+  readonly onSessionAttach?: (session: DeckInstallSession) => void;
   readonly onRequestClose: () => void;
   readonly store?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
@@ -77,6 +80,8 @@ export const LegacyDeckBuilderSession = ({
   open,
   alternateEnabled,
   installOnSessionAttach = false,
+  prepareForNewSessionOnAttach = installOnSessionAttach,
+  onSessionAttach,
   onRequestClose,
   store: suppliedStore,
   cardBackStore: suppliedCardBackStore,
@@ -121,9 +126,11 @@ export const LegacyDeckBuilderSession = ({
   >(undefined);
   const failureHandler = useRef(onInstallFailure);
   const cardBackFailureHandler = useRef(onCardBackInstallFailure);
+  const sessionAttachHandler = useRef(onSessionAttach);
   const wasOpen = useRef(open);
   failureHandler.current = onInstallFailure;
   cardBackFailureHandler.current = onCardBackInstallFailure;
+  sessionAttachHandler.current = onSessionAttach;
 
   useLayoutEffect(() => {
     onCustodyChange?.(custody);
@@ -141,13 +148,14 @@ export const LegacyDeckBuilderSession = ({
       cardBackCoordinator.current = undefined;
       return;
     }
+    let isNewBinding = false;
     if (installOnSessionAttach) {
-      const isNewBinding =
+      isNewBinding =
         preparedBinding.current?.session !== session ||
         preparedBinding.current.store !== store ||
         preparedBinding.current.cardBackStore !== cardBackStore;
       preparedBinding.current = { session, store, cardBackStore };
-      if (isNewBinding) {
+      if (isNewBinding && prepareForNewSessionOnAttach) {
         cardBackStore.prepareForNewSession();
         store.prepareForNewSession();
       }
@@ -170,6 +178,7 @@ export const LegacyDeckBuilderSession = ({
     if (installOnSessionAttach) {
       currentCardBack.flush();
       currentDeck.flush();
+      if (isNewBinding) sessionAttachHandler.current?.(session);
     }
     return () => {
       if (coordinator.current === currentDeck) coordinator.current = undefined;
@@ -179,7 +188,14 @@ export const LegacyDeckBuilderSession = ({
       currentDeck.dispose();
       currentCardBack.dispose();
     };
-  }, [cardBackStore, digest, installOnSessionAttach, session, store]);
+  }, [
+    cardBackStore,
+    digest,
+    installOnSessionAttach,
+    prepareForNewSessionOnAttach,
+    session,
+    store,
+  ]);
 
   useEffect(
     () =>

@@ -1721,11 +1721,12 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      Settings content remain later slices; arbitrary live background URLs remain
      behind ADR-013.
 108. The next source-shape slice restores the existing Solo-only hide-hand
-     checkbox plus its static keybind reminder and contact block. Because this
-     route is multiplayer-only, the checked value is locally retained across
-     lobby, live room, replay, and explicit Leave but cannot transform the
-     server-projected opponent hand, enter renderer preferences, or produce any
-     session traffic. The contact URL is unchanged; the exact source Twitter SVG
+     checkbox plus its static keybind reminder and contact block. It entered
+     while the route was multiplayer-only; the checked value remains locally
+     retained across lobby, live room, replay, and explicit Leave. The later
+     opt-in Solo selector does not yet make it transform the server-projected
+     opponent hand, enter renderer preferences, or produce session traffic. The
+     contact URL is unchanged; the exact source Twitter SVG
      is inline, eliminating the legacy third-party image request. Component and
      full-stack coverage pin labels, links, checked-state retention, unchanged
      board preferences, and zero socket/submission effects. Change background is
@@ -1881,6 +1882,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      and data URLs, the 4,096-code-unit bound, default mapping, failure, stale
      completion, teardown, and exact commands. Mounting the source-shaped Deck
      panel remains the next visible-parity slice.
+123. The existing Solo tab is now active on the query-gated production room
+     shell. It creates the persisted one-player authority, selects the source p1
+     shell, restores Undo plus Set Up/Reset Both, and enables the alternate deck
+     and card back. Both-side actions submit their second command only after the
+     first acknowledged projection, preventing stale-revision loss. Multiplayer
+     navigation parks the same Solo runtime; returning reuses its authority and
+     flushes only Deck edits made while parked. The real Worker/Chromium journey
+     pins one creation request, accepted undo, two accepted resets, exact
+     arbitrary alternate back publication, and same-runtime return. That journey
+     also exposed and closed a fresh-host cache-hit bug: a complete decoded
+     native image now enters `ready` immediately instead of being hidden after
+     its already-fired load event. The default route and v1 remain unchanged.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

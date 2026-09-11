@@ -190,6 +190,12 @@ const CardNode = memo(function CardNode({
   useLayoutEffect(() => {
     const image = imageRef.current;
     if (!image) return;
+    if (image.complete) {
+      const ready = image.naturalWidth > 0;
+      image.dataset.cardImageState = ready ? 'ready' : 'failed';
+      image.style.visibility = ready ? 'visible' : 'hidden';
+      return;
+    }
     image.dataset.cardImageState = 'loading';
     image.style.visibility = 'hidden';
   }, [card.imageUrl]);

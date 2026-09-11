@@ -36,6 +36,7 @@ const roomRouteHarness = vi.hoisted(() => ({
   onBackgroundChange: undefined as
     ((background: RoomBackground) => void) | undefined,
   roomMode: undefined as 'solo' | 'multiplayer' | undefined,
+  onMultiplayerNavigate: undefined as (() => void) | undefined,
   deckStore: undefined as DeckBuilderStore | undefined,
   cardBackStore: undefined as CardBackCustodyStore | undefined,
 }));
@@ -58,6 +59,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     background,
     onBackgroundChange,
     roomMode,
+    onMultiplayerNavigate,
     deckStore,
     cardBackStore,
   }: {
@@ -70,6 +72,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly background?: RoomBackground;
     readonly onBackgroundChange?: (background: RoomBackground) => void;
     readonly roomMode?: 'solo' | 'multiplayer';
+    readonly onMultiplayerNavigate?: () => void;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
   }) => {
@@ -80,11 +83,21 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.background = background;
     roomRouteHarness.onBackgroundChange = onBackgroundChange;
     roomRouteHarness.roomMode = roomMode;
+    roomRouteHarness.onMultiplayerNavigate = onMultiplayerNavigate;
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
     return (
       <main data-app-route="test-remote-room">
         {runtime.label}
+        {onMultiplayerNavigate && (
+          <button
+            id="testOpenMultiplayer"
+            type="button"
+            onClick={onMultiplayerNavigate}
+          >
+            Multiplayer
+          </button>
+        )}
         {onLeave && (
           <button id="testLeaveRoom" type="button" onClick={onLeave}>
             Leave
@@ -197,7 +210,10 @@ const runtime = (
   return { value, submit, dispose, listeners };
 };
 
-const creationResult = (roomRuntime = runtime({ label: 'creator' })) => {
+const creationResult = (
+  roomRuntime = runtime({ label: 'creator' }),
+  mode: 'solo' | 'multiplayer' = 'multiplayer'
+) => {
   const copyPlayerInvitation = vi.fn(async () => ({
     roomCode: ROOM_CODE,
     requestedRole: 'player' as const,
@@ -216,7 +232,7 @@ const creationResult = (roomRuntime = runtime({ label: 'creator' })) => {
       runtime: roomRuntime.value,
       rendererKind: 'dom',
     },
-    mode: 'multiplayer',
+    mode,
     invitations: {
       roomCode: ROOM_CODE,
       copyPlayerInvitation,
@@ -297,6 +313,7 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.background = undefined;
     roomRouteHarness.onBackgroundChange = undefined;
     roomRouteHarness.roomMode = undefined;
+    roomRouteHarness.onMultiplayerNavigate = undefined;
     roomRouteHarness.deckStore = undefined;
     roomRouteHarness.cardBackStore = undefined;
   });
@@ -413,6 +430,67 @@ describe('remote room lobby wiring', () => {
     expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
 
     await act(async () => root.unmount());
+    expect(invitation.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('starts one-player authority from Solo and parks it across source tab navigation', async () => {
+    const invitation = custody();
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi.fn(async () => created.value);
+    const { host, root } = await mount(
+      lobbyDependencies(invitation, createRoom)
+    );
+
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#p1Button').click();
+      await flush();
+    });
+
+    expect(createRoom).toHaveBeenCalledOnce();
+    expect(createRoom.mock.calls[0]?.[0]).toMatchObject({
+      buildId: 'test-build',
+      displayName: 'Froakie',
+      mode: 'solo',
+      rendererKind: 'dom',
+    });
+    expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
+    expect(
+      host.querySelector('[data-app-route="test-remote-room"]')
+    ).not.toBeNull();
+    expect(host.textContent).toContain('solo');
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    expect(roomRouteHarness.onMultiplayerNavigate).toBeTypeOf('function');
+    expect(created.roomRuntime.submit).not.toHaveBeenCalled();
+    expect(invitation.clear).toHaveBeenCalledOnce();
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#testOpenMultiplayer').click()
+    );
+    expect(
+      host.querySelector('[data-app-route="remote-room-lobby"]')
+    ).not.toBeNull();
+    expect(host.textContent).toContain(
+      'Solo game remains active. Select Solo to return.'
+    );
+    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
+    expect(created.dispose).not.toHaveBeenCalled();
+
+    await openDeck(host);
+    expect(
+      element(host, '#altImportHeaderButton').getAttribute('aria-disabled')
+    ).toBe('false');
+
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#p1Button').click();
+      await flush();
+    });
+    expect(createRoom).toHaveBeenCalledOnce();
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    expect(roomRouteHarness.deckStore).toBeDefined();
+    expect(created.dispose).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
     expect(invitation.dispose).toHaveBeenCalledOnce();
   });
 

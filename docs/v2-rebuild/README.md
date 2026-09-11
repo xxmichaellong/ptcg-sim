@@ -126,9 +126,13 @@ the relevant product decisions and phase exit criteria.
   requests a fresh authority artifact without entering replay mode; an active
   replay exports its exact installed artifact. Replay-file import and canonical
   server-held continuation remain later parity work. Deck navigation is now
-  active only on the opt-in v2 room route; the default route remains unchanged. The
-  live Solo header tab retains its separate v1 confirmation text and delegates
-  to the same durable route teardown as Leave Room. The board composition now
+  active only on the opt-in v2 room route; the default route remains unchanged.
+  The lobby's existing Solo tab now creates the persisted one-player authority
+  and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.
+  Multiplayer navigation parks that Solo runtime, and returning does not create
+  another room or reinstall a clean deck. In a connected multiplayer room, the
+  Solo header tab retains its separate v1 confirmation text and delegates to the
+  same durable route teardown as Leave Room. The board composition now
   accepts optional route-owned local preferences across live and replay without
   remounting its renderer. The isolated lobby owns the first visible Settings
   slice across lobby, connected live room, and replay navigation: Dark mode and
@@ -139,9 +143,10 @@ the relevant product decisions and phase exit criteria.
   checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
   paint while preserving stable nodes, geometry, accessibility, and input. The
   source Solo-only hide-hand checkbox and static keybind/contact block are also
-  restored; on this multiplayer-only route the checkbox cannot transform the
-  server-projected view, and the source Twitter mark is inlined to remove its
-  third-party fetch. The final Change background control preserves the source
+  restored; it remains local and cannot yet transform the server-projected view
+  even after the opt-in Solo selector, and the source Twitter mark is inlined to
+  remove its third-party fetch. Safe live-Solo opponent-hand disclosure remains
+  a later parity slice. The final Change background control preserves the source
   prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
   URLs under accepted ADR-013. Images preload before the
   route background changes and remain page-local across lobby/live/replay/Leave;

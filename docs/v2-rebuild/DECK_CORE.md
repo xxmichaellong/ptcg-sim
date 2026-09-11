@@ -512,11 +512,13 @@ Deck click and that the resource appears only after activation.
 The first lazy session owns its `DeckBuilderStore` and `CardBackCustodyStore`,
 then reports those exact objects to `RemoteRoomLobby`. That parent retains them
 across lobby → room → Leave → fresh-lobby transitions and supplies them back to
-later session mounts. Entering a new room marks retained values for a new
-authority binding; card backs drain before decks through the one acknowledged
-session outbox. Multiplayer keeps alternate controls disabled without deleting
-their state; a solo-mode route enables them. Replay continues to hide Deck
-navigation and never installs editor state into replay playback.
+later session mounts. Entering a genuinely new room marks retained values for a
+new authority binding; remounting a parked Solo room flushes only intervening
+offline edits and never reloads clean custody into the same match. Card backs
+drain before decks through the one acknowledged session outbox. Multiplayer
+keeps alternate controls disabled without deleting their state; the live Solo
+route enables them. Replay continues to hide Deck navigation and never installs
+editor state into replay playback.
 
 The multi-context Wrangler/Vite browser journey imports a deck and accepts an
 arbitrary player-pasted card-back URL before joining. It proves the exact URL is
@@ -527,9 +529,9 @@ allowlist, proxy, application fetch, `crossOrigin` assignment, or CORS opt-in is
 introduced; trim, the shared 4,096-code-unit bound, and native image load remain
 the complete card-back admission behavior.
 
-The local production build at this checkpoint transforms 844 modules and keeps
-startup gzip at 59.91 KiB for the default entry, 13.93 KiB for the room lobby,
-and 17.71 KiB for the live room. The first-use Deck JavaScript is 28.11 KiB gzip
+The local production build at this checkpoint transforms 845 modules and keeps
+startup gzip at 59.91 KiB for the default entry, 14.17 KiB for the room lobby,
+and 18.12 KiB for the live room. The first-use Deck JavaScript is 28.15 KiB gzip
 with 3.82 KiB of lazy CSS; the 168-deck corpus remains a later 22.47 KiB gzip
 chunk. Bundle provenance passes over 23 web maps plus the Worker map.
 
@@ -554,12 +556,12 @@ This checkpoint is complete when:
 
 ## Remaining deck slices
 
-The source-browser, deck/session custody, card-back custody, and query-gated
-route activation slices are implemented. Remaining Deck-adjacent product work
-is deliberate and separate: canonical save/replay import-export/continuation,
-the visible production solo-mode selector, broader rollout of the opt-in v2
-route, and the non-Chromium/device release matrix. None requires narrowing the
-accepted arbitrary-image behavior.
+The source-browser, deck/session custody, card-back custody, query-gated route
+activation, and visible opt-in Solo selector slices are implemented. Remaining
+Deck-adjacent product work is deliberate and separate: canonical save/replay
+import-export/continuation, broader rollout of the opt-in v2 route, and the
+non-Chromium/device release matrix. None requires narrowing the accepted
+arbitrary-image behavior.
 
 Rollback for route activation is removal of the lobby/route lazy composition
 wiring while retaining the isolated package, adapters, and parity harness. The

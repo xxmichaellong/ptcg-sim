@@ -537,6 +537,15 @@ Work in vertical slices:
 8. Board flip, split resize, full screen, settings/themes.
 9. Solo undo/replay and complete accessibility bridge.
 
+Implemented opt-in entry checkpoint: the existing Solo tab behind
+`?room-lobby=1` now creates the persisted one-player authority and enters the p1
+shell. Undo and both-side lifecycle controls reuse the existing authority
+commands; both-side actions wait for the first acknowledged projection before
+submitting the second. Multiplayer navigation parks and restores that same Solo
+runtime, and session-aware Deck custody prevents a clean parked deck from being
+destructively reinstalled. This is still an opt-in slice, not the broader v2
+rollout or a claim that every Phase 5 interaction is complete.
+
 Every slice includes reducer, render model, renderer/UI, event/message mapping,
 tests, fixtures, instrumentation, and parity review. Do not create a separate
 “testing phase” for missing slice tests.

@@ -187,6 +187,8 @@ const renderSession = async (options: {
   readonly open: boolean;
   readonly alternateEnabled?: boolean;
   readonly installOnSessionAttach?: boolean;
+  readonly prepareForNewSessionOnAttach?: boolean;
+  readonly onSessionAttach?: (session: DeckInstallSession) => void;
   readonly onRequestClose?: () => void;
   readonly requestCardBack?: BrowserCardBackRequest;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
@@ -202,6 +204,15 @@ const renderSession = async (options: {
         open={options.open}
         alternateEnabled={options.alternateEnabled ?? true}
         installOnSessionAttach={options.installOnSessionAttach ?? false}
+        {...(options.prepareForNewSessionOnAttach !== undefined
+          ? {
+              prepareForNewSessionOnAttach:
+                options.prepareForNewSessionOnAttach,
+            }
+          : {})}
+        {...(options.onSessionAttach
+          ? { onSessionAttach: options.onSessionAttach }
+          : {})}
         onRequestClose={options.onRequestClose ?? vi.fn()}
         catalog={catalog}
         samples={samples}
@@ -598,6 +609,80 @@ describe('LegacyDeckBuilderSession', () => {
       installingRevision: 2,
     });
     expect(firstSession.listenerCount()).toBe(0);
+  });
+
+  it('flushes offline edits without reinstalling clean custody when the same authority remounts', async () => {
+    const store = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
+    const session = new FakeSession();
+    const onSessionAttach = vi.fn();
+    act(() => {
+      store.addCard(card('Retained Pikachu'));
+      cardBackStore.replace('main', '/retained-back.png');
+    });
+
+    await renderSession({
+      session,
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      prepareForNewSessionOnAttach: true,
+      onSessionAttach,
+    });
+    expect(session.commands).toEqual([
+      { type: 'SetCardBack', cardBackUrl: '/retained-back.png' },
+    ]);
+    act(() => session.completeLatest(true));
+    await vi.waitFor(() => expect(session.commands).toHaveLength(2));
+    act(() => session.completeLatest(true));
+    expect(store.getSnapshot().hasDirtyDecks).toBe(false);
+    expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+
+    await renderSession({
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await renderSession({
+      session,
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      prepareForNewSessionOnAttach: false,
+      onSessionAttach,
+    });
+    expect(session.commands).toHaveLength(2);
+    expect(store.getSnapshot().hasDirtyDecks).toBe(false);
+    expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+
+    act(() => store.addCard(card('Offline Eevee')));
+    await renderSession({
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await renderSession({
+      session,
+      store,
+      cardBackStore,
+      open: false,
+      installOnSessionAttach: true,
+      prepareForNewSessionOnAttach: false,
+      onSessionAttach,
+    });
+    await vi.waitFor(() => expect(session.commands).toHaveLength(3));
+    expect(session.commands[2]).toMatchObject({
+      type: 'LoadDeck',
+      entries: [
+        { definition: { name: 'Retained Pikachu' } },
+        { definition: { name: 'Offline Eevee' } },
+      ],
+    });
+    expect(onSessionAttach).toHaveBeenCalledTimes(3);
   });
 
   it('tracks changing room ownership while preserving the offline alternate deck', async () => {

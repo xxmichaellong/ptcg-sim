@@ -41,12 +41,16 @@ const baseState = (): ClientSessionState => ({
 class FakeLiveSession implements RemoteRoomLiveSession {
   private state: ClientSessionState;
   private readonly listeners = new Set<() => void>();
+  private nextCommand = 1;
   readonly sendChat = vi.fn((_message: string) => true);
-  readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult => ({
-    queued: true,
-    commandId: 'live-command',
-    clientSequence: 1,
-  }));
+  readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult => {
+    const ordinal = this.nextCommand++;
+    return {
+      queued: true,
+      commandId: `live-command-${ordinal}`,
+      clientSequence: ordinal,
+    };
+  });
 
   constructor(state: ClientSessionState = baseState()) {
     this.state = state;
@@ -61,6 +65,11 @@ class FakeLiveSession implements RemoteRoomLiveSession {
 
   listenerCount(): number {
     return this.listeners.size;
+  }
+
+  setState(state: ClientSessionState): void {
+    this.state = state;
+    for (const listener of this.listeners) listener();
   }
 }
 
@@ -90,6 +99,7 @@ const mount = async (
   session: FakeLiveSession,
   options: {
     readonly presentation?: RemoteRoomLivePresentation;
+    readonly roomMode?: 'solo' | 'multiplayer';
     readonly onLeave?: () => void;
     readonly onExportState?: () => void;
     readonly confirmLeave?: () => boolean;
@@ -105,6 +115,7 @@ const mount = async (
       <RemoteRoomLiveControls
         session={session}
         presentation={options.presentation ?? livePresentation().value}
+        {...(options.roomMode ? { roomMode: options.roomMode } : {})}
         {...(options.onLeave ? { onLeave: options.onLeave } : {})}
         {...(options.onExportState
           ? { onExportState: options.onExportState }
@@ -220,6 +231,151 @@ describe('RemoteRoomLiveControls', () => {
 
     await act(async () => root.unmount());
     expect(session.listenerCount()).toBe(0);
+  });
+
+  it('preserves the solo control IDs and targets both authority players explicitly', async () => {
+    const session = new FakeLiveSession();
+    const onLeave = vi.fn();
+    const { host, root } = await mount(session, {
+      roomMode: 'solo',
+      onLeave,
+    });
+    const otherPlayerId = playerView.playerOrder.find(
+      (candidate) => candidate !== playerId
+    )!;
+
+    for (const id of [
+      'chatboxButtonContainer',
+      'attackButton',
+      'passButton',
+      'undoButton',
+      'FREEBUTTON',
+      'messageInput',
+      'bottomP1ButtonContainer',
+      'setupButton',
+      'resetButton',
+      'setupBothButton',
+      'resetBothButton',
+      'optionsButton',
+    ]) {
+      expect(host.querySelector(`#${id}`), id).not.toBeNull();
+    }
+    for (const id of [
+      'p2ChatboxButtonContainer',
+      'p2AttackButton',
+      'p2MessageInput',
+      'p2BottomButtonContainer',
+      'leaveRoomButton',
+    ]) {
+      expect(host.querySelector(`#${id}`), id).toBeNull();
+    }
+
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#attackButton').click();
+      element<HTMLButtonElement>(host, '#passButton').click();
+      element<HTMLButtonElement>(host, '#undoButton').click();
+      element<HTMLButtonElement>(host, '#setupButton').click();
+      element<HTMLButtonElement>(host, '#resetButton').click();
+      element<HTMLButtonElement>(host, '#setupBothButton').click();
+    });
+    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
+      true
+    );
+    expect(element<HTMLButtonElement>(host, '#resetBothButton').disabled).toBe(
+      true
+    );
+    const setupBothSubmission = session.submit.mock.results.at(-1)!
+      .value as Extract<SubmitCommandResult, { readonly queued: true }>;
+    await act(async () => {
+      const current = session.getSnapshot();
+      session.setState({
+        ...current,
+        view: { ...current.view!, revision: current.view!.revision + 1 },
+        completedCommands: [
+          ...current.completedCommands,
+          {
+            commandId: setupBothSubmission.commandId,
+            clientSequence: setupBothSubmission.clientSequence,
+            accepted: true,
+            revision: current.view!.revision + 1,
+          },
+        ],
+      });
+    });
+    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
+      false
+    );
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#resetBothButton').click()
+    );
+    const resetBothSubmission = session.submit.mock.results.at(-1)!
+      .value as Extract<SubmitCommandResult, { readonly queued: true }>;
+    await act(async () => {
+      const current = session.getSnapshot();
+      session.setState({
+        ...current,
+        view: { ...current.view!, revision: current.view!.revision + 1 },
+        completedCommands: [
+          ...current.completedCommands,
+          {
+            commandId: resetBothSubmission.commandId,
+            clientSequence: resetBothSubmission.clientSequence,
+            accepted: true,
+            revision: current.view!.revision + 1,
+          },
+        ],
+      });
+    });
+
+    expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
+      { type: 'DeclareAttack', targetPlayerId: playerId },
+      { type: 'PassTurn', targetPlayerId: playerId },
+      { type: 'ApplySoloUndo', targetPlayerId: playerId },
+      { type: 'SetupPlayer', targetPlayerId: playerId },
+      { type: 'ResetPlayer', targetPlayerId: playerId },
+      { type: 'SetupPlayer', targetPlayerId: playerId },
+      { type: 'SetupPlayer', targetPlayerId: otherPlayerId },
+      { type: 'ResetPlayer', targetPlayerId: playerId },
+      { type: 'ResetPlayer', targetPlayerId: otherPlayerId },
+    ]);
+    expect(onLeave).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(session.listenerCount()).toBe(0);
+  });
+
+  it('does not submit the second solo lifecycle command when the first is rejected', async () => {
+    const session = new FakeLiveSession();
+    const { host, root } = await mount(session, { roomMode: 'solo' });
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#setupBothButton').click()
+    );
+    const firstSubmission = session.submit.mock.results[0]!.value as Extract<
+      SubmitCommandResult,
+      { readonly queued: true }
+    >;
+    await act(async () => {
+      const current = session.getSnapshot();
+      session.setState({
+        ...current,
+        completedCommands: [
+          {
+            commandId: firstSubmission.commandId,
+            clientSequence: firstSubmission.clientSequence,
+            accepted: false,
+            revision: current.view!.revision,
+            code: 'precondition_failed',
+          },
+        ],
+      });
+    });
+
+    expect(session.submit).toHaveBeenCalledOnce();
+    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
+      false
+    );
+    await act(async () => root.unmount());
   });
 
   it('retains chat for spectators while withholding player-only mutations', async () => {

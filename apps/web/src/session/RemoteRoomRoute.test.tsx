@@ -139,6 +139,89 @@ describe('RemoteRoomRoute', () => {
     boardHarness.props = undefined;
   });
 
+  it('renders a live solo room through the source p1 shell and navigation seam', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = new RemoteRoomRuntime({
+      connection: {
+        url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
+        buildId: 'route-screen-client',
+        roomCode: 'ABCDEFGH2345',
+        displayName: 'Blue',
+        requestedRole: 'player',
+        admissionTicket,
+        resumeToken,
+      },
+      session: {
+        socketFactory,
+        scheduler: new FakeSessionScheduler(),
+      },
+    });
+    const onMultiplayerNavigate = vi.fn();
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () =>
+      root.render(
+        <RemoteRoomRoute
+          runtime={runtime}
+          rendererKind="dom"
+          roomMode="solo"
+          onMultiplayerNavigate={onMultiplayerNavigate}
+        />
+      )
+    );
+    expect(host.querySelector('#p1Button')?.className).toBe('selected-page');
+    expect(host.querySelector('#p1Button')?.getAttribute('aria-current')).toBe(
+      'page'
+    );
+    expect(host.querySelector('#p2Button')?.className).toBe(
+      'not-selected-page'
+    );
+    expect(host.querySelector('#p1Box')).not.toBeNull();
+    expect(host.querySelector('#p2Box')).toBeNull();
+    expect(host.querySelector('#chatbox')).not.toBeNull();
+    expect(host.querySelector('#p2Chatbox')).toBeNull();
+    expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
+      'connecting'
+    );
+    expect(host.querySelector('main')?.dataset.sessionPhase).toBe('connecting');
+
+    await act(async () => {
+      socketFactory.socket!.serverOpen();
+      socketFactory.socket!.serverMessage(welcome());
+    });
+    expect(host.querySelector('#roomHeader')).toBeNull();
+    expect(host.querySelector('main')?.dataset.sessionPhase).toBe('ready');
+    for (const id of [
+      'attackButton',
+      'passButton',
+      'undoButton',
+      'FREEBUTTON',
+      'messageInput',
+      'setupButton',
+      'resetButton',
+      'setupBothButton',
+      'resetBothButton',
+      'optionsButton',
+    ]) {
+      expect(host.querySelector(`#${id}`), id).not.toBeNull();
+    }
+    expect(host.querySelector('#leaveRoomButton')).toBeNull();
+
+    await act(async () =>
+      (host.querySelector('#p1Button') as HTMLButtonElement).click()
+    );
+    expect(onMultiplayerNavigate).not.toHaveBeenCalled();
+    await act(async () =>
+      (host.querySelector('#p2Button') as HTMLButtonElement).click()
+    );
+    expect(onMultiplayerNavigate).toHaveBeenCalledOnce();
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('composes the connected board, multiplayer activity, replay chrome, and exit lifecycle', async () => {
     const socketFactory = new FakeSocketFactory();
     const announcements = new ControlledAnnouncementScheduler();
@@ -192,6 +275,7 @@ describe('RemoteRoomRoute', () => {
       )
     );
     expect(host.querySelector('main')?.dataset.appRoute).toBe('remote-room');
+    expect(host.querySelector('main')?.dataset.sessionPhase).toBeUndefined();
     expect(host.querySelector('#p1Button')?.textContent).toBe('Solo');
     expect(host.querySelector('#p2Button')?.className).toBe('selected-page');
     expect(host.querySelector('#p2Box')).not.toBeNull();
@@ -245,6 +329,7 @@ describe('RemoteRoomRoute', () => {
       socket.serverMessage(welcome());
     });
     expect(host.querySelector('#room-board')?.textContent).toBe('1');
+    expect(host.querySelector('main')?.dataset.sessionPhase).toBeUndefined();
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
       'Room ABCDEFGH2345'
     );
