@@ -1405,7 +1405,15 @@ identifies a need.
 The deck builder ports the existing pure `.mjs` core into `deck-core`, preserving
 the current UI. Its state must distinguish main and alternate/opponent deck dirty
 status, validate empty/unload transitions, and use a robust CSV parser/serializer
-with compatibility fixtures.
+with compatibility fixtures. The unmounted composed React surface now has a
+direct-import-only Chromium harness that compares it with the complete v1
+runtime at 1600×900: exact control content, 12 geometry landmarks within two CSS
+pixels, and bidirectional foreground paint under a 0.5% ceiling in main,
+alternate, and dark-alternate states. Separate browser flows pin direct native
+arbitrary-image assignment, import/install acknowledgement and retry,
+multiplayer alternate denial, focus return, closed inertness, and teardown.
+Nothing imports the harness or Deck composition from a production entry point;
+route activation and its live-session matrix remain a later checkpoint.
 
 ### Presentation effect routing
 

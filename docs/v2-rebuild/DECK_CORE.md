@@ -97,6 +97,10 @@ apps/web/src/features/deck/
   tcgdex-catalog-http.ts        bounded direct-browser JSON transport
   tcgdex-catalog-decode.ts      strict provider response normalization
   tcgdex-catalog-runtime.ts     bounded concurrency and set-date LRU cache
+apps/web/src/dev/
+  LegacyDeckBuilderBrowserHarness.tsx  direct-import-only Playwright mount
+tests/browser/
+  legacy-deck-builder-browser-parity.spec.ts  real-v1 parity and lifecycle gate
 ```
 
 The package has no runtime dependencies and uses an ES-only TypeScript project.
@@ -428,6 +432,40 @@ card backs for both sides, not-ready refusal, unload guarding, and teardown.
 The composed module remains absent from production output, so this checkpoint
 still changes no current route, control, bundle, UI, or UX.
 
+## Source-browser composition checkpoint
+
+`LegacyDeckBuilderBrowserHarness.tsx` mounts that complete session only when a
+Playwright test directly imports it from the Vite development server. It builds
+the source-shaped application shell and uses a publication-capable fake client
+session, but no application entry point imports the harness or composed Deck
+surface. Production bundle provenance therefore remains the route-activation
+boundary rather than relying on a runtime feature flag.
+
+The browser gate opens the checked-in complete v1 runtime and the React
+candidate side by side at 1600×900. It compares every visible control's tag,
+label, select options, and placeholder; checks 12 panel/workspace landmarks
+within two CSS pixels; and applies a bidirectional foreground-paint comparison
+to main, alternate, and dark-alternate states. The paint ceiling is 0.5% in
+each direction with three-pixel spatial and 24-channel color tolerance. This
+gate found and corrected two source-parity gaps before route activation: CSS
+percentage padding had been resolved against the new sidebar instead of the
+source viewport containing block, and one source inline whitespace node between
+the card-back and language controls had been omitted.
+
+Two additional browser workflows exercise behavior that screenshots cannot:
+
+- a custom or review-table image URL is assigned directly to a native `<img>`
+  and retained exactly after trim, without `crossOrigin`, an application fetch,
+  proxying, or a host/scheme policy; and
+- import replacement, close/Play flushing, covering-publication
+  acknowledgement, retry after authority rejection, multiplayer alternate
+  denial, closed inertness, focus return, and idempotent teardown all retain
+  their intended custody.
+
+The three Playwright scenarios pass together with no page or console errors.
+The direct-import harness, browser spec, session composition, and Deck feature
+modules remain absent from the production module graph.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -438,15 +476,18 @@ This checkpoint is complete when:
 3. the complete repository quality and build gates pass;
 4. the generated public API baseline contains only the deliberately exported
    deck operations and value types; and
-5. production bundle output is unchanged because no route imports the package.
+5. production bundle output is unchanged because no route imports the package;
+   and
+6. the real-v1/candidate browser composition gate passes control, geometry,
+   paint, arbitrary-image, recovery, multiplayer, focus, and teardown evidence.
 
 ## Remaining deck slices
 
-The following remains a separate, reviewable checkpoint:
-
-1. activate the composed surface only after source-browser layout,
-   arbitrary-image, multiplayer,
-   solo, import, install, recovery, and accessibility parity evidence is green.
+The source-browser prerequisite is now green. Production route activation
+remains a separate, reviewable checkpoint: replace the current Deck navigation
+ownership with this composed surface, prove bundle/route isolation and the full
+live solo/multiplayer session matrix, and retain the legacy route as the
+rollback boundary.
 
 Rollback for these checkpoints is removal of the unused package and unmounted
 web adapters plus their project, lockfile, documentation, and public-API

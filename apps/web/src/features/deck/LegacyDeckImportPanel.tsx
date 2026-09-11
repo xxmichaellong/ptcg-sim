@@ -454,7 +454,7 @@ export const LegacyDeckImportPanel = ({
             onClick={() => onChangeCardBack?.(target)}
           >
             Change Card Back
-          </button>
+          </button>{' '}
           <div className="language-container" ref={languageMenu}>
             <button
               id="changeLanguageButton"
