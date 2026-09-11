@@ -12,6 +12,63 @@ const SLOTS: readonly CompoundSlot[] = ['active', 'bench'];
 const compositionOf = (scenario: string): 'break' | 'ordinary' =>
   scenario.startsWith('break') ? 'break' : 'ordinary';
 
+const FALSE_FLAGS = { base: false, middle: false, top: false } as const;
+const BREAK_FLAGS = { base: false, middle: false, top: true } as const;
+const phaseState = {
+  'pristine-q0': {
+    quarterTurns: { base: 0, middle: 0, top: 0 },
+    breakFlags: FALSE_FLAGS,
+  },
+  q1: {
+    quarterTurns: { base: 1, middle: 1, top: 1 },
+    breakFlags: FALSE_FLAGS,
+  },
+  'q1-refreshed': {
+    quarterTurns: { base: 1, middle: 1, top: 1 },
+    breakFlags: FALSE_FLAGS,
+  },
+  q2: {
+    quarterTurns: { base: 2, middle: 2, top: 2 },
+    breakFlags: FALSE_FLAGS,
+  },
+  q3: {
+    quarterTurns: { base: 3, middle: 3, top: 3 },
+    breakFlags: FALSE_FLAGS,
+  },
+  'q0-return': {
+    quarterTurns: { base: 0, middle: 0, top: 0 },
+    breakFlags: FALSE_FLAGS,
+  },
+  'break-on-q0': {
+    quarterTurns: { base: 0, middle: 0, top: 1 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-group-q1': {
+    quarterTurns: { base: 1, middle: 1, top: 2 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-group-q1-refreshed': {
+    quarterTurns: { base: 1, middle: 1, top: 2 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-group-q2': {
+    quarterTurns: { base: 2, middle: 2, top: 3 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-group-q3': {
+    quarterTurns: { base: 3, middle: 3, top: 0 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-group-q0-return': {
+    quarterTurns: { base: 0, middle: 0, top: 1 },
+    breakFlags: BREAK_FLAGS,
+  },
+  'break-off-q0': {
+    quarterTurns: { base: 0, middle: 0, top: 0 },
+    breakFlags: FALSE_FLAGS,
+  },
+} as const;
+
 /**
  * The last compound fixture still recorded from `legacy-source-board.ts` alone.
  * Unlike the rest of the family it measures a whole rotation cycle rather than
@@ -24,20 +81,17 @@ const compositionOf = (scenario: string): 'break' | 'ordinary' =>
  * which disagree with each other in v1 and are the reason a rotation index is
  * not the same thing as a DOM position.
  *
- * Stack x is asserted from the first reconstruction onward, where it matches
- * the fixture to the digit in every scenario and slot. It is not asserted
- * before then, and that is a limit of this harness rather than a finding
- * against the fixture. `evolveCard` sizes the play container from
- * `movingCard.image.clientWidth`, which is 0 for an image that has not been
- * laid out yet, so a stack built in one synchronous burst starts with a
- * zero-width container. How quickly that repairs depends on when layout and
- * v1's empty-wrapper observer run: forcing a settling refresh makes the active
- * slot match exactly and pushes bench off by 40.5px, and omitting it does the
- * reverse. No construction tried here reproduces both slots at once, so the
- * pre-reconstruction figures are left unasserted rather than fitted.
+ * Cards are staged in both halves of a real v1 hand -- its ordered array and
+ * its DOM element -- before `moveCardBundle` moves them. `evolveCard` and
+ * `refreshBoard` nevertheless carry a real v1 race: they can size a newly
+ * reconstructed wrapper from an image before layout gives it a width. The
+ * resulting left anchor can differ by half a card while every painted
+ * transition remains identical. Stack x is therefore compared as movement
+ * within the pre- and post-reconstruction layout epochs; the reconstruction
+ * is allowed to rebase the wrapper, but no rotation within an epoch is.
  *
- * Margins, quarter turns and topology are asserted for every phase, including
- * those two, and they agree throughout.
+ * Quarter turns, BREAK flags, margins and topology are asserted exactly for
+ * every phase as well.
  */
 test('the recorded lower group-rotation oracle matches the real v1 runtime', async ({
   page,
@@ -77,29 +131,37 @@ test('the recorded lower group-rotation oracle matches the real v1 runtime', asy
           fixture.expected.inlineMarginsByCompositionAndSlot[
             key as keyof typeof fixture.expected.inlineMarginsByCompositionAndSlot
           ];
-
-        // The first reconstruction is where v1 stops carrying the stale
-        // one-card container width, and so where recorded x becomes true.
-        const firstSettledPhase = phaseNames.findIndex((phase) =>
+        const reconstructionPhase = phaseNames.findIndex((phase) =>
           phase.endsWith('-refreshed')
         );
         expect(
-          firstSettledPhase,
+          reconstructionPhase,
           `${slot} ${scenario} has a reconstruction phase`
         ).toBeGreaterThan(0);
 
         for (const [index, phase] of phaseNames.entries()) {
           const label = `${slot} ${scenario} ${phase}`;
+          const state = phaseState[phase as keyof typeof phaseState];
+          expect(state, `${label} has an expected state`).toBeDefined();
+          expect(
+            replay.phases[index]!.quarterTurns,
+            `${label} quarter turns`
+          ).toEqual(state.quarterTurns);
+          expect(
+            replay.phases[index]!.breakFlags,
+            `${label} BREAK flags`
+          ).toEqual(state.breakFlags);
           expect(
             [...replay.phases[index]!.inlineMargins],
             `${label} inline margins`
           ).toEqual([...expectedMargins[index]!]);
-          if (index >= firstSettledPhase) {
-            expect(
-              replay.phases[index]!.stackX,
-              `${label} stack x`
-            ).toBeCloseTo(expectedX[index]!, 3);
-          }
+
+          const epochStart =
+            index < reconstructionPhase ? 0 : reconstructionPhase;
+          expect(
+            replay.phases[index]!.stackX - replay.phases[epochStart]!.stackX,
+            `${label} stack x movement within its layout epoch`
+          ).toBeCloseTo(expectedX[index]! - expectedX[epochStart]!, 3);
         }
 
         // Logical and DOM order genuinely differ in v1, and the rotation

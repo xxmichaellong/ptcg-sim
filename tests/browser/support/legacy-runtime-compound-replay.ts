@@ -201,6 +201,7 @@ export const replayCompoundTrace = async (
           const child = await make(childName!);
           byRole.set(childName!, child);
           hand.array.push(child);
+          hand.element.append(child.image);
           const targetIndex = zone.array.findIndex(
             (card) => card.name === parentName
           );
@@ -407,6 +408,7 @@ export const replayCompoundRefreshTrace = async (
           const child = await make(childName!);
           byRole.set(childName!, child);
           hand.array.push(child);
+          hand.element.append(child.image);
           const targetIndex = zone.array.findIndex(
             (card) => card.name === parentName
           );
@@ -672,6 +674,7 @@ export const replayCompoundReconstructTrace = async (
           const child = await make(childName!);
           byRole.set(childName!, child);
           hand.array.push(child);
+          hand.element.append(child.image);
           const targetIndex = zone.array.findIndex(
             (card) => card.name === parentName
           );
@@ -844,6 +847,7 @@ export const replayCompoundPhaseTrace = async (
       // refreshBoard of its own afterwards, and skipping it leaves the play
       // container half a card width off where v1 actually settles.
       hand.array.push(base);
+      hand.element.append(base.image);
       moveCardBundle('self', 'self', 'hand', zoneId, 0, -1, 'play', false);
 
       const frames = () =>
@@ -918,6 +922,7 @@ export const replayCompoundPhaseTrace = async (
           const child = await make(childName!);
           byRole.set(childName!, child);
           hand.array.push(child);
+          hand.element.append(child.image);
           const targetIndex = zone.array.findIndex(
             (card) => card.name === parentName
           );
