@@ -112,17 +112,18 @@ const captureAttachment = async (
     hand.array.length = 0;
     hand.element.replaceChildren();
 
-    const attached: { readonly image: HTMLImageElement; type: string }[] = [];
-    for (const [index, type] of attachmentTypes.entries()) {
-      const card = makeCard(`attachment-${index}`, type);
-      await card.image.decode();
+    const attached = attachmentTypes.map((type, index) =>
+      makeCard(`attachment-${index}`, type)
+    );
+    await Promise.all(attached.map((card) => card.image.decode()));
+
+    // All mutations and inline-style capture stay in one browser task. The
+    // live v1 resize listener can otherwise run during the next image decode
+    // and rescale an earlier attachment before this oracle records it.
+    for (const card of attached) {
       hand.element.append(card.image);
       zone.array.push(card);
-      attached.push(card);
       attachCard('self', 'self', card, base, 'active', zone);
-      await new Promise((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(resolve))
-      );
     }
 
     const container = base.image.parentElement as HTMLElement;

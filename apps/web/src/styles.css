@@ -129,6 +129,15 @@ select {
   border-left: 0;
 }
 
+.legacy-room-tabs {
+  position: relative;
+  z-index: 1400;
+  overflow: hidden;
+  border-left: 2px solid rgb(145 145 145);
+  border-top-left-radius: 5px;
+  box-sizing: border-box;
+}
+
 .legacy-room-tabs button {
   width: 30%;
   padding: 1vh;

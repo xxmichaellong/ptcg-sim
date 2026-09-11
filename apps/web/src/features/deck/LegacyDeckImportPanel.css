@@ -1,5 +1,6 @@
 .legacy-deck-import {
   position: relative;
+  z-index: 1300;
   align-items: stretch;
   gap: 0;
   padding: 0.5vw;
