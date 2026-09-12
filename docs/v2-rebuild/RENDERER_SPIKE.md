@@ -2214,6 +2214,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      remove 679 lines from `legacy-source-board.ts`; the new executable helper
      is 549 lines, the shared transcription falls to 5,773 lines, and its
      browser-spec consumers fall from six to five.
+143. The two-Energy compaction gate now builds all four local/opponent inner-
+     and outer-departure cases through v1's actual `Card`, `moveCardBundle`,
+     `moveCard`, attachment-layer, discard-sort, and `refreshBoard` paths. The
+     real replay captures the stable, direct-departure, synchronous ghost-
+     wrapper, and observer-settled phases with complete card metadata, wrapper
+     geometry, derived hit points, native hit order, removed-card reset, and
+     zero-node cleanup. Its multi-case integration exposed and fixed a harness
+     cleanup bug that had removed the discard zone element after the first
+     case; cleanup now removes only cards and play wrappers. The immutable
+     oracle, one-Energy convergence, strict bidirectional paint, and React DOM
+     parity all remain unchanged, and the primary plus compact runtime gates
+     pass three consecutive Chromium repeats (18/18). Removing the retired
+     two-Energy types and hand-authored compaction/reconstruction recorder cuts
+     another 764 lines from `legacy-source-board.ts`, reducing it to 5,009
+     lines and its browser-spec consumers from five to four; the executable
+     runtime adapter is 304 lines.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

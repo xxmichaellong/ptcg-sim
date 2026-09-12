@@ -150,26 +150,11 @@ for (const [side, branch] of CASES) {
     );
 
     await withLegacyRuntimePage(page, oracle.input.viewport, async () => {
-      const hitPoints: Record<
-        string,
-        Record<string, { x: number; y: number }>
-      > = {};
-      for (const phase of PHASES) {
-        const entry = recorded[phase]!;
-        const branches = entry['branches'] as
-          Record<string, Record<string, unknown>> | undefined;
-        const points = (branches?.[branch]?.['hitPointsFrameLocal'] ??
-          entry['hitPointsFrameLocal']) as
-          Record<string, { x: number; y: number }> | undefined;
-        if (points) hitPoints[phase] = points;
-      }
-
       const capture = await captureAttachmentDeparture(page as Page, {
         side,
         slot: 'active',
         departure: branch,
         attachmentOrder: oracle.input.canonicalAttachmentOrder,
-        hitPoints,
       });
 
       for (const phase of PHASES) {

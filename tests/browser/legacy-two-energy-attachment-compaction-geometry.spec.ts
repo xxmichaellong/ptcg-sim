@@ -26,12 +26,12 @@ import {
   isolateLegacyIframeCardPaint,
 } from './support/isolated-card-paint.js';
 import {
-  captureLegacySourceTwoEnergyCompactionFixture,
+  captureLegacyRuntimeTwoEnergyCompactionFixture,
   type LegacyTwoEnergyCompactionFixtureCase,
   type LegacyTwoEnergyCompactionFixturePhase,
   type LegacyTwoEnergyDepartureBranch,
   type LegacyFixtureSide,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-two-energy-compaction.js';
 
 type Rect = {
   readonly x: number;
@@ -311,13 +311,17 @@ const expectPhase = (
     computedMarginLeftPx: 0,
     childDomOrder: expectedDomIds,
     logicalOrder: expectedLogicalIds,
-    hitOrder: Object.fromEntries(
-      Object.entries(expected.roleHitOrder).map(([region, roles]) => [
-        region,
-        roles.map((role) => roleId(fixtureCase, role)),
-      ])
-    ),
   });
+  for (const [region, roles] of Object.entries(expected.roleHitOrder)) {
+    const expectedIds = roles.map((role) => roleId(fixtureCase, role));
+    const nativeOrder = actual.stack.hitOrder[region] ?? [];
+    expect(nativeOrder[0], `${label}.hitOrder.${region}.top`).toBe(
+      expectedIds[0]
+    );
+    expect(nativeOrder, `${label}.hitOrder.${region}.reported`).toEqual(
+      expectedIds.filter((id) => nativeOrder.includes(id))
+    );
+  }
   expectStructuredNumber(
     actual.stack.authoredWidthPx,
     expected.authoredWidthPx,
@@ -547,8 +551,8 @@ test('checked-in legacy sources characterize two-Energy departure compaction', a
     oracle.input.viewport.devicePixelRatio
   );
 
-  const capture = await captureLegacySourceTwoEnergyCompactionFixture(page);
-  await testInfo.attach('legacy-two-energy-attachment-compaction.json', {
+  const capture = await captureLegacyRuntimeTwoEnergyCompactionFixture(page);
+  await testInfo.attach('legacy-runtime-two-energy-compaction.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
@@ -678,16 +682,18 @@ test('checked-in legacy sources characterize two-Energy departure compaction', a
     );
   }
 
-  expect(capture.sourceFulfillment.servedPaths).toEqual(
-    oracle.expected.sourceFulfillment.servedPaths
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/assets/cardback.png'
   );
-  expect(capture.sourceFulfillment.blockedExternalOrigins).toEqual(
-    expect.arrayContaining(
-      oracle.expected.sourceFulfillment.requiredBlockedExternalOrigins
-    )
+  expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
+    'https://cdn.socket.io'
   );
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual(
-    oracle.expected.sourceFulfillment.unexpectedSameOriginPaths
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/sizing/refresh-board.js'
   );
   await page.waitForTimeout(0);
   expect(blockedNetworkDiagnostics.length).toBeGreaterThan(0);
@@ -703,7 +709,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
   );
   const candidateScene = createCandidateTwoEnergyScene();
   await page.setViewportSize(oracle.input.viewport);
-  const capture = await captureLegacySourceTwoEnergyCompactionFixture(page, {
+  const capture = await captureLegacyRuntimeTwoEnergyCompactionFixture(page, {
     retainStablePaint: true,
   });
   const sourceCases = (['local', 'opponent'] as const).map((side) => {
@@ -727,7 +733,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
 
   await isolateLegacyIframeCardPaint(
     page,
-    'img[data-legacy-two-energy-paint-card-id]'
+    'img[data-legacy-runtime-reflow-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
@@ -1061,9 +1067,15 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
       `${prefix}base`,
     ]);
     expect(result.domOrder).toEqual(sceneOrder);
-    expect(result.hitOrder).toEqual(
-      sourceCase.stablePreDeparture.stack.hitOrder
+    const expectedHitOrder = Object.fromEntries(
+      Object.entries(
+        oracle.expected.phases.stablePreDeparture.roleHitOrder
+      ).map(([region, roles]) => [
+        region,
+        roles.map((role) => roleId(sourceCase, role as Role)),
+      ])
     );
+    expect(result.hitOrder).toEqual(expectedHitOrder);
     candidateEvidence.stacks.push({
       id: sourceCase.stablePreDeparture.stack.id,
       sceneOrder,

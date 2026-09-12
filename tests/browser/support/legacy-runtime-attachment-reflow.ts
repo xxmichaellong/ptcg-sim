@@ -239,8 +239,9 @@ export const captureReflow = async (
         const target = getZone(owner, id);
         target.array.length = 0;
         for (const image of [...target.element.querySelectorAll('img')]) {
-          image.parentElement?.remove();
+          const parent = image.parentElement;
           image.remove();
+          if (parent?.classList.contains('play-container')) parent.remove();
         }
       };
       for (const owner of preserveOtherSide ? [user] : ['self', 'opp']) {
@@ -755,7 +756,36 @@ export const frameLocalFromPhysical = (
 };
 
 /** One sampled moment of a stack, superset of what any phase records. */
+export interface DepartureStack {
+  readonly id: string;
+  readonly frameLocalBounds: Rect;
+  readonly baseClientWidth: number;
+  readonly baseEnergyLayer: number;
+  readonly clientWidth: number;
+  readonly authoredWidthPx: number;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: Readonly<Record<string, readonly string[]>>;
+  readonly hitPointsFrameLocal: {
+    readonly allCardOverlap: RectPoint;
+    readonly attachmentOverlap: RectPoint;
+    readonly outermostAttachment: RectPoint;
+    readonly baseOnly: RectPoint;
+  };
+}
+
+export interface RectPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface DepartureSample {
+  readonly cards: readonly ReflowCard[];
+  readonly stack: DepartureStack;
   readonly cardCount: number;
   readonly stackFrameLocalBounds: Rect;
   readonly cardFrameLocalXByRole: Readonly<Record<string, number>>;
@@ -766,11 +796,15 @@ export interface DepartureSample {
   readonly authoredWidthPx: number;
   readonly roleDomOrder: readonly string[];
   readonly roleLogicalOrder: readonly string[];
+  /** Native hit order expressed in fixture roles rather than stable IDs. */
+  readonly roleHitOrder: Readonly<Record<string, readonly string[]>>;
   readonly observedWrapperCount: number;
   readonly supersededWrapperConnected: boolean;
 }
 
 export interface RemovedCardState {
+  readonly id: string;
+  readonly role: string;
   readonly naturalWidth: number;
   readonly naturalHeight: number;
   readonly localRotationDegrees: number;
@@ -779,8 +813,10 @@ export interface RemovedCardState {
   readonly inlineBottomPx: number;
   readonly attached: boolean;
   readonly target: string;
+  readonly relativeRole: string | null;
   readonly energyLayer: number;
   readonly layer: number;
+  readonly sourcePath: string;
   readonly sinkConnected: boolean;
   readonly parentIsDepartureSink: boolean;
 }
@@ -821,10 +857,9 @@ export const captureAttachmentDeparture = async (
     /** `inner` removes the first attachment, `outer` the second. */
     readonly departure: 'inner' | 'outer';
     readonly attachmentOrder: readonly string[];
-    /** Frame-local points to hit-test, per phase and region. */
-    readonly hitPoints: Readonly<
-      Record<string, Readonly<Record<string, { x: number; y: number }>>>
-    >;
+    /** Stable card IDs used by paint and hit-order comparisons. */
+    readonly cardIdsByRole?: Readonly<Record<string, string>>;
+    readonly stackId?: string;
   }
 ): Promise<DepartureCapture> =>
   page.evaluate(
@@ -834,7 +869,8 @@ export const captureAttachmentDeparture = async (
       departure,
       attachmentOrder,
       typeByRole,
-      hitPoints,
+      cardIdsByRole,
+      stackId,
     }) => {
       const load = (specifier: string): Promise<Record<string, never>> =>
         import(/* @vite-ignore */ specifier);
@@ -852,6 +888,7 @@ export const captureAttachmentDeparture = async (
         layer?: number;
         attached?: boolean;
         target?: string;
+        relative?: HTMLImageElement | number;
       }
       interface LegacyCard {
         readonly name: string;
@@ -908,8 +945,9 @@ export const captureAttachmentDeparture = async (
         const target = getZone(owner, id);
         target.array.length = 0;
         for (const image of [...target.element.querySelectorAll('img')]) {
-          image.parentElement?.remove();
+          const parent = image.parentElement;
           image.remove();
+          if (parent?.classList.contains('play-container')) parent.remove();
         }
       };
       for (const owner of ['self', 'opp']) {
@@ -932,6 +970,8 @@ export const captureAttachmentDeparture = async (
           typeByRole[name] ?? 'Pokémon',
           `${location.origin}/src/assets/cardback.png`
         );
+        card.image.dataset.legacyRuntimeReflowCardId =
+          cardIdsByRole[name] ?? name;
         await card.image.decode();
         return card;
       };
@@ -955,8 +995,11 @@ export const captureAttachmentDeparture = async (
       const base = await make('base');
       byRole.set('base', base);
       await play(base, -1);
-      const container = (): HTMLElement =>
-        base.image.parentElement as HTMLElement;
+      const container = (): HTMLElement => {
+        const element = base.image.parentElement as HTMLElement;
+        element.dataset.legacyRuntimeReflowStackId = stackId;
+        return element;
+      };
       const settle = async (): Promise<void> => {
         let previous = '';
         for (let attempt = 0; attempt < 16; attempt += 1) {
@@ -1025,12 +1068,21 @@ export const captureAttachmentDeparture = async (
         }
         return 'unknown';
       };
+      const idOf = (node: Element): string =>
+        node.tagName === 'IMG'
+          ? ((node as HTMLImageElement).dataset.legacyRuntimeReflowCardId ?? '')
+          : '';
       const numeric = (value: string) => Number.parseFloat(value) || 0;
       let supersededWrapper: HTMLElement | null = null;
       const sample = (): DepartureSample => {
         const element = container();
         const bounds = element.getBoundingClientRect();
-        const images = [...element.querySelectorAll('img')];
+        const images = [
+          ...element.querySelectorAll<HTMLImageElement>(':scope > img'),
+        ];
+        const logicalCards = zone.array.filter((card) =>
+          images.includes(card.image)
+        );
         const xByRole: Record<string, number> = {};
         const leftByRole: Record<string, number> = {};
         const zByRole: Record<string, number> = {};
@@ -1040,7 +1092,196 @@ export const captureAttachmentDeparture = async (
           leftByRole[role] = numeric(image.style.left);
           zByRole[role] = Number.parseInt(image.style.zIndex, 10) || 0;
         }
+        const rectOf = (node: Element): Rect => {
+          const value = node.getBoundingClientRect();
+          return {
+            x: value.x,
+            y: value.y,
+            width: value.width,
+            height: value.height,
+          };
+        };
+        const captureCard = (card: LegacyCard): ReflowCard => {
+          const role = roleOf(card.image);
+          const frameLocalBounds = rectOf(card.image);
+          const styles = getComputedStyle(card.image);
+          const matrix = new DOMMatrixReadOnly(styles.transform);
+          const inlineTransform = card.image.style.transform;
+          let untransformedFrameLocalBounds: Rect;
+          try {
+            card.image.style.transform = 'none';
+            untransformedFrameLocalBounds = rectOf(card.image);
+          } finally {
+            card.image.style.transform = inlineTransform;
+          }
+          return {
+            id: idOf(card.image),
+            role,
+            frameLocalBounds,
+            untransformedFrameLocalBounds,
+            naturalWidth: card.image.naturalWidth,
+            naturalHeight: card.image.naturalHeight,
+            inlineLeft: card.image.style.left,
+            inlineBottom: card.image.style.bottom,
+            inlineTransform,
+            localRotationDegrees:
+              ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+            zIndex: card.image.style.zIndex,
+            clientWidth: card.image.clientWidth,
+            clientHeight: card.image.clientHeight,
+            offsetWidth: card.image.offsetWidth,
+            offsetHeight: card.image.offsetHeight,
+            computedWidthPx: Number.parseFloat(styles.width),
+            computedHeightPx: Number.parseFloat(styles.height),
+            transformMatrix: {
+              a: matrix.a,
+              b: matrix.b,
+              c: matrix.c,
+              d: matrix.d,
+            },
+            transformOrigin: styles.transformOrigin,
+            attached: card.image.attached === true,
+            target: card.image.target ?? '',
+            relativeRole:
+              typeof card.image.relative === 'object' &&
+              card.image.relative !== null
+                ? roleOf(card.image.relative)
+                : null,
+            energyLayer: card.image.energyLayer ?? 0,
+            layer: card.image.layer ?? 0,
+            domOrdinal: images.indexOf(card.image),
+            sourcePath: new URL(card.image.currentSrc).pathname,
+          };
+        };
+        const cardBounds = new Map(
+          logicalCards.map((card) => [
+            card.image,
+            card.image.getBoundingClientRect(),
+          ])
+        );
+        const baseBounds = cardBounds.get(base.image);
+        const attachments = logicalCards.slice(1);
+        if (!baseBounds || attachments.length < 1 || attachments.length > 2) {
+          throw new Error('Real-v1 departure phase has an invalid stack');
+        }
+        const intersection = (cards: readonly LegacyCard[]) => {
+          const rectangles = cards.map((card) => cardBounds.get(card.image));
+          if (rectangles.some((value) => value === undefined)) {
+            throw new Error('Real-v1 departure phase lost card bounds');
+          }
+          const values = rectangles as DOMRect[];
+          const result = {
+            left: Math.max(...values.map((value) => value.left)),
+            top: Math.max(...values.map((value) => value.top)),
+            right: Math.min(...values.map((value) => value.right)),
+            bottom: Math.min(...values.map((value) => value.bottom)),
+          };
+          if (
+            result.right - result.left <= 2 ||
+            result.bottom - result.top <= 2
+          ) {
+            throw new Error('Real-v1 departure overlap lacks a safe interior');
+          }
+          return result;
+        };
+        const center = (value: {
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+        }): RectPoint => ({
+          x: (value.left + value.right) / 2,
+          y: (value.top + value.bottom) / 2,
+        });
+        const attachmentBounds = attachments.map((card) => {
+          const value = cardBounds.get(card.image);
+          if (!value)
+            throw new Error('Real-v1 departure lost attachment bounds');
+          return value;
+        });
+        const outerBounds = attachmentBounds.at(-1)!;
+        const priorRight =
+          attachmentBounds.length === 1
+            ? baseBounds.right
+            : attachmentBounds[attachmentBounds.length - 2]!.right;
+        const pointBounds = {
+          attachmentOverlap: {
+            left: baseBounds.right + 2,
+            right:
+              Math.min(...attachmentBounds.map((value) => value.right)) - 2,
+            top: Math.max(...attachmentBounds.map((value) => value.top)),
+            bottom: Math.min(...attachmentBounds.map((value) => value.bottom)),
+          },
+          outermostAttachment: {
+            left: priorRight + 2,
+            right: outerBounds.right - 2,
+            top: outerBounds.top,
+            bottom: outerBounds.bottom,
+          },
+          baseOnly: {
+            left: baseBounds.left + 2,
+            right: Math.min(...attachmentBounds.map((value) => value.left)) - 2,
+            top: baseBounds.top,
+            bottom: baseBounds.bottom,
+          },
+        };
+        for (const [label, value] of Object.entries(pointBounds)) {
+          if (value.right - value.left <= 0 || value.bottom - value.top <= 0) {
+            throw new Error(`Real-v1 departure ${label} lacks a safe interior`);
+          }
+        }
+        const hitPointsFrameLocal = {
+          allCardOverlap: center(intersection(logicalCards)),
+          attachmentOverlap: center(pointBounds.attachmentOverlap),
+          outermostAttachment: center(pointBounds.outermostAttachment),
+          baseOnly: center(pointBounds.baseOnly),
+        };
+        const known = new Set(images);
+        const idsAt = (point: RectPoint): readonly string[] =>
+          element.ownerDocument
+            .elementsFromPoint(point.x, point.y)
+            .flatMap((candidate) => {
+              const image = candidate.closest<HTMLImageElement>(
+                '[data-legacy-runtime-reflow-card-id]'
+              );
+              return image && known.has(image) ? [idOf(image)] : [];
+            })
+            .filter((id, index, ids) => id !== '' && ids.indexOf(id) === index);
+        const hitOrder = Object.fromEntries(
+          Object.entries(hitPointsFrameLocal).map(([region, point]) => [
+            region,
+            idsAt(point),
+          ])
+        );
+        const roleById = new Map(
+          logicalCards.map((card) => [idOf(card.image), roleOf(card.image)])
+        );
+        const roleHitOrder = Object.fromEntries(
+          Object.entries(hitOrder).map(([region, ids]) => [
+            region,
+            ids.map((id) => roleById.get(id) ?? 'unknown'),
+          ])
+        );
+        const computed = getComputedStyle(element);
+        const stack: DepartureStack = {
+          id: element.dataset.legacyRuntimeReflowStackId ?? stackId,
+          frameLocalBounds: rectOf(element),
+          baseClientWidth: base.image.clientWidth,
+          baseEnergyLayer: base.image.energyLayer ?? 0,
+          clientWidth: element.clientWidth,
+          authoredWidthPx: Number.parseFloat(element.style.width),
+          inlineMarginRight: element.style.marginRight,
+          inlineMarginLeft: element.style.marginLeft,
+          computedMarginRightPx: numeric(computed.marginRight),
+          computedMarginLeftPx: numeric(computed.marginLeft),
+          childDomOrder: images.map(idOf),
+          logicalOrder: logicalCards.map((card) => idOf(card.image)),
+          hitOrder,
+          hitPointsFrameLocal,
+        };
         return {
+          cards: logicalCards.map(captureCard),
+          stack,
           cardCount: images.length,
           stackFrameLocalBounds: {
             x: bounds.x,
@@ -1055,7 +1296,8 @@ export const captureAttachmentDeparture = async (
           clientWidth: element.clientWidth,
           authoredWidthPx: Number.parseFloat(element.style.width),
           roleDomOrder: images.map(roleOf),
-          roleLogicalOrder: zone.array.map((card) => card.name),
+          roleLogicalOrder: logicalCards.map((card) => card.name),
+          roleHitOrder,
           observedWrapperCount: zone.element.querySelectorAll(
             ':scope > .play-container'
           ).length,
@@ -1064,25 +1306,6 @@ export const captureAttachmentDeparture = async (
           ),
         };
       };
-      const hitOrder = (
-        phase: string
-      ): Readonly<Record<string, readonly string[]>> => {
-        const points = hitPoints[phase];
-        if (!points) return {};
-        const known = new Set([...byRole.values()].map((card) => card.image));
-        const result: Record<string, readonly string[]> = {};
-        for (const [region, point] of Object.entries(points)) {
-          result[region] = (
-            base.image.ownerDocument.elementsFromPoint(
-              point.x,
-              point.y
-            ) as Element[]
-          )
-            .filter((node) => known.has(node as LegacyImage))
-            .map(roleOf);
-        }
-        return result;
-      };
 
       const hitOrderByPhaseAndRegion: Record<
         string,
@@ -1090,7 +1313,7 @@ export const captureAttachmentDeparture = async (
       > = {};
       const stablePreDeparture = sample();
       hitOrderByPhaseAndRegion['stablePreDeparture'] =
-        hitOrder('stablePreDeparture');
+        stablePreDeparture.roleHitOrder;
 
       const departingRole =
         departure === 'inner' ? attachmentOrder[0]! : attachmentOrder[1]!;
@@ -1108,9 +1331,8 @@ export const captureAttachmentDeparture = async (
       byRole.delete(departingRole);
       await frames();
       const transientPostDeparture = sample();
-      hitOrderByPhaseAndRegion['transientPostDeparture'] = hitOrder(
-        'transientPostDeparture'
-      );
+      hitOrderByPhaseAndRegion['transientPostDeparture'] =
+        transientPostDeparture.roleHitOrder;
 
       // Sampled synchronously, with no frame awaited. The reconstruction
       // leaves the superseded wrapper connected alongside its replacement
@@ -1119,15 +1341,14 @@ export const captureAttachmentDeparture = async (
       // settled board.
       refreshBoard();
       const synchronousPostRefresh = sample();
-      hitOrderByPhaseAndRegion['synchronousPostRefresh'] = hitOrder(
-        'synchronousPostRefresh'
-      );
+      hitOrderByPhaseAndRegion['synchronousPostRefresh'] =
+        synchronousPostRefresh.roleHitOrder;
 
       await settle();
       supersededWrapper = null;
       const stablePostRefresh = sample();
       hitOrderByPhaseAndRegion['stablePostRefresh'] =
-        hitOrder('stablePostRefresh');
+        stablePostRefresh.roleHitOrder;
 
       const removedImage = departing.image;
       // Moving into discard calls v1 `sort`, whose redraw workaround assigns
@@ -1138,6 +1359,8 @@ export const captureAttachmentDeparture = async (
       // move/refresh boundaries.
       await removedImage.decode();
       const removedCardAfterDeparture: RemovedCardState = {
+        id: removedImage.dataset.legacyRuntimeReflowCardId ?? departingRole,
+        role: departingRole,
         naturalWidth: removedImage.naturalWidth,
         naturalHeight: removedImage.naturalHeight,
         localRotationDegrees:
@@ -1150,15 +1373,23 @@ export const captureAttachmentDeparture = async (
         inlineBottomPx: numeric(removedImage.style.bottom),
         attached: Boolean(removedImage.attached),
         target: removedImage.target ?? 'off',
+        relativeRole:
+          typeof removedImage.relative === 'object' &&
+          removedImage.relative !== null
+            ? roleOf(removedImage.relative)
+            : null,
         energyLayer: removedImage.energyLayer ?? 0,
         layer: removedImage.layer ?? 0,
+        sourcePath: new URL(removedImage.currentSrc).pathname,
         sinkConnected: removedImage.isConnected,
         parentIsDepartureSink: removedImage.parentElement === sink.element,
       };
 
       // Clearing the board is part of what the fixture records: nothing of the
       // case may survive into the next one.
-      for (const id of ['active', 'bench', 'hand']) clearZone(user, id);
+      for (const id of ['active', 'bench', 'hand', 'discard']) {
+        clearZone(user, id);
+      }
       await frames();
 
       return {
@@ -1183,7 +1414,8 @@ export const captureAttachmentDeparture = async (
       departure: options.departure,
       attachmentOrder: options.attachmentOrder,
       typeByRole: CARD_TYPE_BY_ROLE,
-      hitPoints: options.hitPoints,
+      cardIdsByRole: options.cardIdsByRole ?? {},
+      stackId: options.stackId ?? `${options.side}-${options.departure}-stack`,
     }
   );
 
