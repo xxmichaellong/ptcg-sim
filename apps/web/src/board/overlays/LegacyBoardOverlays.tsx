@@ -261,11 +261,20 @@ const useFocusBoundary = (
   identity: string
 ): void => {
   const opener = useRef<HTMLElement | null>(null);
+  const focusCycle = useRef(0);
   useLayoutEffect(() => {
+    const cycle = focusCycle.current + 1;
+    focusCycle.current = cycle;
     const element = container.current;
     if (!element) return;
     const active = element.ownerDocument.activeElement;
-    opener.current = active instanceof HTMLElement ? active : null;
+    // Keep the external opener captured by the first setup. React StrictMode
+    // immediately replays layout effects while focus is already inside the
+    // overlay; replacing the opener in that replay would leave us trying to
+    // restore focus to a button that disappears with the overlay.
+    if (active instanceof HTMLElement && !element.contains(active)) {
+      opener.current = active;
+    }
     const first = element.querySelector<HTMLElement>(focusSelector) ?? element;
     first.focus();
     return () => {
@@ -273,7 +282,23 @@ const useFocusBoundary = (
       const current = element.ownerDocument.activeElement;
       if (!previous?.isConnected || !element.contains(current)) return;
       queueMicrotask(() => {
-        if (previous.isConnected) previous.focus();
+        // React StrictMode replays layout effects without unmounting the DOM.
+        // A replacement setup cancels the first cleanup's queued restoration;
+        // a genuine overlay removal has no replacement cycle and still returns
+        // focus to the opener.
+        const activeNow = element.ownerDocument.activeElement;
+        const replacementClaimedFocus =
+          activeNow instanceof HTMLElement &&
+          activeNow !== element.ownerDocument.body &&
+          activeNow !== current &&
+          !element.contains(activeNow);
+        if (
+          focusCycle.current === cycle &&
+          previous.isConnected &&
+          !replacementClaimedFocus
+        ) {
+          previous.focus();
+        }
       });
     };
   }, [container, focusSelector, identity]);

@@ -23,6 +23,7 @@ import { GamePresentationCoordinator } from '../presentation/GamePresentationCoo
 import { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
 import {
   BoardSessionAdapter,
+  type BoardSessionAdapterOptions,
   type BoardSessionRendererEffect,
 } from './BoardSessionAdapter.js';
 
@@ -211,7 +212,13 @@ const replayTransfer = (
 
 const setup = (
   sceneFactory: (view: MatchViewState) => BoardScene = createScene,
-  onRendererEffect?: (effect: BoardSessionRendererEffect) => void
+  onRendererEffect?: (effect: BoardSessionRendererEffect) => void,
+  transformView?: (
+    view: MatchViewState,
+    source: Parameters<
+      NonNullable<BoardSessionAdapterOptions['transformView']>
+    >[1]
+  ) => MatchViewState
 ) => {
   const socketFactory = new FakeSocketFactory();
   const scheduler = new FakeScheduler();
@@ -237,6 +244,7 @@ const setup = (
       rendererEffects.push(effect);
       onRendererEffect?.(effect);
     },
+    ...(transformView ? { transformView } : {}),
     onSubmission: (command, result) => submissions.push({ command, result }),
   });
   live.connect(connection);
@@ -257,6 +265,51 @@ const sceneEffects = (effects: readonly BoardSessionRendererEffect[]) =>
   effects.filter((effect) => effect.kind === 'InstallScene');
 
 describe('BoardSessionAdapter with real session coordinators', () => {
+  it('reapplies route-local display policy to the current live source without advancing authority', () => {
+    let label = 'Covered opponent';
+    const transformedSources: string[] = [];
+    const test = setup(createScene, undefined, (view, source) => {
+      transformedSources.push(source.kind);
+      return {
+        ...view,
+        players: {
+          ...view.players,
+          'spike-red': { ...view.players['spike-red']!, displayName: label },
+        },
+      };
+    });
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(4)));
+    expect(test.adapter.getSnapshot().view?.revision).toBe(4);
+    expect(
+      test.adapter.getSnapshot().view?.players['spike-red']?.displayName
+    ).toBe('Covered opponent');
+    const beforeEffects = test.rendererEffects.length;
+
+    label = 'Visible opponent';
+    expect(test.adapter.synchronize()).toBe(true);
+
+    expect(
+      test.live.getSnapshot().view?.players['spike-red']?.displayName
+    ).not.toBe('Visible opponent');
+    expect(
+      test.adapter.getSnapshot().view?.players['spike-red']?.displayName
+    ).toBe('Visible opponent');
+    expect(test.adapter.getSnapshot().view?.revision).toBe(4);
+    expect(test.rendererEffects.slice(beforeEffects)).toEqual([
+      {
+        kind: 'InstallScene',
+        scene: test.adapter.getSnapshot().scene,
+        mode: 'replace',
+      },
+    ]);
+    expect(transformedSources).toContain('live');
+
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('routes an equal-revision display-name refresh through the metadata boundary', () => {
     const test = setup();
     test.socket.serverOpen();

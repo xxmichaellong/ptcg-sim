@@ -489,10 +489,13 @@ context-recovery, and canvas-accessibility costs. Record the decision; do not
 choose based on preference alone.
 
 ADR-004 now selects normalized stable-keyed React DOM for the first production
-renderer. The raw Pixi implementation remains an unwired comparison and does
-not block renderer-neutral domain/session work. The remaining visual,
-accessibility, asset, churn, and physical-device evidence gates production
-wiring rather than reopening the technology choice by default.
+renderer. The raw Pixi implementation remains an explicit experimental
+comparison and does not block renderer-neutral domain/session work. The
+renderer, controller, overlays, and keyboard bridge are now wired together only
+on the explicit room-lobby rollout route, which defaults to DOM and selects Pixi
+only when requested. The remaining visual, accessibility, asset, churn, and
+physical-device evidence gates broad rollout rather than reopening the
+technology choice by default.
 
 ### Room-runtime spike
 
@@ -546,6 +549,14 @@ runtime, and session-aware Deck custody prevents a clean parked deck from being
 destructively reinstalled. This is still an opt-in slice, not the broader v2
 rollout or a claim that every Phase 5 interaction is complete.
 
+The same route now replaces its passive renderer wrapper with one
+renderer-neutral `BoardSessionRuntime`. Existing live/replay ownership is
+borrowed once, all renderer and overlay actions cross the protected controller,
+and preferences plus the Solo hand-cover policy reproject locally without a
+game revision. The route's full-deck churn gate keyboard-opens, sorts, and
+closes both deck browsers after every setup and reset, including focus return
+and image-decode checks, while retaining one renderer and authority.
+
 Every slice includes reducer, render model, renderer/UI, event/message mapping,
 tests, fixtures, instrumentation, and parity review. Do not create a separate
 “testing phase” for missing slice tests.
@@ -555,8 +566,8 @@ Exit gate:
 - all Solo-mode `MUST_MATCH` behaviors and visual/geometry tests pass;
 - no logical mutation exists in React/Pixi/DOM code;
 - automated live-Solo repeated setup/reset meets the provisional Chromium
-  resource budget; open-zone churn and the long-duration Solo soak still pass
-  before rollout;
+  resource budget, including full-deck open/sort/close churn; the long-duration
+  Solo soak still passes before rollout;
 - forced reload/restoration of local authority loses no committed state where
   persistence is promised;
 - manual parity review passes in the browser matrix.

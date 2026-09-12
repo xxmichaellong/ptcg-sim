@@ -28,10 +28,11 @@ tree. Stable nodes are views of the immutable scene; they never own or repair
 logical state.
 
 ADR-004 selects React DOM for the first production renderer. Raw Pixi remains a
-hardened, unwired comparison that proves the contract does not depend on DOM.
-It is reconsidered only after a protected workflow demonstrates a material
-rendering bottleneck on target hardware and Pixi passes the full parity,
-accessibility, image, and recovery matrix. `@pixi/react` is not selected.
+hardened, explicitly requested experimental comparison that proves the contract
+does not depend on DOM; it is never an implicit fallback. It is reconsidered
+only after a protected workflow demonstrates a material rendering bottleneck on
+target hardware and Pixi passes the full parity, accessibility, image, and
+recovery matrix. `@pixi/react` is not selected.
 
 ## Renderer public contract
 
@@ -64,7 +65,9 @@ scene replacement. `clearScene()` is the privacy/reset seam: it cancels input,
 removes retained scene/presentation state and rendered board children
 synchronously, but keeps a healthy renderer mounted for replacement. See
 [`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the headless
-controller, live/replay adapter, and uninstantiated DOM composition contract.
+controller, live/replay adapter, and route composition contract. The explicit
+room-lobby rollout route now instantiates that composition; the default
+renderer harness and v1 client remain unchanged.
 
 `installScene` rejects a lower revision in its default `advance` mode. Replay is
 the only caller allowed to request explicit `replace` mode when previous or
@@ -548,8 +551,8 @@ open without a command. Damage accepts bounded integers, while condition text
 is trimmed and capped at 16 characters; both map zero/empty text to removal.
 Malformed drafts stay local, the condition palette updates while typing, and
 reconnect or recipient replacement purges the editor. Keyboard shortcut routing
-is completed by the later selected-card checkpoint; no production route is
-enabled.
+is completed by the later selected-card checkpoint; the explicit room-lobby
+route now instantiates that protected path while v1/default routing is unchanged.
 
 The next source-only gate now characterizes compound Pokémon rotation without
 weakening that production boundary. Separate ordinary-group and BREAK oracles
@@ -1039,8 +1042,11 @@ The first additive application-boundary implementation lives in
 adapter in `BoardSessionAdapter.ts`. The exported, opt-in
 `BoardSessionRuntime.ts` proves that boundary against real session/replay
 coordinators; thin React DOM and Pixi wrappers select the renderer without
-duplicating lifecycle logic. No route imports or instantiates them yet. Explicit
-frame, source, replay-generation, and replay-index cursors keep stale aliases,
+duplicating lifecycle logic. The query-gated connected room now instantiates the
+renderer-neutral runtime directly, selecting DOM by default while retaining
+explicit `renderer=pixi` comparison access. Adapter-monotonic observation
+tokens plus explicit source,
+replay-generation, and replay-index cursors keep stale aliases,
 same-revision reconnect replacement, and replay rewind from being inferred from
 revision alone. Renderer and command effects are one-shot and never retained.
 Protocol presentation facts remain exclusively owned by the parallel
@@ -1547,13 +1553,17 @@ replay controls outside replay mode, disposes its session subscription on route
 teardown, and retains no completed replay after a room/viewer identity change or
 terminal session. Renderers continue to consume only the selected `view`.
 
-`RemoteSessionBoard` now consumes that effective view. Its submit adapter calls
-the live session only while mode is live and request phase is idle; loading,
-active replay, and post-exit `discarding` return the local typed
-`replay_mode` rejection without allocating a command ID or writing transport.
-Mutating drop intents are not forwarded to a second parent submission path;
-local selection/preview/context/zone/resize intents remain available. The board
-enables explicit renderer replacement only in replay mode.
+`RemoteSessionBoard` now owns the query-gated production-shaped composition of
+that effective view. It borrows the route's existing live/replay owners, mounts
+one `BoardSessionRuntime` and selected renderer, and projects the controller's
+safe state into `LegacyBoardOverlays` and `LegacyBoardKeyboardShortcuts`.
+Renderer intent has one optional diagnostic observer, then every semantic
+action passes through the controller; loading, active replay, post-exit
+`discarding`, reconnect, and spectator state reject mutations before the live
+submitter or submission callback can run. Replay rewind uses explicit renderer
+replacement without destroying the renderer. Preferences, viewport/DPR, and
+the Solo-only opponent-hand display policy reproject through that same runtime
+without changing authority revision or allocating another session owner.
 `LegacyReplayControls` preserves the four original IDs, symbols, ordering, color
 classes, and action mappings without disabling boundary buttons. The headless
 `ReplayModeShell` binds those controls and exit to the coordinator and exposes an

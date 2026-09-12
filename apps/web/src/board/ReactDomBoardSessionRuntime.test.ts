@@ -19,6 +19,7 @@ import {
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createRendererSpikeView,
+  DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardLayoutState,
   type BoardRenderer,
@@ -566,6 +567,95 @@ describe('opt-in React DOM board session runtime', () => {
     expect(replay.listenerCount()).toBe(0);
   });
 
+  it('reprojects route-local policy and preferences on one observed renderer', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const observedIntents = vi.fn();
+    let opponentName = 'Covered opponent';
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+      preferences: { ...DEFAULT_BOARD_PREFERENCES, darkMode: true },
+      onIntent: observedIntents,
+      transformView: (view, source) =>
+        source.kind === 'live'
+          ? {
+              ...view,
+              players: {
+                ...view.players,
+                'spike-red': {
+                  ...view.players['spike-red']!,
+                  displayName: opponentName,
+                },
+              },
+            }
+          : view,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+    const renderer = runtime.getRenderer();
+    expect(renderer).toBeDefined();
+    expect(runtime.getBoardSnapshot()?.view?.revision).toBe(1);
+    expect(
+      runtime.getBoardSnapshot()?.view?.players['spike-red']?.displayName
+    ).toBe('Covered opponent');
+    expect(live.getSnapshot().view?.players['spike-red']?.displayName).not.toBe(
+      'Covered opponent'
+    );
+    expect(
+      host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
+        .darkMode
+    ).toBe('true');
+
+    opponentName = 'Visible opponent';
+    await act(async () => {
+      expect(runtime.synchronizeSources()).toBe(true);
+      runtime.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        showZoneOutlines: false,
+      });
+    });
+    expect(runtime.getRenderer()).toBe(renderer);
+    expect(runtime.getBoardSnapshot()?.view?.revision).toBe(1);
+    expect(
+      runtime.getBoardSnapshot()?.view?.players['spike-red']?.displayName
+    ).toBe('Visible opponent');
+    expect(
+      host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
+    ).toMatchObject({ darkMode: 'false', showZoneOutlines: 'false' });
+
+    const deck = runtime
+      .getBoardSnapshot()!
+      .scene!.zones.find(
+        (candidate) => candidate.kind === 'deck' && candidate.side === 'local'
+      )!;
+    const deckElement = host.querySelector<HTMLElement>(
+      `[data-zone-id="${deck.id}"]`
+    )!;
+    await act(async () => {
+      deckElement.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(observedIntents).toHaveBeenCalledExactlyOnceWith({
+      kind: 'ZoneOpened',
+      zoneId: deck.id,
+    });
+    expect(runtime.getBoardSnapshot()?.presentation.openedZoneId).toBe(deck.id);
+
+    await act(async () => {
+      runtime.dispose();
+      await Promise.resolve();
+    });
+  });
+
   it('composes real remote and replay coordinators into the DOM while presentation stays parallel', async () => {
     const socketFactory = new RuntimeSocketFactory();
     const live = new RemoteGameSession({
@@ -713,7 +803,14 @@ describe('opt-in React DOM board session runtime', () => {
     await act(async () => {
       runtime.flipBoard();
     });
-    expect(runtime.getBoardSnapshot()?.cursor).toBe(cursor);
+    expect(runtime.getBoardSnapshot()?.cursor).toMatchObject({
+      source: cursor?.source,
+      recipientKey: cursor?.recipientKey,
+      revision: cursor?.revision,
+    });
+    expect(runtime.getBoardSnapshot()!.cursor!.frameToken).toBeGreaterThan(
+      cursor!.frameToken
+    );
     expect(runtime.getCharacterizedLayoutSnapshot().bottomPlayerId).not.toBe(
       originalBottom
     );
@@ -1347,9 +1444,12 @@ describe('opt-in React DOM board session runtime', () => {
     });
     expect(replay.getSnapshot().generation).toBe(rejectedGeneration);
     expect(runtime.getBoardSnapshot()).toMatchObject({
-      cursor: { frameToken: rejectedGeneration },
+      cursor: { frameToken: expect.any(Number) },
       view: { matchId: 'private-replacement', revision: 2 },
     });
+    expect(runtime.getBoardSnapshot()!.cursor!.frameToken).toBeGreaterThan(
+      rejectedGeneration
+    );
     expect(host.querySelectorAll('[data-card-id]').length).toBeGreaterThan(0);
     const effectCount = effects.length;
     expect(runtime.replaceLayoutState(correctedLayout)).toBe(false);

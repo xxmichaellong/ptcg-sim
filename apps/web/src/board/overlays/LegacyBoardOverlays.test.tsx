@@ -808,6 +808,50 @@ describe('legacy board overlays', () => {
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
   });
 
+  it('preserves the external opener across StrictMode focus-effect replay', async () => {
+    const callbacks = actions();
+    const opener = document.createElement('button');
+    opener.textContent = 'Open deck';
+    document.body.prepend(opener);
+    opener.focus();
+    const deck = scene.zones.find(
+      (candidate) =>
+        candidate.id === `zone:${firstPlayer}:deck` && candidate.interactive
+    )!;
+    const renderOpenedZone = async (openedZoneId: string | null) => {
+      await act(async () => {
+        root.render(
+          createElement(
+            StrictMode,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                presentation: {
+                  selectedCardId: null,
+                  hoveredCardId: null,
+                  drag: null,
+                  openedZoneId,
+                },
+              }),
+              darkMode: false,
+              actions: callbacks,
+            })
+          )
+        );
+        await Promise.resolve();
+      });
+    };
+
+    await renderOpenedZone(deck.id);
+    expect(document.activeElement).toBe(
+      host.querySelector('[data-zone-close]')
+    );
+
+    await renderOpenedZone(null);
+    expect(host.querySelector('[data-legacy-zone-browser]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+
   it('anchors a bounded temporary damage editor without mutating scene markers', async () => {
     const callbacks = actions();
     const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;

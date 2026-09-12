@@ -47,6 +47,11 @@ export type BoardSessionRendererEffect = Exclude<
 export interface BoardSessionAdapterOptions {
   readonly live: BoardSessionLiveSource;
   readonly replay: BoardSessionReplaySource;
+  /** Applies only recipient-safe, page-local display policy before scene creation. */
+  readonly transformView?: (
+    view: MatchViewState,
+    source: BoardProjectionSource
+  ) => MatchViewState;
   readonly createScene: (view: MatchViewState) => BoardScene;
   readonly emitRendererEffect: (effect: BoardSessionRendererEffect) => void;
   readonly onSubmission?: (
@@ -113,6 +118,7 @@ const viewFor = (
 export class BoardSessionAdapter {
   private readonly controller: BoardSessionController;
   private readonly unsubscribeReplay: () => void;
+  private nextFrameToken = 0;
   private disposed = false;
 
   constructor(private readonly options: BoardSessionAdapterOptions) {
@@ -224,10 +230,16 @@ export class BoardSessionAdapter {
     const replayState = this.options.replay.getSnapshot();
     const liveState = this.options.live.getSnapshot();
     const source = sourceFor(replayState);
-    const view = viewFor(replayState, liveState);
+    const sourceView = viewFor(replayState, liveState);
+    const view = sourceView
+      ? (this.options.transformView?.(sourceView, source) ?? sourceView)
+      : undefined;
     const boundary = this.boundaryFor(replayState, source, view);
     const frame: BoardProjectionFrame = {
-      frameToken: replayState.generation,
+      // The adapter may intentionally reproject one upstream generation after
+      // a route-local display policy or layout change. Keep controller
+      // observation ordering monotonic without pretending authority advanced.
+      frameToken: ++this.nextFrameToken,
       source,
       boundary,
       sessionPhase: liveState.phase,

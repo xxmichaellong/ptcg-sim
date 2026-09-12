@@ -3,7 +3,7 @@
 - Status: **ACCEPTED**
 - Decision date: 2026-09-03
 - Scope: the first production v2 board renderer
-- Production wiring: not yet enabled
+- Production wiring: enabled only on the explicit `?room-lobby=1` rollout route
 
 ## Context
 
@@ -45,8 +45,10 @@ flip-time rebinding covers both flipped directions, and double flip/fullscreen
 reversal prove cleanup and ownership restoration. The renderer contract owns
 the corresponding pure four-branch resize transition, including v1 clamps,
 collision arithmetic, edge-handle expansion, and first-event inline fallbacks.
-The opt-in board runtime can apply it to either renderer; production routes and
-the existing UI remain unchanged. A full-runtime Chromium boundary matrix now
+The opt-in board runtime can apply it to either renderer; the explicit
+room-lobby route now defaults to DOM while retaining `renderer=pixi` as an
+experimental comparison. The default route, v1, and existing UI remain
+unchanged. A full-runtime Chromium boundary matrix now
 pins the adjacent collision pixels, strict handle-growth edges, normal/flipped
 clamps, and expanded-handle history. The React DOM runtime additionally offers
 deny-by-default capture-phase pointer ownership over the existing non-painting
@@ -87,8 +89,9 @@ also matches source-ordered context rows and computed paint plus the full-card
 preview shell/image metrics, attaching source/candidate evidence. The renderer
 still rejects hidden surface-card input; a distinct controller action admits
 only cards belonging to the currently opened safe zone. The module remains
-absent from production bundles. Its typed callbacks now traverse the
-controller's currently-open target check, ready/live-player policy, pure overlay
+isolated from the default route but is now instantiated by the explicit
+room-lobby route. Its typed callbacks traverse the controller's currently-open
+target check, ready/live-player policy, pure overlay
 resolver, serialized `SubmitCommand` effect, and adapter submit-time recheck.
 Complete actions reuse existing safe semantic resolvers. Controller-bound
 marker input overlays one temporary React editor on immutable scene output.
@@ -391,8 +394,8 @@ recovery diagnostics merely to reach the current shared baseline.
 
 ## Consequences
 
-- Production board work proceeds in `renderer-dom`; `renderer-pixi` remains
-  unwired and must not become an implicit fallback.
+- Production board work proceeds in `renderer-dom`; `renderer-pixi` remains an
+  explicitly requested experiment and must not become an implicit fallback.
 - Stable keyed/memoized nodes, pure layout, and the shared drag controller are
   the optimization path. React component state does not absorb game state.
 - DOM overlays no longer need cross-surface coordinate arbitration for the
@@ -444,7 +447,8 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Chromium DOM-node/listener gate, deterministic same-origin 120-distinct-SVG
   cache/request/decode gate, green 20-cycle in-process remote-route ownership
   gate, live local-`workerd` creator session, and green live-Solo 100-cycle
-  setup/reset route gate with flat DOM counters and <= 1.10x post-GC heap:
+  setup/reset plus full-deck open/sort/close route gate with flat DOM counters
+  and <= 1.10x post-GC heap:
   deployed browser navigation/BFCache plus representative distinct-real-raster
   decoded-byte accounting on the ratified profile;
 - the ratified physical-device/browser performance matrix; and
@@ -474,8 +478,10 @@ hardware.
 
 ## Migration and rollback
 
-The choice is additive and still unwired. Migrate one complete v2 session route
-behind its feature flag after parity gates pass; never replace pieces of a live
-v1 match. Rollback directs new sessions to v1. Because session/core/protocol
-state is renderer-neutral, this ADR can be revisited without migrating saved
-matches or changing the wire protocol.
+The choice remains additive and is now wired as one complete v2 session route
+behind its explicit rollout flag. That route defaults to the selected DOM
+renderer; `renderer=pixi` remains an explicit experimental comparison. It never
+replaces pieces of a live v1 match. Rollback removes that route selection and
+directs new sessions to v1. Because session/core/protocol state is
+renderer-neutral, this ADR can be revisited without migrating saved matches or
+changing the wire protocol.

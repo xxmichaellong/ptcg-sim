@@ -84,17 +84,22 @@ retains the stronger 20-cycle ownership/teardown proof.
 
 The separate live-Solo renderer churn gate imports two real 60-card decks,
 warms 40 complete setup/reset cycles, then measures 100 more against the real
-Worker. It requires one unchanged renderer, exact scene/rendered topology and
-fresh card aliases on every phase, exact revision/render-commit deltas, flat
+Worker. After every setup and reset it keyboard-opens both complete deck
+browsers, verifies the dialog/focus boundary and every decoded image, applies a
+local sort, closes, and proves focus return. The full run therefore covers 560
+open/sort/close dialog lifecycles while requiring one unchanged renderer, exact
+scene/rendered topology and fresh card aliases on every phase, 400 measured
+authority revisions, 1,200 measured renderer commits, flat
 document/node/listener counters, zero renderer resource failures, and post-GC
-V8 heap no more than 1.10x the aligned warmed baseline. Serial reconnect recovery
-is allowed only while one room/socket path, maximum concurrency one, every old
-socket closed, one final live socket, and ready controls remain proven. It is
-intentionally a roughly four-minute Chromium soak test; uninterrupted transport
-stability is a separate operations concern.
+V8 heap no more than 1.10x the aligned warmed baseline. Serial reconnect
+recovery is allowed only while one room/socket path, maximum concurrency one,
+every old socket closed, one final live socket, and ready controls remain
+proven. Uninterrupted transport stability is a separate operations concern.
 
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
-mounts the effective live/replay board, multiplayer/replay activity surface,
+now composes the effective live/replay view through one `BoardSessionRuntime`,
+one selected renderer, and the protected controller-owned overlays and keyboard
+bridge, alongside the multiplayer/replay activity surface,
 legacy replay controls, authenticated live sidebox controls, and externally
 owned route teardown. Live and replay Options now restore recipient-safe
 battle-log export and browser full screen, while Clear battle log remains live

@@ -90,7 +90,7 @@ in [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 | mutation observers                                     | explicit render/app selectors                                   | Entire mechanism retired.                                                                       |
 
 Implemented renderer decision files (React DOM is selected; Pixi remains
-unwired evidence):
+explicit experimental evidence):
 
 ```text
 packages/renderer-contract/src/
@@ -110,6 +110,9 @@ apps/web/src/
   board/BoardSessionRuntime.ts
   board/ReactDomBoardSessionRuntime.ts
   board/PixiBoardSessionRuntime.ts
+  board/overlays/LegacyBoardOverlays.tsx
+  board/LegacyBoardKeyboardShortcuts.tsx
+  session/RemoteSessionBoard.tsx
 ```
 
 The implemented marker boundary is intentionally narrower than the eventual
@@ -141,10 +144,10 @@ packages/renderer-pixi/src/
 
 apps/web/src/board/
   BoardViewport.tsx
-  BoardSessionController.ts # additive headless reducer/store implemented; not production-wired
-  BoardSessionAdapter.ts    # additive public live/replay composition; not production-wired
-  BoardSessionRuntime.ts         # additive renderer-neutral composition; uninstantiated by routes
-  ReactDomBoardSessionRuntime.ts # selected thin wrapper; still uninstantiated by routes
+  BoardSessionController.ts # protected reducer/store; wired only on the explicit rollout route
+  BoardSessionAdapter.ts    # live/replay boundary; wired only on the explicit rollout route
+  BoardSessionRuntime.ts         # renderer-neutral route composition used by RemoteSessionBoard
+  ReactDomBoardSessionRuntime.ts # selected thin parity/recovery wrapper; uninstantiated by routes
   PixiBoardSessionRuntime.ts     # experimental thin wrapper; uninstantiated by routes
   model/createBoardRenderModel.ts
   layout/boardGeometry.ts

@@ -9,7 +9,6 @@ import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   createRendererSpikeView,
-  type BoardIntent,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
@@ -26,26 +25,6 @@ import {
 } from './RemoteSessionBoard.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-
-const boardHarness = vi.hoisted(() => ({
-  props: undefined as
-    | {
-        readonly view: MatchViewState;
-        readonly allowRevisionRegression?: boolean;
-        readonly sessionReady?: boolean;
-        readonly preferences?: BoardPreferences;
-        readonly onIntent: (intent: BoardIntent) => void;
-        readonly submitCommand: (command: WireGameCommand) => unknown;
-      }
-    | undefined,
-}));
-
-vi.mock('../RendererSpikeBoard.js', () => ({
-  RendererSpikeBoard: (props: NonNullable<typeof boardHarness.props>) => {
-    boardHarness.props = props;
-    return <output>{props.view.revision}</output>;
-  },
-}));
 
 const baseView = createRendererSpikeView();
 const atRevision = (revision: number) => ({ ...baseView, revision });
@@ -113,6 +92,66 @@ const replayArtifact = (): ProjectedReplayArtifact => ({
   ],
 });
 
+const waitForRevision = async (
+  host: ParentNode,
+  revision: number
+): Promise<void> => {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (
+      host
+        .querySelector('.ptcgsim-board-surface')
+        ?.getAttribute('data-revision') === String(revision)
+    ) {
+      return;
+    }
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
+  expect(
+    host.querySelector('.ptcgsim-board-surface')?.getAttribute('data-revision')
+  ).toBe(String(revision));
+};
+
+const selectedScene = () => {
+  const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+  if (!scene) throw new Error('selected renderer scene is unavailable');
+  return scene;
+};
+
+const openLocalDeck = async (host: ParentNode): Promise<HTMLElement> => {
+  const deck = selectedScene().zones.find(
+    (zone) => zone.kind === 'deck' && zone.side === 'local'
+  );
+  if (!deck) throw new Error('local deck scene node is unavailable');
+  const target = host.querySelector<HTMLElement>(`[data-zone-id="${deck.id}"]`);
+  if (!target) throw new Error('local deck element is unavailable');
+  await act(async () => {
+    target.focus();
+    target.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+  const browser = host.querySelector<HTMLElement>(
+    `[data-legacy-zone-browser][data-zone-browser-id="${deck.id}"]`
+  );
+  if (!browser) throw new Error('local deck browser did not open');
+  return browser;
+};
+
+const invokeDeckShuffle = async (host: ParentNode): Promise<void> => {
+  const browser = await openLocalDeck(host);
+  const shuffle = browser.querySelector<HTMLButtonElement>(
+    '[data-zone-action="shuffleDeck"]'
+  );
+  if (!shuffle) throw new Error('deck shuffle action is unavailable');
+  await act(async () => shuffle.click());
+};
+
 class FakeRemoteBoardSession
   implements ReplaySessionSource, RemoteBoardSession
 {
@@ -162,10 +201,10 @@ class FakeRemoteBoardSession
 describe('RemoteSessionBoard replay binding', () => {
   beforeEach(() => {
     document.body.replaceChildren();
-    boardHarness.props = undefined;
+    delete window.__PTCG_RENDERER_SPIKE__;
   });
 
-  it('renders the effective view and blocks submissions throughout replay mode', async () => {
+  it('keeps one renderer across live/replay and lets the controller block replay submissions', async () => {
     const session = new FakeRemoteBoardSession();
     const replay = new ReplaySessionCoordinator(session);
     const onSubmission = vi.fn();
@@ -179,17 +218,6 @@ describe('RemoteSessionBoard replay binding', () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    const command: WireGameCommand = { type: 'FlipCoin' };
-    const dropIntent = {
-      kind: 'CardDropRequested',
-      cardId: 'view-card',
-      targetId: 'slot:blue:bench',
-    } as BoardIntent;
-    const selectionIntent = {
-      kind: 'CardSelected',
-      cardId: 'view-card',
-    } as BoardIntent;
-
     await act(async () =>
       root.render(
         <RemoteSessionBoard
@@ -202,68 +230,51 @@ describe('RemoteSessionBoard replay binding', () => {
         />
       )
     );
-    expect(host.textContent).toBe('10');
-    expect(boardHarness.props?.allowRevisionRegression).toBe(false);
-    expect(boardHarness.props?.sessionReady).toBe(true);
-    expect(boardHarness.props?.preferences).toBe(preferences);
-    expect(boardHarness.props?.submitCommand(command)).toMatchObject({
-      queued: true,
+    await waitForRevision(host, 10);
+    const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
+    expect(renderer).toBeDefined();
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(
+          host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
+        ).toMatchObject({ darkMode: 'true', showZoneOutlines: 'true' })
+      );
     });
+    await invokeDeckShuffle(host);
     expect(session.submit).toHaveBeenCalledTimes(1);
-    boardHarness.props?.onIntent(dropIntent);
-    expect(onIntent).toHaveBeenCalledWith(dropIntent);
-    onIntent.mockClear();
+    expect(session.submit).toHaveBeenCalledWith({
+      type: 'ShuffleZone',
+      zoneId: expect.stringMatching(/:deck$/),
+    });
+    expect(onSubmission).toHaveBeenCalledOnce();
+    expect(onIntent).toHaveBeenCalledWith({
+      kind: 'ZoneOpened',
+      zoneId: expect.stringMatching(/:deck$/),
+    });
 
     await act(async () => replay.requestReplay());
-    expect(host.textContent).toBe('10');
-    expect(boardHarness.props?.submitCommand(command)).toEqual({
-      queued: false,
-      reason: 'replay_mode',
-    });
-    expect(session.submit).toHaveBeenCalledTimes(1);
-    boardHarness.props?.onIntent(dropIntent);
-    boardHarness.props?.onIntent(selectionIntent);
-    expect(onIntent).toHaveBeenCalledTimes(1);
-    expect(onIntent).toHaveBeenCalledWith(selectionIntent);
+    await waitForRevision(host, 10);
 
     await act(async () => session.completeReplay());
-    expect(host.textContent).toBe('0');
-    expect(boardHarness.props?.allowRevisionRegression).toBe(true);
+    await waitForRevision(host, 0);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+    const submissionsBeforeReplayAction = session.submit.mock.calls.length;
+    const notificationsBeforeReplayAction = onSubmission.mock.calls.length;
+    await invokeDeckShuffle(host);
+    expect(session.submit).toHaveBeenCalledTimes(submissionsBeforeReplayAction);
+    expect(onSubmission).toHaveBeenCalledTimes(notificationsBeforeReplayAction);
+
     await act(async () => replay.stepNext());
-    expect(host.textContent).toBe('1');
-    expect(boardHarness.props?.submitCommand(command)).toEqual({
-      queued: false,
-      reason: 'replay_mode',
-    });
-    expect(session.submit).toHaveBeenCalledTimes(1);
+    await waitForRevision(host, 1);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
 
     await act(async () => replay.exitReplay());
-    expect(host.textContent).toBe('10');
-    expect(boardHarness.props?.allowRevisionRegression).toBe(false);
-    expect(boardHarness.props?.submitCommand(command)).toMatchObject({
-      queued: true,
-    });
+    await waitForRevision(host, 10);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+    await invokeDeckShuffle(host);
     expect(session.submit).toHaveBeenCalledTimes(2);
-    expect(onSubmission).toHaveBeenNthCalledWith(2, command, {
-      queued: false,
-      reason: 'replay_mode',
-    });
+    expect(onSubmission).toHaveBeenCalledTimes(2);
 
-    await act(async () => replay.requestReplay());
-    await act(async () => replay.exitReplay());
-    expect(replay.getSnapshot().requestPhase).toBe('discarding');
-    expect(boardHarness.props?.submitCommand(command)).toEqual({
-      queued: false,
-      reason: 'replay_mode',
-    });
-    expect(session.submit).toHaveBeenCalledTimes(2);
-    await act(async () => session.completeReplay());
-    expect(boardHarness.props?.submitCommand(command)).toMatchObject({
-      queued: true,
-    });
-    expect(session.submit).toHaveBeenCalledTimes(3);
-
-    onIntent.mockClear();
     const ready = session.getSnapshot();
     await act(async () =>
       session.publish({
@@ -272,18 +283,24 @@ describe('RemoteSessionBoard replay binding', () => {
         reconnectAttempt: 1,
       })
     );
-    expect(host.textContent).toBe('10');
-    expect(boardHarness.props?.sessionReady).toBe(false);
-    expect(boardHarness.props?.submitCommand(command)).toEqual({
-      queued: false,
-      reason: 'not_ready',
+    await waitForRevision(host, 10);
+    await invokeDeckShuffle(host);
+    expect(session.submit).toHaveBeenCalledTimes(2);
+    expect(onSubmission).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      session.publish({ ...session.getSnapshot(), phase: 'closed' });
+      await Promise.resolve();
     });
-    boardHarness.props?.onIntent(dropIntent);
-    boardHarness.props?.onIntent(selectionIntent);
-    expect(onIntent).toHaveBeenCalledTimes(1);
-    expect(onIntent).toHaveBeenCalledWith(selectionIntent);
+    expect(host.querySelector('.ptcgsim-board-surface')).toBeNull();
+    expect(host.querySelector('[data-legacy-board-overlays]')).toBeNull();
+    expect(host.querySelector('[data-legacy-shortcut-reference]')).toBeNull();
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('closed');
+    expect(window.__PTCG_RENDERER_SPIKE__).toBeUndefined();
 
     await act(async () => root.unmount());
+    await Promise.resolve();
+    expect(window.__PTCG_RENDERER_SPIKE__).toBeUndefined();
     replay.dispose();
   });
 
@@ -322,22 +339,29 @@ describe('RemoteSessionBoard replay binding', () => {
     )!;
 
     await render('solo', true);
-    const covered = boardHarness.props!.view.zones[opponentHand.id]!.cards;
-    expect(covered.every((card) => card.kind === 'concealed')).toBe(true);
-    expect(covered.map((card) => card.id)).toEqual(
+    await waitForRevision(host, disclosed.revision);
+    const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
+    const renderedOpponentHand = () =>
+      selectedScene().cards.filter((card) => card.parentId === opponentHand.id);
+    expect(renderedOpponentHand().every((card) => card.concealed)).toBe(true);
+    expect(renderedOpponentHand().map((card) => card.id)).toEqual(
       opponentHand.cards.map((card) => card.id)
     );
 
     await render('solo', false);
-    expect(boardHarness.props!.view).toBe(disclosed);
-    expect(
-      boardHarness.props!.view.zones[opponentHand.id]!.cards.every(
-        (card) => card.kind === 'known'
-      )
-    ).toBe(true);
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(renderedOpponentHand().map((card) => card.concealed)).toEqual(
+          opponentHand.cards.map(() => false)
+        )
+      );
+    });
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
 
     await render('multiplayer', true);
-    expect(boardHarness.props!.view).toBe(disclosed);
+    expect(renderedOpponentHand().every((card) => !card.concealed)).toBe(true);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+    expect(session.getSnapshot().view).toBe(disclosed);
 
     await act(async () => root.unmount());
     replay.dispose();

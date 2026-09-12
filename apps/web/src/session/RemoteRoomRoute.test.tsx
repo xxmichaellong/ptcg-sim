@@ -36,17 +36,43 @@ const boardHarness = vi.hoisted(() => ({
         readonly allowRevisionRegression?: boolean;
         readonly preferences?: BoardPreferences;
         readonly onIntent: (intent: BoardIntent) => void;
-        readonly submitCommand: (command: WireGameCommand) => unknown;
       }
     | undefined,
 }));
 
-vi.mock('../RendererSpikeBoard.js', () => ({
-  RendererSpikeBoard: (props: NonNullable<typeof boardHarness.props>) => {
-    boardHarness.props = props;
-    return <output id="room-board">{props.view.revision}</output>;
-  },
-}));
+vi.mock('./RemoteSessionBoard.js', async () => {
+  const React = await import('react');
+  return {
+    RemoteSessionBoard: (props: {
+      readonly replay: {
+        readonly getSnapshot: () => {
+          readonly mode: 'live' | 'replay';
+          readonly view?: { readonly revision: number };
+        };
+        readonly subscribe: (listener: () => void) => () => void;
+      };
+      readonly preferences?: BoardPreferences;
+      readonly onIntent: (intent: BoardIntent) => void;
+    }) => {
+      const state = React.useSyncExternalStore(
+        props.replay.subscribe,
+        props.replay.getSnapshot,
+        props.replay.getSnapshot
+      );
+      boardHarness.props = state.view
+        ? {
+            view: state.view,
+            allowRevisionRegression: state.mode === 'replay',
+            ...(props.preferences ? { preferences: props.preferences } : {}),
+            onIntent: props.onIntent,
+          }
+        : undefined;
+      return state.view ? (
+        <output id="room-board">{state.view.revision}</output>
+      ) : null;
+    },
+  };
+});
 
 const admissionTicket = 'route-screen-admission-capability-private-000001';
 const resumeToken = 'route-screen-resume-capability-private-000000001';
@@ -612,19 +638,11 @@ describe('RemoteRoomRoute', () => {
     } as BoardIntent;
     boardHarness.props?.onIntent(dropIntent);
     boardHarness.props?.onIntent(selectionIntent);
-    expect(onIntent).toHaveBeenCalledOnce();
-    expect(onIntent).toHaveBeenCalledWith(selectionIntent);
-    expect(boardHarness.props?.submitCommand({ type: 'FlipCoin' })).toEqual({
-      queued: false,
-      reason: 'replay_mode',
-    });
-    expect(onSubmission).toHaveBeenCalledWith(
-      { type: 'FlipCoin' },
-      {
-        queued: false,
-        reason: 'replay_mode',
-      }
-    );
+    expect(onIntent).toHaveBeenNthCalledWith(1, dropIntent);
+    expect(onIntent).toHaveBeenNthCalledWith(2, selectionIntent);
+    // The route observer sees raw renderer intent. The board controller owns
+    // replay rejection before any session submission or result callback.
+    expect(onSubmission).not.toHaveBeenCalled();
 
     await act(async () =>
       (host.querySelector('#setupBothButton') as HTMLButtonElement).click()

@@ -2,6 +2,8 @@ import { expect, test, type JSHandle, type Page } from '@playwright/test';
 
 const WARMUP_CYCLES = 40;
 const MEASURED_CYCLES = 100;
+const SCENE_REVISIONS_PER_CYCLE = 4;
+const RENDER_COMMITS_PER_CYCLE = 12;
 const MAXIMUM_RETAINED_HEAP_RATIO = 1.1;
 const MAIN_FACE_URL = '/v2/assets/cardback.png?solo-churn=main';
 const ALTERNATE_FACE_URL = '/v2/assets/cardback.png?solo-churn=alternate';
@@ -56,6 +58,73 @@ const submitBoth = async (
     String(before + 2)
   );
   await expect(button).toBeEnabled();
+};
+
+const churnDeckZoneBrowsers = async (
+  page: Page,
+  renderer: JSHandle<unknown>
+): Promise<number> => {
+  const before = await readResourceEvidence(page, renderer);
+  const decks = await page.evaluate(() => {
+    const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+    if (!scene) throw new Error('Missing selected renderer scene');
+    return scene.zones
+      .filter((zone) => zone.kind === 'deck')
+      .map((zone) => ({ id: zone.id, count: zone.count, side: zone.side }))
+      .sort((left, right) => left.side.localeCompare(right.side));
+  });
+  expect(decks).toHaveLength(2);
+
+  for (const deck of decks) {
+    const target = page.locator(`[data-zone-id="${deck.id}"]`);
+    await target.focus();
+    await target.press('Enter');
+    const browser = page.locator(
+      `[data-legacy-zone-browser][data-zone-browser-id="${deck.id}"]`
+    );
+    await expect(browser).toBeVisible();
+    await expect(browser).toHaveAttribute('role', 'dialog');
+    await expect(browser).toHaveAttribute('aria-modal', 'true');
+    await expect(browser).toHaveAccessibleName(
+      new RegExp(`deck, ${deck.count} cards`, 'i')
+    );
+    await expect(browser.locator('[data-zone-close]')).toBeFocused();
+    await expect(browser.locator('[data-overlay-card-id]')).toHaveCount(
+      deck.count
+    );
+    await page.waitForFunction(
+      ({ zoneId, count }) => {
+        const zoneBrowser = document.querySelector(
+          `[data-legacy-zone-browser][data-zone-browser-id="${zoneId}"]`
+        );
+        if (!zoneBrowser) return false;
+        const images = [
+          ...zoneBrowser.querySelectorAll<HTMLImageElement>(
+            '[data-overlay-card-id] img'
+          ),
+        ];
+        return (
+          images.length === count &&
+          images.every((image) => image.complete && image.naturalWidth > 0)
+        );
+      },
+      { zoneId: deck.id, count: deck.count }
+    );
+    const sort = browser.locator('[data-zone-action="sortZone"]');
+    await expect(sort).not.toBeChecked();
+    await sort.check();
+    await expect(sort).toBeChecked();
+    await browser.locator('[data-zone-close]').click();
+    await expect(browser).toHaveCount(0);
+    await expect(target).toBeFocused();
+  }
+
+  const after = await readResourceEvidence(page, renderer);
+  expect(after.sceneRevision).toBe(before.sceneRevision);
+  expect(after.renderCommits - before.renderCommits).toBe(decks.length * 2);
+  expect(after.rendererGeneration).toBe(before.rendererGeneration);
+  expect(after.sameRenderer).toBe(true);
+  return decks.length;
 };
 
 const readResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
@@ -125,6 +194,14 @@ const readResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
       contextLossListeners: diagnostics.contextLossListeners,
       boardSurfaces: document.querySelectorAll('.ptcgsim-board-surface').length,
       canvases: document.querySelectorAll('canvas').length,
+      zoneBrowsers: document.querySelectorAll('[data-legacy-zone-browser]')
+        .length,
+      zoneBrowserCards: document.querySelectorAll(
+        '[data-legacy-zone-browser] [data-overlay-card-id]'
+      ).length,
+      zoneBrowserImages: document.querySelectorAll(
+        '[data-legacy-zone-browser] [data-overlay-card-id] img'
+      ).length,
       activityRows: document.querySelectorAll('#chatbox [data-event-type]')
         .length,
     };
@@ -157,6 +234,9 @@ const resourceSignature = (evidence: ResourceEvidence): string =>
     contextLossListeners: evidence.contextLossListeners,
     boardSurfaces: evidence.boardSurfaces,
     canvases: evidence.canvases,
+    zoneBrowsers: evidence.zoneBrowsers,
+    zoneBrowserCards: evidence.zoneBrowserCards,
+    zoneBrowserImages: evidence.zoneBrowserImages,
     activityRows: evidence.activityRows,
     normalizedScene: evidence.normalizedScene,
   });
@@ -185,6 +265,9 @@ const expectHealthyEvidence = (
     contextLossListeners: 0,
     boardSurfaces: 1,
     canvases: 0,
+    zoneBrowsers: 0,
+    zoneBrowserCards: 0,
+    zoneBrowserImages: 0,
     activityRows: 100,
   });
   expect(evidence.renderedCardIds).toEqual(evidence.sceneCardIds);
@@ -236,18 +319,25 @@ const runCycle = async (
 ): Promise<{
   readonly reset: ResourceEvidence;
   readonly setup: ResourceEvidence;
+  readonly zoneBrowserOpenings: number;
 }> => {
   await submitBoth(page, 'setup');
+  const setupZoneBrowserOpenings = await churnDeckZoneBrowsers(page, renderer);
   const setup = await readResourceEvidence(page, renderer);
   expectAliasesReplaced(previousCardIds, setup.sceneCardIds);
   await submitBoth(page, 'reset');
+  const resetZoneBrowserOpenings = await churnDeckZoneBrowsers(page, renderer);
   const reset = await readResourceEvidence(page, renderer);
   expectAliasesReplaced(setup.sceneCardIds, reset.sceneCardIds);
   if (expected) {
     expect(resourceSignature(reset)).toBe(expected.reset);
     expect(resourceSignature(setup)).toBe(expected.setup);
   }
-  return { reset, setup };
+  return {
+    reset,
+    setup,
+    zoneBrowserOpenings: setupZoneBrowserOpenings + resetZoneBrowserOpenings,
+  };
 };
 
 const alignMemorySnapshotPhase = async (
@@ -363,11 +453,11 @@ const readSocketLifecycleSummary = (page: Page) =>
     };
   });
 
-test('selected DOM Solo setup/reset churn converges route resources', async ({
+test('selected DOM Solo setup/reset and full-deck zone churn converges route resources', async ({
   context,
   page,
 }, testInfo) => {
-  test.setTimeout(300_000);
+  test.setTimeout(420_000);
   const errors = collectRuntimeErrors(page);
   let roomCreations = 0;
   let openedGameSockets = 0;
@@ -501,12 +591,16 @@ test('selected DOM Solo setup/reset churn converges route resources', async ({
   expect(initial.activityRows).toBeLessThan(100);
 
   let warmed: Awaited<ReturnType<typeof runCycle>> | undefined;
+  let warmupZoneBrowserOpenings = 0;
   let previousCardIds = initial.sceneCardIds;
   for (let cycle = 0; cycle < WARMUP_CYCLES; cycle += 1) {
     warmed = await runCycle(page, renderer, undefined, previousCardIds);
+    expect(warmed.zoneBrowserOpenings).toBe(4);
+    warmupZoneBrowserOpenings += warmed.zoneBrowserOpenings;
     previousCardIds = warmed.reset.sceneCardIds;
   }
   if (!warmed) throw new Error('Warm-up did not execute');
+  expect(warmupZoneBrowserOpenings).toBe(WARMUP_CYCLES * 4);
   expectHealthyEvidence(warmed.reset, 'reset');
   expectHealthyEvidence(warmed.setup, 'setup');
   const signatures = {
@@ -526,6 +620,7 @@ test('selected DOM Solo setup/reset churn converges route resources', async ({
   const baselineCounters = await cdp.send('Memory.getDOMCounters');
   const baselineHeap = await cdp.send('Runtime.getHeapUsage');
 
+  let measuredZoneBrowserOpenings = 0;
   for (let cycle = 0; cycle < MEASURED_CYCLES; cycle += 1) {
     const evidence = await runCycle(
       page,
@@ -535,8 +630,11 @@ test('selected DOM Solo setup/reset churn converges route resources', async ({
     );
     expectHealthyEvidence(evidence.reset, 'reset');
     expectHealthyEvidence(evidence.setup, 'setup');
+    expect(evidence.zoneBrowserOpenings).toBe(4);
+    measuredZoneBrowserOpenings += evidence.zoneBrowserOpenings;
     previousCardIds = evidence.reset.sceneCardIds;
   }
+  expect(measuredZoneBrowserOpenings).toBe(MEASURED_CYCLES * 4);
 
   const finalPresentationPhase = await alignMemorySnapshotPhase(
     page,
@@ -553,10 +651,10 @@ test('selected DOM Solo setup/reset churn converges route resources', async ({
   expect(finalPresentationPhase).toEqual(baselinePresentationPhase);
   expect(final.rendererGeneration).toBe(initial.rendererGeneration);
   expect(final.sceneRevision - baseline.sceneRevision).toBe(
-    MEASURED_CYCLES * 4
+    MEASURED_CYCLES * SCENE_REVISIONS_PER_CYCLE
   );
   expect(final.renderCommits - baseline.renderCommits).toBe(
-    MEASURED_CYCLES * 4
+    MEASURED_CYCLES * RENDER_COMMITS_PER_CYCLE
   );
   expect(resourceSignature(final)).toBe(signatures.reset);
   expect(finalCounters.documents).toBeLessThanOrEqual(
@@ -592,12 +690,16 @@ test('selected DOM Solo setup/reset churn converges route resources', async ({
   });
   expect(errors).toEqual([]);
 
-  await testInfo.attach('solo-setup-reset-100-cycle-evidence.json', {
+  await testInfo.attach('solo-setup-reset-zone-100-cycle-evidence.json', {
     body: Buffer.from(
       JSON.stringify(
         {
           warmupCycles: WARMUP_CYCLES,
           measuredCycles: MEASURED_CYCLES,
+          zoneBrowserOpenings: {
+            warmup: warmupZoneBrowserOpenings,
+            measured: measuredZoneBrowserOpenings,
+          },
           initial,
           baseline,
           final,

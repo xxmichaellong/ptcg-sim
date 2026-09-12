@@ -8,6 +8,7 @@ import {
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type BoardIntent,
+  type BoardPreferences,
   type BoardPresentation,
   type BoardRenderer,
   type BoardRendererAdapters,
@@ -38,6 +39,10 @@ export interface BoardSessionRuntimeOptions {
   readonly replay: BoardSessionReplaySource;
   readonly layout: BoardLayoutState;
   readonly createRenderer: (adapters: BoardRendererAdapters) => BoardRenderer;
+  readonly transformView?: BoardSessionAdapterOptions['transformView'];
+  readonly preferences?: BoardPreferences;
+  /** Optional route observer; controller policy remains authoritative. */
+  readonly onIntent?: (intent: BoardIntent) => void;
   readonly onBoardEffect?: (effect: BoardSessionRendererEffect) => void;
   readonly onSubmission?: BoardSessionAdapterOptions['onSubmission'];
   readonly reportError?: (error: unknown) => void;
@@ -104,8 +109,9 @@ const sameLayoutState = (
 /**
  * Renderer-neutral vertical composition for opt-in board candidates. It owns
  * its renderer, adapter, and subscriptions, while borrowing the live/replay
- * sources supplied by the route. Concrete wrappers remain unwired from
- * production routes until their parity gates pass.
+ * sources supplied by the route. The query-gated room route selects a concrete
+ * renderer factory; the thin candidate wrappers remain useful for isolated
+ * parity and recovery evidence.
  */
 export class BoardSessionRuntime {
   private readonly createRenderer: (
@@ -119,6 +125,7 @@ export class BoardSessionRuntime {
   private desiredScene: BoardScene | null = null;
   private desiredSceneMode: 'advance' | 'replace' = 'replace';
   private desiredPresentation: BoardPresentation = DEFAULT_BOARD_PRESENTATION;
+  private preferences: BoardPreferences | undefined;
   private rendererReady = false;
   private rendererMountTask: Promise<void> | null = null;
   private rendererMountError: unknown;
@@ -134,6 +141,7 @@ export class BoardSessionRuntime {
     this.layoutState = retainLayoutState(options.layout);
     this.layoutSnapshot = retainLayoutSnapshot(this.layoutState);
     this.createRenderer = options.createRenderer;
+    this.preferences = options.preferences;
   }
 
   async mount(host: HTMLElement): Promise<void> {
@@ -143,7 +151,14 @@ export class BoardSessionRuntime {
     this.host = host;
     try {
       this.renderer = this.createRenderer({
-        emitIntent: (intent) => this.adapter?.emitIntent(intent),
+        emitIntent: (intent) => {
+          try {
+            this.options.onIntent?.(intent);
+          } catch (error) {
+            this.reportError(error);
+          }
+          this.adapter?.emitIntent(intent);
+        },
         emitPresentationUpdate: (update) =>
           this.adapter?.emitPresentationUpdate(update),
         reportError: this.reportError,
@@ -167,6 +182,11 @@ export class BoardSessionRuntime {
 
   getBoardSnapshot(): BoardSessionControllerState | undefined {
     return this.adapter?.getSnapshot();
+  }
+
+  /** Read-only route diagnostic used to retain the existing browser evidence seam. */
+  getRenderer(): BoardRenderer | undefined {
+    return this.renderer ?? undefined;
   }
 
   /** Route-composition seam for renderer-external menus, dialogs, and status. */
@@ -237,6 +257,21 @@ export class BoardSessionRuntime {
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
     return adapter.refreshScene();
+  }
+
+  /** Re-reads borrowed sources after page-local view policy changes. */
+  synchronizeSources(): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.synchronize();
+  }
+
+  /** Updates renderer-local preferences without replacing authority or renderer. */
+  setPreferences(preferences: BoardPreferences): void {
+    this.assertUsable();
+    this.preferences = preferences;
+    if (this.rendererReady) this.renderer?.setPreferences(preferences);
   }
 
   dismissLocalPresentation(
@@ -357,6 +392,9 @@ export class BoardSessionRuntime {
       createScene: (view) =>
         this.createScene(view, this.layoutState, this.layoutSnapshot),
       emitRendererEffect: this.handleBoardEffect,
+      ...(this.options.transformView
+        ? { transformView: this.options.transformView }
+        : {}),
       ...(this.options.onSubmission
         ? { onSubmission: this.options.onSubmission }
         : {}),
@@ -446,6 +484,7 @@ export class BoardSessionRuntime {
         if (this.desiredPresentation !== initialPresentation) {
           renderer.installPresentation(this.desiredPresentation);
         }
+        if (this.preferences) renderer.setPreferences(this.preferences);
       })
       .catch((error: unknown) => {
         const failure = this.disposed

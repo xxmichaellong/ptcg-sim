@@ -1,9 +1,11 @@
 # Renderer decision spike
 
-- Status: `DECIDED`; production parity gates remain
+- Status: `DECIDED`; selected DOM composition is query-gated and production
+  parity gates remain
 - Implementation branch: `codex/v2-engine-rebuild`
 - Decision: ADR-004 selects normalized stable-keyed React DOM for first production
-  use; raw Pixi remains an unwired comparison
+  use; the explicit room-lobby route now defaults to it while raw Pixi remains
+  available only as an explicitly requested experimental comparison
 
 ## Research result
 
@@ -1981,6 +1983,33 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      dedicated uninterrupted-transport gate, deployed navigation/BFCache, 120
      distinct real-raster decoded-byte pressure, a long-duration soak, or
      cross-browser and physical-device approval.
+129. The query-gated connected room now replaces its passive renderer wrapper
+     with the already-characterized `BoardSessionRuntime`, controller, adapter,
+     `LegacyBoardOverlays`, and `LegacyBoardKeyboardShortcuts`. The composition
+     borrows exactly one route-owned live/replay pair, dynamically selects DOM
+     or experimental Pixi behind the same factory contract, and retains the
+     existing renderer diagnostic handle without creating another authority or
+     presentation owner. Raw renderer intent is observable for diagnostics but
+     still crosses controller policy; replay, reconnect, spectator, and pending
+     replay states reject mutations before session submission. Preferences,
+     viewport/DPR changes, and the Solo-only opponent-hand cover reproject the
+     same renderer. An adapter-owned monotonic observation token permits those
+     same-revision local reprojections without fabricating a game revision or
+     being discarded as a stale upstream generation. Focus-boundary cleanup now
+     survives React StrictMode replay, preserves the true external opener, and
+     yields to a newly mounted overlay that has already claimed focus.
+     Focused route/runtime/adapter/overlay tests pin renderer identity,
+     live/replay submission policy, display-policy immutability, preference
+     updates, cleanup, and StrictMode focus return. The live-Solo route soak now
+     keyboard-opens, locally sorts, and closes both full decks after every setup
+     and reset: 160 warm-up and 400 measured dialog lifecycles, with exact card
+     count/image decode and focus assertions. Its first full 40+100 run passed
+     in 5.9 minutes with exactly 400 measured scene revisions, 1,200 renderer
+     commits, flat 35 documents / 3,969 nodes / 756 listeners, a 1.0372x
+     post-GC heap ratio, one room, one socket, and no runtime errors. The v1 and
+     default renderer-harness routes remain unchanged; broader rollout,
+     `LegacyBoardChrome`, physical-device performance, and cross-browser review
+     remain separate gates.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
