@@ -202,8 +202,11 @@ also now includes `browser-room-options.ts`, which derives the legacy numbered
 battle-log file from recipient-safe activity, performs a foreground bounded-text
 download with object-URL revocation, and starts document full screen from both
 live and replay menus. Clear log uses the route-owned presentation reset and
-remains hidden in replay. No canonical-state serializer or file import is
-implied. The later production split remains:
+remains hidden in replay. The client package now owns a bounded fatal-UTF-8
+perspective-replay byte parser, and the coordinator can atomically install that
+inert artifact without authority traffic while rejecting operation, identity,
+and teardown races. It remains unwired: no browser picker or canonical-state
+serializer is implied. The later production split remains:
 
 ```text
 apps/server/src/
@@ -286,6 +289,12 @@ saved custom-back URL and the canonical transaction emits ordered
 `PlayerCardBackSet` events. Whole-match undo restores the prior value, final
 state/event replay remains exact, and the importer never fetches or proxies the
 URL. Corpus evidence and route installation remain.
+
+In the inventory row above, deferred canonical save/replay import-export and
+continuation excludes the completed perspective-file export and unwired
+`client-session/projected-replay-file.ts` byte-import transaction described in
+this section. Browser selection, route installation, and canonical continuation
+remain later work.
 
 Route installation is now mechanically quarantined: no workspace may declare
 the importer as a production, optional, or peer runtime dependency, and neither

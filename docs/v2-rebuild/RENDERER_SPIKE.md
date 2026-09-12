@@ -1939,6 +1939,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      The complete local gate passes 79 frozen-v1 tests, 2,109 v2 tests, 17
      Worker-runtime tests, all static/build/provenance checks, all 289 Chromium
      regressions in 10.6 minutes, and the production-like topology case.
+127. Perspective replay import now has an untrusted-byte transaction without
+     wiring a file control. The file-v1 parser owns caller bytes synchronously,
+     rejects encoded overflow before decode or hashing, requires fatal UTF-8,
+     and then reuses the exact envelope, pinned protocol, privacy, SHA-256, wire,
+     and replay-semantic validation. Serialization enforces the same encoded
+     bound. A checked-in spectator artifact pins compatibility independently of
+     generated player and spectator round trips. The application coordinator
+     serializes file import against authority replay requests and other imports,
+     installs only after the initiating live identity is still ready/current,
+     retains existing playback on failure, cancels cleanly on Exit, identity
+     replacement, or disposal, sends no request/command, and returns to the
+     latest live projection. Forty-eight focused file/playback/coordinator tests
+     pass. The full local gate passes 79 frozen-v1 tests, 2,123 v2 tests across
+     213 files, 17 Worker-runtime tests, and every static/type/build/provenance
+     check. Browser file selection, v1 import routing, and canonical
+     continuation are unchanged and remain separate gates.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

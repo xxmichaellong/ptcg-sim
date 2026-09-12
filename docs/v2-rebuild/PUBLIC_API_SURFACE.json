@@ -74,11 +74,19 @@
               "kind": "type-value"
             },
             {
+              "name": "MAX_PROJECTED_REPLAY_FILE_BYTES",
+              "kind": "value"
+            },
+            {
               "name": "MAX_PROJECTED_REPLAY_FILE_CODE_UNITS",
               "kind": "value"
             },
             {
               "name": "parseProjectedReplayFile",
+              "kind": "value"
+            },
+            {
+              "name": "parseProjectedReplayFileBytes",
               "kind": "value"
             },
             {

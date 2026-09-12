@@ -4,17 +4,21 @@ import {
   hydrateMatchViewState,
   type SerializedMatchViewState,
 } from '@ptcgsim/protocol';
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import type { ProjectedReplayArtifact } from './model.js';
 import {
   InvalidProjectedReplayFileError,
+  MAX_PROJECTED_REPLAY_FILE_BYTES,
   MAX_PROJECTED_REPLAY_FILE_CODE_UNITS,
   PROJECTED_REPLAY_FILE_FORMAT,
   PROJECTED_REPLAY_FILE_VERSION,
   parseProjectedReplayFile,
+  parseProjectedReplayFileBytes,
   serializeProjectedReplayFile,
 } from './projected-replay-file.js';
+import { ReplayPlaybackController } from './replay-playback.js';
 
 const view = (revision: number): SerializedMatchViewState => ({
   matchId: 'perspective-file-match',
@@ -107,6 +111,49 @@ const resign = async (
 };
 
 describe('projected replay files', () => {
+  it('keeps the checked-in file-v1 spectator artifact compatible and inert', async () => {
+    const bytes = new Uint8Array(
+      await readFile(
+        new URL(
+          '../test-fixtures/perspective-replay-v1-spectator.json',
+          import.meta.url
+        )
+      )
+    );
+    const parsed = await parseProjectedReplayFileBytes(bytes);
+    expect(parsed).toMatchObject({
+      replayId: 'file-v1-golden-spectator',
+      viewer: { kind: 'spectator' },
+      startRevision: 0,
+      endRevision: 0,
+      frames: [{ snapshot: { matchId: 'fixture-match', revision: 0 } }],
+    });
+    const playback = new ReplayPlaybackController(parsed);
+    expect(playback.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      replayId: 'file-v1-golden-spectator',
+      atStart: true,
+      atEnd: true,
+    });
+    expect(playback.stepNext()).toBe(false);
+    const serialized = new TextDecoder().decode(bytes);
+    await expect(
+      serializeProjectedReplayFile(parsed).then((contents) =>
+        JSON.parse(contents)
+      )
+    ).resolves.toEqual(JSON.parse(serialized));
+    for (const forbidden of [
+      'resumeToken',
+      'admissionTicket',
+      'saveCapability',
+      'canonicalState":true',
+      'canonicalCardId',
+      'canonicalDefinitionId',
+    ]) {
+      expect(serialized).not.toContain(forbidden);
+    }
+  });
+
   it('round-trips deterministic viewer-only bytes with explicit privacy markers', async () => {
     const first = await serializeProjectedReplayFile(artifact());
     const second = await serializeProjectedReplayFile(artifact());
@@ -136,6 +183,10 @@ describe('projected replay files', () => {
 
     const parsed = await parseProjectedReplayFile(first);
     expect(stableSerialize(parsed)).toBe(stableSerialize(artifact()));
+    const parsedBytes = await parseProjectedReplayFileBytes(
+      new TextEncoder().encode(first)
+    );
+    expect(stableSerialize(parsedBytes)).toBe(stableSerialize(artifact()));
 
     const runtimeExtended = artifact();
     Object.assign(runtimeExtended.frames[0]!.snapshot, {
@@ -145,6 +196,76 @@ describe('projected replay files', () => {
     const sanitized = await serializeProjectedReplayFile(runtimeExtended);
     expect(sanitized).not.toContain('must-not-hitchhike');
     expect(sanitized).not.toContain('resumeToken');
+  });
+
+  it('owns caller bytes before asynchronous validation and accepts exact UTF-8 Unicode', async () => {
+    const original = artifact();
+    const candidate: ProjectedReplayArtifact = {
+      ...original,
+      frames: original.frames.map((frame) => ({
+        ...frame,
+        snapshot: {
+          ...frame.snapshot,
+          players: {
+            ...frame.snapshot.players,
+            blue: {
+              ...frame.snapshot.players.blue!,
+              displayName: '青 💙',
+            },
+          },
+        },
+      })),
+    };
+    const encoded = await serializeProjectedReplayFile(candidate);
+    const bytes = new TextEncoder().encode(encoded);
+    const pending = parseProjectedReplayFileBytes(bytes);
+    bytes.fill(0);
+
+    const parsed = await pending;
+    expect(parsed.replayId).toBe('perspective-replay-file-1');
+    expect(parsed.frames[0]!.snapshot.players.blue?.displayName).toBe('青 💙');
+    expect(parsed.frames[1]!.snapshot.players.blue?.displayName).toBe('青 💙');
+  });
+
+  it('rejects malformed UTF-8 and encoded overflow before integrity work', async () => {
+    await expect(
+      errorProblem(
+        parseProjectedReplayFileBytes(
+          new Uint8Array([0x7b, 0x22, 0xc3, 0x28, 0x22, 0x7d])
+        )
+      )
+    ).resolves.toBe('invalid_utf8');
+
+    const oversized = new Uint8Array(MAX_PROJECTED_REPLAY_FILE_BYTES + 1);
+    await expect(
+      errorProblem(parseProjectedReplayFileBytes(oversized))
+    ).resolves.toBe('file_too_large');
+    expect(MAX_PROJECTED_REPLAY_FILE_BYTES).toBe(
+      MAX_PROJECTED_REPLAY_FILE_CODE_UNITS * 3
+    );
+    const threeByteCodeUnits = '\u0800'.repeat(1_024);
+    expect(new TextEncoder().encode(threeByteCodeUnits).byteLength).toBe(
+      threeByteCodeUnits.length * 3
+    );
+  });
+
+  it('round-trips a spectator projection through the byte boundary', async () => {
+    const candidate = artifact();
+    const spectator: ProjectedReplayArtifact = {
+      ...candidate,
+      viewer: { kind: 'spectator' },
+      frames: candidate.frames.map((frame) => ({
+        ...frame,
+        snapshot: {
+          ...frame.snapshot,
+          viewer: { kind: 'spectator' },
+        },
+      })),
+    };
+    const encoded = await serializeProjectedReplayFile(spectator);
+    await expect(
+      parseProjectedReplayFileBytes(new TextEncoder().encode(encoded))
+    ).resolves.toEqual(spectator);
   });
 
   it('rejects corruption before installing the artifact', async () => {

@@ -1,7 +1,9 @@
 import {
+  InvalidProjectedReplayFileError,
   InvalidProjectedReplayError,
   ReplayPlaybackController,
   assertProjectedReplayArtifact,
+  parseProjectedReplayFileBytes,
   type ClientSessionPhase,
   type ClientSessionState,
   type ProjectedReplayArtifact,
@@ -17,7 +19,8 @@ export type ReplaySessionSource = Pick<
 >;
 
 export type ReplaySessionMode = 'live' | 'replay';
-export type ReplayRequestPhase = 'idle' | 'loading' | 'discarding';
+export type ReplayRequestPhase =
+  'idle' | 'loading' | 'discarding' | 'importing';
 
 export interface ReplaySessionFailure {
   readonly code:
@@ -58,6 +61,12 @@ interface ReplayRequestContext {
   settled: boolean;
 }
 
+interface ReplayImportContext {
+  readonly generation: number;
+  readonly liveIdentity: LiveIdentity;
+  cancelled: boolean;
+}
+
 interface LiveIdentity {
   readonly matchId: string;
   readonly viewer: string;
@@ -91,6 +100,8 @@ export class ReplaySessionCoordinator {
   private readonly playback = new ReplayPlaybackController();
   private readonly unsubscribeSession: () => void;
   private request?: ReplayRequestContext;
+  private replayImport?: ReplayImportContext;
+  private replayImportGeneration = 0;
   private activeReplayArtifact?: ProjectedReplayArtifact;
   private identity?: LiveIdentity;
   private mode: ReplaySessionMode = 'live';
@@ -116,7 +127,7 @@ export class ReplaySessionCoordinator {
   };
 
   requestReplay(): boolean {
-    if (this.disposed || this.request) return false;
+    if (this.disposed || this.request || this.replayImport) return false;
     const sessionState = this.session.getSnapshot();
     if (sessionState.phase !== 'ready' || sessionState.replayLoading) {
       return false;
@@ -149,7 +160,7 @@ export class ReplaySessionCoordinator {
 
   /** Requests a fresh safe artifact without changing the effective live view. */
   requestReplayArtifact(): Promise<ReplayArtifactRequestResult> {
-    if (this.disposed || this.request) {
+    if (this.disposed || this.request || this.replayImport) {
       return Promise.resolve({
         ok: false,
         failure: {
@@ -208,15 +219,86 @@ export class ReplaySessionCoordinator {
       : undefined;
   }
 
+  /**
+   * Validates untrusted bytes before atomically installing inert playback.
+   * This path never requests authority data and never submits a command.
+   */
+  async importReplayFileBytes(contents: Uint8Array): Promise<boolean> {
+    const sessionState = this.session.getSnapshot();
+    const identity = liveIdentity(sessionState);
+    if (
+      this.disposed ||
+      this.request ||
+      this.replayImport ||
+      sessionState.phase !== 'ready' ||
+      sessionState.replayLoading ||
+      !identity
+    ) {
+      return false;
+    }
+
+    const context: ReplayImportContext = {
+      generation: ++this.replayImportGeneration,
+      liveIdentity: identity,
+      cancelled: false,
+    };
+    this.replayImport = context;
+    this.failure = undefined;
+    this.publish(sessionState);
+
+    let artifact: ProjectedReplayArtifact;
+    try {
+      artifact = await parseProjectedReplayFileBytes(contents);
+    } catch (error) {
+      if (!this.canCompleteImport(context)) return false;
+      this.replayImport = undefined;
+      this.failure = {
+        code: 'invalid_artifact',
+        message:
+          error instanceof InvalidProjectedReplayFileError
+            ? error.message
+            : 'The projected replay file could not be imported',
+      };
+      this.publish(this.session.getSnapshot());
+      return false;
+    }
+
+    if (!this.canCompleteImport(context)) return false;
+    this.replayImport = undefined;
+    try {
+      this.playback.load(artifact);
+      this.activeReplayArtifact = artifact;
+      this.mode = 'replay';
+      this.failure = undefined;
+      this.publish(this.session.getSnapshot());
+      return true;
+    } catch (error) {
+      this.failure = {
+        code: 'invalid_artifact',
+        message:
+          error instanceof InvalidProjectedReplayError
+            ? error.message
+            : 'The projected replay file could not be installed',
+      };
+      this.publish(this.session.getSnapshot());
+      return false;
+    }
+  }
+
   exitReplay(): boolean {
     if (this.disposed) return false;
     const wasActive = this.mode === 'replay';
     const wasLoading = Boolean(
       this.request?.purpose === 'playback' && !this.request.cancelled
     );
-    if (!wasActive && !wasLoading) return false;
+    const wasImporting = Boolean(this.replayImport);
+    if (!wasActive && !wasLoading && !wasImporting) return false;
 
     if (this.request?.purpose === 'playback') this.request.cancelled = true;
+    if (this.replayImport) {
+      this.replayImport.cancelled = true;
+      this.replayImport = undefined;
+    }
     this.mode = 'live';
     this.activeReplayArtifact = undefined;
     this.failure = undefined;
@@ -261,6 +343,8 @@ export class ReplaySessionCoordinator {
     this.unsubscribeSession();
     const request = this.request;
     this.request = undefined;
+    if (this.replayImport) this.replayImport.cancelled = true;
+    this.replayImport = undefined;
     if (request) {
       this.settleRequest(request, {
         ok: false,
@@ -289,6 +373,8 @@ export class ReplaySessionCoordinator {
     if (terminalSession(sessionState.phase)) {
       const request = this.request;
       this.request = undefined;
+      if (this.replayImport) this.replayImport.cancelled = true;
+      this.replayImport = undefined;
       this.mode = 'live';
       this.activeReplayArtifact = undefined;
       this.playback.clear();
@@ -316,6 +402,19 @@ export class ReplaySessionCoordinator {
       }
       this.publish(sessionState);
       return;
+    }
+
+    if (
+      this.replayImport &&
+      (sessionState.phase !== 'ready' || sessionState.replayLoading)
+    ) {
+      this.replayImport.cancelled = true;
+      this.replayImport = undefined;
+      this.failure = {
+        code: 'interrupted',
+        message:
+          'The replay file import was interrupted by live session activity',
+      };
     }
 
     const nextIdentity = liveIdentity(sessionState);
@@ -418,6 +517,8 @@ export class ReplaySessionCoordinator {
   private resetForLiveIdentityChange(): void {
     const request = this.request;
     this.request = undefined;
+    if (this.replayImport) this.replayImport.cancelled = true;
+    this.replayImport = undefined;
     if (request) {
       this.settleRequest(request, {
         ok: false,
@@ -439,11 +540,13 @@ export class ReplaySessionCoordinator {
     generation: number
   ): ReplaySessionCoordinatorState {
     const playback = this.playback.getSnapshot();
-    const requestPhase: ReplayRequestPhase = this.request
-      ? this.request.cancelled
-        ? 'discarding'
-        : 'loading'
-      : 'idle';
+    const requestPhase: ReplayRequestPhase = this.replayImport
+      ? 'importing'
+      : this.request
+        ? this.request.cancelled
+          ? 'discarding'
+          : 'loading'
+        : 'idle';
     const replayView =
       this.mode === 'replay' && playback.phase === 'ready'
         ? playback.view
@@ -458,10 +561,12 @@ export class ReplaySessionCoordinator {
         !this.disposed &&
         sessionState.phase === 'ready' &&
         !sessionState.replayLoading &&
-        !this.request,
+        !this.request &&
+        !this.replayImport,
       canExit:
         this.mode === 'replay' ||
-        (this.request?.purpose === 'playback' && requestPhase === 'loading'),
+        (this.request?.purpose === 'playback' && requestPhase === 'loading') ||
+        requestPhase === 'importing',
       ...(sessionState.view
         ? { liveRevision: sessionState.view.revision }
         : {}),
@@ -505,5 +610,30 @@ export class ReplaySessionCoordinator {
     if (request.settled) return;
     request.settled = true;
     request.resolve?.(result);
+  }
+
+  private canCompleteImport(context: ReplayImportContext): boolean {
+    if (
+      this.disposed ||
+      context.cancelled ||
+      this.replayImport !== context ||
+      context.generation !== this.replayImportGeneration
+    ) {
+      return false;
+    }
+    const sessionState = this.session.getSnapshot();
+    const identity = liveIdentity(sessionState);
+    if (
+      sessionState.phase !== 'ready' ||
+      sessionState.replayLoading ||
+      !identity ||
+      !sameIdentity(identity, context.liveIdentity)
+    ) {
+      context.cancelled = true;
+      this.replayImport = undefined;
+      this.publish(sessionState);
+      return false;
+    }
+    return true;
   }
 }

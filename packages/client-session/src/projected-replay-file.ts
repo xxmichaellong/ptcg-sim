@@ -27,6 +27,13 @@ const PROJECTED_REPLAY_FILE_PROTOCOL_VERSION = 2 as const;
  */
 export const MAX_PROJECTED_REPLAY_FILE_CODE_UNITS =
   MAX_SERVER_FRAME_CODE_UNITS * (MAX_REPLAY_FRAMES + 2);
+/**
+ * Independent encoded-input bound. UTF-8 uses at most three bytes per UTF-16
+ * code unit (surrogate pairs use four bytes for two units), so this preserves
+ * the complete file-v1 string envelope while bounding bytes before decoding.
+ */
+export const MAX_PROJECTED_REPLAY_FILE_BYTES =
+  MAX_PROJECTED_REPLAY_FILE_CODE_UNITS * 3;
 
 interface ProjectedReplayFilePrivacy {
   readonly kind: 'viewer-projection';
@@ -50,6 +57,7 @@ type ProjectedReplayFileProblem =
   | 'invalid_artifact'
   | 'invalid_envelope'
   | 'invalid_json'
+  | 'invalid_utf8'
   | 'unsupported_version';
 
 export class InvalidProjectedReplayFileError extends Error {
@@ -282,13 +290,22 @@ export const serializeProjectedReplayFile = async (
       digest: await sha256Hex(stableSerialize(payload)),
     },
   });
-  if (contents.length > MAX_PROJECTED_REPLAY_FILE_CODE_UNITS) {
+  const file = `${contents}\n`;
+  if (file.length > MAX_PROJECTED_REPLAY_FILE_CODE_UNITS) {
     throw new InvalidProjectedReplayFileError(
       'file_too_large',
       'Projected replay file exceeds its maximum size'
     );
   }
-  return `${contents}\n`;
+  if (
+    new TextEncoder().encode(file).byteLength > MAX_PROJECTED_REPLAY_FILE_BYTES
+  ) {
+    throw new InvalidProjectedReplayFileError(
+      'file_too_large',
+      'Projected replay file exceeds its maximum encoded size'
+    );
+  }
+  return file;
 };
 
 /**
@@ -302,6 +319,15 @@ export const parseProjectedReplayFile = async (
     throw new InvalidProjectedReplayFileError(
       'file_too_large',
       'Projected replay file exceeds its maximum size'
+    );
+  }
+  if (
+    new TextEncoder().encode(contents).byteLength >
+    MAX_PROJECTED_REPLAY_FILE_BYTES
+  ) {
+    throw new InvalidProjectedReplayFileError(
+      'file_too_large',
+      'Projected replay file exceeds its maximum encoded size'
     );
   }
   let raw: unknown;
@@ -385,4 +411,30 @@ export const parseProjectedReplayFile = async (
     );
   }
   return artifact;
+};
+
+/**
+ * Owns and validates untrusted file bytes before decoding. The eager copy
+ * prevents caller mutation while the asynchronous integrity check is pending.
+ */
+export const parseProjectedReplayFileBytes = async (
+  bytes: Uint8Array
+): Promise<ProjectedReplayArtifact> => {
+  if (bytes.byteLength > MAX_PROJECTED_REPLAY_FILE_BYTES) {
+    throw new InvalidProjectedReplayFileError(
+      'file_too_large',
+      'Projected replay file exceeds its maximum encoded size'
+    );
+  }
+  const ownedBytes = Uint8Array.from(bytes);
+  let contents: string;
+  try {
+    contents = new TextDecoder('utf-8', { fatal: true }).decode(ownedBytes);
+  } catch {
+    throw new InvalidProjectedReplayFileError(
+      'invalid_utf8',
+      'Projected replay file is not valid UTF-8'
+    );
+  }
+  return parseProjectedReplayFile(contents);
 };

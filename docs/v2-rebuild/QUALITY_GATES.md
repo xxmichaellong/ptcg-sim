@@ -89,10 +89,11 @@ package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
 The report currently records 10 export-bearing packages, 10 entrypoints, and
-547 symbols. The current reviewed addition is the dependency-free `deck-core`
-entrypoint: only the operations and value types needed by later web adapters are
-public, while comparison, CSV limits, parsing internals, and rule tables remain
-private. `pnpm run check:api:v2` is part of `check:static:v2`. Regenerate the
+562 symbols. The replay-file boundary deliberately exports its encoded-byte
+limit and byte parser beside the existing string adapter; file decoding,
+integrity, and semantic internals remain private. The dependency-free
+`deck-core` entrypoint still exposes only the operations and value types needed
+by web adapters. `pnpm run check:api:v2` is part of `check:static:v2`. Regenerate the
 report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
 whether each surface change is deliberately public; the quality job separately
 ensures generators leave tracked files unchanged.

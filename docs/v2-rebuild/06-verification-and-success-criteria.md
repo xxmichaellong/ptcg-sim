@@ -90,6 +90,7 @@ covered card.
 | Protocol            | Runtime codec round trips, unknown versions/types, byte/depth/count limits, sequence/idempotency, authorization, safe errors |
 | Authority model     | Simultaneous/conflicting commands, duplicate/lost/reordered frames, stale views, one controller per seat, convergence        |
 | Persistence         | Crash at every transaction boundary, checkpoint/tail recovery, compaction, corruption, migration, retention, quota           |
+| Replay file         | Raw-byte bound before decode/hash, fatal UTF-8, exact version/privacy/integrity schema, semantic validation, atomic install  |
 | Legacy conversion   | Every supported version/action, real/golden saves, invalid/truncated/oversized inputs, transactional failure                 |
 | Renderer unit       | Pure geometry, stacking, z-order, hit testing, diff/invalidation, texture leases, generation-safe async teardown             |
 | Browser/WebGL       | Context loss/restore, zero-size host, DPR changes, image failure/CORS, StrictMode remount, pointer cancellation              |
@@ -116,6 +117,14 @@ children must return to their exact or lower baseline bounds, and both batches
 must preserve the exact lifecycle/resource invariants. This advances the
 renderer-local heap budget; representative setup/reset/open-zone route churn
 and physical-device retained-heap evidence remain release requirements.
+
+The replay-file row now has a package-level file-v1 gate and an unwired
+application transaction. A checked-in spectator artifact plus generated player
+and spectator cases cover encoded-byte admission, fatal UTF-8, corruption,
+unknown versions, privacy/semantic inconsistency, caller-buffer ownership,
+concurrent operations, cancellation, disposal, identity replacement, exact
+re-export, and return to the latest live view. Browser file selection and its
+focus/error presentation remain outside this checkpoint.
 
 The developer creator route also has a three-cycle Chromium document-navigation
 gate against real local Vite and Wrangler processes. It pins one distinct room,

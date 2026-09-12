@@ -1,6 +1,7 @@
 import {
   type ClientSessionState,
   type ProjectedReplayArtifact,
+  serializeProjectedReplayFile,
 } from '@ptcgsim/client-session';
 import {
   hydrateMatchViewState,
@@ -183,6 +184,231 @@ const enterReplay = (
 };
 
 describe('ReplaySessionCoordinator', () => {
+  it('atomically imports inert replay bytes without requesting authority data', async () => {
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    const imported = artifact('imported-file', 4, 'shared-offline-match');
+    const canonicalFile = await serializeProjectedReplayFile(imported);
+    const operation = coordinator.importReplayFileBytes(
+      new TextEncoder().encode(canonicalFile)
+    );
+
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'importing',
+      canRequest: false,
+      canExit: true,
+      view: { matchId: 'coordinator-match', revision: 10 },
+    });
+    expect(session.requestReplay).not.toHaveBeenCalled();
+    await expect(operation).resolves.toBe(true);
+    expect(session.requestReplay).not.toHaveBeenCalled();
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'replay',
+      requestPhase: 'idle',
+      view: { matchId: 'shared-offline-match', revision: 4 },
+      playback: { replayId: 'imported-file', frameIndex: 0 },
+    });
+    await expect(
+      serializeProjectedReplayFile(coordinator.getReplayArtifact()!)
+    ).resolves.toBe(canonicalFile);
+
+    session.publish({
+      ...session.getSnapshot(),
+      view: hydrateMatchViewState(view(11)),
+    });
+    expect(coordinator.getSnapshot().view?.matchId).toBe(
+      'shared-offline-match'
+    );
+    expect(coordinator.exitReplay()).toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      view: { matchId: 'coordinator-match', revision: 11 },
+    });
+  });
+
+  it('keeps active playback atomic when imported bytes are invalid', async () => {
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    enterReplay(coordinator, session, artifact('stable-before-import'));
+    coordinator.stepNext();
+    const before = coordinator.getReplayArtifact();
+
+    await expect(
+      coordinator.importReplayFileBytes(new TextEncoder().encode('{'))
+    ).resolves.toBe(false);
+    expect(session.requestReplay).toHaveBeenCalledTimes(1);
+    expect(coordinator.getReplayArtifact()).toBe(before);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'replay',
+      requestPhase: 'idle',
+      view: { revision: 1 },
+      playback: { replayId: 'stable-before-import', frameIndex: 1 },
+      failure: { code: 'invalid_artifact' },
+    });
+  });
+
+  it('atomically replaces active playback only after a valid file completes', async () => {
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    enterReplay(coordinator, session, artifact('old-active-replay'));
+    coordinator.stepNext();
+    session.publish({
+      ...session.getSnapshot(),
+      view: hydrateMatchViewState(view(11)),
+    });
+    const replacement = artifact('replacement-file', 6, 'imported-match');
+    const operation = coordinator.importReplayFileBytes(
+      new TextEncoder().encode(await serializeProjectedReplayFile(replacement))
+    );
+
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'replay',
+      requestPhase: 'importing',
+      view: { matchId: 'coordinator-match', revision: 1 },
+      playback: { replayId: 'old-active-replay', frameIndex: 1 },
+    });
+    await expect(operation).resolves.toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'replay',
+      requestPhase: 'idle',
+      view: { matchId: 'imported-match', revision: 6 },
+      playback: { replayId: 'replacement-file', frameIndex: 0 },
+    });
+    expect(coordinator.exitReplay()).toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      view: { matchId: 'coordinator-match', revision: 11 },
+    });
+  });
+
+  it('serializes imports against authority requests and other imports', async () => {
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    const bytes = new TextEncoder().encode(
+      await serializeProjectedReplayFile(artifact('exclusive-import'))
+    );
+    const first = coordinator.importReplayFileBytes(bytes);
+
+    expect(coordinator.requestReplay()).toBe(false);
+    await expect(coordinator.requestReplayArtifact()).resolves.toMatchObject({
+      ok: false,
+      failure: { code: 'unavailable' },
+    });
+    await expect(coordinator.importReplayFileBytes(bytes)).resolves.toBe(false);
+    await expect(first).resolves.toBe(true);
+    expect(session.requestReplay).not.toHaveBeenCalled();
+
+    expect(coordinator.requestReplay()).toBe(true);
+    await expect(coordinator.importReplayFileBytes(bytes)).resolves.toBe(false);
+  });
+
+  it('cannot install a late file after identity change, cancellation, or disposal', async () => {
+    const bytes = new TextEncoder().encode(
+      await serializeProjectedReplayFile(artifact('late-import'))
+    );
+
+    const changedSession = new FakeReplaySession();
+    const changed = new ReplaySessionCoordinator(changedSession);
+    const changedOperation = changed.importReplayFileBytes(bytes);
+    changedSession.publish({
+      ...changedSession.getSnapshot(),
+      view: hydrateMatchViewState(view(0, 'replacement-live-match')),
+    });
+    await expect(changedOperation).resolves.toBe(false);
+    expect(changed.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      view: { matchId: 'replacement-live-match' },
+      playback: { phase: 'empty' },
+    });
+
+    const cancelledSession = new FakeReplaySession();
+    const cancelled = new ReplaySessionCoordinator(cancelledSession);
+    const cancelledOperation = cancelled.importReplayFileBytes(bytes);
+    expect(cancelled.exitReplay()).toBe(true);
+    await expect(cancelledOperation).resolves.toBe(false);
+    expect(cancelled.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      playback: { phase: 'empty' },
+    });
+
+    const disposedSession = new FakeReplaySession();
+    const disposed = new ReplaySessionCoordinator(disposedSession);
+    const disposedOperation = disposed.importReplayFileBytes(bytes);
+    disposed.dispose();
+    await expect(disposedOperation).resolves.toBe(false);
+    expect(disposed.getSnapshot()).toMatchObject({
+      mode: 'live',
+      canRequest: false,
+      playback: { phase: 'empty' },
+    });
+  });
+
+  it('cancels imports on transient non-ready or authority-loading state', async () => {
+    const bytes = new TextEncoder().encode(
+      await serializeProjectedReplayFile(artifact('transient-import'))
+    );
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    enterReplay(coordinator, session, artifact('preserved-replay'));
+    coordinator.stepNext();
+    const operation = coordinator.importReplayFileBytes(bytes);
+
+    session.publish({
+      ...session.getSnapshot(),
+      phase: 'reconnecting',
+      replayLoading: false,
+    });
+    session.publish({
+      ...session.getSnapshot(),
+      phase: 'ready',
+    });
+    await expect(operation).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'replay',
+      requestPhase: 'idle',
+      playback: { replayId: 'preserved-replay', frameIndex: 1 },
+      failure: { code: 'interrupted' },
+    });
+    expect(session.requestReplay).toHaveBeenCalledTimes(1);
+
+    const authoritySession = new FakeReplaySession();
+    const authorityCoordinator = new ReplaySessionCoordinator(authoritySession);
+    const authorityOperation =
+      authorityCoordinator.importReplayFileBytes(bytes);
+    authoritySession.publish({
+      ...authoritySession.getSnapshot(),
+      replayLoading: true,
+    });
+    authoritySession.publish({
+      ...authoritySession.getSnapshot(),
+      replayLoading: false,
+    });
+    await expect(authorityOperation).resolves.toBe(false);
+    expect(authorityCoordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      playback: { phase: 'empty' },
+      failure: { code: 'interrupted' },
+    });
+    expect(authoritySession.requestReplay).not.toHaveBeenCalled();
+
+    const notReadySession = new FakeReplaySession({
+      ...initialState(),
+      phase: 'reconnecting',
+    });
+    const notReady = new ReplaySessionCoordinator(notReadySession);
+    await expect(notReady.importReplayFileBytes(bytes)).resolves.toBe(false);
+    expect(notReady.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      sessionPhase: 'reconnecting',
+    });
+    expect(notReadySession.requestReplay).not.toHaveBeenCalled();
+  });
+
   it('adopts only a fresh completed artifact and never rewinds live state', () => {
     const stale = artifact('stale');
     const session = new FakeReplaySession({

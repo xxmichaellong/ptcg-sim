@@ -1027,8 +1027,9 @@ production destinations, dashboards, preview baselines, and alert/runbook
 rehearsal remain rollout gates documented in `apps/server/OPERATIONS.md`.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
-foundation. ADR-012 now fixes the archive privacy boundary. Phase 7 still owns
-the perspective download/import implementation, long-retention journal chunks,
+foundation. ADR-012 now fixes the archive privacy boundary. Deterministic
+perspective download plus byte-safe, identity-bound atomic import exist; Phase 7
+still owns browser file-selection wiring, long-retention journal chunks,
 server-held continuation capabilities, encryption, quotas, migration, and the
 remaining sidebar integration.
 

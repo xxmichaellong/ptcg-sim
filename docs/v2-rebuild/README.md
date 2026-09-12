@@ -124,8 +124,10 @@ the relevant product decisions and phase exit criteria.
   ADR-012 now also wires the existing Export game state action to a versioned,
   SHA-256 integrity-checked, non-resumable perspective replay. A live export
   requests a fresh authority artifact without entering replay mode; an active
-  replay exports its exact installed artifact. Replay-file import and canonical
-  server-held continuation remain later parity work. Deck navigation is now
+  replay exports its exact installed artifact. Raw-byte import validation and
+  atomic inert coordinator installation are now complete but deliberately
+  unwired; browser file selection and canonical server-held continuation remain
+  later parity work. Deck navigation is now
   active only on the opt-in v2 room route; the default route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
   and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.

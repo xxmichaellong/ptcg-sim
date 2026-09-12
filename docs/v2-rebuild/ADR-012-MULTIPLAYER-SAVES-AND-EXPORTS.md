@@ -51,6 +51,15 @@ enter replay mode. Exporting while replaying writes the installed artifact.
 Malformed, oversized, integrity-failing, wrong-version, or semantically
 inconsistent files fail before playback and can never submit commands.
 
+The package import transaction owns caller bytes before asynchronous work,
+enforces an encoded-byte bound before decode or hashing, requires fatal UTF-8,
+and installs a completely validated artifact atomically. A concurrent authority
+replay request/import, route disposal, cancellation, non-ready session, or live
+identity change prevents late installation. An imported perspective may belong
+to another match or viewer because it is inert shared viewing data; exiting
+always returns to the latest live projection. The file picker and route control
+remain separately disabled.
+
 The initial format uses SHA-256 to detect corruption. The digest does not
 authenticate an author and does not make an imported file trusted; imported
 replays remain inert untrusted input. Serialization is deterministic for the
@@ -126,12 +135,14 @@ prevents issuance.
 
 ## Verification and rollout
 
-Perspective export must prove deterministic serialization, strict format and
-size bounds, SHA-256 mismatch rejection, artifact semantic validation, exact
-round-trip playback, player/spectator privacy, absence of credentials and
-canonical sentinels, no replay-mode transition for a live export, and inert
-failure after route teardown. Import is enabled separately only after file
-selection, decompression, and migration gates pass.
+Perspective export and the unwired import transaction prove deterministic
+serialization, strict format/code-unit/encoded-byte bounds, fatal UTF-8,
+SHA-256 mismatch rejection, artifact semantic validation, checked-in file-v1
+compatibility, exact round-trip playback, player/spectator privacy, absence of
+credentials and canonical sentinels, no replay-mode transition for a live
+export, and inert failure after route teardown or identity change. Route import
+is enabled separately only after file selection and browser integration gates
+pass; compressed and unknown-version inputs are not accepted or guessed.
 
 Continuation must prove encrypted and digest-only durable custody, independent
 role-bound capabilities, exact canonical hash/projections after restore,

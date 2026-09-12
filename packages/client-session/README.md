@@ -24,7 +24,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - outbound chat is trimmed and rejected locally when empty or over the wire bound; authenticated deliveries are retained in a separate bounded immutable history
 - admission and resume capabilities never enter the public store, command history, or notices; Welcome must echo the already-bound resume bearer
 - failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
-- perspective replay files are deterministic, SHA-256 integrity checked, format/protocol/size bounded, marked non-canonical and non-resumable, and semantically revalidated before inert playback; live export waits for a fresh authority projection without entering replay mode
+- perspective replay files are deterministic, SHA-256 integrity checked, format/protocol/code-unit/encoded-byte bounded, marked non-canonical and non-resumable, and semantically revalidated before inert playback; raw imports are copied before asynchronous work, decoded as fatal UTF-8, and installed atomically only while the initiating live identity remains current; live export waits for a fresh authority projection without entering replay mode
 
 Capabilities are deliberately memory-only in this slice. Durable credential storage must
 be introduced later behind an explicit secret-storage policy; ordinary application state
