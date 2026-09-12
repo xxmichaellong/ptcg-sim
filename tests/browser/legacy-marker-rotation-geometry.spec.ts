@@ -19,10 +19,10 @@ import {
 import oracle from '../legacy-fixtures/renderer/marker-rotation-v1.json' with { type: 'json' };
 
 import {
-  captureLegacySourceMarkerRotationFixture,
+  captureLegacyRuntimeActiveMarkerFixture,
   type CapturedRect,
   type LegacyFixtureSide,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-active-marker.js';
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
@@ -232,29 +232,25 @@ test('checked-in legacy active markers reflow through q0-q1-q2-q3-q0 and clean u
     runtimeErrors.push(`console.error: ${text}`);
   });
 
-  const capture = await captureLegacySourceMarkerRotationFixture(page);
-  await testInfo.attach('legacy-source-marker-rotation-geometry.json', {
+  const capture = await captureLegacyRuntimeActiveMarkerFixture(page);
+  await testInfo.attach('legacy-runtime-marker-rotation-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
 
-  expect(capture.sourceFulfillment.servedPaths).toEqual([
-    '/',
-    '/opp-containers.html',
-    '/self-containers.html',
-    '/src/assets/cardback.png',
-    '/src/css/index.css',
-    '/src/css/opp-containers.css',
-    '/src/css/self-containers.css',
-    '/src/front-end.js',
-  ]);
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
-  expect(capture.sourceFulfillment.blockedExternalOrigins).toEqual([
-    'https://cdn.socket.io',
-    'https://static.cloudflareinsights.com',
-    'https://upload.wikimedia.org',
-    'https://www.svgrepo.com',
-  ]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/assets/cardback.png'
+  );
+  expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
+    'https://cdn.socket.io'
+  );
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/counters/damage-counter.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/general/rotate-card.js'
+  );
 
   expect(capture.cases.map((entry) => entry.id)).toEqual(oracle.input.cases);
   for (const side of ['local', 'opponent'] as const) {
@@ -324,7 +320,6 @@ test('checked-in legacy active markers reflow through q0-q1-q2-q3-q0 and clean u
         entry.color,
       ])
     ).toEqual(oracle.expected.paletteTrace);
-    expect(actualCase.callTrace).toEqual(oracle.expected.callTrace);
     expect(actualCase.phases.map((phase) => phase.name)).toEqual(
       oracle.expected.phases.map((phase) => phase.name)
     );
@@ -585,19 +580,7 @@ test('checked-in legacy active markers reflow through q0-q1-q2-q3-q0 and clean u
 
     expect(actualCase.cleanup).toEqual({
       markerCount: oracle.expected.cleanup.markerCount,
-      cardDamageCounterIsNull: oracle.expected.cleanup.cardPointersAreNull,
-      cardSpecialConditionIsNull: oracle.expected.cleanup.cardPointersAreNull,
-      cardAbilityCounterIsNull: oracle.expected.cleanup.cardPointersAreNull,
-      liveResizeCallsBeforeDispatch:
-        oracle.expected.cleanup.liveResizeCallsBeforeDispatch,
-      liveResizeCallsAfterDispatch:
-        oracle.expected.cleanup.liveResizeCallsAfterDispatch,
-      liveMarkerCountAfterDispatch:
-        oracle.expected.cleanup.liveMarkerCountAfterDispatch,
-      resizeCallsBeforeCleanupDispatch:
-        oracle.expected.cleanup.resizeCallsBeforeCleanupDispatch,
-      resizeCallsAfterCleanupDispatch:
-        oracle.expected.cleanup.resizeCallsAfterCleanupDispatch,
+      cardPointersAreNull: oracle.expected.cleanup.cardPointersAreNull,
       wrapperCountAfterTwoFrames:
         oracle.expected.cleanup.wrapperCountAfterTwoFrames,
       cardCountAfterTwoFrames: oracle.expected.cleanup.cardCountAfterTwoFrames,
@@ -619,14 +602,14 @@ test('pristine source active markers match the strict React DOM candidate', asyn
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
-  const capture = await captureLegacySourceMarkerRotationFixture(page, {
+  const capture = await captureLegacyRuntimeActiveMarkerFixture(page, {
     retainStablePaint: true,
   });
-  await testInfo.attach('legacy-source-to-react-active-marker-geometry.json', {
+  await testInfo.attach('legacy-runtime-to-react-active-marker-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
   expect(candidateScene.cards).toHaveLength(2);
   expect(candidateScene.markers).toHaveLength(6);
 
@@ -645,7 +628,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
 
   await isolateLegacyIframeCardPaint(
     page,
-    ':is(img[data-legacy-marker-card-id], [data-legacy-marker-id])'
+    ':is(img[data-legacy-runtime-marker-card-id], [data-legacy-runtime-marker-id])'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',

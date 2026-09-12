@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 export type MarkerSide = 'local' | 'opponent';
 export type MarkerSlot = 'active' | 'bench';
+export type MarkerKind = 'damage' | 'specialCondition' | 'ability';
 
 export interface MarkerRect {
   readonly x: number;
@@ -23,9 +24,53 @@ export interface MarkerStyles {
 }
 
 export interface CapturedMarker extends MarkerStyles {
+  readonly id: string;
+  readonly kind: MarkerKind;
   readonly present: boolean;
   readonly bounds: MarkerRect;
+  readonly className: string;
+  readonly parentZoneId: string;
+  readonly domOrdinal: number;
   readonly textContent: string;
+  readonly contentEditable: string;
+  readonly pointerEvents: string;
+  readonly display: string;
+  readonly inlineDisplay: string;
+  readonly zIndex: number;
+  readonly backgroundColor: string;
+  readonly color: string;
+  readonly borderRadius: string;
+  readonly localRotationDegrees: number;
+  readonly hitOrder: readonly string[];
+}
+
+export interface RuntimeMarkerCard {
+  readonly id: string;
+  readonly frameLocalBounds: MarkerRect;
+  readonly untransformedFrameLocalBounds: MarkerRect;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly localRotationDegrees: number;
+  readonly inlineTransform: string;
+  readonly zIndex: number;
+  readonly pokemonBreak: boolean;
+  readonly domOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface RuntimeMarkerWrapper {
+  readonly id: string;
+  readonly frameLocalBounds: MarkerRect;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly authoredWidthPx: number | null;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly childImageCount: number;
 }
 
 export interface MarkerPhase {
@@ -39,6 +84,10 @@ export interface MarkerPhase {
   readonly damage: CapturedMarker;
   readonly specialCondition: CapturedMarker;
   readonly ability: CapturedMarker;
+  readonly cardDetails: RuntimeMarkerCard;
+  readonly wrapperDetails: RuntimeMarkerWrapper;
+  readonly markers: readonly CapturedMarker[];
+  readonly cardOnlyHitOrder: readonly string[];
 }
 
 export interface MarkerCapture {
@@ -52,6 +101,7 @@ export interface MarkerCapture {
     };
     /** `[inlineRight, inlineLeft, computedRightPx, computedLeftPx]`. */
     readonly initialWrapperMargins: readonly [string, string, number, number];
+    readonly details: RuntimeMarkerCard;
   };
   readonly phases: readonly MarkerPhase[];
   /** `[input, textContent, backgroundColor, color]` per special condition. */
@@ -59,6 +109,8 @@ export interface MarkerCapture {
   readonly cleanup: {
     readonly markerCount: number;
     readonly cardPointersAreNull: boolean;
+    readonly wrapperCount: number;
+    readonly cardCount: number;
   };
 }
 
@@ -86,6 +138,13 @@ export const captureMarkerRotation = async (
     readonly specialConditionInputs: readonly string[];
     /** Phase names, in capture order: pre-rotation, then one per quarter. */
     readonly phaseNames: readonly string[];
+    readonly cardId?: string;
+    readonly stackId?: string;
+    readonly markerIdsByKind?: Readonly<Record<MarkerKind, string>>;
+    /** Keep an already captured opposite-side marker stack for paint. */
+    readonly preserveOtherSide?: boolean;
+    /** Leave the marked card connected after its requested phases. */
+    readonly retainMarkedPaint?: boolean;
   }
 ): Promise<MarkerCapture> =>
   page.evaluate(
@@ -96,6 +155,11 @@ export const captureMarkerRotation = async (
       damageUpdated,
       specialConditionInputs,
       phaseNames,
+      cardId,
+      stackId,
+      markerIdsByKind,
+      preserveOtherSide,
+      retainMarkedPaint,
     }) => {
       const load = (specifier: string): Promise<Record<string, never>> =>
         import(/* @vite-ignore */ specifier);
@@ -124,6 +188,7 @@ export const captureMarkerRotation = async (
         damageCounter?: MarkerElement | null;
         specialCondition?: MarkerElement | null;
         abilityCounter?: MarkerElement | null;
+        PokémonBreak?: boolean;
       }
       interface LegacyCard {
         readonly name: string;
@@ -243,7 +308,7 @@ export const captureMarkerRotation = async (
           wrapper.remove();
         }
       };
-      for (const owner of ['self', 'opp']) {
+      for (const owner of preserveOtherSide ? [user] : ['self', 'opp']) {
         for (const id of ['active', 'bench', 'hand', 'discard']) {
           clearZone(owner, id);
         }
@@ -260,6 +325,7 @@ export const captureMarkerRotation = async (
         'Pokémon',
         `${location.origin}/src/assets/cardback.png`
       );
+      card.image.dataset.legacyRuntimeMarkerCardId = cardId;
       await card.image.decode();
       zone.array.push(card);
       initializeActiveBenchCard(user, card, zoneId, zone);
@@ -280,8 +346,11 @@ export const captureMarkerRotation = async (
         throw new Error('Real-v1 marker card never received layout');
       }
 
-      const container = (): HTMLElement =>
-        card.image.parentElement as HTMLElement;
+      const container = (): HTMLElement => {
+        const element = card.image.parentElement as HTMLElement;
+        element.dataset.legacyRuntimeMarkerStackId = stackId;
+        return element;
+      };
       // Deliberately never refreshed. `initializeActiveBenchCard` authors no
       // width on the wrapper, so it shrink-wraps to the card's own 90.5625px
       // rather than the 91px a refresh would author -- which is exactly what
@@ -303,12 +372,39 @@ export const captureMarkerRotation = async (
         const value = Number.parseFloat(raw);
         return Number.isFinite(value) ? value : null;
       };
-      const markerOf = (node: MarkerElement | null | undefined) => {
+      const idOf = (node: Element): string =>
+        node.tagName === 'IMG'
+          ? ((node as HTMLImageElement).dataset.legacyRuntimeMarkerCardId ?? '')
+          : ((node as HTMLElement).dataset.legacyRuntimeMarkerId ?? '');
+      const idsAt = (x: number, y: number): readonly string[] =>
+        card.image.ownerDocument
+          .elementsFromPoint(x, y)
+          .flatMap((candidate) => {
+            const target = candidate.closest<HTMLElement>(
+              '[data-legacy-runtime-marker-id], [data-legacy-runtime-marker-card-id]'
+            );
+            const id = target ? idOf(target) : '';
+            return id ? [id] : [];
+          })
+          .filter((id, index, ids) => ids.indexOf(id) === index);
+      const markerOf = (
+        node: MarkerElement | null | undefined,
+        kind: MarkerKind
+      ): CapturedMarker => {
         if (!node) {
           return {
+            id: markerIdsByKind[kind],
+            kind,
             present: false,
             bounds: { x: 0, y: 0, width: 0, height: 0 },
+            className: '',
+            parentZoneId: '',
+            domOrdinal: -1,
             textContent: '',
+            contentEditable: 'inherit',
+            pointerEvents: 'auto',
+            display: 'none',
+            inlineDisplay: '',
             inlineLeftPx: null,
             inlineTopPx: null,
             inlineRightPx: null,
@@ -317,12 +413,32 @@ export const captureMarkerRotation = async (
             inlineHeightPx: null,
             inlineLineHeightPx: null,
             inlineFontSizePx: null,
+            zIndex: 0,
+            backgroundColor: '',
+            color: '',
+            borderRadius: '',
+            localRotationDegrees: 0,
+            hitOrder: [],
           };
         }
+        node.dataset.legacyRuntimeMarkerId = markerIdsByKind[kind];
+        node.dataset.legacyRuntimeMarkerKind = kind;
+        const bounds = node.getBoundingClientRect();
+        const styles = getComputedStyle(node);
+        const matrix = new DOMMatrixReadOnly(styles.transform);
         return {
+          id: markerIdsByKind[kind],
+          kind,
           present: true,
           bounds: rectOf(node),
+          className: node.className,
+          parentZoneId: node.parentElement?.id ?? '',
+          domOrdinal: [...zone.element.children].indexOf(node),
           textContent: node.textContent ?? '',
+          contentEditable: node.contentEditable,
+          pointerEvents: styles.pointerEvents,
+          display: styles.display,
+          inlineDisplay: node.style.display,
           inlineLeftPx: inline(node, 'left'),
           inlineTopPx: inline(node, 'top'),
           inlineRightPx: inline(node, 'right'),
@@ -331,20 +447,88 @@ export const captureMarkerRotation = async (
           inlineHeightPx: inline(node, 'height'),
           inlineLineHeightPx: inline(node, 'line-height'),
           inlineFontSizePx: inline(node, 'font-size'),
+          zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+          backgroundColor: styles.backgroundColor,
+          color: styles.color,
+          borderRadius: styles.borderRadius,
+          localRotationDegrees:
+            ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+          hitOrder: idsAt(
+            bounds.left + bounds.width / 2,
+            bounds.top + bounds.height / 2
+          ),
         };
       };
       const rotationOf = (image: LegacyImage) =>
         Number.parseInt(image.style.transform.replace(/[^0-9-]/gu, ''), 10) ||
         0;
+      const captureCard = (): RuntimeMarkerCard => {
+        const frameLocalBounds = rectOf(card.image);
+        const priorTransform = card.image.style.transform;
+        card.image.style.transform = 'none';
+        const untransformedFrameLocalBounds = rectOf(card.image);
+        card.image.style.transform = priorTransform;
+        const styles = getComputedStyle(card.image);
+        const matrix = new DOMMatrixReadOnly(styles.transform);
+        return {
+          id: cardId,
+          frameLocalBounds,
+          untransformedFrameLocalBounds,
+          clientWidth: card.image.clientWidth,
+          clientHeight: card.image.clientHeight,
+          naturalWidth: card.image.naturalWidth,
+          naturalHeight: card.image.naturalHeight,
+          localRotationDegrees:
+            ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+          inlineTransform: card.image.style.transform,
+          zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+          pokemonBreak: card.image.PokémonBreak === true,
+          domOrdinal: [...container().querySelectorAll(':scope > img')].indexOf(
+            card.image
+          ),
+          sourcePath: new URL(card.image.currentSrc).pathname,
+        };
+      };
       const sample = (name: string): MarkerPhase => {
         const element = container();
         const computed = getComputedStyle(element);
+        for (const [kind, marker] of [
+          ['damage', card.image.damageCounter],
+          ['specialCondition', card.image.specialCondition],
+          ['ability', card.image.abilityCounter],
+        ] as const) {
+          if (marker) {
+            marker.dataset.legacyRuntimeMarkerId = markerIdsByKind[kind];
+            marker.dataset.legacyRuntimeMarkerKind = kind;
+          }
+        }
         // The rotation is lifted only to read the unrotated box, then put back
         // before anything else observes the card.
         const authored = card.image.style.transform;
         card.image.style.transform = 'none';
         const untransformedCard = rectOf(card.image);
         card.image.style.transform = authored;
+        const cardDetails = captureCard();
+        const markers = [
+          markerOf(card.image.damageCounter, 'damage'),
+          markerOf(card.image.specialCondition, 'specialCondition'),
+          markerOf(card.image.abilityCounter, 'ability'),
+        ].filter((marker) => marker.present);
+        const wrapperDetails: RuntimeMarkerWrapper = {
+          id: stackId,
+          frameLocalBounds: rectOf(element),
+          clientWidth: element.clientWidth,
+          clientHeight: element.clientHeight,
+          authoredWidthPx: element.style.width
+            ? Number.parseFloat(element.style.width)
+            : null,
+          inlineMarginRight: element.style.marginRight,
+          inlineMarginLeft: element.style.marginLeft,
+          computedMarginRightPx: Number.parseFloat(computed.marginRight) || 0,
+          computedMarginLeftPx: Number.parseFloat(computed.marginLeft) || 0,
+          childImageCount: element.querySelectorAll(':scope > img').length,
+        };
+        const cardBounds = card.image.getBoundingClientRect();
         return {
           name,
           rotationDegrees: rotationOf(card.image),
@@ -357,9 +541,19 @@ export const captureMarkerRotation = async (
             Number.parseFloat(computed.marginRight) || 0,
             Number.parseFloat(computed.marginLeft) || 0,
           ] as const,
-          damage: markerOf(card.image.damageCounter),
-          specialCondition: markerOf(card.image.specialCondition),
-          ability: markerOf(card.image.abilityCounter),
+          damage: markerOf(card.image.damageCounter, 'damage'),
+          specialCondition: markerOf(
+            card.image.specialCondition,
+            'specialCondition'
+          ),
+          ability: markerOf(card.image.abilityCounter, 'ability'),
+          cardDetails,
+          wrapperDetails,
+          markers,
+          cardOnlyHitOrder: idsAt(
+            cardBounds.left + cardBounds.width / 2,
+            cardBounds.bottom - 3
+          ),
         };
       };
 
@@ -378,6 +572,7 @@ export const captureMarkerRotation = async (
           Number.parseFloat(initialComputed.marginRight) || 0,
           Number.parseFloat(initialComputed.marginLeft) || 0,
         ] as const,
+        details: captureCard(),
       };
 
       addDamageCounter(user, zoneId, 0, damageInitial, false);
@@ -410,12 +605,22 @@ export const captureMarkerRotation = async (
         phases.push(sample(name));
       }
 
-      removeDamageCounter(user, zoneId, 0, false);
-      if (specialConditionInputs.length > 0) {
-        removeSpecialCondition(user, zoneId, 0, false);
+      if (!retainMarkedPaint) {
+        removeDamageCounter(user, zoneId, 0, false);
+        if (specialConditionInputs.length > 0) {
+          removeSpecialCondition(user, zoneId, 0, false);
+        }
+        removeAbilityCounter(user, zoneId, 0, false);
+        await frames();
+        const wrapper = container();
+        const index = zone.array.indexOf(card);
+        if (index >= 0) zone.array.splice(index, 1);
+        card.image.remove();
+        await frames();
+        if (wrapper.isConnected && wrapper.childElementCount === 0) {
+          wrapper.remove();
+        }
       }
-      removeAbilityCounter(user, zoneId, 0, false);
-      await frames();
 
       return {
         initialCard,
@@ -429,6 +634,12 @@ export const captureMarkerRotation = async (
             !card.image.damageCounter &&
             !card.image.specialCondition &&
             !card.image.abilityCounter,
+          wrapperCount: zone.element.querySelectorAll(
+            '[data-legacy-runtime-marker-stack-id]'
+          ).length,
+          cardCount: zone.element.querySelectorAll(
+            '[data-legacy-runtime-marker-card-id]'
+          ).length,
         },
       };
     },
@@ -439,6 +650,18 @@ export const captureMarkerRotation = async (
       damageUpdated: options.damageUpdated,
       specialConditionInputs: options.specialConditionInputs,
       phaseNames: options.phaseNames,
+      cardId: options.cardId ?? `${options.side}-${options.slot}-marker-card`,
+      stackId:
+        options.stackId ?? `${options.side}-${options.slot}-marker-stack`,
+      markerIdsByKind:
+        options.markerIdsByKind ??
+        ({
+          damage: `${options.side}-${options.slot}-damage-marker`,
+          specialCondition: `${options.side}-${options.slot}-specialCondition-marker`,
+          ability: `${options.side}-${options.slot}-ability-marker`,
+        } satisfies Record<MarkerKind, string>),
+      preserveOtherSide: options.preserveOtherSide ?? false,
+      retainMarkedPaint: options.retainMarkedPaint ?? false,
     }
   );
 

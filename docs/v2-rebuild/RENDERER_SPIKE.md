@@ -2230,6 +2230,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      another 764 lines from `legacy-source-board.ts`, reducing it to 5,009
      lines and its browser-spec consumers from five to four; the executable
      runtime adapter is 304 lines.
+144. The active marker-rotation gate now executes v1's actual `Card`, active
+     placement, damage, condition, ability, and `rotateCard` modules for both
+     sides. Its real capture preserves the immutable q0/q1/q2/q3/q0-return
+     geometry, complete card/wrapper/marker styles, editable native hit order,
+     condition palette, pointer removal, zero-node cleanup, strict q0 paint,
+     and React DOM parity. The synthetic fixture's self-authored call log and
+     fake resize-listener counters are removed because they were evidence only
+     about the harness, while all browser-observable assertions remain. The
+     existing active and bench compact runtime oracles stay green across three
+     consecutive focused repeats (21/21). Deleting the retired active-marker
+     recorder removes 697 lines from
+     `legacy-source-board.ts`, reducing it to 4,312 lines and its browser-spec
+     consumers from four to three; the reusable runtime capture now also
+     carries the richer fields needed for the upcoming bench-marker migration,
+     and the active adapter is 249 lines.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

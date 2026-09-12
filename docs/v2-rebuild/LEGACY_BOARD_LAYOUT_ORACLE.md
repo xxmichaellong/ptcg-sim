@@ -757,13 +757,15 @@ original-category history cannot select a renderer path.
 
 `tests/browser/legacy-marker-rotation-geometry.spec.ts` adds a tenth source
 oracle backed by
-`tests/legacy-fixtures/renderer/marker-rotation-v1.json`. Two independent inert
-histories place one ordinary active Pokémon and its damage, special-condition,
-and ability-used markers in the local and opponent source frames. They capture
-the pristine card, marked q0, each synchronous q1/q2/q3/q0-return phase, and
-marker-node/card-pointer cleanup, post-removal resize non-observation, and
-wrapper cleanup. The fixture also executes a damage update and all
-P/B/A/Pa/C/default condition palette branches.
+`tests/legacy-fixtures/renderer/marker-rotation-v1.json`. Two independent real
+v1 histories place one ordinary active Pokémon and its damage,
+special-condition, and ability-used markers in the local and opponent frames.
+They execute the actual `Card`, active placement, damage, condition, ability,
+and `rotateCard` modules, capturing the pristine card, marked q0, each
+q1/q2/q3/q0-return phase, and marker-node/card-pointer/wrapper cleanup. The
+fixture also executes a real damage update and all P/B/A/Pa/C/default condition
+palette branches. External network access is denied. The old harness-only call
+log and synthetic resize-listener counters are not treated as v1 evidence.
 
 At q0 the card paints at 90.5625×126 px. Damage and condition are editable,
 pointer-hit 30.1875 px circles; the empty ability marker is a pointer-hit
@@ -798,14 +800,15 @@ views update and clean up without card asset churn. Real owner, opponent, and
 spectator sessions retain distinct stable aliases and identical normalized
 geometry without serializing canonical card or definition IDs.
 
-For paint evidence, the source harness optionally restores the pristine q0 card
-and all three markers only after its recorded cleanup reaches zero marker, card,
-and wrapper nodes. The browser then isolates the two local/opponent cards and
-six damage, poison, and ability markers alongside the React equivalents. Both
-card definitions use the digest-pinned card back, and the attached screenshots
-must meet the shared 97.5%, three-pixel, 24/255-channel foreground contract in
-both directions. This covers q0 marker/card compositing and typography, not the
-rotated or history-retained phases.
+For paint evidence, a separate runtime pass retains the pristine q0 card and
+all three markers on both sides only after the complete histories have recorded
+zero marker, card, and wrapper nodes. The browser then isolates the two
+local/opponent cards and six damage, poison, and ability markers alongside the
+React equivalents. Both card definitions use the digest-pinned card back, and
+the attached screenshots must meet the shared 97.5%, three-pixel,
+24/255-channel foreground contract in both directions. This covers q0
+marker/card compositing and typography, not the rotated or history-retained
+phases.
 
 Rotated bench markers, BREAK and compound evolution/group rotation,
 Energy/Trainer rotation, marker transfer/reconstruction, editing gestures,
