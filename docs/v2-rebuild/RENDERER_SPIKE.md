@@ -1955,6 +1955,32 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      213 files, 17 Worker-runtime tests, and every static/type/build/provenance
      check. Browser file selection, v1 import routing, and canonical
      continuation are unchanged and remain separate gates.
+128. The selected React DOM renderer now has a real live-Solo route resource
+     convergence gate instead of only renderer-local and in-process lifecycle
+     evidence. The browser imports deterministic 60-card main and alternate
+     decks through the shipped Deck surface, warms 40 complete Setup Both ->
+     Reset Both cycles past every bounded history/presentation queue, then
+     measures another 100 cycles over the real Worker/WebSocket authority. Every
+     phase pins the same renderer object and generation, exact scene/rendered
+     IDs, complete normalized setup/reset topology, replacement of every prior
+     card alias, setup distributions of 47 deck / 7 hand / 6 prizes per side,
+     reset distributions of 60 / 0 / 0, one board and no canvas, and zero DOM-
+     renderer texture/display/context/failure resources. The measured window is
+     exactly 400 authoritative scene revisions and 400 renderer commits without
+     another room. A scalar socket-lifecycle probe requires one unique room
+     path, at most one concurrently open socket, one final open socket, no
+     connecting socket, and every replaced socket closed; recoverable transport
+     errors remain explicit artifact evidence instead of invalidating renderer
+     convergence. Baseline/final collection is aligned to the same reset scene,
+     exactly 120 positively decoded raster images, one live-region child, and two
+     animation frames. Three fresh Chromium executions with the final decode
+     and socket probes retained the same 35 documents, 3,639 DOM nodes, and 753
+     listeners; post-GC V8 heap ratios were 1.0654, 1.0686, and 1.0674 against
+     the warmed baseline, below the provisional 1.10 ceiling. This is a local
+     Vite/`workerd` route gate with three cached raster URL families, not a
+     dedicated uninterrupted-transport gate, deployed navigation/BFCache, 120
+     distinct real-raster decoded-byte pressure, a long-duration soak, or
+     cross-browser and physical-device approval.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1966,7 +1992,9 @@ from happy-DOM lifecycle tests.
 
 The renderer suites live in `tests/browser/renderer-spike.spec.ts`,
 `tests/browser/renderer-dom-cacheable-assets.spec.ts`, and
-`tests/browser/renderer-private-asset-privacy.spec.ts`. The source-parity suites
+`tests/browser/renderer-private-asset-privacy.spec.ts`; the selected live-Solo
+route convergence gate lives in
+`tests/browser/remote-room-solo-renderer-churn.spec.ts`. The source-parity suites
 start with `tests/browser/legacy-dom-geometry.spec.ts` and
 the transformed overlay comparison lives in
 `tests/browser/react-dom-transformed-overlay-paint.spec.ts`,
@@ -2151,9 +2179,10 @@ wiring:
   monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
   any future Pixi rollout;
 - complete resource evidence beyond the green warmed-host lifecycle,
-  controlled same-origin distinct-SVG request/decode gate, and local
-  creator-route document churn: deployed route-host navigation, real-raster
-  decoded-byte and retained-heap accounting on the ratified profile;
+  controlled same-origin distinct-SVG request/decode gate, local creator-route
+  document churn, and local live-Solo 100-cycle real-raster/retained-heap gate:
+  deployed route-host navigation/BFCache and representative distinct-real-raster
+  decoded-byte accounting on the ratified profile;
   display-object/GPU counters remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;

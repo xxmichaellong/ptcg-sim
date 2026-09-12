@@ -554,7 +554,9 @@ Exit gate:
 
 - all Solo-mode `MUST_MATCH` behaviors and visual/geometry tests pass;
 - no logical mutation exists in React/Pixi/DOM code;
-- repeated setup/reset and long solo soak meet resource budgets;
+- automated live-Solo repeated setup/reset meets the provisional Chromium
+  resource budget; open-zone churn and the long-duration Solo soak still pass
+  before rollout;
 - forced reload/restoration of local authority loses no committed state where
   persistence is promised;
 - manual parity review passes in the browser matrix.

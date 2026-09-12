@@ -118,6 +118,25 @@ must preserve the exact lifecycle/resource invariants. This advances the
 renderer-local heap budget; representative setup/reset/open-zone route churn
 and physical-device retained-heap evidence remain release requirements.
 
+The real opt-in Solo route now adds the representative setup/reset portion of
+that route-host gate. It installs deterministic 60-card main and alternate
+decks through the shipped Deck UI, saturates bounded command, activity, and
+accessibility histories with 40 warm-up cycles, and measures 100 more Setup Both
+-> Reset Both cycles against the local Worker. Each phase proves exact
+scene/rendered identity, complete normalized topology, fresh opaque card
+aliases, one unchanged renderer object/generation, and zero renderer-owned
+texture/display/context/failure resources. The measured window produces exactly
+400 scene revisions and render commits. A scalar lifecycle probe permits the
+client's bounded serial reconnect recovery while requiring one room/socket path,
+maximum socket concurrency one, no dangling connection, every replaced socket
+closed, one final open socket, and ready controls. Three fresh Chromium runs
+with the final probes kept documents/nodes/listeners exactly flat at
+35/3,639/753 and retained post-GC V8 heap at 1.0654x, 1.0686x, and 1.0674x of the
+aligned warmed baseline. The test uses three cacheable real-PNG URL families;
+uninterrupted transport stability, 120 distinct real raster assets, open-zone
+churn, deployed navigation/BFCache, long-duration soak, physical devices, and
+the non-Chromium matrix remain separate release evidence.
+
 The replay-file row now has a package-level file-v1 gate and an unwired
 application transaction. A checked-in spectator artifact plus generated player
 and spectator cases cover encoded-byte admission, fatal UTF-8, corruption,
