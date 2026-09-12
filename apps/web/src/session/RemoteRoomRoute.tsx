@@ -353,6 +353,9 @@ export const RemoteRoomRoute = ({
                     roomMode={roomMode}
                     {...(onLeave ? { onLeave } : {})}
                     onExportState={exportLivePerspective}
+                    onImportReplayFile={(contents) =>
+                      runtime.replay.importReplayFileBytes(contents)
+                    }
                     downloadTextFile={downloadTextFile}
                     requestFullscreen={requestFullscreen}
                   />

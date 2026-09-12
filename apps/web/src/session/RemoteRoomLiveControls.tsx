@@ -3,7 +3,13 @@ import type {
   RemoteGameSession,
 } from '@ptcgsim/client-session';
 import { MAX_CHAT_CODE_UNITS } from '@ptcgsim/protocol';
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
 import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
@@ -14,6 +20,11 @@ import {
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
+import {
+  readBrowserReplayFileBytes,
+  type BrowserReplayFileLike,
+  type BrowserReplayFileReadResult,
+} from './browser-replay-file.js';
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useGameSession } from './useGameSession.js';
 
@@ -34,6 +45,14 @@ const ownPlayerId = (state: ClientSessionState): string | undefined =>
     ? state.view.viewer.playerId
     : undefined;
 
+const reportInvalidReplayFile = (): void =>
+  globalThis.alert('Error reading file. Please make sure the file is valid.');
+
+export type BrowserReplayFileReader = (
+  file: BrowserReplayFileLike,
+  options?: { readonly signal?: AbortSignal }
+) => Promise<BrowserReplayFileReadResult>;
+
 /** Existing connected-room controls backed only by authenticated session APIs. */
 export const RemoteRoomLiveControls = ({
   session,
@@ -41,21 +60,27 @@ export const RemoteRoomLiveControls = ({
   roomMode = 'multiplayer',
   onLeave,
   onExportState,
+  onImportReplayFile,
   confirmLeave = () =>
     globalThis.confirm(
       'Are you sure you want to leave the room? Current game state will be lost.'
     ),
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
+  readReplayFile = readBrowserReplayFileBytes,
+  reportReplayImportFailure = reportInvalidReplayFile,
 }: {
   readonly session: RemoteRoomLiveSession;
   readonly presentation: RemoteRoomLivePresentation;
   readonly roomMode?: 'solo' | 'multiplayer';
   readonly onLeave?: () => void;
   readonly onExportState?: () => void;
+  readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
   readonly confirmLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
+  readonly readReplayFile?: BrowserReplayFileReader;
+  readonly reportReplayImportFailure?: () => void;
 }) => {
   const state = useGameSession(session);
   const [message, setMessage] = useState('');
@@ -64,6 +89,9 @@ export const RemoteRoomLiveControls = ({
     readonly action: 'setup' | 'reset';
     readonly targetPlayerId: string;
   }>();
+  const [replayImportPending, setReplayImportPending] = useState(false);
+  const replayFileInputRef = useRef<HTMLInputElement>(null);
+  const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
   const options = useDismissibleRoomOptions();
   const playerId = ownPlayerId(state);
   const playerControls = playerId !== undefined;
@@ -128,6 +156,64 @@ export const RemoteRoomLiveControls = ({
     );
     if (resolution.ok) session.submit(resolution.command);
   }, [pendingBoth, session, state]);
+  useEffect(
+    () => () => {
+      replayImportAbortRef.current?.abort();
+    },
+    []
+  );
+  const importReplayFile = async (
+    event: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (
+      !file ||
+      !onImportReplayFile ||
+      !ready ||
+      state.replayLoading ||
+      replayImportPending
+    ) {
+      return;
+    }
+
+    replayImportAbortRef.current?.abort();
+    const controller = new AbortController();
+    replayImportAbortRef.current = controller;
+    setReplayImportPending(true);
+    let read: BrowserReplayFileReadResult;
+    try {
+      read = await readReplayFile(file, { signal: controller.signal });
+    } catch {
+      read = { ok: false, reason: 'read_failed' };
+    }
+    if (
+      controller.signal.aborted ||
+      replayImportAbortRef.current !== controller
+    ) {
+      return;
+    }
+
+    let imported = false;
+    if (read.ok) {
+      try {
+        imported = await onImportReplayFile(read.bytes);
+      } catch {
+        imported = false;
+      }
+    }
+    if (
+      controller.signal.aborted ||
+      replayImportAbortRef.current !== controller
+    ) {
+      return;
+    }
+    replayImportAbortRef.current = undefined;
+    setReplayImportPending(false);
+    options.setOpen(false);
+    if (!read.ok || !imported) reportReplayImportFailure();
+  };
   const sendMessage = (): void => {
     const normalized = message.trim();
     if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
@@ -290,6 +376,27 @@ export const RemoteRoomLiveControls = ({
           >
             Export game state
           </button>
+        )}
+        {solo && onImportReplayFile && (
+          <div id="jsonReplayDiv" role="none">
+            <button
+              id="importReplay"
+              type="button"
+              role="menuitem"
+              disabled={!ready || state.replayLoading || replayImportPending}
+              onClick={() => replayFileInputRef.current?.click()}
+            >
+              Enter replay mode
+            </button>
+            <input
+              id="jsonReplay"
+              ref={replayFileInputRef}
+              type="file"
+              accept=".json"
+              hidden
+              onChange={(event) => void importReplayFile(event)}
+            />
+          </div>
         )}
         <button
           id="exportLog"

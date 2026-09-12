@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   RemoteRoomLiveControls,
+  type BrowserReplayFileReader,
   type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
 } from './RemoteRoomLiveControls.js';
@@ -102,9 +103,12 @@ const mount = async (
     readonly roomMode?: 'solo' | 'multiplayer';
     readonly onLeave?: () => void;
     readonly onExportState?: () => void;
+    readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
     readonly confirmLeave?: () => boolean;
     readonly downloadTextFile?: (filename: string, contents: string) => boolean;
     readonly requestFullscreen?: () => boolean;
+    readonly readReplayFile?: BrowserReplayFileReader;
+    readonly reportReplayImportFailure?: () => void;
   } = {}
 ): Promise<{ readonly host: HTMLDivElement; readonly root: Root }> => {
   const host = document.createElement('div');
@@ -120,6 +124,9 @@ const mount = async (
         {...(options.onExportState
           ? { onExportState: options.onExportState }
           : {})}
+        {...(options.onImportReplayFile
+          ? { onImportReplayFile: options.onImportReplayFile }
+          : {})}
         {...(options.confirmLeave
           ? { confirmLeave: options.confirmLeave }
           : {})}
@@ -128,6 +135,12 @@ const mount = async (
           : {})}
         {...(options.requestFullscreen
           ? { requestFullscreen: options.requestFullscreen }
+          : {})}
+        {...(options.readReplayFile
+          ? { readReplayFile: options.readReplayFile }
+          : {})}
+        {...(options.reportReplayImportFailure
+          ? { reportReplayImportFailure: options.reportReplayImportFailure }
           : {})}
       />
     )
@@ -471,6 +484,118 @@ describe('RemoteRoomLiveControls', () => {
     expect(session.sendChat).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
+  });
+
+  it('imports a bounded replay file only from the live Solo options row', async () => {
+    const session = new FakeLiveSession();
+    const bytes = Uint8Array.from([1, 2, 3]);
+    const readPending = Promise.withResolvers<{
+      readonly ok: true;
+      readonly bytes: Uint8Array;
+    }>();
+    const importPending = Promise.withResolvers<boolean>();
+    const readReplayFile = vi.fn(() => readPending.promise);
+    const onImportReplayFile = vi.fn(() => importPending.promise);
+    const reportReplayImportFailure = vi.fn();
+    const { host, root } = await mount(session, {
+      roomMode: 'solo',
+      onImportReplayFile,
+      readReplayFile,
+      reportReplayImportFailure,
+    });
+    const options = element<HTMLButtonElement>(host, '#optionsButton');
+    const menu = element<HTMLElement>(host, '#optionsContextMenu');
+    const input = element<HTMLInputElement>(host, '#jsonReplay');
+    const importButton = element<HTMLButtonElement>(host, '#importReplay');
+    expect(importButton.textContent).toBe('Enter replay mode');
+    expect(input.accept).toBe('.json');
+    expect(input.hidden).toBe(true);
+
+    await act(async () => options.click());
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['ignored'], 'replay.json')],
+    });
+    await act(async () =>
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    );
+    expect(readReplayFile).toHaveBeenCalledOnce();
+    expect(readReplayFile.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
+    expect(importButton.disabled).toBe(true);
+    expect(menu.hidden).toBe(false);
+    expect(input.value).toBe('');
+
+    await act(async () => {
+      readPending.resolve({ ok: true, bytes });
+      await readPending.promise;
+      await Promise.resolve();
+    });
+    expect(onImportReplayFile).toHaveBeenCalledWith(bytes);
+    expect(importButton.disabled).toBe(true);
+    await act(async () => {
+      importPending.resolve(true);
+      await importPending.promise;
+      await Promise.resolve();
+    });
+    expect(menu.hidden).toBe(true);
+    expect(reportReplayImportFailure).not.toHaveBeenCalled();
+
+    await act(async () => options.click());
+    readReplayFile.mockRejectedValueOnce(new Error('browser read failed'));
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['ignored'], 'replay.json')],
+    });
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(onImportReplayFile).toHaveBeenCalledOnce();
+    expect(reportReplayImportFailure).toHaveBeenCalledOnce();
+    expect(menu.hidden).toBe(true);
+
+    await act(async () => root.unmount());
+
+    const multiplayer = await mount(new FakeLiveSession(), {
+      onImportReplayFile,
+    });
+    expect(multiplayer.host.querySelector('#importReplay')).toBeNull();
+    expect(multiplayer.host.querySelector('#jsonReplay')).toBeNull();
+    await act(async () => multiplayer.root.unmount());
+  });
+
+  it('aborts a pending replay-file read on teardown', async () => {
+    const pending = Promise.withResolvers<{
+      readonly ok: true;
+      readonly bytes: Uint8Array;
+    }>();
+    const readReplayFile = vi.fn(() => pending.promise);
+    const onImportReplayFile = vi.fn(async () => true);
+    const reportReplayImportFailure = vi.fn();
+    const { host, root } = await mount(new FakeLiveSession(), {
+      roomMode: 'solo',
+      onImportReplayFile,
+      readReplayFile,
+      reportReplayImportFailure,
+    });
+    const input = element<HTMLInputElement>(host, '#jsonReplay');
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['ignored'], 'replay.json')],
+    });
+    await act(async () =>
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    );
+    const signal = readReplayFile.mock.calls[0]?.[1]?.signal;
+    expect(signal?.aborted).toBe(false);
+
+    await act(async () => root.unmount());
+    expect(signal?.aborted).toBe(true);
+    pending.resolve({ ok: true, bytes: Uint8Array.from([1]) });
+    await pending.promise;
+    await Promise.resolve();
+    expect(onImportReplayFile).not.toHaveBeenCalled();
+    expect(reportReplayImportFailure).not.toHaveBeenCalled();
   });
 
   it('dismisses an open options menu outside and releases its document listener', async () => {

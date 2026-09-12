@@ -6,7 +6,10 @@ import type {
   SessionSocketFactory,
   SessionSocketHandlers,
 } from '@ptcgsim/client-session';
-import { parseProjectedReplayFile } from '@ptcgsim/client-session';
+import {
+  parseProjectedReplayFile,
+  serializeProjectedReplayFile,
+} from '@ptcgsim/client-session';
 import {
   PROTOCOL_VERSION,
   type ServerMessage,
@@ -244,6 +247,52 @@ describe('RemoteRoomRoute', () => {
       expect(host.querySelector(`#${id}`), id).not.toBeNull();
     }
     expect(host.querySelector('#leaveRoomButton')).toBeNull();
+
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
+    expect(host.querySelector('#importReplay')?.textContent).toBe(
+      'Enter replay mode'
+    );
+    const replayContents = await serializeProjectedReplayFile({
+      replayId: 'route-file-replay',
+      viewer: view.viewer,
+      startRevision: view.revision,
+      endRevision: view.revision,
+      truncated: view.revision > 0,
+      frames: [{ snapshot: view, presentationEvents: [] }],
+    });
+    const replayBytes = new TextEncoder().encode(replayContents);
+    const replayFile = new File([replayBytes], 'route-replay.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(replayFile, 'arrayBuffer', {
+      value: async () => replayBytes.buffer.slice(0),
+    });
+    const replayInput = host.querySelector('#jsonReplay') as HTMLInputElement;
+    Object.defineProperty(replayInput, 'files', {
+      configurable: true,
+      value: [replayFile],
+    });
+    const sentBeforeImport = socketFactory.socket!.sent.length;
+    await act(async () => {
+      replayInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await vi.waitFor(() =>
+        expect(runtime.replay.getSnapshot().mode).toBe('replay')
+      );
+    });
+    expect(host.querySelector('#p1Button')?.textContent).toBe('Replay');
+    expect(host.querySelector('#importReplay')).toBeNull();
+    expect(socketFactory.socket!.sent).toHaveLength(sentBeforeImport);
+
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
+    await act(async () =>
+      (host.querySelector('#exitReplay') as HTMLButtonElement).click()
+    );
+    expect(runtime.replay.getSnapshot().mode).toBe('live');
+    expect(host.querySelector('#p1Button')?.textContent).toBe('Solo');
 
     await act(async () =>
       (host.querySelector('#p1Button') as HTMLButtonElement).click()

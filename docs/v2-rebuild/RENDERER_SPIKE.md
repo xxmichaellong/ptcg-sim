@@ -2043,6 +2043,25 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      chrome. Focused component/runtime tests and real Worker/Chromium routes pin
      visibility, command policy, one renderer, resize, refresh, expansion,
      replay flip, reconnect, sidebar restoration, and teardown.
+     Exact commit `9dfd0e6` is fully green in hosted run 34677338403: Quality
+     passed in 3m28s, all 210 consolidated Chromium regressions passed in 15.0
+     minutes, the unchanged route churn passed in 6.3 minutes, and production
+     topology passed in 7.2 seconds without retry.
+132. The live Solo Options menu now wires the source-shaped `Enter replay mode`
+     control and hidden `.json` input to the already-bounded perspective replay
+     transaction. Browser admission rejects invalid declared sizes before
+     reading, verifies the returned byte length independently, contains read
+     failures, resets the input for same-file retries, and aborts stale work on
+     teardown. The coordinator still owns the bytes before async validation,
+     checks file-v1 integrity/privacy/semantics, installs playback atomically,
+     and emits no command or authority request. Invalid files retain live mode
+     and use the existing legacy error message. Focused tests cover preflight,
+     read failure, cancellation, component concurrency, exact route wiring, and
+     zero socket writes. The real Worker/Chromium Solo journey exports a live
+     perspective artifact, imports those downloaded bytes through the native
+     input, enters and exits replay, restores the exact live revision, and then
+     rejects malformed JSON without losing the room. Canonical resumable
+     `Import game state` remains deliberately unwired under ADR-012.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

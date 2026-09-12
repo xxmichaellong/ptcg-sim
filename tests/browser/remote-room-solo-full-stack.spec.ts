@@ -272,6 +272,71 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(
     page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`).first()
   ).toBeVisible();
+
+  const liveRevisionBeforeReplayImport = await page
+    .locator('.ptcgsim-board-surface')
+    .getAttribute('data-revision');
+  await page.locator('#optionsButton').click();
+  await expect(page.locator('#importReplay')).toHaveText('Enter replay mode');
+  const [perspectiveReplay] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#exportState').click(),
+  ]);
+  expect(perspectiveReplay.suggestedFilename()).toBe(
+    'ptcgsim-perspective-replay.json'
+  );
+  const perspectiveReplayStream = await perspectiveReplay.createReadStream();
+  const replayChunks: Buffer[] = [];
+  for await (const chunk of perspectiveReplayStream) {
+    replayChunks.push(Buffer.from(chunk));
+  }
+  const perspectiveReplayBytes = Buffer.concat(replayChunks);
+  expect(JSON.parse(perspectiveReplayBytes.toString())).toMatchObject({
+    format: 'ptcgsim-perspective-replay',
+    formatVersion: 1,
+    protocolVersion: 2,
+    privacy: {
+      kind: 'viewer-projection',
+      canonicalState: false,
+      resumable: false,
+    },
+  });
+
+  await page.locator('#optionsButton').click();
+  await page.locator('#jsonReplay').setInputFiles({
+    name: 'solo-perspective-replay.json',
+    mimeType: 'application/json',
+    buffer: perspectiveReplayBytes,
+  });
+  await expect(page.locator('#p1Button')).toHaveText('Replay');
+  await expect(page.locator('#importReplay')).toHaveCount(0);
+  await expect(page.locator('#turnButton')).toHaveCount(0);
+  await page.locator('#optionsButton').click();
+  await page.locator('#exitReplay').click();
+  await expect(page.locator('#p1Button')).toHaveText('Solo');
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    liveRevisionBeforeReplayImport ?? ''
+  );
+
+  await page.locator('#optionsButton').click();
+  const replayFailure = page.waitForEvent('dialog');
+  const invalidImport = page.locator('#jsonReplay').setInputFiles({
+    name: 'invalid-replay.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{'),
+  });
+  const replayFailureDialog = await replayFailure;
+  expect(replayFailureDialog.message()).toBe(
+    'Error reading file. Please make sure the file is valid.'
+  );
+  await replayFailureDialog.dismiss();
+  await invalidImport;
+  await expect(page.locator('#p1Button')).toHaveText('Solo');
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    liveRevisionBeforeReplayImport ?? ''
+  );
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
   expect(errors).toEqual([]);
 });
