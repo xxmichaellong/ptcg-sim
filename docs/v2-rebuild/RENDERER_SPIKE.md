@@ -2188,6 +2188,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      hand-authored DOM mutation recorder remove 479 more lines from
      `legacy-source-board.ts`, reducing it to 7,072 lines and its browser-spec
      consumers from eight to seven.
+141. The Trainer-as-Tool geometry gate now uses that same real-v1 replay path,
+     extended to report the source-observable pre-transform rectangles, offset
+     and computed dimensions, transform matrices/origins, transient margin, and
+     common/Tool-only/base-only/authored-layout-only hit regions. Both sides run
+     the actual `Card`, `moveCard`, and `refreshBoard` modules and retain every
+     existing structured, lifecycle, strict paint, and React DOM assertion. The
+     unchanged oracle agrees with the runtime capture without correction, and
+     the adjacent Energy plus compact two-fixture runtime gates stay green. The
+     retired Trainer-as-Tool types, capture helpers, and hand-authored mutation
+     recorder remove another 620 lines from `legacy-source-board.ts`, reducing
+     it to 6,452 lines and its browser-spec consumers from seven to six.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

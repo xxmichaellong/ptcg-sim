@@ -24,7 +24,9 @@ import {
   isolateCandidateCardPaint,
   isolateLegacyIframeCardPaint,
 } from './support/isolated-card-paint.js';
-import { captureLegacySourceTrainerToolAttachmentReflowFixture } from './support/legacy-source-board.js';
+import { captureReflow } from './support/legacy-runtime-attachment-reflow.js';
+import { captureLegacyRuntimeLayout } from './support/legacy-runtime-layout.js';
+import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 type Rect = {
   readonly x: number;
@@ -186,9 +188,144 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
-  const capture =
-    await captureLegacySourceTrainerToolAttachmentReflowFixture(page);
-  await testInfo.attach('legacy-trainer-tool-attachment-reflow-geometry.json', {
+  const loaded = await loadLegacyRuntime(page);
+  const layout = await captureLegacyRuntimeLayout(page);
+  const frameTransforms = Object.fromEntries(
+    Object.entries(layout.frameTransforms).map(([side, transform]) => [
+      side,
+      {
+        ...transform,
+        rotationDegrees:
+          ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      },
+    ])
+  ) as Readonly<
+    Record<
+      'local' | 'opponent',
+      { a: number; b: number; c: number; d: number; rotationDegrees: number }
+    >
+  >;
+  const physicalRect = (side: 'local' | 'opponent', bounds: Rect): Rect => {
+    const frame = layout.frames[side];
+    return side === 'local'
+      ? { ...bounds, x: frame.x + bounds.x, y: frame.y + bounds.y }
+      : {
+          ...bounds,
+          x: frame.x + frame.width - bounds.x - bounds.width,
+          y: frame.y + frame.height - bounds.y - bounds.height,
+        };
+  };
+  const cards: Array<
+    Omit<
+      Awaited<ReturnType<typeof captureReflow>>['cards'][number],
+      'role' | 'zIndex'
+    > & {
+      side: 'local' | 'opponent';
+      role: 'base' | 'tool';
+      physicalBounds: Rect;
+      untransformedPhysicalBounds: Rect;
+      effectiveRotationDegrees: number;
+      zIndex: number;
+      inlineLeftPx: number;
+      inlineBottomPx: number;
+      relativeId: string | null;
+    }
+  > = [];
+  const stacks = [];
+  for (const side of ['local', 'opponent'] as const) {
+    const cardIdsByRole = {
+      base: `${side}-tool-base`,
+      'trainer-as-tool': `${side}-tool-attachment`,
+    };
+    const stackId = `${side}-canonical-trainer-tool-stack`;
+    const runtime = await captureReflow(page, {
+      side,
+      slot: 'active',
+      evolutionOrder: ['base'],
+      attachmentOrder: ['trainer-as-tool'],
+      cardIdsByRole,
+      stackId,
+      captureAttachmentBoundary: true,
+      preserveOtherSide: side === 'opponent',
+    });
+    if (!runtime.attachmentBoundary) {
+      throw new Error(`Missing ${side} Trainer-as-Tool attachment boundary`);
+    }
+    cards.push(
+      ...runtime.cards.map((card) => ({
+        ...card,
+        side,
+        role: card.role === 'base' ? ('base' as const) : ('tool' as const),
+        physicalBounds: physicalRect(side, card.frameLocalBounds),
+        untransformedPhysicalBounds: physicalRect(
+          side,
+          card.untransformedFrameLocalBounds
+        ),
+        effectiveRotationDegrees:
+          (card.localRotationDegrees + frameTransforms[side].rotationDegrees) %
+          360,
+        zIndex: Number.parseInt(card.zIndex, 10) || 0,
+        inlineLeftPx: Number.parseFloat(card.inlineLeft) || 0,
+        inlineBottomPx: Number.parseFloat(card.inlineBottom) || 0,
+        relativeId:
+          card.relativeRole === null
+            ? null
+            : cardIdsByRole[card.relativeRole as keyof typeof cardIdsByRole],
+      }))
+    );
+    const idForRole = (role: string): string =>
+      cardIdsByRole[role as keyof typeof cardIdsByRole] ?? role;
+    stacks.push({
+      ...runtime.stack,
+      side,
+      physicalBounds: physicalRect(side, runtime.stack.frameLocalBounds),
+      attachmentClientWidthsBefore: runtime.attachmentClientWidthsBefore,
+      attachmentAuthoredWidthsPx: runtime.attachmentAuthoredWidthsPx,
+      transientPostAttach: {
+        logicalOrder:
+          runtime.attachmentBoundary.transientPostAttach.logicalOrder.map(
+            idForRole
+          ),
+        domOrder:
+          runtime.attachmentBoundary.transientPostAttach.domOrder.map(
+            idForRole
+          ),
+        clientWidth: runtime.attachmentBoundary.transientPostAttach.clientWidth,
+        authoredWidthPx:
+          runtime.attachmentBoundary.transientPostAttach.authoredWidthPx,
+        inlineMarginRight:
+          runtime.attachmentBoundary.transientPostAttach.inlineMarginRight,
+        computedMarginRightPx:
+          runtime.attachmentBoundary.transientPostAttach.computedMarginRightPx,
+      },
+      synchronousPostRefreshContainerCount:
+        runtime.attachmentBoundary.synchronousPostRefreshContainerCount,
+      oldContainerConnectedImmediatelyAfterRefresh:
+        runtime.attachmentBoundary.oldContainerConnectedImmediatelyAfterRefresh,
+      stableContainerCount: runtime.attachmentBoundary.stableContainerCount,
+      oldContainerConnected: runtime.attachmentBoundary.oldContainerConnected,
+      childDomOrder: runtime.stack.childDomOrder.map(idForRole),
+      logicalOrder: runtime.stack.logicalOrder.map(idForRole),
+      hitOrder: {
+        commonOverlap: runtime.stack.hitOrder.commonOverlap,
+        toolOnly: runtime.stack.hitOrder.attachmentOnly,
+        baseOnly: runtime.stack.hitOrder.baseOnly,
+        authoredLayoutOnly: runtime.stack.hitOrder.authoredLayoutOnly,
+      },
+    });
+  }
+  const capture = {
+    frames: layout.frames,
+    frameTransforms,
+    cards,
+    stacks,
+    sourceFulfillment: {
+      servedPaths: loaded.servedPaths,
+      blockedExternalOrigins: loaded.blockedOrigins,
+      missingSameOriginPaths: loaded.missingPaths,
+    },
+  };
+  await testInfo.attach('legacy-runtime-trainer-tool-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
@@ -197,7 +334,7 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
   expect(capture.stacks).toHaveLength(2);
   await isolateLegacyIframeCardPaint(
     page,
-    'img[data-legacy-canonical-trainer-tool-card-id]'
+    'img[data-legacy-runtime-reflow-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
@@ -422,7 +559,13 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
   expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
     'https://cdn.socket.io'
   );
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/sizing/refresh-board.js'
+  );
 
   expect(candidateScene.cards).toHaveLength(4);
   expect(new Set(candidateScene.cards.map((card) => card.id))).toEqual(

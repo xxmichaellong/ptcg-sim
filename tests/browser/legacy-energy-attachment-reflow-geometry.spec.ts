@@ -267,7 +267,6 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       attachmentClientWidthsBefore: runtime.attachmentClientWidthsBefore,
       attachmentAuthoredWidthsPx: runtime.attachmentAuthoredWidthsPx,
       transientPostAttach: {
-        ...runtime.attachmentBoundary.transientPostAttach,
         logicalOrder:
           runtime.attachmentBoundary.transientPostAttach.logicalOrder.map(
             idForRole
@@ -276,6 +275,9 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
           runtime.attachmentBoundary.transientPostAttach.domOrder.map(
             idForRole
           ),
+        clientWidth: runtime.attachmentBoundary.transientPostAttach.clientWidth,
+        authoredWidthPx:
+          runtime.attachmentBoundary.transientPostAttach.authoredWidthPx,
       },
       synchronousPostRefreshContainerCount:
         runtime.attachmentBoundary.synchronousPostRefreshContainerCount,

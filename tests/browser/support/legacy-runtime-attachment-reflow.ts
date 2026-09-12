@@ -23,6 +23,7 @@ export interface ReflowCard {
   readonly id: string;
   readonly role: string;
   readonly frameLocalBounds: Rect;
+  readonly untransformedFrameLocalBounds: Rect;
   readonly naturalWidth: number;
   readonly naturalHeight: number;
   readonly inlineLeft: string;
@@ -32,6 +33,17 @@ export interface ReflowCard {
   readonly zIndex: string;
   readonly clientWidth: number;
   readonly clientHeight: number;
+  readonly offsetWidth: number;
+  readonly offsetHeight: number;
+  readonly computedWidthPx: number;
+  readonly computedHeightPx: number;
+  readonly transformMatrix: {
+    readonly a: number;
+    readonly b: number;
+    readonly c: number;
+    readonly d: number;
+  };
+  readonly transformOrigin: string;
   readonly attached: boolean;
   readonly target: string;
   readonly relativeRole: string | null;
@@ -56,6 +68,17 @@ export interface ReflowStack {
   readonly hitOrder: {
     readonly commonOverlap: readonly string[];
     readonly attachmentOnly: readonly string[];
+    readonly baseOnly: readonly string[];
+    readonly authoredLayoutOnly: readonly string[];
+  };
+  readonly hitPointsFrameLocal: {
+    readonly commonOverlap: { readonly x: number; readonly y: number } | null;
+    readonly attachmentOnly: { readonly x: number; readonly y: number } | null;
+    readonly baseOnly: { readonly x: number; readonly y: number } | null;
+    readonly authoredLayoutOnly: {
+      readonly x: number;
+      readonly y: number;
+    } | null;
   };
 }
 
@@ -65,6 +88,8 @@ export interface ReflowAttachmentBoundary {
     readonly domOrder: readonly string[];
     readonly clientWidth: number;
     readonly authoredWidthPx: number;
+    readonly inlineMarginRight: string;
+    readonly computedMarginRightPx: number;
   };
   readonly synchronousPostRefreshContainerCount: number;
   readonly oldContainerConnectedImmediatelyAfterRefresh: boolean;
@@ -394,6 +419,11 @@ export const captureReflow = async (
             }),
             clientWidth: transientContainer.clientWidth,
             authoredWidthPx: Number.parseFloat(transientContainer.style.width),
+            inlineMarginRight: transientContainer.style.marginRight,
+            computedMarginRightPx:
+              Number.parseFloat(
+                getComputedStyle(transientContainer).marginRight
+              ) || 0,
           };
           refreshBoard();
           const synchronousPostRefreshContainerCount =
@@ -457,62 +487,192 @@ export const captureReflow = async (
             return id ? [id] : [];
           })
           .filter((id, index, ids) => ids.indexOf(id) === index);
-      const baseBounds = byRole.get(first!)!.image.getBoundingClientRect();
       const attachment = attachmentOrder.at(-1);
-      const attachmentBounds = attachment
-        ? byRole.get(attachment)?.image.getBoundingClientRect()
+      const attachmentImage = attachment
+        ? byRole.get(attachment)?.image
         : undefined;
-      const hitOrder = (() => {
-        if (!attachmentBounds) {
-          return { commonOverlap: [], attachmentOnly: [] };
+      const hitEvidence = (() => {
+        const emptyOrder = {
+          commonOverlap: [],
+          attachmentOnly: [],
+          baseOnly: [],
+          authoredLayoutOnly: [],
+        };
+        const emptyPoints = {
+          commonOverlap: null,
+          attachmentOnly: null,
+          baseOnly: null,
+          authoredLayoutOnly: null,
+        };
+        if (!attachmentImage) {
+          return { hitOrder: emptyOrder, hitPointsFrameLocal: emptyPoints };
         }
+        const baseBounds = byRole.get(first!)!.image.getBoundingClientRect();
+        const attachmentBounds = attachmentImage.getBoundingClientRect();
+        const inlineTransform = attachmentImage.style.transform;
+        let untransformedAttachmentBounds: DOMRect;
+        try {
+          attachmentImage.style.transform = 'none';
+          untransformedAttachmentBounds =
+            attachmentImage.getBoundingClientRect();
+        } finally {
+          attachmentImage.style.transform = inlineTransform;
+        }
+        const matrix = new DOMMatrixReadOnly(
+          getComputedStyle(attachmentImage).transform
+        );
+        const localRotationDegrees =
+          ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360;
+        const center = (bounds: {
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+        }) => ({
+          x: (bounds.left + bounds.right) / 2,
+          y: (bounds.top + bounds.bottom) / 2,
+        });
         const common = {
           left: Math.max(baseBounds.left, attachmentBounds.left),
           top: Math.max(baseBounds.top, attachmentBounds.top),
           right: Math.min(baseBounds.right, attachmentBounds.right),
           bottom: Math.min(baseBounds.bottom, attachmentBounds.bottom),
         };
-        const attachmentOnly = {
-          left: baseBounds.right + 2,
-          right: attachmentBounds.right,
-        };
         if (
           common.right - common.left <= 2 ||
-          common.bottom - common.top <= 2 ||
-          attachmentOnly.right - attachmentOnly.left <= 2
+          common.bottom - common.top <= 2
         ) {
-          throw new Error('Real-v1 attachment hit regions lack safe interiors');
+          throw new Error('Real-v1 attachment overlap lacks a safe interior');
         }
+        const commonOverlap = center(common);
+
+        if (Math.round(localRotationDegrees) % 180 === 90) {
+          const attachmentOnly = {
+            left:
+              Math.max(baseBounds.right, untransformedAttachmentBounds.right) +
+              2,
+            right: attachmentBounds.right - 2,
+            top: attachmentBounds.top,
+            bottom: attachmentBounds.bottom,
+          };
+          const baseOnly = {
+            left: baseBounds.left,
+            right: baseBounds.right,
+            top: baseBounds.top + 2,
+            bottom: attachmentBounds.top - 2,
+          };
+          const authoredLayoutOnly = {
+            left: baseBounds.right + 2,
+            right: untransformedAttachmentBounds.right - 2,
+            top: attachmentBounds.bottom + 2,
+            bottom: untransformedAttachmentBounds.bottom - 2,
+          };
+          for (const [label, bounds] of Object.entries({
+            attachmentOnly,
+            baseOnly,
+            authoredLayoutOnly,
+          })) {
+            if (
+              bounds.right - bounds.left <= 0 ||
+              bounds.bottom - bounds.top <= 0
+            ) {
+              throw new Error(
+                `Real-v1 rotated attachment ${label} lacks a safe interior`
+              );
+            }
+          }
+          const hitPointsFrameLocal = {
+            commonOverlap,
+            attachmentOnly: center(attachmentOnly),
+            baseOnly: center(baseOnly),
+            authoredLayoutOnly: center(authoredLayoutOnly),
+          };
+          return {
+            hitOrder: {
+              commonOverlap: idsAt(commonOverlap.x, commonOverlap.y),
+              attachmentOnly: idsAt(
+                hitPointsFrameLocal.attachmentOnly.x,
+                hitPointsFrameLocal.attachmentOnly.y
+              ),
+              baseOnly: idsAt(
+                hitPointsFrameLocal.baseOnly.x,
+                hitPointsFrameLocal.baseOnly.y
+              ),
+              authoredLayoutOnly: idsAt(
+                hitPointsFrameLocal.authoredLayoutOnly.x,
+                hitPointsFrameLocal.authoredLayoutOnly.y
+              ),
+            },
+            hitPointsFrameLocal,
+          };
+        }
+
+        const attachmentOnlyBounds = {
+          left: baseBounds.right + 2,
+          right: attachmentBounds.right,
+          top: attachmentBounds.top,
+          bottom: attachmentBounds.bottom,
+        };
+        if (attachmentOnlyBounds.right - attachmentOnlyBounds.left <= 2) {
+          throw new Error(
+            'Real-v1 attachment-only strip lacks a safe interior'
+          );
+        }
+        const attachmentOnly = center(attachmentOnlyBounds);
         return {
-          commonOverlap: idsAt(
-            (common.left + common.right) / 2,
-            (common.top + common.bottom) / 2
-          ),
-          attachmentOnly: idsAt(
-            (attachmentOnly.left + attachmentOnly.right) / 2,
-            attachmentBounds.top + attachmentBounds.height / 2
-          ),
+          hitOrder: {
+            commonOverlap: idsAt(commonOverlap.x, commonOverlap.y),
+            attachmentOnly: idsAt(attachmentOnly.x, attachmentOnly.y),
+            baseOnly: [],
+            authoredLayoutOnly: [],
+          },
+          hitPointsFrameLocal: {
+            commonOverlap,
+            attachmentOnly,
+            baseOnly: null,
+            authoredLayoutOnly: null,
+          },
         };
       })();
 
-      return {
-        cards: [...byRole].map(([role, card]) => ({
+      const captureCard = (role: string, card: LegacyCard) => {
+        const paintedBounds = rectOf(card.image);
+        const styles = getComputedStyle(card.image);
+        const matrix = new DOMMatrixReadOnly(styles.transform);
+        const inlineTransform = card.image.style.transform;
+        let untransformedFrameLocalBounds: Rect;
+        try {
+          card.image.style.transform = 'none';
+          untransformedFrameLocalBounds = rectOf(card.image);
+        } finally {
+          card.image.style.transform = inlineTransform;
+        }
+        return {
           id: card.image.dataset.legacyRuntimeReflowCardId ?? role,
           role,
-          frameLocalBounds: rectOf(card.image),
+          frameLocalBounds: paintedBounds,
+          untransformedFrameLocalBounds,
           naturalWidth: card.image.naturalWidth,
           naturalHeight: card.image.naturalHeight,
           inlineLeft: card.image.style.left,
           inlineBottom: card.image.style.bottom,
-          inlineTransform: card.image.style.transform,
+          inlineTransform,
           localRotationDegrees:
-            Number.parseInt(
-              card.image.style.transform.replace(/[^0-9-]/gu, ''),
-              10
-            ) || 0,
+            ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
           zIndex: card.image.style.zIndex,
           clientWidth: card.image.clientWidth,
           clientHeight: card.image.clientHeight,
+          offsetWidth: card.image.offsetWidth,
+          offsetHeight: card.image.offsetHeight,
+          computedWidthPx: Number.parseFloat(styles.width),
+          computedHeightPx: Number.parseFloat(styles.height),
+          transformMatrix: {
+            a: matrix.a,
+            b: matrix.b,
+            c: matrix.c,
+            d: matrix.d,
+          },
+          transformOrigin: styles.transformOrigin,
           attached: card.image.attached === true,
           target: card.image.target ?? '',
           relativeRole:
@@ -526,7 +686,11 @@ export const captureReflow = async (
             ...card.image.parentElement!.querySelectorAll(':scope > img'),
           ].indexOf(card.image),
           sourcePath: new URL(card.image.currentSrc).pathname,
-        })),
+        };
+      };
+
+      return {
+        cards: [...byRole].map(([role, card]) => captureCard(role, card)),
         stack: {
           id: stackId,
           frameLocalBounds: rectOf(element),
@@ -539,7 +703,8 @@ export const captureReflow = async (
           computedMarginLeftPx: Number.parseFloat(computed.marginLeft),
           childDomOrder: [...element.querySelectorAll('img')].map(roleOf),
           logicalOrder: zone.array.map((card) => card.name),
-          hitOrder,
+          hitOrder: hitEvidence.hitOrder,
+          hitPointsFrameLocal: hitEvidence.hitPointsFrameLocal,
         },
         attachmentClientWidthsBefore,
         attachmentAuthoredWidthsPx,

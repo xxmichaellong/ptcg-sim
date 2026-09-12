@@ -507,7 +507,10 @@ Trainer attached to an ordinary active Pokémon receives the non-Pokémon
 presentation turn and writes `margin-right: 2%` on the wrapper. The stable
 wrapper retains the same 91 px integer base width and 106.167 px authored width
 as the single-Energy case, but its computed 7.71875 px margin shifts the
-centered stack.
+centered stack. The browser replay now obtains every phase from v1's actual
+`Card`, `moveCard`, and `refreshBoard` modules; the checked-in JSON remains the
+immutable expectation, with no hand-authored DOM/state mutation recorder in
+this path.
 
 The Tool checkpoint explicitly separates the pre-transform 90.5625×126 px
 layout box from the 126×90.5625 px painted bounding box. It records the local
