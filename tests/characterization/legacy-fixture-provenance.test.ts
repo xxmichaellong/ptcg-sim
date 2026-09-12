@@ -21,6 +21,8 @@ interface ProvenanceClaim {
 interface Fixture {
   readonly provenance?: readonly ProvenanceEntry[];
   readonly provenanceClaims?: readonly ProvenanceClaim[];
+  /** Digests of other fixtures this one was derived from. */
+  readonly dependencies?: readonly ProvenanceEntry[];
 }
 
 const fixtureFiles = async (): Promise<readonly string[]> => {
@@ -103,6 +105,36 @@ describe('legacy fixture provenance', () => {
     expect(mismatches, 'fixtures describing a source that has changed').toEqual(
       []
     );
+  });
+
+  /**
+   * A fixture derived from another pins that one by digest too. Those entries
+   * are always text, and they point at fixtures rather than client sources, so
+   * a stale one means a fixture is describing a baseline that has since moved.
+   */
+  it('matches every claimed dependency digest against the checked-in fixture', async () => {
+    const files = await fixtureFiles();
+    const mismatches: string[] = [];
+    let checked = 0;
+    for (const file of files) {
+      const fixture = JSON.parse(
+        await readFile(`${repositoryRoot}${file}`, 'utf8')
+      ) as Fixture;
+      for (const entry of fixture.dependencies ?? []) {
+        checked += 1;
+        const actual = await digestOf({ ...entry, encoding: 'utf8' }).catch(
+          (error: unknown) => `unreadable: ${String(error)}`
+        );
+        if (actual !== entry.sha256) {
+          mismatches.push(`${file} -> ${entry.path}`);
+        }
+      }
+    }
+    expect(mismatches, 'fixtures deriving from a baseline that moved').toEqual(
+      []
+    );
+    // Guards against the loop silently covering nothing if the field is renamed.
+    expect(checked, 'dependency entries checked').toBeGreaterThan(0);
   });
 
   it('keeps each fixture claim set and digest set in agreement', async () => {
