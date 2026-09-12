@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createRoomAdmissionState,
+  dueDisconnectedSessions,
   expireDisconnectedRoomSessions,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
@@ -105,5 +106,47 @@ describe('session expiry ordering', () => {
       [...declared],
       'declared ids are in the code-unit order the invariant requires'
     ).toEqual([...declared].sort());
+  });
+
+  /**
+   * The session hub has to rebuild this same list in its crash-recovery path,
+   * to recognise an expiry that already landed durably. It once did so with its
+   * own copy of the filter and sort, which kept the collation order after the
+   * commit had been corrected -- so a committed sweep still read as
+   * uncommitted. Both now go through this selector; this pins what it returns.
+   */
+  it('selects due sessions in the order a transition declaration needs', () => {
+    const current = snapshotWithDueSessions();
+    const due = dueDisconnectedSessions(current, 2_000).map(
+      (session) => session.id
+    );
+    expect(due).toEqual([upperId, lowerId]);
+    expect(due, 'code-unit order').toEqual([...due].sort());
+    expect(
+      due,
+      'collation would order these differently, which is the whole hazard'
+    ).not.toEqual([...due].sort((left, right) => left.localeCompare(right)));
+
+    // A declaration built from this selector is accepted by the invariant that
+    // both the commit and the recovery path run.
+    const candidate: RoomAuthoritySnapshot = {
+      ...current,
+      authorityVersion: current.authorityVersion + 1,
+      sessions: {},
+    };
+    expect(() =>
+      assertAdmissionTransactionTransition(current, {
+        expectedAuthorityVersion: current.authorityVersion,
+        snapshot: candidate,
+        kind: 'sessions_expired',
+        sessionIds: due,
+        expiredAt: 2_000,
+      })
+    ).not.toThrow();
+  });
+
+  it('excludes sessions whose lease is not yet due', () => {
+    const current = snapshotWithDueSessions();
+    expect(dueDisconnectedSessions(current, 999)).toEqual([]);
   });
 });

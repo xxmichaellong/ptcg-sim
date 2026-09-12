@@ -563,6 +563,37 @@ export interface ExpireDisconnectedRoomSessionsResult {
   readonly nextReconnectExpiresAt?: number;
 }
 
+/**
+ * The disconnected sessions whose reconnect lease is due, in the order the
+ * transition invariant requires them to be declared.
+ *
+ * That order is code-unit, not collation. The invariant compares the declared
+ * ids against their own `.sort()`, and session ids are `session_<base64url>` --
+ * an alphabet spanning the case boundary, where the two rules disagree, since
+ * code-unit order puts every uppercase letter before every lowercase one while
+ * collation interleaves them. Declaring them in collation order made the commit
+ * throw whenever two due ids first differed across that boundary, which
+ * abandoned the sweep and left those sessions holding their seats.
+ *
+ * Every caller that needs this list must use this function. It is exported
+ * precisely so that the session hub's crash-recovery path, which has to
+ * reconstruct the same declaration to recognise an expiry that already
+ * committed, cannot derive a different order than the commit did.
+ */
+export const dueDisconnectedSessions = (
+  current: RoomAuthoritySnapshot,
+  now: number
+): readonly AuthoritySession[] =>
+  Object.values(current.sessions)
+    .filter(
+      (session) =>
+        session.reconnectExpiresAt !== undefined &&
+        session.reconnectExpiresAt <= now
+    )
+    .sort((left, right) =>
+      left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+    );
+
 /** Atomically retires every reconnect lease due at the supplied wall clock. */
 export const expireDisconnectedRoomSessions = async (
   current: RoomAuthoritySnapshot,
@@ -574,17 +605,7 @@ export const expireDisconnectedRoomSessions = async (
   const disconnected = Object.values(current.sessions).filter(
     (session) => session.reconnectExpiresAt !== undefined
   );
-  const expiredSessions = disconnected
-    .filter((session) => session.reconnectExpiresAt! <= now)
-    // Code-unit order, not collation. The transition invariant compares the
-    // declared ids against their own `.sort()`, and session ids are
-    // `session_<base64url>` -- an alphabet that spans the case boundary, where
-    // collation and code-unit order disagree. Sorting by `localeCompare` here
-    // made the commit throw whenever two due ids differed first across that
-    // boundary, which left every session in the sweep holding its seat.
-    .sort((left, right) =>
-      left.id < right.id ? -1 : left.id > right.id ? 1 : 0
-    );
+  const expiredSessions = dueDisconnectedSessions(current, now);
   const nextReconnectExpiresAt = disconnected
     .filter((session) => session.reconnectExpiresAt! > now)
     .reduce<number | undefined>(

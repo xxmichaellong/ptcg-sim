@@ -1,18 +1,19 @@
 import {
+  type AdmissionTicketIssueRequest,
   assertAdmissionTransactionTransition,
+  type AuthorityCommandTimingBreakdown,
+  type AuthoritySession,
+  type AuthoritySnapshotStore,
   buildProjectedReplay,
   disconnectRoomSession,
-  expireDisconnectedRoomSessions,
+  dueDisconnectedSessions,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
   leaveRoomSession,
   RoomAuthorityCoordinator,
-  type AdmissionTicketIssueRequest,
-  type AuthorityCommandTimingBreakdown,
-  type AuthoritySession,
-  type AuthoritySnapshotStore,
   type RoomInvitationDependencies,
   type RoomInvitationIssueRequest,
+  expireDisconnectedRoomSessions,
 } from '@ptcgsim/room-authority';
 import {
   PROTOCOL_VERSION,
@@ -591,13 +592,12 @@ export class RoomSessionHub {
     const run = this.tail.then(async () => {
       await this.flushPendingDisconnects();
       const before = this.coordinator.currentSnapshot();
-      const expiredSessions = Object.values(before.sessions)
-        .filter(
-          (session) =>
-            session.reconnectExpiresAt !== undefined &&
-            session.reconnectExpiresAt <= now
-        )
-        .sort((left, right) => left.id.localeCompare(right.id));
+      // The same selector the commit uses. This list is replayed through
+      // assertAdmissionTransactionTransition below to recognise an expiry that
+      // already landed durably, so deriving it differently here -- as a second
+      // copy of the filter and sort once did -- makes a committed sweep look
+      // uncommitted.
+      const expiredSessions = dueDisconnectedSessions(before, now);
       try {
         const result = await expireDisconnectedRoomSessions(
           before,
