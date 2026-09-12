@@ -2146,6 +2146,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      collector bookkeeping rather than retained application state. The
      hardened 140-cycle gate passes locally in 5.3 minutes, and the complete
      non-browser CI gate remains green.
+138. The obsolete compound-rotation transcription is removed from
+     `legacy-source-board.ts`. Its 216-scenario routing/type block and its
+     capture implementation plus forty convenience wrappers had no remaining
+     import anywhere in the repository after the compound JSON oracles gained
+     independent real-v1 replay gates. Those fixtures and replay tests remain
+     intact; only the unused recorder is deleted. Exact sentinel and whole-repo
+     reference checks bounded the two removed ranges, browser TypeScript and
+     lint stay green, and 5,404 lines leave the shared helper (13,623 down to
+     8,219). The nine browser specs that still import the helper continue to
+     cover active Energy, evolution, Trainer Tool, mixed-stack, and marker
+     behavior.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
