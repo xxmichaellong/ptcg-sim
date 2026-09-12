@@ -370,6 +370,7 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
       computedWidthPx: 90.5625,
       computedHeightPx: 126,
       transformOrigin: '45.2812px 63px',
+      position: expectedCard.role === 'base' ? 'relative' : 'absolute',
       zIndex: expectedCard.role === 'base' ? 0 : -1,
       inlineBottomPx: 0,
       attached: expectedCard.role === 'tool',

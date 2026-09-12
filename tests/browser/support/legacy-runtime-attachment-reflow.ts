@@ -44,6 +44,7 @@ export interface ReflowCard {
     readonly d: number;
   };
   readonly transformOrigin: string;
+  readonly position: string;
   readonly attached: boolean;
   readonly target: string;
   readonly relativeRole: string | null;
@@ -675,6 +676,7 @@ export const captureReflow = async (
             d: matrix.d,
           },
           transformOrigin: styles.transformOrigin,
+          position: styles.position,
           attached: card.image.attached === true,
           target: card.image.target ?? '',
           relativeRole:
@@ -1141,6 +1143,7 @@ export const captureAttachmentDeparture = async (
               d: matrix.d,
             },
             transformOrigin: styles.transformOrigin,
+            position: styles.position,
             attached: card.image.attached === true,
             target: card.image.target ?? '',
             relativeRole:

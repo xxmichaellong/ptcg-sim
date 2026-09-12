@@ -2323,6 +2323,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      each live-derived probe against the exact intended card-rectangle set and
      requires the complete native hit stack; it no longer confuses one
      recorder-selected safe coordinate with source behavior.
+152. The original three-case attachment smoke bridge is retired after its sole
+     remaining unique check—computed `relative` base versus `absolute`
+     attachment positioning—is captured and asserted by the authoritative
+     Energy and Trainer-as-Tool reflow suites. The evolution suite already
+     pins the same positioning rule through every pre-evolution, transient,
+     synchronous-refresh, and stable card stage. All offset, layer, rotation,
+     relationship, wrapper, source, candidate, hit, and paint assertions remain
+     in the stronger paths, removing another 288 duplicated browser-test lines.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -347,6 +347,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       clientWidth: 91,
       clientHeight: 126,
       localRotationDegrees: 0,
+      position: expectedCard.role === 'base' ? 'relative' : 'absolute',
       zIndexNumber: expectedCard.role === 'base' ? 0 : -1,
       inlineBottomPx: 0,
       attached: expectedCard.role === 'energy',
