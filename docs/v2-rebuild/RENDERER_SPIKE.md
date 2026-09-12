@@ -2157,6 +2157,24 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      8,219). The nine browser specs that still import the helper continue to
      cover active Energy, evolution, Trainer Tool, mixed-stack, and marker
      behavior.
+139. The active-to-bench marker-movement geometry gate now drives v1's actual
+     `Card`, `moveCardBundle`, `refreshBoard`, damage, special-condition, and
+     ability-counter modules. It retains the prior stable-card/marker identity,
+     physical geometry, counter style, wrapper replacement, immediate-versus-
+     settled lifecycle, special-condition removal, and cleanup assertions, and
+     additionally requires the real module graph to resolve without a missing
+     same-origin path. The independent runtime exposed two inaccuracies in the
+     transcription: cross-zone bundles retain three wrappers in the same task
+     because the move and its following refresh both reconstruct before
+     MutationObserver delivery, and the direct bench refresh's two live flex
+     wrappers move each surviving marker 45.265625 px rather than 4.765625 px.
+     The fixture is corrected to the directly sampled drift; its synthetic
+     call trace and harness-only listener/observer counters are removed, while
+     all source-observable cleanup fields remain. Both local and opponent paths
+     plus the compact runtime oracle pass three consecutive Chromium repeats
+     (12/12). The retired marker-movement recorder and types remove another 668
+     lines from `legacy-source-board.ts`, reducing it to 7,551 lines and its
+     browser-spec consumers from nine to eight.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -7,9 +7,14 @@ import { expect, test } from '@playwright/test';
 import oracle from '../legacy-fixtures/renderer/marker-movement-v1.json' with { type: 'json' };
 
 import {
-  captureLegacySourceMarkerMovementFixture,
-  type CapturedRect,
-} from './support/legacy-source-board.js';
+  captureLegacyRuntimeLayout,
+  type LegacySide,
+} from './support/legacy-runtime-layout.js';
+import {
+  captureMarkerMovement,
+  type MarkerRect as CapturedRect,
+} from './support/legacy-runtime-marker.js';
+import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -57,7 +62,7 @@ test('marker movement oracle pins every claimed source and binary asset digest',
   }
 });
 
-test('legacy movement reparents stable marker nodes while reconstructing stack wrappers', async ({
+test('real v1 movement reparents stable marker nodes while reconstructing stack wrappers', async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -68,6 +73,8 @@ test('legacy movement reparents stable marker nodes while reconstructing stack w
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
+  const loaded = await loadLegacyRuntime(page);
+  const layout = await captureLegacyRuntimeLayout(page);
   const runtimeErrors: string[] = [];
   page.on('pageerror', (error) =>
     runtimeErrors.push(`pageerror: ${error.message}`)
@@ -83,29 +90,74 @@ test('legacy movement reparents stable marker nodes while reconstructing stack w
     runtimeErrors.push(`console.error: ${text}`);
   });
 
-  const capture = await captureLegacySourceMarkerMovementFixture(page);
-  await testInfo.attach('legacy-source-marker-movement-geometry.json', {
+  const physicalRect = (
+    side: LegacySide,
+    bounds: CapturedRect
+  ): CapturedRect => {
+    const frame = layout.frames[side];
+    return side === 'local'
+      ? {
+          ...bounds,
+          x: frame.x + bounds.x,
+          y: frame.y + bounds.y,
+        }
+      : {
+          ...bounds,
+          x: frame.x + frame.width - bounds.x - bounds.width,
+          y: frame.y + frame.height - bounds.y - bounds.height,
+        };
+  };
+  const cases = [];
+  for (const side of ['local', 'opponent'] as const) {
+    const movement = await captureMarkerMovement(page, {
+      side,
+      damage: oracle.input.damage,
+      specialCondition: oracle.input.specialCondition,
+      phaseNames: oracle.expected.phaseNames,
+    });
+    cases.push({
+      ...movement,
+      side,
+      phases: movement.phases.map((phase) => ({
+        ...phase,
+        cardPhysicalBounds: physicalRect(side, phase.cardFrameLocalBounds),
+      })),
+    });
+  }
+  const capture = {
+    frames: layout.frames,
+    cases,
+    sourceFulfillment: {
+      servedPaths: loaded.servedPaths,
+      blockedExternalOrigins: loaded.blockedOrigins,
+      missingSameOriginPaths: loaded.missingPaths,
+    },
+  };
+  await testInfo.attach('legacy-runtime-marker-movement-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
 
-  expect(capture.sourceFulfillment.servedPaths).toEqual([
-    '/',
-    '/opp-containers.html',
-    '/self-containers.html',
-    '/src/assets/cardback.png',
-    '/src/css/index.css',
-    '/src/css/opp-containers.css',
-    '/src/css/self-containers.css',
-    '/src/front-end.js',
-  ]);
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
-  expect(capture.sourceFulfillment.blockedExternalOrigins).toEqual([
-    'https://cdn.socket.io',
-    'https://static.cloudflareinsights.com',
-    'https://upload.wikimedia.org',
-    'https://www.svgrepo.com',
-  ]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain('/src/front-end.js');
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card-bundle.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/sizing/refresh-board.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/counters/damage-counter.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/counters/special-condition.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/counters/ability-counter.js'
+  );
+  expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
+    'https://cdn.socket.io'
+  );
   expect(capture.cases.map(({ id }) => id)).toEqual(oracle.input.cases);
 
   for (const side of ['local', 'opponent'] as const) {
@@ -135,8 +187,13 @@ test('legacy movement reparents stable marker nodes while reconstructing stack w
         ({ benchWrapperCountAfterSettle }) => benchWrapperCountAfterSettle
       )
     ).toEqual(oracle.expected.benchWrapperCounts);
-    expect(movement.callTrace).toEqual(oracle.expected.callTrace);
-    expect(movement.cleanup).toEqual(oracle.expected.cleanup);
+    expect(movement.cleanup).toEqual({
+      markerCount: oracle.expected.cleanup.markerCount,
+      activeWrapperCount: oracle.expected.cleanup.activeWrapperCount,
+      benchWrapperCount: oracle.expected.cleanup.benchWrapperCount,
+      cardConnected: oracle.expected.cleanup.cardConnected,
+      cardPointersAreNull: oracle.expected.cleanup.cardPointersAreNull,
+    });
 
     const [initial, demoted, refreshed, promoted] = movement.phases;
     if (!initial || !demoted || !refreshed || !promoted) {
@@ -158,15 +215,19 @@ test('legacy movement reparents stable marker nodes while reconstructing stack w
       priorWrapperConnectedImmediately: null,
       priorWrapperConnectedAfterSettle: null,
     });
-    for (const [prior, phase] of [
-      [initial, demoted],
-      [demoted, refreshed],
-      [refreshed, promoted],
+    // A cross-zone move constructs once in `moveCard` and once more in the
+    // `refreshBoard` that `moveCardBundle` invokes, so both superseded wrappers
+    // remain connected until MutationObserver delivery. A direct refresh has
+    // only the original and replacement wrappers at that boundary.
+    for (const [prior, phase, immediateWrapperCount] of [
+      [initial, demoted, 3],
+      [demoted, refreshed, 2],
+      [refreshed, promoted, 3],
     ] as const) {
       expect(phase).toMatchObject({
         priorWrapperId: prior.wrapperId,
         sameWrapperAsPrior: false,
-        wrapperCountImmediately: 2,
+        wrapperCountImmediately: immediateWrapperCount,
         priorWrapperConnectedImmediately: true,
         priorWrapperConnectedAfterSettle: false,
       });

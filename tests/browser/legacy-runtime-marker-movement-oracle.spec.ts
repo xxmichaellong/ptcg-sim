@@ -23,10 +23,10 @@ const SIDES: readonly MarkerSide[] = ['local', 'opponent'];
  * has to leave the active slot with no play container at all rather than an
  * empty one, and the promotion has to do the same to the bench.
  *
- * `benchRefreshTransientMarkerXDrift` is not asserted. It records how far a
- * marker slides mid-reconstruction, and the fixture gives the drift without the
- * moment it was sampled at; picking one would be choosing a sample site until
- * the number matched.
+ * This compact replay does not sample `benchRefreshTransientMarkerXDrift`.
+ * The detailed real-runtime geometry companion samples it synchronously after
+ * `refreshBoard`, before MutationObserver cleanup, and pins the resulting
+ * wrapper overlap and marker position.
  */
 for (const side of SIDES) {
   test(`the recorded ${side} marker-movement oracle matches the real v1 runtime`, async ({

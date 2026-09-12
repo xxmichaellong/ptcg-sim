@@ -859,13 +859,15 @@ movement checkpoint backed by
 Pokémon moves active→bench, undergoes one same-bench refresh reconstruction,
 and moves bench→active in independent local/opponent histories. Chromium pins
 the stable card, damage, and ability nodes; removal of the active-only special
-condition; a new wrapper for every phase; synchronous two-wrapper overlap; and
-observer-settled cleanup. The same-bench refresh records a transient 4.765625 px
-frame-local rightward shift for both surviving marker nodes because four
-synchronous reflows measure the replacement before the old wrapper disappears.
-The old wrapper's `MutationObserver` and the native bench `ResizeObserver` then
-reflow the markers to their prior bench geometry during settlement. The card
-does not shift in either capture.
+condition; a new wrapper for every phase; synchronous wrapper overlap; and
+observer-settled cleanup. Cross-zone `moveCardBundle` transitions temporarily
+retain three wrappers because both `moveCard` and the bundle's subsequent
+`refreshBoard` reconstruct the stack before MutationObserver delivery. A direct
+same-bench refresh retains two. While both bench wrappers still participate in
+flex layout, the refresh records a transient 45.265625 px frame-local rightward
+shift for both surviving marker nodes. The old wrapper's `MutationObserver` and
+the native bench `ResizeObserver` then reflow the markers to their prior bench
+geometry during settlement. Stable card geometry does not shift.
 
 V2 does not expose or encode that transient wrapper history. Its stable
 top-card-derived damage/ability IDs instead change between `legacyActiveQ0` and

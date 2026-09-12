@@ -442,17 +442,55 @@ export const captureMarkerRotation = async (
     }
   );
 
+export type MarkerMovementKind = 'damage' | 'specialCondition' | 'ability';
+
+export interface MarkerMovementMarker {
+  readonly id: string;
+  readonly kind: MarkerMovementKind;
+  readonly nodeStable: boolean;
+  readonly parentZoneId: MarkerSlot;
+  readonly textContent: string;
+  readonly contentEditable: string;
+  readonly frameLocalBounds: MarkerRect;
+  readonly className: string;
+  readonly pointerEvents: string;
+  readonly backgroundColor: string;
+  readonly color: string;
+  readonly zIndex: number;
+}
+
 export interface MarkerMovementPhase {
   readonly name: string;
   /** The zone the card is in when this phase is sampled. */
   readonly zone: string;
+  readonly zoneId: MarkerSlot;
   /** Which marker kinds the card carries, in a stable order. */
-  readonly markerKinds: readonly string[];
+  readonly markerKinds: readonly MarkerMovementKind[];
   readonly activeWrapperCount: number;
   readonly benchWrapperCount: number;
+  readonly activeWrapperCountAfterSettle: number;
+  readonly benchWrapperCountAfterSettle: number;
+  readonly cardId: string;
+  readonly cardNodeStable: boolean;
+  readonly cardFrameLocalBounds: MarkerRect;
+  readonly wrapperId: string;
+  readonly wrapperNodeStable: boolean;
+  readonly priorWrapperId: string | null;
+  readonly sameWrapperAsPrior: boolean | null;
+  readonly wrapperCountImmediately: number;
+  readonly priorWrapperConnectedImmediately: boolean | null;
+  readonly priorWrapperConnectedAfterSettle: boolean | null;
+  readonly markerFrameLocalBoundsImmediately: Readonly<
+    Partial<Record<MarkerMovementKind, MarkerRect>>
+  >;
+  readonly markers: readonly MarkerMovementMarker[];
+  readonly cardDamageCounterId: string | null;
+  readonly cardSpecialConditionId: string | null;
+  readonly cardAbilityCounterId: string | null;
 }
 
 export interface MarkerMovementCapture {
+  readonly id: string;
   readonly phases: readonly MarkerMovementPhase[];
   readonly cleanup: {
     readonly markerCount: number;
@@ -482,7 +520,7 @@ export const captureMarkerMovement = async (
   }
 ): Promise<MarkerMovementCapture> =>
   page.evaluate(
-    async ({ user, damage, specialCondition, phaseNames }) => {
+    async ({ side, user, damage, specialCondition, phaseNames }) => {
       const load = (specifier: string): Promise<Record<string, never>> =>
         import(/* @vite-ignore */ specifier);
       const [
@@ -641,47 +679,197 @@ export const captureMarkerMovement = async (
       ) {
         await frames();
       }
+      if (card.image.clientWidth === 0) {
+        throw new Error('Real-v1 marker movement card never received layout');
+      }
 
       const wrapperCount = (zone: LegacyZone) =>
         zone.element.querySelectorAll(':scope > .play-container').length;
-      const zoneOf = () =>
+      const zoneOf = (): MarkerSlot | 'none' =>
         active.array.includes(card)
           ? 'active'
           : bench.array.includes(card)
             ? 'bench'
             : 'none';
-      const sample = (name: string): MarkerMovementPhase => ({
-        name,
-        zone: zoneOf(),
-        markerKinds: [
-          ...(card.image.damageCounter ? ['damage'] : []),
-          ...(card.image.specialCondition ? ['specialCondition'] : []),
-          ...(card.image.abilityCounter ? ['ability'] : []),
-        ],
-        activeWrapperCount: wrapperCount(active),
-        benchWrapperCount: wrapperCount(bench),
-      });
+      const wrapperOf = (): HTMLElement => {
+        const wrapper = card.image.parentElement;
+        if (!wrapper) {
+          throw new Error('Real-v1 marker movement card has no wrapper');
+        }
+        return wrapper;
+      };
+      const wrapperIds = new WeakMap<HTMLElement, string>();
+      let wrapperSequence = 0;
+      const idOfWrapper = (wrapper: HTMLElement): string => {
+        const existing = wrapperIds.get(wrapper);
+        if (existing) return existing;
+        const id = `${side}-marker-wrapper-${String(++wrapperSequence)}`;
+        wrapperIds.set(wrapper, id);
+        return id;
+      };
+      const initialCard = card.image;
+      const initialWrapper = wrapperOf();
+      idOfWrapper(initialWrapper);
+      const cardId = `${side}-marker-movement-card`;
+      const markerId = (kind: MarkerMovementKind) =>
+        `${side}-marker-movement-${kind}`;
+      const rectOf = (node: Element): MarkerRect => {
+        const bounds = node.getBoundingClientRect();
+        return {
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        };
+      };
 
       addDamageCounter(user, 'active', 0, damage, false);
       addSpecialCondition(user, 'active', 0, false);
       updateSpecialCondition(user, 'active', 0, specialCondition, false);
       addAbilityCounter(user, 'active', 0);
       await frames();
-      const phases: MarkerMovementPhase[] = [sample(phaseNames[0]!)];
+      const initialMarkers: Readonly<
+        Record<MarkerMovementKind, HTMLElement | null>
+      > = {
+        damage: card.image.damageCounter ?? null,
+        specialCondition: card.image.specialCondition ?? null,
+        ability: card.image.abilityCounter ?? null,
+      };
+      const markerEntries = () =>
+        [
+          ['damage', card.image.damageCounter],
+          ['specialCondition', card.image.specialCondition],
+          ['ability', card.image.abilityCounter],
+        ] as const;
+      const captureMarkers = (): MarkerMovementMarker[] =>
+        markerEntries().flatMap(([kind, marker]) => {
+          if (!marker?.isConnected) return [];
+          const parentZoneId =
+            marker.parentElement === active.element
+              ? 'active'
+              : marker.parentElement === bench.element
+                ? 'bench'
+                : null;
+          if (parentZoneId === null) {
+            throw new Error(`Real-v1 ${kind} marker has an unexpected parent`);
+          }
+          const styles = getComputedStyle(marker);
+          return [
+            {
+              id: markerId(kind),
+              kind,
+              nodeStable: marker === initialMarkers[kind],
+              parentZoneId,
+              textContent: marker.textContent ?? '',
+              contentEditable: marker.contentEditable,
+              frameLocalBounds: rectOf(marker),
+              className: marker.className,
+              pointerEvents: styles.pointerEvents,
+              backgroundColor: styles.backgroundColor,
+              color: styles.color,
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+            },
+          ];
+        });
+      const captureMarkerBounds = () =>
+        Object.fromEntries(
+          markerEntries().flatMap(([kind, marker]) =>
+            marker?.isConnected ? [[kind, rectOf(marker)]] : []
+          )
+        ) as Readonly<Partial<Record<MarkerMovementKind, MarkerRect>>>;
+      const capturePhase = (
+        name: string,
+        priorWrapper: HTMLElement | null,
+        wrapperCountImmediately: number,
+        priorWrapperConnectedImmediately: boolean | null,
+        markerFrameLocalBoundsImmediately: Readonly<
+          Partial<Record<MarkerMovementKind, MarkerRect>>
+        >
+      ): MarkerMovementPhase => {
+        const zoneId = zoneOf();
+        if (zoneId === 'none') {
+          throw new Error(`Real-v1 marker card has no zone during ${name}`);
+        }
+        const wrapper = wrapperOf();
+        const markers = captureMarkers();
+        const activeWrapperCount = wrapperCount(active);
+        const benchWrapperCount = wrapperCount(bench);
+        return {
+          name,
+          zone: zoneId,
+          zoneId,
+          markerKinds: markers.map(({ kind }) => kind),
+          activeWrapperCount,
+          benchWrapperCount,
+          activeWrapperCountAfterSettle: activeWrapperCount,
+          benchWrapperCountAfterSettle: benchWrapperCount,
+          cardId,
+          cardNodeStable: card.image === initialCard,
+          cardFrameLocalBounds: rectOf(card.image),
+          wrapperId: idOfWrapper(wrapper),
+          wrapperNodeStable: wrapper === initialWrapper,
+          priorWrapperId:
+            priorWrapper === null ? null : idOfWrapper(priorWrapper),
+          sameWrapperAsPrior:
+            priorWrapper === null ? null : wrapper === priorWrapper,
+          wrapperCountImmediately,
+          priorWrapperConnectedImmediately,
+          priorWrapperConnectedAfterSettle:
+            priorWrapper === null ? null : priorWrapper.isConnected,
+          markerFrameLocalBoundsImmediately,
+          markers,
+          cardDamageCounterId: card.image.damageCounter
+            ? markerId('damage')
+            : null,
+          cardSpecialConditionId: card.image.specialCondition
+            ? markerId('specialCondition')
+            : null,
+          cardAbilityCounterId: card.image.abilityCounter
+            ? markerId('ability')
+            : null,
+        };
+      };
+      const phases: MarkerMovementPhase[] = [
+        capturePhase(
+          phaseNames[0]!,
+          null,
+          wrapperCount(active) + wrapperCount(bench),
+          null,
+          captureMarkerBounds()
+        ),
+      ];
+      const transition = async (
+        name: string,
+        operation: () => void
+      ): Promise<void> => {
+        const priorWrapper = wrapperOf();
+        idOfWrapper(priorWrapper);
+        operation();
+        const wrapperCountImmediately =
+          wrapperCount(active) + wrapperCount(bench);
+        const priorWrapperConnectedImmediately = priorWrapper.isConnected;
+        const markerFrameLocalBoundsImmediately = captureMarkerBounds();
+        await frames();
+        phases.push(
+          capturePhase(
+            name,
+            priorWrapper,
+            wrapperCountImmediately,
+            priorWrapperConnectedImmediately,
+            markerFrameLocalBoundsImmediately
+          )
+        );
+      };
 
       // Demote to the bench. moveCardBundle refreshes on its own, which is
       // what reflows the counters into their new home.
-      moveCardBundle(user, 'self', 'active', 'bench', 0, -1, 'move', false);
-      await frames();
-      phases.push(sample(phaseNames[1]!));
-
-      refreshBoard();
-      await frames();
-      phases.push(sample(phaseNames[2]!));
-
-      moveCardBundle(user, 'self', 'bench', 'active', 0, -1, 'move', false);
-      await frames();
-      phases.push(sample(phaseNames[3]!));
+      await transition(phaseNames[1]!, () =>
+        moveCardBundle(user, 'self', 'active', 'bench', 0, -1, 'move', false)
+      );
+      await transition(phaseNames[2]!, refreshBoard);
+      await transition(phaseNames[3]!, () =>
+        moveCardBundle(user, 'self', 'bench', 'active', 0, -1, 'move', false)
+      );
 
       const zoneId = zoneOf();
       if (zoneId !== 'none') {
@@ -698,15 +886,12 @@ export const captureMarkerMovement = async (
       await frames();
 
       return {
+        id: `${side}-marker-movement`,
         phases,
         cleanup: {
-          markerCount:
-            active.element.querySelectorAll(
-              '.self-circle, .opp-circle, .self-ability-counter, .opp-ability-counter'
-            ).length +
-            bench.element.querySelectorAll(
-              '.self-circle, .opp-circle, .self-ability-counter, .opp-ability-counter'
-            ).length,
+          markerCount: Object.values(initialMarkers).filter(
+            (marker) => marker?.isConnected
+          ).length,
           activeWrapperCount: wrapperCount(active),
           benchWrapperCount: wrapperCount(bench),
           cardConnected: card.image.isConnected,
@@ -718,6 +903,7 @@ export const captureMarkerMovement = async (
       };
     },
     {
+      side: options.side,
       user: options.side === 'local' ? 'self' : 'opp',
       damage: options.damage,
       specialCondition: options.specialCondition,

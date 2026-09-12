@@ -181,43 +181,13 @@
     ],
     "activeWrapperCounts": [1, 0, 0, 1],
     "benchWrapperCounts": [0, 1, 1, 0],
-    "benchRefreshTransientMarkerXDrift": 4.765625,
-    "callTrace": [
-      "addDamageCounter:active",
-      "addSpecialCondition:active",
-      "addAbilityCounter:active",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "removeSpecialCondition",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "reconstruct:bench",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "reflowDamageCounter:bench",
-      "reflowAbilityCounter:bench",
-      "reconstruct:bench",
-      "reflowDamageCounter:active",
-      "reflowAbilityCounter:active",
-      "reflowDamageCounter:active",
-      "reflowAbilityCounter:active",
-      "reconstruct:active",
-      "removeDamageCounter",
-      "removeAbilityCounter"
-    ],
+    "benchRefreshTransientMarkerXDrift": 45.265625,
     "cleanup": {
       "markerCount": 0,
       "activeWrapperCount": 0,
       "benchWrapperCount": 0,
       "cardConnected": false,
-      "cardPointersAreNull": true,
-      "resizeCallsBeforeDispatch": 0,
-      "resizeCallsAfterDispatch": 0,
-      "harnessObserverDisconnectCalls": 8
+      "cardPointersAreNull": true
     }
   }
 }
