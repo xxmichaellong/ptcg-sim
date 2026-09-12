@@ -2377,6 +2377,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      pass. This closes controlled redirect and extreme-intrinsic compatibility;
      representative large-raster decoded-memory cost stays a physical-profile
      gate.
+158. The live-Solo convergence gate now disables Playwright tracing for that
+     measurement file only. Default retain-on-failure tracing captured every
+     locator action against each 47/60-card dialog, producing a 140.8 MB trace
+     while also observing the DOM population under test. The gate still runs
+     all 40 warm-up and 100 measured cycles, 560 native keyboard-open/sort/close
+     dialog lifecycles, exact topology and alias checks, scalar socket/resource
+     assertions, three-sample post-GC comparisons, and its two JSON evidence
+     attachments. The unchanged workload passes locally in 4.6 minutes with
+     exact-or-lower document/node/listener bounds and the retained-heap limit;
+     ordinary failure screenshots and error context remain enabled.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

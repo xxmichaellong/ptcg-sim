@@ -6,6 +6,12 @@ import {
   type Page,
 } from '@playwright/test';
 
+// Playwright trace snapshots retain a full copy of every 47/60-card dialog at
+// every locator action. Besides producing a >100 MB artifact, that observer
+// perturbs the DOM/heap population this test is intended to measure. The gate
+// attaches its scalar memory and route evidence directly instead.
+test.use({ trace: 'off' });
+
 const WARMUP_CYCLES = 40;
 const MEASURED_CYCLES = 100;
 const SCENE_REVISIONS_PER_CYCLE = 4;
