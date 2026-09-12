@@ -2245,6 +2245,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      consumers from four to three; the reusable runtime capture now also
      carries the richer fields needed for the upcoming bench-marker migration,
      and the active adapter is 249 lines.
+145. The sole-bench marker gate now reuses the richer runtime capture and runs
+     both sides through v1's actual `Card`, bench placement, damage, ability,
+     `ResizeObserver`, and `rotateCard` paths. It retains every immutable
+     q0/q1/q2/q3/q0-return card/wrapper/marker geometry and style assertion,
+     derives the damage/ability overlap point from the live DOM, preserves
+     native hit order, verifies the active-only condition exclusion and zero-
+     node cleanup, and keeps strict q0 paint plus React DOM parity. The retired
+     recorder's self-authored call log, fake listener counters, and harness-
+     installed observer counters are removed because they did not measure v1.
+     The primary and compact runtime gates pass three consecutive focused
+     repeats (21/21). Removing the bench recorder and now-unused shared marker
+     transcription types cuts
+     865 lines from `legacy-source-board.ts`, reducing it to 3,447 lines and its
+     browser-spec consumers from three to two; the bench runtime adapter is 247
+     lines.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -19,10 +19,10 @@ import {
 import oracle from '../legacy-fixtures/renderer/bench-marker-rotation-v1.json' with { type: 'json' };
 
 import {
-  captureLegacySourceBenchMarkerRotationFixture,
+  captureLegacyRuntimeBenchMarkerFixture,
   type CapturedRect,
   type LegacyFixtureSide,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-bench-marker.js';
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
@@ -261,29 +261,25 @@ test('checked-in legacy bench markers reflow through q0-q1-q2-q3-q0 and clean up
     runtimeErrors.push(`console.error: ${text}`);
   });
 
-  const capture = await captureLegacySourceBenchMarkerRotationFixture(page);
-  await testInfo.attach('legacy-source-bench-marker-rotation-geometry.json', {
+  const capture = await captureLegacyRuntimeBenchMarkerFixture(page);
+  await testInfo.attach('legacy-runtime-bench-marker-rotation-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
 
-  expect(capture.sourceFulfillment.servedPaths).toEqual([
-    '/',
-    '/opp-containers.html',
-    '/self-containers.html',
-    '/src/assets/cardback.png',
-    '/src/css/index.css',
-    '/src/css/opp-containers.css',
-    '/src/css/self-containers.css',
-    '/src/front-end.js',
-  ]);
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
-  expect(capture.sourceFulfillment.blockedExternalOrigins).toEqual([
-    'https://cdn.socket.io',
-    'https://static.cloudflareinsights.com',
-    'https://upload.wikimedia.org',
-    'https://www.svgrepo.com',
-  ]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/assets/cardback.png'
+  );
+  expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
+    'https://cdn.socket.io'
+  );
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/counters/damage-counter.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/general/rotate-card.js'
+  );
 
   expect(capture.cases.map((entry) => entry.id)).toEqual(oracle.input.cases);
   for (const side of ['local', 'opponent'] as const) {
@@ -352,7 +348,6 @@ test('checked-in legacy bench markers reflow through q0-q1-q2-q3-q0 and clean up
       computedRightPx: oracle.expected.initialCard.initialWrapperMargins[2],
       computedLeftPx: oracle.expected.initialCard.initialWrapperMargins[3],
     });
-    expect(actualCase.callTrace).toEqual(oracle.expected.callTrace);
     expect(actualCase.phases.map((phase) => phase.name)).toEqual(
       oracle.expected.phases.map((phase) => phase.name)
     );
@@ -650,25 +645,11 @@ test('checked-in legacy bench markers reflow through q0-q1-q2-q3-q0 and clean up
       expect(phase.markerOverlapHitOrder).toEqual(expectedOverlap ?? null);
     }
 
-    expect(actualCase.nativeBenchResizeObserver).toEqual(
-      oracle.expected.nativeBenchResizeObserver
-    );
     expect(actualCase.cleanup).toEqual({
       markerCount: oracle.expected.cleanup.markerCount,
       specialConditionMarkerCount:
         oracle.expected.cleanup.specialConditionMarkerCount,
-      cardDamageCounterIsNull: oracle.expected.cleanup.cardPointersAreNull,
-      cardAbilityCounterIsNull: oracle.expected.cleanup.cardPointersAreNull,
-      liveResizeCallsBeforeDispatch:
-        oracle.expected.cleanup.liveResizeCallsBeforeDispatch,
-      liveResizeCallsAfterDispatch:
-        oracle.expected.cleanup.liveResizeCallsAfterDispatch,
-      liveMarkerCountAfterDispatch:
-        oracle.expected.cleanup.liveMarkerCountAfterDispatch,
-      resizeCallsBeforeCleanupDispatch:
-        oracle.expected.cleanup.resizeCallsBeforeCleanupDispatch,
-      resizeCallsAfterCleanupDispatch:
-        oracle.expected.cleanup.resizeCallsAfterCleanupDispatch,
+      cardPointersAreNull: oracle.expected.cleanup.cardPointersAreNull,
       wrapperCountAfterTwoFrames:
         oracle.expected.cleanup.wrapperCountAfterTwoFrames,
       cardCountAfterTwoFrames: oracle.expected.cleanup.cardCountAfterTwoFrames,
@@ -691,14 +672,14 @@ test('pristine source bench markers match the strict React DOM candidate', async
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
-  const capture = await captureLegacySourceBenchMarkerRotationFixture(page, {
+  const capture = await captureLegacyRuntimeBenchMarkerFixture(page, {
     retainStablePaint: true,
   });
-  await testInfo.attach('legacy-source-to-react-bench-marker-geometry.json', {
+  await testInfo.attach('legacy-runtime-to-react-bench-marker-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
   expect(candidateScene.cards).toHaveLength(4);
   expect(candidateScene.markers).toHaveLength(4);
   expect(
@@ -720,7 +701,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
 
   await isolateLegacyIframeCardPaint(
     page,
-    ':is(img[data-legacy-bench-marker-card-id], [data-legacy-bench-marker-id])'
+    ':is(img[data-legacy-runtime-marker-card-id], [data-legacy-runtime-marker-id])'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',

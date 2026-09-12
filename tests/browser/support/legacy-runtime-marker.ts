@@ -87,6 +87,8 @@ export interface MarkerPhase {
   readonly cardDetails: RuntimeMarkerCard;
   readonly wrapperDetails: RuntimeMarkerWrapper;
   readonly markers: readonly CapturedMarker[];
+  readonly specialConditionMarkerCount: number;
+  readonly markerOverlapHitOrder: readonly string[] | null;
   readonly cardOnlyHitOrder: readonly string[];
 }
 
@@ -111,6 +113,7 @@ export interface MarkerCapture {
     readonly cardPointersAreNull: boolean;
     readonly wrapperCount: number;
     readonly cardCount: number;
+    readonly zoneZIndex: number;
   };
 }
 
@@ -529,6 +532,28 @@ export const captureMarkerRotation = async (
           childImageCount: element.querySelectorAll(':scope > img').length,
         };
         const cardBounds = card.image.getBoundingClientRect();
+        const damageBounds = card.image.damageCounter?.getBoundingClientRect();
+        const abilityBounds =
+          card.image.abilityCounter?.getBoundingClientRect();
+        const markerOverlapHitOrder = (() => {
+          if (!damageBounds || !abilityBounds) return null;
+          const overlap = {
+            left: Math.max(damageBounds.left, abilityBounds.left),
+            top: Math.max(damageBounds.top, abilityBounds.top),
+            right: Math.min(damageBounds.right, abilityBounds.right),
+            bottom: Math.min(damageBounds.bottom, abilityBounds.bottom),
+          };
+          if (
+            overlap.right - overlap.left <= 2 ||
+            overlap.bottom - overlap.top <= 2
+          ) {
+            return null;
+          }
+          return idsAt(
+            (overlap.left + overlap.right) / 2,
+            (overlap.top + overlap.bottom) / 2
+          );
+        })();
         return {
           name,
           rotationDegrees: rotationOf(card.image),
@@ -550,6 +575,10 @@ export const captureMarkerRotation = async (
           cardDetails,
           wrapperDetails,
           markers,
+          specialConditionMarkerCount: Number(
+            card.image.specialCondition?.isConnected === true
+          ),
+          markerOverlapHitOrder,
           cardOnlyHitOrder: idsAt(
             cardBounds.left + cardBounds.width / 2,
             cardBounds.bottom - 3
@@ -640,6 +669,8 @@ export const captureMarkerRotation = async (
           cardCount: zone.element.querySelectorAll(
             '[data-legacy-runtime-marker-card-id]'
           ).length,
+          zoneZIndex:
+            Number.parseInt(getComputedStyle(zone.element).zIndex, 10) || 0,
         },
       };
     },

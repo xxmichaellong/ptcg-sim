@@ -817,11 +817,14 @@ alternate layouts, and Pixi-native paint/hit parity remain deferred.
 `tests/browser/legacy-bench-marker-rotation-geometry.spec.ts` adds an eleventh,
 separate source oracle backed by
 `tests/legacy-fixtures/renderer/bench-marker-rotation-v1.json`. Each physical
-side receives one ordinary Pokémon in the sole bench wrapper, with a damage
-circle and ability-used tab. Visible control eligibility, keyboard eligibility,
-and movement cleanup sources pin special conditions as active-only; the bench
-fixture records zero special-condition nodes and explicitly excludes direct
-noncanonical low-level creation.
+side receives one ordinary Pokémon through v1's actual `Card` and bench
+placement modules, then adds a damage circle and ability-used tab with the real
+counter modules and advances every quarter through `rotateCard`. Visible
+control eligibility, keyboard eligibility, and movement cleanup sources pin
+special conditions as active-only; the bench fixture records zero
+special-condition nodes and explicitly excludes direct noncanonical low-level
+creation. The immutable JSON remains the expectation and external network
+access is denied.
 
 The portrait q0 card paints at 80.859375×112.5 px. Its damage circle is
 26.953125 px and its ability tab is 80.859375×16.171875 px. q1/q3 paint the
@@ -839,12 +842,13 @@ default. Local/opponent geometry otherwise agrees, with the opponent
 q0/q2/q0-return ability tab retaining a measured 0.015625 px frame-local y
 delta.
 
-One window resize invokes exactly the two live marker listeners, and removal
-prevents later invocations. Separately, the source bench `ResizeObserver`
-delivers once after marker setup and refreshes both markers, then delivers on
-empty-wrapper cleanup without refreshing either removed marker. Legacy does
-not expose an observer disconnect path: the capture proves it remains live
-before one harness-only disconnect and makes no source teardown claim.
+The retired transcription also counted its own replacement resize listeners
+and an observer it installed solely for instrumentation. Those harness-only
+callback totals and its self-authored call log are no longer treated as v1
+evidence. The real bench `ResizeObserver` and marker resize hooks still execute
+naturally; the gate pins their browser-observable settled geometry, absence of
+special conditions, cleared card pointers, and zero remaining marker, card, and
+wrapper nodes.
 
 The full rotation and observer checkpoint remains source-only. Its pristine q0
 phase now feeds a strict production branch only when one clean active control
@@ -859,14 +863,14 @@ DOM/Pixi lifecycle and real owner/opponent/spectator projection tests cover
 stable IDs, cleanup, no asset churn, equal normalized geometry, distinct stable
 opaque marker/parent aliases, and the stable public stack ID.
 
-After the rotation/observer history records its zero-node cleanup and the
-harness disconnects its source observers, an optional paint path restores the
-pristine q0 wrapper, card, damage circle, and ability tab on each side. The
-browser hides the unrelated React active controls, pins both candidate card
-definitions to the digest-matched card back, and compares the two bench cards
-plus four markers over white. Attached screenshots and foreground metrics must
-meet the shared 97.5%, three-pixel, 24/255-channel contract in both directions.
-This does not claim rotated or observer-transition paint.
+After the full rotation history records its zero-node cleanup, a separate
+runtime pass retains the pristine q0 wrapper, card, damage circle, and ability
+tab on each side. The browser hides the unrelated React active controls, pins
+both candidate card definitions to the digest-matched card back, and compares
+the two bench cards plus four markers over white. Attached screenshots and
+foreground metrics must meet the shared 97.5%, three-pixel, 24/255-channel
+contract in both directions. This does not claim rotated or observer-transition
+paint.
 
 Additional bench siblings/flex contention, all rotated production paths,
 BREAK/compound and attachment rotation, marker editing, alternate layouts, and
