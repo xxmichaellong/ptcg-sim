@@ -21,10 +21,10 @@ import {
   isolateLegacyIframeCardPaint,
 } from './support/isolated-card-paint.js';
 import {
-  captureLegacySourceContainedCardFixture,
   type CapturedRect,
+  captureLegacyRuntimeContainedCardFixture,
   type LegacyContainedCardFixtureCard,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-contained-card.js';
 
 const anchorTolerancePixels = oracle.tolerances.anchorPixels;
 const sizeToleranceRelative = oracle.tolerances.cardSizeRelative;
@@ -123,7 +123,7 @@ const createTopOwnerStadiumCandidateScene = () => {
   };
 };
 
-test('source-backed contained cards match the DOM candidate at legacy pile tops', async ({
+test('real v1 runtime contained cards match the DOM candidate at legacy pile tops', async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -132,16 +132,29 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
   );
   const topOwnerStadiumScene = createTopOwnerStadiumCandidateScene();
   await page.setViewportSize(oracle.input.viewport);
-  const source = await captureLegacySourceContainedCardFixture(page);
+  const source = await captureLegacyRuntimeContainedCardFixture(page);
   await testInfo.attach('legacy-contained-card-geometry.json', {
     body: Buffer.from(JSON.stringify(source, null, 2)),
     contentType: 'application/json',
   });
 
   expect(source.cards).toHaveLength(8);
-  expect(source.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(source.sourceFulfillment.missingSameOriginPaths).toEqual([]);
   expect(source.sourceFulfillment.servedPaths).toContain(
     '/src/assets/cardback.png'
+  );
+  expect(source.sourceFulfillment.servedPaths).toContain('/src/front-end.js');
+  expect(source.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card.js'
+  );
+  expect(source.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/update-cover.js'
+  );
+  expect(source.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/update-stadium-card.js'
+  );
+  expect(source.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/deck-constructor/cover.js'
   );
   expect(source.sourceFulfillment.blockedExternalOrigins).toContain(
     'https://cdn.socket.io'

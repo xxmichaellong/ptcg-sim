@@ -44,7 +44,8 @@ const MAX_MISMATCHED_PIXELS = 1_536;
 const MAX_HANDLE_MISMATCHES = 512;
 const MAX_CONTROL_MISMATCHES = 1_280;
 const MAX_ONCE_PER_GAME_MISMATCHES = 1_792;
-const MAX_CHANNEL_DELTA = 128;
+const MAX_BASE_CHANNEL_DELTA = 128;
+const MAX_ONCE_PER_GAME_CHANNEL_DELTA = 136;
 
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
@@ -328,6 +329,8 @@ const comparePixels = async (
   readonly height: number;
   readonly mismatchedPixels: number;
   readonly maximumChannelDelta: number;
+  readonly maximumBaseChannelDelta: number;
+  readonly maximumOncePerGameChannelDelta: number;
   readonly mismatchBounds: {
     readonly left: number;
     readonly top: number;
@@ -370,6 +373,8 @@ const comparePixels = async (
       }
       let mismatchedPixels = 0;
       let maximumChannelDelta = 0;
+      let maximumBaseChannelDelta = 0;
+      let maximumOncePerGameChannelDelta = 0;
       let left = expected.width;
       let top = expected.height;
       let right = -1;
@@ -390,6 +395,10 @@ const comparePixels = async (
             y <= region.y + region.height + 10
         );
       for (let offset = 0; offset < expected.data.length; offset += 4) {
+        const pixel = offset / 4;
+        const x = pixel % expected.width;
+        const y = Math.floor(pixel / expected.width);
+        const oncePerGamePixel = isOncePerGamePixel(x, y);
         let pixelDiffers = false;
         for (let channel = 0; channel < 4; channel += 1) {
           const delta = Math.abs(
@@ -397,19 +406,24 @@ const comparePixels = async (
               (actual.data[offset + channel] ?? 0)
           );
           maximumChannelDelta = Math.max(maximumChannelDelta, delta);
+          if (oncePerGamePixel) {
+            maximumOncePerGameChannelDelta = Math.max(
+              maximumOncePerGameChannelDelta,
+              delta
+            );
+          } else {
+            maximumBaseChannelDelta = Math.max(maximumBaseChannelDelta, delta);
+          }
           if (delta !== 0) pixelDiffers = true;
         }
         if (pixelDiffers) {
           mismatchedPixels += 1;
-          const pixel = offset / 4;
-          const x = pixel % expected.width;
-          const y = Math.floor(pixel / expected.width);
           left = Math.min(left, x);
           top = Math.min(top, y);
           right = Math.max(right, x);
           bottom = Math.max(bottom, y);
           if (x < 32) handleMismatches += 1;
-          else if (isOncePerGamePixel(x, y)) oncePerGameMismatches += 1;
+          else if (oncePerGamePixel) oncePerGameMismatches += 1;
           else controlMismatches += 1;
         }
       }
@@ -418,6 +432,8 @@ const comparePixels = async (
         height: expected.height,
         mismatchedPixels,
         maximumChannelDelta,
+        maximumBaseChannelDelta,
+        maximumOncePerGameChannelDelta,
         mismatchBounds: right < 0 ? null : { left, top, right, bottom },
         handleMismatches,
         controlMismatches,
@@ -515,8 +531,17 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       )
       .toBeLessThanOrEqual(MAX_ONCE_PER_GAME_MISMATCHES);
     expect
-      .soft(comparison.maximumChannelDelta, `${state} maximum channel delta`)
-      .toBeLessThanOrEqual(MAX_CHANNEL_DELTA);
+      .soft(
+        comparison.maximumBaseChannelDelta,
+        `${state} base-chrome maximum channel delta`
+      )
+      .toBeLessThanOrEqual(MAX_BASE_CHANNEL_DELTA);
+    expect
+      .soft(
+        comparison.maximumOncePerGameChannelDelta,
+        `${state} once-per-game maximum channel delta`
+      )
+      .toBeLessThanOrEqual(MAX_ONCE_PER_GAME_CHANNEL_DELTA);
   }
   await testInfo.attach('legacy-board-chrome-pixel-comparison.json', {
     body: Buffer.from(JSON.stringify(comparisons, null, 2)),

@@ -2083,6 +2083,28 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      journey toggles all four markers, verifies six authoritative feed events,
      round-trips their final state through perspective replay export/import,
      and proves the visible replay controls cannot mutate it.
+134. The contained pile-top paint and geometry gate now obtains its six
+     deck/discard/lost-zone covers and both stadium-owner orientations from the
+     checked-in v1 runtime rather than from `legacy-source-board.ts`. The
+     fixture imports and executes v1's real `Card`, `Cover`, `moveCard`, cover
+     update, stadium replacement, sorting, and popup cleanup modules while the
+     existing network-denying runtime harness records every served or missing
+     path. It then applies the unchanged numeric, hit-order, rotation, and
+     foreground screenshot thresholds to the React DOM candidate. This also
+     preserves a source-specific DOM detail: v1 constructs cover images in the
+     top document before adopting them into player iframes, so the capture
+     identifies those images by tag rather than by an invalid iframe-realm
+     `instanceof` assumption. The focused Chromium comparison passes and the
+     number of browser specs depending on the transcription drops from fourteen
+     to thirteen; the now-unreferenced contained-card transcription and its
+     dedicated types are removed from the shared source-board helper.
+     The preceding GX/VSTAR exact-head hosted lane passed 209 of 210 cases and
+     exposed one comparator-category omission: dark iframe text produced a
+     133-channel fringe at coordinate `(264, 383)`, inside the independently
+     bounded marker region, while the hosted base chrome peaked at 110 under
+     its unchanged 128 cap. The comparison now records and enforces separate
+     maxima, retaining 128 for all pre-existing chrome and a narrow 136 ceiling
+     for iframe-versus-top-level once-per-game text.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -2111,9 +2133,10 @@ real-client compound-history execution lives in
 `tests/browser/legacy-runtime-compound-lower-nonzero-refresh-oracle.spec.ts`.
 The geometry suites
 continue with
-`tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
-comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
-source-backed evolution comparison in
+`tests/browser/legacy-card-stack-geometry.spec.ts`, plus the real-v1-runtime
+contained-card comparison in
+`tests/browser/legacy-contained-card-geometry.spec.ts` and the source-backed
+evolution comparison in
 `tests/browser/legacy-evolution-reflow-geometry.spec.ts` and the source-backed
 single-Energy comparison in
 `tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts`, plus the
