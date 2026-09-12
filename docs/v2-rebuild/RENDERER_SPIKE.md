@@ -2305,6 +2305,13 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      redundant two-case canonical bridge and the final 1,592-line
      `legacy-source-board.ts` transcription are removed; no browser spec now
      depends on that helper.
+150. The surviving mixed-stack numeric fixture is reduced to its measured
+     geometry, semantic phases, tolerances, and digest-pinned provenance. Its
+     recorder-authored call/reset sequences and stub-only request-fulfillment
+     snapshot had no remaining consumer and did not measure v1 exports, so they
+     are deleted instead of being mislabeled as runtime proof. Recording/scope
+     metadata now names the real exported operations used by the replacement
+     gate and keeps the candidate-renderer boundary explicit.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -192,8 +192,9 @@ cases cover both physical sides: native canonical active construction, a real
 ordinary reattachment. The runtime path exercises no-target automatic
 promotion and return to occupied active, then freezes canonical settled active
 and sole-bench geometry, logical/DOM order, rotations, z/hits, wrapper cleanup,
-and original categories. Historical hand-authored operation/reset traces in the
-JSON are no longer asserted as runtime evidence. The browser test mounts React
+and original categories. The old hand-authored operation/reset traces and
+stub-network fulfillment have been removed from the JSON because they were not
+runtime evidence. The browser test mounts React
 for only the settled sole-bench and returned-active movement phases on both
 sides. It compares all mixed-card scene/pre-transform
 and painted boxes, q1/q3 Tool rotation, z `300/299/298`, renderer order, and four

@@ -738,8 +738,8 @@ exposes two, and the real empty-wrapper observer settles every case to one
 active and one bench wrapper. Exact logical and DOM order, current/original
 categories, card and wrapper geometry, Tool rotation, z/hit order, parent
 identity, cleanup, source digests, and deny-by-default runtime fulfillment are
-frozen. The old recorder's hand-authored call/reset traces remain historical
-fixture metadata only and are not treated as executable evidence.
+frozen. The old recorder's hand-authored call/reset traces and stub-network
+fulfillment have been removed because they were not executable evidence.
 
 The strict renderer-contract path uses only the semantic current state: one
 known same-owner face-up Pokémon base followed by one known Energy and one known
