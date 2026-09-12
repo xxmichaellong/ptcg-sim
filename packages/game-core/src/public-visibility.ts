@@ -9,7 +9,6 @@ import type {
   CardFace,
   CardInstance,
   CardLocation,
-  CardZone,
   MatchState,
 } from './model.js';
 
@@ -22,19 +21,6 @@ export interface CardSourceSnapshot {
 }
 
 /** Returns the exact ordered container used by stale-safe per-card actions. */
-/**
- * Whether a zone hides the identity of the cards inside it.
- *
- * Decision and application both depend on this answer and must give the same
- * one: `decideCommand` stamps `concealIdentity` onto the events it emits from
- * this predicate, and `applyEvents` re-derives it to validate that stamp. The
- * two used to hold private copies, so a change to one without the other would
- * have made the authority reject legitimate events -- or accept events that
- * disclose a card it should have concealed -- with nothing to catch the drift.
- */
-export const isConcealedZone = (zone: CardZone): boolean =>
-  zone.kind === 'deck' || zone.kind === 'hand' || zone.kind === 'prizes';
-
 export const cardSourceSnapshot = (
   state: MatchState,
   card: CardInstance,

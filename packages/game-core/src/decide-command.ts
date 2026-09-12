@@ -39,8 +39,8 @@ import { cloneMatchState } from './clone.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
-  isConcealedZone,
 } from './public-visibility.js';
+import { isConcealedZone } from './concealed-zone.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
 import { stableHash } from './stable-hash.js';

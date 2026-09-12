@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { isConcealedZone } from './concealed-zone.js';
 import { asPlayerId, asZoneId } from './ids.js';
-import { isConcealedZone } from './public-visibility.js';
 import type { CardZone, ZoneKind } from './model.js';
 
 const ALL_ZONE_KINDS: readonly ZoneKind[] = [
