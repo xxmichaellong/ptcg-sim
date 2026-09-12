@@ -13,11 +13,11 @@ import {
 
 import oracle from '../legacy-fixtures/renderer/board-layout-v1.json' with { type: 'json' };
 import {
-  captureLegacySourceGeometry,
   type CapturedRect,
+  captureLegacyRuntimeGeometry,
   type LegacyRegionKind,
   type LegacySide,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-layout.js';
 
 const fixture = oracle.cases.find(
   (candidate) => candidate.name === 'desktop-sidebar-css-default'
@@ -30,8 +30,8 @@ if (!fixture) throw new Error('Missing desktop legacy geometry fixture');
  * still agree with real legacy CSS at other window sizes?
  *
  * Legacy's board CSS is authored in percentages and viewport units, so the
- * browser is the authority at every size. Each case measures the checked-in
- * legacy stylesheets in Chromium and compares them to
+ * browser is the authority at every size. Each case runs and measures the
+ * checked-in legacy client in Chromium and compares it to
  * `createBoardLayoutSnapshot` computed for the same viewport. Nothing here is
  * hand-recorded, so adding a viewport costs one row.
  */
@@ -105,21 +105,21 @@ const regionBorderBox = (
 };
 
 for (const viewport of viewports) {
-  test(`legacy CSS and the layout model agree at ${viewport.name}`, async ({
+  test(`real v1 runtime and the layout model agree at ${viewport.name}`, async ({
     browser,
   }, testInfo) => {
     test.skip(
       testInfo.project.name !== 'chromium',
-      'Source-characterization gates are Chromium-specific.'
+      'Real-runtime layout gates are Chromium-specific.'
     );
 
     const legacyPage = await browser.newPage({
       viewport: { width: viewport.width, height: viewport.height },
       deviceScaleFactor: viewport.devicePixelRatio,
     });
-    let legacy: Awaited<ReturnType<typeof captureLegacySourceGeometry>>;
+    let legacy: Awaited<ReturnType<typeof captureLegacyRuntimeGeometry>>;
     try {
-      legacy = await captureLegacySourceGeometry(legacyPage);
+      legacy = await captureLegacyRuntimeGeometry(legacyPage);
       expect(
         await legacyPage.evaluate(() => window.devicePixelRatio)
       ).toBeCloseTo(viewport.devicePixelRatio, 5);
@@ -130,6 +130,9 @@ for (const viewport of viewports) {
     const snapshot = createBoardLayoutSnapshot(
       layoutStateFor(viewport.width, viewport.height, viewport.devicePixelRatio)
     );
+
+    expect(legacy.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+    expect(legacy.sourceFulfillment.servedPaths).toContain('/src/front-end.js');
 
     await testInfo.attach(`${viewport.name}-model-vs-legacy.json`, {
       body: Buffer.from(

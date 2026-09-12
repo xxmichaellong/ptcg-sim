@@ -2,11 +2,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 import oracle from '../legacy-fixtures/renderer/board-layout-v1.json' with { type: 'json' };
 import {
-  captureLegacySourceGeometry,
   type CapturedRect,
+  captureLegacyRuntimeGeometry,
   type LegacyRegionKind,
   type LegacySide,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-layout.js';
 
 const fixture = oracle.cases.find(
   (candidate) => candidate.name === 'desktop-sidebar-css-default'
@@ -208,7 +208,7 @@ const captureV2Geometry = async (page: Page): Promise<V2Geometry> => {
   };
 };
 
-test('checked-in legacy CSS and React DOM share default region geometry and structural anchors', async ({
+test('checked-in legacy runtime and React DOM share default region geometry and structural anchors', async ({
   browser,
   page,
 }, testInfo) => {
@@ -231,15 +231,15 @@ test('checked-in legacy CSS and React DOM share default region geometry and stru
     },
     deviceScaleFactor: fixture.input.viewport.devicePixelRatio,
   });
-  let legacy: Awaited<ReturnType<typeof captureLegacySourceGeometry>>;
+  let legacy: Awaited<ReturnType<typeof captureLegacyRuntimeGeometry>>;
   try {
-    legacy = await captureLegacySourceGeometry(legacyPage);
+    legacy = await captureLegacyRuntimeGeometry(legacyPage);
   } finally {
     await legacyPage.close();
   }
   const v2 = await captureV2Geometry(page);
 
-  await testInfo.attach('legacy-source-default-geometry.json', {
+  await testInfo.attach('legacy-runtime-default-geometry.json', {
     body: Buffer.from(
       JSON.stringify(
         {
@@ -270,6 +270,11 @@ test('checked-in legacy CSS and React DOM share default region geometry and stru
   });
 
   const tolerance = oracle.tolerances.browserPixels;
+  expect(legacy.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(legacy.sourceFulfillment.servedPaths).toContain('/src/front-end.js');
+  expect(legacy.sourceFulfillment.blockedExternalOrigins).toContain(
+    'https://cdn.socket.io'
+  );
   expectRectWithin(
     legacy.playAreaBounds,
     fixture.expected.playAreaBounds,

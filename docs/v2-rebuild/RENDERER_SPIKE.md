@@ -2105,6 +2105,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      its unchanged 128 cap. The comparison now records and enforces separate
      maxima, retaining 128 for all pre-existing chrome and a narrow 136 ceiling
      for iframe-versus-top-level once-per-game text.
+135. Default-shell geometry, the eight viewport/DPR generalization rows, and
+     resize, flip, fullscreen, collision, and clamp characterization now share
+     one capture of the checked-in v1 runtime. The capture loads the actual
+     legacy front-end module graph under the network-denying harness, requires
+     every same-origin module to resolve, records the denied CDN origin, and
+     measures the live player iframes, regions, transforms, shell, controls,
+     handles, and inline resize state. The React DOM comparisons retain their
+     existing two-pixel tolerances and exact transform assertions. All thirteen
+     focused Chromium cases pass. The superseded inert HTML/CSS geometry
+     capture, its duplicated interaction-suite implementation, and its unused
+     selectors/types are removed, reducing browser specs coupled to
+     `legacy-source-board.ts` from thirteen to ten.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

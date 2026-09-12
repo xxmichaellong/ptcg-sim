@@ -32,32 +32,10 @@ export type LegacyRegionKind =
 
 export type LegacySide = 'local' | 'opponent';
 
-export interface LegacySourceGeometry {
-  readonly playAreaBounds: CapturedRect;
-  readonly shellGapBounds: CapturedRect;
-  readonly sidebarBounds: CapturedRect;
-  readonly tabsBounds: CapturedRect;
-  readonly frames: Readonly<Record<LegacySide, CapturedRect>>;
-  readonly stadiumBounds: CapturedRect;
-  readonly boardControlsBounds: CapturedRect;
-  readonly resizeHandles: {
-    readonly lower: CapturedRect;
-    readonly upper: CapturedRect;
-  };
-  readonly regions: Readonly<
-    Record<LegacySide, Readonly<Record<LegacyRegionKind, CapturedRect>>>
-  >;
-  readonly opponentFrameTransform: {
-    readonly a: number;
-    readonly b: number;
-    readonly c: number;
-    readonly d: number;
-  };
-  readonly sourceFulfillment: {
-    readonly servedPaths: readonly string[];
-    readonly blockedExternalOrigins: readonly string[];
-    readonly unexpectedSameOriginPaths: readonly string[];
-  };
+export interface LegacySourceFulfillment {
+  readonly servedPaths: readonly string[];
+  readonly blockedExternalOrigins: readonly string[];
+  readonly unexpectedSameOriginPaths: readonly string[];
 }
 
 export type LegacyMarkerKind = 'damage' | 'specialCondition' | 'ability';
@@ -169,7 +147,7 @@ export interface LegacySourceMarkerRotationFixture {
     Record<LegacyFixtureSide, LegacyFrameTransform>
   >;
   readonly cases: readonly LegacyMarkerRotationCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyBenchMarkerKind = 'damage' | 'ability';
@@ -238,7 +216,7 @@ export interface LegacySourceBenchMarkerRotationFixture {
     Record<LegacyFixtureSide, LegacyFrameTransform>
   >;
   readonly cases: readonly LegacyBenchMarkerRotationCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyMarkerMovementPhaseName =
@@ -305,7 +283,7 @@ export interface LegacyMarkerMovementCase {
 export interface LegacySourceMarkerMovementFixture {
   readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
   readonly cases: readonly LegacyMarkerMovementCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyFixtureSide = LegacySide;
@@ -365,7 +343,7 @@ export interface LegacySourceCardFixture {
   readonly frameRotationDegrees: Readonly<Record<LegacyFixtureSide, number>>;
   readonly cards: readonly LegacyCardFixtureCard[];
   readonly stacks: readonly LegacyCardFixtureStack[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export interface LegacyEnergyAttachmentFixtureCard {
@@ -431,7 +409,7 @@ export interface LegacySourceEnergyAttachmentReflowFixture {
   >;
   readonly cards: readonly LegacyEnergyAttachmentFixtureCard[];
   readonly stacks: readonly LegacyEnergyAttachmentFixtureStack[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyTwoEnergyDepartureBranch = 'inner' | 'outer';
@@ -542,7 +520,7 @@ export interface LegacySourceTwoEnergyCompactionFixture {
     Record<LegacyFixtureSide, LegacyFrameTransform>
   >;
   readonly cases: readonly LegacyTwoEnergyCompactionFixtureCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyMixedAttachmentRole = 'base' | 'energy' | 'trainerTool';
@@ -802,7 +780,7 @@ export interface LegacySourceMixedAttachmentOrderFixture {
   readonly departureCases: readonly LegacyMixedAttachmentDepartureFixtureCase[];
   readonly restoreCases: readonly LegacyMixedRestoreFixtureCase[];
   readonly stagedSwapCases: readonly LegacyMixedStagedSwapFixtureCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyMixedStackMovementScenario =
@@ -914,7 +892,7 @@ export interface LegacySourceMixedStackMovementFixture {
     Record<LegacyFixtureSide, LegacyFrameTransform>
   >;
   readonly cases: readonly LegacyMixedStackMovementCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export interface LegacyTrainerToolAttachmentFixtureCard {
@@ -1003,7 +981,7 @@ export interface LegacySourceTrainerToolAttachmentReflowFixture {
   >;
   readonly cards: readonly LegacyTrainerToolAttachmentFixtureCard[];
   readonly stacks: readonly LegacyTrainerToolAttachmentFixtureStack[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyEvolutionCardRole = 'topEvolution' | 'lowerEvolution';
@@ -1099,7 +1077,7 @@ export interface LegacySourceEvolutionReflowFixture {
   >;
   readonly cards: readonly LegacyEvolutionFixtureCard[];
   readonly stacks: readonly LegacyEvolutionFixtureStack[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyCompoundRotationScenario =
@@ -1513,7 +1491,7 @@ export interface LegacySourceCompoundRotationFixture {
   readonly lowerNonzeroGroupRefreshAfterSingleCases: readonly LegacyCompoundRotationCase[];
   readonly nonzeroGroupSingleCases: readonly LegacyCompoundRotationCase[];
   readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
-  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+  readonly sourceFulfillment: LegacySourceFulfillment;
 }
 
 export type LegacyCompoundRotationCaseBucket = Exclude<
@@ -2003,25 +1981,6 @@ const requireRect = async (
   return bounds;
 };
 
-const unionRects = (left: CapturedRect, right: CapturedRect): CapturedRect => {
-  const x = Math.min(left.x, right.x);
-  const y = Math.min(left.y, right.y);
-  const rightEdge = Math.max(left.x + left.width, right.x + right.width);
-  const bottomEdge = Math.max(left.y + left.height, right.y + right.height);
-  return { x, y, width: rightEdge - x, height: bottomEdge - y };
-};
-
-const regionSelectors: Readonly<Record<LegacyRegionKind, string>> = {
-  hand: '#hand',
-  bench: '#bench',
-  active: '#active',
-  prizes: '#prizes',
-  lostZone: '#lostZoneCover',
-  deck: '#deckCover',
-  discard: '#discardCover',
-  board: '#board',
-};
-
 interface LoadedLegacySourceBoard {
   readonly servedPaths: Set<string>;
   readonly blockedExternalOrigins: Set<string>;
@@ -2030,7 +1989,7 @@ interface LoadedLegacySourceBoard {
 
 const sourceFulfillment = (
   loaded: LoadedLegacySourceBoard
-): LegacySourceGeometry['sourceFulfillment'] => ({
+): LegacySourceFulfillment => ({
   servedPaths: [...loaded.servedPaths].sort(),
   blockedExternalOrigins: [...loaded.blockedExternalOrigins].sort(),
   unexpectedSameOriginPaths: [...loaded.unexpectedSameOriginPaths].sort(),
@@ -2113,88 +2072,6 @@ const loadLegacySourceBoard = async (
   requireNoUnexpectedSameOriginPaths(loaded);
   requireServedPaths(loaded, requiredSourcePaths);
   return loaded;
-};
-
-/**
- * Loads the checked-in legacy HTML/CSS in a real browser without executing the
- * networked application module. Every same-origin request is allowlisted and
- * every external request is denied, so this capture cannot contact production.
- */
-export const captureLegacySourceGeometry = async (
-  page: Page
-): Promise<LegacySourceGeometry> => {
-  const loaded = await loadLegacySourceBoard(page);
-
-  const localFrame = await requireRect(
-    page.locator('#selfContainer'),
-    '#selfContainer'
-  );
-  const opponentFrame = await requireRect(
-    page.locator('#oppContainer'),
-    '#oppContainer'
-  );
-  const sidebarBounds = await requireRect(page.locator('#p1Box'), '#p1Box');
-  const playAreaBounds = unionRects(localFrame, opponentFrame);
-  const shellGapBounds: CapturedRect = {
-    x: playAreaBounds.x + playAreaBounds.width,
-    y: playAreaBounds.y,
-    width: sidebarBounds.x - (playAreaBounds.x + playAreaBounds.width),
-    height: playAreaBounds.height,
-  };
-
-  const captureRegions = async (
-    frameSelector: '#selfContainer' | '#oppContainer'
-  ): Promise<Record<LegacyRegionKind, CapturedRect>> => {
-    const frame = page.frameLocator(frameSelector);
-    const entries = await Promise.all(
-      Object.entries(regionSelectors).map(async ([kind, selector]) => [
-        kind,
-        await requireRect(
-          frame.locator(selector),
-          `${frameSelector} ${selector}`
-        ),
-      ])
-    );
-    return Object.fromEntries(entries) as Record<
-      LegacyRegionKind,
-      CapturedRect
-    >;
-  };
-
-  const [localRegions, opponentRegions] = await Promise.all([
-    captureRegions('#selfContainer'),
-    captureRegions('#oppContainer'),
-  ]);
-  const opponentFrameTransform = await page
-    .locator('#oppContainer')
-    .evaluate((element) => {
-      const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
-      return { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d };
-    });
-
-  requireNoUnexpectedSameOriginPaths(loaded);
-  return {
-    playAreaBounds,
-    shellGapBounds,
-    sidebarBounds,
-    tabsBounds: await requireRect(
-      page.locator('#topButtonContainer'),
-      '#topButtonContainer'
-    ),
-    frames: { local: localFrame, opponent: opponentFrame },
-    stadiumBounds: await requireRect(page.locator('#stadium'), '#stadium'),
-    boardControlsBounds: await requireRect(
-      page.locator('#boardButtonContainer'),
-      '#boardButtonContainer'
-    ),
-    resizeHandles: {
-      lower: await requireRect(page.locator('#selfResizer'), '#selfResizer'),
-      upper: await requireRect(page.locator('#oppResizer'), '#oppResizer'),
-    },
-    regions: { local: localRegions, opponent: opponentRegions },
-    opponentFrameTransform,
-    sourceFulfillment: sourceFulfillment(loaded),
-  };
 };
 
 const cardFixtureAssetPaths = new Set([
