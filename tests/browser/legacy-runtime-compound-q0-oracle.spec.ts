@@ -44,8 +44,8 @@ const compositionOf = (scenario: string): string =>
 
 /**
  * The three remaining directly-replayable compound fixtures. Like the
- * lower-nonzero family they were recorded from `legacy-source-board.ts` and
- * asserted against that same transcription, and like that family each one
+ * lower-nonzero family they were recorded from the since-retired TypeScript
+ * transcription of v1 and asserted against that same transcription, and like that family each one
  * carries an `operationTraceByScenario` script that can be replayed against
  * the client it claims to describe.
  *

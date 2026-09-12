@@ -70,7 +70,8 @@ const phaseState = {
 } as const;
 
 /**
- * The last compound fixture still recorded from `legacy-source-board.ts` alone.
+ * The last compound fixture whose recording was never checked against the
+ * client, back when the TypeScript transcription of v1 was its only witness.
  * Unlike the rest of the family it measures a whole rotation cycle rather than
  * one transition: a pristine sample, then one after every rotation and after
  * the reconstruction partway through, with the container's frame-local x

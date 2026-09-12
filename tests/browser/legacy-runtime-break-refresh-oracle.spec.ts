@@ -41,8 +41,8 @@ const measuredRefreshEvidence = (refresh: {
  * phases, while at q3 it collapses the group back to zero and reapplies only
  * the BREAK quarter turn to the top card.
  *
- * Both were recorded from `legacy-source-board.ts` and asserted against that
- * same transcription, so neither could fail if the transcription invented that
+ * Both were recorded from the since-retired TypeScript transcription of v1 and
+ * asserted against that same transcription, so neither could fail if the transcription invented that
  * asymmetry. Replaying them against real v1 is what settles it, and unlike the
  * returned-q0 gate these traces are not state-neutral -- a `refreshBoard` that
  * did nothing would leave the q3 stack at its pre-refresh rotation and fail.

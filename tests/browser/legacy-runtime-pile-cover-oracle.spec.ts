@@ -18,8 +18,8 @@ import { withLegacyRuntimePage } from './support/legacy-runtime-compound-replay.
  *   the top card back off restores the one beneath it.
  * - A stadium holds exactly one card: playing a second discards the first.
  *
- * Recorded from `legacy-source-board.ts` and asserted against that same
- * transcription, so none of it could fail before. The digests this fixture
+ * Recorded from the since-retired TypeScript transcription of v1 and asserted
+ * against that same transcription, so none of it could fail before. The digests this fixture
  * carries are checked separately in the unit lane.
  */
 test('the recorded pile-cover semantics match the real v1 runtime', async ({

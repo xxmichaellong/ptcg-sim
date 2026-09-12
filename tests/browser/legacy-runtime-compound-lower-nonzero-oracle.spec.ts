@@ -49,8 +49,8 @@ interface NonzeroFixture {
 /**
  * The compound-lower-nonzero family is the largest self-referential block left
  * in the repository: fourteen fixtures, twelve scenarios each, every one of
- * them recorded from `legacy-source-board.ts` and asserted against that same
- * transcription. Nothing in those 36 specs could fail if the transcription and
+ * them recorded from the since-retired TypeScript transcription of v1 and
+ * asserted against that same transcription. Nothing in those 36 specs could fail if the transcription and
  * the fixtures were wrong in the same way.
  *
  * Each fixture carries a complete `operationTraceByScenario` script, so it is

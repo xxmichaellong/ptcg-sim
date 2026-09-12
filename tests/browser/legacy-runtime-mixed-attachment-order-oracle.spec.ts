@@ -38,8 +38,9 @@ const CASES: readonly (readonly [ReflowSide, string])[] = [
  * in that order immediately, but the refresh reorders the stack so that Energy
  * is always innermost. The fixture records one `immediateAttachTrace` per order
  * and a single `refreshAttachTrace` shared by both, which is the assertion --
- * and, being recorded from `legacy-source-board.ts` and asserted against that
- * same transcription, it was not falsifiable until now.
+ * and, having been recorded from the since-retired TypeScript transcription of
+ * v1 and asserted against that same transcription, it was not falsifiable
+ * until now.
  *
  * Attachments are driven through `moveCard` rather than `moveCardBundle`,
  * because the bundle refreshes after every move and would erase the immediate
