@@ -50,10 +50,10 @@ it does not prove that the original manual transcription was correct.
 
 That independent check is now available rather than deferred.
 `tests/browser/support/legacy-runtime.ts` loads the checked-in v1 client and
-lets its own module graph evaluate: all 117 modules under `client/src`,
-`front-end.js` included. `tests/browser/legacy-runtime-oracle.spec.ts` then
-imports the real `Card`, `initializeActiveBenchCard` and `getZone` and measures
-what they actually place.
+lets its own module graph evaluate, `front-end.js` included. The authoritative
+geometry suites then import and execute the real operations they characterize,
+including `Card`, `initializeActiveBenchCard`, `moveCardBundle`, marker and
+rotation actions, attachment/evolution paths, and `refreshBoard`.
 
 One accommodation is required, and it does not touch board geometry:
 `global-variables.js` calls `io('https://ptcgsim.online')` at import time, so a
@@ -61,18 +61,14 @@ no-op `io` is installed before any module evaluates. Every non-fixture origin
 stays refused, so an accidental network dependency fails loudly instead of
 silently reaching the internet.
 
-This matters for how the other fixtures should be read. They stub
-`front-end.js` and compare against a TypeScript re-implementation of it, so a
-pass shows the transcription agrees with itself. The runtime gate is the only
-one whose pass is evidence about v1. Its first case confirms the transcription
-for the narrow behaviour it covers: the real runtime places an active card at
-`clientWidth` 91 and `126 x 90.5625` CSS pixels, which is what the recorded
-card oracle already encodes.
-
-Feasibility is therefore settled: expanding this gate, rather than expanding
-the transcription, is the way to raise confidence in the remaining
-characterized behaviours. The transcription is not required to stay the
-oracle.
+The original one-card feasibility probe has been retired as an exact subset of
+the active-marker authority suite. That suite preserves its narrow result—the
+real runtime places a decoded active card at `clientWidth` 91 and
+`126 x 90.5625` CSS pixels—while also covering local/opponent transforms,
+wrapper geometry, markers, full-turn reflow, native hits, cleanup, React parity,
+and isolated paint. Passing source-executed suites is evidence about v1;
+fixture-only transcription tests remain schema and provenance sentinels rather
+than independent runtime witnesses.
 
 ## Coordinate spaces
 

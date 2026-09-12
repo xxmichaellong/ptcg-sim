@@ -2331,6 +2331,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      synchronous-refresh, and stable card stage. All offset, layer, rotation,
      relationship, wrapper, source, candidate, hit, and paint assertions remain
      in the stronger paths, removing another 288 duplicated browser-test lines.
+153. The original one-card runtime feasibility probe is retired after the
+     active-marker authority suite subsumes its real `Card` and
+     `initializeActiveBenchCard` execution, decoded 91-by-126 card metrics,
+     intrinsic asset dimensions, active placement, wrapper structure, DOM
+     ordinal, and source-fulfillment claims. The retained suite extends that
+     boundary across both player frames, marker state, full-turn reflow,
+     cleanup, React geometry, native hits, and isolated paint, removing 223
+     more exact-subset lines. The layout-oracle guide no longer describes the
+     retired probe as the sole real-v1 witness.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
