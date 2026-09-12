@@ -558,10 +558,11 @@ This checkpoint is complete when:
 
 The source-browser, deck/session custody, card-back custody, query-gated route
 activation, and visible opt-in Solo selector slices are implemented. Remaining
-Deck-adjacent product work is deliberate and separate: canonical save/replay
-import-export/continuation, broader rollout of the opt-in v2 route, and the
-non-Chromium/device release matrix. None requires narrowing the accepted
-arbitrary-image behavior.
+Deck-adjacent product work is deliberate and separate: canonical state import
+and server-held continuation, broader rollout of the opt-in v2 route, and the
+non-Chromium/device release matrix. Perspective replay export/import is already
+implemented and inert. None of these workstreams requires narrowing the
+accepted arbitrary-image behavior.
 
 Rollback for route activation is removal of the lobby/route lazy composition
 wiring while retaining the isolated package, adapters, and parity harness. The

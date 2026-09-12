@@ -142,13 +142,15 @@ Uninterrupted transport stability, 120 distinct real raster assets, deployed
 navigation/BFCache, long-duration soak, physical devices, and the non-Chromium
 matrix remain separate release evidence.
 
-The replay-file row now has a package-level file-v1 gate and an unwired
+The replay-file row now has a package-level file-v1 gate and a wired inert
 application transaction. A checked-in spectator artifact plus generated player
 and spectator cases cover encoded-byte admission, fatal UTF-8, corruption,
 unknown versions, privacy/semantic inconsistency, caller-buffer ownership,
 concurrent operations, cancellation, disposal, identity replacement, exact
-re-export, and return to the latest live view. Browser file selection and its
-focus/error presentation remain outside this checkpoint.
+re-export, and return to the latest live view. The real Worker/Chromium Solo
+journey covers native file selection, replay entry/exit, exact live restoration,
+and the source error presentation for malformed input. Canonical resumable state
+import remains a separate disabled capability.
 
 The developer creator route also has a three-cycle Chromium document-navigation
 gate against real local Vite and Wrangler processes. It pins one distinct room,

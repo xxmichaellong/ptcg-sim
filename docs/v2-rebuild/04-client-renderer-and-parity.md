@@ -1610,9 +1610,12 @@ Export reads the bounded effective activity source rather than DOM, uses the
 legacy numbered text format, and revokes the object URL; Clear is local
 presentation only; Full screen retains the foreground gesture and vendor
 fallbacks. Perspective-safe game-state/replay export is now wired for both live
-and replay mode. The raw-byte replay import and atomic coordinator installation
-are complete but deliberately unwired; browser file selection, server-held
-continuation, and complete focus/keyboard/visual parity remain later slices.
+and replay mode. The live Solo Options menu wires its source-shaped `Enter replay
+mode` control and hidden `.json` picker to the raw-byte replay validator and
+atomic coordinator installation. Native selection, malformed-file recovery,
+replay exit, and restoration of the exact live revision are browser-gated;
+server-held continuation and complete focus/keyboard/visual parity remain later
+slices.
 The lazy Deck composition does not require a live network session. Its
 stores retain offline main/alternate deck edits and browser-loaded card-back
 choices, apply changing solo/multiplayer ownership without deleting either

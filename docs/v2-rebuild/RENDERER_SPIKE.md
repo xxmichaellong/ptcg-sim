@@ -2386,7 +2386,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      assertions, three-sample post-GC comparisons, and its two JSON evidence
      attachments. The unchanged workload passes locally in 4.6 minutes with
      exact-or-lower document/node/listener bounds and the retained-heap limit;
-     ordinary failure screenshots and error context remain enabled.
+     ordinary failure screenshots and error context remain enabled. Exact commit
+     `de22e03` is fully green in hosted run 34692661432: Quality passed in
+     3m22s, all 199 consolidated Chromium cases passed in 17.0 minutes,
+     production topology passed in 8.6 seconds, and the unchanged churn case
+     passed in 5.9 minutes instead of the prior traced 7.6 minutes.
+159. A canonical-document audit reconciles the already-shipped perspective
+     replay picker with ADR-012 and the architecture, migration, verification,
+     file-map, and web guides. Commit `d6f2448` wired the live Solo
+     source-shaped `Enter replay mode` control and hidden `.json` input to the
+     bounded inert import transaction and covered the exact export/import/exit,
+     malformed-file recovery, cancellation, and zero-authority-write behavior.
+     Those documents no longer call that picker unwired. They continue to keep
+     canonical resumable `Import game state`, server-held continuation,
+     encryption, retention, quotas, and migration disabled as their separate
+     ADR-012 workstream.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

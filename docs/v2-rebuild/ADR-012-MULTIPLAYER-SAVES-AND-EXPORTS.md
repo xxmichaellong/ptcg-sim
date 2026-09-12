@@ -4,9 +4,9 @@
 - Decision date: 2026-09-10
 - Scope: replay downloads, canonical multiplayer continuation, and full-state
   disclosure
-- Production wiring: perspective replay export may ship on the isolated v2
-  route; canonical save/resume remains disabled until its capability, retention,
-  recovery, and abuse gates pass
+- Production wiring: perspective replay export and inert replay-file import may
+  ship on the isolated v2 route; canonical save/resume remains disabled until
+  its capability, retention, recovery, and abuse gates pass
 
 ## Context
 
@@ -57,8 +57,12 @@ and installs a completely validated artifact atomically. A concurrent authority
 replay request/import, route disposal, cancellation, non-ready session, or live
 identity change prevents late installation. An imported perspective may belong
 to another match or viewer because it is inert shared viewing data; exiting
-always returns to the latest live projection. The file picker and route control
-remain separately disabled.
+always returns to the latest live projection. The isolated live Solo route wires
+this transaction to the source-shaped `Enter replay mode` control and a hidden
+`.json` picker. Browser admission rejects invalid declared sizes before reading,
+checks the returned byte length independently, resets the input for same-file
+retries, and aborts stale reads on teardown. This does not enable canonical
+state import or continuation.
 
 The initial format uses SHA-256 to detect corruption. The digest does not
 authenticate an author and does not make an imported file trusted; imported
@@ -135,14 +139,16 @@ prevents issuance.
 
 ## Verification and rollout
 
-Perspective export and the unwired import transaction prove deterministic
-serialization, strict format/code-unit/encoded-byte bounds, fatal UTF-8,
+Perspective export and the wired inert replay-import transaction prove
+deterministic serialization, strict format/code-unit/encoded-byte bounds, fatal UTF-8,
 SHA-256 mismatch rejection, artifact semantic validation, checked-in file-v1
 compatibility, exact round-trip playback, player/spectator privacy, absence of
 credentials and canonical sentinels, no replay-mode transition for a live
-export, and inert failure after route teardown or identity change. Route import
-is enabled separately only after file selection and browser integration gates
-pass; compressed and unknown-version inputs are not accepted or guessed.
+export, and inert failure after route teardown or identity change. A real
+Worker/Chromium Solo journey exports the live artifact, imports its downloaded
+bytes through the native input, enters and exits replay, restores the exact live
+revision, and rejects malformed JSON without losing the room. Compressed and
+unknown-version inputs are not accepted or guessed.
 
 Continuation must prove encrypted and digest-only durable custody, independent
 role-bound capabilities, exact canonical hash/projections after restore,

@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-10
+- Last updated: 2026-09-12
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
@@ -124,10 +124,10 @@ the relevant product decisions and phase exit criteria.
   ADR-012 now also wires the existing Export game state action to a versioned,
   SHA-256 integrity-checked, non-resumable perspective replay. A live export
   requests a fresh authority artifact without entering replay mode; an active
-  replay exports its exact installed artifact. Raw-byte import validation and
-  atomic inert coordinator installation are now complete but deliberately
-  unwired; browser file selection and canonical server-held continuation remain
-  later parity work. Deck navigation is now
+  replay exports its exact installed artifact. The live Solo Options menu now
+  wires its source-shaped `Enter replay mode` control and hidden `.json` picker
+  to the raw-byte validator and atomic inert coordinator installation. Canonical
+  server-held continuation remains later parity work. Deck navigation is now
   active only on the opt-in v2 room route; the default route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
   and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.

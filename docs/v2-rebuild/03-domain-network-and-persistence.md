@@ -1029,9 +1029,10 @@ rehearsal remain rollout gates documented in `apps/server/OPERATIONS.md`.
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation. ADR-012 now fixes the archive privacy boundary. Deterministic
 perspective download plus byte-safe, identity-bound atomic import exist; Phase 7
-still owns browser file-selection wiring, long-retention journal chunks,
-server-held continuation capabilities, encryption, quotas, migration, and the
-remaining sidebar integration.
+now wires native file selection for inert playback on the isolated live Solo
+route. Phase 7 still owns long-retention journal chunks, server-held continuation
+capabilities, encryption, quotas, migration, and canonical state-import/sidebar
+integration.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

@@ -608,9 +608,10 @@ Work:
   affecting Replay. The local live/replay Options subset additionally
   exports the recipient-safe effective battle log and requests browser full
   screen; Clear remains live-only and resets only local presentation.
-  Perspective replay export and an unwired byte-safe, atomically installed
-  replay-file import transaction are implemented; browser file selection and
-  server-held continuation remain later work. Deck navigation is live behind the same
+  Perspective replay export and byte-safe, atomically installed replay-file
+  import are implemented. The live Solo Options menu wires the source-shaped
+  `Enter replay mode` control and hidden `.json` picker; canonical server-held
+  continuation remains later work. Deck navigation is live behind the same
   opt-in query-gated route, with first-use chunk isolation and retained
   deck/card-back custody across lobby/live/Leave. The first
   Settings slice restores tab ownership plus page-local Dark mode and Hide
@@ -671,13 +672,15 @@ slice serializes only the authority-produced role projection into a
 deterministic, SHA-256 integrity-checked, version/size-bounded file explicitly
 marked non-canonical and non-resumable. The existing Export game state control
 works in live and replay mode; live export requests a fresh artifact without
-changing the effective board. The unwired import boundary now owns bounded raw
-bytes before asynchronous work, rejects malformed UTF-8, validates the exact
-file-v1 envelope/integrity/privacy/semantics, and installs playback atomically
-only if its initiating live identity is still current. A checked-in spectator
-artifact pins compatibility. File-selection/import UI stays disabled pending
-its browser gate. Canonical multiplayer continuation remains server-held and
-unwired pending its encryption,
+changing the effective board. The import boundary owns bounded raw bytes before
+asynchronous work, rejects malformed UTF-8, validates the exact file-v1
+envelope/integrity/privacy/semantics, and installs playback atomically only if
+its initiating live identity is still current. The live Solo Options menu now
+wires that transaction through the source-shaped `Enter replay mode` control and
+hidden `.json` picker. A checked-in spectator artifact pins compatibility, and a
+real Worker/Chromium journey covers export, native selection, replay entry/exit,
+live restoration, and malformed-file recovery. Canonical multiplayer
+continuation remains server-held and unwired pending its encryption,
 role-capability, retention, recovery, quota, and abuse slices.
 
 Work:
