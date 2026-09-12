@@ -2312,6 +2312,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      are deleted instead of being mislabeled as runtime proof. Recording/scope
      metadata now names the real exported operations used by the replacement
      gate and keeps the candidate-renderer boundary explicit.
+151. Five temporary real-v1 bridge specs are retired after their stronger
+     browser suites absorbed every assertion. Evolution, single Energy/Tool
+     reflow, two-Energy compaction, and active/bench marker geometry now each
+     have one authoritative real-runtime path that also covers physical-frame
+     mapping, transient lifecycle where applicable, cleanup, React geometry,
+     native hits, and isolated paint. Removing the exact-subset bridges cuts
+     1,152 browser-test lines and eleven duplicated Chromium cases without
+     reducing an oracle or candidate boundary. The two-Energy gate now checks
+     each live-derived probe against the exact intended card-rectangle set and
+     requires the complete native hit stack; it no longer confuses one
+     recorder-selected safe coordinate with source behavior.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

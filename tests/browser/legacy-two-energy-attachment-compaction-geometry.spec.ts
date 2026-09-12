@@ -150,7 +150,6 @@ interface ExpectedPhase {
   readonly roleDomOrder: readonly Role[];
   readonly roleLogicalOrder: readonly Role[];
   readonly roleHitOrder: Readonly<Record<HitRegion, readonly Role[]>>;
-  readonly hitPointsFrameLocal: Readonly<Record<HitRegion, Point>>;
   readonly observedWrapperCount: number;
   readonly supersededWrapperConnected: boolean;
 }
@@ -231,6 +230,12 @@ const roleId = (
   `${fixtureCase.side}-${fixtureCase.branch}-${
     role === 'base' ? 'base' : role === 'energy1' ? 'energy-1' : 'energy-2'
   }`;
+
+const pointIsStrictlyInside = (point: Point, bounds: Rect): boolean =>
+  point.x > bounds.x &&
+  point.x < bounds.x + bounds.width &&
+  point.y > bounds.y &&
+  point.y < bounds.y + bounds.height;
 
 const expectedPostDepartureHitOrder = (
   remainingRole: 'energy1' | 'energy2'
@@ -313,37 +318,28 @@ const expectPhase = (
     logicalOrder: expectedLogicalIds,
   });
   for (const [region, roles] of Object.entries(expected.roleHitOrder)) {
+    const hitRegion = region as HitRegion;
     const expectedIds = roles.map((role) => roleId(fixtureCase, role));
-    const nativeOrder = actual.stack.hitOrder[region] ?? [];
-    expect(nativeOrder[0], `${label}.hitOrder.${region}.top`).toBe(
+    const nativeOrder = actual.stack.hitOrder[hitRegion] ?? [];
+    expect(nativeOrder[0], `${label}.hitOrder.${hitRegion}.top`).toBe(
       expectedIds[0]
     );
-    expect(nativeOrder, `${label}.hitOrder.${region}.reported`).toEqual(
-      expectedIds.filter((id) => nativeOrder.includes(id))
+    expect(nativeOrder, `${label}.hitOrder.${hitRegion}.complete`).toEqual(
+      expectedIds
     );
+    const point = actual.stack.hitPointsFrameLocal[hitRegion];
+    for (const card of actual.cards) {
+      expect(
+        pointIsStrictlyInside(point, card.frameLocalBounds),
+        `${label}.hitPointsFrameLocal.${hitRegion}.${card.role}.containment`
+      ).toBe(expectedIds.includes(card.id));
+    }
   }
   expectStructuredNumber(
     actual.stack.authoredWidthPx,
     expected.authoredWidthPx,
     `${label}.stack.authoredWidthPx`
   );
-  for (const region of [
-    'allCardOverlap',
-    'attachmentOverlap',
-    'outermostAttachment',
-    'baseOnly',
-  ] as const) {
-    expectStructuredNumber(
-      actual.stack.hitPointsFrameLocal[region].x,
-      expected.hitPointsFrameLocal[region].x,
-      `${label}.hitPointsFrameLocal.${region}.x`
-    );
-    expectStructuredNumber(
-      actual.stack.hitPointsFrameLocal[region].y,
-      expected.hitPointsFrameLocal[region].y,
-      `${label}.hitPointsFrameLocal.${region}.y`
-    );
-  }
   expect(actual.observedWrapperCount).toBe(expected.observedWrapperCount);
   expect(actual.supersededWrapperConnected).toBe(
     expected.supersededWrapperConnected
@@ -487,7 +483,6 @@ const phaseExpectationsFor = (
       roleDomOrder: postDepartureOrder,
       roleLogicalOrder: postDepartureOrder,
       roleHitOrder: postDepartureHits,
-      hitPointsFrameLocal: transientBranch.hitPointsFrameLocal,
     },
     synchronousPostRefresh: {
       ...phases.synchronousPostRefresh,
