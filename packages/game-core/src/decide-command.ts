@@ -39,6 +39,7 @@ import { cloneMatchState } from './clone.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
+  isConcealedZone,
 } from './public-visibility.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
@@ -68,9 +69,6 @@ const requirePlayer = (
   state.players[playerId]
     ? null
     : reject('not_found', `Player ${playerId} does not exist`);
-
-const isConcealedZone = (zone: CardZone): boolean =>
-  zone.kind === 'deck' || zone.kind === 'hand' || zone.kind === 'prizes';
 
 const validatePermutation = <Value>(
   before: readonly Value[],

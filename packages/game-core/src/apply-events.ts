@@ -30,6 +30,7 @@ import type { CardInstance, CardZone, MatchState, PlayStack } from './model.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
+  isConcealedZone,
 } from './public-visibility.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
@@ -53,9 +54,6 @@ const normalizeCardForZone = (
         orientationQuarterTurns: 0,
         abilityUsed: false,
       };
-
-const isConcealedZone = (zone: CardZone): boolean =>
-  zone.kind === 'deck' || zone.kind === 'hand' || zone.kind === 'prizes';
 
 const retireInspectionGrants = (
   grants: MatchState['visibility']['inspectionGrants'],
