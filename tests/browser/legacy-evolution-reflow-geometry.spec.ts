@@ -24,7 +24,7 @@ import {
   isolateCandidateCardPaint,
   isolateLegacyIframeCardPaint,
 } from './support/isolated-card-paint.js';
-import { captureLegacySourceEvolutionReflowFixture } from './support/legacy-source-board.js';
+import { captureLegacyRuntimeEvolutionReflow } from './support/legacy-runtime-evolution-reflow.js';
 
 type Rect = {
   readonly x: number;
@@ -185,8 +185,8 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
   );
   await page.setViewportSize({ width: 1600, height: 900 });
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(1);
-  const capture = await captureLegacySourceEvolutionReflowFixture(page);
-  await testInfo.attach('legacy-evolution-reflow-geometry.json', {
+  const capture = await captureLegacyRuntimeEvolutionReflow(page);
+  await testInfo.attach('legacy-runtime-evolution-reflow-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
@@ -199,11 +199,17 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
   expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
     'https://cdn.socket.io'
   );
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/sizing/refresh-board.js'
+  );
 
   await isolateLegacyIframeCardPaint(
     page,
-    'img[data-legacy-evolution-card-id]'
+    'img[data-legacy-runtime-evolution-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',

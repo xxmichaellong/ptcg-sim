@@ -2199,6 +2199,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      retired Trainer-as-Tool types, capture helpers, and hand-authored mutation
      recorder remove another 620 lines from `legacy-source-board.ts`, reducing
      it to 6,452 lines and its browser-spec consumers from seven to six.
+142. The ordinary three-card evolution gate now constructs local/opponent
+     active and bench histories through v1's actual `Card`, `moveCardBundle`,
+     `moveCard`, and `refreshBoard` modules. A dedicated runtime capture samples
+     the stable two-card precursor, direct second-evolution output, same-task
+     ghost-wrapper boundary, observer-settled three-card result, native hit
+     order, and the final four-stack paint scene. It explicitly waits for the
+     top hand card after cross-document adoption because `evolveCard` reads its
+     integer `clientWidth`; an initial zero-width diagnostic exposed that
+     precondition and was rejected before any oracle change. With the real
+     user-action precondition restored, the existing oracle and all structured,
+     lifecycle, strict paint, and React DOM assertions agree unchanged across
+     three repeats (6/6). The retired evolution types and hand-authored replay
+     remove 679 lines from `legacy-source-board.ts`; the new executable helper
+     is 549 lines, the shared transcription falls to 5,773 lines, and its
+     browser-spec consumers fall from six to five.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

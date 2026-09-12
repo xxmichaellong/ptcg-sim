@@ -441,15 +441,16 @@ React DOM preserves the source card-edge paint as well: local cards use a
 `0.275rem` radius, opponent cards `0.3rem`, shared cards `0.375rem`, and only
 shared cards use the stronger `0.5` shadow alpha rather than `0.3`.
 
-The evolution fixture does not execute the networked modules. It excludes
-Energy/Trainer/Tool and unrelated attachments, markers, BREAK/rotation,
-multiple-stack flex shrink and overflow, resize/flip,
-transfer/removal/promotion, `leaveAll` and other history-dependent restoration,
-noncanonical dimensions, face hide/reveal and source mutation, previews, and
-input or network behavior. Those states retain the previous scene path or
-require a later oracle rather than inheriting this narrow result. Pixi consumes
-the same renderer-neutral scene geometry for qualifying stacks, but its paint
-and hit parity remain unverified.
+The evolution runtime capture executes v1's actual card construction,
+`moveCardBundle`, `moveCard`, evolution, and `refreshBoard` modules while its
+network harness blocks every external request. It excludes Energy/Trainer/Tool
+and unrelated attachments, markers, BREAK/rotation, multiple-stack flex shrink
+and overflow, resize/flip, transfer/removal/promotion, `leaveAll` and other
+history-dependent restoration, noncanonical dimensions, face hide/reveal and
+source mutation, previews, and input or network behavior. Those states retain
+the previous scene path or require a later oracle rather than inheriting this
+narrow result. Pixi consumes the same renderer-neutral scene geometry for
+qualifying stacks, but its paint and hit parity remain unverified.
 
 `tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts` adds a fifth,
 source-backed card checkpoint with the separately digest-pinned, source-only
