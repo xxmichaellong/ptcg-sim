@@ -124,6 +124,7 @@ export const RemoteRoomRoute = ({
   const [activePanel, setActivePanel] = useState<'room' | 'deck' | 'settings'>(
     'room'
   );
+  const [playmatExpanded, setPlaymatExpanded] = useState(false);
   const [locallyActivatedDeck, setLocallyActivatedDeck] = useState(false);
   const deckActivated = deckSurfaceActivated || locallyActivatedDeck;
   const openDeck = (): void => {
@@ -215,7 +216,13 @@ export const RemoteRoomRoute = ({
                 : undefined
             }
           >
-            <section className="board-column" aria-label="Game board">
+            <section
+              className={`board-column${
+                playmatExpanded ? ' board-column--fullscreen' : ''
+              }`}
+              aria-label="Game board"
+              data-board-shell={playmatExpanded ? 'fullscreen' : 'sidebar'}
+            >
               <RemoteSessionBoard
                 session={runtime.session}
                 replay={runtime.replay}
@@ -225,9 +232,14 @@ export const RemoteRoomRoute = ({
                 {...(preferences ? { preferences } : {})}
                 roomMode={roomMode}
                 hideOpponentHand={hideOpponentHand}
+                playmatExpanded={playmatExpanded}
+                onPlaymatExpandedChange={setPlaymatExpanded}
               />
             </section>
-            <aside className="legacy-sidebar legacy-room-sidebar">
+            <aside
+              className="legacy-sidebar legacy-room-sidebar"
+              hidden={playmatExpanded}
+            >
               <nav
                 id="topButtonContainer"
                 className="legacy-tabs legacy-room-tabs"

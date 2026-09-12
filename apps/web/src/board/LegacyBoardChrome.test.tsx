@@ -125,6 +125,30 @@ describe('LegacyBoardChrome', () => {
       host.querySelector<HTMLButtonElement>('#turnButton button')?.className
     ).toBe('legacy-board-control-button dark-mode-2');
 
+    await act(async () =>
+      root.render(
+        <LegacyBoardChrome
+          layout={flipped}
+          localPlayerId={asPlayerId('spike-blue')}
+          darkMode={true}
+          actions={actions}
+          visibility={{ playerActions: false, flipBoard: false }}
+          refreshingImages
+        />
+      )
+    );
+    expect(host.querySelector('#turnButton')).toBeNull();
+    expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#flipBoardButton')).toBeNull();
+    expect(host.querySelector('#refreshButton')).not.toBeNull();
+    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
+      'none'
+    );
+    expect(
+      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
+    ).toBe('block');
+
     await act(async () => root.unmount());
   });
 });

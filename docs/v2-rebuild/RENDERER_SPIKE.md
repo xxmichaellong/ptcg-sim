@@ -2024,6 +2024,25 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      surface is synchronously detached, exactly one clear/install pair occurs,
      and the same healthy renderer object and generation remain mounted. All
      three real Worker/WebSocket route cases pass with that lifecycle pinned.
+     Replacement exact-head CI passed the quality job plus all 290 Chromium
+     cases; the unchanged hosted route soak completed in 7.2 minutes.
+131. The selected DOM room route now composes the already screenshot-approved
+     `LegacyBoardChrome` over the protected runtime. A shared DOM resize bridge
+     preserves source overlap priority and scaled pointer coordinates in both
+     its isolated harness and the production route without turning layout into
+     a command. Turn and Coin use the stale-safe controller resolvers and appear
+     only for a writable live player; Flip appears only for Solo or spectator
+     perspectives; Refresh and full-playmat remain local. The button and
+     unselected `R` path both reassign and decode the source-matched active,
+     bench, deck, and prize image families, show the existing spinner, tolerate
+     individual failures, and reconstruct geometry without replacing the
+     renderer. Full-playmat mode switches the
+     characterized shell, widens the board, and hides rather than unmounts the
+     sibling sidebar, so its selected room/deck/settings panel survives. The
+     experimental Pixi route remains unchanged and does not expose DOM-only
+     chrome. Focused component/runtime tests and real Worker/Chromium routes pin
+     visibility, command policy, one renderer, resize, refresh, expansion,
+     replay flip, reconnect, sidebar restoration, and teardown.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -2203,13 +2222,12 @@ bottleneck and the full cross-browser matrix.
 The following still require controlled browser/device runs before production
 wiring:
 
-- expand the source-driven geometry checkpoint to painted/interactable frames,
-  handles and controls, remaining card/stack modes and screenshots,
-  browser-level candidate
-  split/flip/fullscreen controls, and the remaining structured 2 px / 1%
-  thresholds (source edge clamp/collision states, the isolated candidate
-  resize-pointer path, and normal/flipped fullscreen viewport continuity are now
-  covered);
+- expand the source-driven geometry checkpoint to painted/interactable player
+  frames, remaining card/stack modes and screenshots, and the remaining
+  structured 2 px / 1% thresholds. Painted handles/controls, browser-level
+  split/flip/full-playmat behavior, source edge clamp/collision states, the
+  selected DOM production resize path, and normal/flipped fullscreen viewport
+  continuity are now covered;
 - a manual screen-reader audit beyond the automated replay-local and transformed
   stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
   focus-visible paint/return, exact face assets, and stable geometry;

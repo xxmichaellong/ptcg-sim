@@ -284,6 +284,10 @@ describe('RemoteSessionBoard replay binding', () => {
       })
     );
     await waitForRevision(host, 10);
+    expect(host.querySelector('#turnButton')).toBeNull();
+    expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#refreshButton')).not.toBeNull();
+    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
     await invokeDeckShuffle(host);
     expect(session.submit).toHaveBeenCalledTimes(2);
     expect(onSubmission).toHaveBeenCalledTimes(2);
@@ -362,6 +366,187 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(renderedOpponentHand().every((card) => !card.concealed)).toBe(true);
     expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
     expect(session.getSnapshot().view).toBe(disclosed);
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('wires source-shaped chrome through protected commands and local layout actions', async () => {
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const onPlaymatExpandedChange = vi.fn();
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const render = async (
+      roomMode: 'solo' | 'multiplayer',
+      playmatExpanded = false
+    ) =>
+      act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            rendererKind="dom"
+            roomMode={roomMode}
+            playmatExpanded={playmatExpanded}
+            onPlaymatExpandedChange={onPlaymatExpandedChange}
+            onIntent={vi.fn()}
+          />
+        )
+      );
+
+    await render('multiplayer');
+    await waitForRevision(host, 10);
+    expect(host.querySelector('[data-legacy-board-chrome]')).not.toBeNull();
+    expect(host.querySelector('#turnButton')).not.toBeNull();
+    expect(host.querySelector('#flipCoinButton')).not.toBeNull();
+    expect(host.querySelector('#flipBoardButton')).toBeNull();
+    expect(host.querySelector('#refreshButton')).not.toBeNull();
+    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('#turnButton button')?.click();
+      host.querySelector<HTMLButtonElement>('#flipCoinButton button')?.click();
+    });
+    expect(session.submit).toHaveBeenNthCalledWith(1, {
+      type: 'StartTurn',
+      targetPlayerId: 'spike-blue',
+    });
+    expect(session.submit).toHaveBeenNthCalledWith(2, { type: 'FlipCoin' });
+
+    const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
+    let finishDecode: (() => void) | undefined;
+    const decodePending = new Promise<void>((resolve) => {
+      finishDecode = resolve;
+    });
+    const decode = vi
+      .spyOn(HTMLImageElement.prototype, 'decode')
+      .mockReturnValue(decodePending);
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#refreshButton button')?.click()
+    );
+    expect(decode).toHaveBeenCalled();
+    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
+      'none'
+    );
+    expect(
+      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
+    ).toBe('block');
+    await act(async () => {
+      finishDecode?.();
+      await decodePending;
+      await Promise.resolve();
+    });
+    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
+      ''
+    );
+    expect(
+      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
+    ).toBe('');
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+    expect(session.submit).toHaveBeenCalledTimes(2);
+
+    decode.mockClear();
+    let finishShortcutDecode: (() => void) | undefined;
+    const shortcutDecodePending = new Promise<void>((resolve) => {
+      finishShortcutDecode = resolve;
+    });
+    decode.mockReturnValue(shortcutDecodePending);
+    await act(async () =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'r',
+          code: 'KeyR',
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(decode).toHaveBeenCalled();
+    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
+      'none'
+    );
+    await act(async () => {
+      finishShortcutDecode?.();
+      await shortcutDecodePending;
+      await Promise.resolve();
+    });
+    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
+      ''
+    );
+    decode.mockRestore();
+
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('#fullscreenPlaymatButton button')
+        ?.click()
+    );
+    expect(onPlaymatExpandedChange).toHaveBeenCalledWith(true);
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(
+          host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
+            .shellMode
+        ).toBe('fullscreen')
+      );
+    });
+
+    await render('solo', true);
+    const bottomBeforeFlip = selectedScene().bottomPlayerId;
+    expect(host.querySelector('#flipBoardButton')).not.toBeNull();
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#flipBoardButton button')?.click()
+    );
+    expect(selectedScene().bottomPlayerId).not.toBe(bottomBeforeFlip);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+
+    await act(async () => replay.requestReplay());
+    await act(async () => session.completeReplay());
+    await waitForRevision(host, 0);
+    expect(host.querySelector('#turnButton')).toBeNull();
+    expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#flipBoardButton')).not.toBeNull();
+    expect(host.querySelector('#refreshButton')).not.toBeNull();
+    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('shows only local and perspective controls to a multiplayer spectator', async () => {
+    const spectatorView: MatchViewState = {
+      ...atRevision(10),
+      viewer: { kind: 'spectator' },
+    };
+    const { playerId: _playerId, ...withoutPlayerId } = initialState();
+    const session = new FakeRemoteBoardSession({
+      ...withoutPlayerId,
+      role: 'spectator',
+      view: spectatorView,
+    });
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          roomMode="multiplayer"
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    expect(host.querySelector('#turnButton')).toBeNull();
+    expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#flipBoardButton')).not.toBeNull();
+    expect(host.querySelector('#refreshButton')).not.toBeNull();
+    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
 
     await act(async () => root.unmount());
     replay.dispose();

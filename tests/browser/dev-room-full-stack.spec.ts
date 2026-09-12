@@ -252,6 +252,61 @@ test('development route reaches and resumes a real durable room through the same
     playerCount: 2,
   });
   expect(connected.roomCode).toMatch(/^[A-HJ-NP-Z2-9]{12}$/u);
+  await expect(page.locator('[data-legacy-board-chrome]')).toBeVisible();
+  await expect(page.locator('#turnButton')).toBeVisible();
+  await expect(page.locator('#flipCoinButton')).toBeVisible();
+  await expect(page.locator('#flipBoardButton')).toHaveCount(0);
+  await expect(page.locator('#selfResizer')).toBeVisible();
+  await expect(page.locator('#oppResizer')).toBeVisible();
+
+  const lowerHandleBefore = await page.locator('#selfResizer').boundingBox();
+  if (!lowerHandleBefore) throw new Error('Missing lower resize handle bounds');
+  await page.mouse.move(
+    lowerHandleBefore.x + lowerHandleBefore.width / 2,
+    lowerHandleBefore.y + lowerHandleBefore.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    lowerHandleBefore.x + lowerHandleBefore.width / 2,
+    lowerHandleBefore.y + lowerHandleBefore.height / 2 + 40
+  );
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await page.locator('#selfResizer').boundingBox())?.y)
+    .not.toBe(lowerHandleBefore.y);
+
+  const routeRenderer = await page.evaluateHandle(
+    () => window.__PTCG_RENDERER_SPIKE__?.renderer
+  );
+  await page.locator('#refreshButton button').click();
+  expect(
+    await page.evaluate(
+      (renderer) => window.__PTCG_RENDERER_SPIKE__?.renderer === renderer,
+      routeRenderer
+    )
+  ).toBe(true);
+  await routeRenderer.dispose();
+  await page.locator('#fullscreenPlaymatButton button').click();
+  await expect(page.locator('.board-column')).toHaveAttribute(
+    'data-board-shell',
+    'fullscreen'
+  );
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-shell-mode',
+    'fullscreen'
+  );
+  await expect(page.locator('.legacy-room-sidebar')).toBeHidden();
+  await page.locator('#fullscreenPlaymatButton button').click();
+  await expect(page.locator('.board-column')).toHaveAttribute(
+    'data-board-shell',
+    'sidebar'
+  );
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-shell-mode',
+    'sidebar'
+  );
+  await expect(page.locator('.legacy-room-sidebar')).toBeVisible();
+  await expect(page.locator('#p2Chatbox')).toBeVisible();
 
   const postResponses = authorityResponses
     .filter((response) => response.request().method() === 'POST')
@@ -478,12 +533,7 @@ test('development route reaches and resumes a real durable room through the same
     expect(resumedUrl.password).toBe('');
   }
 
-  const resumedSubmission = await page.evaluate(() => {
-    const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
-    if (!handle) throw new Error('Missing resumed development room handle');
-    return handle.runtime.session.submit({ type: 'FlipCoin' });
-  });
-  expect(resumedSubmission).toMatchObject({ queued: true });
+  await page.locator('#flipCoinButton button').click();
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -570,6 +620,9 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   expect(creationResponse.request().postDataJSON()).toEqual({ mode: 'solo' });
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+  await expect(page.locator('#turnButton')).toBeVisible();
+  await expect(page.locator('#flipCoinButton')).toBeVisible();
+  await expect(page.locator('#flipBoardButton')).toBeVisible();
   const creationBody = await page.evaluate(
     () =>
       (globalThis as BrowserDevRoomGlobals).__ptcgsimCreationProbe as {
@@ -677,6 +730,21 @@ test('solo creation serves one-player authority and locally disclosed replay wit
       )
     )
     .toBe('replay');
+  await expect(page.locator('#turnButton')).toHaveCount(0);
+  await expect(page.locator('#flipCoinButton')).toHaveCount(0);
+  await expect(page.locator('#flipBoardButton')).toBeVisible();
+  await expect(page.locator('#refreshButton')).toBeVisible();
+  await expect(page.locator('#fullscreenPlaymatButton')).toBeVisible();
+
+  const replayBottomBeforeFlip = await page.evaluate(
+    () => window.__PTCG_RENDERER_SPIKE__?.scene.bottomPlayerId
+  );
+  await page.locator('#flipBoardButton button').click();
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.scene.bottomPlayerId)
+    )
+    .not.toBe(replayBottomBeforeFlip);
 
   expect(
     await page.evaluate(() => {

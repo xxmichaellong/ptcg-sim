@@ -12,6 +12,16 @@ export interface LegacyBoardChromeActions {
   readonly toggleFullscreen: () => void;
 }
 
+export interface LegacyBoardChromeVisibility {
+  readonly playerActions: boolean;
+  readonly flipBoard: boolean;
+}
+
+const DEFAULT_VISIBILITY: LegacyBoardChromeVisibility = {
+  playerActions: true,
+  flipBoard: true,
+};
+
 const SELF_GRADIENT =
   'linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864))';
 const OPPONENT_GRADIENT =
@@ -66,11 +76,15 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   localPlayerId,
   darkMode,
   actions,
+  visibility = DEFAULT_VISIBILITY,
+  refreshingImages = false,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly localPlayerId: PlayerId;
   readonly darkMode: boolean;
   readonly actions: LegacyBoardChromeActions;
+  readonly visibility?: LegacyBoardChromeVisibility;
+  readonly refreshingImages?: boolean;
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -137,38 +151,52 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           height: anchor.height,
         }}
       >
-        <LegacyTooltipButton
-          id="turnButton"
-          label="Start turn"
-          onClick={actions.takeTurn}
-          darkMode={darkMode}
-        >
-          +Turn
-        </LegacyTooltipButton>
-        <LegacyTooltipButton
-          id="flipCoinButton"
-          label="Flip coin"
-          onClick={actions.flipCoin}
-          darkMode={darkMode}
-        >
-          Coin
-        </LegacyTooltipButton>
-        <LegacyTooltipButton
-          id="flipBoardButton"
-          label="Flip board"
-          onClick={actions.flipBoard}
-          darkMode={darkMode}
-        >
-          ⇅
-        </LegacyTooltipButton>
+        {visibility.playerActions && (
+          <>
+            <LegacyTooltipButton
+              id="turnButton"
+              label="Start turn"
+              onClick={actions.takeTurn}
+              darkMode={darkMode}
+            >
+              +Turn
+            </LegacyTooltipButton>
+            <LegacyTooltipButton
+              id="flipCoinButton"
+              label="Flip coin"
+              onClick={actions.flipCoin}
+              darkMode={darkMode}
+            >
+              Coin
+            </LegacyTooltipButton>
+          </>
+        )}
+        {visibility.flipBoard && (
+          <LegacyTooltipButton
+            id="flipBoardButton"
+            label="Flip board"
+            onClick={actions.flipBoard}
+            darkMode={darkMode}
+          >
+            ⇅
+          </LegacyTooltipButton>
+        )}
         <LegacyTooltipButton
           id="refreshButton"
           label="Refresh images"
           onClick={actions.refreshImages}
           darkMode={darkMode}
         >
-          <div id="refreshIcon">↻</div>
-          <div id="loadingCircle" />
+          <div
+            id="refreshIcon"
+            style={{ display: refreshingImages ? 'none' : undefined }}
+          >
+            ↻
+          </div>
+          <div
+            id="loadingCircle"
+            style={{ display: refreshingImages ? 'block' : undefined }}
+          />
         </LegacyTooltipButton>
         <LegacyTooltipButton
           id="fullscreenPlaymatButton"

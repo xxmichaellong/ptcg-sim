@@ -32,6 +32,10 @@ select {
   height: 100%;
 }
 
+.board-column--fullscreen {
+  width: 100%;
+}
+
 .board-spike-host {
   position: absolute;
   inset: 0;

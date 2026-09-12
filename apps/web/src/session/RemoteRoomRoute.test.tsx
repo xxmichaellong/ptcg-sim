@@ -36,6 +36,8 @@ const boardHarness = vi.hoisted(() => ({
         readonly allowRevisionRegression?: boolean;
         readonly preferences?: BoardPreferences;
         readonly onIntent: (intent: BoardIntent) => void;
+        readonly playmatExpanded: boolean;
+        readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
       }
     | undefined,
 }));
@@ -53,6 +55,8 @@ vi.mock('./RemoteSessionBoard.js', async () => {
       };
       readonly preferences?: BoardPreferences;
       readonly onIntent: (intent: BoardIntent) => void;
+      readonly playmatExpanded?: boolean;
+      readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
     }) => {
       const state = React.useSyncExternalStore(
         props.replay.subscribe,
@@ -65,6 +69,12 @@ vi.mock('./RemoteSessionBoard.js', async () => {
             allowRevisionRegression: state.mode === 'replay',
             ...(props.preferences ? { preferences: props.preferences } : {}),
             onIntent: props.onIntent,
+            playmatExpanded: props.playmatExpanded ?? false,
+            ...(props.onPlaymatExpandedChange
+              ? {
+                  onPlaymatExpandedChange: props.onPlaymatExpandedChange,
+                }
+              : {}),
           }
         : undefined;
       return state.view ? (
@@ -301,6 +311,12 @@ describe('RemoteRoomRoute', () => {
       )
     );
     expect(host.querySelector('main')?.dataset.appRoute).toBe('remote-room');
+    expect(host.querySelector('.board-column')?.dataset.boardShell).toBe(
+      'sidebar'
+    );
+    expect(
+      (host.querySelector('.legacy-room-sidebar') as HTMLElement).hidden
+    ).toBe(false);
     expect(host.querySelector('main')?.dataset.sessionPhase).toBeUndefined();
     expect(host.querySelector('#p1Button')?.textContent).toBe('Solo');
     expect(host.querySelector('#p2Button')?.className).toBe('selected-page');
@@ -367,6 +383,26 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
     expect(boardHarness.props?.preferences).toBeUndefined();
+
+    await act(async () => boardHarness.props?.onPlaymatExpandedChange?.(true));
+    expect(host.querySelector('.board-column')?.dataset.boardShell).toBe(
+      'fullscreen'
+    );
+    expect(host.querySelector('.board-column')?.classList).toContain(
+      'board-column--fullscreen'
+    );
+    expect(
+      (host.querySelector('.legacy-room-sidebar') as HTMLElement).hidden
+    ).toBe(true);
+    expect(boardHarness.props?.playmatExpanded).toBe(true);
+    await act(async () => boardHarness.props?.onPlaymatExpandedChange?.(false));
+    expect(host.querySelector('.board-column')?.dataset.boardShell).toBe(
+      'sidebar'
+    );
+    expect(
+      (host.querySelector('.legacy-room-sidebar') as HTMLElement).hidden
+    ).toBe(false);
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(false);
 
     await act(async () => {
       (host.querySelector('#p2OptionsButton') as HTMLButtonElement).click();
