@@ -135,8 +135,9 @@ Before implementation, Phase 1 records the legacy system as evidence:
 1. A feature inventory linking each control and gesture to its current handler.
 2. A command/action catalog for every dispatch entry in `accept-action.js`, with
    preconditions, state effects, visibility, messages, and undo behavior.
-3. Golden v1 save/export, deck, replay, and action-log fixtures, including old
-   versions still expected to import.
+3. Golden v1 save/export and action-log fixtures retained as characterization
+   evidence, plus supported deck and v2-native replay fixtures. ADR-021 makes no
+   first-release promise to import the v1 save/action fixtures.
 4. Playwright workflows for each protected user journey.
 5. Fixed-viewport screenshots for empty, setup, mid-game, popup, menu, dark-mode,
    flipped, spectator, reconnect, and replay states.

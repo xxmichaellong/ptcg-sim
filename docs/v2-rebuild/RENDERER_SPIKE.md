@@ -2401,6 +2401,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      canonical resumable `Import game state`, server-held continuation,
      encryption, retention, quotas, and migration disabled as their separate
      ADR-012 workstream.
+160. ADR-021 records the owner's first-release decision to defer v1
+     saved-game/action-history files and old `/import?key=` share links. The
+     existing bounded converter remains a quarantined development/test package:
+     workspace and bundle provenance gates keep it out of both production
+     artifacts, and no v1 upload/share route is added. Supported deck inputs and
+     the already-wired v2 perspective-replay picker remain unchanged. Canonical
+     requirements, migration, verification, file-map, decision, and legacy
+     conversion documents now distinguish tested source-shaped evidence from a
+     user-facing compatibility promise. Future activation requires a replacement
+     ADR naming exact versions, representative real-user corpus evidence, link
+     retention, and renewed privacy/resource/migration/browser/rollback review.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

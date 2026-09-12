@@ -11,8 +11,9 @@ in-match modules.
 - v1 clients never send positional actions to a v2 room; v2 clients never import
   live v1 runtime modules.
 - Existing v1 rooms finish on v1 during rollout.
-- The only bridge is transactional one-way conversion of deck/save/replay data
-  into normalized v2 state.
+- The first-release production bridge covers supported deck data and v2-native
+  perspective replays. ADR-021 keeps the transactional v1 save/action converter
+  quarantined and unwired.
 - Rollback directs new sessions back to v1. It never tries to convert an active
   v2 room back into a live v1 action stream.
 
@@ -42,7 +43,8 @@ Work:
 - Audit every document using `AUDIT.md`.
 - Resolve all `BLOCKING` questions in the decision register.
 - Decide top-level workspace location and deployment constraints.
-- Define browser, viewport, hardware, and supported legacy-version matrices.
+- Define browser, viewport, hardware, and v1 fallback/deprecation matrices;
+  record ADR-021's first-release v1 save/share-import deferral.
 - Approve privacy behavior for multiplayer saves/replays and coaching/spectators.
 - Confirm ownership/license terms for any direct MagicCircle code extraction;
   otherwise permit only clean reimplementation of documented patterns.
@@ -102,8 +104,8 @@ Exit gate:
 - every key shown by the existing keybind UI has a passing characterization
   test;
 - protected workflows have deterministic baselines;
-- at least ten representative v1 saves/replays, including attachments,
-  inspection/reveal, undo, flip, spectator, and reconnect, are captured;
+- source-shaped v1 save/replay fixtures preserve the known exporter and complex
+  action evidence without being treated as a production compatibility corpus;
 - known bugs are classified rather than accidentally enshrined; and
 - baseline performance and payload/memory trends are recorded.
 
@@ -448,8 +450,9 @@ Work:
   history/table signals.
 - Implement role projections and concealed-handle epochs.
 - Port the pure deck-builder core and strengthen CSV/dirty/unload behavior.
-- Maintain the isolated v1 interpreter/converter and versioned conversion
-  reports while corpus evidence expands.
+- Maintain the isolated v1 interpreter/converter, source-shaped fixtures, and
+  versioned conversion reports as quarantined evidence; run a real-user corpus
+  only if a future ADR reopens production compatibility.
 - Differentially run characterized action scenarios through v1 fixtures and v2
   reducers, comparing semantic normalized outcomes rather than DOM details.
 
@@ -460,8 +463,8 @@ Exit gate:
 - invariant/property tests cover arbitrary valid command sequences;
 - canonical serialization/hash is deterministic across Node and browser;
 - projection leak/differential tests pass for every zone and role;
-- 100% of supported valid legacy fixtures convert to their expected semantic
-  states; invalid fixtures fail without partial state;
+- every checked-in quarantined converter fixture reaches its expected semantic
+  state or fails without partial state; this is not a production support claim;
 - no core package imports browser/network/storage/rendering code.
 
 Rollback: none required; the package is unused by production v1.
@@ -665,7 +668,7 @@ save; they are never silently moved to v1.
 
 ## Phase 7 — Saves, replay, sharing, and compatibility
 
-Goal: make v2 sessions durable and legacy data safe to carry forward.
+Goal: make v2 sessions durable and v2-native replay data safe to carry forward.
 
 Current status (2026-09-12): ADR-012 is accepted. The first bounded archive
 slice serializes only the authority-produced role projection into a
@@ -682,6 +685,8 @@ real Worker/Chromium journey covers export, native selection, replay entry/exit,
 live restoration, and malformed-file recovery. Canonical multiplayer
 continuation remains server-held and unwired pending its encryption,
 role-capability, retention, recovery, quota, and abuse slices.
+ADR-021 separately defers production v1 saved-game/action-history files and old
+`/import?key=` share links; the isolated converter remains test-only.
 
 Work:
 
@@ -705,23 +710,25 @@ Work:
   parity exception. Preserve the
   implemented recipient-safe actor/scope/source facts and spectator-public
   single-reveal names while adding long-retention journal chunks and remaining
-  import formats. The v1-shaped export control now writes the accepted
+  v2-native archive formats. The v1-shaped export control now writes the accepted
   perspective replay format.
-- Expose v1 conversion through an isolated upload/import transaction.
+- Keep v1 saved-game/share-link route, dependency, and bundle wiring absent;
+  preserve the quarantined converter and fixtures for a future replacement ADR.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and
   cleanup jobs.
 
 Exit gate:
 
-- all persistence and legacy compatibility contract tests pass;
+- all v2 persistence/replay contract tests pass and production provenance still
+  excludes the quarantined legacy converter;
 - a saved match resumes to the same canonical hash and role projections;
 - restore from newest snapshot plus journal tail survives injected interruption;
 - corrupt/oversized/decompression-bomb inputs fail safely;
 - public or role-projected replay contains no hidden data;
 - share tokens cannot be feasibly guessed and expired/revoked links fail closed.
 
-Rollback: disable new saves/imports separately; existing v2 data remains readable
-by the previous compatible server deployment.
+Rollback: disable new saves and v2 replay-file imports separately; existing v2
+data remains readable by the previous compatible server deployment.
 
 ## Phase 8 — Hardening, parity closure, and release candidate
 
@@ -778,11 +785,13 @@ Goal: remove v1 only after v2 has proven stable.
 - Stop creating v1 rooms, then wait beyond maximum room/save compatibility
   window.
 - Archive a tagged v1 build and immutable fixtures.
-- Keep the supported legacy converter, not the live v1 action runtime.
+- Archive the quarantined legacy converter and fixtures, not the live v1 action
+  runtime; they carry no production support promise.
 - Remove legacy client/server dependencies, iframe HTML, relay handlers, and v1
   deployment configuration in separately reviewable commits.
 - Re-run dependency, license, security, and dead-code scans.
-- Document the last supported v1 import version and retention deadline.
+- Document that v1 save/action and old share-link import were not enabled for
+  the first v2 release; any later support needs its own version and retention ADR.
 
 Rollback after final data deletion may be impossible, so deletion/retention is a
 separate explicitly approved operation.

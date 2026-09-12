@@ -761,11 +761,12 @@ at 139/358,243, including a 297-byte frontier.
   targets are based on hosting budget and expected concurrency approved in Phase
   0 rather than an invented user count.
 
-## Legacy compatibility gates
+## Legacy conversion quarantine and deck compatibility gates
 
-- Every current and historical supported deck/save/replay fixture converts to the
-  expected canonical hash and view snapshots, or fails transactionally with a
-  specific diagnostic.
+- Every supported deck fixture remains readable. Checked-in v1 save/action
+  fixtures exercise the quarantined converter to an expected canonical hash and
+  view snapshots, or fail transactionally with a specific diagnostic; they do
+  not create a production compatibility promise.
 - All 50 legacy dispatch actions have at least one conversion fixture; compound,
   randomized, hidden, and positional edge cases have several.
 - The converter validates structural format because current displayed/package
@@ -774,8 +775,9 @@ at 139/358,243, including a 297-byte frontier.
   quoted commas/newlines as approved, and Pocket/legacy set-code collisions.
 - Main and alternate deck state/save/unload/dirty behavior is independently
   tested.
-- Old `/import?key=` records remain readable for the promised transition window;
-  new weak four-character records are never created by v2.
+- The first v2 release neither reads old `/import?key=` records nor creates new
+  weak four-character records. A future route requires the replacement ADR and
+  representative real-corpus evidence specified by ADR-021.
 - No converted match retains or executes legacy function names at runtime.
 
 ## Observability gates
@@ -788,10 +790,13 @@ Before any multiplayer cohort, dashboards and alerts must expose:
 - durable append/checkpoint/recovery latency and failure;
 - projection/serialization/publication payload and latency;
 - reconnect attempts, success, recovery time, seat expiry/supersession;
-- legacy import outcomes by inferred/declared version and safe reason;
 - renderer initialization/context loss/recovery and texture/asset failure;
 - client fatal errors, build/protocol/schema versions, and canary cohort; and
 - save creation/read/expiry/quota failures.
+
+ADR-021's deferral intentionally leaves no production legacy-import telemetry
+producer. Isolated corpus-tool reports retain safe version/reason evidence
+without user data.
 
 Telemetry contains opaque correlations, build/schema versions, command type,
 revision, and outcome only. It excludes raw command payloads, chat, card names,
@@ -820,7 +825,7 @@ A release candidate requires attached evidence and named approval for:
 - persistence/operations owner;
 - renderer/performance owner;
 - UI parity/accessibility owner;
-- legacy compatibility owner; and
+- legacy retirement/quarantine owner; and
 - product owner for all exceptions/deferred items.
 
 Any invariant failure, confirmed hidden leak, acknowledged-state loss, corrupting

@@ -1,8 +1,8 @@
 # Legacy import boundary
 
-- Status: **bounded v1 conversion transaction, canonical card-back policy, report, and private-corpus evidence runner implemented**
-- Supported source versions: `1.5`, `1.5.1`
-- Production route status: unwired
+- Status: **bounded v1 conversion transaction, canonical card-back policy, report, and private-corpus evidence runner implemented and quarantined**
+- Test-converter source versions: `1.5`, `1.5.1` (not a production support promise)
+- Production route status: intentionally deferred by ADR-021
 
 ## Purpose
 
@@ -12,10 +12,11 @@ actions to mutate the board even if a later record fails. V2 must never pass an
 uploaded name into dynamic function lookup or install a partially converted
 match.
 
-`packages/legacy-import` is the only planned production package allowed to know
-v1 action names, positional parameters, export versions, or action-era card
-quirks. It remains independent of the browser, v1 runtime, renderer, transport,
-and room authority.
+`packages/legacy-import` is the only package allowed to know v1 action names,
+positional parameters, export versions, or action-era card quirks. It remains
+independent of the browser, v1 runtime, renderer, transport, and room authority,
+and ADR-021 forbids it from production dependencies and bundles in the first
+release.
 
 ## Source-backed format
 
@@ -59,6 +60,19 @@ through `1.5.1`; commit `c9df292` changed only the displayed version string.
 Both shapes are retained as source-shaped fixtures in
 `tests/legacy-fixtures/saves/`. They establish parser compatibility, not yet a
 claim that every historical action parameter has a semantic converter.
+
+## First-release product decision
+
+ADR-021 defers user-facing v1 saved-game/action-history files and old
+`/import?key=` share links from the first v2 release. The absence of a
+representative real-user corpus means the known exporter fixtures cannot justify
+a historical compatibility promise. Deck-list/CSV import and v2-native
+perspective-replay files are separate supported boundaries and are unaffected.
+
+The converter, reports, fixtures, and corpus tool below remain test-only
+characterization. Production route activation requires a new accepted ADR with
+named versions, real-corpus evidence, a link-retention policy if applicable,
+and renewed privacy, resource, migration, browser, and rollback review.
 
 ## Legacy hazards preserved as evidence, not behavior
 
@@ -154,8 +168,8 @@ gate rejects `@ptcgsim/legacy-import` from every workspace `dependencies`,
 `optionalDependencies`, and `peerDependencies` section even if unused;
 `devDependencies` remain available for isolated verification. Production web
 and Worker source-map provenance independently reject any emitted importer
-module. Activating a route therefore requires an explicit reviewed gate change
-after the representative real-user corpus evidence is approved.
+module. Activating a route therefore requires the replacement ADR and approved
+representative real-user corpus evidence described above.
 
 ### Privacy-safe corpus evidence runner
 
@@ -208,7 +222,7 @@ conversion or baseline drift exits nonzero. Ten synthetic tooling tests prove
 determinism, content/path redaction, action coverage, duplicate refusal, limits,
 symlink refusal, input isolation, and baseline behavior. No raw or redacted
 real-user corpus is currently present, so this infrastructure does not satisfy
-the representative-corpus exit gate by itself.
+the future compatibility reconsideration gate by itself.
 
 ### Positional families
 
@@ -956,15 +970,19 @@ saved action family now has a strict decoder and canonical transition or
 source-authentic no-op normalization; malformed card-back tuples retain typed
 `cardBack.*` diagnostics.
 
-## Next conversion slices
+## Future compatibility reconsideration
 
-1. Use the implemented private-corpus runner against a representative,
+ADR-021 schedules no production conversion slice for the first release. If a
+future product decision reopens compatibility work, its replacement ADR must:
+
+1. use the implemented private-corpus runner against a representative,
    privacy-reviewed real-user corpus and approve its redacted expected
-   report/state identities as compatibility evidence.
-2. Only after that corpus passes should the same reviewed change deliberately
-   relax the source quarantine and let the route loader or old `/import?key=`
-   reader call this package. Bundle provenance must remain closed until the
-   intended production consumer is separately admitted.
+   report/state identities as compatibility evidence; then
+2. name the exact supported versions and retention window before deliberately
+   relaxing the source quarantine for a reviewed route loader or old
+   `/import?key=` reader. Bundle provenance remains closed until that production
+   consumer is separately admitted.
 
-No v1 module is imported, no save/replay route is enabled, and no visible UI or
-UX changes in this checkpoint.
+No v1 module is imported, no v1 save/share route is enabled, and no visible UI
+or UX change follows from retaining this test-only package. The independent
+v2-native perspective-replay picker remains enabled.

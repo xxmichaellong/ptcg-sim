@@ -223,8 +223,10 @@ a manual tabletop simulator.
 | [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
 | [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md) | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
+| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)   | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
+| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                   | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
-| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
+| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
 | [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
 | [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
@@ -249,7 +251,7 @@ incremental implementation behind the isolated v2 route and draft PR:
 - the state schema, command envelope, visibility rules, and persistence format
   have no unresolved semantic gaps;
 - the renderer and backend spikes pass their defined gates;
-- migration, rollback, and v1 compatibility fixtures are demonstrated; and
+- migration, rollback, and the ADR-021 v1 save/share quarantine are demonstrated; and
 - the project owner explicitly approves Phase 1.
 
 ## Definitions
@@ -263,4 +265,5 @@ incremental implementation behind the isolated v2 route and draft PR:
   and other local-only UI state.
 - **Parity**: the current feature remains discoverable and behaves the same to a
   user, within documented rendering tolerances.
-- **Legacy import**: one-way conversion of a v1 save/action stream into v2 state.
+- **Legacy import**: a quarantined, non-production one-way converter for v1
+  save/action streams; ADR-021 defers user-facing support from the first release.

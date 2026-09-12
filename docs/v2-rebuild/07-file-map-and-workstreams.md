@@ -546,5 +546,6 @@ Only Phase 10 removes:
 - v1 deck/image card classes and image custom logical properties; and
 - production imports from `client/src/actions/**`.
 
-The immutable characterization fixtures, supported legacy converter, tagged v1
-source release, and migration documentation remain.
+The immutable characterization fixtures, quarantined legacy converter, tagged
+v1 source release, and migration documentation remain. ADR-021 gives the
+converter no first-release production support promise.
