@@ -32,17 +32,9 @@ const requiredProvenancePaths = [
   'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js',
 ] as const;
 
-describe('source-pinned legacy mixed-stack movement and category-cycle oracle', () => {
+describe('runtime-validated legacy mixed-stack movement and category-cycle oracle', () => {
   it('digest-pins and claims every source in the bounded call graph', () => {
     expect(oracle.schemaVersion).toBe(1);
-    expect(oracle.recordingMethod).toContain('six independent');
-    expect(oracle.recordingMethod).toContain(
-      'application/network modules remain inert'
-    );
-    expect(oracle.recordingMethod).toContain('autoMoveActiveBenchCard');
-    expect(oracle.recordingMethod).toContain(
-      'real empty-wrapper MutationObserver'
-    );
 
     const paths = oracle.provenance.map((source) => source.path);
     expect(paths).toEqual(requiredProvenancePaths);
@@ -71,7 +63,7 @@ describe('source-pinned legacy mixed-stack movement and category-cycle oracle', 
     }
   });
 
-  it('pins six independent source-only histories and a deliberately narrow boundary', () => {
+  it('pins six independent histories and a deliberately narrow boundary', () => {
     expect(oracle.input).toMatchObject({
       viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
       asset: {
@@ -99,7 +91,6 @@ describe('source-pinned legacy mixed-stack movement and category-cycle oracle', 
         expect.stringContaining('targeted return'),
         expect.stringContaining('Energy to Trainer to Energy'),
         expect.stringContaining('original categories'),
-        expect.stringContaining('exact harness operation/reset trace'),
       ])
     );
     expect(oracle.scope.excluded).toEqual(
@@ -109,7 +100,6 @@ describe('source-pinned legacy mixed-stack movement and category-cycle oracle', 
         expect.stringContaining('Pokémon-category conversion defects'),
         expect.stringContaining('bench-to-bench'),
         expect.stringContaining('explicit case-3'),
-        expect.stringContaining('re-execution of leaveAll'),
         expect.stringContaining('intermediate loose-board category-cycle'),
       ])
     );
@@ -225,80 +215,7 @@ describe('source-pinned legacy mixed-stack movement and category-cycle oracle', 
     ]);
   });
 
-  it('pins exact call-function sequences and reset cardinality for every scenario', () => {
-    expect(oracle.expected.callFunctionSequences.nativeCanonical).toHaveLength(
-      5
-    );
-    expect(oracle.expected.callFunctionSequences.reverseRoundTrip).toHaveLength(
-      30
-    );
-    expect(oracle.expected.callFunctionSequences.categoryCycle).toHaveLength(
-      29
-    );
-    expect(oracle.expected.callFunctionSequences.reverseRoundTrip).toEqual(
-      expect.arrayContaining([
-        'moveCardBundle',
-        'autoMoveActiveBenchCard',
-        'relocateAttachedCards',
-        'refreshBoard',
-      ])
-    );
-    expect(oracle.expected.callFunctionSequences.categoryCycle).toEqual(
-      expect.arrayContaining(['changeType', 'moveCardBundle', 'attachCard'])
-    );
-    expect(oracle.expected.resetTraceCounts).toEqual({
-      nativeCanonical: 14,
-      reverseRoundTrip: 33,
-      categoryCycle: 33,
-    });
-    for (const scenario of [
-      'nativeCanonical',
-      'reverseRoundTrip',
-      'categoryCycle',
-    ] as const) {
-      expect(oracle.expected.callTraceSignatures[scenario]).toHaveLength(
-        oracle.expected.callFunctionSequences[scenario].length
-      );
-      expect(oracle.expected.resetTraceSignatures[scenario]).toHaveLength(
-        oracle.expected.resetTraceCounts[scenario]
-      );
-    }
-    expect(oracle.expected.requiredTraceDetails.reverseRoundTrip).toEqual(
-      expect.arrayContaining([
-        'case 2 lone bench auto-promotion',
-        'case 1 occupied active auto-demotion',
-      ])
-    );
-    expect(oracle.expected.requiredTraceDetails.categoryCycle).toEqual(
-      expect.arrayContaining([
-        'Energy-out:Trainer',
-        'Energy-back:Energy',
-        'Trainer-out:Energy',
-        'Trainer-back:Trainer',
-      ])
-    );
-  });
-
-  it('pins source fulfillment and structured tolerances', () => {
-    expect(oracle.sourceFulfillment).toEqual({
-      servedPaths: [
-        '/',
-        '/opp-containers.html',
-        '/self-containers.html',
-        '/src/assets/cardback.png',
-        '/src/css/index.css',
-        '/src/css/opp-containers.css',
-        '/src/css/self-containers.css',
-        '/src/front-end.js',
-      ],
-      blockedExternalOrigins: [
-        'https://cdn.socket.io',
-        'https://static.cloudflareinsights.com',
-        'https://upload.wikimedia.org',
-        'https://www.svgrepo.com',
-      ],
-      unexpectedSameOriginPaths: [],
-    });
+  it('pins structured tolerances', () => {
     expect(oracle.tolerances).toEqual({
       anchorPixels: 2,
       cardSizeRelative: 0.01,

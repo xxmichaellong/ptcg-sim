@@ -185,19 +185,17 @@ Reverse arrays remain valid historical state outside the v1 normalized
 transition subset.
 
 `legacy-mixed-stack-movement-category-cycle-layout.test.ts` pins the separate
-`mixed-stack-movement-category-cycle-v1.json` source checkpoint. Six isolated
-cases cover both physical sides: native canonical active construction,
-whole-stack movement seeded from the preceding oracle's exact reverse-restored
-geometry, and Energy/Trainer current-category cycles through board departure
-and ordinary reattachment. The movement path exercises no-target automatic
+`mixed-stack-movement-category-cycle-v1.json` numeric checkpoint. Six isolated
+cases cover both physical sides: native canonical active construction, a real
+`leaveAll` reverse restore followed by whole-stack movement, and real
+`changeType` Energy/Trainer category cycles through board departure and
+ordinary reattachment. The runtime path exercises no-target automatic
 promotion and return to occupied active, then freezes canonical settled active
 and sole-bench geometry, logical/DOM order, rotations, z/hits, wrapper cleanup,
-and harness-operation/reset traces. It deliberately does not replay `leaveAll`
-or claim its setup trace; that transition is pinned by the preceding fixture.
-The category path records original categories and proves final settled
-equivalence without turning legacy reflow history into game state. The browser
-test now also mounts React for only the settled sole-bench and returned-active
-movement phases on both sides. It compares all mixed-card scene/pre-transform
+and original categories. Historical hand-authored operation/reset traces in the
+JSON are no longer asserted as runtime evidence. The browser test mounts React
+for only the settled sole-bench and returned-active movement phases on both
+sides. It compares all mixed-card scene/pre-transform
 and painted boxes, q1/q3 Tool rotation, z `300/299/298`, renderer order, and four
 native hit regions within 2 px / 1% / 0.1 degrees. After all cleanup records are
 captured, the harness retains a fresh returned-active scene and the test

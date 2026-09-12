@@ -16,13 +16,12 @@ import {
 import oracle from '../legacy-fixtures/renderer/mixed-stack-movement-category-cycle-v1.json' with { type: 'json' };
 
 import {
-  captureLegacySourceMixedStackMovementFixture,
-  LEGACY_SOURCE_ORIGIN,
+  captureLegacyRuntimeMixedStackMovementFixture,
   type LegacyMixedStackMovementCard,
   type LegacyMixedStackMovementPhase,
   type LegacyMixedStackMovementRole,
-  type LegacyMixedStackMovementScenario,
-} from './support/legacy-source-board.js';
+} from './support/legacy-runtime-mixed-stack.js';
+import { LEGACY_RUNTIME_ORIGIN } from './support/legacy-runtime.js';
 import {
   attachForegroundPaintComparison,
   compareForegroundScreenshots,
@@ -561,7 +560,7 @@ test.use({
   deviceScaleFactor: 1,
 });
 
-test('checked-in legacy sources characterize canonical, transferred, and category-cycled mixed stacks', async ({
+test('the checked-in v1 runtime characterizes canonical, transferred, and category-cycled mixed stacks', async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -585,7 +584,7 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     }
   });
 
-  const capture = await captureLegacySourceMixedStackMovementFixture(page, {
+  const capture = await captureLegacyRuntimeMixedStackMovementFixture(page, {
     retainStablePaint: true,
   });
   await testInfo.attach('legacy-mixed-stack-movement-category-cycle.json', {
@@ -593,7 +592,7 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     contentType: 'application/json',
   });
 
-  expect(page.url()).toBe(`${LEGACY_SOURCE_ORIGIN}/`);
+  expect(page.url()).toBe(`${LEGACY_RUNTIME_ORIGIN}/`);
   expect(capture.frames.local).toEqual(
     expect.objectContaining({ x: 0, y: 450, width: 1208, height: 450 })
   );
@@ -632,76 +631,11 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
       }
       assertPhase(phase, expectedPhase, `${fixtureCase.id}.${phase.name}`);
     });
-    expect(
-      fixtureCase.callTrace.map((entry) => entry.functionName),
-      `${fixtureCase.id}.callFunctions`
-    ).toEqual(oracle.expected.callFunctionSequences[fixtureCase.scenario]);
-    expect(
-      fixtureCase.callTrace.map((entry) =>
-        [
-          entry.functionName,
-          roleForNullableId(entry.cardId),
-          entry.origin,
-          entry.destination,
-          roleForNullableId(entry.targetCardId),
-          entry.detail,
-        ]
-          .map((value) => value ?? 'null')
-          .join('|')
-      ),
-      `${fixtureCase.id}.callTrace`
-    ).toEqual(oracle.expected.callTraceSignatures[fixtureCase.scenario]);
-    expect(fixtureCase.resetTrace, `${fixtureCase.id}.resetCount`).toHaveLength(
-      oracle.expected.resetTraceCounts[fixtureCase.scenario]
-    );
-    expect(
-      fixtureCase.resetTrace.map((entry) =>
-        [roleForId(entry.cardId), entry.reason, entry.parentZoneBefore]
-          .map((value) => value ?? 'null')
-          .join('|')
-      ),
-      `${fixtureCase.id}.resetTrace`
-    ).toEqual(oracle.expected.resetTraceSignatures[fixtureCase.scenario]);
     expect(fixtureCase.cleanup, `${fixtureCase.id}.cleanup`).toEqual({
       observedWrapperCount: 0,
       observedCardCount: 0,
       sinkConnected: false,
     });
-  }
-
-  for (const scenario of [
-    'nativeCanonical',
-    'reverseRoundTrip',
-    'categoryCycle',
-  ] as const satisfies readonly LegacyMixedStackMovementScenario[]) {
-    const local = capture.cases.find(
-      (fixtureCase) =>
-        fixtureCase.side === 'local' && fixtureCase.scenario === scenario
-    );
-    const opponent = capture.cases.find(
-      (fixtureCase) =>
-        fixtureCase.side === 'opponent' && fixtureCase.scenario === scenario
-    );
-    expect(local, `${scenario}.local`).toBeDefined();
-    expect(opponent, `${scenario}.opponent`).toBeDefined();
-    if (!local || !opponent) continue;
-    const normalizeTrace = (entry: (typeof local.callTrace)[number]) => ({
-      ...entry,
-      cardId: roleForNullableId(entry.cardId),
-      targetCardId: roleForNullableId(entry.targetCardId),
-    });
-    const normalizeReset = (entry: (typeof local.resetTrace)[number]) => ({
-      ...entry,
-      cardId: roleForId(entry.cardId),
-    });
-    expect(
-      opponent.callTrace.map(normalizeTrace),
-      `${scenario}.sideCallTrace`
-    ).toEqual(local.callTrace.map(normalizeTrace));
-    expect(
-      opponent.resetTrace.map(normalizeReset),
-      `${scenario}.sideResetTrace`
-    ).toEqual(local.resetTrace.map(normalizeReset));
   }
 
   for (const side of ['local', 'opponent'] as const) {
@@ -751,25 +685,6 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     ).toBe(30.3333);
     expect(immediateBench.wrapperCounts).toEqual({ active: 3, bench: 3 });
     expect(immediateReturn.wrapperCounts).toEqual({ active: 3, bench: 3 });
-    for (const detail of oracle.expected.requiredTraceDetails
-      .reverseRoundTrip) {
-      expect(
-        roundTrip.callTrace.some((entry) => entry.detail === detail),
-        `${roundTrip.id}.${detail}`
-      ).toBe(true);
-    }
-    for (const parentZoneBefore of ['active', 'bench']) {
-      expect(
-        roundTrip.resetTrace.some(
-          (entry) =>
-            roleForId(entry.cardId) === 'energy' &&
-            entry.reason === 'relocateAttachedCards' &&
-            entry.parentZoneBefore === parentZoneBefore
-        ),
-        `${roundTrip.id}.Energy relocation from ${parentZoneBefore}`
-      ).toBe(true);
-    }
-
     const category = capture.cases.find(
       (fixtureCase) =>
         fixtureCase.side === side && fixtureCase.scenario === 'categoryCycle'
@@ -792,25 +707,26 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
       ['trainerTool', 'Trainer'],
       ['controlBase', 'Pokémon'],
     ]);
-    for (const detail of oracle.expected.requiredTraceDetails.categoryCycle) {
-      expect(
-        category.callTrace.some((entry) => entry.detail === detail),
-        `${category.id}.${detail}`
-      ).toBe(true);
-    }
-    for (const role of ['energy', 'trainerTool'] as const) {
-      expect(
-        category.resetTrace.filter(
-          (entry) =>
-            roleForId(entry.cardId) === role &&
-            entry.parentZoneBefore === 'board'
-        ),
-        `${category.id}.${role} board resets`
-      ).toHaveLength(3);
-    }
   }
 
-  expect(capture.sourceFulfillment).toEqual(oracle.sourceFulfillment);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toEqual(
+    expect.arrayContaining([
+      '/',
+      '/src/front-end.js',
+      '/src/setup/deck-constructor/card.js',
+      '/src/actions/move-card-bundle/move-card-bundle.js',
+      '/src/actions/move-card-bundle/initialize-active-bench-card.js',
+      '/src/actions/general/change-type.js',
+      '/src/actions/zones/general.js',
+      '/src/setup/sizing/refresh-board.js',
+      '/src/setup/sizing/resizer.js',
+      oracle.input.asset.path,
+    ])
+  );
+  expect(
+    capture.sourceFulfillment.blockedExternalOrigins.length
+  ).toBeGreaterThan(0);
   expect(blockedNetworkDiagnostics.length).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
 

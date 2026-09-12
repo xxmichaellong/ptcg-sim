@@ -713,17 +713,18 @@ overflow/flex behavior, and Pixi parity remain deferred. Reverse arrays remain
 valid historical state outside the v1 normalized transition subset; they are
 not globally invalid state.
 
-`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts` adds a ninth source
-oracle and a bounded React DOM candidate comparison backed by
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts` adds a ninth
+real-v1 runtime oracle and a bounded React DOM candidate comparison backed by
 `tests/legacy-fixtures/renderer/mixed-stack-movement-category-cycle-v1.json`.
 It runs native canonical construction, a reverse-restore whole-stack round
 trip, and a current-category cycle independently in both physical frames. The
-movement history seeds the exact reverse-restored geometry independently pinned
-by the preceding oracle, sends the mixed active stack to an occupied bench
-without a target, observes the legacy automatic promotion, and then returns it
-to the occupied active slot. It does not replay `leaveAll` a second time. The
-category history changes Energy to Trainer and back and Trainer to Energy and
-back through real board departure and ordinary reattachment semantics.
+movement history executes the real exported `leaveAll` path to obtain the exact
+reverse-restored geometry independently pinned by the preceding oracle, sends
+the mixed active stack to an occupied bench without a target through the real
+`moveCardBundle`, observes the legacy automatic promotion, and then returns it
+to the occupied active slot. The category history calls the real `changeType`
+export to change Energy to Trainer and back and Trainer to Energy and back
+through board departure and ordinary reattachment.
 
 The seeded reverse-restored checkpoint begins with the already observed
 14.8333/30.3333 px active offsets. Because `moveCardBundle` refreshes after each
@@ -736,8 +737,9 @@ movement phases expose three old/new wrappers in each zone, the category cycle
 exposes two, and the real empty-wrapper observer settles every case to one
 active and one bench wrapper. Exact logical and DOM order, current/original
 categories, card and wrapper geometry, Tool rotation, z/hit order, parent
-identity, reset and harness-operation traces, cleanup, source digests, and
-deny-by-default request fulfillment are frozen.
+identity, cleanup, source digests, and deny-by-default runtime fulfillment are
+frozen. The old recorder's hand-authored call/reset traces remain historical
+fixture metadata only and are not treated as executable evidence.
 
 The strict renderer-contract path uses only the semantic current state: one
 known same-owner face-up Pokémon base followed by one known Energy and one known
@@ -759,7 +761,7 @@ replacement and without texture churn. A real multiplayer projection test
 confirms identical normalized geometry and stable, distinct aliases for owner,
 opponent, and spectator through movement and a current-category cycle.
 
-The source harness can also reconstruct and retain the settled returned-active
+The runtime harness can also reconstruct and retain the settled returned-active
 state only after all six histories have recorded their cleanup. The browser
 gate isolates its six local/opponent base, Energy, and Trainer-as-Tool images
 and the candidate equivalents over white. Both use the digest-pinned card back;

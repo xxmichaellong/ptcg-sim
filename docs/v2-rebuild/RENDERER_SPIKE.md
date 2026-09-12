@@ -2294,6 +2294,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      recorder/types reduces `legacy-source-board.ts` from 3,446 to 1,592 lines
      and its browser consumers from two to one. The sole remaining transcription
      is the mixed whole-stack/category-history gate.
+149. The final mixed whole-stack/category-history gate now executes the real v1
+     runtime. Its six local/opponent cases call exported `Card`, `leaveAll`,
+     `moveCardBundle`, `changeType`, placement, and refresh modules while
+     retaining every observable phase: reverse-restored drift, automatic
+     active/bench movement, synchronous three-/two-wrapper boundaries, settled
+     geometry, logical/DOM order, original categories, native hit order, clean
+     teardown, and the existing React geometry/paint comparison. The old
+     recorder's self-authored call/reset arrays are no longer asserted. The
+     redundant two-case canonical bridge and the final 1,592-line
+     `legacy-source-board.ts` transcription are removed; no browser spec now
+     depends on that helper.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
