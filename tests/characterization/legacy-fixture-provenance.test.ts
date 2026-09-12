@@ -19,6 +19,7 @@ interface ProvenanceClaim {
 }
 
 interface Fixture {
+  readonly schemaVersion?: number;
   readonly provenance?: readonly ProvenanceEntry[];
   readonly provenanceClaims?: readonly ProvenanceClaim[];
   /** Digests of other fixtures this one was derived from. */
@@ -144,12 +145,22 @@ describe('legacy fixture provenance', () => {
       const fixture = JSON.parse(
         await readFile(`${repositoryRoot}${file}`, 'utf8')
       ) as Fixture;
+      // Only recorded renderer fixtures carry a schema version; `saves/` holds
+      // exported action logs, which are bare arrays.
+      if (
+        file.startsWith(`${fixtureRoot}/renderer/`) &&
+        fixture.schemaVersion !== 1
+      ) {
+        problems.push(`${file}: unexpected schema version`);
+      }
       const paths = (fixture.provenance ?? []).map((entry) => entry.path);
       if (new Set(paths).size !== paths.length) {
         problems.push(`${file}: duplicate provenance paths`);
       }
-      // A fixture that names sources in its claims but never digests them is
-      // asserting authorship it has not evidenced.
+      // The claim set and the digest set must close over each other. A source
+      // named in a claim but never digested asserts authorship it has not
+      // evidenced; a source digested but never claimed is a digest nothing
+      // explains.
       const claimed = new Set(
         (fixture.provenanceClaims ?? []).flatMap((claim) => claim.sources)
       );
@@ -158,9 +169,17 @@ describe('legacy fixture provenance', () => {
           problems.push(`${file}: claims ${source} without a digest`);
         }
       }
+      for (const path of paths) {
+        if (!claimed.has(path)) {
+          problems.push(`${file}: digests ${path} without a claim`);
+        }
+      }
       for (const claim of fixture.provenanceClaims ?? []) {
         if (claim.sources.length === 0) {
           problems.push(`${file}: claim "${claim.claim}" cites no source`);
+        }
+        if (new Set(claim.sources).size !== claim.sources.length) {
+          problems.push(`${file}: claim "${claim.claim}" repeats a source`);
         }
       }
     }

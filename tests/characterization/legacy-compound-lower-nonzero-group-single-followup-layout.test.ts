@@ -1,7 +1,3 @@
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
 import historyOracle from '../legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json';
@@ -40,22 +36,6 @@ type PhaseEvidenceTuple = readonly [
   authoredCardRects: CardRects,
   hitPoints: readonly PointTuple[],
 ];
-
-interface DigestEntry {
-  readonly path: string;
-  readonly sha256: string;
-  readonly encoding?: string;
-}
-
-interface DigestManifest {
-  readonly schemaVersion: number;
-  readonly provenance?: readonly DigestEntry[];
-  readonly provenanceClaims?: readonly {
-    readonly claim: string;
-    readonly sources: readonly string[];
-  }[];
-  readonly dependencies?: readonly DigestEntry[];
-}
 
 interface ScenarioMetadata {
   readonly composition: Composition;
@@ -246,61 +226,6 @@ const expectedPostHitRoles = (
 };
 
 describe('source-pinned legacy compound lower-card nonzero-group same-card follow-up oracle', () => {
-  it('closes recursive source and fixture hashes', () => {
-    const visited = new Set<string>();
-    const visit = (manifest: DigestManifest, manifestPath: string): void => {
-      if (visited.has(manifestPath)) return;
-      visited.add(manifestPath);
-      expect(manifest.schemaVersion, manifestPath).toBe(1);
-      const provenance = manifest.provenance ?? [];
-      const claims = manifest.provenanceClaims ?? [];
-      const sourcePaths = provenance.map((entry) => entry.path);
-      expect(new Set(sourcePaths).size, manifestPath).toBe(sourcePaths.length);
-      expect(
-        [...new Set(claims.flatMap((claim) => claim.sources))].sort(),
-        `${manifestPath}: claim closure`
-      ).toEqual([...sourcePaths].sort());
-      for (const claim of claims) {
-        expect(claim.sources.length, claim.claim).toBeGreaterThan(0);
-        expect(new Set(claim.sources).size, claim.claim).toBe(
-          claim.sources.length
-        );
-      }
-      for (const entry of provenance) {
-        const source = readFileSync(resolve(process.cwd(), entry.path));
-        const hashInput =
-          entry.encoding === 'utf8'
-            ? source.toString('utf8').replaceAll('\r\n', '\n')
-            : source;
-        expect(
-          createHash('sha256').update(hashInput).digest('hex'),
-          entry.path
-        ).toBe(entry.sha256);
-      }
-      for (const dependency of manifest.dependencies ?? []) {
-        const source = readFileSync(
-          resolve(process.cwd(), dependency.path),
-          'utf8'
-        ).replaceAll('\r\n', '\n');
-        expect(
-          createHash('sha256').update(source).digest('hex'),
-          dependency.path
-        ).toBe(dependency.sha256);
-        visit(JSON.parse(source) as DigestManifest, dependency.path);
-      }
-    };
-
-    visit(
-      oracle as unknown as DigestManifest,
-      'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json'
-    );
-    expect(oracle.dependencies.map((entry) => entry.path)).toEqual([
-      'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json',
-      'tests/legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json',
-    ]);
-    expect(visited.size).toBeGreaterThan(5);
-  });
-
   it('pins the exact unique forty-eight-case matrix and complete metadata maps', () => {
     expect(oracle.input).toMatchObject({
       viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
