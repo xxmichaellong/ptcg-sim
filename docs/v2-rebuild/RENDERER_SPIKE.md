@@ -2129,6 +2129,23 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      hit-testing, and dedicated types are deleted: 423 lines leave
      `legacy-source-board.ts`, and its browser-spec consumers drop from ten to
      nine.
+137. The long live-Solo route-churn gate now samples DOM counters and heap usage
+     after three consecutive forced collections at both its warmed baseline and
+     final convergence point. Component-wise counter minima make a documents,
+     nodes, or listeners increase fail only when it survives every collection;
+     the retained-heap comparison likewise uses the minimum observed used size.
+     The strict zero-growth counter bounds and 1.1 retained-heap ratio are
+     unchanged. Raw baseline and final samples are attached before assertions
+     and included in the 100-cycle evidence artifact, so any future failure is
+     diagnosable even when a counter assertion stops the test. This follows an
+     exact-head hosted run where all semantic, renderer, socket, request, and
+     resource signatures converged but a single post-collection node reading
+     was two above baseline (4,129 versus 4,127). The unchanged production
+     commit then passed the original one-shot test locally and all 210 Chromium
+     cases on an exact-SHA hosted retry, classifying that reading as transient
+     collector bookkeeping rather than retained application state. The
+     hardened 140-cycle gate passes locally in 5.3 minutes, and the complete
+     non-browser CI gate remains green.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

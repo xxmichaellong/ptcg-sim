@@ -1,10 +1,17 @@
-import { expect, test, type JSHandle, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type CDPSession,
+  type JSHandle,
+  type Page,
+} from '@playwright/test';
 
 const WARMUP_CYCLES = 40;
 const MEASURED_CYCLES = 100;
 const SCENE_REVISIONS_PER_CYCLE = 4;
 const RENDER_COMMITS_PER_CYCLE = 12;
 const MAXIMUM_RETAINED_HEAP_RATIO = 1.1;
+const MEMORY_SAMPLE_ATTEMPTS = 3;
 const MAIN_FACE_URL = '/v2/assets/cardback.png?solo-churn=main';
 const ALTERNATE_FACE_URL = '/v2/assets/cardback.png?solo-churn=alternate';
 
@@ -31,6 +38,35 @@ const collectRuntimeErrors = (page: Page): string[] => {
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
   });
   return errors;
+};
+
+/**
+ * CDP can expose a small, transient detached-node population after one forced
+ * collection. Sample repeatedly and compare component-wise minima so growth
+ * must survive every collection to fail the convergence gate.
+ */
+const collectGarbageCollectedMemory = async (cdp: CDPSession) => {
+  const samples = [];
+  for (let attempt = 0; attempt < MEMORY_SAMPLE_ATTEMPTS; attempt += 1) {
+    await cdp.send('HeapProfiler.collectGarbage');
+    samples.push({
+      counters: await cdp.send('Memory.getDOMCounters'),
+      heap: await cdp.send('Runtime.getHeapUsage'),
+    });
+  }
+  return {
+    samples,
+    counters: {
+      documents: Math.min(...samples.map(({ counters }) => counters.documents)),
+      nodes: Math.min(...samples.map(({ counters }) => counters.nodes)),
+      jsEventListeners: Math.min(
+        ...samples.map(({ counters }) => counters.jsEventListeners)
+      ),
+    },
+    heap: samples.reduce((minimum, sample) =>
+      sample.heap.usedSize < minimum.heap.usedSize ? sample : minimum
+    ).heap,
+  };
 };
 
 const readRevision = async (page: Page): Promise<number> => {
@@ -616,9 +652,9 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   const baseline = await readResourceEvidence(page, renderer);
   const cdp = await context.newCDPSession(page);
   await cdp.send('HeapProfiler.enable');
-  await cdp.send('HeapProfiler.collectGarbage');
-  const baselineCounters = await cdp.send('Memory.getDOMCounters');
-  const baselineHeap = await cdp.send('Runtime.getHeapUsage');
+  const baselineMemory = await collectGarbageCollectedMemory(cdp);
+  const baselineCounters = baselineMemory.counters;
+  const baselineHeap = baselineMemory.heap;
 
   let measuredZoneBrowserOpenings = 0;
   for (let cycle = 0; cycle < MEASURED_CYCLES; cycle += 1) {
@@ -641,12 +677,17 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
     baselinePresentationPhase.liveRegionChildren
   );
   const final = await readResourceEvidence(page, renderer);
-  await cdp.send('HeapProfiler.collectGarbage');
-  const finalCounters = await cdp.send('Memory.getDOMCounters');
-  const finalHeap = await cdp.send('Runtime.getHeapUsage');
+  const finalMemory = await collectGarbageCollectedMemory(cdp);
+  const finalCounters = finalMemory.counters;
+  const finalHeap = finalMemory.heap;
   const retainedHeapRatio = finalHeap.usedSize / baselineHeap.usedSize;
   const socketLifecycle = await readSocketLifecycleSummary(page);
   await renderer.dispose();
+
+  await testInfo.attach('solo-setup-reset-zone-memory-samples.json', {
+    body: Buffer.from(JSON.stringify({ baselineMemory, finalMemory }, null, 2)),
+    contentType: 'application/json',
+  });
 
   expect(finalPresentationPhase).toEqual(baselinePresentationPhase);
   expect(final.rendererGeneration).toBe(initial.rendererGeneration);
@@ -707,6 +748,11 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
           finalCounters,
           baselineHeap,
           finalHeap,
+          memorySamples: {
+            attempts: MEMORY_SAMPLE_ATTEMPTS,
+            baseline: baselineMemory.samples,
+            final: finalMemory.samples,
+          },
           retainedHeap: {
             maximumRatio: MAXIMUM_RETAINED_HEAP_RATIO,
             ratio: retainedHeapRatio,
