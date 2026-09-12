@@ -2010,6 +2010,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      default renderer-harness routes remain unchanged; broader rollout,
      `LegacyBoardChrome`, physical-device performance, and cross-browser review
      remain separate gates.
+130. The first exact-head hosted run of the production-shaped board route passed
+     the complete static/unit/runtime/build job and 286 of 290 Chromium cases.
+     Three early route failures were one selector ambiguity: after recipient
+     identity exists, the board's visible status no longer duplicates the room
+     shell's `data-session-phase` ownership; the status keeps that attribute only
+     for the viewless mount/error fallback. The remaining case reached revision
+     534 of 536 when the seven-minute Playwright test budget expired, so the
+     unchanged 40-warm-up/100-measured full-deck workload now has a ten-minute
+     budget. A fresh local run completed in 5.2 minutes. Repair validation also
+     replaced the passive wrapper's obsolete reconnect expectation with the
+     controller's existing protected equal-revision resync contract: the prior
+     surface is synchronously detached, exactly one clear/install pair occurs,
+     and the same healthy renderer object and generation remain mounted. All
+     three real Worker/WebSocket route cases pass with that lifecycle pinned.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

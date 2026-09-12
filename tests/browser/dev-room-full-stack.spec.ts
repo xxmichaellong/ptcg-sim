@@ -437,6 +437,7 @@ test('development route reaches and resumes a real durable room through the same
       reconnectAttempt: snapshot.reconnectAttempt,
       revision: snapshot.view?.revision,
       sameSurface: probe.initialSurface === surface,
+      previousSurfaceConnected: probe.initialSurface?.isConnected ?? null,
       sameRenderer: probe.initialRenderer === rendererHandle.renderer,
       diagnostics,
     };
@@ -447,7 +448,8 @@ test('development route reaches and resumes a real durable room through the same
     phase: 'ready',
     reconnectAttempt: 0,
     revision: 0,
-    sameSurface: true,
+    sameSurface: false,
+    previousSurfaceConnected: false,
     sameRenderer: true,
     diagnostics: {
       rendererKind: 'dom',
@@ -455,7 +457,7 @@ test('development route reaches and resumes a real durable room through the same
       destroyed: false,
       generation: 1,
       sceneRevision: 0,
-      renderCommits: beforeReconnect.renderCommits,
+      renderCommits: beforeReconnect.renderCommits + 2,
     },
   });
   const resumedPresenceRow = page.locator('#p2Chatbox p.announcement').last();

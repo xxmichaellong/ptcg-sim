@@ -457,7 +457,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   context,
   page,
 }, testInfo) => {
-  test.setTimeout(420_000);
+  test.setTimeout(600_000);
   const errors = collectRuntimeErrors(page);
   let roomCreations = 0;
   let openedGameSockets = 0;

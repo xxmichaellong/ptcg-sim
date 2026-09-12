@@ -409,7 +409,7 @@ export const RemoteSessionBoard = ({
             ? rendererStatus.generation
             : undefined
         }
-        data-session-phase={replayState.sessionPhase}
+        data-session-phase={identity ? undefined : replayState.sessionPhase}
       >
         {visibleStatus}
       </span>
