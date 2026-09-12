@@ -1754,7 +1754,12 @@ distinct, versioned, same-origin SVG assets. It proves exact one-request-per-URL
 completion, successful browser-visible decode and intrinsic dimensions, stable
 keyed image nodes while already-cached URLs are reassigned, cache reuse by a
 fresh renderer/host without refetch, and clean teardown. The fixture is synthetic
-and serve-only. A separate development-route integration gate performs 20 React
+and serve-only. A separate hermetic DOM gate drives direct, missing, corrupt,
+single-redirect, and external → `localhost` → `127.0.0.1` multi-hop image
+requests. Its final no-CORS SVG reports 32,768-square intrinsic dimensions while
+the stable card/image nodes retain exact bounds and input; every hop remains a
+native browser image request. This covers redirect/intrinsic-size compatibility,
+not representative real-raster decoded-memory cost. A separate development-route integration gate performs 20 React
 StrictMode mount/unmount cycles through the actual remote route, session,
 presentation, and DOM renderer stack. It coalesces each StrictMode probe into one
 room creation and proves exact runtime/socket/renderer/global-handle teardown;

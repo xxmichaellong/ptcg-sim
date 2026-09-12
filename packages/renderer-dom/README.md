@@ -21,4 +21,6 @@ DOM behavior without a CORS opt-in. Each stable keyed image is hidden behind the
 neutral card surface while a URL is pending or failed and becomes visible only
 after browser decode succeeds. Missing and corrupt responses cannot remove card
 input, and a later successful direct or redirected URL recovers the same button
-and image nodes.
+and image nodes. The browser gate also follows a two-hop cross-origin redirect
+to a no-CORS image with 32,768-square intrinsic dimensions while preserving the
+assigned URL, exact card bounds, native input, and both node identities.

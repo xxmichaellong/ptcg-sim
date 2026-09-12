@@ -3,6 +3,8 @@ import { defineConfig, type Plugin } from 'vite';
 
 const rendererCacheFixturePrefix = '/__ptcgsim-test-assets__/renderer-cache-v1';
 const rendererCacheFixtureCount = 120;
+const rendererRedirectFixturePrefix =
+  '/__ptcgsim-test-assets__/renderer-redirect-v1';
 
 const rendererCacheFixtureBody = (index: number): string => {
   const id = String(index).padStart(3, '0');
@@ -130,6 +132,52 @@ const rendererCacheFixture = (): Plugin => {
   };
 };
 
+const rendererRedirectFixture = (): Plugin => ({
+  name: 'ptcgsim-renderer-redirect-fixture',
+  apply: 'serve',
+  configureServer(server) {
+    server.middlewares.use((request, response, next) => {
+      const requestUrl = new URL(request.url ?? '/', 'http://ptcgsim.invalid');
+      if (!requestUrl.pathname.startsWith(rendererRedirectFixturePrefix)) {
+        next();
+        return;
+      }
+      if (
+        request.method === 'GET' &&
+        requestUrl.pathname ===
+          `${rendererRedirectFixturePrefix}/redirect-hop.svg`
+      ) {
+        const port = request.socket.localPort ?? 4173;
+        response.statusCode = 302;
+        response.setHeader(
+          'Location',
+          `http://127.0.0.1:${String(port)}${rendererRedirectFixturePrefix}/oversized.svg`
+        );
+        response.setHeader('Cache-Control', 'no-store');
+        response.end();
+        return;
+      }
+      if (
+        request.method === 'GET' &&
+        requestUrl.pathname === `${rendererRedirectFixturePrefix}/oversized.svg`
+      ) {
+        const body =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="32768" height="32768" viewBox="0 0 1 1"><rect width="1" height="1" fill="#135f2d"/></svg>';
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+        response.setHeader('Content-Length', String(body.length));
+        response.setHeader('Cache-Control', 'no-store');
+        response.setHeader('X-Content-Type-Options', 'nosniff');
+        response.end(body);
+        return;
+      }
+      response.statusCode = request.method === 'GET' ? 404 : 405;
+      response.setHeader('Cache-Control', 'no-store');
+      response.end();
+    });
+  },
+});
+
 /**
  * Where `wrangler dev` is listening. The dev server proxies `/v2` there so the
  * browser sees one origin: the authority rejects any room-creation, ticket, or
@@ -141,7 +189,7 @@ const v2ServerTarget =
   process.env['PTCGSIM_V2_SERVER_ORIGIN'] ?? 'http://127.0.0.1:8787';
 
 export default defineConfig({
-  plugins: [rendererCacheFixture(), react()],
+  plugins: [rendererCacheFixture(), rendererRedirectFixture(), react()],
   server: {
     proxy: {
       // Scoped to the authority's own routes. A blanket `/v2` rule would also

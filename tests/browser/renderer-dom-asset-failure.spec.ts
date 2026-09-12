@@ -6,11 +6,14 @@ const corruptUrl = `${assetOrigin}/corrupt.png`;
 const directUrl = `${assetOrigin}/direct.png`;
 const redirectUrl = `${assetOrigin}/redirect.png`;
 const redirectedUrl = 'http://127.0.0.1:4173/v2/assets/cardback.png';
+const redirectChainUrl = `${assetOrigin}/redirect-chain.svg`;
+const redirectFixturePrefix = '/__ptcgsim-test-assets__/renderer-redirect-v1';
+const redirectHopUrl = `http://localhost:4173${redirectFixturePrefix}/redirect-hop.svg`;
+const oversizedUrl = `http://127.0.0.1:4173${redirectFixturePrefix}/oversized.svg`;
 const onePixelPng = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg==',
   'base64'
 );
-
 const collectRuntimeErrors = (page: Page) => {
   const errors: string[] = [];
   const expectedResourceErrors: string[] = [];
@@ -31,9 +34,20 @@ test('React DOM contains external card asset failures and recovers the stable ca
 }, testInfo) => {
   const runtimeErrors = collectRuntimeErrors(page);
   const requestedUrls: string[] = [];
+  const requestResourceTypes: string[] = [];
+  page.on('request', (request) => {
+    const url = request.url();
+    if (
+      !url.startsWith(`${assetOrigin}/`) &&
+      new URL(url).pathname.startsWith(redirectFixturePrefix) === false
+    ) {
+      return;
+    }
+    requestedUrls.push(url);
+    requestResourceTypes.push(request.resourceType());
+  });
   await page.context().route(`${assetOrigin}/**`, async (route) => {
     const url = route.request().url();
-    requestedUrls.push(url);
     if (url === missingUrl) {
       await route.fulfill({ status: 404, body: 'missing' });
       return;
@@ -62,6 +76,13 @@ test('React DOM contains external card asset failures and recovers the stable ca
       });
       return;
     }
+    if (url === redirectChainUrl) {
+      await route.fulfill({
+        status: 302,
+        headers: { location: redirectHopUrl },
+      });
+      return;
+    }
     await route.abort('failed');
   });
 
@@ -86,6 +107,8 @@ test('React DOM contains external card asset failures and recovers the stable ca
   await image.evaluate((node) => {
     node.dataset.assetIdentityWitness = 'stable';
   });
+  const initialCardBounds = await card.boundingBox();
+  if (!initialCardBounds) throw new Error('Missing initial card bounds');
 
   let revision = 10_000;
   const installUrl = async (url: string) => {
@@ -156,14 +179,57 @@ test('React DOM contains external card asset failures and recovers the stable ca
   await expect
     .poll(() => image.evaluate((node) => (node as HTMLImageElement).currentSrc))
     .toBe(redirectUrl);
+
+  const resolvedRedirectChain = page.waitForResponse(
+    (response) => response.url() === oversizedUrl && response.ok()
+  );
+  await installUrl(redirectChainUrl);
+  await resolvedRedirectChain;
+  await expect(image).toHaveAttribute('data-card-image-state', 'ready');
+  await expect(image).toHaveCSS('visibility', 'visible');
+  await expect(image).not.toHaveAttribute('crossorigin');
+  await expect
+    .poll(() =>
+      image.evaluate((node) => ({
+        naturalWidth: (node as HTMLImageElement).naturalWidth,
+        naturalHeight: (node as HTMLImageElement).naturalHeight,
+        currentSrc: (node as HTMLImageElement).currentSrc,
+      }))
+    )
+    .toEqual({
+      naturalWidth: 32_768,
+      naturalHeight: 32_768,
+      currentSrc: redirectChainUrl,
+    });
+  const [oversizedCardBounds, oversizedImageBounds] = await Promise.all([
+    card.boundingBox(),
+    image.boundingBox(),
+  ]);
+  expect(oversizedCardBounds).toEqual(initialCardBounds);
+  if (!oversizedImageBounds) throw new Error('Missing oversized image bounds');
+  expect(oversizedImageBounds.x).toBeGreaterThanOrEqual(initialCardBounds.x);
+  expect(oversizedImageBounds.y).toBeGreaterThanOrEqual(initialCardBounds.y);
+  expect(
+    oversizedImageBounds.x + oversizedImageBounds.width
+  ).toBeLessThanOrEqual(initialCardBounds.x + initialCardBounds.width);
+  expect(
+    oversizedImageBounds.y + oversizedImageBounds.height
+  ).toBeLessThanOrEqual(initialCardBounds.y + initialCardBounds.height);
   await expect(image).toHaveAttribute('data-asset-identity-witness', 'stable');
   await expect(card).toHaveAttribute('data-card-id', targetId);
+  await expect(card).toBeEnabled();
+  await card.click();
+  await expect(page.locator('output')).toContainText('CardSelected');
   expect(requestedUrls).toEqual([
     missingUrl,
     corruptUrl,
     directUrl,
     redirectUrl,
+    redirectChainUrl,
+    redirectHopUrl,
+    oversizedUrl,
   ]);
+  expect(requestResourceTypes).toEqual(requestedUrls.map(() => 'image'));
   expect(runtimeErrors.errors).toEqual([]);
   expect(runtimeErrors.expectedResourceErrors).toHaveLength(1);
   expect(runtimeErrors.expectedResourceErrors[0]).toContain('404');
@@ -174,6 +240,7 @@ test('React DOM contains external card asset failures and recovers the stable ca
         {
           targetId,
           requestedUrls,
+          requestResourceTypes,
           finalImage: {
             corsAttribute: await image.getAttribute('crossorigin'),
             state: await image.getAttribute('data-card-image-state'),

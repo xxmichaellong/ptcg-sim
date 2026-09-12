@@ -2367,6 +2367,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      boundaries are not replaced by the broader geometry/candidate suites and
      remain load-bearing. The primitive file commentary now states this current
      role instead of calling itself the first or only real-runtime witness.
+157. The selected DOM asset gate now follows a hermetic real-HTTP multi-hop
+     chain from an intercepted arbitrary external host through `localhost` to
+     `127.0.0.1`, ending in a no-CORS SVG with 32,768-square intrinsic
+     dimensions. It proves that every hop is native browser image traffic, the
+     original URL remains assigned, decode succeeds, card geometry and input
+     remain exact, and the keyed card/image nodes survive prior missing,
+     corrupt, direct, and redirected sources. Five repeated Chromium cases
+     pass. This closes controlled redirect and extreme-intrinsic compatibility;
+     representative large-raster decoded-memory cost stays a physical-profile
+     gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -2558,11 +2568,12 @@ wiring:
 - a manual screen-reader audit beyond the automated replay-local and transformed
   stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
   focus-visible paint/return, exact face assets, and stable geometry;
-- actual supported card-face/back hosts, cross-origin redirect chains, and
-  oversized assets under ADR-013's accepted direct native-DOM policy (the
-  controlled DOM gate now covers an intercepted external hostname, no-CORS success,
-  missing/corrupt containment, same-origin redirect completion, and stable-node
-  recovery);
+- actual supported card-face/back hosts and representative large-raster
+  decoded-memory behavior under ADR-013's accepted direct native-DOM policy
+  (the controlled DOM gate now covers an intercepted external hostname,
+  no-CORS success, missing/corrupt containment, single and multi-hop
+  cross-origin redirects, 32,768-square intrinsic dimensions, stable-node
+  recovery, exact containment, and retained input);
 - physical background freeze/resume and BFCache behavior plus non-Chromium
   monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
   any future Pixi rollout;

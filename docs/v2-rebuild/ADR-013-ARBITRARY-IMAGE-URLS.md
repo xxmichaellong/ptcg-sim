@@ -122,9 +122,14 @@ ownership tests reject changing another seat's back. Legacy conversion fixtures
 must preserve final saved back values deterministically. Separate privacy tests
 must prove that hidden face names, identities, and URLs never cross the
 projection or network boundary; card-back URLs are intentionally public.
-Browser tests retain direct cross-origin success, redirect, missing/corrupt
-containment, stable input, and recovery coverage. Background tests retain
-local-only, latest-request, failure, CSS-escaping, and teardown coverage.
+Browser tests retain direct cross-origin success, missing/corrupt containment,
+stable input, and recovery coverage. A hermetic real-HTTP chain now redirects
+external → `localhost` → `127.0.0.1` into a no-CORS SVG with 32,768-square
+intrinsic dimensions and proves browser-image-only requests, unchanged assigned
+URL, exact layout containment, and stable card/image nodes. It does not replace
+representative real-raster decoded-memory measurement on release hardware.
+Background tests retain local-only, latest-request, failure, CSS-escaping, and
+teardown coverage.
 The multi-context room-route gate additionally proves a pre-room arbitrary back
 is loaded directly, retained through room attachment, published unchanged,
 rendered for both players and a spectator, and retained after Leave, while only
