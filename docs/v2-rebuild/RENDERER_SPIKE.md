@@ -2340,6 +2340,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      cleanup, React geometry, native hits, and isolated paint, removing 223
      more exact-subset lines. The layout-oracle guide no longer describes the
      retired probe as the sole real-v1 witness.
+154. The original q0 counter-placement smoke is retired as an exact subset of
+     the active-marker authority suite. The retained path pins sibling-zone
+     ownership, damage/condition circle and ability-tab geometry, text,
+     classes, colors, inline dimensions, z order, complete native hit stacks,
+     both player frames, all four rotations, cleanup, and React paint/geometry.
+     Removing the narrower path cuts 255 duplicated browser-test lines without
+     changing any marker or renderer acceptance boundary.
+155. The compact marker-movement runtime oracle is retired after its phase,
+     zone, surviving-kind, settled-wrapper-count, and cleanup assertions are
+     confirmed as exact subsets of the detailed real-v1 movement geometry
+     suite. The retained path additionally pins card/marker node identity,
+     cross-zone reparenting, synchronous superseded wrappers, frame and
+     physical geometry, transient refresh drift, and source fulfillment. This
+     removes 90 duplicated browser-test lines without dropping the legacy rule
+     that special conditions disappear on demotion while damage and ability
+     markers follow the card.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
