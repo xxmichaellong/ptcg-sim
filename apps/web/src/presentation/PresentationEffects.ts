@@ -291,6 +291,16 @@ export const presentationEffectsForEvent = (
         accessibility(event, message),
       ];
     }
+    case 'OncePerGameMarkerSet': {
+      const marker = event.marker === 'gx' ? 'GX' : 'VSTAR';
+      const message = event.used
+        ? `${playerName(view, event.playerId)} used their ${marker}!`
+        : `${playerName(view, event.playerId)} reset their ${marker}`;
+      return [
+        activity(event, 'player', message, event.playerId),
+        accessibility(event, message),
+      ];
+    }
     case 'MulliganDeclared': {
       const message = `${playerName(view, event.playerId)} mulligans`;
       return [

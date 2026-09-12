@@ -647,6 +647,14 @@ const DeckViewDeclaredPresentationEventSchema = v.object({
   playerId: IdentifierSchema,
 });
 
+const OncePerGameMarkerSetPresentationEventSchema = v.object({
+  type: v.literal('OncePerGameMarkerSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  marker: v.picklist(['gx', 'vstar'] as const),
+  used: v.boolean(),
+});
+
 export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('CoinFlipped'),
@@ -746,6 +754,7 @@ export const PresentationEventSchema = v.variant('type', [
     targetPlayerId: IdentifierSchema,
     revertedRevision: RevisionSchema,
   }),
+  OncePerGameMarkerSetPresentationEventSchema,
   MulliganDeclaredPresentationEventSchema,
   DeckViewDeclaredPresentationEventSchema,
 ]);

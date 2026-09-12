@@ -18,6 +18,18 @@ type ChromeState =
   | 'flipped'
   | 'fullscreen';
 
+type OncePerGameControlGeometry = Readonly<
+  Record<
+    'local-vstar' | 'local-gx' | 'opponent-vstar' | 'opponent-gx',
+    {
+      readonly x: number;
+      readonly y: number;
+      readonly width: number;
+      readonly height: number;
+    }
+  >
+>;
+
 interface ChromeHarnessWindow extends Window {
   __PTCG_REACT_DOM_BOARD_CHROME_HARNESS__?: {
     readonly getLayout: () => BoardLayoutState;
@@ -31,6 +43,7 @@ interface ChromeHarnessWindow extends Window {
 const MAX_MISMATCHED_PIXELS = 1_536;
 const MAX_HANDLE_MISMATCHES = 512;
 const MAX_CONTROL_MISMATCHES = 1_280;
+const MAX_ONCE_PER_GAME_MISMATCHES = 1_792;
 const MAX_CHANNEL_DELTA = 128;
 
 const collectRuntimeErrors = (page: Page): string[] => {
@@ -109,6 +122,8 @@ const isolateLegacyChrome = async (page: Page): Promise<void> => {
     content: `
       html, body, body.dark-mode-1 { background: #fff !important; }
       body > * { visibility: hidden !important; }
+      body > #selfContainer,
+      body > #oppContainer,
       body > #selfResizer,
       body > #oppResizer,
       body > #boardButtonContainer { visibility: visible !important; }
@@ -119,13 +134,34 @@ const isolateLegacyChrome = async (page: Page): Promise<void> => {
       }
     `,
   });
+  for (const frameId of ['selfContainer', 'oppContainer']) {
+    const frame = page.frameLocator(`#${frameId}`);
+    await frame.locator('body').evaluate((body) => {
+      const style = document.createElement('style');
+      style.textContent = `
+        html, body, body.dark-mode-1 { background: transparent !important; }
+        body > * { visibility: hidden !important; }
+        body > #specialMoveButtonContainer,
+        body > #specialMoveButtonContainer * { visibility: visible !important; }
+        *, *::before, *::after {
+          animation: none !important;
+          caret-color: transparent !important;
+          transition: none !important;
+        }
+      `;
+      body.append(style);
+    });
+  }
   await settlePaint(page);
 };
 
 const captureLegacyChrome = async (
   browser: Browser,
   state: ChromeState
-): Promise<Buffer> => {
+): Promise<{
+  readonly image: Buffer;
+  readonly oncePerGameControls: OncePerGameControlGeometry;
+}> => {
   const page = await browser.newPage({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
@@ -137,9 +173,66 @@ const captureLegacyChrome = async (
     await isolateLegacyChrome(page);
     expect(loaded.missingPaths, `${state} legacy source paths`).toEqual([]);
     expect(errors, `${state} legacy source errors`).toEqual([]);
-    return await page.screenshot({ animations: 'disabled', caret: 'hide' });
+    const oncePerGameControls = Object.fromEntries(
+      await Promise.all(
+        (['local', 'opponent'] as const).flatMap((side) =>
+          (['vstar', 'gx'] as const).map(async (marker) => {
+            const frameId = side === 'local' ? 'selfContainer' : 'oppContainer';
+            const buttonId = marker === 'vstar' ? 'VSTARButton' : 'GXButton';
+            const bounds = await page
+              .frameLocator(`#${frameId}`)
+              .locator(`#${buttonId}`)
+              .boundingBox();
+            if (!bounds) throw new Error(`Missing ${side} ${marker} control`);
+            return [`${side}-${marker}`, bounds] as const;
+          })
+        )
+      )
+    ) as OncePerGameControlGeometry;
+    return {
+      image: await page.screenshot({ animations: 'disabled', caret: 'hide' }),
+      oncePerGameControls,
+    };
   } finally {
     await page.close();
+  }
+};
+
+const captureCandidateOncePerGameControls = async (
+  page: Page
+): Promise<OncePerGameControlGeometry> =>
+  Object.fromEntries(
+    await Promise.all(
+      (['local', 'opponent'] as const).flatMap((side) =>
+        (['vstar', 'gx'] as const).map(async (marker) => {
+          const bounds = await page
+            .locator(
+              `[data-player-side="${side}"][data-once-per-game-marker="${marker}"]`
+            )
+            .boundingBox();
+          if (!bounds) throw new Error(`Missing candidate ${side} ${marker}`);
+          return [`${side}-${marker}`, bounds] as const;
+        })
+      )
+    )
+  ) as OncePerGameControlGeometry;
+
+const expectControlGeometryWithin = (
+  actual: OncePerGameControlGeometry,
+  expected: OncePerGameControlGeometry,
+  state: ChromeState
+): void => {
+  for (const key of Object.keys(expected) as Array<
+    keyof OncePerGameControlGeometry
+  >) {
+    for (const dimension of ['x', 'y', 'width', 'height'] as const) {
+      expect
+        .soft(
+          Math.abs(actual[key][dimension] - expected[key][dimension]),
+          `${state} ${key}.${dimension}`
+        )
+        .toBeLessThanOrEqual(2);
+    }
   }
 };
 
@@ -227,7 +320,9 @@ const attachComparison = async (
 const comparePixels = async (
   page: Page,
   source: Buffer,
-  candidate: Buffer
+  candidate: Buffer,
+  sourceControls: OncePerGameControlGeometry,
+  candidateControls: OncePerGameControlGeometry
 ): Promise<{
   readonly width: number;
   readonly height: number;
@@ -241,9 +336,10 @@ const comparePixels = async (
   } | null;
   readonly handleMismatches: number;
   readonly controlMismatches: number;
+  readonly oncePerGameMismatches: number;
 }> =>
   page.evaluate(
-    async ({ sourceUrl, candidateUrl }) => {
+    async ({ sourceUrl, candidateUrl, sourceControls, candidateControls }) => {
       const pixels = async (url: string) => {
         const image = new Image();
         image.src = url;
@@ -280,6 +376,19 @@ const comparePixels = async (
       let bottom = -1;
       let handleMismatches = 0;
       let controlMismatches = 0;
+      let oncePerGameMismatches = 0;
+      const markerRegions = [
+        ...Object.values(sourceControls),
+        ...Object.values(candidateControls),
+      ];
+      const isOncePerGamePixel = (x: number, y: number) =>
+        markerRegions.some(
+          (region) =>
+            x >= region.x - 10 &&
+            x <= region.x + region.width + 10 &&
+            y >= region.y - 10 &&
+            y <= region.y + region.height + 10
+        );
       for (let offset = 0; offset < expected.data.length; offset += 4) {
         let pixelDiffers = false;
         for (let channel = 0; channel < 4; channel += 1) {
@@ -300,6 +409,7 @@ const comparePixels = async (
           right = Math.max(right, x);
           bottom = Math.max(bottom, y);
           if (x < 32) handleMismatches += 1;
+          else if (isOncePerGamePixel(x, y)) oncePerGameMismatches += 1;
           else controlMismatches += 1;
         }
       }
@@ -311,11 +421,14 @@ const comparePixels = async (
         mismatchBounds: right < 0 ? null : { left, top, right, bottom },
         handleMismatches,
         controlMismatches,
+        oncePerGameMismatches,
       };
     },
     {
       sourceUrl: `data:image/png;base64,${source.toString('base64')}`,
       candidateUrl: `data:image/png;base64,${candidate.toString('base64')}`,
+      sourceControls,
+      candidateControls,
     }
   );
 
@@ -345,18 +458,49 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       animations: 'disabled',
       caret: 'hide',
     });
-    await attachComparison(testInfo, state, source, candidate);
-    const comparison = await comparePixels(page, source, candidate);
+    const candidateControls = await captureCandidateOncePerGameControls(page);
+    await testInfo.attach(`legacy-board-chrome-${state}-geometry.json`, {
+      body: Buffer.from(
+        JSON.stringify(
+          {
+            source: source.oncePerGameControls,
+            candidate: candidateControls,
+          },
+          null,
+          2
+        )
+      ),
+      contentType: 'application/json',
+    });
+    await attachComparison(testInfo, state, source.image, candidate);
+    expectControlGeometryWithin(
+      candidateControls,
+      source.oncePerGameControls,
+      state
+    );
+    const comparison = await comparePixels(
+      page,
+      source.image,
+      candidate,
+      source.oncePerGameControls,
+      candidateControls
+    );
     comparisons[state] = comparison;
     expect(comparison.width, `${state} screenshot width`).toBe(1280);
     expect(comparison.height, `${state} screenshot height`).toBe(720);
     // The source paints transformed fixed nodes in the document compositor;
     // the candidate paints equivalent absolute nodes in an isolated route
     // layer. Chromium builds rasterize that fringe differently, so retain
-    // strict total, handle-band, control-band, and channel bounds. Soft
+    // strict base-chrome, handle-band, shared-control, marker-control, and
+    // channel bounds. Marker controls have a dedicated region because source
+    // iframe text rasterization is measurably different from top-level DOM
+    // text even when their rectangles agree within two pixels. Soft
     // assertions preserve every state attachment when one bound regresses.
     expect
-      .soft(comparison.mismatchedPixels, `${state} painted chrome`)
+      .soft(
+        comparison.handleMismatches + comparison.controlMismatches,
+        `${state} painted base chrome`
+      )
       .toBeLessThanOrEqual(MAX_MISMATCHED_PIXELS);
     expect
       .soft(comparison.handleMismatches, `${state} painted resize handles`)
@@ -364,6 +508,12 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
     expect
       .soft(comparison.controlMismatches, `${state} painted controls`)
       .toBeLessThanOrEqual(MAX_CONTROL_MISMATCHES);
+    expect
+      .soft(
+        comparison.oncePerGameMismatches,
+        `${state} painted once-per-game controls`
+      )
+      .toBeLessThanOrEqual(MAX_ONCE_PER_GAME_MISMATCHES);
     expect
       .soft(comparison.maximumChannelDelta, `${state} maximum channel delta`)
       .toBeLessThanOrEqual(MAX_CHANNEL_DELTA);
@@ -377,6 +527,12 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
   for (const id of ['turnButton', 'flipCoinButton', 'refreshButton']) {
     await page.locator(`#${id}`).dispatchEvent('click');
   }
+  await page
+    .locator('[data-player-id="spike-blue"][data-once-per-game-marker="gx"]')
+    .dispatchEvent('click');
+  await page
+    .locator('[data-player-id="spike-red"][data-once-per-game-marker="vstar"]')
+    .dispatchEvent('click');
   expect(
     await page.evaluate(() => {
       const harness = (window as ChromeHarnessWindow)
@@ -384,7 +540,12 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       if (!harness) throw new Error('Missing board chrome harness');
       return harness.getActionCounts();
     })
-  ).toEqual({ takeTurn: 1, flipCoin: 1, refreshImages: 1 });
+  ).toEqual({
+    takeTurn: 1,
+    flipCoin: 1,
+    refreshImages: 1,
+    toggleOncePerGame: 2,
+  });
 
   await page.evaluate(() => {
     const harness = (window as ChromeHarnessWindow)

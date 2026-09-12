@@ -2062,6 +2062,27 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      input, enters and exits replay, restores the exact live revision, and then
      rejects malformed JSON without losing the room. Canonical resumable
      `Import game state` remains deliberately unwired under ADR-012.
+     Exact commit `d6f2448` is fully green in hosted run 34678379020: Quality
+     passed in 2m53s and all 210 consolidated Chromium regressions passed in
+     12m28s without retry.
+133. The production DOM room chrome now restores both source-shaped GX/VSTAR
+     controls for each projected player without changing the surrounding UI.
+     Their used state comes only from the installed recipient-safe view, while
+     clicks enter the controller as player-targeted intents and become one
+     explicit `SetOncePerGameMarker` command only from a ready, writable live
+     player view. Missing/stale players, spectators, reconnecting sessions, and
+     replay remain no-write paths. Authority presentation now projects the
+     resulting public marker event and the route emits the exact legacy used
+     and reset feed text. The DOM paint preserves source order, theme, owner
+     color, responsive iframe-relative sizing, and player ownership through
+     resize, board flip, and full-playmat mode. Source/candidate browser
+     comparison pins every button rectangle within two pixels and keeps the
+     existing shared-chrome tolerances independent of the iframe-versus-DOM
+     text raster band. Focused protocol, authority, presentation, controller,
+     adapter, chrome, and route tests are green. A real Worker/Chromium Solo
+     journey toggles all four markers, verifies six authoritative feed events,
+     round-trips their final state through perspective replay export/import,
+     and proves the visible replay controls cannot mutate it.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

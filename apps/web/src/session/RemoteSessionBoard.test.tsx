@@ -404,6 +404,17 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(host.querySelector('#flipBoardButton')).toBeNull();
     expect(host.querySelector('#refreshButton')).not.toBeNull();
     expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+    expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
+      4
+    );
+    const localGx = host.querySelector<HTMLButtonElement>(
+      '[data-player-side="local"][data-once-per-game-marker="gx"]'
+    );
+    const opponentVstar = host.querySelector<HTMLButtonElement>(
+      '[data-player-side="opponent"][data-once-per-game-marker="vstar"]'
+    );
+    expect(localGx?.getAttribute('aria-pressed')).toBe('false');
+    expect(opponentVstar?.getAttribute('aria-pressed')).toBe('false');
 
     await act(async () => {
       host.querySelector<HTMLButtonElement>('#turnButton button')?.click();
@@ -414,6 +425,22 @@ describe('RemoteSessionBoard replay binding', () => {
       targetPlayerId: 'spike-blue',
     });
     expect(session.submit).toHaveBeenNthCalledWith(2, { type: 'FlipCoin' });
+    await act(async () => {
+      localGx?.click();
+      opponentVstar?.click();
+    });
+    expect(session.submit).toHaveBeenNthCalledWith(3, {
+      type: 'SetOncePerGameMarker',
+      targetPlayerId: 'spike-blue',
+      marker: 'gx',
+      used: true,
+    });
+    expect(session.submit).toHaveBeenNthCalledWith(4, {
+      type: 'SetOncePerGameMarker',
+      targetPlayerId: 'spike-red',
+      marker: 'vstar',
+      used: true,
+    });
 
     const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
     let finishDecode: (() => void) | undefined;
@@ -445,7 +472,7 @@ describe('RemoteSessionBoard replay binding', () => {
       host.querySelector<HTMLElement>('#loadingCircle')?.style.display
     ).toBe('');
     expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
-    expect(session.submit).toHaveBeenCalledTimes(2);
+    expect(session.submit).toHaveBeenCalledTimes(4);
 
     decode.mockClear();
     let finishShortcutDecode: (() => void) | undefined;
@@ -509,6 +536,17 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(host.querySelector('#flipBoardButton')).not.toBeNull();
     expect(host.querySelector('#refreshButton')).not.toBeNull();
     expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+    expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
+      4
+    );
+    await act(async () => {
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-player-side="local"][data-once-per-game-marker="gx"]'
+        )
+        ?.click();
+    });
+    expect(session.submit).toHaveBeenCalledTimes(4);
 
     await act(async () => root.unmount());
     replay.dispose();

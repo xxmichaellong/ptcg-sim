@@ -33,6 +33,7 @@ import type {
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
+import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 
 export interface BoardSessionRuntimeOptions {
   readonly live: BoardSessionLiveSource;
@@ -233,6 +234,17 @@ export class BoardSessionRuntime {
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
     return adapter.emitLegacyShortcutAction(request);
+  }
+
+  /** Resolves a player-frame GX/VSTAR control against the installed safe view. */
+  emitOncePerGameAction(
+    targetPlayerId: string,
+    action: OncePerGameAction
+  ): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitOncePerGameAction(targetPlayerId, action);
   }
 
   /** Route-owned keyboard seam for an ephemeral, non-command declaration. */
@@ -457,6 +469,7 @@ export class BoardSessionRuntime {
       case 'IntentRejected':
       case 'OverlayActionRejected':
       case 'ShortcutActionRejected':
+      case 'OncePerGameActionRejected':
         break;
     }
     this.options.onBoardEffect?.(effect);

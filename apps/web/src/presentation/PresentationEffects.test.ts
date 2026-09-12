@@ -118,6 +118,20 @@ const events: readonly PresentationEvent[] = [
     revision: 14,
     playerId: 'spike-blue',
   },
+  {
+    type: 'OncePerGameMarkerSet',
+    revision: 15,
+    playerId: 'spike-red',
+    marker: 'vstar',
+    used: true,
+  },
+  {
+    type: 'OncePerGameMarkerSet',
+    revision: 16,
+    playerId: 'spike-blue',
+    marker: 'gx',
+    used: false,
+  },
 ];
 
 const messages = (effects: readonly PresentationEffect[]) =>
@@ -322,6 +336,8 @@ describe('presentationEffectsForEvent', () => {
         "player:Blue is looking through Blue's deck",
         "accessibility:Blue is looking through Blue's deck",
       ],
+      ['player:Red used their VSTAR!', 'accessibility:Red used their VSTAR!'],
+      ['player:Blue reset their GX', 'accessibility:Blue reset their GX'],
     ]);
 
     expect(presentationEffectsForEvent(events[0]!, view)).toContainEqual({

@@ -31,6 +31,11 @@ import {
 } from './resolveLegacyBoardOverlayAction.js';
 import { isLegacyBoardCountActionId } from './resolveLegacyBoardCountAction.js';
 import {
+  resolveOncePerGameAction,
+  type OncePerGameAction,
+  type OncePerGameActionResolution,
+} from './resolveOncePerGameAction.js';
+import {
   isLegacyOwnHandShortcutAction,
   resolveLegacyBoardShortcutAction,
   type LegacyBoardShortcutActionRejectionReason,
@@ -139,6 +144,11 @@ export type BoardSessionControllerAction =
       readonly request: LegacyBoardShortcutActionRequest;
     }
   | {
+      readonly kind: 'OncePerGameActionRequested';
+      readonly targetPlayerId: string;
+      readonly action: OncePerGameAction;
+    }
+  | {
       readonly kind: 'RendererPresentationUpdated';
       readonly update: BoardPresentationUpdate;
     }
@@ -173,6 +183,12 @@ export type BoardShortcutActionRejectionReason =
   | 'stale_input'
   | LegacyBoardShortcutActionRejectionReason;
 
+export type OncePerGameActionRejectionReason =
+  | 'no_installed_view'
+  | 'not_ready'
+  | 'read_only'
+  | Exclude<OncePerGameActionResolution, { readonly ok: true }>['reason'];
+
 export type BoardSessionControllerEffect =
   | {
       readonly kind: 'InstallScene';
@@ -203,6 +219,12 @@ export type BoardSessionControllerEffect =
       readonly reason: BoardShortcutActionRejectionReason;
     }
   | {
+      readonly kind: 'OncePerGameActionRejected';
+      readonly targetPlayerId: string;
+      readonly action: OncePerGameAction;
+      readonly reason: OncePerGameActionRejectionReason;
+    }
+  | {
       readonly kind: 'IntentRejected';
       readonly intent: BoardIntent;
       readonly reason: BoardIntentRejectionReason;
@@ -221,6 +243,7 @@ export interface BoardSessionControllerDependencies {
   readonly resolveDrop?: typeof resolveBoardDrop;
   readonly resolveOverlayAction?: typeof resolveLegacyBoardOverlayAction;
   readonly resolveShortcutAction?: typeof resolveLegacyBoardShortcutAction;
+  readonly resolveOncePerGameAction?: typeof resolveOncePerGameAction;
   readonly resolveAttachEvolveTarget?: typeof resolveAttachEvolveTarget;
 }
 
@@ -1468,6 +1491,57 @@ const handleShortcutAction = (
   ]);
 };
 
+const rejectOncePerGameAction = (
+  state: BoardSessionControllerState,
+  targetPlayerId: string,
+  action: OncePerGameAction,
+  reason: OncePerGameActionRejectionReason
+): BoardSessionControllerReduction =>
+  accepted(state, [
+    {
+      kind: 'OncePerGameActionRejected',
+      targetPlayerId,
+      action,
+      reason,
+    },
+  ]);
+
+const handleOncePerGameAction = (
+  state: BoardSessionControllerState,
+  targetPlayerId: string,
+  action: OncePerGameAction,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  if (!state.view || !state.scene) {
+    return rejectOncePerGameAction(
+      state,
+      targetPlayerId,
+      action,
+      'no_installed_view'
+    );
+  }
+  if (state.sessionPhase !== 'ready') {
+    return rejectOncePerGameAction(state, targetPlayerId, action, 'not_ready');
+  }
+  if (!state.canSubmitCommands) {
+    return rejectOncePerGameAction(state, targetPlayerId, action, 'read_only');
+  }
+  const resolution = (
+    dependencies.resolveOncePerGameAction ?? resolveOncePerGameAction
+  )(state.view, targetPlayerId, action);
+  if (!resolution.ok) {
+    return rejectOncePerGameAction(
+      state,
+      targetPlayerId,
+      action,
+      resolution.reason
+    );
+  }
+  return accepted(state, [
+    { kind: 'SubmitCommand', command: resolution.command },
+  ]);
+};
+
 const refreshScene = (
   state: BoardSessionControllerState,
   dependencies: BoardSessionControllerDependencies
@@ -1559,6 +1633,13 @@ export const reduceBoardSessionController = (
       return handleOverlayAction(state, action.request, dependencies);
     case 'LegacyShortcutActionRequested':
       return handleShortcutAction(state, action.request, dependencies);
+    case 'OncePerGameActionRequested':
+      return handleOncePerGameAction(
+        state,
+        action.targetPlayerId,
+        action.action,
+        dependencies
+      );
     case 'RendererPresentationUpdated':
       return handlePresentationUpdate(state, action.update);
     case 'HoverChanged': {

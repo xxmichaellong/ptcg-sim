@@ -475,6 +475,15 @@ export const RemoteSessionBoard = ({
         runtime.setShellMode(expanded ? 'fullscreen' : 'sidebar');
         onPlaymatExpandedChangeRef.current?.(expanded);
       },
+      toggleOncePerGame: (
+        playerId: Parameters<BoardSessionRuntime['emitOncePerGameAction']>[0],
+        marker: 'gx' | 'vstar'
+      ): void => {
+        runtimeRef.current?.emitOncePerGameAction(playerId, {
+          type: 'toggle',
+          marker,
+        });
+      },
     }),
     [refreshImages]
   );
@@ -496,6 +505,7 @@ export const RemoteSessionBoard = ({
                   ? boardState.view.viewer.playerId
                   : boardState.scene.bottomPlayerId
               }
+              players={boardState.view?.players ?? {}}
               darkMode={preferences.darkMode}
               actions={chromeActions}
               refreshingImages={refreshingImages}

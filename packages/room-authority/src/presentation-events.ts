@@ -170,6 +170,17 @@ export const presentationEventsForBatch = (
         },
       ];
     }
+    if (event.type === 'OncePerGameMarkerSet') {
+      return [
+        {
+          type: 'OncePerGameMarkerSet',
+          revision: batch.revision,
+          playerId: event.playerId,
+          marker: event.marker,
+          used: event.used,
+        },
+      ];
+    }
     if (event.type !== 'TableActionDeclared') return [];
     const common = {
       revision: batch.revision,

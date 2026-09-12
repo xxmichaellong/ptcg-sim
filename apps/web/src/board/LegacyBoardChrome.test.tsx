@@ -25,6 +25,23 @@ const layoutState = (): BoardLayoutState => ({
   vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
 });
 
+const players = {
+  'spike-blue': {
+    id: asPlayerId('spike-blue'),
+    displayName: 'Blue',
+    cardBackUrl: '/blue.png',
+    coachingConsent: false,
+    oncePerGame: { gxUsed: false, vstarUsed: true },
+  },
+  'spike-red': {
+    id: asPlayerId('spike-red'),
+    displayName: 'Red',
+    cardBackUrl: '/red.png',
+    coachingConsent: false,
+    oncePerGame: { gxUsed: true, vstarUsed: false },
+  },
+};
+
 describe('LegacyBoardChrome', () => {
   afterEach(() => document.body.replaceChildren());
 
@@ -38,6 +55,7 @@ describe('LegacyBoardChrome', () => {
       flipBoard: vi.fn(),
       refreshImages: vi.fn(),
       toggleFullscreen: vi.fn(),
+      toggleOncePerGame: vi.fn(),
     };
     const initial = createBoardLayoutSnapshot(layoutState());
 
@@ -46,6 +64,7 @@ describe('LegacyBoardChrome', () => {
         <LegacyBoardChrome
           layout={initial}
           localPlayerId={asPlayerId('spike-blue')}
+          players={players}
           darkMode={false}
           actions={actions}
         />
@@ -88,6 +107,18 @@ describe('LegacyBoardChrome', () => {
     expect(
       host.querySelector<HTMLButtonElement>('#turnButton button')?.className
     ).toBe('legacy-board-control-button');
+    expect(
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-player-id="spike-blue"][data-once-per-game-marker="vstar"]'
+        )
+        ?.getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      host.querySelector<HTMLButtonElement>(
+        '[data-player-id="spike-red"][data-once-per-game-marker="gx"]'
+      )?.classList
+    ).toContain('used-special-move');
 
     for (const id of [
       'turnButton',
@@ -103,6 +134,15 @@ describe('LegacyBoardChrome', () => {
     expect(actions.flipBoard).toHaveBeenCalledOnce();
     expect(actions.refreshImages).toHaveBeenCalledOnce();
     expect(actions.toggleFullscreen).toHaveBeenCalledOnce();
+    host
+      .querySelector<HTMLButtonElement>(
+        '[data-player-id="spike-blue"][data-once-per-game-marker="gx"]'
+      )
+      ?.click();
+    expect(actions.toggleOncePerGame).toHaveBeenCalledWith(
+      asPlayerId('spike-blue'),
+      'gx'
+    );
 
     const flipped = createBoardLayoutSnapshot(
       flipBoardLayoutState(layoutState())
@@ -112,6 +152,7 @@ describe('LegacyBoardChrome', () => {
         <LegacyBoardChrome
           layout={flipped}
           localPlayerId={asPlayerId('spike-blue')}
+          players={players}
           darkMode={true}
           actions={actions}
         />
@@ -124,12 +165,32 @@ describe('LegacyBoardChrome', () => {
     expect(
       host.querySelector<HTMLButtonElement>('#turnButton button')?.className
     ).toBe('legacy-board-control-button dark-mode-2');
+    const flippedLocalFrame = host.querySelector<HTMLElement>(
+      '[data-player-frame-chrome="spike-blue"]'
+    );
+    const flippedOpponentFrame = host.querySelector<HTMLElement>(
+      '[data-player-frame-chrome="spike-red"]'
+    );
+    expect(flippedLocalFrame?.dataset.playerSide).toBe('local');
+    expect(flippedLocalFrame?.dataset.playerLayoutSide).toBe('opponent');
+    expect(flippedLocalFrame?.dataset.playerPhysicalSide).toBe('upper');
+    expect(flippedOpponentFrame?.dataset.playerSide).toBe('opponent');
+    expect(flippedOpponentFrame?.dataset.playerLayoutSide).toBe('local');
+    expect(flippedOpponentFrame?.dataset.playerPhysicalSide).toBe('lower');
+    expect(
+      flippedLocalFrame
+        ?.querySelector<HTMLButtonElement>(
+          '[data-once-per-game-marker="vstar"]'
+        )
+        ?.getAttribute('aria-pressed')
+    ).toBe('true');
 
     await act(async () =>
       root.render(
         <LegacyBoardChrome
           layout={flipped}
           localPlayerId={asPlayerId('spike-blue')}
+          players={players}
           darkMode={true}
           actions={actions}
           visibility={{ playerActions: false, flipBoard: false }}

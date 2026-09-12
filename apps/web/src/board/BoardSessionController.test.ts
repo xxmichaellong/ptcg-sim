@@ -656,6 +656,61 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('resolves player-frame GX/VSTAR toggles only from a writable current view', () => {
+    const state = install();
+    const targetPlayerId = state.view!.playerOrder[1]!;
+    const action = { type: 'toggle', marker: 'vstar' } as const;
+    const accepted = apply(state, {
+      kind: 'OncePerGameActionRequested',
+      targetPlayerId,
+      action,
+    });
+    expect(accepted.state).toBe(state);
+    expect(accepted.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetOncePerGameMarker',
+          targetPlayerId,
+          marker: 'vstar',
+          used: true,
+        },
+      },
+    ]);
+
+    const replay = install(replayFrame(1, 1, state.view!, 'resync'));
+    expect(
+      apply(replay, {
+        kind: 'OncePerGameActionRequested',
+        targetPlayerId,
+        action,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'OncePerGameActionRejected',
+        targetPlayerId,
+        action,
+        reason: 'read_only',
+      },
+    ]);
+
+    const staleTarget = 'missing-player';
+    expect(
+      apply(state, {
+        kind: 'OncePerGameActionRequested',
+        targetPlayerId: staleTarget,
+        action,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'OncePerGameActionRejected',
+        targetPlayerId: staleTarget,
+        action,
+        reason: 'stale_player',
+      },
+    ]);
+  });
+
   it('submits viewer-owned loose-board shortcuts without a selected card', () => {
     let state = install();
     if (state.view?.viewer.kind !== 'player') {

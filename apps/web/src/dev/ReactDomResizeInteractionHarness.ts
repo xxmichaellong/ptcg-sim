@@ -232,11 +232,13 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
     throw error;
   }
 
-  type CountedChromeAction = 'takeTurn' | 'flipCoin' | 'refreshImages';
+  type CountedChromeAction =
+    'takeTurn' | 'flipCoin' | 'refreshImages' | 'toggleOncePerGame';
   const actionCounts: Record<CountedChromeAction, number> = {
     takeTurn: 0,
     flipCoin: 0,
     refreshImages: 0,
+    toggleOncePerGame: 0,
   };
   const count = (action: CountedChromeAction): void => {
     actionCounts[action] += 1;
@@ -248,6 +250,7 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
       createElement(LegacyBoardChrome, {
         layout: runtime.getCharacterizedLayoutSnapshot(),
         localPlayerId: firstPlayerId,
+        players: view.players,
         darkMode,
         actions: {
           takeTurn: () => count('takeTurn'),
@@ -260,6 +263,7 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
                 ? 'fullscreen'
                 : 'sidebar'
             ),
+          toggleOncePerGame: () => count('toggleOncePerGame'),
         },
       })
     );

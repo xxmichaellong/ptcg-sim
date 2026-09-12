@@ -1,5 +1,8 @@
-import type { PlayerId } from '@ptcgsim/game-core';
-import type { BoardLayoutSnapshot } from '@ptcgsim/renderer-contract';
+import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
+import type {
+  BoardLayoutSnapshot,
+  BoardPlayerLayout,
+} from '@ptcgsim/renderer-contract';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';
@@ -10,6 +13,10 @@ export interface LegacyBoardChromeActions {
   readonly flipBoard: () => void;
   readonly refreshImages: () => void;
   readonly toggleFullscreen: () => void;
+  readonly toggleOncePerGame: (
+    playerId: PlayerId,
+    marker: 'gx' | 'vstar'
+  ) => void;
 }
 
 export interface LegacyBoardChromeVisibility {
@@ -66,6 +73,72 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
   );
 });
 
+const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
+  frame,
+  player,
+  playerSide,
+  darkMode,
+  onToggle,
+}: {
+  readonly frame: BoardPlayerLayout;
+  readonly player: MatchViewState['players'][string];
+  readonly playerSide: 'local' | 'opponent';
+  readonly darkMode: boolean;
+  readonly onToggle: LegacyBoardChromeActions['toggleOncePerGame'];
+}) {
+  const button = (marker: 'gx' | 'vstar') => {
+    const used =
+      marker === 'gx'
+        ? player.oncePerGame.gxUsed
+        : player.oncePerGame.vstarUsed;
+    const label = marker === 'gx' ? 'GX' : 'VSTAR';
+    return (
+      <button
+        type="button"
+        className={`legacy-once-per-game-button${
+          darkMode ? ' dark-mode-2' : ''
+        }${used ? ' used-special-move' : ''}`}
+        data-once-per-game-marker={marker}
+        data-player-id={frame.playerId}
+        data-player-side={playerSide}
+        aria-label={`${player.displayName} ${label}`}
+        aria-pressed={used}
+        style={{
+          height: Math.min(20, Math.max(10, frame.frameBounds.height * 0.06)),
+          fontSize: Math.min(15, Math.max(10, frame.frameBounds.height * 0.04)),
+        }}
+        onClick={() => onToggle(frame.playerId, marker)}
+      >
+        {label}
+      </button>
+    );
+  };
+  return (
+    <div
+      className="legacy-player-frame-chrome"
+      data-player-frame-chrome={frame.playerId}
+      data-player-side={playerSide}
+      data-player-layout-side={frame.side}
+      data-player-physical-side={frame.physicalSide}
+      style={{
+        position: 'absolute',
+        left: frame.frameBounds.x,
+        top: frame.frameBounds.y,
+        width: frame.frameBounds.width,
+        height: frame.frameBounds.height,
+        transform: `rotate(${frame.rotationQuarterTurns * 90}deg)`,
+      }}
+    >
+      <div
+        className={`legacy-once-per-game-controls legacy-once-per-game-controls--${frame.side}`}
+      >
+        {button('vstar')}
+        {button('gx')}
+      </div>
+    </div>
+  );
+});
+
 /**
  * Route-owned source-shaped paint. Board geometry and resize input remain in
  * the renderer-neutral runtime; this layer only preserves the existing chrome
@@ -74,6 +147,7 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
 export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   layout,
   localPlayerId,
+  players,
   darkMode,
   actions,
   visibility = DEFAULT_VISIBILITY,
@@ -81,6 +155,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly localPlayerId: PlayerId;
+  readonly players: MatchViewState['players'];
   readonly darkMode: boolean;
   readonly actions: LegacyBoardChromeActions;
   readonly visibility?: LegacyBoardChromeVisibility;
@@ -117,6 +192,19 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
         userSelect: 'none',
       }}
     >
+      {layout.players.map((frame) => {
+        const player = players[frame.playerId];
+        return player ? (
+          <LegacyOncePerGameControls
+            key={frame.playerId}
+            frame={frame}
+            player={player}
+            playerSide={frame.playerId === localPlayerId ? 'local' : 'opponent'}
+            darkMode={darkMode}
+            onToggle={actions.toggleOncePerGame}
+          />
+        ) : null;
+      })}
       <div
         id="selfResizer"
         className="legacy-board-resizer"

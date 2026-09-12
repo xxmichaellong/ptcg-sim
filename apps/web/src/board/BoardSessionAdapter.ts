@@ -27,6 +27,7 @@ import {
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
+import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
@@ -161,6 +162,17 @@ export class BoardSessionAdapter {
     return this.controller.dispatch({
       kind: 'LegacyShortcutActionRequested',
       request,
+    });
+  }
+
+  emitOncePerGameAction(
+    targetPlayerId: string,
+    action: OncePerGameAction
+  ): boolean {
+    return this.controller.dispatch({
+      kind: 'OncePerGameActionRequested',
+      targetPlayerId,
+      action,
     });
   }
 

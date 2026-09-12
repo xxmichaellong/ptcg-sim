@@ -117,6 +117,37 @@ const inspectionBatch = (type: 'opened' | 'closed'): EventBatch => ({
 });
 
 describe('presentation event privacy', () => {
+  it('projects once-per-game marker changes without command or hidden identity data', () => {
+    const state = stateWithSecret('Never published', false);
+    const events = presentationEventsForBatch(
+      {
+        revision: 7,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: actorId,
+            marker: 'vstar',
+            used: true,
+          },
+        ],
+      },
+      state
+    );
+    expect(events).toEqual([
+      {
+        type: 'OncePerGameMarkerSet',
+        revision: 7,
+        playerId: actorId,
+        marker: 'vstar',
+        used: true,
+      },
+    ]);
+    const serialized = JSON.stringify(events);
+    expect(serialized).not.toContain(cardId);
+    expect(serialized).not.toContain(definitionId);
+    expect(serialized).not.toContain('Never published');
+  });
+
   it('includes only the public name needed for single-card reveal parity', () => {
     const events = presentationEventsForBatch(
       publicRevealBatch(true),

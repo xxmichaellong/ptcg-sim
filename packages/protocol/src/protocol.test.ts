@@ -1082,6 +1082,13 @@ describe('client protocol ingress', () => {
         revision: 9,
         playerId: 'actor',
       },
+      {
+        type: 'OncePerGameMarkerSet',
+        revision: 10,
+        playerId: 'actor',
+        marker: 'vstar',
+        used: true,
+      },
     ] as const;
 
     for (const event of events) {
@@ -1105,6 +1112,8 @@ describe('client protocol ingress', () => {
       { ...events[0], cardName: 'x'.repeat(257) },
       { ...events[2], scope: undefined },
       { ...events[3], cardCount: 0 },
+      { ...events[6], marker: 'ability' },
+      { ...events[6], used: 1 },
     ]) {
       expect(v.safeParse(PresentationEventSchema, event).success).toBe(false);
     }

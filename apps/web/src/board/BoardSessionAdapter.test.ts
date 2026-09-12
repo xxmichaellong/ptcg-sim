@@ -711,6 +711,52 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('routes player-frame GX/VSTAR toggles through the guarded submitter', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+
+    expect(
+      test.adapter.emitOncePerGameAction('spike-red', {
+        type: 'toggle',
+        marker: 'gx',
+      })
+    ).toBe(true);
+    expect(test.submissions).toEqual([
+      {
+        command: {
+          type: 'SetOncePerGameMarker',
+          targetPlayerId: 'spike-red',
+          marker: 'gx',
+          used: true,
+        },
+        result: {
+          queued: true,
+          commandId: 'board-command-1',
+          clientSequence: 1,
+        },
+      },
+    ]);
+    expect(
+      test.socket.sent.filter(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toHaveLength(1);
+
+    expect(test.replay.requestReplay()).toBe(true);
+    replayTransfer(test.socket);
+    const sentCount = test.socket.sent.length;
+    test.adapter.emitOncePerGameAction('spike-blue', {
+      type: 'toggle',
+      marker: 'vstar',
+    });
+    expect(test.socket.sent).toHaveLength(sentCount);
+
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('keeps replay overlay requests outside the resolver and submitter', () => {
     const test = setup();
     test.socket.serverOpen();

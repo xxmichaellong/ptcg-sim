@@ -273,6 +273,44 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`).first()
   ).toBeVisible();
 
+  const localGx = page.locator(
+    '[data-player-side="local"][data-once-per-game-marker="gx"]'
+  );
+  const localVstar = page.locator(
+    '[data-player-side="local"][data-once-per-game-marker="vstar"]'
+  );
+  const opponentGx = page.locator(
+    '[data-player-side="opponent"][data-once-per-game-marker="gx"]'
+  );
+  const opponentVstar = page.locator(
+    '[data-player-side="opponent"][data-once-per-game-marker="vstar"]'
+  );
+  for (const marker of [localGx, localVstar, opponentGx, opponentVstar]) {
+    await expect(marker).toBeVisible();
+    await expect(marker).toHaveAttribute('aria-pressed', 'false');
+  }
+  for (const [marker, pressed] of [
+    [localVstar, 'true'],
+    [localGx, 'true'],
+    [opponentVstar, 'true'],
+    [opponentGx, 'true'],
+    [localVstar, 'false'],
+    [opponentGx, 'false'],
+  ] as const) {
+    await marker.click();
+    await expect(marker).toHaveAttribute('aria-pressed', pressed);
+  }
+  await expect(
+    page.locator('#chatbox [data-event-type="OncePerGameMarkerSet"]')
+  ).toHaveText([
+    'Blue used their VSTAR!',
+    'Blue used their GX!',
+    'Player 2 used their VSTAR!',
+    'Player 2 used their GX!',
+    'Blue reset their VSTAR',
+    'Player 2 reset their GX',
+  ]);
+
   const liveRevisionBeforeReplayImport = await page
     .locator('.ptcgsim-board-surface')
     .getAttribute('data-revision');
@@ -311,6 +349,13 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(page.locator('#p1Button')).toHaveText('Replay');
   await expect(page.locator('#importReplay')).toHaveCount(0);
   await expect(page.locator('#turnButton')).toHaveCount(0);
+  await page.locator('#resetBothButton').click();
+  await expect(localGx).toHaveAttribute('aria-pressed', 'true');
+  await expect(localVstar).toHaveAttribute('aria-pressed', 'false');
+  await expect(opponentGx).toHaveAttribute('aria-pressed', 'false');
+  await expect(opponentVstar).toHaveAttribute('aria-pressed', 'true');
+  await localGx.click();
+  await expect(localGx).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#optionsButton').click();
   await page.locator('#exitReplay').click();
   await expect(page.locator('#p1Button')).toHaveText('Solo');
