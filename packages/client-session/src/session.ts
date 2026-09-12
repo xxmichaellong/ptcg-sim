@@ -1,0 +1,1145 @@
+import {
+  asPlayerId,
+  asViewCardId,
+  asViewDefinitionId,
+  stableSerialize,
+  type MatchViewState,
+} from '@ptcgsim/game-core';
+import {
+  hydrateMatchViewState,
+  MAX_CHAT_CODE_UNITS,
+  PROTOCOL_VERSION,
+  parseServerFrame,
+  type ClientMessage,
+  type ServerMessage,
+  type WireGameCommand,
+} from '@ptcgsim/protocol';
+
+import {
+  DEFAULT_CLIENT_SESSION_POLICY,
+  type ClientSessionFailure,
+  type ClientSessionPolicy,
+  type ClientSessionState,
+  type CompletedCommandSummary,
+  type ConnectSessionOptions,
+  type PendingCommandSummary,
+  type ProjectedReplayArtifact,
+} from './model.js';
+import type {
+  SessionSocket,
+  SessionSocketCloseEvent,
+  SessionSocketFactory,
+} from './transport.js';
+
+type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
+type CommandResult = Extract<ServerMessage, { type: 'CommandResult' }>;
+
+interface PendingCommand {
+  readonly envelope: CommandEnvelope;
+  status: PendingCommandSummary['state'];
+  retries: number;
+  publicationRevision?: number;
+  result?: CommandResult;
+}
+
+interface ReplayTransfer {
+  readonly replayId: string;
+  readonly viewer: Extract<ServerMessage, { type: 'ReplayStarted' }>['viewer'];
+  readonly startRevision: number;
+  readonly endRevision: number;
+  readonly truncated: boolean;
+  readonly frameCount: number;
+  readonly localDisclosureDefinitions?: ProjectedReplayArtifact['localDisclosureDefinitions'];
+  readonly frames: ProjectedReplayArtifact['frames'][number][];
+}
+
+export interface ClientSessionScheduler {
+  readonly schedule: (callback: () => void, delayMs: number) => unknown;
+  readonly cancel: (handle: unknown) => void;
+}
+
+export interface ClientSessionDependencies {
+  readonly socketFactory: SessionSocketFactory;
+  readonly createCommandId?: () => string;
+  readonly scheduler?: ClientSessionScheduler;
+  readonly random?: () => number;
+  readonly now?: () => number;
+  readonly policy?: Partial<ClientSessionPolicy>;
+}
+
+export type SubmitCommandResult =
+  | {
+      readonly queued: true;
+      readonly commandId: string;
+      readonly clientSequence: number;
+    }
+  | {
+      readonly queued: false;
+      readonly reason:
+        'not_ready' | 'spectator' | 'queue_full' | 'command_pending';
+    };
+
+const initialState = (): ClientSessionState => ({
+  phase: 'idle',
+  nextClientSequence: 1,
+  pendingCommands: [],
+  completedCommands: [],
+  presentationEvents: [],
+  chatMessages: [],
+  presence: [],
+  notices: [],
+  replayLoading: false,
+  reconnectAttempt: 0,
+});
+
+const defaultScheduler: ClientSessionScheduler = {
+  schedule: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
+  cancel: (handle) => globalThis.clearTimeout(handle as number),
+};
+
+const defaultCommandId = (): string => globalThis.crypto.randomUUID();
+
+const appendBounded = <Value>(
+  values: readonly Value[],
+  value: Value,
+  maximum: number
+): readonly Value[] =>
+  maximum === 0 ? [] : [...values, value].slice(-maximum);
+
+const appendManyBounded = <Value>(
+  values: readonly Value[],
+  additions: readonly Value[],
+  maximum: number
+): readonly Value[] =>
+  maximum === 0 ? [] : [...values, ...additions].slice(-maximum);
+
+const isDisplayNameOnlyRefresh = (
+  current: MatchViewState,
+  candidate: MatchViewState
+): boolean => {
+  const currentPlayerIds = Object.keys(current.players);
+  const candidatePlayerIds = Object.keys(candidate.players);
+  if (
+    currentPlayerIds.length !== candidatePlayerIds.length ||
+    candidatePlayerIds.some((playerId) => !current.players[playerId])
+  ) {
+    return false;
+  }
+  const normalizedPlayers = Object.fromEntries(
+    candidatePlayerIds.map((playerId) => [
+      playerId,
+      {
+        ...candidate.players[playerId]!,
+        displayName: current.players[playerId]!.displayName,
+      },
+    ])
+  );
+  return (
+    stableSerialize({ ...candidate, players: normalizedPlayers }) ===
+    stableSerialize(current)
+  );
+};
+
+const validPolicy = (policy: ClientSessionPolicy): ClientSessionPolicy => {
+  for (const [key, value] of Object.entries(policy)) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new Error(`Invalid client session policy: ${key}`);
+    }
+  }
+  if (
+    policy.maximumPendingCommands < 1 ||
+    policy.maximumReconnectAttempts < 1 ||
+    policy.reconnectJitterRatio > 1
+  ) {
+    throw new Error('Invalid client session policy bounds');
+  }
+  return policy;
+};
+
+/**
+ * Owns one authoritative remote session. No capability is ever copied into the
+ * public state returned by getSnapshot().
+ */
+export class RemoteGameSession {
+  private readonly socketFactory: SessionSocketFactory;
+  private readonly createCommandId: () => string;
+  private readonly scheduler: ClientSessionScheduler;
+  private readonly random: () => number;
+  private readonly now: () => number;
+  private readonly policy: ClientSessionPolicy;
+  private readonly listeners = new Set<() => void>();
+  private readonly pending: PendingCommand[] = [];
+  private readonly pingTimes = new Map<number, number>();
+  private state: ClientSessionState = initialState();
+  private options?: Omit<
+    ConnectSessionOptions,
+    'admissionTicket' | 'resumeToken'
+  >;
+  private admissionTicket?: string;
+  private resumeToken?: string;
+  private sessionId?: string;
+  private socket?: SessionSocket;
+  private socketGeneration = 0;
+  private reconnectTimer?: unknown;
+  private reconnectAttempts = 0;
+  private manualClose = false;
+  private nextPingId = 0;
+  private replayTransfer?: ReplayTransfer;
+
+  constructor(dependencies: ClientSessionDependencies) {
+    this.socketFactory = dependencies.socketFactory;
+    this.createCommandId = dependencies.createCommandId ?? defaultCommandId;
+    this.scheduler = dependencies.scheduler ?? defaultScheduler;
+    this.random = dependencies.random ?? Math.random;
+    this.now = dependencies.now ?? Date.now;
+    this.policy = validPolicy({
+      ...DEFAULT_CLIENT_SESSION_POLICY,
+      ...dependencies.policy,
+    });
+  }
+
+  getSnapshot = (): ClientSessionState => this.state;
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  connect(options: ConnectSessionOptions): void {
+    this.cancelReconnect();
+    this.socketGeneration += 1;
+    this.closeSocket(1000, 'Session replaced');
+    this.pending.length = 0;
+    this.pingTimes.clear();
+    this.replayTransfer = undefined;
+    this.options = {
+      url: options.url,
+      buildId: options.buildId,
+      roomCode: options.roomCode,
+      displayName: options.displayName,
+      requestedRole: options.requestedRole,
+    };
+    this.admissionTicket = options.admissionTicket;
+    this.resumeToken = options.resumeToken;
+    this.sessionId = undefined;
+    this.reconnectAttempts = 0;
+    this.manualClose = false;
+    this.state = { ...initialState(), phase: 'connecting' };
+    const generation = this.socketGeneration;
+    this.emit();
+    if (
+      !this.isCurrent(generation) ||
+      this.manualClose ||
+      this.state.phase !== 'connecting'
+    ) {
+      return;
+    }
+    this.openSocket();
+  }
+
+  submit(command: WireGameCommand): SubmitCommandResult {
+    if (this.state.phase !== 'ready' || !this.sessionId) {
+      return { queued: false, reason: 'not_ready' };
+    }
+    if (this.state.role !== 'player') {
+      return { queued: false, reason: 'spectator' };
+    }
+    // Undo pops whole-match authority history. Match v1's in-progress guard so
+    // key repeat cannot turn one intended undo into multiple queued pops.
+    if (
+      command.type === 'ApplySoloUndo' &&
+      this.pending.some(
+        (pending) => pending.envelope.command.type === 'ApplySoloUndo'
+      )
+    ) {
+      return { queued: false, reason: 'command_pending' };
+    }
+    if (this.pending.length >= this.policy.maximumPendingCommands) {
+      return { queued: false, reason: 'queue_full' };
+    }
+    const commandId = this.createCommandId();
+    const clientSequence = this.state.nextClientSequence;
+    const envelope: CommandEnvelope = {
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: this.sessionId,
+      clientSequence,
+      commandId,
+      lastSeenRevision: this.state.view?.revision ?? 0,
+      command,
+    };
+    this.pending.push({ envelope, status: 'queued', retries: 0 });
+    this.updateState({
+      nextClientSequence: clientSequence + 1,
+      pendingCommands: this.pendingSummaries(),
+    });
+    this.sendHead();
+    return { queued: true, commandId, clientSequence };
+  }
+
+  sendChat(message: string): boolean {
+    if (this.state.phase !== 'ready') return false;
+    const normalized = message.trim();
+    if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
+      return false;
+    }
+    return this.send({
+      type: 'SendChat',
+      protocolVersion: PROTOCOL_VERSION,
+      message: normalized,
+    });
+  }
+
+  /** Sends no player identity; the bound room session owns attribution. */
+  declareMulligan(): boolean {
+    if (this.state.phase !== 'ready' || this.state.role !== 'player') {
+      return false;
+    }
+    return this.send({
+      type: 'DeclareMulligan',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+  }
+
+  /** Sends no player or zone identity; the bound room session owns attribution. */
+  declareDeckView(): boolean {
+    if (this.state.phase !== 'ready' || this.state.role !== 'player') {
+      return false;
+    }
+    return this.send({
+      type: 'DeclareDeckView',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+  }
+
+  requestReplay(): boolean {
+    if (
+      this.state.phase !== 'ready' ||
+      this.state.replayLoading ||
+      this.replayTransfer
+    ) {
+      return false;
+    }
+    const sent = this.send({
+      type: 'RequestReplay',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    if (sent) this.updateState({ replayLoading: true });
+    return sent;
+  }
+
+  ping(): number | undefined {
+    if (this.state.phase !== 'ready') return undefined;
+    const id = this.nextPingId++;
+    this.pingTimes.set(id, this.now());
+    if (this.pingTimes.size > 32) {
+      const oldest = this.pingTimes.keys().next().value;
+      if (oldest !== undefined) this.pingTimes.delete(oldest);
+    }
+    if (!this.send({ type: 'Ping', protocolVersion: PROTOCOL_VERSION, id })) {
+      this.pingTimes.delete(id);
+      return undefined;
+    }
+    return id;
+  }
+
+  disconnect(): void {
+    if (this.state.phase === 'closed') return;
+    this.manualClose = true;
+    this.cancelReconnect();
+    if (this.state.phase === 'ready') {
+      this.send({ type: 'Leave', protocolVersion: PROTOCOL_VERSION });
+    }
+    this.socketGeneration += 1;
+    this.closeSocket(1000, 'Client left room');
+    this.clearCapabilities();
+    this.updateState({
+      phase: 'closed',
+      reconnectAttempt: 0,
+      replayLoading: false,
+    });
+  }
+
+  private openSocket(): void {
+    const options = this.options;
+    if (!options) return;
+    const generation = ++this.socketGeneration;
+    try {
+      const socket = this.socketFactory.open(options.url, {
+        open: () => {
+          if (!this.isCurrent(generation)) return;
+          this.updateState({ phase: 'handshaking' });
+          if (
+            !this.isCurrent(generation) ||
+            this.state.phase !== 'handshaking'
+          ) {
+            return;
+          }
+          if (!this.resumeToken) {
+            this.fail({
+              code: 'sequence_divergence',
+              message: 'No resume capability is available',
+            });
+            return;
+          }
+          const sent = this.send({
+            type: 'Hello',
+            protocolVersion: PROTOCOL_VERSION,
+            buildId: options.buildId,
+            roomCode: options.roomCode,
+            displayName: options.displayName,
+            requestedRole: options.requestedRole,
+            resumeToken: this.resumeToken,
+            ...(this.admissionTicket
+              ? { admissionTicket: this.admissionTicket }
+              : {}),
+          });
+          if (
+            !sent &&
+            this.isCurrent(generation) &&
+            this.state.phase === 'handshaking'
+          ) {
+            this.reconnectTransport('Admission handshake write failed');
+          }
+        },
+        message: (frame) => {
+          if (this.isCurrent(generation)) this.handleFrame(frame);
+        },
+        close: (event) => {
+          if (this.isCurrent(generation)) this.handleClose(event);
+        },
+        error: () => {
+          // Browser WebSocket error events carry no actionable detail. The
+          // close event owns reconnect policy and avoids scheduling twice.
+        },
+      });
+      if (!this.isCurrent(generation)) socket.close(1000, 'Stale socket');
+      else this.socket = socket;
+    } catch {
+      if (this.isCurrent(generation)) {
+        this.socket = undefined;
+        this.scheduleReconnect();
+      }
+    }
+  }
+
+  private handleFrame(frame: string): void {
+    const parsed = parseServerFrame(frame);
+    if (!parsed.ok) {
+      this.fail({
+        code: 'invalid_server_frame',
+        message: `Server frame rejected: ${parsed.reason}`,
+      });
+      return;
+    }
+    const message = parsed.value;
+    switch (message.type) {
+      case 'Welcome':
+        this.handleWelcome(message);
+        return;
+      case 'StatePublication':
+        this.handlePublication(message);
+        return;
+      case 'ProjectionRefresh':
+        this.handleProjectionRefresh(message);
+        return;
+      case 'CommandResult':
+        this.handleCommandResult(message);
+        return;
+      case 'ReplayStarted':
+        this.handleReplayStarted(message);
+        return;
+      case 'ReplayFrame':
+        this.handleReplayFrame(message);
+        return;
+      case 'ReplayCompleted':
+        this.handleReplayCompleted(message);
+        return;
+      case 'ChatMessage':
+        this.updateState({
+          chatMessages: appendBounded(
+            this.state.chatMessages,
+            message,
+            this.policy.maximumChatMessages
+          ),
+        });
+        return;
+      case 'MulliganAnnouncement':
+      case 'DeckViewAnnouncement': {
+        const current = this.state.view;
+        if (
+          this.state.phase !== 'ready' ||
+          !current ||
+          message.event.revision !== current.revision ||
+          !current.players[message.event.playerId]
+        ) {
+          this.fail({
+            code: 'inconsistent_publication',
+            message: 'Player announcement does not match the current room',
+          });
+          return;
+        }
+        this.updateState({
+          presentationEvents: appendBounded(
+            this.state.presentationEvents,
+            message.event,
+            this.policy.maximumPresentationEvents
+          ),
+        });
+        return;
+      }
+      case 'Presence':
+        if (this.state.phase !== 'ready' || !this.state.view) {
+          this.fail({
+            code: 'sequence_divergence',
+            message: 'Presence received outside an admitted room session',
+          });
+          return;
+        }
+        if (
+          message.playerId !== undefined &&
+          !this.state.view.players[message.playerId]
+        ) {
+          this.fail({
+            code: 'inconsistent_publication',
+            message: 'Presence references a player outside the current room',
+          });
+          return;
+        }
+        this.updateState({
+          presence: appendBounded(
+            this.state.presence,
+            message,
+            this.policy.maximumPresenceEvents
+          ),
+        });
+        return;
+      case 'Pong': {
+        const started = this.pingTimes.get(message.id);
+        if (started === undefined) return;
+        this.pingTimes.delete(message.id);
+        this.updateState({ latencyMs: Math.max(0, this.now() - started) });
+        return;
+      }
+      case 'ServerNotice': {
+        const noticeGeneration = this.socketGeneration;
+        const noticePhase = this.state.phase;
+        const commandAtReceipt =
+          noticePhase === 'ready' ? this.pending[0] : undefined;
+        if (message.code === 'replay_unavailable') {
+          this.replayTransfer = undefined;
+        }
+        this.updateState({
+          notices: appendBounded(
+            this.state.notices,
+            message,
+            this.policy.maximumNotices
+          ),
+          ...(message.code === 'replay_unavailable'
+            ? { replayLoading: false }
+            : {}),
+        });
+        if (!this.isCurrent(noticeGeneration)) return;
+        if (
+          message.retryable &&
+          noticePhase === 'ready' &&
+          this.state.phase === 'ready' &&
+          commandAtReceipt !== undefined &&
+          this.pending[0] === commandAtReceipt
+        ) {
+          this.retryHead();
+        } else if (
+          message.retryable &&
+          noticePhase === 'handshaking' &&
+          this.state.phase === 'handshaking'
+        ) {
+          this.reconnectTransport('Admission retry requested');
+        } else if (
+          !message.retryable &&
+          noticePhase === 'handshaking' &&
+          this.state.phase === 'handshaking'
+        ) {
+          this.fail({
+            code: 'admission_rejected',
+            message: `Room admission was rejected: ${message.code}`,
+          });
+        }
+        return;
+      }
+      case 'SessionSuperseded':
+        this.manualClose = true;
+        this.cancelReconnect();
+        this.socketGeneration += 1;
+        this.closeSocket(4409, 'Session superseded');
+        this.clearCapabilities();
+        this.updateState({
+          phase: 'superseded',
+          reconnectAttempt: 0,
+          replayLoading: false,
+        });
+        return;
+    }
+  }
+
+  private handleReplayStarted(
+    message: Extract<ServerMessage, { type: 'ReplayStarted' }>
+  ): void {
+    if (
+      this.state.phase !== 'ready' ||
+      !this.state.replayLoading ||
+      this.replayTransfer ||
+      message.endRevision < message.startRevision ||
+      message.frameCount !== message.endRevision - message.startRevision + 1 ||
+      message.truncated !== message.startRevision > 0 ||
+      message.viewer.kind !== this.state.role ||
+      (message.viewer.kind === 'player' &&
+        message.viewer.playerId !== this.state.playerId)
+    ) {
+      this.failReplay('Replay start metadata is inconsistent with the session');
+      return;
+    }
+    this.replayTransfer = {
+      replayId: message.replayId,
+      viewer: message.viewer,
+      startRevision: message.startRevision,
+      endRevision: message.endRevision,
+      truncated: message.truncated,
+      frameCount: message.frameCount,
+      ...(message.localDisclosureDefinitions
+        ? {
+            localDisclosureDefinitions: message.localDisclosureDefinitions.map(
+              (definition) => ({
+                ...definition,
+                id: asViewDefinitionId(definition.id),
+              })
+            ),
+          }
+        : {}),
+      frames: [],
+    };
+  }
+
+  private handleReplayFrame(
+    message: Extract<ServerMessage, { type: 'ReplayFrame' }>
+  ): void {
+    const transfer = this.replayTransfer;
+    const expectedRevision = transfer
+      ? transfer.startRevision + transfer.frames.length
+      : -1;
+    if (
+      !transfer ||
+      message.replayId !== transfer.replayId ||
+      message.index !== transfer.frames.length ||
+      message.index >= transfer.frameCount ||
+      message.snapshot.revision !== expectedRevision ||
+      message.snapshot.matchId !== this.state.view?.matchId ||
+      message.snapshot.viewer.kind !== transfer.viewer.kind ||
+      (message.snapshot.viewer.kind === 'player' &&
+        (transfer.viewer.kind !== 'player' ||
+          message.snapshot.viewer.playerId !== transfer.viewer.playerId)) ||
+      message.presentationEvents?.some(
+        (event) => event.revision !== message.snapshot.revision
+      ) ||
+      (message.index === 0 && (message.presentationEvents?.length ?? 0) > 0)
+    ) {
+      this.failReplay('Replay frame sequence or perspective is inconsistent');
+      return;
+    }
+    transfer.frames.push({
+      snapshot: hydrateMatchViewState(message.snapshot),
+      ...(message.localDisclosure
+        ? {
+            localDisclosure: {
+              zoneIds: [...message.localDisclosure.zoneIds],
+              cards: message.localDisclosure.cards.map((card) => ({
+                ...card,
+                id: asViewCardId(card.id),
+                definitionId: asViewDefinitionId(card.definitionId),
+                ownerId: asPlayerId(card.ownerId),
+              })),
+            },
+          }
+        : {}),
+      presentationEvents: message.presentationEvents ?? [],
+    });
+  }
+
+  private handleReplayCompleted(
+    message: Extract<ServerMessage, { type: 'ReplayCompleted' }>
+  ): void {
+    const transfer = this.replayTransfer;
+    if (
+      !transfer ||
+      message.replayId !== transfer.replayId ||
+      message.frameCount !== transfer.frameCount ||
+      transfer.frames.length !== transfer.frameCount ||
+      transfer.frames.at(-1)?.snapshot.revision !== transfer.endRevision
+    ) {
+      this.failReplay('Replay completion metadata is inconsistent');
+      return;
+    }
+    const replayArtifact: ProjectedReplayArtifact = {
+      replayId: transfer.replayId,
+      viewer: transfer.frames[0]!.snapshot.viewer,
+      startRevision: transfer.startRevision,
+      endRevision: transfer.endRevision,
+      truncated: transfer.truncated,
+      ...(transfer.localDisclosureDefinitions
+        ? {
+            localDisclosureDefinitions: [
+              ...transfer.localDisclosureDefinitions,
+            ],
+          }
+        : {}),
+      frames: transfer.frames,
+    };
+    this.replayTransfer = undefined;
+    this.updateState({ replayLoading: false, replayArtifact });
+  }
+
+  private failReplay(message: string): void {
+    this.replayTransfer = undefined;
+    this.fail({ code: 'inconsistent_replay', message });
+  }
+
+  private handleWelcome(
+    message: Extract<ServerMessage, { type: 'Welcome' }>
+  ): void {
+    if (this.state.phase !== 'handshaking') {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'Welcome received outside the handshake',
+      });
+      return;
+    }
+    if (this.sessionId && this.sessionId !== message.sessionId) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'The resumed session identity changed',
+      });
+      return;
+    }
+    if (message.resumeToken !== this.resumeToken) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'The server changed the bound resume capability',
+      });
+      return;
+    }
+    const sequenceFloor =
+      this.pending[0]?.envelope.clientSequence ?? this.state.nextClientSequence;
+    if (
+      this.sessionId !== undefined &&
+      message.nextClientSequence < sequenceFloor
+    ) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'The server sequence moved behind the pending command queue',
+      });
+      return;
+    }
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const current = this.state.view;
+    const nextView =
+      current &&
+      (candidate.revision < current.revision ||
+        (candidate.revision === current.revision &&
+          stableSerialize(candidate) === stableSerialize(current)))
+        ? current
+        : candidate;
+    this.sessionId = message.sessionId;
+    this.admissionTicket = undefined;
+    this.reconnectAttempts = 0;
+    for (const command of this.pending) {
+      command.status = 'queued';
+      command.retries = 0;
+      if (command.envelope.clientSequence < message.nextClientSequence) {
+        command.publicationRevision = message.snapshot.revision;
+      }
+    }
+    const locallyAllocated = this.state.nextClientSequence;
+    this.updateState({
+      phase: 'ready',
+      role: message.role,
+      ...(message.playerId ? { playerId: message.playerId } : {}),
+      nextClientSequence: Math.max(
+        locallyAllocated,
+        message.nextClientSequence
+      ),
+      reconnectAttempt: 0,
+      failure: undefined,
+      view: nextView,
+      pendingCommands: this.pendingSummaries(),
+    });
+    if (
+      this.getSnapshot().phase !== 'ready' ||
+      this.sessionId !== message.sessionId
+    ) {
+      return;
+    }
+    this.sendHead();
+  }
+
+  private handlePublication(
+    message: Extract<ServerMessage, { type: 'StatePublication' }>
+  ): void {
+    if (this.state.phase !== 'ready') return;
+    const generation = this.socketGeneration;
+    if (
+      message.presentationEvents?.some(
+        (event) => event.revision !== message.snapshot.revision
+      )
+    ) {
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Presentation event revision does not match its snapshot',
+      });
+      return;
+    }
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const current = this.state.view;
+    const previousRevision = current?.revision ?? -1;
+    if (
+      current &&
+      candidate.revision === current.revision &&
+      stableSerialize(candidate) !== stableSerialize(current)
+    ) {
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Equal state revisions contained different projections',
+      });
+      return;
+    }
+    const advancesView = !current || candidate.revision > current.revision;
+    const presentationEvents =
+      candidate.revision > previousRevision && message.presentationEvents
+        ? appendManyBounded(
+            this.state.presentationEvents,
+            message.presentationEvents,
+            this.policy.maximumPresentationEvents
+          )
+        : this.state.presentationEvents;
+    if (advancesView || presentationEvents !== this.state.presentationEvents) {
+      this.updateState({
+        ...(advancesView ? { view: candidate } : {}),
+        presentationEvents,
+      });
+      if (!this.isCurrent(generation) || this.state.phase !== 'ready') return;
+    }
+    if (message.coveringCommandId) {
+      const pending = this.pending.find(
+        (item) => item.envelope.commandId === message.coveringCommandId
+      );
+      if (pending) pending.publicationRevision = message.snapshot.revision;
+    }
+    this.finishHeadIfComplete();
+    this.publishPending();
+  }
+
+  private handleProjectionRefresh(
+    message: Extract<ServerMessage, { type: 'ProjectionRefresh' }>
+  ): void {
+    const current = this.state.view;
+    if (this.state.phase !== 'ready' || !current) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'Projection refresh received outside an admitted room',
+      });
+      return;
+    }
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const sameProjection =
+      candidate.revision === current.revision &&
+      stableSerialize(candidate) === stableSerialize(current);
+    if (sameProjection) return;
+    if (
+      candidate.revision !== current.revision ||
+      !isDisplayNameOnlyRefresh(current, candidate)
+    ) {
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Projection refresh changed non-refreshable authority state',
+      });
+      return;
+    }
+    this.updateState({ view: candidate });
+  }
+
+  private handleCommandResult(message: CommandResult): void {
+    if (this.state.phase !== 'ready') return;
+    const head = this.pending[0];
+    if (
+      !head ||
+      head.envelope.commandId !== message.commandId ||
+      head.envelope.clientSequence !== message.clientSequence
+    ) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'Command result does not match the in-flight command',
+      });
+      return;
+    }
+    head.result = message;
+    if (
+      message.accepted &&
+      (head.publicationRevision ?? -1) < message.revision
+    ) {
+      head.status = 'awaiting_publication';
+      this.publishPending();
+      return;
+    }
+    this.finishHeadIfComplete();
+    this.publishPending();
+  }
+
+  private finishHeadIfComplete(): void {
+    const head = this.pending[0];
+    if (!head?.result) return;
+    if (
+      head.result.accepted &&
+      (head.publicationRevision ?? -1) < head.result.revision
+    ) {
+      return;
+    }
+    this.pending.shift();
+    const completed: CompletedCommandSummary = {
+      commandId: head.result.commandId,
+      clientSequence: head.result.clientSequence,
+      accepted: head.result.accepted,
+      revision: head.result.revision,
+      ...(head.result.code ? { code: head.result.code } : {}),
+    };
+    this.updateState({
+      completedCommands: appendBounded(
+        this.state.completedCommands,
+        completed,
+        this.policy.maximumCompletedCommands
+      ),
+      pendingCommands: this.pending.map((item) => ({
+        commandId: item.envelope.commandId,
+        clientSequence: item.envelope.clientSequence,
+        commandType: item.envelope.command.type,
+        state: item.status,
+      })),
+    });
+    this.sendHead();
+  }
+
+  private sendHead(): void {
+    if (this.state.phase !== 'ready') return;
+    const head = this.pending[0];
+    if (!head || head.status !== 'queued') return;
+    const generation = this.socketGeneration;
+    const sessionId = this.sessionId;
+    head.status = 'in_flight';
+    this.publishPending();
+    if (
+      !this.isCurrent(generation) ||
+      this.state.phase !== 'ready' ||
+      this.sessionId !== sessionId ||
+      this.pending[0] !== head ||
+      head.status !== 'in_flight'
+    ) {
+      return;
+    }
+    if (
+      !this.sendEnvelope(head.envelope) &&
+      this.isCurrent(generation) &&
+      this.state.phase === 'ready' &&
+      this.sessionId === sessionId &&
+      this.pending[0] === head &&
+      head.status === 'in_flight'
+    ) {
+      this.reconnectTransport('Command write failed');
+    }
+  }
+
+  private retryHead(): void {
+    const head = this.pending[0];
+    if (!head) return;
+    if (head.retries >= this.policy.maximumCommandRetries) {
+      this.fail({
+        code: 'command_retry_exhausted',
+        message: 'The in-flight command exceeded its bounded retry budget',
+      });
+      return;
+    }
+    const generation = this.socketGeneration;
+    const sessionId = this.sessionId;
+    head.retries += 1;
+    if (
+      !this.sendEnvelope(head.envelope) &&
+      this.isCurrent(generation) &&
+      this.state.phase === 'ready' &&
+      this.sessionId === sessionId &&
+      this.pending[0] === head
+    ) {
+      this.reconnectTransport('Command retry write failed');
+    }
+  }
+
+  private send(message: ClientMessage): boolean {
+    return this.sendEnvelope(message);
+  }
+
+  private sendEnvelope(message: ClientMessage): boolean {
+    const socket = this.socket;
+    const generation = this.socketGeneration;
+    try {
+      if (!socket) return false;
+      socket.send(JSON.stringify(message));
+      return this.isCurrent(generation) && this.socket === socket;
+    } catch {
+      return false;
+    }
+  }
+
+  private handleClose(event: SessionSocketCloseEvent): void {
+    this.socket = undefined;
+    this.replayTransfer = undefined;
+    this.socketGeneration += 1;
+    if (
+      this.manualClose ||
+      this.state.phase === 'closed' ||
+      this.state.phase === 'failed' ||
+      this.state.phase === 'superseded'
+    ) {
+      return;
+    }
+    if (event.code === 1000 && event.wasClean) {
+      this.clearCapabilities();
+      this.updateState({
+        phase: 'closed',
+        reconnectAttempt: 0,
+        replayLoading: false,
+      });
+      return;
+    }
+    this.scheduleReconnect();
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.policy.maximumReconnectAttempts) {
+      this.fail({
+        code: 'reconnect_exhausted',
+        message: 'The session exceeded its bounded reconnect budget',
+      });
+      return;
+    }
+    this.cancelReconnect();
+    this.reconnectAttempts += 1;
+    const exponential = Math.min(
+      this.policy.reconnectMaximumDelayMs,
+      this.policy.reconnectBaseDelayMs * 2 ** (this.reconnectAttempts - 1)
+    );
+    const jitter =
+      exponential * this.policy.reconnectJitterRatio * (this.random() * 2 - 1);
+    const delay = Math.max(0, Math.round(exponential + jitter));
+    const generation = this.socketGeneration;
+    const reconnectAttempt = this.reconnectAttempts;
+    this.updateState({
+      phase: 'reconnecting',
+      reconnectAttempt,
+      replayLoading: false,
+    });
+    if (
+      !this.isCurrent(generation) ||
+      this.state.phase !== 'reconnecting' ||
+      this.reconnectAttempts !== reconnectAttempt
+    ) {
+      return;
+    }
+    this.reconnectTimer = this.scheduler.schedule(() => {
+      this.reconnectTimer = undefined;
+      if (this.state.phase !== 'reconnecting') return;
+      const timerGeneration = this.socketGeneration;
+      this.updateState({ phase: 'connecting' });
+      if (
+        !this.isCurrent(timerGeneration) ||
+        this.getSnapshot().phase !== 'connecting'
+      ) {
+        return;
+      }
+      this.openSocket();
+    }, delay);
+  }
+
+  private reconnectTransport(reason: string): void {
+    this.socketGeneration += 1;
+    this.closeSocket(1012, reason);
+    this.scheduleReconnect();
+  }
+
+  private cancelReconnect(): void {
+    if (this.reconnectTimer === undefined) return;
+    this.scheduler.cancel(this.reconnectTimer);
+    this.reconnectTimer = undefined;
+  }
+
+  private fail(failure: ClientSessionFailure): void {
+    this.manualClose = true;
+    this.cancelReconnect();
+    this.socketGeneration += 1;
+    this.closeSocket(4400, failure.code);
+    this.clearCapabilities();
+    this.updateState({ phase: 'failed', replayLoading: false, failure });
+  }
+
+  private clearCapabilities(): void {
+    this.admissionTicket = undefined;
+    this.resumeToken = undefined;
+    this.sessionId = undefined;
+    this.replayTransfer = undefined;
+  }
+
+  private closeSocket(code: number, reason: string): void {
+    const socket = this.socket;
+    this.socket = undefined;
+    try {
+      socket?.close(code, reason);
+    } catch {
+      // Closing is best effort; generation invalidation rejects late events.
+    }
+  }
+
+  private isCurrent(generation: number): boolean {
+    return generation === this.socketGeneration;
+  }
+
+  private publishPending(): void {
+    const pendingCommands = this.pendingSummaries();
+    if (
+      pendingCommands.length === this.state.pendingCommands.length &&
+      pendingCommands.every((pending, index) => {
+        const current = this.state.pendingCommands[index];
+        return (
+          current?.commandId === pending.commandId &&
+          current.clientSequence === pending.clientSequence &&
+          current.commandType === pending.commandType &&
+          current.state === pending.state
+        );
+      })
+    ) {
+      return;
+    }
+    this.updateState({ pendingCommands });
+  }
+
+  private pendingSummaries(): PendingCommandSummary[] {
+    return this.pending.map((item) => ({
+      commandId: item.envelope.commandId,
+      clientSequence: item.envelope.clientSequence,
+      commandType: item.envelope.command.type,
+      state: item.status,
+    }));
+  }
+
+  private updateState(patch: Partial<ClientSessionState>): void {
+    this.state = { ...this.state, ...patch };
+    this.emit();
+  }
+
+  private emit(): void {
+    for (const listener of this.listeners) listener();
+  }
+}

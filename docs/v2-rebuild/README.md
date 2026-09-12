@@ -1,0 +1,269 @@
+# PTCG Sim v2 rebuild blueprint
+
+- Status: **approved implementation in progress on the isolated v2 feature branch**
+- Last updated: 2026-09-12
+- Primary objective: replace the internals while preserving the current UI and UX.
+
+This directory is the implementation contract for the PTCG Sim v2 rebuild.
+Isolated implementation and characterization are authorized on the draft feature
+branch. Production routing, user-facing migration, and rollout remain blocked on
+the relevant product decisions and phase exit criteria.
+
+## Recommended target
+
+- A React + TypeScript application shell for the existing side panels, dialogs,
+  menus, settings, chat, and deck tooling.
+- A renderer-neutral two-sided tabletop with normalized stable-keyed React DOM
+  selected for the first production renderer by ADR-004. The hardened raw
+  PixiJS spike remains unwired as contract and regression evidence.
+- A framework-independent, strict TypeScript game core containing normalized
+  state, commands, reducers, invariants, visibility projections, and replay.
+- An authoritative room server. The preferred deployment is a Cloudflare Worker
+  with one Durable Object per room; Colyseus remains the documented fallback if
+  its operational model is a better fit after the spike.
+- Per-recipient state projections so private hands, deck identities/order, and
+  private looks never reach unauthorized clients.
+- A bounded authoritative replay ledger, session-bound streamed projected
+  replay, renderer-neutral deterministic playback, and an application
+  coordinator/board binding that never rewinds or submits through the live
+  session. A headless legacy-chrome shell and generation-safe presentation
+  pipeline now map live or replay facts into isolated activity,
+  accessibility, and animation effects. Bounded narrow-channel stores preserve
+  live history, rebuild replay history on seek, and cancel stale one-shot work.
+  Recipient-safe activity facts preserve trusted actor, card-versus-zone scope,
+  semantic source, and only spectator-public single-reveal names, restoring the
+  legacy reveal/hide/look wording without exposing canonical or private card
+  data.
+  Renderer-neutral consumers project keyed feed rows and serialize polite
+  announcements and cancellable animation work. A route-scoped legacy
+  presentation owner and tested React surface now preserve `#chatbox` colors,
+  scrolling, replay replacement, and an off-screen live region. The legacy coin
+  action is log-only, so its resolved animation request is drained without new
+  motion. An externally owned remote-room runtime now composes the real session,
+  replay, presentation, effective board, legacy multiplayer/replay feed IDs,
+  replay controls, and Exit path behind a lazy application branch. It requires a
+  trusted in-memory connection handoff. ADR-018 now supplies that handoff through
+  a bounded same-origin no-store POST: authority stores only a short-lived
+  role/name-bound ticket plus its bound resume digest, atomically consumes the
+  ticket into a session retaining that resume authority, and the browser passes
+  only the runtime/route descriptor to React.
+  Room creation is also a strict bounded same-origin no-store exchange. The
+  creator is bootstrapped immediately while the other master credentials remain
+  in a non-serializing in-memory custodian. That custodian now mints bounded,
+  expiring, one-use player or spectator claims; an untrusted guest handoff is
+  validated and exchanged through the existing short-lived ticket boundary.
+  Durable schema v7 stores only invitation/ticket digests, binds solo to one
+  persisted human-player seat, retires losing-seat credentials after the first
+  claim, and atomically consumes the invitation with its final ticket. Every
+  admission write is validated against its exact durable predecessor. Creation
+  now atomically schedules a
+  five-minute unclaimed-room alarm, first admission cancels it, retry-safe
+  tombstones prevent resurrection, and layered edge/per-room budgets bound
+  creation, credential exchange, socket allocation, and repeated `Hello`
+  attempts. A public no-store health probe and closed versioned telemetry union
+  now expose safe HTTP/lifecycle/rate/admission/command/socket facts with random
+  non-authority correlations; field-by-field construction excludes payloads,
+  identifiers, credentials, user/card data, URLs, and thrown errors. A
+  development-only creator route now exercises that full stack behind Vite; a
+  20-cycle StrictMode integration gate proves one creation and exact ownership
+  teardown per mount, while production bundle provenance rejects the entire dev
+  module. A separate Chromium gate starts local Wrangler and Vite and proves the
+  live creation → ticket → WebSocket → projected DOM board path, safe transport
+  URLs, an authenticated chat round trip, and clean closure. Chat text is
+  trimmed and bounded at both client and server, attributed only from the
+  durable bound session, protected by per-connection and durable per-room
+  budgets, retained only in bounded client/presentation memory, and excluded
+  from canonical state, replay, storage, and telemetry. Authenticated ephemeral
+  presence now preserves the existing announcement text across join,
+  disconnect, reconnect, and leave. Explicit leave durably removes the session
+  registry entry and bounded command-outcome cache, revokes its resume
+  capability, and releases its claimed player seat, while
+  hibernation restoration and superseded-socket closure stay silent. Unclean
+  transport loss instead commits a 30-second reconnect deadline, shares its
+  earliest expiry with the Durable Object alarm, and preserves the session and
+  seat until resume clears it or one batch expiry removes due sessions. Expiry
+  releases authorization without mutating seat-owned match/private state, and
+  the bounded browser retry schedule finishes inside that server lease. Socket
+  admission is also response-loss safe: the ticket exchange binds a distinct
+  server-minted resume digest before `Hello`, and the client retries the exact
+  private pair until `Welcome` can prove either one-time redemption or recovery
+  of the already-committed session. Already-connected peers receive a
+  separately validated, equal-revision
+  display-name refresh after player admission; this changes labels without
+  fabricating a command/replay revision or rotating card aliases.
+  Credential-free upgrades also carry a non-renewing 30-second `Hello` lease in
+  their hibernation attachment. Its deadline shares the room alarm with
+  unclaimed cleanup, survives object eviction, closes malformed/late idle
+  sockets without consuming tickets, and is removed once a durable active
+  session is bound. Visible
+  ADR-020 now selects a manual foreground clipboard handoff: creator custody
+  writes a strict bounded envelope without returning its bearer to UI code,
+  native guest paste prevents DOM insertion and retains it only in a private
+  non-serializing custodian, player copies rotate, and repeat spectators receive
+  distinct claims. An isolated five-browser-context Chromium journey covers the
+  custody path. The production-built `?room-lobby=1` slice now preserves the
+  familiar multiplayer controls while driving real create/copy/paste/join,
+  input bounding, safe status messages, role reflection, creator/guest ownership,
+  initial coaching consent, and teardown. A second four-context journey drives
+  that visible path. The connected screen now preserves the existing Attack,
+  Pass, flower, chat, Set Up, Reset, and Leave Room controls. Player actions use
+  existing atomic resolvers, chat attribution remains session-authenticated,
+  spectators retain only chat/flower/leave, replay suppresses live controls,
+  and confirmed leave disposes the current runtime and replaces its private
+  invitation custody before returning to the lobby. Normal traffic still
+  receives the renderer harness, so
+  neither v1 nor the public/default v2 route is cut over. The
+  canonical Wrangler topology now publishes the built Vite app beside the room
+  Worker, with explicit authority-first and static-asset route namespaces plus
+  SPA fallback. A separate production-build Chromium lane proves that one-origin
+  routing, document replacement, room creation/ticket exchange, card-back bytes,
+  and exclusion of the development module. Managed-preview behavior remains a
+  release gate. Live and replay Options now export the bounded recipient-safe
+  battle log without reading DOM and start browser full screen from the
+  foreground click; Clear battle log remains live-only and local. Accepted
+  ADR-012 now also wires the existing Export game state action to a versioned,
+  SHA-256 integrity-checked, non-resumable perspective replay. A live export
+  requests a fresh authority artifact without entering replay mode; an active
+  replay exports its exact installed artifact. The live Solo Options menu now
+  wires its source-shaped `Enter replay mode` control and hidden `.json` picker
+  to the raw-byte validator and atomic inert coordinator installation. Canonical
+  server-held continuation remains later parity work. Deck navigation is now
+  active only on the opt-in v2 room route; the default route remains unchanged.
+  The lobby's existing Solo tab now creates the persisted one-player authority
+  and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.
+  Multiplayer navigation parks that Solo runtime, and returning does not create
+  another room or reinstall a clean deck. In a connected multiplayer room, the
+  Solo header tab retains its separate v1 confirmation text and delegates to the
+  same durable route teardown as Leave Room. The board composition now
+  accepts optional route-owned local preferences across live and replay without
+  remounting its renderer. The isolated lobby owns the first visible Settings
+  slice across lobby, connected live room, and replay navigation: Dark mode and
+  Hide containers retain their source IDs, labels, and behavior without storage
+  or authority traffic, and survive room entry/leave only while that lobby host
+  remains mounted.
+  The shared preference contract also models the legacy “Hide containers”
+  checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
+  paint while preserving stable nodes, geometry, accessibility, and input. The
+  source Solo-only hide-hand checkbox and static keybind/contact block are also
+  restored. The persisted one-player Solo authority now discloses the opposing
+  hand only to its player through opaque aliases, while spectators and every
+  multiplayer projection remain concealed. The checkbox covers or uncovers those
+  cards only in the live Solo display, preserves their stable interaction IDs,
+  and emits no command. The source Twitter mark is inlined to remove its
+  third-party fetch. The final Change background control preserves the source
+  prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
+  URLs under accepted ADR-013. Images preload before the
+  route background changes and remain page-local across lobby/live/replay/Leave;
+  their URL never enters authority, protocol, replay, storage, renderer
+  preferences, or Pixi. A direct request still reveals ordinary network
+  metadata to the player-selected host, an explicitly accepted parity tradeoff.
+  The same ADR preserves bounded custom-card face URLs when a recipient is
+  authorized to see that face and public player-selected card backs. Those
+  synchronized images also load directly through native DOM without an
+  allowlist, proxy, or CORS requirement; the shipped card back remains the
+  default. The bounded owner-authorized `SetCardBack` transition and ordered
+  legacy-import conversion now preserve exact custom-back URLs across event
+  replay and undo. The source-shaped React Deck workspace, including direct
+  custom-face entry, is reconstructed and mounted only after first Deck use on
+  the opt-in v2 room route. The pure pasted
+  deck-list parser now covers the complete checked-in sample corpus while
+  remaining DOM/network-free. Its bounded Limitless completion and native
+  image-preload transaction are also isolated. The exact 168-deck corpus is
+  now behind a validated second lazy chunk, and the source-shaped right-side
+  Deck, review-table, language, and card-back controls are reconstructed behind
+  a first-use lazy boundary. A route-neutral owner composes both surfaces with one editor,
+  catalog, acknowledged deck/card-back drains, combined dirty-page guard, and
+  independent pre-room card-back custody. Exact browser-loaded arbitrary URLs
+  are retained across lobby, live-room, Leave, and fresh room bindings without
+  adding an application fetch, proxy, allowlist, or CORS requirement.
+  Production/browser gates pin startup chunk isolation, authority
+  acknowledgement, public-back propagation, and private-face request isolation.
+- A strangler migration: v1 stays available while v2 reaches parity behind a
+  route/feature flag. There is no in-place big-bang rewrite.
+
+The server is authoritative about tabletop integrity, access, ordering,
+randomness, and visibility. It is **not** a Pokémon rules engine. PTCG Sim remains
+a manual tabletop simulator.
+
+## Non-negotiable constraints
+
+1. No intentional UI or UX redesign is part of this project.
+2. Logical state must never be stored in the DOM, Pixi display objects, or React
+   component state.
+3. Every card instance has a stable identity independent of its array position.
+4. The reducer is deterministic and has no browser, renderer, network, clock, or
+   random-number dependencies.
+5. Multiplayer commands are authenticated, validated, ordered, idempotent, and
+   applied by the server before acceptance.
+6. A client only receives the state it is allowed to know.
+7. Reconnect uses an authoritative snapshot, not replay of an unbounded client
+   action array.
+8. The legacy runtime is frozen except for security fixes, characterization
+   hooks, and changes required to keep the migration viable.
+9. Every phase has measurable entry and exit gates and a rollback path.
+10. No v1 runtime module may be imported into v2 production code. Compatibility
+    is isolated in adapters and fixtures.
+
+## Documents
+
+| Document                                                                               | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md) | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
+| [02-target-architecture.md](./02-target-architecture.md)                               | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
+| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)         | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
+| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                 | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
+| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)               | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
+| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)   | Test pyramid, failure injection, performance budgets, and release gates                                      |
+| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                     | Current-to-target file mapping, work ownership, and dependency order                                         |
+| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)     | Decisions, alternatives, open questions, risk register, and stop conditions                                  |
+| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                   | Stable requirement IDs and blueprint-level traceability                                                      |
+| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                         | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
+| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
+| [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
+| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md) | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
+| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
+| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)   | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
+| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                   | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
+| [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
+| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
+| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
+| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
+| [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
+| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
+| [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                            |
+
+## How to read and approve this blueprint
+
+Reviewers should start with this page and the parity contract, then review only
+the concern they own. Findings are recorded using the format in `AUDIT.md`.
+Changes that affect multiple documents require a decision-record entry and links
+to each affected section.
+
+The first three-lane review and its dispositions are recorded in
+[`reviews/2026-08-31-initial-parallel-audit.md`](./reviews/2026-08-31-initial-parallel-audit.md).
+
+The following remain release gates even though the owner has authorized
+incremental implementation behind the isolated v2 route and draft PR:
+
+- every item marked `BLOCKING` has an owner and accepted resolution;
+- the current behavior inventory and visual baselines exist;
+- the state schema, command envelope, visibility rules, and persistence format
+  have no unresolved semantic gaps;
+- the renderer and backend spikes pass their defined gates;
+- migration, rollback, and the ADR-021 v1 save/share quarantine are demonstrated; and
+- the project owner explicitly approves Phase 1.
+
+## Definitions
+
+- **Canonical state**: complete server-owned match state, including secrets.
+- **View state**: a role-specific projection safe to send to one connection.
+- **Command**: a validated request to change canonical state.
+- **Domain event**: an accepted fact used for audit, replay, messages, and
+  presentation; it is not the source of truth on the client.
+- **Presentation state**: selection, hover, drag preview, open menus, animation,
+  and other local-only UI state.
+- **Parity**: the current feature remains discoverable and behaves the same to a
+  user, within documented rendering tolerances.
+- **Legacy import**: a quarantined, non-production one-way converter for v1
+  save/action streams; ADR-021 defers user-facing support from the first release.

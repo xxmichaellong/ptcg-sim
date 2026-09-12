@@ -1,0 +1,833 @@
+# Verification and success criteria
+
+## Quality model
+
+The rebuild is done when evidence shows it preserves behavior while improving
+correctness, privacy, recoverability, responsiveness, and resource bounds. Code
+coverage alone is not an acceptance criterion.
+
+All quantitative performance budgets below are provisional until the Phase 1
+legacy baseline and Phase 4 spikes run on named hardware. Ratification may make
+them stricter or document a justified exception; it may not silently remove a
+budget because an implementation missed it.
+
+## Test environments
+
+### Deterministic CI environment
+
+- Chromium at 1366×768, DPR 1 and 1920×1080, DPR 2.
+- Pinned fonts and same-origin deterministic card-image server.
+- Seeded test ID/random adapters; resolved random events in replay fixtures.
+- Fake clock for core/server tests and real clock for browser timing tests.
+- A documented four-core mid-tier CPU profile for quantitative renderer runs.
+- Software-rendered browser results may catch regressions but do not substitute
+  for physical-GPU release evidence.
+
+The current pull-request lane is a deliberately narrower implemented baseline:
+GitHub-hosted Ubuntu 24.04, Node 24.19.0, pnpm 11.24.0, Playwright 1.62.1, and
+one sequential Playwright-managed Chromium worker. Default renderer cases use
+1280×720/DPR 1, while source-oracle cases use their explicitly pinned
+1600×900/DPR 1 override. After the Vite-development/Worker lane, an isolated
+configuration builds the production web output and serves it beside the room
+Worker from one local Wrangler origin. That lane pins static/authority route
+priority, SPA fallback, production exclusion of the developer module, repeated
+document replacement, room creation/ticket exchange, and a real resumed room
+socket after a deterministic unclean-close signal. The resume gate pins the
+rotated capability, exact client phase sequence, stable renderer/DOM ownership,
+no repeated HTTP admission, a post-resume command, and both socket closures.
+Both lanes run after
+the non-browser quality gate with retries disabled, CI-only focused-test
+rejection, fresh server ownership, failure screenshots, and retained failure
+traces. `tsconfig.browser.json` independently typechecks both Playwright
+configurations and every spec/support module under the production
+strict/no-unchecked profile. The lanes do not yet satisfy the two-target viewport
+matrix above, pin fonts, cover Firefox/Safari, or substitute for managed-preview
+platform evidence. Those remain release evidence, not claims made by current CI. See
+[`QUALITY_GATES.md`](./QUALITY_GATES.md).
+
+### Browser release matrix
+
+Current stable Chromium, Firefox, and Safari on supported desktop operating
+systems. Chromium provides quantitative CI; Firefox/Safari must pass functional,
+visual manual, input, storage, socket, and WebGL recovery checks. The exact
+versions and support window are ratified in Phase 0.
+
+### Representative match fixture
+
+- 120 card instances and 120 distinct face assets for cache pressure.
+- Both active/bench areas populated with evolution and mixed attachments.
+- Face-down/public/private cards and every marker/rotation type.
+- Stadium, free-board cards, all persistent zones, both work areas.
+- A 60-card opened zone browser.
+- Flipped board, non-50/50 split, sidebar and full-screen variants.
+
+The selected DOM renderer's current deterministic Chromium evidence covers the
+120 distinct URL count with same-origin, versioned synthetic SVGs: exact server
+request completion, browser-visible decode/dimensions, stable keyed-node cache
+reuse, fresh-host cache reuse without refetch, and teardown. It does not replace
+the representative real-raster decoded-byte/retained-heap run, route-host churn,
+actual supported-host matrix, or the release browser matrix. A separate
+controlled Chromium card-failure gate uses an intercepted external hostname to
+prove native no-CORS image success, missing and corrupt response containment,
+stable neutral fallback paint/input, stable keyed-node recovery, and an HTTP
+redirect to a decoded asset. Oversized resources and real third-party
+availability remain open; ADR-013 accepts the direct-host privacy policy. A canonical-state-to-projection-
+to-scene browser oracle separately covers the private-image request scan with
+deterministic same-origin SVGs: it permits only authorized board-tier faces
+across reveal/cover and private inspection/close, rejects every hidden canonical
+token and full-tier request, and proves a delayed face response cannot restore a
+covered card.
+
+## Required test layers
+
+| Layer               | Required evidence                                                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Static architecture | Strict type check, lint, circular-dependency and forbidden-import checks, package API report, bundle secret scan             |
+| Domain unit         | Valid/rejected/boundary/no-op cases for every command and event type                                                         |
+| Invariant/property  | Generated valid/invalid sequences; exactly-one location; nonduplicated ordered zones/stacks; rejected state unchanged        |
+| Determinism         | Identical state + command + context gives byte-identical resolved events, next state, projection, and stable hash            |
+| Visibility/security | Role matrix, non-interference/differential projection, serialized leak scan, private asset request scan                      |
+| Protocol            | Runtime codec round trips, unknown versions/types, byte/depth/count limits, sequence/idempotency, authorization, safe errors |
+| Authority model     | Simultaneous/conflicting commands, duplicate/lost/reordered frames, stale views, one controller per seat, convergence        |
+| Persistence         | Crash at every transaction boundary, checkpoint/tail recovery, compaction, corruption, migration, retention, quota           |
+| Replay file         | Raw-byte bound before decode/hash, fatal UTF-8, exact version/privacy/integrity schema, semantic validation, atomic install  |
+| Legacy conversion   | Every supported version/action, real/golden saves, invalid/truncated/oversized inputs, transactional failure                 |
+| Renderer unit       | Pure geometry, stacking, z-order, hit testing, diff/invalidation, texture leases, generation-safe async teardown             |
+| Browser/WebGL       | Context loss/restore, zero-size host, DPR changes, image failure/CORS, StrictMode remount, pointer cancellation              |
+| E2E parity          | Protected solo/multiplayer/spectator/replay/deck/settings journeys, screenshots and structured geometry                      |
+| Accessibility       | Keyboard-only flows, focus/menu/dialog behavior, semantic board bridge, live announcements, reduced motion                   |
+| Performance         | Cold/warm load, setup, one-card action, drag, resize, opened zones, reset churn, reconnect, server persistence               |
+| Soak/fault          | Long randomized room sessions with drops, reconnect, restarts, hibernation, image errors, and context loss                   |
+
+The selected DOM route now has deterministic Chromium evidence for the
+zero-paint-size host, DPR, resize-coalescing, and visible-document-resume parts
+of the Browser/WebGL row. It retains one renderer and all 61 keyed cards, folds
+25 synchronous signals into one reconciliation, and releases every observer and
+listener on unmount. Chromium CDP changes the real DPR/query match without
+emitting the browser's resolution-media event, so the test injects only that
+missing event. Physical background freezing/BFCache and non-Chromium monitor
+transitions remain required release evidence.
+
+The React DOM component also has an enforced 100-cycle mount/clear/destroy leak
+gate. It primes the retained host and lazy runtime state with an equal 100-cycle
+batch, collects through CDP, runs the measured 100-cycle batch, collects again,
+and requires V8 `usedSize` to remain within 10% of the steady-state baseline.
+Documents, DOM nodes, event listeners, rendered diagnostics, surfaces, and host
+children must return to their exact or lower baseline bounds, and both batches
+must preserve the exact lifecycle/resource invariants. This advances the
+renderer-local heap budget; the production-shaped route gate below now covers
+representative setup/reset/open-zone churn, while physical-device retained-heap
+evidence remains a release requirement.
+
+The real opt-in Solo route now adds representative setup/reset and full-deck
+zone-browser churn to that route-host gate. It installs deterministic 60-card
+main and alternate decks through the shipped Deck UI, saturates bounded command,
+activity, and accessibility histories with 40 warm-up cycles, and measures 100
+more Setup Both -> Reset Both cycles against the local Worker. After every setup
+and reset it keyboard-opens both decks, verifies the native dialog semantics,
+exact recipient-safe card count, every decoded image, fresh local-sort state,
+and focus return after close. Across 560 dialog lifecycles, each closed phase
+proves exact scene/rendered identity, complete normalized topology, fresh opaque
+card aliases, one unchanged renderer object/generation, and zero
+renderer-owned texture/display/context/failure resources. The measured window
+produces exactly 400 scene revisions and 1,200 renderer commits: four authority
+installs plus eight controller-presentation installs per cycle. A scalar
+lifecycle probe permits the client's bounded serial reconnect recovery while
+requiring one room/socket path, maximum socket concurrency one, no dangling
+connection, every replaced socket closed, one final open socket, and ready
+controls. The test uses cacheable real-PNG card-back URL families;
+the first full local run held documents/nodes/listeners exactly flat at
+35/3,969/756 and retained post-GC V8 heap at 1.0372x its warmed baseline.
+Uninterrupted transport stability, 120 distinct real raster assets, deployed
+navigation/BFCache, long-duration soak, physical devices, and the non-Chromium
+matrix remain separate release evidence.
+
+The replay-file row now has a package-level file-v1 gate and a wired inert
+application transaction. A checked-in spectator artifact plus generated player
+and spectator cases cover encoded-byte admission, fatal UTF-8, corruption,
+unknown versions, privacy/semantic inconsistency, caller-buffer ownership,
+concurrent operations, cancellation, disposal, identity replacement, exact
+re-export, and return to the latest live view. The real Worker/Chromium Solo
+journey covers native file selection, replay entry/exit, exact live restoration,
+and the source error presentation for malformed input. Canonical resumable state
+import remains a separate disabled capability.
+
+The developer creator route also has a three-cycle Chromium document-navigation
+gate against real local Vite and Wrangler processes. It pins one distinct room,
+one ticket exchange, one credential-free native socket, one ready DOM renderer,
+and one non-persisted pagehide teardown per cycle. The old session reaches
+`closed` and its native socket reaches `CLOSING` before the next neutral
+document is observed. Unit coverage separately preserves a live owner for a
+persisted pagehide. Deployed routing and physical BFCache restore remain release
+evidence.
+
+Global loose-board keyboard parity has paired Chromium evidence. Three fresh
+deny-by-default v1 pages execute Enter, Alt-Enter, and Slash through the shipped
+module graph and pin arrays, deterministic shuffle indices, the single outer
+action/export record, and local asset/error boundaries. The selected DOM route
+emits one viewer-owned, ordered-preconditioned `ResolveLooseBoardCards` command
+per key and none from an editable target. Replay/spectator/empty/stale/forged
+cases remain fail-closed unit obligations.
+
+Unselected deck-key parity has paired Chromium evidence across five fresh v1
+pages and one candidate route. Digits draw, Alt-digits inspect the top,
+Control-digits inspect the bottom, and `S` shuffles with exact array/action/
+export/randomness assertions. Candidate commands are viewer-derived and counts
+clamp to the current projection. Alt-Control-digit is a pinned preserve/fix
+decision: v1 performs a second unlogged deck mutation and throws a DOM removal
+error, while v2 emits no command. Editable/replay/spectator/empty/stale/forged
+paths remain fail-closed obligations.
+
+Global coin-key parity has paired Chromium evidence across five fresh v1 pages
+and one candidate route. Non-Alt `F` is proven for deterministic heads and
+tails, selected-card fallthrough, exact chat paint data, one legacy random
+call, unchanged selection, empty action logs, replay/spectator silence, and
+Alt-`F` separation. The candidate emits only the parameterless `FlipCoin`
+intent, retains selection, suppresses editable input, and rejects replay
+before submission. Actor identity, randomness, persistence, and presentation
+remain authority-owned.
+
+Alt-`F` board-perspective parity has paired Chromium evidence across seven
+fresh v1 pages and the protected candidate. The source oracle pins reversible
+orientation, Control/Shift variants, retained selection, ordinary multiplayer's
+consumed no-op, coaching/spectator eligibility, replay-local behavior, editor
+silence, and empty action/export history. It also records the source's two
+coaching/spectator hand-visibility relays. V2 preserves the visible flip through
+the existing renderer runtime but emits no command or socket message: the
+recipient-safe projection remains the only disclosure authority. Candidate
+Chromium proves physical-side reversal/restoration and zero game traffic.
+
+Global Escape parity has paired Chromium evidence across six fresh v1 pages and
+the protected candidate. The source oracle pins simultaneous popup, zone,
+selection, and target-highlight cleanup; selected full-stack closure;
+Control/Alt/Shift variants; replay/spectator locality; focused-input silence;
+native default behavior; and empty action/export/socket history. The candidate
+must dispatch only the existing all-scope local presentation dismissal, clear
+selection/context/zone/preview state, preserve overlay-owned scoped Escape and
+editable input, remain available in replay, and emit no command or rejection.
+
+Shift-reference parity has paired Chromium evidence across six fresh v1 pages
+and the protected candidate. The contract compares the complete ordered
+surface—six headings, 53 entries, every shortcut token, and the macOS note—plus
+exact 1600×900 bounds and computed light/dark paint. It also pins both physical
+Shift keys, selected-player default prevention, spectator/native defaults,
+replay availability, editor keydown suppression, unguarded keyup after focus
+migration, Escape closure, and zero game traffic. The candidate adds a blur
+cleanup guard so a lost keyup cannot strand the presentation surface.
+
+Unselected lifecycle-key parity has paired Chromium evidence across nine fresh
+v1 pages and one candidate route. Alt-`N` setup, Alt-`R` reset, and Alt-`T`
+start-turn pin exact empty-deck messages, live/export records, owner rewriting,
+turn state, selected/unselected boundaries, and spectator silence. The source
+oracle also pins v1's replay mutation leak; v2 deliberately requires live ready
+state and proves one typed rejection plus zero submissions for each replay
+request. Candidate commands derive their target from the installed viewer and
+selected Alt-`T` retains category precedence.
+
+Unselected hand-key parity has paired Chromium evidence across ten fresh v1
+pages and one candidate route. Alt-`D`, Alt-`S`, and Alt-ArrowDown pin the exact
+native prompt/default, cancel alert, default-prevention split, deterministic
+zone order and shuffle indices, random-call counts, messages, live/export
+records, selected/spectator silence, and the same v1 replay leak. Candidate
+input is controller-owned and action-bound: a valid second stage emits one
+existing atomic hand command, invalid/canceled input emits none, forged staged
+input fails closed, authority owns randomness, and replay is rejected before a
+prompt opens.
+
+Solo-undo keyboard parity has paired Chromium evidence across six fresh v1
+pages and one explicitly solo-capable candidate route. Plain `U` pins successful
+zone reconstruction, exact announcement/action/export state, loading-button
+transitions, synchronous repeat suppression, selected default prevention,
+multiplayer/spectator/editable silence, and v1 replay leakage. Candidate input
+contains no target or history data, derives the viewer for `ApplySoloUndo`,
+rejects replay before resolution, and queues only one command under rapid
+repeat. The client-session gate proves `command_pending` consumes no sequence
+or socket write and clears only when the pending authority result settles.
+
+Mulligan-key parity has paired Chromium evidence across seven fresh v1 pages,
+the protected candidate, and the real local Worker/browser route. Plain and
+modified `M` produce the exact neutral announcement but no legacy action/export
+record; selected, spectator, and editable paths stay silent, while the source
+oracle records v1's replay leak. V2 sends a parameterless non-command intent,
+derives the actor from the bound server session, broadcasts to active players
+and spectators without a durable mutation, rejects spectator forgery, validates
+the incoming revision/player against the installed view, and suppresses live
+delivery during replay. The end-to-end route renders the unchanged announcement
+class and text through the existing presentation surface.
+
+Refresh/rotation-key parity has paired Chromium evidence across ten fresh v1
+pages and the protected candidate. The source oracle pins unselected R refresh,
+Alt-R refresh-before-reset ordering, selected top/lower group rotation,
+single-card BREAK toggling, stadium behavior, exact action indices,
+replay/full-view suppression, spectator default behavior, and editable input.
+The candidate must reconstruct locally without a command when unselected,
+retain selection and emit the existing explicit stack/per-card target command
+when selected, reject replay before submission, and suppress both branches
+during full-card preview. The gate does not authorize reconstructing v1's
+history-dependent inline-angle, wrapper-margin, or per-evolution BREAK state in
+the canonical model.
+
+Deck/preview-key parity has paired Chromium evidence across eleven fresh v1
+pages, the protected candidate, and the real local Worker/browser route.
+Unselected plain/modified `V` pins exact deck opening, solo/multiplayer activity
+text/class/host and relay shape, spectator silence, editable suppression, empty
+action/export state, and the source replay leak. Selected `V` pins active-stack
+versus single-card preview and player/spectator default behavior without a deck
+announcement. V2 must open only a recipient-safe interactive deck, send no
+client identity or text, derive the player from the active server binding,
+reject spectator forgery, validate the current revision/player at receipt, and
+mutate no command/authority/persistence/replay state. Historical replay may open
+the local safe deck, but its declaration must fail before transport.
+
+### Implemented seeded authority/storage model
+
+The server model suite at
+`apps/server/src/generative-authority-model.test.ts` is a dependency-free,
+deterministic bridge across game core, room authority, recipient projection,
+replay, and the production durable snapshot adapter with in-memory Durable
+Object storage. A compile-time registry covers all 51 public wire-game-command
+variants: 45 have projection-driven generators and six hard-precondition
+variants have named, asserted scenarios. Generated and named-scenario commands
+are runtime parsed by the public protocol schema before they reach the
+coordinator.
+
+Each accepted step verifies the exact revision/event-batch delta, recursively
+frozen snapshot invariants, independent event application and replay
+reconstruction, full-clone versus incremental validation agreement, complete
+one-per-active-session recipient publication, independently reprojected views,
+and serialized hidden-information safety including presentation-event and
+embedded-string payloads. Periodic and final durable reconstruction cover
+compaction and frontier fast paths. Generated rejected, duplicate, stale, gap,
+forged, and spectator attempts distinguish no-commit from persisted session
+outcomes. Named bounded-dedupe, pre-commit failure, transaction-retry, and
+ambiguous committed-failure cases add exact durable-head, journal, recovery,
+publication, and relevant RNG/ID call-count assertions. Named coverage also
+includes temporal VIS-003 handle retirement, twin-world non-interference,
+movement/stack/index boundaries, counts/markers, public and coaching inspection,
+policy-disabled opponent interaction, and solo undo.
+
+The checked-in default is 100 seeds by 50 transitions. The 2026-09-03 final
+root-gate run's model passed 9/9 tests in 132.801 seconds, with the generated
+matrix taking 126.293 seconds and every generated type and all seven named
+scenario types yielding and accepting. It observed 500 final-or-periodic
+durable reconstructions, 1,998 actual replay-compaction transitions, and 3,600
+authority-frontier hits. Reproduce it with:
+
+```sh
+PTCGSIM_MODEL_REPORT=1 \
+  corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+`PTCGSIM_MODEL_SEED`, `PTCGSIM_MODEL_COUNT`, `PTCGSIM_MODEL_STEPS`, and
+`PTCGSIM_MODEL_TIMEOUT_MS` provide bounded diagnostics or a larger soak. Small
+debug overrides still enforce registry completeness and named scenarios but
+scale statistical coverage expectations to the available transition budget.
+
+The release-scale gate was run in an isolated detached worktree at exact commit
+`e681ab41463cc6502093bb56ebbbae6f3dac7dd9` with:
+
+```sh
+PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_STEPS=50 \
+  PTCGSIM_MODEL_TIMEOUT_MS=3600000 PTCGSIM_MODEL_REPORT=1 \
+  corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+All 1,000 seeds by 50 transitions and all 9 tests passed with no failure trace.
+The matrix took 1,261.892 seconds and the command took 1,271.16 seconds wall
+time. All 41 projection-driven command types yielded and accepted, and all seven
+named hard-precondition scenarios passed. The run recorded 5,000 durable
+reconstructions, 19,987 actual replay-compaction transitions, and 36,000
+authority-frontier hits. This satisfies the seeded-count evidence in core
+correctness gate 10 for that exact commit; later behavioral changes require
+fresh evidence, and the separate long-duration runtime soak remains a release
+gate.
+
+## Core correctness gates
+
+Release requires all of the following:
+
+1. Zero invariant violations in unit, generated, multiplayer, import, replay, and
+   soak suites.
+2. Every card appears exactly once after every accepted event batch.
+3. A rejected command leaves the canonical serialized state and hash unchanged.
+4. One accepted command creates one atomic event batch and one new revision.
+5. Duplicate `(seatId, sessionId, clientSequence, commandId)` submissions have exactly one
+   state effect and return the recorded outcome.
+6. Two conflicting moves resolve as one acceptance and one typed rejection; two
+   unrelated moves both succeed when their entity preconditions still hold.
+7. Replaying persisted resolved events from the supported checkpoint produces the
+   same final canonical hash on all supported runtimes.
+8. Client view revisions never regress and all connected clients converge to the
+   correct projection of one canonical revision.
+9. Unknown discriminants and invalid/oversized values fail closed before reducer
+   dispatch.
+10. Property suites cover at least 1,000 deterministic seeds with mixed valid and
+    invalid command sequences before release; failures persist their seed as a
+    regression fixture.
+11. Solo undo restores the last retained resolved checkpoint without invoking
+    randomness, advances revision, keeps the reverted audit event, and remains
+    forbidden in explicit multiplayer mode.
+12. Undo after a hidden/random action rotates discarded-branch handles for every
+    recipient; reconnect preserves only the restored branch and does not replay
+    the presentation fact.
+13. Projected replay playback is bounded and deterministic: backward navigation
+    never reruns domain logic or randomness, forward effects match only the
+    frames crossed, and a rejected replacement leaves the active replay intact.
+14. Replay application mode never mutates the live session: only a fresh
+    request-correlated artifact is entered, exit discards late completion,
+    reconnect/new-room boundaries retain or clear playback as specified, and
+    malformed refresh leaves the current replay intact. Interrupted replay
+    loading becomes non-ready in one external-store publication; even a
+    reentrant observer cannot enqueue against the lost socket or advance the
+    reconnect counter twice, and every terminal phase clears loading. Welcome,
+    command allocation, and advancing view/presentation-event installation are
+    each coherent publication boundaries. Reentrant disconnects from
+    connecting, handshaking, ready admission, in-flight command, and reconnect
+    timer notifications cannot open, write, or reconnect afterward; locally
+    initiated transport close invalidates its generation before even a
+    synchronous close callback can run. Retryable notices can affect only the
+    receipt-time command head and cannot spend the retry budget of a command
+    created by a synchronous notice observer. A transport that synchronously
+    closes during any write cannot report stale chat/ping/replay success or
+    restore replay loading, while Hello and command sends retain exactly one
+    reconnect attempt.
+15. The remote board renders the effective live/replay projection, blocks every
+    command during loading/active/discarding replay phases, and rewinds through
+    explicit renderer replacement without weakening monotonic live installs. A
+    live ready→non-ready boundary cancels captured interaction, clears transient
+    presentation, blocks drop submission, and retains the last safe scene; a
+    resumed ready phase reuses the same renderer and DOM surface.
+16. Replay chrome matches the legacy live/active visibility map, all four
+    controls and exit call the coordinator exactly once, and presentation facts
+    are delivered once per later playback generation in recorded order across
+    fast-forward, reentrancy, adapter errors, remount, rewind, and teardown.
+17. Every presentation-event variant maps exhaustively to privacy-safe activity
+    and accessibility effects; coin facts carry the trusted actor and persisted
+    outcome; live facts are consumed exactly once, including while replay mode
+    suppresses them without bleed or delayed backlog.
+18. Local presentation channels are independently subscribable and bounded;
+    transient consumers acknowledge FIFO entries; reset/disposal block
+    reentrant stale writes; replay rewind deterministically removes future
+    activity and transient work without replaying effects on remount; changed or
+    terminal match/viewer identity purges all local presentation data.
+19. Activity feed projection is stable and renderer-neutral; announcement and
+    animation consumers are serialized; overflow, clear, replacement, preference
+    change, and disposal abort obsolete work; late settlements cannot consume a
+    newer head; handler/diagnostic failures cannot wedge the queue; and reduced
+    motion never enters the animated path or changes command timing.
+20. Reveal/hide/private-look facts preserve the trusted actor or viewer,
+    card-versus-zone scope, semantic source, and legacy wording in live and
+    replay paths; only a spectator-public single reveal may include a bounded
+    card name, while hide/private facts pass hidden-identity non-interference and
+    serialized leak scans.
+21. The mounted legacy presentation surface renders only recipient-safe keyed
+    text, preserves the existing `#chatbox` row classes and bottom-scroll
+    behavior, announces FIFO entries through a cancellable polite live region,
+    replaces activity and cancels stale dwell across replay seek, drains the
+    legacy log-only coin result without adding motion, and releases every
+    subscription and scheduled callback on teardown.
+22. A remote room route constructs session, replay, and presentation owners
+    before connection; renders the effective live/replay view; uses the legacy
+    multiplayer/replay feed IDs and chrome; blocks replay submissions; wires
+    controls and Exit once; and tears down presentation, replay, then transport
+    idempotently. React StrictMode cannot create or dispose that external owner,
+    the default spike loads the room branch lazily, and no admission capability
+    appears in public snapshots or rendered markup.
+23. Browser admission sends a long-lived seat/spectator capability only in a
+    bounded same-origin no-store POST body, rejects redirects and unsafe
+    response shapes, and derives credential-free room/socket URLs. Authority
+    persists only a role/name/resume-digest-bound ticket record, enforces a
+    30-second expiry and 32-ticket room cap, consumes it atomically with session
+    admission, returns a distinct server-minted resume capability, rejects
+    replay/expiry/mismatch, and
+    restores its committed frontier after an ambiguous persistence failure.
+    Schema-v4 rooms migrate with empty ticket/invitation registries, schema-v5
+    rooms preserve their tickets while gaining an empty invitation registry,
+    and schema-v6 rooms derive the schema-v7 player-seat ceiling from their
+    persisted mode. Contradictory legacy sessions/claims fail closed, and no
+    bearer is exposed through snapshots, journals, errors, DOM, React state,
+    storage, or URLs.
+24. Creator custody never releases its long-lived player-two or spectator
+    credential. It mints only bounded 15-minute role-bound invitations; player
+    issuance revokes prior seat invitations and their tickets, spectator claims
+    respect the room cap, and expired claims fail closed. Repeating an
+    invitation-to-ticket exchange rotates the prior ticket so an ambiguous HTTP
+    response is recoverable. Final WebSocket admission atomically consumes the
+    invitation and every linked ticket, and replay is rejected across authority,
+    persistence, HTTP, hub-recovery, and client-bootstrap tests.
+    Solo admission persists a one-player ceiling, atomically retires losing-seat
+    credentials after the first claim, permits the winning resume and spectators,
+    and rejects a second player through direct, invitation, and ticket paths.
+25. New-room initialization atomically persists its snapshot, unclaimed
+    lifecycle, and five-minute alarm; first admission atomically claims it and
+    cancels expiry. Early, duplicate, failed-deletion, stale-marker, malformed,
+    and admission-race paths are bounded and fail closed. Coarse creation limits
+    never substitute for authorization, while exact persisted per-room limits
+    survive reconstruction and independently cap invitation, ticket, socket,
+    and repeated `Hello` work with tested retry hints.
+26. The isolated Cloudflare Vitest gate runs the deployed Worker and
+    SQLite-backed Durable Object in `workerd`: it verifies edge routing and
+    binding use, persisted creation/alarm state, early and due alarm behavior,
+    atomic first-admission claim, and WebSocket attachment/session recovery
+    across a forced hibernating eviction. The resumed socket answers an
+    application ping and commits the next sequenced command durably. Bounded
+    adapter-fault cases cover retryable initial admission, concurrent admission
+    with a pre-commit command failure, and a committed-but-unacknowledged
+    command; exact retries before and after eviction never create a phantom
+    acknowledgement or second mutation. Preview managed-service fault rehearsal,
+    load/cost measurement, and platform alarm/rate-limit distribution remain
+    explicit pre-rollout gates.
+27. Presence is derived only from the bound durable session and remains
+    ephemeral. Initial admission, transport loss, resume, and explicit leave
+    publish the exact lifecycle sequence; hibernation restoration and a
+    superseded socket's later close are silent. Explicit leave atomically
+    removes the session registry entry and bounded command-outcome cache,
+    revokes its resume digest, releases only its claimed player seat, survives
+    a committed-but-failed response path, and permits a fresh seat admission.
+    Repeated spectator join/leave cycles prove the registry remains bounded.
+    Authority, durable-adapter, hub, client,
+    presentation, real-Worker, and real-browser tests cover the boundary, while
+    replay and canonical state remain unchanged.
+28. Admission-ticket issuance returns a distinct server-minted resume bearer
+    whose digest is durably bound to the role/name ticket record before socket
+    admission. Initial `Hello` retries the exact private pair until `Welcome`;
+    the authority either consumes the live ticket once or resumes the session
+    created by an ambiguously committed attempt. Definite pre-commit failure,
+    post-commit failure, failed Welcome send, normal reconnect, hibernation, and
+    a forged ticket/resume pair are covered without persisting raw credentials,
+    changing session identity, duplicating a seat, or exposing capabilities in
+    public client state.
+29. A player admission projects its canonical display-name update for every
+    active recipient inside the same durable transaction and then emits a
+    distinct `ProjectionRefresh`; it does not fabricate a command result,
+    replay event, or game revision. The client accepts an equal-revision refresh
+    only when the complete hydrated projection is identical or differs solely
+    in player display names. The board replaces label metadata without rotating
+    aliases or clearing valid local presentation. Resume regenerates peer
+    projections so an exact-pair retry repairs an update skipped by an
+    ambiguously successful admission write.
+30. Credential-free WebSocket upgrades carry a non-renewing admission deadline
+    no longer than the one-time ticket lifetime. Real-runtime eviction, alarm,
+    and late-message tests prove expired or malformed idle sockets close without
+    consuming tickets, the earliest deadline coexists with unclaimed-room
+    expiry, and authenticated peers are never selected for cleanup.
+31. Explicit leave removes, rather than tombstones, the exact durable session
+    and its bounded command-outcome cache. Transition validation rejects a
+    retained inactive session or any unrelated session mutation; repeated
+    spectator admission/leave cycles leave an empty registry. Transport loss
+    instead commits a 30-second absolute reconnect deadline without releasing
+    the session or seat. Resume clears it; one shared-alarm transaction removes
+    all due sessions and releases exactly their seats while canonical player
+    state/private grants remain seat-owned. Late bearers fail, replacement
+    admission succeeds, ambiguous commits reconcile, missing markers are
+    repaired after eviction, and the client's worst-case default retry schedule
+    remains below the server deadline in unit and real-runtime tests.
+32. `CloseInspection` is formable from the recipient projection without
+    disclosing its canonical inspection token. The client submits the projected
+    work-area handle; authority accepts only the actor's exact current handle,
+    the domain derives its internal inspection ID after the same precondition,
+    and stale or cross-player attempts are rejected. Protocol, resolver,
+    authority, core, and generated-model tests cover the complete path.
+33. `SetCoachingConsent` is target-free on the wire and resolved to the
+    authenticated player. Core decision and replay independently require mutual
+    current consent for cross-player inspection. Withdrawing either seat emits
+    one exact event that rejects incomplete revocation metadata, removes every
+    affected cross-player grant, retains self-inspection, rotates the former
+    viewer to concealed aliases, and publishes only identity-free close facts.
+    Protocol, core, authority, projection, presentation, client-resolver, and
+    generated-model tests cover accepted ADR-017 without a UI change.
+34. Anonymous cross-browser invitation transfer uses only a foreground clipboard
+    operation. Its branded text is strict and bounded; creator APIs return only
+    safe room/role/expiry metadata; native paste prevents bearer insertion and
+    gives it only to a private non-serializing custodian; room-code-only,
+    malformed, expired, concurrent, and disposed joins fail closed. A failed
+    exchange retains custody for bounded retry and success clears it. Five
+    isolated browser contexts prove rotated player claims, player-two admission,
+    two distinct repeat-spectator claims, correct projected roles,
+    credential-free URLs, and no envelope in document HTML or browser storage.
+35. A normal game-state download contains only the authority-produced requesting
+    role's replay projection and declares `canonicalState: false` and
+    `resumable: false`. Exact bytes are deterministic for the same artifact and
+    carry a SHA-256 digest. Wrong format/protocol/privacy metadata, excess size,
+    corruption, malformed frames, perspective mismatch, and invalid replay
+    semantics fail before playback. Live export waits for a fresh artifact
+    without entering replay mode or rewinding the board; replay export uses the
+    exact installed artifact. Teardown settles an in-flight export without a
+    late download, and neither path contains or creates admission, invitation,
+    socket, resume, or save authority.
+
+## Privacy and security gates
+
+For every hidden-information fixture:
+
+- recursively scan all player/spectator snapshot, event, error, timeline, chat,
+  diagnostic, and definition-catalog JSON;
+- assert forbidden canonical IDs, definition IDs, names, image URLs, and deck
+  order are absent;
+- compare unauthorized projections of states differing only in a secret and
+  require normalized serialized equality;
+- intercept browser image requests and accessibility nodes to prove hidden faces
+  are not fetched or exposed;
+- prove concealment handles change after shuffle/newly concealed transitions;
+- prove private inspection reaches only granted viewers and public reveal reaches
+  exactly the intended roles;
+- prove spectators cannot reach the reducer or privileged save/export paths; and
+- prove coaching visibility only expands after the characterized mutual-consent
+  condition.
+
+Threat tests also cover room-code guessing limits, admission/reconnect token
+replay, connection supersession, origin checks, chat rendering, image-proxy SSRF
+and decompression/import attacks, log redaction, default/missing admin credentials,
+and dependency vulnerabilities.
+
+Zero confirmed hidden-information leaks or unauthorized mutations are allowed.
+This gate cannot be waived as a cosmetic parity exception.
+
+## Persistence and failure matrix
+
+Inject failure at each boundary:
+
+| Failure point                                              | Required result                                                                              |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Before durable event/dedupe transaction                    | No state change; safe retry may execute once                                                 |
+| After durable commit, before in-memory install/publication | Restart/reconnect loads the applied revision                                                 |
+| After publication, before command result                   | Resend returns prior outcome without reapplying                                              |
+| Snapshot write interrupted                                 | Previous checkpoint plus valid journal tail restores                                         |
+| Newest checkpoint corrupt                                  | Fail safely or use explicitly verified prior checkpoint; alert with no silent divergent room |
+| Room process eviction/hibernation                          | Wake restores identical hash, roles, sequence frontiers, and visibility generations          |
+| Send fails for one connection                              | Other recipients progress; failed client recovers by snapshot                                |
+| Connection supersession race                               | Exactly one controlling connection remains per seat                                          |
+| Forged admission kind/delta or credential binding          | Candidate and predecessor remain unchanged; no admission journal row is written              |
+| Migrated solo snapshot with two player sessions            | Restore fails closed before frontier repair or any new write                                 |
+| Import/conversion fails at action N                        | Current match unchanged; report format/version/action/reason                                 |
+| Storage quota/unavailable                                  | Command is rejected retryably before acknowledgement; no phantom acceptance                  |
+
+Every acknowledged multiplayer mutation must be recoverable after a room restart.
+A change to write-behind or a nonzero acknowledged-loss window requires a new
+approved durability ADR.
+
+## UI and interaction parity gates
+
+- Every `MUST_MATCH` parity-matrix row passes in its declared browsers/modes.
+- Every keyboard shortcut shown by the current Shift reference is automated,
+  including selected/unselected context, reused keys, modifiers, form-field
+  suppression, repeat policy, and replay/spectator restrictions.
+- Every supported source/destination drag class is covered, including covers,
+  both boards, stack attach/evolve, pointer leaving the canvas, cancellation,
+  authority rejection, and state replacement mid-drag.
+- Context-menu item visibility/enabled state is parameterized by zone, role,
+  selection, face, mode, perspective, and replay.
+- Deck/discard/lost-zone/view/detached work-area browsers preserve sorting,
+  scrolling, density, bulk actions, prompts, and close behavior.
+- Board flip, both resizers, full-screen playmat, hand concealment, themes,
+  outlines, card preview, stack expansion, counters, and marker editing have
+  automated workflows and manual sign-off.
+- All existing button labels, prompts, menu text, and battle-log outcomes match
+  fixtures unless listed in the approved parity-exceptions register.
+
+### Geometry and screenshot thresholds
+
+At controlled fixtures:
+
+- zone/card anchor positions are within 2 CSS pixels;
+- card width/height are within 1%;
+- rotation is within 0.1 degrees;
+- ordering, face/back, visibility, opacity, and menu contents match exactly;
+- screenshot diff stays below a threshold established from repeat legacy runs,
+  with only documented font/image antialias regions masked; and
+- Chromium baseline is automated, with final Firefox/Safari manual approval.
+
+Screenshot percentage alone cannot pass parity. Structured geometry and semantic
+assertions are required so widespread small shifts are not masked.
+
+## Renderer performance budgets
+
+Measured after warmup on the reference fixture/device:
+
+| Metric                                                 |                                    Provisional release budget |
+| ------------------------------------------------------ | ------------------------------------------------------------: |
+| One-card render-model reconciliation                   |                                                p95 ≤ 4 ms CPU |
+| Full 120-card scene reconciliation                     |                                               p95 ≤ 50 ms CPU |
+| Drag frame time                                        |                                  p95 ≤ 16.7 ms; p99 ≤ 33.3 ms |
+| Input event to changed drag visual                     |                                                   p95 ≤ 25 ms |
+| Main-thread long task during warmed single-card action |                                                  none > 50 ms |
+| Resize/split work                                      |                 at most one layout/render per animation frame |
+| Settled idle render scheduling                         |                                        zero continuous frames |
+| Board-tier estimated GPU textures                      |                                                     ≤ 128 MiB |
+| Preview-tier estimated GPU textures                    |                                                      ≤ 16 MiB |
+| Initial v2 route JavaScript                            | ≤ 500 KiB gzip, excluding images/optional deck-builder chunks |
+| Resource churn after 100 setup/reset/open/close cycles |     listeners/views/leases/textures return to warmed baseline |
+| Retained heap after the same churn                     |                  ≤ 10% above warmed baseline after collection |
+| Successful renderer/context recovery                   |                                                   ≤ 3 seconds |
+
+The selected renderer must also be no worse than v1 at p95 for protected input
+latency and must materially improve at least the profiled setup/reset, full-zone,
+or single-card update bottlenecks. Phase 1 records the exact improvement target;
+the architecture cannot claim “faster” using only synthetic frame rate.
+
+Use performance marks around model creation, diff, layout, texture assignment,
+render, persistence, projection, serialization, publication, and reconciliation.
+Track invalidation reasons, display objects, textures/leases, listeners, fetches,
+decoded bytes, long tasks, payload size, and heap trends.
+
+## Network and recovery objectives
+
+On the ratified reference region/network profile:
+
+| Metric                                                           |          Provisional objective |
+| ---------------------------------------------------------------- | -----------------------------: |
+| Local intent to immediate local feedback                         |                    p95 ≤ 50 ms |
+| Same-region command to authoritative reconciliation              |     p95 < 250 ms; p99 < 500 ms |
+| Reconnect to usable projected match after transport is available |                p95 < 2 seconds |
+| Duplicate command state effects                                  |                    exactly one |
+| Periodic full-action-log transmission                            |                           zero |
+| Accepted-command durability                                      | 100% in injected restart suite |
+
+Track p50/p95/p99 by command family and separate network, durable commit,
+projection/serialization, send, and client-reconciliation time. A global average
+cannot hide slow hidden/bulk actions.
+
+The implemented local `workerd` harness now enforces deterministic structural,
+frame, fanout, attachment, and serialized-storage envelopes for a real
+120-card/two-player/spectator room. Its optional runner records named-host
+command and hibernation observations without treating local wall-clock values as
+portable CI thresholds. The initial evidence and its explicit limitations are
+recorded in
+[`SERVER_PERFORMANCE_BASELINE.md`](./SERVER_PERFORMANCE_BASELINE.md). Managed
+preview phase splits, reconnect timing, and platform resource/cost distributions
+remain release gates. Command/admission audit rows now have transactional
+count/byte retention and a real-runtime storage plateau. Production telemetry v2
+separates authority processing, projection, persistence, publication
+serialization, and socket send; the local performance artifact alone advances
+to v3 for deeper breakdowns.
+
+The multiplayer hot path derives one canonical batch/state transition from an
+exact recursively frozen validated predecessor. A single-use opaque proof binds
+that predecessor and proof, the resulting state/history objects, and replay
+limits; cached canonical UTF-8 entry sizes drive exact minimal prefix compaction
+without replaying the retained suffix. The completed candidate is recursively
+frozen and bound to its exact source snapshot and validation, session, outcome,
+and canonical batch. The storage adapter then requires that source to be the
+exact store-local validated head and that a strict persisted v1 frontier match
+it. A hit reads no snapshot; it rotates the optional v6-envelope generation and
+atomically writes the snapshot/frontier, journal, retention, and pruning.
+
+Neither proof nor the frontier generation is a security credential. The proofs
+are not persisted, while the frontier is only bounded coherence evidence.
+Missing, forged, stale, reused, cross-room, mutated, mismatched, and unproven
+direct-adapter inputs receive complete fail-closed candidate, predecessor, and
+transition validation. Restore, migration, retry reload, external install, and
+all fallback paths retain full validation. Missing/malformed frontier data and
+generation-free rollback-era v6 envelopes are repaired only after that full
+validation; well-formed divergence fails without writes. Admission and expiry
+preserve snapshot/frontier/lifecycle/alarm pairing. The rollback-compatible
+storage addition changes no game-domain, wire, or production telemetry schema.
+
+The canonical authority-frontier observation took 8.766 seconds for its scenario
+and 12.12 seconds overall; fixture setup took 664 ms. Mature command-to-publication
+minimum/p50/p95/p99/max is 29/43/50/53/53 ms and server handling is
+21/34/42/44/44 ms. Authority, projection, persistence, publication serialization,
+and socket-send p50/p95 are 18/22, 7/11, 8/12, 1/1, and 0/1 ms. Inner input,
+resolution/execution, history/candidate, candidate validation, adapter
+validation, predecessor validation, and transaction p50/p95 are 0/0, 3/6, 9/11,
+6/8, 0/0, 0/0, and 8/12 ms. The mature window has 32 frontier hits and zero
+fallbacks. Relative to the incremental-replay run, p95 falls from 252 to 50 ms
+end to end, 243 to 42 ms server-side, and 207 to 12 ms for persistence; scenario
+time falls from 26.204 to 8.766 seconds. The provisional 250 ms objective is met
+locally by 200 ms end to end and 208 ms server-side. Managed preview/network
+measurements and the existing load, soak, payload, and correctness evidence
+remain required; further work must not bypass full restore/fallback validation.
+
+The post-hibernation command was 181 ms end to end and 43 ms server-side; its
+authority/projection/persistence/publication/socket split was 16/14/12/0/1 ms
+and its input/resolution/history/candidate/adapter/predecessor/hit/transaction
+detail was 0/3/7/6/0/0/1/11 ms. The largest frame and aggregate publication were
+62,431 and 149,276 bytes. Storage peaked at 139 entries/368,318 bytes and ended
+at 139/358,243, including a 297-byte frontier.
+
+## Load and soak gates
+
+- A deterministic suite executes at least 100,000 accepted/rejected command
+  attempts across rooms, with duplicates, gaps, disconnects, restarts, and role
+  changes: zero divergence, invariant failure, or unhandled rejection.
+- A two-hour automated browser/server soak runs in routine CI or scheduled CI.
+- A 24-hour pre-release soak covers representative two-player/spectator sessions,
+  repeated joins/leaves, save/checkpoint cycles, external asset failures, and
+  renderer churn.
+- Heap, room journal tail, idempotency window, pending client outbox, chat/timeline
+  history, render views, textures, listeners, and caches have enforced bounds and
+  no monotonic growth after compaction/collection.
+- Room load tests verify admission and rate limits before public cohort rollout;
+  targets are based on hosting budget and expected concurrency approved in Phase
+  0 rather than an invented user count.
+
+## Legacy conversion quarantine and deck compatibility gates
+
+- Every supported deck fixture remains readable. Checked-in v1 save/action
+  fixtures exercise the quarantined converter to an expected canonical hash and
+  view snapshots, or fail transactionally with a specific diagnostic; they do
+  not create a production compatibility promise.
+- All 50 legacy dispatch actions have at least one conversion fixture; compound,
+  randomized, hidden, and positional edge cases have several.
+- The converter validates structural format because current displayed/package
+  versions disagree and legacy import does not reliably enforce version.
+- Existing `QTY,Name,Type,URL` deck CSV remains readable, including Unicode,
+  quoted commas/newlines as approved, and Pocket/legacy set-code collisions.
+- Main and alternate deck state/save/unload/dirty behavior is independently
+  tested.
+- The first v2 release neither reads old `/import?key=` records nor creates new
+  weak four-character records. A future route requires the replacement ADR and
+  representative real-corpus evidence specified by ADR-021.
+- No converted match retains or executes legacy function names at runtime.
+
+## Observability gates
+
+Before any multiplayer cohort, dashboards and alerts must expose:
+
+- active/created/admitted/rejected/expired rooms and role counts;
+- accepted/rejected/duplicate/gap commands by safe type/reason;
+- reducer and invariant failures;
+- durable append/checkpoint/recovery latency and failure;
+- projection/serialization/publication payload and latency;
+- reconnect attempts, success, recovery time, seat expiry/supersession;
+- renderer initialization/context loss/recovery and texture/asset failure;
+- client fatal errors, build/protocol/schema versions, and canary cohort; and
+- save creation/read/expiry/quota failures.
+
+ADR-021's deferral intentionally leaves no production legacy-import telemetry
+producer. Isolated corpus-tool reports retain safe version/reason evidence
+without user data.
+
+Telemetry contains opaque correlations, build/schema versions, command type,
+revision, and outcome only. It excludes raw command payloads, chat, card names,
+card/deck IDs, image URLs, room/save/seat tokens, and IP-derived identity.
+
+The implemented server foundation provides a public no-store version health
+probe and field-by-field structured events for HTTP, room lifecycle/rates,
+admission/reconnect, command outcome/revision and request/publication byte
+counts, socket state, and fixed failure subsystems. Tests inject credential-,
+username-, and exception-like
+extras and prove they cannot enter emitted records; malformed labels/numbers are
+normalized and emitter failures cannot alter the request/authority path. Actual
+Cloudflare destinations, dashboards, preview baselines, alert ownership, and
+client/renderer/import/save producers remain required before cohort rollout.
+
+Runbooks are rehearsed for persistence outage, room restart loop, reconnect
+spike, image-provider/proxy outage, import regression, hidden-data incident,
+canary pause, and v2 rollback.
+
+## Release sign-off checklist
+
+A release candidate requires attached evidence and named approval for:
+
+- domain/invariant owner;
+- protocol/security/visibility owner;
+- persistence/operations owner;
+- renderer/performance owner;
+- UI parity/accessibility owner;
+- legacy retirement/quarantine owner; and
+- product owner for all exceptions/deferred items.
+
+Any invariant failure, confirmed hidden leak, acknowledged-state loss, corrupting
+import, severity-1/2 defect, or P0 parity regression automatically blocks or
+pauses rollout.

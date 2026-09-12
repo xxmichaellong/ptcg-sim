@@ -1,0 +1,1350 @@
+import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
+import {
+  PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
+  serializeMatchViewState,
+} from '@ptcgsim/protocol';
+
+import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
+import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import {
+  MAX_OUTSTANDING_ADMISSION_TICKETS,
+  MAX_OUTSTANDING_ROOM_INVITATIONS,
+  type AdmissionPersistence,
+  type AuthorityDelivery,
+  type AuthoritySession,
+  type RoomAdmissionState,
+  type RoomAdmissionTicket,
+  type RoomInvitationGrant,
+  type RoomAuthoritySnapshot,
+} from './model.js';
+import { createReplayHistory } from './replay-history.js';
+import { emptySoloUndoHistory } from './solo-undo-history.js';
+
+export type AdmissionRequest =
+  | {
+      readonly type: 'ClaimSeat';
+      readonly seatCapability: string;
+      readonly displayName: string;
+    }
+  | {
+      readonly type: 'JoinSpectator';
+      readonly spectatorCapability: string;
+    }
+  | {
+      readonly type: 'Resume';
+      readonly resumeCapability: string;
+    };
+
+export interface AdmissionCrypto {
+  readonly digestCapability: (capability: string) => Promise<string>;
+  readonly equalDigest: (left: string, right: string) => boolean;
+  readonly nextResumeCapability: () => string;
+  readonly nextSessionId: () => string;
+}
+
+export interface AdmissionTicketCrypto extends AdmissionCrypto {
+  readonly nextAdmissionTicket: () => string;
+}
+
+export interface RoomInvitationCrypto extends AdmissionTicketCrypto {
+  readonly nextRoomInvitation: () => string;
+}
+
+export interface AdmissionDependencies {
+  readonly crypto: AdmissionCrypto;
+  readonly opaqueIds: OpaqueIdSource;
+  readonly persistence: AdmissionPersistence;
+  /** Required when validating the lifetime of a disconnected resume bearer. */
+  readonly now?: () => number;
+}
+
+export interface AdmissionTicketDependencies extends Omit<
+  AdmissionDependencies,
+  'crypto'
+> {
+  readonly crypto: AdmissionTicketCrypto;
+}
+
+export interface RoomInvitationDependencies extends Omit<
+  AdmissionDependencies,
+  'crypto'
+> {
+  readonly crypto: RoomInvitationCrypto;
+}
+
+export interface AdmissionTicketPolicy {
+  readonly lifetimeMs: number;
+  readonly maximumOutstandingTickets: number;
+}
+
+export const DEFAULT_ADMISSION_TICKET_POLICY: AdmissionTicketPolicy = {
+  lifetimeMs: 30_000,
+  maximumOutstandingTickets: MAX_OUTSTANDING_ADMISSION_TICKETS,
+};
+
+export interface RoomInvitationPolicy {
+  readonly lifetimeMs: number;
+  readonly maximumOutstandingInvitations: number;
+}
+
+export const DEFAULT_ROOM_INVITATION_POLICY: RoomInvitationPolicy = {
+  lifetimeMs: 15 * 60_000,
+  maximumOutstandingInvitations: MAX_OUTSTANDING_ROOM_INVITATIONS,
+};
+
+export type AdmissionResult =
+  | {
+      readonly accepted: true;
+      readonly committed: boolean;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly session: AuthoritySession;
+      readonly resumeCapability: string;
+      readonly view: MatchViewState;
+      readonly refreshes: readonly AuthorityDelivery[];
+    }
+  | {
+      readonly accepted: false;
+      readonly code:
+        | 'invalid_request'
+        | 'invalid_capability'
+        | 'seat_unavailable'
+        | 'room_not_ready';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+export type AdmissionTicketIssueResult =
+  | {
+      readonly accepted: true;
+      readonly committed: true;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly admissionTicket: string;
+      readonly resumeCapability: string;
+      readonly expiresAt: number;
+    }
+  | {
+      readonly accepted: false;
+      readonly code:
+        | 'invalid_request'
+        | 'invalid_capability'
+        | 'seat_unavailable'
+        | 'room_not_ready'
+        | 'ticket_capacity';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+export type RoomInvitationIssueResult =
+  | {
+      readonly accepted: true;
+      readonly committed: true;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly invitation: string;
+      readonly requestedRole: 'player' | 'spectator';
+      readonly expiresAt: number;
+    }
+  | {
+      readonly accepted: false;
+      readonly code:
+        | 'invalid_request'
+        | 'invalid_capability'
+        | 'seat_unavailable'
+        | 'room_not_ready'
+        | 'invitation_capacity';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+export interface AdmissionTicketIssueRequest {
+  readonly capability: string;
+  readonly displayName: string;
+  readonly requestedRole: 'player' | 'spectator';
+}
+
+export interface RoomInvitationIssueRequest {
+  readonly capability: string;
+  readonly requestedRole: 'player' | 'spectator';
+}
+
+export interface AdmissionTicketRedemptionRequest {
+  readonly admissionTicket: string;
+  readonly displayName: string;
+  readonly requestedRole: 'player' | 'spectator';
+  /** Required for tickets issued with a bound resume digest. */
+  readonly resumeCapability?: string;
+}
+
+type UnboundRoomAdmissionTicket =
+  | Omit<
+      Extract<RoomAdmissionTicket, { role: 'player' }>,
+      'resumeCapabilityDigest'
+    >
+  | Omit<
+      Extract<RoomAdmissionTicket, { role: 'spectator' }>,
+      'resumeCapabilityDigest'
+    >;
+
+export const createRoomAdmissionState = (input: {
+  readonly playerSeatLimit: RoomAdmissionState['playerSeatLimit'];
+  readonly seatCapabilityDigests: Readonly<Record<string, string>>;
+  readonly playerIds: readonly PlayerId[];
+  readonly spectatorCapabilityDigest?: string;
+}): RoomAdmissionState => ({
+  playerSeatLimit: input.playerSeatLimit,
+  seats: Object.fromEntries(
+    input.playerIds.map((playerId) => [
+      playerId,
+      {
+        playerId,
+        claimCapabilityDigest: input.seatCapabilityDigests[playerId] ?? '',
+        claimedSessionId: null,
+      },
+    ])
+  ),
+  spectatorCapabilityDigest: input.spectatorCapabilityDigest ?? null,
+  invitations: {},
+  tickets: {},
+});
+
+const validBoundedCapability = (value: string): boolean =>
+  value.length >= 32 && value.length <= 512;
+
+const validDisplayName = (value: string): boolean =>
+  value.trim().length >= 1 && value.length <= 64;
+
+const validNow = (value: number): boolean =>
+  Number.isSafeInteger(value) && value >= 0;
+
+const claimedPlayerSeatCount = (admission: RoomAdmissionState): number =>
+  Object.values(admission.seats).filter(
+    (seat) => seat.claimedSessionId !== null
+  ).length;
+
+const canClaimPlayerSeat = (
+  admission: RoomAdmissionState,
+  playerId: PlayerId
+): boolean => {
+  const seat = admission.seats[playerId];
+  if (!seat) return false;
+  return (
+    seat.claimedSessionId !== null ||
+    claimedPlayerSeatCount(admission) < admission.playerSeatLimit
+  );
+};
+
+const removeUnavailablePlayerCredentials = (
+  admission: RoomAdmissionState,
+  claimedPlayerId: PlayerId
+): RoomAdmissionState =>
+  admission.playerSeatLimit !== 1
+    ? admission
+    : {
+        ...admission,
+        invitations: Object.fromEntries(
+          Object.entries(admission.invitations).filter(
+            ([, invitation]) =>
+              invitation.role === 'spectator' ||
+              invitation.playerId === claimedPlayerId
+          )
+        ),
+        tickets: Object.fromEntries(
+          Object.entries(admission.tickets).filter(
+            ([, ticket]) =>
+              ticket.role === 'spectator' || ticket.playerId === claimedPlayerId
+          )
+        ),
+      };
+
+const validTicketPolicy = (policy: AdmissionTicketPolicy): boolean =>
+  Number.isSafeInteger(policy.lifetimeMs) &&
+  policy.lifetimeMs >= 1_000 &&
+  policy.lifetimeMs <= 5 * 60_000 &&
+  Number.isSafeInteger(policy.maximumOutstandingTickets) &&
+  policy.maximumOutstandingTickets >= 1 &&
+  policy.maximumOutstandingTickets <= MAX_OUTSTANDING_ADMISSION_TICKETS;
+
+const validInvitationPolicy = (policy: RoomInvitationPolicy): boolean =>
+  Number.isSafeInteger(policy.lifetimeMs) &&
+  policy.lifetimeMs >= 30_000 &&
+  policy.lifetimeMs <= 24 * 60 * 60_000 &&
+  Number.isSafeInteger(policy.maximumOutstandingInvitations) &&
+  policy.maximumOutstandingInvitations >= 1 &&
+  policy.maximumOutstandingInvitations <= MAX_OUTSTANDING_ROOM_INVITATIONS;
+
+const unusedSessionId = (
+  snapshot: RoomAuthoritySnapshot,
+  crypto: AdmissionCrypto
+): string => {
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const id = crypto.nextSessionId();
+    if (id.length >= 16 && id.length <= 128 && !snapshot.sessions[id])
+      return id;
+  }
+  throw new Error('Session ID source failed to produce a unique bounded ID');
+};
+
+const rejection = (
+  snapshot: RoomAuthoritySnapshot,
+  code: Exclude<AdmissionResult, { accepted: true }>['code']
+): AdmissionResult => ({ accepted: false, code, snapshot });
+
+const ticketRejection = (
+  snapshot: RoomAuthoritySnapshot,
+  code: Exclude<AdmissionTicketIssueResult, { accepted: true }>['code']
+): AdmissionTicketIssueResult => ({ accepted: false, code, snapshot });
+
+const invitationRejection = (
+  snapshot: RoomAuthoritySnapshot,
+  code: Exclude<RoomInvitationIssueResult, { accepted: true }>['code']
+): RoomInvitationIssueResult => ({ accepted: false, code, snapshot });
+
+const ticketsWithout = (
+  tickets: RoomAdmissionState['tickets'],
+  rejectedDigest: string
+): RoomAdmissionState['tickets'] =>
+  Object.fromEntries(
+    Object.entries(tickets).filter(([digest]) => digest !== rejectedDigest)
+  );
+
+const liveTickets = (
+  tickets: RoomAdmissionState['tickets'],
+  now: number
+): RoomAdmissionState['tickets'] =>
+  Object.fromEntries(
+    Object.entries(tickets).filter(([, ticket]) => ticket.expiresAt > now)
+  );
+
+const liveInvitations = (
+  invitations: RoomAdmissionState['invitations'],
+  now: number
+): RoomAdmissionState['invitations'] =>
+  Object.fromEntries(
+    Object.entries(invitations).filter(
+      ([, invitation]) => invitation.expiresAt > now
+    )
+  );
+
+const ticketsForLiveInvitations = (
+  tickets: RoomAdmissionState['tickets'],
+  invitations: RoomAdmissionState['invitations']
+): RoomAdmissionState['tickets'] =>
+  Object.fromEntries(
+    Object.entries(tickets).filter(
+      ([, ticket]) =>
+        !ticket.sourceInvitationDigest ||
+        Boolean(invitations[ticket.sourceInvitationDigest])
+    )
+  );
+
+const ticketsWithoutInvitationSource = (
+  tickets: RoomAdmissionState['tickets'],
+  invitationDigest: string
+): RoomAdmissionState['tickets'] =>
+  Object.fromEntries(
+    Object.entries(tickets).filter(
+      ([, ticket]) => ticket.sourceInvitationDigest !== invitationDigest
+    )
+  );
+
+const admissionAfterTicket = (
+  admission: RoomAdmissionState,
+  admissionTicketDigest?: string,
+  invitationDigest?: string
+): RoomAdmissionState =>
+  !admissionTicketDigest && !invitationDigest
+    ? admission
+    : {
+        ...admission,
+        invitations: invitationDigest
+          ? Object.fromEntries(
+              Object.entries(admission.invitations).filter(
+                ([digest]) => digest !== invitationDigest
+              )
+            )
+          : admission.invitations,
+        tickets: invitationDigest
+          ? ticketsWithoutInvitationSource(
+              ticketsWithout(admission.tickets, admissionTicketDigest ?? ''),
+              invitationDigest
+            )
+          : ticketsWithout(admission.tickets, admissionTicketDigest!),
+      };
+
+const projectAdmissionViews = (
+  snapshot: RoomAuthoritySnapshot,
+  admittedSessionId: string,
+  includePeerRefreshes: boolean,
+  dependencies: AdmissionDependencies
+): {
+  readonly identities: RoomAuthoritySnapshot['identities'];
+  readonly admittedView: MatchViewState;
+  readonly refreshes: readonly AuthorityDelivery[];
+} => {
+  let identities = snapshot.identities;
+  let admittedView: MatchViewState | undefined;
+  const refreshes: AuthorityDelivery[] = [];
+  const admittedSession = snapshot.sessions[admittedSessionId];
+  if (!admittedSession?.active) {
+    throw new Error('Admitted session is not active');
+  }
+  const projectionSessions = includePeerRefreshes
+    ? Object.values(snapshot.sessions).filter((entry) => entry.active)
+    : [admittedSession];
+  for (const projectionSession of projectionSessions) {
+    const projected = projectRecipient(
+      snapshot.state,
+      projectionSession.viewer,
+      identities,
+      dependencies.opaqueIds,
+      snapshot.mode
+    );
+    identities = projected.identities;
+    if (projectionSession.id === admittedSessionId) {
+      admittedView = projected.snapshot;
+    } else {
+      refreshes.push({
+        sessionId: projectionSession.id,
+        message: {
+          type: 'ProjectionRefresh',
+          protocolVersion: PROTOCOL_VERSION,
+          cause: 'authority_reconciled',
+          snapshot: serializeMatchViewState(projected.snapshot),
+        },
+      });
+    }
+  }
+  if (!admittedView) {
+    throw new Error('Admitted session projection was not created');
+  }
+  return { identities, admittedView, refreshes };
+};
+
+const persistSessionResume = async (
+  current: RoomAuthoritySnapshot,
+  session: AuthoritySession,
+  resumeCapability: string,
+  dependencies: AdmissionDependencies,
+  admissionTicketDigest?: string,
+  invitationDigest?: string
+): Promise<AdmissionResult> => {
+  const resumedAt =
+    session.reconnectExpiresAt === undefined ? undefined : dependencies.now?.();
+  if (
+    session.reconnectExpiresAt !== undefined &&
+    (resumedAt === undefined ||
+      !validNow(resumedAt) ||
+      session.reconnectExpiresAt <= resumedAt)
+  ) {
+    return rejection(current, 'invalid_capability');
+  }
+  const { reconnectExpiresAt: _reconnected, ...connectedSession } = session;
+  const resumedSession: AuthoritySession = {
+    ...connectedSession,
+    resumeCapabilityDigest:
+      await dependencies.crypto.digestCapability(resumeCapability),
+  };
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: {
+      ...current.sessions,
+      [session.id]: resumedSession,
+    },
+    ...(current.admission
+      ? {
+          admission: admissionAfterTicket(
+            current.admission,
+            admissionTicketDigest,
+            invitationDigest
+          ),
+        }
+      : {}),
+  };
+  const projections = projectAdmissionViews(
+    candidate,
+    session.id,
+    true,
+    dependencies
+  );
+  const projectedCandidate = {
+    ...candidate,
+    identities: projections.identities,
+  };
+  assertAuthoritySnapshotInvariants(projectedCandidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: projectedCandidate,
+    sessionId: session.id,
+    kind: 'session_resumed',
+    ...(resumedAt !== undefined ? { resumedAt } : {}),
+    ...(admissionTicketDigest ? { admissionTicketDigest } : {}),
+    ...(invitationDigest ? { invitationDigest } : {}),
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: projectedCandidate,
+    session: resumedSession,
+    resumeCapability,
+    view: projections.admittedView,
+    refreshes: projections.refreshes,
+  };
+};
+
+export type DisconnectRoomSessionResult =
+  | {
+      readonly accepted: true;
+      readonly committed: boolean;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly session: AuthoritySession;
+      readonly reconnectExpiresAt: number;
+    }
+  | {
+      readonly accepted: false;
+      readonly code: 'invalid_session';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+/** Durably starts (or observes) the bounded reconnect lease for one session. */
+export const disconnectRoomSession = async (
+  current: RoomAuthoritySnapshot,
+  sessionId: string,
+  now: number,
+  persistence: AdmissionPersistence
+): Promise<DisconnectRoomSessionResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!validNow(now)) throw new Error('Session disconnect clock is invalid');
+  const session = current.sessions[sessionId];
+  if (!session?.active) {
+    return { accepted: false, code: 'invalid_session', snapshot: current };
+  }
+  if (session.reconnectExpiresAt !== undefined) {
+    return {
+      accepted: true,
+      committed: false,
+      snapshot: current,
+      session,
+      reconnectExpiresAt: session.reconnectExpiresAt,
+    };
+  }
+  const reconnectExpiresAt = now + SESSION_RECONNECT_GRACE_MS;
+  if (!Number.isSafeInteger(reconnectExpiresAt)) {
+    throw new Error('Session reconnect deadline overflowed');
+  }
+  const disconnectedSession: AuthoritySession = {
+    ...session,
+    reconnectExpiresAt,
+  };
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: { ...current.sessions, [sessionId]: disconnectedSession },
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId,
+    kind: 'session_disconnected',
+    disconnectedAt: now,
+    reconnectExpiresAt,
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session: disconnectedSession,
+    reconnectExpiresAt,
+  };
+};
+
+export interface ExpireDisconnectedRoomSessionsResult {
+  readonly committed: boolean;
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly expiredSessions: readonly AuthoritySession[];
+  readonly nextReconnectExpiresAt?: number;
+}
+
+/**
+ * The disconnected sessions whose reconnect lease is due, in the order the
+ * transition invariant requires them to be declared.
+ *
+ * That order is code-unit, not collation. The invariant compares the declared
+ * ids against their own `.sort()`, and session ids are `session_<base64url>` --
+ * an alphabet spanning the case boundary, where the two rules disagree, since
+ * code-unit order puts every uppercase letter before every lowercase one while
+ * collation interleaves them. Declaring them in collation order made the commit
+ * throw whenever two due ids first differed across that boundary, which
+ * abandoned the sweep and left those sessions holding their seats.
+ *
+ * Every caller that needs this list must use this function. It is exported
+ * precisely so that the session hub's crash-recovery path, which has to
+ * reconstruct the same declaration to recognise an expiry that already
+ * committed, cannot derive a different order than the commit did.
+ */
+export const dueDisconnectedSessions = (
+  current: RoomAuthoritySnapshot,
+  now: number
+): readonly AuthoritySession[] =>
+  Object.values(current.sessions)
+    .filter(
+      (session) =>
+        session.reconnectExpiresAt !== undefined &&
+        session.reconnectExpiresAt <= now
+    )
+    .sort((left, right) =>
+      left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+    );
+
+/** Atomically retires every reconnect lease due at the supplied wall clock. */
+export const expireDisconnectedRoomSessions = async (
+  current: RoomAuthoritySnapshot,
+  now: number,
+  persistence: AdmissionPersistence
+): Promise<ExpireDisconnectedRoomSessionsResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!validNow(now)) throw new Error('Session expiry clock is invalid');
+  const disconnected = Object.values(current.sessions).filter(
+    (session) => session.reconnectExpiresAt !== undefined
+  );
+  const expiredSessions = dueDisconnectedSessions(current, now);
+  const nextReconnectExpiresAt = disconnected
+    .filter((session) => session.reconnectExpiresAt! > now)
+    .reduce<number | undefined>(
+      (next, session) =>
+        next === undefined
+          ? session.reconnectExpiresAt
+          : Math.min(next, session.reconnectExpiresAt!),
+      undefined
+    );
+  if (expiredSessions.length === 0) {
+    return {
+      committed: false,
+      snapshot: current,
+      expiredSessions,
+      ...(nextReconnectExpiresAt !== undefined
+        ? { nextReconnectExpiresAt }
+        : {}),
+    };
+  }
+  const expiredIds = new Set(expiredSessions.map((session) => session.id));
+  const admission = current.admission
+    ? {
+        ...current.admission,
+        seats: Object.fromEntries(
+          Object.entries(current.admission.seats).map(([playerId, seat]) => [
+            playerId,
+            seat.claimedSessionId && expiredIds.has(seat.claimedSessionId)
+              ? { ...seat, claimedSessionId: null }
+              : seat,
+          ])
+        ),
+      }
+    : undefined;
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: Object.fromEntries(
+      Object.entries(current.sessions).filter(
+        ([sessionId]) => !expiredIds.has(sessionId)
+      )
+    ),
+    ...(admission ? { admission } : {}),
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    kind: 'sessions_expired',
+    sessionIds: expiredSessions.map((session) => session.id),
+    expiredAt: now,
+  });
+  return {
+    committed: true,
+    snapshot: candidate,
+    expiredSessions,
+    ...(nextReconnectExpiresAt !== undefined ? { nextReconnectExpiresAt } : {}),
+  };
+};
+
+/**
+ * Durably retires one admitted session by removing its registry entry and
+ * bounded command-outcome cache. The raw resume capability is thereby revoked,
+ * and a player session atomically releases its seat for a future admission.
+ */
+export const leaveRoomSession = async (
+  current: RoomAuthoritySnapshot,
+  sessionId: string,
+  persistence: AdmissionPersistence
+): Promise<
+  | {
+      readonly accepted: true;
+      readonly committed: true;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly session: AuthoritySession;
+    }
+  | {
+      readonly accepted: false;
+      readonly code: 'invalid_session';
+      readonly snapshot: RoomAuthoritySnapshot;
+    }
+> => {
+  assertAuthoritySnapshotInvariants(current);
+  const session = current.sessions[sessionId];
+  if (!session?.active) {
+    return { accepted: false, code: 'invalid_session', snapshot: current };
+  }
+
+  const { resumeCapabilityDigest: _revoked, ...retainedSession } = session;
+  const retiredSession: AuthoritySession = {
+    ...retainedSession,
+    active: false,
+  };
+  const currentAdmission = current.admission;
+  const playerId =
+    session.viewer.kind === 'player' ? session.viewer.playerId : undefined;
+  const claimedSeat =
+    playerId === undefined ? undefined : currentAdmission?.seats[playerId];
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: Object.fromEntries(
+      Object.entries(current.sessions).filter(([id]) => id !== sessionId)
+    ),
+    ...(currentAdmission && claimedSeat
+      ? {
+          admission: {
+            ...currentAdmission,
+            seats: {
+              ...currentAdmission.seats,
+              [claimedSeat.playerId]: {
+                ...claimedSeat,
+                claimedSessionId: null,
+              },
+            },
+          },
+        }
+      : {}),
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId,
+    kind: 'session_left',
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session: retiredSession,
+  };
+};
+
+type AuthorizedAdmission =
+  | {
+      readonly role: 'player';
+      readonly playerId: PlayerId;
+      readonly displayName: string;
+      readonly resumeCapability: string;
+    }
+  | {
+      readonly role: 'spectator';
+      readonly displayName: string;
+      readonly resumeCapability: string;
+    };
+
+const admitAuthorizedSession = async (
+  current: RoomAuthoritySnapshot,
+  authorized: AuthorizedAdmission,
+  dependencies: AdmissionDependencies,
+  admissionTicketDigest?: string,
+  invitationDigest?: string
+): Promise<AdmissionResult> => {
+  if (!current.admission) return rejection(current, 'room_not_ready');
+  if (!validBoundedCapability(authorized.resumeCapability)) {
+    throw new Error('Resume capability source returned an invalid token');
+  }
+
+  const claimedPlayerId =
+    authorized.role === 'player' ? authorized.playerId : undefined;
+  if (claimedPlayerId) {
+    const seat = current.admission.seats[claimedPlayerId];
+    if (!seat) return rejection(current, 'invalid_capability');
+    if (!canClaimPlayerSeat(current.admission, claimedPlayerId)) {
+      return rejection(current, 'seat_unavailable');
+    }
+    if (seat.claimedSessionId !== null) {
+      if (invitationDigest) return rejection(current, 'seat_unavailable');
+      const claimedSession = current.sessions[seat.claimedSessionId];
+      return claimedSession?.active
+        ? persistSessionResume(
+            current,
+            claimedSession,
+            authorized.resumeCapability,
+            dependencies,
+            admissionTicketDigest,
+            invitationDigest
+          )
+        : rejection(current, 'seat_unavailable');
+    }
+  }
+
+  const viewer: AuthoritySession['viewer'] = claimedPlayerId
+    ? { kind: 'player', playerId: claimedPlayerId }
+    : { kind: 'spectator' };
+  const sessionId = unusedSessionId(current, dependencies.crypto);
+  const session: AuthoritySession = {
+    id: sessionId,
+    viewer,
+    displayName: authorized.displayName,
+    active: true,
+    nextClientSequence: 1,
+    recentOutcomes: [],
+    resumeCapabilityDigest: await dependencies.crypto.digestCapability(
+      authorized.resumeCapability
+    ),
+  };
+  const sessions = { ...current.sessions, [session.id]: session };
+  const consumedAdmission = claimedPlayerId
+    ? removeUnavailablePlayerCredentials(
+        admissionAfterTicket(
+          current.admission,
+          admissionTicketDigest,
+          invitationDigest
+        ),
+        claimedPlayerId
+      )
+    : admissionAfterTicket(
+        current.admission,
+        admissionTicketDigest,
+        invitationDigest
+      );
+  const admission: RoomAdmissionState = claimedPlayerId
+    ? {
+        ...consumedAdmission,
+        seats: {
+          ...consumedAdmission.seats,
+          [claimedPlayerId]: {
+            ...consumedAdmission.seats[claimedPlayerId]!,
+            claimedSessionId: session.id,
+          },
+        },
+      }
+    : consumedAdmission;
+  const state =
+    authorized.role === 'player'
+      ? {
+          ...current.state,
+          players: {
+            ...current.state.players,
+            [authorized.playerId]: {
+              ...current.state.players[authorized.playerId]!,
+              displayName: authorized.displayName,
+            },
+          },
+        }
+      : current.state;
+  let candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    state,
+    soloUndoHistory: claimedPlayerId
+      ? emptySoloUndoHistory()
+      : current.soloUndoHistory,
+    replayHistory: claimedPlayerId
+      ? createReplayHistory(state)
+      : current.replayHistory,
+    sessions,
+    admission,
+  };
+  const projections = projectAdmissionViews(
+    candidate,
+    session.id,
+    Boolean(claimedPlayerId),
+    dependencies
+  );
+  candidate = { ...candidate, identities: projections.identities };
+  assertAuthoritySnapshotInvariants(candidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId: session.id,
+    kind: claimedPlayerId ? 'seat_claimed' : 'spectator_joined',
+    ...(admissionTicketDigest ? { admissionTicketDigest } : {}),
+    ...(invitationDigest ? { invitationDigest } : {}),
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session,
+    resumeCapability: authorized.resumeCapability,
+    view: projections.admittedView,
+    refreshes: projections.refreshes,
+  };
+};
+
+const digestAlreadyAuthorized = (
+  snapshot: RoomAuthoritySnapshot,
+  digest: string
+): boolean =>
+  Object.values(snapshot.sessions).some(
+    (session) => session.resumeCapabilityDigest === digest
+  ) ||
+  (snapshot.admission !== undefined &&
+    (Boolean(snapshot.admission.invitations[digest]) ||
+      Boolean(snapshot.admission.tickets[digest]) ||
+      Object.values(snapshot.admission.tickets).some(
+        (ticket) => ticket.resumeCapabilityDigest === digest
+      ) ||
+      Object.values(snapshot.admission.seats).some(
+        (seat) => seat.claimCapabilityDigest === digest
+      ) ||
+      snapshot.admission.spectatorCapabilityDigest === digest));
+
+export const issueRoomInvitation = async (
+  current: RoomAuthoritySnapshot,
+  request: RoomInvitationIssueRequest,
+  now: number,
+  dependencies: RoomInvitationDependencies,
+  policy: RoomInvitationPolicy = DEFAULT_ROOM_INVITATION_POLICY
+): Promise<RoomInvitationIssueResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!current.admission) return invitationRejection(current, 'room_not_ready');
+  if (
+    !validNow(now) ||
+    !validInvitationPolicy(policy) ||
+    !validBoundedCapability(request.capability)
+  ) {
+    return invitationRejection(current, 'invalid_request');
+  }
+
+  const suppliedDigest = await dependencies.crypto.digestCapability(
+    request.capability
+  );
+  let grant: RoomInvitationGrant;
+  if (request.requestedRole === 'player') {
+    const seat = Object.values(current.admission.seats).find((candidate) =>
+      dependencies.crypto.equalDigest(
+        candidate.claimCapabilityDigest,
+        suppliedDigest
+      )
+    );
+    if (!seat) return invitationRejection(current, 'invalid_capability');
+    if (seat.claimedSessionId !== null) {
+      return invitationRejection(current, 'seat_unavailable');
+    }
+    if (!canClaimPlayerSeat(current.admission, seat.playerId)) {
+      return invitationRejection(current, 'seat_unavailable');
+    }
+    grant = {
+      role: 'player',
+      playerId: seat.playerId,
+      expiresAt: now + policy.lifetimeMs,
+    };
+  } else {
+    const expected = current.admission.spectatorCapabilityDigest;
+    if (
+      expected === null ||
+      !dependencies.crypto.equalDigest(expected, suppliedDigest)
+    ) {
+      return invitationRejection(current, 'invalid_capability');
+    }
+    grant = { role: 'spectator', expiresAt: now + policy.lifetimeMs };
+  }
+  if (!Number.isSafeInteger(grant.expiresAt)) {
+    return invitationRejection(current, 'invalid_request');
+  }
+
+  const live = liveInvitations(current.admission.invitations, now);
+  const retainedInvitations = Object.fromEntries(
+    Object.entries(live).filter(
+      ([, invitation]) =>
+        grant.role !== 'player' ||
+        invitation.role !== 'player' ||
+        invitation.playerId !== grant.playerId
+    )
+  );
+  if (
+    Object.keys(retainedInvitations).length >=
+    policy.maximumOutstandingInvitations
+  ) {
+    return invitationRejection(current, 'invitation_capacity');
+  }
+
+  const retainedTickets = ticketsForLiveInvitations(
+    liveTickets(current.admission.tickets, now),
+    retainedInvitations
+  );
+  const admissionBeforeIssue: RoomAdmissionState = {
+    ...current.admission,
+    invitations: retainedInvitations,
+    tickets: retainedTickets,
+  };
+  let invitation: string | undefined;
+  let invitationDigest: string | undefined;
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const candidate = dependencies.crypto.nextRoomInvitation();
+    if (!validBoundedCapability(candidate)) continue;
+    const digest = await dependencies.crypto.digestCapability(candidate);
+    // Compare against the pre-rotation registry as well as the credentials we
+    // retain. Reusing a just-revoked raw token would silently make the old
+    // invitation valid again when an entropy source misbehaves.
+    if (!digestAlreadyAuthorized(current, digest)) {
+      invitation = candidate;
+      invitationDigest = digest;
+      break;
+    }
+  }
+  if (!invitation || !invitationDigest) {
+    throw new Error('Invitation source failed to produce a unique token');
+  }
+
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    admission: {
+      ...admissionBeforeIssue,
+      invitations: {
+        ...retainedInvitations,
+        [invitationDigest]: grant,
+      },
+    },
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    kind: 'invitation_issued',
+    invitationDigest,
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    invitation,
+    requestedRole: request.requestedRole,
+    expiresAt: grant.expiresAt,
+  };
+};
+
+export const issueRoomAdmissionTicket = async (
+  current: RoomAuthoritySnapshot,
+  request: AdmissionTicketIssueRequest,
+  now: number,
+  dependencies: AdmissionTicketDependencies,
+  policy: AdmissionTicketPolicy = DEFAULT_ADMISSION_TICKET_POLICY
+): Promise<AdmissionTicketIssueResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!current.admission) return ticketRejection(current, 'room_not_ready');
+  if (
+    !validNow(now) ||
+    !validTicketPolicy(policy) ||
+    !validBoundedCapability(request.capability) ||
+    !validDisplayName(request.displayName)
+  ) {
+    return ticketRejection(current, 'invalid_request');
+  }
+
+  const suppliedDigest = await dependencies.crypto.digestCapability(
+    request.capability
+  );
+  const invitations = liveInvitations(current.admission.invitations, now);
+  let sourceInvitationDigest: string | undefined;
+  let ticket: UnboundRoomAdmissionTicket;
+  if (request.requestedRole === 'player') {
+    const seat = Object.values(current.admission.seats).find((candidate) =>
+      dependencies.crypto.equalDigest(
+        candidate.claimCapabilityDigest,
+        suppliedDigest
+      )
+    );
+    const invitation = invitations[suppliedDigest];
+    if (!seat) {
+      if (invitation?.role !== 'player') {
+        return ticketRejection(current, 'invalid_capability');
+      }
+      const invitedSeat = current.admission.seats[invitation.playerId];
+      if (!invitedSeat) return ticketRejection(current, 'invalid_capability');
+      if (invitedSeat.claimedSessionId !== null) {
+        return ticketRejection(current, 'invalid_capability');
+      }
+      sourceInvitationDigest = suppliedDigest;
+    }
+    const playerId =
+      seat?.playerId ??
+      (invitation?.role === 'player' ? invitation.playerId : undefined);
+    if (!playerId) return ticketRejection(current, 'invalid_capability');
+    if (!canClaimPlayerSeat(current.admission, playerId)) {
+      return ticketRejection(current, 'seat_unavailable');
+    }
+    ticket = {
+      role: 'player',
+      playerId,
+      displayName: request.displayName.trim(),
+      expiresAt: Math.min(
+        now + policy.lifetimeMs,
+        invitation?.expiresAt ?? Number.MAX_SAFE_INTEGER
+      ),
+      ...(sourceInvitationDigest ? { sourceInvitationDigest } : {}),
+    };
+  } else {
+    const expected = current.admission.spectatorCapabilityDigest;
+    const masterCapability =
+      expected !== null &&
+      dependencies.crypto.equalDigest(expected, suppliedDigest);
+    const invitation = invitations[suppliedDigest];
+    if (!masterCapability) {
+      if (invitation?.role !== 'spectator') {
+        return ticketRejection(current, 'invalid_capability');
+      }
+      sourceInvitationDigest = suppliedDigest;
+    }
+    ticket = {
+      role: 'spectator',
+      displayName: request.displayName.trim(),
+      expiresAt: Math.min(
+        now + policy.lifetimeMs,
+        invitation?.expiresAt ?? Number.MAX_SAFE_INTEGER
+      ),
+      ...(sourceInvitationDigest ? { sourceInvitationDigest } : {}),
+    };
+  }
+  if (!Number.isSafeInteger(ticket.expiresAt)) {
+    return ticketRejection(current, 'invalid_request');
+  }
+
+  const liveTicketRecords = ticketsForLiveInvitations(
+    liveTickets(current.admission.tickets, now),
+    invitations
+  );
+  const retainedTickets = sourceInvitationDigest
+    ? ticketsWithoutInvitationSource(liveTicketRecords, sourceInvitationDigest)
+    : liveTicketRecords;
+  if (Object.keys(retainedTickets).length >= policy.maximumOutstandingTickets) {
+    return ticketRejection(current, 'ticket_capacity');
+  }
+
+  let admissionTicket: string | undefined;
+  let ticketDigest: string | undefined;
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const candidate = dependencies.crypto.nextAdmissionTicket();
+    if (!validBoundedCapability(candidate)) continue;
+    const digest = await dependencies.crypto.digestCapability(candidate);
+    // A retry rotates its prior ticket. Never permit the replacement to reuse
+    // that raw bearer value, even if the token source repeats itself.
+    if (!digestAlreadyAuthorized(current, digest)) {
+      admissionTicket = candidate;
+      ticketDigest = digest;
+      break;
+    }
+  }
+  if (!admissionTicket || !ticketDigest) {
+    throw new Error('Admission ticket source failed to produce a unique token');
+  }
+
+  let resumeCapability: string | undefined;
+  let resumeCapabilityDigest: string | undefined;
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const candidate = dependencies.crypto.nextResumeCapability();
+    if (!validBoundedCapability(candidate)) continue;
+    const digest = await dependencies.crypto.digestCapability(candidate);
+    if (digest !== ticketDigest && !digestAlreadyAuthorized(current, digest)) {
+      resumeCapability = candidate;
+      resumeCapabilityDigest = digest;
+      break;
+    }
+  }
+  if (!resumeCapability || !resumeCapabilityDigest) {
+    throw new Error(
+      'Resume capability source failed to produce a unique token'
+    );
+  }
+
+  const boundTicket: RoomAdmissionTicket = {
+    ...ticket,
+    resumeCapabilityDigest,
+  };
+
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    admission: {
+      ...current.admission,
+      invitations,
+      tickets: { ...retainedTickets, [ticketDigest]: boundTicket },
+    },
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    kind: 'ticket_issued',
+    ticketDigest,
+    ...(sourceInvitationDigest ? { sourceInvitationDigest } : {}),
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    admissionTicket,
+    resumeCapability,
+    expiresAt: ticket.expiresAt,
+  };
+};
+
+export const redeemRoomAdmissionTicket = async (
+  current: RoomAuthoritySnapshot,
+  request: AdmissionTicketRedemptionRequest,
+  now: number,
+  dependencies: AdmissionDependencies
+): Promise<AdmissionResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!current.admission) return rejection(current, 'room_not_ready');
+  if (
+    !validNow(now) ||
+    !validBoundedCapability(request.admissionTicket) ||
+    !validDisplayName(request.displayName) ||
+    (request.resumeCapability !== undefined &&
+      !validBoundedCapability(request.resumeCapability))
+  ) {
+    return rejection(current, 'invalid_request');
+  }
+  const ticketDigest = await dependencies.crypto.digestCapability(
+    request.admissionTicket
+  );
+  const ticket = current.admission.tickets[ticketDigest];
+  const suppliedResumeDigest = request.resumeCapability
+    ? await dependencies.crypto.digestCapability(request.resumeCapability)
+    : undefined;
+  if (
+    !ticket ||
+    ticket.expiresAt <= now ||
+    ticket.role !== request.requestedRole ||
+    ticket.displayName !== request.displayName.trim() ||
+    (ticket.resumeCapabilityDigest !== undefined &&
+      (suppliedResumeDigest === undefined ||
+        !dependencies.crypto.equalDigest(
+          ticket.resumeCapabilityDigest,
+          suppliedResumeDigest
+        )))
+  ) {
+    return rejection(current, 'invalid_capability');
+  }
+  const sourceInvitation = ticket.sourceInvitationDigest
+    ? current.admission.invitations[ticket.sourceInvitationDigest]
+    : undefined;
+  if (
+    ticket.sourceInvitationDigest &&
+    (!sourceInvitation ||
+      sourceInvitation.expiresAt <= now ||
+      sourceInvitation.role !== ticket.role ||
+      (sourceInvitation.role === 'player' &&
+        (ticket.role !== 'player' ||
+          sourceInvitation.playerId !== ticket.playerId)))
+  ) {
+    return rejection(current, 'invalid_capability');
+  }
+
+  const resumeCapability =
+    request.resumeCapability ?? dependencies.crypto.nextResumeCapability();
+  return admitAuthorizedSession(
+    current,
+    ticket.role === 'player'
+      ? {
+          role: 'player',
+          playerId: ticket.playerId,
+          displayName: ticket.displayName,
+          resumeCapability,
+        }
+      : {
+          role: 'spectator',
+          displayName: ticket.displayName,
+          resumeCapability,
+        },
+    dependencies,
+    ticketDigest,
+    ticket.sourceInvitationDigest
+  );
+};
+
+export const admitRoomSession = async (
+  current: RoomAuthoritySnapshot,
+  request: AdmissionRequest,
+  dependencies: AdmissionDependencies
+): Promise<AdmissionResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!current.admission) return rejection(current, 'room_not_ready');
+
+  const suppliedCapability =
+    request.type === 'ClaimSeat'
+      ? request.seatCapability
+      : request.type === 'JoinSpectator'
+        ? request.spectatorCapability
+        : request.resumeCapability;
+  if (!validBoundedCapability(suppliedCapability)) {
+    return rejection(current, 'invalid_request');
+  }
+  const suppliedDigest =
+    await dependencies.crypto.digestCapability(suppliedCapability);
+
+  if (request.type === 'Resume') {
+    const session = Object.values(current.sessions).find(
+      (candidate) =>
+        candidate.active &&
+        candidate.resumeCapabilityDigest !== undefined &&
+        dependencies.crypto.equalDigest(
+          candidate.resumeCapabilityDigest,
+          suppliedDigest
+        )
+    );
+    return session
+      ? persistSessionResume(
+          current,
+          session,
+          request.resumeCapability,
+          dependencies
+        )
+      : rejection(current, 'invalid_capability');
+  }
+
+  if (request.type === 'ClaimSeat') {
+    if (!validDisplayName(request.displayName)) {
+      return rejection(current, 'invalid_request');
+    }
+    const seat = Object.values(current.admission.seats).find((candidate) =>
+      dependencies.crypto.equalDigest(
+        candidate.claimCapabilityDigest,
+        suppliedDigest
+      )
+    );
+    return seat
+      ? admitAuthorizedSession(
+          current,
+          {
+            role: 'player',
+            playerId: seat.playerId,
+            displayName: request.displayName.trim(),
+            resumeCapability: request.seatCapability,
+          },
+          dependencies
+        )
+      : rejection(current, 'invalid_capability');
+  }
+
+  const expected = current.admission.spectatorCapabilityDigest;
+  if (
+    expected === null ||
+    !dependencies.crypto.equalDigest(expected, suppliedDigest)
+  ) {
+    return rejection(current, 'invalid_capability');
+  }
+  return admitAuthorizedSession(
+    current,
+    {
+      role: 'spectator',
+      displayName: 'Spectator',
+      resumeCapability: dependencies.crypto.nextResumeCapability(),
+    },
+    dependencies
+  );
+};

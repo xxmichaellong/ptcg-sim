@@ -1,3 +1,24 @@
 packages:
-  - "client"
-  - "server"
+  - 'client'
+  - 'server'
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  esbuild: true
+  sqlite3: true
+  workerd: false
+overrides:
+  '@humanfs/node@<0.16.8': 0.16.8
+  'body-parser@<1.20.6': 1.20.6
+  'brace-expansion@<1.1.18': 1.1.18
+  'brace-expansion@>=2.0.0 <2.1.4': 2.1.4
+  'engine.io@>=6.5.0 <6.6.7': 6.6.10
+  'minimatch@>=3.0.0 <3.1.4': 3.1.4
+  'minimatch@>=5.0.0 <5.1.8': 5.1.8
+  'path-to-regexp@<0.1.13': 0.1.13
+  'picomatch@<2.3.2': 2.3.2
+  'qs@<6.16.0': 6.16.0
+  'sharp@<0.35.4': 0.35.4
+  'socket.io-parser@>=4.0.0 <4.2.7': 4.2.7
+  'tar-fs@>=2.0.0 <2.1.4': 2.1.5
+  'ws@<8.21.0': 8.21.3

@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Manually reviewed Chromium 151 CSS-pixel capture of two isolated, source-pinned DOM replays of the checked-in moveCardBundle -> moveCard -> attachCard -> syncRotation -> refreshBoard path. The legacy HTML, CSS, cardback asset, and Trainer-as-Tool category path are loaded or inspected directly; application/network modules remain inert, and their relevant mutation logic is narrowly transcribed. The immediate attach result is diagnostic only. Stable geometry is captured after refresh reconstruction, adjustCards, and empty-wrapper MutationObserver settlement across two animation frames. Painted boxes come from getBoundingClientRect; untransformed layout boxes are measured synchronously with the inline transform suppressed and restored without yielding.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "canonicalEvolutionOrder": ["base"],
+    "canonicalAttachmentOrder": ["trainer-as-tool"],
+    "cases": ["local-active", "opponent-active"]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "one native/current-category Trainer attached as a Tool to one ordinary face-up unrotated non-BREAK Pokémon",
+      "isolated local and opponent active slots at the default 1600x900 DPR-1 sidebar layout",
+      "the immediate post-attach diagnostic state and stable post-refresh state",
+      "integer CSSOM clientWidth/6 offset, stable adjustCards wrapper width, inline 2% right margin, and empty left margin",
+      "Trainer presentation-only quarter-turn, transformed painted box, synchronously measured untransformed layout box, matrix, and transform origin",
+      "single-Tool rotated paint overflow beyond the authored wrapper",
+      "logical order, DOM order, attachment target/relative/energyLayer state, z order, common/Tool-only/base-only/empty authored-layout hit order, and asynchronous empty-wrapper cleanup",
+      "the legacy UI convention that its Tool action reclassifies the current card category to Trainer"
+    ],
+    "excluded": [
+      "rules-aware Pokémon Tool validation or a distinct Tool card category",
+      "Energy, multiple or mixed attachments, Trainer ordering, and attachment-order normalization",
+      "Pokémon evolution layers and Pokémon-classified attachments",
+      "attachment departure, compaction, transfer, staging, history-dependent reconstruction, and stale post-removal margins",
+      "bench, multiple stacks and their flex shrink/overflow interactions, resize, fullscreen, alternate layouts, and explicit board flip",
+      "damage, ability, special-condition, BREAK, group rotation, nonzero base rotation, and manual Tool rotation",
+      "native-versus-reclassified Trainer history, mixed or noncanonical card dimensions, and cross-owner placement",
+      "concealed card metadata, face-down, reveal, hide, and source mutation behavior",
+      "previews, click, drag, drop, context-menu, message, network, and server behavior",
+      "candidate DOM/Pixi parity, production renderer correctness, and rotation-aware shared interaction semantics",
+      "the synchronous ghost wrapper as a stable or user-visible rendered result"
+    ]
+  },
+  "provenance": [
+    {
+      "path": "client/index.ejs",
+      "encoding": "utf8",
+      "sha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/self-containers.html",
+      "encoding": "utf8",
+      "sha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "encoding": "utf8",
+      "sha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "encoding": "utf8",
+      "sha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "encoding": "utf8",
+      "sha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "encoding": "utf8",
+      "sha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "encoding": "binary",
+      "sha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "encoding": "utf8",
+      "sha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "encoding": "utf8",
+      "sha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "encoding": "utf8",
+      "sha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-bundle.js",
+      "encoding": "utf8",
+      "sha256": "06ffbe2fd8b39eb78eee817667d059aef4ea56772b12393ffc1d625c4f949ed2"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card.js",
+      "encoding": "utf8",
+      "sha256": "5737c45ff7b45a71dee661b42cbba7b2ee6e1c852ee530ec4369b85493e794e3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+      "encoding": "utf8",
+      "sha256": "4e9d65ca703a1949fb6d603b596acf30eb0bf141c5228c3496542ae086ef822c"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/attach-card.js",
+      "encoding": "utf8",
+      "sha256": "711302b5dfdf757aa21b3a4ef1c83c582f6a14d60db31aaf8f81afdcd05203b4"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+      "encoding": "utf8",
+      "sha256": "b682db984c742521ee231d8e273ea0dc28e7561ce47234ef58971f6c8ab1c86e"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "encoding": "utf8",
+      "sha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
+    },
+    {
+      "path": "client/src/actions/general/change-type.js",
+      "encoding": "utf8",
+      "sha256": "7a746ae9ccc04a6180817f661b8a885c028c4c88d36c92f85a3ee8c34b54b108"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
+      "encoding": "utf8",
+      "sha256": "a7d50832cea32727a2bbb1957887d45a52f701c6b6d465e84e32338e42217940"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "outer player frames, opponent half-turn, active DOM regions, portrait asset sizing, and Chromium-observed transform origin",
+      "sources": [
+        "client/index.ejs",
+        "client/self-containers.html",
+        "client/opp-containers.html",
+        "client/src/css/index.css",
+        "client/src/css/self-containers.css",
+        "client/src/css/opp-containers.css",
+        "client/src/assets/cardback.png"
+      ]
+    },
+    {
+      "claim": "card defaults, reset state, and active play-container construction",
+      "sources": [
+        "client/src/setup/deck-constructor/card.js",
+        "client/src/setup/image-logic/reset-image.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js"
+      ]
+    },
+    {
+      "claim": "ordinary move entry, target resolution, non-Pokémon attachment, integer horizontal offset, and z order",
+      "sources": [
+        "client/src/setup/zones/get-zone.js",
+        "client/src/actions/move-card-bundle/move-card-bundle.js",
+        "client/src/actions/move-card-bundle/move-card.js",
+        "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+        "client/src/actions/move-card-bundle/attach-card.js"
+      ]
+    },
+    {
+      "claim": "Trainer-as-Tool category mapping, presentation-only quarter-turn, and inline 2% right margin",
+      "sources": [
+        "client/src/actions/general/change-type.js",
+        "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
+        "client/src/actions/general/rotate-card.js"
+      ]
+    },
+    {
+      "claim": "refresh reconstruction, attachment relocation, stable wrapper width, and asynchronous old-wrapper cleanup",
+      "sources": [
+        "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+        "client/src/setup/sizing/refresh-board.js",
+        "client/src/setup/sizing/resizer.js"
+      ]
+    }
+  ],
+  "phaseInvariants": {
+    "transientPostAttach": {
+      "logicalOrder": ["base", "trainer-as-tool"],
+      "domOrder": ["base", "trainer-as-tool"],
+      "clientWidth": 106,
+      "authoredWidthPx": 106.167,
+      "inlineMarginRight": "2%",
+      "computedMarginRightPx": 7.71875
+    },
+    "stablePostRefresh": {
+      "logicalOrder": ["base", "trainer-as-tool"],
+      "domOrder": ["base", "trainer-as-tool"],
+      "zIndexesByLogicalOrder": [0, -1],
+      "localRotationsByLogicalOrder": [0, 90],
+      "synchronousWrapperCount": 2,
+      "stableWrapperCount": 1
+    }
+  },
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": { "a": -1, "b": 0, "c": 0, "d": -1, "rotationDegrees": 180 }
+    },
+    "cards": [
+      {
+        "id": "local-tool-base",
+        "side": "local",
+        "role": "base",
+        "physicalBounds": {
+          "x": 547.046875,
+          "y": 481.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "frameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedPhysicalBounds": {
+          "x": 547.046875,
+          "y": 481.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedFrameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "localRotationDegrees": 0,
+        "effectiveRotationDegrees": 0,
+        "transformMatrix": { "a": 1, "b": 0, "c": 0, "d": 1 }
+      },
+      {
+        "id": "local-tool-attachment",
+        "side": "local",
+        "role": "tool",
+        "physicalBounds": {
+          "x": 544.484375,
+          "y": 499.21875,
+          "width": 126,
+          "height": 90.5625
+        },
+        "frameLocalBounds": {
+          "x": 544.484375,
+          "y": 49.21875,
+          "width": 126,
+          "height": 90.5625
+        },
+        "untransformedPhysicalBounds": {
+          "x": 562.203125,
+          "y": 481.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedFrameLocalBounds": {
+          "x": 562.203125,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "localRotationDegrees": 90,
+        "effectiveRotationDegrees": 90,
+        "transformMatrix": { "a": 0, "b": 1, "c": -1, "d": 0 }
+      },
+      {
+        "id": "opponent-tool-base",
+        "side": "opponent",
+        "role": "base",
+        "physicalBounds": {
+          "x": 570.390625,
+          "y": 292.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "frameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedPhysicalBounds": {
+          "x": 570.390625,
+          "y": 292.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedFrameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "localRotationDegrees": 0,
+        "effectiveRotationDegrees": 180,
+        "transformMatrix": { "a": 1, "b": 0, "c": 0, "d": 1 }
+      },
+      {
+        "id": "opponent-tool-attachment",
+        "side": "opponent",
+        "role": "tool",
+        "physicalBounds": {
+          "x": 537.515625,
+          "y": 310.21875,
+          "width": 126,
+          "height": 90.5625
+        },
+        "frameLocalBounds": {
+          "x": 544.484375,
+          "y": 49.21875,
+          "width": 126,
+          "height": 90.5625
+        },
+        "untransformedPhysicalBounds": {
+          "x": 555.234375,
+          "y": 292.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "untransformedFrameLocalBounds": {
+          "x": 562.203125,
+          "y": 31.5,
+          "width": 90.5625,
+          "height": 126
+        },
+        "localRotationDegrees": 90,
+        "effectiveRotationDegrees": 270,
+        "transformMatrix": { "a": 0, "b": 1, "c": -1, "d": 0 }
+      }
+    ],
+    "stacks": [
+      {
+        "id": "local-canonical-trainer-tool-stack",
+        "side": "local",
+        "physicalBounds": {
+          "x": 547.046875,
+          "y": 481.5,
+          "width": 106.15625,
+          "height": 126
+        },
+        "frameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 106.15625,
+          "height": 126
+        },
+        "baseClientWidth": 91,
+        "clientWidth": 106,
+        "authoredWidthPx": 106.167,
+        "attachmentClientWidthsBefore": [91],
+        "attachmentAuthoredWidthsPx": [106.167],
+        "inlineMarginRight": "2%",
+        "inlineMarginLeft": "",
+        "computedMarginRightPx": 7.71875,
+        "computedMarginLeftPx": 0,
+        "childDomOrder": ["local-tool-base", "local-tool-attachment"],
+        "logicalOrder": ["local-tool-base", "local-tool-attachment"],
+        "hitOrder": {
+          "commonOverlap": ["local-tool-base", "local-tool-attachment"],
+          "toolOnly": ["local-tool-attachment"],
+          "baseOnly": ["local-tool-base"],
+          "authoredLayoutOnly": []
+        }
+      },
+      {
+        "id": "opponent-canonical-trainer-tool-stack",
+        "side": "opponent",
+        "physicalBounds": {
+          "x": 554.796875,
+          "y": 292.5,
+          "width": 106.15625,
+          "height": 126
+        },
+        "frameLocalBounds": {
+          "x": 547.046875,
+          "y": 31.5,
+          "width": 106.15625,
+          "height": 126
+        },
+        "baseClientWidth": 91,
+        "clientWidth": 106,
+        "authoredWidthPx": 106.167,
+        "attachmentClientWidthsBefore": [91],
+        "attachmentAuthoredWidthsPx": [106.167],
+        "inlineMarginRight": "2%",
+        "inlineMarginLeft": "",
+        "computedMarginRightPx": 7.71875,
+        "computedMarginLeftPx": 0,
+        "childDomOrder": ["opponent-tool-base", "opponent-tool-attachment"],
+        "logicalOrder": ["opponent-tool-base", "opponent-tool-attachment"],
+        "hitOrder": {
+          "commonOverlap": ["opponent-tool-base", "opponent-tool-attachment"],
+          "toolOnly": ["opponent-tool-attachment"],
+          "baseOnly": ["opponent-tool-base"],
+          "authoredLayoutOnly": []
+        }
+      }
+    ]
+  }
+}

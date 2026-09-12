@@ -1,0 +1,1616 @@
+import { asMatchId, asPlayerId, createEmptyMatch } from '@ptcgsim/game-core';
+import {
+  AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  DEFAULT_AUTHORITY_POLICY,
+  RoomAuthorityCoordinator,
+  createRoomAdmissionState,
+  createReplayHistory,
+  emptyProjectionIdentityState,
+  type AuthoritySnapshotStore,
+  type PersistedAdmissionTransaction,
+  type PersistedAuthorityTransaction,
+  type RoomAuthoritySnapshot,
+} from '@ptcgsim/room-authority';
+import { PROTOCOL_VERSION, type ServerMessage } from '@ptcgsim/protocol';
+import { describe, expect, it, vi } from 'vitest';
+
+import { WebCryptoAuthoritySource } from './authority-crypto.js';
+import { NOOP_SERVER_TELEMETRY } from './server-telemetry.js';
+import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
+
+const p1 = asPlayerId('player-one');
+const p2 = asPlayerId('player-two');
+
+const allowRoomOperations = {
+  attempt: async () => ({ allowed: true, remaining: 1 }) as const,
+};
+
+class MemoryAuthorityStore implements AuthoritySnapshotStore {
+  commandCommits: PersistedAuthorityTransaction[] = [];
+  admissionCommits: PersistedAdmissionTransaction[] = [];
+  failAdmissionAfterCommitOnce = false;
+
+  constructor(public durable: RoomAuthoritySnapshot) {}
+
+  async load() {
+    return this.durable;
+  }
+
+  async commit(transaction: PersistedAuthorityTransaction) {
+    expect(transaction.expectedAuthorityVersion).toBe(
+      this.durable.authorityVersion
+    );
+    this.commandCommits.push(transaction);
+    this.durable = transaction.snapshot;
+  }
+
+  async commitAdmission(transaction: PersistedAdmissionTransaction) {
+    expect(transaction.expectedAuthorityVersion).toBe(
+      this.durable.authorityVersion
+    );
+    this.admissionCommits.push(transaction);
+    this.durable = transaction.snapshot;
+    if (this.failAdmissionAfterCommitOnce) {
+      this.failAdmissionAfterCommitOnce = false;
+      throw new Error('simulated response-path failure');
+    }
+  }
+}
+
+const connection = (id: string) => {
+  const messages: ServerMessage[] = [];
+  const close = vi.fn();
+  const value: RuntimeConnection = {
+    id,
+    send: (frame) => messages.push(JSON.parse(frame) as ServerMessage),
+    close,
+  };
+  return { value, messages, close };
+};
+
+const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
+  const crypto = new WebCryptoAuthoritySource();
+  const seatToken = crypto.nextSeatCapability();
+  const otherSeatToken = crypto.nextSeatCapability();
+  const spectatorToken = crypto.nextSeatCapability();
+  const state = createEmptyMatch(asMatchId('hub-room'), [
+    { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
+    { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
+  ]);
+  const initial: RoomAuthoritySnapshot = {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode,
+    state,
+    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    sessions: {},
+    admission: createRoomAdmissionState({
+      playerSeatLimit: mode === 'solo' ? 1 : 2,
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: await crypto.digestCapability(seatToken),
+        [p2]: await crypto.digestCapability(otherSeatToken),
+      },
+      spectatorCapabilityDigest: await crypto.digestCapability(spectatorToken),
+    }),
+  };
+  const store = new MemoryAuthorityStore(initial);
+  let wallClock = 10_000;
+  let monotonicTick = 0;
+  const monotonicNow = () => monotonicTick++;
+  const coordinatorDependencies = {
+    commandContext: crypto,
+    opaqueIds: crypto,
+    policy: DEFAULT_AUTHORITY_POLICY,
+    monotonicNow,
+  };
+  const coordinator = new RoomAuthorityCoordinator(
+    initial,
+    store,
+    coordinatorDependencies
+  );
+  const rateLimits = {
+    attempt: vi.fn(async () => ({ allowed: true, remaining: 1 }) as const),
+  };
+  const telemetry = {
+    ...NOOP_SERVER_TELEMETRY,
+    roomRateLimit: vi.fn(),
+    roomAdmission: vi.fn(),
+    roomCommand: vi.fn(),
+    failure: vi.fn(),
+  };
+  const hubDependencies = {
+    store,
+    rateLimits,
+    telemetry,
+    monotonicNow,
+    admission: {
+      crypto,
+      opaqueIds: crypto,
+      persistence: store,
+      now: () => wallClock,
+    },
+  };
+  const hub = new RoomSessionHub(coordinator, 'server-build', hubDependencies);
+  const issued = await hub.issueAdmissionTicket({
+    capability: seatToken,
+    displayName: 'Blue',
+    requestedRole: 'player',
+  });
+  if (!issued.accepted) throw new Error(issued.code);
+  return {
+    hub,
+    store,
+    admissionTicket: issued.admissionTicket,
+    resumeToken: issued.resumeCapability,
+    seatCapability: seatToken,
+    otherSeatCapability: otherSeatToken,
+    spectatorCapability: spectatorToken,
+    crypto,
+    rateLimits,
+    telemetry,
+    setWallClock: (value: number) => {
+      wallClock = value;
+    },
+    restoreHub: () =>
+      new RoomSessionHub(
+        new RoomAuthorityCoordinator(
+          store.durable,
+          store,
+          coordinatorDependencies
+        ),
+        'server-build',
+        hubDependencies
+      ),
+  };
+};
+
+const helloFrame = (input: {
+  readonly admissionTicket?: string;
+  readonly resumeToken?: string;
+  readonly displayName?: string;
+  readonly requestedRole?: 'player' | 'spectator';
+}): string =>
+  JSON.stringify({
+    type: 'Hello',
+    protocolVersion: PROTOCOL_VERSION,
+    buildId: 'client-build',
+    roomCode: 'ROOM',
+    displayName: input.displayName ?? 'Blue',
+    requestedRole: input.requestedRole ?? 'player',
+    ...input,
+  });
+
+describe('serialized room session hub', () => {
+  it('rejects over-budget operations before authority mutation', async () => {
+    const setup = await fixture();
+    setup.rateLimits.attempt.mockResolvedValue({
+      allowed: false,
+      retryAfterSeconds: 23,
+    });
+
+    await expect(
+      setup.hub.issueInvitation({
+        capability: setup.otherSeatCapability,
+        requestedRole: 'player',
+      })
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'rate_limited',
+      retryAfterSeconds: 23,
+      snapshot: { authorityVersion: 1 },
+    });
+    expect(setup.store.admissionCommits).toHaveLength(1);
+    expect(setup.telemetry.roomAdmission).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        operation: 'invitation_issue',
+        outcome: 'rate_limited',
+        reason: 'rate_limited',
+      })
+    );
+
+    await expect(setup.hub.reserveSocketUpgrade()).resolves.toEqual({
+      allowed: false,
+      retryAfterSeconds: 23,
+    });
+    expect(setup.rateLimits.attempt.mock.calls.slice(-2)).toEqual([
+      ['invitation', 10_000],
+      ['socket_upgrade', 10_000],
+    ]);
+  });
+
+  it('bounds repeated Hello attempts on an already-open socket', async () => {
+    const setup = await fixture();
+    setup.rateLimits.attempt.mockResolvedValue({
+      allowed: false,
+      retryAfterSeconds: 11,
+    });
+    const client = connection('over-budget-hello');
+
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+
+    expect(client.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        retryable: true,
+      }),
+    ]);
+    expect(setup.store.admissionCommits).toHaveLength(1);
+    expect(setup.rateLimits.attempt).toHaveBeenLastCalledWith(
+      'session_hello',
+      10_000
+    );
+  });
+
+  it('reloads a ticket commit when persistence reports failure after durability', async () => {
+    const setup = await fixture();
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: setup.seatCapability,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+
+    const recovered = await setup.hub.issueAdmissionTicket({
+      capability: setup.seatCapability,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    expect(recovered.accepted).toBe(true);
+    expect(setup.store.durable.authorityVersion).toBe(3);
+  });
+
+  it('recovers an admission committed before its Welcome send failed', async () => {
+    const setup = await fixture();
+    const failedSend = vi.fn(() => {
+      throw new Error('simulated lost Welcome');
+    });
+    const first: RuntimeConnection = {
+      id: 'lost-welcome',
+      send: failedSend,
+      close: vi.fn(),
+    };
+
+    await setup.hub.handleFrame(
+      first,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+
+    const admitted = Object.values(setup.store.durable.sessions)[0];
+    expect(admitted).toMatchObject({ active: true });
+    expect(setup.hub.bindingForConnection(first.id).sessionId).toBeUndefined();
+    expect(setup.store.durable.admission?.tickets).toEqual({});
+
+    const retry = connection('lost-welcome-retry');
+    await setup.hub.handleFrame(
+      retry.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+
+    expect(retry.messages[0]).toMatchObject({
+      type: 'Welcome',
+      sessionId: admitted?.id,
+      resumeToken: setup.resumeToken,
+    });
+    expect(retry.messages[1]).toMatchObject({
+      type: 'Presence',
+      status: 'reconnected',
+    });
+    expect(setup.store.admissionCommits.map((entry) => entry.kind)).toEqual([
+      'ticket_issued',
+      'seat_claimed',
+      'session_disconnected',
+      'session_resumed',
+    ]);
+    expect(setup.telemetry.failure).toHaveBeenCalledWith({
+      subsystem: 'socket_send',
+      retryable: true,
+    });
+  });
+
+  it('recovers the same pair after an admission commit reports ambiguity', async () => {
+    const setup = await fixture();
+    setup.store.failAdmissionAfterCommitOnce = true;
+    const client = connection('ambiguous-admission');
+    const frame = helloFrame({
+      admissionTicket: setup.admissionTicket,
+      resumeToken: setup.resumeToken,
+    });
+
+    await setup.hub.handleFrame(client.value, frame);
+    expect(client.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'internal_retryable',
+        retryable: true,
+      }),
+    ]);
+    const committedSession = Object.values(setup.store.durable.sessions)[0];
+    expect(committedSession).toMatchObject({ active: true });
+
+    await setup.hub.handleFrame(client.value, frame);
+
+    expect(client.messages[1]).toMatchObject({
+      type: 'Welcome',
+      sessionId: committedSession?.id,
+      resumeToken: setup.resumeToken,
+    });
+    expect(setup.store.admissionCommits.map((entry) => entry.kind)).toEqual([
+      'ticket_issued',
+      'seat_claimed',
+      'session_resumed',
+    ]);
+  });
+
+  it('refreshes an existing peer when a player display name is admitted', async () => {
+    const setup = await fixture();
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const watcher = connection('name-refresh-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const watcherWelcome = watcher.messages.find(
+      (message) => message.type === 'Welcome'
+    );
+    expect(watcherWelcome).toMatchObject({
+      type: 'Welcome',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Player 1' } },
+      },
+    });
+
+    const blue = connection('name-refresh-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+
+    const refresh = watcher.messages.find(
+      (message) => message.type === 'ProjectionRefresh'
+    );
+    expect(refresh).toMatchObject({
+      type: 'ProjectionRefresh',
+      cause: 'authority_reconciled',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Blue' } },
+      },
+    });
+    expect(refresh).not.toHaveProperty('coveringCommandId');
+  });
+
+  it('repairs a missed peer-name refresh after an ambiguous admission commit', async () => {
+    const setup = await fixture();
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const watcher = connection('ambiguous-name-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    setup.store.failAdmissionAfterCommitOnce = true;
+    const blue = connection('ambiguous-name-blue');
+    const frame = helloFrame({
+      admissionTicket: setup.admissionTicket,
+      resumeToken: setup.resumeToken,
+    });
+
+    await setup.hub.handleFrame(blue.value, frame);
+    expect(
+      watcher.messages.some((message) => message.type === 'ProjectionRefresh')
+    ).toBe(false);
+
+    await setup.hub.handleFrame(blue.value, frame);
+    expect(
+      watcher.messages.find((message) => message.type === 'ProjectionRefresh')
+    ).toMatchObject({
+      type: 'ProjectionRefresh',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Blue' } },
+      },
+    });
+  });
+
+  it('reloads and safely rotates an invitation committed before a failed response', async () => {
+    const setup = await fixture();
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueInvitation({
+        capability: setup.otherSeatCapability,
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+
+    const lostDigest = setup.store.admissionCommits.at(-1);
+    expect(lostDigest).toMatchObject({ kind: 'invitation_issued' });
+    const recovered = await setup.hub.issueInvitation({
+      capability: setup.otherSeatCapability,
+      requestedRole: 'player',
+    });
+    expect(recovered.accepted).toBe(true);
+    if (!recovered.accepted) return;
+    expect(setup.store.durable.authorityVersion).toBe(3);
+    expect(
+      Object.keys(setup.store.durable.admission?.invitations ?? {})
+    ).toEqual([await setup.crypto.digestCapability(recovered.invitation)]);
+    expect(setup.store.admissionCommits.map((item) => item.kind)).toEqual([
+      'ticket_issued',
+      'invitation_issued',
+      'invitation_issued',
+    ]);
+  });
+
+  it('recovers a lost invitation-exchange response and admits the guest exactly once', async () => {
+    const setup = await fixture();
+    const invitation = await setup.hub.issueInvitation({
+      capability: setup.otherSeatCapability,
+      requestedRole: 'player',
+    });
+    if (!invitation.accepted) throw new Error(invitation.code);
+
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: invitation.invitation,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+    const lostTicket = setup.store.admissionCommits.at(-1);
+    if (lostTicket?.kind !== 'ticket_issued') {
+      throw new Error('missing lost ticket transaction');
+    }
+
+    const recovered = await setup.hub.issueAdmissionTicket({
+      capability: invitation.invitation,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    if (!recovered.accepted) throw new Error(recovered.code);
+    const recoveredDigest = await setup.crypto.digestCapability(
+      recovered.admissionTicket
+    );
+    expect(recoveredDigest).not.toBe(lostTicket.ticketDigest);
+    expect(setup.store.durable.admission?.tickets).not.toHaveProperty(
+      lostTicket.ticketDigest
+    );
+
+    const guest = connection('invited-guest');
+    await setup.hub.handleFrame(
+      guest.value,
+      helloFrame({
+        admissionTicket: recovered.admissionTicket,
+        resumeToken: recovered.resumeCapability,
+      })
+    );
+    expect(guest.messages[0]).toMatchObject({
+      type: 'Welcome',
+      role: 'player',
+    });
+    expect(setup.store.durable.admission?.invitations).toEqual({});
+    expect(setup.store.durable.admission?.tickets).not.toHaveProperty(
+      recoveredDigest
+    );
+    expect(setup.store.durable.admission?.seats[p2]?.claimedSessionId).toBe(
+      guest.messages[0]?.type === 'Welcome'
+        ? guest.messages[0].sessionId
+        : undefined
+    );
+
+    const replay = await setup.hub.issueAdmissionTicket({
+      capability: invitation.invitation,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    expect(replay).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+  });
+
+  it('recovers an exact admission pair and supersedes one controlling connection per session', async () => {
+    const setup = await fixture();
+    const first = connection('connection-one');
+    await setup.hub.handleFrame(
+      first.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = first.messages[0];
+    expect(welcome).toMatchObject({ type: 'Welcome', role: 'player' });
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+
+    const replay = connection('connection-ticket-replay');
+    await setup.hub.handleFrame(
+      replay.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    expect(replay.messages[0]).toMatchObject({
+      type: 'Welcome',
+      sessionId: welcome.sessionId,
+    });
+    expect(first.messages.at(-1)).toMatchObject({ type: 'SessionSuperseded' });
+    expect(first.close).toHaveBeenCalledWith(4409, 'Session superseded');
+
+    const forged = connection('connection-forged-ticket-replay');
+    await setup.hub.handleFrame(
+      forged.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.crypto.nextResumeCapability(),
+      })
+    );
+    expect(forged.messages[0]).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_capability',
+      retryable: false,
+    });
+
+    const second = connection('connection-two');
+    await setup.hub.handleFrame(
+      second.value,
+      helloFrame({ resumeToken: welcome.resumeToken })
+    );
+
+    expect(replay.messages.at(-1)).toMatchObject({ type: 'SessionSuperseded' });
+    expect(replay.close).toHaveBeenCalledWith(4409, 'Session superseded');
+    expect(second.messages[0]).toMatchObject({
+      type: 'Welcome',
+      sessionId: welcome.sessionId,
+    });
+    expect(setup.store.admissionCommits.map((item) => item.kind)).toEqual([
+      'ticket_issued',
+      'seat_claimed',
+      'session_resumed',
+      'session_resumed',
+    ]);
+  });
+
+  it('publishes authenticated presence without false hibernation or supersession disconnects', async () => {
+    const setup = await fixture();
+    const blue = connection('presence-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    expect(blue.messages).toEqual([
+      expect.objectContaining({ type: 'Welcome', role: 'player' }),
+      {
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p1,
+        displayName: 'Blue',
+        status: 'joined',
+      },
+    ]);
+
+    const ticket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Persistent Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const spectator = connection('presence-spectator');
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: ticket.admissionTicket,
+        resumeToken: ticket.resumeCapability,
+        displayName: 'Persistent Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const spectatorWelcome = spectator.messages[0];
+    if (spectatorWelcome?.type !== 'Welcome') {
+      throw new Error('missing spectator welcome');
+    }
+    const joined = {
+      type: 'Presence' as const,
+      protocolVersion: PROTOCOL_VERSION,
+      displayName: 'Persistent Watcher',
+      status: 'joined' as const,
+    };
+    expect(blue.messages.at(-1)).toEqual(joined);
+    expect(spectator.messages.at(-1)).toEqual(joined);
+
+    const versionBeforeDisconnect = setup.store.durable.authorityVersion;
+    await setup.hub.disconnect(spectator.value.id);
+    expect(blue.messages.at(-1)).toEqual({
+      ...joined,
+      status: 'disconnected',
+    });
+    expect(setup.store.durable.authorityVersion).toBe(
+      versionBeforeDisconnect + 1
+    );
+    expect(
+      setup.store.durable.sessions[spectatorWelcome.sessionId]
+        ?.reconnectExpiresAt
+    ).toBe(40_000);
+
+    const afterWake = connection('presence-after-wake');
+    const blueMessageCount = blue.messages.length;
+    setup.hub.restoreBinding(afterWake.value, spectatorWelcome.sessionId);
+    expect(afterWake.messages).toEqual([]);
+    expect(
+      setup.hub.bindingForConnection(afterWake.value.id).sessionId
+    ).toBeUndefined();
+    expect(blue.messages).toHaveLength(blueMessageCount);
+
+    const resumed = connection('presence-resumed');
+    await setup.hub.handleFrame(
+      resumed.value,
+      helloFrame({
+        resumeToken: spectatorWelcome.resumeToken,
+        displayName: 'Forged Name',
+        requestedRole: 'spectator',
+      })
+    );
+    expect(afterWake.messages).toEqual([]);
+    expect(afterWake.close).not.toHaveBeenCalled();
+    const reconnected = { ...joined, status: 'reconnected' as const };
+    expect(blue.messages.at(-1)).toEqual(reconnected);
+    expect(resumed.messages.at(-1)).toEqual(reconnected);
+
+    const countBeforeSupersededClose = blue.messages.length;
+    await setup.hub.disconnect(afterWake.value.id);
+    expect(blue.messages).toHaveLength(countBeforeSupersededClose);
+
+    await setup.hub.handleFrame(
+      resumed.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+    expect(resumed.close).toHaveBeenCalledWith(1000, 'Client left room');
+    expect(blue.messages.at(-1)).toEqual({ ...joined, status: 'left' });
+    expect(
+      setup.store.durable.sessions[spectatorWelcome.sessionId]
+    ).toBeUndefined();
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'session_left',
+      sessionId: spectatorWelcome.sessionId,
+    });
+
+    const rejectedResume = connection('presence-retired-resume');
+    await setup.hub.handleFrame(
+      rejectedResume.value,
+      helloFrame({
+        resumeToken: spectatorWelcome.resumeToken,
+        requestedRole: 'spectator',
+      })
+    );
+    expect(rejectedResume.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'invalid_capability',
+      }),
+    ]);
+  });
+
+  it('reconciles an ambiguously committed leave and releases a player seat', async () => {
+    const setup = await fixture();
+    const blue = connection('ambiguous-leave-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = blue.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    setup.store.failAdmissionAfterCommitOnce = true;
+
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+
+    expect(blue.close).toHaveBeenCalledWith(1000, 'Client left room');
+    expect(setup.store.durable.sessions[welcome.sessionId]).toBeUndefined();
+    expect(
+      setup.store.durable.admission?.seats[p1]?.claimedSessionId
+    ).toBeNull();
+    expect(setup.telemetry.failure).not.toHaveBeenCalledWith({
+      subsystem: 'session_leave',
+      retryable: true,
+    });
+
+    const replacementTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.seatCapability,
+      displayName: 'Replacement Blue',
+      requestedRole: 'player',
+    });
+    expect(replacementTicket).toMatchObject({ accepted: true });
+  });
+
+  it('expires a disconnected seat once and rejects its late resume bearer', async () => {
+    const setup = await fixture();
+    const player = connection('expiring-player');
+    await setup.hub.handleFrame(
+      player.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = player.messages[0];
+    if (welcome?.type !== 'Welcome' || !welcome.playerId) {
+      throw new Error('missing player welcome');
+    }
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Lease Observer',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const spectator = connection('lease-observer');
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Lease Observer',
+        requestedRole: 'spectator',
+      })
+    );
+
+    const preservedState = setup.store.durable.state;
+    const preservedReplay = setup.store.durable.replayHistory;
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await setup.hub.disconnect(player.value.id);
+    expect(setup.hub.nextReconnectExpiry()).toBe(40_000);
+    await expect(setup.hub.expireDisconnectedSessions(39_999)).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.admissionCommits.at(-1)?.kind).toBe(
+      'session_disconnected'
+    );
+
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(setup.hub.expireDisconnectedSessions(40_000)).resolves.toBe(
+      undefined
+    );
+    expect(setup.store.durable.sessions[welcome.sessionId]).toBeUndefined();
+    expect(
+      setup.store.durable.admission?.seats[welcome.playerId]?.claimedSessionId
+    ).toBeNull();
+    expect(setup.store.durable.state).toBe(preservedState);
+    expect(setup.store.durable.replayHistory).toBe(preservedReplay);
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'Presence',
+      displayName: 'Blue',
+      status: 'left',
+    });
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'sessions_expired',
+      sessionIds: [welcome.sessionId],
+      expiredAt: 40_000,
+    });
+
+    setup.setWallClock(40_000);
+    const late = connection('late-resume');
+    await setup.hub.handleFrame(
+      late.value,
+      helloFrame({ resumeToken: welcome.resumeToken })
+    );
+    expect(late.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'invalid_capability',
+      }),
+    ]);
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: setup.seatCapability,
+        displayName: 'Replacement Blue',
+        requestedRole: 'player',
+      })
+    ).resolves.toMatchObject({ accepted: true });
+  });
+
+  it('repairs a missing disconnect marker once after runtime restoration', async () => {
+    const setup = await fixture();
+    const player = connection('lost-runtime-player');
+    await setup.hub.handleFrame(
+      player.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = player.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing player welcome');
+    const beforeRepair = setup.store.durable.authorityVersion;
+
+    // A fresh runtime sees durable authorization but no surviving socket
+    // attachment, as can happen after an interrupted close callback.
+    const restored = setup.restoreHub();
+    await expect(restored.reconcileDisconnectedBindings()).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.durable.authorityVersion).toBe(beforeRepair + 1);
+    expect(
+      setup.store.durable.sessions[welcome.sessionId]?.reconnectExpiresAt
+    ).toBe(40_000);
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'session_disconnected',
+      sessionId: welcome.sessionId,
+    });
+
+    const commitCount = setup.store.admissionCommits.length;
+    await expect(restored.reconcileDisconnectedBindings()).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.admissionCommits).toHaveLength(commitCount);
+  });
+
+  it('serializes a socket-close callback behind an in-flight durable leave', async () => {
+    const setup = await fixture();
+    const blue = connection('leave-race-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const watcherTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Leave Race Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!watcherTicket.accepted) throw new Error(watcherTicket.code);
+    const watcher = connection('leave-race-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: watcherTicket.admissionTicket,
+        resumeToken: watcherTicket.resumeCapability,
+        displayName: 'Leave Race Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const beforeLifecycle = watcher.messages.length;
+
+    const originalCommit = setup.store.commitAdmission.bind(setup.store);
+    let announceCommitStarted = (): void => undefined;
+    const commitStarted = new Promise<void>((resolve) => {
+      announceCommitStarted = resolve;
+    });
+    let releaseCommit = (): void => undefined;
+    const commitGate = new Promise<void>((resolve) => {
+      releaseCommit = resolve;
+    });
+    vi.spyOn(setup.store, 'commitAdmission').mockImplementationOnce(
+      async (transaction) => {
+        announceCommitStarted();
+        await commitGate;
+        await originalCommit(transaction);
+      }
+    );
+
+    const leave = setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+    await commitStarted;
+    const socketClose = setup.hub.disconnect(blue.value.id);
+    releaseCommit();
+    await Promise.all([leave, socketClose]);
+
+    expect(
+      watcher.messages
+        .slice(beforeLifecycle)
+        .filter((message) => message.type === 'Presence')
+        .map((message) => message.status)
+    ).toEqual(['left']);
+  });
+
+  it('routes an accepted command publication before its result', async () => {
+    const setup = await fixture();
+    const client = connection('connection');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = client.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+
+    const frame = JSON.stringify({
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: welcome.sessionId,
+      clientSequence: 1,
+      commandId: 'flip-command',
+      lastSeenRevision: 0,
+      command: { type: 'FlipCoin' },
+    });
+    await setup.hub.handleFrame(client.value, frame);
+
+    expect(client.messages.slice(-2).map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'CommandResult',
+      accepted: true,
+      revision: 1,
+    });
+    expect(setup.store.commandCommits).toHaveLength(1);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'FlipCoin',
+        outcome: 'accepted',
+        startRevision: 0,
+        endRevision: 1,
+        deliveryCount: 2,
+        phases: {
+          authorityProcessingMs: 11,
+          projectionMs: 1,
+          persistenceMs: 1,
+          publicationSerializationMs: 1,
+          socketSendMs: 1,
+        },
+        durationMs: 18,
+      })
+    );
+    expect(setup.hub.recentAcceptedCommandPerformance()).toEqual([
+      {
+        endRevision: 1,
+        totalMs: 18,
+        phases: {
+          authorityProcessingMs: 11,
+          projectionMs: 1,
+          persistenceMs: 1,
+          publicationSerializationMs: 1,
+          socketSendMs: 1,
+        },
+        breakdown: {
+          inputValidationMs: 1,
+          resolutionAndExecutionMs: 1,
+          historyAndCandidateMs: 1,
+          candidateValidationMs: 1,
+          snapshotValidationMs: 0,
+          predecessorValidationMs: 0,
+          frontierFastPathHit: 0,
+          transactionMs: 0,
+        },
+      },
+    ]);
+
+    await setup.hub.handleFrame(client.value, frame);
+    expect(setup.store.commandCommits).toHaveLength(1);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'FlipCoin',
+        outcome: 'duplicate',
+        startRevision: 1,
+        endRevision: 1,
+      })
+    );
+    expect(setup.hub.recentAcceptedCommandPerformance()).toHaveLength(1);
+  });
+
+  it('broadcasts ephemeral server-attributed player announcements without authority mutation', async () => {
+    const setup = await fixture();
+    const redTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.otherSeatCapability,
+      displayName: 'Red',
+      requestedRole: 'player',
+    });
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!redTicket.accepted || !spectatorTicket.accepted) {
+      throw new Error('missing mulligan fixture tickets');
+    }
+    const blue = connection('mulligan-blue');
+    const red = connection('mulligan-red');
+    const spectator = connection('mulligan-spectator');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    await setup.hub.handleFrame(
+      red.value,
+      helloFrame({
+        admissionTicket: redTicket.admissionTicket,
+        resumeToken: redTicket.resumeCapability,
+        displayName: 'Red',
+      })
+    );
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const authorityVersion = setup.store.durable.authorityVersion;
+    const commandCommitCount = setup.store.commandCommits.length;
+
+    const privateChat = 'hello private room';
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: `  ${privateChat}  `,
+        playerId: p2,
+        displayName: 'Forged Red',
+      })
+    );
+    const playerChat = blue.messages.at(-1);
+    expect(playerChat).toMatchObject({
+      type: 'ChatMessage',
+      protocolVersion: PROTOCOL_VERSION,
+      messageId: expect.any(String),
+      playerId: p1,
+      displayName: 'Blue',
+      message: privateChat,
+      createdAtMs: 10_000,
+    });
+    expect(red.messages.at(-1)).toEqual(playerChat);
+    expect(spectator.messages.at(-1)).toEqual(playerChat);
+
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'spectator hello',
+      })
+    );
+    const spectatorChat = spectator.messages.at(-1);
+    expect(spectatorChat).toMatchObject({
+      type: 'ChatMessage',
+      displayName: 'Watcher',
+      message: 'spectator hello',
+    });
+    expect(spectatorChat).not.toHaveProperty('playerId');
+    expect(blue.messages.at(-1)).toEqual(spectatorChat);
+    expect(red.messages.at(-1)).toEqual(spectatorChat);
+    expect(setup.rateLimits.attempt.mock.calls.slice(-2)).toEqual([
+      ['chat', 10_000],
+      ['chat', 10_000],
+    ]);
+    expect(
+      JSON.stringify({
+        rateLimits: setup.telemetry.roomRateLimit.mock.calls,
+        admissions: setup.telemetry.roomAdmission.mock.calls,
+        commands: setup.telemetry.roomCommand.mock.calls,
+        failures: setup.telemetry.failure.mock.calls,
+      })
+    ).not.toContain(privateChat);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p2,
+      })
+    );
+
+    const announcement = {
+      type: 'MulliganAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: {
+        type: 'MulliganDeclared',
+        revision: 0,
+        playerId: p1,
+      },
+    };
+    expect(blue.messages.at(-1)).toEqual(announcement);
+    expect(red.messages.at(-1)).toEqual(announcement);
+    expect(spectator.messages.at(-1)).toEqual(announcement);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'DeclareDeckView',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p2,
+        zoneId: 'forged-deck',
+      })
+    );
+    const deckAnnouncement = {
+      type: 'DeckViewAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: {
+        type: 'DeckViewDeclared',
+        revision: 0,
+        playerId: p1,
+      },
+    };
+    expect(blue.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(red.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(spectator.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
+    const blueMessageCount = blue.messages.length;
+    const redMessageCount = red.messages.length;
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'unauthorized',
+    });
+    expect(blue.messages).toHaveLength(blueMessageCount);
+    expect(red.messages).toHaveLength(redMessageCount);
+
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'DeclareDeckView',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'unauthorized',
+    });
+    expect(blue.messages).toHaveLength(blueMessageCount);
+    expect(red.messages).toHaveLength(redMessageCount);
+  });
+
+  it('rejects empty and layered over-budget chat without room mutation', async () => {
+    const setup = await fixture();
+    const client = connection('bounded-chat');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const callsBeforeEmpty = setup.rateLimits.attempt.mock.calls.length;
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: '   ',
+      })
+    );
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_message',
+      retryable: false,
+    });
+    expect(setup.rateLimits.attempt).toHaveBeenCalledTimes(callsBeforeEmpty);
+
+    const ids = new Set<string>();
+    for (let index = 0; index < 8; index += 1) {
+      await setup.hub.handleFrame(
+        client.value,
+        JSON.stringify({
+          type: 'SendChat',
+          protocolVersion: PROTOCOL_VERSION,
+          message: `burst ${index}`,
+        })
+      );
+      const delivered = client.messages.at(-1);
+      expect(delivered).toMatchObject({
+        type: 'ChatMessage',
+        message: `burst ${index}`,
+      });
+      if (delivered?.type === 'ChatMessage') ids.add(delivered.messageId);
+    }
+    expect(ids.size).toBe(8);
+    const callsBeforeBurstRejection =
+      setup.rateLimits.attempt.mock.calls.length;
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'one too many',
+      })
+    );
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'rate_limited',
+      retryable: false,
+    });
+    expect(setup.rateLimits.attempt).toHaveBeenCalledTimes(
+      callsBeforeBurstRejection
+    );
+    expect(setup.store.commandCommits).toHaveLength(0);
+
+    await setup.hub.disconnect(client.value.id);
+    const resumed = connection('bounded-chat-resumed');
+    const welcome = client.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    await setup.hub.handleFrame(
+      resumed.value,
+      helloFrame({
+        resumeToken: welcome.resumeToken,
+        requestedRole: welcome.role,
+      })
+    );
+    resumed.messages.length = 0;
+    setup.rateLimits.attempt.mockResolvedValueOnce({
+      allowed: false,
+      retryAfterSeconds: 17,
+    });
+    await setup.hub.handleFrame(
+      resumed.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'room budget',
+      })
+    );
+    expect(resumed.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        retryable: false,
+        message: expect.stringContaining('17 seconds'),
+      }),
+    ]);
+    expect(setup.telemetry.roomRateLimit).toHaveBeenLastCalledWith({
+      operation: 'chat',
+      allowed: false,
+      retryAfterSeconds: 17,
+    });
+  });
+
+  it('streams only the requesting session perspective from retained history', async () => {
+    const setup = await fixture();
+    const client = connection('replay-connection');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = client.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: welcome.sessionId,
+        clientSequence: 1,
+        commandId: 'replay-flip-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      })
+    );
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'RequestReplay',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+
+    const replayMessages = client.messages.slice(-4);
+    expect(replayMessages.map((message) => message.type)).toEqual([
+      'ReplayStarted',
+      'ReplayFrame',
+      'ReplayFrame',
+      'ReplayCompleted',
+    ]);
+    expect(replayMessages[0]).toMatchObject({
+      type: 'ReplayStarted',
+      viewer: { kind: 'player', playerId: p1 },
+      startRevision: 0,
+      endRevision: 1,
+      truncated: false,
+      frameCount: 2,
+    });
+    expect(replayMessages[0]).not.toHaveProperty('localDisclosureDefinitions');
+    expect(replayMessages[2]).toMatchObject({
+      type: 'ReplayFrame',
+      index: 1,
+      snapshot: {
+        revision: 1,
+        viewer: { kind: 'player', playerId: p1 },
+      },
+      presentationEvents: [{ type: 'CoinFlipped', revision: 1, playerId: p1 }],
+    });
+    expect(replayMessages[2]).not.toHaveProperty('localDisclosure');
+  });
+
+  it('streams a separate local disclosure projection only for a solo player', async () => {
+    const setup = await fixture('solo');
+    const client = connection('solo-replay-connection');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'RequestReplay',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+
+    const started = client.messages.find(
+      (message) => message.type === 'ReplayStarted'
+    );
+    const frame = client.messages.find(
+      (message) => message.type === 'ReplayFrame'
+    );
+    expect(started).toMatchObject({
+      type: 'ReplayStarted',
+      viewer: { kind: 'player', playerId: p1 },
+      localDisclosureDefinitions: [],
+    });
+    expect(frame).toMatchObject({
+      type: 'ReplayFrame',
+      localDisclosure: {
+        zoneIds: [`zone:${p1}:prizes`, `zone:${p2}:hand`, `zone:${p2}:prizes`],
+        cards: [],
+      },
+    });
+  });
+
+  it('restores a serialized session binding after hibernation', async () => {
+    const setup = await fixture();
+    const beforeSleep = connection('connection-before-sleep');
+    await setup.hub.handleFrame(
+      beforeSleep.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = beforeSleep.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+
+    const restoredCoordinator = new RoomAuthorityCoordinator(
+      setup.store.durable,
+      setup.store,
+      {
+        commandContext: setup.crypto,
+        opaqueIds: setup.crypto,
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+    const restoredHub = new RoomSessionHub(
+      restoredCoordinator,
+      'server-build',
+      {
+        store: setup.store,
+        rateLimits: allowRoomOperations,
+        telemetry: NOOP_SERVER_TELEMETRY,
+        monotonicNow: () => 0,
+        admission: {
+          crypto: setup.crypto,
+          opaqueIds: setup.crypto,
+          persistence: setup.store,
+          now: () => 10_001,
+        },
+      }
+    );
+    const afterWake = connection('connection-after-wake');
+    restoredHub.restoreBinding(afterWake.value, welcome.sessionId);
+    await restoredHub.handleFrame(
+      afterWake.value,
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: welcome.sessionId,
+        clientSequence: 1,
+        commandId: 'post-hibernation-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      })
+    );
+
+    expect(afterWake.messages.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(setup.store.durable.state.revision).toBe(1);
+  });
+
+  it('restores authenticated spectator chat attribution after hibernation', async () => {
+    const setup = await fixture();
+    const ticket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Persistent Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const beforeSleep = connection('spectator-before-sleep');
+    await setup.hub.handleFrame(
+      beforeSleep.value,
+      helloFrame({
+        admissionTicket: ticket.admissionTicket,
+        resumeToken: ticket.resumeCapability,
+        displayName: 'Persistent Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const welcome = beforeSleep.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    expect(setup.store.durable.sessions[welcome.sessionId]).toMatchObject({
+      viewer: { kind: 'spectator' },
+      displayName: 'Persistent Watcher',
+    });
+
+    const restoredCoordinator = new RoomAuthorityCoordinator(
+      setup.store.durable,
+      setup.store,
+      {
+        commandContext: setup.crypto,
+        opaqueIds: setup.crypto,
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+    const restoredHub = new RoomSessionHub(
+      restoredCoordinator,
+      'server-build',
+      {
+        store: setup.store,
+        rateLimits: allowRoomOperations,
+        telemetry: NOOP_SERVER_TELEMETRY,
+        monotonicNow: () => 0,
+        admission: {
+          crypto: setup.crypto,
+          opaqueIds: setup.crypto,
+          persistence: setup.store,
+          now: () => 10_001,
+        },
+      }
+    );
+    const afterWake = connection('spectator-after-wake');
+    restoredHub.restoreBinding(afterWake.value, welcome.sessionId);
+    await restoredHub.handleFrame(
+      afterWake.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'still watching',
+        displayName: 'Forged Viewer',
+        playerId: p1,
+      })
+    );
+
+    expect(afterWake.messages).toEqual([
+      expect.objectContaining({
+        type: 'ChatMessage',
+        displayName: 'Persistent Watcher',
+        message: 'still watching',
+      }),
+    ]);
+    expect(afterWake.messages[0]).not.toHaveProperty('playerId');
+    expect(JSON.stringify(setup.store.durable)).not.toContain('still watching');
+  });
+
+  it('rejects commands before Hello and session spoofing without mutation', async () => {
+    const setup = await fixture();
+    const client = connection('connection');
+    const command = {
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: 'spoofed-session',
+      clientSequence: 1,
+      commandId: 'spoofed-command',
+      lastSeenRevision: 0,
+      command: { type: 'FlipCoin' },
+    };
+    await setup.hub.handleFrame(client.value, JSON.stringify(command));
+    expect(client.messages[0]).toMatchObject({
+      type: 'ServerNotice',
+      code: 'hello_required',
+    });
+
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    await setup.hub.handleFrame(client.value, JSON.stringify(command));
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_session',
+    });
+    expect(setup.store.commandCommits).toHaveLength(0);
+  });
+
+  it('rejects malformed frames without reflecting their contents', async () => {
+    const setup = await fixture();
+    const client = connection('connection');
+    const secret = 'private-deck-secret';
+    await setup.hub.handleFrame(client.value, `{not-json:${secret}}`);
+
+    expect(client.messages[0]).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_message',
+    });
+    expect(JSON.stringify(client.messages)).not.toContain(secret);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'Unknown',
+        outcome: 'rejected',
+        reason: 'invalid_message',
+      })
+    );
+    expect(
+      JSON.stringify(setup.telemetry.roomCommand.mock.calls)
+    ).not.toContain(secret);
+  });
+});

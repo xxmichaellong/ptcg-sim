@@ -1,0 +1,3056 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of forty-eight independent inert replays, split into ordinary and top-BREAK 24-case executions (local/opponent x active/sole bench x original clean group q1/q2/q3 x prior middle/base lower single), against the checked-in board surface. Construction through the divergent lower-card single is inherited from a digest-pinned dependency. The application module and KeyR image-reload path are not executed; only the immediate source-shaped wrapper reconstruction, synchronous state, two-animation-frame settlement, and replayed rotations are retained.",
+  "input": {
+    "viewport": {
+      "width": 1600,
+      "height": 900,
+      "devicePixelRatio": 1
+    },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "evolutionOrder": ["base", "middle", "top"],
+    "setupLowerSingleCount": 1,
+    "measuredRefreshOrdinal": 1,
+    "phaseSequence": [
+      "pre-refresh",
+      "synchronous-post-refresh",
+      "settled-post-refresh"
+    ],
+    "scenarioOrderByComposition": {
+      "ordinary": [
+        "ordinaryRefreshAfterMiddleSingleAtGroupQ1",
+        "ordinaryRefreshAfterMiddleSingleAtGroupQ2",
+        "ordinaryRefreshAfterMiddleSingleAtGroupQ3",
+        "ordinaryRefreshAfterBaseSingleAtGroupQ1",
+        "ordinaryRefreshAfterBaseSingleAtGroupQ2",
+        "ordinaryRefreshAfterBaseSingleAtGroupQ3"
+      ],
+      "break": [
+        "breakRefreshAfterMiddleSingleAtGroupQ1",
+        "breakRefreshAfterMiddleSingleAtGroupQ2",
+        "breakRefreshAfterMiddleSingleAtGroupQ3",
+        "breakRefreshAfterBaseSingleAtGroupQ1",
+        "breakRefreshAfterBaseSingleAtGroupQ2",
+        "breakRefreshAfterBaseSingleAtGroupQ3"
+      ]
+    },
+    "casesByComposition": {
+      "ordinary": [
+        "local-active-compound-group-q1-middle-single-refresh",
+        "local-bench-compound-group-q1-middle-single-refresh",
+        "local-active-compound-group-q2-middle-single-refresh",
+        "local-bench-compound-group-q2-middle-single-refresh",
+        "local-active-compound-group-q3-middle-single-refresh",
+        "local-bench-compound-group-q3-middle-single-refresh",
+        "local-active-compound-group-q1-base-single-refresh",
+        "local-bench-compound-group-q1-base-single-refresh",
+        "local-active-compound-group-q2-base-single-refresh",
+        "local-bench-compound-group-q2-base-single-refresh",
+        "local-active-compound-group-q3-base-single-refresh",
+        "local-bench-compound-group-q3-base-single-refresh",
+        "opponent-active-compound-group-q1-middle-single-refresh",
+        "opponent-bench-compound-group-q1-middle-single-refresh",
+        "opponent-active-compound-group-q2-middle-single-refresh",
+        "opponent-bench-compound-group-q2-middle-single-refresh",
+        "opponent-active-compound-group-q3-middle-single-refresh",
+        "opponent-bench-compound-group-q3-middle-single-refresh",
+        "opponent-active-compound-group-q1-base-single-refresh",
+        "opponent-bench-compound-group-q1-base-single-refresh",
+        "opponent-active-compound-group-q2-base-single-refresh",
+        "opponent-bench-compound-group-q2-base-single-refresh",
+        "opponent-active-compound-group-q3-base-single-refresh",
+        "opponent-bench-compound-group-q3-base-single-refresh"
+      ],
+      "break": [
+        "local-active-compound-break-group-q1-middle-single-refresh",
+        "local-bench-compound-break-group-q1-middle-single-refresh",
+        "local-active-compound-break-group-q2-middle-single-refresh",
+        "local-bench-compound-break-group-q2-middle-single-refresh",
+        "local-active-compound-break-group-q3-middle-single-refresh",
+        "local-bench-compound-break-group-q3-middle-single-refresh",
+        "local-active-compound-break-group-q1-base-single-refresh",
+        "local-bench-compound-break-group-q1-base-single-refresh",
+        "local-active-compound-break-group-q2-base-single-refresh",
+        "local-bench-compound-break-group-q2-base-single-refresh",
+        "local-active-compound-break-group-q3-base-single-refresh",
+        "local-bench-compound-break-group-q3-base-single-refresh",
+        "opponent-active-compound-break-group-q1-middle-single-refresh",
+        "opponent-bench-compound-break-group-q1-middle-single-refresh",
+        "opponent-active-compound-break-group-q2-middle-single-refresh",
+        "opponent-bench-compound-break-group-q2-middle-single-refresh",
+        "opponent-active-compound-break-group-q3-middle-single-refresh",
+        "opponent-bench-compound-break-group-q3-middle-single-refresh",
+        "opponent-active-compound-break-group-q1-base-single-refresh",
+        "opponent-bench-compound-break-group-q1-base-single-refresh",
+        "opponent-active-compound-break-group-q2-base-single-refresh",
+        "opponent-bench-compound-break-group-q2-base-single-refresh",
+        "opponent-active-compound-break-group-q3-base-single-refresh",
+        "opponent-bench-compound-break-group-q3-base-single-refresh"
+      ]
+    },
+    "cases": [
+      "local-active-compound-group-q1-middle-single-refresh",
+      "local-bench-compound-group-q1-middle-single-refresh",
+      "local-active-compound-group-q2-middle-single-refresh",
+      "local-bench-compound-group-q2-middle-single-refresh",
+      "local-active-compound-group-q3-middle-single-refresh",
+      "local-bench-compound-group-q3-middle-single-refresh",
+      "local-active-compound-group-q1-base-single-refresh",
+      "local-bench-compound-group-q1-base-single-refresh",
+      "local-active-compound-group-q2-base-single-refresh",
+      "local-bench-compound-group-q2-base-single-refresh",
+      "local-active-compound-group-q3-base-single-refresh",
+      "local-bench-compound-group-q3-base-single-refresh",
+      "opponent-active-compound-group-q1-middle-single-refresh",
+      "opponent-bench-compound-group-q1-middle-single-refresh",
+      "opponent-active-compound-group-q2-middle-single-refresh",
+      "opponent-bench-compound-group-q2-middle-single-refresh",
+      "opponent-active-compound-group-q3-middle-single-refresh",
+      "opponent-bench-compound-group-q3-middle-single-refresh",
+      "opponent-active-compound-group-q1-base-single-refresh",
+      "opponent-bench-compound-group-q1-base-single-refresh",
+      "opponent-active-compound-group-q2-base-single-refresh",
+      "opponent-bench-compound-group-q2-base-single-refresh",
+      "opponent-active-compound-group-q3-base-single-refresh",
+      "opponent-bench-compound-group-q3-base-single-refresh",
+      "local-active-compound-break-group-q1-middle-single-refresh",
+      "local-bench-compound-break-group-q1-middle-single-refresh",
+      "local-active-compound-break-group-q2-middle-single-refresh",
+      "local-bench-compound-break-group-q2-middle-single-refresh",
+      "local-active-compound-break-group-q3-middle-single-refresh",
+      "local-bench-compound-break-group-q3-middle-single-refresh",
+      "local-active-compound-break-group-q1-base-single-refresh",
+      "local-bench-compound-break-group-q1-base-single-refresh",
+      "local-active-compound-break-group-q2-base-single-refresh",
+      "local-bench-compound-break-group-q2-base-single-refresh",
+      "local-active-compound-break-group-q3-base-single-refresh",
+      "local-bench-compound-break-group-q3-base-single-refresh",
+      "opponent-active-compound-break-group-q1-middle-single-refresh",
+      "opponent-bench-compound-break-group-q1-middle-single-refresh",
+      "opponent-active-compound-break-group-q2-middle-single-refresh",
+      "opponent-bench-compound-break-group-q2-middle-single-refresh",
+      "opponent-active-compound-break-group-q3-middle-single-refresh",
+      "opponent-bench-compound-break-group-q3-middle-single-refresh",
+      "opponent-active-compound-break-group-q1-base-single-refresh",
+      "opponent-bench-compound-break-group-q1-base-single-refresh",
+      "opponent-active-compound-break-group-q2-base-single-refresh",
+      "opponent-bench-compound-break-group-q2-base-single-refresh",
+      "opponent-active-compound-break-group-q3-base-single-refresh",
+      "opponent-bench-compound-break-group-q3-base-single-refresh"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "forty-eight independently constructed marker-free histories, executed as separate ordinary and top-BREAK 24-case captures",
+      "local/opponent active and sole-bench histories beginning at the exact checkpoint-18 divergent post-single state, followed immediately by one source-shaped wrapper refresh",
+      "new-wrapper synchronous diagnostics in the same JavaScript task with the emptied old wrapper still connected, followed by two-animation-frame settled layout",
+      "reconstruction-driven normalization of the selected lower divergence and the top-BREAK q3 negative-replay collapse to top q1 plus lower q0",
+      "exact trace extension, rotations, BREAK flags, margins, topology and links, wrapper/card identity, painted/authored/physical geometry, ten native hit probes and orders, observer ownership, and cleanup"
+    ],
+    "excluded": [
+      "real KeyR refreshBoardImages execution, image reload completion, cache, CORS, external networking, global four-zone scanning, or application event ingress",
+      "any rotation or movement after the measured refresh, repeated or cross-lower singles, lower-initiated group rotation, q0/returned/imported histories, or alternate refresh timing",
+      "movement, promotion, evolution/removal, leaveAll, undo, replay from network state, or normalization into canonical v2 state",
+      "converted categories, non-Pokemon initiators, Energy, Trainer, Tool, markers/counters, attachments, mixed dimensions, and noncanonical assets",
+      "additional bench siblings, flex shrink, overflow, resize-driven layout, explicit flip, fullscreen, alternate viewport/DPR, and concealment",
+      "candidate parity and production/domain/protocol/schema behavior"
+    ]
+  },
+  "dependencies": [
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json",
+      "sha256": "8a6fb5cfec1d8db010431e971a8900305a4065189c67203d6e108ed0aa09539e"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-group-rotation-v1.json",
+      "sha256": "7253fbb68b8ac332c2d1385940ec27ea7a5cb8adb688e2fcd15a3f52c69d054c"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-rotation-v1.json",
+      "sha256": "cc9b03a34a183395812fce9bbfc79ab27c4ae23c243856e94368b80ec539c487"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-refresh-q0-q2-v1.json",
+      "sha256": "214506f07e534793606a47cca877ed88791370c3696d7333ae6141acc63eff73"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-refresh-q3-v1.json",
+      "sha256": "951f43f9eac71cd69c4a2a2380bcf5d6ad4de092a13dc899570c4d0475b9a51f"
+    }
+  ],
+  "provenance": [
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "Refresh selects each unattached top, derives replay count including the top-BREAK negative-turn path, rebuilds it in-zone, and replays whole-group rotations.",
+      "sources": ["client/src/setup/sizing/refresh-board.js"]
+    },
+    {
+      "claim": "Whole-group replay rotates Pokemon siblings, preserves per-card BREAK flags, and authors the final wrapper margins.",
+      "sources": ["client/src/actions/general/rotate-card.js"]
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": {
+        "x": 0,
+        "y": 450,
+        "width": 1208,
+        "height": 450
+      },
+      "opponent": {
+        "x": 0,
+        "y": 0,
+        "width": 1208,
+        "height": 450
+      }
+    },
+    "frameTransforms": {
+      "local": {
+        "a": 1,
+        "b": 0,
+        "c": 0,
+        "d": 1,
+        "rotationDegrees": 0
+      },
+      "opponent": {
+        "a": -1,
+        "b": 0,
+        "c": 0,
+        "d": -1,
+        "rotationDegrees": 180
+      }
+    },
+    "hitRegionOrder": [
+      "commonOverlap",
+      "topOnly",
+      "middleAndBaseOverlap",
+      "baseOnly",
+      "topPaintedOnly",
+      "topAuthoredOnly",
+      "middlePaintedOnly",
+      "middleAuthoredOnly",
+      "basePaintedOnly",
+      "baseAuthoredOnly"
+    ],
+    "phaseEvidenceTupleSchema": [
+      "phase name",
+      "stack frame-local rect [x,y,width,height]",
+      "painted card rects [top,middle,base], each [x,y,width,height]",
+      "authored/untransformed card rects [top,middle,base], each [x,y,width,height]",
+      "hit points in expected.hitRegionOrder, each [x,y] or null"
+    ],
+    "topology": {
+      "logicalRoles": ["top", "middle", "base"],
+      "domRoles": ["top", "base", "middle"],
+      "zByRole": {
+        "top": 0,
+        "middle": -1,
+        "base": -2
+      },
+      "bottomLayerMultipliers": {
+        "top": 0,
+        "middle": 1,
+        "base": 2
+      },
+      "topLayer": 2,
+      "energyLayer": 0,
+      "wrapperTransform": "none",
+      "wrapperZIndex": 0
+    },
+    "lifecycle": {
+      "wrapperCountsByPhase": [1, 2, 1],
+      "refreshEvidence": {
+        "synchronousWrapperCount": 2,
+        "oldWrapperConnectedImmediately": true,
+        "stableWrapperCount": 1,
+        "oldWrapperConnectedAfterSettle": false,
+        "wrapperIdentityChanged": true,
+        "cardNodeIdentityPreserved": true
+      },
+      "observerPairsCreated": 4,
+      "minimumResizeCallbacksBeforeCardRemoval": 4,
+      "resizeCallbacksAddedAfterCardRemoval": 1,
+      "transcribedSourceDisconnectCalls": 0,
+      "harnessDisconnectCallsPerObserverKind": 4
+    },
+    "scenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": {
+        "composition": "ordinary",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 1
+      },
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": {
+        "composition": "ordinary",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 2
+      },
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": {
+        "composition": "ordinary",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 3
+      },
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": {
+        "composition": "ordinary",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 1
+      },
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": {
+        "composition": "ordinary",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 2
+      },
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": {
+        "composition": "ordinary",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 3
+      },
+      "breakRefreshAfterMiddleSingleAtGroupQ1": {
+        "composition": "break",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 1
+      },
+      "breakRefreshAfterMiddleSingleAtGroupQ2": {
+        "composition": "break",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 2
+      },
+      "breakRefreshAfterMiddleSingleAtGroupQ3": {
+        "composition": "break",
+        "priorLowerRole": "middle",
+        "priorLowerIndex": 1,
+        "priorLowerDomOrdinal": 2,
+        "originalGroupTurns": 3
+      },
+      "breakRefreshAfterBaseSingleAtGroupQ1": {
+        "composition": "break",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 1
+      },
+      "breakRefreshAfterBaseSingleAtGroupQ2": {
+        "composition": "break",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 2
+      },
+      "breakRefreshAfterBaseSingleAtGroupQ3": {
+        "composition": "break",
+        "priorLowerRole": "base",
+        "priorLowerIndex": 2,
+        "priorLowerDomOrdinal": 1,
+        "originalGroupTurns": 3
+      }
+    },
+    "predecessorScenarioByScenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": "ordinaryMiddleSingleAtGroupQ1",
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": "ordinaryMiddleSingleAtGroupQ2",
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": "ordinaryMiddleSingleAtGroupQ3",
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": "ordinaryBaseSingleAtGroupQ1",
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": "ordinaryBaseSingleAtGroupQ2",
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": "ordinaryBaseSingleAtGroupQ3",
+      "breakRefreshAfterMiddleSingleAtGroupQ1": "breakMiddleSingleAtGroupQ1",
+      "breakRefreshAfterMiddleSingleAtGroupQ2": "breakMiddleSingleAtGroupQ2",
+      "breakRefreshAfterMiddleSingleAtGroupQ3": "breakMiddleSingleAtGroupQ3",
+      "breakRefreshAfterBaseSingleAtGroupQ1": "breakBaseSingleAtGroupQ1",
+      "breakRefreshAfterBaseSingleAtGroupQ2": "breakBaseSingleAtGroupQ2",
+      "breakRefreshAfterBaseSingleAtGroupQ3": "breakBaseSingleAtGroupQ3"
+    },
+    "quarterTurnsByScenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": [
+        {
+          "top": 1,
+          "middle": 0,
+          "base": 1
+        },
+        {
+          "top": 1,
+          "middle": 1,
+          "base": 1
+        },
+        {
+          "top": 1,
+          "middle": 1,
+          "base": 1
+        }
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": [
+        {
+          "top": 2,
+          "middle": 0,
+          "base": 2
+        },
+        {
+          "top": 2,
+          "middle": 2,
+          "base": 2
+        },
+        {
+          "top": 2,
+          "middle": 2,
+          "base": 2
+        }
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": [
+        {
+          "top": 3,
+          "middle": 0,
+          "base": 3
+        },
+        {
+          "top": 3,
+          "middle": 3,
+          "base": 3
+        },
+        {
+          "top": 3,
+          "middle": 3,
+          "base": 3
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": [
+        {
+          "top": 1,
+          "middle": 1,
+          "base": 0
+        },
+        {
+          "top": 1,
+          "middle": 1,
+          "base": 1
+        },
+        {
+          "top": 1,
+          "middle": 1,
+          "base": 1
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": [
+        {
+          "top": 2,
+          "middle": 2,
+          "base": 0
+        },
+        {
+          "top": 2,
+          "middle": 2,
+          "base": 2
+        },
+        {
+          "top": 2,
+          "middle": 2,
+          "base": 2
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": [
+        {
+          "top": 3,
+          "middle": 3,
+          "base": 0
+        },
+        {
+          "top": 3,
+          "middle": 3,
+          "base": 3
+        },
+        {
+          "top": 3,
+          "middle": 3,
+          "base": 3
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1": [
+        {
+          "top": 2,
+          "middle": 0,
+          "base": 1
+        },
+        {
+          "top": 2,
+          "middle": 1,
+          "base": 1
+        },
+        {
+          "top": 2,
+          "middle": 1,
+          "base": 1
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2": [
+        {
+          "top": 3,
+          "middle": 0,
+          "base": 2
+        },
+        {
+          "top": 3,
+          "middle": 2,
+          "base": 2
+        },
+        {
+          "top": 3,
+          "middle": 2,
+          "base": 2
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3": [
+        {
+          "top": 0,
+          "middle": 0,
+          "base": 3
+        },
+        {
+          "top": 1,
+          "middle": 0,
+          "base": 0
+        },
+        {
+          "top": 1,
+          "middle": 0,
+          "base": 0
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1": [
+        {
+          "top": 2,
+          "middle": 1,
+          "base": 0
+        },
+        {
+          "top": 2,
+          "middle": 1,
+          "base": 1
+        },
+        {
+          "top": 2,
+          "middle": 1,
+          "base": 1
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2": [
+        {
+          "top": 3,
+          "middle": 2,
+          "base": 0
+        },
+        {
+          "top": 3,
+          "middle": 2,
+          "base": 2
+        },
+        {
+          "top": 3,
+          "middle": 2,
+          "base": 2
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3": [
+        {
+          "top": 0,
+          "middle": 3,
+          "base": 0
+        },
+        {
+          "top": 1,
+          "middle": 0,
+          "base": 0
+        },
+        {
+          "top": 1,
+          "middle": 0,
+          "base": 0
+        }
+      ]
+    },
+    "breakFlagsByScenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": [
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": false,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3": [
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        },
+        {
+          "top": true,
+          "middle": false,
+          "base": false
+        }
+      ]
+    },
+    "inlineMarginsByScenarioAndSlot": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1:active": [
+        ["1%", "0%"],
+        ["", ""],
+        ["", ""]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2:bench": [
+        ["3%", "2%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1:active": [
+        ["1%", "0%"],
+        ["", ""],
+        ["", ""]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2:bench": [
+        ["3%", "2%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1:bench": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2:bench": [
+        ["3%", "2%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1:bench": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2:bench": [
+        ["3%", "2%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["3%", "2%"]
+      ]
+    },
+    "operationTraceByScenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:middle:index=1:single=true:90->0:break=false->false",
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false"
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:middle:index=1:single=true:180->0:break=false->false",
+        "refresh:top:break=false:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false"
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:top:index=0:single=false:180->270:break=false->false",
+        "rotate:middle:index=1:single=true:270->0:break=false->false",
+        "refresh:top:break=false:groupTurns=3",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false",
+        "replay-rotate:top:index=0:single=false:180->270:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:base:index=2:single=true:90->0:break=false->false",
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:base:index=2:single=true:180->0:break=false->false",
+        "refresh:top:break=false:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:top:index=0:single=false:180->270:break=false->false",
+        "rotate:base:index=2:single=true:270->0:break=false->false",
+        "refresh:top:break=false:groupTurns=3",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false",
+        "replay-rotate:top:index=0:single=false:180->270:break=false->false"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:middle:index=1:single=true:90->0:break=false->false",
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:middle:index=1:single=true:180->0:break=false->false",
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:top:index=0:single=false:270->0:break=true->true",
+        "rotate:middle:index=1:single=true:270->0:break=false->false",
+        "refresh:top:break=true:groupTurns=-1"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:base:index=2:single=true:90->0:break=false->false",
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:base:index=2:single=true:180->0:break=false->false",
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:top:index=0:single=false:270->0:break=true->true",
+        "rotate:base:index=2:single=true:270->0:break=false->false",
+        "refresh:top:break=true:groupTurns=-1"
+      ]
+    },
+    "transitionTraceByScenario": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1": [
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false"
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2": [
+        "refresh:top:break=false:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false"
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3": [
+        "refresh:top:break=false:groupTurns=3",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false",
+        "replay-rotate:top:index=0:single=false:180->270:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1": [
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2": [
+        "refresh:top:break=false:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false"
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3": [
+        "refresh:top:break=false:groupTurns=3",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "replay-rotate:top:index=0:single=false:90->180:break=false->false",
+        "replay-rotate:top:index=0:single=false:180->270:break=false->false"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1": [
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2": [
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3": [
+        "refresh:top:break=true:groupTurns=-1"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1": [
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2": [
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3": [
+        "refresh:top:break=true:groupTurns=-1"
+      ]
+    },
+    "phaseEvidenceByScenarioAndSlot": {
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 129.90625],
+            [558.8125, 39.34375],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            [541.09375, 39.34375],
+            [558.8125, 23.1875]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [605.921875, 31.5, 91, 126],
+          [
+            [588.203125, 49.21875, 126, 90.5625],
+            [588.203125, 43.15625, 126, 90.5625],
+            [588.203125, 37.09375, 126, 90.5625]
+          ],
+          [
+            [605.921875, 31.5, 90.5625, 126],
+            [605.921875, 25.4375, 90.5625, 126],
+            [605.921875, 19.375, 90.5625, 126]
+          ],
+          [
+            [590.453125, 51.46875],
+            [590.453125, 135.96875],
+            [590.453125, 45.40625],
+            [590.453125, 39.34375],
+            [590.453125, 51.46875],
+            [608.171875, 39.34375],
+            [590.453125, 45.40625],
+            [608.171875, 29.25],
+            [590.453125, 39.34375],
+            [608.171875, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [558.484375, 31.5, 91, 126],
+          [
+            [540.765625, 49.21875, 126, 90.5625],
+            [540.765625, 43.15625, 126, 90.5625],
+            [540.765625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.484375, 31.5, 90.5625, 126],
+            [558.484375, 25.4375, 90.5625, 126],
+            [558.484375, 19.375, 90.5625, 126]
+          ],
+          [
+            [543.015625, 51.46875],
+            [543.015625, 135.96875],
+            [543.015625, 45.40625],
+            [543.015625, 39.34375],
+            [543.015625, 51.46875],
+            [560.734375, 39.34375],
+            [543.015625, 45.40625],
+            [560.734375, 29.25],
+            [543.015625, 39.34375],
+            [560.734375, 29.25]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ1:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [536.8671875, 195.8203125, 112.5, 80.859375],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 198.0703125],
+            [539.1171875, 268.1328125],
+            [554.9375, 187.2734375],
+            [539.1171875, 187.2734375],
+            [539.1171875, 198.0703125],
+            [554.9375, 182.25],
+            null,
+            null,
+            [539.1171875, 187.2734375],
+            [554.9375, 172.359375]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [582.1171875, 190.4296875, 112.5, 80.859375],
+            [582.1171875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [584.3671875, 198.0703125],
+            [584.3671875, 273.5390625],
+            [584.3671875, 192.6796875],
+            [584.3671875, 187.2734375],
+            [584.3671875, 198.0703125],
+            [600.1875, 187.2734375],
+            [584.3671875, 192.6796875],
+            [600.1875, 177.75],
+            [584.3671875, 187.2734375],
+            [600.1875, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375],
+            [539.1015625, 192.6796875],
+            [554.921875, 177.75],
+            [539.1015625, 187.2734375],
+            [554.921875, 177.75]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 33.75],
+            [606.234375, 153.6875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ2:bench": [
+        [
+          "pre-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 182.25],
+            [554.921875, 289.359375],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [617.03125, 180, 81, 112.5],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [619.28125, 182.25],
+            [619.28125, 289.359375],
+            [619.28125, 176.859375],
+            [619.28125, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 182.25],
+            [554.9375, 289.359375],
+            [554.9375, 176.859375],
+            [554.9375, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 129.90625],
+            [558.8125, 39.34375],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            [541.09375, 39.34375],
+            [558.8125, 23.1875]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [586.265625, 43.15625, 126, 90.5625],
+            [586.265625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [588.515625, 51.46875],
+            [588.515625, 135.96875],
+            [588.515625, 45.40625],
+            [588.515625, 39.34375],
+            [588.515625, 51.46875],
+            [606.234375, 39.34375],
+            [588.515625, 45.40625],
+            [606.234375, 29.25],
+            [588.515625, 39.34375],
+            [606.234375, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [541.09375, 51.46875],
+            [541.09375, 135.96875],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 39.34375],
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            [541.09375, 39.34375],
+            [558.8125, 29.25]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterMiddleSingleAtGroupQ3:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [536.8671875, 195.8203125, 112.5, 80.859375],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 198.0703125],
+            [539.1171875, 268.1328125],
+            [554.9375, 187.2734375],
+            [539.1171875, 187.2734375],
+            [539.1171875, 198.0703125],
+            [554.9375, 182.25],
+            null,
+            null,
+            [539.1171875, 187.2734375],
+            [554.9375, 172.359375]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [582.1171875, 190.4296875, 112.5, 80.859375],
+            [582.1171875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [584.3671875, 198.0703125],
+            [584.3671875, 273.5390625],
+            [584.3671875, 192.6796875],
+            [584.3671875, 187.2734375],
+            [584.3671875, 198.0703125],
+            [600.1875, 187.2734375],
+            [584.3671875, 192.6796875],
+            [600.1875, 177.75],
+            [584.3671875, 187.2734375],
+            [600.1875, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375],
+            [539.1015625, 192.6796875],
+            [554.921875, 177.75],
+            [539.1015625, 187.2734375],
+            [554.921875, 177.75]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 135.96875],
+            [558.8125, 45.40625],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [605.921875, 31.5, 91, 126],
+          [
+            [588.203125, 49.21875, 126, 90.5625],
+            [588.203125, 43.15625, 126, 90.5625],
+            [588.203125, 37.09375, 126, 90.5625]
+          ],
+          [
+            [605.921875, 31.5, 90.5625, 126],
+            [605.921875, 25.4375, 90.5625, 126],
+            [605.921875, 19.375, 90.5625, 126]
+          ],
+          [
+            [590.453125, 51.46875],
+            [590.453125, 135.96875],
+            [590.453125, 45.40625],
+            [590.453125, 39.34375],
+            [590.453125, 51.46875],
+            [608.171875, 39.34375],
+            [590.453125, 45.40625],
+            [608.171875, 29.25],
+            [590.453125, 39.34375],
+            [608.171875, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [558.484375, 31.5, 91, 126],
+          [
+            [540.765625, 49.21875, 126, 90.5625],
+            [540.765625, 43.15625, 126, 90.5625],
+            [540.765625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.484375, 31.5, 90.5625, 126],
+            [558.484375, 25.4375, 90.5625, 126],
+            [558.484375, 19.375, 90.5625, 126]
+          ],
+          [
+            [543.015625, 51.46875],
+            [543.015625, 135.96875],
+            [543.015625, 45.40625],
+            [543.015625, 39.34375],
+            [543.015625, 51.46875],
+            [560.734375, 39.34375],
+            [543.015625, 45.40625],
+            [560.734375, 29.25],
+            [543.015625, 39.34375],
+            [560.734375, 29.25]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ1:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [536.8671875, 195.8203125, 112.5, 80.859375],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 198.0703125],
+            [539.1171875, 273.5390625],
+            [554.9375, 192.6796875],
+            [554.9375, 171.453125],
+            [539.1171875, 198.0703125],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [582.1171875, 190.4296875, 112.5, 80.859375],
+            [582.1171875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [584.3671875, 198.0703125],
+            [584.3671875, 273.5390625],
+            [584.3671875, 192.6796875],
+            [584.3671875, 187.2734375],
+            [584.3671875, 198.0703125],
+            [600.1875, 187.2734375],
+            [584.3671875, 192.6796875],
+            [600.1875, 177.75],
+            [584.3671875, 187.2734375],
+            [600.1875, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375],
+            [539.1015625, 192.6796875],
+            [554.921875, 177.75],
+            [539.1015625, 187.2734375],
+            [554.921875, 177.75]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 33.75],
+            [606.234375, 153.6875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ2:bench": [
+        [
+          "pre-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 182.25],
+            [554.921875, 289.359375],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [617.03125, 180, 81, 112.5],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [619.28125, 182.25],
+            [619.28125, 289.359375],
+            [619.28125, 176.859375],
+            [619.28125, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 182.25],
+            [554.9375, 289.359375],
+            [554.9375, 176.859375],
+            [554.9375, 171.453125],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 135.96875],
+            [558.8125, 45.40625],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [586.265625, 43.15625, 126, 90.5625],
+            [586.265625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [588.515625, 51.46875],
+            [588.515625, 135.96875],
+            [588.515625, 45.40625],
+            [588.515625, 39.34375],
+            [588.515625, 51.46875],
+            [606.234375, 39.34375],
+            [588.515625, 45.40625],
+            [606.234375, 29.25],
+            [588.515625, 39.34375],
+            [606.234375, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [541.09375, 51.46875],
+            [541.09375, 135.96875],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 39.34375],
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            [541.09375, 39.34375],
+            [558.8125, 29.25]
+          ]
+        ]
+      ],
+      "ordinaryRefreshAfterBaseSingleAtGroupQ3:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [536.8671875, 195.8203125, 112.5, 80.859375],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 198.0703125],
+            [539.1171875, 273.5390625],
+            [554.9375, 192.6796875],
+            [554.9375, 171.453125],
+            [539.1171875, 198.0703125],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [582.1171875, 190.4296875, 112.5, 80.859375],
+            [582.1171875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [584.3671875, 198.0703125],
+            [584.3671875, 273.5390625],
+            [584.3671875, 192.6796875],
+            [584.3671875, 187.2734375],
+            [584.3671875, 198.0703125],
+            [600.1875, 187.2734375],
+            [584.3671875, 192.6796875],
+            [600.1875, 177.75],
+            [584.3671875, 187.2734375],
+            [600.1875, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375],
+            [539.1015625, 192.6796875],
+            [554.921875, 177.75],
+            [539.1015625, 187.2734375],
+            [554.921875, 177.75]
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 39.34375],
+            [558.8125, 153.6875],
+            null,
+            [541.09375, 39.34375],
+            null,
+            null,
+            null,
+            null,
+            [541.09375, 39.34375],
+            [558.8125, 23.1875]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [586.265625, 43.15625, 126, 90.5625],
+            [586.265625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 45.40625],
+            [606.234375, 33.75],
+            [588.515625, 45.40625],
+            [588.515625, 39.34375],
+            null,
+            null,
+            [588.515625, 45.40625],
+            [606.234375, 29.25],
+            [588.515625, 39.34375],
+            [606.234375, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null,
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            [541.09375, 39.34375],
+            [558.8125, 29.25]
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ1:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 187.2734375],
+            [554.9375, 289.359375],
+            null,
+            [539.1171875, 187.2734375],
+            null,
+            null,
+            null,
+            null,
+            [539.1171875, 187.2734375],
+            [554.9375, 172.359375]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.953125, 180, 81, 112.5],
+          [
+            [597.953125, 180, 80.859375, 112.5],
+            [582.1328125, 190.4296875, 112.5, 80.859375],
+            [582.1328125, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.953125, 180, 80.859375, 112.5],
+            [597.953125, 174.609375, 80.859375, 112.5],
+            [597.953125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [600.203125, 192.6796875],
+            [600.203125, 182.25],
+            [584.3828125, 192.6796875],
+            [584.3828125, 187.2734375],
+            null,
+            null,
+            [584.3828125, 192.6796875],
+            [600.203125, 177.75],
+            [584.3828125, 187.2734375],
+            [600.203125, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null,
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            [539.1171875, 187.2734375],
+            [554.9375, 177.75]
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 51.46875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 51.46875],
+            [588.515625, 51.46875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            [588.515625, 51.46875],
+            [606.234375, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 51.46875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ2:bench": [
+        [
+          "pre-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [617.03125, 180, 81, 112.5],
+          [
+            [601.2109375, 195.8203125, 112.5, 80.859375],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [619.28125, 198.0703125],
+            [603.4609375, 198.0703125],
+            [619.28125, 176.859375],
+            [619.28125, 171.453125],
+            [603.4609375, 198.0703125],
+            [619.28125, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 39.34375],
+            [558.8125, 153.6875],
+            null,
+            [541.09375, 39.34375],
+            null,
+            null,
+            null,
+            null,
+            [541.09375, 39.34375],
+            [558.8125, 23.1875]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 51.46875],
+            [588.515625, 51.46875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            [588.515625, 51.46875],
+            [606.234375, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.546875, 31.5, 91, 126],
+          [
+            [538.828125, 49.21875, 126, 90.5625],
+            [556.546875, 25.4375, 90.5625, 126],
+            [556.546875, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.546875, 31.5, 90.5625, 126],
+            [556.546875, 25.4375, 90.5625, 126],
+            [556.546875, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.796875, 51.46875],
+            [541.078125, 51.46875],
+            [558.796875, 27.6875],
+            [558.796875, 21.625],
+            [541.078125, 51.46875],
+            [558.796875, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterMiddleSingleAtGroupQ3:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 187.2734375],
+            [554.9375, 289.359375],
+            null,
+            [539.1171875, 187.2734375],
+            null,
+            null,
+            null,
+            null,
+            [539.1171875, 187.2734375],
+            [554.9375, 172.359375]
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [600.1875, 198.0703125],
+            [584.3671875, 198.0703125],
+            [600.1875, 176.859375],
+            [600.1875, 171.453125],
+            [584.3671875, 198.0703125],
+            [600.1875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 147.625],
+            null,
+            [558.8125, 21.625],
+            null,
+            null,
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [586.265625, 43.15625, 126, 90.5625],
+            [586.265625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 45.40625],
+            [606.234375, 33.75],
+            [588.515625, 45.40625],
+            [588.515625, 39.34375],
+            null,
+            null,
+            [588.515625, 45.40625],
+            [606.234375, 29.25],
+            [588.515625, 39.34375],
+            [606.234375, 29.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null,
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            [541.09375, 39.34375],
+            [558.8125, 29.25]
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ1:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 283.953125],
+            null,
+            [554.9375, 171.453125],
+            null,
+            null,
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.953125, 180, 81, 112.5],
+          [
+            [597.953125, 180, 80.859375, 112.5],
+            [582.1328125, 190.4296875, 112.5, 80.859375],
+            [582.1328125, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [597.953125, 180, 80.859375, 112.5],
+            [597.953125, 174.609375, 80.859375, 112.5],
+            [597.953125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [600.203125, 192.6796875],
+            [600.203125, 182.25],
+            [584.3828125, 192.6796875],
+            [584.3828125, 187.2734375],
+            null,
+            null,
+            [584.3828125, 192.6796875],
+            [600.203125, 177.75],
+            [584.3828125, 187.2734375],
+            [600.203125, 177.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null,
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            [539.1171875, 187.2734375],
+            [554.9375, 177.75]
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 51.46875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 51.46875],
+            [588.515625, 51.46875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            [588.515625, 51.46875],
+            [606.234375, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 51.46875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ2:bench": [
+        [
+          "pre-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [617.03125, 180, 81, 112.5],
+          [
+            [601.2109375, 195.8203125, 112.5, 80.859375],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [617.03125, 180, 80.859375, 112.5],
+            [617.03125, 174.609375, 80.859375, 112.5],
+            [617.03125, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [619.28125, 198.0703125],
+            [603.4609375, 198.0703125],
+            [619.28125, 176.859375],
+            [619.28125, 171.453125],
+            [603.4609375, 198.0703125],
+            [619.28125, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3:active": [
+        [
+          "pre-refresh",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 147.625],
+            null,
+            [558.8125, 21.625],
+            null,
+            null,
+            [541.09375, 45.40625],
+            [558.8125, 29.25],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [603.984375, 31.5, 91, 126],
+          [
+            [586.265625, 49.21875, 126, 90.5625],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [603.984375, 31.5, 90.5625, 126],
+            [603.984375, 25.4375, 90.5625, 126],
+            [603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 51.46875],
+            [588.515625, 51.46875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            [588.515625, 51.46875],
+            [606.234375, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [556.546875, 31.5, 91, 126],
+          [
+            [538.828125, 49.21875, 126, 90.5625],
+            [556.546875, 25.4375, 90.5625, 126],
+            [556.546875, 19.375, 90.5625, 126]
+          ],
+          [
+            [556.546875, 31.5, 90.5625, 126],
+            [556.546875, 25.4375, 90.5625, 126],
+            [556.546875, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.796875, 51.46875],
+            [541.078125, 51.46875],
+            [558.796875, 27.6875],
+            [558.796875, 21.625],
+            [541.078125, 51.46875],
+            [558.796875, 33.75],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakRefreshAfterBaseSingleAtGroupQ3:bench": [
+        [
+          "pre-refresh",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 283.953125],
+            null,
+            [554.9375, 171.453125],
+            null,
+            null,
+            [539.1171875, 192.6796875],
+            [554.9375, 177.75],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [597.9375, 180, 81, 112.5],
+          [
+            [582.1171875, 195.8203125, 112.5, 80.859375],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [597.9375, 180, 80.859375, 112.5],
+            [597.9375, 174.609375, 80.859375, 112.5],
+            [597.9375, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [600.1875, 198.0703125],
+            [584.3671875, 198.0703125],
+            [600.1875, 176.859375],
+            [600.1875, 171.453125],
+            [584.3671875, 198.0703125],
+            [600.1875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25],
+            null,
+            null,
+            null,
+            null
+          ]
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,756 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of twenty-four independent inert replays (local/opponent x active/sole bench x clean ordinary/BREAK x group q1/q2/q3) of top-selected single-card Alt-R against the checked-in board surface. Three-Pokemon evolution construction, whole-stack rotation, layout sources, and controlled cardback bytes are inherited from digest-pinned compound dependencies. Keyboard and clicked-card ingress are digest-pinned but not executed; the application module is stubbed, and only the nonzero-group single-card transition and two-animation-frame cleanup are narrowly transcribed from digest-pinned source.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "evolutionOrder": ["base", "middle", "top"],
+    "scenarioOrder": [
+      "ordinarySingleAtGroupQ1",
+      "ordinarySingleAtGroupQ2",
+      "ordinarySingleAtGroupQ3",
+      "breakSingleAtGroupQ1",
+      "breakSingleAtGroupQ2",
+      "breakSingleAtGroupQ3"
+    ],
+    "cases": [
+      "local-active-compound-group-q1-single",
+      "local-bench-compound-group-q1-single",
+      "local-active-compound-group-q2-single",
+      "local-bench-compound-group-q2-single",
+      "local-active-compound-group-q3-single",
+      "local-bench-compound-group-q3-single",
+      "local-active-compound-break-group-q1-single",
+      "local-bench-compound-break-group-q1-single",
+      "local-active-compound-break-group-q2-single",
+      "local-bench-compound-break-group-q2-single",
+      "local-active-compound-break-group-q3-single",
+      "local-bench-compound-break-group-q3-single",
+      "opponent-active-compound-group-q1-single",
+      "opponent-bench-compound-group-q1-single",
+      "opponent-active-compound-group-q2-single",
+      "opponent-bench-compound-group-q2-single",
+      "opponent-active-compound-group-q3-single",
+      "opponent-bench-compound-group-q3-single",
+      "opponent-active-compound-break-group-q1-single",
+      "opponent-bench-compound-break-group-q1-single",
+      "opponent-active-compound-break-group-q2-single",
+      "opponent-bench-compound-break-group-q2-single",
+      "opponent-active-compound-break-group-q3-single",
+      "opponent-bench-compound-break-group-q3-single"
+    ],
+    "phaseSequence": ["pre-single", "post-single"]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1
+  },
+  "scope": {
+    "included": [
+      "one marker-free three-Pokemon evolution chain built independently for each history through the ordinary evolve and refresh path",
+      "local/opponent active and sole-bench freshly constructed ordinary/BREAK cases at group q1/q2/q3 and the default 1600x900 DPR-1 layout",
+      "digest-pinned active/bench Alt-R ingress and clicked-image-to-zone/index selection, without executing the application keydown listener",
+      "top-selected Alt-R's absolute legacy branch: only an effective q0 advances to and retains BREAK q1; effective q1/q2/q3 are reset to q0 with BREAK false",
+      "preservation of the two lower cards' group angles while the selected top diverges, including the BREAK q3 q0-to-q1 case",
+      "pre/post action evidence, complete operation and transition traces, history-sensitive margins, topology, painted geometry, native hit regions, observer ownership, and cleanup"
+    ],
+    "excluded": [
+      "normalizing Alt-R into a group-relative offset or changing canonical v2 state, commands, rendering, or UX",
+      "q0-only Alt-R already captured by the compound BREAK oracle, repeated Alt-R or group rotation after the first divergent single-card transition, refresh after these divergent histories, and raw/imported per-card q2/q3 states",
+      "single-card rotation of a lower evolution, group rotation initiated below the top, converted categories, and non-Pokemon initiators",
+      "Energy, Trainer, Tool, markers, attachment timing/syncRotation histories, mixed dimensions, and noncanonical assets",
+      "additional bench siblings, flex shrink, overflow, active/bench movement, promotion, evolution/removal while BREAK, leaveAll, undo, and replay",
+      "resize-driven board layout, explicit flip, fullscreen, alternate viewport/DPR, concealment, application/network execution, candidate parity, and production geometry"
+    ]
+  },
+  "dependencies": [
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-group-rotation-v1.json",
+      "sha256": "7253fbb68b8ac332c2d1385940ec27ea7a5cb8adb688e2fcd15a3f52c69d054c"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-rotation-v1.json",
+      "sha256": "cc9b03a34a183395812fce9bbfc79ab27c4ae23c243856e94368b80ec539c487"
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": {
+        "a": -1,
+        "b": 0,
+        "c": 0,
+        "d": -1,
+        "rotationDegrees": 180
+      }
+    },
+    "quarterTurnsByScenario": {
+      "ordinarySingleAtGroupQ1": [
+        { "top": 1, "middle": 1, "base": 1 },
+        { "top": 0, "middle": 1, "base": 1 }
+      ],
+      "ordinarySingleAtGroupQ2": [
+        { "top": 2, "middle": 2, "base": 2 },
+        { "top": 0, "middle": 2, "base": 2 }
+      ],
+      "ordinarySingleAtGroupQ3": [
+        { "top": 3, "middle": 3, "base": 3 },
+        { "top": 0, "middle": 3, "base": 3 }
+      ],
+      "breakSingleAtGroupQ1": [
+        { "top": 2, "middle": 1, "base": 1 },
+        { "top": 0, "middle": 1, "base": 1 }
+      ],
+      "breakSingleAtGroupQ2": [
+        { "top": 3, "middle": 2, "base": 2 },
+        { "top": 0, "middle": 2, "base": 2 }
+      ],
+      "breakSingleAtGroupQ3": [
+        { "top": 0, "middle": 3, "base": 3 },
+        { "top": 1, "middle": 3, "base": 3 }
+      ]
+    },
+    "topBreakByScenario": {
+      "ordinarySingleAtGroupQ1": [false, false],
+      "ordinarySingleAtGroupQ2": [false, false],
+      "ordinarySingleAtGroupQ3": [false, false],
+      "breakSingleAtGroupQ1": [true, false],
+      "breakSingleAtGroupQ2": [true, false],
+      "breakSingleAtGroupQ3": [true, true]
+    },
+    "inlineMarginsByScenarioAndSlot": {
+      "ordinarySingleAtGroupQ1:active": [
+        ["", ""],
+        ["1%", "0%"]
+      ],
+      "ordinarySingleAtGroupQ1:bench": [
+        ["3%", "2%"],
+        ["1%", "0%"]
+      ],
+      "ordinarySingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinarySingleAtGroupQ2:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"]
+      ],
+      "ordinarySingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinarySingleAtGroupQ3:bench": [
+        ["3%", "2%"],
+        ["1%", "0%"]
+      ],
+      "breakSingleAtGroupQ1:active": [
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakSingleAtGroupQ1:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"]
+      ],
+      "breakSingleAtGroupQ2:active": [
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakSingleAtGroupQ2:bench": [
+        ["3%", "2%"],
+        ["1%", "0%"]
+      ],
+      "breakSingleAtGroupQ3:active": [
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "breakSingleAtGroupQ3:bench": [
+        ["1%", "0%"],
+        ["3%", "2%"]
+      ]
+    },
+    "operationTraceByScenario": {
+      "ordinarySingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=true:90->0:break=false->false"
+      ],
+      "ordinarySingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:top:index=0:single=true:180->0:break=false->false"
+      ],
+      "ordinarySingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:top:index=0:single=false:90->180:break=false->false",
+        "rotate:top:index=0:single=false:180->270:break=false->false",
+        "rotate:top:index=0:single=true:270->0:break=false->false"
+      ],
+      "breakSingleAtGroupQ1": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=true:180->0:break=true->false"
+      ],
+      "breakSingleAtGroupQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:top:index=0:single=true:270->0:break=true->false"
+      ],
+      "breakSingleAtGroupQ3": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:top:index=0:single=false:270->0:break=true->true",
+        "rotate:top:index=0:single=true:0->90:break=true->true"
+      ]
+    },
+    "transitionTraceByScenario": {
+      "ordinarySingleAtGroupQ1": "rotate:top:index=0:single=true:90->0:break=false->false",
+      "ordinarySingleAtGroupQ2": "rotate:top:index=0:single=true:180->0:break=false->false",
+      "ordinarySingleAtGroupQ3": "rotate:top:index=0:single=true:270->0:break=false->false",
+      "breakSingleAtGroupQ1": "rotate:top:index=0:single=true:180->0:break=true->false",
+      "breakSingleAtGroupQ2": "rotate:top:index=0:single=true:270->0:break=true->false",
+      "breakSingleAtGroupQ3": "rotate:top:index=0:single=true:0->90:break=true->true"
+    },
+    "phaseEvidenceTupleSchema": [
+      "phase name",
+      "stack frame-local rect [x,y,width,height]",
+      "painted card rects [top,middle,base], each [x,y,width,height]",
+      "hit points [commonOverlap,topOnly,middleAndBaseOverlap,baseOnly,topPaintedOnly,topAuthoredOnly], each [x,y] or null"
+    ],
+    "phaseEvidenceByScenarioAndSlot": {
+      "ordinarySingleAtGroupQ1:active": [
+        [
+          "pre-single",
+          [558.484375, 31.5, 91, 126],
+          [
+            [540.765625, 49.21875, 126, 90.5625],
+            [540.765625, 43.15625, 126, 90.5625],
+            [540.765625, 37.09375, 126, 90.5625]
+          ],
+          [
+            [543.015625, 51.46875],
+            [543.015625, 135.96875],
+            [543.015625, 45.40625],
+            [543.015625, 39.34375],
+            [543.015625, 51.46875],
+            [560.734375, 39.34375]
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinarySingleAtGroupQ1:bench": [
+        [
+          "pre-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375]
+          ]
+        ],
+        [
+          "post-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinarySingleAtGroupQ2:active": [
+        [
+          "pre-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinarySingleAtGroupQ2:bench": [
+        [
+          "pre-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 182.25],
+            [554.9375, 289.359375],
+            [554.9375, 176.859375],
+            [554.9375, 171.453125],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 182.25],
+            [554.921875, 289.359375],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinarySingleAtGroupQ3:active": [
+        [
+          "pre-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [541.09375, 51.46875],
+            [541.09375, 135.96875],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 39.34375]
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "ordinarySingleAtGroupQ3:bench": [
+        [
+          "pre-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375]
+          ]
+        ],
+        [
+          "post-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ1:active": [
+        [
+          "pre-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ1:bench": [
+        [
+          "pre-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [552.671875, 180, 80.859375, 112.5],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [554.921875, 192.6796875],
+            [554.921875, 182.25],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ2:active": [
+        [
+          "pre-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 51.46875],
+            [541.09375, 51.46875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            [541.09375, 51.46875],
+            [558.8125, 33.75]
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [556.5625, 25.4375, 90.5625, 126],
+            [556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 33.75],
+            [558.8125, 153.6875],
+            [558.8125, 27.6875],
+            [558.8125, 21.625],
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ2:bench": [
+        [
+          "pre-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [552.671875, 174.609375, 80.859375, 112.5],
+            [552.671875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25]
+          ]
+        ],
+        [
+          "post-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [552.6875, 174.609375, 80.859375, 112.5],
+            [552.6875, 169.203125, 80.859375, 112.5]
+          ],
+          [
+            [554.9375, 182.25],
+            [554.9375, 289.359375],
+            [554.9375, 176.859375],
+            [554.9375, 171.453125],
+            null,
+            null
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ3:active": [
+        [
+          "pre-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [556.5625, 31.5, 90.5625, 126],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [556.5625, 31.5, 91, 126],
+          [
+            [538.84375, 49.21875, 126, 90.5625],
+            [538.84375, 43.15625, 126, 90.5625],
+            [538.84375, 37.09375, 126, 90.5625]
+          ],
+          [
+            [541.09375, 51.46875],
+            [541.09375, 135.96875],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            [541.09375, 51.46875],
+            [558.8125, 39.34375]
+          ]
+        ]
+      ],
+      "breakSingleAtGroupQ3:bench": [
+        [
+          "pre-single",
+          [552.6875, 180, 81, 112.5],
+          [
+            [552.6875, 180, 80.859375, 112.5],
+            [536.8671875, 190.4296875, 112.5, 80.859375],
+            [536.8671875, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null
+          ]
+        ],
+        [
+          "post-single",
+          [552.671875, 180, 81, 112.5],
+          [
+            [536.8515625, 195.8203125, 112.5, 80.859375],
+            [536.8515625, 190.4296875, 112.5, 80.859375],
+            [536.8515625, 185.0234375, 112.5, 80.859375]
+          ],
+          [
+            [539.1015625, 198.0703125],
+            [539.1015625, 273.5390625],
+            [539.1015625, 192.6796875],
+            [539.1015625, 187.2734375],
+            [539.1015625, 198.0703125],
+            [554.921875, 187.2734375]
+          ]
+        ]
+      ]
+    },
+    "paintedAuthoredHitRolesByScenario": {
+      "ordinarySingleAtGroupQ1": [
+        ["top", "middle", "base"],
+        ["base"],
+        null,
+        null
+      ],
+      "ordinarySingleAtGroupQ2": [null, null, null, null],
+      "ordinarySingleAtGroupQ3": [
+        ["top", "middle", "base"],
+        ["base"],
+        null,
+        null
+      ],
+      "breakSingleAtGroupQ1": [null, null, null, null],
+      "breakSingleAtGroupQ2": [["top"], ["middle", "base"], null, null],
+      "breakSingleAtGroupQ3": [null, null, ["top", "middle", "base"], ["base"]]
+    },
+    "topology": {
+      "logicalRoles": ["top", "middle", "base"],
+      "domRoles": ["top", "base", "middle"],
+      "zByRole": { "top": 0, "middle": -1, "base": -2 },
+      "bottomLayerMultipliers": { "top": 0, "middle": 1, "base": 2 },
+      "topLayer": 2,
+      "energyLayer": 0,
+      "wrapperTransform": "none",
+      "wrapperZIndex": 0
+    },
+    "lifecycle": {
+      "wrapperCountsByPhase": [1, 1],
+      "refreshEvidence": null,
+      "observerPairsCreated": 3,
+      "minimumResizeCallbacksBeforeCardRemoval": 4,
+      "resizeCallbacksAddedAfterCardRemoval": 1,
+      "transcribedSourceDisconnectCalls": 0,
+      "harnessDisconnectCallsPerObserverKind": 3
+    }
+  },
+  "provenance": [
+    {
+      "path": "client/src/actions/keybinds/keybinds.js",
+      "encoding": "utf8",
+      "sha256": "f04ab70230e7ac4df75d3320dc3f0f0df36fa971c08d4e32a0e1368021324b6a"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/image-logic/click-events.js",
+      "encoding": "utf8",
+      "sha256": "12c1b0a7285295227195be932bf62b94eef5379e44aa53d839fb8b60944af431"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "active/bench Alt-R eligibility guards and forwarding of the selected card index with single=true",
+      "sources": ["client/src/actions/keybinds/keybinds.js"]
+    },
+    {
+      "claim": "top-selected single-card absolute-angle branch, BREAK mutation, non-selected-card exclusion, and history-sensitive wrapper-margin writes",
+      "sources": ["client/src/actions/general/rotate-card.js"]
+    },
+    {
+      "claim": "clicked active/bench image selection and exact zone-array index resolution used by keyboard ingress",
+      "sources": ["client/src/setup/image-logic/click-events.js"]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ptcgsim-v2",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BUILD_ID": "local-development",
+  },
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/v2/*", "!/v2/assets/cardback.png"],
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PTCG_ROOM",
+        "class_name": "PtcgRoom",
+      },
+    ],
+  },
+  "ratelimits": [
+    {
+      "name": "ROOM_CREATION_RATE_LIMITER",
+      "namespace_id": "260903001",
+      "simple": {
+        "limit": 12,
+        "period": 60,
+      },
+    },
+  ],
+  "exports": {
+    "PtcgRoom": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  "observability": {
+    "enabled": true,
+  },
+}
