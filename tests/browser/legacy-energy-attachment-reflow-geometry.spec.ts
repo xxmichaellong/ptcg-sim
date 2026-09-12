@@ -24,7 +24,9 @@ import {
   isolateCandidateCardPaint,
   isolateLegacyIframeCardPaint,
 } from './support/isolated-card-paint.js';
-import { captureLegacySourceEnergyAttachmentReflowFixture } from './support/legacy-source-board.js';
+import { captureReflow } from './support/legacy-runtime-attachment-reflow.js';
+import { captureLegacyRuntimeLayout } from './support/legacy-runtime-layout.js';
+import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 type Rect = {
   readonly x: number;
@@ -181,8 +183,126 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
   );
-  const capture = await captureLegacySourceEnergyAttachmentReflowFixture(page);
-  await testInfo.attach('legacy-energy-attachment-reflow-geometry.json', {
+  const loaded = await loadLegacyRuntime(page);
+  const layout = await captureLegacyRuntimeLayout(page);
+  const frameTransforms = Object.fromEntries(
+    Object.entries(layout.frameTransforms).map(([side, transform]) => [
+      side,
+      {
+        ...transform,
+        rotationDegrees:
+          ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      },
+    ])
+  ) as Readonly<
+    Record<
+      'local' | 'opponent',
+      { a: number; b: number; c: number; d: number; rotationDegrees: number }
+    >
+  >;
+  const physicalRect = (side: 'local' | 'opponent', bounds: Rect): Rect => {
+    const frame = layout.frames[side];
+    return side === 'local'
+      ? { ...bounds, x: frame.x + bounds.x, y: frame.y + bounds.y }
+      : {
+          ...bounds,
+          x: frame.x + frame.width - bounds.x - bounds.width,
+          y: frame.y + frame.height - bounds.y - bounds.height,
+        };
+  };
+  const cards: Array<
+    Awaited<ReturnType<typeof captureReflow>>['cards'][number] & {
+      side: 'local' | 'opponent';
+      physicalBounds: Rect;
+      effectiveRotationDegrees: number;
+      zIndexNumber: number;
+      inlineLeftPx: number;
+      inlineBottomPx: number;
+      relativeId: string | null;
+    }
+  > = [];
+  const stacks = [];
+  for (const side of ['local', 'opponent'] as const) {
+    const cardIdsByRole = {
+      base: `${side}-attachment-base`,
+      energy: `${side}-attachment-energy`,
+    };
+    const stackId = `${side}-canonical-attachment-stack`;
+    const runtime = await captureReflow(page, {
+      side,
+      slot: 'active',
+      evolutionOrder: ['base'],
+      attachmentOrder: ['energy'],
+      cardIdsByRole,
+      stackId,
+      captureAttachmentBoundary: true,
+      preserveOtherSide: side === 'opponent',
+    });
+    if (!runtime.attachmentBoundary) {
+      throw new Error(`Missing ${side} attachment boundary`);
+    }
+    cards.push(
+      ...runtime.cards.map((card) => ({
+        ...card,
+        side,
+        physicalBounds: physicalRect(side, card.frameLocalBounds),
+        effectiveRotationDegrees:
+          (card.localRotationDegrees + frameTransforms[side].rotationDegrees) %
+          360,
+        zIndexNumber: Number.parseInt(card.zIndex, 10) || 0,
+        inlineLeftPx: Number.parseFloat(card.inlineLeft) || 0,
+        inlineBottomPx: Number.parseFloat(card.inlineBottom) || 0,
+        relativeId:
+          card.relativeRole === null
+            ? null
+            : cardIdsByRole[card.relativeRole as keyof typeof cardIdsByRole],
+      }))
+    );
+    const idForRole = (role: string): string =>
+      cardIdsByRole[role as keyof typeof cardIdsByRole] ?? role;
+    stacks.push({
+      ...runtime.stack,
+      side,
+      physicalBounds: physicalRect(side, runtime.stack.frameLocalBounds),
+      attachmentClientWidthsBefore: runtime.attachmentClientWidthsBefore,
+      attachmentAuthoredWidthsPx: runtime.attachmentAuthoredWidthsPx,
+      transientPostAttach: {
+        ...runtime.attachmentBoundary.transientPostAttach,
+        logicalOrder:
+          runtime.attachmentBoundary.transientPostAttach.logicalOrder.map(
+            idForRole
+          ),
+        domOrder:
+          runtime.attachmentBoundary.transientPostAttach.domOrder.map(
+            idForRole
+          ),
+      },
+      synchronousPostRefreshContainerCount:
+        runtime.attachmentBoundary.synchronousPostRefreshContainerCount,
+      oldContainerConnectedImmediatelyAfterRefresh:
+        runtime.attachmentBoundary.oldContainerConnectedImmediatelyAfterRefresh,
+      stableContainerCount: runtime.attachmentBoundary.stableContainerCount,
+      oldContainerConnected: runtime.attachmentBoundary.oldContainerConnected,
+      childDomOrder: runtime.stack.childDomOrder.map(idForRole),
+      logicalOrder: runtime.stack.logicalOrder.map(idForRole),
+      hitOrder: {
+        commonOverlap: runtime.stack.hitOrder.commonOverlap,
+        energyOnly: runtime.stack.hitOrder.attachmentOnly,
+      },
+    });
+  }
+  const capture = {
+    frames: layout.frames,
+    frameTransforms,
+    cards,
+    stacks,
+    sourceFulfillment: {
+      servedPaths: loaded.servedPaths,
+      blockedExternalOrigins: loaded.blockedOrigins,
+      missingSameOriginPaths: loaded.missingPaths,
+    },
+  };
+  await testInfo.attach('legacy-runtime-energy-attachment-geometry.json', {
     body: Buffer.from(JSON.stringify(capture, null, 2)),
     contentType: 'application/json',
   });
@@ -192,7 +312,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
 
   await isolateLegacyIframeCardPaint(
     page,
-    'img[data-legacy-canonical-attachment-card-id]'
+    'img[data-legacy-runtime-reflow-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
@@ -225,7 +345,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       clientWidth: 91,
       clientHeight: 126,
       localRotationDegrees: 0,
-      zIndex: expectedCard.role === 'base' ? 0 : -1,
+      zIndexNumber: expectedCard.role === 'base' ? 0 : -1,
       inlineBottomPx: 0,
       attached: expectedCard.role === 'energy',
       target: expectedCard.role === 'base' ? 'off' : 'on',
@@ -351,7 +471,13 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
   expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
     'https://cdn.socket.io'
   );
-  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/actions/move-card-bundle/move-card.js'
+  );
+  expect(capture.sourceFulfillment.servedPaths).toContain(
+    '/src/setup/sizing/refresh-board.js'
+  );
 
   expect(candidateScene.cards).toHaveLength(4);
   expect(new Set(candidateScene.cards.map((card) => card.id))).toEqual(

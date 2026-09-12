@@ -2175,6 +2175,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      (12/12). The retired marker-movement recorder and types remove another 668
      lines from `legacy-source-board.ts`, reducing it to 7,551 lines and its
      browser-spec consumers from nine to eight.
+140. The one-Energy attachment geometry gate now constructs both active stacks
+     with v1's actual `Card`, stages the Energy through the real `moveCard`, and
+     samples the real `refreshBoard` reconstruction before comparing React DOM.
+     The existing oracle values hold without correction across card and wrapper
+     geometry, integer-width offset math, attachment metadata, transient
+     post-attach state, same-task two-wrapper lifetime, settled cleanup, native
+     hit order, and strict bidirectional card paint. A combined-paint option in
+     the shared runtime replay explicitly preserves the already-settled other
+     player while the second side is captured; ordinary callers retain the
+     prior full-board reset. The obsolete one-Energy types, capture helpers, and
+     hand-authored DOM mutation recorder remove 479 more lines from
+     `legacy-source-board.ts`, reducing it to 7,072 lines and its browser-spec
+     consumers from eight to seven.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

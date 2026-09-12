@@ -455,10 +455,13 @@ and hit parity remain unverified.
 source-backed card checkpoint with the separately digest-pinned, source-only
 `tests/legacy-fixtures/renderer/energy-attachment-reflow-v1.json`. It isolates
 one face-up Energy attached to one unrotated active Pokémon in the local and
-opponent frames at the default 1600×900 DPR-1 sidebar layout. The replay records
-the immediate post-attach result only as a diagnostic, then transcribes the
-unconditional `refreshBoard` reconstruction, `adjustCards` width rewrite, and
-MutationObserver-delayed old-wrapper cleanup before accepting stable geometry.
+opponent frames at the default 1600×900 DPR-1 sidebar layout. The replay now
+constructs the cards with v1's actual `Card`, moves the final Energy with its
+actual `moveCard`, records the immediate post-attach result as a diagnostic,
+then calls the actual `refreshBoard` and observes its `adjustCards` width
+rewrite plus MutationObserver-delayed old-wrapper cleanup before accepting
+stable geometry. The checked-in JSON remains the immutable expected result; no
+hand-authored DOM/state transcription remains in this path.
 
 The stable source state preserves `[base, energy]` logical and DOM order, z
 ranks `[0, -1]`, common-overlap priority `[base, energy]`, and an Energy-only

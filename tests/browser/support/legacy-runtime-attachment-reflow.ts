@@ -20,17 +20,29 @@ export interface FrameTransform {
 
 /** One card placed by the replay, measured in its own frame's coordinates. */
 export interface ReflowCard {
+  readonly id: string;
   readonly role: string;
   readonly frameLocalBounds: Rect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
   readonly inlineLeft: string;
   readonly inlineBottom: string;
   readonly inlineTransform: string;
+  readonly localRotationDegrees: number;
   readonly zIndex: string;
   readonly clientWidth: number;
   readonly clientHeight: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeRole: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly sourcePath: string;
 }
 
 export interface ReflowStack {
+  readonly id: string;
   readonly frameLocalBounds: Rect;
   readonly baseClientWidth: number;
   readonly clientWidth: number;
@@ -41,6 +53,23 @@ export interface ReflowStack {
   readonly computedMarginLeftPx: number;
   readonly childDomOrder: readonly string[];
   readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly commonOverlap: readonly string[];
+    readonly attachmentOnly: readonly string[];
+  };
+}
+
+export interface ReflowAttachmentBoundary {
+  readonly transientPostAttach: {
+    readonly logicalOrder: readonly string[];
+    readonly domOrder: readonly string[];
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+  };
+  readonly synchronousPostRefreshContainerCount: number;
+  readonly oldContainerConnectedImmediatelyAfterRefresh: boolean;
+  readonly stableContainerCount: number;
+  readonly oldContainerConnected: boolean;
 }
 
 export interface ReflowCapture {
@@ -49,6 +78,7 @@ export interface ReflowCapture {
   /** Container width after each attachment, before the next one lands. */
   readonly attachmentClientWidthsBefore: readonly number[];
   readonly attachmentAuthoredWidthsPx: readonly number[];
+  readonly attachmentBoundary: ReflowAttachmentBoundary | null;
 }
 
 /** The v1 card type each fixture role is constructed with. */
@@ -86,21 +116,48 @@ export const captureReflow = async (
     readonly evolutionOrder: readonly string[];
     /** Non-Pokemon attached to the base, in order. */
     readonly attachmentOrder: readonly string[];
+    /** Stable card IDs used by paint and hit-order comparisons. */
+    readonly cardIdsByRole?: Readonly<Record<string, string>>;
+    readonly stackId?: string;
+    /** Split the final attachment's move and refresh to sample that boundary. */
+    readonly captureAttachmentBoundary?: boolean;
+    /** Keep the other player's settled stack for a combined paint capture. */
+    readonly preserveOtherSide?: boolean;
   }
 ): Promise<ReflowCapture> =>
   page.evaluate(
-    async ({ user, zoneId, evolutionOrder, attachmentOrder, typeByRole }) => {
+    async ({
+      user,
+      zoneId,
+      evolutionOrder,
+      attachmentOrder,
+      typeByRole,
+      cardIdsByRole,
+      stackId,
+      captureAttachmentBoundary,
+      preserveOtherSide,
+    }) => {
       const load = (specifier: string): Promise<Record<string, never>> =>
         import(/* @vite-ignore */ specifier);
-      const [cardModule, zoneModule, bundleModule] = await Promise.all([
-        load('/src/setup/deck-constructor/card.js'),
-        load('/src/setup/zones/get-zone.js'),
-        load('/src/actions/move-card-bundle/move-card-bundle.js'),
-      ]);
+      const [cardModule, zoneModule, bundleModule, moveModule, refreshModule] =
+        await Promise.all([
+          load('/src/setup/deck-constructor/card.js'),
+          load('/src/setup/zones/get-zone.js'),
+          load('/src/actions/move-card-bundle/move-card-bundle.js'),
+          load('/src/actions/move-card-bundle/move-card.js'),
+          load('/src/setup/sizing/refresh-board.js'),
+        ]);
 
+      interface LegacyImage extends HTMLImageElement {
+        attached?: boolean;
+        target?: string;
+        relative?: HTMLImageElement | number;
+        energyLayer?: number;
+        layer?: number;
+      }
       interface LegacyCard {
         readonly name: string;
-        readonly image: HTMLImageElement;
+        readonly image: LegacyImage;
       }
       interface LegacyZone {
         readonly element: HTMLElement;
@@ -131,10 +188,24 @@ export const captureReflow = async (
           emit?: boolean
         ) => void;
       };
+      const { moveCard } = moveModule as unknown as {
+        readonly moveCard: (
+          user: string,
+          initiator: string,
+          oZoneId: string,
+          dZoneId: string,
+          index: number,
+          targetIndex: number
+        ) => void;
+      };
+      const { refreshBoard } = refreshModule as unknown as {
+        readonly refreshBoard: () => void;
+      };
 
-      // Both sides are cleared, not just the acting one. `refreshBoard`
+      // Both sides are normally cleared, not just the acting one. `refreshBoard`
       // rebuilds the whole board, so a stack left behind by an earlier capture
-      // on the other side takes part in this one's reflow.
+      // on the other side takes part in this one's reflow. Combined source-paint
+      // fixtures can explicitly preserve that already-settled opposite stack.
       //
       // Only cards are removed, never the element's other children: a zone
       // container also holds v1's own controls, and `sort` reads the discard
@@ -147,7 +218,7 @@ export const captureReflow = async (
           image.remove();
         }
       };
-      for (const owner of ['self', 'opp']) {
+      for (const owner of preserveOtherSide ? [user] : ['self', 'opp']) {
         for (const id of ['active', 'bench', 'hand', 'discard']) {
           clearZone(owner, id);
         }
@@ -166,6 +237,8 @@ export const captureReflow = async (
           typeByRole[name] ?? 'Pokémon',
           `${location.origin}/src/assets/cardback.png`
         );
+        card.image.dataset.legacyRuntimeReflowCardId =
+          cardIdsByRole[name] ?? name;
         await card.image.decode();
         return card;
       };
@@ -201,12 +274,14 @@ export const captureReflow = async (
         host = role;
       }
 
-      const container = (): HTMLElement =>
-        byRole.get(first!)!.image.parentElement as HTMLElement;
-
-      const { refreshBoard } = (await load(
-        '/src/setup/sizing/refresh-board.js'
-      )) as unknown as { readonly refreshBoard: () => void };
+      const container = (): HTMLElement => {
+        const element = byRole.get(first!)?.image.parentElement;
+        if (!element) {
+          throw new Error('Real-v1 reflow base has no play container');
+        }
+        element.dataset.legacyRuntimeReflowStackId = stackId;
+        return element;
+      };
 
       /**
        * Refreshes until the container's width stops changing.
@@ -279,16 +354,68 @@ export const captureReflow = async (
 
       const attachmentClientWidthsBefore: number[] = [];
       const attachmentAuthoredWidthsPx: number[] = [];
+      let attachmentBoundary: ReflowAttachmentBoundary | null = null;
+      if (captureAttachmentBoundary && attachmentOrder.length !== 1) {
+        throw new Error(
+          'Attachment-boundary capture requires exactly one attachment'
+        );
+      }
       for (const role of attachmentOrder) {
         attachmentClientWidthsBefore.push(container().clientWidth);
         const card = await make(role);
         byRole.set(role, card);
         // Attachments always target the stack's own base, which is where v1
         // anchors an Energy or Tool regardless of how tall the stack is.
-        await play(card, indexOf(first!));
-        attachmentAuthoredWidthsPx.push(
-          Number.parseFloat(container().style.width)
-        );
+        if (captureAttachmentBoundary) {
+          hand.array.push(card);
+          hand.element.append(card.image);
+          const oldContainer = container();
+          moveCard(
+            user,
+            'self',
+            'hand',
+            zoneId,
+            hand.array.length - 1,
+            indexOf(first!)
+          );
+          const transientContainer = container();
+          attachmentAuthoredWidthsPx.push(
+            Number.parseFloat(transientContainer.style.width)
+          );
+          const transientPostAttach = {
+            logicalOrder: zone.array.map(({ name }) => name),
+            domOrder: [
+              ...transientContainer.querySelectorAll(':scope > img'),
+            ].map((image) => {
+              for (const [candidateRole, candidate] of byRole) {
+                if (candidate.image === image) return candidateRole;
+              }
+              return 'unknown';
+            }),
+            clientWidth: transientContainer.clientWidth,
+            authoredWidthPx: Number.parseFloat(transientContainer.style.width),
+          };
+          refreshBoard();
+          const synchronousPostRefreshContainerCount =
+            zone.element.querySelectorAll(':scope > .play-container').length;
+          const oldContainerConnectedImmediatelyAfterRefresh =
+            oldContainer.isConnected;
+          await frames();
+          attachmentBoundary = {
+            transientPostAttach,
+            synchronousPostRefreshContainerCount,
+            oldContainerConnectedImmediatelyAfterRefresh,
+            stableContainerCount: zone.element.querySelectorAll(
+              ':scope > .play-container'
+            ).length,
+            oldContainerConnected: oldContainer.isConnected,
+          };
+        } else {
+          await play(card, indexOf(first!));
+          attachmentAuthoredWidthsPx.push(
+            Number.parseFloat(container().style.width)
+          );
+        }
       }
 
       // An attachment is sized and placed by the refresh that follows it, so
@@ -313,19 +440,95 @@ export const captureReflow = async (
         }
         return 'unknown';
       };
+      const idOf = (node: Element): string => {
+        if (node.tagName !== 'IMG') return '';
+        return (
+          (node as HTMLImageElement).dataset.legacyRuntimeReflowCardId ?? ''
+        );
+      };
+      const idsAt = (x: number, y: number) =>
+        element.ownerDocument
+          .elementsFromPoint(x, y)
+          .flatMap((candidate) => {
+            const image = candidate.closest<HTMLImageElement>(
+              '[data-legacy-runtime-reflow-card-id]'
+            );
+            const id = image ? idOf(image) : '';
+            return id ? [id] : [];
+          })
+          .filter((id, index, ids) => ids.indexOf(id) === index);
+      const baseBounds = byRole.get(first!)!.image.getBoundingClientRect();
+      const attachment = attachmentOrder.at(-1);
+      const attachmentBounds = attachment
+        ? byRole.get(attachment)?.image.getBoundingClientRect()
+        : undefined;
+      const hitOrder = (() => {
+        if (!attachmentBounds) {
+          return { commonOverlap: [], attachmentOnly: [] };
+        }
+        const common = {
+          left: Math.max(baseBounds.left, attachmentBounds.left),
+          top: Math.max(baseBounds.top, attachmentBounds.top),
+          right: Math.min(baseBounds.right, attachmentBounds.right),
+          bottom: Math.min(baseBounds.bottom, attachmentBounds.bottom),
+        };
+        const attachmentOnly = {
+          left: baseBounds.right + 2,
+          right: attachmentBounds.right,
+        };
+        if (
+          common.right - common.left <= 2 ||
+          common.bottom - common.top <= 2 ||
+          attachmentOnly.right - attachmentOnly.left <= 2
+        ) {
+          throw new Error('Real-v1 attachment hit regions lack safe interiors');
+        }
+        return {
+          commonOverlap: idsAt(
+            (common.left + common.right) / 2,
+            (common.top + common.bottom) / 2
+          ),
+          attachmentOnly: idsAt(
+            (attachmentOnly.left + attachmentOnly.right) / 2,
+            attachmentBounds.top + attachmentBounds.height / 2
+          ),
+        };
+      })();
 
       return {
         cards: [...byRole].map(([role, card]) => ({
+          id: card.image.dataset.legacyRuntimeReflowCardId ?? role,
           role,
           frameLocalBounds: rectOf(card.image),
+          naturalWidth: card.image.naturalWidth,
+          naturalHeight: card.image.naturalHeight,
           inlineLeft: card.image.style.left,
           inlineBottom: card.image.style.bottom,
           inlineTransform: card.image.style.transform,
+          localRotationDegrees:
+            Number.parseInt(
+              card.image.style.transform.replace(/[^0-9-]/gu, ''),
+              10
+            ) || 0,
           zIndex: card.image.style.zIndex,
           clientWidth: card.image.clientWidth,
           clientHeight: card.image.clientHeight,
+          attached: card.image.attached === true,
+          target: card.image.target ?? '',
+          relativeRole:
+            typeof card.image.relative === 'object' &&
+            card.image.relative !== null
+              ? roleOf(card.image.relative as HTMLImageElement)
+              : null,
+          energyLayer: card.image.energyLayer ?? 0,
+          layer: card.image.layer ?? 0,
+          domOrdinal: [
+            ...card.image.parentElement!.querySelectorAll(':scope > img'),
+          ].indexOf(card.image),
+          sourcePath: new URL(card.image.currentSrc).pathname,
         })),
         stack: {
+          id: stackId,
           frameLocalBounds: rectOf(element),
           baseClientWidth: byRole.get(first!)!.image.clientWidth,
           clientWidth: element.clientWidth,
@@ -336,9 +539,11 @@ export const captureReflow = async (
           computedMarginLeftPx: Number.parseFloat(computed.marginLeft),
           childDomOrder: [...element.querySelectorAll('img')].map(roleOf),
           logicalOrder: zone.array.map((card) => card.name),
+          hitOrder,
         },
         attachmentClientWidthsBefore,
         attachmentAuthoredWidthsPx,
+        attachmentBoundary,
       };
     },
     {
@@ -347,6 +552,10 @@ export const captureReflow = async (
       evolutionOrder: options.evolutionOrder,
       attachmentOrder: options.attachmentOrder,
       typeByRole: CARD_TYPE_BY_ROLE,
+      cardIdsByRole: options.cardIdsByRole ?? {},
+      stackId: options.stackId ?? `${options.side}-${options.slot}-stack`,
+      captureAttachmentBoundary: options.captureAttachmentBoundary ?? false,
+      preserveOtherSide: options.preserveOtherSide ?? false,
     }
   );
 
