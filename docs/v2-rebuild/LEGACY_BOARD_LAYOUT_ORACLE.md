@@ -653,6 +653,16 @@ synchronously exposes the superseded empty wrapper and the new wrapper; the
 real MutationObserver settles this to one, and fixture cleanup leaves no cards,
 wrappers, or sink.
 
+The four departure branches also have an independent executable gate in
+`tests/browser/legacy-runtime-mixed-attachment-departure-oracle.spec.ts`. It
+constructs the mixed stack with v1's real `Card` and movement modules, splits
+the departure from `refreshBoard` to preserve the transient boundary, and
+derives native hit points from the live card intersections. A Tool's rotated
+paint box can extend left of its base, so the shared runtime capture locates a
+genuinely attachment-free base point from the rendered rectangles instead of
+assuming a free vertical strip. The original two-Energy compaction gate shares
+and verifies that generalized path.
+
 Those attach/reorder/departure transients are diagnostic and must not become
 renderer state. The stable canonical `[Energy, Trainer]` output now contributes
 source evidence to the narrow strict production path described below; reverse

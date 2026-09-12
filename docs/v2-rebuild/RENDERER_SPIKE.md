@@ -2260,6 +2260,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      865 lines from `legacy-source-board.ts`, reducing it to 3,447 lines and its
      browser-spec consumers from three to two; the bench runtime adapter is 247
      lines.
+146. The mixed Energy/Trainer departure bridge now executes all four
+     local/opponent Energy-removal and Tool-removal histories through v1's real
+     `Card`, `moveCardBundle`, direct `moveCard`, attachment compaction,
+     discard reset, `refreshBoard`, and observer cleanup paths. It preserves
+     the immutable stable, transient, synchronous ghost-wrapper, and settled
+     geometry/topology expectations while deriving click targets from the live
+     DOM. Exercising the quarter-turned Tool exposed an Energy-only assumption
+     in the reusable base-hit derivation; the helper now searches the painted
+     rectangles for a truly attachment-free base point. The new mixed gate and
+     existing two-Energy compact gate pass two consecutive focused repeats
+     (16/16). This is a deliberate bridge checkpoint: restore/staged-swap and
+     the aggregate recorder remain for the next migration slice.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -115,6 +115,7 @@ const CARD_TYPE_BY_ROLE: Readonly<Record<string, string>> = {
   energy1: 'Energy',
   energy2: 'Energy',
   tool: 'Trainer',
+  trainerTool: 'Trainer',
   'trainer-as-tool': 'Trainer',
 };
 
@@ -1204,6 +1205,49 @@ export const captureAttachmentDeparture = async (
           attachmentBounds.length === 1
             ? baseBounds.right
             : attachmentBounds[attachmentBounds.length - 2]!.right;
+        const exclusivePoint = (
+          subject: DOMRect,
+          exclusions: readonly DOMRect[]
+        ): RectPoint => {
+          const candidates: { point: RectPoint; clearance: number }[] = [];
+          for (let yStep = 1; yStep < 10; yStep += 1) {
+            for (let xStep = 1; xStep < 10; xStep += 1) {
+              const point = {
+                x: subject.left + (subject.width * xStep) / 10,
+                y: subject.top + (subject.height * yStep) / 10,
+              };
+              if (
+                exclusions.some(
+                  (bounds) =>
+                    point.x >= bounds.left &&
+                    point.x <= bounds.right &&
+                    point.y >= bounds.top &&
+                    point.y <= bounds.bottom
+                )
+              ) {
+                continue;
+              }
+              candidates.push({
+                point,
+                clearance: Math.min(
+                  point.x - subject.left,
+                  subject.right - point.x,
+                  point.y - subject.top,
+                  subject.bottom - point.y
+                ),
+              });
+            }
+          }
+          const best = candidates.sort(
+            (left, right) => right.clearance - left.clearance
+          )[0];
+          if (!best) {
+            throw new Error(
+              'Real-v1 departure base lacks an attachment-free hit point'
+            );
+          }
+          return best.point;
+        };
         const pointBounds = {
           attachmentOverlap: {
             left: baseBounds.right + 2,
@@ -1218,12 +1262,6 @@ export const captureAttachmentDeparture = async (
             top: outerBounds.top,
             bottom: outerBounds.bottom,
           },
-          baseOnly: {
-            left: baseBounds.left + 2,
-            right: Math.min(...attachmentBounds.map((value) => value.left)) - 2,
-            top: baseBounds.top,
-            bottom: baseBounds.bottom,
-          },
         };
         for (const [label, value] of Object.entries(pointBounds)) {
           if (value.right - value.left <= 0 || value.bottom - value.top <= 0) {
@@ -1234,7 +1272,7 @@ export const captureAttachmentDeparture = async (
           allCardOverlap: center(intersection(logicalCards)),
           attachmentOverlap: center(pointBounds.attachmentOverlap),
           outermostAttachment: center(pointBounds.outermostAttachment),
-          baseOnly: center(pointBounds.baseOnly),
+          baseOnly: exclusivePoint(baseBounds, attachmentBounds),
         };
         const known = new Set(images);
         const idsAt = (point: RectPoint): readonly string[] =>
