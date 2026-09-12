@@ -2284,6 +2284,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      and swap runtime gates pass three consecutive focused repeats (42/42).
      This completes the executable behavior needed to retire the mixed aggregate
      recorder in the following cleanup checkpoint.
+148. The obsolete mixed-attachment aggregate gate and its hand-authored source
+     recorder are removed after the three focused runtime gates established
+     equivalent executable coverage for ingress order, both departure branches,
+     both restore shapes, and the staged deck-top swap. Stable mixed rendering
+     remains covered independently by renderer-contract, React DOM, and Pixi
+     tests. The retired aggregate was source characterization only and contained
+     no candidate assertion. Removing its 1,089-line spec plus 1,854 lines of
+     recorder/types reduces `legacy-source-board.ts` from 3,446 to 1,592 lines
+     and its browser consumers from two to one. The sole remaining transcription
+     is the mixed whole-stack/category-history gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -2323,8 +2333,10 @@ source-backed Trainer-as-Tool comparison in
 `tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts`, and the
 source-backed stable two-Energy comparison plus departure capture in
 `tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`, and
-the separate source-only mixed Energy/Trainer order and departure check in
-`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`,
+the separate real-runtime mixed Energy/Trainer order, departure, restore, and
+swap checks in `tests/browser/legacy-runtime-mixed-attachment-order-oracle.spec.ts`,
+`tests/browser/legacy-runtime-mixed-attachment-departure-oracle.spec.ts`, and
+`tests/browser/legacy-runtime-mixed-staged-restore-oracle.spec.ts`,
 plus the whole-stack/category-history source and React comparison in
 `tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`, including the
 source-backed settled mixed-stack paint. Marker/rotation history and

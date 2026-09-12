@@ -141,10 +141,10 @@ departures, staged restore, bench/flex contention, markers, BREAK/rotation,
 alternate layouts and assets, destination UX, candidate click/drag behavior,
 and server/network behavior remain excluded.
 
-`legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts` checks the
-source
+The three `legacy-runtime-mixed-attachment-*-oracle.spec.ts` browser gates check
+the immutable
 `tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`
-fixture. Four independent attachment
+fixture against v1's real modules. Four independent attachment
 histories cover Energy-then-Trainer and
 Trainer-then-Energy on the local and opponent active stacks; four more histories
 start from the same stable mixed stack and independently remove the Energy or
@@ -171,9 +171,11 @@ The same fixture now includes reversed two-card and interleaved four-card
 It proves that source restoration replays the flat staged list through the
 incoming-Energy rule, while source swap removes and appends the old deck top.
 Every deck checkpoint pins logical and direct-child DOM order plus reset card
-state, while a phase/card trace makes every source-transcribed reset invocation
-observable; restored checkpoints pin one live wrapper, no superseded wrapper,
-and a hidden staging popup before and after two animation frames.
+state. The real-runtime gate treats the exported synchronous swap's before and
+after states as authoritative; the fixture's hand-stepped reset trace remains
+historical detail rather than an independent runtime claim. Restored checkpoints
+pin one live wrapper, no superseded wrapper, and a hidden staging popup before
+and after two animation frames.
 The v2 exact-position swap is an explicit semantic exception; its versioned
 restore still applies the supported category partition to the resulting list.
 The stable canonical output contributes to the narrow production gate described

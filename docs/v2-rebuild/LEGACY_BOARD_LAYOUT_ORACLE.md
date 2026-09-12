@@ -608,14 +608,15 @@ bench/flex contention, markers, BREAK/rotation, alternate layouts and assets,
 destination UX, candidate click/drag behavior, Pixi paint/hit, and
 server/network behavior remain excluded.
 
-`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`
-checks the source-only
-`tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`.
-It records four isolated attachment histories—both Energy/Trainer ingress
-orders in the local and opponent active frames—and four isolated departure
-histories—remove Energy or Trainer-as-Tool on each side. This is a checked-in-
-source capture, not a candidate renderer comparison or a new production
-eligibility path.
+Three real-runtime browser gates check the immutable
+`tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`:
+`legacy-runtime-mixed-attachment-order-oracle.spec.ts`,
+`legacy-runtime-mixed-attachment-departure-oracle.spec.ts`, and
+`legacy-runtime-mixed-staged-restore-oracle.spec.ts`. Together they execute four
+isolated attachment histories—both Energy/Trainer ingress orders in the local
+and opponent active frames—four isolated departure histories, four staged
+restores, and two staged swaps. These are v1 runtime comparisons, not candidate
+renderer comparisons or new production eligibility paths.
 
 For the stable three-card source stack, both ingress orders converge on logical
 `[base, Energy, Trainer]`, sibling `[base, Trainer, Energy]`, and z-index
@@ -1615,11 +1616,11 @@ divergence or wrapper refresh after divergence,
 lower-initiated group, and pristine/returned/history-authored-q0
 lower single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
-feeds and compares the production geometry. The two-Energy
-departure phases remain source-only and prove stable convergence to the
-single-Energy source state. The mixed fixtures retain their historical and
-transient phases as source-only diagnostics, while their canonical settled
-active/sole-bench shapes feed the narrow strict production branch. Raw
+feeds and compares the production geometry. The two-Energy departure phases
+remain runtime-only and prove stable convergence to the single-Energy source
+state. The mixed fixtures retain their historical and transient phases as
+runtime-only diagnostics, while their canonical settled active/sole-bench
+shapes feed the narrow strict production branch. Raw
 normalized/authored inputs, box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
