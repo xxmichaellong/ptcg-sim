@@ -2272,6 +2272,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      existing two-Energy compact gate pass two consecutive focused repeats
      (16/16). This is a deliberate bridge checkpoint: restore/staged-swap and
      the aggregate recorder remain for the next migration slice.
+147. The staged mixed-attachment bridge now executes reverse-two and
+     interleaved-four `leaveAll` plus the multi-card deck-top swap on both sides
+     through v1's real `Card`, `leaveAll`, `switchWithDeckTop`, movement,
+     attachment, sorting, and placement modules. It pins the complete staged
+     and deck state at the exported action boundaries, then the restored stack's
+     immutable card/wrapper geometry, logical/DOM order, attachment pointers,
+     native top hits, immediate/settled identity, and zero-node cleanup. The
+     transcription's hand-authored reset trace is correctly classified as
+     historical rather than executable evidence. All order, departure, restore,
+     and swap runtime gates pass three consecutive focused repeats (42/42).
+     This completes the executable behavior needed to retire the mixed aggregate
+     recorder in the following cleanup checkpoint.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

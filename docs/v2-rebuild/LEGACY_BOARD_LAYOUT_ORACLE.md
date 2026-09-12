@@ -684,6 +684,15 @@ card state at every phase. A separate phase/card invocation trace keeps the
 otherwise idempotent selected-departure, deck-rotation, and prior-top-return
 reset calls observable.
 
+The executable runtime gate now treats the exported operation boundary as the
+authority instead. `legacy-runtime-mixed-staged-restore-oracle.spec.ts` installs
+real `Card` instances as the staged input, invokes v1's actual `leaveAll` and
+`switchWithDeckTop` exports, and checks the complete reset state, zone-array and
+direct-child order, geometry, attachment topology, native top hits, and cleanup
+immediately before and after those actions. The older per-reset trace split the
+synchronous swap by manually repeating its implementation, so it remains
+historical fixture detail rather than independent evidence about v1 execution.
+
 `leaveAll` does not call refresh. Its immediate and two-animation-frame phases
 are identical with one live wrapper, no superseded wrapper, and the staging
 popup hidden: reversed two-card restore leaves the Energy at `14.8333` px;
