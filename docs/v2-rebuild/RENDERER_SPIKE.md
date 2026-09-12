@@ -2117,6 +2117,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      capture, its duplicated interaction-suite implementation, and its unused
      selectors/types are removed, reducing browser specs coupled to
      `legacy-source-board.ts` from thirteen to ten.
+136. The CSSOM card-width rounding gate now constructs a settled active stack
+     for each player through v1's actual `Card`, `moveCardBundle`, and
+     `refreshBoard` implementations at 1x, 1.25x, 1.5x, and 2x device scale.
+     Every case still proves that the browser's intrinsic-aspect-ratio width
+     equals the layout model's whole-CSS-pixel prediction, while additionally
+     requiring the real front-end and movement module graph to resolve with no
+     missing same-origin path and no permitted external request. All four
+     focused Chromium cases pass. Because this was the sole remaining caller
+     of the generic transcribed card/stack fixture, its construction, capture,
+     hit-testing, and dedicated types are deleted: 423 lines leave
+     `legacy-source-board.ts`, and its browser-spec consumers drop from ten to
+     nine.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

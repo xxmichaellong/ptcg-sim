@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { asPlayerId } from '../../packages/game-core/src/ids.js';
 import {
@@ -10,7 +10,8 @@ import {
 
 import oracle from '../legacy-fixtures/renderer/board-layout-v1.json' with { type: 'json' };
 import cardOracle from '../legacy-fixtures/renderer/card-stack-layout-v1.json' with { type: 'json' };
-import { captureLegacySourceCardFixture } from './support/legacy-source-board.js';
+import { captureReflow } from './support/legacy-runtime-attachment-reflow.js';
+import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 // Legacy sizes each card `<img>` by height and lets the browser derive width
 // from the asset's own intrinsic ratio. The checked-in card back is 736x1024,
@@ -63,13 +64,43 @@ const layoutStateFor = (devicePixelRatio: number): BoardLayoutState => ({
   vertical: fixture.input.vertical as BoardLayoutState['vertical'],
 });
 
+const captureRuntimeCardWidths = async (page: Page) => {
+  const loaded = await loadLegacyRuntime(page);
+  const stacks: {
+    id: string;
+    side: 'local' | 'opponent';
+    baseClientWidth: number;
+  }[] = [];
+  for (const side of ['local', 'opponent'] as const) {
+    const capture = await captureReflow(page, {
+      side,
+      slot: 'active',
+      evolutionOrder: ['base'],
+      attachmentOrder: [],
+    });
+    stacks.push({
+      id: `${side}-active-stack`,
+      side,
+      baseClientWidth: capture.stack.baseClientWidth,
+    });
+  }
+  return {
+    stacks,
+    sourceFulfillment: {
+      servedPaths: loaded.servedPaths,
+      blockedExternalOrigins: loaded.blockedOrigins,
+      missingSameOriginPaths: loaded.missingPaths,
+    },
+  };
+};
+
 for (const scale of scales) {
-  test(`legacy CSSOM card width matches the modelled rounding at ${scale.name}`, async ({
+  test(`real v1 CSSOM card width matches the modelled rounding at ${scale.name}`, async ({
     browser,
   }, testInfo) => {
     test.skip(
       testInfo.project.name !== 'chromium',
-      'Source-characterization gates are Chromium-specific.'
+      'Real-runtime CSSOM gates are Chromium-specific.'
     );
 
     const page = await browser.newPage({
@@ -79,19 +110,30 @@ for (const scale of scales) {
       },
       deviceScaleFactor: scale.devicePixelRatio,
     });
-    let capture: Awaited<ReturnType<typeof captureLegacySourceCardFixture>>;
+    let capture: Awaited<ReturnType<typeof captureRuntimeCardWidths>>;
     try {
       expect(await page.evaluate(() => window.devicePixelRatio)).toBeCloseTo(
         scale.devicePixelRatio,
         5
       );
-      capture = await captureLegacySourceCardFixture(page);
+      capture = await captureRuntimeCardWidths(page);
     } finally {
       await page.close();
     }
 
     const snapshot = createBoardLayoutSnapshot(
       layoutStateFor(scale.devicePixelRatio)
+    );
+
+    expect(capture.sourceFulfillment.missingSameOriginPaths).toEqual([]);
+    expect(capture.sourceFulfillment.servedPaths).toContain(
+      '/src/front-end.js'
+    );
+    expect(capture.sourceFulfillment.servedPaths).toContain(
+      '/src/actions/move-card-bundle/move-card-bundle.js'
+    );
+    expect(capture.sourceFulfillment.blockedExternalOrigins).toContain(
+      'https://cdn.socket.io'
     );
 
     await testInfo.attach(`${scale.name}-card-widths.json`, {
