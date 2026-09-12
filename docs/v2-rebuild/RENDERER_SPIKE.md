@@ -2356,6 +2356,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      removes 90 duplicated browser-test lines without dropping the legacy rule
      that special conditions disappear on demotion while damage and ability
      markers follow the card.
+156. The runtime-oracle consolidation stops at twelve retained specs after an
+     assertion-by-assertion uniqueness audit. Five compound files cover direct
+     trace matrices and distinct refresh/returned/lower-card lifecycles; two
+     BREAK/lower-group files cover reconstruction asymmetries and topology; the
+     three mixed files cover pre-refresh attach recursion, individual
+     attachment departure, and staged/deck-top restoration; pile-cover covers
+     cover-node identity and Stadium replacement; and primitive rotation covers
+     base-initiated group turns plus repeated standalone single toggles. These
+     boundaries are not replaced by the broader geometry/candidate suites and
+     remain load-bearing. The primitive file commentary now states this current
+     role instead of calling itself the first or only real-runtime witness.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

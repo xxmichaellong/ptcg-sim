@@ -12,19 +12,17 @@ interface RotationSample {
 }
 
 /**
- * The first parity gate measured against the running v1 client rather than a
- * transcription of it.
- *
  * `rotate-card.js` is the rule the whole compound-rotation family rests on:
  * rotation accumulates from the parsed inline transform, bench containers take
  * a wider margin, half turns restore the narrow one, a group rotation carries
- * sibling Pokemon, and a single rotation toggles the `PokémonBreak` flag. Every
- * existing gate for that behaviour compares a TypeScript re-implementation
- * against fixtures derived from the same re-implementation, so a pass shows
- * only that the copy agrees with itself.
+ * sibling Pokemon, and a single rotation toggles the `PokémonBreak` flag.
  *
- * This drives the real `rotateCard` through the same q0-q1-q2-q3-q0 cycle the
- * transcription pins, so the recorded numbers become measurements of v1.
+ * This primitive witness remains separate from the compound-history family:
+ * it selects the base of a directly assembled two-card stack for a full group
+ * cycle, then independently repeats single on/off rotations without an evolve
+ * or refresh boundary. Compound replays select the top of a three-card stack
+ * and interleave group, single, evolution, and reconstruction operations, so
+ * neither retained branch subsumes this one.
  */
 const rotateCycle = async (
   page: import('@playwright/test').Page,
