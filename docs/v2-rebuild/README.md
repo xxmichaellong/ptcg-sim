@@ -143,9 +143,11 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   one-operation restore plan before target work and atomically replaces it with
   an encrypted exact-retry receipt after completion, while retaining the
   original expiry. Idempotent target initialization storage is also implemented
-  with an exact digest-marked retry contract and atomic lifecycle alarm.
-  Production key provisioning, quotas, internal object RPC/cross-object
-  orchestration, routes, and UI remain deliberately disabled later parity work.
+  with an exact digest-marked retry contract and atomic lifecycle alarm. An
+  internal, unwired coordinator now proves reservation/target/completion
+  convergence across pre-commit failures and ambiguous committed responses.
+  Production key provisioning, quotas, internal object RPC/namespace adapters,
+  routes, and UI remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

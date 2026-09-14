@@ -1,8 +1,9 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, encrypted one-time restore state, pure fork
-transform, idempotent target-room storage, and inert Durable Object runtime
-implemented; create/open/restore remain deliberately unwired
+transform, idempotent target-room storage, internal restore coordination model,
+and inert Durable Object runtime implemented; create/open/restore remain
+deliberately unwired
 
 Decision owner: ADR-012
 
@@ -10,6 +11,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-fork.ts`,
 `apps/server/src/continuation-restore-format.ts`,
+`apps/server/src/continuation-restore.ts`,
 `apps/server/src/continuation-target.ts`, and the inert `PtcgContinuation`
 export in `apps/server/src/worker.ts`
 
@@ -22,9 +24,9 @@ RPC, socket message, client package, or UI control. A dedicated
 Wrangler's current `exports` lifecycle, but it exposes only platform alarm
 cleanup. It does not change the live room namespace or the default/v2 route
 behavior. Production activation still requires the source-room authorization
-and quota transaction, internal object RPC/cross-object orchestration,
-deployment secret provisioning, abuse limits, recovery evidence, and the
-unchanged-UI integration described below.
+and quota transaction, internal object RPC/runtime orchestration wiring,
+deployment secret provisioning, abuse limits, managed recovery evidence, and
+the unchanged-UI integration described below.
 
 The implementation is intentionally a one-record storage adapter, instantiated
 only against the dedicated continuation namespace; passing an active room's
@@ -175,7 +177,7 @@ marks a continuation consumed. Those effects remain owned by the durable
 reservation/completion and future target-orchestration boundaries; calling
 this pure function alone cannot restore or expose a save.
 
-## Durable restore state and future cross-object protocol
+## Durable restore state and internal cross-object protocol
 
 This custody slice deliberately supports authenticated open, not restore. A
 future route must not treat `open()` as permission to initialize an arbitrary
@@ -210,10 +212,30 @@ a retry, crash, or ambiguous storage response cannot select a second plan:
    the save object. The original room and restored room have no shared mutable
    authority.
 
-No distributed claim of atomicity is made until the idempotent target
-initializer, orchestration loop, and complete cross-object crash matrix exist.
-The implemented save-side transitions provide the durable input and output of
-that loop; they do not call another object or expose an RPC.
+There is deliberately no distributed transaction. The internal
+`coordinateContinuationRestore()` loop now composes typed save-reservation,
+target-initialization, and save-completion ports. It validates the reservation's
+save/operation identity, requires the target acknowledgement to name exactly
+the reserved room, and verifies that the completion receipt exactly matches the
+encrypted plan. A completed retry returns its receipt without touching the
+target again. Malformed capabilities and operation IDs stop before either
+object.
+
+The retry convergence is object-owned: a save-reservation ambiguity recovers
+the same encrypted plan; a target ambiguity replays the digest-marked exact
+initialization; a completion ambiguity recovers the encrypted receipt. Failure
+before target commit leaves an inaccessible reservation; failure after target
+commit but before completion leaves an unclaimed target that the exact
+operation can finish. If completion misses the target/invitation deadline, no
+credentials are returned and the inaccessible target remains governed by its
+unclaimed-room alarm. The coordinator intentionally does not compensate by
+deleting or selecting a replacement room.
+
+This is a persistence-backed in-memory object model, not a live Worker call
+path. The save-side transitions still do not call another object or expose an
+RPC. Production confidence still requires exact internal RPC codecs, namespace
+selection by the reserved room code, and workerd/managed-preview exercises for
+eviction, transport ambiguity, deadline cleanup, and deployment rollback.
 
 The target storage half is now implemented independently. It validates the
 zero-version multiplayer/unclaimed snapshot, empty session/projection state,
@@ -228,8 +250,8 @@ frontier, empty journal state, lifecycle, and marker. It returns the existing
 room and repairs the alarm. A normal occupied room, another restore, partial
 write, malformed marker, changed snapshot, changed lifetime, or journal activity
 fails closed. The wrapper does not select a Durable Object or expose credentials;
-the future orchestrator must select exactly `plan.targetRoomCode` and call this
-initializer before completing the save record.
+the future target-port adapter must select exactly `plan.targetRoomCode` and
+call this initializer before completing the save record.
 
 ## Verification implemented in this slice
 
@@ -265,6 +287,15 @@ refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
 rejection, full rollback on write/alarm failure, and ambiguous committed
 initialization recovery without rewrite.
 
+The orchestration suite composes the real custody, fork, target wrapper, and
+durable in-memory stores. It proves the happy-path canonical-state identity;
+pre-commit reservation/preparation, target, and completion failures; ambiguous
+committed reservation, target, and completion recovery; no repeated fork
+preparation; exact room selection; completed-retry target bypass; foreign
+bearer/operation exclusion; mismatched acknowledgement/receipt refusal; invalid
+clock refusal; target-deadline refusal; and the no-credential, alarm-bounded
+orphan outcome when original custody expires during target work.
+
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
@@ -275,11 +306,11 @@ and attached to the draft PR/release evidence:
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
-- internal continuation/room RPCs and the cross-object
-  reservation/initialize/completion orchestration crash matrix; the save-side
+- exact internal continuation/room RPC codecs, reserved-room namespace adapter,
+  and the real-runtime/managed-preview cross-object crash matrix; the save-side
   state machine, idempotent target initializer, pure canonical transform,
-  credential/identity rotation, and projection/hash equivalence tests are
-  implemented but intentionally have no runtime caller;
+  internal orchestration loop, credential/identity rotation, and model
+  convergence tests are implemented but intentionally have no runtime caller;
 - delete/revoke and restore HTTP contracts with same-origin/no-store controls,
   generic external errors, telemetry redaction, and no capability logging;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
