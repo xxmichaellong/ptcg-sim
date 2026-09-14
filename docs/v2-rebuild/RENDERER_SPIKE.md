@@ -1008,8 +1008,9 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
     real v1 `Card` and pins source-ordered menu rows/computed paint plus the
     full-preview shell/image metrics, attaching both sides and JSON evidence.
     Action callbacks remain typed recording seams, not completed mutation
-    workflows; replay availability, complete accessibility audit, reconnect
-    behavior, production wiring, and non-Chromium approval remain separate.
+    workflows; replay availability, the ADR-024 accessibility-parity audit,
+    reconnect behavior, production wiring, and non-Chromium approval remain
+    separate.
 55. Those typed callbacks now enter the same protected controller/effect/session
     path as renderer drops. `resolveLegacyBoardOverlayAction` exhaustively
     classifies every current menu/zone control and reuses the existing
@@ -2611,9 +2612,10 @@ wiring:
   split/flip/full-playmat behavior, source edge clamp/collision states, the
   selected DOM production resize path, and normal/flipped fullscreen viewport
   continuity are now covered;
-- a manual screen-reader audit beyond the automated replay-local and transformed
-  stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
-  focus-visible paint/return, exact face assets, and stable geometry;
+- the manual ADR-024 screen-reader parity audit beyond the automated replay-local
+  and transformed stack/zone-dialog semantic names, roles, keyboard
+  traversal/wrap, focus-visible paint/return, exact face assets, and stable
+  geometry;
 - actual supported card-face/back hosts and representative large-raster
   decoded-memory behavior under ADR-013's accepted direct native-DOM policy
   (the controlled DOM gate now covers an intercepted external hostname,
@@ -2631,8 +2633,10 @@ wiring:
   display-object/GPU counters remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
-- keyboard and screen-reader audit of the selected semantic DOM surface; and
-- Chromium automation plus Firefox and Safari approval.
+- the recorded ADR-024 keyboard and screen-reader parity audit of the selected
+  semantic DOM surface; and
+- Chromium/Firefox/WebKit automation plus actual-product approval under
+  ADR-023.
 
 The renderer-neutral core, protocol, authority, scene, and runtime remain valid
 if a future measured bottleneck satisfies ADR-004's narrow revisit triggers.

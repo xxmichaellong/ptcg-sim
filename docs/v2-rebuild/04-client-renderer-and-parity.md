@@ -1388,8 +1388,8 @@ parity. Transformed stack/zone dialogs now use immutable owning-player frames
 to reproduce the legacy iframe coordinate systems. A source/candidate Chromium
 gate pins local and opponent physical geometry, card order/assets/paint, modal
 semantics, Tab containment, focus return, screenshots/metrics, and zero command
-traffic. A manual screen-reader audit, production routing, and non-Chromium
-approval remain separate gates.
+traffic. The manual ADR-024 screen-reader parity audit, production routing, and
+non-Chromium approval remain separate gates.
 
 ## React application state
 
@@ -1827,26 +1827,31 @@ resolved against the persisted Solo mode. Spectators and multiplayer recipients
 remain concealed. The default v2 renderer route and frozen v1 client are
 unchanged.
 
-## Accessibility preservation and minimum improvement
+## Accessibility preservation
 
-A canvas removes implicit DOM semantics, so v2 must not regress keyboard and
-screen-reader access that exists through current controls.
+The selected React DOM board and application shell must not regress keyboard or
+screen-reader behavior that is explicitly characterized under ADR-024.
 
-- All React controls keep native elements, labels, focus order, and visible focus.
-- Context menus/dialogs use correct focus trapping, Escape behavior, and return
-  focus to the selected card/zone.
-- The accessibility bridge provides a compact, virtualized DOM representation of
-  selectable visible cards/zones with labels, actions, and roving focus; it is not
-  a second visual renderer.
-- Chat, command rejection, coin flip, turn, attack/pass, reconnect, and import
-  errors use a bounded live region.
-- Reduced-motion preference shortens/removes nonessential transitions without
-  changing command timing.
-- High-contrast/dark settings continue to affect outlines and controls according
-  to characterized behavior.
+- React UI keeps native controls, labels, focus order, and visible focus.
+- Recipient-safe cards remain native buttons. Interactive zones expose button
+  semantics, counts, and Enter/Space activation without disclosing hidden card
+  information.
+- Characterized context menus and dialogs retain keyboard traversal, modal focus
+  boundaries, Escape behavior, and return focus to their card/zone opener.
+- Recipient-safe game activity uses a bounded named log plus ordered polite live
+  announcements that cancel across replay replacement and teardown.
+- When a caller enables the existing reduced-motion contract, nonessential
+  animation is bypassed or cancelled without changing the resolved result or
+  command timing. No OS-level detection or new visible setting is implied.
+- Dark and outline settings continue to affect controls according to
+  characterized behavior; formal contrast and forced-colors conformance are not
+  claimed.
 
-Accessibility work here restores semantics lost by moving images into canvas; it
-is part of parity and reliability, not a visual redesign.
+This is accessibility parity and reliability work, not a visual redesign or a
+formal conformance claim. A future canvas renderer would have to recreate these
+semantics without becoming a second source of game truth. See
+[`ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md`](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)
+and [`ACCESSIBILITY_PARITY.md`](./ACCESSIBILITY_PARITY.md).
 
 ## Visual parity verification
 

@@ -63,9 +63,9 @@ engine passed.
 The minimum viewport is measured in CSS pixels reported to the page. Larger
 viewports and higher device-pixel ratios remain supported, but the existing
 provisional 1366×768/DPR 1 and 1920×1080/DPR 2 quantitative targets still need
-their separate reference-hardware evidence. Accessibility requirements,
-including zoom expectations, and the named performance reference hardware are
-not decided by this ADR.
+their separate reference-hardware evidence. ADR-024 separately defines the
+first-release accessibility-parity and zoom boundary. The named performance
+reference hardware is not decided by this ADR.
 
 ## Consequences
 
@@ -90,7 +90,8 @@ not decided by this ADR.
   browser/OS versions, viewport, result, defects, and reviewer.
 - Record the reference device and physical-GPU measurements before claiming the
   quantitative renderer budgets.
-- Complete the separate accessibility support decision before public cutover.
+- Keep ADR-024's automated accessibility-parity gates green and complete its
+  recorded manual first-release smoke before public cutover.
 
 If a supported browser fails, do not silently relabel it best effort. Fix the
 defect, hold the release, or replace this ADR through explicit product approval.

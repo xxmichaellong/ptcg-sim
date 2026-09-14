@@ -43,10 +43,10 @@ Work:
 - Audit every document using `AUDIT.md`.
 - Resolve all `BLOCKING` questions in the decision register.
 - Decide top-level workspace location and deployment constraints.
-- Apply ADR-023's desktop browser/device/viewport matrix, define the remaining
-  reference-hardware and accessibility matrices, apply ADR-021's first-release
-  v1 save/share-import deferral, and apply ADR-022's fallback/deprecation
-  window.
+- Apply ADR-023's desktop browser/device/viewport matrix and ADR-024's
+  first-release accessibility-parity boundary, define the remaining quantitative
+  reference hardware/network profile, apply ADR-021's first-release v1
+  save/share-import deferral, and apply ADR-022's fallback/deprecation window.
 - Approve privacy behavior for multiplayer saves/replays and coaching/spectators.
 - Confirm ownership/license terms for any direct MagicCircle code extraction;
   otherwise permit only clean reimplementation of documented patterns.
@@ -543,7 +543,7 @@ Work in vertical slices:
 6. Counters, conditions, abilities, rotation/category/face state.
 7. Shuffle/draw/bulk moves, turn/coin/attack/pass, VSTAR/GX.
 8. Board flip, split resize, full screen, settings/themes.
-9. Solo undo/replay and complete accessibility bridge.
+9. Solo undo/replay and the characterized accessibility bridge.
 
 Implemented opt-in entry checkpoint: the existing Solo tab behind
 `?room-lobby=1` now creates the persisted one-player authority and enters the p1
@@ -742,8 +742,8 @@ Work:
 - Run performance tuning based on traces, not architectural rewrites.
 - Conduct security review/threat modeling of rooms, hidden info, direct external
   images, chat, imports, saves, admin/observability, and dependencies.
-- Run browser/device checks, accessibility audit, load/fault tests, two-hour CI
-  soaks, and 24-hour pre-release soak.
+- Run browser/device checks, the ADR-024 accessibility-parity audit, load/fault
+  tests, two-hour CI soaks, and 24-hour pre-release soak.
 - Exercise deploy/rollback, mixed build/protocol, storage restore, and incident
   runbooks in staging.
 - Produce user-neutral release notes: internal changes and any security-required

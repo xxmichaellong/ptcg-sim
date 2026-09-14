@@ -46,7 +46,8 @@ and replay workflow at 1280×720/DPR 1. The lanes do not yet satisfy the
 two-target quantitative viewport matrix above, pin fonts, run the actual stable
 Chrome/Edge/Firefox/Safari products, or substitute for managed-preview platform
 evidence. Those remain release evidence, not claims made by current CI. See
-[`ADR-023-DESKTOP-BROWSER-SUPPORT.md`](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)
+[`ADR-023-DESKTOP-BROWSER-SUPPORT.md`](./ADR-023-DESKTOP-BROWSER-SUPPORT.md),
+[`ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md`](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md),
 and [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ### Browser release matrix
@@ -59,6 +60,24 @@ candidate still requires a recorded foreground smoke in the four actual stable
 browser products because Chromium is only a Chrome/Edge engine proxy and Linux
 WebKit is only a Safari engine proxy. Phones, tablets, touch-only interaction,
 and smaller viewports are best effort for the first v2 release.
+
+### Accessibility release contract
+
+ADR-024 makes preservation of characterized accessibility behavior a
+first-release gate without claiming formal WCAG conformance. Native control
+roles/names/states, characterized keyboard eligibility and editable-target
+suppression, menu/dialog focus behavior, ordered live announcements, the
+existing reduced-motion consumer path, and hidden-information non-disclosure
+remain release-blocking.
+
+The automated suite supplies the repeatable semantic, focus, keyboard,
+announcement, motion, and privacy evidence. Before first public v2 cutover, a
+recorded keyboard and screen-reader smoke must run on at least one current
+desktop browser/OS/screen-reader combination using
+[`ACCESSIBILITY_PARITY.md`](./ACCESSIBILITY_PARITY.md). This is parity evidence,
+not a formal assistive-technology support matrix. A separate 200% zoom/reflow
+claim is deferred: the ADR-023 boundary continues to use the viewport's reported
+CSS pixels under zoom.
 
 ### Representative match fixture
 
@@ -88,24 +107,24 @@ covered card.
 
 ## Required test layers
 
-| Layer               | Required evidence                                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Static architecture | Strict type check, lint, circular-dependency and forbidden-import checks, package API report, bundle secret scan             |
-| Domain unit         | Valid/rejected/boundary/no-op cases for every command and event type                                                         |
-| Invariant/property  | Generated valid/invalid sequences; exactly-one location; nonduplicated ordered zones/stacks; rejected state unchanged        |
-| Determinism         | Identical state + command + context gives byte-identical resolved events, next state, projection, and stable hash            |
-| Visibility/security | Role matrix, non-interference/differential projection, serialized leak scan, private asset request scan                      |
-| Protocol            | Runtime codec round trips, unknown versions/types, byte/depth/count limits, sequence/idempotency, authorization, safe errors |
-| Authority model     | Simultaneous/conflicting commands, duplicate/lost/reordered frames, stale views, one controller per seat, convergence        |
-| Persistence         | Crash at every transaction boundary, checkpoint/tail recovery, compaction, corruption, migration, retention, quota           |
-| Replay file         | Raw-byte bound before decode/hash, fatal UTF-8, exact version/privacy/integrity schema, semantic validation, atomic install  |
-| Legacy conversion   | Every supported version/action, real/golden saves, invalid/truncated/oversized inputs, transactional failure                 |
-| Renderer unit       | Pure geometry, stacking, z-order, hit testing, diff/invalidation, texture leases, generation-safe async teardown             |
-| Browser/WebGL       | Context loss/restore, zero-size host, DPR changes, image failure/CORS, StrictMode remount, pointer cancellation              |
-| E2E parity          | Protected solo/multiplayer/spectator/replay/deck/settings journeys, screenshots and structured geometry                      |
-| Accessibility       | Keyboard-only flows, focus/menu/dialog behavior, semantic board bridge, live announcements, reduced motion                   |
-| Performance         | Cold/warm load, setup, one-card action, drag, resize, opened zones, reset churn, reconnect, server persistence               |
-| Soak/fault          | Long randomized room sessions with drops, reconnect, restarts, hibernation, image errors, and context loss                   |
+| Layer               | Required evidence                                                                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static architecture | Strict type check, lint, circular-dependency and forbidden-import checks, package API report, bundle secret scan                                                                                              |
+| Domain unit         | Valid/rejected/boundary/no-op cases for every command and event type                                                                                                                                          |
+| Invariant/property  | Generated valid/invalid sequences; exactly-one location; nonduplicated ordered zones/stacks; rejected state unchanged                                                                                         |
+| Determinism         | Identical state + command + context gives byte-identical resolved events, next state, projection, and stable hash                                                                                             |
+| Visibility/security | Role matrix, non-interference/differential projection, serialized leak scan, private asset request scan                                                                                                       |
+| Protocol            | Runtime codec round trips, unknown versions/types, byte/depth/count limits, sequence/idempotency, authorization, safe errors                                                                                  |
+| Authority model     | Simultaneous/conflicting commands, duplicate/lost/reordered frames, stale views, one controller per seat, convergence                                                                                         |
+| Persistence         | Crash at every transaction boundary, checkpoint/tail recovery, compaction, corruption, migration, retention, quota                                                                                            |
+| Replay file         | Raw-byte bound before decode/hash, fatal UTF-8, exact version/privacy/integrity schema, semantic validation, atomic install                                                                                   |
+| Legacy conversion   | Every supported version/action, real/golden saves, invalid/truncated/oversized inputs, transactional failure                                                                                                  |
+| Renderer unit       | Pure geometry, stacking, z-order, hit testing, diff/invalidation, texture leases, generation-safe async teardown                                                                                              |
+| Browser/WebGL       | Context loss/restore, zero-size host, DPR changes, image failure/CORS, StrictMode remount, pointer cancellation                                                                                               |
+| E2E parity          | Protected solo/multiplayer/spectator/replay/deck/settings journeys, screenshots and structured geometry                                                                                                       |
+| Accessibility       | Characterized keyboard flows and suppression, native/board semantics, focus/menu/dialog behavior, ordered recipient-safe announcements, reduced-motion result parity, and recorded manual screen-reader smoke |
+| Performance         | Cold/warm load, setup, one-card action, drag, resize, opened zones, reset churn, reconnect, server persistence                                                                                                |
+| Soak/fault          | Long randomized room sessions with drops, reconnect, restarts, hibernation, image errors, and context loss                                                                                                    |
 
 The selected DOM route now has deterministic Chromium evidence for the
 zero-paint-size host, DPR, resize-coalescing, and visible-document-resume parts
@@ -855,10 +874,10 @@ A release candidate requires attached evidence and named approval for:
 - protocol/security/visibility owner;
 - persistence/operations owner;
 - renderer/performance owner;
-- UI parity/accessibility owner;
+- UI parity/accessibility-parity owner;
 - legacy retirement/quarantine owner; and
 - product owner for all exceptions/deferred items.
 
 Any invariant failure, confirmed hidden leak, acknowledged-state loss, corrupting
-import, severity-1/2 defect, or P0 parity regression automatically blocks or
-pauses rollout.
+import, severity-1/2 defect, protected accessibility regression, or P0 parity
+regression automatically blocks or pauses rollout.
