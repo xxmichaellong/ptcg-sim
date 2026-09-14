@@ -405,11 +405,13 @@ reservation, quota lease, save creation, and source completion, and refusal of
 mismatched plans, receipts, completion references, unavailable completed
 receipts, and invalid clocks.
 
-The coordinator also accepts only Cloudflare's documented `Symbol.dispose` RPC
-lifecycle metadata in addition to each exact payload schema, copies the
-validated credential receipt into a plain frozen DTO, and disposes every
-object-valued save response on success or failure. Focused tests prove wrapper
-disposal and that transport metadata cannot escape in the returned credential.
+The creation and restore coordinators accept only Cloudflare's documented
+`Symbol.dispose` RPC lifecycle metadata in addition to each exact payload
+schema. Creation copies the validated credential receipt into a plain frozen
+DTO; both coordinators dispose every object-valued cross-object response on
+success or failure. Focused tests prove wrapper disposal, refusal of unknown
+payload or symbol fields, and that transport metadata cannot escape in returned
+credentials.
 
 The quota suite proves deterministic bounded shard selection, strict
 policy/lifetime/input validation, digest-only room/operation storage, exact

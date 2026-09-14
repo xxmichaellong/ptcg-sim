@@ -10,6 +10,10 @@ import {
   type ContinuationRestoreResult,
   type ReserveContinuationRestoreInput,
 } from './continuation-restore-format.js';
+import {
+  disposeDurableObjectRpcResult,
+  hasExactDurableObjectRpcResultKeys,
+} from './durable-object-rpc-result.js';
 
 export interface ContinuationRestoreSavePort {
   readonly reserveRestore: (
@@ -29,7 +33,7 @@ export interface ContinuationRestoreTargetAcknowledgement {
 export interface ContinuationRestoreTargetPort {
   readonly initializeRestoreTarget: (
     plan: ContinuationRestorePlan
-  ) => Promise<ContinuationRestoreTargetAcknowledgement>;
+  ) => Promise<ContinuationRestoreTargetAcknowledgement | undefined>;
 }
 
 export interface ContinuationRestoreClock {
@@ -113,13 +117,26 @@ export const coordinateContinuationRestore = async (
   }
   const acknowledgement =
     await dependencies.target.initializeRestoreTarget(plan);
-  if (
-    typeof acknowledgement.created !== 'boolean' ||
-    acknowledgement.targetRoomCode !== plan.targetRoomCode
-  ) {
+  if (!acknowledgement || typeof acknowledgement !== 'object') {
     throw new ContinuationRestoreCoordinationError(
-      'Continuation restore target acknowledgement does not match its plan'
+      'Continuation restore target acknowledgement is malformed'
     );
+  }
+  try {
+    if (
+      !hasExactDurableObjectRpcResultKeys(acknowledgement, [
+        'created',
+        'targetRoomCode',
+      ]) ||
+      typeof acknowledgement.created !== 'boolean' ||
+      acknowledgement.targetRoomCode !== plan.targetRoomCode
+    ) {
+      throw new ContinuationRestoreCoordinationError(
+        'Continuation restore target acknowledgement does not match its plan'
+      );
+    }
+  } finally {
+    disposeDurableObjectRpcResult(acknowledgement);
   }
 
   const completed = await dependencies.save.completeRestore({

@@ -331,6 +331,52 @@ describe('continuation cross-object restore coordinator', () => {
     expect(harness.selectedRoomCodes).toEqual([targetRoomCode, targetRoomCode]);
   });
 
+  it('accepts only known RPC lifecycle metadata and disposes target results', async () => {
+    const valid = await createHarness();
+    const initialize = valid.dependencies.target.initializeRestoreTarget;
+    let validDisposals = 0;
+    await expect(
+      coordinateContinuationRestore(restoreInput(valid.capability), {
+        ...valid.dependencies,
+        target: {
+          initializeRestoreTarget: async (plan) => {
+            const acknowledgement = await initialize(plan);
+            if (!acknowledgement) return undefined;
+            return {
+              ...acknowledgement,
+              [Symbol.dispose]: () => {
+                validDisposals += 1;
+              },
+            };
+          },
+        },
+      })
+    ).resolves.toMatchObject({ targetRoomCode });
+    expect(validDisposals).toBe(1);
+
+    const malformed = await createHarness();
+    let malformedDisposals = 0;
+    const complete = vi.spyOn(malformed.dependencies.save, 'completeRestore');
+    await expect(
+      coordinateContinuationRestore(restoreInput(malformed.capability), {
+        ...malformed.dependencies,
+        target: {
+          initializeRestoreTarget: async () => ({
+            created: true,
+            targetRoomCode,
+            unexpected: true,
+            [Symbol.dispose]: () => {
+              malformedDisposals += 1;
+            },
+          }),
+        },
+      })
+    ).rejects.toThrow('acknowledgement does not match its plan');
+    expect(malformedDisposals).toBe(1);
+    expect(complete).not.toHaveBeenCalled();
+    expect(storedSaveRecord(malformed).state).toBe('restoring');
+  });
+
   it('recovers an ambiguous committed completion directly from its retry receipt', async () => {
     const harness = await createHarness();
     const complete = harness.dependencies.save.completeRestore;
@@ -538,6 +584,20 @@ describe('continuation cross-object restore coordinator', () => {
       )
     ).rejects.toBeInstanceOf(ContinuationRestoreCoordinationError);
     expect(storedSaveRecord(acknowledgementHarness).state).toBe('restoring');
+
+    const missingAcknowledgementHarness = await createHarness();
+    await expect(
+      coordinateContinuationRestore(
+        restoreInput(missingAcknowledgementHarness.capability),
+        {
+          ...missingAcknowledgementHarness.dependencies,
+          target: { initializeRestoreTarget: async () => undefined },
+        }
+      )
+    ).rejects.toThrow('target acknowledgement is malformed');
+    expect(storedSaveRecord(missingAcknowledgementHarness).state).toBe(
+      'restoring'
+    );
 
     const completionHarness = await createHarness();
     const complete = completionHarness.dependencies.save.completeRestore;

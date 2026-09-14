@@ -20,6 +20,10 @@ import type {
   ContinuationQuotaLeaseReservation,
   ReserveContinuationQuotaLeaseInput,
 } from './continuation-quota.js';
+import {
+  disposeDurableObjectRpcResult,
+  hasExactDurableObjectRpcResultKeys,
+} from './durable-object-rpc-result.js';
 
 const CREATION_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const SAVE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/u;
@@ -110,25 +114,6 @@ const exactKeys = (value: object, expected: readonly string[]): boolean => {
     JSON.stringify((keys as string[]).sort()) ===
       JSON.stringify([...expected].sort())
   );
-};
-
-const exactRpcResultKeys = (
-  value: object,
-  expected: readonly string[]
-): boolean => {
-  const keys = Reflect.ownKeys(value);
-  const payloadKeys = keys.filter(
-    (key): key is string => typeof key === 'string'
-  );
-  return (
-    keys.every((key) => typeof key === 'string' || key === Symbol.dispose) &&
-    JSON.stringify(payloadKeys.sort()) === JSON.stringify([...expected].sort())
-  );
-};
-
-const disposeRpcResult = (value: object): void => {
-  const dispose = Reflect.get(value, Symbol.dispose);
-  if (typeof dispose === 'function') dispose.call(value);
 };
 
 const safeNonNegativeInteger = (value: unknown): value is number =>
@@ -228,7 +213,7 @@ const validateReceipt = (
   if (
     typeof receipt !== 'object' ||
     receipt === null ||
-    !exactRpcResultKeys(receipt, [
+    !hasExactDurableObjectRpcResultKeys(receipt, [
       'capability',
       'createdAt',
       'expiresAt',
@@ -345,7 +330,7 @@ export const coordinateContinuationCreation = async (
         ),
       };
     } finally {
-      disposeRpcResult(receipt);
+      disposeDurableObjectRpcResult(receipt);
     }
   }
 
@@ -377,7 +362,7 @@ export const coordinateContinuationCreation = async (
   let quotaExceeded = false;
   try {
     if (quota.state === 'quota_exceeded') {
-      if (!exactRpcResultKeys(quota, ['state'])) {
+      if (!hasExactDurableObjectRpcResultKeys(quota, ['state'])) {
         throw new ContinuationCreationCoordinationError(
           'Continuation global quota result is malformed'
         );
@@ -385,7 +370,7 @@ export const coordinateContinuationCreation = async (
       quotaExceeded = true;
     } else if (
       quota.state !== 'reserved' ||
-      !exactRpcResultKeys(quota, ['created', 'state']) ||
+      !hasExactDurableObjectRpcResultKeys(quota, ['created', 'state']) ||
       typeof quota.created !== 'boolean'
     ) {
       throw new ContinuationCreationCoordinationError(
@@ -393,7 +378,7 @@ export const coordinateContinuationCreation = async (
       );
     }
   } finally {
-    disposeRpcResult(quota);
+    disposeDurableObjectRpcResult(quota);
   }
   if (quotaExceeded) return { state: 'quota_exceeded', scope: 'global' };
   const saved = await dependencies.saveForId(plan.saveId).createReserved({
@@ -414,7 +399,7 @@ export const coordinateContinuationCreation = async (
   try {
     if (
       typeof saved !== 'object' ||
-      !exactRpcResultKeys(saved, ['created', 'receipt']) ||
+      !hasExactDurableObjectRpcResultKeys(saved, ['created', 'receipt']) ||
       typeof saved.created !== 'boolean'
     ) {
       throw new ContinuationCreationCoordinationError(
@@ -428,7 +413,7 @@ export const coordinateContinuationCreation = async (
       plan.createdAt
     );
   } finally {
-    if (typeof saved === 'object') disposeRpcResult(saved);
+    if (typeof saved === 'object') disposeDurableObjectRpcResult(saved);
   }
   const completed = await dependencies.source.completeCreation({
     requesterSessionId: input.requesterSessionId,

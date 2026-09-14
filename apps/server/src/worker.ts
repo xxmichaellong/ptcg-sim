@@ -38,7 +38,6 @@ import {
   type ContinuationQuotaLeaseReservation,
 } from './continuation-quota.js';
 import {
-  ContinuationRestoreCoordinationError,
   coordinateContinuationRestore,
   type ContinuationRestoreTargetAcknowledgement,
 } from './continuation-restore.js';
@@ -228,17 +227,10 @@ export class PtcgContinuation extends DurableObject<Env> {
           custody.completeRestore(completeInput),
       },
       target: {
-        initializeRestoreTarget: async (plan) => {
-          const acknowledgement = await this.env.PTCG_ROOM.getByName(
+        initializeRestoreTarget: (plan) =>
+          this.env.PTCG_ROOM.getByName(
             plan.targetRoomCode
-          ).initializeContinuation(plan);
-          if (!acknowledgement) {
-            throw new ContinuationRestoreCoordinationError(
-              'Continuation target rejected its reserved plan'
-            );
-          }
-          return acknowledgement;
-        },
+          ).initializeContinuation(plan),
       },
       clock: { now: Date.now },
     });
