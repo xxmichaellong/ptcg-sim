@@ -1,5 +1,6 @@
 import {
   MATCH_STATE_SCHEMA_VERSION,
+  stableSerialize,
   type MatchState,
 } from '@ptcgsim/game-core';
 import {
@@ -32,6 +33,7 @@ import { ROOM_ALREADY_INITIALIZED_MESSAGE } from './room-initialization.js';
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 export const AUTHORITY_FRONTIER_STORAGE_KEY = 'authority:frontier';
 export const ROOM_LIFECYCLE_STORAGE_KEY = 'room:lifecycle';
+const ROOM_CONTINUATION_ORIGIN_STORAGE_KEY = 'room:continuation-origin';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
 const PRIOR_STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
@@ -40,6 +42,7 @@ const RECENT_STORAGE_FORMAT = 'ptcgsim-room-authority-v5';
 const STORAGE_FORMAT = 'ptcgsim-room-authority-v6';
 const AUTHORITY_FRONTIER_FORMAT = 'ptcgsim-authority-frontier-v1';
 const GENERATION_PATTERN = /^[0-9a-f]{32}$/u;
+const CONTINUATION_RESTORE_DIGEST_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 
 export interface DurableStorageTransactionLike extends JournalRetentionTransaction {
   readonly put: (entries: Record<string, unknown>) => Promise<void>;
@@ -80,6 +83,11 @@ type StoredRoomLifecycle =
       readonly createdAt: number;
       readonly unclaimedExpiresAt: number;
     };
+
+interface StoredRoomContinuationOrigin {
+  readonly format: 'ptcgsim-room-continuation-origin-v1';
+  readonly restoreDigest: string;
+}
 
 export type UnclaimedRoomExpiryResult =
   'expired' | 'claimed' | 'scheduled' | 'missing';
@@ -170,6 +178,26 @@ export class RoomExpiredError extends Error {
 
 const safeNonNegativeInteger = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+const readStoredRoomContinuationOrigin = (
+  value: unknown
+): StoredRoomContinuationOrigin | undefined => {
+  if (value === undefined) return undefined;
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Array.isArray(value) ||
+    Reflect.ownKeys(value).length !== 2 ||
+    Reflect.get(value, 'format') !== 'ptcgsim-room-continuation-origin-v1' ||
+    typeof Reflect.get(value, 'restoreDigest') !== 'string' ||
+    !CONTINUATION_RESTORE_DIGEST_PATTERN.test(
+      Reflect.get(value, 'restoreDigest')
+    )
+  ) {
+    throw new Error('Stored room continuation origin is malformed');
+  }
+  return value as StoredRoomContinuationOrigin;
+};
 
 const defaultAuthorityGeneration = (): string => {
   const bytes = new Uint8Array(16);
@@ -710,6 +738,13 @@ export class DurableRoomSnapshotStore
       );
       if (existing !== undefined) throw new RoomAlreadyInitializedError();
       if (
+        (await transaction.get<unknown>(
+          ROOM_CONTINUATION_ORIGIN_STORAGE_KEY
+        )) !== undefined
+      ) {
+        throw new Error('Stored room continuation origin has no snapshot');
+      }
+      if (
         (await transaction.get<unknown>(AUTHORITY_FRONTIER_STORAGE_KEY)) !==
         undefined
       ) {
@@ -741,6 +776,140 @@ export class DurableRoomSnapshotStore
       }
     });
     this.validatedHead = { snapshot, validation, frontier };
+  }
+
+  async initializeContinuationTarget(
+    snapshot: RoomAuthoritySnapshot,
+    lifecycle: RoomInitializationLifecycle,
+    restoreDigest: string
+  ): Promise<boolean> {
+    const validation = validateAuthoritySnapshot(snapshot);
+    if (
+      !validInitializationLifecycle(lifecycle) ||
+      !CONTINUATION_RESTORE_DIGEST_PATTERN.test(restoreDigest) ||
+      snapshot.authorityVersion !== 0 ||
+      snapshot.mode !== 'multiplayer' ||
+      Object.keys(snapshot.sessions).length !== 0 ||
+      snapshot.identities.cardAliases.length !== 0 ||
+      snapshot.identities.definitionAliases.length !== 0 ||
+      !snapshot.admission ||
+      Object.values(snapshot.admission.seats).some(
+        (seat) => seat.claimedSessionId !== null
+      )
+    ) {
+      throw new Error('Continuation target initialization is invalid');
+    }
+    const generation = this.createGeneration();
+    const frontier = frontierForSnapshot(snapshot, generation);
+    const expectedLifecycle: StoredRoomLifecycle = {
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'unclaimed',
+      createdAt: lifecycle.createdAt,
+      unclaimedExpiresAt: lifecycle.unclaimedExpiresAt,
+    };
+    const expectedRetention = initialJournalRetentionIndex(
+      snapshot.authorityVersion
+    );
+    const result = await this.storage.transaction(async (transaction) => {
+      const [
+        rawSnapshot,
+        rawFrontier,
+        rawLifecycle,
+        rawOrigin,
+        rawRetention,
+        authorityJournal,
+        admissionJournal,
+      ] = await Promise.all([
+        transaction.get<unknown>(AUTHORITY_SNAPSHOT_STORAGE_KEY),
+        transaction.get<unknown>(AUTHORITY_FRONTIER_STORAGE_KEY),
+        transaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY),
+        transaction.get<unknown>(ROOM_CONTINUATION_ORIGIN_STORAGE_KEY),
+        transaction.get<unknown>(JOURNAL_RETENTION_STORAGE_KEY),
+        transaction.list<unknown>({ prefix: 'authority:journal:', limit: 1 }),
+        transaction.list<unknown>({
+          prefix: 'authority:admission:',
+          limit: 1,
+        }),
+      ]);
+      if (rawSnapshot === undefined) {
+        if (
+          rawFrontier !== undefined ||
+          rawLifecycle !== undefined ||
+          rawOrigin !== undefined ||
+          rawRetention !== undefined ||
+          authorityJournal.size > 0 ||
+          admissionJournal.size > 0
+        ) {
+          throw new Error('Stored continuation target is incomplete');
+        }
+        const origin: StoredRoomContinuationOrigin = {
+          format: 'ptcgsim-room-continuation-origin-v1',
+          restoreDigest,
+        };
+        await transaction.put({
+          [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
+            format: STORAGE_FORMAT,
+            generation,
+            snapshot,
+          } satisfies StoredAuthoritySnapshot,
+          [AUTHORITY_FRONTIER_STORAGE_KEY]: frontier,
+          [JOURNAL_RETENTION_STORAGE_KEY]: expectedRetention,
+          [ROOM_LIFECYCLE_STORAGE_KEY]: expectedLifecycle,
+          [ROOM_CONTINUATION_ORIGIN_STORAGE_KEY]: origin,
+        });
+        await transaction.setAlarm(lifecycle.unclaimedExpiresAt);
+        return {
+          created: true,
+          head: { snapshot, validation, frontier },
+        };
+      }
+
+      const origin = readStoredRoomContinuationOrigin(rawOrigin);
+      if (!origin || origin.restoreDigest !== restoreDigest) {
+        throw new RoomAlreadyInitializedError();
+      }
+      if (
+        rawFrontier === undefined ||
+        rawLifecycle === undefined ||
+        rawRetention === undefined ||
+        authorityJournal.size > 0 ||
+        admissionJournal.size > 0
+      ) {
+        throw new Error('Stored continuation target is incomplete');
+      }
+      const restored = readStoredSnapshotEnvelope(rawSnapshot);
+      const storedFrontier = readStoredFrontier(rawFrontier);
+      const storedLifecycle = readStoredRoomLifecycle(rawLifecycle);
+      if (
+        !restored ||
+        restored.format !== STORAGE_FORMAT ||
+        !restored.generation ||
+        !storedFrontier ||
+        !frontierMatches(
+          storedFrontier,
+          frontierForSnapshot(restored.snapshot, restored.generation)
+        ) ||
+        stableSerialize(restored.snapshot) !== stableSerialize(snapshot) ||
+        stableSerialize(storedLifecycle) !==
+          stableSerialize(expectedLifecycle) ||
+        stableSerialize(rawRetention) !== stableSerialize(expectedRetention)
+      ) {
+        throw new RoomAlreadyInitializedError();
+      }
+      if ((await transaction.getAlarm()) !== lifecycle.unclaimedExpiresAt) {
+        await transaction.setAlarm(lifecycle.unclaimedExpiresAt);
+      }
+      return {
+        created: false,
+        head: {
+          snapshot: restored.snapshot,
+          validation: restored.validation,
+          frontier: storedFrontier,
+        },
+      };
+    });
+    this.validatedHead = result.head;
+    return result.created;
   }
 
   private createGeneration(): string {

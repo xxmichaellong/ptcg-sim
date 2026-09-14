@@ -142,11 +142,12 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   leave that transform. The custody adapter also persists an encrypted
   one-operation restore plan before target work and atomically replaces it with
   an encrypted exact-retry receipt after completion, while retaining the
-  original expiry. Production key provisioning, quotas, idempotent target
-  initialization/cross-object orchestration, routes, and UI remain deliberately
-  disabled later parity work. Deck
-  navigation is now active only on the opt-in v2 room route; the default route
-  remains unchanged.
+  original expiry. Idempotent target initialization storage is also implemented
+  with an exact digest-marked retry contract and atomic lifecycle alarm.
+  Production key provisioning, quotas, internal object RPC/cross-object
+  orchestration, routes, and UI remain deliberately disabled later parity work.
+  Deck navigation is now active only on the opt-in v2 room route; the default
+  route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
   and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.
   Multiplayer navigation parks that Solo runtime, and returning does not create

@@ -1039,13 +1039,14 @@ create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
 declared through Wrangler `exports`; its key-independent alarm is tested across
 eviction, but it exposes no edge or object operation surface. Phase 7 still
 owns production key provisioning, source-room quotas and authorization RPC,
-idempotent target-room initialization and cross-object orchestration,
-operational recovery/abuse evidence, and canonical state-import/sidebar
-integration. The independently tested pure fork transform already preserves
-the canonical state/replay exactly while clearing and rotating all recipient
-and admission authority; the save adapter durably encrypts one immutable plan
-and its completion receipt under the original expiry. See
-`CONTINUATION_CUSTODY.md` for the closed production gates.
+internal continuation/room RPC and cross-object orchestration, operational
+recovery/abuse evidence, and canonical state-import/sidebar integration. The
+independently tested pure fork transform already preserves the canonical
+state/replay exactly while clearing and rotating all recipient and admission
+authority; the save adapter durably encrypts one immutable plan and its
+completion receipt under the original expiry, and the target store atomically
+initializes/retries the exact digest-marked room. See `CONTINUATION_CUSTODY.md`
+for the closed production gates.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

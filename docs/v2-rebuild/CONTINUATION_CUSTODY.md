@@ -1,16 +1,17 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, encrypted one-time restore state, pure fork
-transform, and inert Durable Object runtime implemented; create/open/restore
-remain deliberately unwired
+transform, idempotent target-room storage, and inert Durable Object runtime
+implemented; create/open/restore remain deliberately unwired
 
 Decision owner: ADR-012
 
 Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-fork.ts`,
-`apps/server/src/continuation-restore-format.ts`, and the inert
-`PtcgContinuation` export in `apps/server/src/worker.ts`
+`apps/server/src/continuation-restore-format.ts`,
+`apps/server/src/continuation-target.ts`, and the inert `PtcgContinuation`
+export in `apps/server/src/worker.ts`
 
 ## Purpose and release boundary
 
@@ -21,9 +22,9 @@ RPC, socket message, client package, or UI control. A dedicated
 Wrangler's current `exports` lifecycle, but it exposes only platform alarm
 cleanup. It does not change the live room namespace or the default/v2 route
 behavior. Production activation still requires the source-room authorization
-and quota transaction, idempotent target-room initialization plus cross-object
-orchestration, deployment secret provisioning, abuse limits, recovery evidence,
-and the unchanged-UI integration described below.
+and quota transaction, internal object RPC/cross-object orchestration,
+deployment secret provisioning, abuse limits, recovery evidence, and the
+unchanged-UI integration described below.
 
 The implementation is intentionally a one-record storage adapter, instantiated
 only against the dedicated continuation namespace; passing an active room's
@@ -214,6 +215,22 @@ initializer, orchestration loop, and complete cross-object crash matrix exist.
 The implemented save-side transitions provide the durable input and output of
 that loop; they do not call another object or expose an RPC.
 
+The target storage half is now implemented independently. It validates the
+zero-version multiplayer/unclaimed snapshot, empty session/projection state,
+fresh admission shape, lifecycle bound, and a 43-character restore digest. In
+one transaction it requires an entirely empty target and writes the canonical
+snapshot envelope, frontier, empty journal-retention index, unclaimed lifecycle,
+`room:continuation-origin` marker, and lifecycle alarm. The marker contains only
+a domain-separated SHA-256 digest of save locator plus restore operation ID.
+
+An exact retry must match that digest, the byte-deterministic snapshot, complete
+frontier, empty journal state, lifecycle, and marker. It returns the existing
+room and repairs the alarm. A normal occupied room, another restore, partial
+write, malformed marker, changed snapshot, changed lifetime, or journal activity
+fails closed. The wrapper does not select a Durable Object or expose credentials;
+the future orchestrator must select exactly `plan.targetRoomCode` and call this
+initializer before completing the save record.
+
 ## Verification implemented in this slice
 
 The focused model suite covers capability entropy/grammar, key validation and
@@ -242,6 +259,12 @@ ambiguous committed reservation/completion recovery, lifecycle/operation/plan
 validation, phase-specific AAD swap rejection, and original-deadline cleanup
 for restoring and completed records.
 
+The target suite proves atomic five-record-plus-alarm initialization, exact
+retry and alarm repair, save/operation-bound digest derivation, room collision
+refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
+rejection, full rollback on write/alarm failure, and ambiguous committed
+initialization recovery without rewrite.
+
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
@@ -252,11 +275,11 @@ and attached to the draft PR/release evidence:
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
-- idempotent new-room initialization and the cross-object
+- internal continuation/room RPCs and the cross-object
   reservation/initialize/completion orchestration crash matrix; the save-side
-  state machine, pure canonical transform, credential/identity rotation, and
-  projection/hash equivalence tests are implemented but intentionally have no
-  runtime caller;
+  state machine, idempotent target initializer, pure canonical transform,
+  credential/identity rotation, and projection/hash equivalence tests are
+  implemented but intentionally have no runtime caller;
 - delete/revoke and restore HTTP contracts with same-origin/no-store controls,
   generic external errors, telemetry redaction, and no capability logging;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
