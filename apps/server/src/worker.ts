@@ -17,6 +17,7 @@ import {
   isSameOriginBrowserRequest,
 } from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
+import { expireContinuationCustody } from './continuation-custody.js';
 import { initializeNewRoom } from './create-room.js';
 import {
   DurableRoomSnapshotStore,
@@ -44,6 +45,7 @@ import {
 
 interface Env {
   readonly BUILD_ID: string;
+  readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
 }
@@ -138,6 +140,17 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
   );
   return match?.[1];
 };
+
+/**
+ * Dedicated long-lived custody namespace. It intentionally exposes no create,
+ * open, revoke, fetch, or restore entrypoint yet; only bounded alarm cleanup is
+ * active until the source-room quota and one-time restore protocols exist.
+ */
+export class PtcgContinuation extends DurableObject<Env> {
+  override async alarm(): Promise<void> {
+    await expireContinuationCustody(this.ctx.storage, Date.now());
+  }
+}
 
 export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();

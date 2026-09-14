@@ -849,31 +849,39 @@ export class DurableContinuationCustody {
   }
 
   async expire(now: number): Promise<ContinuationExpiryResult> {
-    assertClock(now);
-    return this.storage.transaction(async (transaction) => {
-      const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
-      if (raw === undefined) {
-        await transaction.deleteAlarm();
-        return 'missing';
-      }
-      let current: StoredContinuationRecord;
-      try {
-        current = readStoredRecord(raw);
-      } catch {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
-        await transaction.deleteAlarm();
-        return 'corrupt_removed';
-      }
-      if (now < current.createdAt) {
-        throw new Error('Continuation clock precedes creation');
-      }
-      if (now < current.expiresAt) {
-        await transaction.setAlarm(current.expiresAt);
-        return 'scheduled';
-      }
-      await transaction.delete([CONTINUATION_STORAGE_KEY]);
-      await transaction.deleteAlarm();
-      return 'expired';
-    });
+    return expireContinuationCustody(this.storage, now);
   }
 }
+
+/** Retention cleanup never depends on decrypt-key availability. */
+export const expireContinuationCustody = async (
+  storage: DurableStorageLike,
+  now: number
+): Promise<ContinuationExpiryResult> => {
+  assertClock(now);
+  return storage.transaction(async (transaction) => {
+    const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
+    if (raw === undefined) {
+      await transaction.deleteAlarm();
+      return 'missing';
+    }
+    let current: StoredContinuationRecord;
+    try {
+      current = readStoredRecord(raw);
+    } catch {
+      await transaction.delete([CONTINUATION_STORAGE_KEY]);
+      await transaction.deleteAlarm();
+      return 'corrupt_removed';
+    }
+    if (now < current.createdAt) {
+      throw new Error('Continuation clock precedes creation');
+    }
+    if (now < current.expiresAt) {
+      await transaction.setAlarm(current.expiresAt);
+      return 'scheduled';
+    }
+    await transaction.delete([CONTINUATION_STORAGE_KEY]);
+    await transaction.deleteAlarm();
+    return 'expired';
+  });
+};

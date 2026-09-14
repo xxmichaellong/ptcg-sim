@@ -18,6 +18,10 @@
         "name": "PTCG_ROOM",
         "class_name": "PtcgRoom",
       },
+      {
+        "name": "PTCG_CONTINUATION",
+        "class_name": "PtcgContinuation",
+      },
     ],
   },
   "ratelimits": [
@@ -31,6 +35,10 @@
     },
   ],
   "exports": {
+    "PtcgContinuation": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
     "PtcgRoom": {
       "type": "durable-object",
       "storage": "sqlite",

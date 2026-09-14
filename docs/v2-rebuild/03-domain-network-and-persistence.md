@@ -1035,11 +1035,13 @@ now wires native file selection for inert playback on the isolated live Solo
 route. The first unwired continuation-custody slice now implements the dedicated
 one-record adapter, role-bound high-entropy capability, digest-only AES-GCM
 record, exact bounds/integrity validation, key rotation, and transactional
-create/revoke/expiry behavior. Phase 7 still owns the dedicated Durable Object
-namespace/migration, source-room quotas and authorization RPC, one-time restore
-state machine, operational recovery/abuse evidence, and canonical
-state-import/sidebar integration. See `CONTINUATION_CUSTODY.md` for the closed
-production gates.
+create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
+declared through Wrangler `exports`; its key-independent alarm is tested across
+eviction, but it exposes no edge or object operation surface. Phase 7 still
+owns production key provisioning, source-room quotas and authorization RPC,
+one-time restore state machine, operational recovery/abuse evidence, and
+canonical state-import/sidebar integration. See `CONTINUATION_CUSTODY.md` for
+the closed production gates.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

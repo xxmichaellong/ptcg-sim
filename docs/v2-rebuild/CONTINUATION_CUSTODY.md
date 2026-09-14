@@ -1,29 +1,33 @@
 # Server-held continuation custody
 
-Status: storage/cryptography foundation implemented and deliberately unwired
+Status: storage/cryptography plus inert Durable Object runtime implemented;
+create/open/restore remain deliberately unwired
 
 Decision owner: ADR-012
 
-Implementation:
-`apps/server/src/continuation-custody.ts`
+Implementation: `apps/server/src/continuation-custody.ts`,
+`apps/server/src/continuation-configuration.ts`, and the inert
+`PtcgContinuation` export in `apps/server/src/worker.ts`
 
 ## Purpose and release boundary
 
 This slice establishes the durable custody boundary for canonical multiplayer
-continuations without making continuation reachable from an HTTP route,
-Durable Object RPC, socket message, client package, or UI control. It does not
-change the live room namespace or the default/v2 route behavior. Production
-activation still requires the source-room authorization and quota transaction,
-the one-time restore/fork state machine, a dedicated Durable Object namespace,
-configuration/secret validation, abuse limits, recovery evidence, and the
-unchanged-UI integration described below.
+continuations without making continuation reachable from an HTTP route, object
+RPC, socket message, client package, or UI control. A dedicated
+`PtcgContinuation` SQLite Durable Object namespace is now declared through
+Wrangler's current `exports` lifecycle, but it exposes only platform alarm
+cleanup. It does not change the live room namespace or the default/v2 route
+behavior. Production activation still requires the source-room authorization
+and quota transaction, the one-time restore/fork state machine, deployment
+secret provisioning, abuse limits, recovery evidence, and the unchanged-UI
+integration described below.
 
-The implementation is intentionally a one-record storage adapter. Production
-code must instantiate it only over a dedicated continuation Durable Object;
-passing an active room's storage is outside the contract. This keeps room
-lifecycle deletion, authority journals, and hot command storage independent
-from the longer-lived save record. Expiring an unclaimed or original room must
-not delete a continuation, and expiring a continuation must not touch a room.
+The implementation is intentionally a one-record storage adapter, instantiated
+only against the dedicated continuation namespace; passing an active room's
+storage is outside the contract. This keeps room lifecycle deletion, authority
+journals, and hot command storage independent from the longer-lived save
+record. Expiring an unclaimed or original room must not delete a continuation,
+and expiring a continuation must not touch a room.
 
 ## Threat model
 
@@ -59,6 +63,12 @@ The current guarantees are:
   encrypt key while older decrypt-only-compatible keys may remain in the
   in-memory keyring for retention-window rotation. Keys and raw key bytes are
   never persisted by the adapter.
+- The exact bounded `ptcgsim-continuation-keyring-v1` configuration accepts one
+  active encrypt/decrypt key plus at most three distinct prior decrypt keys.
+  Missing, oversized, malformed, wrong-version, duplicate, non-canonical, or
+  incomplete configuration raises one redacted fail-closed error. Decoded raw
+  key buffers are zeroed after non-extractable Web Crypto import. There is no
+  default or checked-in production key.
 - Plaintext is deterministic JSON, bounded to 1 MiB before encryption, decoded
   with fatal UTF-8, checked against an exact versioned schema, SHA-256 digest,
   canonical state hash, authority invariants, multiplayer mode, and original
@@ -83,6 +93,11 @@ The current guarantees are:
   state and cannot revoke. Expiry removes active records and tombstones. Alarm
   processing deletes malformed records rather than attempting recovery or
   returning plaintext.
+- The real `PtcgContinuation` alarm path survives object eviction, reschedules
+  an early delivery at the exact record expiry, and deletes an expired record
+  plus alarm. Cleanup deliberately does not require a decrypt key, so missing
+  key configuration cannot extend retention. No edge path is routed to this
+  namespace and the class exports no create/open/revoke/restore RPC.
 
 The bearer model does not protect a capability after the player intentionally
 or accidentally shares it with a clipboard manager, extension, device, or
@@ -154,15 +169,18 @@ non-extractability, byte bounds, digest-only encrypted storage, active-player
 authorization, malformed input, collision refusal, exact ambiguous-create
 recovery, storage transaction retry, record/alarm rollback, ciphertext and AAD
 tampering, wrong/missing decrypt keys, key rotation, transactional/idempotent
-revocation, exact expiry, alarm repair, and corrupt-record cleanup.
+revocation, exact expiry, alarm repair, corrupt-record cleanup, exact keyring
+configuration, bounded rotation, and redacted failure. The real Worker suite
+also proves declarative namespace provisioning, absent edge routing,
+post-eviction alarm restoration, exact rescheduling, and deletion.
 
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
 and attached to the draft PR/release evidence:
 
-- dedicated continuation Durable Object class, binding, migration tag, alarms,
-  and fail-closed deployment key configuration;
+- production secret provisioning, key-rotation/retirement rehearsal, and
+  wiring the fail-closed keyring loader only into future cryptographic RPCs;
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
@@ -176,7 +194,13 @@ and attached to the draft PR/release evidence:
 - the source-shaped UI wiring and browser journeys, without changing the
   existing UI/UX beyond activating the approved continuation behavior.
 
-Rollback before activation is removal/disablement of the new binding and
-routes. After saves exist, disabling new create/restore must preserve the last
-compatible decrypt keyring and read/delete path until every record expires or
-is explicitly revoked.
+Wrangler `exports` lifecycle changes cannot be crossed by an ordinary Worker
+rollback. Before activation, rollback therefore leaves the inert class,
+binding, and live `exports` declaration in place and reverts only executable
+call sites; the namespace contains no application-created records. Do not
+delete or omit the export as a rollback shortcut. After saves exist, disabling
+new create/restore must preserve the last compatible decrypt keyring and
+read/delete path until every record expires or is explicitly revoked. See
+Cloudflare's
+[Durable Object class exports](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/)
+contract.

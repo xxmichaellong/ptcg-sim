@@ -146,6 +146,13 @@ silently inheriting an open subtree. `build:v2` builds web assets before the
 Worker dry run so the uploaded asset manifest cannot come from a stale or
 missing directory.
 
+The same canonical configuration now declaratively exports two independent
+SQLite Durable Object namespaces: hot `PtcgRoom` authority and long-lived
+`PtcgContinuation` custody. The latter has no edge or object operation surface;
+its real-runtime tests prove only binding/provisioning and key-independent alarm
+reschedule/delete behavior across eviction. Continuation activation remains a
+separate gated change.
+
 Vite still emits hidden source maps because the bundle-provenance gate parses
 them locally. The built entry modules contain no `sourceMappingURL` hint, and
 `apps/web/public/.assetsignore` excludes every map from Wrangler's public asset

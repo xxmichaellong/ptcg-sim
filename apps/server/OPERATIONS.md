@@ -19,6 +19,50 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
+## Continuation key and namespace boundary (inactive)
+
+Wrangler declaratively exports a dedicated SQLite `PtcgContinuation` Durable
+Object and binds it as `PTCG_CONTINUATION`. The edge Worker does not route to
+it, and the class currently exports only its platform alarm handler. Its alarm
+reschedules or deletes bounded continuation records without decrypting them, so
+cleanup remains available even when encryption-key configuration is absent or
+invalid. This inert namespace is not evidence that continuation is enabled.
+
+Before any future create/open/restore RPC is wired, provision
+`CONTINUATION_KEYRING` as a Worker **secret**, never a plaintext Wrangler
+`vars` value. The exact JSON format is:
+
+```json
+{
+  "format": "ptcgsim-continuation-keyring-v1",
+  "activeKeyId": "operator-chosen-bounded-id",
+  "keys": [
+    {
+      "id": "operator-chosen-bounded-id",
+      "material": "43-character-base64url-encoding-of-32-random-bytes"
+    }
+  ]
+}
+```
+
+The loader accepts one active AES-256-GCM encrypt/decrypt key and at most three
+distinct prior decrypt keys. It has no fallback. Invalid configuration emits
+only a fixed safe error and must prevent all operations that need encryption or
+decryption. Rotation adds a new active key while retaining every prior key that
+can protect an unexpired record; key removal waits for the maximum retention
+window plus verified record cleanup. The decoded temporary key buffer is zeroed
+after non-extractable Web Crypto import. Key material, configuration, key
+digests, capabilities, and thrown configuration values must never enter logs,
+telemetry, health responses, PRs, or support tickets.
+
+Cloudflare's declarative Durable Object `exports` entry is namespace lifecycle
+state, not ordinary version metadata. Do not remove the live class/export or
+attempt to roll back across its provisioning change. Before continuation
+activation, a code rollback leaves the inert declaration intact. After saves
+exist, a pause disables new create/restore while retaining alarm cleanup and the
+last compatible decrypt keyring until all records expire or are explicitly
+revoked.
+
 ## Structured event contract
 
 `server-telemetry.ts` emits the closed

@@ -133,8 +133,10 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   dedicated one-record custody adapter with high-entropy role-bound
   capabilities, digest-only AES-GCM storage, strict bounds/integrity, 30-day
   maximum retention, transactional revocation/expiry, key rotation, and
-  ambiguous-create recovery. Its namespace, quotas, restore state machine,
-  routes, and UI remain deliberately disabled later parity work. Deck
+  ambiguous-create recovery. Its dedicated SQLite Durable Object is now
+  declaratively provisioned with key-independent alarm cleanup but no edge or
+  object operation surface. Production key provisioning, quotas, restore state
+  machine, routes, and UI remain deliberately disabled later parity work. Deck
   navigation is now active only on the opt-in v2 room route; the default route
   remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

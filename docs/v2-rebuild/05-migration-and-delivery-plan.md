@@ -696,7 +696,9 @@ continuation remains server-held and unwired. Its first custody slice now
 implements the threat/storage contract, high-entropy role-bound capability,
 digest-only encrypted one-record storage, strict format/size/integrity checks,
 key rotation, bounded retention, exact retry recovery, revocation, and expiry.
-The dedicated Durable Object binding/migration, source-room quota transaction,
+Its dedicated SQLite Durable Object binding/export and key-independent alarm
+are implemented and real-runtime tested without an edge or object operation
+surface. Production key provisioning, the source-room quota transaction,
 one-time cross-object restore state machine, routes/UI, and managed
 recovery/abuse gates remain closed as tracked in `CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
@@ -708,7 +710,7 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  its dedicated runtime namespace, source-room/global count and rate limits,
+  production key provisioning, source-room/global count and rate limits,
   one-time restore orchestration, routes, and operational evidence.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
