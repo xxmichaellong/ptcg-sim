@@ -43,8 +43,10 @@ Work:
 - Audit every document using `AUDIT.md`.
 - Resolve all `BLOCKING` questions in the decision register.
 - Decide top-level workspace location and deployment constraints.
-- Define browser, viewport, and hardware matrices; apply ADR-021's first-release
-  v1 save/share-import deferral and ADR-022's fallback/deprecation window.
+- Apply ADR-023's desktop browser/device/viewport matrix, define the remaining
+  reference-hardware and accessibility matrices, apply ADR-021's first-release
+  v1 save/share-import deferral, and apply ADR-022's fallback/deprecation
+  window.
 - Approve privacy behavior for multiplayer saves/replays and coaching/spectators.
 - Confirm ownership/license terms for any direct MagicCircle code extraction;
   otherwise permit only clean reimplementation of documented patterns.

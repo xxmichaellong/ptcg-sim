@@ -1656,7 +1656,7 @@ That browser suite must cover at least:
 - stadium card readability, hand concealment, image/text counter-rotation, and
   chrome/handler changes through flip; and
 - DPR/subpixel quantization, integer `offsetHeight`, viewport resize, and the
-  supported Chromium/Firefox/Safari matrix.
+  supported Chrome/Edge/Firefox/Safari matrix.
 
 Until that gate is green, browser-dependent packing, menus, markers, hit edges,
 scrollbars, text, images, and paint-order behavior remain decision debt.

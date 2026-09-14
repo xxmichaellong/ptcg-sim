@@ -11,7 +11,7 @@ const redirectFixturePrefix = '/__ptcgsim-test-assets__/renderer-redirect-v1';
 const redirectHopUrl = `http://localhost:4173${redirectFixturePrefix}/redirect-hop.svg`;
 const oversizedUrl = `http://127.0.0.1:4173${redirectFixturePrefix}/oversized.svg`;
 const onePixelPng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
   'base64'
 );
 const collectRuntimeErrors = (page: Page) => {

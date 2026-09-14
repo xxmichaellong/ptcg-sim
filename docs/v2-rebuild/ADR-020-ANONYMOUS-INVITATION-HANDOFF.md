@@ -110,9 +110,9 @@ intended participant without displaying the value.
 - Copy failure may leave an unused digest-only spectator invitation until its
   15-minute expiry; the room cap and issue rate limit bound this. A later player
   copy rotates its predecessor.
-- The browser-support decision in ADR-015 must ratify promised
-  `ClipboardItem`/paste-event behavior. Unsupported browsers fail visibly and do
-  not receive a URL/DOM fallback.
+- ADR-023's release-candidate smoke must verify the promised
+  `ClipboardItem`/paste-event behavior in each actual supported browser.
+  Unsupported browsers fail visibly and do not receive a URL/DOM fallback.
 - The clipboard adapter is a transport boundary, not React state and not part of
   canonical game state, replay, or persistence.
 

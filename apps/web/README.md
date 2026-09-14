@@ -162,7 +162,12 @@ but the entry modules do not advertise them and Wrangler excludes them through
 `public/.assetsignore`. Upload maps to a controlled diagnostics destination if
 production symbolication is enabled; do not expose them as static assets.
 
-Run every Chromium lane with `pnpm run check:browser`, or only the combined
-built-app/Worker lane with `pnpm run test:preview:browser`, after installing
-Playwright's Chromium browser. On NixOS, set
-`PTCGSIM_CHROMIUM_PATH` to the Nix-provided Chromium executable.
+Run every Chromium lane with `pnpm run check:browser`, the focused real Solo-room
+journey in Firefox/WebKit with `pnpm run check:cross-browser`, or only the
+combined built-app/Worker lane with `pnpm run test:preview:browser`, after
+installing the corresponding Playwright browsers. `pnpm run check:full` runs the
+non-browser and all browser gates. On NixOS, set `PTCGSIM_CHROMIUM_PATH` to the
+Nix-provided Chromium executable. The cross-browser configuration similarly
+accepts `PTCGSIM_FIREFOX_PATH` and `PTCGSIM_WEBKIT_PATH` for compatible
+Nix-provided Playwright browser builds; the hosted Linux CI remains the
+canonical Firefox/WebKit automation environment.

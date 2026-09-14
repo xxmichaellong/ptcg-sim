@@ -35,22 +35,30 @@ document replacement, room creation/ticket exchange, and a real resumed room
 socket after a deterministic unclean-close signal. The resume gate pins the
 rotated capability, exact client phase sequence, stable renderer/DOM ownership,
 no repeated HTTP admission, a post-resume command, and both socket closures.
-Both lanes run after
+Both Chromium lanes run after
 the non-browser quality gate with retries disabled, CI-only focused-test
 rejection, fresh server ownership, failure screenshots, and retained failure
-traces. `tsconfig.browser.json` independently typechecks both Playwright
+traces. `tsconfig.browser.json` independently typechecks all three Playwright
 configurations and every spec/support module under the production
-strict/no-unchecked profile. The lanes do not yet satisfy the two-target viewport
-matrix above, pin fonts, cover Firefox/Safari, or substitute for managed-preview
-platform evidence. Those remain release evidence, not claims made by current CI. See
-[`QUALITY_GATES.md`](./QUALITY_GATES.md).
+strict/no-unchecked profile. A separate no-retry Firefox/WebKit lane now drives
+the real Solo-room authority, WebSocket, DOM renderer, pointer, arbitrary-image,
+and replay workflow at 1280×720/DPR 1. The lanes do not yet satisfy the
+two-target quantitative viewport matrix above, pin fonts, run the actual stable
+Chrome/Edge/Firefox/Safari products, or substitute for managed-preview platform
+evidence. Those remain release evidence, not claims made by current CI. See
+[`ADR-023-DESKTOP-BROWSER-SUPPORT.md`](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)
+and [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ### Browser release matrix
 
-Current stable Chromium, Firefox, and Safari on supported desktop operating
-systems. Chromium provides quantitative CI; Firefox/Safari must pass functional,
-visual manual, input, storage, socket, and WebGL recovery checks. The exact
-versions and support window are ratified in Phase 0.
+ADR-023 supports the current stable desktop releases of Chrome, Edge, Firefox,
+and Safari on vendor-supported desktop/laptop operating systems at a minimum
+1280×720 CSS-pixel viewport. Chromium provides the broad quantitative and parity
+CI. Firefox and WebKit provide a focused automated functional gate. Each release
+candidate still requires a recorded foreground smoke in the four actual stable
+browser products because Chromium is only a Chrome/Edge engine proxy and Linux
+WebKit is only a Safari engine proxy. Phones, tablets, touch-only interaction,
+and smaller viewports are best effort for the first v2 release.
 
 ### Representative match fixture
 
@@ -635,7 +643,8 @@ At controlled fixtures:
 - ordering, face/back, visibility, opacity, and menu contents match exactly;
 - screenshot diff stays below a threshold established from repeat legacy runs,
   with only documented font/image antialias regions masked; and
-- Chromium baseline is automated, with final Firefox/Safari manual approval.
+- Chromium baseline is automated, with final actual-product approval in current
+  stable Chrome, Edge, Firefox, and Safari.
 
 Screenshot percentage alone cannot pass parity. Structured geometry and semantic
 assertions are required so widespread small shifts are not masked.

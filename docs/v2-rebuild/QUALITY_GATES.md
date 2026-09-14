@@ -26,7 +26,8 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run check:ci`             | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
 | `pnpm run test:preview:browser` | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.     |
 | `pnpm run check:browser`        | Run the sequential Vite/Wrangler browser suite, then the isolated built-production topology lane, in Chromium without retry. |
-| `pnpm run check:full`           | Run `check:ci` and then `check:browser` locally.                                                                             |
+| `pnpm run check:cross-browser`  | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                |
+| `pnpm run check:full`           | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                             |
 | `pnpm run audit:dependencies`   | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.      |
 
 Hosted CI disables the runner's unrelated Google Chrome apt source before
@@ -89,7 +90,7 @@ package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
 The report currently records 10 export-bearing packages, 10 entrypoints, and
-562 symbols. The replay-file boundary deliberately exports its encoded-byte
+563 symbols. The replay-file boundary deliberately exports its encoded-byte
 limit and byte parser beside the existing string adapter; file decoding,
 integrity, and semantic internals remain private. The dependency-free
 `deck-core` entrypoint still exposes only the operations and value types needed
@@ -101,8 +102,8 @@ ensures generators leave tracked files unchanged.
 ## Strict browser harness
 
 `tsconfig.browser.json` inherits the same strict and
-`noUncheckedIndexedAccess` settings as production. It covers Playwright
-configuration for both browser lanes, every browser specification/support
+`noUncheckedIndexedAccess` settings as production. It covers all three
+Playwright configurations, every browser specification/support
 module, and the shared typed renderer-spike window handle. Legacy oracle
 traversal uses literal tuple indices where cardinality is fixed and explicit
 fail-fast checks where fixture data is looked up dynamically, so malformed
@@ -175,12 +176,22 @@ After it tears both down, the production-topology lane builds Vite and starts
 one Wrangler origin on port 4174. Browser reports, failure screenshots, and
 traces are retained as a 14-day artifact. Browser binaries are not cached.
 
+In parallel after `quality`, the `cross-browser` job installs Playwright Firefox
+and WebKit and runs only `remote-room-solo-full-stack.spec.ts` once per engine.
+That existing real-room journey covers room creation, WebSocket authority,
+renderer/input behavior, arbitrary card URLs, perspective replay round-trip,
+and runtime-error detection. Its diagnostics use separate report/result paths
+and the same 14-day retention. These engines are continuous compatibility
+proxies; ADR-023 still requires a release-candidate smoke in actual current
+stable Chrome, Edge, Firefox, and Safari.
+
 ## Explicit residual gaps
 
-- Current CI proves default renderer cases at 1280×720/DPR 1 and source-oracle
-  cases with explicit 1600×900/DPR 1 overrides. The planned 1366×768 and
-  1920×1080/DPR 2, pinned-font, Firefox, Safari, and physical-GPU release matrix
-  remains outstanding.
+- Current CI proves default renderer cases at 1280×720/DPR 1, source-oracle
+  cases with explicit 1600×900/DPR 1 overrides, and one real Solo-room journey
+  in Firefox/WebKit at 1280×720/DPR 1. The planned 1366×768 and 1920×1080/DPR 2
+  quantitative targets, pinned fonts, actual stable browser products, and
+  physical-GPU release matrix remain outstanding.
 - Source-map provenance enforces package containment; it does not replace the
   browser request-interception tests that prove hidden card identities and image
   URLs are never requested.
