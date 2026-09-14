@@ -6,11 +6,56 @@ import {
 } from '@ptcgsim/room-authority';
 
 import type { DurableStorageLike } from './durable-storage.js';
+import type {
+  ContinuationCheckpoint,
+  ContinuationCryptography,
+  ContinuationEncryptionContext,
+  StoredContinuationCiphertext,
+} from './continuation-contract.js';
+import {
+  ContinuationCollisionError,
+  ContinuationCorruptError,
+} from './continuation-errors.js';
+import { MAX_CONTINUATION_PLAINTEXT_BYTES } from './continuation-limits.js';
+import {
+  DEFAULT_CONTINUATION_TARGET_LIFETIME_MS,
+  continuationTargetUnclaimedExpiry,
+  createContinuationRestorePlan,
+  createContinuationRestoreResult,
+  readContinuationRestorePlan,
+  readContinuationRestoreResult,
+  validContinuationRestoreOperationId,
+  type CompleteContinuationRestoreInput,
+  type ContinuationRestorePreparer,
+  type ContinuationRestoreReservation,
+  type ContinuationRestoreResult,
+  type ReserveContinuationRestoreInput,
+} from './continuation-restore-format.js';
+
+export {
+  ContinuationCollisionError,
+  ContinuationCorruptError,
+  DEFAULT_CONTINUATION_TARGET_LIFETIME_MS,
+  MAX_CONTINUATION_PLAINTEXT_BYTES,
+};
+export type {
+  ContinuationCheckpoint,
+  ContinuationCryptography,
+  ContinuationEncryptionContext,
+  StoredContinuationCiphertext,
+} from './continuation-contract.js';
+export type {
+  CompleteContinuationRestoreInput,
+  ContinuationRestorePlan,
+  ContinuationRestorePreparer,
+  ContinuationRestoreReservation,
+  ContinuationRestoreResult,
+  ReserveContinuationRestoreInput,
+} from './continuation-restore-format.js';
 
 export const CONTINUATION_STORAGE_KEY = 'continuation:record';
 export const DEFAULT_CONTINUATION_TTL_MS = 30 * 24 * 60 * 60_000;
 export const MINIMUM_CONTINUATION_TTL_MS = 60_000;
-export const MAX_CONTINUATION_PLAINTEXT_BYTES = 1024 * 1024;
 
 const CONTINUATION_RECORD_FORMAT = 'ptcgsim-continuation-record-v1';
 const CONTINUATION_CHECKPOINT_FORMAT = 'ptcgsim-continuation-checkpoint-v1';
@@ -39,22 +84,6 @@ export interface ContinuationCapability {
   readonly capability: string;
 }
 
-export interface ContinuationCheckpoint {
-  readonly format: typeof CONTINUATION_CHECKPOINT_FORMAT;
-  readonly saveId: string;
-  readonly createdAt: number;
-  readonly expiresAt: number;
-  readonly sourceBuild: string;
-  readonly requesterPlayerId: PlayerId;
-  readonly canonicalStateHash: string;
-  readonly snapshot: RoomAuthoritySnapshot;
-  readonly integrity: {
-    readonly format: typeof CONTINUATION_INTEGRITY_FORMAT;
-    readonly algorithm: 'SHA-256';
-    readonly digest: string;
-  };
-}
-
 export interface CreateContinuationInput {
   readonly capability: string;
   readonly snapshot: RoomAuthoritySnapshot;
@@ -80,22 +109,6 @@ export interface OpenedContinuation {
 export type ContinuationExpiryResult =
   'expired' | 'missing' | 'scheduled' | 'corrupt_removed';
 
-interface ContinuationEncryptionContext {
-  readonly saveId: string;
-  readonly capabilityDigest: string;
-  readonly createdAt: number;
-  readonly expiresAt: number;
-}
-
-export interface StoredContinuationCiphertext {
-  readonly format: typeof CONTINUATION_CIPHER_FORMAT;
-  readonly algorithm: typeof CONTINUATION_CIPHER_ALGORITHM;
-  readonly keyId: string;
-  readonly nonce: string;
-  readonly ciphertext: string;
-  readonly plaintextBytes: number;
-}
-
 interface StoredActiveContinuation {
   readonly format: typeof CONTINUATION_RECORD_FORMAT;
   readonly state: 'active';
@@ -104,6 +117,31 @@ interface StoredActiveContinuation {
   readonly createdAt: number;
   readonly expiresAt: number;
   readonly sealed: StoredContinuationCiphertext;
+}
+
+interface StoredRestoringContinuation {
+  readonly format: typeof CONTINUATION_RECORD_FORMAT;
+  readonly state: 'restoring';
+  readonly saveId: string;
+  readonly capabilityDigest: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly operationDigest: string;
+  readonly reservedAt: number;
+  readonly sealedPlan: StoredContinuationCiphertext;
+}
+
+interface StoredCompletedContinuation {
+  readonly format: typeof CONTINUATION_RECORD_FORMAT;
+  readonly state: 'completed';
+  readonly saveId: string;
+  readonly capabilityDigest: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly operationDigest: string;
+  readonly reservedAt: number;
+  readonly completedAt: number;
+  readonly sealedResult: StoredContinuationCiphertext;
 }
 
 interface StoredRevokedContinuation {
@@ -117,34 +155,10 @@ interface StoredRevokedContinuation {
 }
 
 export type StoredContinuationRecord =
-  StoredActiveContinuation | StoredRevokedContinuation;
-
-export interface ContinuationCryptography {
-  readonly digest: (bytes: Uint8Array) => Promise<string>;
-  readonly equalDigest: (left: string, right: string) => boolean;
-  readonly seal: (
-    plaintext: Uint8Array,
-    context: ContinuationEncryptionContext
-  ) => Promise<StoredContinuationCiphertext>;
-  readonly open: (
-    sealed: StoredContinuationCiphertext,
-    context: ContinuationEncryptionContext
-  ) => Promise<Uint8Array>;
-}
-
-export class ContinuationCollisionError extends Error {
-  constructor() {
-    super('Continuation locator is already initialized');
-    this.name = 'ContinuationCollisionError';
-  }
-}
-
-export class ContinuationCorruptError extends Error {
-  constructor(message = 'Stored continuation is corrupt or unreadable') {
-    super(message);
-    this.name = 'ContinuationCorruptError';
-  }
-}
+  | StoredActiveContinuation
+  | StoredRestoringContinuation
+  | StoredCompletedContinuation
+  | StoredRevokedContinuation;
 
 const exactKeys = (value: object, expected: readonly string[]): boolean => {
   const keys = Reflect.ownKeys(value);
@@ -297,6 +311,53 @@ const readStoredRecord = (value: unknown): StoredContinuationRecord => {
     return value as StoredActiveContinuation;
   }
   if (
+    state === 'restoring' &&
+    exactKeys(value, [
+      'capabilityDigest',
+      'createdAt',
+      'expiresAt',
+      'format',
+      'operationDigest',
+      'reservedAt',
+      'saveId',
+      'sealedPlan',
+      'state',
+    ]) &&
+    typeof Reflect.get(value, 'operationDigest') === 'string' &&
+    DIGEST_PATTERN.test(Reflect.get(value, 'operationDigest')) &&
+    safeNonNegativeInteger(Reflect.get(value, 'reservedAt')) &&
+    Reflect.get(value, 'reservedAt') >= Reflect.get(value, 'createdAt') &&
+    Reflect.get(value, 'reservedAt') < Reflect.get(value, 'expiresAt')
+  ) {
+    readStoredCiphertext(Reflect.get(value, 'sealedPlan'));
+    return value as StoredRestoringContinuation;
+  }
+  if (
+    state === 'completed' &&
+    exactKeys(value, [
+      'capabilityDigest',
+      'completedAt',
+      'createdAt',
+      'expiresAt',
+      'format',
+      'operationDigest',
+      'reservedAt',
+      'saveId',
+      'sealedResult',
+      'state',
+    ]) &&
+    typeof Reflect.get(value, 'operationDigest') === 'string' &&
+    DIGEST_PATTERN.test(Reflect.get(value, 'operationDigest')) &&
+    safeNonNegativeInteger(Reflect.get(value, 'reservedAt')) &&
+    Reflect.get(value, 'reservedAt') >= Reflect.get(value, 'createdAt') &&
+    safeNonNegativeInteger(Reflect.get(value, 'completedAt')) &&
+    Reflect.get(value, 'completedAt') >= Reflect.get(value, 'reservedAt') &&
+    Reflect.get(value, 'completedAt') < Reflect.get(value, 'expiresAt')
+  ) {
+    readStoredCiphertext(Reflect.get(value, 'sealedResult'));
+    return value as StoredCompletedContinuation;
+  }
+  if (
     state === 'revoked' &&
     exactKeys(value, [
       'capabilityDigest',
@@ -326,6 +387,19 @@ const encryptionContext = (
   capabilityDigest: record.capabilityDigest,
   createdAt: record.createdAt,
   expiresAt: record.expiresAt,
+});
+
+const restoreEncryptionContext = (
+  record: Pick<
+    StoredContinuationRecord,
+    'saveId' | 'capabilityDigest' | 'createdAt' | 'expiresAt'
+  >,
+  operationDigest: string,
+  purpose: 'restore_plan' | 'restore_result'
+): ContinuationEncryptionContext => ({
+  ...encryptionContext(record),
+  purpose,
+  operationDigest,
 });
 
 const associatedData = (
@@ -799,6 +873,368 @@ export class DurableContinuationCustody {
     });
   }
 
+  async reserveRestore(
+    input: ReserveContinuationRestoreInput,
+    prepare: ContinuationRestorePreparer
+  ): Promise<ContinuationRestoreReservation | undefined> {
+    const parsed = parseContinuationCapability(input.capability);
+    if (!parsed || !validContinuationRestoreOperationId(input.operationId)) {
+      return undefined;
+    }
+    assertClock(input.reservedAt);
+    const capabilityDigest = await this.cryptography.digest(
+      encoder.encode(input.capability)
+    );
+    const operationDigest = await this.cryptography.digest(
+      encoder.encode(input.operationId)
+    );
+    const initial = await this.storage.transaction(async (transaction) => {
+      const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
+      if (raw === undefined) return undefined;
+      const current = readStoredRecord(raw);
+      if (current.saveId !== parsed.saveId) {
+        throw new ContinuationCorruptError();
+      }
+      if (input.reservedAt < current.createdAt) {
+        throw new Error('Continuation clock precedes creation');
+      }
+      if (input.reservedAt >= current.expiresAt) {
+        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.deleteAlarm();
+        return undefined;
+      }
+      if (
+        !this.cryptography.equalDigest(
+          current.capabilityDigest,
+          capabilityDigest
+        ) ||
+        current.state === 'revoked' ||
+        ((current.state === 'restoring' || current.state === 'completed') &&
+          !this.cryptography.equalDigest(
+            current.operationDigest,
+            operationDigest
+          ))
+      ) {
+        return undefined;
+      }
+      if ((await transaction.getAlarm()) !== current.expiresAt) {
+        await transaction.setAlarm(current.expiresAt);
+      }
+      return current;
+    });
+    if (!initial) return undefined;
+    if (initial.state === 'completed') {
+      const bytes = await this.cryptography.open(
+        initial.sealedResult,
+        restoreEncryptionContext(
+          initial,
+          initial.operationDigest,
+          'restore_result'
+        )
+      );
+      return {
+        state: 'completed',
+        result: readContinuationRestoreResult(bytes, {
+          saveId: initial.saveId,
+          operationId: input.operationId,
+          completedAt: initial.completedAt,
+        }),
+      };
+    }
+    if (initial.state === 'restoring') {
+      const bytes = await this.cryptography.open(
+        initial.sealedPlan,
+        restoreEncryptionContext(
+          initial,
+          initial.operationDigest,
+          'restore_plan'
+        )
+      );
+      return {
+        state: 'reserved',
+        created: false,
+        plan: await readContinuationRestorePlan(
+          bytes,
+          {
+            saveId: initial.saveId,
+            operationId: input.operationId,
+            reservedAt: initial.reservedAt,
+            continuationExpiresAt: initial.expiresAt,
+          },
+          this.cryptography
+        ),
+      };
+    }
+
+    const targetLifetimeMs =
+      input.targetLifetimeMs ?? DEFAULT_CONTINUATION_TARGET_LIFETIME_MS;
+    const targetUnclaimedExpiresAt = continuationTargetUnclaimedExpiry(
+      input.reservedAt,
+      targetLifetimeMs,
+      initial.expiresAt
+    );
+    const checkpointBytes = await this.cryptography.open(
+      initial.sealed,
+      encryptionContext(initial)
+    );
+    const checkpoint = await readCheckpoint(
+      checkpointBytes,
+      initial,
+      this.cryptography
+    );
+    const prepared = await createContinuationRestorePlan(
+      checkpoint,
+      await prepare(checkpoint),
+      input.operationId,
+      input.reservedAt,
+      targetUnclaimedExpiresAt,
+      initial.expiresAt,
+      this.cryptography
+    );
+    const sealedPlan = await this.cryptography.seal(
+      prepared.bytes,
+      restoreEncryptionContext(initial, operationDigest, 'restore_plan')
+    );
+    const reservation = await this.storage.transaction(async (transaction) => {
+      const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
+      if (raw === undefined) return undefined;
+      const current = readStoredRecord(raw);
+      if (current.saveId !== parsed.saveId) {
+        throw new ContinuationCorruptError();
+      }
+      if (input.reservedAt < current.createdAt) {
+        throw new Error('Continuation clock precedes creation');
+      }
+      if (input.reservedAt >= current.expiresAt) {
+        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.deleteAlarm();
+        return undefined;
+      }
+      if (
+        !this.cryptography.equalDigest(
+          current.capabilityDigest,
+          capabilityDigest
+        ) ||
+        current.state === 'revoked'
+      ) {
+        return undefined;
+      }
+      if (current.state === 'active') {
+        const restoring: StoredRestoringContinuation = {
+          format: CONTINUATION_RECORD_FORMAT,
+          state: 'restoring',
+          saveId: current.saveId,
+          capabilityDigest: current.capabilityDigest,
+          createdAt: current.createdAt,
+          expiresAt: current.expiresAt,
+          operationDigest,
+          reservedAt: input.reservedAt,
+          sealedPlan,
+        };
+        await transaction.put({
+          [CONTINUATION_STORAGE_KEY]: restoring,
+        });
+        if ((await transaction.getAlarm()) !== current.expiresAt) {
+          await transaction.setAlarm(current.expiresAt);
+        }
+        return { record: restoring, created: true as const };
+      }
+      if (
+        !this.cryptography.equalDigest(current.operationDigest, operationDigest)
+      ) {
+        return undefined;
+      }
+      if ((await transaction.getAlarm()) !== current.expiresAt) {
+        await transaction.setAlarm(current.expiresAt);
+      }
+      return { record: current, created: false as const };
+    });
+    if (!reservation) return undefined;
+    if (reservation.record.state === 'completed') {
+      const bytes = await this.cryptography.open(
+        reservation.record.sealedResult,
+        restoreEncryptionContext(
+          reservation.record,
+          reservation.record.operationDigest,
+          'restore_result'
+        )
+      );
+      return {
+        state: 'completed',
+        result: readContinuationRestoreResult(bytes, {
+          saveId: reservation.record.saveId,
+          operationId: input.operationId,
+          completedAt: reservation.record.completedAt,
+        }),
+      };
+    }
+    const planBytes = await this.cryptography.open(
+      reservation.record.sealedPlan,
+      restoreEncryptionContext(
+        reservation.record,
+        reservation.record.operationDigest,
+        'restore_plan'
+      )
+    );
+    return {
+      state: 'reserved',
+      created: reservation.created,
+      plan: await readContinuationRestorePlan(
+        planBytes,
+        {
+          saveId: reservation.record.saveId,
+          operationId: input.operationId,
+          reservedAt: reservation.record.reservedAt,
+          continuationExpiresAt: reservation.record.expiresAt,
+        },
+        this.cryptography
+      ),
+    };
+  }
+
+  async completeRestore(
+    input: CompleteContinuationRestoreInput
+  ): Promise<ContinuationRestoreResult | undefined> {
+    const parsed = parseContinuationCapability(input.capability);
+    if (!parsed || !validContinuationRestoreOperationId(input.operationId)) {
+      return undefined;
+    }
+    assertClock(input.completedAt);
+    const capabilityDigest = await this.cryptography.digest(
+      encoder.encode(input.capability)
+    );
+    const operationDigest = await this.cryptography.digest(
+      encoder.encode(input.operationId)
+    );
+    const initial = await this.storage.transaction(async (transaction) => {
+      const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
+      if (raw === undefined) return undefined;
+      const current = readStoredRecord(raw);
+      if (current.saveId !== parsed.saveId) {
+        throw new ContinuationCorruptError();
+      }
+      if (input.completedAt < current.createdAt) {
+        throw new Error('Continuation clock precedes creation');
+      }
+      if (input.completedAt >= current.expiresAt) {
+        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.deleteAlarm();
+        return undefined;
+      }
+      if (
+        !this.cryptography.equalDigest(
+          current.capabilityDigest,
+          capabilityDigest
+        ) ||
+        (current.state !== 'restoring' && current.state !== 'completed') ||
+        !this.cryptography.equalDigest(current.operationDigest, operationDigest)
+      ) {
+        return undefined;
+      }
+      if ((await transaction.getAlarm()) !== current.expiresAt) {
+        await transaction.setAlarm(current.expiresAt);
+      }
+      return current;
+    });
+    if (!initial) return undefined;
+    if (initial.state === 'completed') {
+      const bytes = await this.cryptography.open(
+        initial.sealedResult,
+        restoreEncryptionContext(
+          initial,
+          initial.operationDigest,
+          'restore_result'
+        )
+      );
+      return readContinuationRestoreResult(bytes, {
+        saveId: initial.saveId,
+        operationId: input.operationId,
+        completedAt: initial.completedAt,
+      });
+    }
+    const planBytes = await this.cryptography.open(
+      initial.sealedPlan,
+      restoreEncryptionContext(initial, initial.operationDigest, 'restore_plan')
+    );
+    const plan = await readContinuationRestorePlan(
+      planBytes,
+      {
+        saveId: initial.saveId,
+        operationId: input.operationId,
+        reservedAt: initial.reservedAt,
+        continuationExpiresAt: initial.expiresAt,
+      },
+      this.cryptography
+    );
+    if (
+      input.completedAt < initial.reservedAt ||
+      input.completedAt >= plan.opponentInvitation.expiresAt ||
+      input.completedAt >= plan.targetUnclaimedExpiresAt
+    ) {
+      throw new Error('Continuation restore completion time is invalid');
+    }
+    const prepared = createContinuationRestoreResult(plan, input.completedAt);
+    const sealedResult = await this.cryptography.seal(
+      prepared.bytes,
+      restoreEncryptionContext(initial, operationDigest, 'restore_result')
+    );
+    const completed = await this.storage.transaction(async (transaction) => {
+      const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
+      if (raw === undefined) return undefined;
+      const current = readStoredRecord(raw);
+      if (current.saveId !== parsed.saveId) {
+        throw new ContinuationCorruptError();
+      }
+      if (input.completedAt >= current.expiresAt) {
+        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.deleteAlarm();
+        return undefined;
+      }
+      if (
+        !this.cryptography.equalDigest(
+          current.capabilityDigest,
+          capabilityDigest
+        ) ||
+        (current.state !== 'restoring' && current.state !== 'completed') ||
+        !this.cryptography.equalDigest(current.operationDigest, operationDigest)
+      ) {
+        return undefined;
+      }
+      if (current.state === 'completed') return current;
+      const record: StoredCompletedContinuation = {
+        format: CONTINUATION_RECORD_FORMAT,
+        state: 'completed',
+        saveId: current.saveId,
+        capabilityDigest: current.capabilityDigest,
+        createdAt: current.createdAt,
+        expiresAt: current.expiresAt,
+        operationDigest: current.operationDigest,
+        reservedAt: current.reservedAt,
+        completedAt: input.completedAt,
+        sealedResult,
+      };
+      await transaction.put({ [CONTINUATION_STORAGE_KEY]: record });
+      if ((await transaction.getAlarm()) !== current.expiresAt) {
+        await transaction.setAlarm(current.expiresAt);
+      }
+      return record;
+    });
+    if (!completed) return undefined;
+    const resultBytes = await this.cryptography.open(
+      completed.sealedResult,
+      restoreEncryptionContext(
+        completed,
+        completed.operationDigest,
+        'restore_result'
+      )
+    );
+    return readContinuationRestoreResult(resultBytes, {
+      saveId: completed.saveId,
+      operationId: input.operationId,
+      completedAt: completed.completedAt,
+    });
+  }
+
   async revoke(capability: string, now: number): Promise<boolean> {
     const parsed = parseContinuationCapability(capability);
     if (!parsed) return false;
@@ -827,6 +1263,9 @@ export class DurableContinuationCustody {
           capabilityDigest
         )
       ) {
+        return false;
+      }
+      if (current.state === 'restoring' || current.state === 'completed') {
         return false;
       }
       if (current.state === 'active') {

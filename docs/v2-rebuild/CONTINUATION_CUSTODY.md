@@ -1,14 +1,16 @@
 # Server-held continuation custody
 
-Status: storage/cryptography, pure fork transform, and inert Durable Object
-runtime implemented; create/open/restore remain deliberately unwired
+Status: storage/cryptography, encrypted one-time restore state, pure fork
+transform, and inert Durable Object runtime implemented; create/open/restore
+remain deliberately unwired
 
 Decision owner: ADR-012
 
 Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
-`apps/server/src/continuation-fork.ts`, and the inert `PtcgContinuation` export
-in `apps/server/src/worker.ts`
+`apps/server/src/continuation-fork.ts`,
+`apps/server/src/continuation-restore-format.ts`, and the inert
+`PtcgContinuation` export in `apps/server/src/worker.ts`
 
 ## Purpose and release boundary
 
@@ -19,9 +21,9 @@ RPC, socket message, client package, or UI control. A dedicated
 Wrangler's current `exports` lifecycle, but it exposes only platform alarm
 cleanup. It does not change the live room namespace or the default/v2 route
 behavior. Production activation still requires the source-room authorization
-and quota transaction, the one-time restore/fork state machine, deployment
-secret provisioning, abuse limits, recovery evidence, and the unchanged-UI
-integration described below.
+and quota transaction, idempotent target-room initialization plus cross-object
+orchestration, deployment secret provisioning, abuse limits, recovery evidence,
+and the unchanged-UI integration described below.
 
 The implementation is intentionally a one-record storage adapter, instantiated
 only against the dedicated continuation namespace; passing an active room's
@@ -118,6 +120,19 @@ An active `ptcgsim-continuation-record-v1` contains:
 - `ptcgsim-continuation-cipher-v1` metadata: AES-256-GCM, key ID, 96-bit nonce,
   ciphertext/tag, and bounded plaintext byte length.
 
+The same exact record format moves through two encrypted restore states without
+extending its original expiry:
+
+- `state: restoring` replaces the checkpoint with an operation digest,
+  reservation time, and purpose-bound AES-GCM `restore-plan-v1`. The plan owns
+  the detached target snapshot, target room code/lifecycle, requester seat
+  master, and ordinary opponent invitation. The raw operation ID, credentials,
+  target, and canonical state are not plaintext storage metadata.
+- `state: completed` replaces that plan with its operation digest,
+  reservation/completion times, and a purpose-bound encrypted
+  `restore-result-v1`. The result retains only the exact retry response; the
+  continuation record no longer contains canonical state.
+
 Revocation replaces this with a `state: revoked` tombstone containing locator,
 digest, creation/expiry time, and revocation time. It contains no ciphertext.
 Unknown fields, formats, algorithms, invalid lengths/times, non-canonical
@@ -155,16 +170,16 @@ room initializer with:
 Credential generation is bounded to 32 attempts per value and rejects short,
 oversized, duplicate-raw, duplicate-digest, prior-authority, and malformed
 digest results. The function neither initializes a target Durable Object nor
-marks a continuation consumed. Those effects remain behind the future
-reservation/completion protocol; calling this pure function alone cannot
-restore or expose a save.
+marks a continuation consumed. Those effects remain owned by the durable
+reservation/completion and future target-orchestration boundaries; calling
+this pure function alone cannot restore or expose a save.
 
-## Transaction and future restore protocol
+## Durable restore state and future cross-object protocol
 
 This custody slice deliberately supports authenticated open, not restore. A
 future route must not treat `open()` as permission to initialize an arbitrary
-room. The restore implementation needs its own durable state machine so a
-retry, crash, or ambiguous cross-object response cannot fork twice:
+room. The adapter now implements the save object's durable state transitions so
+a retry, crash, or ambiguous storage response cannot select a second plan:
 
 1. The source room validates the requesting live session and enforces
    per-player/per-room creation rate and count limits before minting a distinct
@@ -173,7 +188,9 @@ retry, crash, or ambiguous cross-object response cannot fork twice:
 2. Restore presents the full capability to the dedicated save object. That
    object authenticates it and transactionally reserves one restore operation
    with a deterministic target-room ID. Concurrent/different operations fail
-   closed; the exact operation may retry.
+   closed; the exact operation decrypts and returns the already committed plan
+   without running its preparation callback again. The transition is
+   `active -> restoring` and remains under the original hard expiry.
 3. The target room idempotently initializes a transformed snapshot. The
    transform preserves the exact canonical game state, including its canonical
    match ID, while the new route/room code supplies the rotated room identity.
@@ -188,12 +205,14 @@ retry, crash, or ambiguous cross-object response cannot fork twice:
 4. The save object records the completed target and encrypted retry response,
    then consumes/revokes the checkpoint. Repeating the exact operation returns
    the same target/credentials; another operation cannot create a second fork.
-   The original room and restored room have no shared mutable authority.
+   The transition is `restoring -> completed`; it removes canonical state from
+   the save object. The original room and restored room have no shared mutable
+   authority.
 
-No distributed claim of atomicity is made until that reservation/completion
-protocol and its crash matrix exist. The dedicated object serializes each save,
-while deterministic target initialization and encrypted result custody provide
-idempotent completion across the object boundary.
+No distributed claim of atomicity is made until the idempotent target
+initializer, orchestration loop, and complete cross-object crash matrix exist.
+The implemented save-side transitions provide the durable input and output of
+that loop; they do not call another object or expose an RPC.
 
 ## Verification implemented in this slice
 
@@ -215,6 +234,14 @@ unclaimed seats, ordinary one-use opponent invitation exchange, closed
 spectator admission, policy validation before entropy, old/raw/digest collision
 recovery, and bounded fail-closed entropy exhaustion.
 
+The restore-state suite proves digest-only encrypted plan reservation, exact
+same-operation recovery without repeated preparation, second-operation and
+wrong-bearer exclusion, canonical-plan removal on completion, encrypted exact
+retry receipts, revocation exclusion after reservation, storage rollback,
+ambiguous committed reservation/completion recovery, lifecycle/operation/plan
+validation, phase-specific AAD swap rejection, and original-deadline cleanup
+for restoring and completed records.
+
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
@@ -225,11 +252,11 @@ and attached to the draft PR/release evidence:
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
-- transactional one-time restore reservation/completion state machine,
-  idempotent new-room initialization, and its cross-object
-  crash/ambiguous-response matrix; the pure canonical transform,
-  credential/identity rotation, and projection/hash equivalence tests are
-  implemented but intentionally have no runtime caller;
+- idempotent new-room initialization and the cross-object
+  reservation/initialize/completion orchestration crash matrix; the save-side
+  state machine, pure canonical transform, credential/identity rotation, and
+  projection/hash equivalence tests are implemented but intentionally have no
+  runtime caller;
 - delete/revoke and restore HTTP contracts with same-origin/no-store controls,
   generic external errors, telemetry redaction, and no capability logging;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,

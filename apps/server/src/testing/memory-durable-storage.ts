@@ -17,6 +17,7 @@ export class MemoryDurableStorage implements DurableStorageLike {
   failDeleteAllOnce = false;
   failDeleteWhenKeyStartsWith: string | undefined;
   failAfterTransactionCommitOnce = false;
+  failAfterTransactionCommitOnCall: number | undefined;
   retryTransactionOnce = false;
   beforeTransactionRetry: (() => void) | undefined;
   transactionGetKeys: string[] = [];
@@ -124,8 +125,12 @@ export class MemoryDurableStorage implements DurableStorageLike {
     }
     this.values = staged;
     this.alarm = stagedAlarm;
-    if (this.failAfterTransactionCommitOnce) {
+    if (
+      this.failAfterTransactionCommitOnce ||
+      this.failAfterTransactionCommitOnCall === this.transactionCalls
+    ) {
       this.failAfterTransactionCommitOnce = false;
+      this.failAfterTransactionCommitOnCall = undefined;
       throw new Error('injected ambiguous transaction failure');
     }
     return result;

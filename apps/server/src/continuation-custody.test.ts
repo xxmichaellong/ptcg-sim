@@ -13,8 +13,10 @@ import {
 } from '@ptcgsim/room-authority';
 import { describe, expect, it } from 'vitest';
 
+import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import {
   CONTINUATION_STORAGE_KEY,
+  DEFAULT_CONTINUATION_TARGET_LIFETIME_MS,
   DEFAULT_CONTINUATION_TTL_MS,
   DurableContinuationCustody,
   MAX_CONTINUATION_PLAINTEXT_BYTES,
@@ -28,6 +30,7 @@ import {
   type CreateContinuationInput,
   type StoredContinuationRecord,
 } from './continuation-custody.js';
+import { prepareContinuationFork } from './continuation-fork.js';
 import { MemoryDurableStorage } from './testing/memory-durable-storage.js';
 
 const p1 = asPlayerId('continuation-player-one');
@@ -655,5 +658,474 @@ describe('durable continuation custody', () => {
       custody.revoke(input.capability, createdAt - 1)
     ).rejects.toThrow('precedes creation');
     expect(storedRecord(storage)).toEqual(before);
+  });
+});
+
+const restoreOperationId = 'R'.repeat(43);
+const alternateRestoreOperationId = 'S'.repeat(43);
+const restoredAt = createdAt + 10_000;
+const restoredRoomCode = 'BCDEFGHJ2345';
+
+const restorePreparation = (reservedAt = restoredAt) => {
+  let calls = 0;
+  return {
+    get calls() {
+      return calls;
+    },
+    prepare: async (
+      checkpoint: Awaited<
+        ReturnType<DurableContinuationCustody['open']>
+      >['checkpoint']
+    ) => {
+      calls += 1;
+      return {
+        targetRoomCode: restoredRoomCode,
+        fork: await prepareContinuationFork(
+          checkpoint,
+          new WebCryptoAuthoritySource(),
+          reservedAt
+        ),
+      };
+    },
+  };
+};
+
+describe('durable continuation one-time restore state', () => {
+  it('reserves one encrypted immutable plan and recovers its exact retry', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    const preparation = restorePreparation();
+
+    const reserved = await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    expect(reserved).toMatchObject({
+      state: 'reserved',
+      created: true,
+      plan: {
+        operationId: restoreOperationId,
+        targetRoomCode: restoredRoomCode,
+        requesterPlayerId: p1,
+        canonicalStateHash: stableHash(input.snapshot.state),
+        targetUnclaimedExpiresAt:
+          restoredAt + DEFAULT_CONTINUATION_TARGET_LIFETIME_MS,
+      },
+    });
+    expect(preparation.calls).toBe(1);
+    const record = storedRecord(storage);
+    expect(record.state).toBe('restoring');
+    const serialized = JSON.stringify(record);
+    expect(serialized).not.toContain(restoreOperationId);
+    expect(serialized).not.toContain(hiddenSentinel);
+    if (reserved?.state !== 'reserved') throw new Error('expected plan');
+    expect(serialized).not.toContain(reserved.plan.requesterSeatCapability);
+    expect(serialized).not.toContain(
+      reserved.plan.opponentInvitation.invitation
+    );
+    expect(storage.alarm).toBe(createdAt + DEFAULT_CONTINUATION_TTL_MS);
+    await expect(
+      custody.open(input.capability, restoredAt + 1)
+    ).resolves.toBeUndefined();
+    await expect(
+      custody.revoke(input.capability, restoredAt + 1)
+    ).resolves.toBe(false);
+
+    const retryPreparation = async (): Promise<never> => {
+      throw new Error('exact retry must not prepare another target');
+    };
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 5,
+        },
+        retryPreparation
+      )
+    ).resolves.toEqual({
+      state: 'reserved',
+      created: false,
+      plan: reserved.plan,
+    });
+  });
+
+  it('completes by replacing the canonical plan with an encrypted retry receipt', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    const preparation = restorePreparation();
+    const reserved = await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    if (reserved?.state !== 'reserved') throw new Error('expected plan');
+
+    const completed = await custody.completeRestore({
+      capability: input.capability,
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 1,
+    });
+    expect(completed).toEqual({
+      format: 'ptcgsim-continuation-restore-result-v1',
+      saveId: parseContinuationCapability(input.capability)!.saveId,
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 1,
+      targetRoomCode: restoredRoomCode,
+      requesterSeatCapability: reserved.plan.requesterSeatCapability,
+      opponentInvitation: reserved.plan.opponentInvitation,
+    });
+    const record = storedRecord(storage);
+    expect(record.state).toBe('completed');
+    expect(record).not.toHaveProperty('sealedPlan');
+    const serialized = JSON.stringify(record);
+    expect(serialized).not.toContain(hiddenSentinel);
+    expect(serialized).not.toContain(completed!.requesterSeatCapability);
+    expect(serialized).not.toContain(completed!.opponentInvitation.invitation);
+
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt + 20,
+      })
+    ).resolves.toEqual(completed);
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 30,
+        },
+        async () => {
+          throw new Error('completed retry must not prepare');
+        }
+      )
+    ).resolves.toEqual({ state: 'completed', result: completed });
+    await expect(
+      custody.revoke(input.capability, restoredAt + 40)
+    ).resolves.toBe(false);
+  });
+
+  it('never lets a second operation observe, complete, or replace a reservation', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt,
+      })
+    ).resolves.toBeUndefined();
+    const preparation = restorePreparation();
+    await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    const record = structuredClone(storedRecord(storage));
+    let alternatePreparationCalls = 0;
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: alternateRestoreOperationId,
+          reservedAt: restoredAt + 1,
+        },
+        async () => {
+          alternatePreparationCalls += 1;
+          throw new Error('must not prepare');
+        }
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: alternateRestoreOperationId,
+        completedAt: restoredAt + 1,
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: alternateCapabilityFor(input.capability),
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 1,
+        },
+        async () => {
+          throw new Error('must not prepare');
+        }
+      )
+    ).resolves.toBeUndefined();
+    expect(alternatePreparationCalls).toBe(0);
+    expect(storedRecord(storage)).toEqual(record);
+  });
+
+  it('recovers committed reservation and completion after ambiguous responses', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    const preparation = restorePreparation();
+    storage.failAfterTransactionCommitOnCall = 3;
+
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt,
+        },
+        preparation.prepare
+      )
+    ).rejects.toThrow('ambiguous transaction failure');
+    expect(storedRecord(storage).state).toBe('restoring');
+    const recovered = await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt + 1,
+      },
+      async () => {
+        throw new Error('must recover the committed plan');
+      }
+    );
+    expect(recovered).toMatchObject({ state: 'reserved', created: false });
+
+    storage.failAfterTransactionCommitOnCall = storage.transactionCalls + 2;
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt + 2,
+      })
+    ).rejects.toThrow('ambiguous transaction failure');
+    expect(storedRecord(storage).state).toBe('completed');
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt + 3,
+      })
+    ).resolves.toMatchObject({
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 2,
+      targetRoomCode: restoredRoomCode,
+    });
+  });
+
+  it('rolls back reservation and completion storage failures without skipping phases', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    const preparation = restorePreparation();
+    storage.failPutWhenKeyStartsWith = CONTINUATION_STORAGE_KEY;
+
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt,
+        },
+        preparation.prepare
+      )
+    ).rejects.toThrow('transactional put failure');
+    expect(storedRecord(storage).state).toBe('active');
+
+    storage.failPutWhenKeyStartsWith = undefined;
+    await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    const restoring = structuredClone(storedRecord(storage));
+    storage.failPutWhenKeyStartsWith = CONTINUATION_STORAGE_KEY;
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt + 1,
+      })
+    ).rejects.toThrow('transactional put failure');
+    expect(storedRecord(storage)).toEqual(restoring);
+  });
+
+  it('rejects malformed operations, lifecycle, and target plans before transition', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = inputFixture();
+    await custody.create(input);
+    const active = structuredClone(storedRecord(storage));
+    let calls = 0;
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: 'short',
+          reservedAt: restoredAt,
+        },
+        async () => {
+          calls += 1;
+          throw new Error('must not prepare');
+        }
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt,
+          targetLifetimeMs: 29_999,
+        },
+        async () => {
+          calls += 1;
+          throw new Error('must not prepare');
+        }
+      )
+    ).rejects.toThrow('lifecycle policy');
+    expect(calls).toBe(0);
+
+    const validPreparation = restorePreparation();
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt,
+        },
+        async (checkpoint) => ({
+          ...(await validPreparation.prepare(checkpoint)),
+          targetRoomCode: 'invalid-room',
+        })
+      )
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt,
+        },
+        async (checkpoint) => {
+          const prepared = await validPreparation.prepare(checkpoint);
+          return {
+            ...prepared,
+            fork: {
+              ...prepared.fork,
+              requesterSeatCapability: input.capability,
+            },
+          };
+        }
+      )
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
+    expect(storedRecord(storage)).toEqual(active);
+  });
+
+  it('binds ciphertext to phase and expires restoring/completed records at the original deadline', async () => {
+    const storage = new MemoryDurableStorage();
+    const source = await cryptography();
+    const custody = new DurableContinuationCustody(storage, source);
+    const input = inputFixture();
+    await custody.create(input);
+    const active = structuredClone(storedRecord(storage));
+    if (active.state !== 'active') throw new Error('expected active record');
+    const preparation = restorePreparation();
+    await custody.reserveRestore(
+      {
+        capability: input.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    const restoring = structuredClone(storedRecord(storage));
+    if (restoring.state !== 'restoring') {
+      throw new Error('expected restoring record');
+    }
+    storage.values.set(CONTINUATION_STORAGE_KEY, {
+      ...restoring,
+      sealedPlan: active.sealed,
+    });
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 1,
+        },
+        async () => {
+          throw new Error('must not prepare');
+        }
+      )
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
+
+    storage.values.set(CONTINUATION_STORAGE_KEY, restoring);
+    await custody.completeRestore({
+      capability: input.capability,
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 2,
+    });
+    const completed = structuredClone(storedRecord(storage));
+    if (completed.state !== 'completed') {
+      throw new Error('expected completed record');
+    }
+    storage.values.set(CONTINUATION_STORAGE_KEY, {
+      ...completed,
+      sealedResult: restoring.sealedPlan,
+    });
+    await expect(
+      custody.completeRestore({
+        capability: input.capability,
+        operationId: restoreOperationId,
+        completedAt: restoredAt + 3,
+      })
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
+
+    storage.values.set(CONTINUATION_STORAGE_KEY, completed);
+    await expect(
+      custody.expire(createdAt + DEFAULT_CONTINUATION_TTL_MS)
+    ).resolves.toBe('expired');
+    expect(storage.values.size).toBe(0);
+    expect(storage.alarm).toBeNull();
   });
 });

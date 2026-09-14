@@ -139,9 +139,12 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   canonical state/replay while resetting authority version, sessions,
   idempotency history, aliases, tickets, and admission credentials; only the
   requester's fresh seat master and an ordinary one-use opponent invitation
-  leave that transform. Production key provisioning, quotas, cross-object
-  restore state machine, routes, and UI remain deliberately disabled later
-  parity work. Deck
+  leave that transform. The custody adapter also persists an encrypted
+  one-operation restore plan before target work and atomically replaces it with
+  an encrypted exact-retry receipt after completion, while retaining the
+  original expiry. Production key provisioning, quotas, idempotent target
+  initialization/cross-object orchestration, routes, and UI remain deliberately
+  disabled later parity work. Deck
   navigation is now active only on the opt-in v2 room route; the default route
   remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

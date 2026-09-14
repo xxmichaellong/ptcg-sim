@@ -701,10 +701,12 @@ are implemented and real-runtime tested without an edge or object operation
 surface. The pure target-room transform now preserves exact canonical
 state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
-ordinary opponent invitation. Production key provisioning, the source-room
-quota transaction, one-time cross-object restore state machine and idempotent
-target initializer, routes/UI, and managed recovery/abuse gates remain closed
-as tracked in `CONTINUATION_CUSTODY.md`.
+ordinary opponent invitation. The save adapter now also owns the encrypted
+`active -> restoring -> completed` transition and exact retry recovery under
+the original expiry. Production key provisioning, the source-room quota
+transaction, idempotent target initializer and cross-object orchestration,
+routes/UI, and managed recovery/abuse gates remain closed as tracked in
+`CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
 `/import?key=` share links; the isolated converter remains test-only.
 
