@@ -1851,7 +1851,7 @@ layout, shortcut, or visible interaction changed in this slice.
 V1 kept separate `selfActionData` and `oppActionData` arrays even though many
 entries could mutate shared or opposite-seat state. Replaying one lane after
 interleaved moves can therefore erase or repeat unrelated shared effects. The
-provisional v2 integrity rule defines “last move” as the most recent accepted
+accepted ADR-014 integrity rule defines “last move” as the most recent accepted
 canonical whole-match command. `targetPlayerId` preserves the current
 bottom-seat announcement; it does not select an independent history lane. This
 rare interleaved/flip-board distinction is recorded under ADR-014 for parity

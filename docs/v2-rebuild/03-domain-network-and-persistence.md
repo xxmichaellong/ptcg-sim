@@ -396,10 +396,11 @@ opaque handles.
 
 ## Room authority
 
-One logical authority owns each room. The recommended Durable Object runtime
-serializes room commands and keeps hot state in memory backed by durable storage.
-An adapter boundary keeps `game-core` and the protocol deployable to another
-room runtime.
+One logical authority owns each room. ADR-005 selects one SQLite-backed Durable
+Object per room for the first v2 runtime. It serializes room commands and keeps
+hot state in memory backed by durable storage. An adapter boundary keeps
+`game-core` and the protocol deployable to another room runtime if managed
+operational gates expose a platform blocker.
 
 ### Connection and role lifecycle
 
@@ -1066,11 +1067,12 @@ invitation registry. Schema-v6 rooms derive the new durable player-seat ceiling
 from their already-persisted mode and fail closed if their sessions or seat
 claims contradict it.
 
-The provisional command order is whole-match authority order, not v1's two
-independent client action arrays. This avoids replaying one seat's JavaScript
-side effects over later shared-state changes. The target player remains only a
-presentation/announcement field. ADR-014 keeps this narrow interleaved-history
-difference visible for product parity ratification.
+ADR-014 accepts whole-match authority order, not v1's two independent client
+action arrays. This avoids replaying one seat's JavaScript side effects over
+later shared-state changes. The target player remains only a
+presentation/announcement field. `PARITY_EXCEPTIONS.md` records this narrow
+interleaved-history correctness fix while preserving the visible Solo-only Undo
+control.
 
 ## Legacy conversion
 

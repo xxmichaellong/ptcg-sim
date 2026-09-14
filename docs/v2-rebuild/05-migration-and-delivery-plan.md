@@ -38,6 +38,13 @@ mutating the same match.
 
 Goal: make the plan safe to implement.
 
+Closeout status (2026-09-14): complete for feature-branch architecture. Every
+non-deferred decision now has an accepted ADR and the blocking product questions
+are resolved. `PARITY_EXCEPTIONS.md` records approved departures. Named people
+for release sign-off remain an external organizational gate and all physical,
+managed-preview, manual, and rollout evidence remains required before production
+routing. See `reviews/2026-09-14-adr-readiness-closeout.md`.
+
 Work:
 
 - Audit every document using `AUDIT.md`.
@@ -96,7 +103,7 @@ tests/e2e/legacy-baselines/
 tests/e2e/legacy-workflows/
 docs/v2-rebuild/parity-matrix.*
 docs/v2-rebuild/legacy-action-catalog.*
-docs/v2-rebuild/parity-exceptions.md
+docs/v2-rebuild/PARITY_EXCEPTIONS.md
 ```
 
 Exit gate:

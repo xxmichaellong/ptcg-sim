@@ -6,8 +6,9 @@
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
 Isolated implementation and characterization are authorized on the draft feature
-branch. Production routing, user-facing migration, and rollout remain blocked on
-the relevant product decisions and phase exit criteria.
+branch. The architecture decision register is closed. Production routing,
+user-facing migration, and rollout remain blocked on retained release evidence,
+named operational/sign-off ownership, and the applicable phase exit criteria.
 
 ## Recommended target
 
@@ -18,9 +19,10 @@ the relevant product decisions and phase exit criteria.
   PixiJS spike remains unwired as contract and regression evidence.
 - A framework-independent, strict TypeScript game core containing normalized
   state, commands, reducers, invariants, visibility projections, and replay.
-- An authoritative room server. The preferred deployment is a Cloudflare Worker
-  with one Durable Object per room; Colyseus remains the documented fallback if
-  its operational model is a better fit after the spike.
+- An authoritative room server deployed for the first release as a Cloudflare
+  Worker with one SQLite-backed Durable Object per room under ADR-005. Colyseus
+  remains a replacement option only if managed operational gates expose a
+  platform blocker.
 - Per-recipient state projections so private hands, deck identities/order, and
   private looks never reach unauthorized clients.
 - A bounded authoritative replay ledger, session-bound streamed projected
@@ -206,38 +208,55 @@ a manual tabletop simulator.
 
 ## Documents
 
-| Document                                                                                         | Purpose                                                                                                      |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md)           | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
-| [02-target-architecture.md](./02-target-architecture.md)                                         | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
-| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)                   | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
-| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                           | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
-| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)                         | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
-| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)             | Test pyramid, failure injection, performance budgets, and release gates                                      |
-| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                               | Current-to-target file mapping, work ownership, and dependency order                                         |
-| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)               | Decisions, alternatives, open questions, risk register, and stop conditions                                  |
-| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                             | Stable requirement IDs and blueprint-level traceability                                                      |
-| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                                   | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
-| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                                   | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
-| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                         | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
-| [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                                         | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
-| [ADR-015-REFERENCE-PERFORMANCE-PROFILE.md](./ADR-015-REFERENCE-PERFORMANCE-PROFILE.md)           | Accepted physical laptop, network shaping, sampling, and quantitative release evidence contract              |
-| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md)           | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
-| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                             | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
-| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)             | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
-| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                             | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
-| [ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md](./ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md)   | Accepted minimum v1 fallback observation window and explicit retirement boundary                             |
-| [ADR-023-DESKTOP-BROWSER-SUPPORT.md](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)                       | Accepted desktop browser, operating-system, minimum viewport, and release evidence matrix                    |
-| [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md) | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
-| [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                             | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
-| [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                             | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
-| [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                       | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
-| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                           | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
-| [DECK_CORE.md](./DECK_CORE.md)                                                                   | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
-| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                               | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
-| [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                             | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
-| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                           | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
-| [AUDIT.md](./AUDIT.md)                                                                           | Multi-agent review process, change protocol, and audit checklists                                            |
+| Document                                                                                           | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md)             | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
+| [02-target-architecture.md](./02-target-architecture.md)                                           | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
+| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)                     | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
+| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                             | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
+| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)                           | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
+| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)               | Test pyramid, failure injection, performance budgets, and release gates                                      |
+| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                                 | Current-to-target file mapping, work ownership, and dependency order                                         |
+| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)                 | Accepted decisions, alternatives, closed product questions, risks, and stop conditions                       |
+| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                               | Stable requirement IDs and blueprint-level traceability                                                      |
+| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                                     | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
+| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                                     | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                           | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
+| [ADR-001-MANUAL-TABLETOP-BOUNDARY.md](./ADR-001-MANUAL-TABLETOP-BOUNDARY.md)                       | Accepted manual-tabletop product and validation boundary                                                     |
+| [ADR-002-DETERMINISTIC-GAME-CORE.md](./ADR-002-DETERMINISTIC-GAME-CORE.md)                         | Accepted strict deterministic stable-ID domain architecture                                                  |
+| [ADR-003-REACT-APPLICATION-SHELL.md](./ADR-003-REACT-APPLICATION-SHELL.md)                         | Accepted React application composition and lifecycle boundary                                                |
+| [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                                           | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
+| [ADR-005-DURABLE-OBJECT-ROOM-RUNTIME.md](./ADR-005-DURABLE-OBJECT-ROOM-RUNTIME.md)                 | Accepted first-release Durable Object room runtime and external operational gates                            |
+| [ADR-006-RECIPIENT-SNAPSHOT-SYNCHRONIZATION.md](./ADR-006-RECIPIENT-SNAPSHOT-SYNCHRONIZATION.md)   | Accepted full recipient-specific live synchronization strategy                                               |
+| [ADR-007-PERSIST-BEFORE-PUBLISH.md](./ADR-007-PERSIST-BEFORE-PUBLISH.md)                           | Accepted atomic durability and acknowledged-command ordering                                                 |
+| [ADR-008-WHOLE-SESSION-MIGRATION.md](./ADR-008-WHOLE-SESSION-MIGRATION.md)                         | Accepted complete-session strangler, coexistence, and rollback boundary                                      |
+| [ADR-009-RECIPIENT-SAFE-PROJECTION.md](./ADR-009-RECIPIENT-SAFE-PROJECTION.md)                     | Accepted recipient-independent hidden-information projection                                                 |
+| [ADR-010-PLAY-STACK-DOMAIN-MODEL.md](./ADR-010-PLAY-STACK-DOMAIN-MODEL.md)                         | Accepted normalized play-stack, zone, and work-area model                                                    |
+| [ADR-011-CLIENT-STATE-CHANNELS.md](./ADR-011-CLIENT-STATE-CHANNELS.md)                             | Accepted authoritative, pending, and presentation client channels                                            |
+| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md)             | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
+| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                               | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
+| [ADR-014-SOLO-UNDO.md](./ADR-014-SOLO-UNDO.md)                                                     | Accepted authoritative bounded Solo-only undo semantics                                                      |
+| [ADR-015-REFERENCE-PERFORMANCE-PROFILE.md](./ADR-015-REFERENCE-PERFORMANCE-PROFILE.md)             | Accepted physical laptop, network shaping, sampling, and quantitative release evidence contract              |
+| [ADR-016-EVENT-LEDGER-AND-PERSPECTIVE-REPLAY.md](./ADR-016-EVENT-LEDGER-AND-PERSPECTIVE-REPLAY.md) | Accepted bounded authoritative ledger and role-projected replay architecture                                 |
+| [ADR-017-COACHING-AND-PRIVATE-INSPECTION.md](./ADR-017-COACHING-AND-PRIVATE-INSPECTION.md)         | Accepted mutual-consent private-inspection and reconnect lifetime                                            |
+| [ADR-018-CAPABILITY-BASED-ROOM-ADMISSION.md](./ADR-018-CAPABILITY-BASED-ROOM-ADMISSION.md)         | Accepted capability, ticket, resume, seat, and expiry architecture                                           |
+| [ADR-019-MAGICCIRCLE-REUSE.md](./ADR-019-MAGICCIRCLE-REUSE.md)                                     | Accepted bounded direct-reuse and provenance policy                                                          |
+| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)               | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
+| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                               | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
+| [ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md](./ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md)     | Accepted minimum v1 fallback observation window and explicit retirement boundary                             |
+| [ADR-023-DESKTOP-BROWSER-SUPPORT.md](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)                         | Accepted desktop browser, operating-system, minimum viewport, and release evidence matrix                    |
+| [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)   | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
+| [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
+| [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
+| [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                               | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
+| [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                         | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
+| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                             | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
+| [DECK_CORE.md](./DECK_CORE.md)                                                                     | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
+| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                                 | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
+| [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                               | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
+| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                             | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
+| [AUDIT.md](./AUDIT.md)                                                                             | Multi-agent review process, change protocol, and audit checklists                                            |
+| [reviews/2026-09-14-adr-readiness-closeout.md](./reviews/2026-09-14-adr-readiness-closeout.md)     | Cross-cutting closeout of stale ADR state, parity decisions, external gates, and remaining work              |
 
 ## How to read and approve this blueprint
 

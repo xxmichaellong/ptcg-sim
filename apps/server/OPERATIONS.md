@@ -215,8 +215,9 @@ validation, and transaction p50/p95 are 0/0, 3/6, 9/11, 6/8, 0/0, 0/0, and
 8/12 ms. All 32 mature commands hit the frontier and none fell back. Relative to
 the incremental-replay run, p95 fell from 252 to 50 ms end to end, 243 to 42 ms
 server-side, and 207 to 12 ms for persistence; scenario time fell from 26.204 to
-8.766 seconds. Both provisional 250 ms p95 objectives are met, by 200 and 208 ms
-respectively.
+8.766 seconds. This diagnostic local run has 200 ms and 208 ms of headroom
+against the accepted 250 ms p95 user and server objectives respectively. It does
+not count as ADR-015 managed-preview or physical/network release evidence.
 
 The post-hibernation command measured 181 ms end to end and 43 ms server-side:
 16 ms authority, 14 ms projection, 12 ms persistence, 0 ms publication

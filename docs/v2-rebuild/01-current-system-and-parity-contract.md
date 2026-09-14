@@ -155,13 +155,14 @@ external asset changes do not invalidate comparisons.
 
 Every legacy behavior receives one of these labels:
 
-| Label                             | Meaning                                                                                            |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `MUST_MATCH`                      | User-visible behavior must match before v2 release.                                                |
-| `MATCH_WITH_TOLERANCE`            | Canvas/font differences are allowed within a recorded visual or timing tolerance.                  |
-| `BUG_COMPATIBLE_PENDING_DECISION` | Existing behavior may be a bug, but changing it requires an explicit decision and regression test. |
-| `SECURITY_EXCEPTION`              | Legacy behavior is intentionally blocked because it leaks data or permits unauthorized mutation.   |
-| `DEFERRED`                        | Not required for first v2 release and approved as such by the product owner.                       |
+| Label                             | Meaning                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `MUST_MATCH`                      | User-visible behavior must match before v2 release.                                                    |
+| `MATCH_WITH_TOLERANCE`            | Canvas/font differences are allowed within a recorded visual or timing tolerance.                      |
+| `BUG_COMPATIBLE_PENDING_DECISION` | Existing behavior may be a bug, but changing it requires an explicit decision and regression test.     |
+| `APPROVED_FIX`                    | A documented correctness/lifecycle defect is corrected while preserving the intended visible workflow. |
+| `SECURITY_EXCEPTION`              | Legacy behavior is intentionally blocked because it leaks data or permits unauthorized mutation.       |
+| `DEFERRED`                        | Not required for first v2 release and approved as such by the product owner.                           |
 
 No behavior may disappear merely because it was difficult to discover in the
 legacy code. Any exception must be visible in the parity matrix and release
@@ -180,4 +181,6 @@ be mathematically equal. It requires:
 - screenshots and geometry within the thresholds in the verification plan.
 
 Security fixes may change what a user can learn or mutate only when the old
-behavior was unauthorized. Those exceptions must be tested and documented.
+behavior was unauthorized. Approved correctness/lifecycle fixes may change only
+the defective result recorded in `PARITY_EXCEPTIONS.md`, not the intended visible
+workflow. All exceptions must be tested and documented.
