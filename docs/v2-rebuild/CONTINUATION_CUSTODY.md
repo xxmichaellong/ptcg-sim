@@ -1,9 +1,9 @@
 # Server-held continuation custody
 
-Status: storage/cryptography, encrypted one-time restore state, pure fork
-transform, idempotent target-room storage, internal restore coordination, and
-private Durable Object restore runtime implemented; create/open/public restore
-remain deliberately unwired
+Status: storage/cryptography, source-room creation reservation, encrypted
+one-time restore state, pure fork transform, idempotent target-room storage,
+internal restore coordination, and private Durable Object restore runtime
+implemented; create/open/public restore remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -13,6 +13,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-restore-format.ts`,
 `apps/server/src/continuation-rpc.ts`,
 `apps/server/src/continuation-restore.ts`,
+`apps/server/src/continuation-source.ts`,
 `apps/server/src/continuation-target.ts`, and the private `PtcgContinuation` /
 `PtcgRoom` RPCs in `apps/server/src/worker.ts`
 
@@ -25,10 +26,11 @@ message, client package, or UI control. A dedicated
 Wrangler's current `exports` lifecycle. It exposes one exact internal restore
 RPC, and `PtcgRoom` exposes its exact target initializer, but no edge handler
 selects the continuation namespace. It does not change the default/v2 route
-behavior. Production activation still requires the source-room authorization
-and quota transaction, public HTTP contract, deployment secret provisioning,
-abuse limits, managed recovery evidence, and the unchanged-UI integration
-described below.
+behavior. The room-local authorization, reservation, and per-player/per-room
+count model is implemented but is not yet called by a Durable Object RPC.
+Production activation still requires create coordination, a global quota lease,
+public HTTP contract, deployment secret provisioning, abuse limits, managed
+recovery evidence, and the unchanged-UI integration described below.
 
 The implementation is intentionally a one-record storage adapter, instantiated
 only against the dedicated continuation namespace; passing an active room's
@@ -86,6 +88,21 @@ The current guarantees are:
   overwritten. An exact create retry succeeds only after the stored record
   authenticates, decrypts, validates, and equals the requested checkpoint;
   every other collision fails closed.
+- A separate source-room ledger authorizes only an active, currently claimed
+  multiplayer player against the exact canonical authority frontier. It stores
+  a domain-separated digest of the stable create operation, a non-secret save
+  locator, requester role, lifetime, and an exact detached source snapshot
+  while work is pending. It never stores the raw operation ID or a continuation
+  bearer. A frontier race, malformed ledger, malformed frontier, or storage
+  failure fails closed.
+- The source ledger reserves at most four unexpired entries per player and
+  eight per room under an injected bounded policy. Exact transaction retries
+  and ambiguous committed responses recover the same plan. Completion compacts
+  away the pending snapshot, source session, and source build while retaining a
+  digest-only reference for retry and conservative quota accounting. Expired
+  entries are removed transactionally when the ledger is next used. These are
+  local count limits, not the still-required global quota or independent request
+  rate limits.
 - Creation writes the record and 30-day-default alarm in one storage
   transaction. The TTL may be shortened to no less than one minute but cannot
   be extended beyond 30 days by this format. Transaction retry reuses one
@@ -188,10 +205,14 @@ future route must not treat `open()` as permission to initialize an arbitrary
 room. The adapter now implements the save object's durable state transitions so
 a retry, crash, or ambiguous storage response cannot select a second plan:
 
-1. The source room validates the requesting live session and enforces
-   per-player/per-room creation rate and count limits before minting a distinct
-   save locator/bearer. Save creation uses a stable operation ID so an ambiguous
-   object RPC repeats the identical capability, timestamp, and checkpoint.
+1. The source room validates the requesting live session and transactionally
+   reserves its exact source snapshot and stable create operation under
+   per-player/per-room count limits. This local reservation is implemented.
+   The future private create coordinator must use its reserved locator to mint
+   and durably recover one distinct save bearer, acquire the global quota/rate
+   allowance, create the save object, and compact the source reservation. An
+   ambiguous object RPC must therefore repeat the identical capability,
+   timestamp, and checkpoint rather than recapture a later room head.
 2. Restore presents the full capability to the dedicated save object. That
    object authenticates it and transactionally reserves one restore operation
    with a deterministic target-room ID. Concurrent/different operations fail
@@ -289,6 +310,14 @@ ambiguous committed reservation/completion recovery, lifecycle/operation/plan
 validation, phase-specific AAD swap rejection, and original-deadline cleanup
 for restoring and completed records.
 
+The source-reservation suite proves active claimed-player authorization,
+spectator/disconnected/solo refusal before identity work, exact detached
+snapshot capture, digest-only operation storage, complete-frontier atomicity,
+independent per-player/per-room count limits, transaction-retry stability,
+rollback, ambiguous committed reservation/completion recovery, completion
+compaction, conservative completed-reference accounting, expiry pruning, and
+fail-closed policy/ledger/frontier validation.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -319,9 +348,11 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- source-room authenticated creation RPC plus stable idempotency operation,
-  per-player/per-room/global count limits, request/body limits, and independent
-  rate limits;
+- source-room private creation RPC/coordinator, encrypted exact-retry bearer
+  recovery in the save object, global quota leasing, request/body limits, and
+  independent rate limits; the stable source operation, active-player
+  authorization, exact-snapshot reservation, and bounded per-player/per-room
+  count model are implemented but remain unwired;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration

@@ -703,8 +703,13 @@ state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
-the original expiry. Production key provisioning, the source-room quota
-transaction, public routes/UI, and managed recovery/abuse gates remain closed.
+the original expiry. Production key provisioning, the private source-room
+create coordinator, global quota/rate enforcement, public routes/UI, and
+managed recovery/abuse gates remain closed. The unwired source-room adapter now
+covers active claimed-player authorization, exact-frontier snapshot
+reservation, stable digest-only idempotency, bounded per-player/per-room counts,
+completion compaction, expiry pruning, and ambiguous-commit recovery without
+persisting a raw bearer.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
 selection, concurrent retry, and post-eviction recovery are implemented without
@@ -718,8 +723,9 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  production key provisioning, source-room/global count and rate limits,
-  one-time restore orchestration, routes, and operational evidence.
+  production key provisioning, private source-room create coordination, global
+  quota and independent rate limits, one-time restore orchestration, routes,
+  and operational evidence.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

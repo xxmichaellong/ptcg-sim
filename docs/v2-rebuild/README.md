@@ -147,9 +147,14 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   internal coordinator now proves reservation/target/completion
   convergence across pre-commit failures and ambiguous committed responses. Its
   exact private continuation/room RPC path now also proves concurrent retry and
-  post-eviction recovery in workerd without adding an edge route. Production key
-  provisioning, quotas, public routes, and UI remain deliberately disabled
-  later parity work.
+  post-eviction recovery in workerd without adding an edge route. An unwired
+  source-room adapter now authorizes active claimed multiplayer players,
+  transactionally reserves the exact current snapshot under a digest-only
+  stable operation, applies bounded per-player/per-room counts, recovers
+  ambiguous commits, and compacts completion without storing a raw bearer.
+  Production key provisioning, private create coordination, global quota/rate
+  controls, public routes, and UI remain deliberately disabled later parity
+  work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
