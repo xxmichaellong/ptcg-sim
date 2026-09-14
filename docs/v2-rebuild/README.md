@@ -155,9 +155,12 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   ambiguous commits, and compacts completion without storing a raw bearer.
   The save object can now atomically create and encrypt that bearer with the
   checkpoint, recover the same receipt after ambiguity/source compaction,
-  retain it through restore, and erase it on revocation/expiry. Production key
-  provisioning, private create coordination, global quota/rate controls, public
-  routes, and UI remain deliberately disabled later parity work.
+  retain it through restore, and erase it on revocation/expiry. The internal
+  create coordinator now composes source reservation, exact named-save
+  creation/recovery, and source compaction across pre-commit and ambiguous
+  failures. Production key provisioning, the private source-room creation RPC,
+  global quota/rate controls, public routes, and UI remain deliberately disabled
+  later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

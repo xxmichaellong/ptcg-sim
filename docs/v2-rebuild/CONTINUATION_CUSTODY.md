@@ -1,15 +1,16 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, source-room creation reservation, encrypted
-exact-retry creation receipt, encrypted one-time restore state, pure fork
-transform, idempotent target-room storage, internal restore coordination, and
-private Durable Object restore runtime implemented; create/open/public restore
-remain deliberately unwired
+exact-retry creation receipt, internal create coordination, encrypted one-time
+restore state, pure fork transform, idempotent target-room storage, internal
+restore coordination, and private Durable Object restore runtime implemented;
+create/open/public restore remain deliberately unwired
 
 Decision owner: ADR-012
 
 Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
+`apps/server/src/continuation-create.ts`,
 `apps/server/src/continuation-fork.ts`,
 `apps/server/src/continuation-restore-format.ts`,
 `apps/server/src/continuation-rpc.ts`,
@@ -29,9 +30,10 @@ RPC, and `PtcgRoom` exposes its exact target initializer, but no edge handler
 selects the continuation namespace. It does not change the default/v2 route
 behavior. The room-local authorization, reservation, and per-player/per-room
 count model is implemented but is not yet called by a Durable Object RPC.
-Production activation still requires create coordination, a global quota lease,
-public HTTP contract, deployment secret provisioning, abuse limits, managed
-recovery evidence, and the unchanged-UI integration described below.
+Production activation still requires the private source-room create RPC, a
+global quota lease, public HTTP contract, deployment secret provisioning, abuse
+limits, managed recovery evidence, and the unchanged-UI integration described
+below.
 
 The implementation is intentionally a single-save adapter with one primary
 record and, for source-coordinated creation, one small encrypted retry receipt.
@@ -231,12 +233,15 @@ a retry, crash, or ambiguous storage response cannot select a second plan:
 
 1. The source room validates the requesting live session and transactionally
    reserves its exact source snapshot and stable create operation under
-   per-player/per-room count limits. This local reservation is implemented.
-   The future private create coordinator must use its reserved locator to mint
-   and durably recover one distinct save bearer, acquire the global quota/rate
-   allowance, create the save object, and compact the source reservation. An
-   ambiguous object RPC must therefore repeat the identical capability,
-   timestamp, and checkpoint rather than recapture a later room head.
+   per-player/per-room count limits. The internal create coordinator uses that
+   reserved locator to select exactly one save object, atomically mint and
+   encrypt one distinct bearer/checkpoint there, and compact the source
+   reservation. A completed source retry bypasses creation and asks the same
+   save object to recover its encrypted receipt. Pre-commit failures, lost
+   reservation/create/completion responses, and retries after source compaction
+   therefore converge on the identical capability, timestamp, and checkpoint
+   instead of recapturing a later room head. Global quota/rate allowance remains
+   outside this coordinator and is still required before an RPC is wired.
 2. Restore presents the full capability to the dedicated save object. That
    object authenticates it and transactionally reserves one restore operation
    with a deterministic target-room ID. Concurrent/different operations fail
@@ -349,6 +354,14 @@ transaction-retry stability, ambiguous committed recovery, occupied/incomplete
 locator refusal, ciphertext tamper rejection, retention through one-time
 restore, revocation erasure, and primary/orphan expiry cleanup.
 
+The create-coordination suite composes the real source ledger, custody adapter,
+cryptography, and durable in-memory stores. It proves exact save-object
+selection, canonical checkpoint opening, source compaction, completed-retry
+receipt recovery, unauthorized/quota short-circuiting, pre-commit and ambiguous
+committed failure recovery at source reservation, save creation, and source
+completion, and refusal of mismatched plans, receipts, completion references,
+unavailable completed receipts, and invalid clocks.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -379,11 +392,11 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- source-room private creation RPC/coordinator, global quota leasing,
-  request/body limits, and independent rate limits; the stable source operation,
-  active-player authorization, exact-snapshot reservation, bounded
-  per-player/per-room count model, and save-object encrypted exact-retry bearer
-  recovery are implemented but remain unwired;
+- source-room private creation RPC, global quota leasing, request/body limits,
+  and independent rate limits; the stable source operation, active-player
+  authorization, exact-snapshot reservation, bounded per-player/per-room count
+  model, save-object encrypted exact-retry bearer recovery, and cross-object
+  creation coordinator/crash matrix are implemented but remain unwired;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration
