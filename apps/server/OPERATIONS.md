@@ -19,21 +19,20 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
-## Continuation key and namespace boundary (edge-inactive)
+## Continuation key, quota, and namespace boundary (edge-inactive)
 
-Wrangler declaratively exports a dedicated SQLite `PtcgContinuation` Durable
-Object and binds it as `PTCG_CONTINUATION`. The edge Worker does not route to
-it. The class exports its platform alarm plus one exact, locator-bound internal
-restore RPC; `PtcgRoom` exports the corresponding exact target initializer. The
-restore RPC lazily loads its key, reserves inside the save object, selects only
-the plan's room name, and completes only after that room acknowledges the same
-plan. Create/open/revoke and every public continuation route remain absent. Its
-alarm reschedules or deletes bounded continuation records without decrypting
-them, so cleanup remains available even when encryption-key configuration is
-absent or invalid. This private wiring is not evidence that continuation is
-enabled.
+Wrangler declaratively exports dedicated SQLite `PtcgContinuation` and
+`PtcgContinuationQuota` Durable Objects and binds them as `PTCG_CONTINUATION`
+and `PTCG_CONTINUATION_QUOTA`. The edge Worker does not route to either. Exact
+private source-room create, named-save create/recovery/restore, quota-reserve,
+and target-room initialization RPCs are implemented; create acquires its quota
+lease before encrypted save storage. Open/revoke and every public continuation
+route remain absent. Save alarms clean records without decrypting them, and
+quota alarms clean expired leases without reading capacity configuration, so
+cleanup remains available when key or quota configuration is absent or invalid.
+This private wiring is not evidence that continuation is enabled.
 
-Before any public route or source-room create RPC is activated, provision
+Before any public route is activated, provision
 `CONTINUATION_KEYRING` as a Worker **secret**, never a plaintext Wrangler
 `vars` value. The exact JSON format is:
 
@@ -60,13 +59,40 @@ after non-extractable Web Crypto import. Key material, configuration, key
 digests, capabilities, and thrown configuration values must never enter logs,
 telemetry, health responses, PRs, or support tickets.
 
-Cloudflare's declarative Durable Object `exports` entry is namespace lifecycle
-state, not ordinary version metadata. Do not remove the live class/export or
-attempt to roll back across its provisioning change. Before continuation
-activation, a code rollback leaves the inert declaration intact. After saves
-exist, a pause disables new create/restore while retaining alarm cleanup and the
-last compatible decrypt keyring until all records expire or are explicitly
-revoked.
+Also provision `CONTINUATION_QUOTA_CONFIGURATION` as an environment-specific
+operator binding. It is policy rather than a secret, but it deliberately has no
+checked-in production default:
+
+```json
+{
+  "format": "ptcgsim-continuation-quota-configuration-v1",
+  "shardCount": 64,
+  "maximumActiveLeasesPerShard": 128
+}
+```
+
+The numbers above illustrate the schema; they are not an approved production
+capacity. `shardCount` must be an integer from 1 through 4,096 and
+`maximumActiveLeasesPerShard` from 1 through 512. Their product is the hard
+global lease ceiling. Missing, oversized, malformed, unsupported, or out-of-
+range configuration fails closed with one redacted error. Room codes map to a
+fixed digest-derived shard, and every accepted reservation counts until the
+save's hard expiry. This conservative model may temporarily over-count a failed
+downstream create but cannot leave a stored save uncounted.
+
+Increasing either capacity input is an explicit cost-policy change. Decreasing
+the shard count or per-shard capacity requires disabling new creates and waiting
+one maximum retention period, or producing verified complete cleanup evidence;
+otherwise still-live leases can exist above or outside the new partition set.
+
+Cloudflare's declarative Durable Object `exports` entries are namespace
+lifecycle state, not ordinary version metadata. Do not remove either live
+class/export or attempt to roll back across its provisioning change. Before
+continuation activation, a code rollback leaves both inert declarations intact.
+After saves exist, a pause disables new create/restore while retaining both
+alarm cleanup paths, the last compatible decrypt keyring, and the last
+compatible quota partition interpretation until all records and leases expire
+or are explicitly cleaned up.
 
 ## Structured event contract
 

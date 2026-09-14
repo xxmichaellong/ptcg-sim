@@ -16,9 +16,14 @@ import type {
   ContinuationSourceCreationReservation,
   ReserveContinuationSourceCreationInput,
 } from './continuation-source.js';
+import type {
+  ContinuationQuotaLeaseReservation,
+  ReserveContinuationQuotaLeaseInput,
+} from './continuation-quota.js';
 
 const CREATION_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const SAVE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/u;
+const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;
 
 type SourceReserveInput = Omit<
   ReserveContinuationSourceCreationInput,
@@ -47,11 +52,18 @@ export interface ContinuationCreationSavePort {
   ) => Promise<ContinuationCreationReceipt | undefined>;
 }
 
+export interface ContinuationCreationQuotaPort {
+  readonly reserve: (
+    input: ReserveContinuationQuotaLeaseInput
+  ) => Promise<ContinuationQuotaLeaseReservation | undefined>;
+}
+
 export interface ContinuationCreationClock {
   readonly now: () => number;
 }
 
 export interface CoordinateContinuationCreationInput {
+  readonly sourceRoomCode: string;
   readonly requesterSessionId: string;
   readonly operationId: string;
   readonly sourceBuild: string;
@@ -64,11 +76,12 @@ export type ContinuationCreationCoordinationResult =
     }
   | {
       readonly state: 'quota_exceeded';
-      readonly scope: 'player' | 'room';
+      readonly scope: 'player' | 'room' | 'global';
     };
 
 export interface ContinuationCreationCoordinatorDependencies {
   readonly source: ContinuationCreationSourcePort;
+  readonly quota: ContinuationCreationQuotaPort;
   readonly saveForId: (saveId: string) => ContinuationCreationSavePort;
   readonly clock: ContinuationCreationClock;
 }
@@ -268,6 +281,7 @@ export const coordinateContinuationCreation = async (
 ): Promise<ContinuationCreationCoordinationResult | undefined> => {
   if (
     !CREATION_OPERATION_PATTERN.test(input.operationId) ||
+    !ROOM_CODE_PATTERN.test(input.sourceRoomCode) ||
     input.requesterSessionId.length < 1 ||
     input.requesterSessionId.length > 256 ||
     input.sourceBuild.length < 1 ||
@@ -347,6 +361,41 @@ export const coordinateContinuationCreation = async (
   validatePlan(reservation.plan, input, reservedAt);
   const plan = reservation.plan;
   const reference = { saveId: plan.saveId, expiresAt: plan.expiresAt };
+  const quota = await dependencies.quota.reserve({
+    sourceRoomCode: input.sourceRoomCode,
+    operationId: plan.operationId,
+    saveId: plan.saveId,
+    createdAt: plan.createdAt,
+    expiresAt: plan.expiresAt,
+    requestedAt: coordinatorTime(dependencies.clock),
+  });
+  if (!quota || typeof quota !== 'object') {
+    throw new ContinuationCreationCoordinationError(
+      'Continuation global quota rejected its source reservation'
+    );
+  }
+  let quotaExceeded = false;
+  try {
+    if (quota.state === 'quota_exceeded') {
+      if (!exactRpcResultKeys(quota, ['state'])) {
+        throw new ContinuationCreationCoordinationError(
+          'Continuation global quota result is malformed'
+        );
+      }
+      quotaExceeded = true;
+    } else if (
+      quota.state !== 'reserved' ||
+      !exactRpcResultKeys(quota, ['created', 'state']) ||
+      typeof quota.created !== 'boolean'
+    ) {
+      throw new ContinuationCreationCoordinationError(
+        'Continuation global quota result is malformed'
+      );
+    }
+  } finally {
+    disposeRpcResult(quota);
+  }
+  if (quotaExceeded) return { state: 'quota_exceeded', scope: 'global' };
   const saved = await dependencies.saveForId(plan.saveId).createReserved({
     saveId: plan.saveId,
     operationId: plan.operationId,

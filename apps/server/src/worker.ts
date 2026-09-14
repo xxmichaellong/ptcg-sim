@@ -30,6 +30,13 @@ import {
   type ReservedContinuationCreationResult,
 } from './continuation-custody.js';
 import { prepareContinuationFork } from './continuation-fork.js';
+import { readContinuationQuotaConfiguration } from './continuation-quota-configuration.js';
+import {
+  DurableContinuationQuotaShard,
+  continuationQuotaShardName,
+  expireContinuationQuotaLeases,
+  type ContinuationQuotaLeaseReservation,
+} from './continuation-quota.js';
 import {
   ContinuationRestoreCoordinationError,
   coordinateContinuationRestore,
@@ -38,6 +45,7 @@ import {
 import {
   readContinuationSaveCreationRpcInput,
   readContinuationSaveRecoveryRpcInput,
+  readContinuationQuotaReservationRpcInput,
   readContinuationRestoreRpcInput,
   readContinuationSourceCreationRpcInput,
   type ContinuationRestoreRpcResult,
@@ -76,7 +84,10 @@ interface Env {
   readonly BUILD_ID: string;
   /** Secret binding, deliberately absent from checked-in production config. */
   readonly CONTINUATION_KEYRING?: string;
+  /** Operator policy binding, deliberately absent from production defaults. */
+  readonly CONTINUATION_QUOTA_CONFIGURATION?: string;
   readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
+  readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
 }
@@ -248,6 +259,40 @@ export class PtcgContinuation extends DurableObject<Env> {
   }
 }
 
+/**
+ * One fixed partition of the global continuation capacity. No edge route
+ * selects this namespace, and alarms need no production configuration.
+ */
+export class PtcgContinuationQuota extends DurableObject<Env> {
+  private readonly identity = new WebCryptoAuthoritySource();
+
+  async reserveContinuation(
+    value: unknown
+  ): Promise<ContinuationQuotaLeaseReservation | undefined> {
+    const input = readContinuationQuotaReservationRpcInput(value);
+    if (!input) return undefined;
+    const configuration = readContinuationQuotaConfiguration(
+      this.env.CONTINUATION_QUOTA_CONFIGURATION
+    );
+    const expectedShard = await continuationQuotaShardName(
+      input.sourceRoomCode,
+      configuration.shardCount,
+      this.identity
+    );
+    if (expectedShard !== this.ctx.id.name) return undefined;
+    const quota = new DurableContinuationQuotaShard(
+      this.ctx.storage,
+      this.identity,
+      configuration.shardPolicy
+    );
+    return quota.reserve(input);
+  }
+
+  override async alarm(): Promise<void> {
+    await expireContinuationQuotaLeases(this.ctx.storage, Date.now());
+  }
+}
+
 export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
@@ -353,8 +398,10 @@ export class PtcgRoom extends DurableObject<Env> {
     if (!input) return undefined;
     const runtime = await this.runtimePromise;
     if (!runtime) return undefined;
+    const sourceRoomCode = this.ctx.id.name;
+    if (!sourceRoomCode) return undefined;
     return coordinateContinuationCreation(
-      { ...input, sourceBuild: this.env.BUILD_ID },
+      { ...input, sourceRoomCode, sourceBuild: this.env.BUILD_ID },
       {
         source: {
           reserveCreation: (reserveInput) =>
@@ -367,6 +414,21 @@ export class PtcgRoom extends DurableObject<Env> {
               ...completeInput,
               snapshot: runtime.coordinator.currentSnapshot(),
             }),
+        },
+        quota: {
+          reserve: async (quotaInput) => {
+            const configuration = readContinuationQuotaConfiguration(
+              this.env.CONTINUATION_QUOTA_CONFIGURATION
+            );
+            const quotaShard = await continuationQuotaShardName(
+              sourceRoomCode,
+              configuration.shardCount,
+              this.cryptoSource
+            );
+            return this.env.PTCG_CONTINUATION_QUOTA.getByName(
+              quotaShard
+            ).reserveContinuation(quotaInput);
+          },
         },
         saveForId: (saveId) => {
           const save = this.env.PTCG_CONTINUATION.getByName(saveId);

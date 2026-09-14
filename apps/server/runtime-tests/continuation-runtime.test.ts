@@ -20,6 +20,12 @@ import {
 } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
+import { WebCryptoAuthoritySource } from '../src/authority-crypto.js';
+import { readContinuationQuotaConfiguration } from '../src/continuation-quota-configuration.js';
+import {
+  CONTINUATION_QUOTA_LEASES_STORAGE_KEY,
+  continuationQuotaShardName,
+} from '../src/continuation-quota.js';
 import {
   CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
   CONTINUATION_STORAGE_KEY,
@@ -33,6 +39,7 @@ import { createContinuationCryptographyFromConfiguration } from '../src/continua
 import { ROOM_CONTINUATION_CREATIONS_STORAGE_KEY } from '../src/continuation-source.js';
 import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
 import { continuationTestKeyring } from './continuation-test-keyring.js';
+import { continuationTestQuotaConfiguration } from './continuation-test-quota-configuration.js';
 
 const p1 = asPlayerId('continuation-runtime-player-one');
 const p2 = asPlayerId('continuation-runtime-player-two');
@@ -110,7 +117,82 @@ describe('continuation Durable Object runtime', () => {
     );
 
     expect(env.PTCG_CONTINUATION).toBeDefined();
+    expect(env.PTCG_CONTINUATION_QUOTA).toBeDefined();
     expect(response.status).toBe(404);
+  });
+
+  it('reserves only the exact configured quota shard and recovers after eviction', async () => {
+    const sourceRoomCode = 'CDEFGHJK2345';
+    const configuration = readContinuationQuotaConfiguration(
+      continuationTestQuotaConfiguration
+    );
+    const shardName = await continuationQuotaShardName(
+      sourceRoomCode,
+      configuration.shardCount,
+      new WebCryptoAuthoritySource()
+    );
+    const quota = env.PTCG_CONTINUATION_QUOTA.getByName(shardName);
+    const createdAt = Date.now();
+    const input = {
+      sourceRoomCode,
+      operationId: 'Q'.repeat(43),
+      saveId: 'Q'.repeat(22),
+      createdAt,
+      expiresAt: createdAt + MINIMUM_CONTINUATION_TTL_MS,
+      requestedAt: createdAt,
+    };
+    await expect(quota.reserveContinuation(input)).resolves.toEqual({
+      state: 'reserved',
+      created: true,
+    });
+    const stored = await runInDurableObject(quota, async (_instance, state) =>
+      state.storage.get(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)
+    );
+    expect(JSON.stringify(stored)).not.toContain(sourceRoomCode);
+    expect(JSON.stringify(stored)).not.toContain(input.operationId);
+    expect(JSON.stringify(stored)).toContain(input.saveId);
+
+    const wrongShard = env.PTCG_CONTINUATION_QUOTA.getByName(
+      'continuation-quota-v1-fff'
+    );
+    await expect(
+      wrongShard.reserveContinuation(input)
+    ).resolves.toBeUndefined();
+    await expect(
+      runInDurableObject(wrongShard, async (_instance, state) =>
+        state.storage.list()
+      )
+    ).resolves.toEqual(new Map());
+
+    await evictDurableObject(quota);
+    await expect(
+      quota.reserveContinuation({ ...input, requestedAt: createdAt + 1 })
+    ).resolves.toEqual({ state: 'reserved', created: false });
+
+    const now = Date.now();
+    await runInDurableObject(quota, async (_instance, state) => {
+      const ledger = await state.storage.get<{
+        format: string;
+        leases: readonly Record<string, unknown>[];
+      }>(CONTINUATION_QUOTA_LEASES_STORAGE_KEY);
+      if (!ledger) throw new Error('expected quota ledger');
+      await state.storage.put(CONTINUATION_QUOTA_LEASES_STORAGE_KEY, {
+        ...ledger,
+        leases: ledger.leases.map((lease) => ({
+          ...lease,
+          createdAt: now - MINIMUM_CONTINUATION_TTL_MS - 1,
+          expiresAt: now - 1,
+        })),
+      });
+      await state.storage.setAlarm(now + MINIMUM_CONTINUATION_TTL_MS);
+    });
+    await evictDurableObject(quota);
+    await expect(runDurableObjectAlarm(quota)).resolves.toBe(true);
+    await expect(
+      runInDurableObject(quota, async (_instance, state) =>
+        state.storage.list()
+      )
+    ).resolves.toEqual(new Map());
   });
 
   it('deletes expired custody after eviction without requiring a decrypt key', async () => {
@@ -311,6 +393,16 @@ describe('continuation Durable Object runtime', () => {
     const continuation = env.PTCG_CONTINUATION.getByName(
       created.receipt.saveId
     );
+    const quotaConfiguration = readContinuationQuotaConfiguration(
+      continuationTestQuotaConfiguration
+    );
+    const quota = env.PTCG_CONTINUATION_QUOTA.getByName(
+      await continuationQuotaShardName(
+        'CDEFGHJK2345',
+        quotaConfiguration.shardCount,
+        new WebCryptoAuthoritySource()
+      )
+    );
     const sourceLedger = await runInDurableObject(
       room,
       async (_instance, state) =>
@@ -335,6 +427,16 @@ describe('continuation Durable Object runtime', () => {
     expect(JSON.stringify([...saveEntries])).not.toContain(
       'continuation-runtime-match'
     );
+    const quotaEntries = await runInDurableObject(
+      quota,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(quotaEntries.has(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)).toBe(true);
+    expect(JSON.stringify([...quotaEntries])).not.toContain(
+      created.receipt.capability
+    );
+    expect(JSON.stringify([...quotaEntries])).not.toContain(operationId);
+    expect(JSON.stringify([...quotaEntries])).not.toContain('CDEFGHJK2345');
     const opened = await runInDurableObject(
       continuation,
       async (_instance, state) => {
@@ -353,6 +455,7 @@ describe('continuation Durable Object runtime', () => {
     );
 
     await evictDurableObject(continuation);
+    await evictDurableObject(quota);
     await evictDurableObject(room);
     await expect(room.createContinuation(input)).resolves.toEqual(created);
     await expect(

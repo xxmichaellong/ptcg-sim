@@ -19,8 +19,8 @@ const BASE64_URL_ALPHABET =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 const ROOM_DIGEST_DOMAIN = 'ptcgsim-continuation-quota-room-v1';
 const OPERATION_DIGEST_DOMAIN = 'ptcgsim-continuation-quota-operation-v1';
-const MAXIMUM_QUOTA_SHARDS = 4_096;
-const MAXIMUM_LEASES_PER_SHARD = 512;
+export const MAXIMUM_CONTINUATION_QUOTA_SHARDS = 4_096;
+export const MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD = 512;
 
 export interface ContinuationQuotaShardPolicy {
   readonly maximumActiveLeases: number;
@@ -84,7 +84,7 @@ const validLifetime = (createdAt: unknown, expiresAt: unknown): boolean =>
 const validPolicy = (policy: ContinuationQuotaShardPolicy): boolean =>
   Number.isSafeInteger(policy.maximumActiveLeases) &&
   policy.maximumActiveLeases >= 1 &&
-  policy.maximumActiveLeases <= MAXIMUM_LEASES_PER_SHARD;
+  policy.maximumActiveLeases <= MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD;
 
 const readStoredLease = (value: unknown): StoredContinuationQuotaLease => {
   if (
@@ -121,7 +121,8 @@ const readLedger = (value: unknown): StoredContinuationQuotaLedger => {
     !exactKeys(value, ['format', 'leases']) ||
     Reflect.get(value, 'format') !== LEDGER_FORMAT ||
     !Array.isArray(Reflect.get(value, 'leases')) ||
-    Reflect.get(value, 'leases').length > MAXIMUM_LEASES_PER_SHARD
+    Reflect.get(value, 'leases').length >
+      MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD
   ) {
     throw new Error('Stored continuation quota ledger is malformed');
   }
@@ -195,7 +196,7 @@ const validateShardCount = (shardCount: number): void => {
   if (
     !Number.isSafeInteger(shardCount) ||
     shardCount < 1 ||
-    shardCount > MAXIMUM_QUOTA_SHARDS
+    shardCount > MAXIMUM_CONTINUATION_QUOTA_SHARDS
   ) {
     throw new Error('Continuation quota shard count is invalid');
   }

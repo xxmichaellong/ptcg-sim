@@ -704,9 +704,9 @@ state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
-the original expiry. Production key provisioning, global quota/rate
-enforcement, public routes/UI, and managed recovery/abuse gates remain closed.
-The source-room adapter now
+the original expiry. Production key/quota-capacity provisioning, independent
+rate enforcement, public routes/UI, and managed recovery/abuse gates remain
+closed. The source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
 completion compaction, expiry pruning, and ambiguous-commit recovery without
@@ -722,7 +722,9 @@ without adding an edge caller.
 The global quota storage adapter now implements deterministic fixed sharding,
 bounded digest-only exact-retry leases, conservative full-retention accounting,
 atomic expiry/alarm cleanup, and corruption refusal without a singleton request
-path. Namespace/configuration and create-coordinator wiring remain closed.
+path. Its exact private namespace/RPC, fail-closed configuration, coordinator
+wiring, and workerd alarm/eviction proof are implemented with a test-only
+policy; production capacity remains unconfigured.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
 selection, concurrent retry, and post-eviction recovery are implemented without
@@ -736,10 +738,10 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  production key provisioning, global quota and independent rate limits,
-  public contracts/routes, and operational evidence. Private source-room
-  creation and one-time restore orchestration are implemented and remain
-  unreachable from public traffic.
+  production key/quota-capacity provisioning, independent rate limits, public
+  contracts/routes, and operational evidence. Private source-room creation,
+  global quota enforcement, and one-time restore orchestration are implemented
+  and remain unreachable from public traffic.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

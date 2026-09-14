@@ -9,10 +9,12 @@ import {
   type ContinuationRestoreResult,
 } from './continuation-custody.js';
 import type { CoordinateContinuationCreationInput } from './continuation-create.js';
+import type { ReserveContinuationQuotaLeaseInput } from './continuation-quota.js';
 import { validContinuationRestoreOperationId } from './continuation-restore-format.js';
 
 const SAVE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/u;
 const CREATION_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
+const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;
 
 export interface ContinuationRestoreRpcInput {
   readonly capability: string;
@@ -42,7 +44,9 @@ const validSourceBuild = (value: unknown): value is string =>
 
 export const readContinuationSourceCreationRpcInput = (
   value: unknown
-): Omit<CoordinateContinuationCreationInput, 'sourceBuild'> | undefined => {
+):
+  | Omit<CoordinateContinuationCreationInput, 'sourceBuild' | 'sourceRoomCode'>
+  | undefined => {
   if (
     typeof value !== 'object' ||
     value === null ||
@@ -165,6 +169,57 @@ export const readContinuationSaveRecoveryRpcInput = (
     return undefined;
   }
   return Object.freeze({ saveId, operationId, requestedAt });
+};
+
+export const readContinuationQuotaReservationRpcInput = (
+  value: unknown
+): ReserveContinuationQuotaLeaseInput | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, [
+      'createdAt',
+      'expiresAt',
+      'operationId',
+      'requestedAt',
+      'saveId',
+      'sourceRoomCode',
+    ])
+  ) {
+    return undefined;
+  }
+  const sourceRoomCode = Reflect.get(value, 'sourceRoomCode');
+  const operationId = Reflect.get(value, 'operationId');
+  const saveId = Reflect.get(value, 'saveId');
+  const createdAt = Reflect.get(value, 'createdAt');
+  const expiresAt = Reflect.get(value, 'expiresAt');
+  const requestedAt = Reflect.get(value, 'requestedAt');
+  if (
+    typeof sourceRoomCode !== 'string' ||
+    !ROOM_CODE_PATTERN.test(sourceRoomCode) ||
+    typeof operationId !== 'string' ||
+    !CREATION_OPERATION_PATTERN.test(operationId) ||
+    typeof saveId !== 'string' ||
+    !SAVE_ID_PATTERN.test(saveId) ||
+    !safeNonNegativeInteger(createdAt) ||
+    !safeNonNegativeInteger(expiresAt) ||
+    expiresAt <= createdAt ||
+    expiresAt - createdAt < MINIMUM_CONTINUATION_TTL_MS ||
+    expiresAt - createdAt > DEFAULT_CONTINUATION_TTL_MS ||
+    !safeNonNegativeInteger(requestedAt) ||
+    requestedAt < createdAt ||
+    requestedAt >= expiresAt
+  ) {
+    return undefined;
+  }
+  return Object.freeze({
+    sourceRoomCode,
+    operationId,
+    saveId,
+    createdAt,
+    expiresAt,
+    requestedAt,
+  });
 };
 
 export const readContinuationRestoreRpcInput = (

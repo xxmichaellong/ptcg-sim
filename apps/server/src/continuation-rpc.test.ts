@@ -15,6 +15,7 @@ import {
 } from './continuation-custody.js';
 import {
   readContinuationRestoreRpcInput,
+  readContinuationQuotaReservationRpcInput,
   readContinuationSaveCreationRpcInput,
   readContinuationSaveRecoveryRpcInput,
   readContinuationSourceCreationRpcInput,
@@ -139,6 +140,28 @@ describe('continuation internal RPC codec', () => {
         input.saveId
       )
     ).toBeUndefined();
+  });
+
+  it('accepts only an exact live global quota reservation request', () => {
+    const input = {
+      sourceRoomCode: 'CDEFGHJK2345',
+      operationId: 'C'.repeat(43),
+      saveId: 'L'.repeat(22),
+      createdAt,
+      expiresAt: createdAt + DEFAULT_CONTINUATION_TTL_MS,
+      requestedAt: createdAt + 1,
+    };
+    expect(readContinuationQuotaReservationRpcInput(input)).toEqual(input);
+    for (const value of [
+      { ...input, sourceRoomCode: 'bad-room' },
+      { ...input, operationId: 'short' },
+      { ...input, saveId: 'short' },
+      { ...input, requestedAt: input.createdAt - 1 },
+      { ...input, requestedAt: input.expiresAt },
+      { ...input, extra: true },
+    ]) {
+      expect(readContinuationQuotaReservationRpcInput(value)).toBeUndefined();
+    }
   });
 
   it('accepts only an exact capability-bound restore request', () => {

@@ -161,13 +161,16 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   creation/recovery, and source compaction across pre-commit and ambiguous
   failures. Exact private source-room/named-save create and recovery RPCs now
   compose that path and prove same-operation convergence, source-head capture,
-  encrypted storage secrecy, and retry after both objects are evicted in
+  encrypted storage secrecy, and retry after source/save eviction in
   workerd. A policy-injected global quota adapter now provides deterministic
   fixed shards, digest-only full-retention leases, a hard aggregate ceiling, and
-  atomic alarm cleanup without a global singleton; its namespace/configuration
-  and coordinator call site remain unwired. Production key provisioning,
-  independent rate controls, public routes, and UI remain deliberately disabled
-  later parity work.
+  atomic alarm cleanup without a global singleton. Its exact private namespace
+  and RPC, fail-closed configuration parser, coordinator wiring, and workerd
+  eviction/alarm proof extend that retry across all three objects with a
+  test-only policy; production
+  capacity is deliberately absent. Production key provisioning, independent
+  rate controls, public routes, and UI remain deliberately disabled later parity
+  work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

@@ -22,6 +22,10 @@ import {
   importContinuationEncryptionKey,
 } from './continuation-custody.js';
 import {
+  CONTINUATION_QUOTA_LEASES_STORAGE_KEY,
+  DurableContinuationQuotaShard,
+} from './continuation-quota.js';
+import {
   DurableRoomContinuationSource,
   ROOM_CONTINUATION_CREATIONS_STORAGE_KEY,
 } from './continuation-source.js';
@@ -35,6 +39,7 @@ const operationId = 'C'.repeat(43);
 const alternateOperationId = 'D'.repeat(43);
 const saveId = 'L'.repeat(22);
 const sourceBuild = 'continuation-create-coordinator-test';
+const sourceRoomCode = 'CDEFGHJK2345';
 const hiddenMatchId = 'create-coordinator-hidden-match';
 
 const snapshotFixture = (): RoomAuthoritySnapshot => {
@@ -112,7 +117,9 @@ interface CreationHarness {
   readonly snapshot: RoomAuthoritySnapshot;
   readonly sourceStorage: MemoryDurableStorage;
   readonly saveStorage: MemoryDurableStorage;
+  readonly quotaStorage: MemoryDurableStorage;
   readonly source: DurableRoomContinuationSource;
+  readonly quota: DurableContinuationQuotaShard;
   readonly custody: DurableContinuationCustody;
   readonly dependencies: ContinuationCreationCoordinatorDependencies;
   readonly selectedSaveIds: string[];
@@ -132,6 +139,12 @@ const createHarness = async (): Promise<CreationHarness> => {
     saveStorage,
     await continuationCryptography()
   );
+  const quotaStorage = new MemoryDurableStorage();
+  const quota = new DurableContinuationQuotaShard(
+    quotaStorage,
+    { digestCapability: (value) => authoritySource.digestCapability(value) },
+    { maximumActiveLeases: 8 }
+  );
   let now = createdAt;
   const selectedSaveIds: string[] = [];
   const dependencies: ContinuationCreationCoordinatorDependencies = {
@@ -141,6 +154,7 @@ const createHarness = async (): Promise<CreationHarness> => {
       completeCreation: (input) =>
         source.completeCreation({ ...input, snapshot }),
     },
+    quota,
     saveForId: (selectedSaveId) => {
       selectedSaveIds.push(selectedSaveId);
       return {
@@ -154,7 +168,9 @@ const createHarness = async (): Promise<CreationHarness> => {
     snapshot,
     sourceStorage,
     saveStorage,
+    quotaStorage,
     source,
+    quota,
     custody,
     dependencies,
     selectedSaveIds,
@@ -169,6 +185,7 @@ const coordinate = (
 ) =>
   coordinateContinuationCreation(
     {
+      sourceRoomCode,
       requesterSessionId,
       operationId: requestedOperationId,
       sourceBuild,
@@ -201,6 +218,12 @@ describe('continuation cross-object creation coordinator', () => {
     );
     expect(sourceLedger).not.toContain(hiddenMatchId);
     expect(sourceLedger).not.toContain(operationId);
+    const quotaLedger = JSON.stringify(
+      harness.quotaStorage.values.get(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)
+    );
+    expect(quotaLedger).not.toContain(sourceRoomCode);
+    expect(quotaLedger).not.toContain(operationId);
+    expect(quotaLedger).not.toContain(result.receipt.capability);
     await expect(
       harness.custody.open(result.receipt.capability, createdAt + 10)
     ).resolves.toMatchObject({
@@ -221,10 +244,25 @@ describe('continuation cross-object creation coordinator', () => {
   it('normalizes and disposes Cloudflare RPC object results', async () => {
     const harness = await createHarness();
     const saveForId = harness.dependencies.saveForId;
+    const reserveQuota = (input: Parameters<typeof harness.quota.reserve>[0]) =>
+      harness.quota.reserve(input);
+    let quotaDisposals = 0;
     let createDisposals = 0;
     let recoveryDisposals = 0;
     const dependencies: ContinuationCreationCoordinatorDependencies = {
       ...harness.dependencies,
+      quota: {
+        reserve: async (input) => {
+          const result = await reserveQuota(input);
+          if (!result) return undefined;
+          return {
+            ...result,
+            [Symbol.dispose]: () => {
+              quotaDisposals += 1;
+            },
+          };
+        },
+      },
       saveForId: (selectedSaveId) => {
         const save = saveForId(selectedSaveId);
         return {
@@ -254,6 +292,7 @@ describe('continuation cross-object creation coordinator', () => {
 
     const created = await coordinate(harness, dependencies);
     expect(created?.state).toBe('created');
+    expect(quotaDisposals).toBe(1);
     expect(createDisposals).toBe(1);
     if (created?.state !== 'created') throw new Error('expected create result');
     expect(Reflect.ownKeys(created.receipt)).toEqual([
@@ -294,6 +333,26 @@ describe('continuation cross-object creation coordinator', () => {
       })
     ).rejects.toThrow('save creation result is malformed');
     expect(malformedDisposals).toBe(1);
+
+    const malformedQuota = await createHarness();
+    let malformedQuotaDisposals = 0;
+    await expect(
+      coordinate(malformedQuota, {
+        ...malformedQuota.dependencies,
+        quota: {
+          reserve: async () => ({
+            state: 'reserved',
+            created: true,
+            [Symbol('unexpected-rpc-metadata')]: true,
+            [Symbol.dispose]: () => {
+              malformedQuotaDisposals += 1;
+            },
+          }),
+        },
+      })
+    ).rejects.toThrow('global quota result is malformed');
+    expect(malformedQuotaDisposals).toBe(1);
+    expect(malformedQuota.selectedSaveIds).toEqual([]);
   });
 
   it('recovers pre-commit and ambiguous committed source reservations', async () => {
@@ -364,6 +423,39 @@ describe('continuation cross-object creation coordinator', () => {
         )
       )
     ).toContain(hiddenMatchId);
+    await expect(coordinate(ambiguous)).resolves.toMatchObject({
+      state: 'created',
+      receipt: { saveId, operationId, createdAt },
+    });
+  });
+
+  it('recovers pre-commit and ambiguous committed global quota leases', async () => {
+    const failed = await createHarness();
+    failed.quotaStorage.failPutWhenKeyStartsWith =
+      CONTINUATION_QUOTA_LEASES_STORAGE_KEY;
+    await expect(coordinate(failed)).rejects.toThrow(
+      'transactional put failure'
+    );
+    expect(
+      failed.sourceStorage.values.has(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+    ).toBe(true);
+    expect(failed.quotaStorage.values.size).toBe(0);
+    expect(failed.saveStorage.values.size).toBe(0);
+    failed.quotaStorage.failPutWhenKeyStartsWith = undefined;
+    await expect(coordinate(failed)).resolves.toMatchObject({
+      state: 'created',
+      receipt: { saveId, operationId, createdAt },
+    });
+
+    const ambiguous = await createHarness();
+    ambiguous.quotaStorage.failAfterTransactionCommitOnce = true;
+    await expect(coordinate(ambiguous)).rejects.toThrow(
+      'ambiguous transaction failure'
+    );
+    expect(
+      ambiguous.quotaStorage.values.has(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)
+    ).toBe(true);
+    expect(ambiguous.saveStorage.values.size).toBe(0);
     await expect(coordinate(ambiguous)).resolves.toMatchObject({
       state: 'created',
       receipt: { saveId, operationId, createdAt },
@@ -447,6 +539,25 @@ describe('continuation cross-object creation coordinator', () => {
       scope: 'player',
     });
     expect(saveForId).not.toHaveBeenCalled();
+
+    const global = await createHarness();
+    const globalSaveForId = vi.spyOn(global.dependencies, 'saveForId');
+    let globalDisposals = 0;
+    await expect(
+      coordinate(global, {
+        ...global.dependencies,
+        quota: {
+          reserve: async () => ({
+            state: 'quota_exceeded',
+            [Symbol.dispose]: () => {
+              globalDisposals += 1;
+            },
+          }),
+        },
+      })
+    ).resolves.toEqual({ state: 'quota_exceeded', scope: 'global' });
+    expect(globalDisposals).toBe(1);
+    expect(globalSaveForId).not.toHaveBeenCalled();
   });
 
   it('rejects mismatched source plans, save receipts, and completions', async () => {

@@ -1039,9 +1039,10 @@ bounds/integrity validation, key rotation, and transactional
 create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
 declared through Wrangler `exports`; its key-independent alarm and private
 create/recovery/restore RPCs are tested across eviction, while no edge route
-selects it. Phase 7 still owns production key provisioning, global quota/rate
-enforcement, public HTTP integration, operational recovery/abuse evidence, and
-canonical state-import/sidebar integration. The room-local source adapter now
+selects it. Phase 7 still owns production key/quota-capacity provisioning,
+independent rate enforcement, public HTTP integration, operational
+recovery/abuse evidence, and canonical state-import/sidebar integration. The
+room-local source adapter now
 transactionally authorizes an active claimed multiplayer player, reserves one
 exact canonical snapshot under a digest-only stable operation, enforces bounded
 per-player/per-room counts, recovers retry ambiguity, and compacts completed
@@ -1057,8 +1058,9 @@ exposing an edge call. A policy-injected global quota adapter now maps source
 rooms to deterministic fixed shards and holds exact digest-only leases through
 the save expiry; fixed per-shard capacities provide a hard aggregate ceiling
 without a singleton request bottleneck. Its Durable Object namespace,
-production shard/capacity configuration, and coordinator call site remain
-unwired. The
+exact private RPC, fail-closed configuration parser, coordinator call site, and
+workerd eviction/alarm path are now wired with a test-only policy. Production
+capacity remains deliberately unconfigured. The
 independently tested pure fork transform already preserves the canonical
 state/replay exactly while clearing and rotating all recipient and admission
 authority; the save adapter durably encrypts one immutable plan and its

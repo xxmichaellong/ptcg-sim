@@ -2,6 +2,7 @@ import { cloudflareTest } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 import { continuationTestKeyring } from './runtime-tests/continuation-test-keyring.js';
+import { continuationTestQuotaConfiguration } from './runtime-tests/continuation-test-quota-configuration.js';
 
 export default defineConfig({
   plugins: [
@@ -10,6 +11,7 @@ export default defineConfig({
       miniflare: {
         bindings: {
           CONTINUATION_KEYRING: continuationTestKeyring,
+          CONTINUATION_QUOTA_CONFIGURATION: continuationTestQuotaConfiguration,
         },
       },
     }),

@@ -22,6 +22,10 @@
         "name": "PTCG_CONTINUATION",
         "class_name": "PtcgContinuation",
       },
+      {
+        "name": "PTCG_CONTINUATION_QUOTA",
+        "class_name": "PtcgContinuationQuota",
+      },
     ],
   },
   "ratelimits": [
@@ -36,6 +40,10 @@
   ],
   "exports": {
     "PtcgContinuation": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgContinuationQuota": {
       "type": "durable-object",
       "storage": "sqlite",
     },

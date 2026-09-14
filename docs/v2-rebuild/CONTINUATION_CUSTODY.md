@@ -4,9 +4,9 @@ Status: storage/cryptography, source-room creation reservation, encrypted
 exact-retry creation receipt, internal create coordination, private Durable
 Object create/recovery RPCs, encrypted one-time restore state, pure fork
 transform, idempotent target-room storage, internal restore coordination, and
-private Durable Object restore runtime implemented; a sharded global quota
-lease adapter is implemented but unwired; public create/open/restore remain
-deliberately unwired
+private Durable Object restore runtime implemented; sharded global quota
+configuration, namespace, coordination, and runtime are implemented with no
+production policy; public create/open/restore remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -14,6 +14,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-create.ts`,
 `apps/server/src/continuation-fork.ts`,
+`apps/server/src/continuation-quota-configuration.ts`,
 `apps/server/src/continuation-quota.ts`,
 `apps/server/src/continuation-restore-format.ts`,
 `apps/server/src/continuation-rpc.ts`,
@@ -33,8 +34,8 @@ private create RPC, the named save object exposes exact create/recovery and
 restore RPCs, and the target room exposes its exact initializer. No edge
 handler, socket message, client package, or UI control can call any of them. It
 does not change the default/v2 route behavior. Production activation still
-requires a global quota lease, public HTTP contract, deployment secret
-provisioning, independent abuse limits, managed recovery evidence, and the
+requires an explicitly provisioned keyring and quota capacity policy, public
+HTTP contract, independent abuse limits, managed recovery evidence, and the
 unchanged-UI integration described below.
 
 The implementation is intentionally a single-save adapter with one primary
@@ -117,9 +118,9 @@ The current guarantees are:
   and ambiguous committed responses recover the same plan. Completion compacts
   away the pending snapshot, source session, and source build while retaining a
   digest-only reference for retry and conservative quota accounting. Expired
-  entries are removed transactionally when the ledger is next used. These are
-  local count limits, not the still-required global quota or independent request
-  rate limits.
+  entries are removed transactionally when the ledger is next used. These local
+  count limits remain independent from the sharded global lease and the still-
+  required request-rate limits.
 - A separate policy-injected quota adapter partitions global capacity across a
   deterministic fixed shard set derived from a domain-separated digest of the
   public source-room code. Each shard is independently bounded to at most 512
@@ -140,8 +141,16 @@ The current guarantees are:
   earliest-expiry alarm, and removes its ledger/alarm when empty. Cleanup is
   idempotent across transaction retry and ambiguous commit. Malformed,
   duplicate, or oversized ledgers fail closed rather than releasing capacity.
-  The adapter has no Durable Object class, production shard count/capacity, or
-  create-coordinator call site yet.
+  The dedicated quota Durable Object exposes only an exact private reservation
+  RPC, validates that the caller selected the digest-derived shard named by the
+  source room, and cleans alarms without needing configuration. The create
+  coordinator acquires this lease after source authorization/reservation and
+  before selecting or writing a save object.
+- The exact bounded quota configuration accepts only a shard count from 1
+  through 4,096 and a per-shard capacity from 1 through 512, computes their
+  safe-integer product as the hard global ceiling, and exposes one redacted
+  fixed error for missing or invalid input. Production has no checked-in
+  default; workerd uses an explicit test-only four-by-four policy.
 - Shard count or per-shard capacity reductions cannot be treated as ordinary
   live tuning. A production reduction requires new-create shutdown plus one
   maximum-retention drain (or verified complete cleanup), because leases in
@@ -264,16 +273,17 @@ storage response cannot select a second plan:
 1. The source room validates the requesting live session and transactionally
    reserves its exact source snapshot and stable create operation under
    per-player/per-room count limits. The internal create coordinator uses that
-   reserved locator to select exactly one save object, atomically mint and
-   encrypt one distinct bearer/checkpoint there, and compact the source
-   reservation. A completed source retry bypasses creation and asks the same
-   save object to recover its encrypted receipt. Pre-commit failures, lost
-   reservation/create/completion responses, and retries after source compaction
-   therefore converge on the identical capability, timestamp, and checkpoint
-   instead of recapturing a later room head. The exact private room/save RPC
-   chain is wired and rejects malformed input before target work. Global
-   quota/rate allowance remains outside this coordinator and is required before
-   any public caller is wired.
+   reserved locator to acquire its exact digest-only global quota lease, select
+   exactly one save object, atomically mint and encrypt one distinct
+   bearer/checkpoint there, and compact the source reservation. A completed
+   source retry bypasses quota/save creation and asks the same save object to
+   recover its encrypted receipt. Pre-commit failures, lost
+   reservation/quota/create/completion responses, and retries after source
+   compaction therefore converge on the identical capability, timestamp, and
+   checkpoint instead of recapturing a later room head. The exact private
+   room/quota/save RPC chain is wired and rejects malformed input before target
+   work. Independent request-rate allowance remains outside this coordinator
+   and is required before any public caller is wired.
 2. Restore presents the full capability to the dedicated save object. That
    object authenticates it and transactionally reserves one restore operation
    with a deterministic target-room ID. Concurrent/different operations fail
@@ -387,12 +397,13 @@ locator refusal, ciphertext tamper rejection, retention through one-time
 restore, revocation erasure, and primary/orphan expiry cleanup.
 
 The create-coordination suite composes the real source ledger, custody adapter,
-cryptography, and durable in-memory stores. It proves exact save-object
-selection, canonical checkpoint opening, source compaction, completed-retry
-receipt recovery, unauthorized/quota short-circuiting, pre-commit and ambiguous
-committed failure recovery at source reservation, save creation, and source
-completion, and refusal of mismatched plans, receipts, completion references,
-unavailable completed receipts, and invalid clocks.
+quota shard, cryptography, and durable in-memory stores. It proves exact
+save-object selection, canonical checkpoint opening, source compaction,
+completed-retry receipt recovery, unauthorized/local/global-quota
+short-circuiting, pre-commit and ambiguous committed failure recovery at source
+reservation, quota lease, save creation, and source completion, and refusal of
+mismatched plans, receipts, completion references, unavailable completed
+receipts, and invalid clocks.
 
 The coordinator also accepts only Cloudflare's documented `Symbol.dispose` RPC
 lifecycle metadata in addition to each exact payload schema, copies the
@@ -406,6 +417,9 @@ idempotent reservation, save-locator collision refusal, per-shard denial,
 transaction retry/rollback/ambiguous-commit recovery, expired-capacity pruning,
 alarm repair, atomic cleanup rollback, ambiguous cleanup recovery, and
 fail-closed malformed/duplicate/oversized ledger handling.
+The configuration suite separately proves exact schema/ranges, computed global
+ceiling, frozen policy output, redacted failures, and missing production-default
+refusal.
 
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
@@ -423,11 +437,13 @@ clock refusal; target-deadline refusal; and the no-credential, alarm-bounded
 orphan outcome when original custody expires during target work.
 
 The workerd suite now executes the exact internal create and restore RPCs across
-real `PtcgContinuation` and `PtcgRoom` namespaces with a deterministic test-only
-key binding. Creation proves active-source authorization, concurrent
+real `PtcgContinuationQuota`, `PtcgContinuation`, and `PtcgRoom` namespaces with
+deterministic test-only key/quota bindings. Creation proves active-source
+authorization, correct-shard selection/wrong-shard rejection, concurrent
 same-operation convergence, source-ledger compaction, encrypted checkpoint and
-receipt custody without plaintext capability/operation/state, exact restored
-source-head capture, and identical recovery after both objects are evicted.
+receipt custody without plaintext capability/operation/state, digest-only
+quota storage, exact restored source-head capture, quota alarm cleanup after
+eviction, and identical recovery after all three objects are evicted.
 Restore proves exact canonical state in the selected room, encrypted completed
 custody, digest-only target origin, generic malformed/wrong-locator refusal
 before storage, rejection of malformed room plans, and exact receipt/storage
@@ -441,13 +457,13 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- quota-shard Durable Object/configuration and create-coordinator wiring,
-  request/body limits, and independent rate limits; the fixed-shard global lease
-  adapter, private source-room/named-save creation RPCs, stable source operation,
+- production quota-capacity provisioning, request/body limits, and independent
+  rate limits; the fixed-shard global lease namespace/configuration/RPC,
+  private source-room/named-save creation RPCs, stable source operation,
   active-player authorization, exact-snapshot reservation, bounded
   per-player/per-room count model, encrypted exact-retry bearer recovery,
-  cross-object coordinator/crash matrix, and workerd concurrency/eviction proof
-  are implemented but have no public caller;
+  cross-object coordinator/crash matrix, and three-object workerd
+  concurrency/eviction proof are implemented but have no public caller;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration
@@ -461,12 +477,13 @@ and attached to the draft PR/release evidence:
   existing UI/UX beyond activating the approved continuation behavior.
 
 Wrangler `exports` lifecycle changes cannot be crossed by an ordinary Worker
-rollback. Before activation, rollback therefore leaves the inert class,
-binding, and live `exports` declaration in place and reverts only executable
-call sites; the namespace contains no application-created records. Do not
-delete or omit the export as a rollback shortcut. After saves exist, disabling
-new create/restore must preserve the last compatible decrypt keyring and
-read/delete path until every record expires or is explicitly revoked. See
+rollback. Before activation, rollback therefore leaves the inert save/quota
+classes, bindings, and live `exports` declarations in place and reverts only
+executable call sites; the namespaces contain no application-created records.
+Do not delete or omit either export as a rollback shortcut. After saves exist,
+disabling new create/restore must preserve the last compatible decrypt keyring,
+quota partition interpretation, and cleanup paths until every record/lease
+expires or is explicitly removed. See
 Cloudflare's
 [Durable Object class exports](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/)
 contract.

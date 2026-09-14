@@ -106,9 +106,11 @@ same-operation convergence and identical recovery after room/save eviction.
 A policy-injected quota adapter separately assigns each source room to a fixed
 digest-derived shard and transactionally holds an exact digest-only lease until
 save expiry. Fixed shard capacities form a hard aggregate ceiling without one
-global Durable Object bottleneck. Its namespace/configuration and coordinator
-wiring, production key provisioning, independent rate enforcement, public
-contracts, and managed operational evidence remain release gates.
+global Durable Object bottleneck. Its private namespace/RPC, exact fail-closed
+configuration, coordinator wiring, and workerd eviction/alarm path are
+implemented with a test-only policy. Production capacity/key provisioning,
+independent rate enforcement, public contracts, and managed operational
+evidence remain release gates.
 
 ## Seeded authority/storage model
 
