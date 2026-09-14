@@ -21,6 +21,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import {
+  CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
   CONTINUATION_STORAGE_KEY,
   DurableContinuationCustody,
   MINIMUM_CONTINUATION_TTL_MS,
@@ -29,6 +30,7 @@ import {
   type StoredContinuationRecord,
 } from '../src/continuation-custody.js';
 import { createContinuationCryptographyFromConfiguration } from '../src/continuation-configuration.js';
+import { ROOM_CONTINUATION_CREATIONS_STORAGE_KEY } from '../src/continuation-source.js';
 import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
 import { continuationTestKeyring } from './continuation-test-keyring.js';
 
@@ -230,6 +232,132 @@ describe('continuation Durable Object runtime', () => {
       alarm: firstTarget.alarm,
       entries: firstTarget.entries,
     });
+  });
+
+  it('creates and recovers an encrypted receipt through the private save RPC', async () => {
+    const saveId = 'L'.repeat(22);
+    const continuation = env.PTCG_CONTINUATION.getByName(saveId);
+    const operationId = 'P'.repeat(43);
+    const createdAt = Date.now();
+    const input = {
+      saveId,
+      operationId,
+      snapshot: snapshotFixture(),
+      requesterSessionId: 'continuation-runtime-session-one',
+      sourceBuild: 'continuation-runtime-test',
+      createdAt,
+      expiresAt: createdAt + MINIMUM_CONTINUATION_TTL_MS,
+      requestedAt: createdAt + 1,
+    };
+    const created = await continuation.createContinuation(input);
+    expect(created).toMatchObject({
+      created: true,
+      receipt: { saveId, operationId },
+    });
+    await expect(
+      continuation.recoverContinuation({
+        saveId,
+        operationId,
+        requestedAt: createdAt + 2,
+      })
+    ).resolves.toEqual(created!.receipt);
+  });
+
+  it('creates through private room/save RPCs and converges concurrently and after eviction', async () => {
+    const room = env.PTCG_ROOM.getByName('CDEFGHJK2345');
+    const source = snapshotFixture();
+    await runInDurableObject(room, async (_instance, state) => {
+      await new DurableRoomSnapshotStore(state.storage).initialize(source);
+    });
+    await evictDurableObject(room);
+
+    const operationId = 'C'.repeat(43);
+    const input = {
+      requesterSessionId: 'continuation-runtime-session-one',
+      operationId,
+    };
+    await expect(
+      room.createContinuation({ ...input, extra: true })
+    ).resolves.toBeUndefined();
+    await expect(
+      room.createContinuation({
+        ...input,
+        requesterSessionId: 'missing-runtime-session',
+      })
+    ).resolves.toBeUndefined();
+    const sourceHead = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        new DurableRoomSnapshotStore(state.storage).load()
+    );
+    expect(sourceHead).toBeDefined();
+
+    const secondOperation = 'D'.repeat(43);
+    const [created, concurrentRetry] = await Promise.all([
+      room.createContinuation(input),
+      room.createContinuation(input),
+    ]);
+    expect(created).toMatchObject({
+      state: 'created',
+      receipt: {
+        operationId,
+        format: 'ptcgsim-continuation-creation-result-v1',
+      },
+    });
+    expect(concurrentRetry).toEqual(created);
+    if (created?.state !== 'created') throw new Error('expected create result');
+    const parsed = parseContinuationCapability(created.receipt.capability);
+    expect(parsed?.saveId).toBe(created.receipt.saveId);
+    const continuation = env.PTCG_CONTINUATION.getByName(
+      created.receipt.saveId
+    );
+    const sourceLedger = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+    );
+    expect(JSON.stringify(sourceLedger)).not.toContain(
+      'continuation-runtime-match'
+    );
+    expect(JSON.stringify(sourceLedger)).not.toContain(operationId);
+    const saveEntries = await runInDurableObject(
+      continuation,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(saveEntries.has(CONTINUATION_STORAGE_KEY)).toBe(true);
+    expect(saveEntries.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      true
+    );
+    expect(JSON.stringify([...saveEntries])).not.toContain(
+      created.receipt.capability
+    );
+    expect(JSON.stringify([...saveEntries])).not.toContain(operationId);
+    expect(JSON.stringify([...saveEntries])).not.toContain(
+      'continuation-runtime-match'
+    );
+    const opened = await runInDurableObject(
+      continuation,
+      async (_instance, state) => {
+        const cryptography =
+          await createContinuationCryptographyFromConfiguration(
+            continuationTestKeyring
+          );
+        return new DurableContinuationCustody(state.storage, cryptography).open(
+          created.receipt.capability,
+          Date.now()
+        );
+      }
+    );
+    expect(stableSerialize(opened!.checkpoint.snapshot)).toBe(
+      stableSerialize(sourceHead)
+    );
+
+    await evictDurableObject(continuation);
+    await evictDurableObject(room);
+    await expect(room.createContinuation(input)).resolves.toEqual(created);
+    await expect(
+      room.createContinuation({ ...input, operationId: secondOperation })
+    ).resolves.toMatchObject({ state: 'created' });
   });
 
   it('rejects malformed and wrong-locator private restore RPC input without target work', async () => {

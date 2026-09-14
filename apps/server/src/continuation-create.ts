@@ -99,6 +99,25 @@ const exactKeys = (value: object, expected: readonly string[]): boolean => {
   );
 };
 
+const exactRpcResultKeys = (
+  value: object,
+  expected: readonly string[]
+): boolean => {
+  const keys = Reflect.ownKeys(value);
+  const payloadKeys = keys.filter(
+    (key): key is string => typeof key === 'string'
+  );
+  return (
+    keys.every((key) => typeof key === 'string' || key === Symbol.dispose) &&
+    JSON.stringify(payloadKeys.sort()) === JSON.stringify([...expected].sort())
+  );
+};
+
+const disposeRpcResult = (value: object): void => {
+  const dispose = Reflect.get(value, Symbol.dispose);
+  if (typeof dispose === 'function') dispose.call(value);
+};
+
 const safeNonNegativeInteger = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 
@@ -192,11 +211,11 @@ const validateReceipt = (
   operationId: string,
   reference: ContinuationSourceCreationReference,
   expectedCreatedAt?: number
-): void => {
+): ContinuationCreationReceipt => {
   if (
     typeof receipt !== 'object' ||
     receipt === null ||
-    !exactKeys(receipt, [
+    !exactRpcResultKeys(receipt, [
       'capability',
       'createdAt',
       'expiresAt',
@@ -228,6 +247,14 @@ const validateReceipt = (
       'Continuation save receipt does not match its reservation'
     );
   }
+  return Object.freeze({
+    format: receipt.format,
+    saveId: receipt.saveId,
+    operationId: receipt.operationId,
+    capability: receipt.capability,
+    createdAt: receipt.createdAt,
+    expiresAt: receipt.expiresAt,
+  });
 };
 
 /**
@@ -294,8 +321,18 @@ export const coordinateContinuationCreation = async (
         'Continuation completed source receipt is unavailable'
       );
     }
-    validateReceipt(receipt, input.operationId, reservation.reference);
-    return { state: 'created', receipt };
+    try {
+      return {
+        state: 'created',
+        receipt: validateReceipt(
+          receipt,
+          input.operationId,
+          reservation.reference
+        ),
+      };
+    } finally {
+      disposeRpcResult(receipt);
+    }
   }
 
   if (
@@ -320,17 +357,30 @@ export const coordinateContinuationCreation = async (
     expiresAt: plan.expiresAt,
     requestedAt: coordinatorTime(dependencies.clock),
   });
-  if (
-    !saved ||
-    typeof saved !== 'object' ||
-    !exactKeys(saved, ['created', 'receipt']) ||
-    typeof saved.created !== 'boolean'
-  ) {
+  if (!saved)
     throw new ContinuationCreationCoordinationError(
       'Continuation save rejected its source reservation'
     );
+  let receipt: ContinuationCreationReceipt;
+  try {
+    if (
+      typeof saved !== 'object' ||
+      !exactRpcResultKeys(saved, ['created', 'receipt']) ||
+      typeof saved.created !== 'boolean'
+    ) {
+      throw new ContinuationCreationCoordinationError(
+        'Continuation save creation result is malformed'
+      );
+    }
+    receipt = validateReceipt(
+      saved.receipt,
+      input.operationId,
+      reference,
+      plan.createdAt
+    );
+  } finally {
+    if (typeof saved === 'object') disposeRpcResult(saved);
   }
-  validateReceipt(saved.receipt, input.operationId, reference, plan.createdAt);
   const completed = await dependencies.source.completeCreation({
     requesterSessionId: input.requesterSessionId,
     operationId: input.operationId,
@@ -342,5 +392,5 @@ export const coordinateContinuationCreation = async (
       'Continuation source completion does not match its reservation'
     );
   }
-  return { state: 'created', receipt: saved.receipt };
+  return { state: 'created', receipt };
 };

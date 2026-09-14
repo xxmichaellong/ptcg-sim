@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": false,
-    "lib": ["ES2023", "WebWorker"],
+    "lib": ["ES2023", "ESNext.Disposable", "WebWorker"],
     "noEmit": true,
     "types": ["@cloudflare/vitest-plugin/types"]
   },

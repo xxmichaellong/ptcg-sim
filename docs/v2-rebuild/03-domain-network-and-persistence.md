@@ -1038,20 +1038,22 @@ checkpoint plus optional encrypted exact-retry creation receipt, exact
 bounds/integrity validation, key rotation, and transactional
 create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
 declared through Wrangler `exports`; its key-independent alarm and private
-restore RPC are tested across eviction, while no edge route selects it. Phase 7
-still owns production key provisioning, the source-room private creation RPC,
-global quota/rate enforcement, public HTTP integration, operational
-recovery/abuse evidence, and canonical state-import/sidebar
-integration. The room-local source adapter now transactionally authorizes an
-active claimed multiplayer player, reserves one exact canonical snapshot under
-a digest-only stable operation, enforces bounded per-player/per-room counts,
-recovers retry ambiguity, and compacts completed reservations without storing a
-raw bearer. The save object can now atomically mint that bearer with the
+create/recovery/restore RPCs are tested across eviction, while no edge route
+selects it. Phase 7 still owns production key provisioning, global quota/rate
+enforcement, public HTTP integration, operational recovery/abuse evidence, and
+canonical state-import/sidebar integration. The room-local source adapter now
+transactionally authorizes an active claimed multiplayer player, reserves one
+exact canonical snapshot under a digest-only stable operation, enforces bounded
+per-player/per-room counts, recovers retry ambiguity, and compacts completed
+reservations without storing a raw bearer. The save object can now atomically
+mint that bearer with the
 checkpoint, recover the same encrypted receipt after ambiguity or source
 compaction, retain it through restore, and erase it on revocation/expiry. The
 internal create coordinator now composes both stores and proves convergence for
 pre-commit and ambiguous failures at reservation, save creation, and source
-completion without exposing an edge call. The
+completion. Its private room-to-save RPC chain additionally proves concurrent
+same-operation convergence and post-eviction recovery in workerd without
+exposing an edge call. The
 independently tested pure fork transform already preserves the canonical
 state/replay exactly while clearing and rotating all recipient and admission
 authority; the save adapter durably encrypts one immutable plan and its

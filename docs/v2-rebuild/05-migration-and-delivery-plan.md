@@ -679,7 +679,7 @@ save; they are never silently moved to v1.
 
 Goal: make v2 sessions durable and v2-native replay data safe to carry forward.
 
-Current status (2026-09-12): ADR-012 is accepted. The first bounded archive
+Current status (2026-09-14): ADR-012 is accepted. The first bounded archive
 slice serializes only the authority-produced role projection into a
 deterministic, SHA-256 integrity-checked, version/size-bounded file explicitly
 marked non-canonical and non-resumable. The existing Export game state control
@@ -704,9 +704,9 @@ state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
-the original expiry. Production key provisioning, the private source-room
-creation RPC, global quota/rate enforcement, public routes/UI, and managed
-recovery/abuse gates remain closed. The unwired source-room adapter now
+the original expiry. Production key provisioning, global quota/rate
+enforcement, public routes/UI, and managed recovery/abuse gates remain closed.
+The source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
 completion compaction, expiry pruning, and ambiguous-commit recovery without
@@ -715,7 +715,10 @@ and exact bearer receipt, binds them to the complete reserved request, recovers
 the same receipt after ambiguity/source compaction, retains it through restore,
 and deletes it on revocation or expiry. The internal create coordinator now
 composes source reservation, exact named-save creation/recovery, and source
-compaction with a model crash matrix, without adding an edge caller.
+compaction with a model crash matrix. Exact private room/save create and
+recovery RPCs now prove concurrent same-operation convergence, encrypted
+storage secrecy, exact source-head capture, and post-eviction retry in workerd,
+without adding an edge caller.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
 selection, concurrent retry, and post-eviction recovery are implemented without
@@ -729,9 +732,10 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  production key provisioning, a private source-room creation RPC, global quota
-  and independent rate limits, one-time restore orchestration, routes, and
-  operational evidence.
+  production key provisioning, global quota and independent rate limits,
+  public contracts/routes, and operational evidence. Private source-room
+  creation and one-time restore orchestration are implemented and remain
+  unreachable from public traffic.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

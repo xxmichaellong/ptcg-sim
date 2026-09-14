@@ -218,6 +218,84 @@ describe('continuation cross-object creation coordinator', () => {
     ).toEqual(sourceBeforeRetry);
   });
 
+  it('normalizes and disposes Cloudflare RPC object results', async () => {
+    const harness = await createHarness();
+    const saveForId = harness.dependencies.saveForId;
+    let createDisposals = 0;
+    let recoveryDisposals = 0;
+    const dependencies: ContinuationCreationCoordinatorDependencies = {
+      ...harness.dependencies,
+      saveForId: (selectedSaveId) => {
+        const save = saveForId(selectedSaveId);
+        return {
+          createReserved: async (input) => {
+            const result = await save.createReserved(input);
+            if (!result) return undefined;
+            return {
+              ...result,
+              [Symbol.dispose]: () => {
+                createDisposals += 1;
+              },
+            };
+          },
+          recoverReserved: async (input) => {
+            const receipt = await save.recoverReserved(input);
+            if (!receipt) return undefined;
+            return {
+              ...receipt,
+              [Symbol.dispose]: () => {
+                recoveryDisposals += 1;
+              },
+            };
+          },
+        };
+      },
+    };
+
+    const created = await coordinate(harness, dependencies);
+    expect(created?.state).toBe('created');
+    expect(createDisposals).toBe(1);
+    if (created?.state !== 'created') throw new Error('expected create result');
+    expect(Reflect.ownKeys(created.receipt)).toEqual([
+      'format',
+      'saveId',
+      'operationId',
+      'capability',
+      'createdAt',
+      'expiresAt',
+    ]);
+
+    await expect(coordinate(harness, dependencies)).resolves.toEqual(created);
+    expect(recoveryDisposals).toBe(1);
+
+    const malformed = await createHarness();
+    const malformedSaveForId = malformed.dependencies.saveForId;
+    let malformedDisposals = 0;
+    await expect(
+      coordinate(malformed, {
+        ...malformed.dependencies,
+        saveForId: (selectedSaveId) => {
+          const save = malformedSaveForId(selectedSaveId);
+          return {
+            ...save,
+            createReserved: async (input) => {
+              const result = await save.createReserved(input);
+              if (!result) return undefined;
+              return {
+                ...result,
+                [Symbol('unexpected-rpc-metadata')]: true,
+                [Symbol.dispose]: () => {
+                  malformedDisposals += 1;
+                },
+              };
+            },
+          };
+        },
+      })
+    ).rejects.toThrow('save creation result is malformed');
+    expect(malformedDisposals).toBe(1);
+  });
+
   it('recovers pre-commit and ambiguous committed source reservations', async () => {
     const failed = await createHarness();
     failed.sourceStorage.failPutWhenKeyStartsWith =

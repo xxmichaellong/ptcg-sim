@@ -1,8 +1,18 @@
+import { validateAuthoritySnapshot } from '@ptcgsim/room-authority';
+
 import {
+  DEFAULT_CONTINUATION_TTL_MS,
+  MINIMUM_CONTINUATION_TTL_MS,
   parseContinuationCapability,
+  type CreateReservedContinuationInput,
+  type RecoverReservedContinuationInput,
   type ContinuationRestoreResult,
 } from './continuation-custody.js';
+import type { CoordinateContinuationCreationInput } from './continuation-create.js';
 import { validContinuationRestoreOperationId } from './continuation-restore-format.js';
+
+const SAVE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/u;
+const CREATION_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 
 export interface ContinuationRestoreRpcInput {
   readonly capability: string;
@@ -16,6 +26,145 @@ const exactKeys = (value: object, expected: readonly string[]): boolean => {
     JSON.stringify((keys as string[]).sort()) ===
       JSON.stringify([...expected].sort())
   );
+};
+
+const safeNonNegativeInteger = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+const validSessionId = (value: unknown): value is string =>
+  typeof value === 'string' && value.length >= 1 && value.length <= 256;
+
+const validSourceBuild = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  value.length >= 1 &&
+  value.length <= 128 &&
+  [...value].every((character) => character >= ' ');
+
+export const readContinuationSourceCreationRpcInput = (
+  value: unknown
+): Omit<CoordinateContinuationCreationInput, 'sourceBuild'> | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, ['operationId', 'requesterSessionId'])
+  ) {
+    return undefined;
+  }
+  const operationId = Reflect.get(value, 'operationId');
+  const requesterSessionId = Reflect.get(value, 'requesterSessionId');
+  if (
+    typeof operationId !== 'string' ||
+    !CREATION_OPERATION_PATTERN.test(operationId) ||
+    !validSessionId(requesterSessionId)
+  ) {
+    return undefined;
+  }
+  return Object.freeze({ operationId, requesterSessionId });
+};
+
+export const readContinuationSaveCreationRpcInput = (
+  value: unknown,
+  expectedSaveId: string | undefined
+): CreateReservedContinuationInput | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, [
+      'createdAt',
+      'expiresAt',
+      'operationId',
+      'requestedAt',
+      'requesterSessionId',
+      'saveId',
+      'snapshot',
+      'sourceBuild',
+    ])
+  ) {
+    return undefined;
+  }
+  const saveId = Reflect.get(value, 'saveId');
+  const operationId = Reflect.get(value, 'operationId');
+  const snapshot = Reflect.get(value, 'snapshot');
+  const requesterSessionId = Reflect.get(value, 'requesterSessionId');
+  const sourceBuild = Reflect.get(value, 'sourceBuild');
+  const createdAt = Reflect.get(value, 'createdAt');
+  const expiresAt = Reflect.get(value, 'expiresAt');
+  const requestedAt = Reflect.get(value, 'requestedAt');
+  if (
+    typeof saveId !== 'string' ||
+    !SAVE_ID_PATTERN.test(saveId) ||
+    !expectedSaveId ||
+    saveId !== expectedSaveId ||
+    typeof operationId !== 'string' ||
+    !CREATION_OPERATION_PATTERN.test(operationId) ||
+    typeof snapshot !== 'object' ||
+    snapshot === null ||
+    !validSessionId(requesterSessionId) ||
+    !validSourceBuild(sourceBuild) ||
+    !safeNonNegativeInteger(createdAt) ||
+    !safeNonNegativeInteger(expiresAt) ||
+    expiresAt <= createdAt ||
+    expiresAt - createdAt < MINIMUM_CONTINUATION_TTL_MS ||
+    expiresAt - createdAt > DEFAULT_CONTINUATION_TTL_MS ||
+    !safeNonNegativeInteger(requestedAt) ||
+    requestedAt < createdAt ||
+    requestedAt >= expiresAt
+  ) {
+    return undefined;
+  }
+  try {
+    validateAuthoritySnapshot(snapshot);
+  } catch {
+    return undefined;
+  }
+  const session = snapshot.sessions[requesterSessionId];
+  if (
+    snapshot.mode !== 'multiplayer' ||
+    !session?.active ||
+    session.viewer.kind !== 'player' ||
+    snapshot.admission?.seats[session.viewer.playerId]?.claimedSessionId !==
+      requesterSessionId
+  ) {
+    return undefined;
+  }
+  return Object.freeze({
+    saveId,
+    operationId,
+    snapshot,
+    requesterSessionId,
+    sourceBuild,
+    createdAt,
+    expiresAt,
+    requestedAt,
+  });
+};
+
+export const readContinuationSaveRecoveryRpcInput = (
+  value: unknown,
+  expectedSaveId: string | undefined
+): RecoverReservedContinuationInput | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, ['operationId', 'requestedAt', 'saveId'])
+  ) {
+    return undefined;
+  }
+  const saveId = Reflect.get(value, 'saveId');
+  const operationId = Reflect.get(value, 'operationId');
+  const requestedAt = Reflect.get(value, 'requestedAt');
+  if (
+    typeof saveId !== 'string' ||
+    !SAVE_ID_PATTERN.test(saveId) ||
+    !expectedSaveId ||
+    saveId !== expectedSaveId ||
+    typeof operationId !== 'string' ||
+    !CREATION_OPERATION_PATTERN.test(operationId) ||
+    !safeNonNegativeInteger(requestedAt)
+  ) {
+    return undefined;
+  }
+  return Object.freeze({ saveId, operationId, requestedAt });
 };
 
 export const readContinuationRestoreRpcInput = (

@@ -19,8 +19,15 @@ import {
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
 import {
+  coordinateContinuationCreation,
+  type ContinuationCreationCoordinationResult,
+} from './continuation-create.js';
+import {
   DurableContinuationCustody,
+  createContinuationSaveId,
   expireContinuationCustody,
+  type ContinuationCreationReceipt,
+  type ReservedContinuationCreationResult,
 } from './continuation-custody.js';
 import { prepareContinuationFork } from './continuation-fork.js';
 import {
@@ -29,9 +36,13 @@ import {
   type ContinuationRestoreTargetAcknowledgement,
 } from './continuation-restore.js';
 import {
+  readContinuationSaveCreationRpcInput,
+  readContinuationSaveRecoveryRpcInput,
   readContinuationRestoreRpcInput,
+  readContinuationSourceCreationRpcInput,
   type ContinuationRestoreRpcResult,
 } from './continuation-rpc.js';
+import { DurableRoomContinuationSource } from './continuation-source.js';
 import {
   initializeContinuationTarget,
   validateContinuationTargetPlan,
@@ -162,13 +173,30 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
 };
 
 /**
- * Dedicated long-lived custody namespace. Its restore method is reachable only
- * through an internal Durable Object binding; no edge route selects this object.
- * Create/open/revoke stay closed until source-room authorization and quotas exist.
+ * Dedicated long-lived custody namespace. Its methods are reachable only
+ * through internal Durable Object bindings; no edge route selects this object.
+ * Open/revoke stay closed until their external contracts and activation gates
+ * exist. Create is reachable only through the source room's private RPC.
  */
 export class PtcgContinuation extends DurableObject<Env> {
   private readonly authoritySource = new WebCryptoAuthoritySource();
   private custodyPromise: Promise<DurableContinuationCustody> | undefined;
+
+  async createContinuation(
+    value: unknown
+  ): Promise<ReservedContinuationCreationResult | undefined> {
+    const input = readContinuationSaveCreationRpcInput(value, this.ctx.id.name);
+    if (!input) return undefined;
+    return (await this.custody()).createReserved(input);
+  }
+
+  async recoverContinuation(
+    value: unknown
+  ): Promise<ContinuationCreationReceipt | undefined> {
+    const input = readContinuationSaveRecoveryRpcInput(value, this.ctx.id.name);
+    if (!input) return undefined;
+    return (await this.custody()).recoverReservedCreation(input);
+  }
 
   async restore(value: unknown): Promise<ContinuationRestoreRpcResult> {
     const input = readContinuationRestoreRpcInput(value, this.ctx.id.name);
@@ -224,6 +252,7 @@ export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
   private readonly rateLimits: DurableRoomRateLimiter;
+  private readonly continuationSource: DurableRoomContinuationSource;
   private readonly telemetry: StructuredServerTelemetry;
   private socketAlarmTail: Promise<void> = Promise.resolve();
   private runtimePromise: Promise<RoomRuntime | undefined>;
@@ -232,6 +261,10 @@ export class PtcgRoom extends DurableObject<Env> {
     super(ctx, env);
     this.store = new DurableRoomSnapshotStore(ctx.storage);
     this.rateLimits = new DurableRoomRateLimiter(ctx.storage);
+    this.continuationSource = new DurableRoomContinuationSource(ctx.storage, {
+      digestCapability: (value) => this.cryptoSource.digestCapability(value),
+      nextSaveId: createContinuationSaveId,
+    });
     this.telemetry = createTelemetry('room', env.BUILD_ID);
     this.runtimePromise = this.restoreRuntime();
   }
@@ -311,6 +344,42 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     this.runtimePromise = Promise.resolve(this.createRuntime(snapshot));
     return result;
+  }
+
+  async createContinuation(
+    value: unknown
+  ): Promise<ContinuationCreationCoordinationResult | undefined> {
+    const input = readContinuationSourceCreationRpcInput(value);
+    if (!input) return undefined;
+    const runtime = await this.runtimePromise;
+    if (!runtime) return undefined;
+    return coordinateContinuationCreation(
+      { ...input, sourceBuild: this.env.BUILD_ID },
+      {
+        source: {
+          reserveCreation: (reserveInput) =>
+            this.continuationSource.reserveCreation({
+              ...reserveInput,
+              snapshot: runtime.coordinator.currentSnapshot(),
+            }),
+          completeCreation: (completeInput) =>
+            this.continuationSource.completeCreation({
+              ...completeInput,
+              snapshot: runtime.coordinator.currentSnapshot(),
+            }),
+        },
+        saveForId: (saveId) => {
+          const save = this.env.PTCG_CONTINUATION.getByName(saveId);
+          return {
+            createReserved: (createInput) =>
+              save.createContinuation(createInput),
+            recoverReserved: (recoverInput) =>
+              save.recoverContinuation(recoverInput),
+          };
+        },
+        clock: { now: Date.now },
+      }
+    );
   }
 
   override async fetch(request: Request): Promise<Response> {

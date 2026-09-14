@@ -1,10 +1,11 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, source-room creation reservation, encrypted
-exact-retry creation receipt, internal create coordination, encrypted one-time
-restore state, pure fork transform, idempotent target-room storage, internal
-restore coordination, and private Durable Object restore runtime implemented;
-create/open/public restore remain deliberately unwired
+exact-retry creation receipt, internal create coordination, private Durable
+Object create/recovery RPCs, encrypted one-time restore state, pure fork
+transform, idempotent target-room storage, internal restore coordination, and
+private Durable Object restore runtime implemented; public create/open/restore
+remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -25,15 +26,14 @@ This slice establishes the durable custody boundary for canonical multiplayer
 continuations without making continuation reachable from an HTTP route, socket
 message, client package, or UI control. A dedicated
 `PtcgContinuation` SQLite Durable Object namespace is now declared through
-Wrangler's current `exports` lifecycle. It exposes one exact internal restore
-RPC, and `PtcgRoom` exposes its exact target initializer, but no edge handler
-selects the continuation namespace. It does not change the default/v2 route
-behavior. The room-local authorization, reservation, and per-player/per-room
-count model is implemented but is not yet called by a Durable Object RPC.
-Production activation still requires the private source-room create RPC, a
-global quota lease, public HTTP contract, deployment secret provisioning, abuse
-limits, managed recovery evidence, and the unchanged-UI integration described
-below.
+Wrangler's current `exports` lifecycle. The source room now exposes one exact
+private create RPC, the named save object exposes exact create/recovery and
+restore RPCs, and the target room exposes its exact initializer. No edge
+handler, socket message, client package, or UI control can call any of them. It
+does not change the default/v2 route behavior. Production activation still
+requires a global quota lease, public HTTP contract, deployment secret
+provisioning, independent abuse limits, managed recovery evidence, and the
+unchanged-UI integration described below.
 
 The implementation is intentionally a single-save adapter with one primary
 record and, for source-coordinated creation, one small encrypted retry receipt.
@@ -138,9 +138,10 @@ The current guarantees are:
   optional creation receipt, and alarm. Orphan receipt metadata is also removed
   when the primary record is absent or corrupt. Cleanup deliberately does not
   require a decrypt key, so missing key configuration cannot extend retention.
-  No edge path is routed to this namespace. Its exact internal restore RPC loads
-  cryptography lazily and fails closed when the secret binding is absent;
-  create/open/revoke RPCs remain absent.
+  No edge path is routed to this namespace. Its exact internal create,
+  create-recovery, and restore RPCs bind the requested locator to the selected
+  object name, load cryptography lazily, and fail closed when the secret binding
+  is absent. Open/revoke RPCs remain absent.
 
 The bearer model does not protect a capability after the player intentionally
 or accidentally shares it with a clipboard manager, extension, device, or
@@ -226,10 +227,11 @@ this pure function alone cannot restore or expose a save.
 
 ## Durable restore state and internal cross-object protocol
 
-This custody slice deliberately supports authenticated open, not restore. A
-future route must not treat `open()` as permission to initialize an arbitrary
-room. The adapter now implements the save object's durable state transitions so
-a retry, crash, or ambiguous storage response cannot select a second plan:
+The lower-level custody adapter supports authenticated open, while restore is
+available only through the private coordinator. A future route must not treat
+`open()` as permission to initialize an arbitrary room. The adapter implements
+the save object's durable state transitions so a retry, crash, or ambiguous
+storage response cannot select a second plan:
 
 1. The source room validates the requesting live session and transactionally
    reserves its exact source snapshot and stable create operation under
@@ -240,8 +242,10 @@ a retry, crash, or ambiguous storage response cannot select a second plan:
    save object to recover its encrypted receipt. Pre-commit failures, lost
    reservation/create/completion responses, and retries after source compaction
    therefore converge on the identical capability, timestamp, and checkpoint
-   instead of recapturing a later room head. Global quota/rate allowance remains
-   outside this coordinator and is still required before an RPC is wired.
+   instead of recapturing a later room head. The exact private room/save RPC
+   chain is wired and rejects malformed input before target work. Global
+   quota/rate allowance remains outside this coordinator and is required before
+   any public caller is wired.
 2. Restore presents the full capability to the dedicated save object. That
    object authenticates it and transactionally reserves one restore operation
    with a deterministic target-room ID. Concurrent/different operations fail
@@ -362,6 +366,12 @@ committed failure recovery at source reservation, save creation, and source
 completion, and refusal of mismatched plans, receipts, completion references,
 unavailable completed receipts, and invalid clocks.
 
+The coordinator also accepts only Cloudflare's documented `Symbol.dispose` RPC
+lifecycle metadata in addition to each exact payload schema, copies the
+validated credential receipt into a plain frozen DTO, and disposes every
+object-valued save response on success or failure. Focused tests prove wrapper
+disposal and that transport metadata cannot escape in the returned credential.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -377,13 +387,17 @@ bearer/operation exclusion; mismatched acknowledgement/receipt refusal; invalid
 clock refusal; target-deadline refusal; and the no-credential, alarm-bounded
 orphan outcome when original custody expires during target work.
 
-The workerd suite now executes the exact internal RPC across real
-`PtcgContinuation` and `PtcgRoom` namespaces with a deterministic test-only key
-binding. It proves concurrent same-operation convergence, exact canonical state
-in the selected room, encrypted completed custody, digest-only target origin,
-generic malformed/wrong-locator refusal before storage, rejection of malformed
-room plans, and exact receipt/storage recovery after both objects are evicted.
-The existing HTTP assertion continues to prove that no edge route reaches it.
+The workerd suite now executes the exact internal create and restore RPCs across
+real `PtcgContinuation` and `PtcgRoom` namespaces with a deterministic test-only
+key binding. Creation proves active-source authorization, concurrent
+same-operation convergence, source-ledger compaction, encrypted checkpoint and
+receipt custody without plaintext capability/operation/state, exact restored
+source-head capture, and identical recovery after both objects are evicted.
+Restore proves exact canonical state in the selected room, encrypted completed
+custody, digest-only target origin, generic malformed/wrong-locator refusal
+before storage, rejection of malformed room plans, and exact receipt/storage
+recovery after eviction. The existing HTTP assertion continues to prove that
+no edge route reaches either operation.
 
 ## Gates still closed
 
@@ -392,11 +406,12 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- source-room private creation RPC, global quota leasing, request/body limits,
-  and independent rate limits; the stable source operation, active-player
-  authorization, exact-snapshot reservation, bounded per-player/per-room count
-  model, save-object encrypted exact-retry bearer recovery, and cross-object
-  creation coordinator/crash matrix are implemented but remain unwired;
+- global quota leasing, request/body limits, and independent rate limits; the
+  private source-room/named-save creation RPCs, stable source operation,
+  active-player authorization, exact-snapshot reservation, bounded
+  per-player/per-room count model, encrypted exact-retry bearer recovery,
+  cross-object coordinator/crash matrix, and workerd concurrency/eviction proof
+  are implemented but have no public caller;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration

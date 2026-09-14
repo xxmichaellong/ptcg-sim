@@ -289,10 +289,13 @@ const randomBytes = (length: number): Uint8Array => {
   return bytes;
 };
 
+export const createContinuationSaveId = (): string =>
+  base64Url(randomBytes(16));
+
 export const createContinuationCapability = (
   reservedSaveId?: string
 ): ContinuationCapability => {
-  const saveId = reservedSaveId ?? base64Url(randomBytes(16));
+  const saveId = reservedSaveId ?? createContinuationSaveId();
   if (!/^[A-Za-z0-9_-]{22}$/u.test(saveId)) {
     throw new Error('Continuation capability locator is malformed');
   }

@@ -96,6 +96,16 @@ traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.
 
+Server-held multiplayer continuation remains closed to HTTP, sockets, and the
+client. Internally, the source room authorizes an active claimed player,
+reserves its exact authority head under bounded room/player counts, calls the
+exact named continuation object to atomically encrypt the checkpoint and retry
+receipt, and compacts the source ledger. Object-valued RPC results are
+schema-normalized and explicitly disposed. Workerd tests prove concurrent
+same-operation convergence and identical recovery after room/save eviction.
+Production key provisioning, global quota/rate enforcement, public contracts,
+and managed operational evidence remain release gates.
+
 ## Seeded authority/storage model
 
 `generative-authority-model.test.ts` drives schema-parsed client commands

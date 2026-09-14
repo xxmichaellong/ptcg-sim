@@ -135,20 +135,21 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   encrypted exact-retry bearer receipt, strict bounds/integrity, 30-day maximum
   retention, transactional revocation/expiry, key rotation, and
   ambiguous-create recovery. Its dedicated SQLite Durable Object is now
-  declaratively provisioned with key-independent alarm cleanup but no edge or
-  object operation surface. A separate pure fork transform preserves exact
-  canonical state/replay while resetting authority version, sessions,
-  idempotency history, aliases, tickets, and admission credentials; only the
-  requester's fresh seat master and an ordinary one-use opponent invitation
-  leave that transform. The custody adapter also persists an encrypted
-  one-operation restore plan before target work and atomically replaces it with
-  an encrypted exact-retry receipt after completion, while retaining the
-  original expiry. Idempotent target initialization storage is also implemented
-  with an exact digest-marked retry contract and atomic lifecycle alarm. An
+  declaratively provisioned with key-independent alarm cleanup and a private
+  object operation surface, but no edge caller. A separate pure fork transform
+  preserves exact canonical state/replay while resetting authority version,
+  sessions, idempotency history, aliases, tickets, and admission credentials;
+  only the requester's fresh seat master and an ordinary one-use opponent
+  invitation leave that transform. The custody adapter also persists an
+  encrypted one-operation restore plan before target work and atomically
+  replaces it with an encrypted exact-retry receipt after completion, while
+  retaining the original expiry. Idempotent target initialization storage is
+  also implemented with an exact digest-marked retry contract and atomic
+  lifecycle alarm. An
   internal coordinator now proves reservation/target/completion
   convergence across pre-commit failures and ambiguous committed responses. Its
   exact private continuation/room RPC path now also proves concurrent retry and
-  post-eviction recovery in workerd without adding an edge route. An unwired
+  post-eviction recovery in workerd without adding an edge route. The
   source-room adapter now authorizes active claimed multiplayer players,
   transactionally reserves the exact current snapshot under a digest-only
   stable operation, applies bounded per-player/per-room counts, recovers
@@ -158,9 +159,11 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   retain it through restore, and erase it on revocation/expiry. The internal
   create coordinator now composes source reservation, exact named-save
   creation/recovery, and source compaction across pre-commit and ambiguous
-  failures. Production key provisioning, the private source-room creation RPC,
-  global quota/rate controls, public routes, and UI remain deliberately disabled
-  later parity work.
+  failures. Exact private source-room/named-save create and recovery RPCs now
+  compose that path and prove same-operation convergence, source-head capture,
+  encrypted storage secrecy, and retry after both objects are evicted in
+  workerd. Production key provisioning, global quota/rate controls, public
+  routes, and UI remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
