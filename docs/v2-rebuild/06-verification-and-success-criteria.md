@@ -816,6 +816,28 @@ Runbooks are rehearsed for persistence outage, room restart loop, reconnect
 spike, image-provider/proxy outage, import regression, hidden-data incident,
 canary pause, and v2 rollback.
 
+## V1 fallback and retirement evidence
+
+ADR-022 starts retirement observation only when v2 is the default at 100% of
+new-room cohort allocation. Release evidence must record that UTC instant and
+then demonstrate both 30 consecutive days at full cutover and two distinct
+stable v2 production release cycles. The explicit v1 fallback and a synthetic
+v1 health check remain available throughout that period.
+
+A rollback below full traffic, release-blocking pause, or severity-1/2
+data/privacy incident invalidates the accumulated retirement eligibility and
+starts a new observation after full traffic safely resumes. Routine maintenance
+that leaves the cohort and evidence valid does not reset it. The ledger records
+each qualifying release and reset reason rather than inferring them from current
+deployment state.
+
+Meeting those minimums is evidence for a separate product approval, not an
+automatic deletion trigger. Retirement first blocks new v1 room creation, then
+waits for active v1 rooms to finish or reach normal expiry. Tagged source,
+immutable fixtures, the quarantined converter, deployment recovery material,
+and any required backup remain verified before runtime removal. Stored-data
+deletion has its own destructive-action approval.
+
 ## Release sign-off checklist
 
 A release candidate requires attached evidence and named approval for:

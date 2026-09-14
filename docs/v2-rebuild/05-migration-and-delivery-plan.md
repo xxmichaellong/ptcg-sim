@@ -43,8 +43,8 @@ Work:
 - Audit every document using `AUDIT.md`.
 - Resolve all `BLOCKING` questions in the decision register.
 - Decide top-level workspace location and deployment constraints.
-- Define browser, viewport, hardware, and v1 fallback/deprecation matrices;
-  record ADR-021's first-release v1 save/share-import deferral.
+- Define browser, viewport, and hardware matrices; apply ADR-021's first-release
+  v1 save/share-import deferral and ADR-022's fallback/deprecation window.
 - Approve privacy behavior for multiplayer saves/replays and coaching/spectators.
 - Confirm ownership/license terms for any direct MagicCircle code extraction;
   otherwise permit only clean reimplementation of documented patterns.
@@ -763,7 +763,8 @@ Suggested stages:
 2. Opt-in local/solo users.
 3. Opt-in multiplayer rooms with a visible beta flag outside the in-game UX.
 4. Sticky 5%, 25%, 50%, then 100% of **new** room creation.
-5. Make v2 default while retaining an explicit v1 fallback window.
+5. Make v2 default at 100% of new-room traffic and start ADR-022's measured v1
+   fallback window.
 
 Cohort assignment is sticky for the complete room and both participants. Pause
 automatically/manual on error, reconnect, invariant, latency, memory, hidden-data,
@@ -772,7 +773,12 @@ real hidden commands into an unauthorized shadow client.
 
 Cutover gate:
 
-- at least two stable release cycles at full new-room traffic;
+- record the UTC instant when v2 becomes the default at 100% of new-room traffic;
+- retain a working explicit v1 fallback for at least 30 uninterrupted calendar
+  days and two stable v2 production release cycles after that instant, whichever
+  takes longer;
+- restart retirement eligibility after a cohort rollback, release-blocking
+  pause, or severity-1/2 data/privacy incident;
 - no unresolved severity-1/2 incident or data/privacy issue;
 - success/error/reconnect/resource metrics meet budgets;
 - save/replay compatibility and rollback are still exercised; and
@@ -782,8 +788,11 @@ Cutover gate:
 
 Goal: remove v1 only after v2 has proven stable.
 
-- Stop creating v1 rooms, then wait beyond maximum room/save compatibility
-  window.
+- Confirm ADR-022's 30-day/two-stable-release evidence and explicit product
+  approval, then stop creating new v1 rooms.
+- Keep the v1 runtime available until already-active rooms finish or reach their
+  documented normal expiry; never terminate or migrate them merely because the
+  eligibility window ended.
 - Archive a tagged v1 build and immutable fixtures.
 - Archive the quarantined legacy converter and fixtures, not the live v1 action
   runtime; they carry no production support promise.

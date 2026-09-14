@@ -33,10 +33,10 @@ route, or accept user uploads. Its fixtures, conversion reports, action mapping,
 and private-corpus runner remain available for characterization and a possible
 future compatibility project.
 
-The v1 application remains available according to the separately approved
-rollout and retirement window. Existing v1 rooms are never live-converted into
-v2 rooms. The first-release v2 compatibility surface consists of supported deck
-inputs and v2-native perspective replay files only.
+The v1 application remains available according to ADR-022's approved rollout
+and retirement window. Existing v1 rooms are never live-converted into v2 rooms.
+The first-release v2 compatibility surface consists of supported deck inputs
+and v2-native perspective replay files only.
 
 Future v1 saved-game support requires a new accepted ADR. That review must name
 the exact source versions and input paths, include representative privacy-
@@ -53,8 +53,9 @@ gates before production wiring is permitted.
 - The isolated converter continues preventing knowledge loss and supports
   future investigation without increasing the production attack surface or
   bundle size.
-- Retiring v1 is a separate product decision. This ADR does not authorize
-  deletion of the v1 application, its data, or its fixtures.
+- Retiring v1 is a separate product decision after ADR-022's minimum window.
+  This ADR does not authorize deletion of the v1 application, its data, or its
+  fixtures.
 
 ## Verification and rollout
 

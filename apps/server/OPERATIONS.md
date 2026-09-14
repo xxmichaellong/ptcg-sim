@@ -135,6 +135,14 @@ application logs are not an accounting source.
 4. Record build/schema versions and aggregate safe outcomes, then rehearse the
    forward fix before resuming at the smallest cohort.
 
+During full cutover, also record ADR-022's UTC cutover instant, each qualifying
+stable v2 release, and every eligibility reset. Keep the explicit v1 fallback
+and its synthetic health check green for at least 30 uninterrupted days and two
+stable production release cycles, whichever takes longer. A rollback,
+release-blocking pause, or severity-1/2 data/privacy incident restarts the
+retirement window after full traffic safely resumes. Passing the window never
+authorizes automatic room shutdown, runtime removal, or stored-data deletion.
+
 Image-provider, save/import, and client/renderer incident procedures will be
 added with those production slices; their absence still blocks external beta.
 

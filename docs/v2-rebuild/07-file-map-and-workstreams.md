@@ -536,6 +536,12 @@ catalog should land and leave consumers broken for weeks.
 
 ## Retirement checklist
 
+ADR-022 makes Phase 10 eligible only after v2 has remained at full new-room
+traffic for 30 uninterrupted days and two stable production release cycles,
+with no invalidating rollback/pause or severity-1/2 data/privacy incident, and
+the product owner has explicitly approved retirement. New v1 room creation is
+disabled before runtime removal; existing rooms drain normally.
+
 Only Phase 10 removes:
 
 - iframe HTML and iframe document globals;

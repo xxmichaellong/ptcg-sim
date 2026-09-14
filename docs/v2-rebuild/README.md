@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-12
+- Last updated: 2026-09-14
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
@@ -206,32 +206,33 @@ a manual tabletop simulator.
 
 ## Documents
 
-| Document                                                                               | Purpose                                                                                                      |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md) | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
-| [02-target-architecture.md](./02-target-architecture.md)                               | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
-| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)         | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
-| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                 | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
-| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)               | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
-| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)   | Test pyramid, failure injection, performance budgets, and release gates                                      |
-| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                     | Current-to-target file mapping, work ownership, and dependency order                                         |
-| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)     | Decisions, alternatives, open questions, risk register, and stop conditions                                  |
-| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                   | Stable requirement IDs and blueprint-level traceability                                                      |
-| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                         | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
-| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
-| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
-| [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
-| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md) | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
-| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
-| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)   | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
-| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                   | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
-| [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
-| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
-| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
-| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
-| [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
-| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
-| [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                            |
+| Document                                                                                       | Purpose                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md)         | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
+| [02-target-architecture.md](./02-target-architecture.md)                                       | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
+| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)                 | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
+| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                         | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
+| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)                       | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
+| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)           | Test pyramid, failure injection, performance budgets, and release gates                                      |
+| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                             | Current-to-target file mapping, work ownership, and dependency order                                         |
+| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)             | Decisions, alternatives, open questions, risk register, and stop conditions                                  |
+| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                           | Stable requirement IDs and blueprint-level traceability                                                      |
+| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                                 | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
+| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                                 | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                       | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
+| [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                                       | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
+| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md)         | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
+| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                           | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
+| [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)           | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
+| [ADR-021-DEFER-V1-SAVE-IMPORT.md](./ADR-021-DEFER-V1-SAVE-IMPORT.md)                           | Accepted first-release deferral of v1 saved-game/action-history files and old share-link import              |
+| [ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md](./ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md) | Accepted minimum v1 fallback observation window and explicit retirement boundary                             |
+| [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                     | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
+| [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                         | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
+| [DECK_CORE.md](./DECK_CORE.md)                                                                 | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |
+| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                             | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
+| [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                           | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
+| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                         | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
+| [AUDIT.md](./AUDIT.md)                                                                         | Multi-agent review process, change protocol, and audit checklists                                            |
 
 ## How to read and approve this blueprint
 

@@ -2412,6 +2412,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      user-facing compatibility promise. Future activation requires a replacement
      ADR naming exact versions, representative real-user corpus evidence, link
      retention, and renewed privacy/resource/migration/browser/rollback review.
+161. ADR-022 records the owner's v1 fallback and retirement window. Full cutover
+     begins only when v2 is the default at 100% of new-room traffic; v1 then
+     remains an explicit working fallback for at least 30 uninterrupted calendar
+     days and two stable v2 production release cycles, whichever takes longer.
+     A cohort rollback, release-blocking pause, or severity-1/2 data/privacy
+     incident restarts eligibility. Completing the window does not remove v1:
+     product approval, new-room shutdown, active-room drain, runtime removal,
+     and stored-data deletion remain separately reviewed steps. The decision,
+     migration, verification, requirements, file-map, legacy-import, and server
+     operations guides now share that exact boundary; no runtime or UI behavior
+     changes in this checkpoint.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
