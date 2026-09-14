@@ -854,9 +854,10 @@ adapter validation, predecessor validation, and transaction p50/p95 were 0/0,
 3/6, 9/11, 6/8, 0/0, 0/0, and 8/12 ms. All 32 plateau commands hit the frontier;
 none fell back. Against the incremental-replay run, p95 moved from 252 to 50 ms
 end to end, 243 to 42 ms server-side, and 207 to 12 ms for persistence; scenario
-time moved from 26.204 to 8.766 seconds. Both provisional 250 ms p95 objectives
-are met locally by 200 and 208 ms. The next gate is managed-preview and soak
-validation, without weakening complete restore/fallback validation.
+time moved from 26.204 to 8.766 seconds. The now-ratified 250 ms p95 objective
+has 200 and 208 ms of local headroom, but this is not ADR-015 managed-network
+evidence. The next gate is managed-preview and soak validation, without
+weakening complete restore/fallback validation.
 
 The post-hibernation command was 181 ms end to end and 43 ms server-side, with a
 16/14/12/0/1 ms authority/projection/persistence/publication/socket split and

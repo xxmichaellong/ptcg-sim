@@ -1747,10 +1747,10 @@ loads are scoped to renderer generation, room/session, viewer role, view-card ID
 and visibility generation; a reused sprite must receive its back before it can
 display, and old private textures are purged on role/room transition.
 
-The provisional desktop target is 128 MiB for board-tier textures plus 16 MiB for
-the tiny preview cache, configurable and validated on actual fixtures. If the
-representative maximum board cannot fit, the resolution/cache strategy changes
-before raising the budget.
+ADR-015 ratifies a 128 MiB desktop budget for board-tier textures plus 16 MiB
+for the tiny preview cache, configurable and validated on actual fixtures. If
+the representative maximum board cannot fit, the resolution/cache strategy
+changes before raising the budget.
 
 The selected DOM candidate now has a deterministic Chromium gate for 120
 distinct, versioned, same-origin SVG assets. It proves exact one-request-per-URL

@@ -221,6 +221,7 @@ a manual tabletop simulator.
 | [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                                   | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
 | [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                         | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
 | [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                                         | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
+| [ADR-015-REFERENCE-PERFORMANCE-PROFILE.md](./ADR-015-REFERENCE-PERFORMANCE-PROFILE.md)           | Accepted physical laptop, network shaping, sampling, and quantitative release evidence contract              |
 | [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md)           | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                             | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
 | [ADR-020-ANONYMOUS-INVITATION-HANDOFF.md](./ADR-020-ANONYMOUS-INVITATION-HANDOFF.md)             | Accepted manual clipboard handoff for anonymous player-two and spectator invitations                         |
@@ -229,6 +230,7 @@ a manual tabletop simulator.
 | [ADR-023-DESKTOP-BROWSER-SUPPORT.md](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)                       | Accepted desktop browser, operating-system, minimum viewport, and release evidence matrix                    |
 | [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md) | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                             | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
+| [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                             | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                       | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                           | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
 | [DECK_CORE.md](./DECK_CORE.md)                                                                   | Deck core, pasted-list parser, adapters, lazy route composition, custody, and remaining product slices       |

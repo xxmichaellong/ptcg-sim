@@ -799,6 +799,7 @@ test('native and shared input follow center-rotated card paint in both candidate
 test('records controlled 120-card reconciliation and idle evidence for both candidates', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(120_000);
   await page.addInitScript(() => {
     class StableBenchmarkResizeObserver {
       observe(): void {}
@@ -828,20 +829,27 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
         scene: typeof spike.scene,
         replace = false
       ) => {
-        const surface = document.querySelector<HTMLElement>(
-          spike.rendererKind === 'dom' ? '.ptcgsim-board-surface' : 'canvas'
-        );
-        if (!surface) throw new Error('Missing rendered board surface');
+        const surfaceSelector =
+          spike.rendererKind === 'dom' ? '.ptcgsim-board-surface' : 'canvas';
+        const currentSurface = () =>
+          document.querySelector<HTMLElement>(surfaceSelector);
+        if (!currentSurface())
+          throw new Error('Missing rendered board surface');
         const previous = diagnostics().renderCommits;
         let finish!: () => void;
         const committed = new Promise<void>((resolve) => {
           finish = resolve;
         });
+        const hasCommitted = () =>
+          diagnostics().renderCommits > previous &&
+          currentSurface()?.dataset.revision === String(scene.revision);
         const observer = new MutationObserver(() => {
-          if (surface.dataset.revision === String(scene.revision)) finish();
+          if (hasCommitted()) finish();
         });
-        observer.observe(surface, {
+        observer.observe(document.body, {
           attributes: true,
+          childList: true,
+          subtree: true,
           attributeFilter: ['data-revision'],
         });
         const timeout = window.setTimeout(() => finish(), 1_000);
@@ -854,19 +862,11 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
           throw error;
         }
         const submissionMs = performance.now() - started;
-        if (
-          diagnostics().renderCommits > previous &&
-          surface.dataset.revision === String(scene.revision)
-        ) {
-          finish();
-        }
+        if (hasCommitted()) finish();
         await committed;
         observer.disconnect();
         window.clearTimeout(timeout);
-        if (
-          diagnostics().renderCommits <= previous ||
-          surface.dataset.revision !== String(scene.revision)
-        ) {
+        if (!hasCommitted()) {
           throw new Error('Renderer did not commit an installed scene');
         }
         return {
@@ -913,13 +913,15 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
         return installAndMeasure(current);
       };
 
-      for (let warmup = 0; warmup < 5; warmup += 1) {
+      const warmupSampleCount = 10;
+      const measuredSampleCount = 100;
+      for (let warmup = 0; warmup < warmupSampleCount; warmup += 1) {
         await sample('single');
         await sample('full');
       }
       const single = [];
       const full = [];
-      for (let index = 0; index < 25; index += 1) {
+      for (let index = 0; index < measuredSampleCount; index += 1) {
         single.push(await sample('single'));
         full.push(await sample('full'));
       }
@@ -954,9 +956,45 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
           0.95
         ),
       });
+      const gpu = (() => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('webgl2');
+        if (!context) return null;
+        const extension = context.getExtension('WEBGL_debug_renderer_info');
+        return {
+          vendor: extension
+            ? String(context.getParameter(extension.UNMASKED_VENDOR_WEBGL))
+            : null,
+          renderer: extension
+            ? String(context.getParameter(extension.UNMASKED_RENDERER_WEBGL))
+            : null,
+          version: String(context.getParameter(context.VERSION)),
+        };
+      })();
+      const navigatorWithDeviceMemory = navigator as Navigator & {
+        readonly deviceMemory?: number;
+        readonly userAgentData?: { readonly platform?: string };
+      };
       return {
         userAgent: navigator.userAgent,
+        platform:
+          navigatorWithDeviceMemory.userAgentData?.platform ??
+          navigator.platform,
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemoryGiB: navigatorWithDeviceMemory.deviceMemory ?? null,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height,
+          colorDepth: window.screen.colorDepth,
+        },
         devicePixelRatio: window.devicePixelRatio,
+        gpu,
+        warmupSampleCount,
+        measuredSampleCount,
         cardCount: settled.renderedCardIds.length,
         zoneCount: settled.renderedZoneIds.length,
         markerCount: settled.renderedMarkerIds.length,
@@ -966,6 +1004,7 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
         idleCommitDelta: afterIdle.renderCommits - idleCommits,
         single: summarize(single),
         full: summarize(full),
+        rawSamples: { single, full },
       };
     });
   }
@@ -981,7 +1020,20 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
   }
   expect(errors).toEqual([]);
   await testInfo.attach('renderer-120-card-evidence.json', {
-    body: Buffer.from(JSON.stringify(evidence, null, 2)),
+    body: Buffer.from(
+      JSON.stringify(
+        {
+          schema: 'ptcgsim-renderer-performance-observation-v1',
+          project: testInfo.project.name,
+          repeatEachIndex: testInfo.repeatEachIndex,
+          evidenceMode:
+            testInfo.project.metadata['evidenceMode'] ?? 'ci-diagnostic',
+          evidence,
+        },
+        null,
+        2
+      )
+    ),
     contentType: 'application/json',
   });
 });

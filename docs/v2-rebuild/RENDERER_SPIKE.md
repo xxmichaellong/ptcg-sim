@@ -319,10 +319,12 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
    inverse-transformed sprite containment and no longer double-scales a
    CSS-pixel explicit hit area.
 6. Both candidates install an identical synthetic 120-card/17-zone/4-marker
-   scene, settle asset diagnostics, record paired single/full reconciliation
-   evidence, and schedule zero additional commits across five idle frames. The
-   JSON attachment records environment and p50/p95 observations; it is
-   diagnostic rather than a portable physical-device release result.
+   scene, settle asset diagnostics, record 100 single/full reconciliation
+   samples after ten warmups, and schedule zero additional commits across five
+   idle frames. The versioned JSON attachment records environment, GPU, and
+   p50/p95 observations. Under the qualifying ADR-015 harness it becomes a
+   physical preflight, but it never replaces the complete release record by
+   itself.
 7. The checked-in v1 HTML/CSS is served through a deny-by-default, inert-module
    browser harness. Its default 1600×900 shell, frames, handles, shared anchors,
    opponent rotation, and all 16 region border boxes match the independently
@@ -1979,7 +1981,7 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      animation frames. Three fresh Chromium executions with the final decode
      and socket probes retained the same 35 documents, 3,639 DOM nodes, and 753
      listeners; post-GC V8 heap ratios were 1.0654, 1.0686, and 1.0674 against
-     the warmed baseline, below the provisional 1.10 ceiling. This is a local
+     the warmed baseline, numerically below the now-ratified 1.10 ceiling. This is a local
      Vite/`workerd` route gate with three cached raster URL families, not a
      dedicated uninterrupted-transport gate, deployed navigation/BFCache, 120
      distinct real-raster decoded-byte pressure, a long-duration soak, or
@@ -2596,12 +2598,12 @@ ELF binaries cannot directly resolve Nix store libraries.
 ## Decision and remaining production gates
 
 ADR-004 records the evidence, consequences, and revisit triggers. React DOM is
-selected because it preserves native UI/image/accessibility behavior, remains
-within the provisional full-scene budget in the controlled 120-card harness,
-and avoids making Pixi's additional asset, overlay, and WebGL failure surface a
-production dependency. Pixi's lower synthetic full-update latency does not
-override the parity-first decision rule without a measured protected-workflow
-bottleneck and the full cross-browser matrix.
+selected because it preserves native UI/image/accessibility behavior, shows
+substantial diagnostic headroom in the controlled 120-card harness, and avoids
+making Pixi's additional asset, overlay, and WebGL failure surface a production
+dependency. Pixi's lower synthetic full-update latency does not override the
+parity-first decision rule without a measured protected-workflow bottleneck and
+the full cross-browser and ADR-015 physical performance matrices.
 
 The following still require controlled browser/device runs before production
 wiring:
@@ -2629,10 +2631,10 @@ wiring:
   controlled same-origin distinct-SVG request/decode gate, local creator-route
   document churn, and local live-Solo 100-cycle real-raster/retained-heap gate:
   deployed route-host navigation/BFCache and representative distinct-real-raster
-  decoded-byte accounting on the ratified profile;
+  decoded-byte accounting on the ADR-015 profile;
   display-object/GPU counters remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
-  ratified four-core reference profile;
+  ADR-015 four-core reference profile;
 - the recorded ADR-024 keyboard and screen-reader parity audit of the selected
   semantic DOM surface; and
 - Chromium/Firefox/WebKit automation plus actual-product approval under

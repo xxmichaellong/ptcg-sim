@@ -6,12 +6,31 @@ The rebuild is done when evidence shows it preserves behavior while improving
 correctness, privacy, recoverability, responsiveness, and resource bounds. Code
 coverage alone is not an acceptance criterion.
 
-All quantitative performance budgets below are provisional until the Phase 1
-legacy baseline and Phase 4 spikes run on named hardware. Ratification may make
-them stricter or document a justified exception; it may not silently remove a
-budget because an implementation missed it.
+ADR-015 ratifies the quantitative performance budgets below against its
+lower-end physical-laptop and controlled managed-network profile. A release
+must attach the named environment, raw samples, three retained repetitions, and
+paired v1 evidence. A synthetic or faster machine may detect regressions but
+cannot silently replace the reference evidence because an implementation missed
+a budget.
 
 ## Test environments
+
+### Reference release environment
+
+ADR-015 uses a physical laptop with four physical CPU cores, 8 GiB memory,
+integrated graphics, no active discrete GPU, and current stable headful Chrome.
+The exact device/CPU/GPU/OS/browser is recorded per candidate. The same device
+runs 1366×768/DPR 1 and 1920×1080/DPR 2. Three valid repetitions, at least ten
+warmups and 100 retained samples per warmed latency metric, explicit software-
+renderer rejection, and paired v1/v2 rules are defined in
+[`ADR-015-REFERENCE-PERFORMANCE-PROFILE.md`](./ADR-015-REFERENCE-PERFORMANCE-PROFILE.md).
+
+End-to-end authority evidence runs on a managed preview with whole-browser HTTP
+and WebSocket shaping. The standard profile calibrates to 40–60 ms round-trip,
+10/2 Mbit/s, at most 10 ms jitter, and 0.1% loss. A separate 120 ms, 5/1
+Mbit/s, 1% loss recovery profile gates correctness and bounded recovery without
+relabeling its latency as same-region evidence. The release record is
+[`PERFORMANCE_RELEASE_EVIDENCE.md`](./PERFORMANCE_RELEASE_EVIDENCE.md).
 
 ### Deterministic CI environment
 
@@ -19,7 +38,6 @@ budget because an implementation missed it.
 - Pinned fonts and same-origin deterministic card-image server.
 - Seeded test ID/random adapters; resolved random events in replay fixtures.
 - Fake clock for core/server tests and real clock for browser timing tests.
-- A documented four-core mid-tier CPU profile for quantitative renderer runs.
 - Software-rendered browser results may catch regressions but do not substitute
   for physical-GPU release evidence.
 
@@ -45,7 +63,15 @@ the real Solo-room authority, WebSocket, DOM renderer, pointer, arbitrary-image,
 and replay workflow at 1280×720/DPR 1. The lanes do not yet satisfy the
 two-target quantitative viewport matrix above, pin fonts, run the actual stable
 Chrome/Edge/Firefox/Safari products, or substitute for managed-preview platform
-evidence. Those remain release evidence, not claims made by current CI. See
+evidence. Those remain release evidence, not claims made by current CI.
+
+The opt-in `playwright.performance.config.ts` runner builds production assets,
+launches current stable Chrome without forcing software rendering, and records three
+100-sample observations at each ADR-015 viewport. It captures CPU/memory
+exposure and WebGL vendor/renderer metadata. A headless mode exists only for
+harness validation, and the synthetic 120-card scene does not replace paired
+protected workflows, real-raster memory, drag/long-task, managed-network, or
+soak evidence. See
 [`ADR-023-DESKTOP-BROWSER-SUPPORT.md`](./ADR-023-DESKTOP-BROWSER-SUPPORT.md),
 [`ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md`](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md),
 and [`QUALITY_GATES.md`](./QUALITY_GATES.md).
@@ -672,7 +698,7 @@ assertions are required so widespread small shifts are not masked.
 
 Measured after warmup on the reference fixture/device:
 
-| Metric                                                 |                                    Provisional release budget |
+| Metric                                                 |                                                Release budget |
 | ------------------------------------------------------ | ------------------------------------------------------------: |
 | One-card render-model reconciliation                   |                                                p95 ≤ 4 ms CPU |
 | Full 120-card scene reconciliation                     |                                               p95 ≤ 50 ms CPU |
@@ -700,9 +726,9 @@ decoded bytes, long tasks, payload size, and heap trends.
 
 ## Network and recovery objectives
 
-On the ratified reference region/network profile:
+On ADR-015's standard managed-preview network profile:
 
-| Metric                                                           |          Provisional objective |
+| Metric                                                           |              Release objective |
 | ---------------------------------------------------------------- | -----------------------------: |
 | Local intent to immediate local feedback                         |                    p95 ≤ 50 ms |
 | Same-region command to authoritative reconciliation              |     p95 < 250 ms; p99 < 500 ms |
@@ -761,10 +787,11 @@ validation, predecessor validation, and transaction p50/p95 are 0/0, 3/6, 9/11,
 6/8, 0/0, 0/0, and 8/12 ms. The mature window has 32 frontier hits and zero
 fallbacks. Relative to the incremental-replay run, p95 falls from 252 to 50 ms
 end to end, 243 to 42 ms server-side, and 207 to 12 ms for persistence; scenario
-time falls from 26.204 to 8.766 seconds. The provisional 250 ms objective is met
-locally by 200 ms end to end and 208 ms server-side. Managed preview/network
-measurements and the existing load, soak, payload, and correctness evidence
-remain required; further work must not bypass full restore/fallback validation.
+time falls from 26.204 to 8.766 seconds. The 250 ms release objective has 200 ms
+local headroom end to end and 208 ms server-side, but local `workerd` cannot pass
+the ADR-015 managed-network gate. Managed-preview measurements and the existing
+load, soak, payload, and correctness evidence remain required; further work must
+not bypass full restore/fallback validation.
 
 The post-hibernation command was 181 ms end to end and 43 ms server-side; its
 authority/projection/persistence/publication/socket split was 16/14/12/0/1 ms

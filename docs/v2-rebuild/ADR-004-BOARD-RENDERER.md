@@ -330,7 +330,7 @@ ownership only; geometry, paint, menus, labels, and shortcuts are unchanged.
 | Stable card identity and drag state                 | Proven with keyed nodes and the shared controller | Proven with stable sprites and the shared controller      | Tie    |
 | Continuous rendering while idle                     | Zero commits after settling                       | Zero renders after settling                               | Tie    |
 | GPU/context failure surface                         | None for ordinary board composition               | Requires startup failure and bounded context recovery     | DOM    |
-| Synthetic 120-card reconciliation                   | Within the provisional full-scene budget          | Lower observed latency                                    | Pixi   |
+| Synthetic 120-card reconciliation                   | Diagnostic headroom; physical CPU proof pending   | Lower observed latency                                    | Pixi   |
 | Initial implementation/bundle complexity            | One UI technology; small adapter                  | Additional engine and lazy implementation chunks          | DOM    |
 
 PixiJS's current documentation identifies WebGL as the recommended stable
@@ -362,7 +362,7 @@ follow the painted footprint in both candidates; this exposed and removed a
 Pixi explicit-hit-area coordinate mismatch.
 
 The controlled automation also installs the same 120-card, 17-zone, 4-marker
-scene into each candidate after five paired warmups, records 25 paired
+scene into each candidate after ten paired warmups, records 100 paired
 single-card and full-scene samples, waits for an observed successful commit,
 and verifies:
 
@@ -374,17 +374,18 @@ One local Chromium 151 / SwiftShader / 1280×720 / DPR 1 observation produced:
 
 | Candidate  | Single update p50/p95 wall-to-commit | Full update p50/p95 wall-to-commit |
 | ---------- | -----------------------------------: | ---------------------------------: |
-| React DOM  |                         1.5 / 4.2 ms |                      3.7 / 10.8 ms |
-| Raw PixiJS |                         1.6 / 2.4 ms |                       1.6 / 2.4 ms |
+| React DOM  |                         1.7 / 6.1 ms |                      4.0 / 12.4 ms |
+| Raw PixiJS |                         1.0 / 1.5 ms |                       1.0 / 1.5 ms |
 
 Those values are diagnostic evidence, not portable release claims: SwiftShader
-is not the ratified physical-GPU profile, the 120 cards reuse fixture artwork
+is not the ADR-015 physical-GPU profile, the 120 cards reuse fixture artwork
 rather than 120 distinct decoded images, and browser wall-to-commit time is not
 the same as isolated CPU reconciliation time. Pixi is faster in the synthetic
-full update, but React DOM remains comfortably inside the provisional 50 ms
-full-scene budget. No characterized v1 workflow has established rendering as
-the user-visible bottleneck, while state coupling, authority, reconnect,
-privacy, and replay defects are already addressed below the renderer.
+full update, and React DOM shows substantial diagnostic headroom against the
+numerical bound, but only the ADR-015 physical run can pass the ratified 50 ms
+CPU budget. No characterized v1 workflow has established rendering as the
+user-visible bottleneck, while state coupling, authority, reconnect, privacy,
+and replay defects are already addressed below the renderer.
 
 The DOM candidate also retains native double-click ordering, arbitrary image
 display, and semantic button behavior without a second overlay tree. The Pixi
@@ -450,9 +451,10 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   setup/reset plus full-deck open/sort/close route gate with flat DOM counters
   and <= 1.10x post-GC heap:
   deployed browser navigation/BFCache plus representative distinct-real-raster
-  decoded-byte accounting on the ratified profile;
-- the ratified physical-device/browser performance matrix; and
-- Chromium automation plus Firefox and Safari approval.
+  decoded-byte accounting on the ADR-015 profile;
+- the ADR-015 physical-device/browser performance matrix; and
+- Chromium/Firefox/WebKit automation plus actual-product approval under
+  ADR-023.
 
 Pixi-only WebGL recovery and GPU-texture gates are no longer blockers for the
 first production renderer, but remain required before any future Pixi rollout.

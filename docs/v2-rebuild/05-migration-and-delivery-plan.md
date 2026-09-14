@@ -43,10 +43,10 @@ Work:
 - Audit every document using `AUDIT.md`.
 - Resolve all `BLOCKING` questions in the decision register.
 - Decide top-level workspace location and deployment constraints.
-- Apply ADR-023's desktop browser/device/viewport matrix and ADR-024's
-  first-release accessibility-parity boundary, define the remaining quantitative
-  reference hardware/network profile, apply ADR-021's first-release v1
-  save/share-import deferral, and apply ADR-022's fallback/deprecation window.
+- Apply ADR-015's physical hardware/network performance profile, ADR-023's
+  desktop browser/device/viewport matrix, ADR-024's first-release
+  accessibility-parity boundary, ADR-021's first-release v1 save/share-import
+  deferral, and ADR-022's fallback/deprecation window.
 - Approve privacy behavior for multiplayer saves/replays and coaching/spectators.
 - Confirm ownership/license terms for any direct MagicCircle code extraction;
   otherwise permit only clean reimplementation of documented patterns.
@@ -570,7 +570,7 @@ Exit gate:
 
 - all Solo-mode `MUST_MATCH` behaviors and visual/geometry tests pass;
 - no logical mutation exists in React/Pixi/DOM code;
-- automated live-Solo repeated setup/reset meets the provisional Chromium
+- automated live-Solo repeated setup/reset meets the ratified Chromium
   resource budget, including full-deck open/sort/close churn; the long-duration
   Solo soak still passes before rollout;
 - forced reload/restoration of local authority loses no committed state where

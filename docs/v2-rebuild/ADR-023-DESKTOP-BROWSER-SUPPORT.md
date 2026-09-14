@@ -61,11 +61,10 @@ browser-specific release blocker fails the matrix even if its corresponding CI
 engine passed.
 
 The minimum viewport is measured in CSS pixels reported to the page. Larger
-viewports and higher device-pixel ratios remain supported, but the existing
-provisional 1366×768/DPR 1 and 1920×1080/DPR 2 quantitative targets still need
-their separate reference-hardware evidence. ADR-024 separately defines the
-first-release accessibility-parity and zoom boundary. The named performance
-reference hardware is not decided by this ADR.
+viewports and higher device-pixel ratios remain supported, but the ratified
+1366×768/DPR 1 and 1920×1080/DPR 2 quantitative targets still need their
+separate ADR-015 reference-hardware evidence. ADR-024 separately defines
+the first-release accessibility-parity and zoom boundary.
 
 ## Consequences
 
@@ -88,8 +87,8 @@ reference hardware is not decided by this ADR.
   failures.
 - For each release candidate, archive the four-product manual smoke record with
   browser/OS versions, viewport, result, defects, and reviewer.
-- Record the reference device and physical-GPU measurements before claiming the
-  quantitative renderer budgets.
+- Record the ADR-015 reference device and physical-GPU measurements before
+  claiming the quantitative renderer budgets.
 - Keep ADR-024's automated accessibility-parity gates green and complete its
   recorded manual first-release smoke before public cutover.
 

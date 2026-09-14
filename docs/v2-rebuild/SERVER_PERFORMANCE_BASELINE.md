@@ -2,8 +2,8 @@
 
 Status: local `workerd` payload gate, bounded journal plateau, numeric
 command-phase observation, validated-snapshot/incremental-replay proofs, and the
-authority-frontier fast commit implemented; provisional local server-latency
-gate achieved
+authority-frontier fast commit implemented; ADR-015 managed-preview release
+evidence remains pending
 
 Recorded: 2026-09-03
 
@@ -100,9 +100,9 @@ not SQLite file size or Cloudflare billable storage.
 
 These wall-clock values are observations, not universal CI assertions. The
 mature command-to-publication p95 is 50 ms and server p95 is 42 ms, respectively
-200 and 208 ms below the provisional 250 ms objective before any Internet or
-browser reconciliation cost is added. The provisional local gate is achieved;
-managed preview measurements remain mandatory.
+200 and 208 ms below the ratified 250 ms objective before any Internet or
+browser reconciliation cost is added. This is local headroom, not a passed
+ADR-015 network gate; managed-preview measurements remain mandatory.
 
 ## Result: bounded audit-journal plateau
 
@@ -248,9 +248,9 @@ server-side; its full measurement fell from 58.6 to 35.4 seconds. The subsequent
 incremental-replay result reduced mature p95 to 252/243 ms and candidate
 validation to 16 ms. The authority-frontier result now reduces mature p95 from
 252 to 50 ms end to end, 243 to 42 ms server-side, and persistence from 207 to 12
-ms; measured scenario time falls from 26.204 to 8.766 seconds. The provisional
-250 ms p95 objective is achieved locally by 200 ms end to end and 208 ms
-server-side.
+ms; measured scenario time falls from 26.204 to 8.766 seconds. The ratified 250
+ms p95 objective has 200 ms local headroom end to end and 208 ms server-side,
+but only the ADR-015 managed-preview profile can produce release evidence.
 
 The next performance step is not another unsafe validation shortcut. Repeat the
 observation for stability, then gather managed-preview/network, platform
@@ -261,8 +261,8 @@ mismatched fallback boundaries.
 ## Evidence still required
 
 - managed Cloudflare preview p50/p95/p99 split by command family and phase;
-- repeated named-host observations and a ratified managed-preview latency
-  objective;
+- three retained named-host observations under ADR-015's standard and recovery
+  network profiles;
 - reconnect-to-usable timing over a real transport;
 - platform CPU, memory, storage, request, and cost distributions;
 - approved room concurrency/load targets and rate-limit behavior;
@@ -271,3 +271,7 @@ mismatched fallback boundaries.
   and
 - the full reference fixture with stacks, markers, every zone/work area, board
   geometry, and 120 decoded assets.
+
+Record those results in
+[`PERFORMANCE_RELEASE_EVIDENCE.md`](./PERFORMANCE_RELEASE_EVIDENCE.md); do not
+copy local `workerd` wall-clock values into its managed-preview columns.

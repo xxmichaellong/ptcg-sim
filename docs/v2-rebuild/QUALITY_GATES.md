@@ -28,6 +28,8 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run check:browser`        | Run the sequential Vite/Wrangler browser suite, then the isolated built-production topology lane, in Chromium without retry. |
 | `pnpm run check:cross-browser`  | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                |
 | `pnpm run check:full`           | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                             |
+| `pnpm run measure:v2:renderer`  | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.     |
+| `pnpm run measure:v2:server`    | Operator-only: capture the named local-`workerd` phase/payload observation; this is not managed-network release evidence.    |
 | `pnpm run audit:dependencies`   | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.      |
 
 Hosted CI disables the runner's unrelated Google Chrome apt source before
@@ -102,7 +104,7 @@ ensures generators leave tracked files unchanged.
 ## Strict browser harness
 
 `tsconfig.browser.json` inherits the same strict and
-`noUncheckedIndexedAccess` settings as production. It covers all three
+`noUncheckedIndexedAccess` settings as production. It covers all four
 Playwright configurations, every browser specification/support
 module, and the shared typed renderer-spike window handle. Legacy oracle
 traversal uses literal tuple indices where cardinality is fixed and explicit
@@ -114,6 +116,24 @@ The default `/v2/assets/cardback.png` is copied byte-for-byte from the current v
 asset. Source and built copies must retain SHA-256
 `44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327`,
 1,065,955 bytes, and a 736×1024 RGBA8 non-interlaced PNG header.
+
+## Physical performance observation
+
+`playwright.performance.config.ts` is an operator-only ADR-015 harness and is
+deliberately absent from CI. It builds production assets, starts one local
+Wrangler origin on port 4175, and runs only the controlled 120-card renderer
+observation three times under current stable Chrome at 1366×768/DPR 1 and
+1920×1080/DPR 2. It uses no SwiftShader argument, records browser/CPU/memory/
+screen/viewport/DPR and WebGL vendor/renderer metadata, and retains the raw 100
+warmed single-card plus 100 full-scene samples per candidate and repetition.
+
+The default is headful Chrome. `PTCGSIM_CHROME_PATH` selects the exact stable
+binary. `PTCGSIM_PERFORMANCE_HEADLESS=1` only validates that the harness can run;
+its output is explicitly diagnostic. Reports and attachments are written below
+the gitignored `artifacts/performance/` directory. The preflight cannot by
+itself pass the real-raster, protected v1/v2 workflow, long-task/drag, managed-
+network, or soak rows in
+[`PERFORMANCE_RELEASE_EVIDENCE.md`](./PERFORMANCE_RELEASE_EVIDENCE.md).
 
 ## Production-topology preview
 
@@ -189,9 +209,10 @@ stable Chrome, Edge, Firefox, and Safari.
 
 - Current CI proves default renderer cases at 1280×720/DPR 1, source-oracle
   cases with explicit 1600×900/DPR 1 overrides, and one real Solo-room journey
-  in Firefox/WebKit at 1280×720/DPR 1. The planned 1366×768 and 1920×1080/DPR 2
-  quantitative targets, pinned fonts, actual stable browser products, and
-  physical-GPU release matrix remain outstanding.
+  in Firefox/WebKit at 1280×720/DPR 1. The opt-in runner now covers the ADR-015
+  1366×768 and 1920×1080/DPR 2 observation shapes, but actual qualifying
+  hardware/GPU results, paired protected workflows, pinned fonts, and the
+  ADR-023 stable browser products remain outstanding.
 - Source-map provenance enforces package containment; it does not replace the
   browser request-interception tests that prove hidden card identities and image
   URLs are never requested.
