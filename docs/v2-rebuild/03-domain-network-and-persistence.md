@@ -1032,9 +1032,14 @@ This bounded ledger, stream, and playback state machine are the runtime replay
 foundation. ADR-012 now fixes the archive privacy boundary. Deterministic
 perspective download plus byte-safe, identity-bound atomic import exist; Phase 7
 now wires native file selection for inert playback on the isolated live Solo
-route. Phase 7 still owns long-retention journal chunks, server-held continuation
-capabilities, encryption, quotas, migration, and canonical state-import/sidebar
-integration.
+route. The first unwired continuation-custody slice now implements the dedicated
+one-record adapter, role-bound high-entropy capability, digest-only AES-GCM
+record, exact bounds/integrity validation, key rotation, and transactional
+create/revoke/expiry behavior. Phase 7 still owns the dedicated Durable Object
+namespace/migration, source-room quotas and authorization RPC, one-time restore
+state machine, operational recovery/abuse evidence, and canonical
+state-import/sidebar integration. See `CONTINUATION_CUSTODY.md` for the closed
+production gates.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

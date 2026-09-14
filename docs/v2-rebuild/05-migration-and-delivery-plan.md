@@ -692,8 +692,13 @@ wires that transaction through the source-shaped `Enter replay mode` control and
 hidden `.json` picker. A checked-in spectator artifact pins compatibility, and a
 real Worker/Chromium journey covers export, native selection, replay entry/exit,
 live restoration, and malformed-file recovery. Canonical multiplayer
-continuation remains server-held and unwired pending its encryption,
-role-capability, retention, recovery, quota, and abuse slices.
+continuation remains server-held and unwired. Its first custody slice now
+implements the threat/storage contract, high-entropy role-bound capability,
+digest-only encrypted one-record storage, strict format/size/integrity checks,
+key rotation, bounded retention, exact retry recovery, revocation, and expiry.
+The dedicated Durable Object binding/migration, source-room quota transaction,
+one-time cross-object restore state machine, routes/UI, and managed
+recovery/abuse gates remain closed as tracked in `CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
 `/import?key=` share links; the isolated converter remains test-only.
 
@@ -701,8 +706,10 @@ Work:
 
 - Implement versioned snapshots, journal chunks, recovery, retention, and
   integrity verification.
-- Implement high-entropy share/save capabilities, TTL/limits/revocation, and
-  encrypted/server-hosted multiplayer continuation policy.
+- Complete the implemented high-entropy capability, bounded
+  TTL/revocation/integrity, and encrypted server-hosted custody foundation with
+  its dedicated runtime namespace, source-room/global count and rate limits,
+  one-time restore orchestration, routes, and operational evidence.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

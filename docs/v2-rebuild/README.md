@@ -128,9 +128,15 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   requests a fresh authority artifact without entering replay mode; an active
   replay exports its exact installed artifact. The live Solo Options menu now
   wires its source-shaped `Enter replay mode` control and hidden `.json` picker
-  to the raw-byte validator and atomic inert coordinator installation. Canonical
-  server-held continuation remains later parity work. Deck navigation is now
-  active only on the opt-in v2 room route; the default route remains unchanged.
+  to the raw-byte validator and atomic inert coordinator installation. The
+  first canonical server-held continuation foundation now provides an unwired,
+  dedicated one-record custody adapter with high-entropy role-bound
+  capabilities, digest-only AES-GCM storage, strict bounds/integrity, 30-day
+  maximum retention, transactional revocation/expiry, key rotation, and
+  ambiguous-create recovery. Its namespace, quotas, restore state machine,
+  routes, and UI remain deliberately disabled later parity work. Deck
+  navigation is now active only on the opt-in v2 room route; the default route
+  remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
   and enters the p1 shell with Undo and serialized Set Up/Reset Both controls.
   Multiplayer navigation parks that Solo runtime, and returning does not create
@@ -248,6 +254,7 @@ a manual tabletop simulator.
 | [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)   | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
 | [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
+| [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server-held continuation threat/storage contract and closed activation gates                     |
 | [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                               | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                         | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                             | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |
