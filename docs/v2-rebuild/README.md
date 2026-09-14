@@ -130,9 +130,10 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   wires its source-shaped `Enter replay mode` control and hidden `.json` picker
   to the raw-byte validator and atomic inert coordinator installation. The
   first canonical server-held continuation foundation now provides an unwired,
-  dedicated one-record custody adapter with high-entropy role-bound
-  capabilities, digest-only AES-GCM storage, strict bounds/integrity, 30-day
-  maximum retention, transactional revocation/expiry, key rotation, and
+  dedicated single-save custody adapter with high-entropy role-bound
+  capabilities, digest-only AES-GCM checkpoint storage plus an optional
+  encrypted exact-retry bearer receipt, strict bounds/integrity, 30-day maximum
+  retention, transactional revocation/expiry, key rotation, and
   ambiguous-create recovery. Its dedicated SQLite Durable Object is now
   declaratively provisioned with key-independent alarm cleanup but no edge or
   object operation surface. A separate pure fork transform preserves exact
@@ -152,9 +153,11 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   transactionally reserves the exact current snapshot under a digest-only
   stable operation, applies bounded per-player/per-room counts, recovers
   ambiguous commits, and compacts completion without storing a raw bearer.
-  Production key provisioning, private create coordination, global quota/rate
-  controls, public routes, and UI remain deliberately disabled later parity
-  work.
+  The save object can now atomically create and encrypt that bearer with the
+  checkpoint, recover the same receipt after ambiguity/source compaction,
+  retain it through restore, and erase it on revocation/expiry. Production key
+  provisioning, private create coordination, global quota/rate controls, public
+  routes, and UI remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

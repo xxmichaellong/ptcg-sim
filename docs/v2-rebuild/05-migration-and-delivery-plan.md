@@ -694,8 +694,9 @@ real Worker/Chromium journey covers export, native selection, replay entry/exit,
 live restoration, and malformed-file recovery. Canonical multiplayer
 continuation remains server-held and unwired. Its first custody slice now
 implements the threat/storage contract, high-entropy role-bound capability,
-digest-only encrypted one-record storage, strict format/size/integrity checks,
-key rotation, bounded retention, exact retry recovery, revocation, and expiry.
+digest-only encrypted checkpoint storage plus an optional encrypted exact-retry
+creation receipt, strict format/size/integrity checks, key rotation, bounded
+retention, exact retry recovery, revocation, and expiry.
 Its dedicated SQLite Durable Object binding/export and key-independent alarm
 are implemented and real-runtime tested without an edge route. The pure
 target-room transform now preserves exact canonical
@@ -709,7 +710,10 @@ managed recovery/abuse gates remain closed. The unwired source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
 completion compaction, expiry pruning, and ambiguous-commit recovery without
-persisting a raw bearer.
+persisting a raw bearer. The save object now atomically encrypts the checkpoint
+and exact bearer receipt, binds them to the complete reserved request, recovers
+the same receipt after ambiguity/source compaction, retains it through restore,
+and deletes it on revocation or expiry.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
 selection, concurrent retry, and post-eviction recovery are implemented without

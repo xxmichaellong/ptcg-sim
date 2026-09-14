@@ -1033,8 +1033,9 @@ foundation. ADR-012 now fixes the archive privacy boundary. Deterministic
 perspective download plus byte-safe, identity-bound atomic import exist; Phase 7
 now wires native file selection for inert playback on the isolated live Solo
 route. The first unwired continuation-custody slice now implements the dedicated
-one-record adapter, role-bound high-entropy capability, digest-only AES-GCM
-record, exact bounds/integrity validation, key rotation, and transactional
+single-save adapter, role-bound high-entropy capability, digest-only AES-GCM
+checkpoint plus optional encrypted exact-retry creation receipt, exact
+bounds/integrity validation, key rotation, and transactional
 create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
 declared through Wrangler `exports`; its key-independent alarm and private
 restore RPC are tested across eviction, while no edge route selects it. Phase 7
@@ -1045,7 +1046,9 @@ integration. The room-local source adapter now transactionally authorizes an
 active claimed multiplayer player, reserves one exact canonical snapshot under
 a digest-only stable operation, enforces bounded per-player/per-room counts,
 recovers retry ambiguity, and compacts completed reservations without storing a
-raw bearer. The
+raw bearer. The save object can now atomically mint that bearer with the
+checkpoint, recover the same encrypted receipt after ambiguity or source
+compaction, retain it through restore, and erase it on revocation/expiry. The
 independently tested pure fork transform already preserves the canonical
 state/replay exactly while clearing and rotating all recipient and admission
 authority; the save adapter durably encrypts one immutable plan and its

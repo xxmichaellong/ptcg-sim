@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import {
+  CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
   CONTINUATION_STORAGE_KEY,
   DEFAULT_CONTINUATION_TARGET_LIFETIME_MS,
   DEFAULT_CONTINUATION_TTL_MS,
@@ -28,6 +29,8 @@ import {
   importContinuationEncryptionKey,
   parseContinuationCapability,
   type CreateContinuationInput,
+  type CreateReservedContinuationInput,
+  type ContinuationCapabilitySource,
   type StoredContinuationRecord,
 } from './continuation-custody.js';
 import { prepareContinuationFork } from './continuation-fork.js';
@@ -143,6 +146,36 @@ const storedRecord = (
 ): StoredContinuationRecord =>
   storage.values.get(CONTINUATION_STORAGE_KEY) as StoredContinuationRecord;
 
+const creationOperationId = 'C'.repeat(43);
+const alternateCreationOperationId = 'D'.repeat(43);
+const reservedSaveId = 'L'.repeat(22);
+
+const reservedInputFixture = (
+  snapshot = snapshotFixture()
+): CreateReservedContinuationInput => ({
+  saveId: reservedSaveId,
+  operationId: creationOperationId,
+  snapshot,
+  requesterSessionId: 'session-player-one',
+  sourceBuild: 'continuation-reserved-create-test',
+  createdAt,
+  expiresAt: createdAt + DEFAULT_CONTINUATION_TTL_MS,
+  requestedAt: createdAt + 1,
+});
+
+const capabilitySourceFixture = () => {
+  const capabilities: string[] = [];
+  const source: ContinuationCapabilitySource = {
+    createForSaveId: (saveId) => {
+      const bearer = String.fromCharCode(65 + capabilities.length).repeat(43);
+      const capability = `ptcgsave.v1.${saveId}.${bearer}`;
+      capabilities.push(capability);
+      return { saveId, capability };
+    },
+  };
+  return { source, capabilities };
+};
+
 describe('continuation capabilities', () => {
   it('creates independent 128-bit locators and 256-bit bearer material', () => {
     const generated = Array.from({ length: 128 }, () =>
@@ -224,6 +257,364 @@ describe('Web Crypto continuation cryptography', () => {
         expiresAt: createdAt + DEFAULT_CONTINUATION_TTL_MS,
       })
     ).rejects.toThrow(RangeError);
+  });
+});
+
+describe('reserved continuation creation receipts', () => {
+  it('atomically encrypts the checkpoint and exact-retry capability receipt', async () => {
+    const storage = new MemoryDurableStorage();
+    const capabilitySource = capabilitySourceFixture();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography(),
+      capabilitySource.source
+    );
+    const input = reservedInputFixture();
+
+    const created = await custody.createReserved(input);
+    expect(created).toEqual({
+      created: true,
+      receipt: {
+        format: 'ptcgsim-continuation-creation-result-v1',
+        saveId: reservedSaveId,
+        operationId: creationOperationId,
+        capability: capabilitySource.capabilities[0],
+        createdAt,
+        expiresAt: createdAt + DEFAULT_CONTINUATION_TTL_MS,
+      },
+    });
+    expect(storage.values.size).toBe(2);
+    expect(storage.alarm).toBe(createdAt + DEFAULT_CONTINUATION_TTL_MS);
+    const serialized = JSON.stringify([...storage.values]);
+    expect(serialized).not.toContain(creationOperationId);
+    expect(serialized).not.toContain(created!.receipt.capability);
+    expect(serialized).not.toContain(hiddenSentinel);
+    expect(serialized).not.toContain(input.sourceBuild);
+    expect(serialized).not.toContain(p1);
+    expect(serialized).toContain(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY);
+
+    await expect(
+      custody.open(created!.receipt.capability, createdAt + 2)
+    ).resolves.toMatchObject({
+      saveId: reservedSaveId,
+      checkpoint: {
+        requesterPlayerId: p1,
+        snapshot: input.snapshot,
+      },
+    });
+    const committed = structuredClone([...storage.values]);
+    await expect(
+      custody.createReserved({ ...input, requestedAt: createdAt + 3 })
+    ).resolves.toEqual({ created: false, receipt: created!.receipt });
+    await expect(
+      custody.recoverReservedCreation({
+        saveId: reservedSaveId,
+        operationId: creationOperationId,
+        requestedAt: createdAt + 4,
+      })
+    ).resolves.toEqual(created!.receipt);
+    await expect(
+      custody.recoverReservedCreation({
+        saveId: reservedSaveId,
+        operationId: alternateCreationOperationId,
+        requestedAt: createdAt + 4,
+      })
+    ).resolves.toBeUndefined();
+    expect([...storage.values]).toEqual(committed);
+  });
+
+  it('binds an idempotency operation to the complete reserved request', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = reservedInputFixture();
+    await custody.createReserved(input);
+    const before = structuredClone([...storage.values]);
+
+    const originalSnapshot = snapshotFixture();
+    const changedSnapshot: RoomAuthoritySnapshot = {
+      ...originalSnapshot,
+      sessions: {
+        ...originalSnapshot.sessions,
+        'session-player-one': {
+          ...originalSnapshot.sessions['session-player-one']!,
+          nextClientSequence:
+            originalSnapshot.sessions['session-player-one']!
+              .nextClientSequence + 1,
+        },
+      },
+    };
+    for (const changed of [
+      { ...input, operationId: alternateCreationOperationId },
+      { ...input, sourceBuild: 'different-source-build' },
+      { ...input, requesterSessionId: 'session-player-two' },
+      { ...input, snapshot: changedSnapshot },
+      { ...input, saveId: 'M'.repeat(22) },
+    ]) {
+      await expect(custody.createReserved(changed)).rejects.toBeInstanceOf(
+        ContinuationCollisionError
+      );
+      expect([...storage.values]).toEqual(before);
+    }
+  });
+
+  it('rejects malformed, unauthorized, and expired reservations before entropy', async () => {
+    const storage = new MemoryDurableStorage();
+    const capabilitySource = capabilitySourceFixture();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography(),
+      capabilitySource.source
+    );
+    const input = reservedInputFixture();
+
+    await expect(
+      custody.createReserved({ ...input, operationId: 'short' })
+    ).rejects.toThrow('input is invalid');
+    await expect(
+      custody.createReserved({
+        ...input,
+        requesterSessionId: 'session-spectator',
+      })
+    ).rejects.toThrow('authenticated player');
+    await expect(
+      custody.createReserved({ ...input, requestedAt: input.expiresAt })
+    ).resolves.toBeUndefined();
+    expect(capabilitySource.capabilities).toHaveLength(0);
+    expect(storage.values.size).toBe(0);
+  });
+
+  it('reuses one candidate on transaction retry and recovers the committed receipt after ambiguity', async () => {
+    const retriedStorage = new MemoryDurableStorage();
+    retriedStorage.retryTransactionOnce = true;
+    const retriedSource = capabilitySourceFixture();
+    const retriedCustody = new DurableContinuationCustody(
+      retriedStorage,
+      await cryptography(),
+      retriedSource.source
+    );
+    await expect(
+      retriedCustody.createReserved(reservedInputFixture())
+    ).resolves.toMatchObject({ created: true });
+    expect(retriedStorage.transactionAttempts).toBe(3);
+    expect(retriedSource.capabilities).toHaveLength(1);
+    expect(retriedStorage.values.size).toBe(2);
+
+    const ambiguousStorage = new MemoryDurableStorage();
+    const ambiguousSource = capabilitySourceFixture();
+    const ambiguousCustody = new DurableContinuationCustody(
+      ambiguousStorage,
+      await cryptography(),
+      ambiguousSource.source
+    );
+    ambiguousStorage.failAfterTransactionCommitOnCall = 2;
+    await expect(
+      ambiguousCustody.createReserved(reservedInputFixture())
+    ).rejects.toThrow('ambiguous transaction failure');
+    await expect(
+      ambiguousCustody.createReserved({
+        ...reservedInputFixture(),
+        requestedAt: createdAt + 2,
+      })
+    ).resolves.toMatchObject({
+      created: false,
+      receipt: { capability: ambiguousSource.capabilities[0] },
+    });
+    expect(ambiguousSource.capabilities).toHaveLength(1);
+  });
+
+  it('rolls both records and the alarm back, and refuses incomplete custody', async () => {
+    const failedStorage = new MemoryDurableStorage();
+    failedStorage.failPutWhenKeyStartsWith =
+      CONTINUATION_CREATION_RECEIPT_STORAGE_KEY;
+    const failedCustody = new DurableContinuationCustody(
+      failedStorage,
+      await cryptography()
+    );
+    await expect(
+      failedCustody.createReserved(reservedInputFixture())
+    ).rejects.toThrow('transactional put failure');
+    expect(failedStorage.values.size).toBe(0);
+    expect(failedStorage.alarm).toBeNull();
+
+    const alarmStorage = new MemoryDurableStorage();
+    alarmStorage.failSetAlarm = true;
+    const alarmCustody = new DurableContinuationCustody(
+      alarmStorage,
+      await cryptography()
+    );
+    await expect(
+      alarmCustody.createReserved(reservedInputFixture())
+    ).rejects.toThrow('setAlarm failure');
+    expect(alarmStorage.values.size).toBe(0);
+    expect(alarmStorage.alarm).toBeNull();
+
+    const incompleteStorage = new MemoryDurableStorage();
+    const incompleteCustody = new DurableContinuationCustody(
+      incompleteStorage,
+      await cryptography()
+    );
+    await incompleteCustody.create(
+      inputFixture(createContinuationCapability(reservedSaveId).capability)
+    );
+    const before = structuredClone([...incompleteStorage.values]);
+    await expect(
+      incompleteCustody.createReserved(reservedInputFixture())
+    ).rejects.toBeInstanceOf(ContinuationCollisionError);
+    expect([...incompleteStorage.values]).toEqual(before);
+  });
+
+  it('retains the creation receipt through one-time restore, then expires both records', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = reservedInputFixture();
+    const created = await custody.createReserved(input);
+    if (!created) throw new Error('expected creation receipt');
+    const preparation = restorePreparation();
+    await custody.reserveRestore(
+      {
+        capability: created.receipt.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    await custody.completeRestore({
+      capability: created.receipt.capability,
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 1,
+    });
+    expect(storage.values.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      true
+    );
+    await expect(
+      custody.createReserved({ ...input, requestedAt: restoredAt + 2 })
+    ).resolves.toEqual({ created: false, receipt: created.receipt });
+
+    await expect(custody.expire(input.expiresAt)).resolves.toBe('expired');
+    expect(storage.values.size).toBe(0);
+    expect(storage.alarm).toBeNull();
+  });
+
+  it('erases the receipt on revocation and cleans orphaned receipt metadata', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const created = await custody.createReserved(reservedInputFixture());
+    if (!created) throw new Error('expected creation receipt');
+    const orphanedReceipt = structuredClone(
+      storage.values.get(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)
+    );
+    await expect(
+      custody.revoke(created.receipt.capability, createdAt + 2)
+    ).resolves.toBe(true);
+    expect(storage.values.has(CONTINUATION_STORAGE_KEY)).toBe(true);
+    expect(storage.values.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      false
+    );
+    await expect(
+      custody.createReserved({
+        ...reservedInputFixture(),
+        requestedAt: createdAt + 3,
+      })
+    ).rejects.toBeInstanceOf(ContinuationCollisionError);
+
+    const orphanedStorage = new MemoryDurableStorage();
+    orphanedStorage.values.set(
+      CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+      orphanedReceipt
+    );
+    orphanedStorage.values.delete(CONTINUATION_STORAGE_KEY);
+    orphanedStorage.alarm = createdAt + 10;
+    await expect(
+      new DurableContinuationCustody(
+        orphanedStorage,
+        await cryptography()
+      ).expire(createdAt + 10)
+    ).resolves.toBe('missing');
+    expect(orphanedStorage.values.size).toBe(0);
+    expect(orphanedStorage.alarm).toBeNull();
+  });
+
+  it('fails closed when the encrypted creation receipt is changed', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const input = reservedInputFixture();
+    await custody.createReserved(input);
+    const stored = structuredClone(
+      storage.values.get(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)
+    ) as {
+      sealedResult: { ciphertext: string };
+    };
+    const finalCharacter = stored.sealedResult.ciphertext.at(-1)!;
+    stored.sealedResult.ciphertext = `${stored.sealedResult.ciphertext.slice(0, -1)}${finalCharacter === 'A' ? 'B' : 'A'}`;
+    storage.values.set(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY, stored);
+
+    await expect(
+      custody.createReserved({ ...input, requestedAt: createdAt + 2 })
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
+  });
+
+  it('recovers a receipt with a retained decrypt key after key rotation', async () => {
+    const oldKey = await importContinuationEncryptionKey(
+      new Uint8Array(32).fill(1)
+    );
+    const newKey = await importContinuationEncryptionKey(
+      new Uint8Array(32).fill(2)
+    );
+    const storage = new MemoryDurableStorage();
+    const original = new DurableContinuationCustody(
+      storage,
+      new WebCryptoContinuationCryptography(
+        'key-old',
+        new Map([['key-old', oldKey]])
+      )
+    );
+    const created = await original.createReserved(reservedInputFixture());
+    if (!created) throw new Error('expected creation receipt');
+
+    const rotated = new DurableContinuationCustody(
+      storage,
+      new WebCryptoContinuationCryptography(
+        'key-new',
+        new Map([
+          ['key-old', oldKey],
+          ['key-new', newKey],
+        ])
+      )
+    );
+    await expect(
+      rotated.recoverReservedCreation({
+        saveId: reservedSaveId,
+        operationId: creationOperationId,
+        requestedAt: createdAt + 2,
+      })
+    ).resolves.toEqual(created.receipt);
+
+    const withoutOldKey = new DurableContinuationCustody(
+      storage,
+      new WebCryptoContinuationCryptography(
+        'key-new',
+        new Map([['key-new', newKey]])
+      )
+    );
+    await expect(
+      withoutOldKey.recoverReservedCreation({
+        saveId: reservedSaveId,
+        operationId: creationOperationId,
+        requestedAt: createdAt + 3,
+      })
+    ).rejects.toBeInstanceOf(ContinuationCorruptError);
   });
 });
 

@@ -54,12 +54,20 @@ export type {
 } from './continuation-restore-format.js';
 
 export const CONTINUATION_STORAGE_KEY = 'continuation:record';
+export const CONTINUATION_CREATION_RECEIPT_STORAGE_KEY =
+  'continuation:creation-receipt';
 export const DEFAULT_CONTINUATION_TTL_MS = 30 * 24 * 60 * 60_000;
 export const MINIMUM_CONTINUATION_TTL_MS = 60_000;
 
 const CONTINUATION_RECORD_FORMAT = 'ptcgsim-continuation-record-v1';
 const CONTINUATION_CHECKPOINT_FORMAT = 'ptcgsim-continuation-checkpoint-v1';
 const CONTINUATION_INTEGRITY_FORMAT = 'ptcgsim-continuation-integrity-v1';
+const CONTINUATION_CREATION_REQUEST_FORMAT =
+  'ptcgsim-continuation-creation-request-v1';
+const CONTINUATION_CREATION_RESULT_FORMAT =
+  'ptcgsim-continuation-creation-result-v1';
+const CONTINUATION_CREATION_RECEIPT_FORMAT =
+  'ptcgsim-continuation-creation-receipt-v1';
 const CONTINUATION_AAD_FORMAT = 'ptcgsim-continuation-aad-v1';
 const CONTINUATION_CIPHER_FORMAT = 'ptcgsim-continuation-cipher-v1';
 const CONTINUATION_CIPHER_ALGORITHM = 'AES-256-GCM';
@@ -67,6 +75,7 @@ const CONTINUATION_CAPABILITY_PATTERN =
   /^ptcgsave\.v1\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})$/u;
 const BASE64_URL_PATTERN = /^[A-Za-z0-9_-]+$/u;
 const DIGEST_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
+const CREATION_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
 const AES_GCM_NONCE_BYTES = 12;
 const AES_GCM_TAG_BYTES = 16;
@@ -84,6 +93,10 @@ export interface ContinuationCapability {
   readonly capability: string;
 }
 
+export interface ContinuationCapabilitySource {
+  readonly createForSaveId: (saveId: string) => ContinuationCapability;
+}
+
 export interface CreateContinuationInput {
   readonly capability: string;
   readonly snapshot: RoomAuthoritySnapshot;
@@ -98,6 +111,38 @@ export interface ContinuationCreationResult {
   readonly expiresAt: number;
   /** False only when an exact retry recovered an already committed create. */
   readonly created: boolean;
+}
+
+export interface CreateReservedContinuationInput {
+  readonly saveId: string;
+  readonly operationId: string;
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly requesterSessionId: string;
+  readonly sourceBuild: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly requestedAt: number;
+}
+
+export interface ContinuationCreationReceipt {
+  readonly format: typeof CONTINUATION_CREATION_RESULT_FORMAT;
+  readonly saveId: string;
+  readonly operationId: string;
+  readonly capability: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+}
+
+export interface ReservedContinuationCreationResult {
+  /** False only when an exact retry recovered an already committed create. */
+  readonly created: boolean;
+  readonly receipt: ContinuationCreationReceipt;
+}
+
+export interface RecoverReservedContinuationInput {
+  readonly saveId: string;
+  readonly operationId: string;
+  readonly requestedAt: number;
 }
 
 export interface OpenedContinuation {
@@ -152,6 +197,17 @@ interface StoredRevokedContinuation {
   readonly createdAt: number;
   readonly expiresAt: number;
   readonly revokedAt: number;
+}
+
+interface StoredContinuationCreationReceipt {
+  readonly format: typeof CONTINUATION_CREATION_RECEIPT_FORMAT;
+  readonly saveId: string;
+  readonly operationDigest: string;
+  readonly requestDigest: string;
+  readonly capabilityDigest: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+  readonly sealedResult: StoredContinuationCiphertext;
 }
 
 export type StoredContinuationRecord =
@@ -233,12 +289,21 @@ const randomBytes = (length: number): Uint8Array => {
   return bytes;
 };
 
-export const createContinuationCapability = (): ContinuationCapability => {
-  const saveId = base64Url(randomBytes(16));
+export const createContinuationCapability = (
+  reservedSaveId?: string
+): ContinuationCapability => {
+  const saveId = reservedSaveId ?? base64Url(randomBytes(16));
+  if (!/^[A-Za-z0-9_-]{22}$/u.test(saveId)) {
+    throw new Error('Continuation capability locator is malformed');
+  }
   return Object.freeze({
     saveId,
     capability: `ptcgsave.v1.${saveId}.${base64Url(randomBytes(32))}`,
   });
+};
+
+const defaultContinuationCapabilitySource: ContinuationCapabilitySource = {
+  createForSaveId: createContinuationCapability,
 };
 
 export const parseContinuationCapability = (
@@ -377,6 +442,96 @@ const readStoredRecord = (value: unknown): StoredContinuationRecord => {
   throw new ContinuationCorruptError();
 };
 
+const readStoredCreationReceipt = (
+  value: unknown
+): StoredContinuationCreationReceipt => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, [
+      'capabilityDigest',
+      'createdAt',
+      'expiresAt',
+      'format',
+      'operationDigest',
+      'requestDigest',
+      'saveId',
+      'sealedResult',
+    ]) ||
+    Reflect.get(value, 'format') !== CONTINUATION_CREATION_RECEIPT_FORMAT ||
+    typeof Reflect.get(value, 'saveId') !== 'string' ||
+    !/^[A-Za-z0-9_-]{22}$/u.test(Reflect.get(value, 'saveId')) ||
+    typeof Reflect.get(value, 'operationDigest') !== 'string' ||
+    !DIGEST_PATTERN.test(Reflect.get(value, 'operationDigest')) ||
+    typeof Reflect.get(value, 'requestDigest') !== 'string' ||
+    !DIGEST_PATTERN.test(Reflect.get(value, 'requestDigest')) ||
+    typeof Reflect.get(value, 'capabilityDigest') !== 'string' ||
+    !DIGEST_PATTERN.test(Reflect.get(value, 'capabilityDigest')) ||
+    !validLifetime(
+      Reflect.get(value, 'createdAt'),
+      Reflect.get(value, 'expiresAt')
+    )
+  ) {
+    throw new ContinuationCorruptError();
+  }
+  readStoredCiphertext(Reflect.get(value, 'sealedResult'));
+  return value as StoredContinuationCreationReceipt;
+};
+
+interface StoredCreationPair {
+  readonly record: Exclude<StoredContinuationRecord, StoredRevokedContinuation>;
+  readonly receipt: StoredContinuationCreationReceipt;
+}
+
+const readStoredCreationPair = (
+  rawRecord: unknown,
+  rawReceipt: unknown,
+  cryptography: ContinuationCryptography
+): StoredCreationPair | undefined => {
+  if (rawRecord === undefined && rawReceipt === undefined) return undefined;
+  if (rawRecord === undefined || rawReceipt === undefined) {
+    throw new ContinuationCollisionError();
+  }
+  const record = readStoredRecord(rawRecord);
+  const receipt = readStoredCreationReceipt(rawReceipt);
+  if (
+    record.state === 'revoked' ||
+    record.saveId !== receipt.saveId ||
+    !cryptography.equalDigest(
+      record.capabilityDigest,
+      receipt.capabilityDigest
+    ) ||
+    record.createdAt !== receipt.createdAt ||
+    record.expiresAt !== receipt.expiresAt
+  ) {
+    throw new ContinuationCorruptError();
+  }
+  return { record, receipt };
+};
+
+const assertCreationPairIdentity = (
+  pair: StoredCreationPair,
+  expectedSaveId: string,
+  expectedOperationDigest: string,
+  expectedRequestDigest: string | undefined,
+  cryptography: ContinuationCryptography
+): void => {
+  if (
+    pair.record.saveId !== expectedSaveId ||
+    !cryptography.equalDigest(
+      pair.receipt.operationDigest,
+      expectedOperationDigest
+    ) ||
+    (expectedRequestDigest !== undefined &&
+      !cryptography.equalDigest(
+        pair.receipt.requestDigest,
+        expectedRequestDigest
+      ))
+  ) {
+    throw new ContinuationCollisionError();
+  }
+};
+
 const encryptionContext = (
   record: Pick<
     StoredContinuationRecord,
@@ -400,6 +555,26 @@ const restoreEncryptionContext = (
   ...encryptionContext(record),
   purpose,
   operationDigest,
+});
+
+const creationEncryptionContext = (
+  receipt: Pick<
+    StoredContinuationCreationReceipt,
+    | 'saveId'
+    | 'capabilityDigest'
+    | 'createdAt'
+    | 'expiresAt'
+    | 'operationDigest'
+    | 'requestDigest'
+  >
+): ContinuationEncryptionContext => ({
+  saveId: receipt.saveId,
+  capabilityDigest: receipt.capabilityDigest,
+  createdAt: receipt.createdAt,
+  expiresAt: receipt.expiresAt,
+  purpose: 'creation_result',
+  operationDigest: receipt.operationDigest,
+  requestDigest: receipt.requestDigest,
 });
 
 const associatedData = (
@@ -576,6 +751,17 @@ interface ContinuationCheckpointBody {
   readonly snapshot: RoomAuthoritySnapshot;
 }
 
+interface ContinuationCreationRequestBody {
+  readonly format: typeof CONTINUATION_CREATION_REQUEST_FORMAT;
+  readonly saveId: string;
+  readonly operationId: string;
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly requesterSessionId: string;
+  readonly sourceBuild: string;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+}
+
 const activeRequester = (
   snapshot: RoomAuthoritySnapshot,
   requesterSessionId: string
@@ -733,6 +919,167 @@ const readCheckpoint = async (
   return Object.freeze(candidate);
 };
 
+const digestCreationRequest = (
+  input: CreateReservedContinuationInput,
+  cryptography: ContinuationCryptography
+): Promise<string> => {
+  const body: ContinuationCreationRequestBody = {
+    format: CONTINUATION_CREATION_REQUEST_FORMAT,
+    saveId: input.saveId,
+    operationId: input.operationId,
+    snapshot: input.snapshot,
+    requesterSessionId: input.requesterSessionId,
+    sourceBuild: input.sourceBuild,
+    createdAt: input.createdAt,
+    expiresAt: input.expiresAt,
+  };
+  return cryptography.digest(encoder.encode(stableSerialize(body)));
+};
+
+const readCreationReceipt = async (
+  bytes: Uint8Array,
+  stored: StoredContinuationCreationReceipt,
+  operationId: string,
+  cryptography: ContinuationCryptography
+): Promise<ContinuationCreationReceipt> => {
+  if (
+    bytes.byteLength < 1 ||
+    bytes.byteLength > MAX_CONTINUATION_PLAINTEXT_BYTES
+  ) {
+    throw new ContinuationCorruptError();
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(decoder.decode(bytes)) as unknown;
+  } catch {
+    throw new ContinuationCorruptError();
+  }
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, [
+      'capability',
+      'createdAt',
+      'expiresAt',
+      'format',
+      'operationId',
+      'saveId',
+    ]) ||
+    Reflect.get(value, 'format') !== CONTINUATION_CREATION_RESULT_FORMAT ||
+    Reflect.get(value, 'saveId') !== stored.saveId ||
+    Reflect.get(value, 'operationId') !== operationId ||
+    Reflect.get(value, 'createdAt') !== stored.createdAt ||
+    Reflect.get(value, 'expiresAt') !== stored.expiresAt ||
+    typeof Reflect.get(value, 'capability') !== 'string'
+  ) {
+    throw new ContinuationCorruptError();
+  }
+  const receipt = value as ContinuationCreationReceipt;
+  const parsed = parseContinuationCapability(receipt.capability);
+  const [capabilityDigest, operationDigest] = await Promise.all([
+    cryptography.digest(encoder.encode(receipt.capability)),
+    cryptography.digest(encoder.encode(operationId)),
+  ]);
+  if (
+    !parsed ||
+    parsed.saveId !== stored.saveId ||
+    !cryptography.equalDigest(capabilityDigest, stored.capabilityDigest) ||
+    !cryptography.equalDigest(operationDigest, stored.operationDigest)
+  ) {
+    throw new ContinuationCorruptError();
+  }
+  return Object.freeze(receipt);
+};
+
+const prepareReservedCreation = async (
+  input: CreateReservedContinuationInput,
+  operationDigest: string,
+  requestDigest: string,
+  cryptography: ContinuationCryptography,
+  capabilitySource: ContinuationCapabilitySource
+): Promise<{
+  readonly record: StoredActiveContinuation;
+  readonly storedReceipt: StoredContinuationCreationReceipt;
+  readonly receipt: ContinuationCreationReceipt;
+}> => {
+  const generated = capabilitySource.createForSaveId(input.saveId);
+  const parsed = parseContinuationCapability(generated.capability);
+  if (
+    generated.saveId !== input.saveId ||
+    !parsed ||
+    parsed.saveId !== input.saveId
+  ) {
+    throw new Error('Continuation capability source is invalid');
+  }
+  const checkpoint = await createCheckpoint(
+    {
+      capability: generated.capability,
+      snapshot: input.snapshot,
+      requesterSessionId: input.requesterSessionId,
+      sourceBuild: input.sourceBuild,
+      createdAt: input.createdAt,
+      ttlMs: input.expiresAt - input.createdAt,
+    },
+    input.saveId,
+    input.expiresAt,
+    cryptography
+  );
+  const capabilityDigest = await cryptography.digest(
+    encoder.encode(generated.capability)
+  );
+  if (
+    !DIGEST_PATTERN.test(capabilityDigest) ||
+    !DIGEST_PATTERN.test(operationDigest) ||
+    !DIGEST_PATTERN.test(requestDigest)
+  ) {
+    throw new Error('Continuation creation identity is invalid');
+  }
+  const context = {
+    saveId: input.saveId,
+    capabilityDigest,
+    createdAt: input.createdAt,
+    expiresAt: input.expiresAt,
+  } satisfies ContinuationEncryptionContext;
+  const receipt: ContinuationCreationReceipt = Object.freeze({
+    format: CONTINUATION_CREATION_RESULT_FORMAT,
+    saveId: input.saveId,
+    operationId: input.operationId,
+    capability: generated.capability,
+    createdAt: input.createdAt,
+    expiresAt: input.expiresAt,
+  });
+  const receiptBytes = encoder.encode(stableSerialize(receipt));
+  const storedReceiptContext: Omit<
+    StoredContinuationCreationReceipt,
+    'sealedResult'
+  > = {
+    format: CONTINUATION_CREATION_RECEIPT_FORMAT,
+    saveId: input.saveId,
+    operationDigest,
+    requestDigest,
+    capabilityDigest,
+    createdAt: input.createdAt,
+    expiresAt: input.expiresAt,
+  };
+  const [sealed, sealedResult] = await Promise.all([
+    cryptography.seal(checkpoint.bytes, context),
+    cryptography.seal(
+      receiptBytes,
+      creationEncryptionContext(storedReceiptContext)
+    ),
+  ]);
+  return {
+    record: {
+      format: CONTINUATION_RECORD_FORMAT,
+      state: 'active',
+      ...context,
+      sealed,
+    },
+    storedReceipt: { ...storedReceiptContext, sealedResult },
+    receipt,
+  };
+};
+
 const assertClock = (now: number): void => {
   if (!safeNonNegativeInteger(now)) {
     throw new Error('Continuation clock is invalid');
@@ -742,8 +1089,206 @@ const assertClock = (now: number): void => {
 export class DurableContinuationCustody {
   constructor(
     private readonly storage: DurableStorageLike,
-    private readonly cryptography: ContinuationCryptography
+    private readonly cryptography: ContinuationCryptography,
+    private readonly capabilitySource: ContinuationCapabilitySource = defaultContinuationCapabilitySource
   ) {}
+
+  async createReserved(
+    input: CreateReservedContinuationInput
+  ): Promise<ReservedContinuationCreationResult | undefined> {
+    if (
+      !/^[A-Za-z0-9_-]{22}$/u.test(input.saveId) ||
+      !CREATION_OPERATION_PATTERN.test(input.operationId) ||
+      !validLifetime(input.createdAt, input.expiresAt)
+    ) {
+      throw new Error('Reserved continuation creation input is invalid');
+    }
+    assertClock(input.requestedAt);
+    if (input.requestedAt < input.createdAt) {
+      throw new Error('Continuation clock precedes creation');
+    }
+    validateAuthoritySnapshot(input.snapshot);
+    activeRequester(input.snapshot, input.requesterSessionId);
+    if (!validSourceBuild(input.sourceBuild)) {
+      throw new Error('Continuation source build is invalid');
+    }
+    const [operationDigest, requestDigest] = await Promise.all([
+      this.cryptography.digest(encoder.encode(input.operationId)),
+      digestCreationRequest(input, this.cryptography),
+    ]);
+    if (
+      !DIGEST_PATTERN.test(operationDigest) ||
+      !DIGEST_PATTERN.test(requestDigest)
+    ) {
+      throw new Error('Continuation creation identity is invalid');
+    }
+    const initial = await this.inspectReservedCreation(
+      input.saveId,
+      operationDigest,
+      requestDigest,
+      input.requestedAt
+    );
+    if (initial.state === 'expired') return undefined;
+    if (initial.state === 'existing') {
+      return {
+        created: false,
+        receipt: await this.openCreationReceipt(
+          initial.receipt,
+          input.operationId
+        ),
+      };
+    }
+    if (input.requestedAt >= input.expiresAt) return undefined;
+    const prepared = await prepareReservedCreation(
+      input,
+      operationDigest,
+      requestDigest,
+      this.cryptography,
+      this.capabilitySource
+    );
+    const decision = await this.storage.transaction(async (transaction) => {
+      const [rawRecord, rawReceipt] = await Promise.all([
+        transaction.get<unknown>(CONTINUATION_STORAGE_KEY),
+        transaction.get<unknown>(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY),
+      ]);
+      const pair = readStoredCreationPair(
+        rawRecord,
+        rawReceipt,
+        this.cryptography
+      );
+      if (!pair) {
+        await transaction.put({
+          [CONTINUATION_STORAGE_KEY]: prepared.record,
+          [CONTINUATION_CREATION_RECEIPT_STORAGE_KEY]: prepared.storedReceipt,
+        });
+        await transaction.setAlarm(input.expiresAt);
+        return { state: 'created' as const };
+      }
+      assertCreationPairIdentity(
+        pair,
+        input.saveId,
+        operationDigest,
+        requestDigest,
+        this.cryptography
+      );
+      if (input.requestedAt < pair.record.createdAt) {
+        throw new Error('Continuation clock precedes creation');
+      }
+      if (input.requestedAt >= pair.record.expiresAt) {
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
+        await transaction.deleteAlarm();
+        return { state: 'expired' as const };
+      }
+      if ((await transaction.getAlarm()) !== pair.record.expiresAt) {
+        await transaction.setAlarm(pair.record.expiresAt);
+      }
+      return { state: 'existing' as const, receipt: pair.receipt };
+    });
+    if (decision.state === 'expired') return undefined;
+    if (decision.state === 'created') {
+      return { created: true, receipt: prepared.receipt };
+    }
+    return {
+      created: false,
+      receipt: await this.openCreationReceipt(
+        decision.receipt,
+        input.operationId
+      ),
+    };
+  }
+
+  async recoverReservedCreation(
+    input: RecoverReservedContinuationInput
+  ): Promise<ContinuationCreationReceipt | undefined> {
+    if (
+      !/^[A-Za-z0-9_-]{22}$/u.test(input.saveId) ||
+      !CREATION_OPERATION_PATTERN.test(input.operationId)
+    ) {
+      return undefined;
+    }
+    assertClock(input.requestedAt);
+    const operationDigest = await this.cryptography.digest(
+      encoder.encode(input.operationId)
+    );
+    if (!DIGEST_PATTERN.test(operationDigest)) {
+      throw new Error('Continuation creation identity is invalid');
+    }
+    const inspected = await this.inspectReservedCreation(
+      input.saveId,
+      operationDigest,
+      undefined,
+      input.requestedAt
+    ).catch((error: unknown) => {
+      if (error instanceof ContinuationCollisionError) return undefined;
+      throw error;
+    });
+    if (!inspected) return undefined;
+    return inspected.state === 'existing'
+      ? this.openCreationReceipt(inspected.receipt, input.operationId)
+      : undefined;
+  }
+
+  private async inspectReservedCreation(
+    saveId: string,
+    operationDigest: string,
+    requestDigest: string | undefined,
+    requestedAt: number
+  ): Promise<
+    | { readonly state: 'vacant' | 'expired' }
+    | {
+        readonly state: 'existing';
+        readonly receipt: StoredContinuationCreationReceipt;
+      }
+  > {
+    return this.storage.transaction(async (transaction) => {
+      const [rawRecord, rawReceipt] = await Promise.all([
+        transaction.get<unknown>(CONTINUATION_STORAGE_KEY),
+        transaction.get<unknown>(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY),
+      ]);
+      const pair = readStoredCreationPair(
+        rawRecord,
+        rawReceipt,
+        this.cryptography
+      );
+      if (!pair) return { state: 'vacant' as const };
+      assertCreationPairIdentity(
+        pair,
+        saveId,
+        operationDigest,
+        requestDigest,
+        this.cryptography
+      );
+      if (requestedAt < pair.record.createdAt) {
+        throw new Error('Continuation clock precedes creation');
+      }
+      if (requestedAt >= pair.record.expiresAt) {
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
+        await transaction.deleteAlarm();
+        return { state: 'expired' as const };
+      }
+      if ((await transaction.getAlarm()) !== pair.record.expiresAt) {
+        await transaction.setAlarm(pair.record.expiresAt);
+      }
+      return { state: 'existing' as const, receipt: pair.receipt };
+    });
+  }
+
+  private async openCreationReceipt(
+    receipt: StoredContinuationCreationReceipt,
+    operationId: string
+  ): Promise<ContinuationCreationReceipt> {
+    const bytes = await this.cryptography.open(
+      receipt.sealedResult,
+      creationEncryptionContext(receipt)
+    );
+    return readCreationReceipt(bytes, receipt, operationId, this.cryptography);
+  }
 
   async create(
     input: CreateContinuationInput
@@ -842,7 +1387,10 @@ export class DurableContinuationCustody {
         throw new Error('Continuation clock precedes creation');
       }
       if (now >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return undefined;
       }
@@ -899,7 +1447,10 @@ export class DurableContinuationCustody {
         throw new Error('Continuation clock precedes creation');
       }
       if (input.reservedAt >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return undefined;
       }
@@ -1006,7 +1557,10 @@ export class DurableContinuationCustody {
         throw new Error('Continuation clock precedes creation');
       }
       if (input.reservedAt >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return undefined;
       }
@@ -1117,7 +1671,10 @@ export class DurableContinuationCustody {
         throw new Error('Continuation clock precedes creation');
       }
       if (input.completedAt >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return undefined;
       }
@@ -1186,7 +1743,10 @@ export class DurableContinuationCustody {
         throw new ContinuationCorruptError();
       }
       if (input.completedAt >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return undefined;
       }
@@ -1253,7 +1813,10 @@ export class DurableContinuationCustody {
         throw new Error('Continuation clock precedes creation');
       }
       if (now >= current.expiresAt) {
-        await transaction.delete([CONTINUATION_STORAGE_KEY]);
+        await transaction.delete([
+          CONTINUATION_STORAGE_KEY,
+          CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+        ]);
         await transaction.deleteAlarm();
         return false;
       }
@@ -1280,6 +1843,7 @@ export class DurableContinuationCustody {
         };
         await transaction.put({ [CONTINUATION_STORAGE_KEY]: revoked });
       }
+      await transaction.delete([CONTINUATION_CREATION_RECEIPT_STORAGE_KEY]);
       if ((await transaction.getAlarm()) !== current.expiresAt) {
         await transaction.setAlarm(current.expiresAt);
       }
@@ -1301,6 +1865,7 @@ export const expireContinuationCustody = async (
   return storage.transaction(async (transaction) => {
     const raw = await transaction.get<unknown>(CONTINUATION_STORAGE_KEY);
     if (raw === undefined) {
+      await transaction.delete([CONTINUATION_CREATION_RECEIPT_STORAGE_KEY]);
       await transaction.deleteAlarm();
       return 'missing';
     }
@@ -1308,7 +1873,10 @@ export const expireContinuationCustody = async (
     try {
       current = readStoredRecord(raw);
     } catch {
-      await transaction.delete([CONTINUATION_STORAGE_KEY]);
+      await transaction.delete([
+        CONTINUATION_STORAGE_KEY,
+        CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+      ]);
       await transaction.deleteAlarm();
       return 'corrupt_removed';
     }
@@ -1319,7 +1887,10 @@ export const expireContinuationCustody = async (
       await transaction.setAlarm(current.expiresAt);
       return 'scheduled';
     }
-    await transaction.delete([CONTINUATION_STORAGE_KEY]);
+    await transaction.delete([
+      CONTINUATION_STORAGE_KEY,
+      CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+    ]);
     await transaction.deleteAlarm();
     return 'expired';
   });

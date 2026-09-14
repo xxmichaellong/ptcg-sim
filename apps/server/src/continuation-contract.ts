@@ -22,8 +22,9 @@ export interface ContinuationEncryptionContext {
   readonly capabilityDigest: string;
   readonly createdAt: number;
   readonly expiresAt: number;
-  readonly purpose?: 'restore_plan' | 'restore_result';
+  readonly purpose?: 'creation_result' | 'restore_plan' | 'restore_result';
   readonly operationDigest?: string;
+  readonly requestDigest?: string;
 }
 
 export interface StoredContinuationCiphertext {

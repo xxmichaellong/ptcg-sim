@@ -1,9 +1,10 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, source-room creation reservation, encrypted
-one-time restore state, pure fork transform, idempotent target-room storage,
-internal restore coordination, and private Durable Object restore runtime
-implemented; create/open/public restore remain deliberately unwired
+exact-retry creation receipt, encrypted one-time restore state, pure fork
+transform, idempotent target-room storage, internal restore coordination, and
+private Durable Object restore runtime implemented; create/open/public restore
+remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -32,12 +33,13 @@ Production activation still requires create coordination, a global quota lease,
 public HTTP contract, deployment secret provisioning, abuse limits, managed
 recovery evidence, and the unchanged-UI integration described below.
 
-The implementation is intentionally a one-record storage adapter, instantiated
-only against the dedicated continuation namespace; passing an active room's
-storage is outside the contract. This keeps room lifecycle deletion, authority
-journals, and hot command storage independent from the longer-lived save
-record. Expiring an unclaimed or original room must not delete a continuation,
-and expiring a continuation must not touch a room.
+The implementation is intentionally a single-save adapter with one primary
+record and, for source-coordinated creation, one small encrypted retry receipt.
+It is instantiated only against the dedicated continuation namespace; passing
+an active room's storage is outside the contract. This keeps room lifecycle
+deletion, authority journals, and hot command storage independent from the
+longer-lived save record. Expiring an unclaimed or original room must not delete
+a continuation, and expiring a continuation must not touch a room.
 
 ## Threat model
 
@@ -56,9 +58,11 @@ The current guarantees are:
 - A capability is `ptcgsave.v1.<locator>.<bearer>`. The locator contains 128
   random bits and exists only to select a dedicated save object; it grants no
   authority. The bearer contains an independent 256 random bits.
-- Storage retains only the public locator and SHA-256 capability digest, never
-  the raw capability. Digest comparison is length-aware and constant-work with
-  respect to the compared strings.
+- Plaintext storage retains only the public locator and SHA-256 capability,
+  operation, and request digests, never the raw capability or operation. The raw
+  bearer exists only inside the purpose-bound encrypted creation receipt needed
+  to recover an ambiguous response. Digest comparison is length-aware and
+  constant-work with respect to the compared strings.
 - Creation validates an invariant-safe multiplayer authority snapshot and
   derives the role binding only from an active player session that currently
   owns its claimed seat. Spectators, disconnected sessions, unclaimed seats,
@@ -88,6 +92,15 @@ The current guarantees are:
   overwritten. An exact create retry succeeds only after the stored record
   authenticates, decrypts, validates, and equals the requested checkpoint;
   every other collision fails closed.
+- Source-coordinated creation binds the reserved locator and stable operation to
+  a digest of the complete creation request. It atomically writes the encrypted
+  checkpoint, encrypted bearer receipt, and alarm. A storage-transaction retry
+  reuses one prepared capability/ciphertext pair; an ambiguous committed retry
+  decrypts and returns the original bearer without regenerating the checkpoint.
+  After source compaction, the named save object can recover that same receipt
+  from the locator plus operation alone. Another locator, operation, or complete
+  request fails closed. The receipt remains available across restore so delayed
+  create responses converge, but an authenticated revocation deletes it.
 - A separate source-room ledger authorizes only an active, currently claimed
   multiplayer player against the exact canonical authority frontier. It stores
   a domain-separated digest of the stable create operation, a non-secret save
@@ -119,12 +132,13 @@ The current guarantees are:
   processing deletes malformed records rather than attempting recovery or
   returning plaintext.
 - The real `PtcgContinuation` alarm path survives object eviction, reschedules
-  an early delivery at the exact record expiry, and deletes an expired record
-  plus alarm. Cleanup deliberately does not require a decrypt key, so missing
-  key configuration cannot extend retention. No edge path is routed to this
-  namespace. Its exact internal restore RPC loads cryptography lazily and fails
-  closed when the secret binding is absent; create/open/revoke RPCs remain
-  absent.
+  an early delivery at the exact record expiry, and deletes the primary record,
+  optional creation receipt, and alarm. Orphan receipt metadata is also removed
+  when the primary record is absent or corrupt. Cleanup deliberately does not
+  require a decrypt key, so missing key configuration cannot extend retention.
+  No edge path is routed to this namespace. Its exact internal restore RPC loads
+  cryptography lazily and fails closed when the secret binding is absent;
+  create/open/revoke RPCs remain absent.
 
 The bearer model does not protect a capability after the player intentionally
 or accidentally shares it with a clipboard manager, extension, device, or
@@ -135,14 +149,24 @@ quotas, platform controls, monitoring, and incident response.
 
 ## Stored formats
 
-Each dedicated object has exactly one `continuation:record` entry and one alarm.
-An active `ptcgsim-continuation-record-v1` contains:
+Each dedicated object has one `continuation:record` entry, an optional
+`continuation:creation-receipt` companion, and one alarm. An active
+`ptcgsim-continuation-record-v1` contains:
 
 - `state: active`;
 - save locator and SHA-256 capability digest;
 - integer creation and expiry times;
 - `ptcgsim-continuation-cipher-v1` metadata: AES-256-GCM, key ID, 96-bit nonce,
   ciphertext/tag, and bounded plaintext byte length.
+
+The exact `ptcgsim-continuation-creation-receipt-v1` companion authenticates the
+same locator, capability digest, creation/expiry, a stable-operation digest, and
+a digest of the complete reserved request. Its purpose-bound ciphertext holds
+only the exact `ptcgsim-continuation-creation-result-v1` locator, operation,
+bearer, and lifetime returned to the source coordinator. It is never written by
+the lower-level caller-supplied-capability test adapter. It survives the primary
+record's restoring/completed transitions, is deleted by active revocation, and
+is always removed with expiry or corrupt-primary cleanup.
 
 The same exact record format moves through two encrypted restore states without
 extending its original expiry:
@@ -318,6 +342,13 @@ rollback, ambiguous committed reservation/completion recovery, completion
 compaction, conservative completed-reference accounting, expiry pruning, and
 fail-closed policy/ledger/frontier validation.
 
+The encrypted creation-receipt suite proves atomic checkpoint/receipt/alarm
+creation, complete-request digest binding, no plaintext bearer/operation/state,
+exact retry without fresh entropy, post-compaction receipt recovery,
+transaction-retry stability, ambiguous committed recovery, occupied/incomplete
+locator refusal, ciphertext tamper rejection, retention through one-time
+restore, revocation erasure, and primary/orphan expiry cleanup.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -348,11 +379,11 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- source-room private creation RPC/coordinator, encrypted exact-retry bearer
-  recovery in the save object, global quota leasing, request/body limits, and
-  independent rate limits; the stable source operation, active-player
-  authorization, exact-snapshot reservation, and bounded per-player/per-room
-  count model are implemented but remain unwired;
+- source-room private creation RPC/coordinator, global quota leasing,
+  request/body limits, and independent rate limits; the stable source operation,
+  active-player authorization, exact-snapshot reservation, bounded
+  per-player/per-room count model, and save-object encrypted exact-retry bearer
+  recovery are implemented but remain unwired;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration
