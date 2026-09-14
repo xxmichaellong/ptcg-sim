@@ -46,8 +46,8 @@ interface FreshCredential {
 const boundedCapability = (value: string): boolean =>
   value.length >= 32 && value.length <= 512;
 
-const boundedDigest = (value: string): boolean =>
-  value.length >= 32 && value.length <= 128;
+const validDigest = (value: string): boolean =>
+  /^[A-Za-z0-9_-]{43}$/u.test(value);
 
 const authorizationDigests = (
   snapshot: RoomAuthoritySnapshot
@@ -92,7 +92,7 @@ const nextFreshCredential = async (
     const raw = next();
     if (!boundedCapability(raw) || usedRaw.has(raw)) continue;
     const digest = await cryptoSource.digestCapability(raw);
-    if (!boundedDigest(digest) || usedDigests.has(digest)) continue;
+    if (!validDigest(digest) || usedDigests.has(digest)) continue;
     usedRaw.add(raw);
     usedDigests.add(digest);
     return { raw, digest };

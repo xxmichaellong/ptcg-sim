@@ -17,7 +17,25 @@ import {
   isSameOriginBrowserRequest,
 } from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
-import { expireContinuationCustody } from './continuation-custody.js';
+import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
+import {
+  DurableContinuationCustody,
+  expireContinuationCustody,
+} from './continuation-custody.js';
+import { prepareContinuationFork } from './continuation-fork.js';
+import {
+  ContinuationRestoreCoordinationError,
+  coordinateContinuationRestore,
+  type ContinuationRestoreTargetAcknowledgement,
+} from './continuation-restore.js';
+import {
+  readContinuationRestoreRpcInput,
+  type ContinuationRestoreRpcResult,
+} from './continuation-rpc.js';
+import {
+  initializeContinuationTarget,
+  validateContinuationTargetPlan,
+} from './continuation-target.js';
 import { initializeNewRoom } from './create-room.js';
 import {
   DurableRoomSnapshotStore,
@@ -45,6 +63,8 @@ import {
 
 interface Env {
   readonly BUILD_ID: string;
+  /** Secret binding, deliberately absent from checked-in production config. */
+  readonly CONTINUATION_KEYRING?: string;
   readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
@@ -142,13 +162,61 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
 };
 
 /**
- * Dedicated long-lived custody namespace. It intentionally exposes no create,
- * open, revoke, fetch, or restore entrypoint yet; only bounded alarm cleanup is
- * active until the source-room quota and one-time restore protocols exist.
+ * Dedicated long-lived custody namespace. Its restore method is reachable only
+ * through an internal Durable Object binding; no edge route selects this object.
+ * Create/open/revoke stay closed until source-room authorization and quotas exist.
  */
 export class PtcgContinuation extends DurableObject<Env> {
+  private readonly authoritySource = new WebCryptoAuthoritySource();
+  private custodyPromise: Promise<DurableContinuationCustody> | undefined;
+
+  async restore(value: unknown): Promise<ContinuationRestoreRpcResult> {
+    const input = readContinuationRestoreRpcInput(value, this.ctx.id.name);
+    if (!input) return undefined;
+    const custody = await this.custody();
+    return coordinateContinuationRestore(input, {
+      save: {
+        reserveRestore: (reserveInput) =>
+          custody.reserveRestore(reserveInput, async (checkpoint) => ({
+            targetRoomCode: roomCode(),
+            fork: await prepareContinuationFork(
+              checkpoint,
+              this.authoritySource,
+              reserveInput.reservedAt
+            ),
+          })),
+        completeRestore: (completeInput) =>
+          custody.completeRestore(completeInput),
+      },
+      target: {
+        initializeRestoreTarget: async (plan) => {
+          const acknowledgement = await this.env.PTCG_ROOM.getByName(
+            plan.targetRoomCode
+          ).initializeContinuation(plan);
+          if (!acknowledgement) {
+            throw new ContinuationRestoreCoordinationError(
+              'Continuation target rejected its reserved plan'
+            );
+          }
+          return acknowledgement;
+        },
+      },
+      clock: { now: Date.now },
+    });
+  }
+
   override async alarm(): Promise<void> {
     await expireContinuationCustody(this.ctx.storage, Date.now());
+  }
+
+  private custody(): Promise<DurableContinuationCustody> {
+    this.custodyPromise ??= createContinuationCryptographyFromConfiguration(
+      this.env.CONTINUATION_KEYRING
+    ).then(
+      (cryptography) =>
+        new DurableContinuationCustody(this.ctx.storage, cryptography)
+    );
+    return this.custodyPromise;
   }
 }
 
@@ -219,6 +287,30 @@ export class PtcgRoom extends DurableObject<Env> {
       };
     }
     return { mode, roomCode: roomCodeValue, credentials: created.credentials };
+  }
+
+  async initializeContinuation(
+    plan: unknown
+  ): Promise<ContinuationRestoreTargetAcknowledgement | undefined> {
+    let validated;
+    try {
+      validated = await validateContinuationTargetPlan(plan, this.cryptoSource);
+    } catch {
+      return undefined;
+    }
+    if (validated.targetRoomCode !== this.ctx.id.name) return undefined;
+    const result = await initializeContinuationTarget(
+      validated,
+      this.store,
+      this.cryptoSource,
+      validated.targetRoomCode
+    );
+    const snapshot = await this.store.load();
+    if (!snapshot) {
+      throw new Error('Continuation target initialization was not recoverable');
+    }
+    this.runtimePromise = Promise.resolve(this.createRuntime(snapshot));
+    return result;
   }
 
   override async fetch(request: Request): Promise<Response> {

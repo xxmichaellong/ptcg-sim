@@ -148,10 +148,13 @@ missing directory.
 
 The same canonical configuration now declaratively exports two independent
 SQLite Durable Object namespaces: hot `PtcgRoom` authority and long-lived
-`PtcgContinuation` custody. The latter has no edge or object operation surface;
-its real-runtime tests prove only binding/provisioning and key-independent alarm
-reschedule/delete behavior across eviction. Continuation activation remains a
-separate gated change.
+`PtcgContinuation` custody. The latter has no edge route; its exact internal
+restore RPC and the room's target-initialization RPC are exercised with a
+test-only key binding. Real-runtime tests prove binding/provisioning,
+key-independent alarm reschedule/delete, concurrent same-operation convergence,
+strict locator/shape refusal, exact cross-namespace selection, and retry after
+both objects are evicted. Continuation activation remains a separate gated
+change.
 
 Vite still emits hidden source maps because the bundle-provenance gate parses
 them locally. The built entry modules contain no `sourceMappingURL` hint, and

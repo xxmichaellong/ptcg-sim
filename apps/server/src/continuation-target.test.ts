@@ -37,6 +37,11 @@ const reservedAt = 2_000_000_000_000;
 const unclaimedExpiresAt = reservedAt + 15 * 60_000;
 const targetRoomCode = 'BCDEFGHJ2345';
 const roomContinuationOriginStorageKey = 'room:continuation-origin';
+const requesterSeatCapability =
+  'continuation-target-requester-seat-capability-00000001';
+const requesterSeatDigest = 'ppZHI3ix1e8_XCNlOIt_S-226zb4wK_xGVxjQPI0UD4';
+const opponentInvitation = 'continuation-target-opponent-invitation-000000002';
+const opponentInvitationDigest = '6tmPSM5f-mLGXejcVES2IqQ_CZZipYBcLuX4jq7nDkE';
 
 const targetSnapshot = (
   matchId = 'continuation-source-match'
@@ -49,7 +54,7 @@ const targetSnapshot = (
     playerSeatLimit: 2,
     playerIds: [p1, p2],
     seatCapabilityDigests: {
-      [p1]: 'a'.repeat(43),
+      [p1]: requesterSeatDigest,
       [p2]: 'b'.repeat(43),
     },
   });
@@ -65,7 +70,7 @@ const targetSnapshot = (
     admission: {
       ...admission,
       invitations: {
-        ['c'.repeat(43)]: {
+        [opponentInvitationDigest]: {
           role: 'player',
           playerId: p2,
           expiresAt: unclaimedExpiresAt,
@@ -85,10 +90,9 @@ const restorePlan = (snapshot = targetSnapshot()): ContinuationRestorePlan => ({
   requesterPlayerId: p1,
   canonicalStateHash: stableHash(snapshot.state),
   snapshot,
-  requesterSeatCapability:
-    'continuation-target-requester-seat-capability-00000001',
+  requesterSeatCapability,
   opponentInvitation: {
-    invitation: 'continuation-target-opponent-invitation-000000002',
+    invitation: opponentInvitation,
     expiresAt: unclaimedExpiresAt,
   },
 });
@@ -299,7 +303,8 @@ describe('continuation target-room initialization', () => {
       initializeContinuationTarget(
         restorePlan(),
         { initializeContinuationTarget: initializeTarget },
-        digestSource
+        digestSource,
+        targetRoomCode
       )
     ).resolves.toEqual({ created: true, targetRoomCode });
     expect(initializeTarget).toHaveBeenCalledWith(
@@ -309,13 +314,59 @@ describe('continuation target-room initialization', () => {
     );
 
     const invalidDigestStore = vi.fn(async () => true);
+    let digestCalls = 0;
     await expect(
       initializeContinuationTarget(
         restorePlan(),
         { initializeContinuationTarget: invalidDigestStore },
-        { digestCapability: async () => 'short' }
+        {
+          digestCapability: async (value) => {
+            digestCalls += 1;
+            return digestCalls <= 2
+              ? digestSource.digestCapability(value)
+              : 'short';
+          },
+        },
+        targetRoomCode
       )
     ).rejects.toThrow('digest source');
     expect(invalidDigestStore).not.toHaveBeenCalled();
+  });
+
+  it('revalidates the complete plan before invoking target storage', async () => {
+    const digestSource = new WebCryptoAuthoritySource();
+    for (const invalid of [
+      { ...restorePlan(), unexpected: true },
+      { ...restorePlan(), requesterSeatCapability: 'x'.repeat(32) },
+      {
+        ...restorePlan(),
+        opponentInvitation: {
+          ...restorePlan().opponentInvitation,
+          expiresAt: unclaimedExpiresAt + 1,
+        },
+      },
+    ]) {
+      const initializeTarget = vi.fn(async () => true);
+      await expect(
+        initializeContinuationTarget(
+          invalid,
+          { initializeContinuationTarget: initializeTarget },
+          digestSource,
+          targetRoomCode
+        )
+      ).rejects.toThrow('target plan is invalid');
+      expect(initializeTarget).not.toHaveBeenCalled();
+    }
+
+    const wrongSelection = vi.fn(async () => true);
+    await expect(
+      initializeContinuationTarget(
+        restorePlan(),
+        { initializeContinuationTarget: wrongSelection },
+        digestSource,
+        'CDEFGHJK3456'
+      )
+    ).rejects.toThrow('selection does not match');
+    expect(wrongSelection).not.toHaveBeenCalled();
   });
 });

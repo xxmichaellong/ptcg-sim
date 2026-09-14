@@ -162,7 +162,8 @@ const createHarness = async (ttlMs?: number): Promise<RestoreHarness> => {
       return initializeContinuationTarget(
         plan,
         new DurableRoomSnapshotStore(targetStorage),
-        authoritySource
+        authoritySource,
+        plan.targetRoomCode
       );
     },
   };

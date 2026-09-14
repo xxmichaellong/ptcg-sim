@@ -1036,18 +1036,19 @@ route. The first unwired continuation-custody slice now implements the dedicated
 one-record adapter, role-bound high-entropy capability, digest-only AES-GCM
 record, exact bounds/integrity validation, key rotation, and transactional
 create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
-declared through Wrangler `exports`; its key-independent alarm is tested across
-eviction, but it exposes no edge or object operation surface. Phase 7 still
-owns production key provisioning, source-room quotas and authorization RPC,
-internal continuation/room RPC plus reserved-room namespace wiring, operational
-recovery/abuse evidence, and canonical state-import/sidebar integration. The
+declared through Wrangler `exports`; its key-independent alarm and private
+restore RPC are tested across eviction, while no edge route selects it. Phase 7
+still owns production key provisioning, source-room quotas and authorization
+RPC, public HTTP integration, operational recovery/abuse evidence, and
+canonical state-import/sidebar integration. The
 independently tested pure fork transform already preserves the canonical
 state/replay exactly while clearing and rotating all recipient and admission
 authority; the save adapter durably encrypts one immutable plan and its
 completion receipt under the original expiry, the target store atomically
-initializes/retries the exact digest-marked room, and the unwired internal
-coordinator proves convergence across their failure boundaries. See
-`CONTINUATION_CUSTODY.md` for the closed production gates.
+initializes/retries the exact digest-marked room, and the private internal
+coordinator/RPC path proves model and real-runtime convergence across their
+failure and eviction boundaries. See `CONTINUATION_CUSTODY.md` for the closed
+production gates.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

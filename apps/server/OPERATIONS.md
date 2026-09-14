@@ -19,16 +19,21 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
-## Continuation key and namespace boundary (inactive)
+## Continuation key and namespace boundary (edge-inactive)
 
 Wrangler declaratively exports a dedicated SQLite `PtcgContinuation` Durable
 Object and binds it as `PTCG_CONTINUATION`. The edge Worker does not route to
-it, and the class currently exports only its platform alarm handler. Its alarm
-reschedules or deletes bounded continuation records without decrypting them, so
-cleanup remains available even when encryption-key configuration is absent or
-invalid. This inert namespace is not evidence that continuation is enabled.
+it. The class exports its platform alarm plus one exact, locator-bound internal
+restore RPC; `PtcgRoom` exports the corresponding exact target initializer. The
+restore RPC lazily loads its key, reserves inside the save object, selects only
+the plan's room name, and completes only after that room acknowledges the same
+plan. Create/open/revoke and every public continuation route remain absent. Its
+alarm reschedules or deletes bounded continuation records without decrypting
+them, so cleanup remains available even when encryption-key configuration is
+absent or invalid. This private wiring is not evidence that continuation is
+enabled.
 
-Before any future create/open/restore RPC is wired, provision
+Before any public route or source-room create RPC is activated, provision
 `CONTINUATION_KEYRING` as a Worker **secret**, never a plaintext Wrangler
 `vars` value. The exact JSON format is:
 

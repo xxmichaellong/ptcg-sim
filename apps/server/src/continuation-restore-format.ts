@@ -20,6 +20,7 @@ const CONTINUATION_RESTORE_PLAN_FORMAT = 'ptcgsim-continuation-restore-plan-v1';
 const CONTINUATION_RESTORE_RESULT_FORMAT =
   'ptcgsim-continuation-restore-result-v1';
 const RESTORE_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
+const SHA256_DIGEST_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -248,12 +249,17 @@ const validateRestorePlan = async (
   if (
     !requesterSeat ||
     !opponentSeat ||
+    !SHA256_DIGEST_PATTERN.test(requesterDigest) ||
+    !SHA256_DIGEST_PATTERN.test(opponentSeat.claimCapabilityDigest) ||
+    !SHA256_DIGEST_PATTERN.test(opponentInvitationDigest) ||
     !cryptography.equalDigest(
       requesterSeat.claimCapabilityDigest,
       requesterDigest
     ) ||
     requesterSeat.claimCapabilityDigest ===
       opponentSeat.claimCapabilityDigest ||
+    opponentInvitationDigest === requesterSeat.claimCapabilityDigest ||
+    opponentInvitationDigest === opponentSeat.claimCapabilityDigest ||
     !invitation ||
     invitation.role !== 'player' ||
     invitation.playerId !== opponentPlayerId ||

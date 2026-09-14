@@ -1,9 +1,9 @@
 # Server-held continuation custody
 
 Status: storage/cryptography, encrypted one-time restore state, pure fork
-transform, idempotent target-room storage, internal restore coordination model,
-and inert Durable Object runtime implemented; create/open/restore remain
-deliberately unwired
+transform, idempotent target-room storage, internal restore coordination, and
+private Durable Object restore runtime implemented; create/open/public restore
+remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -11,22 +11,24 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-fork.ts`,
 `apps/server/src/continuation-restore-format.ts`,
+`apps/server/src/continuation-rpc.ts`,
 `apps/server/src/continuation-restore.ts`,
-`apps/server/src/continuation-target.ts`, and the inert `PtcgContinuation`
-export in `apps/server/src/worker.ts`
+`apps/server/src/continuation-target.ts`, and the private `PtcgContinuation` /
+`PtcgRoom` RPCs in `apps/server/src/worker.ts`
 
 ## Purpose and release boundary
 
 This slice establishes the durable custody boundary for canonical multiplayer
-continuations without making continuation reachable from an HTTP route, object
-RPC, socket message, client package, or UI control. A dedicated
+continuations without making continuation reachable from an HTTP route, socket
+message, client package, or UI control. A dedicated
 `PtcgContinuation` SQLite Durable Object namespace is now declared through
-Wrangler's current `exports` lifecycle, but it exposes only platform alarm
-cleanup. It does not change the live room namespace or the default/v2 route
+Wrangler's current `exports` lifecycle. It exposes one exact internal restore
+RPC, and `PtcgRoom` exposes its exact target initializer, but no edge handler
+selects the continuation namespace. It does not change the default/v2 route
 behavior. Production activation still requires the source-room authorization
-and quota transaction, internal object RPC/runtime orchestration wiring,
-deployment secret provisioning, abuse limits, managed recovery evidence, and
-the unchanged-UI integration described below.
+and quota transaction, public HTTP contract, deployment secret provisioning,
+abuse limits, managed recovery evidence, and the unchanged-UI integration
+described below.
 
 The implementation is intentionally a one-record storage adapter, instantiated
 only against the dedicated continuation namespace; passing an active room's
@@ -103,7 +105,9 @@ The current guarantees are:
   an early delivery at the exact record expiry, and deletes an expired record
   plus alarm. Cleanup deliberately does not require a decrypt key, so missing
   key configuration cannot extend retention. No edge path is routed to this
-  namespace and the class exports no create/open/revoke/restore RPC.
+  namespace. Its exact internal restore RPC loads cryptography lazily and fails
+  closed when the secret binding is absent; create/open/revoke RPCs remain
+  absent.
 
 The bearer model does not protect a capability after the player intentionally
 or accidentally shares it with a clipboard manager, extension, device, or
@@ -231,11 +235,15 @@ credentials are returned and the inaccessible target remains governed by its
 unclaimed-room alarm. The coordinator intentionally does not compensate by
 deleting or selecting a replacement room.
 
-This is a persistence-backed in-memory object model, not a live Worker call
-path. The save-side transitions still do not call another object or expose an
-RPC. Production confidence still requires exact internal RPC codecs, namespace
-selection by the reserved room code, and workerd/managed-preview exercises for
-eviction, transport ambiguity, deadline cleanup, and deployment rollback.
+The same loop is now wired as one private `PtcgContinuation.restore()` RPC. Its
+exact two-field codec binds the capability locator to the named continuation
+object before key loading. The save object generates and durably reserves the
+plan, selects `PTCG_ROOM.getByName(plan.targetRoomCode)`, and calls the room's
+generic-rejection target RPC before completing locally. The room independently
+revalidates the exact plan, both returned credential digests, authority shape,
+and its own named-object identity before storage. Production confidence still
+requires managed-preview exercises for transport ambiguity, deadline cleanup,
+key rotation, abuse behavior, and deployment rollback.
 
 The target storage half is now implemented independently. It validates the
 zero-version multiplayer/unclaimed snapshot, empty session/projection state,
@@ -249,9 +257,9 @@ An exact retry must match that digest, the byte-deterministic snapshot, complete
 frontier, empty journal state, lifecycle, and marker. It returns the existing
 room and repairs the alarm. A normal occupied room, another restore, partial
 write, malformed marker, changed snapshot, changed lifetime, or journal activity
-fails closed. The wrapper does not select a Durable Object or expose credentials;
-the future target-port adapter must select exactly `plan.targetRoomCode` and
-call this initializer before completing the save record.
+fails closed. The wrapper also requires its selected room code to equal
+`plan.targetRoomCode`. The private runtime adapter supplies the target Durable
+Object's own name and returns only created/recovered plus that room code.
 
 ## Verification implemented in this slice
 
@@ -296,6 +304,14 @@ bearer/operation exclusion; mismatched acknowledgement/receipt refusal; invalid
 clock refusal; target-deadline refusal; and the no-credential, alarm-bounded
 orphan outcome when original custody expires during target work.
 
+The workerd suite now executes the exact internal RPC across real
+`PtcgContinuation` and `PtcgRoom` namespaces with a deterministic test-only key
+binding. It proves concurrent same-operation convergence, exact canonical state
+in the selected room, encrypted completed custody, digest-only target origin,
+generic malformed/wrong-locator refusal before storage, rejection of malformed
+room plans, and exact receipt/storage recovery after both objects are evicted.
+The existing HTTP assertion continues to prove that no edge route reaches it.
+
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
@@ -306,11 +322,11 @@ and attached to the draft PR/release evidence:
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
-- exact internal continuation/room RPC codecs, reserved-room namespace adapter,
-  and the real-runtime/managed-preview cross-object crash matrix; the save-side
-  state machine, idempotent target initializer, pure canonical transform,
-  internal orchestration loop, credential/identity rotation, and model
-  convergence tests are implemented but intentionally have no runtime caller;
+- managed-preview cross-object transport/deadline/eviction/rollback exercises;
+  the exact private RPC codecs, reserved-room namespace adapter, save-side state
+  machine, idempotent target initializer, pure transform, internal orchestration
+  loop, credential/identity rotation, model crash matrix, and workerd
+  concurrency/eviction path are implemented without an edge caller;
 - delete/revoke and restore HTTP contracts with same-origin/no-store controls,
   generic external errors, telemetry redaction, and no capability logging;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,

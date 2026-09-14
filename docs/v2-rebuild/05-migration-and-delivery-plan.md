@@ -697,19 +697,18 @@ implements the threat/storage contract, high-entropy role-bound capability,
 digest-only encrypted one-record storage, strict format/size/integrity checks,
 key rotation, bounded retention, exact retry recovery, revocation, and expiry.
 Its dedicated SQLite Durable Object binding/export and key-independent alarm
-are implemented and real-runtime tested without an edge or object operation
-surface. The pure target-room transform now preserves exact canonical
+are implemented and real-runtime tested without an edge route. The pure
+target-room transform now preserves exact canonical
 state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
 the original expiry. Production key provisioning, the source-room quota
-transaction, internal RPC/runtime orchestration wiring, routes/UI, and managed
-recovery/abuse gates remain closed. The target store's atomic digest-marked
-initializer and exact ambiguous-commit recovery plus the internal cross-object
-coordination/crash model are implemented but unwired; exact RPC codecs,
-reserved-room namespace selection, and real-runtime evidence remain, as tracked
-in `CONTINUATION_CUSTODY.md`.
+transaction, public routes/UI, and managed recovery/abuse gates remain closed.
+The target store's atomic digest-marked initializer, internal cross-object
+coordination/crash model, exact private RPC codecs, reserved-room namespace
+selection, concurrent retry, and post-eviction recovery are implemented without
+an edge caller, as tracked in `CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
 `/import?key=` share links; the isolated converter remains test-only.
 

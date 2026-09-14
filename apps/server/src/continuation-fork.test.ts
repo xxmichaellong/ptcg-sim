@@ -56,7 +56,7 @@ const digest = (capability: string): string => {
     value ^= character.charCodeAt(0);
     value = Math.imul(value, 16_777_619) >>> 0;
   }
-  return value.toString(16).padStart(8, '0').repeat(8);
+  return value.toString(16).padStart(8, '0').repeat(6).slice(0, 43);
 };
 
 const commandContext = (): CommandContext => {
