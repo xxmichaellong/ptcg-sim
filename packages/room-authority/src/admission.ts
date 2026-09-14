@@ -1245,8 +1245,17 @@ export const redeemRoomAdmissionTicket = async (
     return rejection(current, 'invalid_capability');
   }
 
+  // The resume bearer the session is bound to. When the ticket carries a
+  // digest, the check above proved the request supplied the matching bearer,
+  // and that is the one used. When it carries none -- only a short-lived
+  // pre-checkpoint ticket restored from storage -- the server mints the
+  // bearer itself. It must never adopt a client-supplied one there: with no
+  // digest to check it against, "use what the client sent" would let the
+  // redeemer of a stale ticket choose the credential its session resumes with.
   const resumeCapability =
-    request.resumeCapability ?? dependencies.crypto.nextResumeCapability();
+    ticket.resumeCapabilityDigest !== undefined && request.resumeCapability
+      ? request.resumeCapability
+      : dependencies.crypto.nextResumeCapability();
   return admitAuthorizedSession(
     current,
     ticket.role === 'player'

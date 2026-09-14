@@ -5,6 +5,7 @@ import {
   createRoomAdmissionState,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
+  redeemRoomAdmissionTicket,
   type RoomInvitationCrypto,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
@@ -207,6 +208,78 @@ describe('admission credential guards', () => {
     expect(ticket.accepted).toBe(false);
     if (ticket.accepted) return;
     expect(ticket.code).toBe('invalid_capability');
+  });
+
+  /**
+   * A ticket's resume digest is optional in the type only so that short-lived
+   * pre-checkpoint tickets can still be loaded from storage, and such a ticket
+   * legitimately redeems with a server-minted resume bearer. What redemption
+   * must never do is adopt a *client-supplied* bearer in that case: with no
+   * digest to check it against, "use what the client sent" let the redeemer
+   * of a stale ticket choose the credential its own session resumes with.
+   */
+  it('mints the resume bearer itself when a ticket carries no digest', async () => {
+    const { deps } = dependencies();
+    const issued = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: seatTwoToken, requestedRole: 'player' },
+      10_000,
+      deps
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+    const minted = await issueRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Guest',
+        requestedRole: 'player',
+      },
+      20_000,
+      deps
+    );
+    expect(minted.accepted).toBe(true);
+    if (!minted.accepted) return;
+
+    // Strip the digest, as a restored pre-checkpoint ticket would lack it.
+    const ticketDigest = digest(minted.admissionTicket);
+    const stored = minted.snapshot.admission!.tickets[ticketDigest]!;
+    const { resumeCapabilityDigest: _unbound, ...bare } = stored;
+    const restored = {
+      ...minted.snapshot,
+      admission: {
+        ...minted.snapshot.admission!,
+        tickets: {
+          ...minted.snapshot.admission!.tickets,
+          [ticketDigest]: bare,
+        },
+      },
+    };
+
+    const redeemed = await redeemRoomAdmissionTicket(
+      restored,
+      {
+        admissionTicket: minted.admissionTicket,
+        displayName: 'Guest',
+        requestedRole: 'player',
+        // The bearer an attacker would like the session to be resumable with.
+        resumeCapability: 'attacker-chosen-resume-000000000000',
+      },
+      30_000,
+      deps
+    );
+    expect(redeemed.accepted).toBe(true);
+    if (!redeemed.accepted) return;
+    // The session resumes with a server-minted bearer, not the one supplied.
+    expect(redeemed.resumeCapability).not.toBe(
+      'attacker-chosen-resume-000000000000'
+    );
+    expect(redeemed.session.resumeCapabilityDigest).toBe(
+      digest(redeemed.resumeCapability)
+    );
+    expect(redeemed.session.resumeCapabilityDigest).not.toBe(
+      digest('attacker-chosen-resume-000000000000')
+    );
   });
 
   it('accepts that same invitation while the seat is still free', async () => {
