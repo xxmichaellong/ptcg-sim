@@ -698,9 +698,13 @@ digest-only encrypted one-record storage, strict format/size/integrity checks,
 key rotation, bounded retention, exact retry recovery, revocation, and expiry.
 Its dedicated SQLite Durable Object binding/export and key-independent alarm
 are implemented and real-runtime tested without an edge or object operation
-surface. Production key provisioning, the source-room quota transaction,
-one-time cross-object restore state machine, routes/UI, and managed
-recovery/abuse gates remain closed as tracked in `CONTINUATION_CUSTODY.md`.
+surface. The pure target-room transform now preserves exact canonical
+state/replay while rotating all session, projection, idempotency, ticket, and
+admission authority and returning only the requester's seat master plus an
+ordinary opponent invitation. Production key provisioning, the source-room
+quota transaction, one-time cross-object restore state machine and idempotent
+target initializer, routes/UI, and managed recovery/abuse gates remain closed
+as tracked in `CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
 `/import?key=` share links; the isolated converter remains test-only.
 

@@ -1,13 +1,14 @@
 # Server-held continuation custody
 
-Status: storage/cryptography plus inert Durable Object runtime implemented;
-create/open/restore remain deliberately unwired
+Status: storage/cryptography, pure fork transform, and inert Durable Object
+runtime implemented; create/open/restore remain deliberately unwired
 
 Decision owner: ADR-012
 
 Implementation: `apps/server/src/continuation-custody.ts`,
-`apps/server/src/continuation-configuration.ts`, and the inert
-`PtcgContinuation` export in `apps/server/src/worker.ts`
+`apps/server/src/continuation-configuration.ts`,
+`apps/server/src/continuation-fork.ts`, and the inert `PtcgContinuation` export
+in `apps/server/src/worker.ts`
 
 ## Purpose and release boundary
 
@@ -130,6 +131,34 @@ by current authority invariants. If later measurements require chunked capture,
 that is a new checkpoint format and migration, not an implicit reinterpretation
 of v1.
 
+## Pure target-room transform
+
+`prepareContinuationFork()` now implements the persistence-independent portion
+of restore. It revalidates the opened checkpoint, role binding, exact canonical
+hash, multiplayer mode, two-seat admission, and invitation lifetime before
+reading entropy. It produces a detached authority snapshot suitable for a new
+room initializer with:
+
+- the exact cloned canonical state and replay history, including the canonical
+  match ID and revision;
+- authority version zero, empty sessions, empty command-outcome history, empty
+  projection aliases, empty tickets, and both seats unclaimed;
+- new digest-only master credentials for both seats that cannot collide with
+  any prior seat, spectator, invitation, ticket, ticket-resume, or
+  session-resume digest;
+- only the requester's fresh seat master in the result; the other seat master
+  is discarded after hashing and a fresh role-bound ordinary invitation is
+  returned instead; and
+- no spectator master in the fork. Spectator admission starts closed rather
+  than copying or returning the source authority.
+
+Credential generation is bounded to 32 attempts per value and rejects short,
+oversized, duplicate-raw, duplicate-digest, prior-authority, and malformed
+digest results. The function neither initializes a target Durable Object nor
+marks a continuation consumed. Those effects remain behind the future
+reservation/completion protocol; calling this pure function alone cannot
+restore or expose a save.
+
 ## Transaction and future restore protocol
 
 This custody slice deliberately supports authenticated open, not restore. A
@@ -146,12 +175,16 @@ retry, crash, or ambiguous cross-object response cannot fork twice:
    with a deterministic target-room ID. Concurrent/different operations fail
    closed; the exact operation may retry.
 3. The target room idempotently initializes a transformed snapshot. The
-   transform preserves canonical game state but rotates match/room identity,
-   projection aliases, sessions, invitations, tickets, resume credentials,
-   command outcome/idempotency history, and all other admission authority. Only
-   a fresh capability for the requesting player's original seat is returned;
-   the other seat is unclaimed and receives a newly issued invitation through
-   the ordinary flow.
+   transform preserves the exact canonical game state, including its canonical
+   match ID, while the new route/room code supplies the rotated room identity.
+   It also rotates projection aliases, sessions, invitations, tickets, resume
+   credentials, command outcome/idempotency history, and all other admission
+   authority. Only a fresh master capability for the requesting player's
+   original seat is returned; the other seat is unclaimed and receives a newly
+   issued ordinary invitation. Spectator admission starts closed rather than
+   copying or returning the source room's spectator master capability; a future
+   authenticated host control may reopen it without weakening the role-bound
+   restore response.
 4. The save object records the completed target and encrypted retry response,
    then consumes/revokes the checkpoint. Repeating the exact operation returns
    the same target/credentials; another operation cannot create a second fork.
@@ -174,6 +207,14 @@ configuration, bounded rotation, and redacted failure. The real Worker suite
 also proves declarative namespace provisioning, absent edge routing,
 post-eviction alarm restoration, exact rescheduling, and deletion.
 
+The fork suite additionally proves exact canonical hash/state/replay and
+fresh-alias projection equivalence for both players and spectators, detached
+source/target object graphs, authority-version reset, removal of every old
+session/projection/idempotency/admission identity, original-seat binding,
+unclaimed seats, ordinary one-use opponent invitation exchange, closed
+spectator admission, policy validation before entropy, old/raw/digest collision
+recovery, and bounded fail-closed entropy exhaustion.
+
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
@@ -184,9 +225,11 @@ and attached to the draft PR/release evidence:
 - source-room authenticated creation RPC plus stable idempotency operation,
   per-player/per-room/global count limits, request/body limits, and independent
   rate limits;
-- transactional one-time restore state machine, canonical transform, new-room
-  initialization, complete credential/identity rotation, exact projection/hash
-  equivalence tests, and crash/ambiguous-response matrix;
+- transactional one-time restore reservation/completion state machine,
+  idempotent new-room initialization, and its cross-object
+  crash/ambiguous-response matrix; the pure canonical transform,
+  credential/identity rotation, and projection/hash equivalence tests are
+  implemented but intentionally have no runtime caller;
 - delete/revoke and restore HTTP contracts with same-origin/no-store controls,
   generic external errors, telemetry redaction, and no capability logging;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,

@@ -135,8 +135,13 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   maximum retention, transactional revocation/expiry, key rotation, and
   ambiguous-create recovery. Its dedicated SQLite Durable Object is now
   declaratively provisioned with key-independent alarm cleanup but no edge or
-  object operation surface. Production key provisioning, quotas, restore state
-  machine, routes, and UI remain deliberately disabled later parity work. Deck
+  object operation surface. A separate pure fork transform preserves exact
+  canonical state/replay while resetting authority version, sessions,
+  idempotency history, aliases, tickets, and admission credentials; only the
+  requester's fresh seat master and an ordinary one-use opponent invitation
+  leave that transform. Production key provisioning, quotas, cross-object
+  restore state machine, routes, and UI remain deliberately disabled later
+  parity work. Deck
   navigation is now active only on the opt-in v2 room route; the default route
   remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
