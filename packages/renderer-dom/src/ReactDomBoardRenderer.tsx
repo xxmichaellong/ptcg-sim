@@ -12,7 +12,7 @@ import {
   type BoardSceneInstallMode,
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
-import { Profiler, StrictMode } from 'react';
+import { StrictMode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { BoardSurface } from './BoardSurface.js';
@@ -207,23 +207,25 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     const scene = this.scene;
     const presentation = this.presentation;
     if (!scene || !presentation) return;
+    let committed = false;
+    const recordCommit = () => {
+      // Strict Mode replays layout effects in development. Count the renderer
+      // commit once while retaining the replay that catches unsafe effects.
+      if (committed) return;
+      committed = true;
+      this.renderCommits += 1;
+      onCommit?.();
+    };
     const surface = (
       <StrictMode>
-        <Profiler
-          id="board-surface"
-          onRender={() => {
-            this.renderCommits += 1;
-          }}
-        >
-          <BoardSurface
-            scene={scene}
-            presentation={presentation}
-            preferences={this.preferences}
-            adapters={this.adapters}
-            onCommit={onCommit}
-            setInteractionCancellation={this.setInteractionCancellation}
-          />
-        </Profiler>
+        <BoardSurface
+          scene={scene}
+          presentation={presentation}
+          preferences={this.preferences}
+          adapters={this.adapters}
+          onCommit={recordCommit}
+          setInteractionCancellation={this.setInteractionCancellation}
+        />
       </StrictMode>
     );
     root.render(surface);

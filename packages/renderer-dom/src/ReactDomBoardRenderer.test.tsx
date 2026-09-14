@@ -230,6 +230,7 @@ describe('React DOM board renderer', () => {
       mounted: true,
       destroyed: false,
       sceneRevision: 3,
+      renderCommits: 3,
       renderedCardIds: [cardId],
       renderedZoneIds: ['zone:p1:hand'],
       renderedMarkerIds: [],
