@@ -193,6 +193,18 @@ describe('private inspection authority resolution', () => {
       context
     );
     if (!blueConsent.accepted) throw new Error(blueConsent.message);
+    // The owner alone has consented. Mutual means both, so the viewer is
+    // still refused here -- checking only the owner's side would let this
+    // through.
+    expect(
+      resolveWireCommand(
+        blueConsent.state,
+        prepared.identities,
+        session(p2),
+        wire,
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'unauthorized' });
     const redResolution = resolveWireCommand(
       blueConsent.state,
       prepared.identities,
@@ -230,6 +242,58 @@ describe('private inspection authority resolution', () => {
         viewerPlayerId: p2,
       },
     });
+  });
+
+  /**
+   * The dangerous direction. A player must not be able to opt *themselves*
+   * into the opponent's private cards: consent is something the owner
+   * grants, and the viewer's own flag only matters once the owner's is set.
+   * Checking the viewer's consent alone would make coaching consent a
+   * self-service disclosure switch.
+   */
+  it('refuses opponent-private inspection when only the viewer has consented', () => {
+    const prepared = fixture();
+    const redResolution = resolveWireCommand(
+      prepared.state,
+      prepared.identities,
+      session(p2),
+      { type: 'SetCoachingConsent', consent: true },
+      DEFAULT_AUTHORITY_POLICY
+    );
+    if (!redResolution.accepted) throw new Error('consent was not resolved');
+    const redOnly = executeCommand(
+      prepared.state,
+      redResolution.command,
+      context
+    );
+    if (!redOnly.accepted) throw new Error(redOnly.message);
+    expect(redOnly.state.players[p2]!.coachingConsent).toBe(true);
+    expect(redOnly.state.players[p1]!.coachingConsent).not.toBe(true);
+
+    for (const wire of [
+      {
+        type: 'BeginZoneInspection',
+        targetPlayerId: p1,
+        zoneId: prepared.prizeId,
+        expectedCardIds: prepared.opponentAliases,
+      },
+      {
+        type: 'BeginCardInspection',
+        cardId: prepared.opponentAliases[0]!,
+        expectedSourceId: prepared.prizeId,
+      },
+    ] as const) {
+      expect(
+        resolveWireCommand(
+          redOnly.state,
+          prepared.identities,
+          session(p2),
+          wire,
+          DEFAULT_AUTHORITY_POLICY
+        ),
+        wire.type
+      ).toEqual({ accepted: false, code: 'unauthorized' });
+    }
   });
 
   it('resolves close only for a viewer named by the active grant', () => {
