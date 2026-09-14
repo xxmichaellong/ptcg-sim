@@ -719,6 +719,10 @@ compaction with a model crash matrix. Exact private room/save create and
 recovery RPCs now prove concurrent same-operation convergence, encrypted
 storage secrecy, exact source-head capture, and post-eviction retry in workerd,
 without adding an edge caller.
+The global quota storage adapter now implements deterministic fixed sharding,
+bounded digest-only exact-retry leases, conservative full-retention accounting,
+atomic expiry/alarm cleanup, and corruption refusal without a singleton request
+path. Namespace/configuration and create-coordinator wiring remain closed.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
 selection, concurrent retry, and post-eviction recovery are implemented without

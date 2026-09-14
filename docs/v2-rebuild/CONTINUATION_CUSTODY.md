@@ -4,8 +4,9 @@ Status: storage/cryptography, source-room creation reservation, encrypted
 exact-retry creation receipt, internal create coordination, private Durable
 Object create/recovery RPCs, encrypted one-time restore state, pure fork
 transform, idempotent target-room storage, internal restore coordination, and
-private Durable Object restore runtime implemented; public create/open/restore
-remain deliberately unwired
+private Durable Object restore runtime implemented; a sharded global quota
+lease adapter is implemented but unwired; public create/open/restore remain
+deliberately unwired
 
 Decision owner: ADR-012
 
@@ -13,6 +14,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-create.ts`,
 `apps/server/src/continuation-fork.ts`,
+`apps/server/src/continuation-quota.ts`,
 `apps/server/src/continuation-restore-format.ts`,
 `apps/server/src/continuation-rpc.ts`,
 `apps/server/src/continuation-restore.ts`,
@@ -118,6 +120,32 @@ The current guarantees are:
   entries are removed transactionally when the ledger is next used. These are
   local count limits, not the still-required global quota or independent request
   rate limits.
+- A separate policy-injected quota adapter partitions global capacity across a
+  deterministic fixed shard set derived from a domain-separated digest of the
+  public source-room code. Each shard is independently bounded to at most 512
+  live entries, so the configured shard capacities sum to a hard global ceiling
+  without sending every create through one global singleton. A hot shard may
+  reject while another shard has room; it can never borrow capacity and exceed
+  the global bound. This follows Cloudflare's current
+  [Durable Object coordination guidance](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/),
+  which explicitly rejects a single global request coordinator.
+- A quota lease is bound to domain-separated source-room and stable-operation
+  digests, the non-secret save locator, and the exact source creation/expiry
+  lifetime. Neither raw room code nor raw operation ID is persisted. Exact
+  retries return the existing lease, locator reuse and changed-operation input
+  fail closed, and every new reservation counts conservatively until the save's
+  hard expiry. A downstream failure can therefore over-count capacity but can
+  never leave a stored save uncounted.
+- Each quota shard transactionally prunes expired leases, repairs its single
+  earliest-expiry alarm, and removes its ledger/alarm when empty. Cleanup is
+  idempotent across transaction retry and ambiguous commit. Malformed,
+  duplicate, or oversized ledgers fail closed rather than releasing capacity.
+  The adapter has no Durable Object class, production shard count/capacity, or
+  create-coordinator call site yet.
+- Shard count or per-shard capacity reductions cannot be treated as ordinary
+  live tuning. A production reduction requires new-create shutdown plus one
+  maximum-retention drain (or verified complete cleanup), because leases in
+  shards made unreachable by a smaller count still represent stored saves.
 - Creation writes the record and 30-day-default alarm in one storage
   transaction. The TTL may be shortened to no less than one minute but cannot
   be extended beyond 30 days by this format. Transaction retry reuses one
@@ -372,6 +400,13 @@ validated credential receipt into a plain frozen DTO, and disposes every
 object-valued save response on success or failure. Focused tests prove wrapper
 disposal and that transport metadata cannot escape in the returned credential.
 
+The quota suite proves deterministic bounded shard selection, strict
+policy/lifetime/input validation, digest-only room/operation storage, exact
+idempotent reservation, save-locator collision refusal, per-shard denial,
+transaction retry/rollback/ambiguous-commit recovery, expired-capacity pruning,
+alarm repair, atomic cleanup rollback, ambiguous cleanup recovery, and
+fail-closed malformed/duplicate/oversized ledger handling.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -406,8 +441,9 @@ and attached to the draft PR/release evidence:
 
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- global quota leasing, request/body limits, and independent rate limits; the
-  private source-room/named-save creation RPCs, stable source operation,
+- quota-shard Durable Object/configuration and create-coordinator wiring,
+  request/body limits, and independent rate limits; the fixed-shard global lease
+  adapter, private source-room/named-save creation RPCs, stable source operation,
   active-player authorization, exact-snapshot reservation, bounded
   per-player/per-room count model, encrypted exact-retry bearer recovery,
   cross-object coordinator/crash matrix, and workerd concurrency/eviction proof

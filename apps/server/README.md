@@ -103,8 +103,12 @@ exact named continuation object to atomically encrypt the checkpoint and retry
 receipt, and compacts the source ledger. Object-valued RPC results are
 schema-normalized and explicitly disposed. Workerd tests prove concurrent
 same-operation convergence and identical recovery after room/save eviction.
-Production key provisioning, global quota/rate enforcement, public contracts,
-and managed operational evidence remain release gates.
+A policy-injected quota adapter separately assigns each source room to a fixed
+digest-derived shard and transactionally holds an exact digest-only lease until
+save expiry. Fixed shard capacities form a hard aggregate ceiling without one
+global Durable Object bottleneck. Its namespace/configuration and coordinator
+wiring, production key provisioning, independent rate enforcement, public
+contracts, and managed operational evidence remain release gates.
 
 ## Seeded authority/storage model
 

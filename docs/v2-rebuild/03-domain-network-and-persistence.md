@@ -1053,7 +1053,12 @@ internal create coordinator now composes both stores and proves convergence for
 pre-commit and ambiguous failures at reservation, save creation, and source
 completion. Its private room-to-save RPC chain additionally proves concurrent
 same-operation convergence and post-eviction recovery in workerd without
-exposing an edge call. The
+exposing an edge call. A policy-injected global quota adapter now maps source
+rooms to deterministic fixed shards and holds exact digest-only leases through
+the save expiry; fixed per-shard capacities provide a hard aggregate ceiling
+without a singleton request bottleneck. Its Durable Object namespace,
+production shard/capacity configuration, and coordinator call site remain
+unwired. The
 independently tested pure fork transform already preserves the canonical
 state/replay exactly while clearing and rotating all recipient and admission
 authority; the save adapter durably encrypts one immutable plan and its
