@@ -27,6 +27,11 @@ import {
 import { establishSession } from './session-handshake.js';
 import { RoomChatService } from './room-chat.js';
 import { sessionPresentationIdentity } from './session-presentation-identity.js';
+import {
+  CLIENT_FRAME_WINDOW_MS,
+  MAX_CLIENT_FRAMES_PER_WINDOW,
+  MAX_PENDING_CLIENT_FRAMES,
+} from './session-hub-limits.js';
 import type {
   BoundedAdmissionTicketIssueResult,
   BoundedRoomInvitationIssueResult,
@@ -39,9 +44,6 @@ import type {
 } from './server-telemetry.js';
 
 const MAX_RECENT_ACCEPTED_COMMAND_PERFORMANCE = 32;
-export const MAX_PENDING_CLIENT_FRAMES = 64;
-export const MAX_CLIENT_FRAMES_PER_WINDOW = 240;
-export const CLIENT_FRAME_WINDOW_MS = 60_000;
 
 export interface AcceptedCommandPerformanceObservation {
   readonly endRevision: number;

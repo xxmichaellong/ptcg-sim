@@ -16,12 +16,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { NOOP_SERVER_TELEMETRY } from './server-telemetry.js';
+import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 import {
   MAX_CLIENT_FRAMES_PER_WINDOW,
   MAX_PENDING_CLIENT_FRAMES,
-  RoomSessionHub,
-  type RuntimeConnection,
-} from './session-hub.js';
+} from './session-hub-limits.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
