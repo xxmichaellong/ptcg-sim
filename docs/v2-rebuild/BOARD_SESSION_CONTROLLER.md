@@ -423,8 +423,8 @@ only while a solo room has a single human driving both sides. That is enforced
 durably rather than inferred. A solo room is created with a persisted
 `playerSeatLimit` of 1 (`create-room.ts`); the admission path refuses a second
 seat claim once that ceiling is reached (`canClaimPlayerSeat` in
-`admission.ts`); the snapshot invariants reject any solo snapshot holding more
-than one player session or a ceiling other than 1; and
+`admission.ts`); the snapshot invariants reject multiple active player
+identities, more than one durably claimed seat, or a ceiling other than 1; and
 `assertAuthorityTransactionTransition` forbids changing either the mode or the
 ceiling after creation. Live connection count is never consulted, because
 connection count must never infer permission (see the durable player-seat

@@ -18,6 +18,7 @@ import {
   type RoomInvitationCrypto,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import { MAX_ROOM_SPECTATOR_SESSIONS } from './limits.js';
 import { appendReplayHistory, createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -1280,6 +1281,133 @@ describe('room capability admission', () => {
     expect(second.session.id).not.toBe(first.session.id);
     expect(second.snapshot.authorityVersion).toBe(2);
     expect(storage.transactions).toHaveLength(2);
+  });
+
+  it('bounds retained spectators while preserving resume and released capacity', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    let snapshot = createSnapshot();
+    const admitted: Array<{
+      readonly sessionId: string;
+      readonly resumeCapability: string;
+    }> = [];
+
+    for (let index = 0; index < MAX_ROOM_SPECTATOR_SESSIONS; index += 1) {
+      const result = await admitRoomSession(
+        snapshot,
+        { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+        deps
+      );
+      if (!result.accepted) throw new Error(result.code);
+      admitted.push({
+        sessionId: result.session.id,
+        resumeCapability: result.resumeCapability,
+      });
+      snapshot = result.snapshot;
+    }
+
+    const full = await admitRoomSession(
+      snapshot,
+      { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+      deps
+    );
+    expect(full).toEqual({
+      accepted: false,
+      code: 'room_full',
+      snapshot,
+    });
+    expect(storage.transactions).toHaveLength(MAX_ROOM_SPECTATOR_SESSIONS);
+
+    const first = admitted[0]!;
+    const resumed = await admitRoomSession(
+      snapshot,
+      { type: 'Resume', resumeCapability: first.resumeCapability },
+      deps
+    );
+    expect(resumed).toMatchObject({
+      accepted: true,
+      session: { id: first.sessionId },
+    });
+    if (!resumed.accepted) return;
+    expect(Object.keys(resumed.snapshot.sessions)).toHaveLength(
+      MAX_ROOM_SPECTATOR_SESSIONS
+    );
+
+    const ticket = await issueRoomAdmissionTicket(
+      resumed.snapshot,
+      {
+        capability: spectatorToken,
+        displayName: 'Waiting viewer',
+        requestedRole: 'spectator',
+      },
+      10_000,
+      deps
+    );
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const rejectedTicket = await redeemRoomAdmissionTicket(
+      ticket.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        resumeCapability: ticket.resumeCapability,
+        displayName: 'Waiting viewer',
+        requestedRole: 'spectator',
+      },
+      10_001,
+      deps
+    );
+    expect(rejectedTicket).toEqual({
+      accepted: false,
+      code: 'room_full',
+      snapshot: ticket.snapshot,
+    });
+
+    const left = await leaveRoomSession(
+      ticket.snapshot,
+      first.sessionId,
+      storage
+    );
+    if (!left.accepted) throw new Error(left.code);
+    const admittedTicket = await redeemRoomAdmissionTicket(
+      left.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        resumeCapability: ticket.resumeCapability,
+        displayName: 'Waiting viewer',
+        requestedRole: 'spectator',
+      },
+      10_002,
+      deps
+    );
+    expect(admittedTicket).toMatchObject({
+      accepted: true,
+      session: { viewer: { kind: 'spectator' } },
+    });
+    if (!admittedTicket.accepted) return;
+    expect(Object.keys(admittedTicket.snapshot.sessions)).toHaveLength(
+      MAX_ROOM_SPECTATOR_SESSIONS
+    );
+    expect(collectAuthoritySnapshotProblems(admittedTicket.snapshot)).toEqual(
+      []
+    );
+
+    const overflowId = 'overflow-spectator-session';
+    const overflow = {
+      ...admittedTicket.snapshot,
+      sessions: {
+        ...admittedTicket.snapshot.sessions,
+        [overflowId]: {
+          id: overflowId,
+          viewer: { kind: 'spectator' as const },
+          active: true,
+          nextClientSequence: 1,
+          recentOutcomes: [],
+        },
+      },
+    };
+    expect(collectAuthoritySnapshotProblems(overflow)).toContain(
+      'authority exceeds its spectator-session limit'
+    );
   });
 
   it('binds solo admission to one durably claimed player seat without blocking spectators or resume', async () => {

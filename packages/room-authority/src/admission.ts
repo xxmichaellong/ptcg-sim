@@ -7,6 +7,7 @@ import {
 
 import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import { MAX_ROOM_SPECTATOR_SESSIONS } from './limits.js';
 import {
   MAX_OUTSTANDING_ADMISSION_TICKETS,
   MAX_OUTSTANDING_ROOM_INVITATIONS,
@@ -109,6 +110,7 @@ export type AdmissionResult =
         | 'invalid_request'
         | 'invalid_capability'
         | 'seat_unavailable'
+        | 'room_full'
         | 'room_not_ready';
       readonly snapshot: RoomAuthoritySnapshot;
     };
@@ -762,6 +764,15 @@ const admitAuthorizedSession = async (
   if (!current.admission) return rejection(current, 'room_not_ready');
   if (!validBoundedCapability(authorized.resumeCapability)) {
     throw new Error('Resume capability source returned an invalid token');
+  }
+
+  if (
+    authorized.role === 'spectator' &&
+    Object.values(current.sessions).filter(
+      (session) => session.viewer.kind === 'spectator'
+    ).length >= MAX_ROOM_SPECTATOR_SESSIONS
+  ) {
+    return rejection(current, 'room_full');
   }
 
   const claimedPlayerId =

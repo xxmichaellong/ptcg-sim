@@ -19,6 +19,12 @@ the private pair can therefore resume an already-committed session after a lost
 Welcome without making the consumed ticket reusable. Raw invitation, ticket, seat,
 spectator, and resume credentials never enter canonical state.
 
+The room retains at most 32 spectator sessions across connected and
+reconnecting states. Final admission enforces that durable ceiling atomically
+and returns `room_full`; explicit leave or reconnect expiry releases capacity.
+This separately bounds recipient projection and publication fan-out even when
+the spectator master capability is deliberately reused.
+
 A player admission changes canonical display-name metadata without inventing a
 game command or revision. The same admission transaction projects the resulting
 view for every active peer and persists any new opaque identities before the

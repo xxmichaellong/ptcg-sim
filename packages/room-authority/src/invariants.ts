@@ -10,6 +10,7 @@ import {
 import { SESSION_RECONNECT_GRACE_MS } from '@ptcgsim/protocol';
 
 import { resolveViewCard, viewerIdentityKey } from './identity-registry.js';
+import { MAX_ROOM_SPECTATOR_SESSIONS } from './limits.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   MAX_OUTSTANDING_ADMISSION_TICKETS,
@@ -463,6 +464,7 @@ const collectAuthoritySnapshotProblemsInternal = (
   }
 
   const activePlayerSessions = new Set<string>();
+  let spectatorSessionCount = 0;
   for (const [key, session] of Object.entries(snapshot.sessions)) {
     if (key !== session.id) problems.push(`session key ${key} mismatches ID`);
     if (
@@ -512,6 +514,8 @@ const collectAuthoritySnapshotProblemsInternal = (
         }
         activePlayerSessions.add(session.viewer.playerId);
       }
+    } else {
+      spectatorSessionCount += 1;
     }
     const commandIds = new Set<string>();
     for (const outcome of session.recentOutcomes) {
@@ -535,6 +539,9 @@ const collectAuthoritySnapshotProblemsInternal = (
     problems.push(
       'solo authority cannot retain multiple active player sessions'
     );
+  }
+  if (spectatorSessionCount > MAX_ROOM_SPECTATOR_SESSIONS) {
+    problems.push('authority exceeds its spectator-session limit');
   }
 
   if (snapshot.admission) {
