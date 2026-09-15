@@ -7,8 +7,9 @@ transform, idempotent target-room storage, internal restore coordination, and
 private Durable Object restore runtime implemented; sharded global quota
 configuration, namespace, coordination, and runtime are implemented with no
 production policy; strict public create/restore protocol and HTTP handler
-contracts are implemented but have no edge route or limiter binding;
-open/revoke remain deliberately unwired
+contracts, default-off edge routing, and independent anonymous limiter bindings
+are implemented; the production activation token remains absent and open/revoke
+remain deliberately unwired
 
 Decision owner: ADR-012
 
@@ -16,6 +17,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-configuration.ts`,
 `apps/server/src/continuation-create.ts`,
 `apps/server/src/continuation-creation-http.ts`,
+`apps/server/src/continuation-http-activation.ts`,
 `apps/server/src/continuation-fork.ts`,
 `apps/server/src/continuation-quota-configuration.ts`,
 `apps/server/src/continuation-quota.ts`,
@@ -32,19 +34,20 @@ schemas in `packages/protocol/src/{schemas,ingress}.ts`, and the private
 ## Purpose and release boundary
 
 This slice establishes the durable custody boundary for canonical multiplayer
-continuations without making continuation reachable from an HTTP route, socket
-message, client package, or UI control. A dedicated
+continuations without making continuation reachable in the production-default
+configuration, socket protocol, client package, or UI control. A dedicated
 `PtcgContinuation` SQLite Durable Object namespace is now declared through
 Wrangler's current `exports` lifecycle. The source room now exposes one exact
 private create RPC, the named save object exposes exact create/recovery and
 restore RPCs, and the target room exposes its exact initializer. Strict edge
-handler modules now define the future browser contract, but `worker.ts` does not
-import or route them and Wrangler has no continuation rate-limit binding. No
-socket message, client package, or UI control can call the operations. This does
-not change the default/v2 route behavior. Production activation still requires
-an explicitly provisioned keyring and quota capacity policy, wired independent
-abuse limits, managed recovery evidence, and the unchanged-UI integration
-described below.
+handlers are now routed only when `CONTINUATION_HTTP_ACTIVATION` equals one
+exact versioned opt-in value. That binding is absent from checked-in production
+configuration, so both exact paths fall through to the ordinary `404` route.
+Two separate 30-request/60-second rate-limit bindings are declared but receive
+no traffic while the gate is closed. No socket message, client package, or UI
+control can call the operations. Production activation still requires an
+explicitly provisioned keyring and quota capacity policy, managed recovery and
+abuse evidence, and the unchanged-UI integration described below.
 
 The implementation is intentionally a single-save adapter with one primary
 record and, for source-coordinated creation, one small encrypted retry receipt.
@@ -197,10 +200,10 @@ The current guarantees are:
   optional creation receipt, and alarm. Orphan receipt metadata is also removed
   when the primary record is absent or corrupt. Cleanup deliberately does not
   require a decrypt key, so missing key configuration cannot extend retention.
-  No edge path is routed to this namespace. Its exact internal create,
-  create-recovery, and restore RPCs bind the requested locator to the selected
-  object name, load cryptography lazily, and fail closed when the secret binding
-  is absent. Open/revoke RPCs remain absent.
+  Only the default-off exact restore edge route can select this namespace. Its
+  exact internal create, create-recovery, and restore RPCs bind the requested
+  locator to the selected object name, load cryptography lazily, and fail closed
+  when the secret binding is absent. Open/revoke RPCs remain absent.
 
 The bearer model does not protect a capability after the player intentionally
 or accidentally shares it with a clipboard manager, extension, device, or
@@ -375,9 +378,10 @@ fails closed. The wrapper also requires its selected room code to equal
 `plan.targetRoomCode`. The private runtime adapter supplies the target Durable
 Object's own name and returns only created/recovered plus that room code.
 
-## Inert public HTTP contracts
+## Default-off public HTTP contracts
 
-The future browser surface is now fixed without activating it:
+The future browser surface is now fixed and routed behind one exact versioned
+activation token:
 
 - `POST /v2/rooms/<roomCode>/continuations` accepts exactly a bounded live
   `resumeToken` and 256-bit base64url `operationId`. The room code is supplied
@@ -408,6 +412,17 @@ metadata, copy validated credentials into protocol DTOs, and dispose the RPC
 wrapper on every success/failure path. Neither bearer appears in a URL, error,
 log call, or rate-limit key.
 
+Wrangler declares independent creation and restore bindings at 30 requests per
+60 seconds. Each hashes the edge-provided client address together with a
+route-specific scope, so raw addresses and credentials are never limiter keys
+and one operation cannot exhaust the other's namespace. These edge limits are
+an approximate abuse-shedding layer, not exact authorization or quota
+accounting: Cloudflare documents that rate-limit bindings are per-location,
+eventually consistent, and permissive on internal failure. The source room's
+transactional authenticated rate/count limits and the quota shards therefore
+remain authoritative. See the
+[Cloudflare rate-limit binding contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
+
 ## Verification implemented in this slice
 
 The focused model suite covers capability entropy/grammar, key validation and
@@ -417,8 +432,9 @@ recovery, storage transaction retry, record/alarm rollback, ciphertext and AAD
 tampering, wrong/missing decrypt keys, key rotation, transactional/idempotent
 revocation, exact expiry, alarm repair, corrupt-record cleanup, exact keyring
 configuration, bounded rotation, and redacted failure. The real Worker suite
-also proves declarative namespace provisioning, absent edge routing,
-post-eviction alarm restoration, exact rescheduling, and deletion.
+also proves declarative namespace provisioning, production-default route
+absence, separately gated route activation, post-eviction alarm restoration,
+exact rescheduling, and deletion.
 
 The fork suite additionally proves exact canonical hash/state/replay and
 fresh-alias projection equivalence for both players and spectators, detached
@@ -481,9 +497,16 @@ locator binding, operation correlation, semantic credential deadlines,
 same-origin/media/query/body guards, mandatory anonymous throttling before
 private work, fail-closed limiter output, generic credential/capacity errors,
 no-store response headers, credential redaction, exact result normalization,
-and outer RPC wrapper disposal. The existing real-Worker assertion continues
-to prove that these tested handler modules are not reachable from any edge
-route.
+and outer RPC wrapper disposal. The ordinary real-Worker configuration proves
+both exact routes remain `404` when the activation binding is absent. A separate
+test-only workerd configuration supplies the exact activation value, keyring,
+and quota policy; it creates from a genuinely admitted player's resume bearer,
+recovers the same receipt, restores once, recovers that same receipt, exchanges
+both rotated target credentials through ordinary admission, refuses a second
+restore operation generically, and exercises the two independent real edge
+budgets. The production-topology browser journey also requests both exact paths
+from the built same-origin application and requires ordinary `404 Not Found`
+responses while the activation binding is absent.
 
 The quota suite proves deterministic bounded shard selection, strict
 policy/lifetime/input validation, digest-only room/operation storage, exact
@@ -523,32 +546,34 @@ objects are evicted.
 Restore proves exact canonical state in the selected room, encrypted completed
 custody, digest-only target origin, generic malformed/wrong-locator refusal
 before storage, rejection of malformed room plans, and exact receipt/storage
-recovery after eviction. The existing HTTP assertion continues to prove that
-no edge route reaches either operation.
+recovery after eviction. The production-default HTTP assertions prove that the
+exact edge routes do not reach either operation without the activation token.
 
 ## Gates still closed
 
 Continuation remains unavailable until all of the following are implemented
 and attached to the draft PR/release evidence:
 
-- production secret provisioning, key-rotation/retirement rehearsal, and
-  wiring the fail-closed keyring loader only into future cryptographic RPCs;
-- production quota-capacity provisioning and wiring/provisioning the independent
-  anonymous create/restore ingress rate bindings; the strict body limits,
-  mandatory limiter ports, authenticated retry-safe
+- production secret provisioning and key-rotation/retirement rehearsal; the
+  fail-closed keyring loader is already limited to private/default-off
+  cryptographic RPC paths;
+- production quota-capacity provisioning, measured/approved anonymous rate
+  policy, and an explicit activation-token rollout; the separate declared
+  bindings, strict body limits, mandatory limiter ports, authenticated retry-safe
   source request budget, fixed-shard global lease namespace/configuration/RPC,
   private source-room/named-save creation RPCs, stable source operation,
   active-player authorization, exact-snapshot reservation, bounded
   per-player/per-room count model, encrypted exact-retry bearer recovery,
   cross-object coordinator/crash matrix, and three-object workerd
-  concurrency/eviction proof are implemented but have no public caller;
+  concurrency/eviction proof are implemented but have no production caller;
 - managed-preview cross-object transport/deadline/eviction/rollback exercises;
   the exact private RPC codecs, reserved-room namespace adapter, save-side state
   machine, idempotent target initializer, pure transform, internal orchestration
   loop, credential/identity rotation, model crash matrix, and workerd
-  concurrency/eviction path are implemented without an edge caller;
-- edge routing for the implemented create/restore contracts plus continuation
-  telemetry redaction/no-capability logging, and delete/revoke HTTP contracts;
+  concurrency/eviction path are implemented without a production edge caller;
+- delete/revoke HTTP contracts and explicit operator-facing continuation
+  lifecycle telemetry; generic edge request telemetry already records only
+  route, outcome, status, and duration with no request body/capability;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
   cleanup and incident runbooks, cost evidence, and security/privacy review;
 - the source-shaped UI wiring and browser journeys, without changing the

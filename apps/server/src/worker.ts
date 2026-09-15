@@ -18,6 +18,7 @@ import {
 } from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
+import { handleContinuationCreationRequest } from './continuation-creation-http.js';
 import {
   coordinateContinuationCreation,
   type ContinuationCreationCoordinationResult,
@@ -30,6 +31,7 @@ import {
   type ReservedContinuationCreationResult,
 } from './continuation-custody.js';
 import { prepareContinuationFork } from './continuation-fork.js';
+import { continuationHttpIsActive } from './continuation-http-activation.js';
 import { readContinuationQuotaConfiguration } from './continuation-quota-configuration.js';
 import {
   DurableContinuationQuotaShard,
@@ -42,6 +44,7 @@ import {
   coordinateContinuationRestore,
   type ContinuationRestoreTargetAcknowledgement,
 } from './continuation-restore.js';
+import { handleContinuationRestoreRequest } from './continuation-restore-http.js';
 import {
   readContinuationSaveCreationRpcInput,
   readContinuationSaveRecoveryRpcInput,
@@ -61,7 +64,11 @@ import {
   RoomAlreadyInitializedError,
 } from './durable-storage.js';
 import { isRoomAlreadyInitialized } from './room-initialization.js';
-import { consumeRoomCreationRateLimit } from './request-rate-limit.js';
+import {
+  consumeContinuationCreationRateLimit,
+  consumeContinuationRestoreRateLimit,
+  consumeRoomCreationRateLimit,
+} from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
 import { DurableRoomRateLimiter } from './room-rate-limit.js';
@@ -86,9 +93,13 @@ interface Env {
   readonly CONTINUATION_KEYRING?: string;
   /** Operator policy binding, deliberately absent from production defaults. */
   readonly CONTINUATION_QUOTA_CONFIGURATION?: string;
+  /** Exact default-off edge activation token, absent from production config. */
+  readonly CONTINUATION_HTTP_ACTIVATION?: string;
   readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
   readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
+  readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
+  readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
 }
 
@@ -183,10 +194,28 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
   return match?.[1];
 };
 
+const continuationCreationRoomCodeFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/continuations$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const continuationRestoreSaveIdFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/continuations\/([A-Za-z0-9_-]{22})\/restore$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
 /**
- * Dedicated long-lived custody namespace. Its methods are reachable only
- * through internal Durable Object bindings; no edge route selects this object.
- * Open/revoke stay closed until their external contracts and activation gates
+ * Dedicated long-lived custody namespace. Only the exact default-off restore
+ * edge route may select it; every operation still crosses a typed internal
+ * Durable Object RPC. Open/revoke stay closed until their external contracts
  * exist. Create is reachable only through the source room's private RPC.
  */
 export class PtcgContinuation extends DurableObject<Env> {
@@ -944,6 +973,39 @@ const worker: ExportedHandler<Env> = {
             )
         )
       );
+    }
+    if (continuationHttpIsActive(env.CONTINUATION_HTTP_ACTIVATION)) {
+      const sourceRoomCode = continuationCreationRoomCodeFromPath(url.pathname);
+      if (sourceRoomCode) {
+        return observeHttp(telemetry, 'continuation_creation', () =>
+          handleContinuationCreationRequest(
+            request,
+            (input) =>
+              env.PTCG_ROOM.getByName(sourceRoomCode).createContinuation(input),
+            () =>
+              consumeContinuationCreationRateLimit(
+                request,
+                env.CONTINUATION_CREATION_RATE_LIMITER
+              )
+          )
+        );
+      }
+      const saveId = continuationRestoreSaveIdFromPath(url.pathname);
+      if (saveId) {
+        return observeHttp(telemetry, 'continuation_restore', () =>
+          handleContinuationRestoreRequest(
+            request,
+            saveId,
+            (selectedSaveId, input) =>
+              env.PTCG_CONTINUATION.getByName(selectedSaveId).restore(input),
+            () =>
+              consumeContinuationRestoreRateLimit(
+                request,
+                env.CONTINUATION_RESTORE_RATE_LIMITER
+              )
+          )
+        );
+      }
     }
     const code = roomCodeFromPath(url.pathname);
     if (request.method === 'GET' && code) {

@@ -14,6 +14,8 @@ export type ServerTelemetrySource = 'edge' | 'room';
 export type ServerHttpRoute =
   | 'health'
   | 'room_creation'
+  | 'continuation_creation'
+  | 'continuation_restore'
   | 'room_invitation'
   | 'admission_ticket'
   | 'socket_upgrade'

@@ -37,6 +37,22 @@
         "period": 60,
       },
     },
+    {
+      "name": "CONTINUATION_CREATION_RATE_LIMITER",
+      "namespace_id": "260903002",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+      "namespace_id": "260903003",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
   ],
   "exports": {
     "PtcgContinuation": {

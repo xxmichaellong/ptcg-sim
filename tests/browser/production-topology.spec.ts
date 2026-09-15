@@ -224,6 +224,36 @@ test('built SPA and room authority share one production-like Worker origin', asy
       }
     );
     const ticket = (await admission.json()) as AdmissionTicket;
+    const continuationCreation = await fetch(
+      `/v2/rooms/${encodeURIComponent(created.roomCode)}/continuations`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeToken: ticket.resumeToken,
+          operationId: 'C'.repeat(43),
+        }),
+        cache: 'no-store',
+        credentials: 'omit',
+        redirect: 'error',
+        referrerPolicy: 'no-referrer',
+      }
+    );
+    const continuationRestore = await fetch(
+      `/v2/continuations/${'A'.repeat(22)}/restore`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+          operationId: 'R'.repeat(43),
+        }),
+        cache: 'no-store',
+        credentials: 'omit',
+        redirect: 'error',
+        referrerPolicy: 'no-referrer',
+      }
+    );
     return {
       creationStatus: creation.status,
       creationType: creation.headers.get('Content-Type'),
@@ -242,6 +272,10 @@ test('built SPA and room authority share one production-like Worker origin', asy
       resumeShape: ticket.resumeToken.length >= 32,
       ticketAndResumeDiffer: ticket.admissionTicket !== ticket.resumeToken,
       ticketIsFresh: ticket.expiresAt > Date.now(),
+      continuationCreationStatus: continuationCreation.status,
+      continuationCreationBody: await continuationCreation.text(),
+      continuationRestoreStatus: continuationRestore.status,
+      continuationRestoreBody: await continuationRestore.text(),
     };
   });
   expect(routeProof).toEqual({
@@ -259,6 +293,10 @@ test('built SPA and room authority share one production-like Worker origin', asy
     resumeShape: true,
     ticketAndResumeDiffer: true,
     ticketIsFresh: true,
+    continuationCreationStatus: 404,
+    continuationCreationBody: 'Not Found',
+    continuationRestoreStatus: 404,
+    continuationRestoreBody: 'Not Found',
   });
   expect(authorityRequests).toEqual([
     '/v2/health',
@@ -268,6 +306,8 @@ test('built SPA and room authority share one production-like Worker origin', asy
     expect.stringMatching(
       /^\/v2\/rooms\/[A-HJ-NP-Z2-9]{12}\/admission-tickets$/u
     ),
+    expect.stringMatching(/^\/v2\/rooms\/[A-HJ-NP-Z2-9]{12}\/continuations$/u),
+    `/v2/continuations/${'A'.repeat(22)}/restore`,
   ]);
   expect(errors).toEqual([]);
 });

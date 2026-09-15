@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   anonymousRequestRateLimitKey,
+  consumeContinuationCreationRateLimit,
+  consumeContinuationRestoreRateLimit,
   consumeRoomCreationRateLimit,
   readRequestRateLimitDecision,
   ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS,
@@ -64,6 +66,25 @@ describe('anonymous edge request rate limits', () => {
     });
     expect(limit).toHaveBeenCalledOnce();
     expect(limit.mock.calls[0]?.[0].key).toMatch(/^[0-9a-f]{64}$/u);
+  });
+
+  it('uses independent anonymous scopes for continuation creation and restore', async () => {
+    const keys: string[] = [];
+    const binding = {
+      limit: vi.fn(async ({ key }: { readonly key: string }) => {
+        keys.push(key);
+        return { success: true };
+      }),
+    };
+    const input = request('203.0.113.42');
+
+    await consumeContinuationCreationRateLimit(input, binding);
+    await consumeContinuationRestoreRateLimit(input, binding);
+
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toMatch(/^[0-9a-f]{64}$/u);
+    expect(keys[1]).toMatch(/^[0-9a-f]{64}$/u);
+    expect(keys[0]).not.toBe(keys[1]);
   });
 
   it('rejects invalid scopes before calling the digest', async () => {

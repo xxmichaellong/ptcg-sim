@@ -2142,7 +2142,23 @@
               "kind": "type-value"
             },
             {
+              "name": "consumeContinuationCreationRateLimit",
+              "kind": "value"
+            },
+            {
+              "name": "consumeContinuationRestoreRateLimit",
+              "kind": "value"
+            },
+            {
               "name": "consumeRoomCreationRateLimit",
+              "kind": "value"
+            },
+            {
+              "name": "CONTINUATION_CREATION_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
+              "name": "CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS",
               "kind": "value"
             },
             {

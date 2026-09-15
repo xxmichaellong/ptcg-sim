@@ -148,17 +148,20 @@ missing directory.
 
 The same canonical configuration now declaratively exports two independent
 SQLite Durable Object namespaces: hot `PtcgRoom` authority and long-lived
-`PtcgContinuation` custody. The latter has no edge route; its exact internal
+`PtcgContinuation` custody. Its exact edge route is default-off; the internal
 restore RPC and the room's target-initialization RPC are exercised with a
 test-only key binding. Real-runtime tests prove binding/provisioning,
 key-independent alarm reschedule/delete, concurrent same-operation convergence,
 strict locator/shape refusal, exact cross-namespace selection, and retry after
-both objects are evicted. Separate unit-level public create/restore contracts
+both objects are evicted. Separate public create/restore contracts
 now prove bounded same-origin JSON, mandatory anonymous limiter ports, generic
 external errors, no-store credentials, exact operation/locator correlation,
-and disposable RPC-result normalization. The Worker deliberately does not
-import those handlers, so the real-runtime absent-route assertion remains
-green. Continuation activation remains a separate gated change.
+and disposable RPC-result normalization. Exact Worker routes are guarded by an
+absent versioned activation binding and two independent declared anonymous rate
+namespaces. The normal workerd configuration proves production-default `404`;
+a separate test-only enabled configuration proves real create/retry/restore,
+both rotated admission handoffs, generic second-operation refusal, and both
+edge budgets. Continuation activation remains a separate gated change.
 
 Vite still emits hidden source maps because the bundle-provenance gate parses
 them locally. The built entry modules contain no `sourceMappingURL` hint, and
@@ -176,6 +179,8 @@ one fresh DOM board or no board as appropriate. It also proves:
 
 - `/v2/health`, room creation, and admission-ticket exchange reach Worker JSON
   routes on that same origin with the hardened no-store boundary;
+- both exact continuation create/restore paths remain ordinary Worker `404`
+  responses while the production-default activation binding is absent;
 - an unknown authority path returns Worker `404 Not Found`, not the SPA shell;
 - `/v2/assets/cardback.png` remains the digest-pinned static PNG and a missing
   browser subresource request does not fall back to HTML;

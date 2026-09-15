@@ -149,7 +149,7 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   internal coordinator now proves reservation/target/completion
   convergence across pre-commit failures and ambiguous committed responses. Its
   exact private continuation/room RPC path now also proves concurrent retry and
-  post-eviction recovery in workerd without adding an edge route. The
+  post-eviction recovery in workerd. The
   source-room RPC now authenticates the existing resume bearer against exactly
   one active claimed multiplayer-player session and passes only its derived
   session ID onward. The source adapter then
@@ -172,13 +172,17 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   test-only policy; production capacity is deliberately absent. The same source
   transaction now applies a separate 12-new-operations-per-player/minute budget
   after authorization and before count quota, while exact committed-operation
-  retries bypass a second charge. Strict but inert public create/restore
+  retries bypass a second charge. Strict default-off public create/restore
   protocol and HTTP handler contracts now add bounded same-origin JSON,
   mandatory anonymous limiter ports, generic credential/capacity errors,
   no-store credential responses, exact operation/locator correlation, and
-  disposable RPC-result normalization. They are not imported by the Worker;
-  production key/quota provisioning, rate-limit bindings, public routes, and UI
-  remain deliberately disabled later parity work.
+  disposable RPC-result normalization. The Worker routes both exact paths only
+  behind an absent versioned activation token, with independent declared
+  30-request/minute anonymous limiter bindings. Separate workerd configurations
+  prove both production-default `404` and a complete enabled create -> exact
+  retry -> restore -> two-player credential handoff. Production key/quota
+  provisioning, activation, managed evidence, and UI remain deliberately
+  disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

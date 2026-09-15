@@ -114,16 +114,41 @@ const tombstone = (createdAt: number, expiresAt: number) => ({
 });
 
 describe('continuation Durable Object runtime', () => {
-  it('is provisioned while its edge route remains absent', async () => {
-    const response = await exports.default.fetch(
+  it('is provisioned while exact production-default edge routes remain absent', async () => {
+    const creation = await exports.default.fetch(
+      new Request('https://play.example/v2/rooms/ABCDEFGH2345/continuations', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://play.example',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeToken: playerOneResumeCapability,
+          operationId: 'C'.repeat(43),
+        }),
+      })
+    );
+    const restore = await exports.default.fetch(
       new Request(
-        'https://play.example/v2/continuations/AAAAAAAAAAAAAAAAAAAAAA'
+        `https://play.example/v2/continuations/${'A'.repeat(22)}/restore`,
+        {
+          method: 'POST',
+          headers: {
+            Origin: 'https://play.example',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+            operationId: 'R'.repeat(43),
+          }),
+        }
       )
     );
 
     expect(env.PTCG_CONTINUATION).toBeDefined();
     expect(env.PTCG_CONTINUATION_QUOTA).toBeDefined();
-    expect(response.status).toBe(404);
+    expect(creation.status).toBe(404);
+    expect(restore.status).toBe(404);
   });
 
   it('reserves only the exact configured quota shard and recovers after eviction', async () => {
