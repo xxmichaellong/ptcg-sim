@@ -31,7 +31,7 @@ import {
   type ReservedContinuationCreationResult,
 } from './continuation-custody.js';
 import { prepareContinuationFork } from './continuation-fork.js';
-import { continuationHttpIsActive } from './continuation-http-activation.js';
+import { continuationHttpMode } from './continuation-http-activation.js';
 import { readContinuationQuotaConfiguration } from './continuation-quota-configuration.js';
 import {
   DurableContinuationQuotaShard,
@@ -227,11 +227,11 @@ const continuationRevocationSaveIdFromPath = (
 };
 
 /**
- * Dedicated long-lived custody namespace. Only the exact default-off restore
- * and revocation edge routes may select it; every operation still crosses a typed internal
- * Durable Object RPC. Revocation shares the same gate and exact named-object
- * binding; open remains closed. Create is reachable only through the source
- * room's private RPC.
+ * Dedicated long-lived custody namespace. Only the gated restore and
+ * revocation edge routes may select it; every operation still crosses a
+ * typed internal Durable Object RPC. The rollout gate can retain revocation
+ * while create/restore are draining; open remains closed. Create is reachable
+ * only through the source room's private RPC.
  */
 export class PtcgContinuation extends DurableObject<Env> {
   private readonly authoritySource = new WebCryptoAuthoritySource();
@@ -1063,7 +1063,10 @@ const worker: ExportedHandler<Env> = {
         )
       );
     }
-    if (continuationHttpIsActive(env.CONTINUATION_HTTP_ACTIVATION)) {
+    const continuationMode = continuationHttpMode(
+      env.CONTINUATION_HTTP_ACTIVATION
+    );
+    if (continuationMode === 'enabled') {
       const sourceRoomCode = continuationCreationRoomCodeFromPath(url.pathname);
       if (sourceRoomCode) {
         return observeHttp(telemetry, 'continuation_creation', () =>
@@ -1095,6 +1098,8 @@ const worker: ExportedHandler<Env> = {
           )
         );
       }
+    }
+    if (continuationMode === 'enabled' || continuationMode === 'draining') {
       const revocationSaveId = continuationRevocationSaveIdFromPath(
         url.pathname
       );

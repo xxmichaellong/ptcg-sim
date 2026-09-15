@@ -179,14 +179,15 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   credential/capacity errors, no-store credential responses, exact
   operation/locator correlation, and disposable RPC-result normalization and
   indistinguishable deletion responses.
-  The Worker routes all three exact paths only
-  behind an absent versioned activation token, with independent declared
+  The Worker routes create/restore only behind the absent exact enabled token
+  and can retain revoke behind the exact drain token, with independent declared
   30-request/minute anonymous limiter bindings. Identifier-free lifecycle
   telemetry reports only operation, outcome, and duration. Separate workerd
-  configurations prove both production-default `404` and a complete enabled
-  create -> exact retry -> restore -> two-player credential handoff -> explicit
-  encrypted-receipt deletion, plus active-save revocation and three independent
-  budgets. An inert same-origin browser adapter and JavaScript-private retry
+  configurations prove production-default `404`, revoke-only drain, and a
+  complete enabled create -> exact retry -> restore -> two-player credential
+  handoff -> explicit encrypted-receipt deletion, plus active-save revocation
+  and three independent budgets. An inert same-origin browser adapter and
+  JavaScript-private retry
   custodian now validate those exact responses, retain stable create/restore
   operations without serialization or storage, expose metadata-only snapshots,
   gate source credential release on a ready player session, and clean up on

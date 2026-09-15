@@ -15,7 +15,10 @@ import { join, resolve } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 import { promisify } from 'node:util';
 
-import { CONTINUATION_HTTP_ACTIVATION_VALUE } from '../apps/server/src/continuation-http-activation.js';
+import {
+  CONTINUATION_HTTP_ACTIVATION_VALUE,
+  CONTINUATION_HTTP_DRAIN_VALUE,
+} from '../apps/server/src/continuation-http-activation.js';
 import { readContinuationKeyringConfiguration } from '../apps/server/src/continuation-keyring-schema.js';
 import { readContinuationQuotaConfiguration } from '../apps/server/src/continuation-quota-configuration.js';
 import {
@@ -24,6 +27,7 @@ import {
   CONTINUATION_PREVIEW_CONFIG_FILE,
   CONTINUATION_PREVIEW_CREDENTIALS_FILE,
   CONTINUATION_PREVIEW_DEACTIVATION_FILE,
+  CONTINUATION_PREVIEW_DRAIN_FILE,
   CONTINUATION_PREVIEW_MANIFEST_FILE,
   assertContinuationPreviewPrivateLocation,
   parseContinuationPreviewArguments,
@@ -177,6 +181,13 @@ describe('continuation managed-preview provisioner', () => {
       true
     );
     assert.equal(result.manifest.quota.maximumActiveLeases, 16);
+    assert.deepEqual(result.manifest.files, {
+      wranglerConfig: CONTINUATION_PREVIEW_CONFIG_FILE,
+      credentials: CONTINUATION_PREVIEW_CREDENTIALS_FILE,
+      activation: CONTINUATION_PREVIEW_ACTIVATION_FILE,
+      drain: CONTINUATION_PREVIEW_DRAIN_FILE,
+      deactivation: CONTINUATION_PREVIEW_DEACTIVATION_FILE,
+    });
     assert.deepEqual(
       result.manifest.rateLimitNamespaces.map(({ namespaceId }) => namespaceId),
       ['260904101', '260904102', '260904103', '260904104']
@@ -189,6 +200,7 @@ describe('continuation managed-preview provisioner', () => {
             CONTINUATION_PREVIEW_MANIFEST_FILE,
             CONTINUATION_PREVIEW_CREDENTIALS_FILE,
             CONTINUATION_PREVIEW_ACTIVATION_FILE,
+            CONTINUATION_PREVIEW_DRAIN_FILE,
             CONTINUATION_PREVIEW_DEACTIVATION_FILE,
           ].map(async (file) => [
             (await stat(join(output, file))).mode & 0o777,
@@ -196,7 +208,7 @@ describe('continuation managed-preview provisioner', () => {
           ])
         )
       ).map(([mode]) => mode),
-      [0o600, 0o600, 0o600, 0o600, 0o600]
+      [0o600, 0o600, 0o600, 0o600, 0o600, 0o600]
     );
     assert.equal((await stat(output)).mode & 0o777, 0o700);
 
@@ -232,6 +244,10 @@ describe('continuation managed-preview provisioner', () => {
     assert.deepEqual(
       await readJson(join(output, CONTINUATION_PREVIEW_ACTIVATION_FILE)),
       { CONTINUATION_HTTP_ACTIVATION: CONTINUATION_HTTP_ACTIVATION_VALUE }
+    );
+    assert.deepEqual(
+      await readJson(join(output, CONTINUATION_PREVIEW_DRAIN_FILE)),
+      { CONTINUATION_HTTP_ACTIVATION: CONTINUATION_HTTP_DRAIN_VALUE }
     );
     assert.deepEqual(
       await readJson(join(output, CONTINUATION_PREVIEW_DEACTIVATION_FILE)),

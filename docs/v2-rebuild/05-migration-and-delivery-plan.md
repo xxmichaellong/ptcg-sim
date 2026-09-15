@@ -759,7 +759,8 @@ Work:
   implemented browser-side strict transport and private stable-retry custodian;
   retain the implemented trusted restored-room installer, source-shaped
   capability handoff, local test-activated browser journey, and fail-closed
-  private preview-bundle generator; follow the checked-in three-phase runbook
+  private preview-bundle generator; follow the checked-in phased runbook,
+  including revoke-only drain before final deactivation,
   and execute the opt-in harness against a separately provisioned managed
   preview when the account, namespace, quota, cost, evidence, and teardown
   owners approve it.

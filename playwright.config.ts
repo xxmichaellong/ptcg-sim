@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './tests/browser',
   testIgnore: [
     'continuation-full-stack.spec.ts',
+    'continuation-drain.spec.ts',
     'continuation-rotation.spec.ts',
     'production-topology.spec.ts',
   ],

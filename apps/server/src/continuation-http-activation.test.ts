@@ -2,14 +2,24 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CONTINUATION_HTTP_ACTIVATION_VALUE,
-  continuationHttpIsActive,
+  CONTINUATION_HTTP_DRAIN_VALUE,
+  continuationHttpMode,
 } from './continuation-http-activation.js';
 
 describe('continuation HTTP activation gate', () => {
-  it('opens only for the exact reviewed opt-in value', () => {
-    expect(continuationHttpIsActive(CONTINUATION_HTTP_ACTIVATION_VALUE)).toBe(
-      true
+  it('enables the complete surface only for the exact opt-in value', () => {
+    expect(continuationHttpMode(CONTINUATION_HTTP_ACTIVATION_VALUE)).toBe(
+      'enabled'
     );
+  });
+
+  it('retains only revocation for the exact drain value', () => {
+    expect(continuationHttpMode(CONTINUATION_HTTP_DRAIN_VALUE)).toBe(
+      'draining'
+    );
+  });
+
+  it('fails closed for absence and every other value', () => {
     for (const value of [
       undefined,
       null,
@@ -17,8 +27,9 @@ describe('continuation HTTP activation gate', () => {
       'true',
       'enabled',
       `${CONTINUATION_HTTP_ACTIVATION_VALUE} `,
+      `${CONTINUATION_HTTP_DRAIN_VALUE} `,
     ]) {
-      expect(continuationHttpIsActive(value)).toBe(false);
+      expect(continuationHttpMode(value)).toBe('closed');
     }
   });
 });

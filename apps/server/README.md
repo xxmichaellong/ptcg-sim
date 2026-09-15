@@ -97,9 +97,10 @@ retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.
 
 Server-held multiplayer continuation now has strict create/restore/revoke HTTP
-contracts and a private client custodian, but the routes are hidden unless one
-exact activation secret is present; that value remains absent from checked-in
-production configuration. The source room authenticates the existing resume
+contracts and a private client custodian. One exact secret value enables the
+full surface; a second exact revoke-only value drains create/restore while
+retaining revocation. Both remain absent from checked-in production
+configuration. The source room authenticates the existing resume
 bearer against exactly one active claimed multiplayer player, reserves its
 exact authority head under bounded room/player counts, calls the exact named
 continuation object to atomically encrypt the checkpoint and retry receipt, and
@@ -116,7 +117,7 @@ documented in
 generated config passes pinned-Wrangler dry-run validation. The private staged
 browser harness also passes an artificial old-key -> rotated-key -> retained-key
 rollback crossing against one persisted local Wrangler store. No managed
-preview, remote key/quota, managed key-rotation crossing,
+preview, managed drain proof, remote key/quota, managed key-rotation crossing,
 load/eviction/rollback exercise, or production activation is claimed; those
 remain release gates.
 

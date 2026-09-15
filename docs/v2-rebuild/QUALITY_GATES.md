@@ -27,8 +27,9 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run check:ci`                           | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
 | `pnpm run test:preview:browser`               | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.     |
 | `pnpm run test:continuation:browser`          | Run the real save/restore UI journey against a locally test-activated or explicitly provisioned managed preview.             |
+| `pnpm run test:continuation:drain:browser`    | Prove create/restore are hidden and revoke remains reachable in the exact local or managed rollout drain state.              |
 | `pnpm run test:continuation:rotation:browser` | Operator-only: capture or consume a private save across explicit managed key/deployment transitions.                         |
-| `pnpm run check:browser`                      | Run the Vite/Wrangler suite, default-off built topology, and test-activated continuation lane in Chromium without retry.     |
+| `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium without retry.         |
 | `pnpm run check:cross-browser`                | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                |
 | `pnpm run check:full`                         | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                             |
 | `pnpm run measure:v2:renderer`                | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.     |
@@ -107,7 +108,7 @@ ensures generators leave tracked files unchanged.
 ## Strict browser harness
 
 `tsconfig.browser.json` inherits the same strict and
-`noUncheckedIndexedAccess` settings as production. It covers all six
+`noUncheckedIndexedAccess` settings as production. It covers all seven
 Playwright configurations, every browser specification/support
 module, and the shared typed renderer-spike window handle. Legacy oracle
 traversal uses literal tuple indices where cardinality is fixed and explicit
@@ -160,11 +161,12 @@ both objects are evicted. Separate public create/restore contracts
 now prove bounded same-origin JSON, mandatory anonymous limiter ports, generic
 external errors, no-store credentials, exact operation/locator correlation,
 and disposable RPC-result normalization. Exact Worker routes are guarded by an
-absent versioned activation binding and two independent declared anonymous rate
-namespaces. The normal workerd configuration proves production-default `404`;
-a separate test-only enabled configuration proves real create/retry/restore,
-both rotated admission handoffs, generic second-operation refusal, and both
-edge budgets. Continuation activation remains a separate gated change.
+absent versioned activation binding and three independent declared anonymous
+rate namespaces. The normal workerd configuration proves production-default
+`404`; separate test-only configurations prove revoke-only drain and real
+enabled create/retry/restore, both rotated admission handoffs, generic
+second-operation refusal, and all three edge budgets. Continuation production
+activation remains a separate gated change.
 
 Vite still emits hidden source maps because the bundle-provenance gate parses
 them locally. The built entry modules contain no `sourceMappingURL` hint, and
@@ -221,6 +223,15 @@ journey against an explicitly provisioned managed preview. The ordinary CI lane
 uses local `workerd`; it does not satisfy the remaining managed-network,
 recovery, key-rotation, or rollout gates.
 
+`playwright.continuation-drain.config.ts` owns a separate local Worker origin
+on port 4177 and injects the exact revoke-only value with deterministic test
+credentials. Its request-level gate requires health to remain available,
+create and restore to return ordinary `404 Not Found`, and a synthetic absent
+capability revocation to return the same no-store `204` as any other revoke.
+Setting `PTCGSIM_CONTINUATION_PREVIEW_URL` suppresses local startup and runs the
+same proof after an operator places a managed preview into drain. It never
+provisions the preview or carries a live bearer.
+
 `playwright.continuation-rotation.config.ts` runs only against that explicit
 origin and holds a capability between invocations in an ignored, mode-`0700`
 directory containing two mode-`0600` files. With output only it captures a
@@ -236,10 +247,12 @@ managed execution remains release evidence.
 `PTCGSIM_PREVIEW_URL=https://... pnpm run test:preview:browser` likewise runs
 the production-topology/default-off journey against an already deployed origin
 without starting local Wrangler. Run it before activation and again after
-deactivation. The private fail-closed provisioner, exact three-phase deployment
-order, evidence boundary, staged rotation/rollback sequence, and teardown limits are documented in
+final deactivation. The private fail-closed provisioner, explicit
+default-off/activation/drain/deactivation order, evidence boundary, staged
+rotation/rollback sequence, and teardown limits are documented in
 [`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).
-None of these browser commands provisions or mutates Cloudflare resources.
+None of these browser commands provisions Workers or changes bindings; the
+journeys do exercise scoped room/continuation state on their selected origin.
 
 ## GitHub Actions contract
 
@@ -257,10 +270,10 @@ Socket.IO player admission. Only after the quality job succeeds does the `chromi
 Playwright's own Chromium with its Linux dependencies and run `check:browser`.
 The first Playwright lane starts Wrangler on port 8787 and Vite on port 4173.
 After it tears both down, the production-topology lane builds Vite and starts
-one default-off Wrangler origin on port 4174. The final continuation lane starts
-one separately test-activated built Wrangler origin on port 4176. Browser
-reports, failure screenshots, and traces are retained as a 14-day artifact.
-Browser binaries are not cached.
+one default-off Wrangler origin on port 4174. The continuation lanes then start
+separately test-enabled and revoke-only built Wrangler origins on ports 4176
+and 4177. Browser reports, failure screenshots, and traces from artifact-enabled
+lanes are retained as a 14-day artifact. Browser binaries are not cached.
 
 In parallel after `quality`, the `cross-browser` job installs Playwright Firefox
 and WebKit and runs only `remote-room-solo-full-stack.spec.ts` once per engine.

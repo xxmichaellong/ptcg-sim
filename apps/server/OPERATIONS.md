@@ -26,10 +26,12 @@ Wrangler declaratively exports dedicated SQLite `PtcgContinuation` and
 and `PTCG_CONTINUATION_QUOTA`. Exact private source-room create, named-save
 create/recovery/restore/revoke, quota-reserve, and target-room initialization
 RPCs are implemented; create acquires its quota lease before encrypted save
-storage. Strict create, restore, and revoke edge routes exist only when
-`CONTINUATION_HTTP_ACTIVATION` equals its exact versioned token. That token is
-absent from checked-in production configuration, so all three paths ordinarily
-return `404`; direct open remains absent. Save alarms clean records without
+storage. Strict create and restore edge routes exist only when
+`CONTINUATION_HTTP_ACTIVATION` equals its exact enabled token. Revoke is
+available for either that token or the separate exact revoke-only drain token.
+Both values are absent from checked-in production configuration, so all three
+paths ordinarily return `404`; direct open remains absent. Save alarms clean
+records without
 decrypting them, and quota alarms clean expired leases without reading capacity
 configuration, so cleanup remains available when key or quota configuration is
 absent or invalid. This default-off wiring is not evidence that continuation is
@@ -125,13 +127,12 @@ Cloudflare's declarative Durable Object `exports` entries are namespace
 lifecycle state, not ordinary version metadata. Do not remove either live
 class/export or attempt to roll back across its provisioning change. Before
 continuation activation, a code rollback leaves both inert declarations intact.
-After saves exist, a pause must stop new create/restore traffic while retaining
-revoke access, both alarm cleanup paths, the last compatible decrypt keyring,
-and the last compatible quota partition interpretation until all records and
-leases expire or are explicitly cleaned up. The current single activation token
-is not that traffic-management control; cohort/edge routing must provide the
-operation-specific pause until a separately reviewed application kill state is
-implemented.
+After saves exist, the exact revoke-only drain state stops new create/restore
+traffic while retaining revoke access, both alarm cleanup paths, the last
+compatible decrypt keyring, and the last compatible quota partition
+interpretation until all records and leases expire or are explicitly cleaned
+up. Removing the activation binding closes revoke too and is therefore a final
+deactivation step, not the initial rollout pause.
 
 ## Structured event contract
 

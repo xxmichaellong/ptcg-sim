@@ -11,7 +11,10 @@ import {
   MAX_CONTINUATION_DECRYPT_KEYS,
   readContinuationKeyringConfiguration,
 } from '../apps/server/src/continuation-keyring-schema.js';
-import { CONTINUATION_HTTP_ACTIVATION_VALUE } from '../apps/server/src/continuation-http-activation.js';
+import {
+  CONTINUATION_HTTP_ACTIVATION_VALUE,
+  CONTINUATION_HTTP_DRAIN_VALUE,
+} from '../apps/server/src/continuation-http-activation.js';
 import {
   CONTINUATION_QUOTA_CONFIGURATION_FORMAT,
   readContinuationQuotaConfiguration,
@@ -27,6 +30,7 @@ export const CONTINUATION_PREVIEW_CREDENTIALS_FILE =
   'continuation-credentials.json';
 export const CONTINUATION_PREVIEW_ACTIVATION_FILE =
   'continuation-activate.json';
+export const CONTINUATION_PREVIEW_DRAIN_FILE = 'continuation-drain.json';
 export const CONTINUATION_PREVIEW_DEACTIVATION_FILE =
   'continuation-deactivate.json';
 export const CONTINUATION_PREVIEW_CONFIG_FILE = 'wrangler.json';
@@ -109,6 +113,7 @@ export interface ContinuationPreviewManifest {
     readonly wranglerConfig: typeof CONTINUATION_PREVIEW_CONFIG_FILE;
     readonly credentials: typeof CONTINUATION_PREVIEW_CREDENTIALS_FILE;
     readonly activation: typeof CONTINUATION_PREVIEW_ACTIVATION_FILE;
+    readonly drain: typeof CONTINUATION_PREVIEW_DRAIN_FILE;
     readonly deactivation: typeof CONTINUATION_PREVIEW_DEACTIVATION_FILE;
   };
   readonly safety: {
@@ -624,6 +629,9 @@ export const prepareContinuationPreview = async (
   const activation = {
     CONTINUATION_HTTP_ACTIVATION: CONTINUATION_HTTP_ACTIVATION_VALUE,
   };
+  const drain = {
+    CONTINUATION_HTTP_ACTIVATION: CONTINUATION_HTTP_DRAIN_VALUE,
+  };
   const deactivation = { CONTINUATION_HTTP_ACTIVATION: null };
   const manifest: ContinuationPreviewManifest = {
     format: CONTINUATION_PREVIEW_BUNDLE_FORMAT,
@@ -642,6 +650,7 @@ export const prepareContinuationPreview = async (
       wranglerConfig: CONTINUATION_PREVIEW_CONFIG_FILE,
       credentials: CONTINUATION_PREVIEW_CREDENTIALS_FILE,
       activation: CONTINUATION_PREVIEW_ACTIVATION_FILE,
+      drain: CONTINUATION_PREVIEW_DRAIN_FILE,
       deactivation: CONTINUATION_PREVIEW_DEACTIVATION_FILE,
     },
     safety: {
@@ -674,6 +683,10 @@ export const prepareContinuationPreview = async (
     await writePrivateFile(
       join(outputDirectory, CONTINUATION_PREVIEW_ACTIVATION_FILE),
       serializeJson(activation)
+    );
+    await writePrivateFile(
+      join(outputDirectory, CONTINUATION_PREVIEW_DRAIN_FILE),
+      serializeJson(drain)
     );
     await writePrivateFile(
       join(outputDirectory, CONTINUATION_PREVIEW_DEACTIVATION_FILE),

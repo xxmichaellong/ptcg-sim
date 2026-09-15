@@ -7,7 +7,8 @@ transform, idempotent target-room storage, internal restore coordination, and
 private Durable Object restore runtime implemented; sharded global quota
 configuration, namespace, coordination, and runtime are implemented with no
 production policy; strict public create/restore/revoke protocol and HTTP handler
-contracts, default-off edge routing, independent anonymous limiter bindings,
+contracts, default-off and revoke-only-drain edge routing, independent
+anonymous limiter bindings,
 identifier-free lifecycle telemetry, and a strict browser transport/private
 retry custodian are implemented; bounded capability-file handoff, source-shaped
 live-room controls, atomic ready-target installation, and a dedicated activated
@@ -49,10 +50,12 @@ configuration or socket protocol. A dedicated
 Wrangler's current `exports` lifecycle. The source room now exposes one exact
 private create RPC, the named save object exposes exact create/recovery,
 restore, and revoke RPCs, and the target room exposes its exact initializer.
-Strict edge handlers are now routed only when `CONTINUATION_HTTP_ACTIVATION`
-equals one exact versioned opt-in value. That binding is absent from checked-in
-production configuration, so all three exact paths fall through to the ordinary
-`404` route. Three separate 30-request/60-second rate-limit bindings are
+Strict create and restore edge handlers are routed only when
+`CONTINUATION_HTTP_ACTIVATION` equals the exact versioned enabled value. The
+exact revoke-only drain value hides those two handlers while retaining revoke.
+Both values are absent from checked-in production configuration, so all three
+exact paths fall through to the ordinary `404` route. Three separate
+30-request/60-second rate-limit bindings are
 declared but receive no traffic while the gate is closed. An app-local browser
 adapter and live multiplayer player controls now implement those exact HTTP
 calls, but remain ineffective against the production-default `404`.
@@ -396,8 +399,8 @@ Object's own name and returns only created/recovered plus that room code.
 
 ## Default-off public HTTP contracts
 
-The future browser surface is now fixed and routed behind one exact versioned
-activation token:
+The future browser surface is now fixed and routed behind exact versioned
+enabled and revoke-only drain states:
 
 - `POST /v2/rooms/<roomCode>/continuations` accepts exactly a bounded live
   `resumeToken` and 256-bit base64url `operationId`. The room code is supplied
@@ -570,8 +573,9 @@ private work, fail-closed limiter output, generic credential/capacity errors,
 no-store response headers, credential redaction, exact result normalization,
 outer RPC wrapper disposal, and indistinguishable idempotent deletion. The
 ordinary real-Worker configuration proves all three exact routes remain `404`
-when the activation binding is absent. A separate
-test-only workerd configuration supplies the exact activation value, keyring,
+when the activation binding is absent. Separate test-only workerd
+configurations prove revoke-only drain routing and supply the exact enabled
+activation value, keyring,
 and quota policy; it creates from a genuinely admitted player's resume bearer,
 recovers the same receipt, restores once, recovers that same receipt, exchanges
 both rotated target credentials through ordinary admission, refuses a second
@@ -598,12 +602,13 @@ is claimed by the local/CI lane.
 
 The fail-closed `prepare:continuation-preview` operator tool now generates an
 ignored, mode-`0600`, independently named Worker config plus separate
-credential, activation, and deactivation inputs. It clones only the reviewed
+credential, activation, drain, and deactivation inputs. It clones only the
+reviewed
 code/assets/Durable Object topology, replaces all four rate-limit namespaces,
 copies no production route/domain, rejects checked-in topology drift, validates
 the exact production key/quota schemas, and can retain prior decrypt keys for a
 rotation bundle. Its generated configuration passes the pinned Wrangler dry
-run locally. The complete three-phase procedure and evidence restrictions are
+run locally. The complete phased procedure and evidence restrictions are
 in
 [`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).
 No Cloudflare resource was created by this work.
@@ -683,7 +688,7 @@ receipt erasure, retry-safe tombstones, generic refusal, and its independent
 budget. Identifier-free continuation lifecycle telemetry reports only bounded
 operation, outcome, and duration facts for create/recover/restore/revoke/alarm
 paths. The production-default HTTP assertions prove that the exact edge routes
-do not reach any operation without the activation token.
+do not reach any operation while the gate is closed.
 
 ## Gates still closed
 

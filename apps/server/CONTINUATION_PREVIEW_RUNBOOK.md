@@ -1,8 +1,8 @@
 # Continuation managed-preview runbook
 
-Status: provisioning tooling, local dry-run, and a three-stage persisted
-key-rotation/rollback rehearsal are implemented. No Cloudflare preview has been
-created and no managed-preview evidence is claimed.
+Status: provisioning tooling, local dry-run, revoke-only rollout drain, and a
+three-stage persisted key-rotation/rollback rehearsal are implemented. No
+Cloudflare preview has been created and no managed-preview evidence is claimed.
 
 This runbook creates an isolated, explicitly activated Worker for continuation
 testing. It never targets `ptcgsim-v2`, never copies routes or domains from the
@@ -12,7 +12,7 @@ evidence ownership have been approved.
 
 ## Why the bundle is private
 
-Run `prepare:continuation-preview` to create five files beneath
+Run `prepare:continuation-preview` to create six files beneath
 `.private/continuation-preview/<rehearsal>/`, which is ignored by Git. The
 directory is mode `0700`; every file is mode `0600`:
 
@@ -22,6 +22,7 @@ directory is mode `0700`; every file is mode `0600`:
 | `manifest.json`                 | Reviewable non-secret target, quota, key-ID, and namespace inventory |
 | `continuation-credentials.json` | AES keyring and quota strings for `wrangler secret bulk`             |
 | `continuation-activate.json`    | The one exact activation token                                       |
+| `continuation-drain.json`       | The exact revoke-only drain token                                    |
 | `continuation-deactivate.json`  | A JSON `null` deletion for only the activation secret                |
 
 The command never calls Cloudflare and never prints a key, key digest, keyring,
@@ -180,10 +181,33 @@ but before it is revoked. In that case, do not publish artifacts or blindly
 retire the key. Record the failure privately and either complete an authorized
 revoke while the routes are active or retain the key and allow alarm cleanup.
 
-## Deactivate and verify
+## Drain create/restore and verify revoke
 
-After the journey has confirmed its save was revoked, delete only the
-activation secret:
+After the journey, replace the enabled token with the revoke-only drain token:
+
+```sh
+corepack pnpm --filter @ptcgsim/server-v2 exec wrangler secret bulk \
+  "$PTCGSIM_PREVIEW_BUNDLE/continuation-drain.json" \
+  --config "$PTCGSIM_PREVIEW_BUNDLE/wrangler.json"
+
+PTCGSIM_CONTINUATION_PREVIEW_URL="$PTCGSIM_MANAGED_PREVIEW_URL" \
+  corepack pnpm run test:continuation:drain:browser -- --project=chromium
+```
+
+The drain gate must observe the exact create and restore routes as ordinary
+`404 Not Found`, the exact revoke route as indistinguishable `204` with
+`no-store`, and health as available. The revocation request uses a public,
+synthetic, well-formed absent capability; it creates no save and discloses no
+live bearer. Keep the drain token, compatible code, keyring, quota partition,
+Durable Object bindings, and alarms available while any save can remain live.
+Clients holding a live capability can still revoke it, while no client can
+create a new save or start a restore.
+
+## Final deactivation and teardown boundary
+
+Only after every save is confirmed revoked or the full 30-day retention window
+and verified alarm cleanup have elapsed, delete the activation secret and prove
+the completely closed surface:
 
 ```sh
 corepack pnpm --filter @ptcgsim/server-v2 exec wrangler secret bulk \
@@ -194,12 +218,11 @@ PTCGSIM_PREVIEW_URL="$PTCGSIM_MANAGED_PREVIEW_URL" \
   corepack pnpm run test:preview:browser -- --project=chromium
 ```
 
-The second production-topology run must again observe all continuation routes
-as `404`. Deactivation does not delete the keyring, quota configuration, Worker,
-or Durable Object namespaces. This is intentional: alarms can finish cleanup,
-and a key must remain available for any unexpired record. The current single
-activation token cannot pause create/restore while retaining revoke; this
-remains a production rollout limitation.
+The production-topology run must again observe all three continuation routes as
+`404`. Deactivation does not delete the keyring, quota configuration, Worker,
+or Durable Object namespaces. Alarm cleanup does not depend on the HTTP gate,
+but the last compatible keyring and quota interpretation remain required until
+record and lease cleanup has been reconciled.
 
 Do not delete the Worker or its Durable Object exports as part of an automatic
 script. Remote teardown is a separate, explicitly approved destructive action
@@ -284,10 +307,11 @@ PTCGSIM_CONTINUATION_ROTATION_INPUT="$PTCGSIM_ROTATION_ROOT/new-key" \
 
 That final pass proves the rollback build can decrypt, restore, and revoke data
 created by the forward build. Redeploy the intended forward build, verify its
-health ID, deactivate, and rerun the production-topology `404` gate. Only then
-remove the now-revoked local handoff files through the approved private-data
-cleanup process. The harness itself never deletes input or changes Cloudflare
-state.
+health ID, enter drain mode, and run the drain gate. After every record and
+lease has been reconciled, perform final deactivation and rerun the
+production-topology `404` gate. Only then remove the now-revoked local handoff
+files through the approved private-data cleanup process. The harness itself
+never deletes input or changes Cloudflare state.
 
 An interrupted transition can leave its input restored but not proven revoked,
 or its output directory empty/incomplete after a remote save was attempted.
@@ -304,7 +328,8 @@ Attach only redacted facts to the draft PR/release record:
   name, preview region/client location, and test command;
 - reviewed quota product and the fact that all rate-limit namespaces were
   distinct, without copying secret configuration;
-- default-off, activated journey, and post-deactivation results;
+- default-off, activated journey, revoke-only drain, and final-deactivation
+  results;
 - safe aggregate platform latency, CPU, memory, storage, alarm, and cost facts;
 - rotation/rollback/eviction outcomes once separately exercised; and
 - teardown owner/status.
