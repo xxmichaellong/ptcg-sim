@@ -188,6 +188,10 @@ const readResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
       sceneZones: spike.scene.zones.length,
       sceneMarkers: spike.scene.markers.length,
       sceneCardIds: spike.scene.cards.map((card) => card.id).sort(),
+      renderableSceneCardIds: spike.scene.cards
+        .filter((card) => card.renderKey !== null)
+        .map((card) => card.id)
+        .sort(),
       sceneZoneIds: spike.scene.zones.map((zone) => zone.id).sort(),
       sceneMarkerIds: spike.scene.markers.map((marker) => marker.id).sort(),
       renderedCardIds: [...diagnostics.renderedCardIds].sort(),
@@ -210,7 +214,7 @@ const readResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
           left.id.localeCompare(right.id)
         ),
         cards: spike.scene.cards
-          .map(({ id: _id, ...card }) => card)
+          .map(({ id: _id, renderKey: _renderKey, ...card }) => card)
           .sort((left, right) =>
             JSON.stringify(left).localeCompare(JSON.stringify(right))
           ),
@@ -293,7 +297,7 @@ const expectHealthyEvidence = (
     rendererDestroyed: false,
     sameRenderer: true,
     diagnosticRevision: evidence.sceneRevision,
-    renderedCards: evidence.sceneCards,
+    renderedCards: evidence.renderableSceneCardIds.length,
     renderedZones: evidence.sceneZones,
     renderedMarkers: evidence.sceneMarkers,
     displayObjects: 0,
@@ -312,7 +316,7 @@ const expectHealthyEvidence = (
     zoneBrowserImages: 0,
     activityRows: 100,
   });
-  expect(evidence.renderedCardIds).toEqual(evidence.sceneCardIds);
+  expect(evidence.renderedCardIds).toEqual(evidence.renderableSceneCardIds);
   expect(evidence.renderedZoneIds).toEqual(evidence.sceneZoneIds);
   expect(evidence.renderedMarkerIds).toEqual(evidence.sceneMarkerIds);
   expect(evidence.zoneCounts).toMatchObject(
@@ -397,13 +401,16 @@ const alignMemorySnapshotPhase = async (
     );
   }
   await page.waitForFunction(() => {
+    const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+    if (!scene) return false;
     const images = [
       ...document.querySelectorAll<HTMLImageElement>(
         '.ptcgsim-board-surface img'
       ),
     ];
     return (
-      images.length === 120 &&
+      images.length ===
+        scene.cards.filter((card) => card.renderKey !== null).length &&
       images.every((image) => image.complete && image.naturalWidth > 0)
     );
   });
@@ -653,7 +660,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   const baselinePresentationPhase = await alignMemorySnapshotPhase(page);
   expect(baselinePresentationPhase).toEqual({
     liveRegionChildren: 1,
-    images: 120,
+    images: 2,
   });
   const baseline = await readResourceEvidence(page, renderer);
   const cdp = await context.newCDPSession(page);

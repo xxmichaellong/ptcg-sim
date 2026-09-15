@@ -377,8 +377,8 @@ the HTML/CSS/asset plus cover update, deck order, stadium update/flip, and
 ability-marker sources. The deny-by-default Chromium fixture measures six
 player cover images and both owner-readable stadium states. It then compares
 all eight states against the live React DOM candidate, including physical
-anchors, dimensions, rotation, one enabled/top-painted scene node per pile,
-disabled covered nodes, and stadium-content alignment. The separately mounted
+anchors, dimensions, rotation, one enabled/top-painted physical node per pile,
+no lower-card DOM nodes, and stadium-content alignment. The separately mounted
 top-owner candidate holds the bottom player and explicit card turn fixed while
 changing only projected stadium ownership; its q2 rotation and lower-edge
 alignment are therefore independent of the measured source result.
@@ -386,8 +386,9 @@ alignment are therefore independent of the measured source result.
 The source's final opponent-readable stadium state can also be compared in one
 isolated paint frame with all six pile covers. The top-owner React candidate
 uses the byte-identical digest-pinned card back for its seven interactive pile
-tops; unrelated and covered card nodes are hidden only for the screenshot. Both
-images and foreground metrics are attached, with the shared 97.5%, three-pixel,
+tops; unrelated nodes are hidden only for the screenshot, while covered logical
+cards have no physical DOM node. Both images and foreground metrics are attached,
+with the shared 97.5%, three-pixel,
 24/255-channel match contract supplementing the eight-state numeric checks.
 
 The same source-runtime gate now clicks the real v1 deck, discard, and lost-zone
@@ -398,7 +399,12 @@ renderer about zone kinds: the three source-defined cover surfaces emit
 React DOM and Pixi unit gates preserve context and drag ownership, suppress card
 selection/preview on a cover, and the native Chromium pointer gate exercises a
 double activation through both renderers without leaking `CardPreviewRequested`.
-Opened-zone cards/markers, exact one-node cover rendering, Pixi geometry,
+The scene retains every covered card for controller and opened-zone validation,
+but assigns no physical render key to lower pile cards. Each closed pile instead
+owns one zone-stable cover key, so top-card replacement reuses the same DOM
+button/image or Pixi sprite/texture binding. The 61-card fixture therefore has
+49 physical card views, and native Chromium proves that no lower pile card node
+or asset allocation exists. Opened-zone cards/markers, Pixi geometry,
 noncanonical or undersized assets, and rotated hit regions remain outside this
 checkpoint.
 

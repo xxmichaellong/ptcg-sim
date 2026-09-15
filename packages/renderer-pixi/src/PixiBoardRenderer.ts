@@ -390,25 +390,29 @@ export class PixiBoardRenderer implements BoardRenderer {
       layers.playmat.addChild(graphic);
     }
 
-    const nextIds = new Set(scene.cards.map((card) => String(card.id)));
-    for (const [id, view] of this.cardViews) {
-      if (nextIds.has(id)) continue;
-      this.cardViews.delete(id);
-      this.textures.release(id);
+    const renderedCards = scene.cards.filter(
+      (card): card is CardSceneNode & { readonly renderKey: string } =>
+        card.renderKey !== null
+    );
+    const nextKeys = new Set(renderedCards.map((card) => card.renderKey));
+    for (const [renderKey, view] of this.cardViews) {
+      if (nextKeys.has(renderKey)) continue;
+      this.cardViews.delete(renderKey);
+      this.textures.release(renderKey);
       view.sprite.removeFromParent();
       view.outline.removeFromParent();
       view.sprite.destroy({ texture: false, textureSource: false });
       view.outline.destroy();
     }
-    for (const descriptor of scene.cards) {
-      const id = String(descriptor.id);
-      let view = this.cardViews.get(id);
+    for (const descriptor of renderedCards) {
+      const renderKey = descriptor.renderKey;
+      let view = this.cardViews.get(renderKey);
       if (!view) {
-        const outline = new Graphics({ label: `target:${id}` });
+        const outline = new Graphics({ label: `target:${renderKey}` });
         outline.eventMode = 'none';
         const sprite = new Sprite({
           texture: this.textures.placeholder,
-          label: id,
+          label: renderKey,
         });
         sprite.anchor.set(0.5);
         sprite.eventMode = 'static';
@@ -460,7 +464,7 @@ export class PixiBoardRenderer implements BoardRenderer {
           }
         });
         view = { sprite, outline, descriptor };
-        this.cardViews.set(id, view);
+        this.cardViews.set(renderKey, view);
         layers.cards.addChild(sprite);
         layers.interaction.addChild(outline);
       } else {
@@ -469,17 +473,17 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.applyCardView(view);
       const expectedUrl = descriptor.imageUrl;
       this.textures.bind(
-        id,
+        renderKey,
         expectedUrl,
         (texture) => {
-          const current = this.cardViews.get(id);
+          const current = this.cardViews.get(renderKey);
           if (!current || current.descriptor.imageUrl !== expectedUrl) return;
           current.sprite.texture = texture;
           current.sprite.tint = 0xffffff;
           this.scheduleRender();
         },
         (error) => {
-          const current = this.cardViews.get(id);
+          const current = this.cardViews.get(renderKey);
           if (!current || current.descriptor.imageUrl !== expectedUrl) return;
           current.sprite.texture = this.textures.placeholder;
           current.sprite.tint = 0x777777;

@@ -508,20 +508,22 @@ export const BoardSurface = ({
           emitIntent={adapters.emitIntent}
         />
       ))}
-      {scene.cards.map((card) => (
-        <CardNode
-          key={card.id}
-          card={card}
-          selected={presentation.selectedCardId === card.id}
-          hovered={presentation.hoveredCardId === card.id}
-          targetable={presentation.targetableCardIds.includes(card.id)}
-          drag={
-            presentation.drag?.cardId === card.id ? presentation.drag : null
-          }
-          emitIntent={adapters.emitIntent}
-          consumeSuppressedClick={consumeSuppressedClick}
-        />
-      ))}
+      {scene.cards
+        .filter((card) => card.renderKey !== null)
+        .map((card) => (
+          <CardNode
+            key={card.renderKey}
+            card={card}
+            selected={presentation.selectedCardId === card.id}
+            hovered={presentation.hoveredCardId === card.id}
+            targetable={presentation.targetableCardIds.includes(card.id)}
+            drag={
+              presentation.drag?.cardId === card.id ? presentation.drag : null
+            }
+            emitIntent={adapters.emitIntent}
+            consumeSuppressedClick={consumeSuppressedClick}
+          />
+        ))}
       {scene.markers.map((marker) => (
         <MarkerNode key={marker.id} marker={marker} />
       ))}

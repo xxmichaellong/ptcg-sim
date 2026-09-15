@@ -78,6 +78,7 @@ const scene = (): BoardScene => ({
       concealed: false,
       label: 'Source card',
       interactive: true,
+      renderKey: `card:${String(sourceId)}`,
     },
     {
       id: targetCardId,
@@ -92,6 +93,7 @@ const scene = (): BoardScene => ({
       concealed: false,
       label: 'Target card',
       interactive: true,
+      renderKey: `card:${String(targetCardId)}`,
     },
   ],
   markers: [],

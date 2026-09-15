@@ -4857,6 +4857,7 @@ describe('renderer-neutral board scene', () => {
       expect(nodes.filter((node) => node?.interactive)).toHaveLength(1);
       expect(nodes[topIndex]).toMatchObject({
         interactive: true,
+        renderKey: `cover:${zone.id}`,
         primaryAction: { kind: 'openZone', zoneId: zone.id },
       });
       expect(nodes[topIndex]!.zIndex).toBe(
@@ -4867,6 +4868,9 @@ describe('renderer-neutral board scene', () => {
           (node) => node.parentId === zone.id && !node.interactive
         )
       ).toHaveLength(zone.cards.length - 1);
+      expect(nodes.filter((node) => node?.renderKey === null)).toHaveLength(
+        zone.cards.length - 1
+      );
       expect(
         nodes.filter((node) => node?.primaryAction !== undefined)
       ).toHaveLength(1);
@@ -4876,6 +4880,51 @@ describe('renderer-neutral board scene', () => {
     expect(
       scene.cards.find((card) => card.parentId === stadium.id)?.primaryAction
     ).toBeUndefined();
+    expect(
+      scene.cards.find((card) => card.parentId === stadium.id)?.renderKey
+    ).toMatch(/^card:/u);
+    expect(scene.cards.filter((card) => card.renderKey !== null)).toHaveLength(
+      49
+    );
+    const renderKeys = scene.cards.flatMap((card) =>
+      card.renderKey === null ? [] : [card.renderKey]
+    );
+    expect(new Set(renderKeys).size).toBe(renderKeys.length);
+    const nextDiscardCards = [
+      ...blueDiscard.cards.slice(1),
+      blueDiscard.cards[0]!,
+    ];
+    const nextScene = createBoardSceneForViewport(
+      {
+        ...view,
+        revision: view.revision + 1,
+        zones: {
+          ...view.zones,
+          [blueDiscard.id]: {
+            ...blueDiscard,
+            cards: nextDiscardCards,
+          },
+        },
+      },
+      { ...options, bottomPlayerId: view.playerOrder[0]! }
+    );
+    expect(
+      nextScene.cards.find((card) => card.id === nextDiscardCards.at(-1)!.id)
+    ).toMatchObject({
+      renderKey: `cover:${blueDiscard.id}`,
+      primaryAction: { kind: 'openZone', zoneId: blueDiscard.id },
+    });
+    expect(
+      nextScene.cards.find((card) => card.id === blueDiscard.cards.at(-1)!.id)
+        ?.renderKey
+    ).toBeNull();
+    expect(
+      new Set(
+        nextScene.cards.flatMap((card) =>
+          card.renderKey === null ? [] : [card.renderKey]
+        )
+      )
+    ).toEqual(new Set(renderKeys));
     expect(
       scene.markers.some((marker) =>
         scene.cards.some(
@@ -5188,6 +5237,18 @@ describe('renderer-neutral board scene', () => {
       ),
     };
     expect(diffBoardScenes(first, actionable)).toMatchObject({
+      updatedCardIds: [knownCardId],
+      unchangedCardIds: [hiddenCardId],
+    });
+    const rekeyed = {
+      ...actionable,
+      cards: actionable.cards.map((card) =>
+        card.id === knownCardId
+          ? { ...card, renderKey: `replacement:${String(card.id)}` }
+          : card
+      ),
+    };
+    expect(diffBoardScenes(actionable, rekeyed)).toMatchObject({
       updatedCardIds: [knownCardId],
       unchangedCardIds: [hiddenCardId],
     });

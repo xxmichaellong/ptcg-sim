@@ -278,7 +278,7 @@ test('opt-in React DOM resize owns real scaled pointer gestures and source bound
   await page.mouse.move(activeX, 300);
   await page.mouse.up();
   await expect(routeSurface).toHaveCount(1);
-  await expect(routeSurface.locator('[data-card-id]')).toHaveCount(61);
+  await expect(routeSurface.locator('[data-card-id]')).toHaveCount(49);
   expect(errors).toEqual([]);
 });
 
@@ -451,7 +451,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
     sceneWidth: 966.4,
     sceneHeight: 720,
     generation: 1,
-    cardCount: 61,
+    cardCount: 49,
     hostCount: 1,
     surfaceCount: 1,
   });
@@ -499,7 +499,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
     outerDpr: 2,
     sceneDpr: 2,
     generation: initial.generation,
-    cardCount: 61,
+    cardCount: 49,
     hostCount: 1,
     surfaceCount: 1,
   });
@@ -518,7 +518,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
     outerDpr: 2,
     sceneDpr: 2,
     generation: initial.generation,
-    cardCount: 61,
+    cardCount: 49,
     hostCount: 1,
     surfaceCount: 1,
   });
@@ -535,7 +535,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
     outerDpr: 2,
     sceneDpr: 2,
     generation: initial.generation,
-    cardCount: 61,
+    cardCount: 49,
     hostCount: 1,
     surfaceCount: 1,
   });
@@ -628,7 +628,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
   const final = await readRouteViewport(page);
   expect(final).toMatchObject({
     generation: initial.generation,
-    cardCount: 61,
+    cardCount: 49,
     hostCount: 1,
     surfaceCount: 1,
   });

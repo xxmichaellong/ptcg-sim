@@ -349,7 +349,9 @@ describe('Pixi board interaction cancellation', () => {
     await Promise.resolve();
     const internals = renderer as unknown as RendererInternals;
     const card = currentScene.cards[0]!;
-    const cardView = internals.cardViews.get(String(card.id))!;
+    if (card.renderKey === null)
+      throw new Error('Missing rendered card fixture');
+    const cardView = internals.cardViews.get(card.renderKey)!;
     expect(cardView.sprite.hitArea).toBeNull();
     expect(cardView.outline.visible).toBe(false);
     renderer.installPresentation({
@@ -394,6 +396,7 @@ describe('Pixi board interaction cancellation', () => {
       destroyed: false,
       sceneRevision: currentScene.revision,
       renderedCardIds: currentScene.cards
+        .filter((candidate) => candidate.renderKey !== null)
         .map((candidate) => candidate.id)
         .sort(),
       renderedZoneIds: currentScene.zones.map((candidate) => candidate.id),
@@ -401,10 +404,12 @@ describe('Pixi board interaction cancellation', () => {
       contextLossListeners: 1,
     });
     expect(renderer.getDiagnostics().displayObjects).toBeGreaterThan(
-      currentScene.cards.length + currentScene.zones.length
+      currentScene.cards.filter((candidate) => candidate.renderKey !== null)
+        .length + currentScene.zones.length
     );
     expect(renderer.getDiagnostics().localTextureBindings).toBe(
-      currentScene.cards.length
+      currentScene.cards.filter((candidate) => candidate.renderKey !== null)
+        .length
     );
 
     expect(() =>
@@ -522,11 +527,20 @@ describe('Pixi board interaction cancellation', () => {
     );
     await Promise.resolve();
     const cover = currentScene.cards.find(
-      (card) => card.primaryAction?.kind === 'openZone'
+      (card) =>
+        card.primaryAction?.kind === 'openZone' &&
+        currentScene.cards.some(
+          (candidate) =>
+            candidate.parentId === card.parentId &&
+            candidate.id !== card.id &&
+            candidate.renderKey === null
+        )
     );
-    if (!cover?.primaryAction) throw new Error('Missing cover card fixture');
+    if (!cover?.primaryAction || cover.renderKey === null) {
+      throw new Error('Missing cover card fixture');
+    }
     const internals = renderer as unknown as RendererInternals;
-    const view = internals.cardViews.get(String(cover.id))!;
+    const view = internals.cardViews.get(cover.renderKey)!;
 
     expect(view.sprite.accessibleHint).toBe('Open zone');
     view.sprite.emit('pointertap', { button: 0, detail: 1 });
@@ -538,6 +552,47 @@ describe('Pixi board interaction cancellation', () => {
       { kind: 'ZoneOpened', zoneId: cover.primaryAction.zoneId },
       { kind: 'CardContextRequested', cardId: cover.id },
     ]);
+
+    const replacement = currentScene.cards.find(
+      (card) =>
+        card.parentId === cover.parentId &&
+        card.id !== cover.id &&
+        card.renderKey === null
+    );
+    if (!replacement) throw new Error('Missing retained pile card fixture');
+    const replacementScene: BoardScene = {
+      ...currentScene,
+      revision: currentScene.revision + 1,
+      cards: currentScene.cards.map((card) => {
+        if (card.id === cover.id) {
+          return {
+            ...card,
+            interactive: false,
+            renderKey: null,
+            primaryAction: undefined,
+          };
+        }
+        if (card.id === replacement.id) {
+          return {
+            ...card,
+            interactive: true,
+            renderKey: cover.renderKey,
+            primaryAction: cover.primaryAction,
+          };
+        }
+        return card;
+      }),
+    };
+    renderer.installScene(replacementScene, []);
+    const stableView = internals.cardViews.get(cover.renderKey)!;
+    expect(stableView).toBe(view);
+    expect(stableView.sprite).toBe(view.sprite);
+    expect(stableView.descriptor.id).toBe(replacement.id);
+    stableView.sprite.emit('rightclick', {});
+    expect(intents.at(-1)).toEqual({
+      kind: 'CardContextRequested',
+      cardId: replacement.id,
+    });
     renderer.destroy();
     await Promise.resolve();
   });
@@ -1262,11 +1317,14 @@ describe('Pixi board interaction cancellation', () => {
     expect(initialLoadCount).toBe(scenes.active.cards.length);
 
     const expectDescriptorConsumption = (candidate: BoardScene): void => {
-      expect(internals.cardViews.size).toBe(candidate.cards.length);
-      for (const descriptor of candidate.cards) {
-        const view = internals.cardViews.get(String(descriptor.id));
+      const renderedCards = candidate.cards.filter(
+        (card) => card.renderKey !== null
+      );
+      expect(internals.cardViews.size).toBe(renderedCards.length);
+      for (const descriptor of renderedCards) {
+        const view = internals.cardViews.get(descriptor.renderKey!);
         if (!view) throw new Error(`Missing Pixi card view ${descriptor.id}`);
-        expect(view.sprite).toBe(initialSprites.get(String(descriptor.id)));
+        expect(view.sprite).toBe(initialSprites.get(descriptor.renderKey!));
         expect(view.descriptor).toBe(descriptor);
         expect(view.sprite.position.x).toBeCloseTo(
           descriptor.bounds.x + descriptor.bounds.width / 2,
@@ -1335,11 +1393,14 @@ describe('Pixi board interaction cancellation', () => {
     };
     internals.layers = layers;
     const descriptor = currentScene.cards[0]!;
+    if (descriptor.renderKey === null) {
+      throw new Error('Missing rendered clear-scene fixture');
+    }
     const sprite = new Sprite({ texture: Texture.WHITE });
     const outline = new Graphics();
     layers.cards.addChild(sprite);
     layers.interaction.addChild(outline);
-    internals.cardViews.set(String(descriptor.id), {
+    internals.cardViews.set(descriptor.renderKey, {
       sprite,
       outline,
       descriptor,
@@ -1348,15 +1409,18 @@ describe('Pixi board interaction cancellation', () => {
     vi.spyOn(internals.textures, 'bind').mockImplementation(() => undefined);
 
     renderer.clearScene();
-    expect(release).toHaveBeenCalledWith(String(descriptor.id));
+    expect(release).toHaveBeenCalledWith(descriptor.renderKey);
     expect(internals.scene).toBeNull();
     expect(internals.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
     expect(internals.cardViews.size).toBe(0);
     expect(layers.cards.children).toHaveLength(0);
 
     renderer.installScene(currentScene, [], 'replace');
-    expect(internals.cardViews.size).toBe(currentScene.cards.length);
-    expect(layers.cards.children).toHaveLength(currentScene.cards.length);
+    const renderedCardCount = currentScene.cards.filter(
+      (card) => card.renderKey !== null
+    ).length;
+    expect(internals.cardViews.size).toBe(renderedCardCount);
+    expect(layers.cards.children).toHaveLength(renderedCardCount);
     renderer.destroy();
   });
 
@@ -1403,6 +1467,7 @@ describe('Pixi board interaction cancellation', () => {
                   ? {
                       ...card,
                       id: 'replacement-visible-card' as typeof card.id,
+                      renderKey: 'card:replacement-visible-card',
                     }
                   : card
               ),
@@ -1415,7 +1480,9 @@ describe('Pixi board interaction cancellation', () => {
       expect(createApplication).toHaveBeenCalledTimes(2);
       expect(internals.recoveryPendingForScene).toBe(false);
       expect(internals.scene).toBe(replacement);
-      expect(internals.cardViews.size).toBe(replacement.cards.length);
+      expect(internals.cardViews.size).toBe(
+        replacement.cards.filter((card) => card.renderKey !== null).length
+      );
       expect(host.querySelector('canvas')?.dataset.revision).toBe(
         String(replacement.revision)
       );

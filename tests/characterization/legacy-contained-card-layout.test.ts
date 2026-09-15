@@ -63,9 +63,12 @@ describe('source-pinned legacy contained-card layout oracle', () => {
     expect(oracle.scope.included).toContain(
       'single-click opening for deck, discard, and lost-zone covers'
     );
-    expect(oracle.scope.excluded).toEqual(
+    expect(oracle.scope.included).toContain(
+      'one stable physical renderer node per closed pile while retaining lower logical scene nodes'
+    );
+    expect(oracle.scope.excluded).not.toEqual(
       expect.arrayContaining([
-        expect.stringContaining('retained covered scene nodes'),
+        expect.stringContaining('physical renderer node'),
       ])
     );
     expect(oracle.scope.excluded).not.toEqual(

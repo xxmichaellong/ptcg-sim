@@ -266,9 +266,17 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
         return [];
       }
       const nodes = scene.cards.filter((card) => card.parentId === zone.id);
+      const renderable = nodes.filter((card) => card.renderKey !== null);
       const interactive = nodes.filter((card) => card.interactive);
-      if (nodes.length === 0 || interactive.length !== 1) {
-        throw new Error(`Expected one interactive pile top for ${zone.id}`);
+      if (
+        nodes.length === 0 ||
+        interactive.length !== 1 ||
+        renderable.length !== 1 ||
+        renderable[0] !== interactive[0]
+      ) {
+        throw new Error(
+          `Expected one interactive physical pile top for ${zone.id}`
+        );
       }
       const top = interactive[0]!;
       return [
@@ -277,7 +285,9 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
             zone.kind === 'stadium'
               ? 'shared-stadium-local'
               : `${zone.side}-${zone.kind}`,
+          zoneId: zone.id,
           cardId: top.id,
+          renderKey: top.renderKey,
           sceneBounds: top.bounds,
           rotationQuarterTurns: top.rotationQuarterTurns,
           nodeCount: nodes.length,
@@ -295,11 +305,16 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
     if (!legacy) throw new Error(`Missing legacy source card ${candidate.key}`);
     expect(candidate.nodeCount).toBeGreaterThan(0);
     expect(candidate.topZIndex).toBe(candidate.maximumZIndex);
+    expect(candidate.renderKey).toBe(
+      candidate.key === 'shared-stadium-local'
+        ? `card:${candidate.cardId}`
+        : `cover:${candidate.zoneId}`
+    );
     const locator = page.locator(`[data-card-id="${candidate.cardId}"]`);
     await expect(locator).toBeEnabled();
     for (const cardId of candidate.nodeIds) {
       if (cardId !== candidate.cardId) {
-        await expect(page.locator(`[data-card-id="${cardId}"]`)).toBeDisabled();
+        await expect(page.locator(`[data-card-id="${cardId}"]`)).toHaveCount(0);
       }
     }
     const actual = await locator.boundingBox();

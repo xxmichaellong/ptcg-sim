@@ -23,7 +23,7 @@ test('the accepted React DOM renderer is the default candidate', async ({
   await page.goto('/');
   await waitForReady(page);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
-  await expect(page.locator('[data-card-id]')).toHaveCount(61);
+  await expect(page.locator('[data-card-id]')).toHaveCount(49);
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(
     await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.rendererKind)
@@ -131,7 +131,7 @@ test('normalized React DOM mounts the shared fixture at characterized board and 
   const errors = collectRuntimeErrors(page);
   await page.goto('/?renderer=dom');
   await waitForReady(page);
-  await expect(page.locator('[data-card-id]')).toHaveCount(61);
+  await expect(page.locator('[data-card-id]')).toHaveCount(49);
   await expect(page.locator('canvas')).toHaveCount(0);
 
   const board = await page.locator('.board-column').boundingBox();
@@ -156,7 +156,7 @@ test('normalized React DOM mounts the shared fixture at characterized board and 
   expect(errors).toEqual([]);
 });
 
-test('raw Pixi renderer creates 61 stable views, handles input, and reconstructs after context loss', async ({
+test('raw Pixi renderer creates 49 stable physical views for the 61-card scene and reconstructs after context loss', async ({
   page,
 }, testInfo) => {
   const errors = collectRuntimeErrors(page);
@@ -164,7 +164,14 @@ test('raw Pixi renderer creates 61 stable views, handles input, and reconstructs
   await waitForReady(page);
   const canvas = page.locator('canvas');
   await expect(canvas).toHaveCount(1);
-  await expect(canvas).toHaveAttribute('data-card-views', '61');
+  await expect(canvas).toHaveAttribute('data-card-views', '49');
+  expect(
+    await page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.()
+          .localTextureBindings
+    )
+  ).toBe(49);
   const firstGeneration = Number(
     await page
       .locator('[data-renderer-status]')
@@ -206,7 +213,14 @@ test('raw Pixi renderer creates 61 stable views, handles input, and reconstructs
     })
     .toBeGreaterThan(firstGeneration);
   await expect(page.locator('canvas')).toHaveCount(1);
-  await expect(page.locator('canvas')).toHaveAttribute('data-card-views', '61');
+  await expect(page.locator('canvas')).toHaveAttribute('data-card-views', '49');
+  expect(
+    await page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.()
+          .localTextureBindings
+    )
+  ).toBe(49);
   await testInfo.attach('pixi-renderer-recovered.png', {
     body: await page.screenshot(),
     contentType: 'image/png',
@@ -225,7 +239,7 @@ test('switching candidates repeatedly leaves exactly one live renderer', async (
     await page.locator('select').selectOption('dom');
     await waitForReady(page);
     await expect(page.locator('canvas')).toHaveCount(0);
-    await expect(page.locator('[data-card-id]')).toHaveCount(61);
+    await expect(page.locator('[data-card-id]')).toHaveCount(49);
     await page.locator('select').selectOption('pixi');
   }
   await waitForReady(page);
@@ -338,7 +352,9 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
               );
             }
             if (
-              mounted.renderedCardIds.length !== spike.scene.cards.length ||
+              mounted.renderedCardIds.length !==
+                spike.scene.cards.filter((card) => card.renderKey !== null)
+                  .length ||
               mounted.renderedZoneIds.length !== spike.scene.zones.length ||
               mounted.renderedMarkerIds.length !== spike.scene.markers.length
             ) {
@@ -908,6 +924,7 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
         return {
           ...source,
           id: `benchmark-card-${index}` as typeof source.id,
+          renderKey: `card:benchmark-card-${index}`,
           interactive: false,
           bounds: {
             ...source.bounds,

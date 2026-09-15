@@ -2,7 +2,8 @@
 
 The default route is an isolated renderer decision harness. It does not replace
 or alter the v1 production client. Use `?renderer=pixi` or `?renderer=dom` to
-mount the same deterministic 61-card scene behind either adapter.
+mount the same deterministic 61-card logical scene and its 49 physical card
+views behind either adapter.
 
 `?room-lobby=1&renderer=dom` mounts the isolated, production-built v2 room
 shell. It preserves the existing Solo, Multiplayer, Deck, and Settings tabs plus

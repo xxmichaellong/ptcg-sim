@@ -68,6 +68,7 @@ const createScene = (revision = 1, x = 10): BoardScene => ({
       concealed: false,
       label: 'Visible card',
       interactive: true,
+      renderKey: `card:${String(cardId)}`,
     },
   ],
   markers: [],
@@ -333,6 +334,7 @@ describe('React DOM board renderer', () => {
       cards: base.cards.map((card) => ({
         ...card,
         parentId: zoneId,
+        renderKey: `cover:${zoneId}`,
         primaryAction: { kind: 'openZone' as const, zoneId },
       })),
     });
@@ -355,6 +357,43 @@ describe('React DOM board renderer', () => {
       { kind: 'ZoneOpened', zoneId },
       { kind: 'CardContextRequested', cardId },
     ]);
+
+    const image = cover.querySelector('img');
+    const replacementId = asViewCardId('replacement-cover-card');
+    act(() =>
+      renderer.installScene(
+        {
+          ...base,
+          revision: 2,
+          zones: base.zones.map((zone) => ({
+            ...zone,
+            id: zoneId,
+            kind: 'deck',
+            surface: 'cover',
+          })),
+          cards: base.cards.map((card) => ({
+            ...card,
+            id: replacementId,
+            parentId: zoneId,
+            renderKey: `cover:${zoneId}`,
+            primaryAction: { kind: 'openZone' as const, zoneId },
+          })),
+        },
+        []
+      )
+    );
+    const stableCover =
+      host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+    expect(stableCover).toBe(cover);
+    expect(stableCover.querySelector('img')).toBe(image);
+    expect(stableCover.dataset.cardId).toBe(replacementId);
+    stableCover.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    );
+    expect(intents.at(-1)).toEqual({
+      kind: 'CardContextRequested',
+      cardId: replacementId,
+    });
 
     await act(async () => {
       renderer.destroy();

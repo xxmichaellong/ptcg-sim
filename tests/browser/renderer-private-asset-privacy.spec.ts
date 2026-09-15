@@ -404,8 +404,16 @@ const facePaths = (snapshot: DomSnapshot): string[] =>
     .filter((path) => path.includes('/face-'))
     .sort();
 
-const expectConcealedDom = (snapshot: DomSnapshot): void => {
-  expect(snapshot.cards).toHaveLength(14);
+const expectConcealedDom = (snapshot: DomSnapshot, scene: BoardScene): void => {
+  const expectedIds = scene.cards
+    .filter((card) => card.renderKey !== null)
+    .map((card) => String(card.id));
+  expect(snapshot.cards.map((card) => card.id).sort()).toEqual(
+    [...expectedIds].sort()
+  );
+  expect([...snapshot.diagnostics.renderedCardIds].sort()).toEqual(
+    [...expectedIds].sort()
+  );
   expect(new Set(snapshot.cards.map((card) => card.label))).toEqual(
     new Set(['Face-down card'])
   );
@@ -685,7 +693,7 @@ test('recipient projection never requests concealed face assets across reveal an
     }, scene);
 
   try {
-    expectConcealedDom(initial);
+    expectConcealedDom(initial, fixture.scenes.hidden);
     expect(initial.diagnostics).toMatchObject({
       rendererKind: 'dom',
       mounted: true,
@@ -716,7 +724,7 @@ test('recipient projection never requests concealed face assets across reveal an
 
     phase = 'public-prize-cover';
     const coveredPrize = await install(fixture.scenes.coveredPrize);
-    expectConcealedDom(coveredPrize);
+    expectConcealedDom(coveredPrize, fixture.scenes.coveredPrize);
     expect(
       requests.filter(
         (request) =>
@@ -727,7 +735,7 @@ test('recipient projection never requests concealed face assets across reveal an
 
     phase = 'renderer-recreation';
     const recreated = await recreate(fixture.scenes.coveredPrize);
-    expectConcealedDom(recreated);
+    expectConcealedDom(recreated, fixture.scenes.coveredPrize);
     expect(
       requests.filter(
         (request) =>
@@ -740,7 +748,7 @@ test('recipient projection never requests concealed face assets across reveal an
     const privateSpectator = await install(fixture.scenes.privateSpectator, {
       clearFirst: true,
     });
-    expectConcealedDom(privateSpectator);
+    expectConcealedDom(privateSpectator, fixture.scenes.privateSpectator);
     expect(
       requests.filter(
         (request) =>
@@ -766,7 +774,7 @@ test('recipient projection never requests concealed face assets across reveal an
 
     phase = 'private-close';
     const privateClosed = await install(fixture.scenes.privateClosed);
-    expectConcealedDom(privateClosed);
+    expectConcealedDom(privateClosed, fixture.scenes.privateClosed);
     expect(
       requests.filter(
         (request) =>
@@ -787,7 +795,7 @@ test('recipient projection never requests concealed face assets across reveal an
       .toBe(true);
     phase = 'stale-cover';
     const staleCovered = await install(fixture.scenes.staleCovered);
-    expectConcealedDom(staleCovered);
+    expectConcealedDom(staleCovered, fixture.scenes.staleCovered);
     releaseStale();
     await expect
       .poll(() =>
@@ -805,7 +813,7 @@ test('recipient projection never requests concealed face assets across reveal an
       );
       return handle.snapshot(true);
     });
-    expectConcealedDom(afterStaleSettlement);
+    expectConcealedDom(afterStaleSettlement, fixture.scenes.staleCovered);
     expect(
       requests.filter(
         (request) =>

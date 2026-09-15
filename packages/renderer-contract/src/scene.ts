@@ -883,8 +883,12 @@ const makeCardNode = (
     | 'imageUrl'
     | 'concealed'
     | 'label'
+    | 'renderKey'
     | 'rotationQuarterTurns'
-  > & { readonly rotationQuarterTurns?: CardSceneNode['rotationQuarterTurns'] }
+  > & {
+    readonly renderKey?: CardSceneNode['renderKey'];
+    readonly rotationQuarterTurns?: CardSceneNode['rotationQuarterTurns'];
+  }
 ): CardSceneNode => {
   const baseRotation =
     input.rotationQuarterTurns ??
@@ -899,6 +903,10 @@ const makeCardNode = (
     concealed: isConcealedForRendering(card),
     label: cardLabel(view, card),
     ...input,
+    renderKey:
+      input.renderKey === undefined
+        ? `card:${String(card.id)}`
+        : input.renderKey,
     rotationQuarterTurns,
   };
 };
@@ -1378,8 +1386,12 @@ export const createBoardScene = (
           bounds: cardRect,
           zIndex: isLegacyPileKind(zone.kind) ? pileZIndex : 100 + index,
           interactive: isLegacyPileKind(zone.kind) ? isPileTop : true,
+          ...(isLegacyPileKind(zone.kind) && !isPileTop
+            ? { renderKey: null }
+            : {}),
           ...(region?.surface === 'cover' && isPileTop
             ? {
+                renderKey: `cover:${zone.id}`,
                 primaryAction: {
                   kind: 'openZone' as const,
                   zoneId: zone.id,
@@ -1657,6 +1669,7 @@ const sameCard = (left: CardSceneNode, right: CardSceneNode): boolean =>
   left.concealed === right.concealed &&
   left.label === right.label &&
   left.interactive === right.interactive &&
+  left.renderKey === right.renderKey &&
   left.primaryAction?.kind === right.primaryAction?.kind &&
   left.primaryAction?.zoneId === right.primaryAction?.zoneId &&
   left.bounds.x === right.bounds.x &&

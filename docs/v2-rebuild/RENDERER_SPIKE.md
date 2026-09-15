@@ -77,9 +77,11 @@ Rive, or game-specific systems.
   with an explicit source-zone precondition;
 - face/back URL selection that cannot request a definition image for a
   concealed or face-down card; and
-- a deterministic 61-card competitive fixture with covers, hands, prizes,
-  free-board cards, active evolution/attachments, damage, condition, ability
-  marker, group and BREAK rotation, per-card markers, and stadium.
+- a deterministic 61-card competitive fixture with 49 physical card views:
+  closed piles retain their lower logical cards without allocating hidden DOM
+  nodes, Pixi sprites, or asset bindings, alongside hands, prizes, free-board
+  cards, active evolution/attachments, damage, condition, ability marker,
+  group and BREAK rotation, per-card markers, and stadium.
 
 It also exports a source-pinned ideal-CSS-pixel layout state and executable
 legacy oracle for every primary player region, shell mode, physical frame,
@@ -292,19 +294,21 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1057 v2 tests across 154 files. A separate suite
-passes 212 Playwright checks across 84 Chromium 151 browser files:
+The repository-wide gate passes 2368 v2 tests across 238 files. The default
+Chromium inventory contains 199 Playwright checks across 62 browser files; the
+renderer-focused subset passes in Chromium 151:
 
-1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
+1. React DOM mounts 49 stable physical card nodes for all 61 logical cards,
+   preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
    resolves the drop to `MoveCardToPlay` with the expected source zone,
    resolves an active-to-bench stack drag to `MovePlayStack`,
    produces a screenshot, and has no runtime errors.
-2. Pixi creates one live WebGL canvas with 61 card views, handles a real pointer
+2. Pixi creates one live WebGL canvas with 49 card views, handles a real pointer
    click and pointer-captured drag, resolves the drop through the same command
    boundary including whole-stack movement, loses its actual WebGL2 context
    through `WEBGL_lose_context`,
-   rebuilds to a later renderer generation with all 61 views, produces a
+   rebuilds to a later renderer generation with all 49 views, produces a
    post-recovery screenshot, and has no runtime errors.
 3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each
    time with no runtime errors or accumulated DOM/canvas views.
@@ -353,8 +357,10 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
    proves a primary deck/discard/lost-zone cover click opens its pile, and the
    renderer-neutral scene action passes native Chromium input through both DOM
    and Pixi without card selection or preview. Opened-zone layout, undersized
-   assets, retained covered nodes, Pixi geometry, and q1/q3 hit regions are not
-   claimed.
+   assets, Pixi geometry, and q1/q3 hit regions are not claimed. All lower pile
+   cards remain in the logical scene for controller and opened-zone validation,
+   but exactly one zone-stable physical cover view exists per non-empty pile;
+   DOM and Pixi reuse it when the logical top card changes.
 10. A fourth digest-pinned fixture isolates ordinary second
     evolution across local/opponent active and bench slots. It records the
     transient `evolveCard` result, the synchronous ghost wrapper created by
@@ -1312,7 +1318,8 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     the resolution query after an actual commit. Teardown cancels the frame and
     removes the observer plus all window, document, and media listeners. A browser
     gate reproduces the former same-CSS-size DPR 1→2 stale scene, verifies the
-    corrected outer/scene DPR without replacing the renderer or its 61 cards,
+    corrected outer/scene DPR without replacing the renderer or its 61 logical
+    cards / 49 physical card views,
     pins zero commits for 25 unchanged signals, collapses and restores a
     zero-paint-size host safely, and exercises hidden→visible DPR
     resynchronization. Chromium CDP changes query matches without emitting its

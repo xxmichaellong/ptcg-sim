@@ -222,8 +222,11 @@ fits the public canonical card ratio in each source-derived content rectangle,
 centers it on the inline axis, resolves upper-frame/stadium transforms to a
 physical start/end edge, and exposes only the source-defined pile top to input:
 deck index zero, discard/lost-zone last index, and the only stadium card.
-Covered scene nodes are retained for stable reconciliation but are disabled and
-paint below the cover; closed cover piles do not paint ability markers. Stadium
+Covered logical scene nodes are retained for controller and opened-zone
+validation, but lower pile cards receive no physical render key. A closed pile
+has one zone-stable cover key, allowing React DOM and Pixi to reuse its physical
+view and asset binding when the logical top card changes. Closed cover piles do
+not paint ability markers. Stadium
 orientation composes recipient-visible card orientation with owner-versus-
 bottom readability, and malformed foreign-owner or multi-card stadium views
 fail closed. No definition dimensions enter recipient projections.
@@ -238,9 +241,11 @@ source geometry as candidate input. A live-v1 assertion also proves that one
 primary deck/discard/lost-zone cover click opens its pile; the renderer-neutral
 scene marks only those cover cards with an open-zone action, and native
 Chromium exercises it through both DOM and Pixi without selecting or previewing
-the card. Opened-zone layout, undersized/noncanonical asset no-upscale behavior,
-removal of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit
-boxes remain explicit gates.
+the card. The same gate proves exactly one physical node for every non-empty
+pile and no lower-card DOM node; the 61-card reference scene owns 49 physical
+card views in either renderer. Opened-zone layout, undersized/noncanonical asset
+no-upscale behavior, Pixi geometry, and 90/270-degree hit boxes remain explicit
+gates.
 
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free

@@ -99,6 +99,8 @@ export interface CardSceneNode {
   readonly concealed: boolean;
   readonly label: string;
   readonly interactive: boolean;
+  /** Stable physical view identity; null retains logic/overlay data without painting. */
+  readonly renderKey: string | null;
   /** Overrides ordinary select/preview activation while preserving drag/context input. */
   readonly primaryAction?: {
     readonly kind: 'openZone';

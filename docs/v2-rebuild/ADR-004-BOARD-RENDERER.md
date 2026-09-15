@@ -352,9 +352,10 @@ Primary references:
 
 ### Repository evidence
 
-Both candidates mount the same immutable 61-card fixture, preserve semantic
-click and pointer-captured drag/drop behavior, and survive repeated candidate
-switching in real Chromium. Pixi additionally reconstructs after a real
+Both candidates consume the same immutable 61-card logical fixture while
+allocating only its 49 physical card views, preserve semantic click and
+pointer-captured drag/drop behavior, and survive repeated candidate switching
+in real Chromium. Pixi additionally reconstructs after a real
 `WEBGL_lose_context` event. Native browser coverage characterizes mouse, touch,
 secondary-button filtering, and the exact rapid-click preview boundary. A
 center-rotated fixture also proves that native selection and shared drag/drop

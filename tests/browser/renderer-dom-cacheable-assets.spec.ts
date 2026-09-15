@@ -120,6 +120,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
           return {
             ...source,
             id: `cache-asset-card-${String(index).padStart(3, '0')}` as typeof source.id,
+            renderKey: `card:cache-asset-card-${String(index).padStart(3, '0')}`,
             imageUrl: assetUrls[index]!,
             interactive: false,
             bounds: {
@@ -224,8 +225,11 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         const routeScene = settledSpike.scene;
         const routeCardCount =
           routeSurface.querySelectorAll('[data-card-id]').length;
+        const expectedRouteCardCount = sourceScene.cards.filter(
+          (card) => card.renderKey !== null
+        ).length;
         requireCondition(
-          routeCardCount === sourceScene.cards.length,
+          routeCardCount === expectedRouteCardCount,
           'Route-owned scene changed before the asset gate'
         );
 
@@ -683,10 +687,10 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
   expect(evidence).toMatchObject({
     serviceWorkerControlled: false,
     assetCount,
-    routeCardCount: 61,
+    routeCardCount: 49,
     finalSurfaces: 1,
     finalFixtureHosts: 0,
-    finalRouteCardCount: 61,
+    finalRouteCardCount: 49,
     routeIdentityStable: true,
     firstCleanup: {
       statuses: ['mounting', 'ready', 'destroyed'],
