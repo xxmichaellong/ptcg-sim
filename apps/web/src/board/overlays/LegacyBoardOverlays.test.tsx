@@ -765,6 +765,66 @@ describe('legacy board overlays', () => {
     expect(document.activeElement).toBe(preview);
   });
 
+  it('keeps stable overlay-card geometry through arbitrary image failure and recovery', async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const renderPreview = async (imageUrl: string) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              scene: {
+                ...scene,
+                cards: scene.cards.map((candidate) =>
+                  candidate.id === card.id
+                    ? { ...candidate, imageUrl }
+                    : candidate
+                ),
+              },
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'card', cardId: card.id },
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+    };
+
+    await renderPreview('https://images.example.invalid/broken.png');
+    const wrapper = host.querySelector<HTMLElement>(
+      '[data-overlay-image-card-id]'
+    )!;
+    const image = wrapper.querySelector<HTMLImageElement>('img')!;
+    expect(wrapper.classList).toContain('is-preview');
+    expect(wrapper.getAttribute('data-overlay-image-state')).toBe('loading');
+
+    await act(async () => image.dispatchEvent(new Event('error')));
+    expect(wrapper.getAttribute('data-overlay-image-state')).toBe('failed');
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(getComputedStyle(wrapper).aspectRatio).toBe('5 / 7');
+    expect(getComputedStyle(image).opacity).toBe('0');
+
+    await renderPreview('https://images.example.invalid/recovered.png');
+    const stableWrapper = host.querySelector<HTMLElement>(
+      '[data-overlay-image-card-id]'
+    )!;
+    const stableImage = stableWrapper.querySelector<HTMLImageElement>('img')!;
+    expect(stableWrapper).toBe(wrapper);
+    expect(stableImage).toBe(image);
+    expect(stableWrapper.getAttribute('data-overlay-image-state')).toBe(
+      'loading'
+    );
+    await act(async () => stableImage.dispatchEvent(new Event('load')));
+    expect(stableWrapper.getAttribute('data-overlay-image-state')).toBe(
+      'ready'
+    );
+    expect(getComputedStyle(stableImage).opacity).toBe('1');
+  });
+
   it('sorts only disclosed labels locally and restores authoritative scene order', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(

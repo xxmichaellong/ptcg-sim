@@ -712,6 +712,44 @@ export const legacyZoneBrowserFrameStyle = (
   };
 };
 
+const OverlayCardImage = ({
+  card,
+  variant,
+}: {
+  readonly card: CardSceneNode;
+  readonly variant: 'preview' | 'stack' | 'zone';
+}) => {
+  const [loadedImage, setLoadedImage] = useState<{
+    readonly imageUrl: string;
+    readonly state: 'ready' | 'failed';
+  } | null>(null);
+  const state =
+    loadedImage?.imageUrl === card.imageUrl ? loadedImage.state : 'loading';
+  return (
+    <span
+      className={`ptcgsim-legacy-overlay-card-image is-${variant}`}
+      style={{ aspectRatio: '5 / 7' }}
+      data-overlay-image-state={state}
+      data-overlay-image-card-id={card.id}
+      aria-hidden={variant === 'zone' ? 'true' : undefined}
+    >
+      <img
+        src={card.imageUrl}
+        alt={variant === 'zone' ? '' : card.label}
+        style={{ opacity: state === 'ready' ? 1 : 0 }}
+        data-overlay-card-id={variant === 'zone' ? undefined : card.id}
+        draggable={false}
+        onLoad={() =>
+          setLoadedImage({ imageUrl: card.imageUrl, state: 'ready' })
+        }
+        onError={() =>
+          setLoadedImage({ imageUrl: card.imageUrl, state: 'failed' })
+        }
+      />
+    </span>
+  );
+};
+
 const Preview = ({
   cards,
   kind,
@@ -755,14 +793,7 @@ const Preview = ({
       onClick={dismiss}
       onKeyDown={onKeyDown}
     >
-      {cards[0] ? (
-        <img
-          src={cards[0].imageUrl}
-          alt={cards[0].label}
-          data-overlay-card-id={cards[0].id}
-          draggable={false}
-        />
-      ) : null}
+      {cards[0] ? <OverlayCardImage card={cards[0]} variant="preview" /> : null}
     </div>
   ) : (
     <div
@@ -784,13 +815,7 @@ const Preview = ({
       onKeyDown={onKeyDown}
     >
       {cards.map((card) => (
-        <img
-          key={card.id}
-          src={card.imageUrl}
-          alt={card.label}
-          data-overlay-card-id={card.id}
-          draggable={false}
-        />
+        <OverlayCardImage key={card.id} card={card} variant="stack" />
       ))}
     </div>
   );
@@ -1069,7 +1094,7 @@ const ZoneBrowser = ({
               });
             }}
           >
-            <img src={card.imageUrl} alt="" draggable={false} />
+            <OverlayCardImage card={card} variant="zone" />
             {abilityMarkedCardIds.has(card.id) ? (
               <span
                 className="ptcgsim-legacy-zone-ability-marker"
