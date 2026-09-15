@@ -182,4 +182,43 @@ describe('durable storage corruption guards', () => {
     });
     await expect(store.load()).rejects.toThrow(/schema|malformed/u);
   });
+
+  it('refuses an extra persisted player outside the ordered match seats', async () => {
+    const { storage, store } = await initializedStore();
+    const stored = structuredClone(
+      storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+    ) as {
+      snapshot: RoomAuthoritySnapshot;
+    };
+    const existing = stored.snapshot.state.players[p1]!;
+    const state = stored.snapshot.state as unknown as {
+      players: Record<string, unknown>;
+    };
+    state.players['corruption-unordered-player'] = {
+      ...existing,
+      id: 'corruption-unordered-player',
+    };
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, stored);
+
+    await expect(store.load()).rejects.toThrow(
+      'player keys must exactly match player order'
+    );
+  });
+
+  it('refuses a persisted zone with an unknown runtime kind', async () => {
+    const { storage, store } = await initializedStore();
+    const stored = structuredClone(
+      storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+    ) as {
+      snapshot: RoomAuthoritySnapshot;
+    };
+    const state = stored.snapshot.state as unknown as {
+      zones: Record<string, { kind: string }>;
+    };
+    const zone = Object.values(state.zones)[0]!;
+    zone.kind = 'secret-sideboard';
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, stored);
+
+    await expect(store.load()).rejects.toThrow('has invalid kind');
+  });
 });

@@ -20,6 +20,29 @@ export class MatchInvariantError extends Error {
 const hasDuplicates = <Value>(values: readonly Value[]): boolean =>
   new Set(values).size !== values.length;
 
+const hasExactKeys = (
+  value: Readonly<Record<string, unknown>>,
+  expectedKeys: readonly string[]
+): boolean => {
+  const actual = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return (
+    actual.length === expected.length &&
+    actual.every((key, index) => key === expected[index])
+  );
+};
+
+const cardCategories = new Set(['Pokémon', 'Trainer', 'Energy', 'Unknown']);
+const zoneKinds = new Set([
+  'deck',
+  'hand',
+  'prizes',
+  'discard',
+  'lostZone',
+  'board',
+  'stadium',
+]);
+
 export const collectInvariantProblems = (
   state: MatchState
 ): readonly string[] => {
@@ -27,11 +50,31 @@ export const collectInvariantProblems = (
   if (state.schemaVersion !== MATCH_STATE_SCHEMA_VERSION) {
     problems.push(`unsupported match schema ${state.schemaVersion}`);
   }
+  if (
+    state.lifecycle !== 'lobby' &&
+    state.lifecycle !== 'playing' &&
+    state.lifecycle !== 'finished'
+  ) {
+    problems.push('match lifecycle is invalid');
+  }
+  if (state.rngVersion !== 1) {
+    problems.push('match RNG version is invalid');
+  }
   if (!Number.isSafeInteger(state.revision) || state.revision < 0) {
     problems.push('revision must be a non-negative safe integer');
   }
   if (state.playerOrder.length !== 2 || hasDuplicates(state.playerOrder)) {
     problems.push('match must contain exactly two distinct ordered players');
+  }
+  for (const [label, record] of [
+    ['player', state.players],
+    ['deck-list', state.deckLists],
+    ['board', state.boards],
+    ['work-area', state.workAreas],
+  ] as const) {
+    if (!hasExactKeys(record, state.playerOrder)) {
+      problems.push(`${label} keys must exactly match player order`);
+    }
   }
   if (!Number.isSafeInteger(state.turn.number) || state.turn.number < 0) {
     problems.push('turn number must be a non-negative safe integer');
@@ -41,6 +84,18 @@ export const collectInvariantProblems = (
     !state.players[state.turn.currentPlayerId]
   ) {
     problems.push('turn references an unknown current player');
+  }
+  for (const [playerKey, player] of Object.entries(state.players)) {
+    if (player.id !== playerKey) {
+      problems.push(`player key ${playerKey} does not match its ID`);
+    }
+    if (
+      player.displayName.trim() !== player.displayName ||
+      player.displayName.length < 1 ||
+      player.displayName.length > 64
+    ) {
+      problems.push(`player ${playerKey} has invalid display name`);
+    }
   }
   for (const playerId of state.playerOrder) {
     const player = state.players[playerId];
@@ -86,9 +141,15 @@ export const collectInvariantProblems = (
     }
   }
 
-  for (const definition of Object.values(state.definitions)) {
+  for (const [definitionKey, definition] of Object.entries(state.definitions)) {
+    if (definition.id !== definitionKey) {
+      problems.push(`definition key ${definitionKey} does not match its ID`);
+    }
     if (!definition.name || definition.name.length > 256) {
       problems.push(`definition ${definition.id} has invalid name`);
+    }
+    if (!cardCategories.has(definition.category)) {
+      problems.push(`definition ${definition.id} has invalid category`);
     }
     if (
       !definition.imageUrl ||
@@ -96,9 +157,19 @@ export const collectInvariantProblems = (
     ) {
       problems.push(`definition ${definition.id} has invalid image URL`);
     }
+    if (
+      definition.imageUrlSmall !== undefined &&
+      (!definition.imageUrlSmall ||
+        definition.imageUrlSmall.length > MAX_IMAGE_URL_CODE_UNITS)
+    ) {
+      problems.push(`definition ${definition.id} has invalid small image URL`);
+    }
   }
 
-  for (const card of Object.values(state.cards)) {
+  for (const [cardKey, card] of Object.entries(state.cards)) {
+    if (card.id !== cardKey) {
+      problems.push(`card key ${cardKey} does not match its ID`);
+    }
     if (!state.definitions[card.definitionId]) {
       problems.push(
         `card ${card.id} references missing definition ${card.definitionId}`
@@ -106,6 +177,15 @@ export const collectInvariantProblems = (
     }
     if (!state.players[card.ownerId]) {
       problems.push(`card ${card.id} references missing owner ${card.ownerId}`);
+    }
+    if (
+      !cardCategories.has(card.originalCategory) ||
+      !cardCategories.has(card.currentCategory)
+    ) {
+      problems.push(`card ${card.id} has invalid category`);
+    }
+    if (card.face !== 'up' && card.face !== 'down') {
+      problems.push(`card ${card.id} has invalid face`);
     }
     if (
       !Number.isSafeInteger(card.visibilityGeneration) ||
@@ -144,6 +224,16 @@ export const collectInvariantProblems = (
   for (const [zoneId, zone] of Object.entries(state.zones)) {
     if (zone.id !== zoneId)
       problems.push(`zone key ${zoneId} does not match its ID`);
+    if (!zoneKinds.has(zone.kind)) {
+      problems.push(`zone ${zone.id} has invalid kind`);
+    }
+    if (
+      (zone.kind === 'stadium' && zone.ownerId !== null) ||
+      (zone.kind !== 'stadium' &&
+        (zone.ownerId === null || !state.players[zone.ownerId]))
+    ) {
+      problems.push(`zone ${zone.id} has invalid owner`);
+    }
     if (hasDuplicates(zone.cardIds))
       problems.push(`zone ${zone.id} contains duplicate cards`);
     if (zone.kind === 'stadium' && zone.cardIds.length > 1) {
@@ -189,6 +279,18 @@ export const collectInvariantProblems = (
     }
   }
   for (const stack of Object.values(state.stacks)) {
+    if (state.stacks[stack.id] !== stack) {
+      problems.push(`stack ${stack.id} does not match its record key`);
+    }
+    if (!state.players[stack.boardPlayerId]) {
+      problems.push(`stack ${stack.id} references an unknown board player`);
+    }
+    if (stack.slot !== 'active' && stack.slot !== 'bench') {
+      problems.push(`stack ${stack.id} has invalid slot`);
+    }
+    if (typeof stack.abilityUsed !== 'boolean') {
+      problems.push(`stack ${stack.id} has invalid ability marker`);
+    }
     if (!placedStackIds.has(stack.id))
       problems.push(`stack ${stack.id} is not on a board`);
     if (stack.evolutionCardIds.length === 0)
