@@ -44,7 +44,7 @@
     "check:v2": "corepack pnpm run check:static:v2 && corepack pnpm run test:tooling:v2 && corepack pnpm run test:v2 && corepack pnpm run test:v2:runtime && corepack pnpm run build:v2",
     "check:ci": "corepack pnpm run test:legacy && corepack pnpm run check:v2",
     "check:fast": "corepack pnpm run check:ci",
-    "check:full": "corepack pnpm run check:fast && corepack pnpm run check:browser && corepack pnpm run check:cross-browser",
+    "check:full": "corepack pnpm run audit:dependencies && corepack pnpm run check:fast && corepack pnpm run check:browser && corepack pnpm run check:cross-browser",
     "lint": "corepack pnpm run lint:v2",
     "lint:v2": "eslint --max-warnings=0 apps packages tests scripts playwright.config.ts playwright.continuation.config.ts playwright.continuation-drain.config.ts playwright.continuation-rotation.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs",
     "measure:v2:renderer": "playwright test --config=playwright.performance.config.ts",

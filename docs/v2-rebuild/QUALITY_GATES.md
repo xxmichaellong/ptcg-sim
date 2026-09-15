@@ -31,7 +31,7 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run test:continuation:rotation:browser` | Operator-only: capture or consume a private save across explicit managed key/deployment transitions.                          |
 | `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium without retry.          |
 | `pnpm run check:cross-browser`                | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                 |
-| `pnpm run check:full`                         | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                              |
+| `pnpm run check:full`                         | Fail-closed dependency audit, `check:ci`, Chromium lanes, and the focused Firefox/WebKit lane locally.                        |
 | `pnpm run measure:v2:renderer`                | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.      |
 | `pnpm run measure:v2:server`                  | Operator-only: capture the named local-`workerd` phase/payload observation; this is not managed-network release evidence.     |
 | `pnpm run audit:dependencies`                 | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.       |
