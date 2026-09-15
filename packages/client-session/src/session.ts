@@ -200,6 +200,11 @@ export class RemoteGameSession {
 
   getSnapshot = (): ClientSessionState => this.state;
 
+  /** Accidental serialization is restricted to the credential-free snapshot. */
+  toJSON(): ClientSessionState {
+    return this.state;
+  }
+
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

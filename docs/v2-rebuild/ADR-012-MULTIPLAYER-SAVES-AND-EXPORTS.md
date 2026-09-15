@@ -163,8 +163,13 @@ routes and separate anonymous rate namespaces are now present behind an exact
 versioned activation binding that is absent from production configuration. A
 test-only enabled workerd run proves the full credential handoff,
 active/completed revocation, and independent budgets; identifier-free lifecycle
-telemetry covers custody operations. Production secrets, quota policy, rate
-measurement, managed recovery evidence, and UI remain gates.
+telemetry covers custody operations. An app-local browser adapter now proves
+strict same-origin/no-store requests, bounded correlated responses, and generic
+errors; its JavaScript-private custodian proves stable retry, atomic-installer
+recovery, ready-player-only creation, metadata-only snapshots, and teardown
+cleanup. No UI invokes it or persists a save capability. Production secrets,
+quota policy, rate measurement, managed recovery evidence, trusted restore
+installation, handoff, and visible UI remain gates.
 
 The v1 app and default route remain unchanged. Perspective export can be rolled
 back by hiding its isolated-route action without invalidating files already

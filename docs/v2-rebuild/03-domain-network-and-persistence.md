@@ -1044,9 +1044,14 @@ declared through Wrangler `exports`; its key-independent alarm and private
 create/recovery/restore/revoke RPCs are tested across eviction. Strict
 create/restore/revoke HTTP boundaries, separate anonymous limiter namespaces,
 and the identifier-free lifecycle event are wired behind an activation token
-absent from the production-default configuration. Phase 7 still owns production
+absent from the production-default configuration. The app-local browser
+transport now implements the same exact bounded, locator-correlated, no-store
+contract. A lazy private custodian owns stable create/restore retries and
+metadata-only state, releases a source resume bearer only while its route is a
+ready player session, and clears credentials on revoke/disposal. It has no UI,
+storage, canonical file, or restore installer. Phase 7 still owns production
 key/quota-capacity provisioning, measured rate policy, activation, operational
-recovery/abuse evidence, and canonical state-import/sidebar integration. The
+recovery/abuse evidence, and canonical continuation UI integration. The
 room-local source adapter now
 transactionally authorizes an active claimed multiplayer player, reserves one
 exact canonical snapshot under a digest-only stable operation, enforces bounded

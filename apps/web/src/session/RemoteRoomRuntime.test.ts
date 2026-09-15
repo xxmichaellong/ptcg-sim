@@ -13,6 +13,10 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { LegacyAnnouncementScheduler } from '../presentation/LegacyGamePresentationRuntime.js';
+import {
+  RemoteContinuationCustodyError,
+  type RemoteContinuationPort,
+} from './RemoteContinuationCustody.js';
 import { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
 const admissionTicket = 'route-admission-capability-that-stays-private-0001';
@@ -192,5 +196,62 @@ describe('RemoteRoomRuntime', () => {
         })
     ).toThrow('Invalid client session policy bounds');
     expect(socketFactory.sockets).toEqual([]);
+  });
+
+  it('lazily transfers the player resume bearer into non-serializable continuation custody', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const operationId = 'C'.repeat(43);
+    const saveId = 'S'.repeat(22);
+    const capability = `ptcgsave.v1.${saveId}.${'B'.repeat(43)}`;
+    const port: RemoteContinuationPort = {
+      create: vi.fn(async () => ({
+        format: 'ptcgsim-continuation-creation-result-v1',
+        saveId,
+        operationId,
+        capability,
+        createdAt: 2_000_000_000_000,
+        expiresAt: 2_000_086_400_000,
+      })),
+      restore: vi.fn(async (): Promise<never> => {
+        throw new Error('not used');
+      }),
+      revoke: vi.fn(async () => undefined),
+    };
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: { socketFactory },
+      continuation: { port, createOperationId: () => operationId },
+    });
+    expect(() => runtime.getContinuationCustody()).toThrow(
+      RemoteContinuationCustodyError
+    );
+    const socket = socketFactory.sockets[0]!;
+    socket.serverOpen();
+    socket.serverMessage(welcome());
+    const custody = runtime.getContinuationCustody();
+
+    expect(runtime.getContinuationCustody()).toBe(custody);
+    expect(custody.getSnapshot()).toEqual({ phase: 'pending' });
+    await expect(custody.create()).resolves.toEqual({
+      phase: 'available',
+      saveId,
+      createdAt: 2_000_000_000_000,
+      expiresAt: 2_000_086_400_000,
+    });
+    expect(port.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomCode: connection.roomCode,
+        resumeToken,
+        operationId,
+      })
+    );
+    expect(JSON.stringify(runtime)).not.toContain(resumeToken);
+    expect(JSON.stringify(runtime)).not.toContain(capability);
+
+    runtime.dispose();
+    expect(custody.getSnapshot()).toEqual({ phase: 'disposed' });
+    expect(() => runtime.getContinuationCustody()).toThrow(
+      RemoteContinuationCustodyError
+    );
   });
 });

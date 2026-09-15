@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-14
+- Last updated: 2026-09-15
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
@@ -174,10 +174,11 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   transaction now applies a separate 12-new-operations-per-player/minute budget
   after authorization and before count quota, while exact committed-operation
   retries bypass a second charge. Strict default-off public
-  create/restore/revoke protocol and HTTP handler contracts now add bounded same-origin JSON,
-  mandatory anonymous limiter ports, generic credential/capacity errors,
-  no-store credential responses, exact operation/locator correlation, and
-  disposable RPC-result normalization and indistinguishable deletion responses.
+  create/restore/revoke protocol and HTTP handler contracts now add bounded
+  same-origin JSON, mandatory anonymous limiter ports, generic
+  credential/capacity errors, no-store credential responses, exact
+  operation/locator correlation, and disposable RPC-result normalization and
+  indistinguishable deletion responses.
   The Worker routes all three exact paths only
   behind an absent versioned activation token, with independent declared
   30-request/minute anonymous limiter bindings. Identifier-free lifecycle
@@ -185,8 +186,13 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   configurations prove both production-default `404` and a complete enabled
   create -> exact retry -> restore -> two-player credential handoff -> explicit
   encrypted-receipt deletion, plus active-save revocation and three independent
-  budgets. Production key/quota provisioning, activation, managed evidence, and
-  UI remain deliberately disabled later parity work.
+  budgets. An inert same-origin browser adapter and JavaScript-private retry
+  custodian now validate those exact responses, retain stable create/restore
+  operations without serialization or storage, expose metadata-only snapshots,
+  gate source credential release on a ready player session, and clean up on
+  route disposal. No UI invokes that owner. Production key/quota provisioning,
+  activation, managed evidence, trusted restore installation, and visible
+  handoff remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority
@@ -306,7 +312,7 @@ a manual tabletop simulator.
 | [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)   | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
 | [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
-| [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server-held continuation threat/storage contract and closed activation gates                     |
+| [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server/browser private-custody contract and closed activation/UI gates                           |
 | [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                               | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                         | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                             | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |

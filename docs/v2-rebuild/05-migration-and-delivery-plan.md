@@ -706,8 +706,12 @@ admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
 the original expiry. Strict default-off create/restore/revoke routes and
-independent rate enforcement are implemented. Production key/quota-capacity
-provisioning, route activation, UI, and managed recovery/abuse gates remain
+independent rate enforcement are implemented. A same-origin browser adapter and
+private in-memory retry custodian now match those contracts without storage or
+UI wiring; the remote-room owner creates it only for a welcomed player and
+rechecks readiness before releasing the resume bearer. Production
+key/quota-capacity provisioning, route activation, trusted restore
+installation/handoff, visible controls, and managed recovery/abuse gates remain
 closed. The source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
@@ -745,7 +749,10 @@ Work:
   lifecycle telemetry are implemented behind the absent activation token.
   Private source-room creation now includes a durable authenticated retry-safe
   request budget; global quota enforcement and one-time restore orchestration
-  are also implemented and remain unreachable from public traffic.
+  are also implemented and remain unreachable from public traffic. Retain the
+  implemented browser-side strict transport and private stable-retry custodian;
+  add a trusted restored-room installer, source-shaped capability handoff, and
+  browser journey only when the production gates are deliberately opened.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

@@ -248,6 +248,8 @@ describe('RemoteGameSession', () => {
     expect(JSON.stringify(test.session.getSnapshot())).not.toContain(
       capability
     );
+    expect(JSON.stringify(test.session)).not.toContain(capability);
+    expect(JSON.stringify(test.session)).not.toContain(resumeCapability);
 
     socket.serverMessage(welcome());
 

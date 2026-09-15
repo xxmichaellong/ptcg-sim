@@ -8,8 +8,9 @@ private Durable Object restore runtime implemented; sharded global quota
 configuration, namespace, coordination, and runtime are implemented with no
 production policy; strict public create/restore/revoke protocol and HTTP handler
 contracts, default-off edge routing, independent anonymous limiter bindings,
-and identifier-free lifecycle telemetry are implemented; the production
-activation token remains absent and direct open remains deliberately unwired
+identifier-free lifecycle telemetry, and an inert browser transport/private
+retry custodian are implemented; the production activation token remains
+absent, no UI owns a save handoff, and direct open remains deliberately unwired
 
 Decision owner: ADR-012
 
@@ -30,13 +31,17 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-source.ts`,
 `apps/server/src/continuation-target.ts`, the continuation request/response
 schemas in `packages/protocol/src/{schemas,ingress}.ts`, and the private
-`PtcgContinuation` / `PtcgRoom` RPCs in `apps/server/src/worker.ts`
+`PtcgContinuation` / `PtcgRoom` RPCs in `apps/server/src/worker.ts`; the inert
+browser boundary is implemented by
+`apps/web/src/session/{RemoteContinuationTransport,RemoteContinuationCustody,RemoteRoomRuntime}.ts`,
+with credential-safe accidental serialization in
+`packages/client-session/src/session.ts`
 
 ## Purpose and release boundary
 
 This slice establishes the durable custody boundary for canonical multiplayer
 continuations without making continuation reachable in the production-default
-configuration, socket protocol, client package, or UI control. A dedicated
+configuration, socket protocol, or UI control. A dedicated
 `PtcgContinuation` SQLite Durable Object namespace is now declared through
 Wrangler's current `exports` lifecycle. The source room now exposes one exact
 private create RPC, the named save object exposes exact create/recovery,
@@ -45,11 +50,12 @@ Strict edge handlers are now routed only when `CONTINUATION_HTTP_ACTIVATION`
 equals one exact versioned opt-in value. That binding is absent from checked-in
 production configuration, so all three exact paths fall through to the ordinary
 `404` route. Three separate 30-request/60-second rate-limit bindings are
-declared but receive no traffic while the gate is closed. No socket message,
-client package, or UI control can call the operations. Production activation
-still requires an explicitly provisioned keyring and quota capacity policy,
-managed recovery and abuse evidence, and the unchanged-UI integration described
-below.
+declared but receive no traffic while the gate is closed. An app-local browser
+adapter now implements those exact HTTP calls, but it is lazy, has no route or
+control caller, and remains ineffective against the production-default `404`.
+Production activation still requires an explicitly provisioned keyring and
+quota capacity policy, managed recovery and abuse evidence, and the unchanged-UI
+integration described below.
 
 The implementation is intentionally a single-save adapter with one primary
 record and, for source-coordinated creation, one small encrypted retry receipt.
@@ -439,6 +445,40 @@ transactional authenticated rate/count limits and the quota shards therefore
 remain authoritative. See the
 [Cloudflare rate-limit binding contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
 
+## Inert browser transport and private retry custody
+
+The web application now has a same-origin adapter for the three default-off
+HTTP contracts. It constructs locator-only URLs, sends credentials only in
+no-store request bodies with cookies and referrers omitted, refuses redirects,
+and reads at most 4 KiB of exact JSON. Create and restore responses must match
+the initiating operation and save locator, satisfy bounded clock/lifetime
+checks, and return distinct save, requester-seat, and opponent-invitation
+credentials where applicable. Status, network, parsing, clock, and callback
+failures are normalized to bounded errors that cannot reflect a bearer.
+
+`RemoteContinuationCustody` is the single in-memory owner for a pending source
+resume bearer or an adopted save capability. JavaScript private fields retain
+the bearer, one stable create operation, and one stable restore operation across
+ambiguous request or installer failures. Public snapshots expose only phase,
+save locator, and non-secret timing/target metadata. A restore receipt is handed
+to one trusted atomic installer; if installation fails, the same operation is
+retried instead of selecting another target. Explicit revoke clears every local
+credential. Disposal aborts owned work, clears custody immediately, and
+best-effort revokes a credential returned after teardown; hard server expiry
+remains the final cleanup boundary.
+
+`RemoteRoomRuntime` owns this custodian lazily. Spectators and sessions that are
+not currently welcomed as a player cannot obtain it, and the custodian checks
+that readiness again before sending the source resume bearer. The runtime and
+`RemoteGameSession` define credential-free JSON views so an accidental object
+serialization cannot include admission, resume, or save capabilities.
+
+This boundary adds no local/session storage, downloadable canonical file,
+clipboard format, paste path, React state, renderer state, socket message,
+route, or visible control. No product UI invokes the continuation owner in this
+slice. Selecting the source-shaped handoff and restore installation path, and
+browser-testing that visible behavior, remain separate release work.
+
 ## Verification implemented in this slice
 
 The focused model suite covers capability entropy/grammar, key validation and
@@ -536,6 +576,17 @@ The configuration suite separately proves exact schema/ranges, computed global
 ceiling, frozen policy output, redacted failures, and missing production-default
 refusal.
 
+The browser-unit suite proves schema-valid 256-bit operation generation, exact
+same-origin locator-only URLs, no-store/credential-omitting request options,
+bounded JSON parsing, result immutability, save/operation correlation, bounded
+lifetimes, distinct restored credentials, status/network/clock redaction, and
+strict `204` revocation. Private-custody tests prove stable create/restore retry,
+readiness gating before credential release, operation serialization, metadata-
+only snapshots, atomic-installer retry, call/owner abort, explicit credential
+clearing, and best-effort deletion of late results. Remote-room composition
+proves player-only lazy transfer, no work before use, credential-free
+serialization, and outside-in teardown.
+
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
 refusal, snapshot/lifecycle/marker drift refusal, incomplete/corrupt state
@@ -595,8 +646,11 @@ and attached to the draft PR/release evidence:
   concurrency/eviction path are implemented without production traffic;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
   cleanup and incident runbooks, cost evidence, and security/privacy review;
-- the source-shaped UI wiring and browser journeys, without changing the
-  existing UI/UX beyond activating the approved continuation behavior.
+- the source-shaped UI/handoff wiring, trusted restore-result installation, and
+  browser journeys, without changing the existing UI/UX beyond activating the
+  approved continuation behavior; the same-origin transport, private stable-
+  retry owner, player-readiness gate, and serialization boundary are already
+  implemented but intentionally have no product caller.
 
 Wrangler `exports` lifecycle changes cannot be crossed by an ordinary Worker
 rollback. Before activation, rollback therefore leaves the inert save/quota

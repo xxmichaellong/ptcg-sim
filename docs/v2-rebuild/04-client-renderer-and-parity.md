@@ -1616,6 +1616,15 @@ atomic coordinator installation. Native selection, malformed-file recovery,
 replay exit, and restoration of the exact live revision are browser-gated;
 server-held continuation and complete focus/keyboard/visual parity remain later
 slices.
+
+The remote-room owner now also has a lazy, player-ready-only continuation seam.
+It transfers the source resume bearer into a JavaScript-private custodian only
+after `Welcome`, rechecks live readiness before a create request, exposes only
+non-secret continuation metadata, and disposes that custody before presentation,
+replay, and transport. The app-local HTTP port enforces the default-off server
+contract and stable retry operations, but no React control calls it and no
+restored credential is installed in this slice. This preserves the current UI
+while making credential ownership and teardown auditable before visible wiring.
 The lazy Deck composition does not require a live network session. Its
 stores retain offline main/alternate deck edits and browser-loaded card-back
 choices, apply changing solo/multiplayer ownership without deleting either
