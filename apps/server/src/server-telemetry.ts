@@ -10,12 +10,13 @@ import type { RoomRateLimitedOperation } from './room-rate-limit.js';
 export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v2';
 
 export type ServerTelemetryLevel = 'info' | 'warn' | 'error';
-export type ServerTelemetrySource = 'edge' | 'room';
+export type ServerTelemetrySource = 'edge' | 'room' | 'continuation';
 export type ServerHttpRoute =
   | 'health'
   | 'room_creation'
   | 'continuation_creation'
   | 'continuation_restore'
+  | 'continuation_revocation'
   | 'room_invitation'
   | 'admission_ticket'
   | 'socket_upgrade'
@@ -24,6 +25,17 @@ export type ServerHttpOutcome =
   'accepted' | 'rejected' | 'rate_limited' | 'not_found' | 'failed';
 export type RoomLifecycleOutcome =
   'created' | 'restored' | 'expired' | 'alarm_rescheduled' | 'alarm_cancelled';
+export type ContinuationLifecycleOperation =
+  'create' | 'restore' | 'revoke' | 'expire';
+export type ContinuationLifecycleOutcome =
+  | 'accepted'
+  | 'recovered'
+  | 'rejected'
+  | 'expired'
+  | 'scheduled'
+  | 'missing'
+  | 'corrupt_removed'
+  | 'failed';
 export type RoomAdmissionOperation =
   | 'invitation_issue'
   | 'ticket_issue'
@@ -100,6 +112,12 @@ type ServerTelemetryDetail =
       readonly durationMs: number;
     }
   | {
+      readonly kind: 'continuation_lifecycle';
+      readonly operation: ContinuationLifecycleOperation;
+      readonly outcome: ContinuationLifecycleOutcome;
+      readonly durationMs: number;
+    }
+  | {
       readonly kind: 'room_rate_limit';
       readonly operation: RoomRateLimitedOperation | 'continuation_create';
       readonly outcome: 'allowed' | 'limited';
@@ -159,6 +177,11 @@ export interface ServerTelemetryPort {
     readonly authorityVersion: number;
     readonly activeSessions: number;
     readonly activeSockets: number;
+    readonly durationMs: number;
+  }) => void;
+  readonly continuationLifecycle: (input: {
+    readonly operation: ContinuationLifecycleOperation;
+    readonly outcome: ContinuationLifecycleOutcome;
     readonly durationMs: number;
   }) => void;
   readonly roomRateLimit: (input: {
@@ -337,6 +360,25 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
     });
   }
 
+  continuationLifecycle({
+    operation,
+    outcome,
+    durationMs,
+  }: Parameters<ServerTelemetryPort['continuationLifecycle']>[0]): void {
+    const level =
+      outcome === 'failed'
+        ? 'error'
+        : outcome === 'rejected' || outcome === 'corrupt_removed'
+          ? 'warn'
+          : 'info';
+    this.publish(level, {
+      kind: 'continuation_lifecycle',
+      operation,
+      outcome,
+      durationMs: safeDuration(durationMs),
+    });
+  }
+
   roomRateLimit({
     operation,
     allowed,
@@ -451,6 +493,7 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
 export const NOOP_SERVER_TELEMETRY: ServerTelemetryPort = {
   httpRequest: () => undefined,
   roomLifecycle: () => undefined,
+  continuationLifecycle: () => undefined,
   roomRateLimit: () => undefined,
   roomAdmission: () => undefined,
   roomCommand: () => undefined,

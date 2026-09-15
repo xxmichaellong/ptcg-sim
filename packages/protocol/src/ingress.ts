@@ -10,6 +10,7 @@ import {
   ContinuationCreationResponseSchema,
   ContinuationRestoreRequestSchema,
   ContinuationRestoreResponseSchema,
+  ContinuationRevocationRequestSchema,
   MatchViewStateSchema,
   RoomCreationRequestSchema,
   RoomCreationResponseSchema,
@@ -24,6 +25,7 @@ import {
   type ContinuationCreationResponse,
   type ContinuationRestoreRequest,
   type ContinuationRestoreResponse,
+  type ContinuationRevocationRequest,
   type RoomCreationRequest,
   type RoomCreationResponse,
   type RoomInvitationIssueRequest,
@@ -166,6 +168,11 @@ export const parseContinuationRestoreResponse = (
   value: unknown
 ): SchemaParseResult<ContinuationRestoreResponse> =>
   parseSchema(value, ContinuationRestoreResponseSchema);
+
+export const parseContinuationRevocationRequest = (
+  value: unknown
+): SchemaParseResult<ContinuationRevocationRequest> =>
+  parseSchema(value, ContinuationRevocationRequestSchema);
 
 export const serializeMatchViewState = (
   value: unknown

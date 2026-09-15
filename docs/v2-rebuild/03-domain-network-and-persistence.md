@@ -1023,8 +1023,11 @@ card/deck/definition/view IDs, URLs, room/session/command IDs, all credentials
 and digests, IP identity/hash, close reasons, error messages, and stacks.
 Authority timing is optional and a failed timing clock collapses its observation
 to zero without affecting the transaction. Telemetry clock/ID/sink failure is
-also isolated from game behavior. A no-store
-`GET /v2/health` exposes only status and sanitized build/schema versions;
+also isolated from game behavior. Continuation custody adds only bounded
+operation/outcome/duration lifecycle
+facts under a separate source; it cannot receive a save locator, capability,
+room, restore operation, payload, or error. A no-store `GET /v2/health` exposes
+only status and sanitized build/schema versions;
 production destinations, dashboards, preview baselines, and alert/runbook
 rehearsal remain rollout gates documented in `apps/server/OPERATIONS.md`.
 
@@ -1038,9 +1041,11 @@ checkpoint plus optional encrypted exact-retry creation receipt, exact
 bounds/integrity validation, key rotation, and transactional
 create/revoke/expiry behavior. The dedicated SQLite Durable Object is now
 declared through Wrangler `exports`; its key-independent alarm and private
-create/recovery/restore RPCs are tested across eviction, while no edge route
-selects it. Phase 7 still owns production key/quota-capacity provisioning,
-independent rate enforcement, public HTTP integration, operational
+create/recovery/restore/revoke RPCs are tested across eviction. Strict
+create/restore/revoke HTTP boundaries, separate anonymous limiter namespaces,
+and the identifier-free lifecycle event are wired behind an activation token
+absent from the production-default configuration. Phase 7 still owns production
+key/quota-capacity provisioning, measured rate policy, activation, operational
 recovery/abuse evidence, and canonical state-import/sidebar integration. The
 room-local source adapter now
 transactionally authorizes an active claimed multiplayer player, reserves one
@@ -1053,8 +1058,8 @@ compaction, retain it through restore, and erase it on revocation/expiry. The
 internal create coordinator now composes both stores and proves convergence for
 pre-commit and ambiguous failures at reservation, save creation, and source
 completion. Its private room-to-save RPC chain additionally proves concurrent
-same-operation convergence and post-eviction recovery in workerd without
-exposing an edge call. A policy-injected global quota adapter now maps source
+same-operation convergence and post-eviction recovery in workerd. A
+policy-injected global quota adapter now maps source
 rooms to deterministic fixed shards and holds exact digest-only leases through
 the save expiry; fixed per-shard capacities provide a hard aggregate ceiling
 without a singleton request bottleneck. Its Durable Object namespace,

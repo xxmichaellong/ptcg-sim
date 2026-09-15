@@ -45,7 +45,9 @@ import {
   type ContinuationRestoreTargetAcknowledgement,
 } from './continuation-restore.js';
 import { handleContinuationRestoreRequest } from './continuation-restore-http.js';
+import { handleContinuationRevocationRequest } from './continuation-revocation-http.js';
 import {
+  readContinuationRevocationRpcInput,
   readContinuationSaveCreationRpcInput,
   readContinuationSaveRecoveryRpcInput,
   readContinuationQuotaReservationRpcInput,
@@ -67,6 +69,7 @@ import { isRoomAlreadyInitialized } from './room-initialization.js';
 import {
   consumeContinuationCreationRateLimit,
   consumeContinuationRestoreRateLimit,
+  consumeContinuationRevocationRateLimit,
   consumeRoomCreationRateLimit,
 } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
@@ -78,7 +81,10 @@ import {
   ConsoleServerTelemetrySink,
   StructuredServerTelemetry,
   nextTelemetryId,
+  type ContinuationLifecycleOperation,
+  type ContinuationLifecycleOutcome,
   type ServerHttpRoute,
+  type ServerTelemetrySource,
   type ServerTelemetryPort,
 } from './server-telemetry.js';
 import {
@@ -100,6 +106,7 @@ interface Env {
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
+  readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
 }
 
@@ -131,7 +138,7 @@ const liveAdmissionDeadline = (value: unknown, now: number): value is number =>
 
 const telemetrySink = new ConsoleServerTelemetrySink();
 const createTelemetry = (
-  source: 'edge' | 'room',
+  source: ServerTelemetrySource,
   buildId: string
 ): StructuredServerTelemetry =>
   new StructuredServerTelemetry(
@@ -212,62 +219,144 @@ const continuationRestoreSaveIdFromPath = (
   return match?.[1];
 };
 
+const continuationRevocationSaveIdFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/continuations\/([A-Za-z0-9_-]{22})$/u.exec(pathname);
+  return match?.[1];
+};
+
 /**
  * Dedicated long-lived custody namespace. Only the exact default-off restore
- * edge route may select it; every operation still crosses a typed internal
- * Durable Object RPC. Open/revoke stay closed until their external contracts
- * exist. Create is reachable only through the source room's private RPC.
+ * and revocation edge routes may select it; every operation still crosses a typed internal
+ * Durable Object RPC. Revocation shares the same gate and exact named-object
+ * binding; open remains closed. Create is reachable only through the source
+ * room's private RPC.
  */
 export class PtcgContinuation extends DurableObject<Env> {
   private readonly authoritySource = new WebCryptoAuthoritySource();
+  private readonly telemetry: StructuredServerTelemetry;
   private custodyPromise: Promise<DurableContinuationCustody> | undefined;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.telemetry = createTelemetry('continuation', env.BUILD_ID);
+  }
 
   async createContinuation(
     value: unknown
   ): Promise<ReservedContinuationCreationResult | undefined> {
-    const input = readContinuationSaveCreationRpcInput(value, this.ctx.id.name);
-    if (!input) return undefined;
-    return (await this.custody()).createReserved(input);
+    return this.measureLifecycle(
+      'create',
+      async () => {
+        const input = readContinuationSaveCreationRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).createReserved(input);
+      },
+      (result) =>
+        result ? (result.created ? 'accepted' : 'recovered') : 'rejected'
+    );
   }
 
   async recoverContinuation(
     value: unknown
   ): Promise<ContinuationCreationReceipt | undefined> {
-    const input = readContinuationSaveRecoveryRpcInput(value, this.ctx.id.name);
-    if (!input) return undefined;
-    return (await this.custody()).recoverReservedCreation(input);
+    return this.measureLifecycle(
+      'create',
+      async () => {
+        const input = readContinuationSaveRecoveryRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).recoverReservedCreation(input);
+      },
+      (result) => (result ? 'recovered' : 'rejected')
+    );
   }
 
   async restore(value: unknown): Promise<ContinuationRestoreRpcResult> {
-    const input = readContinuationRestoreRpcInput(value, this.ctx.id.name);
-    if (!input) return undefined;
-    const custody = await this.custody();
-    return coordinateContinuationRestore(input, {
-      save: {
-        reserveRestore: (reserveInput) =>
-          custody.reserveRestore(reserveInput, async (checkpoint) => ({
-            targetRoomCode: roomCode(),
-            fork: await prepareContinuationFork(
-              checkpoint,
-              this.authoritySource,
-              reserveInput.reservedAt
-            ),
-          })),
-        completeRestore: (completeInput) =>
-          custody.completeRestore(completeInput),
+    return this.measureLifecycle(
+      'restore',
+      async () => {
+        const input = readContinuationRestoreRpcInput(value, this.ctx.id.name);
+        if (!input) return undefined;
+        const custody = await this.custody();
+        return coordinateContinuationRestore(input, {
+          save: {
+            reserveRestore: (reserveInput) =>
+              custody.reserveRestore(reserveInput, async (checkpoint) => ({
+                targetRoomCode: roomCode(),
+                fork: await prepareContinuationFork(
+                  checkpoint,
+                  this.authoritySource,
+                  reserveInput.reservedAt
+                ),
+              })),
+            completeRestore: (completeInput) =>
+              custody.completeRestore(completeInput),
+          },
+          target: {
+            initializeRestoreTarget: (plan) =>
+              this.env.PTCG_ROOM.getByName(
+                plan.targetRoomCode
+              ).initializeContinuation(plan),
+          },
+          clock: { now: Date.now },
+        });
       },
-      target: {
-        initializeRestoreTarget: (plan) =>
-          this.env.PTCG_ROOM.getByName(
-            plan.targetRoomCode
-          ).initializeContinuation(plan),
+      (result) => (result ? 'accepted' : 'rejected')
+    );
+  }
+
+  async revoke(value: unknown): Promise<boolean | undefined> {
+    return this.measureLifecycle(
+      'revoke',
+      async () => {
+        const input = readContinuationRevocationRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).revoke(input.capability, Date.now());
       },
-      clock: { now: Date.now },
-    });
+      (result) => (result ? 'accepted' : 'rejected')
+    );
   }
 
   override async alarm(): Promise<void> {
-    await expireContinuationCustody(this.ctx.storage, Date.now());
+    await this.measureLifecycle(
+      'expire',
+      () => expireContinuationCustody(this.ctx.storage, Date.now()),
+      (result) => result
+    );
+  }
+
+  private async measureLifecycle<Value>(
+    operation: ContinuationLifecycleOperation,
+    run: () => Promise<Value>,
+    outcome: (value: Value) => ContinuationLifecycleOutcome
+  ): Promise<Value> {
+    const startedAt = performance.now();
+    try {
+      const result = await run();
+      this.telemetry.continuationLifecycle({
+        operation,
+        outcome: outcome(result),
+        durationMs: performance.now() - startedAt,
+      });
+      return result;
+    } catch (error) {
+      this.telemetry.continuationLifecycle({
+        operation,
+        outcome: 'failed',
+        durationMs: performance.now() - startedAt,
+      });
+      throw error;
+    }
   }
 
   private custody(): Promise<DurableContinuationCustody> {
@@ -1002,6 +1091,24 @@ const worker: ExportedHandler<Env> = {
               consumeContinuationRestoreRateLimit(
                 request,
                 env.CONTINUATION_RESTORE_RATE_LIMITER
+              )
+          )
+        );
+      }
+      const revocationSaveId = continuationRevocationSaveIdFromPath(
+        url.pathname
+      );
+      if (revocationSaveId) {
+        return observeHttp(telemetry, 'continuation_revocation', () =>
+          handleContinuationRevocationRequest(
+            request,
+            revocationSaveId,
+            (selectedSaveId, input) =>
+              env.PTCG_CONTINUATION.getByName(selectedSaveId).revoke(input),
+            () =>
+              consumeContinuationRevocationRateLimit(
+                request,
+                env.CONTINUATION_REVOCATION_RATE_LIMITER
               )
           )
         );

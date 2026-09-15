@@ -1831,10 +1831,10 @@ export class DurableContinuationCustody {
       ) {
         return false;
       }
-      if (current.state === 'restoring' || current.state === 'completed') {
+      if (current.state === 'restoring') {
         return false;
       }
-      if (current.state === 'active') {
+      if (current.state === 'active' || current.state === 'completed') {
         const revoked: StoredRevokedContinuation = {
           format: CONTINUATION_RECORD_FORMAT,
           state: 'revoked',

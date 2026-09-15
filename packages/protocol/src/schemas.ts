@@ -129,6 +129,10 @@ export const ContinuationRestoreRequestSchema = v.strictObject({
   operationId: ContinuationOperationIdSchema,
 });
 
+export const ContinuationRevocationRequestSchema = v.strictObject({
+  capability: ContinuationCapabilitySchema,
+});
+
 export const ContinuationRestoreResponseSchema = v.pipe(
   v.strictObject({
     format: v.literal('ptcgsim-continuation-restore-result-v1'),
@@ -1022,6 +1026,9 @@ export type ContinuationCreationResponse = v.InferOutput<
 >;
 export type ContinuationRestoreRequest = v.InferOutput<
   typeof ContinuationRestoreRequestSchema
+>;
+export type ContinuationRevocationRequest = v.InferOutput<
+  typeof ContinuationRevocationRequestSchema
 >;
 export type ContinuationRestoreResponse = v.InferOutput<
   typeof ContinuationRestoreResponseSchema

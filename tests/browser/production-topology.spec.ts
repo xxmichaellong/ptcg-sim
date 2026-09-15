@@ -254,6 +254,20 @@ test('built SPA and room authority share one production-like Worker origin', asy
         referrerPolicy: 'no-referrer',
       }
     );
+    const continuationRevocation = await fetch(
+      `/v2/continuations/${'A'.repeat(22)}`,
+      {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+        }),
+        cache: 'no-store',
+        credentials: 'omit',
+        redirect: 'error',
+        referrerPolicy: 'no-referrer',
+      }
+    );
     return {
       creationStatus: creation.status,
       creationType: creation.headers.get('Content-Type'),
@@ -276,6 +290,8 @@ test('built SPA and room authority share one production-like Worker origin', asy
       continuationCreationBody: await continuationCreation.text(),
       continuationRestoreStatus: continuationRestore.status,
       continuationRestoreBody: await continuationRestore.text(),
+      continuationRevocationStatus: continuationRevocation.status,
+      continuationRevocationBody: await continuationRevocation.text(),
     };
   });
   expect(routeProof).toEqual({
@@ -297,6 +313,8 @@ test('built SPA and room authority share one production-like Worker origin', asy
     continuationCreationBody: 'Not Found',
     continuationRestoreStatus: 404,
     continuationRestoreBody: 'Not Found',
+    continuationRevocationStatus: 404,
+    continuationRevocationBody: 'Not Found',
   });
   expect(authorityRequests).toEqual([
     '/v2/health',
@@ -308,6 +326,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     ),
     expect.stringMatching(/^\/v2\/rooms\/[A-HJ-NP-Z2-9]{12}\/continuations$/u),
     `/v2/continuations/${'A'.repeat(22)}/restore`,
+    `/v2/continuations/${'A'.repeat(22)}`,
   ]);
   expect(errors).toEqual([]);
 });

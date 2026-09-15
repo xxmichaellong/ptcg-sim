@@ -136,11 +136,12 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   retention, transactional revocation/expiry, key rotation, and
   ambiguous-create recovery. Its dedicated SQLite Durable Object is now
   declaratively provisioned with key-independent alarm cleanup and a private
-  object operation surface, but no edge caller. A separate pure fork transform
-  preserves exact canonical state/replay while resetting authority version,
-  sessions, idempotency history, aliases, tickets, and admission credentials;
-  only the requester's fresh seat master and an ordinary one-use opponent
-  invitation leave that transform. The custody adapter also persists an
+  object operation surface. Its browser-facing routes are present only behind
+  an activation token absent from production defaults. A separate pure fork
+  transform preserves exact canonical state/replay while resetting authority
+  version, sessions, idempotency history, aliases, tickets, and admission
+  credentials; only the requester's fresh seat master and an ordinary one-use
+  opponent invitation leave that transform. The custody adapter also persists an
   encrypted one-operation restore plan before target work and atomically
   replaces it with an encrypted exact-retry receipt after completion, while
   retaining the original expiry. Idempotent target initialization storage is
@@ -172,17 +173,20 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   test-only policy; production capacity is deliberately absent. The same source
   transaction now applies a separate 12-new-operations-per-player/minute budget
   after authorization and before count quota, while exact committed-operation
-  retries bypass a second charge. Strict default-off public create/restore
-  protocol and HTTP handler contracts now add bounded same-origin JSON,
+  retries bypass a second charge. Strict default-off public
+  create/restore/revoke protocol and HTTP handler contracts now add bounded same-origin JSON,
   mandatory anonymous limiter ports, generic credential/capacity errors,
   no-store credential responses, exact operation/locator correlation, and
-  disposable RPC-result normalization. The Worker routes both exact paths only
+  disposable RPC-result normalization and indistinguishable deletion responses.
+  The Worker routes all three exact paths only
   behind an absent versioned activation token, with independent declared
-  30-request/minute anonymous limiter bindings. Separate workerd configurations
-  prove both production-default `404` and a complete enabled create -> exact
-  retry -> restore -> two-player credential handoff. Production key/quota
-  provisioning, activation, managed evidence, and UI remain deliberately
-  disabled later parity work.
+  30-request/minute anonymous limiter bindings. Identifier-free lifecycle
+  telemetry reports only operation, outcome, and duration. Separate workerd
+  configurations prove both production-default `404` and a complete enabled
+  create -> exact retry -> restore -> two-player credential handoff -> explicit
+  encrypted-receipt deletion, plus active-save revocation and three independent
+  budgets. Production key/quota provisioning, activation, managed evidence, and
+  UI remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

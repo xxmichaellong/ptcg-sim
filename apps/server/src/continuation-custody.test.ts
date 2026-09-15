@@ -501,6 +501,61 @@ describe('reserved continuation creation receipts', () => {
     expect(storage.alarm).toBeNull();
   });
 
+  it('explicitly revokes a completed restore and erases both encrypted receipts', async () => {
+    const storage = new MemoryDurableStorage();
+    const custody = new DurableContinuationCustody(
+      storage,
+      await cryptography()
+    );
+    const created = await custody.createReserved(reservedInputFixture());
+    if (!created) throw new Error('expected creation receipt');
+    const preparation = restorePreparation();
+    const reserved = await custody.reserveRestore(
+      {
+        capability: created.receipt.capability,
+        operationId: restoreOperationId,
+        reservedAt: restoredAt,
+      },
+      preparation.prepare
+    );
+    if (reserved?.state !== 'reserved') throw new Error('expected plan');
+    await custody.completeRestore({
+      capability: created.receipt.capability,
+      operationId: restoreOperationId,
+      completedAt: restoredAt + 1,
+    });
+    expect(storedRecord(storage).state).toBe('completed');
+    expect(storage.values.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      true
+    );
+
+    await expect(
+      custody.revoke(created.receipt.capability, restoredAt + 2)
+    ).resolves.toBe(true);
+    const revoked = storedRecord(storage);
+    expect(revoked.state).toBe('revoked');
+    expect(revoked).not.toHaveProperty('sealedResult');
+    expect(storage.values.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      false
+    );
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: created.receipt.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 3,
+        },
+        async () => {
+          throw new Error('revoked retry must not prepare');
+        }
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      custody.revoke(created.receipt.capability, restoredAt + 4)
+    ).resolves.toBe(true);
+    expect(storage.alarm).toBe(created.receipt.expiresAt);
+  });
+
   it('erases the receipt on revocation and cleans orphaned receipt metadata', async () => {
     const storage = new MemoryDurableStorage();
     const custody = new DurableContinuationCustody(
@@ -1212,7 +1267,21 @@ describe('durable continuation one-time restore state', () => {
     ).resolves.toEqual({ state: 'completed', result: completed });
     await expect(
       custody.revoke(input.capability, restoredAt + 40)
-    ).resolves.toBe(false);
+    ).resolves.toBe(true);
+    expect(storedRecord(storage).state).toBe('revoked');
+    expect(storedRecord(storage)).not.toHaveProperty('sealedResult');
+    await expect(
+      custody.reserveRestore(
+        {
+          capability: input.capability,
+          operationId: restoreOperationId,
+          reservedAt: restoredAt + 41,
+        },
+        async () => {
+          throw new Error('revoked retry must not prepare');
+        }
+      )
+    ).resolves.toBeUndefined();
   });
 
   it('never lets a second operation observe, complete, or replace a reservation', async () => {

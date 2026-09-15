@@ -3,6 +3,7 @@ export * from './authority-crypto.js';
 export * from './create-room.js';
 export * from './continuation-creation-http.js';
 export * from './continuation-restore-http.js';
+export * from './continuation-revocation-http.js';
 export * from './durable-storage.js';
 export * from './room-creation-http.js';
 export * from './room-invitation-http.js';

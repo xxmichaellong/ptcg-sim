@@ -1,6 +1,7 @@
 export const ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_CREATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS = 60;
+export const CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS = 60;
 
 export interface EdgeRateLimitBinding {
   readonly limit: (options: {
@@ -97,5 +98,18 @@ export const consumeContinuationRestoreRateLimit = async (
   return {
     allowed: outcome.success,
     retryAfterSeconds: CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
+
+export const consumeContinuationRevocationRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, 'continuation_revocation'),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS,
   };
 };

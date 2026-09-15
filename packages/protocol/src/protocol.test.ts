@@ -17,6 +17,7 @@ import {
   parseContinuationCreationResponse,
   parseContinuationRestoreRequest,
   parseContinuationRestoreResponse,
+  parseContinuationRevocationRequest,
   parseRoomCreationRequest,
   parseRoomCreationResponse,
   parseRoomInvitationIssueRequest,
@@ -171,6 +172,18 @@ describe('continuation HTTP schemas', () => {
       parseContinuationRestoreResponse({
         ...response,
         targetRoomCode: 'AMBIGUOUS-I0',
+      }).ok
+    ).toBe(false);
+  });
+
+  it('accepts only an exact branded revocation request', () => {
+    expect(parseContinuationRevocationRequest({ capability }).ok).toBe(true);
+    expect(
+      parseContinuationRevocationRequest({ capability, operationId }).ok
+    ).toBe(false);
+    expect(
+      parseContinuationRevocationRequest({
+        capability: capability.replace('ptcgsave.v1.', 'ptcgsave.v2.'),
       }).ok
     ).toBe(false);
   });

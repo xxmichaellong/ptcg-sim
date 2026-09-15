@@ -154,13 +154,16 @@ Continuation must prove encrypted and digest-only durable custody, independent
 role-bound capabilities, exact canonical hash/projections after restore,
 transactional one-time fork behavior, credential rotation, expiry/revocation,
 quota/rate enforcement, corrupt/truncated recovery, and rollback compatibility.
-Its inert browser contract now additionally proves exact bounded create/restore
-schemas, same-origin and no-store handling, mandatory anonymous limiter ports,
-generic external credential/capacity errors, locator/operation correlation, and
-disposable RPC-result normalization. Exact Worker routes and separate anonymous
-rate namespaces are now present behind an exact versioned activation binding
-that is absent from production configuration. A test-only enabled workerd run
-proves the full credential handoff; production secrets, quota policy, rate
+Its inert browser contract now additionally proves exact bounded
+create/restore/revoke schemas, same-origin and no-store handling, mandatory
+anonymous limiter ports, generic external credential/capacity errors,
+locator/operation correlation, disposable RPC-result normalization,
+indistinguishable deletion, and completed retry-receipt erasure. Exact Worker
+routes and separate anonymous rate namespaces are now present behind an exact
+versioned activation binding that is absent from production configuration. A
+test-only enabled workerd run proves the full credential handoff,
+active/completed revocation, and independent budgets; identifier-free lifecycle
+telemetry covers custody operations. Production secrets, quota policy, rate
 measurement, managed recovery evidence, and UI remain gates.
 
 The v1 app and default route remain unchanged. Perspective export can be rolled

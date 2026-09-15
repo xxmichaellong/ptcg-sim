@@ -144,11 +144,24 @@ describe('continuation Durable Object runtime', () => {
         }
       )
     );
+    const revocation = await exports.default.fetch(
+      new Request(`https://play.example/v2/continuations/${'A'.repeat(22)}`, {
+        method: 'DELETE',
+        headers: {
+          Origin: 'https://play.example',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+        }),
+      })
+    );
 
     expect(env.PTCG_CONTINUATION).toBeDefined();
     expect(env.PTCG_CONTINUATION_QUOTA).toBeDefined();
     expect(creation.status).toBe(404);
     expect(restore.status).toBe(404);
+    expect(revocation.status).toBe(404);
   });
 
   it('reserves only the exact configured quota shard and recovers after eviction', async () => {

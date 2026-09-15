@@ -15,6 +15,14 @@ export const browserJsonResponse = (
     headers: { ...SECURE_NO_STORE_HEADERS, ...headers },
   });
 
+export const browserNoContentResponse = (
+  headers: Record<string, string> = {}
+): Response =>
+  new Response(null, {
+    status: 204,
+    headers: { ...SECURE_NO_STORE_HEADERS, ...headers },
+  });
+
 export const isSameOriginBrowserRequest = (request: Request): boolean => {
   const origin = request.headers.get('Origin');
   if (!origin) return false;

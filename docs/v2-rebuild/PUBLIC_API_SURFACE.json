@@ -894,6 +894,14 @@
               "kind": "value"
             },
             {
+              "name": "ContinuationRevocationRequest",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRevocationRequestSchema",
+              "kind": "value"
+            },
+            {
               "name": "FrameParseResult",
               "kind": "type"
             },
@@ -959,6 +967,10 @@
             },
             {
               "name": "parseContinuationRestoreResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationRevocationRequest",
               "kind": "value"
             },
             {
@@ -2150,6 +2162,10 @@
               "kind": "value"
             },
             {
+              "name": "consumeContinuationRevocationRateLimit",
+              "kind": "value"
+            },
+            {
               "name": "consumeRoomCreationRateLimit",
               "kind": "value"
             },
@@ -2162,6 +2178,10 @@
               "kind": "value"
             },
             {
+              "name": "CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
               "name": "ContinuationCreationRateLimit",
               "kind": "type"
             },
@@ -2170,11 +2190,27 @@
               "kind": "type"
             },
             {
+              "name": "ContinuationLifecycleOperation",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationLifecycleOutcome",
+              "kind": "type"
+            },
+            {
               "name": "ContinuationRestorer",
               "kind": "type"
             },
             {
               "name": "ContinuationRestoreRateLimit",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRevocationRateLimit",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRevoker",
               "kind": "type"
             },
             {
@@ -2222,6 +2258,10 @@
               "kind": "value"
             },
             {
+              "name": "handleContinuationRevocationRequest",
+              "kind": "value"
+            },
+            {
               "name": "handleRoomCreationRequest",
               "kind": "value"
             },
@@ -2259,6 +2299,10 @@
             },
             {
               "name": "MAX_CONTINUATION_RESTORE_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_CONTINUATION_REVOCATION_REQUEST_BYTES",
               "kind": "value"
             },
             {

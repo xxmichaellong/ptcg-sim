@@ -19,18 +19,21 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
-## Continuation key, quota, and namespace boundary (edge-inactive)
+## Continuation key, quota, and namespace boundary (default-off)
 
 Wrangler declaratively exports dedicated SQLite `PtcgContinuation` and
 `PtcgContinuationQuota` Durable Objects and binds them as `PTCG_CONTINUATION`
-and `PTCG_CONTINUATION_QUOTA`. The edge Worker does not route to either. Exact
-private source-room create, named-save create/recovery/restore, quota-reserve,
-and target-room initialization RPCs are implemented; create acquires its quota
-lease before encrypted save storage. Open/revoke and every public continuation
-route remain absent. Save alarms clean records without decrypting them, and
-quota alarms clean expired leases without reading capacity configuration, so
-cleanup remains available when key or quota configuration is absent or invalid.
-This private wiring is not evidence that continuation is enabled.
+and `PTCG_CONTINUATION_QUOTA`. Exact private source-room create, named-save
+create/recovery/restore/revoke, quota-reserve, and target-room initialization
+RPCs are implemented; create acquires its quota lease before encrypted save
+storage. Strict create, restore, and revoke edge routes exist only when
+`CONTINUATION_HTTP_ACTIVATION` equals its exact versioned token. That token is
+absent from checked-in production configuration, so all three paths ordinarily
+return `404`; direct open remains absent. Save alarms clean records without
+decrypting them, and quota alarms clean expired leases without reading capacity
+configuration, so cleanup remains available when key or quota configuration is
+absent or invalid. This default-off wiring is not evidence that continuation is
+enabled.
 
 The source-room create RPC accepts only an exact stable operation ID and the
 existing session resume bearer. The room hashes that bearer and constant-time
@@ -101,9 +104,10 @@ new operations that reach player/room/global count refusal do charge, preventing
 quota-full request floods. The bounded rate record contains only player IDs,
 window starts, and counts—never operation IDs, capabilities, or request bodies.
 
-Public activation still requires distinct anonymous ingress rate-limit bindings
-for create and restore. Give each binding a unique account `namespace_id`; a
-shared ID intentionally shares counters. Cloudflare documents these counters as
+Wrangler declares distinct anonymous ingress rate-limit bindings for create,
+restore, and revoke, each at the provisional 30 requests per 60 seconds. Keep
+each binding on a unique account `namespace_id`; a shared ID intentionally
+shares counters. Cloudflare documents these counters as
 per-location, permissive, and eventually consistent, so they are an abuse-load
 layer rather than exact capacity accounting. Keep the durable source budget and
 global lease as the authoritative hard bounds. See the
@@ -113,28 +117,33 @@ Cloudflare's declarative Durable Object `exports` entries are namespace
 lifecycle state, not ordinary version metadata. Do not remove either live
 class/export or attempt to roll back across its provisioning change. Before
 continuation activation, a code rollback leaves both inert declarations intact.
-After saves exist, a pause disables new create/restore while retaining both
-alarm cleanup paths, the last compatible decrypt keyring, and the last
-compatible quota partition interpretation until all records and leases expire
-or are explicitly cleaned up.
+After saves exist, a pause must stop new create/restore traffic while retaining
+revoke access, both alarm cleanup paths, the last compatible decrypt keyring,
+and the last compatible quota partition interpretation until all records and
+leases expire or are explicitly cleaned up. The current single activation token
+is not that traffic-management control; cohort/edge routing must provide the
+operation-specific pause until a separately reviewed application kill state is
+implemented.
 
 ## Structured event contract
 
 `server-telemetry.ts` emits the closed
 `ptcgsim-server-telemetry-v2` discriminated union through Cloudflare's
 structured console sink. Every event has timestamp, random event correlation,
-ephemeral random source-instance correlation, source (`edge` or `room`), and
+ephemeral random source-instance correlation, source (`edge`, `room`, or
+`continuation`), and
 sanitized build/protocol/authority/match-schema versions.
 
-| Event kind        | Intended signal                                                             |
-| ----------------- | --------------------------------------------------------------------------- |
-| `http_request`    | Safe route class, derived outcome/status, and handler latency               |
-| `room_lifecycle`  | Create/restore/expire/alarm repair, authority frontier, and bounded counts  |
-| `room_rate_limit` | Allowed/limited room operation and retry interval                           |
-| `room_admission`  | Invitation/ticket/initial/resume operation, role, safe outcome, and latency |
-| `room_command`    | Safe command outcome, bytes, total latency, and numeric phase durations     |
-| `room_socket`     | Upgrade/restore/close/error and current socket count                        |
-| `server_failure`  | Fixed subsystem and retryability; never the thrown error                    |
+| Event kind               | Intended signal                                                             |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `http_request`           | Safe route class, derived outcome/status, and handler latency               |
+| `room_lifecycle`         | Create/restore/expire/alarm repair, authority frontier, and bounded counts  |
+| `continuation_lifecycle` | Create/restore/revoke/expire outcome and duration; no save/room identifiers |
+| `room_rate_limit`        | Allowed/limited room operation and retry interval                           |
+| `room_admission`         | Invitation/ticket/initial/resume operation, role, safe outcome, and latency |
+| `room_command`           | Safe command outcome, bytes, total latency, and numeric phase durations     |
+| `room_socket`            | Upgrade/restore/close/error and current socket count                        |
+| `server_failure`         | Fixed subsystem and retryability; never the thrown error                    |
 
 A successful WebSocket `101` is an accepted HTTP outcome, not a rejected
 request. Terminal socket events exclude the callback socket from
@@ -169,6 +178,8 @@ ratified. Initial conservative alert candidates are:
 - p95 resume admission duration at or above two seconds;
 - unexpected increase in rejected/duplicate commands or admission failures by
   safe reason;
+- sustained failed continuation operations or corrupt-record cleanup above the
+  preview baseline;
 - rate-limited creation/room operations above the preview baseline;
 - restored room socket count without a matching healthy command/admission
   signal; and

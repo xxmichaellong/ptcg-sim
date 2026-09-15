@@ -692,20 +692,22 @@ wires that transaction through the source-shaped `Enter replay mode` control and
 hidden `.json` picker. A checked-in spectator artifact pins compatibility, and a
 real Worker/Chromium journey covers export, native selection, replay entry/exit,
 live restoration, and malformed-file recovery. Canonical multiplayer
-continuation remains server-held and unwired. Its first custody slice now
+continuation remains server-held and disabled by default. Its first custody
+slice now
 implements the threat/storage contract, high-entropy role-bound capability,
 digest-only encrypted checkpoint storage plus an optional encrypted exact-retry
 creation receipt, strict format/size/integrity checks, key rotation, bounded
 retention, exact retry recovery, revocation, and expiry.
 Its dedicated SQLite Durable Object binding/export and key-independent alarm
-are implemented and real-runtime tested without an edge route. The pure
+are implemented and real-runtime tested. The pure
 target-room transform now preserves exact canonical
 state/replay while rotating all session, projection, idempotency, ticket, and
 admission authority and returning only the requester's seat master plus an
 ordinary opponent invitation. The save adapter now also owns the encrypted
 `active -> restoring -> completed` transition and exact retry recovery under
-the original expiry. Production key/quota-capacity provisioning, independent
-rate enforcement, public routes/UI, and managed recovery/abuse gates remain
+the original expiry. Strict default-off create/restore/revoke routes and
+independent rate enforcement are implemented. Production key/quota-capacity
+provisioning, route activation, UI, and managed recovery/abuse gates remain
 closed. The source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
@@ -717,8 +719,7 @@ and deletes it on revocation or expiry. The internal create coordinator now
 composes source reservation, exact named-save creation/recovery, and source
 compaction with a model crash matrix. Exact private room/save create and
 recovery RPCs now prove concurrent same-operation convergence, encrypted
-storage secrecy, exact source-head capture, and post-eviction retry in workerd,
-without adding an edge caller.
+storage secrecy, exact source-head capture, and post-eviction retry in workerd.
 The global quota storage adapter now implements deterministic fixed sharding,
 bounded digest-only exact-retry leases, conservative full-retention accounting,
 atomic expiry/alarm cleanup, and corruption refusal without a singleton request
@@ -727,8 +728,8 @@ wiring, and workerd alarm/eviction proof are implemented with a test-only
 policy; production capacity remains unconfigured.
 The target store's atomic digest-marked initializer, internal cross-object
 coordination/crash model, exact private RPC codecs, reserved-room namespace
-selection, concurrent retry, and post-eviction recovery are implemented without
-an edge caller, as tracked in `CONTINUATION_CUSTODY.md`.
+selection, concurrent retry, and post-eviction recovery are implemented, as
+tracked in `CONTINUATION_CUSTODY.md`.
 ADR-021 separately defers production v1 saved-game/action-history files and old
 `/import?key=` share links; the isolated converter remains test-only.
 
@@ -738,11 +739,13 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  production key/quota-capacity provisioning, anonymous create/restore ingress
-  limits, public contracts/routes, and operational evidence. Private
-  source-room creation now includes a durable authenticated retry-safe request
-  budget; global quota enforcement and one-time restore orchestration are also
-  implemented and remain unreachable from public traffic.
+  production key/quota-capacity provisioning, measured anonymous ingress
+  policy, deliberate route activation, and operational evidence. Strict
+  create/restore/revoke contracts, independent limiters, and identifier-free
+  lifecycle telemetry are implemented behind the absent activation token.
+  Private source-room creation now includes a durable authenticated retry-safe
+  request budget; global quota enforcement and one-time restore orchestration
+  are also implemented and remain unreachable from public traffic.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

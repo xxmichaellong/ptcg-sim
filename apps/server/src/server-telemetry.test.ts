@@ -159,6 +159,43 @@ describe('structured server telemetry', () => {
     ]);
   });
 
+  it('emits identifier-free continuation lifecycle facts', () => {
+    const sink = new CollectingSink();
+    let id = 0;
+    const telemetry = new StructuredServerTelemetry(
+      'continuation',
+      'build',
+      sink,
+      () => 50_000,
+      () => `continuation-event-${++id}`
+    );
+    const capability = `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`;
+    const input = {
+      operation: 'revoke' as const,
+      outcome: 'accepted' as const,
+      durationMs: 1.2345,
+      capability,
+      saveId: 'A'.repeat(22),
+    };
+
+    telemetry.continuationLifecycle(input);
+
+    expect(sink.entries).toMatchObject([
+      {
+        level: 'info',
+        event: {
+          source: 'continuation',
+          kind: 'continuation_lifecycle',
+          operation: 'revoke',
+          outcome: 'accepted',
+          durationMs: 1.235,
+        },
+      },
+    ]);
+    expect(JSON.stringify(sink.entries)).not.toContain(capability);
+    expect(JSON.stringify(sink.entries)).not.toContain('A'.repeat(22));
+  });
+
   it('classifies a successful WebSocket upgrade as accepted', () => {
     const { sink, telemetry } = fixture();
 

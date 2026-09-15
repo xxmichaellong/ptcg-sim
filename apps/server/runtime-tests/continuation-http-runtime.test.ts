@@ -34,6 +34,23 @@ const postJson = (
     })
   );
 
+const deleteJson = (
+  path: string,
+  body: Record<string, unknown>,
+  address: string
+): Promise<Response> =>
+  exports.default.fetch(
+    new Request(`${RUNTIME_ORIGIN}${path}`, {
+      method: 'DELETE',
+      headers: {
+        'CF-Connecting-IP': address,
+        'Content-Type': 'application/json',
+        Origin: RUNTIME_ORIGIN,
+      },
+      body: JSON.stringify(body),
+    })
+  );
+
 const exchangePlayerCapability = async (
   roomCode: string,
   capability: string,
@@ -99,6 +116,43 @@ describe('activated continuation HTTP runtime', () => {
     expect(createRetry.status).toBe(201);
     expect(await createRetry.json()).toEqual(created.value);
 
+    const revocableCreate = await postJson(
+      `/v2/rooms/${source.roomCode}/continuations`,
+      { ...createInput, operationId: 'L'.repeat(43) },
+      '198.51.100.45'
+    );
+    const revocable = parseContinuationCreationResponse(
+      await revocableCreate.json()
+    );
+    expect(revocableCreate.status).toBe(201);
+    expect(revocable.ok).toBe(true);
+    if (!revocable.ok) throw new Error('expected revocable continuation');
+    const revoked = await deleteJson(
+      `/v2/continuations/${revocable.value.saveId}`,
+      { capability: revocable.value.capability },
+      '198.51.100.46'
+    );
+    const revokedRetry = await deleteJson(
+      `/v2/continuations/${revocable.value.saveId}`,
+      { capability: revocable.value.capability },
+      '198.51.100.46'
+    );
+    expect(revoked.status).toBe(204);
+    expect(revokedRetry.status).toBe(204);
+    expect(revoked.headers.get('Cache-Control')).toContain('no-store');
+    const revokedRestore = await postJson(
+      `/v2/continuations/${revocable.value.saveId}/restore`,
+      {
+        capability: revocable.value.capability,
+        operationId: 'M'.repeat(43),
+      },
+      '198.51.100.47'
+    );
+    expect(revokedRestore.status).toBe(404);
+    expect(await revokedRestore.json()).toEqual({
+      error: 'continuation_unavailable',
+    });
+
     const wrongBearer = await postJson(
       `/v2/rooms/${source.roomCode}/continuations`,
       {
@@ -155,6 +209,26 @@ describe('activated continuation HTTP runtime', () => {
     );
     expect(requesterTicket.ok && opponentTicket.ok).toBe(true);
 
+    const completedRevocation = await deleteJson(
+      `/v2/continuations/${created.value.saveId}`,
+      { capability: created.value.capability },
+      '198.51.100.48'
+    );
+    expect(completedRevocation.status).toBe(204);
+    expect(completedRevocation.headers.get('Cache-Control')).toContain(
+      'no-store'
+    );
+
+    const deletedRetry = await postJson(
+      `/v2/continuations/${created.value.saveId}/restore`,
+      restoreInput,
+      '198.51.100.43'
+    );
+    expect(deletedRetry.status).toBe(404);
+    expect(await deletedRetry.json()).toEqual({
+      error: 'continuation_unavailable',
+    });
+
     const secondOperation = await postJson(
       `/v2/continuations/${created.value.saveId}/restore`,
       { ...restoreInput, operationId: 'K'.repeat(43) },
@@ -203,5 +277,25 @@ describe('activated continuation HTTP runtime', () => {
       Array.from({ length: 30 }, () => 404)
     );
     expect(restoreResponses[30]?.status).toBe(429);
+
+    const revocationResponses = await Promise.all(
+      Array.from({ length: 31 }, (_, index) =>
+        deleteJson(
+          `/v2/continuations/${saveId}`,
+          {
+            capability: `ptcgsave.v1.${String.fromCharCode(
+              65 + (index % 26)
+            ).repeat(22)}.${'V'.repeat(43)}`,
+          },
+          '198.51.100.72'
+        )
+      )
+    );
+    expect(
+      revocationResponses.filter(({ status }) => status === 204)
+    ).toHaveLength(30);
+    expect(
+      revocationResponses.filter(({ status }) => status === 429)
+    ).toHaveLength(1);
   });
 });

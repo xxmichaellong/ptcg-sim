@@ -15,6 +15,7 @@ import {
 } from './continuation-custody.js';
 import {
   readContinuationRestoreRpcInput,
+  readContinuationRevocationRpcInput,
   readContinuationQuotaReservationRpcInput,
   readContinuationSaveCreationRpcInput,
   readContinuationSaveRecoveryRpcInput,
@@ -198,6 +199,24 @@ describe('continuation internal RPC codec', () => {
   ])('rejects malformed or extended request %#', (value) => {
     expect(
       readContinuationRestoreRpcInput(value, 'A'.repeat(22))
+    ).toBeUndefined();
+  });
+
+  it('accepts only exact capability-bound revocation input', () => {
+    const capability = createContinuationCapability().capability;
+    const saveId = parseContinuationCapability(capability)!.saveId;
+
+    expect(readContinuationRevocationRpcInput({ capability }, saveId)).toEqual({
+      capability,
+    });
+    expect(
+      readContinuationRevocationRpcInput({ capability }, 'A'.repeat(22))
+    ).toBeUndefined();
+    expect(
+      readContinuationRevocationRpcInput({ capability, force: true }, saveId)
+    ).toBeUndefined();
+    expect(
+      readContinuationRevocationRpcInput({ capability: 'bad' }, saveId)
     ).toBeUndefined();
   });
 });

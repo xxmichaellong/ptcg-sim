@@ -53,6 +53,14 @@
         "period": 60,
       },
     },
+    {
+      "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+      "namespace_id": "260903004",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
   ],
   "exports": {
     "PtcgContinuation": {

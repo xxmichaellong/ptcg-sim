@@ -20,6 +20,10 @@ export interface ContinuationRestoreRpcInput {
   readonly operationId: string;
 }
 
+export interface ContinuationRevocationRpcInput {
+  readonly capability: string;
+}
+
 export interface ContinuationSourceCreationRpcInput {
   readonly resumeToken: string;
   readonly operationId: string;
@@ -251,6 +255,26 @@ export const readContinuationRestoreRpcInput = (
     return undefined;
   }
   return Object.freeze({ capability, operationId });
+};
+
+export const readContinuationRevocationRpcInput = (
+  value: unknown,
+  expectedSaveId: string | undefined
+): ContinuationRevocationRpcInput | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !exactKeys(value, ['capability'])
+  ) {
+    return undefined;
+  }
+  const capability = Reflect.get(value, 'capability');
+  if (typeof capability !== 'string') return undefined;
+  const parsed = parseContinuationCapability(capability);
+  if (!parsed || !expectedSaveId || parsed.saveId !== expectedSaveId) {
+    return undefined;
+  }
+  return Object.freeze({ capability });
 };
 
 export type ContinuationRestoreRpcResult =

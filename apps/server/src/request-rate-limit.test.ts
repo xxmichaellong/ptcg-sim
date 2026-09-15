@@ -4,6 +4,7 @@ import {
   anonymousRequestRateLimitKey,
   consumeContinuationCreationRateLimit,
   consumeContinuationRestoreRateLimit,
+  consumeContinuationRevocationRateLimit,
   consumeRoomCreationRateLimit,
   readRequestRateLimitDecision,
   ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS,
@@ -68,7 +69,7 @@ describe('anonymous edge request rate limits', () => {
     expect(limit.mock.calls[0]?.[0].key).toMatch(/^[0-9a-f]{64}$/u);
   });
 
-  it('uses independent anonymous scopes for continuation creation and restore', async () => {
+  it('uses independent anonymous scopes for continuation lifecycle operations', async () => {
     const keys: string[] = [];
     const binding = {
       limit: vi.fn(async ({ key }: { readonly key: string }) => {
@@ -80,11 +81,11 @@ describe('anonymous edge request rate limits', () => {
 
     await consumeContinuationCreationRateLimit(input, binding);
     await consumeContinuationRestoreRateLimit(input, binding);
+    await consumeContinuationRevocationRateLimit(input, binding);
 
-    expect(keys).toHaveLength(2);
-    expect(keys[0]).toMatch(/^[0-9a-f]{64}$/u);
-    expect(keys[1]).toMatch(/^[0-9a-f]{64}$/u);
-    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys).toHaveLength(3);
+    for (const key of keys) expect(key).toMatch(/^[0-9a-f]{64}$/u);
+    expect(new Set(keys)).toHaveProperty('size', 3);
   });
 
   it('rejects invalid scopes before calling the digest', async () => {
