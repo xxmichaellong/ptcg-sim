@@ -1,7 +1,8 @@
 # Continuation managed-preview runbook
 
-Status: provisioning tooling and local dry-run rehearsal implemented. No
-Cloudflare preview has been created and no managed-preview evidence is claimed.
+Status: provisioning tooling, local dry-run, and a three-stage persisted
+key-rotation/rollback rehearsal are implemented. No Cloudflare preview has been
+created and no managed-preview evidence is claimed.
 
 This runbook creates an isolated, explicitly activated Worker for continuation
 testing. It never targets `ptcgsim-v2`, never copies routes or domains from the
@@ -62,6 +63,14 @@ integer and that reuse across Workers deliberately shares counters. See the
 The quota product is a hard global lease ceiling. Start with a small rehearsal
 value such as four shards and four leases per shard; that example is not a
 production capacity decision.
+
+Do not substitute Wrangler's anonymous `deploy --temporary` mode for this
+approval. Temporary-account creation requires an operator to accept
+Cloudflare's terms and privacy policy, and the documented supported-resource
+table does not include this Worker's Rate Limiting bindings. It therefore
+cannot establish the approved account, complete topology, cost ownership, or
+retention evidence required by this runbook. See Cloudflare's
+[temporary deployment contract](https://developers.cloudflare.com/workers/platform/claim-deployments/).
 
 ## Generate and inspect without network access
 
@@ -197,7 +206,7 @@ script. Remote teardown is a separate, explicitly approved destructive action
 after retained records, evidence, cost data, alarms, and rollback observations
 have been reconciled.
 
-## Key rotation rehearsal input
+## Key rotation and rollback crossing
 
 To prepare a new active key while retaining every prior decrypt key, create a
 new output directory and pass the previous private credentials file:
@@ -222,11 +231,70 @@ rotation plan. The generator refuses a fifth key and does not implement
 retirement: remove an old key only after every record it can protect has passed
 the 30-day maximum retention window and cleanup has been verified.
 
-A complete rotation gate must prove a save created under the old active key can
-still be restored after the rotated keyring is deployed, while a new save is
-created and restored under the new key. The current one-shot browser journey
-does not hold a capability across deployments, so managed rotation evidence
-remains explicitly open even though safe bundle generation is implemented.
+The dedicated rotation journey carries one capability across deployments in a
+private, origin-bound artifact. It never starts a server, so
+`PTCGSIM_CONTINUATION_PREVIEW_URL` is mandatory. In-repository artifacts are
+allowed only below `.private/continuation-rotation/<stage>/`; their directory is
+mode `0700`, their two files are mode `0600`, existing output and symbolic-link
+paths are refused, and expired or wrong-origin input fails before browser work.
+The runner disables retries, traces, screenshots, video, and HTML reports.
+
+First, while the original key is active and continuation routes are enabled,
+capture an old-key save:
+
+```sh
+export PTCGSIM_ROTATION_ROOT=.private/continuation-rotation/rehearsal-YYYYMMDD
+
+PTCGSIM_CONTINUATION_PREVIEW_URL="$PTCGSIM_MANAGED_PREVIEW_URL" \
+PTCGSIM_CONTINUATION_ROTATION_OUTPUT="$PTCGSIM_ROTATION_ROOT/old-key" \
+  corepack pnpm run test:continuation:rotation:browser -- --project=chromium
+```
+
+This stage creates a real two-player room, advances authority, and leaves one
+live save in the private output. Review the rotated bundle, deploy its code,
+upload `continuation-credentials.json`, verify the new active ID and retained
+old ID by **name only** from its manifest, and reactivate if the secret update
+changed activation state. Then cross the forward rotation:
+
+```sh
+PTCGSIM_CONTINUATION_PREVIEW_URL="$PTCGSIM_MANAGED_PREVIEW_URL" \
+PTCGSIM_CONTINUATION_ROTATION_INPUT="$PTCGSIM_ROTATION_ROOT/old-key" \
+PTCGSIM_CONTINUATION_ROTATION_OUTPUT="$PTCGSIM_ROTATION_ROOT/new-key" \
+  corepack pnpm run test:continuation:rotation:browser -- --project=chromium
+```
+
+The transition restores and revokes the input, verifies the exact saved
+match/revision and ordinary rotated-opponent admission, advances the restored
+room, and captures one new save under the currently active key. A passing stage
+therefore proves retained-old-key decryption plus current-key encryption.
+
+For an executable rollback rehearsal, deploy the explicitly reviewed prior
+compatible Worker build while preserving the rotated keyring, quota policy,
+Durable Object exports/bindings, and activation state. Do not bulk-upload the
+old credential file and do not make the old key active again: rollback must not
+resume creating ciphertext that delays old-key retirement. After confirming
+the rolled-back build ID from `/v2/health`, consume the new-key save without
+creating another one:
+
+```sh
+PTCGSIM_CONTINUATION_PREVIEW_URL="$PTCGSIM_MANAGED_PREVIEW_URL" \
+PTCGSIM_CONTINUATION_ROTATION_INPUT="$PTCGSIM_ROTATION_ROOT/new-key" \
+  corepack pnpm run test:continuation:rotation:browser -- --project=chromium
+```
+
+That final pass proves the rollback build can decrypt, restore, and revoke data
+created by the forward build. Redeploy the intended forward build, verify its
+health ID, deactivate, and rerun the production-topology `404` gate. Only then
+remove the now-revoked local handoff files through the approved private-data
+cleanup process. The harness itself never deletes input or changes Cloudflare
+state.
+
+An interrupted transition can leave its input restored but not proven revoked,
+or its output directory empty/incomplete after a remote save was attempted.
+Do not delete or overwrite either artifact and do not blindly rerun. Preserve
+the rotated keyring and activation long enough to reconcile the exact private
+stage: confirm whether restore/revoke committed, revoke an identified live save
+when authorized, or retain all relevant decrypt keys through alarm expiry.
 
 ## Evidence record
 

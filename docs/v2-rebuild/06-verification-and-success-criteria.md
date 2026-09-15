@@ -61,7 +61,7 @@ source/target fork isolation, post-restore command, revocation, and bearer
 non-persistence. All three Chromium lanes run after
 the non-browser quality gate with retries disabled, CI-only focused-test
 rejection, fresh server ownership, failure screenshots, and retained failure
-traces. `tsconfig.browser.json` independently typechecks all five Playwright
+traces. `tsconfig.browser.json` independently typechecks all six Playwright
 configurations and every spec/support module under the production
 strict/no-unchecked profile. A separate no-retry Firefox/WebKit lane now drives
 the real Solo-room authority, WebSocket, DOM renderer, pointer, arbitrary-image,
@@ -74,6 +74,11 @@ Both built-origin Chromium configurations can target an already provisioned
 managed origin without starting a local server. `PTCGSIM_PREVIEW_URL` runs the
 default-off production-topology proof before activation and after deactivation;
 `PTCGSIM_CONTINUATION_PREVIEW_URL` runs the activated continuation journey.
+The same explicit managed origin plus private rotation input/output directories
+runs the no-retry, no-trace staged continuation crossing. A persisted local
+rehearsal has captured under an old key, restored and captured after rotation,
+and restored after a retained-key rollback configuration; this validates the
+harness but is not managed evidence.
 The operator bundle generator and deployment/evidence procedure are documented
 in
 [`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).

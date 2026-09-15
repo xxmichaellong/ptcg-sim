@@ -2,120 +2,23 @@ import {
   parseContinuationHandoffText,
   parseRoomInvitationHandoffText,
 } from '../../packages/protocol/src/index.js';
+import { expect, test } from '@playwright/test';
+
 import {
-  expect,
-  test,
-  type BrowserContext,
-  type Download,
-  type Page,
-} from '@playwright/test';
-
-const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
-const SUCCESS_MESSAGE =
-  'Saved game resumed. A player invitation for the restored room was copied to your clipboard.';
-const EXPECTED_REVOKED_CONSOLE_ERROR =
-  'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
-
-interface OpenedLobby {
-  readonly page: Page;
-  readonly errors: string[];
-}
-
-interface BoardIdentity {
-  readonly matchId: string;
-  readonly revision: string;
-}
-
-const openLobby = async (context: BrowserContext): Promise<OpenedLobby> => {
-  const page = await context.newPage();
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(`console: ${message.text()}`);
-  });
-  await page.goto('/?room-lobby=1&renderer=dom');
-  await expect(
-    page.locator('[data-app-route="remote-room-lobby"]')
-  ).toBeVisible();
-  return { page, errors };
-};
-
-const readClipboard = (page: Page): Promise<string> =>
-  page.evaluate(() => globalThis.navigator.clipboard.readText());
-
-const copyInvitation = async (page: Page): Promise<string> => {
-  await page.locator('#copyButton').click();
-  await expect.poll(() => readClipboard(page)).toContain('PTCGSIM2-INVITE:');
-  return readClipboard(page);
-};
-
-const pasteInvitation = async (
-  page: Page,
-  handoff: string,
-  displayName: string
-): Promise<void> => {
-  await page.locator('#nameInput').fill(displayName);
-  await page.evaluate(
-    (text) => globalThis.navigator.clipboard.writeText(text),
-    handoff
-  );
-  const roomInput = page.locator('#roomIdInput');
-  await roomInput.focus();
-  await page.keyboard.press('Control+V');
-  await expect(roomInput).toHaveValue(ROOM_CODE);
-  await expect(page.locator('.lobby-status')).toHaveText(
-    'Player invitation ready.'
-  );
-};
-
-const joinReadyRoom = async (page: Page): Promise<void> => {
-  await page.locator('#joinRoomButton').click();
-  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#roomHeaderText')).toHaveAttribute(
-    'data-session-phase',
-    'ready'
-  );
-};
-
-const roomCode = async (page: Page): Promise<string> => {
-  const status = await page.locator('#roomHeaderText').innerText();
-  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(status);
-  if (!match?.[1]) throw new Error(`Unexpected room status: ${status}`);
-  return match[1];
-};
-
-const boardIdentity = (page: Page): Promise<BoardIdentity> =>
-  page.locator('.ptcgsim-board-surface').evaluate((surface) => {
-    const matchId = surface.getAttribute('data-match-id');
-    const revision = surface.getAttribute('data-revision');
-    if (!matchId || revision === null) {
-      throw new Error('Board identity attributes are unavailable');
-    }
-    return { matchId, revision };
-  });
-
-const downloadText = async (download: Download): Promise<string> => {
-  const stream = await download.createReadStream();
-  let contents = '';
-  for await (const chunk of stream) contents += chunk.toString();
-  return contents;
-};
-
-const exposedBrowserState = (page: Page) =>
-  page.evaluate(() => ({
-    href: globalThis.location.href,
-    html: globalThis.document.documentElement.outerHTML,
-    localStorage: Array.from(
-      { length: globalThis.localStorage.length },
-      (_, index) =>
-        globalThis.localStorage.getItem(globalThis.localStorage.key(index)!)
-    ),
-    sessionStorage: Array.from(
-      { length: globalThis.sessionStorage.length },
-      (_, index) =>
-        globalThis.sessionStorage.getItem(globalThis.sessionStorage.key(index)!)
-    ),
-  }));
+  CONTINUATION_RESTORE_SUCCESS_MESSAGE,
+  EXPECTED_REVOKED_CONSOLE_ERROR,
+  ROOM_CODE,
+  boardIdentity,
+  copyInvitation,
+  downloadText,
+  exposedBrowserState,
+  joinReadyRoom,
+  openLobby,
+  pasteInvitation,
+  readClipboard,
+  roomCode,
+  type OpenedLobby,
+} from './continuation-browser-helpers.js';
 
 test('online save downloads, restores, rotates both players, and revokes its bearer', async ({
   browser,
@@ -239,7 +142,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(restoreResponse.headers()['cache-control']).toContain('no-store');
     expect(revokeResponse.status()).toBe(204);
     expect(revokeResponse.headers()['cache-control']).toContain('no-store');
-    expect(dialogMessage).toBe(SUCCESS_MESSAGE);
+    expect(dialogMessage).toBe(CONTINUATION_RESTORE_SUCCESS_MESSAGE);
 
     await expect(creator.page.locator('#roomHeaderText')).toHaveAttribute(
       'data-session-phase',
@@ -327,12 +230,18 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       expect(url.search).toBe('');
       expect(url.hash).toBe('');
       for (const bearer of bearerValues) {
-        expect(requestUrl).not.toContain(bearer);
+        if (requestUrl.includes(bearer)) {
+          throw new Error('A private bearer entered a request URL');
+        }
       }
     }
     for (const page of pages) {
       const exposed = JSON.stringify(await exposedBrowserState(page));
-      for (const bearer of bearerValues) expect(exposed).not.toContain(bearer);
+      for (const bearer of bearerValues) {
+        if (exposed.includes(bearer)) {
+          throw new Error('A private bearer entered browser-visible state');
+        }
+      }
     }
 
     expect(creator.errors).toEqual([EXPECTED_REVOKED_CONSOLE_ERROR]);

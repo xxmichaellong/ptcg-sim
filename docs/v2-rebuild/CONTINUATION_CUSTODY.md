@@ -608,6 +608,18 @@ in
 [`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).
 No Cloudflare resource was created by this work.
 
+The separate staged rotation browser runner now carries an origin-bound
+capability between explicit deployments in a locked ignored directory. Capture,
+transition-with-output, and final-transition modes prove exact canonical
+checkpoint recovery, ordinary opponent re-admission, post-restore progress,
+input revocation, and browser bearer non-persistence while disabling retries,
+traces, screenshots, video, and HTML reports. Its artifact reader rejects
+overwrite, symlinks, public modes, extra/incomplete files, malformed or drifted
+schemas, a different origin, and expiry. An artificial three-stage run passed
+against one persisted local Wrangler Durable Object store with old, rotated,
+and rollback keyring configurations. This is harness evidence, not a managed
+key-rotation or executable-rollback claim.
+
 The quota suite proves deterministic bounded shard selection, strict
 policy/lifetime/input validation, digest-only room/operation storage, exact
 idempotent reservation, save-locator collision refusal, per-shard denial,
@@ -679,9 +691,10 @@ Production continuation remains unavailable until all of the following are
 implemented and attached to the draft PR/release evidence:
 
 - managed and production secret provisioning plus key-rotation/retirement
-  rehearsal; the private bundle generator and fail-closed keyring loader are
-  implemented, but no remote secret has been provisioned and no old-key save
-  has crossed a managed rotation;
+  rehearsal; the private bundle generator, fail-closed keyring loader, and
+  staged no-trace browser crossing are implemented and locally rehearsed,
+  but no remote secret has been provisioned and no old-key save has crossed a
+  managed rotation or reviewed executable rollback;
 - production quota-capacity provisioning, measured/approved anonymous rate
   policy, and an explicit activation-token rollout; the separate declared
   bindings, strict body limits, mandatory limiter ports, authenticated retry-safe

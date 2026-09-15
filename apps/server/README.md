@@ -113,9 +113,12 @@ player-credential rotation, revocation, and browser non-persistence locally.
 The no-network private bundle generator and phased managed-preview procedure are
 documented in
 [`CONTINUATION_PREVIEW_RUNBOOK.md`](./CONTINUATION_PREVIEW_RUNBOOK.md). Its
-generated config passes pinned-Wrangler dry-run validation. No managed preview,
-remote key/quota, key-rotation crossing, load/eviction/rollback exercise, or
-production activation is claimed; those remain release gates.
+generated config passes pinned-Wrangler dry-run validation. The private staged
+browser harness also passes an artificial old-key -> rotated-key -> retained-key
+rollback crossing against one persisted local Wrangler store. No managed
+preview, remote key/quota, managed key-rotation crossing,
+load/eviction/rollback exercise, or production activation is claimed; those
+remain release gates.
 
 ## Seeded authority/storage model
 
