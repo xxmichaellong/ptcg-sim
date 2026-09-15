@@ -2,7 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/browser',
-  testIgnore: 'production-topology.spec.ts',
+  testIgnore: [
+    'continuation-full-stack.spec.ts',
+    'production-topology.spec.ts',
+  ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
   retries: 0,

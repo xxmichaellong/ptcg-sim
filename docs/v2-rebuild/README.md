@@ -129,8 +129,8 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   replay exports its exact installed artifact. The live Solo Options menu now
   wires its source-shaped `Enter replay mode` control and hidden `.json` picker
   to the raw-byte validator and atomic inert coordinator installation. The
-  first canonical server-held continuation foundation now provides an unwired,
-  dedicated single-save custody adapter with high-entropy role-bound
+  first canonical server-held continuation foundation now provides a
+  default-off, dedicated single-save custody adapter with high-entropy role-bound
   capabilities, digest-only AES-GCM checkpoint storage plus an optional
   encrypted exact-retry bearer receipt, strict bounds/integrity, 30-day maximum
   retention, transactional revocation/expiry, key rotation, and
@@ -194,8 +194,11 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   `.ptcgsave` capability envelope and restores it through private exact-retry
   custody. Target ownership changes only after ordinary bootstrap reaches a
   ready player and the rotated opponent invitation is copied; partial targets
-  are disposed while the source room remains live. Production key/quota
-  provisioning, activation, and managed browser/recovery evidence remain
+  are disposed while the source room remains live. A dedicated built
+  Worker/Chromium journey now verifies the real download/upload/clipboard path,
+  exact checkpoint and fork isolation, completed-save revocation, and browser
+  bearer non-persistence with command-line-only test bindings. Production
+  key/quota provisioning, activation, and managed browser/recovery evidence remain
   deliberately disabled later release work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.

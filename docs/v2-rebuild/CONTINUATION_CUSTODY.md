@@ -10,9 +10,9 @@ production policy; strict public create/restore/revoke protocol and HTTP handler
 contracts, default-off edge routing, independent anonymous limiter bindings,
 identifier-free lifecycle telemetry, and a strict browser transport/private
 retry custodian are implemented; bounded capability-file handoff, source-shaped
-live-room controls, and atomic ready-target installation are now wired; the
-production activation token remains absent and direct open remains deliberately
-unwired
+live-room controls, atomic ready-target installation, and a dedicated activated
+same-origin browser journey are now wired; the production activation token
+remains absent and direct open remains deliberately unwired
 
 Decision owner: ADR-012
 
@@ -581,6 +581,21 @@ budgets. The production-topology browser journey also requests all three exact
 paths from the built same-origin application and requires ordinary `404 Not
 Found` responses while the activation binding is absent.
 
+The separate continuation browser journey builds the same application and
+Worker on one local origin, but injects deterministic test-only activation,
+keyring, and quota bindings on the `wrangler dev` command line. It creates a
+real two-player room, advances the authority, downloads and strictly parses the
+`.ptcgsave` handoff, uploads those exact bytes through the native file chooser,
+waits for the rotated requester to become ready, and joins the restored opponent
+through the foreground-copied ordinary invitation. It proves exact
+match/revision preservation at the checkpoint, distinct source and target room
+ownership, target-only progress after the fork, completed-save revocation, and
+absence of either bearer from request URLs, DOM, location, and browser storage.
+The test bindings are not present in `wrangler.jsonc`. Setting
+`PTCGSIM_CONTINUATION_PREVIEW_URL` reuses this journey against a separately
+provisioned managed preview without starting a local server; no such managed run
+is claimed by the local/CI lane.
+
 The quota suite proves deterministic bounded shard selection, strict
 policy/lifetime/input validation, digest-only room/operation storage, exact
 idempotent reservation, save-locator collision refusal, per-shard denial,
@@ -670,10 +685,12 @@ implemented and attached to the draft PR/release evidence:
   concurrency/eviction path are implemented without production traffic;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
   cleanup and incident runbooks, cost evidence, and security/privacy review;
-- a managed-preview browser journey for the wired source-shaped UI/handoff and
-  ready-target installation, including foreground clipboard permission and
-  teardown/retry behavior; component and model suites cover the same
-  transaction without changing the existing UI/UX beyond the two approved
+- execution of the checked-in continuation browser journey against a
+  separately provisioned managed preview, plus managed teardown/retry fault
+  exercises; local Chromium covers the wired source-shaped file/clipboard UI,
+  ready-target installation, source/target isolation, revocation, and browser
+  bearer non-persistence, while component and model suites cover teardown and
+  exact retry without changing the existing UI/UX beyond the two approved
   continuation actions.
 
 Wrangler `exports` lifecycle changes cannot be crossed by an ordinary Worker

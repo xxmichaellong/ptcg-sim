@@ -253,10 +253,12 @@ describe('activated continuation HTTP runtime', () => {
         )
       )
     );
-    expect(creationResponses.slice(0, 30).map(({ status }) => status)).toEqual(
-      Array.from({ length: 30 }, () => 403)
-    );
-    expect(creationResponses[30]?.status).toBe(429);
+    expect(
+      creationResponses.filter(({ status }) => status === 403)
+    ).toHaveLength(30);
+    expect(
+      creationResponses.filter(({ status }) => status === 429)
+    ).toHaveLength(1);
 
     const saveId = 'A'.repeat(22);
     const restoreResponses = await Promise.all(
@@ -273,10 +275,12 @@ describe('activated continuation HTTP runtime', () => {
         )
       )
     );
-    expect(restoreResponses.slice(0, 30).map(({ status }) => status)).toEqual(
-      Array.from({ length: 30 }, () => 404)
-    );
-    expect(restoreResponses[30]?.status).toBe(429);
+    expect(
+      restoreResponses.filter(({ status }) => status === 404)
+    ).toHaveLength(30);
+    expect(
+      restoreResponses.filter(({ status }) => status === 429)
+    ).toHaveLength(1);
 
     const revocationResponses = await Promise.all(
       Array.from({ length: 31 }, (_, index) =>

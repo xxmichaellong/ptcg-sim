@@ -52,11 +52,16 @@ priority, SPA fallback, production exclusion of the developer module, repeated
 document replacement, room creation/ticket exchange, and a real resumed room
 socket after a deterministic unclean-close signal. The resume gate pins the
 rotated capability, exact client phase sequence, stable renderer/DOM ownership,
-no repeated HTTP admission, a post-resume command, and both socket closures.
-Both Chromium lanes run after
+no repeated HTTP admission, a post-resume command, and both socket closures. A
+third isolated built-Worker configuration injects test-only continuation
+activation, keyring, and quota bindings on the local Wrangler command line. Its
+three browser contexts exercise the player-visible save download, native-file
+restore, foreground opponent invitation, exact checkpoint preservation,
+source/target fork isolation, post-restore command, revocation, and bearer
+non-persistence. All three Chromium lanes run after
 the non-browser quality gate with retries disabled, CI-only focused-test
 rejection, fresh server ownership, failure screenshots, and retained failure
-traces. `tsconfig.browser.json` independently typechecks all three Playwright
+traces. `tsconfig.browser.json` independently typechecks all five Playwright
 configurations and every spec/support module under the production
 strict/no-unchecked profile. A separate no-retry Firefox/WebKit lane now drives
 the real Solo-room authority, WebSocket, DOM renderer, pointer, arbitrary-image,
@@ -204,6 +209,18 @@ re-export, and return to the latest live view. The real Worker/Chromium Solo
 journey covers native file selection, replay entry/exit, exact live restoration,
 and the source error presentation for malformed input. Canonical resumable state
 import remains a separate disabled capability.
+
+The canonical continuation row now also has a built same-origin local
+Worker/Chromium journey. It advances a real two-player authority, downloads and
+strictly parses the capability-only `.ptcgsave`, restores those exact file bytes
+into a distinct ready room, transfers the ordinary opponent invitation through
+the foreground clipboard path, and proves both restored projections start at
+the saved match/revision. A target action advances only the fork while the
+original opponent remains on the unchanged source. The journey observes
+completed-save deletion, refuses a later restore, and scans request URLs, DOM,
+location, and browser storage for both bearers. Because its activation/key/quota
+values are deterministic local command-line bindings, it is repeatable CI
+evidence but not managed-preview or production-secret evidence.
 
 The developer creator route also has a three-cycle Chromium document-navigation
 gate against real local Vite and Wrangler processes. It pins one distinct room,

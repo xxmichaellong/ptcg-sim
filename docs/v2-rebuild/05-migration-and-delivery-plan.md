@@ -712,8 +712,12 @@ storage; the remote-room owner creates it only for a welcomed player and
 rechecks readiness before releasing the resume bearer. The live multiplayer
 Options menu now adds the two approved player controls for a bounded
 `.ptcgsave` capability download and atomic ready-target restore plus foreground
-opponent-invitation copy. Production key/quota-capacity provisioning, route
-activation, and managed recovery/abuse/browser gates remain closed. The
+opponent-invitation copy. A dedicated same-origin built Worker/Chromium journey
+now exercises that complete file/clipboard path with command-line-only test
+activation, verifies exact checkpoint preservation and source/target isolation,
+and confirms completed-save revocation and browser bearer non-persistence.
+Production key/quota-capacity provisioning, route activation, and managed
+recovery/abuse/browser gates remain closed. The
 source-room adapter now
 covers active claimed-player authorization, exact-frontier snapshot
 reservation, stable digest-only idempotency, bounded per-player/per-room counts,
@@ -753,8 +757,9 @@ Work:
   request budget; global quota enforcement and one-time restore orchestration
   are also implemented and remain unreachable from public traffic. Retain the
   implemented browser-side strict transport and private stable-retry custodian;
-  retain the implemented trusted restored-room installer and source-shaped
-  capability handoff; add its managed-preview browser journey when the
+  retain the implemented trusted restored-room installer, source-shaped
+  capability handoff, and local test-activated browser journey; execute the same
+  opt-in harness against a separately provisioned managed preview when the
   production gates are deliberately opened.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and

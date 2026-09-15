@@ -25,8 +25,9 @@
     "test:tooling:v2": "node --test scripts/*.test.mjs && tsx --test scripts/*.test.ts",
     "test:renderer:browser": "playwright test",
     "test:cross-browser:browser": "playwright test --config=playwright.cross-browser.config.ts",
+    "test:continuation:browser": "playwright test --config=playwright.continuation.config.ts",
     "test:preview:browser": "playwright test --config=playwright.preview.config.ts",
-    "check:browser": "corepack pnpm run test:renderer:browser --project=chromium && corepack pnpm run test:preview:browser --project=chromium",
+    "check:browser": "corepack pnpm run test:renderer:browser --project=chromium && corepack pnpm run test:preview:browser --project=chromium && corepack pnpm run test:continuation:browser --project=chromium",
     "check:cross-browser": "corepack pnpm run test:cross-browser:browser",
     "audit:dependencies": "corepack pnpm audit --audit-level low --ignore-registry-errors",
     "check:legacy-corpus": "tsx scripts/check-legacy-import-corpus.ts",
@@ -42,12 +43,12 @@
     "check:fast": "corepack pnpm run check:ci",
     "check:full": "corepack pnpm run check:fast && corepack pnpm run check:browser && corepack pnpm run check:cross-browser",
     "lint": "corepack pnpm run lint:v2",
-    "lint:v2": "eslint --max-warnings=0 apps packages tests scripts playwright.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs",
+    "lint:v2": "eslint --max-warnings=0 apps packages tests scripts playwright.config.ts playwright.continuation.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs",
     "measure:v2:renderer": "playwright test --config=playwright.performance.config.ts",
     "measure:v2:server": "corepack pnpm --filter @ptcgsim/server-v2 run measure:runtime",
     "format": "corepack pnpm run format:v2",
-    "format:v2": "prettier --write --no-error-on-unmatched-pattern \"apps/**/*.{js,jsx,ts,tsx,json,md,css}\" \"packages/**/*.{js,jsx,ts,tsx,json,md,css}\" \"tests/**/*.{js,jsx,ts,tsx,json,md,css}\" \"docs/v2-rebuild/**/*.{json,md}\" \"scripts/**/*.{js,mjs,ts}\" \".github/**/*.{yml,yaml}\" package.json tsconfig.json tsconfig.base.json tsconfig.browser.json playwright.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs README.md",
-    "format:check:v2": "prettier --check --no-error-on-unmatched-pattern \"apps/**/*.{js,jsx,ts,tsx,json,md,css}\" \"packages/**/*.{js,jsx,ts,tsx,json,md,css}\" \"tests/**/*.{js,jsx,ts,tsx,json,md,css}\" \"docs/v2-rebuild/**/*.{json,md}\" \"scripts/**/*.{js,mjs,ts}\" \".github/**/*.{yml,yaml}\" package.json tsconfig.json tsconfig.base.json tsconfig.browser.json playwright.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs README.md"
+    "format:v2": "prettier --write --no-error-on-unmatched-pattern \"apps/**/*.{js,jsx,ts,tsx,json,md,css}\" \"packages/**/*.{js,jsx,ts,tsx,json,md,css}\" \"tests/**/*.{js,jsx,ts,tsx,json,md,css}\" \"docs/v2-rebuild/**/*.{json,md}\" \"scripts/**/*.{js,mjs,ts}\" \".github/**/*.{yml,yaml}\" package.json tsconfig.json tsconfig.base.json tsconfig.browser.json playwright.config.ts playwright.continuation.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs README.md",
+    "format:check:v2": "prettier --check --no-error-on-unmatched-pattern \"apps/**/*.{js,jsx,ts,tsx,json,md,css}\" \"packages/**/*.{js,jsx,ts,tsx,json,md,css}\" \"tests/**/*.{js,jsx,ts,tsx,json,md,css}\" \"docs/v2-rebuild/**/*.{json,md}\" \"scripts/**/*.{js,mjs,ts}\" \".github/**/*.{yml,yaml}\" package.json tsconfig.json tsconfig.base.json tsconfig.browser.json playwright.config.ts playwright.continuation.config.ts playwright.cross-browser.config.ts playwright.performance.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs README.md"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

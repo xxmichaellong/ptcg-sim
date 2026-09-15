@@ -14,6 +14,7 @@
   "include": [
     "apps/web/src/renderer-spike-handle.ts",
     "playwright.config.ts",
+    "playwright.continuation.config.ts",
     "playwright.cross-browser.config.ts",
     "playwright.performance.config.ts",
     "playwright.preview.config.ts",
