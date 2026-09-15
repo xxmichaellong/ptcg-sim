@@ -314,6 +314,20 @@ component, and real-mouse source/candidate Chromium coverage pins coordinate
 scaling, opacity restoration, exact discard-to-hand output, nonempty retention,
 and empty-pile reconciliation without changing visible controls or styling.
 
+Opened discard cards also retain v1's per-card ability-used tab. The closed
+pile scene still allocates no marker for covered cards; only the mounted zone
+browser consults the installed recipient view and paints a tab when the exact
+alias is a disclosed `known` card with `abilityUsed: true` in that discard.
+The marker is nested under its card button, is presentation-only and hidden
+from the accessibility tree, and therefore follows paint-only Sort without an
+ID lookup, command, or mutable coordinate record. A later projection that
+clears the annotation removes the tab. Component coverage pins exact alias
+association through sorting and removal, while source/candidate Chromium pins
+both player-frame colors, 10% radius, z-index, and physical card-relative
+geometry within the existing 2 px tolerance. Deck/lost-zone cards and
+concealed view records fail closed; no protocol, authority, closed-pile paint,
+input behavior, or visible control changed.
+
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench

@@ -244,6 +244,7 @@
 }
 
 .ptcgsim-legacy-zone-cards button {
+  position: relative;
   display: inline-block;
   width: 10%;
   /* Preserve the non-interactive line-box allowance of v1's inline images. */
@@ -254,6 +255,26 @@
   background: transparent;
   box-shadow: none;
   cursor: pointer;
+}
+
+.ptcgsim-legacy-zone-ability-marker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 1;
+  display: block;
+  box-sizing: content-box;
+  width: 100%;
+  height: 0;
+  padding-bottom: 20%;
+  border-radius: 10%;
+  background: rgb(59 141 173 / 70.8%);
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-zone-browser[data-overlay-side='opponent']
+  .ptcgsim-legacy-zone-ability-marker {
+  background: rgb(255 60 0 / 39.2%);
 }
 
 .ptcgsim-legacy-zone-browser[data-zone-browser-kind='deck']

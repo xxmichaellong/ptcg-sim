@@ -146,6 +146,7 @@ const currentViewport = (): BoardLayoutState['viewport'] => ({
 
 export interface ReactDomProtectedInputHarnessOptions {
   readonly openedPileCardCount?: number;
+  readonly openedPileAbilityMarkers?: boolean;
 }
 
 /** Development-only native-input seam; it is unreachable from production. */
@@ -202,16 +203,24 @@ export const mountReactDomProtectedInputHarness = async (
   }
   // A non-sorted canonical order makes the browser proof sensitive to both
   // enabling and disabling the paint-only Sort control.
-  const view = {
-    ...baseView,
-    zones: {
-      ...expandedZones,
-      [destinationZoneId]: {
-        ...destinationZone,
-        cards: [...destinationZone.cards].reverse(),
-      },
-    },
+  expandedZones[destinationZoneId] = {
+    ...destinationZone,
+    cards: [...destinationZone.cards].reverse(),
   };
+  if (options.openedPileAbilityMarkers) {
+    for (const zone of Object.values(expandedZones)) {
+      if (zone.kind !== 'discard') continue;
+      expandedZones[zone.id] = {
+        ...zone,
+        cards: zone.cards.map((card, index) =>
+          index === 0 && card.kind === 'known'
+            ? { ...card, abilityUsed: true }
+            : card
+        ),
+      };
+    }
+  }
+  const view = { ...baseView, zones: expandedZones };
 
   const layout: BoardLayoutState = {
     geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,

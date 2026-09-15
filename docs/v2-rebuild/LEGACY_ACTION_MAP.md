@@ -1461,6 +1461,19 @@ pin discard-to-hand command/action records, coordinate scaling, forgery
 rejection, no-op retention, and accepted presentation ordering; movement rules,
 protocol, authority, labels, and paint remain unchanged.
 
+An ability-marked card in an opened discard now also retains the source tab
+paint. This remains a projection concern rather than a new scene/authority
+marker: the overlay requires the exact currently installed discard alias to be
+a recipient-visible `known` card with `abilityUsed: true`, then nests one
+non-interactive, accessibility-hidden tab under that card. Local sorting moves
+the marker with the same keyed card; an unmarked successor removes it. Closed
+pile covers continue to allocate neither the covered card DOM nor its marker,
+and deck, lost-zone, and concealed records cannot synthesize one. Component
+tests pin association, sort stability, and removal. A live-v1/candidate
+Chromium comparison pins local/opponent color, radius, z-index, and physical
+placement within the declared 2 px tolerance without changing an action,
+command, disclosure rule, or visible control.
+
 V1 replay's prize reveal/look and opponent-hand look are the scoped zone-level
 local-disclosure exceptions; its context menu also exposes local `Reveal/hide
 card`. They now appear only for a solo player's validated projected replay.

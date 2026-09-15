@@ -809,6 +809,131 @@ describe('legacy board overlays', () => {
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
   });
 
+  it('keeps recipient-safe discard ability markers attached through local sorting', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const markedCard = discardCards[0]!;
+    const viewDiscard = view.zones[discard.id]!;
+    const markedView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [discard.id]: {
+          ...viewDiscard,
+          cards: viewDiscard.cards.map((card) =>
+            card.id === markedCard.id && card.kind === 'known'
+              ? { ...card, abilityUsed: true }
+              : card
+          ),
+        },
+      },
+    };
+    const opened = (nextView: typeof view) =>
+      state({
+        view: nextView,
+        presentation: {
+          selectedCardId: null,
+          hoveredCardId: null,
+          targetableCardIds: [],
+          drag: null,
+          openedZoneId: discard.id,
+        },
+      });
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(markedView),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const markerSelector = `[data-opened-zone-ability-marker][data-marker-card-id="${markedCard.id}"]`;
+    const marker = host.querySelector<HTMLElement>(markerSelector)!;
+    expect(marker).not.toBeNull();
+    expect(marker.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      marker
+        .closest('[data-overlay-card-id]')
+        ?.getAttribute('data-overlay-card-id')
+    ).toBe(markedCard.id);
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(1);
+
+    await act(async () =>
+      host
+        .querySelector<HTMLInputElement>('[data-zone-action="sortZone"]')!
+        .click()
+    );
+    expect(
+      host
+        .querySelector<HTMLElement>(markerSelector)
+        ?.closest('[data-overlay-card-id]')
+        ?.getAttribute('data-overlay-card-id')
+    ).toBe(markedCard.id);
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(view),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(0);
+
+    const deck = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:deck`
+    )!;
+    const viewDeck = view.zones[deck.id]!;
+    const invalidDeckView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [deck.id]: {
+          ...viewDeck,
+          cards: viewDeck.cards.map((card, index) =>
+            index === 0 && card.kind === 'known'
+              ? { ...card, abilityUsed: true }
+              : card
+          ),
+        },
+      },
+    };
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            view: invalidDeckView,
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              targetableCardIds: [],
+              drag: null,
+              openedZoneId: deck.id,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(0);
+  });
+
   it('routes writable opened-zone drags through the shared scene hit test', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(

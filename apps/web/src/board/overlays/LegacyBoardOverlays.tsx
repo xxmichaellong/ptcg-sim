@@ -885,6 +885,16 @@ const ZoneBrowser = ({
     () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
     [cards, sortEnabled]
   );
+  const abilityMarkedCardIds = useMemo(() => {
+    if (zone.kind !== 'discard') return new Set<ViewCardId>();
+    const viewZone = state.view?.zones[zone.id];
+    if (!viewZone || viewZone.kind !== 'discard') return new Set<ViewCardId>();
+    return new Set(
+      viewZone.cards.flatMap((card) =>
+        card.kind === 'known' && card.abilityUsed ? [card.id] : []
+      )
+    );
+  }, [state.view, zone.id, zone.kind]);
   const finishDrag = useCallback(() => {
     activeDragCardId.current = null;
     setDraggingCardId(null);
@@ -1056,6 +1066,14 @@ const ZoneBrowser = ({
             }}
           >
             <img src={card.imageUrl} alt="" draggable={false} />
+            {abilityMarkedCardIds.has(card.id) ? (
+              <span
+                className="ptcgsim-legacy-zone-ability-marker"
+                data-opened-zone-ability-marker="true"
+                data-marker-card-id={card.id}
+                aria-hidden="true"
+              />
+            ) : null}
           </button>
         ))}
       </div>

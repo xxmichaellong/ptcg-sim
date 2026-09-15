@@ -2499,6 +2499,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      checked-in v1 and candidate from opened discard to hand and pins opacity,
      source retention, exact semantic command/action records, and clean teardown.
      No protocol, domain, authority rule, label, layout, paint, or UI/UX changed.
+165. Opened-discard ability-used annotations now survive the closed-pile/opened-
+     browser boundary. The collapsed board scene still suppresses covered-card
+     markers; the React overlay derives one tab only from an exact `known`,
+     `abilityUsed` card alias in the installed recipient-safe discard. The tab
+     is keyed beneath that card, so paint-only sorting carries it with the card
+     and a later unmarked projection removes it without local cleanup state.
+     Deck/lost-zone and concealed records fail closed. Component coverage pins
+     association, sorting, accessibility hiding, and removal. A source-backed
+     Chromium case independently mounts both physical player frames and matches
+     v1's local/opponent fill, 10% radius, z-index, and halfway-card geometry
+     within the existing 2 px source tolerance. No command, protocol, authority
+     rule, closed-cover paint, gesture, label, or visible control changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

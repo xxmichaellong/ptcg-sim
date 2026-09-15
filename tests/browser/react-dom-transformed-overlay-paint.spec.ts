@@ -77,6 +77,14 @@ interface SurfacePaint {
   readonly images: readonly ImagePaint[];
 }
 
+interface AbilityMarkerPaint {
+  readonly bounds: { x: number; y: number; width: number; height: number };
+  readonly backgroundColor: string;
+  readonly borderRadius: string;
+  readonly position: string;
+  readonly zIndex: string;
+}
+
 interface ScrollEvidence {
   readonly clientHeight: number;
   readonly scrollHeight: number;
@@ -179,9 +187,29 @@ const surfacePaint = async (
   };
 };
 
+const abilityMarkerPaint = async (
+  marker: Locator
+): Promise<AbilityMarkerPaint> => {
+  const bounds = await marker.boundingBox();
+  if (!bounds) throw new Error('Ability marker has no physical bounds');
+  return marker.evaluate((element, markerBounds) => {
+    const style = getComputedStyle(element);
+    return {
+      bounds: markerBounds,
+      backgroundColor: style.backgroundColor,
+      borderRadius: style.borderRadius,
+      position: style.position,
+      zIndex: style.zIndex,
+    };
+  }, rectangle(bounds));
+};
+
 const mountCandidate = async (
   page: Page,
-  options: { readonly openedPileCardCount?: number } = {}
+  options: {
+    readonly openedPileCardCount?: number;
+    readonly openedPileAbilityMarkers?: boolean;
+  } = {}
 ): Promise<OverlayFixture> => {
   await page.goto('/?renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
@@ -193,6 +221,7 @@ const mountCandidate = async (
     const module = (await import(/* @vite-ignore */ specifier)) as {
       readonly mountReactDomProtectedInputHarness: (options?: {
         readonly openedPileCardCount?: number;
+        readonly openedPileAbilityMarkers?: boolean;
       }) => Promise<void>;
     };
     await module.mountReactDomProtectedInputHarness(input);
@@ -521,6 +550,20 @@ const expectBoundsToMatch = (
       candidate[key],
       `${description} ${key}: candidate ${candidate[key]}, source ${source[key]}`
     ).toBeCloseTo(source[key], 4);
+  }
+};
+
+const expectBoundsWithin = (
+  candidate: ElementPaint['bounds'],
+  source: ElementPaint['bounds'],
+  tolerance: number,
+  description: string
+): void => {
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expect(
+      Math.abs(candidate[key] - source[key]),
+      `${description} ${key}: candidate ${candidate[key]}, source ${source[key]}`
+    ).toBeLessThanOrEqual(tolerance);
   }
 };
 
@@ -887,6 +930,148 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
       contentType: 'application/json',
     }),
   ]);
+});
+
+test('opened discard ability markers retain real-v1 card association and paint', async ({
+  browser,
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page, {
+    openedPileAbilityMarkers: true,
+  });
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const zone = host.locator('[data-legacy-zone-browser]');
+  const candidateMarker = zone.locator('[data-opened-zone-ability-marker]');
+
+  const localZoneTarget = host.locator(
+    `[data-zone-id="${fixture.destinationZoneId}"]`
+  );
+  await localZoneTarget.press('Enter');
+  await expect(candidateMarker).toHaveCount(1);
+  await expect(candidateMarker).toHaveAttribute('aria-hidden', 'true');
+  const localCardId = await candidateMarker.getAttribute('data-marker-card-id');
+  if (!localCardId) throw new Error('Local ability marker has no card alias');
+  await expect(
+    zone
+      .locator(`button[data-overlay-card-id="${localCardId}"]`)
+      .locator('[data-opened-zone-ability-marker]')
+  ).toHaveCount(1);
+  const localAssets = await assetsFor(zone);
+  await settlePaint(page);
+  const candidateLocal = await abilityMarkerPaint(candidateMarker);
+  await page.keyboard.press('Escape');
+
+  const opponentZoneId = `zone:${fixture.opponentPlayerId}:discard`;
+  await host.locator(`[data-zone-id="${opponentZoneId}"]`).press('Enter');
+  await expect(candidateMarker).toHaveCount(1);
+  const opponentCardId = await candidateMarker.getAttribute(
+    'data-marker-card-id'
+  );
+  if (!opponentCardId)
+    throw new Error('Opponent ability marker has no card alias');
+  await expect(
+    zone
+      .locator(`button[data-overlay-card-id="${opponentCardId}"]`)
+      .locator('[data-opened-zone-ability-marker]')
+  ).toHaveCount(1);
+  const opponentAssets = await assetsFor(zone);
+  await settlePaint(page);
+  const candidateOpponent = await abilityMarkerPaint(candidateMarker);
+  await page.keyboard.press('Escape');
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(sourcePage, [
+      { user: 'self', zoneId: 'discard', assets: localAssets },
+      { user: 'opp', zoneId: 'discard', assets: opponentAssets },
+    ]);
+    const addSourceMarker = (user: 'self' | 'opp'): Promise<void> =>
+      sourcePage.evaluate(async (markerUser) => {
+        const specifier = '/src/actions/counters/ability-counter.js';
+        const module = (await import(/* @vite-ignore */ specifier)) as {
+          readonly addAbilityCounter: (
+            user: string,
+            zoneId: string,
+            index: number
+          ) => void;
+        };
+        module.addAbilityCounter(markerUser, 'discard', 0);
+      }, user);
+
+    await openLegacyZone(sourcePage, 'self', 'discard');
+    await addSourceMarker('self');
+    const sourceLocalZone = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#discard');
+    const sourceLocalMarker = sourceLocalZone.locator(':scope > .self-tab');
+    await expect(sourceLocalMarker).toHaveCount(1);
+    await settlePaint(sourcePage);
+    const sourceLocal = await abilityMarkerPaint(sourceLocalMarker);
+    await sourceLocalZone.locator('#closeDiscardButton').click();
+
+    await openLegacyZone(sourcePage, 'opp', 'discard');
+    await addSourceMarker('opp');
+    const sourceOpponentZone = sourcePage
+      .frameLocator('#oppContainer')
+      .locator('#discard');
+    const sourceOpponentMarker =
+      sourceOpponentZone.locator(':scope > .opp-tab');
+    await expect(sourceOpponentMarker).toHaveCount(1);
+    await settlePaint(sourcePage);
+    const sourceOpponent = await abilityMarkerPaint(sourceOpponentMarker);
+
+    expectBoundsWithin(
+      candidateLocal.bounds,
+      sourceLocal.bounds,
+      2,
+      'local opened-discard ability marker'
+    );
+    expect(candidateLocal).toMatchObject({
+      backgroundColor: sourceLocal.backgroundColor,
+      borderRadius: sourceLocal.borderRadius,
+      position: sourceLocal.position,
+      zIndex: sourceLocal.zIndex,
+    });
+    expectBoundsWithin(
+      candidateOpponent.bounds,
+      sourceOpponent.bounds,
+      2,
+      'opponent opened-discard ability marker'
+    );
+    expect(candidateOpponent).toMatchObject({
+      backgroundColor: sourceOpponent.backgroundColor,
+      borderRadius: sourceOpponent.borderRadius,
+      position: sourceOpponent.position,
+      zIndex: sourceOpponent.zIndex,
+    });
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  expect(await candidateEvidence(page)).toMatchObject({
+    submissions: [],
+    submissionResults: [],
+    overlayRejections: [],
+    overlayActions: [],
+    reportedErrors: [],
+  });
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
 
 test('full opened piles retain real-v1 density and scrolling on both player frames', async ({
