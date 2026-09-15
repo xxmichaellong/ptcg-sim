@@ -81,6 +81,7 @@ const policies = (
   session_hello: policy,
   socket_upgrade: policy,
   chat: policy,
+  replay: policy,
 });
 
 describe('durable per-room rate limits', () => {

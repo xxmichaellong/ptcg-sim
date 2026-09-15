@@ -20,7 +20,8 @@ export type RoomRateLimitedOperation =
   | 'admission_ticket'
   | 'session_hello'
   | 'socket_upgrade'
-  | 'chat';
+  | 'chat'
+  | 'replay';
 
 export interface RoomRateLimitPolicy {
   readonly maximumAttempts: number;
@@ -35,6 +36,7 @@ export const DEFAULT_ROOM_RATE_LIMIT_POLICIES: Readonly<
   session_hello: { maximumAttempts: 120, windowMs: 60_000 },
   socket_upgrade: { maximumAttempts: 120, windowMs: 60_000 },
   chat: { maximumAttempts: 120, windowMs: 60_000 },
+  replay: { maximumAttempts: 12, windowMs: 60_000 },
 };
 
 interface StoredRateLimitBucket {
@@ -117,6 +119,7 @@ const readStoredRateLimits = (value: unknown): StoredRoomRateLimits => {
         'session_hello',
         'socket_upgrade',
         'chat',
+        'replay',
       ].includes(operation) ||
       typeof bucket !== 'object' ||
       bucket === null ||

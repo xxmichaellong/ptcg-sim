@@ -39,6 +39,9 @@ import type {
 } from './server-telemetry.js';
 
 const MAX_RECENT_ACCEPTED_COMMAND_PERFORMANCE = 32;
+export const MAX_PENDING_CLIENT_FRAMES = 64;
+export const MAX_CLIENT_FRAMES_PER_WINDOW = 240;
+export const CLIENT_FRAME_WINDOW_MS = 60_000;
 
 export interface AcceptedCommandPerformanceObservation {
   readonly endRevision: number;
@@ -128,6 +131,12 @@ export class RoomSessionHub {
   private readonly connectionSessions = new Map<string, string>();
   private readonly sessionConnections = new Map<string, string>();
   private readonly pendingDisconnects = new Map<string, boolean>();
+  private readonly pendingClientFrames = new Map<string, number>();
+  private readonly clientFrameWindows = new Map<
+    string,
+    { readonly startedAt: number; readonly count: number }
+  >();
+  private readonly ingressBlockedConnections = new Set<string>();
   private readonly chat: RoomChatService;
   private readonly acceptedCommandPerformance: AcceptedCommandPerformanceObservation[] =
     [];
@@ -148,11 +157,20 @@ export class RoomSessionHub {
   }
 
   handleFrame(connection: RuntimeConnection, frame: string): Promise<void> {
+    if (this.ingressBlockedConnections.has(connection.id)) {
+      return Promise.resolve();
+    }
     this.connections.set(connection.id, connection);
+    if (!this.reserveClientFrame(connection.id)) {
+      return this.rejectIngressOverload(connection);
+    }
     const run = this.tail.then(async () => {
       try {
-        await this.processFrame(connection, frame);
+        if (!this.ingressBlockedConnections.has(connection.id)) {
+          await this.processFrame(connection, frame);
+        }
       } finally {
+        this.releaseClientFrame(connection.id);
         await this.flushPendingDisconnects();
       }
     });
@@ -340,6 +358,7 @@ export class RoomSessionHub {
 
   disconnect(connectionId: string): Promise<void> {
     const run = this.tail.then(async () => {
+      this.ingressBlockedConnections.delete(connectionId);
       const sessionId = this.disconnectNow(connectionId);
       if (sessionId) this.queueSessionDisconnect(sessionId, true);
       await this.flushPendingDisconnects();
@@ -350,6 +369,8 @@ export class RoomSessionHub {
 
   private disconnectNow(connectionId: string): string | undefined {
     this.connections.delete(connectionId);
+    this.pendingClientFrames.delete(connectionId);
+    this.clientFrameWindows.delete(connectionId);
     this.chat.releaseConnection(connectionId);
     const sessionId = this.connectionSessions.get(connectionId);
     this.connectionSessions.delete(connectionId);
@@ -455,6 +476,9 @@ export class RoomSessionHub {
   }
 
   restoreBinding(connection: RuntimeConnection, sessionId?: string): void {
+    this.ingressBlockedConnections.delete(connection.id);
+    this.pendingClientFrames.delete(connection.id);
+    this.clientFrameWindows.delete(connection.id);
     this.connections.set(connection.id, connection);
     if (!sessionId) return;
     const session = this.coordinator.currentSnapshot().sessions[sessionId];
@@ -683,6 +707,60 @@ export class RoomSessionHub {
     } catch {
       return false;
     }
+  }
+
+  private reserveClientFrame(connectionId: string): boolean {
+    const pending = this.pendingClientFrames.get(connectionId) ?? 0;
+    if (pending >= MAX_PENDING_CLIENT_FRAMES) return false;
+    const now = this.dependencies.admission.now();
+    const previous = this.clientFrameWindows.get(connectionId);
+    const current =
+      previous &&
+      now >= previous.startedAt &&
+      now - previous.startedAt < CLIENT_FRAME_WINDOW_MS
+        ? previous
+        : { startedAt: now, count: 0 };
+    if (current.count >= MAX_CLIENT_FRAMES_PER_WINDOW) return false;
+    this.pendingClientFrames.set(connectionId, pending + 1);
+    this.clientFrameWindows.set(connectionId, {
+      startedAt: current.startedAt,
+      count: current.count + 1,
+    });
+    return true;
+  }
+
+  private releaseClientFrame(connectionId: string): void {
+    const pending = this.pendingClientFrames.get(connectionId);
+    if (pending === undefined) return;
+    if (pending <= 1) this.pendingClientFrames.delete(connectionId);
+    else this.pendingClientFrames.set(connectionId, pending - 1);
+  }
+
+  private rejectIngressOverload(connection: RuntimeConnection): Promise<void> {
+    this.ingressBlockedConnections.add(connection.id);
+    try {
+      connection.send(
+        JSON.stringify(
+          notice(
+            'rate_limited',
+            'This connection sent too many messages; reconnect later',
+            true
+          )
+        )
+      );
+    } catch {
+      // The connection is closed below regardless of notice delivery.
+    }
+    try {
+      connection.close(4429, 'Client message limit exceeded');
+    } catch {
+      // Closing an already-failed socket is best effort.
+    }
+    const sessionId = this.disconnectNow(connection.id);
+    if (sessionId) this.queueSessionDisconnect(sessionId, true);
+    const run = this.tail.then(() => this.flushPendingDisconnects());
+    this.tail = run.catch(() => undefined);
+    return run;
   }
 
   private async processFrame(
@@ -979,6 +1057,28 @@ export class RoomSessionHub {
           return;
         }
         try {
+          const rateLimit = await this.dependencies.rateLimits.attempt(
+            'replay',
+            this.dependencies.admission.now()
+          );
+          this.dependencies.telemetry.roomRateLimit({
+            operation: 'replay',
+            allowed: rateLimit.allowed,
+            ...(!rateLimit.allowed
+              ? { retryAfterSeconds: rateLimit.retryAfterSeconds }
+              : {}),
+          });
+          if (!rateLimit.allowed) {
+            this.send(
+              connection,
+              notice(
+                'rate_limited',
+                `Too many replay requests; retry in ${rateLimit.retryAfterSeconds} seconds`,
+                true
+              )
+            );
+            return;
+          }
           const replay = buildProjectedReplay(
             snapshot.replayHistory,
             session.viewer,

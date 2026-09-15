@@ -10,6 +10,12 @@ as an admission ticket. This hibernation-attachment lease shares the room alarm,
 does not extend on traffic, preserves unclaimed-room expiry, and is removed only
 after the socket is bound to an active durable session.
 
+Each connection admits at most 64 frames into the serialized hub and 240 frames
+within a 60-second connection window; either breach closes that socket with application
+code `4429` before more work is queued. Replay projection has an additional
+durable room-wide budget of 12 requests per minute, applied before any frames are
+built or streamed, so hibernation cannot reset that expensive-operation limit.
+
 Operational patterns are adapted from MagicCircle commit
 `39f871cd63800e2317326425345a26e4d61846de`: bounded ingress, server-derived
 identity, explicit message tracking, admission freeze, and lifecycle race tests.

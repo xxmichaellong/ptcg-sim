@@ -16,7 +16,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { NOOP_SERVER_TELEMETRY } from './server-telemetry.js';
-import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
+import {
+  MAX_CLIENT_FRAMES_PER_WINDOW,
+  MAX_PENDING_CLIENT_FRAMES,
+  RoomSessionHub,
+  type RuntimeConnection,
+} from './session-hub.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -184,6 +189,61 @@ const helloFrame = (input: {
   });
 
 describe('serialized room session hub', () => {
+  it('closes a connection before its serialized frame queue can grow without bound', async () => {
+    const setup = await fixture();
+    const client = connection('pending-frame-flood');
+    const ping = JSON.stringify({
+      type: 'Ping',
+      protocolVersion: PROTOCOL_VERSION,
+      id: 'queued-ping',
+    });
+
+    await Promise.all(
+      Array.from({ length: MAX_PENDING_CLIENT_FRAMES + 1 }, () =>
+        setup.hub.handleFrame(client.value, ping)
+      )
+    );
+
+    expect(client.close).toHaveBeenCalledOnce();
+    expect(client.close).toHaveBeenCalledWith(
+      4429,
+      'Client message limit exceeded'
+    );
+    expect(client.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        retryable: true,
+      }),
+    ]);
+  });
+
+  it('closes a connection that exceeds its fixed ingress window', async () => {
+    const setup = await fixture();
+    const client = connection('frame-rate-flood');
+    const ping = JSON.stringify({
+      type: 'Ping',
+      protocolVersion: PROTOCOL_VERSION,
+      id: 'rate-ping',
+    });
+
+    for (let index = 0; index < MAX_CLIENT_FRAMES_PER_WINDOW; index += 1) {
+      await setup.hub.handleFrame(client.value, ping);
+    }
+    expect(client.close).not.toHaveBeenCalled();
+
+    await setup.hub.handleFrame(client.value, ping);
+    expect(client.close).toHaveBeenCalledWith(
+      4429,
+      'Client message limit exceeded'
+    );
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'rate_limited',
+      retryable: true,
+    });
+  });
+
   it('rejects over-budget operations before authority mutation', async () => {
     const setup = await fixture();
     setup.rateLimits.attempt.mockResolvedValue({
@@ -1384,6 +1444,46 @@ describe('serialized room session hub', () => {
       presentationEvents: [{ type: 'CoinFlipped', revision: 1, playerId: p1 }],
     });
     expect(replayMessages[2]).not.toHaveProperty('localDisclosure');
+  });
+
+  it('rate limits replay projection before building or streaming frames', async () => {
+    const setup = await fixture();
+    const client = connection('rate-limited-replay');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    client.messages.length = 0;
+    setup.rateLimits.attempt.mockResolvedValueOnce({
+      allowed: false,
+      retryAfterSeconds: 19,
+    });
+
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'RequestReplay',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+
+    expect(client.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        message: expect.stringContaining('19 seconds'),
+        retryable: true,
+      }),
+    ]);
+    expect(setup.rateLimits.attempt).toHaveBeenLastCalledWith('replay', 10_000);
+    expect(setup.telemetry.roomRateLimit).toHaveBeenLastCalledWith({
+      operation: 'replay',
+      allowed: false,
+      retryAfterSeconds: 19,
+    });
   });
 
   it('streams a separate local disclosure projection only for a solo player', async () => {
