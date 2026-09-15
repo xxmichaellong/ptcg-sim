@@ -45,6 +45,7 @@ import type {
   Rect,
   ZoneSceneNode,
 } from './model.js';
+import { topmostFirst } from './paint-order.js';
 
 const zoneLabel = (
   kind: MatchViewState['zones'][string]['kind'],
@@ -1641,18 +1642,14 @@ export const hitTestBoardScene = (
   x: number,
   y: number
 ): { readonly kind: 'card' | 'zone'; readonly id: string } | null => {
-  const cards = [...scene.cards].sort(
-    (left, right) => right.zIndex - left.zIndex
-  );
+  const cards = topmostFirst(scene.cards);
   const card = cards.find(
     (node) =>
       node.interactive &&
       containsPointInRotatedRect(node.bounds, node.rotationQuarterTurns, x, y)
   );
   if (card) return { kind: 'card', id: card.id };
-  const zones = [...scene.zones].sort(
-    (left, right) => right.zIndex - left.zIndex
-  );
+  const zones = topmostFirst(scene.zones);
   const zone = zones.find(
     (node) => node.interactive && containsPoint(node.bounds, x, y)
   );

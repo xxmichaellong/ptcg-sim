@@ -6,6 +6,7 @@ import type {
   BoardScene,
   CardSceneNode,
 } from './model.js';
+import { topmostFirst } from './paint-order.js';
 
 export interface BoardPointerInput {
   readonly pointerId: number;
@@ -41,26 +42,22 @@ export const resolveBoardDropTarget = (
   x: number,
   y: number
 ): string | null => {
-  const card = [...scene.cards]
-    .sort((left, right) => right.zIndex - left.zIndex)
-    .find(
-      (candidate) =>
-        candidate.id !== sourceCardId &&
-        candidate.interactive &&
-        containsPointInRotatedRect(
-          candidate.bounds,
-          candidate.rotationQuarterTurns,
-          x,
-          y
-        )
-    );
+  const card = topmostFirst(scene.cards).find(
+    (candidate) =>
+      candidate.id !== sourceCardId &&
+      candidate.interactive &&
+      containsPointInRotatedRect(
+        candidate.bounds,
+        candidate.rotationQuarterTurns,
+        x,
+        y
+      )
+  );
   if (card) return card.parentId;
-  const zone = [...scene.zones]
-    .sort((left, right) => right.zIndex - left.zIndex)
-    .find(
-      (candidate) =>
-        candidate.interactive && containsPoint(candidate.bounds, x, y)
-    );
+  const zone = topmostFirst(scene.zones).find(
+    (candidate) =>
+      candidate.interactive && containsPoint(candidate.bounds, x, y)
+  );
   return zone?.id ?? null;
 };
 

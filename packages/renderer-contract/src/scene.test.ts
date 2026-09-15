@@ -5285,6 +5285,25 @@ describe('renderer-neutral board scene', () => {
     expect(hitTestBoardScene(scene, 130, 219)).toBeNull();
   });
 
+  it('hit-tests the later-painted card when z-indexes are equal', () => {
+    const base = createBoardSceneForViewport(createView(), options);
+    const known = base.cards.find((card) => card.id === knownCardId)!;
+    const laterId = asViewCardId('later-painted-card');
+    const scene = {
+      ...base,
+      zones: [],
+      cards: [known, { ...known, id: laterId }],
+    };
+
+    expect(
+      hitTestBoardScene(
+        scene,
+        known.bounds.x + known.bounds.width / 2,
+        known.bounds.y + known.bounds.height / 2
+      )
+    ).toEqual({ kind: 'card', id: laterId });
+  });
+
   it('fails closed for invalid viewports and unsafe split ratios', () => {
     expect(() =>
       createBoardSceneForViewport(createView(), {

@@ -193,6 +193,27 @@ describe('renderer-neutral drag controller', () => {
     expect(resolveBoardDropTarget(scene(), sourceId, 799, 599)).toBeNull();
   });
 
+  it('targets the later-painted card when overlapping cards share a z-index', () => {
+    const base = scene();
+    const target = base.cards.find((card) => card.id === targetCardId)!;
+    const laterTargetId = asViewCardId('later-target-card');
+    const equalLayerScene: BoardScene = {
+      ...base,
+      cards: [
+        ...base.cards,
+        {
+          ...target,
+          id: laterTargetId,
+          parentId: 'later-target-stack',
+        },
+      ],
+    };
+
+    expect(resolveBoardDropTarget(equalLayerScene, sourceId, 520, 160)).toBe(
+      'later-target-stack'
+    );
+  });
+
   it('targets the painted footprint of a quarter-turned card', () => {
     const base = scene();
     const rotated: BoardScene = {
