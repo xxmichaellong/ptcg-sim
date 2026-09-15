@@ -131,6 +131,7 @@ export class BoardSessionRuntime {
   private rendererMountTask: Promise<void> | null = null;
   private rendererMountError: unknown;
   private rendererFailure: Error | null = null;
+  private rendererFailureStatusReported = false;
   private attached = false;
   private disposed = false;
   private readonly layoutListeners = new Set<() => void>();
@@ -164,10 +165,13 @@ export class BoardSessionRuntime {
           this.adapter?.emitPresentationUpdate(update),
         reportError: this.reportError,
         reportStatus: (status) => {
-          try {
-            this.options.reportRendererStatus?.(status);
-          } catch (error) {
-            this.reportError(error);
+          if (status.kind === 'failed') {
+            this.failRendererAndReport(
+              status.error,
+              'Board renderer reported a fatal failure'
+            );
+          } else {
+            this.publishRendererStatus(status);
           }
         },
       });
@@ -283,7 +287,19 @@ export class BoardSessionRuntime {
   setPreferences(preferences: BoardPreferences): void {
     this.assertUsable();
     this.preferences = preferences;
-    if (this.rendererReady) this.renderer?.setPreferences(preferences);
+    if (!this.rendererReady) return;
+    const renderer = this.renderer;
+    if (!renderer) throw new Error('Board renderer is unavailable');
+    try {
+      renderer.setPreferences(preferences);
+    } catch (cause) {
+      const failure = this.failRendererAndReport(
+        cause,
+        'Board renderer preference update failed'
+      );
+      this.reportError(failure);
+      throw failure;
+    }
   }
 
   dismissLocalPresentation(
@@ -439,7 +455,14 @@ export class BoardSessionRuntime {
     if (!renderer) throw new Error('Board renderer is unavailable');
     switch (effect.kind) {
       case 'CancelRendererInteraction':
-        renderer.cancelInteraction();
+        try {
+          renderer.cancelInteraction();
+        } catch (cause) {
+          throw this.failRendererAndReport(
+            cause,
+            'Board renderer interaction cancellation failed'
+          );
+        }
         break;
       case 'ResetRenderer':
         this.desiredScene = null;
@@ -448,23 +471,41 @@ export class BoardSessionRuntime {
         try {
           renderer.clearScene();
         } catch (cause) {
-          throw this.failRenderer(cause, 'Board renderer reset failed');
+          throw this.failRendererAndReport(
+            cause,
+            'Board renderer reset failed'
+          );
         }
         break;
       case 'InstallScene':
         this.desiredScene = effect.scene;
         this.desiredSceneMode = effect.mode;
         if (this.rendererReady) {
-          renderer.resize(effect.scene.viewport);
-          renderer.installScene(effect.scene, [], effect.mode);
+          try {
+            renderer.resize(effect.scene.viewport);
+            renderer.installScene(effect.scene, [], effect.mode);
+          } catch (cause) {
+            throw this.failRendererAndReport(
+              cause,
+              'Board renderer scene install failed'
+            );
+          }
         } else {
           this.startRendererMount();
         }
         break;
       case 'InstallPresentation':
         this.desiredPresentation = effect.presentation;
-        if (this.rendererReady)
-          renderer.installPresentation(effect.presentation);
+        if (this.rendererReady) {
+          try {
+            renderer.installPresentation(effect.presentation);
+          } catch (cause) {
+            throw this.failRendererAndReport(
+              cause,
+              'Board renderer presentation install failed'
+            );
+          }
+        }
         break;
       case 'IntentRejected':
       case 'OverlayActionRejected':
@@ -500,11 +541,14 @@ export class BoardSessionRuntime {
         if (this.preferences) renderer.setPreferences(this.preferences);
       })
       .catch((error: unknown) => {
+        const rendererHadAlreadyFailed = this.rendererFailure !== null;
         const failure = this.disposed
           ? this.abortedMountError
-          : this.failRenderer(error, 'Board renderer mount failed');
+          : this.failRendererAndReport(error, 'Board renderer mount failed');
         this.rendererMountError = failure;
-        if (!this.disposed) this.reportError(failure);
+        if (!this.disposed && !rendererHadAlreadyFailed) {
+          this.reportError(failure);
+        }
       })
       .finally(() => {
         this.rendererMountTask = null;
@@ -528,6 +572,23 @@ export class BoardSessionRuntime {
         this.reportError(error);
       }
     }
+  }
+
+  private publishRendererStatus(status: BoardRendererStatus): void {
+    try {
+      this.options.reportRendererStatus?.(status);
+    } catch (error) {
+      this.reportError(error);
+    }
+  }
+
+  private failRendererAndReport(cause: unknown, message: string): Error {
+    const failure = this.failRenderer(cause, message);
+    if (!this.rendererFailureStatusReported) {
+      this.rendererFailureStatusReported = true;
+      this.publishRendererStatus({ kind: 'failed', error: failure });
+    }
+    return failure;
   }
 
   private failRenderer(cause: unknown, message: string): Error {

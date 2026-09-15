@@ -491,11 +491,15 @@ export const RemoteSessionBoard = ({
     identity && replayState.sessionPhase === 'ready'
       ? rendererStatus.kind
       : replayState.sessionPhase;
+  const showBoardComposition =
+    boardState?.scene !== undefined &&
+    rendererStatus.kind !== 'failed' &&
+    rendererStatus.kind !== 'destroyed';
 
   return (
     <div className="board-spike-host">
       <div className="renderer-surface-host" ref={hostRef} />
-      {boardState?.scene ? (
+      {showBoardComposition && boardState?.scene ? (
         <>
           {layout && rendererKind === 'dom' ? (
             <LegacyBoardChrome

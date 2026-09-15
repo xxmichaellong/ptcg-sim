@@ -12,10 +12,32 @@ import {
   type BoardSceneInstallMode,
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
-import { StrictMode } from 'react';
+import { Component, StrictMode, type ErrorInfo, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { BoardSurface } from './BoardSurface.js';
+
+class BoardRendererErrorBoundary extends Component<
+  {
+    readonly children: ReactNode;
+    readonly onError: (error: unknown) => void;
+  },
+  { readonly failed: boolean }
+> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError(): { readonly failed: true } {
+    return { failed: true };
+  }
+
+  override componentDidCatch(error: unknown, _info: ErrorInfo): void {
+    this.props.onError(error);
+  }
+
+  override render(): ReactNode {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 export class ReactDomBoardRenderer implements BoardRenderer {
   private readonly adapters: BoardRendererAdapters;
@@ -27,7 +49,9 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   private generation = 0;
   private renderCommits = 0;
   private destroyed = false;
+  private fatalErrorReported = false;
   private finishPendingMount: (() => void) | null = null;
+  private failPendingMount: ((error: unknown) => void) | null = null;
   private cancelMountedInteraction: (() => void) | null = null;
 
   constructor(adapters: BoardRendererAdapters) {
@@ -46,17 +70,29 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.host = host;
     this.scene = scene;
     this.presentation = presentation;
-    this.root = createRoot(host);
+    this.root = createRoot(host, {
+      onUncaughtError: this.handleUncaughtRenderError,
+      onCaughtError: this.handleUncaughtRenderError,
+    });
     this.generation += 1;
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       let finished = false;
       const finish = () => {
         if (finished) return;
         finished = true;
         this.finishPendingMount = null;
+        this.failPendingMount = null;
         resolve();
       };
+      const fail = (error: unknown) => {
+        if (finished) return;
+        finished = true;
+        this.finishPendingMount = null;
+        this.failPendingMount = null;
+        reject(error);
+      };
       this.finishPendingMount = finish;
+      this.failPendingMount = fail;
       this.renderNow(this.requireRoot(), finish);
     });
     if (this.destroyed) {
@@ -105,6 +141,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.presentation = DEFAULT_BOARD_PRESENTATION;
     this.finishPendingMount?.();
     this.finishPendingMount = null;
+    this.failPendingMount = null;
     flushSync(() => root.render(null));
     this.renderCommits += 1;
     this.cancelMountedInteraction = null;
@@ -171,6 +208,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.destroyed = true;
     this.finishPendingMount?.();
     this.finishPendingMount = null;
+    this.failPendingMount = null;
     const root = this.root;
     const host = this.host;
     this.root = null;
@@ -218,14 +256,16 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     };
     const surface = (
       <StrictMode>
-        <BoardSurface
-          scene={scene}
-          presentation={presentation}
-          preferences={this.preferences}
-          adapters={this.adapters}
-          onCommit={recordCommit}
-          setInteractionCancellation={this.setInteractionCancellation}
-        />
+        <BoardRendererErrorBoundary onError={this.handleUncaughtRenderError}>
+          <BoardSurface
+            scene={scene}
+            presentation={presentation}
+            preferences={this.preferences}
+            adapters={this.adapters}
+            onCommit={recordCommit}
+            setInteractionCancellation={this.setInteractionCancellation}
+          />
+        </BoardRendererErrorBoundary>
       </StrictMode>
     );
     root.render(surface);
@@ -235,6 +275,31 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     cancel: (() => void) | null
   ): void => {
     this.cancelMountedInteraction = cancel;
+  };
+
+  private readonly handleUncaughtRenderError = (error: unknown): void => {
+    if (this.fatalErrorReported) return;
+    this.fatalErrorReported = true;
+    // Reject a pending initial mount before notifying the runtime. The fatal
+    // status callback is allowed to destroy this renderer synchronously, and
+    // destroy normally resolves a pending mount to unblock orderly disposal.
+    this.failPendingMount?.(error);
+    this.failPendingMount = null;
+    this.finishPendingMount = null;
+    try {
+      this.adapters.reportStatus?.({ kind: 'failed', error });
+    } catch (observerError) {
+      try {
+        this.adapters.reportError(observerError);
+      } catch {
+        // Diagnostics cannot interrupt fatal renderer notification.
+      }
+    }
+    try {
+      this.adapters.reportError(error);
+    } catch {
+      // Diagnostics cannot interrupt React's error cleanup.
+    }
   };
 }
 

@@ -109,6 +109,82 @@ describe('React DOM board renderer', () => {
     document.body.replaceChildren();
   });
 
+  it('rejects an initial mount and reports a fatal status when React rendering throws', async () => {
+    const failure = new Error('initial React render failed');
+    const statuses: BoardRendererStatus[] = [];
+    const reportError = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError,
+      reportStatus: (status) => statuses.push(status),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const scene = new Proxy(createScene(), {
+      get(target, property, receiver) {
+        if (property === 'cards') throw failure;
+        return Reflect.get(target, property, receiver);
+      },
+    });
+
+    let mountOutcome: Promise<unknown> | undefined;
+    await act(async () => {
+      mountOutcome = renderer
+        .mount(host, scene, DEFAULT_BOARD_PRESENTATION)
+        .catch((error: unknown) => error);
+      await Promise.resolve();
+    });
+    expect(await mountOutcome).toBe(failure);
+
+    expect(statuses).toEqual([
+      { kind: 'mounting' },
+      { kind: 'failed', error: failure },
+    ]);
+    expect(reportError).toHaveBeenCalledOnce();
+    expect(reportError).toHaveBeenCalledWith(failure);
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+    expect(host.childElementCount).toBe(0);
+  });
+
+  it('reports a fatal status when a post-mount React render throws', async () => {
+    const failure = new Error('updated React render failed');
+    const statuses: BoardRendererStatus[] = [];
+    const reportError = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError,
+      reportStatus: (status) => statuses.push(status),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const scene = new Proxy(createScene(2), {
+      get(target, property, receiver) {
+        if (property === 'cards') throw failure;
+        return Reflect.get(target, property, receiver);
+      },
+    });
+
+    await act(async () => {
+      renderer.installScene(scene, []);
+      await Promise.resolve();
+    });
+
+    expect(statuses.at(-1)).toEqual({ kind: 'failed', error: failure });
+    expect(reportError).toHaveBeenCalledOnce();
+    expect(reportError).toHaveBeenCalledWith(failure);
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+    expect(host.childElementCount).toBe(0);
+  });
+
   it('reuses stable keyed card elements and emits renderer-neutral intents', async () => {
     const intents: BoardIntent[] = [];
     const statuses: BoardRendererStatus[] = [];

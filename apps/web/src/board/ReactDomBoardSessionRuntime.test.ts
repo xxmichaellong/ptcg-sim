@@ -23,6 +23,7 @@ import {
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardLayoutState,
   type BoardRenderer,
+  type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
 import { act, createElement, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -1502,6 +1503,165 @@ describe('opt-in React DOM board session runtime', () => {
       runtime.dispose();
       await Promise.resolve();
     });
+  });
+
+  it.each([
+    ['cancelInteraction', 'Board renderer interaction cancellation failed'],
+    ['resize', 'Board renderer scene install failed'],
+    ['installScene', 'Board renderer scene install failed'],
+    ['installPresentation', 'Board renderer presentation install failed'],
+    ['setPreferences', 'Board renderer preference update failed'],
+  ] as const)(
+    'fails closed when post-mount renderer %s throws',
+    async (failingMethod, expectedMessage) => {
+      const initial = readyState(atRevision(1));
+      const live = new MutableLiveSource(initial);
+      const replay = new MutableReplaySource(initial);
+      const host = document.createElement('div');
+      document.body.append(host);
+      const errors: unknown[] = [];
+      const statuses: BoardRendererStatus[] = [];
+      const methods = {
+        installScene: vi.fn(),
+        installPresentation: vi.fn(),
+        cancelInteraction: vi.fn(),
+        clearScene: vi.fn(),
+        resize: vi.fn(),
+        setPreferences: vi.fn(),
+      };
+      const destroy = vi.fn();
+      const renderer: BoardRenderer = {
+        mount: vi.fn(async (target) => {
+          target.append(document.createElement('div'));
+        }),
+        ...methods,
+        destroy,
+      };
+      const runtime = new ReactDomBoardSessionRuntime({
+        live,
+        replay,
+        layout: layoutState(),
+        createRenderer: () => renderer,
+        reportError: (error) => errors.push(error),
+        reportRendererStatus: (status) => statuses.push(status),
+      });
+      await runtime.mount(host);
+      const originalFailure = new Error(`${failingMethod} failed`);
+      methods[failingMethod].mockImplementation(() => {
+        throw originalFailure;
+      });
+
+      if (failingMethod === 'cancelInteraction') {
+        const reconnecting: ClientSessionState = {
+          ...initial,
+          phase: 'reconnecting',
+          reconnectAttempt: 1,
+        };
+        live.publish(reconnecting);
+        replay.syncLive(reconnecting);
+      } else if (
+        failingMethod === 'resize' ||
+        failingMethod === 'installScene'
+      ) {
+        const updated = readyState(atRevision(2));
+        live.publish(updated);
+        replay.syncLive(updated);
+      } else if (failingMethod === 'installPresentation') {
+        const card = runtime
+          .getBoardSnapshot()
+          ?.scene?.cards.find((candidate) => candidate.interactive);
+        if (!card) throw new Error('interactive card fixture is unavailable');
+        runtime.emitBoardIntent({ kind: 'CardSelected', cardId: card.id });
+      } else {
+        expect(() =>
+          runtime.setPreferences({
+            ...DEFAULT_BOARD_PREFERENCES,
+            darkMode: !DEFAULT_BOARD_PREFERENCES.darkMode,
+          })
+        ).toThrow(expectedMessage);
+      }
+
+      expect(host.childElementCount).toBe(0);
+      expect(destroy).toHaveBeenCalledOnce();
+      expect(runtime.getBoardSnapshot()).toBeUndefined();
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatchObject({
+        message: expectedMessage,
+        cause: originalFailure,
+      });
+      expect(statuses.at(-1)).toEqual({ kind: 'failed', error: errors[0] });
+      expect(() => runtime.flipBoard()).toThrow(expectedMessage);
+      expect(await runtime.whenSettled().catch((error) => error)).toBe(
+        errors[0]
+      );
+
+      const callsAfterFailure = Object.fromEntries(
+        Object.entries(methods).map(([name, method]) => [
+          name,
+          method.mock.calls.length,
+        ])
+      );
+      const later = readyState(atRevision(3));
+      live.publish(later);
+      replay.syncLive(later);
+      expect(
+        Object.fromEntries(
+          Object.entries(methods).map(([name, method]) => [
+            name,
+            method.mock.calls.length,
+          ])
+        )
+      ).toEqual(callsAfterFailure);
+      runtime.dispose();
+    }
+  );
+
+  it('keeps the renderer healthy when an optional board-effect observer throws', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const host = document.createElement('div');
+    const errors: unknown[] = [];
+    const installScene = vi.fn();
+    const destroy = vi.fn();
+    let observerShouldThrow = false;
+    const renderer: BoardRenderer = {
+      mount: vi.fn(async (target) => {
+        target.append(document.createElement('div'));
+      }),
+      installScene,
+      installPresentation: vi.fn(),
+      cancelInteraction: vi.fn(),
+      clearScene: vi.fn(),
+      resize: vi.fn(),
+      setPreferences: vi.fn(),
+      destroy,
+    };
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+      createRenderer: () => renderer,
+      reportError: (error) => errors.push(error),
+      onBoardEffect: () => {
+        if (observerShouldThrow) throw new Error('observer failed');
+      },
+    });
+    await runtime.mount(host);
+    observerShouldThrow = true;
+
+    const updated = readyState(atRevision(2));
+    live.publish(updated);
+    replay.syncLive(updated);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({ message: 'observer failed' });
+    expect(installScene).toHaveBeenCalled();
+    expect(runtime.getBoardSnapshot()?.view?.revision).toBe(2);
+    expect(host.childElementCount).toBe(1);
+    expect(destroy).not.toHaveBeenCalled();
+    expect(() => runtime.flipBoard()).not.toThrow();
+    runtime.dispose();
   });
 
   it('clears terminal scenes and fails closed if renderer reset throws', async () => {
