@@ -1474,6 +1474,17 @@ Chromium comparison pins local/opponent color, radius, z-index, and physical
 placement within the declared 2 px tolerance without changing an action,
 command, disclosure rule, or visible control.
 
+The selected-card shortcut bridge now accepts that same protected opened-zone
+alias. Its DOM exception is deliberately narrower than the overlay root: only
+the exact selected card button under the exact open zone may emit a shortcut;
+toolbars, menus, editors, previews, and other cards remain suppressed. The
+controller checks the selection and exact open-zone membership again before
+reusing the ordinary shortcut resolver. A real source/candidate `W` journey
+pins one `useAbility`/`SetCardAbilityUsed` result, immediate selection cleanup,
+the source ability tab, and nonempty browser retention. Forged closed-zone and
+switched-zone requests are rejected without submission. This restores the
+existing v1 key path without broadening a command or trust boundary.
+
 V1 replay's prize reveal/look and opponent-hand look are the scoped zone-level
 local-disclosure exceptions; its context menu also exposes local `Reveal/hide
 card`. They now appear only for a solo player's validated projected replay.

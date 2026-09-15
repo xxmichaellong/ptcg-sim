@@ -1470,7 +1470,8 @@ const handleShortcutAction = (
   if ('cardId' in request) {
     if (
       state.presentation.selectedCardId !== request.cardId ||
-      !hasCard(scene, request.cardId)
+      (!hasCard(scene, request.cardId) &&
+        !hasOpenedZoneCard(state, scene, request.cardId))
     ) {
       return rejectShortcutAction(state, request, 'stale_card');
     }

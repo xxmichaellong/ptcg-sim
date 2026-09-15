@@ -65,6 +65,57 @@ describe('legacy board keyboard shortcut bridge', () => {
     target.remove();
   });
 
+  it('allows only the exact selected card in the exact opened zone through the overlay guard', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+              openedZoneId: 'selected-zone',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    const overlays = document.createElement('div');
+    overlays.dataset.legacyBoardOverlays = 'true';
+    const zone = document.createElement('section');
+    zone.dataset.legacyZoneBrowser = 'true';
+    zone.dataset.zoneBrowserId = 'selected-zone';
+    const selected = document.createElement('button');
+    selected.dataset.overlayCardId = 'selected-card';
+    const other = document.createElement('button');
+    other.dataset.overlayCardId = 'other-card';
+    const toolbar = document.createElement('button');
+    zone.append(selected, other, toolbar);
+    overlays.append(zone);
+    document.body.append(overlays);
+
+    const shortcut = () =>
+      new KeyboardEvent('keydown', {
+        key: 'W',
+        code: 'KeyW',
+        bubbles: true,
+        cancelable: true,
+      });
+    expect(selected.dispatchEvent(shortcut())).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'toggleAbility',
+      cardId: 'selected-card',
+    });
+    onRequest.mockClear();
+    expect(other.dispatchEvent(shortcut())).toBe(true);
+    expect(toolbar.dispatchEvent(shortcut())).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    overlays.remove();
+  });
+
   it('emits global loose-board requests without requiring a selection', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

@@ -1074,6 +1074,146 @@ test('opened discard ability markers retain real-v1 card association and paint',
   expect(errors).toEqual([]);
 });
 
+test('opened-pile selected-card shortcuts retain real-v1 protected lifecycle', async ({
+  browser,
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const discardTarget = host.locator(
+    `[data-zone-id="${fixture.destinationZoneId}"]`
+  );
+  await discardTarget.press('Enter');
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  const assets = await assetsFor(zoneBrowser);
+  const candidateCard = zoneBrowser
+    .locator('button[data-overlay-card-id]')
+    .first();
+  const candidateCardId = await candidateCard.getAttribute(
+    'data-overlay-card-id'
+  );
+  if (!candidateCardId) throw new Error('Opened discard card has no alias');
+  await candidateCard.click();
+  await expect
+    .poll(() => candidateEvidence(page))
+    .toMatchObject({
+      presentation: {
+        selectedCardId: candidateCardId,
+        openedZoneId: fixture.destinationZoneId,
+      },
+    });
+  await page.keyboard.press('w');
+  await expect
+    .poll(() => candidateEvidence(page))
+    .toMatchObject({
+      submissions: [
+        {
+          type: 'SetCardAbilityUsed',
+          cardId: candidateCardId,
+          used: true,
+        },
+      ],
+      submissionResults: [{ queued: true, clientSequence: 1 }],
+      overlayRejections: [],
+      overlayActions: [],
+      presentation: {
+        selectedCardId: null,
+        openedZoneId: fixture.destinationZoneId,
+      },
+      reportedErrors: [],
+    });
+  await expect(zoneBrowser).toBeVisible();
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(sourcePage, [
+      { user: 'self', zoneId: 'discard', assets },
+    ]);
+    await sourcePage.evaluate(async () => {
+      const specifier = '/src/front-end.js';
+      const frontEnd = await import(/* @vite-ignore */ specifier);
+      const state = frontEnd['systemState'] as {
+        selfCounter: number;
+        selfActionData: unknown[];
+        exportActionData: unknown[];
+      };
+      state.selfCounter = 0;
+      state.selfActionData = [];
+      state.exportActionData = [];
+    });
+    await openLegacyZone(sourcePage, 'self', 'discard');
+    const sourceDiscard = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#discard');
+    const sourceCard = sourceDiscard.locator(':scope > img').first();
+    await sourceCard.click();
+    await expect(sourceCard).toHaveClass(/highlight/);
+    await sourcePage.keyboard.press('w');
+    await expect(sourceDiscard).toBeVisible();
+    await expect(sourceCard).not.toHaveClass(/highlight/);
+    await expect(sourceDiscard.locator(':scope > .self-tab')).toHaveCount(1);
+    const sourceState = await sourcePage.evaluate(async () => {
+      const specifier = '/src/front-end.js';
+      const frontEnd = await import(/* @vite-ignore */ specifier);
+      const state = frontEnd['systemState'] as {
+        readonly selfCounter: number;
+        readonly selfActionData: readonly unknown[];
+        readonly exportActionData: readonly unknown[];
+      };
+      return {
+        counter: state.selfCounter,
+        actions: structuredClone(state.selfActionData),
+        exports: structuredClone(state.exportActionData),
+        messages: [...document.querySelectorAll('#chatbox p')].map(
+          (message) => message.textContent
+        ),
+      };
+    });
+    expect(sourceState).toMatchObject({
+      counter: 1,
+      actions: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'useAbility',
+          parameters: ['opp', 'discard', 0],
+        },
+      ],
+      exports: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'useAbility',
+          parameters: ['self', 'discard', 0],
+        },
+      ],
+    });
+    expect(sourceState.messages.at(-1)).toBe(
+      `Blue used ${assets[0]!.label}'s ability`
+    );
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('full opened piles retain real-v1 density and scrolling on both player frames', async ({
   browser,
   page,

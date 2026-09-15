@@ -328,6 +328,18 @@ geometry within the existing 2 px tolerance. Deck/lost-zone cards and
 concealed view records fail closed; no protocol, authority, closed-pile paint,
 input behavior, or visible control changed.
 
+Selected-card keyboard shortcuts now cross the same exact opened-zone boundary.
+The document bridge continues to suppress keys from every menu, toolbar,
+preview, editor, and unrelated overlay card; it admits only an event whose
+closest card button matches `selectedCardId` and whose zone browser matches
+`openedZoneId`. The controller independently requires that selection and exact
+current-zone membership before invoking the existing stale-safe shortcut
+resolver. V1/candidate Chromium pins `W` on an opened discard card: selection
+clears, the nonempty browser remains open, v1 creates its ability tab and one
+`useAbility` record, and v2 queues one `SetCardAbilityUsed` command. Closed,
+switched-zone, mismatched-card, replay, and read-only paths remain blocked. No
+key mapping, overlay control, protocol, or authority rule changed.
+
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench

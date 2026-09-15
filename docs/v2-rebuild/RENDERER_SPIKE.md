@@ -2511,6 +2511,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      v1's local/opponent fill, 10% radius, z-index, and halfway-card geometry
      within the existing 2 px source tolerance. No command, protocol, authority
      rule, closed-cover paint, gesture, label, or visible control changed.
+166. Selected-card shortcuts now retain v1 behavior inside an opened pile. The
+     route keyboard bridge no longer drops every overlay-originated key: its one
+     exception requires the event's exact card button to equal the selected
+     alias and its exact browser to equal the open zone. Menus, toolbars,
+     editors, previews, other cards, and other zones remain suppressed. The
+     controller independently rechecks selection plus exact open-zone ownership
+     before calling the existing shortcut resolver. Unit tests pin closed and
+     switched-zone forgery rejection. A physical Chromium journey selects an
+     opened discard card and presses `W` in both source and candidate, proving
+     one `useAbility`/`SetCardAbilityUsed` result, selection cleanup, ability-tab
+     creation in v1, and nonempty browser retention. No shortcut mapping,
+     command, protocol, authority rule, label, or control changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

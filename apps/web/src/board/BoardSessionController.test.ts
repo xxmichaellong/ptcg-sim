@@ -683,6 +683,77 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('admits selected-card shortcuts only from the exact currently opened zone', () => {
+    const initial = install();
+    const discard = initial.scene!.zones.find((zone) =>
+      zone.id.endsWith(':discard')
+    )!;
+    const hiddenCard = initial.scene!.cards.find(
+      (card) => card.parentId === discard.id && !card.interactive
+    )!;
+    const request = {
+      action: 'toggleAbility' as const,
+      cardId: hiddenCard.id,
+    };
+    const forged = {
+      ...initial,
+      presentation: {
+        ...initial.presentation,
+        selectedCardId: hiddenCard.id,
+      },
+    };
+    expect(
+      apply(forged, { kind: 'LegacyShortcutActionRequested', request }).effects
+    ).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'stale_card' },
+    ]);
+
+    let state = apply(initial, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: discard.id },
+    }).state;
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardSelected', cardId: hiddenCard.id },
+    }).state;
+    const accepted = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(accepted.state.presentation).toEqual({
+      ...DEFAULT_BOARD_PRESENTATION,
+      openedZoneId: discard.id,
+    });
+    expect(accepted.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: accepted.state.presentation,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetCardAbilityUsed',
+          cardId: hiddenCard.id,
+          used: true,
+        },
+      },
+    ]);
+
+    const deck = state.scene!.zones.find((zone) => zone.id.endsWith(':deck'))!;
+    const changedZone = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: deck.id },
+    }).state;
+    const rejected = apply(changedZone, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(rejected.state).toBe(changedZone);
+    expect(rejected.effects).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'stale_card' },
+    ]);
+  });
+
   it('owns attach/evolve targeting through target, non-target, and background clicks', () => {
     let state = install();
     const sourceEntry = Object.values(state.view!.zones)

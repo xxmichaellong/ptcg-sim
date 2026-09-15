@@ -51,6 +51,26 @@ const isLegacyBoardOverlayTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
   target.closest('[data-legacy-board-overlays]') !== null;
 
+const isSelectedOpenedZoneCardTarget = (
+  target: EventTarget | null,
+  selectedCardId: string | null,
+  openedZoneId: string | null
+): boolean => {
+  if (
+    !(target instanceof Element) ||
+    selectedCardId === null ||
+    openedZoneId === null
+  ) {
+    return false;
+  }
+  const card = target.closest<HTMLElement>('[data-overlay-card-id]');
+  const zone = card?.closest<HTMLElement>('[data-legacy-zone-browser]');
+  return (
+    card?.dataset.overlayCardId === selectedCardId &&
+    zone?.dataset.zoneBrowserId === openedZoneId
+  );
+};
+
 const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
   (event.key === 'Enter' || event.code === 'Enter') &&
   event.target instanceof Element &&
@@ -90,7 +110,12 @@ export const LegacyBoardKeyboardShortcuts = ({
         event.defaultPrevented ||
         event.isComposing ||
         isLegacyBoardShortcutEditableTarget(event.target) ||
-        isLegacyBoardOverlayTarget(event.target)
+        (isLegacyBoardOverlayTarget(event.target) &&
+          !isSelectedOpenedZoneCardTarget(
+            event.target,
+            selectedCardId,
+            state.presentation.openedZoneId
+          ))
       ) {
         return;
       }
@@ -231,6 +256,7 @@ export const LegacyBoardKeyboardShortcuts = ({
     boardFlipEnabled,
     soloUndoEnabled,
     state.overlays.preview,
+    state.presentation.openedZoneId,
     state.view?.viewer.kind,
   ]);
   return (
