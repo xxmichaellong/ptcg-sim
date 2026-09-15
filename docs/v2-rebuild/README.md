@@ -150,7 +150,9 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   convergence across pre-commit failures and ambiguous committed responses. Its
   exact private continuation/room RPC path now also proves concurrent retry and
   post-eviction recovery in workerd without adding an edge route. The
-  source-room adapter now authorizes active claimed multiplayer players,
+  source-room RPC now authenticates the existing resume bearer against exactly
+  one active claimed multiplayer-player session and passes only its derived
+  session ID onward. The source adapter then
   transactionally reserves the exact current snapshot under a digest-only
   stable operation, applies bounded per-player/per-room counts, recovers
   ambiguous commits, and compacts completion without storing a raw bearer.

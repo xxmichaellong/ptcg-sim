@@ -71,14 +71,14 @@ const snapshotFixture = (): RoomAuthoritySnapshot => {
 describe('continuation internal RPC codec', () => {
   it('accepts only an exact source-room creation request', () => {
     const input = {
-      requesterSessionId: 'continuation-rpc-session-one',
+      resumeToken: 'resume_continuation-rpc-player-one-00000000000001',
       operationId: 'C'.repeat(43),
     };
     expect(readContinuationSourceCreationRpcInput(input)).toEqual(input);
     for (const value of [
       {},
       { ...input, operationId: 'short' },
-      { ...input, requesterSessionId: '' },
+      { ...input, resumeToken: 'short' },
       { ...input, extra: true },
     ]) {
       expect(readContinuationSourceCreationRpcInput(value)).toBeUndefined();

@@ -97,10 +97,13 @@ retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.
 
 Server-held multiplayer continuation remains closed to HTTP, sockets, and the
-client. Internally, the source room authorizes an active claimed player,
+client. Internally, the source room authenticates the existing resume bearer
+against exactly one active claimed multiplayer-player session,
 reserves its exact authority head under bounded room/player counts, calls the
 exact named continuation object to atomically encrypt the checkpoint and retry
-receipt, and compacts the source ledger. Object-valued RPC results are
+receipt, and compacts the source ledger. The private create RPC accepts only the
+resume bearer plus a stable operation; the raw bearer is never passed into or
+stored by continuation custody. Object-valued RPC results are
 schema-normalized and explicitly disposed. Workerd tests prove concurrent
 same-operation convergence and identical recovery after room/save eviction.
 A policy-injected quota adapter separately assigns each source room to a fixed

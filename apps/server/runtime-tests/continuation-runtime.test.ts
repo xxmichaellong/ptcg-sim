@@ -44,6 +44,8 @@ import { continuationTestQuotaConfiguration } from './continuation-test-quota-co
 
 const p1 = asPlayerId('continuation-runtime-player-one');
 const p2 = asPlayerId('continuation-runtime-player-two');
+const playerOneResumeCapability =
+  'resume_continuation-runtime-player-one-000000000001';
 
 const snapshotFixture = (): RoomAuthoritySnapshot => {
   const state = createEmptyMatch(asMatchId('continuation-runtime-match'), [
@@ -87,6 +89,7 @@ const snapshotFixture = (): RoomAuthoritySnapshot => {
         active: true,
         nextClientSequence: 2,
         recentOutcomes: [],
+        resumeCapabilityDigest: '8n5oQEIQvJDwkfv3GACKoigDn8TOts9ZDcmUWp2Y7hk',
       },
       'continuation-runtime-session-two': {
         id: 'continuation-runtime-session-two',
@@ -94,6 +97,7 @@ const snapshotFixture = (): RoomAuthoritySnapshot => {
         active: true,
         nextClientSequence: 1,
         recentOutcomes: [],
+        resumeCapabilityDigest: '2MwtLchA0XgVvBpLGgFz9z379Tp_Spqdb5naWyd10O8',
       },
     },
   };
@@ -356,7 +360,7 @@ describe('continuation Durable Object runtime', () => {
 
     const operationId = 'C'.repeat(43);
     const input = {
-      requesterSessionId: 'continuation-runtime-session-one',
+      resumeToken: playerOneResumeCapability,
       operationId,
     };
     await expect(
@@ -365,7 +369,7 @@ describe('continuation Durable Object runtime', () => {
     await expect(
       room.createContinuation({
         ...input,
-        requesterSessionId: 'missing-runtime-session',
+        resumeToken: 'resume_wrong-runtime-player-00000000000000000001',
       })
     ).resolves.toBeUndefined();
     const sourceHead = await runInDurableObject(
@@ -475,18 +479,21 @@ describe('continuation Durable Object runtime', () => {
 
     await expect(
       room.createContinuation({
-        requesterSessionId: 'missing-runtime-session',
+        resumeToken: 'resume_wrong-runtime-player-00000000000000000001',
         operationId: 'Z'.repeat(43),
       })
     ).resolves.toBeUndefined();
     await expect(
       runInDurableObject(room, async (_instance, state) =>
-        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+        Promise.all([
+          state.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY),
+          state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY),
+        ])
       )
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual([undefined, undefined]);
 
     const inputs = Array.from({ length: 13 }, (_, index) => ({
-      requesterSessionId: 'continuation-runtime-session-one',
+      resumeToken: playerOneResumeCapability,
       operationId: String.fromCharCode(65 + index).repeat(43),
     }));
     const results = await Promise.all(

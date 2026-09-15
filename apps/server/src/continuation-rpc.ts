@@ -8,7 +8,6 @@ import {
   type RecoverReservedContinuationInput,
   type ContinuationRestoreResult,
 } from './continuation-custody.js';
-import type { CoordinateContinuationCreationInput } from './continuation-create.js';
 import type { ReserveContinuationQuotaLeaseInput } from './continuation-quota.js';
 import { validContinuationRestoreOperationId } from './continuation-restore-format.js';
 
@@ -18,6 +17,11 @@ const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;
 
 export interface ContinuationRestoreRpcInput {
   readonly capability: string;
+  readonly operationId: string;
+}
+
+export interface ContinuationSourceCreationRpcInput {
+  readonly resumeToken: string;
   readonly operationId: string;
 }
 
@@ -44,26 +48,26 @@ const validSourceBuild = (value: unknown): value is string =>
 
 export const readContinuationSourceCreationRpcInput = (
   value: unknown
-):
-  | Omit<CoordinateContinuationCreationInput, 'sourceBuild' | 'sourceRoomCode'>
-  | undefined => {
+): ContinuationSourceCreationRpcInput | undefined => {
   if (
     typeof value !== 'object' ||
     value === null ||
-    !exactKeys(value, ['operationId', 'requesterSessionId'])
+    !exactKeys(value, ['operationId', 'resumeToken'])
   ) {
     return undefined;
   }
   const operationId = Reflect.get(value, 'operationId');
-  const requesterSessionId = Reflect.get(value, 'requesterSessionId');
+  const resumeToken = Reflect.get(value, 'resumeToken');
   if (
     typeof operationId !== 'string' ||
     !CREATION_OPERATION_PATTERN.test(operationId) ||
-    !validSessionId(requesterSessionId)
+    typeof resumeToken !== 'string' ||
+    resumeToken.length < 32 ||
+    resumeToken.length > 512
   ) {
     return undefined;
   }
-  return Object.freeze({ operationId, requesterSessionId });
+  return Object.freeze({ operationId, resumeToken });
 };
 
 export const readContinuationSaveCreationRpcInput = (

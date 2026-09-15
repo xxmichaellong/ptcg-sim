@@ -107,7 +107,12 @@ The current guarantees are:
   from the locator plus operation alone. Another locator, operation, or complete
   request fails closed. The receipt remains available across restore so delayed
   create responses converge, but an authenticated revocation deletes it.
-- A separate source-room ledger authorizes only an active, currently claimed
+- The private source-room RPC authenticates the existing resume bearer by
+  hashing it and constant-time matching exactly one active, currently claimed
+  multiplayer-player session. It passes only the derived session ID onward;
+  malformed/wrong/spectator/inactive/solo bearers stop before reservation and
+  rate charging, and raw resume material is never persisted or logged.
+- A separate source-room ledger authorizes that active, currently claimed
   multiplayer player against the exact canonical authority frontier. It stores
   a domain-separated digest of the stable create operation, a non-secret save
   locator, requester role, lifetime, and an exact detached source snapshot
@@ -400,6 +405,12 @@ quota-refusal charging, rollback, ambiguous committed reservation/completion
 recovery, completion compaction, conservative completed-reference accounting,
 expiry pruning, and fail-closed policy/rate-ledger/creation-ledger/frontier
 validation.
+
+The request-authentication suite independently proves exact live-player resume
+bearer matching, constant-time digest comparison, malformed/wrong/inactive/
+spectator/solo refusal, and no digest work for syntactically invalid bearer
+input. The private RPC codec accepts only that bearer and the stable operation;
+workerd proves a wrong bearer cannot create a source or rate record.
 
 The encrypted creation-receipt suite proves atomic checkpoint/receipt/alarm
 creation, complete-request digest binding, no plaintext bearer/operation/state,

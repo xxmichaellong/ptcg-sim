@@ -37,6 +37,7 @@ import {
   expireContinuationQuotaLeases,
   type ContinuationQuotaLeaseReservation,
 } from './continuation-quota.js';
+import { authenticateContinuationRequester } from './continuation-request-auth.js';
 import {
   coordinateContinuationRestore,
   type ContinuationRestoreTargetAcknowledgement,
@@ -392,14 +393,26 @@ export class PtcgRoom extends DurableObject<Env> {
     if (!runtime) return undefined;
     const sourceRoomCode = this.ctx.id.name;
     if (!sourceRoomCode) return undefined;
+    const snapshot = runtime.coordinator.currentSnapshot();
+    const requesterSessionId = await authenticateContinuationRequester(
+      snapshot,
+      input.resumeToken,
+      this.cryptoSource
+    );
+    if (!requesterSessionId) return undefined;
     const result = await coordinateContinuationCreation(
-      { ...input, sourceRoomCode, sourceBuild: this.env.BUILD_ID },
+      {
+        operationId: input.operationId,
+        requesterSessionId,
+        sourceRoomCode,
+        sourceBuild: this.env.BUILD_ID,
+      },
       {
         source: {
           reserveCreation: (reserveInput) =>
             this.continuationSource.reserveCreation({
               ...reserveInput,
-              snapshot: runtime.coordinator.currentSnapshot(),
+              snapshot,
             }),
           completeCreation: (completeInput) =>
             this.continuationSource.completeCreation({

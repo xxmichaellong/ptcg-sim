@@ -32,6 +32,13 @@ quota alarms clean expired leases without reading capacity configuration, so
 cleanup remains available when key or quota configuration is absent or invalid.
 This private wiring is not evidence that continuation is enabled.
 
+The source-room create RPC accepts only an exact stable operation ID and the
+existing session resume bearer. The room hashes that bearer and constant-time
+matches it to exactly one active claimed multiplayer player before source
+reservation or rate charging. It passes only the derived session ID into the
+coordinator; raw resume material must not enter source/save/quota storage,
+telemetry, errors, or support artifacts.
+
 Before any public route is activated, provision
 `CONTINUATION_KEYRING` as a Worker **secret**, never a plaintext Wrangler
 `vars` value. The exact JSON format is:
