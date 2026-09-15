@@ -243,9 +243,18 @@ scene marks only those cover cards with an open-zone action, and native
 Chromium exercises it through both DOM and Pixi without selecting or previewing
 the card. The same gate proves exactly one physical node for every non-empty
 pile and no lower-card DOM node; the 61-card reference scene owns 49 physical
-card views in either renderer. Opened-zone layout, undersized/noncanonical asset
-no-upscale behavior, Pixi geometry, and 90/270-degree hit boxes remain explicit
-gates.
+card views in either renderer. Broader opened-zone scrolling/action histories,
+undersized/noncanonical asset no-upscale behavior, Pixi geometry, and
+90/270-degree hit boxes remain explicit gates.
+
+The adjacent opened-pile overlay gate now runs every deck, discard, and lost-
+zone browser on both player frames against the live checked-in v1 surface. The
+zone kind remains renderer-external metadata used only for paint: deck cards
+retain the source's 8% width, discard 10%, and lost-zone 12%. The gate compares
+surface and image geometry, recipient-safe image/label order, side-specific
+card paint, frame placement, and focus return without adding a controller or
+authority action. This closes the pile-specific density regression while the
+existing full-deck churn gate continues to own image decode and teardown.
 
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free

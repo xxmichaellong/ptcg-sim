@@ -404,7 +404,10 @@ but assigns no physical render key to lower pile cards. Each closed pile instead
 owns one zone-stable cover key, so top-card replacement reuses the same DOM
 button/image or Pixi sprite/texture binding. The 61-card fixture therefore has
 49 physical card views, and native Chromium proves that no lower pile card node
-or asset allocation exists. Opened-zone cards/markers, Pixi geometry,
+or asset allocation exists. A separate real-v1/React DOM overlay gate covers
+the source's opened deck/discard/lost-zone 8%/10%/12% card widths, assets, order,
+and frame geometry on both sides. Opened-zone marker and extended scrolling/
+action histories, Pixi geometry,
 noncanonical or undersized assets, and rotated hit regions remain outside this
 checkpoint.
 

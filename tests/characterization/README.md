@@ -63,9 +63,11 @@ cover/stadium boxes, including both owner-readable stadium states, with the
 React DOM candidate. It now also isolates all six pile covers plus the final
 opponent-readable stadium against a top-owner candidate and attaches
 source/candidate screenshots plus foreground metrics under the shared 97.5%,
-three-pixel, and 24-channel-value paint contract. Cover-open UX, opened-zone
-layout, undersized assets, Pixi geometry, and rotated hit regions remain
-excluded.
+three-pixel, and 24-channel-value paint contract. Cover-open UX is source-backed
+separately, and the overlay oracle now pins opened deck/discard/lost-zone density
+at the source's 8%/10%/12% widths on both player frames. Extended opened-zone
+scrolling/action histories, undersized assets, Pixi geometry, and rotated hit
+regions remain excluded.
 
 `legacy-evolution-reflow-layout.test.ts` pins the separate ordinary-evolution
 boundary. Four isolated local/opponent active/bench cases record a second

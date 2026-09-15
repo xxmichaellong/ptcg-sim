@@ -9,11 +9,14 @@ import {
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 interface OverlayFixture {
+  readonly ownPlayerId: string;
   readonly opponentPlayerId: string;
   readonly activeTopCardId: string;
   readonly conditionlessActiveTopCardId: string;
   readonly destinationZoneId: string;
 }
+
+type OpenedPileKind = 'deck' | 'discard' | 'lostZone';
 
 interface OverlayHarnessWindow extends Window {
   __PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__?: {
@@ -298,7 +301,7 @@ const closeLegacyStack = (page: Page): Promise<void> =>
 const openLegacyZone = (
   page: Page,
   user: 'self' | 'opp',
-  zoneId: 'discard'
+  zoneId: OpenedPileKind
 ): Promise<void> =>
   page.evaluate(
     async ({ user: targetUser, zoneId: targetZoneId }) => {
@@ -313,6 +316,70 @@ const openLegacyZone = (
     },
     { user, zoneId }
   );
+
+const mountLegacyPiles = async (
+  page: Page,
+  piles: readonly {
+    readonly user: 'self' | 'opp';
+    readonly zoneId: OpenedPileKind;
+    readonly assets: readonly Asset[];
+  }[]
+): Promise<void> => {
+  await page.evaluate(async (input) => {
+    interface RuntimeCard {
+      readonly image: HTMLImageElement;
+    }
+    interface RuntimeZone {
+      readonly array: RuntimeCard[];
+      readonly element: HTMLElement;
+    }
+    const load = (specifier: string): Promise<Record<string, unknown>> =>
+      import(/* @vite-ignore */ specifier);
+    const [cardModule, zoneModule, frontEnd] = await Promise.all([
+      load('/src/setup/deck-constructor/card.js'),
+      load('/src/setup/zones/get-zone.js'),
+      load('/src/front-end.js'),
+    ]);
+    const Card = cardModule['Card'] as new (
+      user: string,
+      name: string,
+      type: string,
+      imageUrl: string
+    ) => RuntimeCard;
+    const getZone = zoneModule['getZone'] as (
+      user: string,
+      zoneId: string
+    ) => RuntimeZone;
+    const systemState = frontEnd['systemState'] as {
+      isTwoPlayer: boolean;
+      initiator: string;
+    };
+    systemState.isTwoPlayer = false;
+    systemState.initiator = 'self';
+
+    for (const pile of input) {
+      const zone = getZone(pile.user, pile.zoneId);
+      zone.array.splice(0);
+      for (const image of [...zone.element.querySelectorAll(':scope > img')]) {
+        image.remove();
+      }
+      for (const asset of pile.assets) {
+        const card = new Card(pile.user, asset.label, 'Pokémon', asset.src);
+        await card.image.decode();
+        zone.array.push(card);
+        zone.element.append(card.image);
+      }
+    }
+  }, piles);
+  if (
+    !(await page
+      .locator('body')
+      .evaluate((body) => body.classList.contains('sidebox-hidden')))
+  ) {
+    await page.locator('#fullscreenPlaymatButton').click();
+  }
+  await settlePaint(page);
+};
 
 const expectBoundsToMatch = (
   candidate: ElementPaint['bounds'],
@@ -690,4 +757,129 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
       contentType: 'application/json',
     }),
   ]);
+});
+
+test('opened pile browsers retain real-v1 card density on both player frames', async ({
+  browser,
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const browserSurface = host.locator('[data-legacy-zone-browser]');
+  const cases = (
+    [
+      ['self', fixture.ownPlayerId],
+      ['opp', fixture.opponentPlayerId],
+    ] as const
+  ).flatMap(([user, playerId]) =>
+    (['deck', 'discard', 'lostZone'] as const).map((zoneId) => ({
+      user,
+      playerId,
+      zoneId,
+    }))
+  );
+  const candidate: Array<
+    (typeof cases)[number] & {
+      readonly assets: readonly Asset[];
+      readonly paint: SurfacePaint;
+    }
+  > = [];
+
+  for (const entry of cases) {
+    const zoneId = `zone:${entry.playerId}:${entry.zoneId}`;
+    const target = host.locator(`[data-zone-id="${zoneId}"]`);
+    await target.focus();
+    await target.press('Enter');
+    await expect(browserSurface).toBeVisible();
+    await expect(browserSurface).toHaveAttribute(
+      'data-zone-browser-kind',
+      entry.zoneId
+    );
+    const assets = await assetsFor(browserSurface);
+    expect(
+      assets.length,
+      `${entry.user} ${entry.zoneId} fixture cards`
+    ).toBeGreaterThan(0);
+    await settlePaint(page);
+    candidate.push({
+      ...entry,
+      assets,
+      paint: await surfacePaint(browserSurface, 'candidate'),
+    });
+    await page.keyboard.press('Escape');
+    await expect(browserSurface).toHaveCount(0);
+    await expect(target).toBeFocused();
+  }
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  const source = new Map<string, SurfacePaint>();
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(
+      sourcePage,
+      candidate.map(({ user, zoneId, assets }) => ({ user, zoneId, assets }))
+    );
+    for (const entry of candidate) {
+      await openLegacyZone(sourcePage, entry.user, entry.zoneId);
+      const frameId =
+        entry.user === 'self' ? '#selfContainer' : '#oppContainer';
+      const sourceSurface = sourcePage
+        .frameLocator(frameId)
+        .locator(`#${entry.zoneId}`);
+      await expect(sourceSurface).toBeVisible();
+      await settlePaint(sourcePage);
+      source.set(
+        `${entry.user}:${entry.zoneId}`,
+        await surfacePaint(sourceSurface, 'source')
+      );
+      const closeId = `#close${
+        entry.zoneId === 'lostZone'
+          ? 'LostZone'
+          : entry.zoneId[0]!.toUpperCase() + entry.zoneId.slice(1)
+      }Button`;
+      await sourceSurface.locator(closeId).click();
+      await expect(sourceSurface).toBeHidden();
+    }
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  for (const entry of candidate) {
+    const key = `${entry.user}:${entry.zoneId}`;
+    const sourcePaint = source.get(key);
+    expect(sourcePaint, `${key} source capture`).toBeDefined();
+    expectSurfaceToMatch(
+      entry.paint,
+      sourcePaint!,
+      `${entry.user} ${entry.zoneId} browser`,
+      false
+    );
+  }
+  expect(errors).toEqual([]);
+  await testInfo.attach('legacy-opened-pile-density-metrics.json', {
+    body: Buffer.from(
+      JSON.stringify(
+        {
+          source: Object.fromEntries(source),
+          candidate: Object.fromEntries(
+            candidate.map((entry) => [
+              `${entry.user}:${entry.zoneId}`,
+              entry.paint,
+            ])
+          ),
+        },
+        null,
+        2
+      )
+    ),
+    contentType: 'application/json',
+  });
 });

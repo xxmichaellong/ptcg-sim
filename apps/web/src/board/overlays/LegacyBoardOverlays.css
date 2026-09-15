@@ -250,6 +250,18 @@
   cursor: pointer;
 }
 
+.ptcgsim-legacy-zone-browser[data-zone-browser-kind='deck']
+  .ptcgsim-legacy-zone-cards
+  button {
+  width: 8%;
+}
+
+.ptcgsim-legacy-zone-browser[data-zone-browser-kind='lostZone']
+  .ptcgsim-legacy-zone-cards
+  button {
+  width: 12%;
+}
+
 .ptcgsim-legacy-zone-cards button:focus-visible {
   outline: 4px solid rgb(143 215 153 / 86.4%);
   outline-offset: 1px;

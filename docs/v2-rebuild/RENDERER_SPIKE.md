@@ -295,7 +295,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 2368 v2 tests across 238 files. The default
-Chromium inventory contains 199 Playwright checks across 62 browser files; the
+Chromium inventory contains 200 Playwright checks across 62 browser files; the
 renderer-focused subset passes in Chromium 151:
 
 1. React DOM mounts 49 stable physical card nodes for all 61 logical cards,
@@ -356,8 +356,11 @@ renderer-focused subset passes in Chromium 151:
    alignment, native center hit, and complete teardown. The live-v1 runtime now
    proves a primary deck/discard/lost-zone cover click opens its pile, and the
    renderer-neutral scene action passes native Chromium input through both DOM
-   and Pixi without card selection or preview. Opened-zone layout, undersized
-   assets, Pixi geometry, and q1/q3 hit regions are not claimed. All lower pile
+   and Pixi without card selection or preview. A separate real-v1/React DOM
+   overlay gate now covers both player frames and the source's distinct opened-
+   zone card densities: deck 8%, discard 10%, and lost zone 12%. Broader opened-
+   zone scrolling/action histories, undersized assets, Pixi geometry, and q1/q3
+   hit regions are not claimed. All lower pile
    cards remain in the logical scene for controller and opened-zone validation,
    but exactly one zone-stable physical cover view exists per non-empty pile;
    DOM and Pixi reuse it when the logical top card changes.
@@ -1294,6 +1297,12 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     return, and zero submissions/rejections/errors. The pure frame projection
     has an independent 1280×720 unit oracle. No protocol, authority, canonical
     view, route, visible control, label, UI, or UX changes.
+    A follow-up source-backed density case opens deck, discard, and lost-zone
+    browsers on both player frames. It discovered that the candidate had reused
+    discard's 10% card width for every pile; React DOM now preserves v1's
+    8%/10%/12% deck/discard/lost-zone widths while retaining the same native
+    buttons, recipient-safe order/assets, frame geometry, focus return, and
+    controller isolation.
 73. A recipient-privacy Chromium oracle now carries canonical state through the
     real `projectMatch()` and `createBoardSceneForViewport()` boundaries into a
     mounted selected-DOM renderer while intercepting every matching image

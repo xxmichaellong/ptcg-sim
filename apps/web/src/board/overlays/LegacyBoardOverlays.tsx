@@ -859,6 +859,7 @@ const ZoneBrowser = ({
       className="ptcgsim-legacy-zone-browser"
       data-legacy-zone-browser="true"
       data-zone-browser-id={zone.id}
+      data-zone-browser-kind={zone.kind}
       role="dialog"
       aria-modal="true"
       aria-label={`${zone.label}, ${zone.count} cards`}
