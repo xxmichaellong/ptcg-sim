@@ -416,7 +416,23 @@ boundary. Replay remains strictly non-submitting. V1's replay-only local
 disclosure exceptions include prize reveal, prize look, opponent-hand look, and
 the context menu's per-card reveal/hide operation. A solo player artifact may
 install a separate validated opaque disclosure record beside—but never inside—
-the historical safe view. The controller derives its scene from a transient
+the historical safe view.
+
+That artifact discloses every prize and the _opposing_ hand, which is correct
+only while a solo room has a single human driving both sides. That is enforced
+durably rather than inferred. A solo room is created with a persisted
+`playerSeatLimit` of 1 (`create-room.ts`); the admission path refuses a second
+seat claim once that ceiling is reached (`canClaimPlayerSeat` in
+`admission.ts`); the snapshot invariants reject any solo snapshot holding more
+than one player session or a ceiling other than 1; and
+`assertAuthorityTransactionTransition` forbids changing either the mode or the
+ceiling after creation. Live connection count is never consulted, because
+connection count must never infer permission (see the durable player-seat
+ceiling in `03-domain-network-and-persistence.md`). The ceiling and its
+transition guard are covered by `solo-seat-ceiling.test.ts`, which was added
+after a mutation sweep found them implemented but untested.
+
+The controller derives its scene from a transient
 view and binds every row to the open card and an eligible catalog zone. Zone
 operations update a local per-zone show/cover mode and clear that zone's card
 overrides; `Reveal/hide card` updates only its catalog-backed opaque alias.
