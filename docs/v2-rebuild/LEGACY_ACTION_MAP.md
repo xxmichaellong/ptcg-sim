@@ -1429,8 +1429,23 @@ The ordering keeps submit-time adapter revalidation authoritative while
 restoring the source popup closure immediately instead of waiting for a later
 projection. A source/candidate 60-card Chromium gate pins cancel/accept, clean
 remount, deck-without-confirmation, exact commands, v1 log/action/export
-records, and complete shuffle permutations. V1
-replay's prize reveal/look and opponent-hand look are the scoped zone-level
+records, and complete shuffle permutations.
+
+Context-card rows now follow the same success boundary. V1 executes the row
+handler before its document click listener clears all popups, including an
+opened deck/discard/lost-zone surface. The React menu therefore no longer
+dispatches an unconditional scoped dismissal. Its containing zone ignores the
+nested menu during capture, the controller resolves against the still-open
+card, and only an accepted command, choice, input, or replay-local disclosure
+clears the surrounding local presentation. A newly resolved editor/prompt is
+then installed as the sole retained overlay; invalid, stale, read-only, and
+incomplete requests retain their prior menu/pile. Teardown precedes command
+submission, so a reconnect induced by renderer notification is revalidated and
+cannot send through the stale socket. Controller/component/race tests and a
+live-v1/candidate opened-discard Chromium path pin the ordering without changing
+the menu itself.
+
+V1 replay's prize reveal/look and opponent-hand look are the scoped zone-level
 local-disclosure exceptions; its context menu also exposes local `Reveal/hide
 card`. They now appear only for a solo player's validated projected replay.
 Authority emits a separately bounded catalog whose card keys are the current

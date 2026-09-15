@@ -267,7 +267,7 @@ describe('legacy board overlays', () => {
     ).toEqual([]);
   });
 
-  it('renders a focused context menu and delegates one semantic action', async () => {
+  it('delegates a focused context-menu action to controller-owned teardown', async () => {
     const card = cardIn(`:${firstPlayer}:hand`);
     const callbacks = actions();
     await act(async () => {
@@ -299,7 +299,7 @@ describe('legacy board overlays', () => {
       'discardHand',
       card.id
     );
-    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
   it('recreates the ordered category submenu and delegates one typed choice', async () => {
@@ -398,7 +398,7 @@ describe('legacy board overlays', () => {
       'Trainer'
     );
     expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
-    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
   it('recreates the ordered move submenu and delegates one typed choice', async () => {
@@ -499,7 +499,7 @@ describe('legacy board overlays', () => {
       'deckSwitch'
     );
     expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
-    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
   it('runs each controller count descriptor through one strict-safe native prompt', async () => {

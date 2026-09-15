@@ -630,7 +630,6 @@ const ContextMenu = ({
                 }
                 onSelect={(destination) => {
                   actions.submitMoveChoice(card.id, destination);
-                  dismiss();
                 }}
               />
             ) : entry.action === 'changeCardType' ? (
@@ -646,7 +645,6 @@ const ContextMenu = ({
                 }
                 onSelect={(category) => {
                   actions.submitCategoryChoice(card.id, category);
-                  dismiss();
                 }}
               />
             ) : (
@@ -661,7 +659,6 @@ const ContextMenu = ({
                   data-context-action={entry.action}
                   onClick={() => {
                     actions.invokeContextAction(entry.action, card.id);
-                    dismiss();
                   }}
                 >
                   {entry.label}
@@ -849,7 +846,11 @@ const ZoneBrowser = ({
   const [sortEnabled, setSortEnabled] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   useFocusBoundary(container, '[data-zone-close]', zone.id);
-  useOutsideDismiss(container, dismiss, '[data-legacy-card-preview]');
+  useOutsideDismiss(
+    container,
+    dismiss,
+    '[data-legacy-card-preview], [data-legacy-card-context-menu]'
+  );
   const primary = zoneAction(zone);
   const renderedCards = useMemo(
     () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),

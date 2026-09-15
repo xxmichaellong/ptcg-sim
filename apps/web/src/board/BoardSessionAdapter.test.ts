@@ -832,6 +832,10 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         scene: test.adapter.getSnapshot().scene,
         mode: 'replace',
       },
+      {
+        kind: 'InstallPresentation',
+        presentation: test.adapter.getSnapshot().presentation,
+      },
     ]);
     expect(test.submissions).toEqual([]);
     expect(
@@ -1137,6 +1141,71 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         command: {
           type: 'ShuffleZoneIntoDeck',
           sourceZoneId: discard.id,
+        },
+        result: { queued: false, reason: 'not_ready' },
+      },
+    ]);
+    expect(test.live.getSnapshot().phase).toBe('reconnecting');
+    expect(
+      test.socket.sent.some(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toBe(false);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it('rechecks readiness after accepted context-menu teardown triggers reconnect', () => {
+    let armed = false;
+    const test = setup(createScene, (effect) => {
+      if (armed && effect.kind === 'InstallPresentation') {
+        test.socket.serverClose();
+      }
+    });
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const discard = test.adapter
+      .getSnapshot()
+      .scene!.zones.find(
+        (zone) => zone.id === 'zone:spike-blue:discard' && zone.interactive
+      )!;
+    const card = test.adapter
+      .getSnapshot()
+      .scene!.cards.find((candidate) => candidate.parentId === discard.id)!;
+    expect(
+      test.adapter.emitIntent({ kind: 'ZoneOpened', zoneId: discard.id })
+    ).toBe(true);
+    expect(
+      test.adapter.emitOpenedZoneCardIntent({
+        kind: 'CardContextRequested',
+        cardId: card.id,
+      })
+    ).toBe(true);
+    expect(test.adapter.getSnapshot()).toMatchObject({
+      presentation: { openedZoneId: discard.id },
+      overlays: { contextMenuCardId: card.id },
+    });
+
+    armed = true;
+    expect(
+      test.adapter.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'revealCard',
+        cardId: card.id,
+      })
+    ).toBe(true);
+    expect(test.adapter.getSnapshot()).toMatchObject({
+      presentation: { openedZoneId: null },
+      overlays: { contextMenuCardId: null },
+    });
+    expect(test.submissions).toEqual([
+      {
+        command: {
+          type: 'SetPublicReveal',
+          cardId: card.id,
+          expectedSourceId: discard.id,
+          revealed: true,
         },
         result: { queued: false, reason: 'not_ready' },
       },

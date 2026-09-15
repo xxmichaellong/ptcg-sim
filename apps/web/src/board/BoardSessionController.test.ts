@@ -404,7 +404,7 @@ describe('headless board session controller', () => {
     ]);
   });
 
-  it('resolves one route-owned overlay action from the installed safe view', () => {
+  it('resolves one route-owned overlay action and dismisses its menu atomically', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;
@@ -422,13 +422,19 @@ describe('headless board session controller', () => {
       request,
     });
 
+    expect(result.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+    expect(result.state.overlays.contextMenuCardId).toBeNull();
     expect(result.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
       {
         kind: 'SubmitCommand',
         command: expect.objectContaining({ type: 'SetAbilityUsed' }),
       },
     ]);
-    expect(result.effects[0]).toMatchObject({
+    expect(result.effects[1]).toMatchObject({
       command: { stackId: activeStack.id },
     });
   });
@@ -986,7 +992,12 @@ describe('headless board session controller', () => {
       kind: 'LegacyOverlayActionRequested',
       request: { kind: 'context', action: 'setDamage', cardId },
     });
-    expect(opened.effects).toEqual([]);
+    expect(opened.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+    ]);
     expect(opened.state.overlays).toEqual({
       contextMenuCardId: null,
       preview: null,
@@ -1102,6 +1113,10 @@ describe('headless board session controller', () => {
     });
     expect(result.effects).toEqual([
       {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+      {
         kind: 'SubmitCommand',
         command: { type: 'SetDamage', stackId: activeStack.id, damage: 10 },
       },
@@ -1121,7 +1136,12 @@ describe('headless board session controller', () => {
       kind: 'LegacyOverlayActionRequested',
       request: { kind: 'context', action: 'setSpecialCondition', cardId },
     });
-    expect(opened.effects).toEqual([]);
+    expect(opened.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+    ]);
     expect(opened.state.overlays.input).toEqual({
       kind: 'specialCondition',
       cardId,
@@ -1241,6 +1261,10 @@ describe('headless board session controller', () => {
     });
     expect(created.effects).toEqual([
       {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+      {
         kind: 'SubmitCommand',
         command: {
           type: 'SetSpecialCondition',
@@ -1307,8 +1331,13 @@ describe('headless board session controller', () => {
           category,
         },
       });
-      expect(selected.state).toBe(state);
+      expect(selected.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+      expect(selected.state.overlays.contextMenuCardId).toBeNull();
       expect(selected.effects).toEqual([
+        {
+          kind: 'InstallPresentation',
+          presentation: DEFAULT_BOARD_PRESENTATION,
+        },
         {
           kind: 'SubmitCommand',
           command: {
@@ -1440,8 +1469,13 @@ describe('headless board session controller', () => {
           destination,
         },
       });
-      expect(selected.state).toBe(state);
+      expect(selected.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+      expect(selected.state.overlays.contextMenuCardId).toBeNull();
       expect(selected.effects).toEqual([
+        {
+          kind: 'InstallPresentation',
+          presentation: DEFAULT_BOARD_PRESENTATION,
+        },
         { kind: 'SubmitCommand', command: expected[destination] },
       ]);
     }
@@ -1490,7 +1524,12 @@ describe('headless board session controller', () => {
       kind: 'LegacyOverlayActionRequested',
       request: { kind: 'context', action: 'discardHand', cardId },
     });
-    expect(opened.effects).toEqual([]);
+    expect(opened.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+    ]);
     expect(opened.state.overlays.input).toEqual({
       kind: 'count',
       action: 'discardHand',
@@ -1737,6 +1776,68 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('closes an opened pile only after its card context action resolves', () => {
+    let state = install();
+    const discard = state.scene!.zones.find((zone) =>
+      zone.id.endsWith(':discard')
+    )!;
+    const cardId = cardIn(state.scene!, ':discard');
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: discard.id },
+    }).state;
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    expect(state.presentation.openedZoneId).toBe(discard.id);
+    expect(state.overlays.contextMenuCardId).toBe(cardId);
+
+    const incompleteRequest = {
+      kind: 'context' as const,
+      action: 'moveCard' as const,
+      cardId,
+    };
+    const incomplete = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: incompleteRequest,
+    });
+    expect(incomplete.state).toBe(state);
+    expect(incomplete.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: incompleteRequest,
+        reason: 'requires_choice',
+      },
+    ]);
+
+    const accepted = apply(incomplete.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'revealCard', cardId },
+    });
+    expect(accepted.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+    expect(accepted.state.overlays).toEqual({
+      contextMenuCardId: null,
+      preview: null,
+      input: null,
+    });
+    expect(accepted.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetPublicReveal',
+          cardId,
+          expectedSourceId: discard.id,
+          revealed: true,
+        },
+      },
+    ]);
+  });
+
   it('keeps solo replay disclosure local, persistent on advance, and reset on seek', () => {
     const view = createRendererSpikeView();
     const disclosure = replayLocalDisclosure(view);
@@ -1771,8 +1872,14 @@ describe('headless board session controller', () => {
       { kind: 'LegacyOverlayActionRequested', request },
       deps
     );
+    expect(shown.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+    expect(shown.state.overlays.contextMenuCardId).toBeNull();
     expect(shown.effects).toEqual([
       { kind: 'InstallScene', scene: shown.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
     ]);
     expect(shown.state.view).toBe(initialView);
     expect(shown.state.view!.definitions).not.toHaveProperty(

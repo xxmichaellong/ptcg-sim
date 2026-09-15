@@ -278,6 +278,24 @@ pins the confirmation text, cancel behavior, imported-deck-rank Sort order,
 two popup closures, messages, action/export records, and complete deterministic
 60-card permutations. No label, layout, styling, or other visible UI changed.
 
+Context-card actions now use the same accepted-only teardown boundary. In v1 a
+menu button's target handler runs before the document-level `closePopups()`
+listener, then that listener closes the context menu and any open deck,
+discard, or lost-zone browser. React previously dismissed only the menu from
+the component regardless of whether the controller accepted the request; a
+menu mounted over an opened pile could also lose its click when the pile's
+outside-pointer handler unmounted first. The pile now treats its own context
+menu as a nested surface, and the controller atomically clears selection,
+targeting, hover/drag, opened zone, preview, and menu only after command,
+choice, input, or replay-local resolution succeeds. Input resolutions retain
+only their newly bound editor/prompt. Ordinary commands install the cleared
+presentation before submission so adapter readiness is rechecked after any
+reentrant reconnect, while resolver rejection leaves the exact menu/pile state
+available. Unit coverage pins immediate, choice, input, replay-local, rejection,
+and reconnect ordering; live-v1/candidate Chromium independently proves that a
+per-card action from an opened discard runs once and closes both surfaces. No
+label, geometry, paint, prompt, submenu, command, or other UI/UX changed.
+
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench

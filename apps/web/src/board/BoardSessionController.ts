@@ -1352,13 +1352,16 @@ const handleOverlayAction = (
       return rejected(state);
     }
     if (!sceneMatchesProjection(view, localScene)) return rejected(state);
+    const local = clearLocalPresentation(state);
     const next = nextState(state, {
       replayLocalDisplay,
       scene: localScene,
       sceneInstallMode: 'replace',
+      ...local,
     });
     return accepted(next, [
       { kind: 'InstallScene', scene: localScene, mode: 'replace' },
+      { kind: 'InstallPresentation', presentation: next.presentation },
     ]);
   }
   if (!state.canSubmitCommands) {
@@ -1371,19 +1374,23 @@ const handleOverlayAction = (
     return rejectOverlayAction(state, request, resolution.reason);
   }
   if ('input' in resolution) {
+    const local = clearLocalPresentation(state);
     const next = nextState(state, {
+      ...local,
       overlays: {
         contextMenuCardId: null,
         preview: null,
         input: resolution.input,
       },
     });
-    return accepted(
-      next,
-      resolution.command
-        ? [{ kind: 'SubmitCommand', command: resolution.command }]
-        : []
-    );
+    return accepted(next, [
+      { kind: 'InstallPresentation', presentation: next.presentation },
+      ...(resolution.command
+        ? ([
+            { kind: 'SubmitCommand', command: resolution.command },
+          ] satisfies BoardSessionControllerEffect[])
+        : []),
+    ]);
   }
   if (request.kind === 'zone') {
     const local = clearLocalPresentation(state);
@@ -1397,8 +1404,16 @@ const handleOverlayAction = (
     ? nextState(state, {
         overlays: { ...state.overlays, input: null },
       })
-    : state;
+    : nextState(state, clearLocalPresentation(state));
   return accepted(next, [
+    ...(submittedInputIdentity
+      ? []
+      : ([
+          {
+            kind: 'InstallPresentation',
+            presentation: next.presentation,
+          },
+        ] satisfies BoardSessionControllerEffect[])),
     { kind: 'SubmitCommand', command: resolution.command },
   ]);
 };

@@ -31,6 +31,9 @@ interface OverlayHarnessWindow extends Window {
         readonly selectedCardId: string | null;
         readonly openedZoneId: string | null;
       };
+      readonly overlays: {
+        readonly contextMenuCardId: string | null;
+      };
       readonly reportedErrors: readonly string[];
     };
     readonly clearEvidence: () => void;
@@ -1392,5 +1395,95 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
     await sourcePage.close();
   }
 
+  expect(errors).toEqual([]);
+});
+
+test('opened-pile card actions retain real-v1 all-popup teardown', async ({
+  browser,
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const discardTarget = host.locator(
+    `[data-zone-id="${fixture.destinationZoneId}"]`
+  );
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  await discardTarget.focus();
+  await discardTarget.press('Enter');
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-browser-id',
+    fixture.destinationZoneId
+  );
+  const sourceAssets = await assetsFor(zoneBrowser);
+  const candidateCard = zoneBrowser
+    .locator('button[data-overlay-card-id]')
+    .first();
+  const cardId = await candidateCard.getAttribute('data-overlay-card-id');
+  if (!cardId) throw new Error('Opened discard card has no stable ID');
+
+  await candidateCard.click({ button: 'right' });
+  const candidateMenu = host.locator('[data-legacy-card-context-menu]');
+  await expect(candidateMenu).toBeVisible();
+  await candidateMenu.locator('[data-context-action="revealCard"]').click();
+  await expect
+    .poll(() => candidateEvidence(page))
+    .toMatchObject({
+      submissions: [
+        {
+          type: 'SetPublicReveal',
+          cardId,
+          expectedSourceId: fixture.destinationZoneId,
+          revealed: true,
+        },
+      ],
+      submissionResults: [{ queued: true, clientSequence: 1 }],
+      overlayRejections: [],
+      overlayActions: [{ kind: 'context', action: 'revealCard', cardId }],
+      presentation: { selectedCardId: null, openedZoneId: null },
+      overlays: { contextMenuCardId: null },
+      reportedErrors: [],
+    });
+  await expect(candidateMenu).toHaveCount(0);
+  await expect(zoneBrowser).toHaveCount(0);
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(sourcePage, [
+      { user: 'self', zoneId: 'discard', assets: sourceAssets },
+    ]);
+    await openLegacyZone(sourcePage, 'self', 'discard');
+    const sourceDiscard = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#discard');
+    const sourceMenu = sourcePage.locator('#cardContextMenu');
+    await expect(sourceDiscard).toBeVisible();
+    await sourceDiscard
+      .locator(':scope > img')
+      .first()
+      .click({ button: 'right' });
+    await expect(sourceMenu).toBeVisible();
+    await sourceMenu.locator('#revealHideButton').click();
+    await expect(sourceMenu).toBeHidden();
+    await expect(sourceDiscard).toBeHidden();
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
   expect(errors).toEqual([]);
 });

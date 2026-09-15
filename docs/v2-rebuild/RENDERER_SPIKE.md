@@ -2469,6 +2469,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      permutations, then proves the candidate's protected commands and absence
      of errors. No protocol, domain, authority, label, layout, style, or other
      visible UI changes.
+163. Context-card actions now own that lifecycle at the controller boundary as
+     well. V1 runs a menu row before the document click listener closes the menu
+     plus any opened deck/discard/lost-zone surface. React no longer issues an
+     unconditional component dismissal: the pile's outside-pointer boundary
+     recognizes its nested context menu, and successful command, submenu,
+     input, or replay-local resolution clears all prior transient presentation
+     atomically. A new input descriptor is the sole retained overlay; rejected
+     or incomplete requests preserve the menu/pile for inspection. Presentation
+     teardown precedes command submission, and an adapter test injects reconnect
+     at that exact seam to prove the command cannot reach a stale socket. The
+     unchanged-v1/candidate Chromium gate opens a discard card's real context
+     menu, executes per-card reveal exactly once, and proves both surfaces close.
+     Existing prompt, submenu, overlay, and replay journeys remain green; no
+     protocol, domain, authority, menu label, geometry, paint, or UI/UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
