@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 import {
   checkBundleProvenance,
+  checkForBundleSecretLeaks,
   checkForTestFixtureLeaks,
   checkSourceBoundaries,
 } from './check-v2-boundaries.mjs';
@@ -325,5 +326,42 @@ test('rejects forbidden fixture markers in binary output paths', async () => {
   await assert.rejects(
     checkForTestFixtureLeaks(root),
     /__ptcgsim-test-assets__.*output path/u
+  );
+});
+
+test('rejects and redacts a sensitive environment value embedded in output', async () => {
+  const root = await temporaryRepo();
+  const dist = join(root, 'apps/web/dist');
+  const secret = 'private-ci-value-that-must-never-ship';
+  await mkdir(dist, { recursive: true });
+  await writeFile(
+    join(dist, 'chunk.js'),
+    `export default ${JSON.stringify(secret)};`
+  );
+
+  await assert.rejects(
+    checkForBundleSecretLeaks(root, [dist], {
+      CONTINUATION_KEYRING: secret,
+    }),
+    (error) => {
+      assert.match(String(error), /CONTINUATION_KEYRING/u);
+      assert.equal(String(error).includes(secret), false);
+      return true;
+    }
+  );
+});
+
+test('rejects recognizable private credential formats in output', async () => {
+  const root = await temporaryRepo();
+  const dist = join(root, 'apps/server/dist');
+  await mkdir(dist, { recursive: true });
+  await writeFile(
+    join(dist, 'worker.js.map'),
+    '{"source":"-----BEGIN PRIVATE KEY-----"}'
+  );
+
+  await assert.rejects(
+    checkForBundleSecretLeaks(root, [dist], {}),
+    /PEM private key/u
   );
 });

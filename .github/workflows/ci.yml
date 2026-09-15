@@ -33,6 +33,8 @@ jobs:
       - name: Audit dependencies
         run: corepack pnpm run audit:dependencies
       - name: Run the non-browser quality gate
+        env:
+          CONTINUATION_KEYRING: ptcgsim-ci-secret-sentinel-never-ship-000001
         run: corepack pnpm run check:ci
       - name: Verify tracked files remain unchanged
         run: git diff --exit-code

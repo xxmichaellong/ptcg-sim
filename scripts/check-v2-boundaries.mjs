@@ -36,6 +36,28 @@ const SOURCE_FREE_WEB_PRELOAD_DIGESTS = new Set([
   'aba87f2a53e45ecdc9113fc30387d16e449d1676428cf5f82dd624c1df97d152',
 ]);
 
+const BUNDLE_SECRET_PATTERNS = [
+  {
+    label: 'PEM private key',
+    pattern: /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/u,
+  },
+  {
+    label: 'GitHub access token',
+    pattern: /\b(?:gh[opsu]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})\b/u,
+  },
+  {
+    label: 'AWS access key',
+    pattern: /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/u,
+  },
+  {
+    label: 'live Stripe secret',
+    pattern: /\b(?:sk|rk)_live_[A-Za-z0-9]{16,}\b/u,
+  },
+];
+
+const SENSITIVE_ENVIRONMENT_NAME =
+  /(?:^|_)(?:SECRET|TOKEN|PASSWORD|PRIVATE_KEY|KEYRING)(?:$|_)/u;
+
 // Compatibility packages remain operator/test-only until their evidence gate
 // and production consumer are approved in the same reviewed change.
 const QUARANTINED_RUNTIME_DEPENDENCIES = new Set(['@ptcgsim/legacy-import']);
@@ -505,6 +527,45 @@ export const checkForTestFixtureLeaks = async (repoRoot) => {
   }
 };
 
+export const checkForBundleSecretLeaks = async (
+  repoRoot,
+  distRoots,
+  environment = process.env
+) => {
+  const environmentSecrets = Object.entries(environment)
+    .filter(
+      ([name, value]) =>
+        SENSITIVE_ENVIRONMENT_NAME.test(name) &&
+        typeof value === 'string' &&
+        value.length >= 16
+    )
+    .map(([name, value]) => ({ name, bytes: Buffer.from(value) }));
+  const failures = [];
+  for (const distRoot of distRoots) {
+    for (const path of await walkFiles(distRoot)) {
+      const bytes = await readFile(path);
+      const outputPath = repoRelative(repoRoot, path);
+      for (const secret of environmentSecrets) {
+        if (bytes.includes(secret.bytes)) {
+          failures.push(
+            `${outputPath} contains environment secret ${secret.name}`
+          );
+        }
+      }
+      const text = bytes.toString('utf8');
+      for (const { label, pattern } of BUNDLE_SECRET_PATTERNS) {
+        if (pattern.test(text))
+          failures.push(`${outputPath} contains ${label}`);
+      }
+    }
+  }
+  if (failures.length > 0) {
+    throw new Error(
+      `V2 production bundle contains credential material:\n- ${failures.join('\n- ')}`
+    );
+  }
+};
+
 export const runSourceChecks = async (repoRoot) => {
   const graph = await checkSourceBoundaries(repoRoot);
   await checkCardBackAssets(repoRoot);
@@ -512,19 +573,18 @@ export const runSourceChecks = async (repoRoot) => {
 };
 
 export const runBundleChecks = async (repoRoot) => {
-  await stat(join(repoRoot, 'apps/web/dist/index.html'));
-  const web = await checkBundleProvenance(
-    repoRoot,
-    'web',
-    join(repoRoot, 'apps/web/dist')
-  );
+  const webDistRoot = join(repoRoot, 'apps/web/dist');
+  const serverDistRoot = join(repoRoot, 'apps/server/dist');
+  await stat(join(webDistRoot, 'index.html'));
+  const web = await checkBundleProvenance(repoRoot, 'web', webDistRoot);
   const server = await checkBundleProvenance(
     repoRoot,
     'server',
-    join(repoRoot, 'apps/server/dist')
+    serverDistRoot
   );
   await checkCardBackAssets(repoRoot, true);
   await checkForTestFixtureLeaks(repoRoot);
+  await checkForBundleSecretLeaks(repoRoot, [webDistRoot, serverDistRoot]);
   return { web, server };
 };
 

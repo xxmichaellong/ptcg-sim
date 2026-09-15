@@ -31,7 +31,7 @@
     "test:preview:browser": "playwright test --config=playwright.preview.config.ts",
     "check:browser": "corepack pnpm run test:renderer:browser --project=chromium && corepack pnpm run test:preview:browser --project=chromium && corepack pnpm run test:continuation:browser --project=chromium && corepack pnpm run test:continuation:drain:browser --project=chromium",
     "check:cross-browser": "corepack pnpm run test:cross-browser:browser",
-    "audit:dependencies": "corepack pnpm audit --audit-level low --ignore-registry-errors",
+    "audit:dependencies": "corepack pnpm audit --audit-level low",
     "check:legacy-corpus": "tsx scripts/check-legacy-import-corpus.ts",
     "prepare:continuation-preview": "tsx scripts/prepare-continuation-preview.ts",
     "typecheck:browser:v2": "tsc --noEmit --project tsconfig.browser.json",

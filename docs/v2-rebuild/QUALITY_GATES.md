@@ -10,31 +10,31 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 
 ## Canonical commands
 
-| Command                                       | Contract                                                                                                                     |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run format:check:v2`                    | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                           |
-| `pnpm run lint:v2`                            | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                |
-| `pnpm run check:boundaries:v2`                | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.           |
-| `pnpm run check:api:v2`                       | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.        |
-| `pnpm run check:cycles:v2`                    | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, `.wrangler`, and Worker types.              |
-| `pnpm run typecheck:browser:v2`               | Typecheck Playwright specs/support against the strict production profile, including unchecked-index protection.              |
-| `pnpm run typecheck:v2`                       | Strictly build production references and typecheck Worker model/runtime, browser harnesses, and TypeScript operator tooling. |
-| `pnpm run test:tooling:v2`                    | Prove architecture/API gates, private-tool safety/determinism, and legacy-server dependency compatibility.                   |
-| `pnpm run check:legacy-corpus`                | Operator-only: convert an explicit private corpus into redacted deterministic evidence, optionally comparing a baseline.     |
-| `pnpm run prepare:continuation-preview`       | Operator-only: generate a private, default-off, isolated managed-preview config/credential bundle without network access.    |
-| `pnpm run build:v2`                           | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
-| `pnpm run check:v2`                           | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
-| `pnpm run check:ci`                           | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
-| `pnpm run test:preview:browser`               | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.     |
-| `pnpm run test:continuation:browser`          | Run the real save/restore UI journey against a locally test-activated or explicitly provisioned managed preview.             |
-| `pnpm run test:continuation:drain:browser`    | Prove create/restore are hidden and revoke remains reachable in the exact local or managed rollout drain state.              |
-| `pnpm run test:continuation:rotation:browser` | Operator-only: capture or consume a private save across explicit managed key/deployment transitions.                         |
-| `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium without retry.         |
-| `pnpm run check:cross-browser`                | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                |
-| `pnpm run check:full`                         | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                             |
-| `pnpm run measure:v2:renderer`                | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.     |
-| `pnpm run measure:v2:server`                  | Operator-only: capture the named local-`workerd` phase/payload observation; this is not managed-network release evidence.    |
-| `pnpm run audit:dependencies`                 | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.      |
+| Command                                       | Contract                                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run format:check:v2`                    | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                            |
+| `pnpm run lint:v2`                            | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                 |
+| `pnpm run check:boundaries:v2`                | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.            |
+| `pnpm run check:api:v2`                       | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.         |
+| `pnpm run check:cycles:v2`                    | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, `.wrangler`, and Worker types.               |
+| `pnpm run typecheck:browser:v2`               | Typecheck Playwright specs/support against the strict production profile, including unchecked-index protection.               |
+| `pnpm run typecheck:v2`                       | Strictly build production references and typecheck Worker model/runtime, browser harnesses, and TypeScript operator tooling.  |
+| `pnpm run test:tooling:v2`                    | Prove architecture/API gates, private-tool safety/determinism, and legacy-server dependency compatibility.                    |
+| `pnpm run check:legacy-corpus`                | Operator-only: convert an explicit private corpus into redacted deterministic evidence, optionally comparing a baseline.      |
+| `pnpm run prepare:continuation-preview`       | Operator-only: generate a private, default-off, isolated managed-preview config/credential bundle without network access.     |
+| `pnpm run build:v2`                           | Build Worker and web artifacts, then verify provenance, credential exclusion, fixture exclusion, and emitted card-back bytes. |
+| `pnpm run check:v2`                           | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                          |
+| `pnpm run check:ci`                           | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                              |
+| `pnpm run test:preview:browser`               | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.      |
+| `pnpm run test:continuation:browser`          | Run the real save/restore UI journey against a locally test-activated or explicitly provisioned managed preview.              |
+| `pnpm run test:continuation:drain:browser`    | Prove create/restore are hidden and revoke remains reachable in the exact local or managed rollout drain state.               |
+| `pnpm run test:continuation:rotation:browser` | Operator-only: capture or consume a private save across explicit managed key/deployment transitions.                          |
+| `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium without retry.          |
+| `pnpm run check:cross-browser`                | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                 |
+| `pnpm run check:full`                         | Run `check:ci`, the Chromium lanes, and the focused Firefox/WebKit lane locally.                                              |
+| `pnpm run measure:v2:renderer`                | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.      |
+| `pnpm run measure:v2:server`                  | Operator-only: capture the named local-`workerd` phase/payload observation; this is not managed-network release evidence.     |
+| `pnpm run audit:dependencies`                 | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.       |
 
 Hosted CI disables the runner's unrelated Google Chrome apt source before
 installing Playwright Chromium, then may retry that browser/dependency install
@@ -262,11 +262,14 @@ runs, pins action revisions, and pins Ubuntu 24.04 plus Node 24.19.0.
 
 The `quality` job installs the frozen lockfile, runs `audit:dependencies`, runs
 `check:ci`, and verifies that its generators do not modify tracked files. The
-audit fails on any reported severity; registry transport failures are ignored so
-an advisory-service outage cannot make unrelated changes unmergeable. The
-updated legacy dependency graph is additionally exercised through a child-process
-smoke test covering its rendered root, SQLite-backed import lookup, and a real
-Socket.IO player admission. Only after the quality job succeeds does the `chromium` job install
+audit fails on any reported severity and also fails closed when the advisory
+service cannot be reached. The build runs with a fake keyring sentinel; the
+artifact gate rejects that exact value, sensitive environment values available
+to the build that are at least 16 bytes, and recognizable private-key/access-token
+formats without printing the matched credential. The updated legacy dependency
+graph is additionally exercised through a child-process smoke test covering its
+rendered root, SQLite-backed import lookup, and a real Socket.IO player admission.
+Only after the quality job succeeds does the `chromium` job install
 Playwright's own Chromium with its Linux dependencies and run `check:browser`.
 The first Playwright lane starts Wrangler on port 8787 and Vite on port 4173.
 After it tears both down, the production-topology lane builds Vite and starts
