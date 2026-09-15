@@ -1688,6 +1688,55 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('clears local presentation before submitting an accepted opened-pile action', () => {
+    let state = install();
+    const discard = state.scene!.zones.find((zone) =>
+      zone.id.endsWith(':discard')
+    )!;
+    const discardCard = cardIn(state.scene!, ':discard');
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: discard.id },
+    }).state;
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardSelected', cardId: discardCard },
+    }).state;
+    expect(state.presentation).toMatchObject({
+      selectedCardId: discardCard,
+      openedZoneId: discard.id,
+    });
+
+    const request = {
+      kind: 'zone' as const,
+      action: 'shuffleDiscardToDeck' as const,
+      zoneId: discard.id,
+    };
+    const result = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request,
+    });
+    expect(result.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+    expect(result.state.overlays).toEqual({
+      contextMenuCardId: null,
+      preview: null,
+      input: null,
+    });
+    expect(result.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: DEFAULT_BOARD_PRESENTATION,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'ShuffleZoneIntoDeck',
+          sourceZoneId: discard.id,
+        },
+      },
+    ]);
+  });
+
   it('keeps solo replay disclosure local, persistent on advance, and reset on seek', () => {
     const view = createRendererSpikeView();
     const disclosure = replayLocalDisclosure(view);

@@ -2454,6 +2454,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      migration, verification, requirements, file-map, legacy-import, and server
      operations guides now share that exact boundary; no runtime or UI behavior
      changes in this checkpoint.
+162. Opened-pile primary actions now complete their source lifecycle instead of
+     leaving a submitted pile browser mounted. The discard button retains v1's
+     exact native confirmation: cancellation preserves Sort, full-scroll
+     position, focus, controller state, and an empty action/command trail.
+     Successful discard-to-deck or deck shuffle clears all transient local
+     presentation before the adapter receives exactly one existing semantic
+     command, while failed controller resolution leaves the browser intact.
+     Accepted teardown restores opener focus and a later mount starts with Sort
+     unchecked and scroll zero; deck shuffle opens no confirmation. A new
+     Chromium path drives both the React candidate and unchanged v1 through
+     60-card piles, pins v1's imported-deck-rank Sort behavior, exact dialog,
+     closures, messages, action/export records, and deterministic full
+     permutations, then proves the candidate's protected commands and absence
+     of errors. No protocol, domain, authority, label, layout, style, or other
+     visible UI changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

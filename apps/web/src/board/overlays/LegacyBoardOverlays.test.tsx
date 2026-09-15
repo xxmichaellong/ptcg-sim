@@ -808,6 +808,77 @@ describe('legacy board overlays', () => {
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
   });
 
+  it('preserves the source discard confirmation without adding one to deck shuffle', async () => {
+    const callbacks = actions();
+    const confirm = vi
+      .fn()
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+    vi.stubGlobal('confirm', confirm);
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const opened = (zoneId: string) =>
+      state({
+        presentation: {
+          selectedCardId: null,
+          hoveredCardId: null,
+          targetableCardIds: [],
+          drag: null,
+          openedZoneId: zoneId,
+        },
+      });
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(discard.id),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const discardAction = host.querySelector<HTMLButtonElement>(
+      '[data-zone-action="shuffleDiscardToDeck"]'
+    )!;
+    await act(async () => discardAction.click());
+    expect(confirm).toHaveBeenCalledExactlyOnceWith(
+      'Are you sure you want to shuffle all cards into the deck?'
+    );
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => discardAction.click());
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
+      'shuffleDiscardToDeck',
+      discard.id
+    );
+
+    const deck = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:deck`
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(deck.id),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('[data-zone-action="shuffleDeck"]')!
+        .click()
+    );
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(callbacks.invokeZoneAction).toHaveBeenNthCalledWith(
+      2,
+      'shuffleDeck',
+      deck.id
+    );
+  });
+
   it('preserves the external opener across StrictMode focus-effect replay', async () => {
     const callbacks = actions();
     const opener = document.createElement('button');

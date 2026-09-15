@@ -1385,6 +1385,14 @@ const handleOverlayAction = (
         : []
     );
   }
+  if (request.kind === 'zone') {
+    const local = clearLocalPresentation(state);
+    const next = nextState(state, local);
+    return accepted(next, [
+      { kind: 'InstallPresentation', presentation: next.presentation },
+      { kind: 'SubmitCommand', command: resolution.command },
+    ]);
+  }
   const next = submittedInputIdentity
     ? nextState(state, {
         overlays: { ...state.overlays, input: null },

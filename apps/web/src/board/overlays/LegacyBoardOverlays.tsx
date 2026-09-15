@@ -806,6 +806,9 @@ const zoneAction = (
       ? { id: 'shuffleDiscardToDeck', label: 'Shuffle all to Deck' }
       : null;
 
+const DISCARD_SHUFFLE_CONFIRMATION =
+  'Are you sure you want to shuffle all cards into the deck?';
+
 /**
  * Produces a paint-only ordering from data already disclosed in the scene.
  * Equal labels retain authoritative scene order, which keeps concealed and
@@ -886,7 +889,15 @@ const ZoneBrowser = ({
             type="button"
             className="ptcgsim-legacy-zone-button"
             data-zone-action={primary.id}
-            onClick={() => actions.invokeZoneAction(primary.id, zone.id)}
+            onClick={() => {
+              if (
+                primary.id === 'shuffleDiscardToDeck' &&
+                !window.confirm(DISCARD_SHUFFLE_CONFIRMATION)
+              ) {
+                return;
+              }
+              actions.invokeZoneAction(primary.id, zone.id);
+            }}
           >
             {primary.label}
           </button>

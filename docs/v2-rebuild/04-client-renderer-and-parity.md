@@ -263,6 +263,21 @@ cannot accumulate through a full pile. This closes the pile-specific density
 and scrolling regressions while the existing full-deck churn gate continues to
 own image decode and repeated teardown.
 
+The opened-pile action gate now carries those same maximum-capacity discard and
+deck browsers through their source lifecycle. Discard keeps v1's exact native
+`Are you sure you want to shuffle all cards into the deck?` confirmation;
+cancel leaves the browser, Sort state, maximum scroll position, focus, local
+presentation, and command trail unchanged. Acceptance clears all transient
+board presentation before one `ShuffleZoneIntoDeck` submission, restores focus
+to the pile opener, and remounts later with unchecked Sort and scroll position
+zero. Deck shuffle deliberately opens no confirmation and performs the same
+teardown before one `ShuffleZone` submission. Rejected, stale, replay, and
+read-only requests retain their opened browser because the teardown occurs only
+after successful controller resolution. A live-v1 Chromium page independently
+pins the confirmation text, cancel behavior, imported-deck-rank Sort order,
+two popup closures, messages, action/export records, and complete deterministic
+60-card permutations. No label, layout, styling, or other visible UI changed.
+
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench

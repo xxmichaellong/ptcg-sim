@@ -1102,6 +1102,56 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('rechecks readiness after accepted opened-pile teardown triggers reconnect', () => {
+    let armed = false;
+    const test = setup(createScene, (effect) => {
+      if (armed && effect.kind === 'InstallPresentation') {
+        test.socket.serverClose();
+      }
+    });
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const discard = test.adapter
+      .getSnapshot()
+      .scene!.zones.find(
+        (zone) => zone.id === 'zone:spike-blue:discard' && zone.interactive
+      )!;
+    expect(
+      test.adapter.emitIntent({ kind: 'ZoneOpened', zoneId: discard.id })
+    ).toBe(true);
+    expect(test.adapter.getSnapshot().presentation.openedZoneId).toBe(
+      discard.id
+    );
+
+    armed = true;
+    expect(
+      test.adapter.emitLegacyOverlayAction({
+        kind: 'zone',
+        action: 'shuffleDiscardToDeck',
+        zoneId: discard.id,
+      })
+    ).toBe(true);
+    expect(test.adapter.getSnapshot().presentation.openedZoneId).toBeNull();
+    expect(test.submissions).toEqual([
+      {
+        command: {
+          type: 'ShuffleZoneIntoDeck',
+          sourceZoneId: discard.id,
+        },
+        result: { queued: false, reason: 'not_ready' },
+      },
+    ]);
+    expect(test.live.getSnapshot().phase).toBe('reconnecting');
+    expect(
+      test.socket.sent.some(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toBe(false);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('treats a changed match recipient as a replace boundary', () => {
     const test = setup();
     test.socket.serverOpen();

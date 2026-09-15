@@ -1,6 +1,7 @@
 import {
   expect,
   test,
+  type Dialog,
   type Locator,
   type Page,
   type TestInfo,
@@ -25,8 +26,14 @@ interface OverlayHarnessWindow extends Window {
       readonly submissions: readonly unknown[];
       readonly submissionResults: readonly unknown[];
       readonly overlayRejections: readonly unknown[];
+      readonly overlayActions: readonly unknown[];
+      readonly presentation: {
+        readonly selectedCardId: string | null;
+        readonly openedZoneId: string | null;
+      };
       readonly reportedErrors: readonly string[];
     };
+    readonly clearEvidence: () => void;
     readonly dispose: () => void;
   };
 }
@@ -245,6 +252,39 @@ const scrollToEnd = async (surface: Locator): Promise<ScrollEvidence> => {
   );
   return readScrollEvidence(surface);
 };
+
+const answerNextConfirmation = (
+  page: Page,
+  accept: boolean
+): Promise<{ readonly type: string; readonly message: string }> =>
+  new Promise((resolve, reject) => {
+    page.once('dialog', async (dialog) => {
+      const result = { type: dialog.type(), message: dialog.message() };
+      try {
+        if (accept) await dialog.accept();
+        else await dialog.dismiss();
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+
+const candidateEvidence = (page: Page) =>
+  page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    return harness.getEvidence();
+  });
+
+const clearCandidateEvidence = (page: Page): Promise<void> =>
+  page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.clearEvidence();
+  });
 
 const expectCardButtonHitBoxesToMatchImages = async (
   surface: Locator,
@@ -1022,4 +1062,335 @@ test('full opened piles retain real-v1 density and scrolling on both player fram
     ),
     contentType: 'application/json',
   });
+});
+
+test('opened-pile bulk actions retain real-v1 confirmation and teardown after full scroll', async ({
+  browser,
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page, { openedPileCardCount: 60 });
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  const discardTarget = host.locator(
+    `[data-zone-id="zone:${fixture.ownPlayerId}:discard"]`
+  );
+
+  await discardTarget.focus();
+  await discardTarget.press('Enter');
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-browser-kind',
+    'discard'
+  );
+  const sourceAssets = (await assetsFor(zoneBrowser)).map((asset, index) => ({
+    ...asset,
+    label: `Opened pile card ${String(index).padStart(2, '0')}`,
+  }));
+  const sort = zoneBrowser.locator('[data-zone-action="sortZone"]');
+  await sort.check();
+  const candidateScrollEnd = await scrollToEnd(zoneBrowser);
+  const discardAction = zoneBrowser.locator(
+    '[data-zone-action="shuffleDiscardToDeck"]'
+  );
+
+  const cancelledConfirmation = answerNextConfirmation(page, false);
+  await discardAction.click();
+  expect(await cancelledConfirmation).toEqual({
+    type: 'confirm',
+    message: 'Are you sure you want to shuffle all cards into the deck?',
+  });
+  await expect(zoneBrowser).toBeVisible();
+  await expect(sort).toBeChecked();
+  await expect(discardAction).toBeFocused();
+  expect((await readScrollEvidence(zoneBrowser)).scrollTop).toBe(
+    candidateScrollEnd.scrollTop
+  );
+  expect(await candidateEvidence(page)).toMatchObject({
+    submissions: [],
+    submissionResults: [],
+    overlayRejections: [],
+    overlayActions: [],
+    presentation: {
+      selectedCardId: null,
+      openedZoneId: `zone:${fixture.ownPlayerId}:discard`,
+    },
+    reportedErrors: [],
+  });
+
+  const acceptedConfirmation = answerNextConfirmation(page, true);
+  await discardAction.click();
+  expect(await acceptedConfirmation).toEqual({
+    type: 'confirm',
+    message: 'Are you sure you want to shuffle all cards into the deck?',
+  });
+  await expect(zoneBrowser).toHaveCount(0);
+  await expect(discardTarget).toBeFocused();
+  expect(await candidateEvidence(page)).toMatchObject({
+    submissions: [
+      {
+        type: 'ShuffleZoneIntoDeck',
+        sourceZoneId: `zone:${fixture.ownPlayerId}:discard`,
+      },
+    ],
+    submissionResults: [{ queued: true, clientSequence: 1 }],
+    overlayRejections: [],
+    overlayActions: [
+      {
+        kind: 'zone',
+        action: 'shuffleDiscardToDeck',
+        zoneId: `zone:${fixture.ownPlayerId}:discard`,
+      },
+    ],
+    presentation: { selectedCardId: null, openedZoneId: null },
+    reportedErrors: [],
+  });
+
+  // The development submission seam deliberately leaves its immutable view
+  // untouched. Reopening therefore proves accepted teardown remounts a clean
+  // local browser instead of retaining its prior sort or scroll state.
+  await discardTarget.press('Enter');
+  await expect(zoneBrowser).toBeVisible();
+  await expect(
+    zoneBrowser.locator('[data-zone-action="sortZone"]')
+  ).not.toBeChecked();
+  expect((await readScrollEvidence(zoneBrowser)).scrollTop).toBe(0);
+  await page.keyboard.press('Escape');
+  await expect(discardTarget).toBeFocused();
+
+  await clearCandidateEvidence(page);
+  const deckTarget = host.locator(
+    `[data-zone-id="zone:${fixture.ownPlayerId}:deck"]`
+  );
+  await deckTarget.focus();
+  await deckTarget.press('Enter');
+  await expect(zoneBrowser).toHaveAttribute('data-zone-browser-kind', 'deck');
+  await scrollToEnd(zoneBrowser);
+  const unexpectedCandidateDialogs: string[] = [];
+  const dismissUnexpectedCandidateDialog = async (dialog: Dialog) => {
+    unexpectedCandidateDialogs.push(dialog.message());
+    await dialog.dismiss();
+  };
+  page.on('dialog', dismissUnexpectedCandidateDialog);
+  await zoneBrowser.locator('[data-zone-action="shuffleDeck"]').click();
+  await expect(zoneBrowser).toHaveCount(0);
+  page.off('dialog', dismissUnexpectedCandidateDialog);
+  expect(unexpectedCandidateDialogs).toEqual([]);
+  await expect(deckTarget).toBeFocused();
+  expect(await candidateEvidence(page)).toMatchObject({
+    submissions: [
+      {
+        type: 'ShuffleZone',
+        zoneId: `zone:${fixture.ownPlayerId}:deck`,
+      },
+    ],
+    submissionResults: [{ queued: true, clientSequence: 2 }],
+    overlayRejections: [],
+    overlayActions: [
+      {
+        kind: 'zone',
+        action: 'shuffleDeck',
+        zoneId: `zone:${fixture.ownPlayerId}:deck`,
+      },
+    ],
+    presentation: { selectedCardId: null, openedZoneId: null },
+    reportedErrors: [],
+  });
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(sourcePage, [
+      { user: 'self', zoneId: 'discard', assets: sourceAssets },
+    ]);
+    const sourceSortOrder = sourceAssets.map((asset) => asset.label).reverse();
+    await sourcePage.evaluate((names) => {
+      const frontEndSpecifier = '/src/front-end.js';
+      const coverSpecifier = '/src/setup/deck-constructor/cover.js';
+      const zoneSpecifier = '/src/setup/zones/get-zone.js';
+      return Promise.all([
+        import(/* @vite-ignore */ frontEndSpecifier),
+        import(/* @vite-ignore */ coverSpecifier),
+        import(/* @vite-ignore */ zoneSpecifier),
+      ]).then(([frontEnd, coverModule, zoneModule]) => {
+        const state = frontEnd['systemState'] as {
+          selfCounter: number;
+          selfActionData: unknown[];
+          exportActionData: unknown[];
+          selfDeckData: unknown;
+          cardBackSrc: string;
+        };
+        state.selfCounter = 0;
+        state.selfActionData = [];
+        state.exportActionData = [];
+        state.selfDeckData = names.map((name) => [1, name]);
+        state.cardBackSrc = `${location.origin}/src/assets/cardback.png`;
+        Math.random = () => 0;
+        const Cover = coverModule['Cover'] as new (
+          user: string,
+          name: string,
+          imageUrl: string
+        ) => { readonly image: HTMLImageElement };
+        const getZone = zoneModule['getZone'] as (
+          user: string,
+          zoneId: string
+        ) => {
+          readonly array: readonly { readonly image: HTMLImageElement }[];
+          readonly elementCover: HTMLElement;
+        };
+        const discard = getZone('self', 'discard');
+        const top = discard.array.at(-1);
+        if (!top) throw new Error('Legacy discard fixture is empty');
+        discard.elementCover.replaceChildren(
+          new Cover('self', 'discardCover', top.image.src).image
+        );
+      });
+    }, sourceSortOrder);
+
+    await openLegacyZone(sourcePage, 'self', 'discard');
+    const sourceDiscard = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#discard');
+    await sourceDiscard.locator('#sortDiscardCheckbox').check();
+    expect(
+      await assetsFor(sourceDiscard).then((assets) =>
+        assets.map((asset) => asset.label)
+      )
+    ).toEqual(sourceSortOrder);
+    const sourceScrollEnd = await scrollToEnd(sourceDiscard);
+
+    const sourceCancelled = answerNextConfirmation(sourcePage, false);
+    await sourceDiscard.locator('#shuffleDiscardButton').click();
+    expect(await sourceCancelled).toEqual({
+      type: 'confirm',
+      message: 'Are you sure you want to shuffle all cards into the deck?',
+    });
+    await expect(sourceDiscard).toBeVisible();
+    await expect(sourceDiscard.locator('#sortDiscardCheckbox')).toBeChecked();
+    expect((await readScrollEvidence(sourceDiscard)).scrollTop).toBe(
+      sourceScrollEnd.scrollTop
+    );
+    expect(
+      await sourcePage.evaluate(async () => {
+        const specifier = '/src/front-end.js';
+        const frontEnd = await import(/* @vite-ignore */ specifier);
+        return (frontEnd['systemState'] as { selfActionData: unknown[] })
+          .selfActionData.length;
+      })
+    ).toBe(0);
+
+    const sourceAccepted = answerNextConfirmation(sourcePage, true);
+    await sourceDiscard.locator('#shuffleDiscardButton').click();
+    expect(await sourceAccepted).toEqual({
+      type: 'confirm',
+      message: 'Are you sure you want to shuffle all cards into the deck?',
+    });
+    await expect(sourceDiscard).toBeHidden();
+
+    const sourceDeck = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#deck');
+    await openLegacyZone(sourcePage, 'self', 'deck');
+    await expect(sourceDeck).toBeVisible();
+    await scrollToEnd(sourceDeck);
+    const unexpectedSourceDialogs: string[] = [];
+    const dismissUnexpectedSourceDialog = async (dialog: Dialog) => {
+      unexpectedSourceDialogs.push(dialog.message());
+      await dialog.dismiss();
+    };
+    sourcePage.on('dialog', dismissUnexpectedSourceDialog);
+    await sourceDeck.locator('#shuffleDeckButton').click();
+    await expect(sourceDeck).toBeHidden();
+    sourcePage.off('dialog', dismissUnexpectedSourceDialog);
+    expect(unexpectedSourceDialogs).toEqual([]);
+
+    const sourceState = await sourcePage.evaluate(async () => {
+      const frontEndSpecifier = '/src/front-end.js';
+      const zoneSpecifier = '/src/setup/zones/get-zone.js';
+      const [frontEnd, zoneModule] = await Promise.all([
+        import(/* @vite-ignore */ frontEndSpecifier),
+        import(/* @vite-ignore */ zoneSpecifier),
+      ]);
+      const systemState = frontEnd['systemState'] as {
+        readonly selfCounter: number;
+        readonly selfActionData: readonly {
+          readonly user: string;
+          readonly emit: boolean;
+          readonly action: string;
+          readonly parameters: readonly unknown[];
+        }[];
+        readonly exportActionData: readonly {
+          readonly user: string;
+          readonly emit: boolean;
+          readonly action: string;
+          readonly parameters: readonly unknown[];
+        }[];
+      };
+      const getZone = zoneModule['getZone'] as (
+        user: string,
+        zoneId: string
+      ) => { readonly array: readonly unknown[] };
+      return {
+        selfCounter: systemState.selfCounter,
+        actions: structuredClone(systemState.selfActionData),
+        exports: structuredClone(systemState.exportActionData),
+        deckCount: getZone('self', 'deck').array.length,
+        discardCount: getZone('self', 'discard').array.length,
+        messages: [...document.querySelectorAll('#chatbox p')].map(
+          (message) => message.textContent
+        ),
+      };
+    });
+    expect(sourceState).toMatchObject({
+      selfCounter: 2,
+      deckCount: 60,
+      discardCount: 0,
+    });
+    expect(sourceState.messages.slice(-2)).toEqual([
+      'Blue shuffled discard into deck',
+      'Blue shuffled deck',
+    ]);
+    expect(sourceState.actions).toHaveLength(2);
+    expect(sourceState.actions[0]).toMatchObject({
+      user: 'self',
+      emit: true,
+      action: 'shuffleAll',
+    });
+    expect(sourceState.actions[0]!.parameters.slice(0, 2)).toEqual([
+      'opp',
+      'discard',
+    ]);
+    expect(sourceState.actions[1]).toMatchObject({
+      user: 'self',
+      emit: true,
+      action: 'shuffleAll',
+    });
+    expect(sourceState.actions[1]!.parameters.slice(0, 2)).toEqual([
+      'opp',
+      'deck',
+    ]);
+    for (const action of sourceState.actions) {
+      const indices = action.parameters[2];
+      expect(indices).toHaveLength(60);
+      expect(
+        [...(indices as number[])].sort((left, right) => left - right)
+      ).toEqual(Array.from({ length: 60 }, (_, index) => index));
+    }
+    expect(sourceState.exports).toEqual(
+      sourceState.actions.map((action) => ({
+        ...action,
+        parameters: ['self', ...action.parameters.slice(1)],
+      }))
+    );
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  expect(errors).toEqual([]);
 });
