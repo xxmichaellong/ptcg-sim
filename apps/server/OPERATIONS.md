@@ -69,6 +69,14 @@ after non-extractable Web Crypto import. Key material, configuration, key
 digests, capabilities, and thrown configuration values must never enter logs,
 telemetry, health responses, PRs, or support tickets.
 
+The operator-only
+[`CONTINUATION_PREVIEW_RUNBOOK.md`](./CONTINUATION_PREVIEW_RUNBOOK.md) defines
+the isolated preview name/namespace boundary, generates mode-`0600` private
+credential and activation files without network access, and separates
+default-off deploy, credential provisioning, and route activation. It has been
+locally dry-run against the pinned Wrangler CLI; it has not deployed a managed
+preview and is not production provisioning evidence.
+
 Also provision `CONTINUATION_QUOTA_CONFIGURATION` as an environment-specific
 operator binding. It is policy rather than a secret, but it deliberately has no
 checked-in production default:

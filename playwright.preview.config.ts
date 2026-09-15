@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const LOCAL_PRODUCTION_PREVIEW_URL = 'http://127.0.0.1:4174';
+const externalProductionPreviewUrl = process.env['PTCGSIM_PREVIEW_URL']?.trim();
+const productionPreviewUrl =
+  externalProductionPreviewUrl || LOCAL_PRODUCTION_PREVIEW_URL;
+
 export default defineConfig({
   testDir: './tests/browser',
   testMatch: 'production-topology.spec.ts',
@@ -33,7 +38,7 @@ export default defineConfig({
       ],
   use: {
     ...devices['Desktop Chrome'],
-    baseURL: 'http://127.0.0.1:4174',
+    baseURL: productionPreviewUrl,
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
     trace: 'retain-on-failure',
@@ -51,13 +56,17 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command:
-      'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4174',
-    url: 'http://127.0.0.1:4174/v2/health',
-    reuseExistingServer: false,
-    timeout: 90_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  ...(externalProductionPreviewUrl
+    ? {}
+    : {
+        webServer: {
+          command:
+            'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4174',
+          url: `${LOCAL_PRODUCTION_PREVIEW_URL}/v2/health`,
+          reuseExistingServer: false,
+          timeout: 90_000,
+          stdout: 'ignore' as const,
+          stderr: 'pipe' as const,
+        },
+      }),
 });

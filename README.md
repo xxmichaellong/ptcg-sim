@@ -54,7 +54,12 @@ After installing dependencies with `corepack pnpm install`, use:
 - `corepack pnpm run check:cross-browser` for the focused real-room Firefox and
   WebKit lane;
 - `corepack pnpm run audit:dependencies` for the full lockfile advisory gate;
+- `corepack pnpm run prepare:continuation-preview -- ...` for a private,
+  no-network managed-preview provisioning bundle;
 - `corepack pnpm run check:full` for all gates locally.
 
 The exact checks, CI environment, and known limitations are recorded in
 [`QUALITY_GATES.md`](./docs/v2-rebuild/QUALITY_GATES.md).
+Managed continuation preview provisioning and activation are separately gated
+by the
+[`CONTINUATION_PREVIEW_RUNBOOK.md`](./apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).

@@ -758,9 +758,11 @@ Work:
   are also implemented and remain unreachable from public traffic. Retain the
   implemented browser-side strict transport and private stable-retry custodian;
   retain the implemented trusted restored-room installer, source-shaped
-  capability handoff, and local test-activated browser journey; execute the same
-  opt-in harness against a separately provisioned managed preview when the
-  production gates are deliberately opened.
+  capability handoff, local test-activated browser journey, and fail-closed
+  private preview-bundle generator; follow the checked-in three-phase runbook
+  and execute the opt-in harness against a separately provisioned managed
+  preview when the account, namespace, quota, cost, evidence, and teardown
+  owners approve it.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

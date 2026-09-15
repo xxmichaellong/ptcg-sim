@@ -320,6 +320,7 @@ a manual tabletop simulator.
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
 | [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
 | [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server/browser private-custody contract and closed activation/UI gates                           |
+| [Continuation preview runbook](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md)                  | Private default-off provisioning bundle, phased activation, rotation input, and evidence/teardown contract   |
 | [PERFORMANCE_RELEASE_EVIDENCE.md](./PERFORMANCE_RELEASE_EVIDENCE.md)                               | Physical renderer, paired-v1, resource, managed-network, and sign-off record                                 |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                                         | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                             | Quarantined v1 format evidence, bounded conversion/report, corpus runner, and future reconsideration gates   |

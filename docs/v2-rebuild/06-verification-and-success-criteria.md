@@ -70,6 +70,15 @@ two-target quantitative viewport matrix above, pin fonts, run the actual stable
 Chrome/Edge/Firefox/Safari products, or substitute for managed-preview platform
 evidence. Those remain release evidence, not claims made by current CI.
 
+Both built-origin Chromium configurations can target an already provisioned
+managed origin without starting a local server. `PTCGSIM_PREVIEW_URL` runs the
+default-off production-topology proof before activation and after deactivation;
+`PTCGSIM_CONTINUATION_PREVIEW_URL` runs the activated continuation journey.
+The operator bundle generator and deployment/evidence procedure are documented
+in
+[`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).
+The generator and Wrangler dry run are local evidence only.
+
 The opt-in `playwright.performance.config.ts` runner builds production assets,
 launches current stable Chrome without forcing software rendering, and records three
 100-sample observations at each ADR-015 viewport. It captures CPU/memory

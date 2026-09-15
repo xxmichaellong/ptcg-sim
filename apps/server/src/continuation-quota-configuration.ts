@@ -2,7 +2,7 @@ import {
   MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD,
   MAXIMUM_CONTINUATION_QUOTA_SHARDS,
   type ContinuationQuotaShardPolicy,
-} from './continuation-quota.js';
+} from './continuation-quota-policy.js';
 
 export const CONTINUATION_QUOTA_CONFIGURATION_FORMAT =
   'ptcgsim-continuation-quota-configuration-v1' as const;

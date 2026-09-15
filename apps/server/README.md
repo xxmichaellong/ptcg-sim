@@ -96,28 +96,26 @@ traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.
 
-Server-held multiplayer continuation remains closed to HTTP, sockets, and the
-client. Internally, the source room authenticates the existing resume bearer
-against exactly one active claimed multiplayer-player session,
-reserves its exact authority head under bounded room/player counts, calls the
-exact named continuation object to atomically encrypt the checkpoint and retry
-receipt, and compacts the source ledger. The private create RPC accepts only the
-resume bearer plus a stable operation; the raw bearer is never passed into or
-stored by continuation custody. Object-valued RPC results are
-schema-normalized and explicitly disposed. Workerd tests prove concurrent
-same-operation convergence and identical recovery after room/save eviction.
-A policy-injected quota adapter separately assigns each source room to a fixed
-digest-derived shard and transactionally holds an exact digest-only lease until
-save expiry. Fixed shard capacities form a hard aggregate ceiling without one
-global Durable Object bottleneck. Its private namespace/RPC, exact fail-closed
-configuration, coordinator wiring, and workerd eviction/alarm path are
-implemented with a test-only policy. The source reservation transaction also
-enforces a separate fixed-window budget of 12 authenticated new operations per
-player per minute. Exact committed-operation retries are not charged again;
-unauthorized calls cannot consume the budget, while new operations refused by
-count quota do consume it. Production capacity/key provisioning, anonymous
-create/restore ingress throttles, public contracts, and managed operational
-evidence remain release gates.
+Server-held multiplayer continuation now has strict create/restore/revoke HTTP
+contracts and a private client custodian, but the routes are hidden unless one
+exact activation secret is present; that value remains absent from checked-in
+production configuration. The source room authenticates the existing resume
+bearer against exactly one active claimed multiplayer player, reserves its
+exact authority head under bounded room/player counts, calls the exact named
+continuation object to atomically encrypt the checkpoint and retry receipt, and
+compacts the source ledger. The raw bearer is never passed into or stored by
+continuation custody. A fixed-shard digest-only lease namespace enforces hard
+global capacity, while distinct anonymous edge limits and a durable
+authenticated per-player budget bound requests. Workerd and browser tests prove
+retry, eviction, alarm cleanup, real save/restore, fork isolation,
+player-credential rotation, revocation, and browser non-persistence locally.
+
+The no-network private bundle generator and phased managed-preview procedure are
+documented in
+[`CONTINUATION_PREVIEW_RUNBOOK.md`](./CONTINUATION_PREVIEW_RUNBOOK.md). Its
+generated config passes pinned-Wrangler dry-run validation. No managed preview,
+remote key/quota, key-rotation crossing, load/eviction/rollback exercise, or
+production activation is claimed; those remain release gates.
 
 ## Seeded authority/storage model
 

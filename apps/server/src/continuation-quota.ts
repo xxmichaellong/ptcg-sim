@@ -6,6 +6,17 @@ import {
   DEFAULT_CONTINUATION_TTL_MS,
   MINIMUM_CONTINUATION_TTL_MS,
 } from './continuation-custody.js';
+import {
+  MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD,
+  MAXIMUM_CONTINUATION_QUOTA_SHARDS,
+  type ContinuationQuotaShardPolicy,
+} from './continuation-quota-policy.js';
+
+export {
+  MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD,
+  MAXIMUM_CONTINUATION_QUOTA_SHARDS,
+  type ContinuationQuotaShardPolicy,
+} from './continuation-quota-policy.js';
 
 export const CONTINUATION_QUOTA_LEASES_STORAGE_KEY =
   'continuation-quota:leases';
@@ -19,13 +30,6 @@ const BASE64_URL_ALPHABET =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 const ROOM_DIGEST_DOMAIN = 'ptcgsim-continuation-quota-room-v1';
 const OPERATION_DIGEST_DOMAIN = 'ptcgsim-continuation-quota-operation-v1';
-export const MAXIMUM_CONTINUATION_QUOTA_SHARDS = 4_096;
-export const MAXIMUM_CONTINUATION_QUOTA_LEASES_PER_SHARD = 512;
-
-export interface ContinuationQuotaShardPolicy {
-  readonly maximumActiveLeases: number;
-}
-
 export interface ContinuationQuotaIdentity {
   readonly digestCapability: (value: string) => Promise<string>;
 }

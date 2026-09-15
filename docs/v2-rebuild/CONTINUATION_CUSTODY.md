@@ -596,6 +596,18 @@ The test bindings are not present in `wrangler.jsonc`. Setting
 provisioned managed preview without starting a local server; no such managed run
 is claimed by the local/CI lane.
 
+The fail-closed `prepare:continuation-preview` operator tool now generates an
+ignored, mode-`0600`, independently named Worker config plus separate
+credential, activation, and deactivation inputs. It clones only the reviewed
+code/assets/Durable Object topology, replaces all four rate-limit namespaces,
+copies no production route/domain, rejects checked-in topology drift, validates
+the exact production key/quota schemas, and can retain prior decrypt keys for a
+rotation bundle. Its generated configuration passes the pinned Wrangler dry
+run locally. The complete three-phase procedure and evidence restrictions are
+in
+[`apps/server/CONTINUATION_PREVIEW_RUNBOOK.md`](../../apps/server/CONTINUATION_PREVIEW_RUNBOOK.md).
+No Cloudflare resource was created by this work.
+
 The quota suite proves deterministic bounded shard selection, strict
 policy/lifetime/input validation, digest-only room/operation storage, exact
 idempotent reservation, save-locator collision refusal, per-shard denial,
@@ -666,9 +678,10 @@ do not reach any operation without the activation token.
 Production continuation remains unavailable until all of the following are
 implemented and attached to the draft PR/release evidence:
 
-- production secret provisioning and key-rotation/retirement rehearsal; the
-  fail-closed keyring loader is already limited to private/default-off
-  cryptographic RPC paths;
+- managed and production secret provisioning plus key-rotation/retirement
+  rehearsal; the private bundle generator and fail-closed keyring loader are
+  implemented, but no remote secret has been provisioned and no old-key save
+  has crossed a managed rotation;
 - production quota-capacity provisioning, measured/approved anonymous rate
   policy, and an explicit activation-token rollout; the separate declared
   bindings, strict body limits, mandatory limiter ports, authenticated retry-safe
