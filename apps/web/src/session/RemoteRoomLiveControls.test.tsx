@@ -12,10 +12,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   RemoteRoomLiveControls,
+  type BrowserContinuationFileReader,
   type BrowserReplayFileReader,
   type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
 } from './RemoteRoomLiveControls.js';
+import type { DeferredTextClipboardWriter } from './browser-invitation-clipboard.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -104,11 +106,23 @@ const mount = async (
     readonly onLeave?: () => void;
     readonly onExportState?: () => void;
     readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
+    readonly onSaveOnlineGame?: (signal: AbortSignal) => Promise<void>;
+    readonly onResumeSavedGame?: (
+      contents: string,
+      deliverOpponentInvitation: (text: string) => Promise<void>,
+      signal: AbortSignal
+    ) => Promise<void>;
     readonly confirmLeave?: () => boolean;
     readonly downloadTextFile?: (filename: string, contents: string) => boolean;
     readonly requestFullscreen?: () => boolean;
     readonly readReplayFile?: BrowserReplayFileReader;
+    readonly readContinuationFile?: BrowserContinuationFileReader;
+    readonly getInvitationClipboard?: () =>
+      DeferredTextClipboardWriter | undefined;
     readonly reportReplayImportFailure?: () => void;
+    readonly reportOnlineSaveFailure?: () => void;
+    readonly reportSavedGameResumeFailure?: () => void;
+    readonly reportSavedGameResumeSuccess?: () => void;
   } = {}
 ): Promise<{ readonly host: HTMLDivElement; readonly root: Root }> => {
   const host = document.createElement('div');
@@ -127,6 +141,12 @@ const mount = async (
         {...(options.onImportReplayFile
           ? { onImportReplayFile: options.onImportReplayFile }
           : {})}
+        {...(options.onSaveOnlineGame
+          ? { onSaveOnlineGame: options.onSaveOnlineGame }
+          : {})}
+        {...(options.onResumeSavedGame
+          ? { onResumeSavedGame: options.onResumeSavedGame }
+          : {})}
         {...(options.confirmLeave
           ? { confirmLeave: options.confirmLeave }
           : {})}
@@ -139,8 +159,29 @@ const mount = async (
         {...(options.readReplayFile
           ? { readReplayFile: options.readReplayFile }
           : {})}
+        {...(options.readContinuationFile
+          ? { readContinuationFile: options.readContinuationFile }
+          : {})}
+        {...(options.getInvitationClipboard
+          ? { getInvitationClipboard: options.getInvitationClipboard }
+          : {})}
         {...(options.reportReplayImportFailure
           ? { reportReplayImportFailure: options.reportReplayImportFailure }
+          : {})}
+        {...(options.reportOnlineSaveFailure
+          ? { reportOnlineSaveFailure: options.reportOnlineSaveFailure }
+          : {})}
+        {...(options.reportSavedGameResumeFailure
+          ? {
+              reportSavedGameResumeFailure:
+                options.reportSavedGameResumeFailure,
+            }
+          : {})}
+        {...(options.reportSavedGameResumeSuccess
+          ? {
+              reportSavedGameResumeSuccess:
+                options.reportSavedGameResumeSuccess,
+            }
           : {})}
       />
     )
@@ -484,6 +525,167 @@ describe('RemoteRoomLiveControls', () => {
     expect(session.sendChat).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
+  });
+
+  it('runs online save as one abortable player-only menu operation', async () => {
+    const pending = Promise.withResolvers<void>();
+    const onSaveOnlineGame = vi.fn(() => pending.promise);
+    const reportOnlineSaveFailure = vi.fn();
+    const { host, root } = await mount(new FakeLiveSession(), {
+      onSaveOnlineGame,
+      reportOnlineSaveFailure,
+    });
+    const options = element<HTMLButtonElement>(host, '#p2OptionsButton');
+    await act(async () => options.click());
+    const save = element<HTMLButtonElement>(host, '#saveOnlineGame');
+    expect(save.textContent).toBe('Save online game');
+
+    await act(async () => save.click());
+    expect(onSaveOnlineGame).toHaveBeenCalledOnce();
+    expect(onSaveOnlineGame.mock.calls[0]?.[0].aborted).toBe(false);
+    expect(save.disabled).toBe(true);
+    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(true);
+    await act(async () => {
+      pending.resolve();
+      await pending.promise;
+    });
+    expect(reportOnlineSaveFailure).not.toHaveBeenCalled();
+
+    await act(async () => options.click());
+    onSaveOnlineGame.mockRejectedValueOnce(new Error('private failure'));
+    await act(async () => {
+      save.click();
+      await Promise.resolve();
+    });
+    expect(reportOnlineSaveFailure).toHaveBeenCalledOnce();
+
+    await act(async () => root.unmount());
+  });
+
+  it('reads a saved-game file and starts opponent clipboard custody synchronously', async () => {
+    const order: string[] = [];
+    let clipboardText: Promise<string> | undefined;
+    const clipboard: DeferredTextClipboardWriter = {
+      writeText: vi.fn((text) => {
+        order.push('clipboard');
+        clipboardText = text;
+        return Promise.resolve();
+      }),
+    };
+    const readContinuationFile = vi.fn(async () => {
+      order.push('read');
+      return { ok: true as const, text: 'opaque-save-file' };
+    });
+    const onResumeSavedGame = vi.fn(
+      async (
+        _contents: string,
+        deliverOpponentInvitation: (text: string) => Promise<void>
+      ) => deliverOpponentInvitation('opaque-opponent-invitation')
+    );
+    const reportSavedGameResumeFailure = vi.fn();
+    const reportSavedGameResumeSuccess = vi.fn();
+    const { host, root } = await mount(new FakeLiveSession(), {
+      onResumeSavedGame,
+      readContinuationFile,
+      getInvitationClipboard: () => clipboard,
+      reportSavedGameResumeFailure,
+      reportSavedGameResumeSuccess,
+    });
+    const input = element<HTMLInputElement>(host, '#continuationSaveFile');
+    expect(element(host, '#resumeSavedGame').textContent).toBe(
+      'Resume saved game'
+    );
+    expect(input.accept).toBe('.ptcgsave');
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['ignored'], 'game.ptcgsave')],
+    });
+
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      await vi.waitFor(() =>
+        expect(reportSavedGameResumeSuccess).toHaveBeenCalledOnce()
+      );
+    });
+    expect(order).toEqual(['clipboard', 'read']);
+    expect(readContinuationFile.mock.calls[0]?.[1]?.signal.aborted).toBe(false);
+    expect(onResumeSavedGame).toHaveBeenCalledWith(
+      'opaque-save-file',
+      expect.any(Function),
+      expect.any(AbortSignal)
+    );
+    await expect(clipboardText).resolves.toBe('opaque-opponent-invitation');
+    expect(reportSavedGameResumeFailure).not.toHaveBeenCalled();
+    expect(input.value).toBe('');
+
+    await act(async () => root.unmount());
+  });
+
+  it('withholds continuation actions from solo players and spectators', async () => {
+    const callbacks = {
+      onSaveOnlineGame: vi.fn(async () => undefined),
+      onResumeSavedGame: vi.fn(async () => undefined),
+    };
+    const solo = await mount(new FakeLiveSession(), {
+      roomMode: 'solo',
+      ...callbacks,
+    });
+    expect(solo.host.querySelector('#saveOnlineGame')).toBeNull();
+    expect(solo.host.querySelector('#resumeSavedGame')).toBeNull();
+    await act(async () => solo.root.unmount());
+
+    const spectatorState: ClientSessionState = {
+      ...baseState(),
+      role: 'spectator',
+      playerId: undefined,
+      view: { ...playerView, viewer: { kind: 'spectator' } },
+    };
+    const spectator = await mount(
+      new FakeLiveSession(spectatorState),
+      callbacks
+    );
+    expect(spectator.host.querySelector('#saveOnlineGame')).toBeNull();
+    expect(spectator.host.querySelector('#resumeSavedGame')).toBeNull();
+    await act(async () => spectator.root.unmount());
+  });
+
+  it('aborts a pending continuation read without restoring or reporting after teardown', async () => {
+    const pending = Promise.withResolvers<{
+      readonly ok: true;
+      readonly text: string;
+    }>();
+    const readContinuationFile = vi.fn(() => pending.promise);
+    const onResumeSavedGame = vi.fn(async () => undefined);
+    const reportSavedGameResumeFailure = vi.fn();
+    const clipboard: DeferredTextClipboardWriter = {
+      writeText: vi.fn(async (text) => {
+        await text.catch(() => undefined);
+      }),
+    };
+    const { host, root } = await mount(new FakeLiveSession(), {
+      onResumeSavedGame,
+      readContinuationFile,
+      getInvitationClipboard: () => clipboard,
+      reportSavedGameResumeFailure,
+    });
+    const input = element<HTMLInputElement>(host, '#continuationSaveFile');
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['ignored'], 'game.ptcgsave')],
+    });
+    await act(async () =>
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    );
+    const signal = readContinuationFile.mock.calls[0]?.[1]?.signal;
+    expect(signal?.aborted).toBe(false);
+
+    await act(async () => root.unmount());
+    expect(signal?.aborted).toBe(true);
+    pending.resolve({ ok: true, text: 'opaque-save-file' });
+    await pending.promise;
+    await Promise.resolve();
+    expect(onResumeSavedGame).not.toHaveBeenCalled();
+    expect(reportSavedGameResumeFailure).not.toHaveBeenCalled();
   });
 
   it('imports a bounded replay file only from the live Solo options row', async () => {

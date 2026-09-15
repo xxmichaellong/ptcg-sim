@@ -8,9 +8,11 @@ private Durable Object restore runtime implemented; sharded global quota
 configuration, namespace, coordination, and runtime are implemented with no
 production policy; strict public create/restore/revoke protocol and HTTP handler
 contracts, default-off edge routing, independent anonymous limiter bindings,
-identifier-free lifecycle telemetry, and an inert browser transport/private
-retry custodian are implemented; the production activation token remains
-absent, no UI owns a save handoff, and direct open remains deliberately unwired
+identifier-free lifecycle telemetry, and a strict browser transport/private
+retry custodian are implemented; bounded capability-file handoff, source-shaped
+live-room controls, and atomic ready-target installation are now wired; the
+production activation token remains absent and direct open remains deliberately
+unwired
 
 Decision owner: ADR-012
 
@@ -30,10 +32,11 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-restore.ts`,
 `apps/server/src/continuation-source.ts`,
 `apps/server/src/continuation-target.ts`, the continuation request/response
-schemas in `packages/protocol/src/{schemas,ingress}.ts`, and the private
-`PtcgContinuation` / `PtcgRoom` RPCs in `apps/server/src/worker.ts`; the inert
+schemas and handoff codec in
+`packages/protocol/src/{schemas,ingress,continuation-handoff}.ts`, and the private
+`PtcgContinuation` / `PtcgRoom` RPCs in `apps/server/src/worker.ts`; the
 browser boundary is implemented by
-`apps/web/src/session/{RemoteContinuationTransport,RemoteContinuationCustody,RemoteRoomRuntime}.ts`,
+`apps/web/src/session/{RemoteContinuationTransport,RemoteContinuationCustody,RemoteRoomRuntime,RemoteRoomRestoration,browser-continuation-file}.ts`,
 with credential-safe accidental serialization in
 `packages/client-session/src/session.ts`
 
@@ -41,7 +44,7 @@ with credential-safe accidental serialization in
 
 This slice establishes the durable custody boundary for canonical multiplayer
 continuations without making continuation reachable in the production-default
-configuration, socket protocol, or UI control. A dedicated
+configuration or socket protocol. A dedicated
 `PtcgContinuation` SQLite Durable Object namespace is now declared through
 Wrangler's current `exports` lifecycle. The source room now exposes one exact
 private create RPC, the named save object exposes exact create/recovery,
@@ -51,8 +54,8 @@ equals one exact versioned opt-in value. That binding is absent from checked-in
 production configuration, so all three exact paths fall through to the ordinary
 `404` route. Three separate 30-request/60-second rate-limit bindings are
 declared but receive no traffic while the gate is closed. An app-local browser
-adapter now implements those exact HTTP calls, but it is lazy, has no route or
-control caller, and remains ineffective against the production-default `404`.
+adapter and live multiplayer player controls now implement those exact HTTP
+calls, but remain ineffective against the production-default `404`.
 Production activation still requires an explicitly provisioned keyring and
 quota capacity policy, managed recovery and abuse evidence, and the unchanged-UI
 integration described below.
@@ -469,15 +472,27 @@ remains the final cleanup boundary.
 
 `RemoteRoomRuntime` owns this custodian lazily. Spectators and sessions that are
 not currently welcomed as a player cannot obtain it, and the custodian checks
-that readiness again before sending the source resume bearer. The runtime and
-`RemoteGameSession` define credential-free JSON views so an accidental object
-serialization cannot include admission, resume, or save capabilities.
+that readiness again before sending the source resume bearer. Successful file
+delivery rotates the custodian so a later click captures a fresh authoritative
+head; failed delivery retains the same checkpoint and operation for exact
+retry. The runtime and `RemoteGameSession` define credential-free JSON views so
+an accidental object serialization cannot include admission, resume, or save
+capabilities.
 
-This boundary adds no local/session storage, downloadable canonical file,
-clipboard format, paste path, React state, renderer state, socket message,
-route, or visible control. No product UI invokes the continuation owner in this
-slice. Selecting the source-shaped handoff and restore installation path, and
-browser-testing that visible behavior, remain separate release work.
+The live multiplayer Options menu now exposes only the two approved player
+actions: `Save online game` and `Resume saved game`. Save downloads a strict,
+canonical, at-most-1-KiB `.ptcgsave` capability envelope; match state remains
+encrypted on the server and the existing `Export game state` continues to mean
+recipient-safe perspective replay. Resume performs bounded declared/actual byte
+checks, fatal UTF-8 decoding, strict envelope parsing, and expiry validation
+without placing the bearer in React state, DOM, URLs, or browser storage. Its
+private restoration owner retains the same operation across installation
+failure, exchanges the rotated requester credential through the ordinary
+bootstrap, waits for a ready player session, and copies the ordinary one-use
+opponent invitation through the foreground clipboard path. Lobby ownership
+changes only after all of those steps succeed; partial targets are disposed and
+the source room remains live on failure. Completed save custody is then revoked
+best-effort. Solo players and spectators receive neither control.
 
 ## Verification implemented in this slice
 
@@ -585,7 +600,16 @@ readiness gating before credential release, operation serialization, metadata-
 only snapshots, atomic-installer retry, call/owner abort, explicit credential
 clearing, and best-effort deletion of late results. Remote-room composition
 proves player-only lazy transfer, no work before use, credential-free
-serialization, and outside-in teardown.
+serialization, fresh checkpoint rotation only after successful file delivery,
+exact retry after download failure, and outside-in teardown. Capability-file
+tests prove strict canonical prefix/schema/locator binding, 1-KiB
+declared/actual byte bounds, fatal UTF-8 handling, and expiry refusal. Restoration
+tests prove exact-operation retry, ready-player gating, partial-target cleanup,
+ordinary opponent-invitation delivery, best-effort completed-save revocation,
+credential-safe serialization, source-owner retention on failure, and atomic
+lobby replacement on success. Component tests prove the two player-only menu
+controls, synchronous foreground clipboard initiation, abortable teardown, and
+Solo/spectator exclusion.
 
 The target suite proves atomic five-record-plus-alarm initialization, exact
 retry and alarm repair, save/operation-bound digest derivation, room collision
@@ -624,8 +648,8 @@ do not reach any operation without the activation token.
 
 ## Gates still closed
 
-Continuation remains unavailable until all of the following are implemented
-and attached to the draft PR/release evidence:
+Production continuation remains unavailable until all of the following are
+implemented and attached to the draft PR/release evidence:
 
 - production secret provisioning and key-rotation/retirement rehearsal; the
   fail-closed keyring loader is already limited to private/default-off
@@ -646,11 +670,11 @@ and attached to the draft PR/release evidence:
   concurrency/eviction path are implemented without production traffic;
 - managed-preview storage/load/eviction/alarm/key-rotation/rollback exercises,
   cleanup and incident runbooks, cost evidence, and security/privacy review;
-- the source-shaped UI/handoff wiring, trusted restore-result installation, and
-  browser journeys, without changing the existing UI/UX beyond activating the
-  approved continuation behavior; the same-origin transport, private stable-
-  retry owner, player-readiness gate, and serialization boundary are already
-  implemented but intentionally have no product caller.
+- a managed-preview browser journey for the wired source-shaped UI/handoff and
+  ready-target installation, including foreground clipboard permission and
+  teardown/retry behavior; component and model suites cover the same
+  transaction without changing the existing UI/UX beyond the two approved
+  continuation actions.
 
 Wrangler `exports` lifecycle changes cannot be crossed by an ordinary Worker
 rollback. Before activation, rollback therefore leaves the inert save/quota

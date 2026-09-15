@@ -21,6 +21,10 @@ import {
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
+import {
+  RemoteRoomRestorationCustody,
+  type RemoteRoomRestorationInput,
+} from './RemoteRoomRestoration.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { RemoteRoomSettings } from './RemoteRoomSettings.js';
 import {
@@ -79,13 +83,21 @@ const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Sycamore',
 ]);
 
-type LobbyOperation = 'solo' | 'generate' | 'copy' | 'join';
+type LobbyOperation = 'solo' | 'generate' | 'copy' | 'join' | 'resume';
 
 interface InvitationJoinCustody {
   readonly acceptPaste: RemoteRoomInvitationJoinCustody['acceptPaste'];
   readonly bootstrap: RemoteRoomInvitationJoinCustody['bootstrap'];
   readonly clear: RemoteRoomInvitationJoinCustody['clear'];
   readonly dispose: RemoteRoomInvitationJoinCustody['dispose'];
+}
+
+interface RoomRestorationCustody {
+  readonly matchesHandoff: (contents: string) => boolean;
+  readonly restore: (
+    input: RemoteRoomRestorationInput
+  ) => Promise<{ readonly runtime: RemoteRoomRuntime }>;
+  readonly dispose: () => void;
 }
 
 interface LobbyOwner {
@@ -100,6 +112,7 @@ interface LobbyOwner {
     readonly displayName: string;
   };
   guestRuntime?: RemoteRoomRuntime;
+  restoration?: RoomRestorationCustody;
   copyReset?: ReturnType<typeof setTimeout>;
 }
 
@@ -109,6 +122,9 @@ export interface RemoteRoomLobbyDependencies {
   readonly fallbackDisplayName: () => string;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
   readonly requestCardBack?: BrowserCardBackRequest;
+  readonly createRestorationCustody?: (
+    contents: string
+  ) => RoomRestorationCustody;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
@@ -138,6 +154,7 @@ const disposeOwner = (owner: LobbyOwner): void => {
   owner.operation?.abort.abort();
   if (owner.copyReset !== undefined) clearTimeout(owner.copyReset);
   owner.invitation.dispose();
+  owner.restoration?.dispose();
   if (owner.creator) {
     owner.creator.result.dispose();
   } else {
@@ -550,6 +567,8 @@ export const RemoteRoomLobby = ({
     }
     owner.invitation.dispose();
     owner.invitation = nextInvitation;
+    owner.restoration?.dispose();
+    delete owner.restoration;
     if (owner.creator) {
       owner.creator.result.dispose();
       delete owner.creator;
@@ -564,6 +583,70 @@ export const RemoteRoomLobby = ({
     setConnected(undefined);
     setParkedSolo(undefined);
     setStatus('Left room.');
+  };
+
+  const handleResumeSavedGame = async (
+    contents: string,
+    deliverOpponentInvitation: RemoteRoomRestorationInput['deliverOpponentInvitation'],
+    signal: AbortSignal
+  ): Promise<void> => {
+    const active = beginOperation('resume');
+    if (!active) throw new Error('A room operation is already in progress');
+    const displayName = normalizeDisplayName(
+      name,
+      dependencies.fallbackDisplayName
+    );
+    try {
+      let restoration = active.owner.restoration;
+      if (!restoration?.matchesHandoff(contents)) {
+        const replacement = dependencies.createRestorationCustody
+          ? dependencies.createRestorationCustody(contents)
+          : new RemoteRoomRestorationCustody(contents);
+        restoration?.dispose();
+        restoration = replacement;
+        active.owner.restoration = replacement;
+      }
+      const combinedSignal = AbortSignal.any([active.abort.signal, signal]);
+      const result = await restoration.restore({
+        buildId,
+        displayName,
+        rendererKind,
+        deliverOpponentInvitation,
+        signal: combinedSignal,
+      });
+      if (
+        combinedSignal.aborted ||
+        active.owner.disposed ||
+        ownerRef.current !== active.owner
+      ) {
+        result.runtime.dispose();
+        return;
+      }
+
+      const previousCreator = active.owner.creator;
+      const previousGuest = active.owner.guestRuntime;
+      active.owner.guestRuntime = result.runtime;
+      delete active.owner.creator;
+      delete active.owner.restoration;
+      setParkedSolo(undefined);
+      setName(displayName);
+      setReceipt(undefined);
+      setRoomCode(result.runtime.roomCode);
+      setCoachingConsent(false);
+      setCopyConfirmed(false);
+      setConnected({
+        runtime: result.runtime,
+        rendererKind,
+        mode: 'multiplayer',
+        coachingConsent: false,
+      });
+      previousCreator?.result.dispose();
+      if (previousGuest && previousGuest !== result.runtime) {
+        previousGuest.dispose();
+      }
+    } finally {
+      endOperation(active.owner);
+    }
   };
 
   const handleMultiplayerNavigate = (): void => {
@@ -606,6 +689,7 @@ export const RemoteRoomLobby = ({
             preparedDeckSessions.current.add(connected.runtime.session)
           }
           onLeave={handleLeave}
+          onResumeSavedGame={handleResumeSavedGame}
           onMultiplayerNavigate={handleMultiplayerNavigate}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}

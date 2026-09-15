@@ -331,6 +331,7 @@ describe('RemoteRoomRoute', () => {
     const onIntent = vi.fn();
     const onSubmission = vi.fn();
     const onLeave = vi.fn();
+    const onResumeSavedGame = vi.fn(async () => undefined);
     const confirmHeaderLeave = vi.fn(() => false);
     const downloadTextFile = vi.fn(
       (_filename: string, _contents: string) => true
@@ -352,6 +353,7 @@ describe('RemoteRoomRoute', () => {
           onIntent={onIntent}
           onSubmission={onSubmission}
           onLeave={onLeave}
+          onResumeSavedGame={onResumeSavedGame}
           confirmHeaderLeave={confirmHeaderLeave}
           downloadTextFile={downloadTextFile}
           requestFullscreen={requestFullscreen}
@@ -428,6 +430,12 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2PassButton')).not.toBeNull();
     expect(host.querySelector('#p2SetupButton')).not.toBeNull();
     expect(host.querySelector('#p2ResetButton')).not.toBeNull();
+    expect(host.querySelector('#saveOnlineGame')?.textContent).toBe(
+      'Save online game'
+    );
+    expect(host.querySelector('#resumeSavedGame')?.textContent).toBe(
+      'Resume saved game'
+    );
     expect(
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);

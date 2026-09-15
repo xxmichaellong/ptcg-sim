@@ -21,6 +21,15 @@ import {
   serializeBattleLog,
 } from './browser-room-options.js';
 import {
+  readBrowserContinuationFileText,
+  type BrowserContinuationFileLike,
+  type BrowserContinuationFileReadResult,
+} from './browser-continuation-file.js';
+import {
+  currentBrowserInvitationClipboard,
+  type DeferredTextClipboardWriter,
+} from './browser-invitation-clipboard.js';
+import {
   readBrowserReplayFileBytes,
   type BrowserReplayFileLike,
   type BrowserReplayFileReadResult,
@@ -48,10 +57,29 @@ const ownPlayerId = (state: ClientSessionState): string | undefined =>
 const reportInvalidReplayFile = (): void =>
   globalThis.alert('Error reading file. Please make sure the file is valid.');
 
+const reportContinuationFailure = (action: 'save' | 'resume'): void =>
+  globalThis.alert(
+    action === 'save'
+      ? 'Could not save this online game. Please try again.'
+      : 'Could not resume this saved game. Please check the file and try again.'
+  );
+
+const reportContinuationResumeSuccess = (): void =>
+  globalThis.alert(
+    'Saved game resumed. A player invitation for the restored room was copied to your clipboard.'
+  );
+
 export type BrowserReplayFileReader = (
   file: BrowserReplayFileLike,
   options?: { readonly signal?: AbortSignal }
 ) => Promise<BrowserReplayFileReadResult>;
+
+export type BrowserContinuationFileReader = (
+  file: BrowserContinuationFileLike,
+  options?: { readonly signal?: AbortSignal }
+) => Promise<BrowserContinuationFileReadResult>;
+
+export type OpponentInvitationDelivery = (text: string) => Promise<void>;
 
 /** Existing connected-room controls backed only by authenticated session APIs. */
 export const RemoteRoomLiveControls = ({
@@ -61,6 +89,8 @@ export const RemoteRoomLiveControls = ({
   onLeave,
   onExportState,
   onImportReplayFile,
+  onSaveOnlineGame,
+  onResumeSavedGame,
   confirmLeave = () =>
     globalThis.confirm(
       'Are you sure you want to leave the room? Current game state will be lost.'
@@ -68,7 +98,12 @@ export const RemoteRoomLiveControls = ({
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
   readReplayFile = readBrowserReplayFileBytes,
+  readContinuationFile = readBrowserContinuationFileText,
+  getInvitationClipboard = currentBrowserInvitationClipboard,
   reportReplayImportFailure = reportInvalidReplayFile,
+  reportOnlineSaveFailure = () => reportContinuationFailure('save'),
+  reportSavedGameResumeFailure = () => reportContinuationFailure('resume'),
+  reportSavedGameResumeSuccess = reportContinuationResumeSuccess,
 }: {
   readonly session: RemoteRoomLiveSession;
   readonly presentation: RemoteRoomLivePresentation;
@@ -76,11 +111,23 @@ export const RemoteRoomLiveControls = ({
   readonly onLeave?: () => void;
   readonly onExportState?: () => void;
   readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
+  readonly onSaveOnlineGame?: (signal: AbortSignal) => Promise<void>;
+  readonly onResumeSavedGame?: (
+    contents: string,
+    deliverOpponentInvitation: OpponentInvitationDelivery,
+    signal: AbortSignal
+  ) => Promise<void>;
   readonly confirmLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
   readonly readReplayFile?: BrowserReplayFileReader;
+  readonly readContinuationFile?: BrowserContinuationFileReader;
+  readonly getInvitationClipboard?: () =>
+    DeferredTextClipboardWriter | undefined;
   readonly reportReplayImportFailure?: () => void;
+  readonly reportOnlineSaveFailure?: () => void;
+  readonly reportSavedGameResumeFailure?: () => void;
+  readonly reportSavedGameResumeSuccess?: () => void;
 }) => {
   const state = useGameSession(session);
   const [message, setMessage] = useState('');
@@ -90,8 +137,13 @@ export const RemoteRoomLiveControls = ({
     readonly targetPlayerId: string;
   }>();
   const [replayImportPending, setReplayImportPending] = useState(false);
+  const [continuationPending, setContinuationPending] = useState<
+    'save' | 'resume'
+  >();
   const replayFileInputRef = useRef<HTMLInputElement>(null);
+  const continuationFileInputRef = useRef<HTMLInputElement>(null);
   const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
+  const continuationAbortRef = useRef<AbortController | undefined>(undefined);
   const options = useDismissibleRoomOptions();
   const playerId = ownPlayerId(state);
   const playerControls = playerId !== undefined;
@@ -159,9 +211,125 @@ export const RemoteRoomLiveControls = ({
   useEffect(
     () => () => {
       replayImportAbortRef.current?.abort();
+      const continuation = continuationAbortRef.current;
+      continuationAbortRef.current = undefined;
+      continuation?.abort();
     },
     []
   );
+  const saveOnlineGame = async (): Promise<void> => {
+    if (!onSaveOnlineGame || !ready || !playerControls || continuationPending) {
+      return;
+    }
+    const controller = new AbortController();
+    continuationAbortRef.current = controller;
+    setContinuationPending('save');
+    options.setOpen(false);
+    try {
+      await onSaveOnlineGame(controller.signal);
+    } catch {
+      if (!controller.signal.aborted) reportOnlineSaveFailure();
+    } finally {
+      if (continuationAbortRef.current === controller) {
+        continuationAbortRef.current = undefined;
+        setContinuationPending(undefined);
+      }
+    }
+  };
+  const resumeSavedGame = async (
+    event: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (
+      !file ||
+      !onResumeSavedGame ||
+      !ready ||
+      !playerControls ||
+      continuationPending
+    ) {
+      return;
+    }
+
+    const clipboard = getInvitationClipboard();
+    if (!clipboard) {
+      options.setOpen(false);
+      reportSavedGameResumeFailure();
+      return;
+    }
+    const controller = new AbortController();
+    continuationAbortRef.current = controller;
+    setContinuationPending('resume');
+    options.setOpen(false);
+
+    let resolveInvitation!: (text: string) => void;
+    let rejectInvitation!: () => void;
+    let invitationDelivered = false;
+    const invitationText = new Promise<string>((resolve, reject) => {
+      resolveInvitation = resolve;
+      rejectInvitation = () => reject(new Error('Invitation unavailable'));
+    });
+    void invitationText.catch(() => undefined);
+    let clipboardWrite: Promise<void>;
+    try {
+      clipboardWrite = clipboard.writeText(invitationText);
+    } catch {
+      rejectInvitation();
+      continuationAbortRef.current = undefined;
+      setContinuationPending(undefined);
+      reportSavedGameResumeFailure();
+      return;
+    }
+    void clipboardWrite.catch(() => undefined);
+    const deliverOpponentInvitation: OpponentInvitationDelivery = async (
+      text
+    ) => {
+      if (invitationDelivered) throw new Error('Invitation already delivered');
+      invitationDelivered = true;
+      resolveInvitation(text);
+      await clipboardWrite;
+    };
+
+    try {
+      let read: BrowserContinuationFileReadResult;
+      try {
+        read = await readContinuationFile(file, {
+          signal: controller.signal,
+        });
+      } catch {
+        read = { ok: false, reason: 'read_failed' };
+      }
+      if (
+        controller.signal.aborted ||
+        continuationAbortRef.current !== controller
+      ) {
+        if (!invitationDelivered) rejectInvitation();
+        return;
+      }
+      if (!read.ok) throw new Error('Invalid continuation file');
+      await onResumeSavedGame(
+        read.text,
+        deliverOpponentInvitation,
+        controller.signal
+      );
+      if (
+        controller.signal.aborted ||
+        continuationAbortRef.current !== controller
+      ) {
+        return;
+      }
+      reportSavedGameResumeSuccess();
+    } catch {
+      if (!invitationDelivered) rejectInvitation();
+      if (!controller.signal.aborted) reportSavedGameResumeFailure();
+    } finally {
+      if (continuationAbortRef.current === controller) {
+        continuationAbortRef.current = undefined;
+        setContinuationPending(undefined);
+      }
+    }
+  };
   const importReplayFile = async (
     event: ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
@@ -376,6 +544,38 @@ export const RemoteRoomLiveControls = ({
           >
             Export game state
           </button>
+        )}
+        {!solo && playerControls && onSaveOnlineGame && (
+          <button
+            id="saveOnlineGame"
+            type="button"
+            role="menuitem"
+            disabled={!ready || continuationPending !== undefined}
+            onClick={() => void saveOnlineGame()}
+          >
+            Save online game
+          </button>
+        )}
+        {!solo && playerControls && onResumeSavedGame && (
+          <div id="continuationSaveDiv" role="none">
+            <button
+              id="resumeSavedGame"
+              type="button"
+              role="menuitem"
+              disabled={!ready || continuationPending !== undefined}
+              onClick={() => continuationFileInputRef.current?.click()}
+            >
+              Resume saved game
+            </button>
+            <input
+              id="continuationSaveFile"
+              ref={continuationFileInputRef}
+              type="file"
+              accept=".ptcgsave"
+              hidden
+              onChange={(event) => void resumeSavedGame(event)}
+            />
+          </div>
         )}
         {solo && onImportReplayFile && (
           <div id="jsonReplayDiv" role="none">

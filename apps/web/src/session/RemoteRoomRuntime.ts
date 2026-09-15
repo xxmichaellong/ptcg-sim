@@ -1,4 +1,8 @@
 import {
+  serializeContinuationHandoffText,
+  type ContinuationCreationResponse,
+} from '@ptcgsim/protocol';
+import {
   createBrowserWebSocketFactory,
   RemoteGameSession,
   type ClientSessionDependencies,
@@ -36,6 +40,11 @@ export interface RemoteRoomRuntimeOptions {
     readonly createOperationId?: () => string;
   };
 }
+
+export type RemoteContinuationHandoffWriter = (
+  filename: string,
+  contents: string
+) => boolean | Promise<boolean>;
 
 /**
  * Single owner for one remote room route. It constructs every dependent source
@@ -126,8 +135,39 @@ export class RemoteRoomRuntime {
         : {}),
     });
     this.continuationCustody = custody;
-    this.continuationSource = undefined;
     return custody;
+  }
+
+  /**
+   * Creates and downloads one opaque online save. Successful delivery rotates
+   * custody so the next user action captures a fresh authoritative head.
+   */
+  async saveOnlineGame(
+    write: RemoteContinuationHandoffWriter,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const custody = this.getContinuationCustody();
+    await custody.handoffCreated(
+      async (receipt: ContinuationCreationResponse) => {
+        const contents = serializeContinuationHandoffText({
+          format: 'ptcgsim-continuation-handoff-v1',
+          saveId: receipt.saveId,
+          capability: receipt.capability,
+          expiresAt: receipt.expiresAt,
+        });
+        if (!(await write('ptcgsim-online-save.ptcgsave', contents))) {
+          throw new Error('Continuation handoff was not delivered');
+        }
+      },
+      signal
+    );
+    if (this.disposed) {
+      throw new RemoteContinuationCustodyError('disposed');
+    }
+    if (this.continuationCustody === custody) {
+      custody.dispose();
+      this.continuationCustody = undefined;
+    }
   }
 
   /** Prevents route/controller graphs from becoming credential-bearing JSON. */

@@ -254,4 +254,66 @@ describe('RemoteRoomRuntime', () => {
       RemoteContinuationCustodyError
     );
   });
+
+  it('retries a failed save handoff and rotates only after successful delivery', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const operationIds = ['C'.repeat(43), 'D'.repeat(43)];
+    const saveIds = ['S'.repeat(22), 'T'.repeat(22)];
+    const port: RemoteContinuationPort = {
+      create: vi.fn(async (input) => {
+        const index = input.operationId === operationIds[0] ? 0 : 1;
+        const saveId = saveIds[index]!;
+        return {
+          format: 'ptcgsim-continuation-creation-result-v1',
+          saveId,
+          operationId: input.operationId,
+          capability: `ptcgsave.v1.${saveId}.${(index === 0 ? 'B' : 'E').repeat(43)}`,
+          createdAt: 2_000_000_000_000 + index,
+          expiresAt: 2_000_086_400_000 + index,
+        };
+      }),
+      restore: vi.fn(async (): Promise<never> => {
+        throw new Error('not used');
+      }),
+      revoke: vi.fn(async () => undefined),
+    };
+    let operationIndex = 0;
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: { socketFactory },
+      continuation: {
+        port,
+        createOperationId: () => operationIds[operationIndex++]!,
+      },
+    });
+    const socket = socketFactory.sockets[0]!;
+    socket.serverOpen();
+    socket.serverMessage(welcome());
+    const failedWriter = vi.fn(() => false);
+
+    await expect(runtime.saveOnlineGame(failedWriter)).rejects.toMatchObject({
+      code: 'installation_failed',
+    });
+    const firstWriter = vi.fn(() => true);
+    await runtime.saveOnlineGame(firstWriter);
+    expect(port.create).toHaveBeenCalledOnce();
+    expect(firstWriter).toHaveBeenCalledWith(
+      'ptcgsim-online-save.ptcgsave',
+      expect.stringContaining(`ptcgsave.v1.${saveIds[0]}.`)
+    );
+
+    const secondWriter = vi.fn(() => true);
+    await runtime.saveOnlineGame(secondWriter);
+    expect(port.create).toHaveBeenCalledTimes(2);
+    expect(
+      (port.create as ReturnType<typeof vi.fn>).mock.calls.map(
+        ([input]) => input.operationId
+      )
+    ).toEqual(operationIds);
+    expect(secondWriter).toHaveBeenCalledWith(
+      'ptcgsim-online-save.ptcgsave',
+      expect.stringContaining(`ptcgsave.v1.${saveIds[1]}.`)
+    );
+    runtime.dispose();
+  });
 });

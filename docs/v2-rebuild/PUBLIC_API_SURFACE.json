@@ -862,6 +862,10 @@
               "kind": "value"
             },
             {
+              "name": "CONTINUATION_HANDOFF_TEXT_PREFIX",
+              "kind": "value"
+            },
+            {
               "name": "ContinuationCreationRequest",
               "kind": "type"
             },
@@ -876,6 +880,18 @@
             {
               "name": "ContinuationCreationResponseSchema",
               "kind": "value"
+            },
+            {
+              "name": "ContinuationHandoff",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationHandoffSchema",
+              "kind": "value"
+            },
+            {
+              "name": "ContinuationHandoffTextParseResult",
+              "kind": "type"
             },
             {
               "name": "ContinuationRestoreRequest",
@@ -922,6 +938,10 @@
               "kind": "value"
             },
             {
+              "name": "MAX_CONTINUATION_HANDOFF_TEXT_CODE_UNITS",
+              "kind": "value"
+            },
+            {
               "name": "MAX_DECK_CARDS",
               "kind": "value"
             },
@@ -959,6 +979,10 @@
             },
             {
               "name": "parseContinuationCreationResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationHandoffText",
               "kind": "value"
             },
             {
@@ -1088,6 +1112,10 @@
             {
               "name": "SchemaParseResult",
               "kind": "type"
+            },
+            {
+              "name": "serializeContinuationHandoffText",
+              "kind": "value"
             },
             {
               "name": "SerializedCardDefinitionSchema",

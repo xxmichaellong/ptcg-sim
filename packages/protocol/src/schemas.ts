@@ -124,6 +124,20 @@ export const ContinuationCreationResponseSchema = v.pipe(
   )
 );
 
+/** Small browser/file handoff. Canonical match state remains server-held. */
+export const ContinuationHandoffSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-handoff-v1'),
+    saveId: ContinuationSaveIdSchema,
+    capability: ContinuationCapabilitySchema,
+    expiresAt: NonNegativeIntegerSchema,
+  }),
+  v.check(
+    (value) => value.capability.startsWith(`ptcgsave.v1.${value.saveId}.`),
+    'Continuation handoff is inconsistent'
+  )
+);
+
 export const ContinuationRestoreRequestSchema = v.strictObject({
   capability: ContinuationCapabilitySchema,
   operationId: ContinuationOperationIdSchema,
@@ -1023,6 +1037,9 @@ export type ContinuationCreationRequest = v.InferOutput<
 >;
 export type ContinuationCreationResponse = v.InferOutput<
   typeof ContinuationCreationResponseSchema
+>;
+export type ContinuationHandoff = v.InferOutput<
+  typeof ContinuationHandoffSchema
 >;
 export type ContinuationRestoreRequest = v.InferOutput<
   typeof ContinuationRestoreRequestSchema

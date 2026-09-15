@@ -20,7 +20,10 @@ import {
   RemoteSessionBoard,
   type RemoteBoardSubmissionResult,
 } from './RemoteSessionBoard.js';
-import { RemoteRoomLiveControls } from './RemoteRoomLiveControls.js';
+import {
+  RemoteRoomLiveControls,
+  type OpponentInvitationDelivery,
+} from './RemoteRoomLiveControls.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { RemoteRoomSettings } from './RemoteRoomSettings.js';
 import {
@@ -67,6 +70,12 @@ export interface RemoteRoomRouteProps {
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  /** Atomic owner-level replacement after a server-held save is restored. */
+  readonly onResumeSavedGame?: (
+    contents: string,
+    deliverOpponentInvitation: OpponentInvitationDelivery,
+    signal: AbortSignal
+  ) => Promise<void>;
   /** Parks a live solo authority while the source Multiplayer tab is open. */
   readonly onMultiplayerNavigate?: () => void;
   /** When supplied with onPreferencesChange, ownership remains above the route. */
@@ -103,6 +112,7 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  onResumeSavedGame,
   onMultiplayerNavigate,
   preferences: ownedPreferences,
   onPreferencesChange,
@@ -356,6 +366,10 @@ export const RemoteRoomRoute = ({
                     onImportReplayFile={(contents) =>
                       runtime.replay.importReplayFileBytes(contents)
                     }
+                    onSaveOnlineGame={(signal) =>
+                      runtime.saveOnlineGame(downloadTextFile, signal)
+                    }
+                    {...(onResumeSavedGame ? { onResumeSavedGame } : {})}
                     downloadTextFile={downloadTextFile}
                     requestFullscreen={requestFullscreen}
                   />

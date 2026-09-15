@@ -76,6 +76,11 @@ export type ContinuationRestoreInstaller = (
   signal: AbortSignal
 ) => Promise<void>;
 
+export type ContinuationCreationInstaller = (
+  receipt: ContinuationCreationResponse,
+  signal: AbortSignal
+) => Promise<void>;
+
 interface StoredCreation {
   readonly saveId: string;
   readonly capability: string;
@@ -229,36 +234,98 @@ export class RemoteContinuationCustody {
       throw new RemoteContinuationCustodyError('invalid_state');
     }
     this.beginOperation();
-    const source = this.#source;
-    const operationId = this.#creationOperationId!;
     const activeSignal = this.activeSignal(signal);
     try {
       if (activeSignal.aborted) {
         throw new RemoteContinuationCustodyError('cancelled');
       }
-      const result = await this.#port.create({
-        roomCode: source.roomCode,
-        resumeToken: source.resumeToken,
-        operationId,
-        signal: activeSignal,
-      });
-      const parsed = parseContinuationCreationResponse(result);
-      if (!parsed.ok || parsed.value.operationId !== operationId) {
-        throw new RemoteContinuationCustodyError('invalid_response');
-      }
-      const receipt = immutableCreation(parsed.value);
+      await this.createPending(activeSignal);
+      return this.getSnapshot();
+    } catch (error) {
       if (this.isDisposed()) {
-        await this.bestEffortRevoke(receipt.capability);
         throw new RemoteContinuationCustodyError('disposed');
       }
-      this.#creation = {
-        saveId: receipt.saveId,
-        capability: receipt.capability,
-        createdAt: receipt.createdAt,
-        expiresAt: receipt.expiresAt,
-      };
-      this.#source = undefined;
-      this.#phase = 'available';
+      if (activeSignal.aborted) {
+        throw new RemoteContinuationCustodyError('cancelled');
+      }
+      throw error;
+    } finally {
+      this.#busy = false;
+    }
+  }
+
+  /**
+   * Delivers one created capability only to a trusted foreground boundary.
+   * Installer failure retains the same creation and operation for exact retry.
+   */
+  async handoffCreated(
+    install: ContinuationCreationInstaller,
+    signal?: AbortSignal
+  ): Promise<RemoteContinuationCustodySnapshot> {
+    this.assertUsable();
+    if (
+      (this.#phase !== 'pending' && this.#phase !== 'available') ||
+      !this.#creationOperationId
+    ) {
+      throw new RemoteContinuationCustodyError('invalid_state');
+    }
+    if (this.#phase === 'pending') {
+      let canCreate = false;
+      try {
+        canCreate = this.#canCreate();
+      } catch {
+        // A readiness observation is never allowed to release a credential.
+      }
+      if (!canCreate) {
+        throw new RemoteContinuationCustodyError('invalid_state');
+      }
+    }
+
+    this.beginOperation();
+    const activeSignal = this.activeSignal(signal);
+    try {
+      if (activeSignal.aborted) {
+        throw new RemoteContinuationCustodyError('cancelled');
+      }
+      if (this.#phase === 'pending') {
+        await this.createPending(activeSignal);
+      }
+      if (activeSignal.aborted) {
+        throw new RemoteContinuationCustodyError('cancelled');
+      }
+      const creation = this.#creation;
+      if (
+        !creation ||
+        creation.createdAt === undefined ||
+        creation.expiresAt === undefined
+      ) {
+        throw new RemoteContinuationCustodyError('invalid_state');
+      }
+      const receipt = immutableCreation({
+        format: 'ptcgsim-continuation-creation-result-v1',
+        saveId: creation.saveId,
+        operationId: this.#creationOperationId,
+        capability: creation.capability,
+        createdAt: creation.createdAt,
+        expiresAt: creation.expiresAt,
+      });
+      try {
+        await install(receipt, activeSignal);
+      } catch {
+        if (this.isDisposed()) {
+          throw new RemoteContinuationCustodyError('disposed');
+        }
+        if (activeSignal.aborted) {
+          throw new RemoteContinuationCustodyError('cancelled');
+        }
+        throw new RemoteContinuationCustodyError('installation_failed');
+      }
+      if (this.isDisposed()) {
+        throw new RemoteContinuationCustodyError('disposed');
+      }
+      if (activeSignal.aborted) {
+        throw new RemoteContinuationCustodyError('cancelled');
+      }
       return this.getSnapshot();
     } catch (error) {
       if (this.isDisposed()) {
@@ -338,6 +405,9 @@ export class RemoteContinuationCustody {
         await this.bestEffortRevoke(creation.capability);
         throw new RemoteContinuationCustodyError('disposed');
       }
+      if (activeSignal.aborted) {
+        throw new RemoteContinuationCustodyError('cancelled');
+      }
       this.#restore = {
         targetRoomCode: receipt.targetRoomCode,
         completedAt: receipt.completedAt,
@@ -414,6 +484,41 @@ export class RemoteContinuationCustody {
     } catch {
       throw new RemoteContinuationCustodyError('invalid_input');
     }
+  }
+
+  private async createPending(activeSignal: AbortSignal): Promise<void> {
+    const source = this.#source;
+    const operationId = this.#creationOperationId;
+    if (this.#phase !== 'pending' || !source || !operationId) {
+      throw new RemoteContinuationCustodyError('invalid_state');
+    }
+    const result = await this.#port.create({
+      roomCode: source.roomCode,
+      resumeToken: source.resumeToken,
+      operationId,
+      signal: activeSignal,
+    });
+    const parsed = parseContinuationCreationResponse(result);
+    if (!parsed.ok || parsed.value.operationId !== operationId) {
+      throw new RemoteContinuationCustodyError('invalid_response');
+    }
+    const receipt = immutableCreation(parsed.value);
+    if (this.isDisposed()) {
+      await this.bestEffortRevoke(receipt.capability);
+      throw new RemoteContinuationCustodyError('disposed');
+    }
+    if (activeSignal.aborted) {
+      await this.bestEffortRevoke(receipt.capability);
+      throw new RemoteContinuationCustodyError('cancelled');
+    }
+    this.#creation = {
+      saveId: receipt.saveId,
+      capability: receipt.capability,
+      createdAt: receipt.createdAt,
+      expiresAt: receipt.expiresAt,
+    };
+    this.#source = undefined;
+    this.#phase = 'available';
   }
 
   private activeSignal(signal?: AbortSignal): AbortSignal {

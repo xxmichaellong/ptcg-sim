@@ -1048,10 +1048,14 @@ absent from the production-default configuration. The app-local browser
 transport now implements the same exact bounded, locator-correlated, no-store
 contract. A lazy private custodian owns stable create/restore retries and
 metadata-only state, releases a source resume bearer only while its route is a
-ready player session, and clears credentials on revoke/disposal. It has no UI,
-storage, canonical file, or restore installer. Phase 7 still owns production
-key/quota-capacity provisioning, measured rate policy, activation, operational
-recovery/abuse evidence, and canonical continuation UI integration. The
+ready player session, and clears credentials on revoke/disposal. The
+source-shaped live multiplayer player controls now download only a bounded
+capability envelope and restore through a private exact-operation custodian.
+The installer waits for the rotated requester session to become ready, copies
+the ordinary opponent invitation, and atomically swaps lobby ownership while
+disposing partial targets on failure. Phase 7 still owns production
+key/quota-capacity provisioning, measured rate policy, activation, and
+operational recovery/abuse/browser evidence. The
 room-local source adapter now
 transactionally authorizes an active claimed multiplayer player, reserves one
 exact canonical snapshot under a digest-only stable operation, enforces bounded

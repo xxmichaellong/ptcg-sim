@@ -167,9 +167,15 @@ telemetry covers custody operations. An app-local browser adapter now proves
 strict same-origin/no-store requests, bounded correlated responses, and generic
 errors; its JavaScript-private custodian proves stable retry, atomic-installer
 recovery, ready-player-only creation, metadata-only snapshots, and teardown
-cleanup. No UI invokes it or persists a save capability. Production secrets,
-quota policy, rate measurement, managed recovery evidence, trusted restore
-installation, handoff, and visible UI remain gates.
+cleanup. No save capability is persisted in React, DOM, URL, or browser
+storage. Production secrets,
+quota policy, rate measurement, and managed recovery/browser evidence remain
+gates. The live multiplayer player Options menu now wires a bounded canonical
+`.ptcgsave` capability envelope and an atomic restore installer: it waits for
+the rotated requester session to become ready, copies the ordinary one-use
+opponent invitation, retains exact-operation retry custody on failure, and only
+then replaces the source-room owner. No canonical state enters the file, React
+state, DOM, URL, or browser storage.
 
 The v1 app and default route remain unchanged. Perspective export can be rolled
 back by hiding its isolated-route action without invalidating files already

@@ -127,6 +127,33 @@ describe('remote continuation private custody', () => {
     expect(JSON.stringify(custody.getSnapshot())).not.toContain(capability);
   });
 
+  it('retries one created capability until its trusted handoff succeeds', async () => {
+    const adapter = port();
+    const custody = new RemoteContinuationCustody({
+      port: adapter,
+      source: { roomCode, resumeToken },
+      createOperationId: operationIds(),
+    });
+    const install = vi
+      .fn()
+      .mockRejectedValueOnce(new Error(capability))
+      .mockResolvedValueOnce(undefined);
+
+    await expect(custody.handoffCreated(install)).rejects.toMatchObject({
+      code: 'installation_failed',
+    });
+    expect(custody.getSnapshot()).toMatchObject({ phase: 'available', saveId });
+    await expect(custody.handoffCreated(install)).resolves.toMatchObject({
+      phase: 'available',
+      saveId,
+    });
+    expect(adapter.create).toHaveBeenCalledOnce();
+    expect(install).toHaveBeenCalledTimes(2);
+    expect(install.mock.calls[0]?.[0]).toEqual(creation());
+    expect(Object.isFrozen(install.mock.calls[0]?.[0])).toBe(true);
+    expect(JSON.stringify(custody)).not.toContain(capability);
+  });
+
   it('serializes work, aborts disposal, and revokes a late create result best-effort', async () => {
     let finish: ((value: ReturnType<typeof creation>) => void) | undefined;
     let requestSignal: AbortSignal | undefined;

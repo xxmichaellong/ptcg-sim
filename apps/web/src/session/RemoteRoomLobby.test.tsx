@@ -39,6 +39,13 @@ const roomRouteHarness = vi.hoisted(() => ({
   onMultiplayerNavigate: undefined as (() => void) | undefined,
   deckStore: undefined as DeckBuilderStore | undefined,
   cardBackStore: undefined as CardBackCustodyStore | undefined,
+  onResumeSavedGame: undefined as
+    | ((
+        contents: string,
+        deliverOpponentInvitation: (text: string) => Promise<void>,
+        signal: AbortSignal
+      ) => Promise<void>)
+    | undefined,
 }));
 
 vi.mock('../RendererSpikeBoard.js', () => ({
@@ -62,6 +69,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onMultiplayerNavigate,
     deckStore,
     cardBackStore,
+    onResumeSavedGame,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -75,6 +83,11 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onMultiplayerNavigate?: () => void;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
+    readonly onResumeSavedGame?: (
+      contents: string,
+      deliverOpponentInvitation: (text: string) => Promise<void>,
+      signal: AbortSignal
+    ) => Promise<void>;
   }) => {
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
@@ -86,6 +99,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onMultiplayerNavigate = onMultiplayerNavigate;
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
+    roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
     return (
       <main data-app-route="test-remote-room">
         {runtime.label}
@@ -197,6 +211,7 @@ const runtime = (
   const dispose = vi.fn();
   const value = {
     label: options.label,
+    roomCode: ROOM_CODE,
     session: {
       getSnapshot: () => ({ phase: 'ready' as const, view: projected }),
       subscribe: (listener: () => void) => {
@@ -316,6 +331,7 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.onMultiplayerNavigate = undefined;
     roomRouteHarness.deckStore = undefined;
     roomRouteHarness.cardBackStore = undefined;
+    roomRouteHarness.onResumeSavedGame = undefined;
   });
 
   it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
@@ -756,6 +772,80 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(created.roomRuntime.listeners.size).toBe(0);
+  });
+
+  it('keeps the live room on failed restore and atomically replaces it after exact retry', async () => {
+    const invitation = custody();
+    const created = creationResult(runtime({ label: 'source' }));
+    const restored = runtime({ label: 'restored' });
+    const restore = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('redacted restore failure'))
+      .mockImplementationOnce(async (input) => {
+        await input.deliverOpponentInvitation('private opponent invitation');
+        return { runtime: restored.value };
+      });
+    const restoration = {
+      matchesHandoff: vi.fn(() => true),
+      restore,
+      dispose: vi.fn(),
+    };
+    const createRestorationCustody = vi.fn(() => restoration);
+    const dependencies = {
+      ...lobbyDependencies(
+        invitation,
+        vi.fn(async () => created.value)
+      ),
+      createRestorationCustody,
+    };
+    const { host, root } = await mount(dependencies);
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+    expect(host.textContent).toContain('source');
+    const resume = roomRouteHarness.onResumeSavedGame!;
+    const deliverOpponentInvitation = vi.fn(async () => undefined);
+
+    await expect(
+      act(async () =>
+        resume(
+          'opaque continuation file',
+          deliverOpponentInvitation,
+          new AbortController().signal
+        )
+      )
+    ).rejects.toThrow('redacted restore failure');
+    expect(host.textContent).toContain('source');
+    expect(created.dispose).not.toHaveBeenCalled();
+    expect(restored.dispose).not.toHaveBeenCalled();
+
+    await act(async () =>
+      resume(
+        'opaque continuation file',
+        deliverOpponentInvitation,
+        new AbortController().signal
+      )
+    );
+    expect(createRestorationCustody).toHaveBeenCalledOnce();
+    expect(restoration.matchesHandoff).toHaveBeenCalledWith(
+      'opaque continuation file'
+    );
+    expect(restore).toHaveBeenCalledTimes(2);
+    expect(deliverOpponentInvitation).toHaveBeenCalledWith(
+      'private opponent invitation'
+    );
+    expect(host.textContent).toContain('restored');
+    expect(created.dispose).toHaveBeenCalledOnce();
+    expect(restored.dispose).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(restored.dispose).toHaveBeenCalledOnce();
+    expect(restoration.dispose).not.toHaveBeenCalled();
   });
 
   it('returns a creator to a fresh lobby and disposes each ownership generation once', async () => {

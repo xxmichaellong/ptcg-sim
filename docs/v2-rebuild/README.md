@@ -190,9 +190,13 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   custodian now validate those exact responses, retain stable create/restore
   operations without serialization or storage, expose metadata-only snapshots,
   gate source credential release on a ready player session, and clean up on
-  route disposal. No UI invokes that owner. Production key/quota provisioning,
-  activation, managed evidence, trusted restore installation, and visible
-  handoff remain deliberately disabled later parity work.
+  route disposal. The live multiplayer player Options menu now writes a bounded
+  `.ptcgsave` capability envelope and restores it through private exact-retry
+  custody. Target ownership changes only after ordinary bootstrap reaches a
+  ready player and the rotated opponent invitation is copied; partial targets
+  are disposed while the source room remains live. Production key/quota
+  provisioning, activation, and managed browser/recovery evidence remain
+  deliberately disabled later release work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

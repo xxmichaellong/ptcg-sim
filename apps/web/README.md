@@ -113,7 +113,12 @@ live Solo Options menu wires its source-shaped `Enter replay mode` control and
 hidden `.json` picker to the validated raw-byte import, which atomically installs
 inert playback without authority traffic and returns to the latest live view on
 exit. Canonical server-held continuation and the remaining focus/visual parity
-remain later slices. Deck navigation is
+now has the two source-shaped multiplayer player actions: a bounded
+`.ptcgsave` capability download and a private exact-retry restore that waits for
+the target session and copies its rotated opponent invitation before replacing
+the source room. The production server routes remain default-off pending
+operational gates. Remaining focus/visual parity stays in later slices. Deck
+navigation is
 now active in the opt-in lobby and live-room route, while the default route is
 unchanged. The Deck implementation and CSS load only after its first tab click;
 the first lazy mount transfers its exact deck/card-back stores to the lobby so

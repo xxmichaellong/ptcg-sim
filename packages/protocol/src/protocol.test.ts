@@ -1,4 +1,9 @@
 import {
+  MAX_CONTINUATION_HANDOFF_TEXT_CODE_UNITS,
+  parseContinuationHandoffText,
+  serializeContinuationHandoffText,
+} from './continuation-handoff.js';
+import {
   MAX_DECK_CARDS as GAME_CORE_MAX_DECK_CARDS,
   MAX_IMAGE_URL_CODE_UNITS as GAME_CORE_MAX_IMAGE_URL_CODE_UNITS,
 } from '@ptcgsim/game-core';
@@ -186,6 +191,59 @@ describe('continuation HTTP schemas', () => {
         capability: capability.replace('ptcgsave.v1.', 'ptcgsave.v2.'),
       }).ok
     ).toBe(false);
+  });
+});
+
+describe('continuation file handoff', () => {
+  const saveId = 'A'.repeat(22);
+  const capability = `ptcgsave.v1.${saveId}.${'C'.repeat(43)}`;
+  const handoff = {
+    format: 'ptcgsim-continuation-handoff-v1' as const,
+    saveId,
+    capability,
+    expiresAt: 2_000_000_000_000,
+  };
+
+  it('round-trips one exact bounded capability envelope', () => {
+    const text = serializeContinuationHandoffText(handoff);
+    expect(text.startsWith('PTCGSIM2-SAVE:')).toBe(true);
+    expect(text.length).toBeLessThan(MAX_CONTINUATION_HANDOFF_TEXT_CODE_UNITS);
+    expect(parseContinuationHandoffText(text)).toEqual({
+      ok: true,
+      value: handoff,
+    });
+  });
+
+  it('rejects noncanonical, oversized, extended, and locator-mismatched input', () => {
+    expect(parseContinuationHandoffText(JSON.stringify(handoff))).toMatchObject(
+      {
+        ok: false,
+        reason: 'invalid_prefix',
+      }
+    );
+    expect(
+      parseContinuationHandoffText(
+        `PTCGSIM2-SAVE:${JSON.stringify({ ...handoff, injected: true })}`
+      )
+    ).toMatchObject({ ok: false, reason: 'invalid_handoff' });
+    expect(
+      parseContinuationHandoffText(
+        `PTCGSIM2-SAVE:${JSON.stringify({
+          ...handoff,
+          saveId: 'D'.repeat(22),
+        })}`
+      )
+    ).toMatchObject({ ok: false, reason: 'invalid_handoff' });
+    expect(
+      parseContinuationHandoffText(
+        'X'.repeat(MAX_CONTINUATION_HANDOFF_TEXT_CODE_UNITS + 1)
+      )
+    ).toMatchObject({ ok: false, reason: 'text_too_large' });
+    expect(
+      parseContinuationHandoffText(
+        `PTCGSIM2-SAVE:${JSON.stringify({ expiresAt: handoff.expiresAt })}`
+      )
+    ).toMatchObject({ ok: false, reason: 'invalid_handoff' });
   });
 });
 
