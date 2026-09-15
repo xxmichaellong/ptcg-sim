@@ -6,6 +6,10 @@ import {
 } from './constants.js';
 import {
   ClientMessageSchema,
+  ContinuationCreationRequestSchema,
+  ContinuationCreationResponseSchema,
+  ContinuationRestoreRequestSchema,
+  ContinuationRestoreResponseSchema,
   MatchViewStateSchema,
   RoomCreationRequestSchema,
   RoomCreationResponseSchema,
@@ -16,6 +20,10 @@ import {
   RoomAdmissionTicketResponseSchema,
   ServerMessageSchema,
   type ClientMessage,
+  type ContinuationCreationRequest,
+  type ContinuationCreationResponse,
+  type ContinuationRestoreRequest,
+  type ContinuationRestoreResponse,
   type RoomCreationRequest,
   type RoomCreationResponse,
   type RoomInvitationIssueRequest,
@@ -138,6 +146,26 @@ export const parseRoomAdmissionTicketResponse = (
   value: unknown
 ): SchemaParseResult<RoomAdmissionTicketResponse> =>
   parseSchema(value, RoomAdmissionTicketResponseSchema);
+
+export const parseContinuationCreationRequest = (
+  value: unknown
+): SchemaParseResult<ContinuationCreationRequest> =>
+  parseSchema(value, ContinuationCreationRequestSchema);
+
+export const parseContinuationCreationResponse = (
+  value: unknown
+): SchemaParseResult<ContinuationCreationResponse> =>
+  parseSchema(value, ContinuationCreationResponseSchema);
+
+export const parseContinuationRestoreRequest = (
+  value: unknown
+): SchemaParseResult<ContinuationRestoreRequest> =>
+  parseSchema(value, ContinuationRestoreRequestSchema);
+
+export const parseContinuationRestoreResponse = (
+  value: unknown
+): SchemaParseResult<ContinuationRestoreResponse> =>
+  parseSchema(value, ContinuationRestoreResponseSchema);
 
 export const serializeMatchViewState = (
   value: unknown

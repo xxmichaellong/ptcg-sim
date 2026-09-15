@@ -26,6 +26,21 @@ const CardCategorySchema = v.picklist([
 ] as const);
 const QuarterTurnsSchema = v.picklist([0, 1, 2, 3] as const);
 const CapabilitySchema = boundedString(512, 32);
+const ContinuationSaveIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^[A-Za-z0-9_-]{22}$/u, 'Invalid continuation save ID')
+);
+const ContinuationOperationIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^[A-Za-z0-9_-]{43}$/u, 'Invalid continuation operation ID')
+);
+const ContinuationCapabilitySchema = v.pipe(
+  v.string(),
+  v.regex(
+    /^ptcgsave\.v1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$/u,
+    'Invalid continuation capability'
+  )
+);
 const RoomCodeSchema = v.pipe(
   v.string(),
   v.regex(V2_ROOM_CODE_PATTERN, 'Invalid room code')
@@ -86,6 +101,52 @@ export const RoomAdmissionTicketResponseSchema = v.strictObject({
   resumeToken: CapabilitySchema,
   expiresAt: NonNegativeIntegerSchema,
 });
+
+export const ContinuationCreationRequestSchema = v.strictObject({
+  resumeToken: CapabilitySchema,
+  operationId: ContinuationOperationIdSchema,
+});
+
+export const ContinuationCreationResponseSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-creation-result-v1'),
+    saveId: ContinuationSaveIdSchema,
+    operationId: ContinuationOperationIdSchema,
+    capability: ContinuationCapabilitySchema,
+    createdAt: NonNegativeIntegerSchema,
+    expiresAt: NonNegativeIntegerSchema,
+  }),
+  v.check(
+    (value) =>
+      value.expiresAt > value.createdAt &&
+      value.capability.startsWith(`ptcgsave.v1.${value.saveId}.`),
+    'Continuation creation result is inconsistent'
+  )
+);
+
+export const ContinuationRestoreRequestSchema = v.strictObject({
+  capability: ContinuationCapabilitySchema,
+  operationId: ContinuationOperationIdSchema,
+});
+
+export const ContinuationRestoreResponseSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-restore-result-v1'),
+    saveId: ContinuationSaveIdSchema,
+    operationId: ContinuationOperationIdSchema,
+    completedAt: NonNegativeIntegerSchema,
+    targetRoomCode: RoomCodeSchema,
+    requesterSeatCapability: CapabilitySchema,
+    opponentInvitation: v.strictObject({
+      invitation: CapabilitySchema,
+      expiresAt: NonNegativeIntegerSchema,
+    }),
+  }),
+  v.check(
+    (value) => value.opponentInvitation.expiresAt > value.completedAt,
+    'Continuation restore result is expired'
+  )
+);
 
 export const SerializedCardDefinitionSchema = v.object({
   id: IdentifierSchema,
@@ -952,6 +1013,18 @@ export type RoomAdmissionTicketRequest = v.InferOutput<
 >;
 export type RoomAdmissionTicketResponse = v.InferOutput<
   typeof RoomAdmissionTicketResponseSchema
+>;
+export type ContinuationCreationRequest = v.InferOutput<
+  typeof ContinuationCreationRequestSchema
+>;
+export type ContinuationCreationResponse = v.InferOutput<
+  typeof ContinuationCreationResponseSchema
+>;
+export type ContinuationRestoreRequest = v.InferOutput<
+  typeof ContinuationRestoreRequestSchema
+>;
+export type ContinuationRestoreResponse = v.InferOutput<
+  typeof ContinuationRestoreResponseSchema
 >;
 export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
 export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;

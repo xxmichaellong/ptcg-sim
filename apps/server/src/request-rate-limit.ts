@@ -11,6 +11,35 @@ export interface RequestRateLimitDecision {
   readonly retryAfterSeconds: number;
 }
 
+/** Copies only exact bounded limiter output across an HTTP trust boundary. */
+export const readRequestRateLimitDecision = (
+  value: unknown
+): RequestRateLimitDecision | undefined => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const keys = Reflect.ownKeys(value);
+  if (
+    !keys.every((key) => typeof key === 'string') ||
+    JSON.stringify((keys as string[]).sort()) !==
+      JSON.stringify(['allowed', 'retryAfterSeconds'])
+  ) {
+    return undefined;
+  }
+  const allowed = Reflect.get(value, 'allowed');
+  const retryAfterSeconds = Reflect.get(value, 'retryAfterSeconds');
+  if (
+    typeof allowed !== 'boolean' ||
+    !Number.isSafeInteger(retryAfterSeconds) ||
+    Number(retryAfterSeconds) < 1 ||
+    Number(retryAfterSeconds) > 24 * 60 * 60
+  ) {
+    return undefined;
+  }
+  return Object.freeze({
+    allowed,
+    retryAfterSeconds: Number(retryAfterSeconds),
+  });
+};
+
 const hex = (bytes: Uint8Array): string =>
   [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 

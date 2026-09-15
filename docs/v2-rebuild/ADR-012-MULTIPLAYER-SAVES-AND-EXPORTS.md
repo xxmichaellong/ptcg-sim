@@ -154,6 +154,12 @@ Continuation must prove encrypted and digest-only durable custody, independent
 role-bound capabilities, exact canonical hash/projections after restore,
 transactional one-time fork behavior, credential rotation, expiry/revocation,
 quota/rate enforcement, corrupt/truncated recovery, and rollback compatibility.
+Its inert browser contract now additionally proves exact bounded create/restore
+schemas, same-origin and no-store handling, mandatory anonymous limiter ports,
+generic external credential/capacity errors, locator/operation correlation, and
+disposable RPC-result normalization. Those handlers remain absent from Worker
+routing until production secrets, quota policy, rate bindings, and managed
+recovery evidence exist.
 
 The v1 app and default route remain unchanged. Perspective export can be rolled
 back by hiding its isolated-route action without invalidating files already

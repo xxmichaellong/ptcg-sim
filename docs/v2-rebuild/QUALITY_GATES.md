@@ -153,8 +153,12 @@ restore RPC and the room's target-initialization RPC are exercised with a
 test-only key binding. Real-runtime tests prove binding/provisioning,
 key-independent alarm reschedule/delete, concurrent same-operation convergence,
 strict locator/shape refusal, exact cross-namespace selection, and retry after
-both objects are evicted. Continuation activation remains a separate gated
-change.
+both objects are evicted. Separate unit-level public create/restore contracts
+now prove bounded same-origin JSON, mandatory anonymous limiter ports, generic
+external errors, no-store credentials, exact operation/locator correlation,
+and disposable RPC-result normalization. The Worker deliberately does not
+import those handlers, so the real-runtime absent-route assertion remains
+green. Continuation activation remains a separate gated change.
 
 Vite still emits hidden source maps because the bundle-provenance gate parses
 them locally. The built entry modules contain no `sourceMappingURL` hint, and

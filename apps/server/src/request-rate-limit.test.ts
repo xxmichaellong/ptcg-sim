@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   anonymousRequestRateLimitKey,
   consumeRoomCreationRateLimit,
+  readRequestRateLimitDecision,
   ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS,
 } from './request-rate-limit.js';
 
@@ -12,6 +13,21 @@ const request = (address?: string): Request =>
   });
 
 describe('anonymous edge request rate limits', () => {
+  it('copies only exact bounded limiter decisions', () => {
+    const input = { allowed: true, retryAfterSeconds: 60 };
+    const parsed = readRequestRateLimitDecision(input);
+
+    expect(parsed).toEqual(input);
+    expect(parsed).not.toBe(input);
+    expect(Object.isFrozen(parsed)).toBe(true);
+    expect(
+      readRequestRateLimitDecision({ ...input, injected: true })
+    ).toBeUndefined();
+    expect(
+      readRequestRateLimitDecision({ ...input, retryAfterSeconds: 0 })
+    ).toBeUndefined();
+  });
+
   it('derives stable scoped keys without exposing raw network addresses', async () => {
     const address = '203.0.113.42';
     const first = await anonymousRequestRateLimitKey(

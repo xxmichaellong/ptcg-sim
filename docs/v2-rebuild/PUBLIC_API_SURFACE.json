@@ -862,6 +862,38 @@
               "kind": "value"
             },
             {
+              "name": "ContinuationCreationRequest",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationCreationRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "ContinuationCreationResponse",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationCreationResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "ContinuationRestoreRequest",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRestoreRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "ContinuationRestoreResponse",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRestoreResponseSchema",
+              "kind": "value"
+            },
+            {
               "name": "FrameParseResult",
               "kind": "type"
             },
@@ -911,6 +943,22 @@
             },
             {
               "name": "parseClientFrame",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationCreationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationCreationResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationRestoreRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseContinuationRestoreResponse",
               "kind": "value"
             },
             {
@@ -2098,6 +2146,22 @@
               "kind": "value"
             },
             {
+              "name": "ContinuationCreationRateLimit",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationCreator",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRestorer",
+              "kind": "type"
+            },
+            {
+              "name": "ContinuationRestoreRateLimit",
+              "kind": "type"
+            },
+            {
               "name": "DEFAULT_ROOM_RATE_LIMIT_POLICIES",
               "kind": "value"
             },
@@ -2134,6 +2198,14 @@
               "kind": "value"
             },
             {
+              "name": "handleContinuationCreationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "handleContinuationRestoreRequest",
+              "kind": "value"
+            },
+            {
               "name": "handleRoomCreationRequest",
               "kind": "value"
             },
@@ -2166,6 +2238,14 @@
               "kind": "value"
             },
             {
+              "name": "MAX_CONTINUATION_CREATION_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_CONTINUATION_RESTORE_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
               "name": "MAX_ROOM_CREATION_REQUEST_BYTES",
               "kind": "value"
             },
@@ -2187,6 +2267,10 @@
             },
             {
               "name": "NOOP_SERVER_TELEMETRY",
+              "kind": "value"
+            },
+            {
+              "name": "readRequestRateLimitDecision",
               "kind": "value"
             },
             {

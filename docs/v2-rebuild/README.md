@@ -172,9 +172,13 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   test-only policy; production capacity is deliberately absent. The same source
   transaction now applies a separate 12-new-operations-per-player/minute budget
   after authorization and before count quota, while exact committed-operation
-  retries bypass a second charge. Production key provisioning, anonymous
-  create/restore ingress throttles, public routes, and UI remain deliberately
-  disabled later parity work.
+  retries bypass a second charge. Strict but inert public create/restore
+  protocol and HTTP handler contracts now add bounded same-origin JSON,
+  mandatory anonymous limiter ports, generic credential/capacity errors,
+  no-store credential responses, exact operation/locator correlation, and
+  disposable RPC-result normalization. They are not imported by the Worker;
+  production key/quota provisioning, rate-limit bindings, public routes, and UI
+  remain deliberately disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

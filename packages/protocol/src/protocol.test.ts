@@ -13,6 +13,10 @@ import {
 } from './constants.js';
 import {
   parseClientFrame,
+  parseContinuationCreationRequest,
+  parseContinuationCreationResponse,
+  parseContinuationRestoreRequest,
+  parseContinuationRestoreResponse,
   parseRoomCreationRequest,
   parseRoomCreationResponse,
   parseRoomInvitationIssueRequest,
@@ -74,6 +78,99 @@ describe('room admission HTTP schemas', () => {
       parseRoomAdmissionTicketResponse({
         admissionTicket: 'socket-ticket-0000000000000000000001',
         expiresAt: 40_000,
+      }).ok
+    ).toBe(false);
+  });
+});
+
+describe('continuation HTTP schemas', () => {
+  const saveId = 'A'.repeat(22);
+  const operationId = 'B'.repeat(43);
+  const capability = `ptcgsave.v1.${saveId}.${'C'.repeat(43)}`;
+
+  it('accepts only exact bounded creation requests and locator-bound results', () => {
+    expect(
+      parseContinuationCreationRequest({
+        resumeToken: 'resume-capability-00000000000000000001',
+        operationId,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseContinuationCreationRequest({
+        resumeToken: 'resume-capability-00000000000000000001',
+        operationId,
+        sourceRoomCode: 'ATTACKER2345',
+      }).ok
+    ).toBe(false);
+    expect(
+      parseContinuationCreationRequest({
+        resumeToken: 'short',
+        operationId,
+      }).ok
+    ).toBe(false);
+    const response = {
+      format: 'ptcgsim-continuation-creation-result-v1',
+      saveId,
+      operationId,
+      capability,
+      createdAt: 1_000,
+      expiresAt: 2_000,
+    };
+    expect(parseContinuationCreationResponse(response).ok).toBe(true);
+    expect(
+      parseContinuationCreationResponse({
+        ...response,
+        capability: `ptcgsave.v1.${'D'.repeat(22)}.${'C'.repeat(43)}`,
+      }).ok
+    ).toBe(false);
+    expect(
+      parseContinuationCreationResponse({ ...response, expiresAt: 1_000 }).ok
+    ).toBe(false);
+  });
+
+  it('accepts only exact restore requests and live exact credential results', () => {
+    expect(
+      parseContinuationRestoreRequest({ capability, operationId }).ok
+    ).toBe(true);
+    expect(
+      parseContinuationRestoreRequest({
+        capability: capability.replace('ptcgsave.v1.', 'ptcgsave.v2.'),
+        operationId,
+      }).ok
+    ).toBe(false);
+    expect(
+      parseContinuationRestoreRequest({
+        capability,
+        operationId,
+        saveId,
+      }).ok
+    ).toBe(false);
+    const response = {
+      format: 'ptcgsim-continuation-restore-result-v1',
+      saveId,
+      operationId,
+      completedAt: 2_000,
+      targetRoomCode: 'ABCDEFGH2345',
+      requesterSeatCapability: 'requester-seat-capability-00000000000001',
+      opponentInvitation: {
+        invitation: 'opponent-invitation-capability-000000000001',
+        expiresAt: 3_000,
+      },
+    };
+    expect(parseContinuationRestoreResponse(response).ok).toBe(true);
+    expect(
+      parseContinuationRestoreResponse({
+        ...response,
+        opponentInvitation: {
+          ...response.opponentInvitation,
+          expiresAt: response.completedAt,
+        },
+      }).ok
+    ).toBe(false);
+    expect(
+      parseContinuationRestoreResponse({
+        ...response,
+        targetRoomCode: 'AMBIGUOUS-I0',
       }).ok
     ).toBe(false);
   });

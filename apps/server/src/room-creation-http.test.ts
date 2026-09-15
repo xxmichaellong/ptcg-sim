@@ -162,6 +162,18 @@ describe('room creation HTTP boundary', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('fails closed on malformed platform rate decisions', async () => {
+    const create = acceptedCreator();
+    const response = await handleRoomCreationRequest(
+      request('{}'),
+      create,
+      async () => ({ allowed: true, retryAfterSeconds: 0 })
+    );
+
+    expect(response.status).toBe(503);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('does not expose thrown errors or malformed credential bundles', async () => {
     const failed = await handleRoomCreationRequest(request('{}'), async () => {
       throw new Error(playerOneSeatCapability);
