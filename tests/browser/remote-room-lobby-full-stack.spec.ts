@@ -389,7 +389,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'data-renderer-status',
       'ready'
     );
-    await expect(rendererStatus).not.toBeVisible();
+    await expect(rendererStatus).toHaveCSS('width', '1px');
+    await expect(rendererStatus).toHaveCSS('height', '1px');
+    await expect(rendererStatus).toHaveCSS('clip-path', 'inset(50%)');
     const boardSurface = playerTwo.page.locator('.ptcgsim-board-surface');
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
     await expect(boardSurface).toHaveAttribute(

@@ -148,10 +148,31 @@
   opacity: 1;
 }
 
-.ptcgsim-legacy-card-preview .ptcgsim-legacy-overlay-card-image.is-preview {
+.ptcgsim-legacy-overlay-card-image[data-overlay-image-state='ready'] {
+  display: contents;
+}
+
+.ptcgsim-legacy-card-preview
+  .ptcgsim-legacy-overlay-card-image.is-preview:not(
+    [data-overlay-image-state='ready']
+  ) {
   width: min(90vw, calc(90vh * 5 / 7));
   max-width: 90%;
   max-height: 90%;
+  border-radius: 1rem;
+}
+
+.ptcgsim-legacy-card-preview
+  .ptcgsim-legacy-overlay-card-image.is-preview[data-overlay-image-state='ready']
+  img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  max-width: 90%;
+  max-height: 90%;
+  transform: translate(-50%, -50%);
   border-radius: 1rem;
 }
 
@@ -185,7 +206,10 @@
   white-space: nowrap;
 }
 
-.ptcgsim-legacy-stack-preview .ptcgsim-legacy-overlay-card-image.is-stack {
+.ptcgsim-legacy-stack-preview
+  .ptcgsim-legacy-overlay-card-image.is-stack:not(
+    [data-overlay-image-state='ready']
+  ) {
   display: inline-block;
   height: 24%;
   margin: 0.5%;
@@ -194,7 +218,26 @@
 }
 
 .ptcgsim-legacy-stack-preview[data-overlay-side='opponent']
-  .ptcgsim-legacy-overlay-card-image.is-stack {
+  .ptcgsim-legacy-overlay-card-image.is-stack:not(
+    [data-overlay-image-state='ready']
+  ) {
+  border-radius: 0.3rem;
+}
+
+.ptcgsim-legacy-stack-preview
+  .ptcgsim-legacy-overlay-card-image.is-stack[data-overlay-image-state='ready']
+  img {
+  display: inline-block;
+  width: auto;
+  height: 24%;
+  margin: 0.5%;
+  border-radius: 0.275rem;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+}
+
+.ptcgsim-legacy-stack-preview[data-overlay-side='opponent']
+  .ptcgsim-legacy-overlay-card-image.is-stack[data-overlay-image-state='ready']
+  img {
   border-radius: 0.3rem;
 }
 
@@ -317,7 +360,10 @@
   outline-offset: 1px;
 }
 
-.ptcgsim-legacy-zone-cards .ptcgsim-legacy-overlay-card-image.is-zone {
+.ptcgsim-legacy-zone-cards
+  .ptcgsim-legacy-overlay-card-image.is-zone:not(
+    [data-overlay-image-state='ready']
+  ) {
   display: block;
   width: 100%;
   border-radius: 0.275rem;
@@ -327,6 +373,26 @@
 
 .ptcgsim-legacy-zone-browser[data-overlay-side='opponent']
   .ptcgsim-legacy-zone-cards
-  .ptcgsim-legacy-overlay-card-image.is-zone {
+  .ptcgsim-legacy-overlay-card-image.is-zone:not(
+    [data-overlay-image-state='ready']
+  ) {
+  border-radius: 0.3rem;
+}
+
+.ptcgsim-legacy-zone-cards
+  .ptcgsim-legacy-overlay-card-image.is-zone[data-overlay-image-state='ready']
+  img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.275rem;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-zone-browser[data-overlay-side='opponent']
+  .ptcgsim-legacy-zone-cards
+  .ptcgsim-legacy-overlay-card-image.is-zone[data-overlay-image-state='ready']
+  img {
   border-radius: 0.3rem;
 }
