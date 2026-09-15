@@ -1378,6 +1378,14 @@ export const createBoardScene = (
           bounds: cardRect,
           zIndex: isLegacyPileKind(zone.kind) ? pileZIndex : 100 + index,
           interactive: isLegacyPileKind(zone.kind) ? isPileTop : true,
+          ...(region?.surface === 'cover' && isPileTop
+            ? {
+                primaryAction: {
+                  kind: 'openZone' as const,
+                  zoneId: zone.id,
+                },
+              }
+            : {}),
           ...(stadiumRotation === undefined
             ? {}
             : {
@@ -1649,6 +1657,8 @@ const sameCard = (left: CardSceneNode, right: CardSceneNode): boolean =>
   left.concealed === right.concealed &&
   left.label === right.label &&
   left.interactive === right.interactive &&
+  left.primaryAction?.kind === right.primaryAction?.kind &&
+  left.primaryAction?.zoneId === right.primaryAction?.zoneId &&
   left.bounds.x === right.bounds.x &&
   left.bounds.y === right.bounds.y &&
   left.bounds.width === right.bounds.width &&

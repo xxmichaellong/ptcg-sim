@@ -518,9 +518,33 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
   for (const renderer of ['dom', 'pixi'] as const) {
     await page.goto(`/?renderer=${renderer}`);
     await waitForReady(page);
+    const cover = await page.evaluate(() => {
+      const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+        (node) =>
+          node.side === 'local' && node.primaryAction?.kind === 'openZone'
+      );
+      if (!candidate?.primaryAction)
+        throw new Error('Missing local pile cover');
+      return {
+        zoneId: candidate.primaryAction.zoneId,
+        x: candidate.bounds.x + candidate.bounds.width / 2,
+        y: candidate.bounds.y + candidate.bounds.height / 2,
+      };
+    });
+    await page.mouse.click(cover.x, cover.y, { clickCount: 2, delay: 20 });
+    await expect(page.locator('output')).toHaveText(
+      JSON.stringify({
+        intent: { kind: 'ZoneOpened', zoneId: cover.zoneId },
+        command: null,
+      })
+    );
+
     const card = await page.evaluate(() => {
       const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
-        (node) => node.side === 'local' && !node.concealed
+        (node) =>
+          node.side === 'local' &&
+          !node.concealed &&
+          node.primaryAction === undefined
       );
       if (!candidate) throw new Error('Missing visible card');
       return {

@@ -349,9 +349,12 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
    closed-cover markers, and fails closed for foreign stadium owners or more
    than one stadium card. The top-owner candidate is built from fixed projected
    state, independently of source output, and proves q2 paint, lower-edge
-   alignment, native center hit, and complete teardown. Cover-open UX, opened
-   zones, undersized assets, retained covered nodes, Pixi geometry, and q1/q3
-   hit regions are not claimed.
+   alignment, native center hit, and complete teardown. The live-v1 runtime now
+   proves a primary deck/discard/lost-zone cover click opens its pile, and the
+   renderer-neutral scene action passes native Chromium input through both DOM
+   and Pixi without card selection or preview. Opened-zone layout, undersized
+   assets, retained covered nodes, Pixi geometry, and q1/q3 hit regions are not
+   claimed.
 10. A fourth digest-pinned fixture isolates ordinary second
     evolution across local/opponent active and bench slots. It records the
     transient `evolveCard` result, the synchronous ghost wrapper created by
@@ -1817,8 +1820,9 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      paint, containment, and the stadium's effective half-turn. The seven
      source/candidate cards pass the shared 97.5%, three-pixel,
      24-channel-value gate alongside the existing eight-state geometry and
-     owner-orientation proof. Cover-open behavior, opened-zone contents,
-     undersized/noncanonical assets, and Pixi paint remain excluded.
+     owner-orientation proof. A separate source-runtime and native-candidate
+     assertion closes cover-open behavior for DOM and Pixi. Opened-zone
+     contents, undersized/noncanonical assets, and Pixi paint remain excluded.
 116. The settled mixed-stack checkpoint now retains the source state after a
      complete active-to-bench-to-active round trip and isolates the six
      local/opponent base, Energy, and rotated Trainer-as-Tool images. The

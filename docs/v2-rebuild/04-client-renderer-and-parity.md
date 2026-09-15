@@ -234,10 +234,13 @@ then compares all six covers and both owner-readable stadium states against the
 React DOM candidate within 2 px / 1% / 0.1 degrees. The top-owner check uses a
 fixed projected q0 card with the bottom player held constant, so owner
 readability supplies the expected physical q2 half-turn without consuming
-source geometry as candidate input. Exact cover-click/open-zone UX, opened-zone
-layout, undersized/noncanonical asset no-upscale behavior, removal of retained
-covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes remain
-explicit gates.
+source geometry as candidate input. A live-v1 assertion also proves that one
+primary deck/discard/lost-zone cover click opens its pile; the renderer-neutral
+scene marks only those cover cards with an open-zone action, and native
+Chromium exercises it through both DOM and Pixi without selecting or previewing
+the card. Opened-zone layout, undersized/noncanonical asset no-upscale behavior,
+removal of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit
+boxes remain explicit gates.
 
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free

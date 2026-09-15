@@ -390,8 +390,14 @@ tops; unrelated and covered card nodes are hidden only for the screenshot. Both
 images and foreground metrics are attached, with the shared 97.5%, three-pixel,
 24/255-channel match contract supplementing the eight-state numeric checks.
 
-This does not yet prove the legacy cover-click behavior: v1 opens the zone,
-whereas the current candidate's top card still emits its ordinary card intent.
+The same source-runtime gate now clicks the real v1 deck, discard, and lost-zone
+covers and proves that one primary click opens the corresponding closed pile.
+`CardSceneNode.primaryAction` carries that semantic boundary without teaching a
+renderer about zone kinds: the three source-defined cover surfaces emit
+`ZoneOpened`, while stadium and ordinary cards retain select/preview behavior.
+React DOM and Pixi unit gates preserve context and drag ownership, suppress card
+selection/preview on a cover, and the native Chromium pointer gate exercises a
+double activation through both renderers without leaking `CardPreviewRequested`.
 Opened-zone cards/markers, exact one-node cover rendering, Pixi geometry,
 noncanonical or undersized assets, and rotated hit regions remain outside this
 checkpoint.

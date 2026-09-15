@@ -181,6 +181,18 @@ test('the recorded pile-cover semantics match the real v1 runtime', async ({
       await playInto('stadium', 'stadium-2');
       const stadium = getZone('self', 'stadium');
 
+      const coverClickOpened: Record<string, boolean> = {};
+      for (const zoneId of ['deck', 'discard', 'lostZone']) {
+        const zone = getZone('self', zoneId);
+        zone.element.style.display = 'none';
+        const cover = coverNode(zoneId);
+        if (!(cover instanceof HTMLElement)) {
+          throw new Error(`Missing ${zoneId} cover interaction target`);
+        }
+        cover.click();
+        coverClickOpened[zoneId] = zone.element.style.display === 'block';
+      }
+
       return {
         deckOrder,
         deckCoverRebuilds,
@@ -190,6 +202,7 @@ test('the recorded pile-cover semantics match the real v1 runtime', async ({
         stadiumAfterFirst,
         stadiumCount: stadium.array.length,
         stadiumRemaining: stadium.array.map((card) => card.name),
+        coverClickOpened,
       };
     });
 
@@ -233,5 +246,10 @@ test('the recorded pile-cover semantics match the real v1 runtime', async ({
       result.stadiumRemaining,
       'the newer stadium is the one left in play'
     ).toEqual(['stadium-2']);
+
+    expect(
+      result.coverClickOpened,
+      'one primary cover click opens each closed pile'
+    ).toEqual({ deck: true, discard: true, lostZone: true });
   });
 });

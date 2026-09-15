@@ -419,15 +419,23 @@ export class PixiBoardRenderer implements BoardRenderer {
           if (this.dragController.consumeSuppressedClick(view!.descriptor.id)) {
             return;
           }
-          this.adapters.emitIntent({
-            kind: 'CardSelected',
-            cardId: view!.descriptor.id,
-          });
-          if (this.completesDoubleActivation(event)) {
+          const primaryAction = view!.descriptor.primaryAction;
+          if (primaryAction?.kind === 'openZone') {
             this.adapters.emitIntent({
-              kind: 'CardPreviewRequested',
+              kind: 'ZoneOpened',
+              zoneId: primaryAction.zoneId,
+            });
+          } else {
+            this.adapters.emitIntent({
+              kind: 'CardSelected',
               cardId: view!.descriptor.id,
             });
+            if (this.completesDoubleActivation(event)) {
+              this.adapters.emitIntent({
+                kind: 'CardPreviewRequested',
+                cardId: view!.descriptor.id,
+              });
+            }
           }
         });
         sprite.on('rightclick', () =>
@@ -542,7 +550,9 @@ export class PixiBoardRenderer implements BoardRenderer {
       : 'default';
     sprite.accessible = descriptor.interactive;
     sprite.accessibleTitle = descriptor.label;
-    sprite.accessibleHint = 'Select card';
+    sprite.accessibleHint = descriptor.primaryAction
+      ? 'Open zone'
+      : 'Select card';
     const selected = this.presentation?.selectedCardId === descriptor.id;
     sprite.alpha = selected ? 0.88 : 1;
     outline.clear();

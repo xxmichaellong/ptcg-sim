@@ -99,6 +99,11 @@ export interface CardSceneNode {
   readonly concealed: boolean;
   readonly label: string;
   readonly interactive: boolean;
+  /** Overrides ordinary select/preview activation while preserving drag/context input. */
+  readonly primaryAction?: {
+    readonly kind: 'openZone';
+    readonly zoneId: string;
+  };
 }
 
 export interface MarkerSceneNode {

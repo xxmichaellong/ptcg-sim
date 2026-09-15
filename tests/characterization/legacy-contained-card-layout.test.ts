@@ -60,11 +60,16 @@ describe('source-pinned legacy contained-card layout oracle', () => {
     expect(oracle.scope.included).toContain(
       'browser candidate comparison of both stadium-owner branches'
     );
+    expect(oracle.scope.included).toContain(
+      'single-click opening for deck, discard, and lost-zone covers'
+    );
     expect(oracle.scope.excluded).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('cover click'),
         expect.stringContaining('retained covered scene nodes'),
       ])
+    );
+    expect(oracle.scope.excluded).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('cover click')])
     );
     expect(oracle.scope.excluded).not.toEqual(
       expect.arrayContaining([expect.stringContaining('top-owner stadium')])

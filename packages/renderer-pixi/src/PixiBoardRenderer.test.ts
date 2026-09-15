@@ -501,6 +501,47 @@ describe('Pixi board interaction cancellation', () => {
     await Promise.resolve();
   });
 
+  it('opens a cover zone without selecting or previewing its top card', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const intents: unknown[] = [];
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: (intent) => intents.push(intent),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const currentScene = scene();
+    await renderer.mount(
+      document.createElement('div'),
+      currentScene,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+    const cover = currentScene.cards.find(
+      (card) => card.primaryAction?.kind === 'openZone'
+    );
+    if (!cover?.primaryAction) throw new Error('Missing cover card fixture');
+    const internals = renderer as unknown as RendererInternals;
+    const view = internals.cardViews.get(String(cover.id))!;
+
+    expect(view.sprite.accessibleHint).toBe('Open zone');
+    view.sprite.emit('pointertap', { button: 0, detail: 1 });
+    view.sprite.emit('pointertap', { button: 0, detail: 2 });
+    view.sprite.emit('rightclick', {});
+
+    expect(intents).toEqual([
+      { kind: 'ZoneOpened', zoneId: cover.primaryAction.zoneId },
+      { kind: 'ZoneOpened', zoneId: cover.primaryAction.zoneId },
+      { kind: 'CardContextRequested', cardId: cover.id },
+    ]);
+    renderer.destroy();
+    await Promise.resolve();
+  });
+
   it('reuses keyed generic and active-q0 marker views through style updates and removal without card asset churn', async () => {
     const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
     const unload = vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);

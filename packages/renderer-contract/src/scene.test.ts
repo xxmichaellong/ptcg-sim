@@ -4855,7 +4855,10 @@ describe('renderer-neutral board scene', () => {
       );
       expect(nodes.every((node) => node !== undefined)).toBe(true);
       expect(nodes.filter((node) => node?.interactive)).toHaveLength(1);
-      expect(nodes[topIndex]).toMatchObject({ interactive: true });
+      expect(nodes[topIndex]).toMatchObject({
+        interactive: true,
+        primaryAction: { kind: 'openZone', zoneId: zone.id },
+      });
       expect(nodes[topIndex]!.zIndex).toBe(
         Math.max(...nodes.map((node) => node!.zIndex))
       );
@@ -4864,7 +4867,15 @@ describe('renderer-neutral board scene', () => {
           (node) => node.parentId === zone.id && !node.interactive
         )
       ).toHaveLength(zone.cards.length - 1);
+      expect(
+        nodes.filter((node) => node?.primaryAction !== undefined)
+      ).toHaveLength(1);
     }
+    const stadium = view.zones['zone:shared:stadium']!;
+    expect(stadium.kind).toBe('stadium');
+    expect(
+      scene.cards.find((card) => card.parentId === stadium.id)?.primaryAction
+    ).toBeUndefined();
     expect(
       scene.markers.some((marker) =>
         scene.cards.some(
@@ -5161,6 +5172,25 @@ describe('renderer-neutral board scene', () => {
     expect(new Set(diff.updatedCardIds)).toEqual(
       new Set([hiddenCardId, knownCardId])
     );
+
+    const actionable = {
+      ...first,
+      cards: first.cards.map((card) =>
+        card.id === knownCardId
+          ? {
+              ...card,
+              primaryAction: {
+                kind: 'openZone' as const,
+                zoneId: card.parentId,
+              },
+            }
+          : card
+      ),
+    };
+    expect(diffBoardScenes(first, actionable)).toMatchObject({
+      updatedCardIds: [knownCardId],
+      unchangedCardIds: [hiddenCardId],
+    });
 
     const known = first.cards.find((card) => card.id === knownCardId)!;
     expect(

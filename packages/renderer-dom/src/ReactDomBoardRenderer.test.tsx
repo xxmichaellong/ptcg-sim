@@ -311,6 +311,57 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('opens a cover zone without selecting or previewing its top card', async () => {
+    const intents: BoardIntent[] = [];
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const zoneId = 'zone:p1:deck';
+    const base = createScene();
+    await mountInAct(renderer, host, {
+      ...base,
+      zones: base.zones.map((zone) => ({
+        ...zone,
+        id: zoneId,
+        kind: 'deck',
+        surface: 'cover',
+      })),
+      cards: base.cards.map((card) => ({
+        ...card,
+        parentId: zoneId,
+        primaryAction: { kind: 'openZone' as const, zoneId },
+      })),
+    });
+
+    const cover = host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+    expect(cover.dataset.cardPrimaryAction).toBe('openZone');
+    expect(cover.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(cover.getAttribute('aria-pressed')).toBeNull();
+    cover.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    cover.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));
+    cover.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+    );
+    cover.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    );
+
+    expect(intents).toEqual([
+      { kind: 'ZoneOpened', zoneId },
+      { kind: 'ZoneOpened', zoneId },
+      { kind: 'CardContextRequested', cardId },
+    ]);
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('keeps a stable neutral card surface across image failure and recovery', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

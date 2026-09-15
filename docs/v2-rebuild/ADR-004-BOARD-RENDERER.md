@@ -437,8 +437,8 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   integration (source lifecycle and the safe v2 resolver are characterized),
   production BREAK/compound rotation (the split source history is pinned but
   proves projected state insufficient), overflow,
-  Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
-  UX, or opened-zone layout, and the sidebar content rectangle is derived from
+  Tool-specific Pixi paint parity, full paint or interaction parity, or
+  opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
 - the manual ADR-024 screen-reader parity audit beyond the automated replay-local
   and transformed stack/zone-dialog semantic roles, names, keyboard

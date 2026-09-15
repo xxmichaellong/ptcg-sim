@@ -187,6 +187,13 @@ const CardNode = memo(function CardNode({
     event.preventDefault();
     emitIntent({ kind: 'CardContextRequested', cardId: card.id });
   };
+  const activate = () => {
+    if (card.primaryAction?.kind === 'openZone') {
+      emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
+      return;
+    }
+    emitIntent({ kind: 'CardSelected', cardId: card.id });
+  };
   useLayoutEffect(() => {
     const image = imageRef.current;
     if (!image) return;
@@ -205,8 +212,12 @@ const CardNode = memo(function CardNode({
       className="ptcgsim-card"
       data-card-id={card.id}
       data-card-role={card.role}
+      data-card-primary-action={card.primaryAction?.kind}
       aria-label={card.label}
-      aria-pressed={selected}
+      aria-haspopup={
+        card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
+      }
+      aria-pressed={card.primaryAction ? undefined : selected}
       style={{
         ...absoluteRect(bounds, drag ? 10_000 : card.zIndex),
         display: 'block',
@@ -230,12 +241,14 @@ const CardNode = memo(function CardNode({
       disabled={!card.interactive}
       onClick={() => {
         if (!consumeSuppressedClick(card.id)) {
-          emitIntent({ kind: 'CardSelected', cardId: card.id });
+          activate();
         }
       }}
-      onDoubleClick={() =>
-        emitIntent({ kind: 'CardPreviewRequested', cardId: card.id })
-      }
+      onDoubleClick={() => {
+        if (!card.primaryAction) {
+          emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
+        }
+      }}
       onContextMenu={context}
     >
       <img
