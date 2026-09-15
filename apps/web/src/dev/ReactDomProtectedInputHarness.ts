@@ -2,7 +2,7 @@ import type {
   ClientSessionState,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import { asViewDefinitionId } from '@ptcgsim/game-core';
+import { asViewCardId, asViewDefinitionId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -144,8 +144,14 @@ const currentViewport = (): BoardLayoutState['viewport'] => ({
   devicePixelRatio: Math.max(1, window.devicePixelRatio),
 });
 
+export interface ReactDomProtectedInputHarnessOptions {
+  readonly openedPileCardCount?: number;
+}
+
 /** Development-only native-input seam; it is unreachable from production. */
-export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
+export const mountReactDomProtectedInputHarness = async (
+  options: ReactDomProtectedInputHarnessOptions = {}
+): Promise<void> => {
   window[HANDLE_NAME]?.dispose();
   const baseView = createRendererSpikeView();
   const firstPlayerId = baseView.playerOrder[0];
@@ -153,8 +159,44 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   if (!firstPlayerId || !secondPlayerId) {
     throw new Error('Protected-input harness requires exactly two players');
   }
+  const expandedZones = { ...baseView.zones };
+  const openedPileCardCount = options.openedPileCardCount;
+  if (
+    openedPileCardCount !== undefined &&
+    (!Number.isSafeInteger(openedPileCardCount) ||
+      openedPileCardCount < 1 ||
+      openedPileCardCount > 60)
+  ) {
+    throw new Error(
+      'Protected-input pile count must be an integer from 1 to 60'
+    );
+  }
+  if (openedPileCardCount !== undefined) {
+    for (const zone of Object.values(baseView.zones)) {
+      if (
+        zone.kind !== 'deck' &&
+        zone.kind !== 'discard' &&
+        zone.kind !== 'lostZone'
+      ) {
+        continue;
+      }
+      const template = zone.cards[0];
+      if (!template) {
+        throw new Error(`Protected-input ${zone.kind} fixture is empty`);
+      }
+      expandedZones[zone.id] = {
+        ...zone,
+        cards: Array.from({ length: openedPileCardCount }, (_, index) => ({
+          ...template,
+          id: asViewCardId(
+            `protected-opened-pile-${zone.ownerId}-${zone.kind}-${index}`
+          ),
+        })),
+      };
+    }
+  }
   const destinationZoneId = `zone:${firstPlayerId}:discard`;
-  const destinationZone = baseView.zones[destinationZoneId];
+  const destinationZone = expandedZones[destinationZoneId];
   if (!destinationZone) {
     throw new Error('Protected-input destination zone is missing');
   }
@@ -163,7 +205,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const view = {
     ...baseView,
     zones: {
-      ...baseView.zones,
+      ...expandedZones,
       [destinationZoneId]: {
         ...destinationZone,
         cards: [...destinationZone.cards].reverse(),

@@ -67,6 +67,17 @@ interface SurfacePaint {
   readonly images: readonly ImagePaint[];
 }
 
+interface ScrollEvidence {
+  readonly clientHeight: number;
+  readonly scrollHeight: number;
+  readonly scrollTop: number;
+  readonly surfaceTop: number;
+  readonly toolbarTop: number;
+  readonly toolbarBottom: number;
+  readonly firstImageTop: number;
+  readonly lastImageBottom: number;
+}
+
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
@@ -158,19 +169,24 @@ const surfacePaint = async (
   };
 };
 
-const mountCandidate = async (page: Page): Promise<OverlayFixture> => {
+const mountCandidate = async (
+  page: Page,
+  options: { readonly openedPileCardCount?: number } = {}
+): Promise<OverlayFixture> => {
   await page.goto('/?renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
   );
-  await page.evaluate(async () => {
+  await page.evaluate(async (input) => {
     const specifier = '/src/dev/ReactDomProtectedInputHarness.ts';
     const module = (await import(/* @vite-ignore */ specifier)) as {
-      readonly mountReactDomProtectedInputHarness: () => Promise<void>;
+      readonly mountReactDomProtectedInputHarness: (options?: {
+        readonly openedPileCardCount?: number;
+      }) => Promise<void>;
     };
-    await module.mountReactDomProtectedInputHarness();
-  });
+    await module.mountReactDomProtectedInputHarness(input);
+  }, options);
   return page.evaluate(() => {
     const harness = (window as OverlayHarnessWindow)
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
@@ -189,6 +205,77 @@ const assetsFor = (surface: Locator): Promise<Asset[]> =>
       };
     })
   );
+
+const readScrollEvidence = (surface: Locator): Promise<ScrollEvidence> =>
+  surface.evaluate((element) => {
+    const toolbar = element.querySelector(
+      '.ptcgsim-legacy-zone-toolbar, .zone-button-container'
+    );
+    const images = element.querySelectorAll('img');
+    const firstImage = images[0];
+    const lastImage = images[images.length - 1];
+    if (!toolbar || !firstImage || !lastImage) {
+      throw new Error('Opened-pile scroll evidence is incomplete');
+    }
+    const surfaceBounds = element.getBoundingClientRect();
+    const toolbarBounds = toolbar.getBoundingClientRect();
+    const firstImageBounds = firstImage.getBoundingClientRect();
+    const lastImageBounds = lastImage.getBoundingClientRect();
+    return {
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      scrollTop: element.scrollTop,
+      surfaceTop: surfaceBounds.top,
+      toolbarTop: toolbarBounds.top,
+      toolbarBottom: toolbarBounds.bottom,
+      firstImageTop: firstImageBounds.top,
+      lastImageBottom: lastImageBounds.bottom,
+    };
+  });
+
+const scrollToEnd = async (surface: Locator): Promise<ScrollEvidence> => {
+  await surface.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await surface.page().evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      })
+  );
+  return readScrollEvidence(surface);
+};
+
+const expectCardButtonHitBoxesToMatchImages = async (
+  surface: Locator,
+  description: string
+): Promise<void> => {
+  const deltas = await surface
+    .locator('button[data-overlay-card-id]')
+    .evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const image = button.querySelector('img');
+        if (!image) throw new Error('Opened-pile card button has no image');
+        const buttonBounds = button.getBoundingClientRect();
+        const imageBounds = image.getBoundingClientRect();
+        return {
+          x: buttonBounds.x - imageBounds.x,
+          y: buttonBounds.y - imageBounds.y,
+          width: buttonBounds.width - imageBounds.width,
+          height: buttonBounds.height - imageBounds.height,
+        };
+      })
+    );
+  expect(deltas, `${description} card button count`).toHaveLength(60);
+  for (const [index, delta] of deltas.entries()) {
+    for (const metric of ['x', 'y', 'width', 'height'] as const) {
+      expect(
+        delta[metric],
+        `${description} card ${index} button/image ${metric}`
+      ).toBeCloseTo(0, 4);
+    }
+  }
+};
 
 const mountLegacySurfaces = async (
   page: Page,
@@ -759,13 +846,13 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
   ]);
 });
 
-test('opened pile browsers retain real-v1 card density on both player frames', async ({
+test('full opened piles retain real-v1 density and scrolling on both player frames', async ({
   browser,
   page,
 }, testInfo) => {
   test.setTimeout(90_000);
   const errors = collectRuntimeErrors(page);
-  const fixture = await mountCandidate(page);
+  const fixture = await mountCandidate(page, { openedPileCardCount: 60 });
   const host = page.locator('[data-react-dom-protected-input-harness]');
   const browserSurface = host.locator('[data-legacy-zone-browser]');
   const cases = (
@@ -784,6 +871,8 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
     (typeof cases)[number] & {
       readonly assets: readonly Asset[];
       readonly paint: SurfacePaint;
+      readonly scrollStart: ScrollEvidence;
+      readonly scrollEnd: ScrollEvidence;
     }
   > = [];
 
@@ -798,15 +887,30 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
       entry.zoneId
     );
     const assets = await assetsFor(browserSurface);
-    expect(
-      assets.length,
-      `${entry.user} ${entry.zoneId} fixture cards`
-    ).toBeGreaterThan(0);
+    expect(assets, `${entry.user} ${entry.zoneId} fixture cards`).toHaveLength(
+      60
+    );
     await settlePaint(page);
+    const paint = await surfacePaint(browserSurface, 'candidate');
+    await expectCardButtonHitBoxesToMatchImages(
+      browserSurface,
+      `${entry.user} ${entry.zoneId}`
+    );
+    const scrollStart = await readScrollEvidence(browserSurface);
+    expect(scrollStart.scrollTop).toBe(0);
+    expect(scrollStart.scrollHeight).toBeGreaterThan(scrollStart.clientHeight);
+    const scrollEnd = await scrollToEnd(browserSurface);
+    expect(scrollEnd.scrollTop).toBe(
+      scrollEnd.scrollHeight - scrollEnd.clientHeight
+    );
+    expect(scrollEnd.toolbarTop).toBeCloseTo(scrollStart.toolbarTop, 4);
+    expect(scrollEnd.toolbarBottom).toBeCloseTo(scrollStart.toolbarBottom, 4);
     candidate.push({
       ...entry,
       assets,
-      paint: await surfacePaint(browserSurface, 'candidate'),
+      paint,
+      scrollStart,
+      scrollEnd,
     });
     await page.keyboard.press('Escape');
     await expect(browserSurface).toHaveCount(0);
@@ -818,7 +922,14 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
     deviceScaleFactor: 1,
   });
   const sourceErrors = collectRuntimeErrors(sourcePage);
-  const source = new Map<string, SurfacePaint>();
+  const source = new Map<
+    string,
+    {
+      readonly paint: SurfacePaint;
+      readonly scrollStart: ScrollEvidence;
+      readonly scrollEnd: ScrollEvidence;
+    }
+  >();
   try {
     const loaded = await loadLegacyRuntime(sourcePage);
     await mountLegacyPiles(
@@ -834,10 +945,23 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
         .locator(`#${entry.zoneId}`);
       await expect(sourceSurface).toBeVisible();
       await settlePaint(sourcePage);
-      source.set(
-        `${entry.user}:${entry.zoneId}`,
-        await surfacePaint(sourceSurface, 'source')
+      const paint = await surfacePaint(sourceSurface, 'source');
+      const scrollStart = await readScrollEvidence(sourceSurface);
+      expect(scrollStart.scrollTop).toBe(0);
+      expect(scrollStart.scrollHeight).toBeGreaterThan(
+        scrollStart.clientHeight
       );
+      const scrollEnd = await scrollToEnd(sourceSurface);
+      expect(scrollEnd.scrollTop).toBe(
+        scrollEnd.scrollHeight - scrollEnd.clientHeight
+      );
+      expect(scrollEnd.toolbarTop).toBeCloseTo(scrollStart.toolbarTop, 4);
+      expect(scrollEnd.toolbarBottom).toBeCloseTo(scrollStart.toolbarBottom, 4);
+      source.set(`${entry.user}:${entry.zoneId}`, {
+        paint,
+        scrollStart,
+        scrollEnd,
+      });
       const closeId = `#close${
         entry.zoneId === 'lostZone'
           ? 'LostZone'
@@ -858,10 +982,22 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
     expect(sourcePaint, `${key} source capture`).toBeDefined();
     expectSurfaceToMatch(
       entry.paint,
-      sourcePaint!,
+      sourcePaint!.paint,
       `${entry.user} ${entry.zoneId} browser`,
       false
     );
+    for (const phase of ['scrollStart', 'scrollEnd'] as const) {
+      for (const metric of [
+        'clientHeight',
+        'scrollHeight',
+        'scrollTop',
+      ] as const) {
+        expect(entry[phase][metric], `${key} ${phase} ${metric}`).toBeCloseTo(
+          sourcePaint![phase][metric],
+          1
+        );
+      }
+    }
   }
   expect(errors).toEqual([]);
   await testInfo.attach('legacy-opened-pile-density-metrics.json', {
@@ -872,7 +1008,11 @@ test('opened pile browsers retain real-v1 card density on both player frames', a
           candidate: Object.fromEntries(
             candidate.map((entry) => [
               `${entry.user}:${entry.zoneId}`,
-              entry.paint,
+              {
+                paint: entry.paint,
+                scrollStart: entry.scrollStart,
+                scrollEnd: entry.scrollEnd,
+              },
             ])
           ),
         },

@@ -65,9 +65,11 @@ opponent-readable stadium against a top-owner candidate and attaches
 source/candidate screenshots plus foreground metrics under the shared 97.5%,
 three-pixel, and 24-channel-value paint contract. Cover-open UX is source-backed
 separately, and the overlay oracle now pins opened deck/discard/lost-zone density
-at the source's 8%/10%/12% widths on both player frames. Extended opened-zone
-scrolling/action histories, undersized assets, Pixi geometry, and rotated hit
-regions remain excluded.
+at the source's 8%/10%/12% widths on both player frames. Deterministic 60-card
+variants cover exact row wrapping, scroll extent/end position, sticky toolbar,
+Escape teardown, and focus restoration in all six browsers. Opened-zone action
+histories, undersized assets, Pixi geometry, and rotated hit regions remain
+excluded.
 
 `legacy-evolution-reflow-layout.test.ts` pins the separate ordinary-evolution
 boundary. Four isolated local/opponent active/bench cases record a second

@@ -1303,6 +1303,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     8%/10%/12% deck/discard/lost-zone widths while retaining the same native
     buttons, recipient-safe order/assets, frame geometry, focus return, and
     controller isolation.
+    The maximum-capacity follow-up expands each of those six browsers to 60
+    deterministic cards. It pins every wrapped image box against live v1,
+    equal scroll height and maximum scroll position, a toolbar that remains
+    physically fixed from start to end, Escape removal, focus restoration, and
+    image-sized button hit boxes. This exposed a one-pixel-per-row loss from
+    wrapping v1's inline image in a native button; non-interactive wrapper margin
+    now preserves the source line-box allowance, so deck, discard, and lost-zone
+    scroll extents remain exact at full capacity.
 73. A recipient-privacy Chromium oracle now carries canonical state through the
     real `projectMatch()` and `createBoardSceneForViewport()` boundaries into a
     mounted selected-DOM renderer while intercepting every matching image

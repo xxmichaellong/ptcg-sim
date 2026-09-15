@@ -406,8 +406,10 @@ button/image or Pixi sprite/texture binding. The 61-card fixture therefore has
 49 physical card views, and native Chromium proves that no lower pile card node
 or asset allocation exists. A separate real-v1/React DOM overlay gate covers
 the source's opened deck/discard/lost-zone 8%/10%/12% card widths, assets, order,
-and frame geometry on both sides. Opened-zone marker and extended scrolling/
-action histories, Pixi geometry,
+and frame geometry on both sides. Its deterministic 60-card variants also pin
+wrapped-row spacing, overflow extent, maximum scroll position, sticky toolbar,
+Escape teardown, and invoker-focus restoration for all six player/pile
+combinations. Opened-zone marker and action histories, Pixi geometry,
 noncanonical or undersized assets, and rotated hit regions remain outside this
 checkpoint.
 

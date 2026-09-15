@@ -243,7 +243,7 @@ scene marks only those cover cards with an open-zone action, and native
 Chromium exercises it through both DOM and Pixi without selecting or previewing
 the card. The same gate proves exactly one physical node for every non-empty
 pile and no lower-card DOM node; the 61-card reference scene owns 49 physical
-card views in either renderer. Broader opened-zone scrolling/action histories,
+card views in either renderer. Broader opened-zone action histories,
 undersized/noncanonical asset no-upscale behavior, Pixi geometry, and
 90/270-degree hit boxes remain explicit gates.
 
@@ -253,8 +253,15 @@ zone kind remains renderer-external metadata used only for paint: deck cards
 retain the source's 8% width, discard 10%, and lost-zone 12%. The gate compares
 surface and image geometry, recipient-safe image/label order, side-specific
 card paint, frame placement, and focus return without adding a controller or
-authority action. This closes the pile-specific density regression while the
-existing full-deck churn gate continues to own image decode and teardown.
+authority action. Its maximum-capacity fixture mounts 60 cards in all six
+player/pile combinations and additionally pins exact wrapped-row geometry,
+overflow extent, maximum scroll position, sticky-toolbar stability, Escape
+teardown, focus restoration, and image-sized native hit boxes. The native
+button wrapper carries the same non-interactive four-pixel line-box allowance
+that v1's inline images receive implicitly, so a one-pixel row-height difference
+cannot accumulate through a full pile. This closes the pile-specific density
+and scrolling regressions while the existing full-deck churn gate continues to
+own image decode and repeated teardown.
 
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free

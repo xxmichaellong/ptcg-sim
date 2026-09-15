@@ -241,7 +241,8 @@
 .ptcgsim-legacy-zone-cards button {
   display: inline-block;
   width: 10%;
-  margin: 1px;
+  /* Preserve the non-interactive line-box allowance of v1's inline images. */
+  margin: 1px 1px 5px;
   padding: 0;
   border: 0;
   border-radius: 0;
