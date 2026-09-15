@@ -81,6 +81,10 @@ export type ContinuationCreationCoordinationResult =
   | {
       readonly state: 'quota_exceeded';
       readonly scope: 'player' | 'room' | 'global';
+    }
+  | {
+      readonly state: 'rate_limited';
+      readonly retryAfterSeconds: number;
     };
 
 export interface ContinuationCreationCoordinatorDependencies {
@@ -295,6 +299,19 @@ export const coordinateContinuationCreation = async (
     ) {
       throw new ContinuationCreationCoordinationError(
         'Continuation source quota result is malformed'
+      );
+    }
+    return reservation;
+  }
+  if (reservation.state === 'rate_limited') {
+    if (
+      !exactKeys(reservation, ['retryAfterSeconds', 'state']) ||
+      !safeNonNegativeInteger(reservation.retryAfterSeconds) ||
+      reservation.retryAfterSeconds < 1 ||
+      reservation.retryAfterSeconds > 24 * 60 * 60
+    ) {
+      throw new ContinuationCreationCoordinationError(
+        'Continuation source rate limit result is malformed'
       );
     }
     return reservation;

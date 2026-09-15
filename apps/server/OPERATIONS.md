@@ -85,6 +85,23 @@ the shard count or per-shard capacity requires disabling new creates and waiting
 one maximum retention period, or producing verified complete cleanup evidence;
 otherwise still-live leases can exist above or outside the new partition set.
 
+The source room separately enforces a durable fixed-window continuation-create
+budget: 12 authenticated new operations per claimed player per minute. The
+budget update and source reservation share one transaction. An exact operation
+already present in the source ledger bypasses a second charge, including after
+an ambiguous response or object eviction. Unauthorized requests do not charge;
+new operations that reach player/room/global count refusal do charge, preventing
+quota-full request floods. The bounded rate record contains only player IDs,
+window starts, and counts—never operation IDs, capabilities, or request bodies.
+
+Public activation still requires distinct anonymous ingress rate-limit bindings
+for create and restore. Give each binding a unique account `namespace_id`; a
+shared ID intentionally shares counters. Cloudflare documents these counters as
+per-location, permissive, and eventually consistent, so they are an abuse-load
+layer rather than exact capacity accounting. Keep the durable source budget and
+global lease as the authoritative hard bounds. See the
+[Cloudflare Rate Limiting binding contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
+
 Cloudflare's declarative Durable Object `exports` entries are namespace
 lifecycle state, not ordinary version metadata. Do not remove either live
 class/export or attempt to roll back across its provisioning change. Before

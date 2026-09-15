@@ -16,6 +16,11 @@ import {
   type ContinuationSourceIdentity,
 } from './continuation-source.js';
 import {
+  DEFAULT_CONTINUATION_CREATION_RATE_LIMIT_POLICY,
+  ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY,
+  type ContinuationCreationRateLimitPolicy,
+} from './continuation-request-rate.js';
+import {
   AUTHORITY_FRONTIER_STORAGE_KEY,
   ConcurrentRoomWriteError,
   DurableRoomSnapshotStore,
@@ -124,7 +129,8 @@ const input = (
 });
 
 const setup = async (
-  policy: ContinuationSourceCreationPolicy = DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY
+  policy: ContinuationSourceCreationPolicy = DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY,
+  rateLimitPolicy: ContinuationCreationRateLimitPolicy = DEFAULT_CONTINUATION_CREATION_RATE_LIMIT_POLICY
 ) => {
   const storage = new MemoryDurableStorage();
   const snapshot = snapshotFixture();
@@ -137,7 +143,8 @@ const setup = async (
     source: new DurableRoomContinuationSource(
       storage,
       identity.identity,
-      policy
+      policy,
+      rateLimitPolicy
     ),
   };
 };
@@ -262,6 +269,82 @@ describe('source-room continuation creation reservations', () => {
         input(roomLimited.snapshot, operationThree)
       )
     ).resolves.toEqual({ state: 'quota_exceeded', scope: 'room' });
+  });
+
+  it('rate limits only authenticated new operations and never double-charges retries', async () => {
+    const harness = await setup(DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY, {
+      maximumAttempts: 2,
+      windowMs: 60_000,
+    });
+    const first = await harness.source.reserveCreation(input(harness.snapshot));
+    expect(first).toMatchObject({ state: 'pending', created: true });
+    await expect(
+      harness.source.reserveCreation(
+        input(
+          harness.snapshot,
+          operationOne,
+          'source-session-one',
+          createdAt + 1
+        )
+      )
+    ).resolves.toMatchObject({ state: 'pending', created: false });
+    await expect(
+      harness.source.reserveCreation(
+        input(
+          harness.snapshot,
+          operationTwo,
+          'source-session-one',
+          createdAt + 2
+        )
+      )
+    ).resolves.toMatchObject({ state: 'pending', created: true });
+    await expect(
+      harness.source.reserveCreation(
+        input(
+          harness.snapshot,
+          operationThree,
+          'source-session-one',
+          createdAt + 3
+        )
+      )
+    ).resolves.toEqual({ state: 'rate_limited', retryAfterSeconds: 60 });
+    await expect(
+      harness.source.reserveCreation(
+        input(
+          harness.snapshot,
+          operationThree,
+          'source-session-two',
+          createdAt + 3
+        )
+      )
+    ).resolves.toMatchObject({ state: 'pending', created: true });
+
+    const stored = JSON.stringify(
+      harness.storage.values.get(
+        ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY
+      )
+    );
+    expect(stored).not.toContain(operationOne);
+    expect(stored).not.toContain(operationTwo);
+    expect(stored).not.toContain(operationThree);
+  });
+
+  it('charges new requests that hit save-count quota before rate refusal', async () => {
+    const harness = await setup(
+      {
+        maximumPerPlayer: 1,
+        maximumPerRoom: 2,
+        retentionMs: MINIMUM_CONTINUATION_TTL_MS,
+      },
+      { maximumAttempts: 2, windowMs: 60_000 }
+    );
+    await harness.source.reserveCreation(input(harness.snapshot));
+    await expect(
+      harness.source.reserveCreation(input(harness.snapshot, operationTwo))
+    ).resolves.toEqual({ state: 'quota_exceeded', scope: 'player' });
+    await expect(
+      harness.source.reserveCreation(input(harness.snapshot, operationThree))
+    ).resolves.toEqual({ state: 'rate_limited', retryAfterSeconds: 60 });
   });
 
   it('compacts the canonical plan after completion and recovers exact completion retries', async () => {
@@ -483,6 +566,15 @@ describe('source-room continuation creation reservations', () => {
     await expect(
       corrupt.source.reserveCreation(input(corrupt.snapshot))
     ).rejects.toThrow('creation is malformed');
+
+    const corruptRate = await setup();
+    corruptRate.storage.values.set(
+      ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY,
+      { format: 'wrong-format', buckets: [] }
+    );
+    await expect(
+      corruptRate.source.reserveCreation(input(corruptRate.snapshot))
+    ).rejects.toThrow('rate limit is malformed');
   });
 
   it('rolls back failed writes and recovers ambiguous reservation/completion commits', async () => {
@@ -503,6 +595,11 @@ describe('source-room continuation creation reservations', () => {
         }
       ).entries
     ).toHaveLength(1);
+    expect(
+      retried.storage.values.get(
+        ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY
+      )
+    ).toMatchObject({ buckets: [{ attempts: 1 }] });
 
     const rollback = await setup();
     rollback.storage.failPutWhenKeyStartsWith =
@@ -513,18 +610,33 @@ describe('source-room continuation creation reservations', () => {
     expect(
       rollback.storage.values.has(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
     ).toBe(false);
+    expect(
+      rollback.storage.values.has(
+        ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY
+      )
+    ).toBe(false);
 
     const harness = await setup();
     harness.storage.failAfterTransactionCommitOnce = true;
     await expect(
       harness.source.reserveCreation(input(harness.snapshot))
     ).rejects.toThrow('ambiguous transaction failure');
+    expect(
+      harness.storage.values.get(
+        ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY
+      )
+    ).toMatchObject({ buckets: [{ attempts: 1 }] });
     const recovered = await harness.source.reserveCreation(
       input(harness.snapshot, operationOne, 'source-session-one', createdAt + 1)
     );
     expect(recovered).toMatchObject({ state: 'pending', created: false });
     if (recovered?.state !== 'pending')
       throw new Error('expected pending plan');
+    expect(
+      harness.storage.values.get(
+        ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY
+      )
+    ).toMatchObject({ buckets: [{ attempts: 1 }] });
 
     harness.storage.failAfterTransactionCommitOnce = true;
     const completion = {
@@ -573,5 +685,14 @@ describe('source-room continuation creation reservations', () => {
           )
       ).toThrow('policy is invalid');
     }
+    expect(
+      () =>
+        new DurableRoomContinuationSource(
+          new MemoryDurableStorage(),
+          identity.identity,
+          DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY,
+          { maximumAttempts: 0, windowMs: 60_000 }
+        )
+    ).toThrow('policy is invalid');
   });
 });

@@ -167,10 +167,12 @@ named operational/sign-off ownership, and the applicable phase exit criteria.
   atomic alarm cleanup without a global singleton. Its exact private namespace
   and RPC, fail-closed configuration parser, coordinator wiring, and workerd
   eviction/alarm proof extend that retry across all three objects with a
-  test-only policy; production
-  capacity is deliberately absent. Production key provisioning, independent
-  rate controls, public routes, and UI remain deliberately disabled later parity
-  work.
+  test-only policy; production capacity is deliberately absent. The same source
+  transaction now applies a separate 12-new-operations-per-player/minute budget
+  after authorization and before count quota, while exact committed-operation
+  retries bypass a second charge. Production key provisioning, anonymous
+  create/restore ingress throttles, public routes, and UI remain deliberately
+  disabled later parity work.
   Deck navigation is now active only on the opt-in v2 room route; the default
   route remains unchanged.
   The lobby's existing Solo tab now creates the persisted one-player authority

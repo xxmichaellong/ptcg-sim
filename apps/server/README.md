@@ -108,8 +108,12 @@ digest-derived shard and transactionally holds an exact digest-only lease until
 save expiry. Fixed shard capacities form a hard aggregate ceiling without one
 global Durable Object bottleneck. Its private namespace/RPC, exact fail-closed
 configuration, coordinator wiring, and workerd eviction/alarm path are
-implemented with a test-only policy. Production capacity/key provisioning,
-independent rate enforcement, public contracts, and managed operational
+implemented with a test-only policy. The source reservation transaction also
+enforces a separate fixed-window budget of 12 authenticated new operations per
+player per minute. Exact committed-operation retries are not charged again;
+unauthorized calls cannot consume the budget, while new operations refused by
+count quota do consume it. Production capacity/key provisioning, anonymous
+create/restore ingress throttles, public contracts, and managed operational
 evidence remain release gates.
 
 ## Seeded authority/storage model

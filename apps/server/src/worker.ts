@@ -392,7 +392,7 @@ export class PtcgRoom extends DurableObject<Env> {
     if (!runtime) return undefined;
     const sourceRoomCode = this.ctx.id.name;
     if (!sourceRoomCode) return undefined;
-    return coordinateContinuationCreation(
+    const result = await coordinateContinuationCreation(
       { ...input, sourceRoomCode, sourceBuild: this.env.BUILD_ID },
       {
         source: {
@@ -434,6 +434,14 @@ export class PtcgRoom extends DurableObject<Env> {
         clock: { now: Date.now },
       }
     );
+    if (result?.state === 'rate_limited') {
+      this.telemetry.roomRateLimit({
+        operation: 'continuation_create',
+        allowed: false,
+        retryAfterSeconds: result.retryAfterSeconds,
+      });
+    }
+    return result;
   }
 
   override async fetch(request: Request): Promise<Response> {

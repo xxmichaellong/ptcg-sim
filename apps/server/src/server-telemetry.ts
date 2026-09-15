@@ -99,7 +99,7 @@ type ServerTelemetryDetail =
     }
   | {
       readonly kind: 'room_rate_limit';
-      readonly operation: RoomRateLimitedOperation;
+      readonly operation: RoomRateLimitedOperation | 'continuation_create';
       readonly outcome: 'allowed' | 'limited';
       readonly retryAfterSeconds: number;
     }
@@ -160,7 +160,7 @@ export interface ServerTelemetryPort {
     readonly durationMs: number;
   }) => void;
   readonly roomRateLimit: (input: {
-    readonly operation: RoomRateLimitedOperation;
+    readonly operation: RoomRateLimitedOperation | 'continuation_create';
     readonly allowed: boolean;
     readonly retryAfterSeconds?: number;
   }) => void;

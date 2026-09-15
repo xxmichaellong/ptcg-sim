@@ -16,6 +16,7 @@ Implementation: `apps/server/src/continuation-custody.ts`,
 `apps/server/src/continuation-fork.ts`,
 `apps/server/src/continuation-quota-configuration.ts`,
 `apps/server/src/continuation-quota.ts`,
+`apps/server/src/continuation-request-rate.ts`,
 `apps/server/src/continuation-restore-format.ts`,
 `apps/server/src/continuation-rpc.ts`,
 `apps/server/src/continuation-restore.ts`,
@@ -119,8 +120,17 @@ The current guarantees are:
   away the pending snapshot, source session, and source build while retaining a
   digest-only reference for retry and conservative quota accounting. Expired
   entries are removed transactionally when the ledger is next used. These local
-  count limits remain independent from the sharded global lease and the still-
-  required request-rate limits.
+  count limits remain independent from the sharded global lease and request
+  throttles.
+- The source reservation transaction separately consumes a fixed-window budget
+  of 12 authenticated new operations per player per minute. It checks an exact
+  already-reserved operation before consuming, so transaction retries,
+  ambiguous committed responses, downstream recovery, and object eviction do
+  not double-charge. Unauthorized callers cannot consume another player's
+  budget. New operations denied by local count quota do consume it, preventing
+  a quota-full room from becoming an unbounded request path. The bounded
+  two-player record stores only player IDs, window starts, and counts—never raw
+  operation IDs, request bodies, or capabilities.
 - A separate policy-injected quota adapter partitions global capacity across a
   deterministic fixed shard set derived from a domain-separated digest of the
   public source-room code. Each shard is independently bounded to at most 512
@@ -385,9 +395,11 @@ The source-reservation suite proves active claimed-player authorization,
 spectator/disconnected/solo refusal before identity work, exact detached
 snapshot capture, digest-only operation storage, complete-frontier atomicity,
 independent per-player/per-room count limits, transaction-retry stability,
-rollback, ambiguous committed reservation/completion recovery, completion
-compaction, conservative completed-reference accounting, expiry pruning, and
-fail-closed policy/ledger/frontier validation.
+authenticated per-player request-rate independence, no retry double-charge,
+quota-refusal charging, rollback, ambiguous committed reservation/completion
+recovery, completion compaction, conservative completed-reference accounting,
+expiry pruning, and fail-closed policy/rate-ledger/creation-ledger/frontier
+validation.
 
 The encrypted creation-receipt suite proves atomic checkpoint/receipt/alarm
 creation, complete-request digest binding, no plaintext bearer/operation/state,
@@ -399,11 +411,11 @@ restore, revocation erasure, and primary/orphan expiry cleanup.
 The create-coordination suite composes the real source ledger, custody adapter,
 quota shard, cryptography, and durable in-memory stores. It proves exact
 save-object selection, canonical checkpoint opening, source compaction,
-completed-retry receipt recovery, unauthorized/local/global-quota
+completed-retry receipt recovery, unauthorized/rate/local/global-quota
 short-circuiting, pre-commit and ambiguous committed failure recovery at source
 reservation, quota lease, save creation, and source completion, and refusal of
-mismatched plans, receipts, completion references, unavailable completed
-receipts, and invalid clocks.
+mismatched rate decisions, plans, receipts, completion references, unavailable
+completed receipts, and invalid clocks.
 
 The creation and restore coordinators accept only Cloudflare's documented
 `Symbol.dispose` RPC lifecycle metadata in addition to each exact payload
@@ -445,7 +457,9 @@ authorization, correct-shard selection/wrong-shard rejection, concurrent
 same-operation convergence, source-ledger compaction, encrypted checkpoint and
 receipt custody without plaintext capability/operation/state, digest-only
 quota storage, exact restored source-head capture, quota alarm cleanup after
-eviction, and identical recovery after all three objects are evicted.
+eviction, atomic concurrent new-operation throttling, unauthorized non-charging,
+exact-retry non-charging after eviction, and identical recovery after all three
+objects are evicted.
 Restore proves exact canonical state in the selected room, encrypted completed
 custody, digest-only target origin, generic malformed/wrong-locator refusal
 before storage, rejection of malformed room plans, and exact receipt/storage
@@ -460,7 +474,8 @@ and attached to the draft PR/release evidence:
 - production secret provisioning, key-rotation/retirement rehearsal, and
   wiring the fail-closed keyring loader only into future cryptographic RPCs;
 - production quota-capacity provisioning, request/body limits, and independent
-  rate limits; the fixed-shard global lease namespace/configuration/RPC,
+  anonymous create/restore ingress rate limits; the authenticated retry-safe
+  source request budget, fixed-shard global lease namespace/configuration/RPC,
   private source-room/named-save creation RPCs, stable source operation,
   active-player authorization, exact-snapshot reservation, bounded
   per-player/per-room count model, encrypted exact-retry bearer recovery,

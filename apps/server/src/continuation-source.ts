@@ -15,6 +15,12 @@ import {
   DEFAULT_CONTINUATION_TTL_MS,
   MINIMUM_CONTINUATION_TTL_MS,
 } from './continuation-custody.js';
+import {
+  DEFAULT_CONTINUATION_CREATION_RATE_LIMIT_POLICY,
+  consumeContinuationCreationRateLimit,
+  validContinuationCreationRateLimitPolicy,
+  type ContinuationCreationRateLimitPolicy,
+} from './continuation-request-rate.js';
 
 export const ROOM_CONTINUATION_CREATIONS_STORAGE_KEY =
   'room:continuation-creations';
@@ -83,6 +89,10 @@ export type ContinuationSourceCreationReservation =
   | {
       readonly state: 'quota_exceeded';
       readonly scope: 'player' | 'room';
+    }
+  | {
+      readonly state: 'rate_limited';
+      readonly retryAfterSeconds: number;
     };
 
 export interface CompleteContinuationSourceCreationInput {
@@ -356,9 +366,13 @@ export class DurableRoomContinuationSource {
   constructor(
     private readonly storage: DurableStorageLike,
     private readonly identity: ContinuationSourceIdentity,
-    private readonly policy: ContinuationSourceCreationPolicy = DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY
+    private readonly policy: ContinuationSourceCreationPolicy = DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY,
+    private readonly rateLimitPolicy: ContinuationCreationRateLimitPolicy = DEFAULT_CONTINUATION_CREATION_RATE_LIMIT_POLICY
   ) {
-    if (!validPolicy(policy)) {
+    if (
+      !validPolicy(policy) ||
+      !validContinuationCreationRateLimitPolicy(rateLimitPolicy)
+    ) {
       throw new Error('Continuation source creation policy is invalid');
     }
   }
@@ -427,6 +441,20 @@ export class DurableRoomContinuationSource {
               state: 'completed' as const,
               reference: referenceFromCreation(existing),
             };
+      }
+      const rateLimit = await consumeContinuationCreationRateLimit(
+        transaction,
+        requesterPlayerId,
+        input.snapshot.state.playerOrder,
+        input.createdAt,
+        this.rateLimitPolicy
+      );
+      if (!rateLimit.allowed) {
+        await persistPrunedLedger(transaction, ledger, entries);
+        return {
+          state: 'rate_limited' as const,
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        };
       }
       if (
         entries.filter((entry) => entry.requesterPlayerId === requesterPlayerId)

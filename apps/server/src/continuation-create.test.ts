@@ -540,6 +540,43 @@ describe('continuation cross-object creation coordinator', () => {
     });
     expect(saveForId).not.toHaveBeenCalled();
 
+    const rate = await createHarness();
+    const reserveQuota = vi.spyOn(rate.dependencies.quota, 'reserve');
+    const rateSaveForId = vi.spyOn(rate.dependencies, 'saveForId');
+    await expect(
+      coordinate(rate, {
+        ...rate.dependencies,
+        source: {
+          ...rate.dependencies.source,
+          reserveCreation: async () => ({
+            state: 'rate_limited',
+            retryAfterSeconds: 17,
+          }),
+        },
+      })
+    ).resolves.toEqual({ state: 'rate_limited', retryAfterSeconds: 17 });
+    expect(reserveQuota).not.toHaveBeenCalled();
+    expect(rateSaveForId).not.toHaveBeenCalled();
+
+    const malformedRate = await createHarness();
+    const malformedRateQuota = vi.spyOn(
+      malformedRate.dependencies.quota,
+      'reserve'
+    );
+    await expect(
+      coordinate(malformedRate, {
+        ...malformedRate.dependencies,
+        source: {
+          ...malformedRate.dependencies.source,
+          reserveCreation: async () => ({
+            state: 'rate_limited',
+            retryAfterSeconds: 0,
+          }),
+        },
+      })
+    ).rejects.toThrow('source rate limit result is malformed');
+    expect(malformedRateQuota).not.toHaveBeenCalled();
+
     const global = await createHarness();
     const globalSaveForId = vi.spyOn(global.dependencies, 'saveForId');
     let globalDisposals = 0;

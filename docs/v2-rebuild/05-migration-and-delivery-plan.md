@@ -738,10 +738,11 @@ Work:
   integrity verification.
 - Complete the implemented high-entropy capability, bounded
   TTL/revocation/integrity, and encrypted server-hosted custody foundation with
-  production key/quota-capacity provisioning, independent rate limits, public
-  contracts/routes, and operational evidence. Private source-room creation,
-  global quota enforcement, and one-time restore orchestration are implemented
-  and remain unreachable from public traffic.
+  production key/quota-capacity provisioning, anonymous create/restore ingress
+  limits, public contracts/routes, and operational evidence. Private
+  source-room creation now includes a durable authenticated retry-safe request
+  budget; global quota enforcement and one-time restore orchestration are also
+  implemented and remain unreachable from public traffic.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented

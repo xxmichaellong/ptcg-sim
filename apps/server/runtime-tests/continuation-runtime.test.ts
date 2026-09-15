@@ -36,6 +36,7 @@ import {
   type StoredContinuationRecord,
 } from '../src/continuation-custody.js';
 import { createContinuationCryptographyFromConfiguration } from '../src/continuation-configuration.js';
+import { ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY } from '../src/continuation-request-rate.js';
 import { ROOM_CONTINUATION_CREATIONS_STORAGE_KEY } from '../src/continuation-source.js';
 import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
 import { continuationTestKeyring } from './continuation-test-keyring.js';
@@ -461,6 +462,71 @@ describe('continuation Durable Object runtime', () => {
     await expect(
       room.createContinuation({ ...input, operationId: secondOperation })
     ).resolves.toMatchObject({ state: 'created' });
+  });
+
+  it('atomically rate limits authenticated new create operations without charging exact retries', async () => {
+    const room = env.PTCG_ROOM.getByName('DEFGHJKM3456');
+    await runInDurableObject(room, async (_instance, state) => {
+      await new DurableRoomSnapshotStore(state.storage).initialize(
+        snapshotFixture()
+      );
+    });
+    await evictDurableObject(room);
+
+    await expect(
+      room.createContinuation({
+        requesterSessionId: 'missing-runtime-session',
+        operationId: 'Z'.repeat(43),
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      runInDurableObject(room, async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+      )
+    ).resolves.toBeUndefined();
+
+    const inputs = Array.from({ length: 13 }, (_, index) => ({
+      requesterSessionId: 'continuation-runtime-session-one',
+      operationId: String.fromCharCode(65 + index).repeat(43),
+    }));
+    const results = await Promise.all(
+      inputs.map((createInput) => room.createContinuation(createInput))
+    );
+    expect(
+      results.filter((result) => result?.state === 'created')
+    ).toHaveLength(4);
+    expect(
+      results.filter((result) => result?.state === 'quota_exceeded')
+    ).toHaveLength(8);
+    expect(
+      results.filter((result) => result?.state === 'rate_limited')
+    ).toHaveLength(1);
+
+    const storedBeforeRetry = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+    );
+    expect(storedBeforeRetry).toMatchObject({
+      buckets: [{ requesterPlayerId: p1, attempts: 12 }],
+    });
+    expect(JSON.stringify(storedBeforeRetry)).not.toContain(
+      inputs[0]!.operationId
+    );
+
+    const createdIndex = results.findIndex(
+      (result) => result?.state === 'created'
+    );
+    if (createdIndex < 0) throw new Error('expected one created continuation');
+    await evictDurableObject(room);
+    await expect(
+      room.createContinuation(inputs[createdIndex]!)
+    ).resolves.toEqual(results[createdIndex]);
+    await expect(
+      runInDurableObject(room, async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+      )
+    ).resolves.toEqual(storedBeforeRetry);
   });
 
   it('rejects malformed and wrong-locator private restore RPC input without target work', async () => {
