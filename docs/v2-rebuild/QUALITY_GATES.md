@@ -96,7 +96,7 @@ package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
 The report currently records 10 export-bearing packages, 10 entrypoints, and
-563 symbols. The replay-file boundary deliberately exports its encoded-byte
+606 symbols. The replay-file boundary deliberately exports its encoded-byte
 limit and byte parser beside the existing string adapter; file decoding,
 integrity, and semantic internals remain private. The dependency-free
 `deck-core` entrypoint still exposes only the operations and value types needed
