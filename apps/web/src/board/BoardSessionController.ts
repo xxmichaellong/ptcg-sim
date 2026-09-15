@@ -101,6 +101,7 @@ export type BoardPresentationDismissScope =
 
 export type OpenedZoneCardIntent =
   | Extract<BoardIntent, { readonly kind: 'CardSelected' }>
+  | Extract<BoardIntent, { readonly kind: 'CardDropRequested' }>
   | Extract<BoardIntent, { readonly kind: 'CardContextRequested' }>
   | Extract<BoardIntent, { readonly kind: 'CardPreviewRequested' }>;
 
@@ -441,6 +442,10 @@ const hasOpenedZoneCard = (
       card.id === cardId && card.parentId === state.presentation.openedZoneId
   );
 
+const openedZoneRemainsPresentable = (zone: BoardScene['zones'][number]) =>
+  zone.interactive &&
+  (!['deck', 'discard', 'lostZone'].includes(zone.kind) || zone.count > 0);
+
 const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
   Boolean(
     scene.zones.some((zone) => zone.id === id && zone.interactive) ||
@@ -476,7 +481,9 @@ const reconcilePresentation = (
   const openedZoneId =
     state.presentation.openedZoneId &&
     scene.zones.some(
-      (zone) => zone.id === state.presentation.openedZoneId && zone.interactive
+      (zone) =>
+        zone.id === state.presentation.openedZoneId &&
+        openedZoneRemainsPresentable(zone)
     )
       ? state.presentation.openedZoneId
       : null;
@@ -1201,7 +1208,8 @@ const handleIntent = (
     case 'ZoneOpened': {
       if (
         !scene.zones.some(
-          (zone) => zone.id === intent.zoneId && zone.interactive
+          (zone) =>
+            zone.id === intent.zoneId && openedZoneRemainsPresentable(zone)
         )
       ) {
         return rejectIntent(state, intent, 'stale_zone');
@@ -1216,6 +1224,8 @@ const handleIntent = (
         return rejectIntent(state, intent, 'not_ready');
       if (!state.canSubmitCommands)
         return rejectIntent(state, intent, 'read_only');
+      if (!hasPresentableCard(intent.cardId))
+        return rejectIntent(state, intent, 'stale_card');
       // Capture one installed pair before invoking a resolver supplied by the
       // application. It can never mix a new view with an old scene.
       const installedView = view;
@@ -1226,15 +1236,31 @@ const handleIntent = (
         intent
       );
       if (!resolution.ok) return rejectIntent(state, intent, resolution.reason);
-      const presentation = state.presentation.drag
-        ? { ...state.presentation, drag: null }
-        : state.presentation;
-      const next =
-        presentation === state.presentation
-          ? state
-          : nextState(state, { presentation });
+      const presentation = allowOpenedZoneCard
+        ? {
+            ...state.presentation,
+            selectedCardId: null,
+            targetableCardIds: [],
+            drag: null,
+          }
+        : state.presentation.drag
+          ? { ...state.presentation, drag: null }
+          : state.presentation;
+      const overlays = allowOpenedZoneCard ? emptyOverlays() : state.overlays;
+      const playTargeting = allowOpenedZoneCard ? null : state.playTargeting;
+      const presentationChanged = !samePresentation(
+        state.presentation,
+        presentation
+      );
+      const localChanged =
+        presentationChanged ||
+        !sameOverlays(state.overlays, overlays) ||
+        state.playTargeting !== playTargeting;
+      const next = localChanged
+        ? nextState(state, { presentation, overlays, playTargeting })
+        : state;
       return accepted(next, [
-        ...(presentation === state.presentation
+        ...(!presentationChanged
           ? []
           : ([
               { kind: 'InstallPresentation', presentation },

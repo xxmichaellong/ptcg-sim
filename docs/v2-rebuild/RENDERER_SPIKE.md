@@ -2483,6 +2483,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      menu, executes per-card reveal exactly once, and proves both surfaces close.
      Existing prompt, submenu, overlay, and replay journeys remain green; no
      protocol, domain, authority, menu label, geometry, paint, or UI/UX changed.
+164. Opened-pile cards now retain v1's direct native drag path instead of being
+     limited to click, preview, and context actions. The duplicated React card
+     carries no authority logic: its browser drag exposes only a constant local
+     payload, maps viewport coordinates through the renderer contract's shared
+     drop-target resolver, and sends the resulting card/target pair through the
+     separately protected opened-zone intent. The controller requires that the
+     source card still belong to the exact open recipient-safe zone, rejects the
+     same request through ordinary renderer input, and reuses the existing
+     stale-safe drop resolver and command. V1 and candidate both hide the pile
+     during the physical drag, restore it after release, retain a nonempty source
+     browser after acceptance, and close it when a successor projection empties
+     the pile. Same-zone, stale, replay, read-only, invalid-coordinate, and
+     cross-zone paths submit nothing. A real-mouse Chromium journey drives the
+     checked-in v1 and candidate from opened discard to hand and pins opacity,
+     source retention, exact semantic command/action records, and clean teardown.
+     No protocol, domain, authority rule, label, layout, paint, or UI/UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

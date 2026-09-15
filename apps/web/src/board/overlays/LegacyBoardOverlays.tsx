@@ -5,6 +5,8 @@ import {
   layoutLegacyBenchQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
+  resolveBoardDropTarget,
+  type BoardScene,
   type BoardScenePlayerFrame,
   type CardSceneNode,
   type MarkerSceneNode,
@@ -823,6 +825,31 @@ export const sortRecipientSafeZoneCards = (
     })
     .map(({ card }) => card);
 
+export const resolveOpenedZoneDropTarget = (
+  scene: BoardScene,
+  surfaceBounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  sourceCardId: ViewCardId,
+  clientX: number,
+  clientY: number
+): string | null => {
+  if (
+    surfaceBounds.width <= 0 ||
+    surfaceBounds.height <= 0 ||
+    !Number.isFinite(clientX) ||
+    !Number.isFinite(clientY)
+  ) {
+    return null;
+  }
+  return resolveBoardDropTarget(
+    scene,
+    sourceCardId,
+    ((clientX - surfaceBounds.left) * scene.viewport.width) /
+      surfaceBounds.width,
+    ((clientY - surfaceBounds.top) * scene.viewport.height) /
+      surfaceBounds.height
+  );
+};
+
 const ZoneBrowser = ({
   state,
   zone,
@@ -843,6 +870,8 @@ const ZoneBrowser = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLElement>(null);
+  const activeDragCardId = useRef<ViewCardId | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   useFocusBoundary(container, '[data-zone-close]', zone.id);
@@ -856,6 +885,57 @@ const ZoneBrowser = ({
     () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
     [cards, sortEnabled]
   );
+  const finishDrag = useCallback(() => {
+    activeDragCardId.current = null;
+    setDraggingCardId(null);
+  }, []);
+  useEffect(() => {
+    const element = container.current;
+    const document = element?.ownerDocument;
+    const scene = state.scene;
+    if (!element || !document || !scene) return;
+    const onDragOver = (event: DragEvent): void => {
+      if (activeDragCardId.current === null) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+    const onDrop = (event: DragEvent): void => {
+      const cardId = activeDragCardId.current;
+      if (cardId === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const stillOwned = cards.some(
+        (card) => card.id === cardId && card.parentId === zone.id
+      );
+      const overlay = element.closest<HTMLElement>(
+        '[data-legacy-board-overlays]'
+      );
+      const targetId =
+        stillOwned && overlay
+          ? resolveOpenedZoneDropTarget(
+              scene,
+              overlay.getBoundingClientRect(),
+              cardId,
+              event.clientX,
+              event.clientY
+            )
+          : null;
+      finishDrag();
+      if (targetId) {
+        actions.emitOpenedZoneCardIntent({
+          kind: 'CardDropRequested',
+          cardId,
+          targetId,
+        });
+      }
+    };
+    document.addEventListener('dragover', onDragOver, true);
+    document.addEventListener('drop', onDrop, true);
+    return () => {
+      document.removeEventListener('dragover', onDragOver, true);
+      document.removeEventListener('drop', onDrop, true);
+    };
+  }, [actions, cards, finishDrag, state.scene, zone.id]);
 
   return (
     <section
@@ -864,6 +944,7 @@ const ZoneBrowser = ({
       data-legacy-zone-browser="true"
       data-zone-browser-id={zone.id}
       data-zone-browser-kind={zone.kind}
+      data-zone-dragging-card={draggingCardId ?? undefined}
       role="dialog"
       aria-modal="true"
       aria-label={`${zone.label}, ${zone.count} cards`}
@@ -929,6 +1010,24 @@ const ZoneBrowser = ({
             data-overlay-card-id={card.id}
             aria-label={card.label}
             aria-pressed={state.presentation.selectedCardId === card.id}
+            draggable={state.canSubmitCommands}
+            onDragStart={(event) => {
+              if (!state.canSubmitCommands) {
+                event.preventDefault();
+                return;
+              }
+              activeDragCardId.current = card.id;
+              setDraggingCardId(card.id);
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData(
+                  'application/x-ptcgsim-opened-zone-card',
+                  'card'
+                );
+              }
+              actions.dismiss('selection');
+            }}
+            onDragEnd={finishDrag}
             onClick={() =>
               actions.emitOpenedZoneCardIntent({
                 kind: 'CardSelected',

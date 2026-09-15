@@ -1445,6 +1445,22 @@ cannot send through the stale socket. Controller/component/race tests and a
 live-v1/candidate opened-discard Chromium path pin the ordering without changing
 the menu itself.
 
+Opened deck/discard/lost-zone cards also retain the source native drag gesture.
+The duplicated zone-browser button is only a recipient-safe input surface: it
+places a constant, identity-free value in browser transfer data, uses the
+renderer contract's existing physical drop-target hit test, and returns one
+`CardDropRequested` through `OpenedZoneCardIntent`. Controller policy requires
+the source alias to remain in the exact currently open zone before the existing
+`resolveBoardDrop` resolver may derive a command. Sending the same covered card
+through normal renderer input, a closed or different zone, replay/read-only
+state, an invalid release point, or a same-zone target cannot submit. The native
+source/candidate drag hides and restores the pile while active. Acceptance keeps
+a nonempty source browser mounted and a later authoritative projection closes
+it if its count reaches zero. Physical Chromium and headless controller tests
+pin discard-to-hand command/action records, coordinate scaling, forgery
+rejection, no-op retention, and accepted presentation ordering; movement rules,
+protocol, authority, labels, and paint remain unchanged.
+
 V1 replay's prize reveal/look and opponent-hand look are the scoped zone-level
 local-disclosure exceptions; its context menu also exposes local `Reveal/hide
 card`. They now appear only for a solo player's validated projected replay.

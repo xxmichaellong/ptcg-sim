@@ -296,6 +296,24 @@ and reconnect ordering; live-v1/candidate Chromium independently proves that a
 per-card action from an opened discard runs once and closes both surfaces. No
 label, geometry, paint, prompt, submenu, command, or other UI/UX changed.
 
+Direct opened-pile drag now crosses that protected duplicated-card boundary as
+well. V1's card image starts one native browser drag, clears selection, makes
+the source pile transparent while targeting, and restores it on release. A
+successful move leaves a nonempty source pile open; the source closes only when
+the move empties it. The React zone card is draggable only on a writable live
+player projection. It publishes no card handle through browser transfer data,
+converts the physical release point through the shared renderer-contract hit
+test, and submits the resulting `CardDropRequested` only through
+`OpenedZoneCardIntent`. The controller rechecks that the card still belongs to
+the exact currently open recipient-safe zone, while the ordinary renderer path
+continues to reject the same noninteractive duplicate. Existing
+`resolveBoardDrop` logic derives the preconditioned command; no movement rule is
+implemented in the overlay. Same-zone, stale, read-only, replay, cross-zone,
+and invalid-coordinate attempts retain the browser and submit nothing. Unit,
+component, and real-mouse source/candidate Chromium coverage pins coordinate
+scaling, opacity restoration, exact discard-to-hand output, nonempty retention,
+and empty-pile reconciliation without changing visible controls or styling.
+
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench

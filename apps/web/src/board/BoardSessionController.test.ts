@@ -404,6 +404,178 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('protects opened-zone drops and retains the source browser after acceptance', () => {
+    let state = install();
+    const sourceZone = state.scene!.zones.find(
+      (zone) => zone.id === 'zone:spike-blue:discard'
+    )!;
+    const sourceCard = state.scene!.cards.find(
+      (card) => card.parentId === sourceZone.id && !card.interactive
+    )!;
+    const targetZoneId = 'zone:spike-blue:hand';
+    const intent: BoardIntent = {
+      kind: 'CardDropRequested',
+      cardId: sourceCard.id,
+      targetId: targetZoneId,
+    };
+
+    expect(
+      apply(state, { kind: 'OpenedZoneCardIntent', intent }).effects
+    ).toEqual([{ kind: 'IntentRejected', intent, reason: 'stale_card' }]);
+
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: sourceZone.id },
+    }).state;
+    expect(apply(state, { kind: 'RendererIntent', intent }).effects).toEqual([
+      { kind: 'IntentRejected', intent, reason: 'stale_card' },
+    ]);
+    const otherCoveredCard = state.scene!.cards.find(
+      (card) => card.parentId !== sourceZone.id && !card.interactive
+    )!;
+    const crossZoneIntent: BoardIntent = {
+      ...intent,
+      cardId: otherCoveredCard.id,
+    };
+    expect(
+      apply(state, {
+        kind: 'OpenedZoneCardIntent',
+        intent: crossZoneIntent,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'IntentRejected',
+        intent: crossZoneIntent,
+        reason: 'stale_card',
+      },
+    ]);
+    expect(
+      apply(
+        { ...state, canSubmitCommands: false },
+        { kind: 'OpenedZoneCardIntent', intent }
+      ).effects
+    ).toEqual([{ kind: 'IntentRejected', intent, reason: 'read_only' }]);
+    const staleTargetIntent: BoardIntent = {
+      ...intent,
+      targetId: 'zone:missing',
+    };
+    const staleTarget = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: staleTargetIntent,
+    });
+    expect(staleTarget.state).toBe(state);
+    expect(staleTarget.effects).toEqual([
+      {
+        kind: 'IntentRejected',
+        intent: staleTargetIntent,
+        reason: 'stale_target',
+      },
+    ]);
+
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardSelected', cardId: sourceCard.id },
+    }).state;
+    const accepted = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent,
+    });
+
+    expect(accepted.state.presentation).toEqual({
+      ...DEFAULT_BOARD_PRESENTATION,
+      openedZoneId: sourceZone.id,
+    });
+    expect(accepted.state.overlays).toEqual({
+      contextMenuCardId: null,
+      preview: null,
+      input: null,
+    });
+    expect(accepted.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: accepted.state.presentation,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'MoveCard',
+          cardId: sourceCard.id,
+          expectedSourceZoneId: sourceZone.id,
+          destinationZoneId: targetZoneId,
+        },
+      },
+    ]);
+
+    const installedView = state.view!;
+    const sourceViewZone = installedView.zones[sourceZone.id]!;
+    const targetViewZone = installedView.zones[targetZoneId]!;
+    const movedCard = sourceViewZone.cards.find(
+      (card) => card.id === sourceCard.id
+    )!;
+    const remainingCards = sourceViewZone.cards.filter(
+      (card) => card.id !== sourceCard.id
+    );
+    expect(remainingCards.length).toBeGreaterThan(0);
+    const nonEmptyView: MatchViewState = {
+      ...installedView,
+      revision: 2,
+      zones: {
+        ...installedView.zones,
+        [sourceZone.id]: { ...sourceViewZone, cards: remainingCards },
+        [targetZoneId]: {
+          ...targetViewZone,
+          cards: [...targetViewZone.cards, movedCard],
+        },
+      },
+    };
+    const nonEmpty = apply(accepted.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, nonEmptyView),
+    });
+    expect(nonEmpty.state.presentation.openedZoneId).toBe(sourceZone.id);
+
+    const emptiedView: MatchViewState = {
+      ...nonEmptyView,
+      revision: 3,
+      zones: {
+        ...nonEmptyView.zones,
+        [sourceZone.id]: {
+          ...nonEmptyView.zones[sourceZone.id]!,
+          cards: [],
+        },
+        [targetZoneId]: {
+          ...nonEmptyView.zones[targetZoneId]!,
+          cards: [
+            ...nonEmptyView.zones[targetZoneId]!.cards,
+            ...remainingCards,
+          ],
+        },
+      },
+    };
+    const emptied = apply(nonEmpty.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(3, emptiedView),
+    });
+    expect(emptied.state.presentation.openedZoneId).toBeNull();
+    expect(emptied.effects).toContainEqual({
+      kind: 'InstallPresentation',
+      presentation: emptied.state.presentation,
+    });
+
+    const noOpIntent: BoardIntent = {
+      ...intent,
+      targetId: sourceZone.id,
+    };
+    const rejected = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: noOpIntent,
+    });
+    expect(rejected.state).toBe(state);
+    expect(rejected.effects).toEqual([
+      { kind: 'IntentRejected', intent: noOpIntent, reason: 'no_op' },
+    ]);
+  });
+
   it('resolves one route-owned overlay action and dismisses its menu atomically', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

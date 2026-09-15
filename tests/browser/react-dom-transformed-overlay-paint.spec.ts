@@ -1487,3 +1487,217 @@ test('opened-pile card actions retain real-v1 all-popup teardown', async ({
   await expect(host).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('opened-pile cards retain real-v1 native drag movement', async ({
+  browser,
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const discardTarget = host.locator(
+    `[data-zone-id="${fixture.destinationZoneId}"]`
+  );
+  const handTarget = host.locator(
+    `[data-zone-id="zone:${fixture.ownPlayerId}:hand"]`
+  );
+  await discardTarget.press('Enter');
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-browser-id',
+    fixture.destinationZoneId
+  );
+  const sourceAssets = await assetsFor(zoneBrowser);
+  const candidateCard = zoneBrowser
+    .locator('button[data-overlay-card-id]')
+    .first();
+  const candidateCardId = await candidateCard.getAttribute(
+    'data-overlay-card-id'
+  );
+  if (!candidateCardId) throw new Error('Opened discard card has no stable ID');
+  const candidateTargetBounds = await handTarget.boundingBox();
+  if (!candidateTargetBounds) throw new Error('Candidate hand has no bounds');
+  const candidateSourceBounds = await candidateCard.boundingBox();
+  if (!candidateSourceBounds)
+    throw new Error('Candidate opened discard card has no bounds');
+  const candidateSourcePoint = {
+    x: candidateSourceBounds.x + candidateSourceBounds.width / 2,
+    y: candidateSourceBounds.y + candidateSourceBounds.height / 2,
+  };
+  const candidateDropPoint = {
+    x: candidateTargetBounds.x + candidateTargetBounds.width / 2,
+    y: candidateTargetBounds.y + candidateTargetBounds.height / 2,
+  };
+
+  await page.mouse.move(candidateSourcePoint.x, candidateSourcePoint.y);
+  await page.mouse.down();
+  await page.mouse.move(candidateSourcePoint.x + 12, candidateSourcePoint.y, {
+    steps: 3,
+  });
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-dragging-card',
+    candidateCardId
+  );
+  await expect(zoneBrowser).toHaveCSS('opacity', '0');
+  await page.mouse.move(candidateDropPoint.x, candidateDropPoint.y, {
+    steps: 10,
+  });
+  await page.mouse.up();
+
+  await expect
+    .poll(() => candidateEvidence(page))
+    .toMatchObject({
+      submissions: [
+        {
+          type: 'MoveCard',
+          cardId: candidateCardId,
+          expectedSourceZoneId: fixture.destinationZoneId,
+          destinationZoneId: `zone:${fixture.ownPlayerId}:hand`,
+        },
+      ],
+      submissionResults: [{ queued: true, clientSequence: 1 }],
+      overlayRejections: [],
+      overlayActions: [],
+      presentation: {
+        selectedCardId: null,
+        openedZoneId: fixture.destinationZoneId,
+      },
+      overlays: { contextMenuCardId: null },
+      reportedErrors: [],
+    });
+  await expect(zoneBrowser).toBeVisible();
+  await expect(zoneBrowser).not.toHaveAttribute('data-zone-dragging-card');
+  await expect(zoneBrowser).toHaveCSS('opacity', '1');
+
+  const sourcePage = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const sourceErrors = collectRuntimeErrors(sourcePage);
+  try {
+    const loaded = await loadLegacyRuntime(sourcePage);
+    await mountLegacyPiles(sourcePage, [
+      { user: 'self', zoneId: 'discard', assets: sourceAssets },
+    ]);
+    await sourcePage.evaluate(async () => {
+      const specifier = '/src/front-end.js';
+      const frontEnd = await import(/* @vite-ignore */ specifier);
+      const state = frontEnd['systemState'] as {
+        selfCounter: number;
+        selfActionData: unknown[];
+        exportActionData: unknown[];
+      };
+      state.selfCounter = 0;
+      state.selfActionData = [];
+      state.exportActionData = [];
+    });
+    await openLegacyZone(sourcePage, 'self', 'discard');
+    const sourceDiscard = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#discard');
+    const sourceHand = sourcePage
+      .frameLocator('#selfContainer')
+      .locator('#hand');
+    const sourceCard = sourceDiscard.locator(':scope > img').first();
+    const sourceCardBounds = await sourceCard.boundingBox();
+    const sourceHandBounds = await sourceHand.boundingBox();
+    if (!sourceCardBounds || !sourceHandBounds) {
+      throw new Error('Legacy drag endpoints are missing');
+    }
+    const sourceStart = {
+      x: sourceCardBounds.x + sourceCardBounds.width / 2,
+      y: sourceCardBounds.y + sourceCardBounds.height / 2,
+    };
+    const sourceEnd = {
+      x: sourceHandBounds.x + sourceHandBounds.width / 2,
+      y: sourceHandBounds.y + sourceHandBounds.height / 2,
+    };
+
+    await sourcePage.mouse.move(sourceStart.x, sourceStart.y);
+    await sourcePage.mouse.down();
+    await sourcePage.mouse.move(sourceStart.x + 12, sourceStart.y, {
+      steps: 3,
+    });
+    await expect(sourceDiscard).toHaveCSS('opacity', '0');
+    await sourcePage.mouse.move(sourceEnd.x, sourceEnd.y, { steps: 10 });
+    await sourcePage.mouse.up();
+
+    await expect(sourceDiscard).toBeVisible();
+    await expect(sourceDiscard).toHaveCSS('opacity', '1');
+    const sourceState = await sourcePage.evaluate(async () => {
+      const frontEndSpecifier = '/src/front-end.js';
+      const zoneSpecifier = '/src/setup/zones/get-zone.js';
+      const [frontEnd, zoneModule] = await Promise.all([
+        import(/* @vite-ignore */ frontEndSpecifier),
+        import(/* @vite-ignore */ zoneSpecifier),
+      ]);
+      const state = frontEnd['systemState'] as {
+        readonly selfCounter: number;
+        readonly selfActionData: readonly {
+          readonly user: string;
+          readonly emit: boolean;
+          readonly action: string;
+          readonly parameters: readonly unknown[];
+        }[];
+        readonly exportActionData: readonly {
+          readonly user: string;
+          readonly emit: boolean;
+          readonly action: string;
+          readonly parameters: readonly unknown[];
+        }[];
+      };
+      const getZone = zoneModule['getZone'] as (
+        user: string,
+        zoneId: string
+      ) => { readonly array: readonly unknown[] };
+      return {
+        counter: state.selfCounter,
+        actions: structuredClone(state.selfActionData),
+        exports: structuredClone(state.exportActionData),
+        discardCount: getZone('self', 'discard').array.length,
+        handCount: getZone('self', 'hand').array.length,
+        messages: [...document.querySelectorAll('#chatbox p')].map(
+          (message) => message.textContent
+        ),
+      };
+    });
+    expect(sourceState).toMatchObject({
+      counter: 1,
+      discardCount: sourceAssets.length - 1,
+      handCount: 1,
+      actions: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'moveCardBundle',
+          parameters: ['opp', 'discard', 'hand', 0, undefined, 'move'],
+        },
+      ],
+      exports: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'moveCardBundle',
+          parameters: ['self', 'discard', 'hand', 0, undefined, 'move'],
+        },
+      ],
+    });
+    expect(sourceState.messages.at(-1)).toBe(
+      `Blue moved ${sourceAssets[0]!.label} from discard to hand`
+    );
+    expect(loaded.missingPaths).toEqual([]);
+    expect(sourceErrors).toEqual([]);
+  } finally {
+    await sourcePage.close();
+  }
+
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

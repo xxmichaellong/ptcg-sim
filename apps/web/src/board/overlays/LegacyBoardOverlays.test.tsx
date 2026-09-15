@@ -17,6 +17,7 @@ import {
   LegacyBoardOverlays,
   legacyStackPreviewFrameStyle,
   legacyZoneBrowserFrameStyle,
+  resolveOpenedZoneDropTarget,
   selectLegacyContextEntries,
   sortRecipientSafeZoneCards,
   type LegacyBoardOverlayActions,
@@ -806,6 +807,138 @@ describe('legacy board overlays', () => {
     ).toBe(false);
     expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+  });
+
+  it('routes writable opened-zone drags through the shared scene hit test', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const hand = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:hand`
+    )!;
+    const overlayState = state({
+      presentation: {
+        selectedCardId: discardCards[0]!.id,
+        hoveredCardId: null,
+        targetableCardIds: [],
+        drag: null,
+        openedZoneId: discard.id,
+      },
+    });
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: scene.viewport.width,
+      bottom: scene.viewport.height,
+      width: scene.viewport.width,
+      height: scene.viewport.height,
+      toJSON: () => ({}),
+    });
+    const source = host.querySelector<HTMLButtonElement>(
+      `[data-overlay-card-id="${discardCards[0]!.id}"]`
+    )!;
+    expect(source.getAttribute('draggable')).toBe('true');
+    const transfer = {
+      dropEffect: 'none',
+      effectAllowed: 'none',
+      setData: vi.fn(),
+    };
+    const event = (type: string, clientX = 0, clientY = 0): Event => {
+      const dispatched = new Event(type, {
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperties(dispatched, {
+        clientX: { value: clientX },
+        clientY: { value: clientY },
+        dataTransfer: { value: transfer },
+      });
+      return dispatched;
+    };
+
+    await act(async () => source.dispatchEvent(event('dragstart')));
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('selection');
+    expect(transfer.effectAllowed).toBe('move');
+    expect(transfer.setData).toHaveBeenCalledExactlyOnceWith(
+      'application/x-ptcgsim-opened-zone-card',
+      'card'
+    );
+    expect(
+      host
+        .querySelector('[data-legacy-zone-browser]')
+        ?.getAttribute('data-zone-dragging-card')
+    ).toBe(String(discardCards[0]!.id));
+
+    const targetX = hand.bounds.x + hand.bounds.width / 2;
+    const targetY = hand.bounds.y + hand.bounds.height / 2;
+    await act(async () =>
+      document.dispatchEvent(event('drop', targetX, targetY))
+    );
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardDropRequested',
+      cardId: discardCards[0]!.id,
+      targetId: hand.id,
+    });
+    expect(
+      host
+        .querySelector('[data-legacy-zone-browser]')
+        ?.hasAttribute('data-zone-dragging-card')
+    ).toBe(false);
+
+    expect(
+      resolveOpenedZoneDropTarget(
+        scene,
+        { left: 100, top: 50, width: 640, height: 360 },
+        discardCards[0]!.id,
+        100 + (targetX * 640) / scene.viewport.width,
+        50 + (targetY * 360) / scene.viewport.height
+      )
+    ).toBe(hand.id);
+    expect(
+      resolveOpenedZoneDropTarget(
+        scene,
+        { left: 0, top: 0, width: 0, height: 0 },
+        discardCards[0]!.id,
+        targetX,
+        targetY
+      )
+    ).toBeNull();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: { ...overlayState, canSubmitCommands: false },
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const readOnly = host.querySelector<HTMLButtonElement>(
+      `[data-overlay-card-id="${discardCards[0]!.id}"]`
+    )!;
+    expect(readOnly.getAttribute('draggable')).toBe('false');
+    await act(async () => readOnly.dispatchEvent(event('dragstart')));
+    expect(callbacks.dismiss).toHaveBeenCalledTimes(1);
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
   });
 
   it('preserves the source discard confirmation without adding one to deck shuffle', async () => {

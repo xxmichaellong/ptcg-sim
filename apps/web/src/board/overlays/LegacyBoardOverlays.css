@@ -196,6 +196,11 @@
   pointer-events: auto;
 }
 
+.ptcgsim-legacy-zone-browser[data-zone-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+}
+
 .ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-zone-browser {
   background: rgb(21 21 21 / 87%);
   color: #fff;
