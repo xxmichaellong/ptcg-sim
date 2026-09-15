@@ -574,6 +574,7 @@ describe('React DOM board renderer', () => {
     await mountInAct(renderer, host, createScene());
     const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
     const zone = host.querySelector<HTMLElement>('[data-zone-id]')!;
+    expect(surface.style.background).toBe('transparent');
     expect(surface.dataset.showZoneOutlines).toBe('true');
     expect(zone.style.background).toBe('rgba(255, 255, 255, 0.1)');
     expect(zone.style.boxShadow).toBe('2px 2px 5px rgba(0, 0, 0, 0.1)');
@@ -602,6 +603,15 @@ describe('React DOM board renderer', () => {
     expect(surface.dataset.showZoneOutlines).toBe('true');
     expect(zone.style.background).toBe('rgba(255, 255, 255, 0.1)');
     expect(zone.style.boxShadow).toBe('2px 2px 5px rgba(0, 0, 0, 0.1)');
+
+    act(() =>
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        darkMode: true,
+      })
+    );
+    expect(surface.dataset.darkMode).toBe('true');
+    expect(surface.style.background).toBe('transparent');
 
     await act(async () => {
       renderer.destroy();

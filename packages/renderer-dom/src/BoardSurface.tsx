@@ -485,7 +485,7 @@ export const BoardSurface = ({
         width: scene.viewport.width,
         height: scene.viewport.height,
         overflow: 'hidden',
-        background: preferences.darkMode ? '#081212' : 'transparent',
+        background: 'transparent',
         touchAction: 'none',
         userSelect: 'none',
         contain: 'strict',

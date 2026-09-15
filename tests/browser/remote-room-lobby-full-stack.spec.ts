@@ -384,9 +384,12 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         .getByText('Watcher: still watching', { exact: true })
     ).toBeVisible();
 
-    await expect(
-      playerTwo.page.locator('[data-renderer-status]')
-    ).toHaveAttribute('data-renderer-status', 'ready');
+    const rendererStatus = playerTwo.page.locator('[data-renderer-status]');
+    await expect(rendererStatus).toHaveAttribute(
+      'data-renderer-status',
+      'ready'
+    );
+    await expect(rendererStatus).not.toBeVisible();
     const boardSurface = playerTwo.page.locator('.ptcgsim-board-surface');
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
     await expect(boardSurface).toHaveAttribute(
@@ -447,6 +450,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await playerTwo.page.locator('#darkModeCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
+    await expect(boardSurface).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)'
+    );
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
     await expect(roomRoute).toHaveCSS('background-color', 'rgb(8, 18, 18)');
     await expect(playerTwo.page.locator('#settings')).toHaveCSS(
