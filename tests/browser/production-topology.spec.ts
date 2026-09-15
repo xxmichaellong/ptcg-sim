@@ -10,6 +10,8 @@ const PUBLIC_V2_ASSET_DIRECTORY = fileURLToPath(
 
 const CARD_BACK_SHA256 =
   '44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327';
+const EXPECTED_DEFAULT_OFF_CONSOLE_ERROR =
+  'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 
 interface CreatedRoom {
   readonly mode: string;
@@ -328,5 +330,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     `/v2/continuations/${'A'.repeat(22)}/restore`,
     `/v2/continuations/${'A'.repeat(22)}`,
   ]);
-  expect(errors).toEqual([]);
+  expect(errors).toEqual(
+    Array.from({ length: 3 }, () => EXPECTED_DEFAULT_OFF_CONSOLE_ERROR)
+  );
 });

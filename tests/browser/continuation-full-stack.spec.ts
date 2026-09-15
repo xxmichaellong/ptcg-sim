@@ -13,6 +13,8 @@ import {
 const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 const SUCCESS_MESSAGE =
   'Saved game resumed. A player invitation for the restored room was copied to your clipboard.';
+const EXPECTED_REVOKED_CONSOLE_ERROR =
+  'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 
 interface OpenedLobby {
   readonly page: Page;
@@ -333,7 +335,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       for (const bearer of bearerValues) expect(exposed).not.toContain(bearer);
     }
 
-    expect(creator.errors).toEqual([]);
+    expect(creator.errors).toEqual([EXPECTED_REVOKED_CONSOLE_ERROR]);
     expect(sourceOpponent.errors).toEqual([]);
     expect(restoredOpponent.errors).toEqual([]);
   } finally {
