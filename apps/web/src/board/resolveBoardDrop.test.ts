@@ -230,6 +230,62 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('rejects a card visible through another player inspection without submitting', () => {
+    const input = fixture();
+    const sceneCard = localHandCard(input);
+    if (input.view.viewer.kind !== 'player') {
+      throw new Error('player view fixture is required');
+    }
+    const viewerPlayerId = input.view.viewer.playerId;
+    const sourcePlayerId = input.view.playerOrder.find(
+      (playerId) => playerId !== viewerPlayerId
+    )!;
+    const hand = input.view.zones[`zone:${viewerPlayerId}:hand`]!;
+    const viewCard = hand.cards.find((card) => card.id === sceneCard.id)!;
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter((card) => card.id !== viewCard.id),
+        },
+      },
+      workAreas: {
+        ...input.view.workAreas,
+        [sourcePlayerId]: {
+          ...input.view.workAreas[sourcePlayerId]!,
+          inspection: {
+            id: 'foreign-inspection-work-area',
+            sourceZoneId: hand.id,
+            cards: [viewCard],
+          },
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: viewerPlayerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const submit = vi.fn();
+
+    expect(
+      submitBoardDrop(
+        view,
+        scene,
+        {
+          kind: 'CardDropRequested',
+          cardId: viewCard.id,
+          targetId: `zone:${viewerPlayerId}:discard`,
+        },
+        submit
+      )
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it('moves staged cards individually or restores the represented stack', () => {
     const input = fixture();
     const sceneCard = localHandCard(input);

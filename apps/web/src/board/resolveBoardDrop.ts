@@ -65,12 +65,13 @@ export const resolveBoardDrop = (
       containsCard(stack.evolutionCards, intent.cardId) ||
       containsCard(stack.attachmentCards, intent.cardId)
   );
-  const sourceInspection = Object.values(view.workAreas)
-    .map((workArea) => workArea.inspection)
-    .find(
-      (inspection) =>
-        inspection !== null && containsCard(inspection.cards, intent.cardId)
-    );
+  const sourceInspectionEntry = Object.entries(view.workAreas).find(
+    ([, workArea]) =>
+      workArea.inspection !== null &&
+      containsCard(workArea.inspection.cards, intent.cardId)
+  );
+  const sourceInspection = sourceInspectionEntry?.[1].inspection ?? null;
+  const sourceInspectionPlayerId = sourceInspectionEntry?.[0];
   const sourceStagedEntry = Object.entries(view.workAreas).find(
     ([, workArea]) => {
       const resolution = workArea.attachmentResolution;
@@ -91,6 +92,9 @@ export const resolveBoardDrop = (
     return rejected('stale_card');
   }
   if (sourceStaged && sourceStagedPlayerId !== view.viewer.playerId) {
+    return rejected('unsupported_source');
+  }
+  if (sourceInspection && sourceInspectionPlayerId !== view.viewer.playerId) {
     return rejected('unsupported_source');
   }
 
