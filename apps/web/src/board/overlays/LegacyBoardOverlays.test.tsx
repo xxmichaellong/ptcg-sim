@@ -712,6 +712,59 @@ describe('legacy board overlays', () => {
     });
   });
 
+  it('traps card-preview focus and exposes only the topmost nested dialog as modal', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const card = scene.cards.find(
+      (candidate) => candidate.parentId === discard.id
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              targetableCardIds: [],
+              drag: null,
+              openedZoneId: discard.id,
+            },
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const browser = host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser]'
+    )!;
+    const preview = host.querySelector<HTMLElement>(
+      '[data-preview-kind="card"]'
+    )!;
+    expect(preview.getAttribute('aria-modal')).toBe('true');
+    expect(browser.getAttribute('aria-modal')).toBeNull();
+    expect(browser.getAttribute('aria-hidden')).toBe('true');
+    expect(browser.hasAttribute('inert')).toBe(true);
+    expect(document.activeElement).toBe(preview);
+
+    const tab = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(preview.dispatchEvent(tab)).toBe(false);
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(preview);
+  });
+
   it('sorts only disclosed labels locally and restores authoritative scene order', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(

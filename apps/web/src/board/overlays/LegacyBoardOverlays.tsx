@@ -729,7 +729,7 @@ const Preview = ({
   useFocusBoundary(container, '[data-preview-focus]', identity);
   useOutsideDismiss(container, dismiss);
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
-    if (kind === 'stack' && container.current) {
+    if (container.current) {
       trapModalTab(event, container.current, '[data-preview-tabbable]');
     }
     if (
@@ -855,6 +855,7 @@ const ZoneBrowser = ({
   zone,
   cards,
   frame,
+  obscured,
   captureContextAnchor,
   actions,
 }: {
@@ -862,6 +863,7 @@ const ZoneBrowser = ({
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
   readonly frame?: BoardScenePlayerFrame;
+  readonly obscured: boolean;
   readonly captureContextAnchor: (
     cardId: ViewCardId,
     zoneId: string,
@@ -956,7 +958,9 @@ const ZoneBrowser = ({
       data-zone-browser-kind={zone.kind}
       data-zone-dragging-card={draggingCardId ?? undefined}
       role="dialog"
-      aria-modal="true"
+      aria-modal={obscured ? undefined : 'true'}
+      aria-hidden={obscured ? 'true' : undefined}
+      inert={obscured ? true : undefined}
       aria-label={`${zone.label}, ${zone.count} cards`}
       data-overlay-side={zone.side}
       tabIndex={-1}
@@ -1385,6 +1389,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           zone={openedZone}
           cards={openedZoneCards}
           frame={openedZoneFrame}
+          obscured={preview !== null}
           captureContextAnchor={(cardId, zoneId, bounds) =>
             setContextAnchor({ cardId, zoneId, bounds })
           }
