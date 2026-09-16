@@ -73,7 +73,9 @@ const openIsolatedPage = async (
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
   });
-  await page.goto('/');
+  // The invitation modules are driven directly; stay on the lobby rather
+  // than letting the page open a solo table.
+  await page.goto('/?room-lobby=1');
   return page;
 };
 

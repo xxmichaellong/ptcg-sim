@@ -134,6 +134,52 @@ const expectForgedConcealmentRejected = (
 };
 
 describe('movement visibility hardening', () => {
+  it('shows a player their own deck and hand, and only backs to everyone else', () => {
+    const prepared = fixture();
+    const deckId = playerZoneId(p1, 'deck');
+    const handId = playerZoneId(p1, 'hand');
+    const prizesId = playerZoneId(p1, 'prizes');
+    const owner = projectMatch(
+      prepared.state,
+      { kind: 'player', playerId: p1 },
+      identities
+    );
+    const opponent = projectMatch(
+      prepared.state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    const spectator = projectMatch(
+      prepared.state,
+      { kind: 'spectator' },
+      identities
+    );
+    // v1 lets a player look through their deck; the deck order the owner
+    // sees is the authoritative order.
+    expect(owner.zones[deckId]!.cards.length).toBeGreaterThan(0);
+    expect(
+      owner.zones[deckId]!.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    expect(
+      owner.zones[handId]!.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    // Prizes stay face down even for their owner until revealed or looked at.
+    expect(
+      owner.zones[prizesId]!.cards.every((card) => card.kind === 'concealed')
+    ).toBe(true);
+    for (const view of [opponent, spectator]) {
+      for (const zoneId of [deckId, handId, prizesId]) {
+        expect(
+          view.zones[zoneId]!.cards.every((card) => card.kind === 'concealed'),
+          `${view.viewer.kind} ${zoneId}`
+        ).toBe(true);
+      }
+    }
+    expect(spectator.zones[deckId]!.cards).toHaveLength(
+      owner.zones[deckId]!.cards.length
+    );
+  });
+
   it('conceals and rotates public identity when a card enters prizes', () => {
     const prepared = fixture();
     const handId = playerZoneId(p1, 'hand');

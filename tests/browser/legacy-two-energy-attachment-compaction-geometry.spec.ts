@@ -802,6 +802,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

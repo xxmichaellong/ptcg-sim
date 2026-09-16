@@ -497,7 +497,15 @@ describe('authoritative room command transaction', () => {
       loaded.state,
       { kind: 'player', playerId: p1 },
       emptyProjectionIdentityState(),
-      { nextOpaqueId: () => 'alias-integrity-opaque-id-0001' }
+      {
+        // The owner's projection now names the deck card's definition too,
+        // so the source must hand out distinct ids.
+        nextOpaqueId: (() => {
+          let next = 0;
+          return () =>
+            `alias-integrity-opaque-id-${String(++next).padStart(4, '0')}`;
+        })(),
+      }
     );
     const snapshot: RoomAuthoritySnapshot = {
       ...initial,

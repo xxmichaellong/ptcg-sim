@@ -186,8 +186,11 @@ export const isCardKnownToViewer = (
   if (location.kind === 'zone') {
     const zone = state.zones[location.zoneId];
     if (!zone) return false;
-    if (zone.kind === 'deck' || zone.kind === 'prizes') return false;
-    if (zone.kind === 'hand') {
+    if (zone.kind === 'prizes') return false;
+    // v1 lets a player look through their own deck (and hand); the opponent
+    // and spectators still see only backs. Prizes stay face down for everyone
+    // until revealed or looked at.
+    if (zone.kind === 'deck' || zone.kind === 'hand') {
       return viewer.kind === 'player' && viewer.playerId === zone.ownerId;
     }
     if (card.face === 'down') {

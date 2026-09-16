@@ -286,6 +286,65 @@ describe('LegacyPresentationSurface', () => {
     await act(async () => root.unmount());
   });
 
+  it('paints the intro above the entries and wipes it with Clear battle log like v1', async () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const scheduler = new ControlledAnnouncementScheduler();
+    const runtime = new LegacyGamePresentationRuntime({
+      live,
+      replay,
+      scheduleAnnouncementClear: scheduler.schedule,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () =>
+      root.render(
+        <LegacyPresentationSurface
+          runtime={runtime}
+          perspective={view}
+          intro={<strong>Welcome to PTCG-sim!</strong>}
+        />
+      )
+    );
+    const feed = host.querySelector('#chatbox') as HTMLDivElement;
+    expect(feed.firstElementChild?.getAttribute('data-activity-intro')).toBe(
+      'true'
+    );
+    expect(feed.textContent).toBe('Welcome to PTCG-sim!');
+
+    await act(async () => {
+      live.publish([coin(2, 'spike-blue', 'heads')]);
+      await flushConsumers();
+    });
+    // Entries append below the intro; the intro is not an entry.
+    expect(feed.firstElementChild?.getAttribute('data-activity-intro')).toBe(
+      'true'
+    );
+    expect(feed.querySelectorAll('p')).toHaveLength(1);
+    expect(feed.textContent).toBe('Welcome to PTCG-sim!Blue flipped heads');
+
+    // v1's Clear battle log sets the whole panel's innerHTML to '' -- the
+    // welcome goes with the entries and does not come back.
+    await act(async () => {
+      runtime.clearActivity();
+    });
+    expect(feed.textContent).toBe('');
+    await act(async () => {
+      live.publish([
+        coin(2, 'spike-blue', 'heads'),
+        coin(3, 'spike-red', 'tails'),
+      ]);
+      await flushConsumers();
+    });
+    expect(feed.querySelector('[data-activity-intro]')).toBeNull();
+    expect(feed.textContent).toContain('Red flipped tails');
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('replaces activity and cancels stale live-region work across replay seek', async () => {
     const live = new FakeLiveSource();
     const replay = new FakeReplaySource();

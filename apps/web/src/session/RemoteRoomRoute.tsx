@@ -15,6 +15,7 @@ import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import { LegacyPresentationSurface } from '../presentation/LegacyPresentationSurface.js';
+import { LegacyWelcome } from './LegacyWelcome.js';
 import { ReplayModeShell } from '../replay/ReplayModeShell.js';
 import {
   RemoteSessionBoard,
@@ -355,6 +356,7 @@ export const RemoteRoomRoute = ({
                   runtime={runtime.presentation}
                   perspective={state.view}
                   feedId={feedId}
+                  {...(soloLive ? { intro: <LegacyWelcome /> } : {})}
                 />
                 {!chrome.active && (
                   <RemoteRoomLiveControls

@@ -482,20 +482,24 @@ export class PixiBoardRenderer implements BoardRenderer {
         view.descriptor = descriptor;
       }
       this.applyCardView(view);
-      const expectedUrl = descriptor.imageUrl;
+      const expectedUrl = descriptor.tableImageUrl ?? descriptor.imageUrl;
+      const currentUrl = (candidate: CardSceneNode): string =>
+        candidate.tableImageUrl ?? candidate.imageUrl;
       this.textures.bind(
         renderKey,
         expectedUrl,
         (texture) => {
           const current = this.cardViews.get(renderKey);
-          if (!current || current.descriptor.imageUrl !== expectedUrl) return;
+          if (!current || currentUrl(current.descriptor) !== expectedUrl)
+            return;
           current.sprite.texture = texture;
           current.sprite.tint = 0xffffff;
           this.scheduleRender();
         },
         (error) => {
           const current = this.cardViews.get(renderKey);
-          if (!current || current.descriptor.imageUrl !== expectedUrl) return;
+          if (!current || currentUrl(current.descriptor) !== expectedUrl)
+            return;
           current.sprite.texture = this.textures.placeholder;
           current.sprite.tint = 0x777777;
           this.adapters.reportError(error);

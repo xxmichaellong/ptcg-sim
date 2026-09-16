@@ -566,6 +566,7 @@ test('recipient projection never requests concealed face assets across reveal an
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     } as const;
     const waitForRevision = async (revision: number) => {
       for (let attempt = 0; attempt < 60; attempt += 1) {

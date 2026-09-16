@@ -686,6 +686,53 @@ describe('renderer-neutral board scene', () => {
     expect(last.bounds.width).toBeCloseTo(width);
   });
 
+  it('paints a known deck as its owner card back on the table but as faces in the viewer', () => {
+    const base = createView();
+    const deckCards = Array.from({ length: 3 }, (_, index) => ({
+      kind: 'known' as const,
+      id: asViewCardId(`own-deck:${index}`),
+      definitionId,
+      ownerId: p1,
+      category: 'Pokémon' as const,
+      face: 'up' as const,
+      orientationQuarterTurns: 0 as const,
+      abilityUsed: false,
+      publiclyRevealed: false,
+    }));
+    const view: MatchViewState = {
+      ...base,
+      zones: {
+        ...base.zones,
+        'zone:p1:deck': {
+          id: 'zone:p1:deck',
+          kind: 'deck',
+          ownerId: p1,
+          cards: deckCards,
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, options);
+    const deck = scene.cards.filter((card) => card.parentId === 'zone:p1:deck');
+    expect(deck).toHaveLength(3);
+    const cover = deck.find((card) => card.renderKey === 'cover:zone:p1:deck')!;
+    // The owner can read the deck, so every node carries the face for the
+    // zone viewer, while the table shows v1's card-back cover.
+    expect(cover.imageUrl).toBe('https://cards.invalid/board-visible.png');
+    expect(cover.tableImageUrl).toBe('/blue-back.png');
+    for (const card of deck) {
+      expect(card.imageUrl).toBe('https://cards.invalid/board-visible.png');
+    }
+    expect(deck.filter((card) => card.tableImageUrl !== undefined)).toEqual([
+      cover,
+    ]);
+    // A concealed opponent deck still paints backs everywhere.
+    const opponentCover = scene.cards.find(
+      (card) => card.renderKey === 'cover:zone:p2:deck'
+    )!;
+    expect(opponentCover.imageUrl).toBe('/red-back.png');
+    expect(opponentCover.tableImageUrl).toBe('/red-back.png');
+  });
+
   it('uses board-tier face images only for visible cards and backs for concealed cards', () => {
     const scene = createBoardSceneForViewport(createView(), options);
     const known = scene.cards.find((card) => card.id === knownCardId);

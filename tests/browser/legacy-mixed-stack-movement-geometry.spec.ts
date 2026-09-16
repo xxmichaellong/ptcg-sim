@@ -849,6 +849,7 @@ test('the checked-in v1 runtime characterizes canonical, transferred, and catego
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     fixtureWindow.__PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__ = renderer;
   }, candidateScenes.bench);

@@ -532,6 +532,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

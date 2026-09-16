@@ -111,6 +111,12 @@ export interface CardSceneNode {
   /** Effective physical rotation, including any opponent-frame half-turn. */
   readonly rotationQuarterTurns: QuarterTurns;
   readonly imageUrl: string;
+  /**
+   * What the table paints instead of `imageUrl`, when they differ. A deck's
+   * cover is its owner's card back even though the owner can see the deck's
+   * contents through the zone viewer, which keeps using `imageUrl`.
+   */
+  readonly tableImageUrl?: string;
   readonly concealed: boolean;
   readonly label: string;
   readonly interactive: boolean;

@@ -104,6 +104,8 @@ interface RoomRestorationCustody {
 interface LobbyOwner {
   invitation: InvitationJoinCustody;
   disposed: boolean;
+  /** The Solo landing has been started for this owner. */
+  landedOnSolo?: boolean;
   operation?: {
     readonly kind: LobbyOperation;
     readonly abort: AbortController;
@@ -244,10 +246,16 @@ const CopyIcon = () => (
 export const RemoteRoomLobby = ({
   buildId,
   rendererKind,
+  landing = 'lobby',
   dependencies = defaultDependencies,
 }: {
   readonly buildId: string;
   readonly rendererKind: RendererKind;
+  /**
+   * v1 opens on the Solo table; `solo` starts a solo room as soon as the
+   * lobby mounts, and `lobby` waits on the Multiplayer panel instead.
+   */
+  readonly landing?: 'solo' | 'lobby';
   readonly dependencies?: RemoteRoomLobbyDependencies;
 }) => {
   const emptyBoardView = useMemo(createEmptyBoardView, []);
@@ -307,6 +315,17 @@ export const RemoteRoomLobby = ({
       disposeOwner(owner);
     };
   }, [dependencies]);
+
+  useEffect(() => {
+    // Guarded per owner rather than per component: StrictMode replays the
+    // owner effect with a fresh owner, and the first owner's room creation
+    // is discarded on arrival because that owner was disposed.
+    const owner = ownerRef.current;
+    if (landing !== 'solo' || !owner || owner.disposed || owner.landedOnSolo)
+      return;
+    owner.landedOnSolo = true;
+    void handleSolo();
+  });
 
   const beginOperation = (
     kind: LobbyOperation

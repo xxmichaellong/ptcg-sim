@@ -691,3 +691,93 @@ select {
   background: linear-gradient(to bottom, rgb(205 188 103), rgb(175 158 83));
   box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
 }
+
+/* v1's Solo welcome panel (index.ejs `#chatbox` opening content). */
+.legacy-activity-intro #changelogLink {
+  color: #5b9bd5;
+  border-bottom: 1px solid #5b9bd5;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.legacy-activity-intro .shift-font {
+  font-family: monospace;
+}
+
+#tutorialButton {
+  margin-left: 50%;
+  padding: 0 6px 2px;
+  border: 2px solid #a89850;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  transform: translateX(-50%);
+}
+
+#tutorialButton:hover {
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
+  cursor: pointer;
+}
+
+#links {
+  width: 100%;
+  font-size: small;
+  text-align: center;
+}
+
+#donationsLink {
+  margin-top: 1vh;
+  font-weight: bold;
+}
+
+#donationsLink:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#line {
+  width: 100%;
+  height: 0.1vh;
+  margin-top: 0.5vh;
+  background: rgb(230 230 230);
+}
+
+#videoContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 50%);
+}
+
+#videoContainer iframe {
+  position: absolute;
+  bottom: 50%;
+  left: 10%;
+  width: 55.5%;
+  height: 60%;
+  transform: translateY(50%);
+}
+
+#donationsPage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  width: 76%;
+  height: 100%;
+  padding: 60px;
+  overflow: auto;
+  background: rgb(222 221 221 / 85.2%);
+}
+
+#donationsPage a {
+  color: rgb(91 91 173);
+  text-decoration: underline;
+}

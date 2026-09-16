@@ -477,6 +477,7 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

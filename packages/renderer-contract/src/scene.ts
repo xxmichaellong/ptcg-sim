@@ -1494,6 +1494,15 @@ export const createBoardScene = (
           ...(isLegacyPileKind(zone.kind) && !isPileTop
             ? { renderKey: null }
             : {}),
+          ...(zone.kind === 'deck' && isPileTop
+            ? {
+                // The deck cover is always a card back on the table (v1's
+                // `#deckCover`), whatever the owner may know of the deck.
+                tableImageUrl:
+                  view.players[card.ownerId]?.cardBackUrl ??
+                  (card.kind === 'concealed' ? card.cardBackUrl : ''),
+              }
+            : {}),
           ...(region?.surface === 'cover' && isPileTop
             ? {
                 renderKey: `cover:${zone.id}`,

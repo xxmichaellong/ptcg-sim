@@ -27,8 +27,9 @@ const devRoomRequested =
 // The lobby is the application. The renderer parity spike -- a developer
 // comparison of the two board renderers over one synthetic placeholder scene
 // -- stays reachable at `?renderer-spike=1` for the geometry gates that use
-// it, but it is never what a visitor lands on. `room-lobby=1` is still
-// accepted so existing links keep working.
+// it, but it is never what a visitor lands on. A visitor lands on the Solo
+// table, as in v1; `room-lobby=1` opens on the Multiplayer panel instead,
+// which is what the browser gates and existing links use.
 const rendererSpikeRequested = parameters.get('renderer-spike') === '1';
 const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
   ? undefined
@@ -36,6 +37,7 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
       kind: 'remote-room-lobby',
       buildId: import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2-web',
       rendererKind,
+      landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
     };
 
 const root = document.getElementById('root');

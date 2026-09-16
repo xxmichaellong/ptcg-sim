@@ -85,6 +85,7 @@ export type AppRoute =
       readonly kind: 'remote-room-lobby';
       readonly buildId: string;
       readonly rendererKind: RendererKind;
+      readonly landing?: 'solo' | 'lobby';
     }
   | {
       readonly kind: 'remote-room';
@@ -126,6 +127,7 @@ export const App = ({
         <RemoteRoomLobby
           buildId={route.buildId}
           rendererKind={route.rendererKind}
+          {...(route.landing ? { landing: route.landing } : {})}
         />
       </Suspense>
     );

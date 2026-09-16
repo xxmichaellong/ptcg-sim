@@ -750,6 +750,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

@@ -533,6 +533,7 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

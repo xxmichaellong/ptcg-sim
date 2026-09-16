@@ -842,6 +842,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {

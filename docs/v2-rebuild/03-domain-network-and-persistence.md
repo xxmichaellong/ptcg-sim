@@ -327,9 +327,9 @@ and server-only. A username or board orientation does not select a role.
   to them.
 - Opponents and public spectators see hand counts and opaque concealed cards,
   never definitions.
-- Deck identity and order remain server-only except for explicitly authorized
-  inspection. Even the owner normally receives only the allowed view, not a
-  durable full-order payload.
+- A player sees their own deck's identities and order, as in v1, where opening
+  the deck shows every card; opponents and spectators receive only backs, and
+  cross-player deck inspection still requires explicit authorization.
 - Prize identities follow current reveal/look semantics but default to
   concealed.
 - A private whole-zone look is limited to the exact current hand or prize order.

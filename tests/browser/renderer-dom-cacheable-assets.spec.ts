@@ -154,6 +154,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
           targetableCardIds: [],
           drag: null,
           openedZoneId: null,
+          settling: [],
         } as const;
         const fixtureSelector = '[data-renderer-cache-fixture-host]';
         const waitForDeferredUnmount = async () => {

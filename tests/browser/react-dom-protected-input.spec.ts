@@ -584,6 +584,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
         selectedCardId: null,
         drag: null,
         openedZoneId: null,
+        settling: [],
       },
       overlays: {
         contextMenuCardId: fixture.sourceCardId,

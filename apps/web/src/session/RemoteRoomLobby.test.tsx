@@ -298,7 +298,8 @@ const lobbyDependencies = (
 
 const mount = async (
   dependencies: RemoteRoomLobbyDependencies,
-  strict = false
+  strict = false,
+  landing: 'solo' | 'lobby' = 'lobby'
 ): Promise<{ readonly host: HTMLDivElement; readonly root: Root }> => {
   const host = document.createElement('div');
   document.body.append(host);
@@ -307,6 +308,7 @@ const mount = async (
     <RemoteRoomLobby
       buildId="test-build"
       rendererKind="dom"
+      landing={landing}
       dependencies={dependencies}
     />
   );
@@ -468,6 +470,35 @@ describe('remote room lobby wiring', () => {
 
     await act(async () => root.unmount());
     expect(invitation.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('opens on the Solo table when the page lands there, once even under StrictMode', async () => {
+    const invitation = custody();
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi.fn(async () => created.value);
+    const { host, root } = await mount(
+      lobbyDependencies(invitation, createRoom),
+      true,
+      'solo'
+    );
+    await act(async () => flush());
+
+    // v1 opens on Solo; nobody has to press a tab to get a table. StrictMode
+    // replays the mount with a fresh owner: the first owner's creation is
+    // aborted with it and the live owner's creation is the one mounted.
+    expect(createRoom).toHaveBeenCalledTimes(2);
+    for (const call of createRoom.mock.calls) {
+      expect(call[0]).toMatchObject({ displayName: 'Froakie', mode: 'solo' });
+    }
+    expect(createRoom.mock.calls[0]?.[0].signal.aborted).toBe(true);
+    expect(createRoom.mock.calls[1]?.[0].signal.aborted).toBe(false);
+    expect(
+      host.querySelector('[data-app-route="test-remote-room"]')
+    ).not.toBeNull();
+    expect(roomRouteHarness.roomMode).toBe('solo');
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledTimes(2);
   });
 
   it('starts one-player authority from Solo and parks it across source tab navigation', async () => {

@@ -152,7 +152,13 @@ const snapshotWithActiveAlias = (): RoomAuthoritySnapshot => {
     loaded.state,
     { kind: 'player', playerId: p1 },
     emptyProjectionIdentityState(),
-    { nextOpaqueId: () => 'durable-alias-opaque-id-0001' }
+    {
+      nextOpaqueId: (() => {
+        let next = 0;
+        return () =>
+          `durable-alias-opaque-id-${String(++next).padStart(4, '0')}`;
+      })(),
+    }
   );
   return {
     ...initial,

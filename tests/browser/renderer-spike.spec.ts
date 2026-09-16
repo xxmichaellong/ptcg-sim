@@ -294,6 +294,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     renderer.clearScene();
     renderer.destroy();
@@ -343,6 +344,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
               targetableCardIds: [],
               drag: null,
               openedZoneId: null,
+              settling: [],
             });
             const mounted = renderer.getDiagnostics?.();
             if (!mounted) throw new Error('Missing lifecycle diagnostics');
@@ -723,6 +725,7 @@ test('native and shared input follow center-rotated card paint in both candidate
           targetableCardIds: [],
           drag: null,
           openedZoneId: null,
+          settling: [],
         }
       );
       (

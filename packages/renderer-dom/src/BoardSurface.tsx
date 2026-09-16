@@ -212,7 +212,7 @@ const CardNode = memo(function CardNode({
     }
     image.dataset.cardImageState = 'loading';
     image.style.visibility = 'hidden';
-  }, [card.imageUrl]);
+  }, [card.tableImageUrl, card.imageUrl]);
   return (
     <button
       type="button"
@@ -264,7 +264,7 @@ const CardNode = memo(function CardNode({
     >
       <img
         ref={imageRef}
-        src={card.imageUrl}
+        src={card.tableImageUrl ?? card.imageUrl}
         alt=""
         draggable={false}
         onLoad={(event) => {

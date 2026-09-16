@@ -641,6 +641,7 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
       targetableCardIds: [],
       drag: null,
       openedZoneId: null,
+      settling: [],
     });
     (
       window as typeof window & {
