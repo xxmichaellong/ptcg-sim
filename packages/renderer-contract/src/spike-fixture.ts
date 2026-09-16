@@ -199,3 +199,70 @@ export const createRendererSpikeView = (): MatchViewState => {
     turn: { number: 4, currentPlayerId: p1 },
   };
 };
+
+/**
+ * A two-seat view with nothing on it: every zone empty, no active Pokémon,
+ * no counters. The lobby paints this behind its panels so a visitor sees the
+ * table they are about to sit at, the way v1 opens on an empty board, rather
+ * than the parity fixture's placeholder cards.
+ */
+export const createEmptyBoardView = (): MatchViewState => {
+  const p1 = asPlayerId('lobby-blue');
+  const p2 = asPlayerId('lobby-red');
+  const zones: Record<string, MatchViewState['zones'][string]> = {};
+  for (const playerId of [p1, p2]) {
+    for (const kind of [
+      'hand',
+      'prizes',
+      'deck',
+      'discard',
+      'lostZone',
+      'board',
+    ] as const) {
+      const id = `zone:${playerId}:${kind}`;
+      zones[id] = { id, kind, ownerId: playerId, cards: [] };
+    }
+  }
+  zones['zone:shared:stadium'] = {
+    id: 'zone:shared:stadium',
+    kind: 'stadium',
+    ownerId: null,
+    cards: [],
+  };
+  return {
+    matchId: 'lobby-empty-board',
+    revision: 1,
+    lifecycle: 'playing',
+    viewer: { kind: 'player', playerId: p1 },
+    playerOrder: [p1, p2],
+    players: {
+      [p1]: {
+        id: p1,
+        displayName: 'Blue',
+        cardBackUrl: cardBack('#465fa7'),
+        coachingConsent: false,
+        oncePerGame: { gxUsed: false, vstarUsed: false },
+      },
+      [p2]: {
+        id: p2,
+        displayName: 'Red',
+        cardBackUrl: cardBack('#a7465f'),
+        coachingConsent: false,
+        oncePerGame: { gxUsed: false, vstarUsed: false },
+      },
+    },
+    definitions: {},
+    zones,
+    boards: {
+      [p1]: { activeStackId: null, benchStackIds: [] },
+      [p2]: { activeStackId: null, benchStackIds: [] },
+    },
+    stacks: {},
+    workAreas: {
+      [p1]: { inspection: null, attachmentResolution: null },
+      [p2]: { inspection: null, attachmentResolution: null },
+    },
+    privateInspections: [],
+    turn: { number: 1, currentPlayerId: p1 },
+  };
+};

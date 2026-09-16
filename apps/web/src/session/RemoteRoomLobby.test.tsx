@@ -24,6 +24,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const lobbyBoardHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
+  viewMatchId: undefined as string | undefined,
+  parkedSession: undefined as unknown,
+  parkedRoomMode: undefined as string | undefined,
 }));
 const roomRouteHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
@@ -49,9 +52,24 @@ const roomRouteHarness = vi.hoisted(() => ({
 }));
 
 vi.mock('../RendererSpikeBoard.js', () => ({
-  RendererSpikeBoard: (props: { readonly preferences?: BoardPreferences }) => {
+  RendererSpikeBoard: (props: {
+    readonly preferences?: BoardPreferences;
+    readonly view: { readonly matchId: string };
+  }) => {
     lobbyBoardHarness.preferences = props.preferences;
+    lobbyBoardHarness.viewMatchId = props.view.matchId;
     return <div data-testid="lobby-board" />;
+  },
+}));
+
+vi.mock('./RemoteSessionBoard.js', () => ({
+  RemoteSessionBoard: (props: {
+    readonly session: unknown;
+    readonly roomMode?: string;
+  }) => {
+    lobbyBoardHarness.parkedSession = props.session;
+    lobbyBoardHarness.parkedRoomMode = props.roomMode;
+    return <div data-testid="parked-solo-board" />;
   },
 }));
 
@@ -349,6 +367,9 @@ describe('remote room lobby wiring', () => {
       host.querySelector('[data-app-route="remote-room-lobby"]')
     ).not.toBeNull();
     expect(host.querySelector('[data-testid="lobby-board"]')).not.toBeNull();
+    // A visitor with no game sees an empty table, not the parity fixture.
+    expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
+    expect(host.querySelector('[data-testid="parked-solo-board"]')).toBeNull();
     expect(element(host, '#p2Button').getAttribute('aria-current')).toBe(
       'page'
     );
@@ -490,6 +511,16 @@ describe('remote room lobby wiring', () => {
     );
     expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
     expect(created.dispose).not.toHaveBeenCalled();
+    // The parked game keeps its table on screen behind the Multiplayer panel
+    // instead of the lobby's empty board.
+    expect(
+      host.querySelector('[data-testid="parked-solo-board"]')
+    ).not.toBeNull();
+    expect(host.querySelector('[data-testid="lobby-board"]')).toBeNull();
+    expect(lobbyBoardHarness.parkedSession).toBe(
+      created.roomRuntime.value.session
+    );
+    expect(lobbyBoardHarness.parkedRoomMode).toBe('solo');
 
     await openDeck(host);
     expect(

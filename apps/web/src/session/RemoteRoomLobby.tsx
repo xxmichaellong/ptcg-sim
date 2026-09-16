@@ -1,5 +1,5 @@
 import {
-  createRendererSpikeView,
+  createEmptyBoardView,
   DEFAULT_BOARD_PREFERENCES,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
@@ -21,6 +21,7 @@ import {
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
+import { RemoteSessionBoard } from './RemoteSessionBoard.js';
 import {
   RemoteRoomRestorationCustody,
   type RemoteRoomRestorationInput,
@@ -249,7 +250,7 @@ export const RemoteRoomLobby = ({
   readonly rendererKind: RendererKind;
   readonly dependencies?: RemoteRoomLobbyDependencies;
 }) => {
-  const boardView = useMemo(createRendererSpikeView, []);
+  const emptyBoardView = useMemo(createEmptyBoardView, []);
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
   const preparedDeckSessions = useRef(new WeakSet<object>());
   const [name, setName] = useState('');
@@ -732,14 +733,28 @@ export const RemoteRoomLobby = ({
       }
     >
       <section className="board-column" aria-label="Game board">
-        <RendererSpikeBoard
-          view={boardView}
-          rendererKind={rendererKind}
-          onIntent={() => undefined}
-          submitCommand={() => undefined}
-          sessionReady={false}
-          {...(preferences ? { preferences } : {})}
-        />
+        {parkedSolo ? (
+          // v1 keeps the table on screen while the Multiplayer panel is
+          // open; the parked solo game stays live and playable here too.
+          <RemoteSessionBoard
+            session={parkedSolo.runtime.session}
+            replay={parkedSolo.runtime.replay}
+            rendererKind={parkedSolo.rendererKind}
+            onIntent={() => undefined}
+            roomMode="solo"
+            hideOpponentHand={hideOpponentHand}
+            {...(preferences ? { preferences } : {})}
+          />
+        ) : (
+          <RendererSpikeBoard
+            view={emptyBoardView}
+            rendererKind={rendererKind}
+            onIntent={() => undefined}
+            submitCommand={() => undefined}
+            sessionReady={false}
+            {...(preferences ? { preferences } : {})}
+          />
+        )}
       </section>
       <aside className="legacy-sidebar legacy-room-sidebar">
         <nav
