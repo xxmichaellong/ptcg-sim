@@ -196,7 +196,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(0);
   }
 
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   const routeProof = await page.evaluate(async () => {
     const creation = await fetch('/v2/rooms', {

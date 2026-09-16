@@ -247,7 +247,7 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
       candidateRuntimeErrors.push(`console: ${message.text()}`);
     }
   });
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

@@ -20,7 +20,7 @@ test('the accepted React DOM renderer is the default candidate', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
-  await page.goto('/');
+  await page.goto('/?renderer-spike=1');
   await waitForReady(page);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   await expect(page.locator('[data-card-id]')).toHaveCount(49);
@@ -129,7 +129,7 @@ test('normalized React DOM mounts the shared fixture at characterized board and 
   page,
 }, testInfo) => {
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await waitForReady(page);
   await expect(page.locator('[data-card-id]')).toHaveCount(49);
   await expect(page.locator('canvas')).toHaveCount(0);
@@ -160,7 +160,7 @@ test('raw Pixi renderer creates 49 stable physical views for the 61-card scene a
   page,
 }, testInfo) => {
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer=pixi');
+  await page.goto('/?renderer-spike=1&renderer=pixi');
   await waitForReady(page);
   const canvas = page.locator('canvas');
   await expect(canvas).toHaveCount(1);
@@ -232,7 +232,7 @@ test('switching candidates repeatedly leaves exactly one live renderer', async (
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer=pixi');
+  await page.goto('/?renderer-spike=1&renderer=pixi');
   for (let cycle = 0; cycle < 3; cycle += 1) {
     await waitForReady(page);
     await expect(page.locator('canvas')).toHaveCount(1);
@@ -254,7 +254,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
 }, testInfo) => {
   test.setTimeout(90_000);
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await waitForReady(page);
   // React delegates native events to its root container. Warm and retain the
   // route-owned host so the resource comparison measures repeated session
@@ -587,7 +587,7 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
     );
   }
 
-  await page.goto('/?renderer=pixi');
+  await page.goto('/?renderer-spike=1&renderer=pixi');
   await waitForReady(page);
   const emptyZonePoint = await page.evaluate(() => {
     const zone = window.__PTCG_RENDERER_SPIKE__?.scene.zones.find(
@@ -616,7 +616,7 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
   try {
     const touchPage = await touchContext.newPage();
     const touchErrors = collectRuntimeErrors(touchPage);
-    await touchPage.goto('/?renderer=pixi');
+    await touchPage.goto('/?renderer-spike=1&renderer=pixi');
     await waitForReady(touchPage);
     const touchCard = await touchPage.evaluate(() => {
       const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(

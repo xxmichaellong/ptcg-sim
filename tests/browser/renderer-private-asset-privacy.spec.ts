@@ -522,7 +522,7 @@ test('recipient projection never requests concealed face assets across reveal an
     )
   ).toEqual([fixture.staleBoardPath]);
 
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

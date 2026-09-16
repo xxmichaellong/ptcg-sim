@@ -86,7 +86,7 @@ test('React DOM contains external card asset failures and recovers the stable ca
     await route.abort('failed');
   });
 
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

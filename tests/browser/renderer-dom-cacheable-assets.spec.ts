@@ -62,7 +62,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
   page.on('response', onResponse);
 
   const collectEvidence = async () => {
-    await page.goto('/?renderer=dom');
+    await page.goto('/?renderer-spike=1&renderer=dom');
     await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
       'data-renderer-status',
       'ready'

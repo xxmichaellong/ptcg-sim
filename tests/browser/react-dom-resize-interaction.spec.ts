@@ -27,7 +27,7 @@ const collectRuntimeErrors = (page: Page): string[] => {
 };
 
 const mountHarness = async (page: Page): Promise<void> => {
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
@@ -434,7 +434,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
         return resolutionListeners.size;
       };
   });
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

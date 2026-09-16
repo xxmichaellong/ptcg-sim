@@ -222,7 +222,7 @@ const openCandidateDeckBuilder = async (
   page: Page,
   alternateEnabled = true
 ): Promise<void> => {
-  await page.goto('/?renderer=dom');
+  await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
