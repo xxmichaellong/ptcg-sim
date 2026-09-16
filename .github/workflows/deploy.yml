@@ -1,0 +1,147 @@
+name: Deploy v2
+
+# Deploys are deliberate, never automatic. OPERATIONS.md describes a
+# cohort-based cutover in which new rooms are assigned to v2 by an explicit
+# control, existing rooms are never live-downgraded, and a rollback restarts
+# the retirement window -- so there is no push trigger here. A deploy is a
+# dispatch, run against a GitHub environment that can carry required reviewers.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        type: choice
+        required: true
+        default: deploy
+        options:
+          - deploy
+          - rollback
+      environment:
+        description: GitHub environment holding the Cloudflare credentials
+        type: environment
+        required: true
+        default: preview
+      version-id:
+        description: Worker version to roll back to (rollback only; blank = previous)
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    if: inputs.action == 'deploy'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Audit dependencies
+        run: corepack pnpm run audit:dependencies
+      # The same gate CI runs. A deploy must not ship a commit CI would have
+      # refused, and re-running it here means a dispatch against an old
+      # commit still meets today's bar.
+      - name: Run the non-browser quality gate
+        env:
+          CONTINUATION_KEYRING: ptcgsim-ci-secret-sentinel-never-ship-000001
+        run: corepack pnpm run check:ci
+      - name: Verify tracked files remain unchanged
+        run: git diff --exit-code
+      - name: Build the web bundle and server
+        run: corepack pnpm run build:v2
+      # BUILD_ID is stamped with the commit so /v2/health reports exactly what
+      # is running, which OPERATIONS.md requires alongside the schema versions.
+      - name: Deploy the Worker
+        id: deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/server
+          command: deploy --var BUILD_ID:${{ github.sha }}
+      # Not a formality: the health endpoint must answer from the edge and name
+      # this commit. A deploy that returns any other build id has not landed.
+      - name: Verify the deployed build
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          EXPECTED_BUILD_ID: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOYMENT_URL" || { echo "wrangler did not report a deployment URL"; exit 1; }
+          for attempt in 1 2 3 4 5 6; do
+            body="$(curl -fsS "$DEPLOYMENT_URL/v2/health" || true)"
+            if [ -n "$body" ]; then break; fi
+            sleep 5
+          done
+          echo "health: $body"
+          echo "$body" | node -e '
+            const health = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            const expected = process.env.EXPECTED_BUILD_ID;
+            if (health.status !== "ok") throw new Error(`status ${health.status}`);
+            if (health.buildId !== expected) {
+              throw new Error(`deployed build ${health.buildId} is not ${expected}`);
+            }
+            console.log(`build ${health.buildId} authority-schema ${health.authoritySchemaVersion} match-state-schema ${health.matchStateSchemaVersion}`);
+          '
+      - name: Record the deployment
+        run: |
+          {
+            echo "## Deployed \`ptcgsim-v2\` to **${{ inputs.environment }}**"
+            echo
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- URL: ${{ steps.deploy.outputs.deployment-url }}"
+            echo "- Roll back with: \`wrangler rollback\` (or dispatch this workflow with action=rollback)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rollback:
+    name: Roll back ${{ inputs.environment }}
+    if: inputs.action == 'rollback'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      # Cloudflare keeps every uploaded version; rolling back re-points the
+      # Worker at one of them without touching Durable Object storage, which
+      # is what OPERATIONS.md requires -- canonical state is never downgraded.
+      - name: Roll back the Worker
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/server
+          command: rollback ${{ inputs.version-id }} --yes --message "Rolled back via GitHub Actions run ${{ github.run_id }}"
+      - name: Record the rollback
+        run: |
+          {
+            echo "## Rolled back \`ptcgsim-v2\` on **${{ inputs.environment }}**"
+            echo
+            echo "- Target version: \`${{ inputs.version-id || 'previous' }}\`"
+            echo "- Durable Object storage was not modified."
+          } >> "$GITHUB_STEP_SUMMARY"

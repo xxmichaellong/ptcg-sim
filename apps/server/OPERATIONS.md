@@ -293,6 +293,40 @@ authorizes automatic room shutdown, runtime removal, or stored-data deletion.
 Image-provider, save/import, and client/renderer incident procedures will be
 added with those production slices; their absence still blocks external beta.
 
+## Deploying and rolling back
+
+Deploys run through `.github/workflows/deploy.yml`, and only by dispatch: there
+is deliberately no push trigger, because the cutover in "Canary pause and
+rollback" assigns rooms to v2 through an explicit control rather than by
+whatever last landed on `main`. The workflow targets a GitHub environment, so
+`production` can carry required reviewers while `preview` does not.
+
+Each environment needs two secrets: `CLOUDFLARE_API_TOKEN`, a token scoped to
+edit Workers scripts on the account, and `CLOUDFLARE_ACCOUNT_ID`. The Worker
+name, Durable Object exports, and rate-limit bindings come from
+`apps/server/wrangler.jsonc`; every Durable Object is SQLite-backed, which the
+free Workers plan supports.
+
+A deploy re-runs the non-browser quality gate on the dispatched commit before
+building. That is not redundant with CI: a dispatch may target an older commit,
+and it must still meet today's bar. It then deploys with `BUILD_ID` stamped to
+the commit SHA and refuses to report success until `/v2/health` answers from
+the edge with `status: ok` **and that exact build id**. A deploy whose health
+endpoint names any other build has not landed, whatever Wrangler printed.
+
+To roll back, dispatch the same workflow with `action: rollback`, optionally
+naming a Worker version id (blank rolls back to the previous one). Cloudflare
+keeps every uploaded version, and a rollback re-points the Worker without
+touching Durable Object storage -- canonical room state is never downgraded,
+which is the invariant the runbook above depends on. Confirm afterwards that
+`/v2/health` reports the build id you expect, and record it with the schema
+versions as the runbook requires.
+
+The continuation feature is default-off and stays off on any environment that
+does not also provision `CONTINUATION_KEYRING`, `CONTINUATION_HTTP_ACTIVATION`
+and `CONTINUATION_QUOTA_CONFIGURATION` as described under the continuation
+boundary above. A preview without them serves rooms normally.
+
 ## Local runtime measurement
 
 Run `corepack pnpm run measure:v2:server` from the repository root to exercise a

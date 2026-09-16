@@ -2,8 +2,12 @@
 
 Status: provisionally selected; local bundle/type checks plus real `workerd`
 lifecycle, hibernation, concurrency, and bounded persistence-fault tests pass.
-Preview deployment, platform-fault rehearsal, load/cost measurements, and
-rollback evidence remain required before ADR-005 becomes accepted.
+A preview deployment has run on the real edge (SQLite Durable Objects
+instantiated, rooms created and served), and `.github/workflows/deploy.yml`
+now performs deploys and rollbacks by dispatch with a build-id-verified health
+check (see OPERATIONS.md, "Deploying and rolling back"). Platform-fault
+rehearsal, load/cost measurements, and rehearsed rollback evidence remain
+required before ADR-005 becomes accepted.
 
 ## Implemented runtime boundary
 
