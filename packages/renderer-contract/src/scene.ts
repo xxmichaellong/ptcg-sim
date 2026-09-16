@@ -253,15 +253,71 @@ const layoutBoardGrid = (bounds: Rect, count: number): Rect[] => {
   );
 };
 
+/** Half-turn of a rectangle about the centre of its enclosing frame. */
+const rotateRectInFrame = (bounds: Rect, frame: Rect): Rect => ({
+  x: frame.x + frame.width - (bounds.x - frame.x) - bounds.width,
+  y: frame.y + frame.height - (bounds.y - frame.y) - bounds.height,
+  width: bounds.width,
+  height: bounds.height,
+});
+
+/**
+ * Transcribes v1's hand row (`#hand img` in self-containers.css): images are
+ * `max-height: calc(100% - 3vh)` inside the content box, sit on
+ * `margin-bottom: 2vh` with `.25vw` either side, and the flex row is centred
+ * until it overflows. Both `vh` and `vw` resolve against the player container,
+ * not the outer page, because each side is its own iframe. Where v1 then
+ * scrolls, v2 keeps every card in view by compressing the step instead.
+ *
+ * v1 lets the image's natural aspect set the width; v2 uses the standard card
+ * ratio so the row does not depend on which image happens to load.
+ */
+const layoutLegacyHandRow = (
+  contentBounds: Rect,
+  frame: Rect,
+  side: BoardSide,
+  count: number
+): Rect[] => {
+  if (count === 0) return [];
+  const vh = frame.height / 100;
+  const vw = frame.width / 100;
+  const local =
+    side === 'opponent'
+      ? rotateRectInFrame(contentBounds, frame)
+      : contentBounds;
+  const height = Math.max(0, local.height - 3 * vh);
+  const width = height * CARD_ASPECT_RATIO;
+  const sideMargin = 0.25 * vw;
+  const naturalStep = width + 2 * sideMargin;
+  const rowWidth = naturalStep * count;
+  const overflows = rowWidth > local.width;
+  const step = overflows
+    ? Math.max(
+        0,
+        (local.width - 2 * sideMargin - width) / Math.max(1, count - 1)
+      )
+    : naturalStep;
+  const startX = overflows
+    ? local.x + sideMargin
+    : local.x + (local.width - rowWidth) / 2 + sideMargin;
+  const y = local.y + local.height - 2 * vh - height;
+  return Array.from({ length: count }, (_, index) => {
+    const rect = { x: startX + step * index, y, width, height };
+    return side === 'opponent' ? rotateRectInFrame(rect, frame) : rect;
+  });
+};
+
 const layoutZoneCards = (
   kind: MatchViewState['zones'][string]['kind'],
   bounds: Rect,
   count: number,
-  containedBlockAlignment: LegacyContainedCardBlockAlignment = 'start'
+  containedBlockAlignment: LegacyContainedCardBlockAlignment,
+  owner: { readonly frame: Rect; readonly side: BoardSide } | null
 ): Rect[] => {
   switch (kind) {
     case 'hand':
-      return layoutRow(insetRect(bounds, 2), count, 0.84);
+      if (!owner) throw new Error('Hand zone must belong to a player');
+      return layoutLegacyHandRow(bounds, owner.frame, owner.side, count);
     case 'prizes':
       return layoutPrizeGrid(insetRect(bounds, 3), count);
     case 'board':
@@ -1407,7 +1463,13 @@ export const createBoardScene = (
       zone.kind,
       contentBounds,
       zone.cards.length,
-      containedBlockAlignment
+      containedBlockAlignment,
+      zone.ownerId
+        ? {
+            frame: playerLayout(zone.ownerId).frameBounds,
+            side: playerLayout(zone.ownerId).side,
+          }
+        : null
     );
     zone.cards.forEach((card, index) => {
       const cardRect = cardBounds[index];

@@ -3,11 +3,12 @@ import {
   asViewCardId,
   asViewDefinitionId,
   type MatchViewState,
+  type PlayerId,
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BOARD_VIEWPORT } from './defaults.js';
 import { resolveBoardDropTarget } from './drag.js';
-import { layoutPlayerZone } from './geometry.js';
+import { CARD_ASPECT_RATIO, layoutPlayerZone } from './geometry.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
@@ -585,6 +586,104 @@ describe('renderer-neutral board scene', () => {
     expect(deck.count).toBe(1);
     expect(deck.anchor.x).toBeCloseTo(1208 * 0.02);
     expect(deck.anchor.y).toBeCloseTo(450 * 0.91);
+  });
+
+  it('lays the hand out the way v1 does: 3vh shorter than the row, resting on 2vh, centred', () => {
+    // Recorded from the real v1 runtime at 1440x900 with seven cards in the
+    // local hand: images 118.484px tall at y=772.516, first at x=229.016,
+    // stepping 90.625px (85.219px image + .25vw either side). v1's width
+    // follows the image's natural aspect; v2 uses the standard card ratio.
+    const sevenCards = (ownerId: PlayerId, zoneId: string) =>
+      Array.from({ length: 7 }, (_, index) => ({
+        kind: 'concealed' as const,
+        id: asViewCardId(`${zoneId}:${index}`),
+        ownerId,
+        cardBackUrl: '/back.png',
+        publiclyRevealed: false,
+      }));
+    const view: MatchViewState = {
+      ...createView(),
+      zones: {
+        'zone:p1:hand': {
+          id: 'zone:p1:hand',
+          kind: 'hand',
+          ownerId: p1,
+          cards: sevenCards(p1, 'zone:p1:hand'),
+        },
+        'zone:p2:hand': {
+          id: 'zone:p2:hand',
+          kind: 'hand',
+          ownerId: p2,
+          cards: sevenCards(p2, 'zone:p2:hand'),
+        },
+      },
+    };
+    // The scene viewport is the play area: 75.5% of the 1440px window.
+    const frameWidth = 1440 * 0.755;
+    const playArea = { width: frameWidth, height: 900, devicePixelRatio: 1 };
+    const scene = createBoardSceneForViewport(view, {
+      ...options,
+      viewport: playArea,
+    });
+    const height = 118.5;
+    const width = height * CARD_ASPECT_RATIO;
+    const step = width + 2 * 0.0025 * frameWidth;
+    const local = scene.cards.filter(
+      (card) => card.parentId === 'zone:p1:hand'
+    );
+    expect(local).toHaveLength(7);
+    for (const [index, card] of local.entries()) {
+      expect(card.bounds.height).toBeCloseTo(height);
+      expect(card.bounds.width).toBeCloseTo(width);
+      expect(card.bounds.y).toBeCloseTo(772.5);
+      expect(card.bounds.x).toBeCloseTo(
+        (frameWidth - step * 7) / 2 + 0.0025 * frameWidth + step * index
+      );
+    }
+    // The opponent row is the same authored row after the frame half-turn:
+    // the 2vh rest becomes a top margin and the first card sits at the right.
+    const opponent = scene.cards.filter(
+      (card) => card.parentId === 'zone:p2:hand'
+    );
+    expect(opponent).toHaveLength(7);
+    for (const [index, card] of opponent.entries()) {
+      expect(card.bounds.height).toBeCloseTo(height);
+      expect(card.bounds.y).toBeCloseTo(9);
+      expect(card.bounds.x).toBeCloseTo(
+        frameWidth - local[index]!.bounds.x - width
+      );
+    }
+
+    // A hand wider than the row compresses its step instead of scrolling.
+    const wide = createBoardSceneForViewport(
+      {
+        ...view,
+        zones: {
+          'zone:p1:hand': {
+            id: 'zone:p1:hand',
+            kind: 'hand',
+            ownerId: p1,
+            cards: Array.from({ length: 30 }, (_, index) => ({
+              kind: 'concealed' as const,
+              id: asViewCardId(`wide:${index}`),
+              ownerId: p1,
+              cardBackUrl: '/back.png',
+              publiclyRevealed: false,
+            })),
+          },
+        },
+      },
+      { ...options, viewport: playArea }
+    );
+    const wideCards = wide.cards.filter(
+      (card) => card.parentId === 'zone:p1:hand'
+    );
+    expect(wideCards[0]!.bounds.x).toBeCloseTo(0.0025 * frameWidth);
+    const last = wideCards.at(-1)!;
+    expect(last.bounds.x + last.bounds.width).toBeCloseTo(
+      frameWidth - 0.0025 * frameWidth
+    );
+    expect(last.bounds.width).toBeCloseTo(width);
   });
 
   it('uses board-tier face images only for visible cards and backs for concealed cards', () => {
