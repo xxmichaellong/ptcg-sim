@@ -120,6 +120,25 @@ export interface MarkerSceneNode {
   readonly label: string;
 }
 
+/** Legacy `(N)` card-count text beside a counted zone. */
+export interface ZoneCountSceneNode {
+  readonly id: string;
+  readonly zoneId: string;
+  readonly playerId: PlayerId;
+  readonly side: BoardSide;
+  readonly kind: 'deck' | 'discard' | 'lostZone' | 'hand';
+  readonly count: number;
+  /** Physical corner of the text box named by the two alignments. */
+  readonly anchor: { readonly x: number; readonly y: number };
+  readonly horizontalAlign: 'left' | 'right';
+  readonly verticalAlign: 'top' | 'bottom';
+  readonly fontSizePx: number;
+  /** CSS color; v1 tints only the hand count with the player's side color. */
+  readonly color: string;
+  readonly zIndex: number;
+  readonly label: string;
+}
+
 export interface BoardScenePlayerFrame {
   readonly playerId: PlayerId;
   readonly side: BoardSide;
@@ -171,6 +190,7 @@ export interface BoardScene {
   readonly zones: readonly ZoneSceneNode[];
   readonly cards: readonly CardSceneNode[];
   readonly markers: readonly MarkerSceneNode[];
+  readonly counts: readonly ZoneCountSceneNode[];
 }
 
 export type BoardIntent =

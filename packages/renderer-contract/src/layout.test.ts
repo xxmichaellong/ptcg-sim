@@ -156,6 +156,107 @@ describe('renderer-neutral legacy board layout', () => {
     });
   });
 
+  it('places legacy zone count text where v1 paints it on both frames', () => {
+    // Recorded from the real v1 runtime at 1440x900 (frames 1087.1875x450):
+    // the `#deckText`/`#discardText`/`#lostZoneText`/`#handText` border boxes
+    // inside each container, with the opponent frame's own half-turn applied.
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1440, height: 900, devicePixelRatio: 1 } })
+    );
+    const label = (side: 'local' | 'opponent', kind: string) => {
+      const region = layout.players
+        .find((player) => player.side === side)!
+        .regions.find((candidate) => candidate.kind === kind)!;
+      expect(region.countLabel).not.toBeNull();
+      return region.countLabel!;
+    };
+    const expectAnchor = (
+      actual: ReturnType<typeof label>,
+      expected: {
+        x: number;
+        y: number;
+        horizontalAlign: 'left' | 'right';
+        verticalAlign: 'top' | 'bottom';
+      }
+    ) => {
+      expect(actual.horizontalAlign).toBe(expected.horizontalAlign);
+      expect(actual.verticalAlign).toBe(expected.verticalAlign);
+      expect(Math.abs(actual.anchor.x - expected.x)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(actual.anchor.y - expected.y)).toBeLessThanOrEqual(0.5);
+      expect(actual.fontSizePx).toBe(18);
+    };
+    // Local frame: text boxes hang from their right/left and bottom edges.
+    expectAnchor(label('local', 'deck'), {
+      x: 1065.27,
+      y: 490.5,
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+    });
+    expectAnchor(label('local', 'discard'), {
+      x: 1065.27,
+      y: 630,
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+    });
+    expectAnchor(label('local', 'lostZone'), {
+      x: 92.39,
+      y: 495,
+      horizontalAlign: 'left',
+      verticalAlign: 'bottom',
+    });
+    expectAnchor(label('local', 'hand'), {
+      x: 1065.27,
+      y: 765,
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+    });
+    // Opponent frame: the same authored boxes after the frame's half-turn.
+    expectAnchor(label('opponent', 'deck'), {
+      x: 21.92,
+      y: 409.5,
+      horizontalAlign: 'left',
+      verticalAlign: 'top',
+    });
+    expectAnchor(label('opponent', 'discard'), {
+      x: 21.92,
+      y: 270,
+      horizontalAlign: 'left',
+      verticalAlign: 'top',
+    });
+    expectAnchor(label('opponent', 'lostZone'), {
+      x: 994.8,
+      y: 405,
+      horizontalAlign: 'right',
+      verticalAlign: 'top',
+    });
+    expectAnchor(label('opponent', 'hand'), {
+      x: 21.92,
+      y: 135,
+      horizontalAlign: 'left',
+      verticalAlign: 'top',
+    });
+    for (const kind of ['active', 'bench', 'prizes', 'board']) {
+      for (const side of ['local', 'opponent'] as const) {
+        const region = layout.players
+          .find((player) => player.side === side)!
+          .regions.find((candidate) => candidate.kind === kind)!;
+        expect(region.countLabel, `${side}:${kind}`).toBeNull();
+      }
+    }
+    // v1 clamps `4vh` of the container to [10px, 20px].
+    const short = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1440, height: 400, devicePixelRatio: 1 } })
+    );
+    const tall = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1440, height: 1400, devicePixelRatio: 1 } })
+    );
+    const deckFont = (candidate: typeof layout) =>
+      candidate.players[0]!.regions.find((region) => region.kind === 'deck')!
+        .countLabel!.fontSizePx;
+    expect(deckFont(short)).toBe(10);
+    expect(deckFont(tall)).toBe(20);
+  });
+
   it('retains content-box padding instead of hiding it in percentage geometry', () => {
     const layout = createBoardLayoutSnapshot(state());
     const prizes = findBoardLayoutRegion(layout, 'local', 'prizes');

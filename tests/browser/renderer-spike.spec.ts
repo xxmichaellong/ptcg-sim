@@ -715,6 +715,7 @@ test('native and shared input follow center-rotated card paint in both candidate
             },
           ],
           markers: [],
+          counts: [],
         },
         {
           selectedCardId: null,

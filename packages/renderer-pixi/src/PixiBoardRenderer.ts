@@ -16,6 +16,7 @@ import {
   type BoardViewport,
   type CardSceneNode,
   type MarkerSceneNode,
+  type ZoneCountSceneNode,
   isLegacyMarkerPresentation,
   legacyMarkerAppearance,
   legacyMarkerPackedColor,
@@ -63,10 +64,17 @@ interface MarkerView {
   descriptor: MarkerSceneNode;
 }
 
+interface ZoneCountView {
+  readonly text: Text;
+  descriptor: ZoneCountSceneNode;
+}
+
 interface SceneLayers {
   readonly playmat: Container;
   readonly cards: Container;
   readonly markers: Container;
+  /** Legacy `(N)` zone counts; plain text over the playmat, under cards. */
+  readonly counts: Container;
   readonly interaction: Container;
 }
 
@@ -81,6 +89,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private readonly textures: CardTextureRegistry<Texture>;
   private readonly cardViews = new Map<string, CardView>();
   private readonly markerViews = new Map<string, MarkerView>();
+  private readonly countViews = new Map<string, ZoneCountView>();
   private app: Application | null = null;
   private layers: SceneLayers | null = null;
   private host: HTMLElement | null = null;
@@ -342,16 +351,18 @@ export class PixiBoardRenderer implements BoardRenderer {
     const playmat = new Container({ label: 'playmat', sortableChildren: true });
     const cards = new Container({ label: 'cards', sortableChildren: true });
     const markers = new Container({ label: 'markers', sortableChildren: true });
+    const counts = new Container({ label: 'counts', sortableChildren: true });
     const interaction = new Container({
       label: 'interaction',
       sortableChildren: true,
     });
     playmat.zIndex = 0;
+    counts.zIndex = 50;
     cards.zIndex = 100;
     markers.zIndex = 1_000;
     interaction.zIndex = 10_000;
-    stage.addChild(playmat, cards, markers, interaction);
-    return { playmat, cards, markers, interaction };
+    stage.addChild(playmat, counts, cards, markers, interaction);
+    return { playmat, cards, markers, counts, interaction };
   }
 
   private syncScene(): void {
@@ -518,6 +529,26 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.applyMarkerView(view);
       layers.markers.setChildIndex(view.root, index);
     });
+    const nextCountIds = new Set(scene.counts.map((node) => node.id));
+    for (const [id, view] of this.countViews) {
+      if (nextCountIds.has(id)) continue;
+      this.countViews.delete(id);
+      view.text.removeFromParent();
+      view.text.destroy();
+    }
+    for (const descriptor of scene.counts) {
+      let view = this.countViews.get(descriptor.id);
+      if (!view) {
+        const countText = new Text({ label: descriptor.id });
+        countText.eventMode = 'none';
+        view = { text: countText, descriptor };
+        this.countViews.set(descriptor.id, view);
+        layers.counts.addChild(countText);
+      } else {
+        view.descriptor = descriptor;
+      }
+      this.applyZoneCountView(view);
+    }
     if (this.app) {
       this.app.canvas.dataset.cardViews = String(this.cardViews.size);
       this.app.canvas.dataset.zoneViews = String(scene.zones.length);
@@ -590,6 +621,21 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
     }
   };
+
+  private applyZoneCountView(view: ZoneCountView): void {
+    const { text, descriptor } = view;
+    text.text = `(${descriptor.count})`;
+    text.style.fill = descriptor.color;
+    text.style.fontSize = descriptor.fontSizePx;
+    // The anchor is the text-box corner named by the two alignments, so the
+    // text's own anchor point moves to that corner.
+    text.anchor.set(
+      descriptor.horizontalAlign === 'left' ? 0 : 1,
+      descriptor.verticalAlign === 'top' ? 0 : 1
+    );
+    text.position.set(descriptor.anchor.x, descriptor.anchor.y);
+    text.zIndex = descriptor.zIndex;
+  }
 
   private applyMarkerView(view: MarkerView): void {
     const { root, graphic, text, descriptor } = view;
@@ -843,12 +889,18 @@ export class PixiBoardRenderer implements BoardRenderer {
       view.root.destroy({ children: true });
     }
     this.markerViews.clear();
+    for (const view of this.countViews.values()) {
+      view.text.removeFromParent();
+      view.text.destroy();
+    }
+    this.countViews.clear();
     const layers = this.layers;
     if (layers) {
       for (const layer of [
         layers.playmat,
         layers.cards,
         layers.markers,
+        layers.counts,
         layers.interaction,
       ]) {
         for (const child of layer.removeChildren()) {

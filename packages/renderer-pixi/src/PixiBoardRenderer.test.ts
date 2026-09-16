@@ -227,10 +227,15 @@ interface RendererInternals {
       descriptor: BoardScene['markers'][number];
     }
   >;
+  readonly countViews: Map<
+    string,
+    { readonly text: Text; descriptor: BoardScene['counts'][number] }
+  >;
   layers: {
     readonly playmat: Container;
     readonly cards: Container;
     readonly markers: Container;
+    readonly counts: Container;
     readonly interaction: Container;
   } | null;
   readonly textures: {
@@ -1006,6 +1011,87 @@ describe('Pixi board interaction cancellation', () => {
     await Promise.resolve();
   });
 
+  it('paints legacy zone counts as anchored text on their own layer and updates them in place', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const initial = scene();
+    // The spike view carries every counted zone for both players.
+    expect(initial.counts.map((node) => node.kind).sort()).toEqual([
+      'deck',
+      'deck',
+      'discard',
+      'discard',
+      'hand',
+      'hand',
+      'lostZone',
+      'lostZone',
+    ]);
+    await renderer.mount(
+      document.createElement('div'),
+      initial,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+
+    const internals = renderer as unknown as RendererInternals;
+    expect(internals.countViews.size).toBe(initial.counts.length);
+    expect(internals.layers?.counts.children).toHaveLength(
+      initial.counts.length
+    );
+    // Counts never share the marker layer, whose child order the marker
+    // paint-order contract owns.
+    expect(internals.layers?.markers.children).toHaveLength(
+      initial.markers.length
+    );
+    for (const descriptor of initial.counts) {
+      const view = internals.countViews.get(descriptor.id)!;
+      expect(view.text.text).toBe(`(${descriptor.count})`);
+      expect(view.text.style.fontSize).toBe(descriptor.fontSizePx);
+      expect(view.text.style.fill).toBe(descriptor.color);
+      expect(view.text.anchor.x).toBe(
+        descriptor.horizontalAlign === 'left' ? 0 : 1
+      );
+      expect(view.text.anchor.y).toBe(
+        descriptor.verticalAlign === 'top' ? 0 : 1
+      );
+      expect(view.text.position.x).toBe(descriptor.anchor.x);
+      expect(view.text.position.y).toBe(descriptor.anchor.y);
+      expect(view.text.eventMode).toBe('none');
+    }
+
+    const [first, ...rest] = initial.counts;
+    const firstView = internals.countViews.get(first!.id)!;
+    renderer.installScene(
+      {
+        ...initial,
+        revision: initial.revision + 1,
+        counts: [{ ...first!, count: first!.count + 5 }, ...rest.slice(1)],
+      },
+      [],
+      'replace'
+    );
+    expect(internals.countViews.get(first!.id)).toBe(firstView);
+    expect(firstView.text.text).toBe(`(${first!.count + 5})`);
+    expect(internals.countViews.has(rest[0]!.id)).toBe(false);
+    expect(internals.layers?.counts.children).toHaveLength(
+      initial.counts.length - 1
+    );
+
+    renderer.clearScene();
+    expect(internals.countViews.size).toBe(0);
+    expect(internals.layers?.counts.children).toHaveLength(0);
+    renderer.destroy();
+  });
+
   it('consumes legacy bench-q0 markers with stable keyed views and no card asset churn', async () => {
     const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
     const unload = vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
@@ -1389,6 +1475,7 @@ describe('Pixi board interaction cancellation', () => {
       playmat: new Container(),
       cards: new Container(),
       markers: new Container(),
+      counts: new Container(),
       interaction: new Container(),
     };
     internals.layers = layers;

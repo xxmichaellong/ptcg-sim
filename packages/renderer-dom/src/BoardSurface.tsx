@@ -12,6 +12,7 @@ import type {
   BoardScene,
   CardSceneNode,
   MarkerSceneNode,
+  ZoneCountSceneNode,
   Rect,
   ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
@@ -279,6 +280,46 @@ const CardNode = memo(function CardNode({
   );
 });
 
+const ZoneCountNode = memo(function ZoneCountNode({
+  node,
+}: {
+  readonly node: ZoneCountSceneNode;
+}) {
+  // The anchor is one corner of the text box; the other three follow from
+  // the text's own size, which is why this is positioned by the anchored
+  // edges rather than by a measured rectangle.
+  const horizontal =
+    node.horizontalAlign === 'left'
+      ? { left: node.anchor.x }
+      : { right: `calc(100% - ${node.anchor.x}px)` };
+  const vertical =
+    node.verticalAlign === 'top'
+      ? { top: node.anchor.y }
+      : { bottom: `calc(100% - ${node.anchor.y}px)` };
+  return (
+    <div
+      className={`ptcgsim-zone-count ptcgsim-zone-count-${node.kind}`}
+      data-zone-count-for={node.zoneId}
+      data-zone-count={node.count}
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        ...horizontal,
+        ...vertical,
+        zIndex: node.zIndex,
+        fontSize: node.fontSizePx,
+        lineHeight: 'normal',
+        color: node.color,
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      }}
+    >
+      ({node.count})
+    </div>
+  );
+});
+
 const MarkerNode = memo(function MarkerNode({
   marker,
 }: {
@@ -530,6 +571,9 @@ export const BoardSurface = ({
         ))}
       {scene.markers.map((marker) => (
         <MarkerNode key={marker.id} marker={marker} />
+      ))}
+      {scene.counts.map((node) => (
+        <ZoneCountNode key={node.id} node={node} />
       ))}
     </div>
   );

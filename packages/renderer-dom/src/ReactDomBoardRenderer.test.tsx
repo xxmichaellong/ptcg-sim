@@ -10,6 +10,7 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
   type MarkerSceneNode,
+  type ZoneCountSceneNode,
   type BoardRendererStatus,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -72,6 +73,7 @@ const createScene = (revision = 1, x = 10): BoardScene => ({
     },
   ],
   markers: [],
+  counts: [],
 });
 
 const marker = (overrides: Partial<MarkerSceneNode> = {}): MarkerSceneNode => ({
@@ -1378,6 +1380,92 @@ describe('React DOM board renderer', () => {
 
     act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
     expect(card.style.boxShadow).toBe(restingShadow);
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
+  it('paints legacy zone counts hung from their anchored corner and updates them in place', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const count = (
+      overrides: Partial<ZoneCountSceneNode> = {}
+    ): ZoneCountSceneNode => ({
+      id: 'count:zone:p1:deck',
+      zoneId: 'zone:p1:deck',
+      playerId,
+      side: 'local',
+      kind: 'deck',
+      count: 47,
+      anchor: { x: 700, y: 330 },
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+      fontSizePx: 18,
+      color: '#000',
+      zIndex: 15,
+      label: '47 cards',
+      ...overrides,
+    });
+    await mountInAct(renderer, host, {
+      ...createScene(),
+      counts: [
+        count(),
+        count({
+          id: 'count:zone:p2:hand',
+          zoneId: 'zone:p2:hand',
+          kind: 'hand',
+          side: 'opponent',
+          count: 7,
+          anchor: { x: 16, y: 90 },
+          horizontalAlign: 'left',
+          verticalAlign: 'top',
+          color: 'rgba(188, 90, 113, 0.864)',
+        }),
+      ],
+    });
+    const deck = host.querySelector<HTMLElement>(
+      '[data-zone-count-for="zone:p1:deck"]'
+    )!;
+    expect(deck.textContent).toBe('(47)');
+    // The anchor is the text box's bottom-right corner, so the box is hung
+    // from the right and bottom edges rather than given a top-left.
+    expect(deck.style.right).toBe('calc(100% - 700px)');
+    expect(deck.style.bottom).toBe('calc(100% - 330px)');
+    expect(deck.style.left).toBe('');
+    expect(deck.style.top).toBe('');
+    expect(deck.style.fontSize).toBe('18px');
+    expect(deck.style.pointerEvents).toBe('none');
+    expect(deck.getAttribute('aria-hidden')).toBe('true');
+    const hand = host.querySelector<HTMLElement>(
+      '[data-zone-count-for="zone:p2:hand"]'
+    )!;
+    expect(hand.textContent).toBe('(7)');
+    expect(hand.style.left).toBe('16px');
+    expect(hand.style.top).toBe('90px');
+    expect(hand.style.color).toBe('rgba(188, 90, 113, 0.864)');
+
+    act(() =>
+      renderer.installScene(
+        { ...createScene(2), counts: [count({ count: 46 })] },
+        [],
+        'replace'
+      )
+    );
+    const updated = host.querySelector<HTMLElement>(
+      '[data-zone-count-for="zone:p1:deck"]'
+    )!;
+    expect(updated).toBe(deck);
+    expect(updated.textContent).toBe('(46)');
+    expect(
+      host.querySelector('[data-zone-count-for="zone:p2:hand"]')
+    ).toBeNull();
 
     await act(async () => {
       renderer.destroy();

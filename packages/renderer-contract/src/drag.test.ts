@@ -97,6 +97,7 @@ const scene = (): BoardScene => ({
     },
   ],
   markers: [],
+  counts: [],
 });
 
 const input = (x: number, y: number, pointerId = 7) => ({

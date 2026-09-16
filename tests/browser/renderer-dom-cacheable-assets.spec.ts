@@ -134,6 +134,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
           revision: Math.max(sourceScene.revision + 1, 20_000),
           cards,
           markers: [],
+          counts: [],
         };
         const expectedIds = coldScene.cards.map((card) => String(card.id));
         requireCondition(

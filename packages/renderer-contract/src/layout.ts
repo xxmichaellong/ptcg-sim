@@ -190,6 +190,30 @@ export interface BoardLayoutRegion {
   readonly affordances: readonly BoardLayoutAffordance[];
   /** Optional child image input; its browser bounds are not inferred here. */
   readonly childCardAffordances: readonly BoardLayoutAffordance[] | null;
+  /**
+   * Where the legacy `(N)` card-count text for this region sits, or null for
+   * regions v1 never counted.
+   */
+  readonly countLabel: BoardLayoutCountLabel | null;
+}
+
+/**
+ * Physical placement of a legacy zone count. v1 authors each count as a
+ * `position: fixed` text node inside the player container (`#deckText`,
+ * `#discardText`, `#lostZoneText`, `#handText`), anchored by `right`/`left`
+ * and `bottom` percentages, and un-rotates the opponent copy with
+ * `transform: scale(-1, -1)`. The anchor is therefore the corner of the text
+ * box named by the two alignments, mapped through the player frame rotation.
+ */
+export interface BoardLayoutCountLabel {
+  /** Physical corner point of the text box. */
+  readonly anchor: { readonly x: number; readonly y: number };
+  /** Which horizontal edge of the text box sits on the anchor. */
+  readonly horizontalAlign: 'left' | 'right';
+  /** Which vertical edge of the text box sits on the anchor. */
+  readonly verticalAlign: 'top' | 'bottom';
+  /** v1 `clamp(10px, 4vh, 20px)` resolved against the player frame. */
+  readonly fontSizePx: number;
 }
 
 export interface BoardPlayerLayout {
@@ -398,12 +422,23 @@ interface RegionSource {
   readonly semanticZOrder: number;
   readonly affordances: readonly BoardLayoutAffordance[];
   readonly childCardAffordances?: readonly BoardLayoutAffordance[];
+  /** Player-local `left`/`right` and `bottom` ratios of the count text. */
+  readonly countLabel?: {
+    readonly horizontalAnchor: 'left' | 'right';
+    readonly horizontalOffsetRatio: number;
+    readonly bottomRatio: number;
+  };
 }
 
 const SHARED_PLAYER_REGION_SOURCES: Readonly<
   Record<Exclude<BoardLayoutRegionKind, 'board'>, RegionSource>
 > = {
   hand: {
+    countLabel: {
+      horizontalAnchor: 'right',
+      horizontalOffsetRatio: 0.02,
+      bottomRatio: 0.3,
+    },
     normalizedBounds: { x: 0, y: 0.7, width: 1, height: 0.3 },
     horizontalAnchor: 'left',
     horizontalOffsetRatio: 0,
@@ -443,6 +478,11 @@ const SHARED_PLAYER_REGION_SOURCES: Readonly<
     affordances: LEGACY_BOARD_AFFORDANCES_V1.zone,
   },
   lostZone: {
+    countLabel: {
+      horizontalAnchor: 'left',
+      horizontalOffsetRatio: 0.085,
+      bottomRatio: 0.9,
+    },
     normalizedBounds: { x: 0.01, y: 0.01, width: 0.07, height: 0.15 },
     horizontalAnchor: 'left',
     horizontalOffsetRatio: 0.01,
@@ -453,6 +493,11 @@ const SHARED_PLAYER_REGION_SOURCES: Readonly<
     childCardAffordances: LEGACY_BOARD_AFFORDANCES_V1.coverCard,
   },
   deck: {
+    countLabel: {
+      horizontalAnchor: 'right',
+      horizontalOffsetRatio: 0.02,
+      bottomRatio: 0.91,
+    },
     normalizedBounds: { x: 0.91, y: 0.09, width: 0.08, height: 0.25 },
     horizontalAnchor: 'right',
     horizontalOffsetRatio: 0.01,
@@ -463,6 +508,11 @@ const SHARED_PLAYER_REGION_SOURCES: Readonly<
     childCardAffordances: LEGACY_BOARD_AFFORDANCES_V1.coverCard,
   },
   discard: {
+    countLabel: {
+      horizontalAnchor: 'right',
+      horizontalOffsetRatio: 0.02,
+      bottomRatio: 0.6,
+    },
     normalizedBounds: { x: 0.91, y: 0.41, width: 0.08, height: 0.23 },
     horizontalAnchor: 'right',
     horizontalOffsetRatio: 0.01,
@@ -735,8 +785,42 @@ const createRegions = (
       semanticZOrder: source.semanticZOrder,
       affordances: source.affordances,
       childCardAffordances: source.childCardAffordances ?? null,
+      countLabel: source.countLabel
+        ? physicalCountLabel(source.countLabel, player)
+        : null,
     };
   });
+
+const physicalCountLabel = (
+  source: NonNullable<RegionSource['countLabel']>,
+  player: Pick<BoardPlayerLayout, 'side' | 'frameBounds'>
+): BoardLayoutCountLabel => {
+  const { x, y, width, height } = player.frameBounds;
+  // Player-local corner: `right: r%` puts the text's right edge at (1 - r),
+  // `left: l%` its left edge at l; `bottom: b%` puts its bottom edge at (1 - b).
+  const localX =
+    source.horizontalAnchor === 'left'
+      ? source.horizontalOffsetRatio
+      : 1 - source.horizontalOffsetRatio;
+  const localY = 1 - source.bottomRatio;
+  const fontSizePx = Math.min(20, Math.max(10, 0.04 * height));
+  if (player.side === 'local') {
+    return {
+      anchor: { x: x + localX * width, y: y + localY * height },
+      horizontalAlign: source.horizontalAnchor,
+      verticalAlign: 'bottom',
+      fontSizePx,
+    };
+  }
+  // The opponent frame is a half-turn of the local one, and v1 flips the
+  // text itself back upright, so the anchored corner swaps to its opposite.
+  return {
+    anchor: { x: x + (1 - localX) * width, y: y + (1 - localY) * height },
+    horizontalAlign: source.horizontalAnchor === 'left' ? 'right' : 'left',
+    verticalAlign: 'top',
+    fontSizePx,
+  };
+};
 
 const createPlayerLayout = (
   playerId: PlayerId,

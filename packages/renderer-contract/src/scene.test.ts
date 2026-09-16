@@ -548,6 +548,45 @@ describe('renderer-neutral board scene', () => {
     });
   });
 
+  it('projects a legacy count label for every counted zone in the view', () => {
+    const scene = createBoardSceneForViewport(createView(), options);
+    // Only the zones the view carries get a count; the base view has p1's
+    // hand (one card) and p2's deck (one concealed card).
+    expect(scene.counts.map((node) => [node.id, node.count])).toEqual([
+      ['count:zone:p1:hand', 1],
+      ['count:zone:p2:deck', 1],
+    ]);
+    const hand = scene.counts.find((node) => node.zoneId === 'zone:p1:hand')!;
+    expect(hand).toMatchObject({
+      playerId: p1,
+      side: 'local',
+      kind: 'hand',
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+      color: 'rgba(90, 110, 188, 0.864)',
+      label: '1 cards',
+    });
+    // Same numbers the layout module pins against the v1 runtime: the hand
+    // count hangs from the frame's right edge (2%) just above the hand (30%).
+    expect(hand.anchor.x).toBeCloseTo(1208 * 0.98);
+    expect(hand.anchor.y).toBeCloseTo(765);
+    expect(hand.fontSizePx).toBe(18);
+    const deck = scene.counts.find((node) => node.zoneId === 'zone:p2:deck')!;
+    expect(deck).toMatchObject({
+      playerId: p2,
+      side: 'opponent',
+      kind: 'deck',
+      horizontalAlign: 'left',
+      verticalAlign: 'top',
+      color: '#000',
+    });
+    // Count nodes carry the card count itself, not a card, so a concealed
+    // deck still reports how many cards it hides.
+    expect(deck.count).toBe(1);
+    expect(deck.anchor.x).toBeCloseTo(1208 * 0.02);
+    expect(deck.anchor.y).toBeCloseTo(450 * 0.91);
+  });
+
   it('uses board-tier face images only for visible cards and backs for concealed cards', () => {
     const scene = createBoardSceneForViewport(createView(), options);
     const known = scene.cards.find((card) => card.id === knownCardId);

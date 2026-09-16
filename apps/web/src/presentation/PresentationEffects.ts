@@ -173,6 +173,16 @@ export const presentationEffectsForEvent = (
       ];
     }
     case 'PlayerSetup': {
+      // Set Up with no deck loaded still resets the board, but there is
+      // nothing to draw. v1 announces that as an invalid deck rather than
+      // claiming a hand was drawn.
+      if (event.handCount === 0 && event.prizeCount === 0) {
+        const message = `${playerName(view, event.playerId)} has an invalid deck!`;
+        return [
+          activity(event, 'announcement', message),
+          accessibility(event, message),
+        ];
+      }
       const message = `${playerName(
         view,
         event.playerId

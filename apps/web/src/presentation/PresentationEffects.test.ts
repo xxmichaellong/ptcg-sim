@@ -352,6 +352,27 @@ describe('presentationEffectsForEvent', () => {
     });
   });
 
+  it('announces an invalid deck when setup had nothing to draw', () => {
+    const view = createRendererSpikeView();
+    expect(
+      messages(
+        presentationEffectsForEvent(
+          {
+            type: 'PlayerSetup',
+            revision: 9,
+            playerId: 'spike-blue',
+            handCount: 0,
+            prizeCount: 0,
+          },
+          view
+        )
+      )
+    ).toEqual([
+      'announcement:Blue has an invalid deck!',
+      'accessibility:Blue has an invalid deck!',
+    ]);
+  });
+
   it('describes cross-player undo accurately and never prints opaque fallback IDs', () => {
     const view = createRendererSpikeView();
     const crossPlayerUndo: PresentationEvent = {

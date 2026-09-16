@@ -43,9 +43,33 @@ import type {
   CardSceneNode,
   MarkerSceneNode,
   Rect,
+  ZoneCountSceneNode,
   ZoneSceneNode,
 } from './model.js';
 import { topmostFirst } from './paint-order.js';
+
+const isCountedZoneKind = (
+  kind: MatchViewState['zones'][string]['kind']
+): kind is ZoneCountSceneNode['kind'] =>
+  kind === 'deck' ||
+  kind === 'discard' ||
+  kind === 'lostZone' ||
+  kind === 'hand';
+
+/**
+ * v1 colours only the hand count, with the owning side's colour
+ * (`#handText` in self-containers.css / opp-containers.css); the pile counts
+ * inherit the container's default text colour.
+ */
+const legacyCountColor = (
+  kind: ZoneCountSceneNode['kind'],
+  side: BoardSide
+): string =>
+  kind !== 'hand'
+    ? '#000'
+    : side === 'local'
+      ? 'rgba(90, 110, 188, 0.864)'
+      : 'rgba(188, 90, 113, 0.864)';
 
 const zoneLabel = (
   kind: MatchViewState['zones'][string]['kind'],
@@ -1284,6 +1308,7 @@ export const createBoardScene = (
   const zones: ZoneSceneNode[] = [];
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
+  const counts: ZoneCountSceneNode[] = [];
   const seenCards = new Set<ViewCardId>();
   const registerCard = (
     node: CardSceneNode,
@@ -1350,6 +1375,23 @@ export const createBoardScene = (
       ),
       interactive: true,
     });
+    if (region?.countLabel && zone.ownerId && isCountedZoneKind(zone.kind)) {
+      counts.push({
+        id: `count:${zone.id}`,
+        zoneId: zone.id,
+        playerId: zone.ownerId,
+        side: region.side,
+        kind: zone.kind,
+        count: zone.cards.length,
+        anchor: { ...region.countLabel.anchor },
+        horizontalAlign: region.countLabel.horizontalAlign,
+        verticalAlign: region.countLabel.verticalAlign,
+        fontSizePx: region.countLabel.fontSizePx,
+        color: legacyCountColor(zone.kind, region.side),
+        zIndex: 15,
+        label: `${zone.cards.length} cards`,
+      });
+    }
     const pileTopIndex = isLegacyPileKind(zone.kind)
       ? legacyPileTopIndex(zone.kind, zone.cards.length)
       : null;
@@ -1634,6 +1676,7 @@ export const createBoardScene = (
         left.zIndex - right.zIndex || left.id.localeCompare(right.id)
     ),
     markers: markers.sort(compareMarkerPaintOrder),
+    counts: counts.sort((left, right) => left.id.localeCompare(right.id)),
   };
 };
 
