@@ -1,10 +1,11 @@
 # Final hardening audit
 
-- Blueprint revision/commit: `9aa1a56`
+- Implementation baseline: `3a805b2`
 - Review lanes: authority/security, renderer/layout, browser/release operations
 - Reviewer: primary integrator with parallel specialist reports
 - Date: 2026-09-15
-- Overall verdict: **implementation-ready; release-blocked on external evidence and named decisions**
+- Overall verdict: **implementation-ready; decisions closed; release-blocked on
+  external evidence and operational execution**
 
 ## Scope
 
@@ -37,7 +38,8 @@ or physical-device release evidence.
 
 ## Current verification
 
-At `9aa1a56`, the local non-browser gate passed:
+The complete local non-browser gate passed at `9aa1a56`, before the final
+renderer geometry correction at `3a805b2`:
 
 - 79 frozen-v1 tests;
 - 2,397 v2 tests across 238 files;
@@ -51,10 +53,11 @@ At `9aa1a56`, the local non-browser gate passed:
 
 Local Playwright cannot launch in this workspace because Chromium cannot load
 `libglib-2.0.so.0`. That environment failure is not recorded as browser proof or
-as an ignored application failure. Current-head Chromium, Firefox, and WebKit
-evidence must come from the hosted draft-PR jobs.
+as an ignored application failure. Hosted draft-PR run `35037948033` passed the
+Quality gate, all 205 Chromium tests, and both Firefox/WebKit real-room journeys
+at exact head `3a805b2485e2aa4f13bbe79cdf6c1db9ab7d4132`.
 
-## Deliberately open findings
+## Decision dispositions and remaining external gate
 
 ### FHA-001 — unauthenticated socket-upgrade budget remains shared
 
@@ -67,10 +70,12 @@ evidence must come from the hosted draft-PR jobs.
 - Constraint: putting the bearer in a URL is forbidden; simply removing the
   shared limit enables unbounded pre-admission sockets. Per-credential limiting
   after `Hello` does not repair an already rejected upgrade.
-- Required decision: choose and review an edge identity/rate limit, a
-  credential-derived WebSocket subprotocol/header design, or explicit
-  acceptance of the bounded availability risk. Do not disguise this as a
-  limiter reorder.
+- Disposition: **decision closed by ADR-025 on 2026-09-16**. Keep the shared
+  durable room cap and require Cloudflare per-source edge throttling before
+  public routing. Do not place credentials in URLs or WebSocket subprotocols.
+  The managed-preview rule, threshold, legitimate-reconnect result,
+  invalid-upgrade result, and rollback rehearsal remain external release
+  evidence.
 
 ### FHA-002 — MagicCircle legal provenance is not inferable from source
 
@@ -80,10 +85,11 @@ evidence must come from the hosted draft-PR jobs.
   patterns cite source commit `39f871cd63800e2317326425345a26e4d61846de`,
   but repository evidence cannot establish every contributor's ownership or
   notice obligations.
-- Required decision: the rights holder/legal owner must confirm applicable
-  terms for directly copied units. Behavior-level reimplementation may proceed
-  under PTCG-owned contracts, but direct-copy release remains blocked without
-  that confirmation.
+- Disposition: **closed by owner confirmation on 2026-09-16**. The project owner
+  confirmed the necessary authority for MagicCircle project-source reuse and
+  directed that no additional project-source permission blocker be retained.
+  ADR-019 still requires commit/file provenance and the ordinary audit and
+  preservation of terms/notices carried by third-party dependencies.
 
 ### FHA-003 — release evidence is external and incomplete
 
@@ -108,8 +114,9 @@ capacity, or credential was created by this audit.
 
 ## Recommendation
 
-After current-head hosted CI is green, stop implementation churn and conduct a
-review/decision checkpoint. The next work is evidence and ownership, not another
-renderer or rules rewrite: resolve FHA-001 and FHA-002, assign release roles,
-then execute the managed-preview, physical-performance, accessibility, and soak
-records. Keep the PR draft until those gates are deliberately dispositioned.
+Stop implementation churn. The product and architecture decisions identified by
+this audit are closed. The next work is release evidence and operational
+ownership, not another renderer or rules rewrite: configure and prove ADR-025's
+edge control, assign release roles, then execute the managed-preview,
+physical-performance, accessibility, and soak records. Keep the PR draft until
+those gates are deliberately dispositioned.

@@ -2,7 +2,7 @@
 
 - Status: **ACCEPTED**
 - Decision date: 2026-08-31
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-16
 - Scope: direct source reuse, adaptation, provenance, and coupling
 
 ## Context
@@ -13,16 +13,19 @@ continuous game engine, shared state broadcasting, account infrastructure, and
 application-specific managers that do not fit PTCG Sim's manual hidden-information
 tabletop.
 
-The project owner explicitly authorized direct reuse. That authorization removes
-the project-level copy blocker but does not waive third-party license, notice,
-attribution, dependency, security, or provenance obligations.
+The project owner explicitly authorized direct reuse. On 2026-09-16, the owner
+also confirmed that the project has the necessary authority for that reuse and
+directed that no additional MagicCircle project-source permission blocker be
+retained. That confirmation does not waive licenses or notices attached to
+third-party dependencies, nor the repository's security and provenance rules.
 
 ## Decision
 
 Directly copy or adapt the smallest MagicCircle implementation unit when it
 satisfies a PTCG-owned contract and its reuse is more maintainable than a local
-rewrite. Record source provenance and preserve all required license/notices.
-Verify ownership and applicable terms at extraction time.
+rewrite. Record the source commit and file. Preserve licenses/notices carried by
+third-party dependencies, and audit those dependencies at extraction time. The
+owner confirmation above closes the project-source permission gate.
 
 PTCG Sim owns the resulting public contract and tests. Do not import or subclass
 MagicCircle terminal application code, maintain a broad source fork, or copy its
@@ -45,9 +48,10 @@ safe extraction procedure. Renderer/session/authority contracts, boundary checks
 and PTCG tests remain the acceptance evidence regardless of source origin.
 
 Every copied unit increases provenance and upstream-divergence obligations. A
-unit can be replaced locally without changing domain/protocol behavior. If its
-license or ownership cannot be verified, do not copy it; reimplement the
-documented behavior behind the same contract.
+unit can be replaced locally without changing domain/protocol behavior. If a
+candidate brings a dependency whose applicable terms cannot be established, do
+not import that dependency; reimplement the documented behavior behind the same
+contract.
 
 ## Migration and rollback
 

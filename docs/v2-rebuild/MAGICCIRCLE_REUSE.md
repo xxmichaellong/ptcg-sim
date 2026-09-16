@@ -9,9 +9,11 @@ PTCG-owned contracts and tests exist. It must not depend directly on MagicCircle
 terminal application source or fork its large Quinoa/room classes.
 
 The project owner explicitly authorized direct MagicCircle implementation reuse
-on 2026-08-31 (ADR-019). Preserve provenance and any required notices when code
-is copied; still extract only the smallest PTCG-owned unit whose dependencies and
-failure behavior are covered by this repository's contracts.
+on 2026-08-31 and confirmed the necessary project-source authority on
+2026-09-16 (ADR-019). That confirmation closes the MagicCircle source-permission
+gate. Preserve commit/file provenance and third-party dependency notices when
+code is copied; still extract only the smallest PTCG-owned unit whose
+dependencies and failure behavior are covered by this repository's contracts.
 
 ## Client and renderer candidates
 
@@ -120,7 +122,9 @@ For each candidate:
 
 1. Write the PTCG public contract, requirements, failure matrix, and tests first.
 2. Identify the smallest behavior in the MagicCircle file that satisfies it.
-3. Confirm license/ownership and dependencies.
+3. Record the MagicCircle source commit/file and audit imported third-party
+   dependencies and their notices; ADR-019's owner confirmation covers the
+   MagicCircle project-source permission.
 4. Reimplement or extract into a small PTCG-owned adapter with no terminal-app
    deep import.
 5. Run PTCG parity/security/durability tests, not only MagicCircle's tests.

@@ -19,6 +19,34 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
+## Pre-admission WebSocket edge boundary
+
+The room's durable `socket_upgrade` budget of 120 attempts per minute is an
+inner resource bound, not the only public abuse defense. It is intentionally
+shared because a browser upgrade reaches the room before the credential-bearing
+`Hello`; a hostile source can otherwise spend that shared availability budget.
+
+ADR-025 requires a Cloudflare edge policy on the exact v2 WebSocket upgrade
+route before any public cohort. It must throttle by edge-observed source before
+Durable Object routing without forwarding or recording that source identity in
+application state or telemetry. Keep admission credentials out of URLs, query
+strings, logs, persistence, analytics, and WebSocket subprotocol values.
+
+There is no checked-in production threshold. In an isolated managed preview,
+record normal initial-connect and recovery-stress reconnect bursts, then choose
+a per-source threshold below the volume with which one source could exhaust the
+room budget. Prove valid joins/reconnects still succeed, sustained invalid
+upgrades are rejected at the edge, and the room limit remains active as an
+independent layer. Preserve a redacted rule identifier/version, route match,
+threshold rationale, exact build commit, timestamps, results, named operator,
+and disable/rollback rehearsal. Do not retain source identifiers or bearer
+material in the evidence.
+
+Missing, disabled, overbroad, or unverified edge configuration blocks public
+exposure. It does not justify removing the room budget or changing the
+credential handshake. During an incident, pause new v2 cohort allocation while
+the last verified edge policy is restored.
+
 ## Continuation key, quota, and namespace boundary (default-off)
 
 Wrangler declaratively exports dedicated SQLite `PtcgContinuation` and

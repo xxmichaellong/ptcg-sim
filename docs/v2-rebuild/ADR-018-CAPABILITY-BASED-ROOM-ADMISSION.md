@@ -4,8 +4,8 @@
 - Decision date: 2026-09-14
 - Last reviewed: 2026-09-14
 - Scope: room creation, invitation, admission, resume, and seat lifecycle
-- Release status: architecture and local implementation accepted; preview abuse,
-  load, alarm, and operational evidence remain open
+- Release status: architecture and local implementation accepted; ADR-025 edge
+  abuse control plus preview load, alarm, and operational evidence remain open
 
 ## Context
 
@@ -53,8 +53,8 @@ hibernation tests cover it.
 
 Bearer custody remains security-sensitive even when non-serializing. Production
 rollout still requires managed-preview abuse/load/alarm evidence, operational
-ownership, and rollback rehearsal. These gates can block exposure without
-reopening the capability architecture.
+ownership, ADR-025's per-source edge throttle, and rollback rehearsal. These
+gates can block exposure without reopening the capability architecture.
 
 ## Migration and rollback
 

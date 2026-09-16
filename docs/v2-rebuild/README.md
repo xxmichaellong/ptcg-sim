@@ -318,6 +318,7 @@ a manual tabletop simulator.
 | [ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md](./ADR-022-V1-FALLBACK-AND-RETIREMENT-WINDOW.md)     | Accepted minimum v1 fallback observation window and explicit retirement boundary                             |
 | [ADR-023-DESKTOP-BROWSER-SUPPORT.md](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)                         | Accepted desktop browser, operating-system, minimum viewport, and release evidence matrix                    |
 | [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)   | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
+| [ADR-025-PRE-ADMISSION-SOCKET-ABUSE.md](./ADR-025-PRE-ADMISSION-SOCKET-ABUSE.md)                   | Accepted layered room/edge pre-admission availability defense and public rollout gate                        |
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
 | [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
 | [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server/browser private-custody contract and closed activation/UI gates                           |
