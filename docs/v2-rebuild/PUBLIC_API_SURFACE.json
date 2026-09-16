@@ -1210,6 +1210,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardLayoutCountLabel",
+              "kind": "type"
+            },
+            {
               "name": "BoardLayoutOptions",
               "kind": "type"
             },
@@ -1391,6 +1395,10 @@
             },
             {
               "name": "createBoardSceneLayout",
+              "kind": "value"
+            },
+            {
+              "name": "createEmptyBoardView",
               "kind": "value"
             },
             {
@@ -1616,6 +1624,10 @@
             {
               "name": "sideForPlayer",
               "kind": "value"
+            },
+            {
+              "name": "ZoneCountSceneNode",
+              "kind": "type"
             },
             {
               "name": "ZoneSceneNode",
