@@ -16,6 +16,7 @@ export const DEFAULT_BOARD_PRESENTATION: BoardPresentation = {
   targetableCardIds: [],
   drag: null,
   openedZoneId: null,
+  settling: [],
 };
 
 export const DEFAULT_BOARD_PREFERENCES: BoardPreferences = {

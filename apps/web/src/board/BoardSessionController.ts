@@ -11,6 +11,7 @@ import {
   type BoardPresentationUpdate,
   type BoardScene,
   type BoardSceneInstallMode,
+  type SettlingCard,
 } from '@ptcgsim/renderer-contract';
 import {
   resolveBoardDrop,
@@ -79,6 +80,12 @@ export interface BoardProjectionFrame {
   readonly replayLocalDisclosure?: ReplayLocalDisclosureState;
   /** Covers replay loading/discarding and any application-level submit gate. */
   readonly submissionsBlocked: boolean;
+  /**
+   * Live session commands still in flight. A settling card is released as
+   * soon as its command leaves this list, which is the same moment the
+   * session has either published the accepted move or recorded a rejection.
+   */
+  readonly pendingCommandIds?: readonly string[];
 }
 
 export type BoardPreviewState =
@@ -158,7 +165,9 @@ export type BoardSessionControllerAction =
       readonly kind: 'DismissLocalPresentation';
       readonly scope?: BoardPresentationDismissScope;
     }
-  | { readonly kind: 'SubmissionRejected' };
+  | { readonly kind: 'SubmissionRejected' }
+  /** The adapter queued the command emitted by the newest accepted drop. */
+  | { readonly kind: 'SubmissionQueued'; readonly commandId: string };
 
 export type BoardIntentRejectionReason =
   | 'no_installed_view'
@@ -376,9 +385,47 @@ const emptyPresentation = (): BoardPresentation => ({
   ...DEFAULT_BOARD_PRESENTATION,
 });
 
+/**
+ * A settling card is created by an accepted drop before the adapter knows the
+ * command id, so the newest entry stays unbound until `SubmissionQueued` (or
+ * is dropped by `SubmissionRejected`). Bound entries live exactly as long as
+ * their command is pending in the live session.
+ */
+interface SettlingEntry extends SettlingCard {
+  readonly commandId: string | null;
+}
+
+const settlingEntries = (
+  presentation: BoardPresentation
+): readonly SettlingEntry[] =>
+  presentation.settling as readonly SettlingEntry[];
+
+const pruneSettling = (
+  entries: readonly SettlingEntry[],
+  scene: BoardScene | undefined,
+  pendingCommandIds: readonly string[] | undefined
+): readonly SettlingEntry[] => {
+  const kept = entries.filter(
+    (entry) =>
+      (scene === undefined || hasCard(scene, entry.cardId)) &&
+      (entry.commandId === null ||
+        pendingCommandIds === undefined ||
+        pendingCommandIds.includes(entry.commandId))
+  );
+  return kept.length === entries.length ? entries : kept;
+};
+
+const sameSettling = (
+  left: readonly SettlingCard[],
+  right: readonly SettlingCard[]
+): boolean =>
+  left.length === right.length &&
+  left.every((entry, index) => right[index] === entry);
+
 const emptyOverlays = (): BoardOverlayState => ({ ...EMPTY_OVERLAYS });
 
 const presentationIsEmpty = (presentation: BoardPresentation): boolean =>
+  presentation.settling.length === 0 &&
   presentation.selectedCardId === null &&
   presentation.hoveredCardId === null &&
   presentation.targetableCardIds.length === 0 &&
@@ -456,7 +503,8 @@ const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
 const reconcilePresentation = (
   state: BoardSessionControllerState,
   view: MatchViewState,
-  scene: BoardScene
+  scene: BoardScene,
+  pendingCommandIds?: readonly string[]
 ): Pick<
   BoardSessionControllerState,
   'presentation' | 'playTargeting' | 'overlays'
@@ -546,6 +594,11 @@ const reconcilePresentation = (
       targetableCardIds: [],
       drag: reconciledDrag,
       openedZoneId,
+      settling: pruneSettling(
+        settlingEntries(state.presentation),
+        scene,
+        pendingCommandIds
+      ),
     },
     playTargeting: null,
     overlays: {
@@ -617,7 +670,8 @@ const samePresentation = (
     (cardId, index) => right.targetableCardIds[index] === cardId
   ) &&
   left.drag === right.drag &&
-  left.openedZoneId === right.openedZoneId;
+  left.openedZoneId === right.openedZoneId &&
+  sameSettling(left.settling, right.settling);
 
 const installFrame = (
   state: BoardSessionControllerState,
@@ -955,12 +1009,27 @@ const installFrame = (
     frame.boundary === 'advance' &&
     (frame.source.kind === 'live' || !replayGenerationChanged)
   ) {
+    // The session republishes the same view when only its command queue
+    // moved; that is when a settled card's command completes.
+    const settling = pruneSettling(
+      settlingEntries(state.presentation),
+      state.scene,
+      frame.pendingCommandIds
+    );
+    const presentation =
+      settling === state.presentation.settling
+        ? state.presentation
+        : { ...state.presentation, settling };
     return accepted(
       nextState(state, {
         source: frame.source,
         cursor: cursorFor(frame, frame.view),
         canSubmitCommands: canSubmit(frame),
-      })
+        presentation,
+      }),
+      presentation === state.presentation
+        ? []
+        : [{ kind: 'InstallPresentation', presentation }]
     );
   }
 
@@ -1016,7 +1085,7 @@ const installFrame = (
     frame.sessionPhase !== 'ready';
   const local = mustClearLocal
     ? clearLocalPresentation(state)
-    : reconcilePresentation(state, frame.view, scene);
+    : reconcilePresentation(state, frame.view, scene, frame.pendingCommandIds);
   const installMode: BoardSceneInstallMode =
     mustClearLocal ||
     previousRevision === undefined ||
@@ -1236,16 +1305,34 @@ const handleIntent = (
         intent
       );
       if (!resolution.ok) return rejectIntent(state, intent, resolution.reason);
+      // Hold a board-painted card where it was dropped until the session
+      // resolves the command; a card dragged out of an opened zone has no
+      // board node to hold, so it is left to the authoritative publication.
+      const settledCard = installedScene.cards.find(
+        (card) => card.id === intent.cardId && card.renderKey !== null
+      );
+      const settling: readonly SettlingEntry[] = settledCard
+        ? [
+            ...settlingEntries(state.presentation).filter(
+              (entry) => entry.cardId !== intent.cardId
+            ),
+            {
+              cardId: intent.cardId,
+              x: intent.x,
+              y: intent.y,
+              commandId: null,
+            },
+          ]
+        : settlingEntries(state.presentation);
       const presentation = allowOpenedZoneCard
         ? {
             ...state.presentation,
             selectedCardId: null,
             targetableCardIds: [],
             drag: null,
+            settling,
           }
-        : state.presentation.drag
-          ? { ...state.presentation, drag: null }
-          : state.presentation;
+        : { ...state.presentation, drag: null, settling };
       const overlays = allowOpenedZoneCard ? emptyOverlays() : state.overlays;
       const playTargeting = allowOpenedZoneCard ? null : state.playTargeting;
       const presentationChanged = !samePresentation(
@@ -1706,17 +1793,43 @@ export const reduceBoardSessionController = (
     }
     case 'DismissLocalPresentation':
       return dismissPresentation(state, action.scope ?? 'all');
-    case 'SubmissionRejected':
+    case 'SubmissionRejected': {
+      const entries = settlingEntries(state.presentation);
+      const newestUnbound = entries.findLastIndex(
+        (entry) => entry.commandId === null
+      );
       return installPresentation(
         state,
         {
           ...state.presentation,
           targetableCardIds: [],
           drag: null,
+          settling:
+            newestUnbound < 0
+              ? entries
+              : entries.filter((_, index) => index !== newestUnbound),
         },
         state.overlays,
         null
       );
+    }
+    case 'SubmissionQueued': {
+      const entries = settlingEntries(state.presentation);
+      const newestUnbound = entries.findLastIndex(
+        (entry) => entry.commandId === null
+      );
+      if (newestUnbound < 0) return ignored(state);
+      const settling = entries.map((entry, index) =>
+        index === newestUnbound
+          ? { ...entry, commandId: action.commandId }
+          : entry
+      );
+      return accepted(
+        nextState(state, {
+          presentation: { ...state.presentation, settling },
+        })
+      );
+    }
   }
 };
 

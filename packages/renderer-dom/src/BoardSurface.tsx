@@ -12,6 +12,7 @@ import type {
   BoardScene,
   CardSceneNode,
   MarkerSceneNode,
+  SettlingCard,
   ZoneCountSceneNode,
   Rect,
   ZoneSceneNode,
@@ -155,6 +156,7 @@ const CardNode = memo(function CardNode({
   hovered,
   targetable,
   drag,
+  settle,
   emitIntent,
   consumeSuppressedClick,
 }: {
@@ -163,15 +165,19 @@ const CardNode = memo(function CardNode({
   readonly hovered: boolean;
   readonly targetable: boolean;
   readonly drag: BoardPresentation['drag'];
+  readonly settle: SettlingCard | null;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const bounds = drag
+  // A card that was just dropped stays centred on its drop point until the
+  // authoritative move lands, exactly as it was painted while dragging.
+  const held = drag ?? settle;
+  const bounds = held
     ? {
         ...card.bounds,
-        x: drag.x - card.bounds.width / 2,
-        y: drag.y - card.bounds.height / 2,
+        x: held.x - card.bounds.width / 2,
+        y: held.y - card.bounds.height / 2,
       }
     : card.bounds;
   const legacyBorderRadius =
@@ -220,7 +226,7 @@ const CardNode = memo(function CardNode({
       }
       aria-pressed={card.primaryAction ? undefined : selected}
       style={{
-        ...absoluteRect(bounds, drag ? 10_000 : card.zIndex),
+        ...absoluteRect(bounds, drag ? 10_000 : settle ? 9_000 : card.zIndex),
         display: 'block',
         margin: 0,
         padding: 0,
@@ -564,6 +570,10 @@ export const BoardSurface = ({
             targetable={presentation.targetableCardIds.includes(card.id)}
             drag={
               presentation.drag?.cardId === card.id ? presentation.drag : null
+            }
+            settle={
+              presentation.settling.find((entry) => entry.cardId === card.id) ??
+              null
             }
             emitIntent={adapters.emitIntent}
             consumeSuppressedClick={consumeSuppressedClick}

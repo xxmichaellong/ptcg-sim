@@ -1387,6 +1387,42 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('holds a settling card on its drop point above the board until it is released', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    const resting = { left: card.style.left, top: card.style.top };
+    const width = Number.parseFloat(card.style.width);
+    const height = Number.parseFloat(card.style.height);
+
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        settling: [{ cardId, x: 300, y: 200 }],
+      })
+    );
+    // Centred on the drop point, like a drag, but below an active drag.
+    expect(Number.parseFloat(card.style.left)).toBeCloseTo(300 - width / 2);
+    expect(Number.parseFloat(card.style.top)).toBeCloseTo(200 - height / 2);
+    expect(card.style.zIndex).toBe('9000');
+    expect(card.style.width).toBe(`${width}px`);
+
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(card.style.left).toBe(resting.left);
+    expect(card.style.top).toBe(resting.top);
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('paints legacy zone counts hung from their anchored corner and updates them in place', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

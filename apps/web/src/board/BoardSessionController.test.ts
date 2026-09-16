@@ -386,12 +386,23 @@ describe('headless board session controller', () => {
           kind: 'CardDropRequested',
           cardId,
           targetId: 'zone:spike-blue:discard',
+          x: 700,
+          y: 640,
         },
       },
       { createScene, resolveDrop }
     );
     expect(resolveDrop).toHaveBeenCalledOnce();
+    // The dropped card is held on its drop point while the command is in
+    // flight, so the presentation changes alongside the submission.
     expect(result.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: {
+          ...DEFAULT_BOARD_PRESENTATION,
+          settling: [{ cardId, x: 700, y: 640, commandId: null }],
+        },
+      },
       {
         kind: 'SubmitCommand',
         command: {
@@ -402,6 +413,107 @@ describe('headless board session controller', () => {
         },
       },
     ]);
+  });
+
+  it('holds a dropped card on its drop point exactly until its command leaves the queue', () => {
+    const view = createRendererSpikeView();
+    let state = install(initialFrame(view));
+    const cardId = cardIn(state.scene!, ':hand');
+    const resolveDrop = vi.fn(() => ({
+      ok: true as const,
+      command: {
+        type: 'MoveCard' as const,
+        cardId,
+        expectedSourceZoneId: 'zone:spike-blue:hand',
+        destinationZoneId: 'zone:spike-blue:discard',
+      },
+    }));
+    const drop = (): void => {
+      state = apply(
+        state,
+        {
+          kind: 'RendererIntent',
+          intent: {
+            kind: 'CardDropRequested',
+            cardId,
+            targetId: 'zone:spike-blue:discard',
+            x: 700,
+            y: 640,
+          },
+        },
+        { createScene, resolveDrop }
+      ).state;
+    };
+    const settling = () => state.presentation.settling;
+
+    // Not queued: the hold is released at once.
+    drop();
+    expect(settling()).toEqual([{ cardId, x: 700, y: 640, commandId: null }]);
+    state = apply(state, { kind: 'SubmissionRejected' }).state;
+    expect(settling()).toEqual([]);
+
+    // Queued: the entry binds to the command and survives the publication
+    // that still lists the command as pending...
+    drop();
+    state = apply(state, {
+      kind: 'SubmissionQueued',
+      commandId: 'command-7',
+    }).state;
+    expect(settling()).toEqual([
+      { cardId, x: 700, y: 640, commandId: 'command-7' },
+    ]);
+    // The session publishes the queue before the command is submitted, so
+    // an unbound entry must not be pruned by a frame that lacks its id.
+    const published = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, view, { pendingCommandIds: ['command-7'] }),
+    });
+    state = published.state;
+    expect(settling()).toEqual([
+      { cardId, x: 700, y: 640, commandId: 'command-7' },
+    ]);
+    expect(published.effects).toEqual([]);
+
+    // ...and is released by the same-view republish that empties the queue.
+    const released = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(3, view, { pendingCommandIds: [] }),
+    });
+    state = released.state;
+    expect(settling()).toEqual([]);
+    expect(released.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: { ...DEFAULT_BOARD_PRESENTATION },
+      },
+    ]);
+
+    // A card that left the scene (its alias changed) is released too, and a
+    // resync clears every hold.
+    drop();
+    state = apply(state, {
+      kind: 'SubmissionQueued',
+      commandId: 'command-8',
+    }).state;
+    const withoutCard: MatchViewState = {
+      ...withRevision(view, 2),
+      zones: {
+        ...view.zones,
+        'zone:spike-blue:hand': {
+          ...view.zones['zone:spike-blue:hand']!,
+          cards: view.zones['zone:spike-blue:hand']!.cards.filter(
+            (card) => card.id !== cardId
+          ),
+        },
+      },
+    };
+    state = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(4, withoutCard, { pendingCommandIds: ['command-8'] }),
+    }).state;
+    expect(settling()).toEqual([]);
+    drop();
+    expect(settling()).toEqual([]);
   });
 
   it('protects opened-zone drops and retains the source browser after acceptance', () => {

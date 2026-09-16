@@ -1135,6 +1135,8 @@ describe('legacy board overlays', () => {
       kind: 'CardDropRequested',
       cardId: discardCards[0]!.id,
       targetId: hand.id,
+      x: targetX,
+      y: targetY,
     });
     expect(
       host

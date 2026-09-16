@@ -166,6 +166,8 @@ export class BoardDragController {
         kind: 'CardDropRequested',
         cardId: gesture.cardId,
         targetId,
+        x: input.x,
+        y: input.y,
       });
     }
     return true;

@@ -151,6 +151,8 @@ describe('renderer-neutral drag controller', () => {
         kind: 'CardDropRequested',
         cardId: sourceId,
         targetId: 'target-stack',
+        x: 520,
+        y: 160,
       },
     ]);
     expect(controller.consumeSuppressedClick(sourceId)).toBe(true);

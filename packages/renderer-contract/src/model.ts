@@ -33,6 +33,21 @@ export interface BoardPresentation {
     readonly targetId: string | null;
   } | null;
   readonly openedZoneId: string | null;
+  /**
+   * Cards held where they were dropped while the authoritative move is in
+   * flight. The board stays authoritative -- nothing is predicted -- but the
+   * card does not snap back to its source and then jump to its destination
+   * one round trip later. Renderers paint each entry at its drop point, over
+   * everything except an active drag, until the controller removes it.
+   */
+  readonly settling: readonly SettlingCard[];
+}
+
+export interface SettlingCard {
+  readonly cardId: ViewCardId;
+  /** Physical drop point; the card is centred on it like a drag. */
+  readonly x: number;
+  readonly y: number;
 }
 
 export interface Rect {
@@ -200,6 +215,9 @@ export type BoardIntent =
       readonly kind: 'CardDropRequested';
       readonly cardId: ViewCardId;
       readonly targetId: string;
+      /** Physical drop point, so the card can be held there while it settles. */
+      readonly x: number;
+      readonly y: number;
     }
   | { readonly kind: 'CardContextRequested'; readonly cardId: ViewCardId }
   | { readonly kind: 'CardPreviewRequested'; readonly cardId: ViewCardId }

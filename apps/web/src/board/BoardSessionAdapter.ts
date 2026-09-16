@@ -119,8 +119,10 @@ const viewFor = (
 export class BoardSessionAdapter {
   private readonly controller: BoardSessionController;
   private readonly unsubscribeReplay: () => void;
+  private readonly unsubscribeLive: () => void;
   private nextFrameToken = 0;
   private disposed = false;
+  private lastPendingCommandIds: readonly string[] = [];
 
   constructor(private readonly options: BoardSessionAdapterOptions) {
     this.controller = new BoardSessionController({
@@ -134,7 +136,27 @@ export class BoardSessionAdapter {
     const unsubscribe = options.replay.subscribe(this.synchronize);
     if (this.disposed) unsubscribe();
     this.unsubscribeReplay = unsubscribe;
+    // The replay coordinator collapses live changes that leave the view
+    // alone, but a command completing without changing the view is exactly
+    // what releases a settling card, so watch the queue directly.
+    const unsubscribeLive = options.live.subscribe(this.synchronizePending);
+    if (this.disposed) unsubscribeLive();
+    this.unsubscribeLive = unsubscribeLive;
   }
+
+  private readonly synchronizePending = (): void => {
+    if (this.disposed) return;
+    const pending = this.options.live
+      .getSnapshot()
+      .pendingCommands.map((item) => item.commandId);
+    if (
+      pending.length === this.lastPendingCommandIds.length &&
+      pending.every((id, index) => this.lastPendingCommandIds[index] === id)
+    ) {
+      return;
+    }
+    this.synchronize();
+  };
 
   getSnapshot = (): BoardSessionControllerState =>
     this.controller.getSnapshot();
@@ -232,6 +254,7 @@ export class BoardSessionAdapter {
     this.disposed = true;
     try {
       this.unsubscribeReplay();
+      this.unsubscribeLive();
     } finally {
       this.controller.dispose();
     }
@@ -266,7 +289,11 @@ export class BoardSessionAdapter {
         replayState.requestPhase !== 'idle' ||
         liveState.phase !== 'ready' ||
         view?.viewer.kind !== 'player',
+      pendingCommandIds: liveState.pendingCommands.map(
+        (pending) => pending.commandId
+      ),
     };
+    this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
     return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
 
@@ -315,7 +342,12 @@ export class BoardSessionAdapter {
     }
     const result = this.submitIfStillAllowed(effect.command);
     this.options.onSubmission?.(effect.command, result);
-    if (!result.queued) {
+    if (result.queued) {
+      this.controller.dispatch({
+        kind: 'SubmissionQueued',
+        commandId: result.commandId,
+      });
+    } else {
       this.controller.dispatch({ kind: 'SubmissionRejected' });
     }
   };

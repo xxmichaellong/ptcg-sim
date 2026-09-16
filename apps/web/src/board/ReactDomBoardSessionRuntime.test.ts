@@ -2032,7 +2032,8 @@ describe('opt-in Pixi board session runtime', () => {
     expect(pixiRendererFactory).toHaveBeenCalledOnce();
     expect(host.querySelector('canvas')).toBe(canvas);
     expect(canvas.dataset.revision).toBe('1');
-    expect(live.listenerCount()).toBe(0);
+    // The adapter watches the live command queue for settling cards.
+    expect(live.listenerCount()).toBe(1);
     expect(replay.listenerCount()).toBe(1);
 
     const next = readyState(atRevision(2));

@@ -566,14 +566,22 @@ export class PixiBoardRenderer implements BoardRenderer {
     const { sprite, outline, descriptor } = view;
     const drag = this.presentation?.drag;
     const dragging = drag?.cardId === descriptor.id;
+    // A just-dropped card is held on its drop point, like a drag, until the
+    // authoritative move lands.
+    const settle = dragging
+      ? undefined
+      : this.presentation?.settling.find(
+          (entry) => entry.cardId === descriptor.id
+        );
+    const held = dragging ? drag : settle;
     sprite.position.set(
-      dragging ? drag.x : descriptor.bounds.x + descriptor.bounds.width / 2,
-      dragging ? drag.y : descriptor.bounds.y + descriptor.bounds.height / 2
+      held ? held.x : descriptor.bounds.x + descriptor.bounds.width / 2,
+      held ? held.y : descriptor.bounds.y + descriptor.bounds.height / 2
     );
     sprite.width = descriptor.bounds.width;
     sprite.height = descriptor.bounds.height;
     sprite.rotation = descriptor.rotationQuarterTurns * (Math.PI / 2);
-    sprite.zIndex = dragging ? 10_000 : descriptor.zIndex;
+    sprite.zIndex = dragging ? 10_000 : settle ? 9_000 : descriptor.zIndex;
     // Sprite hit testing already inverse-transforms through scale and rotation.
     // A CSS-pixel Rectangle here would be scaled a second time and shrink input.
     sprite.hitArea = null;

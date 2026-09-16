@@ -850,13 +850,13 @@ export const sortRecipientSafeZoneCards = (
     })
     .map(({ card }) => card);
 
-export const resolveOpenedZoneDropTarget = (
+/** Maps a client-space pointer onto the scene's physical viewport. */
+export const openedZoneDropPoint = (
   scene: BoardScene,
   surfaceBounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
-  sourceCardId: ViewCardId,
   clientX: number,
   clientY: number
-): string | null => {
+): { readonly x: number; readonly y: number } | null => {
   if (
     surfaceBounds.width <= 0 ||
     surfaceBounds.height <= 0 ||
@@ -865,14 +865,26 @@ export const resolveOpenedZoneDropTarget = (
   ) {
     return null;
   }
-  return resolveBoardDropTarget(
-    scene,
-    sourceCardId,
-    ((clientX - surfaceBounds.left) * scene.viewport.width) /
+  return {
+    x:
+      ((clientX - surfaceBounds.left) * scene.viewport.width) /
       surfaceBounds.width,
-    ((clientY - surfaceBounds.top) * scene.viewport.height) /
-      surfaceBounds.height
-  );
+    y:
+      ((clientY - surfaceBounds.top) * scene.viewport.height) /
+      surfaceBounds.height,
+  };
+};
+
+export const resolveOpenedZoneDropTarget = (
+  scene: BoardScene,
+  surfaceBounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  sourceCardId: ViewCardId,
+  clientX: number,
+  clientY: number
+): string | null => {
+  const point = openedZoneDropPoint(scene, surfaceBounds, clientX, clientY);
+  if (!point) return null;
+  return resolveBoardDropTarget(scene, sourceCardId, point.x, point.y);
 };
 
 const ZoneBrowser = ({
@@ -947,22 +959,27 @@ const ZoneBrowser = ({
       const overlay = element.closest<HTMLElement>(
         '[data-legacy-board-overlays]'
       );
-      const targetId =
-        stillOwned && overlay
-          ? resolveOpenedZoneDropTarget(
+      const surfaceBounds = overlay?.getBoundingClientRect();
+      const point =
+        stillOwned && surfaceBounds
+          ? openedZoneDropPoint(
               scene,
-              overlay.getBoundingClientRect(),
-              cardId,
+              surfaceBounds,
               event.clientX,
               event.clientY
             )
           : null;
+      const targetId = point
+        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+        : null;
       finishDrag();
-      if (targetId) {
+      if (targetId && point) {
         actions.emitOpenedZoneCardIntent({
           kind: 'CardDropRequested',
           cardId,
           targetId,
+          x: point.x,
+          y: point.y,
         });
       }
     };
