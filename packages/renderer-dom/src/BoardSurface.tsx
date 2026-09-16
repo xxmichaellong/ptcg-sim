@@ -223,16 +223,20 @@ const CardNode = memo(function CardNode({
         display: 'block',
         margin: 0,
         padding: 0,
-        border: selected
-          ? '4px solid rgba(143, 215, 153, 0.864)'
-          : hovered
-            ? '3px solid rgba(90, 110, 188, 0.864)'
-            : 0,
+        // Selection and hover are rings drawn with box-shadow, never with a
+        // border. The card is a fixed-size box, so a border would be taken
+        // out of its content area and shrink the image inside -- which is
+        // exactly what v1 avoids by highlighting with box-shadow.
+        border: 0,
         borderRadius: legacyBorderRadius,
         background: '#777',
         boxShadow: targetable
           ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
-          : legacyShadow,
+          : selected
+            ? `rgba(143, 215, 153, 0.864) 0 0 0 4px, ${legacyShadow}`
+            : hovered
+              ? `rgba(90, 110, 188, 0.864) 0 0 0 3px, ${legacyShadow}`
+              : legacyShadow,
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,

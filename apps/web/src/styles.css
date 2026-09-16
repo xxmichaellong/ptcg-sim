@@ -153,6 +153,10 @@ select {
 
 .legacy-room-sidebox {
   position: relative;
+  /* Above the deck-builder workspace (900), as v1's sidebox is at 1300. The
+   * closed workspace parks underneath the sidebar with an 8px toggle peeking
+   * out; without this it shows through the panel instead. */
+  z-index: 1300;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

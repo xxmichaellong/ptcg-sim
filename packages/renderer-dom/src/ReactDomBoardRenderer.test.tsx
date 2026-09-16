@@ -1344,6 +1344,47 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('highlights a selected card with a ring instead of a border so its box never shrinks', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    const restingWidth = card.style.width;
+    const restingHeight = card.style.height;
+    const restingShadow = card.style.boxShadow;
+    expect(card.style.borderWidth).toBe('0px');
+
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selectedCardId: cardId,
+      })
+    );
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+    // v1 highlights with `box-shadow: 0 0 0 4px`; a border on a fixed-size
+    // box would be taken out of the image area and visibly shrink the card.
+    expect(card.style.borderWidth).toBe('0px');
+    expect(card.style.width).toBe(restingWidth);
+    expect(card.style.height).toBe(restingHeight);
+    expect(card.style.boxShadow).toContain(
+      'rgba(143, 215, 153, 0.864) 0 0 0 4px'
+    );
+    expect(card.style.boxShadow).toContain(restingShadow);
+
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(card.style.boxShadow).toBe(restingShadow);
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('paints controller-owned targets and emits a neutral background intent', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({
