@@ -696,7 +696,8 @@ export const RemoteRoomLobby = ({
     setReceipt(undefined);
     setRoomCode('');
     setCopyConfirmed(false);
-    setStatus('Solo game remains active. Select Solo to return.');
+    // v1 says nothing when you leave the Solo tab; the game simply waits.
+    setStatus(undefined);
   };
 
   if (connected) {

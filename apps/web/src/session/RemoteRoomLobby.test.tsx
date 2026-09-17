@@ -568,9 +568,7 @@ describe('remote room lobby wiring', () => {
     expect(
       host.querySelector('[data-app-route="remote-room-lobby"]')
     ).not.toBeNull();
-    expect(host.textContent).toContain(
-      'Solo game remains active. Select Solo to return.'
-    );
+    expect(host.querySelector('.lobby-status')).toBeNull();
     expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
     expect(created.dispose).not.toHaveBeenCalled();
     // The parked game keeps its table on screen behind the Multiplayer panel

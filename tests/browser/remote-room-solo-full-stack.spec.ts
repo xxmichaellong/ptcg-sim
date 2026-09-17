@@ -254,9 +254,7 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
-  await expect(page.locator('.lobby-status')).toHaveText(
-    'Solo game remains active. Select Solo to return.'
-  );
+  await expect(page.locator('.lobby-status')).toHaveCount(0);
   await expect(page.locator('#roomIdInput')).toHaveValue('');
   await page.locator('#deckImportButton').click();
   await expect(page.locator('#altImportHeaderButton')).toHaveAttribute(
