@@ -421,7 +421,9 @@ export const RemoteRoomLobby = ({
       delete active.owner.guestRuntime;
       previous?.result.dispose();
       active.owner.invitation.clear();
-      setName(displayName);
+      // Solo takes a generated name for the room when the visitor typed
+      // none; that stand-in is not written back into the Multiplayer Name
+      // box, which v1 leaves for the visitor to fill in themselves.
       setRoomCode('');
       setReceipt(undefined);
       setCoachingConsent(false);

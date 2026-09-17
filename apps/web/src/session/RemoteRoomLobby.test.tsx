@@ -522,6 +522,11 @@ describe('remote room lobby wiring', () => {
       host.querySelector('[data-app-route="test-remote-room"]')
     ).not.toBeNull();
     expect(roomRouteHarness.roomMode).toBe('solo');
+    // The generated stand-in name stays out of the Multiplayer Name box.
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#testOpenMultiplayer').click()
+    );
+    expect(element<HTMLInputElement>(host, '#nameInput').value).toBe('');
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
