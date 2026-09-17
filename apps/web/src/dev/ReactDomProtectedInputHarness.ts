@@ -25,6 +25,7 @@ import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntim
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import {
   LegacyBoardOverlays,
+  legacyStackPreviewOrder,
   type LegacyBoardCategoryChoice,
   type LegacyBoardContextActionId,
   type LegacyBoardMoveChoice,
@@ -534,10 +535,12 @@ export const mountReactDomProtectedInputHarness = async (
     opponentDeckCount: view.zones[opponentDeckZoneId]!.cards.length,
     ownHandCount: view.zones[sourceZoneId]!.cards.length,
     unsupportedCardId: String(unsupportedCardId),
-    unsupportedStackCardIds: scene.cards
-      .filter((card) => card.parentId === localActiveStackId)
-      .sort((left, right) => left.zIndex - right.zIndex)
-      .map((card) => String(card.id)),
+    // v1's full view lists the top card, then attachments newest-first, then
+    // the lower stages newest-first.
+    unsupportedStackCardIds: legacyStackPreviewOrder(
+      localActiveStack,
+      scene.cards.filter((card) => card.parentId === localActiveStackId)
+    ).map((card) => String(card.id)),
     activeTopCardId: String(activeTopCardId),
     activeStackId: localActiveStackId,
     activeAttachmentCardId: String(activeAttachmentCardId),

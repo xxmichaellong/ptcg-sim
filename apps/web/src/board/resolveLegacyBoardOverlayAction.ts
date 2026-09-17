@@ -1,4 +1,9 @@
-import type { MatchViewState, ViewCard, ViewCardId } from '@ptcgsim/game-core';
+import type {
+  MatchViewState,
+  ViewCard,
+  ViewCardId,
+  WorkAreaCardsDestination,
+} from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
@@ -21,6 +26,7 @@ import {
 } from './resolvePublicVisibilityAction.js';
 import { resolveRandomFaceDownAction } from './resolveRandomFaceDownAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
+import { resolveWorkAreaCardsAction } from './resolveWorkAreaCardsAction.js';
 
 export type LegacyBoardContextActionId =
   | 'toggleAbility'
@@ -144,7 +150,49 @@ export type LegacyBoardOverlayActionRequest =
       readonly kind: 'zone';
       readonly action: LegacyBoardZoneActionId;
       readonly zoneId: string;
+    }
+  | {
+      readonly kind: 'workArea';
+      readonly source: LegacyBoardWorkAreaSource;
+      readonly action: LegacyBoardWorkAreaActionId;
     };
+
+/** v1's "Looking at cards..." (viewCards) and "Move attached cards" popups. */
+export type LegacyBoardWorkAreaSource = 'inspection' | 'staged';
+
+/** The bulk buttons along the bottom of those popups. */
+export type LegacyBoardWorkAreaActionId =
+  | 'discardAll'
+  | 'shuffleAll'
+  | 'shuffleBottom'
+  | 'lostZoneAll'
+  | 'toHand'
+  | 'leaveInPlay';
+
+export const LEGACY_BOARD_WORK_AREA_ACTIONS: Readonly<
+  Record<
+    LegacyBoardWorkAreaSource,
+    readonly {
+      readonly id: LegacyBoardWorkAreaActionId;
+      readonly label: string;
+    }[]
+  >
+> = {
+  inspection: [
+    { id: 'discardAll', label: 'Discard all' },
+    { id: 'shuffleAll', label: 'Shuffle all' },
+    { id: 'shuffleBottom', label: 'Shuffle to bottom' },
+    { id: 'lostZoneAll', label: 'Lost Zone all' },
+    { id: 'toHand', label: 'To Hand' },
+  ],
+  staged: [
+    { id: 'discardAll', label: 'Discard all' },
+    { id: 'shuffleAll', label: 'Shuffle all' },
+    { id: 'lostZoneAll', label: 'Lost Zone all' },
+    { id: 'toHand', label: 'To Hand' },
+    { id: 'leaveInPlay', label: 'Leave in play' },
+  ],
+};
 
 export type LegacyBoardOverlayActionRequirement =
   'command' | 'input' | 'choice' | 'local';
@@ -586,5 +634,55 @@ export const resolveLegacyBoardOverlayAction = (
   if (view.viewer.kind !== 'player') return rejected('not_player');
   return request.kind === 'context'
     ? resolveContextAction(view, request)
-    : resolveZoneAction(view, request);
+    : request.kind === 'zone'
+      ? resolveZoneAction(view, request)
+      : resolveWorkAreaAction(view, request);
+};
+
+const WORK_AREA_DESTINATIONS: Readonly<
+  Record<
+    Exclude<LegacyBoardWorkAreaActionId, 'leaveInPlay'>,
+    WorkAreaCardsDestination
+  >
+> = {
+  discardAll: 'discard',
+  shuffleAll: 'shuffleIntoDeck',
+  shuffleBottom: 'shuffleToDeckBottom',
+  lostZoneAll: 'lostZone',
+  toHand: 'hand',
+};
+
+const resolveWorkAreaAction = (
+  view: MatchViewState,
+  request: Extract<
+    LegacyBoardOverlayActionRequest,
+    { readonly kind: 'workArea' }
+  >
+): LegacyBoardOverlayActionResolution => {
+  if (view.viewer.kind !== 'player') return rejected('not_player');
+  const areas = view.workAreas[view.viewer.playerId];
+  if (request.action === 'leaveInPlay') {
+    const staged =
+      request.source === 'staged' ? areas?.attachmentResolution : null;
+    if (!staged) return rejected('unsupported_source');
+    const board = view.boards[view.viewer.playerId];
+    if (!board) return rejected('stale_player');
+    return command({
+      type: 'RestoreStagedStack',
+      expectedWorkAreaId: staged.id,
+      expectedActiveStackId: board.activeStackId,
+      expectedBenchStackIds: [...board.benchStackIds],
+      destinationSlot: staged.suggestedSlot,
+    });
+  }
+  const resolution = resolveWorkAreaCardsAction(
+    view,
+    request.source,
+    WORK_AREA_DESTINATIONS[request.action]
+  );
+  return resolution.ok
+    ? command(resolution.command)
+    : rejected(
+        resolution.reason === 'not_player' ? 'not_player' : 'unsupported_source'
+      );
 };

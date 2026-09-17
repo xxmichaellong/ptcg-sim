@@ -714,4 +714,107 @@ describe('legacy board overlay action resolver', () => {
       })
     ).toEqual({ ok: false, reason: 'stale_zone' });
   });
+  it('maps the work-area popup buttons onto the bulk and restore commands', () => {
+    const base = createRendererSpikeView();
+    const playerId = base.playerOrder[0]!;
+    const hand = base.zones[`zone:${playerId}:hand`]!;
+    const [inspected, staged] = hand.cards;
+    if (!inspected || !staged) throw new Error('Fixture hand is too small');
+    const view: MatchViewState = {
+      ...base,
+      zones: {
+        ...base.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+      },
+      workAreas: {
+        ...base.workAreas,
+        [playerId]: {
+          inspection: {
+            id: 'popup-inspection',
+            cards: [inspected],
+            sourceZoneId: `zone:${playerId}:deck`,
+          },
+          attachmentResolution: {
+            id: 'popup-staged',
+            sourceStackId: 'removed-stack',
+            cards: [staged],
+            evolutionCards: [],
+            attachmentCards: [staged],
+            suggestedSlot: 'bench',
+          },
+        },
+      },
+    };
+    const board = view.boards[playerId]!;
+
+    const expectations = [
+      ['inspection', 'discardAll', 'discard'],
+      ['inspection', 'shuffleAll', 'shuffleIntoDeck'],
+      ['inspection', 'shuffleBottom', 'shuffleToDeckBottom'],
+      ['inspection', 'lostZoneAll', 'lostZone'],
+      ['inspection', 'toHand', 'hand'],
+      ['staged', 'discardAll', 'discard'],
+      ['staged', 'shuffleAll', 'shuffleIntoDeck'],
+      ['staged', 'lostZoneAll', 'lostZone'],
+      ['staged', 'toHand', 'hand'],
+    ] as const;
+    for (const [source, action, destination] of expectations) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'workArea',
+          source,
+          action,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type:
+            source === 'inspection'
+              ? 'ResolveInspectionCards'
+              : 'ResolveStagedCards',
+          expectedWorkAreaId:
+            source === 'inspection' ? 'popup-inspection' : 'popup-staged',
+          destination,
+        },
+      });
+    }
+    // "Leave in play" restores the staged stack to the slot it came from.
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'workArea',
+        source: 'staged',
+        action: 'leaveInPlay',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'RestoreStagedStack',
+        expectedWorkAreaId: 'popup-staged',
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: 'bench',
+      },
+    });
+    // The inspection popup has no such button, and a missing popup fails closed.
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'workArea',
+        source: 'inspection',
+        action: 'leaveInPlay',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(
+      resolveLegacyBoardOverlayAction(base, {
+        kind: 'workArea',
+        source: 'inspection',
+        action: 'toHand',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(
+      resolveLegacyBoardOverlayAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { kind: 'workArea', source: 'staged', action: 'toHand' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+  });
 });

@@ -1,8 +1,7 @@
-import type { ViewCardId } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import {
   isLegacyMarkerPresentation,
   layoutLegacyActiveQ0Markers,
-  layoutLegacyBenchQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
   resolveBoardDropTarget,
@@ -40,8 +39,11 @@ import type {
 import {
   LEGACY_BOARD_CATEGORY_CHOICES,
   LEGACY_BOARD_MOVE_CHOICES,
+  LEGACY_BOARD_WORK_AREA_ACTIONS,
   parseLegacyDamageInput,
   parseLegacySpecialConditionInput,
+  type LegacyBoardWorkAreaActionId,
+  type LegacyBoardWorkAreaSource,
 } from '../resolveLegacyBoardOverlayAction.js';
 import {
   parseLegacyCountInput,
@@ -58,13 +60,22 @@ export type {
   LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
   LegacyBoardMoveChoice,
+  LegacyBoardWorkAreaActionId,
+  LegacyBoardWorkAreaSource,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
 
 export interface LegacyBoardOverlayActions {
   readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => void;
+  /** Table-owned card intents from the work-area popups' own card images. */
+  readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
   /** Opens one card's full preview from inside the stack view. */
   readonly previewCard?: (cardId: ViewCardId) => void;
+  /** One of the bulk buttons along the bottom of a work-area popup. */
+  readonly invokeWorkAreaAction?: (
+    source: LegacyBoardWorkAreaSource,
+    action: LegacyBoardWorkAreaActionId
+  ) => void;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
     action: LegacyBoardContextActionId,
@@ -769,6 +780,36 @@ const OverlayCardImage = ({
   );
 };
 
+/**
+ * v1's full view lists the play-container's images in DOM order: the top
+ * card first, then every card attached to it newest-first, because each
+ * attachment is inserted directly after its host.
+ */
+export const legacyStackPreviewOrder = (
+  stack:
+    | Pick<
+        MatchViewState['stacks'][string],
+        'evolutionCards' | 'attachmentCards'
+      >
+    | undefined,
+  cards: readonly CardSceneNode[]
+): readonly CardSceneNode[] => {
+  if (!stack) {
+    return [...cards].sort((left, right) => right.zIndex - left.zIndex);
+  }
+  const byId = new Map(cards.map((card) => [card.id, card]));
+  const ordered = [
+    ...stack.evolutionCards.slice(-1),
+    ...[...stack.attachmentCards].reverse(),
+    ...stack.evolutionCards.slice(0, -1).reverse(),
+  ].flatMap((card) => {
+    const node = byId.get(card.id);
+    return node ? [node] : [];
+  });
+  const listed = new Set(ordered.map((card) => card.id));
+  return [...ordered, ...cards.filter((card) => !listed.has(card.id))];
+};
+
 const Preview = ({
   cards,
   kind,
@@ -1212,6 +1253,194 @@ const ZoneBrowser = ({
   );
 };
 
+/**
+ * v1's `#viewCards` ("Looking at cards...") and `#attachedCards` ("Move
+ * attached cards") popups. The scene already lays the area's cards out where
+ * the popup's inline images sit, so this paints the popup chrome around them
+ * and its own copies of the cards on top for dragging, selecting, previewing
+ * and the context menu. It is not modal and, as in v1, Escape leaves it open:
+ * the cards must be resolved with the buttons or by moving them.
+ */
+const WorkAreaPanel = ({
+  state,
+  zone,
+  cards,
+  captureContextAnchor,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly zone: ZoneSceneNode;
+  readonly cards: readonly CardSceneNode[];
+  readonly captureContextAnchor: (
+    cardId: ViewCardId,
+    zoneId: string,
+    bounds: Rect
+  ) => void;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const container = useRef<HTMLElement>(null);
+  const activeDragCardId = useRef<ViewCardId | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
+  const source: LegacyBoardWorkAreaSource =
+    zone.kind === 'inspection' ? 'inspection' : 'staged';
+  const own =
+    state.view?.viewer.kind === 'player' &&
+    zone.playerId === state.view.viewer.playerId;
+  const heading =
+    zone.kind === 'inspection'
+      ? 'Looking at cards...'
+      : own
+        ? 'Move attached cards'
+        : 'Opponent moving cards...';
+  const emit = actions.emitCardIntent;
+  const finishDrag = useCallback(() => {
+    activeDragCardId.current = null;
+    setDraggingCardId(null);
+  }, []);
+  useEffect(() => {
+    const element = container.current;
+    const document = element?.ownerDocument;
+    const scene = state.scene;
+    if (!element || !document || !scene || !emit) return;
+    const onDragOver = (event: DragEvent): void => {
+      if (activeDragCardId.current === null) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+    const onDrop = (event: DragEvent): void => {
+      const cardId = activeDragCardId.current;
+      if (cardId === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const stillOwned = cards.some(
+        (card) => card.id === cardId && card.parentId === zone.id
+      );
+      const overlay = element.closest<HTMLElement>(
+        '[data-legacy-board-overlays]'
+      );
+      const surfaceBounds = overlay?.getBoundingClientRect();
+      const point =
+        stillOwned && surfaceBounds
+          ? openedZoneDropPoint(
+              scene,
+              surfaceBounds,
+              event.clientX,
+              event.clientY
+            )
+          : null;
+      const targetId = point
+        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+        : null;
+      finishDrag();
+      if (targetId && point) {
+        emit({
+          kind: 'CardDropRequested',
+          cardId,
+          targetId,
+          x: point.x,
+          y: point.y,
+        });
+      }
+    };
+    document.addEventListener('dragover', onDragOver, true);
+    document.addEventListener('drop', onDrop, true);
+    return () => {
+      document.removeEventListener('dragover', onDragOver, true);
+      document.removeEventListener('drop', onDrop, true);
+    };
+  }, [cards, emit, finishDrag, state.scene, zone.id]);
+  const interactive = own && state.canSubmitCommands && emit !== undefined;
+
+  return (
+    <section
+      ref={container}
+      className="ptcgsim-legacy-work-area"
+      data-legacy-work-area={source}
+      data-work-area-id={zone.id}
+      data-overlay-side={zone.side}
+      data-work-area-dragging-card={draggingCardId ?? undefined}
+      aria-label={heading}
+      style={{
+        left: zone.bounds.x,
+        top: zone.bounds.y,
+        width: zone.bounds.width,
+        height: zone.bounds.height,
+      }}
+    >
+      <div className="ptcgsim-legacy-work-area-header">{heading}</div>
+      {cards.map((card) => (
+        <button
+          type="button"
+          key={card.id}
+          className="ptcgsim-legacy-work-area-card"
+          data-work-area-card-id={card.id}
+          aria-label={card.label}
+          aria-pressed={state.presentation.selectedCardId === card.id}
+          disabled={!interactive}
+          draggable={interactive}
+          style={{
+            left: card.bounds.x - zone.bounds.x,
+            top: card.bounds.y - zone.bounds.y,
+            width: card.bounds.width,
+            height: card.bounds.height,
+          }}
+          onDragStart={(event) => {
+            if (!interactive) {
+              event.preventDefault();
+              return;
+            }
+            activeDragCardId.current = card.id;
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData(
+                'application/x-ptcgsim-work-area-card',
+                'card'
+              );
+              installDragImage(event, card.imageUrl);
+            }
+            setDraggingCardId(card.id);
+            actions.dismiss('selection');
+          }}
+          onDragEnd={finishDrag}
+          onClick={() => emit?.({ kind: 'CardSelected', cardId: card.id })}
+          onDoubleClick={() =>
+            emit?.({ kind: 'CardPreviewRequested', cardId: card.id })
+          }
+          onContextMenu={(event) => {
+            event.preventDefault();
+            if (!emit) return;
+            const bounds = event.currentTarget.getBoundingClientRect();
+            captureContextAnchor(card.id, zone.id, {
+              x: bounds.x,
+              y: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+            });
+            emit({ kind: 'CardContextRequested', cardId: card.id });
+          }}
+        >
+          <OverlayCardImage card={card} variant="zone" />
+        </button>
+      ))}
+      {interactive && actions.invokeWorkAreaAction ? (
+        <div className="ptcgsim-legacy-work-area-buttons">
+          {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => (
+            <button
+              type="button"
+              key={button.id}
+              className="ptcgsim-legacy-zone-button"
+              data-work-area-action={button.id}
+              onClick={() => actions.invokeWorkAreaAction?.(source, button.id)}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
 const markerEditorMarker = (
   state: BoardSessionControllerState
 ): MarkerSceneNode | null => {
@@ -1238,23 +1467,26 @@ const markerEditorMarker = (
     (marker) => marker.parentCardId === topCard.id && marker.kind === input.kind
   );
   if (existing) return existing;
-  const sibling = scene.markers.find(
-    (marker) =>
-      marker.parentCardId === topCard.id &&
-      isLegacyMarkerPresentation(marker.presentation)
-  );
-  const presentation = sibling?.presentation ?? 'generic';
-  const characterizedBounds =
-    presentation === 'legacyActiveQ0'
-      ? layoutLegacyActiveQ0Markers(topCard.bounds, topCard.side)[input.kind]
-          .bounds
-      : presentation === 'legacyBenchQ0' && input.kind === 'damage'
-        ? layoutLegacyBenchQ0Markers(topCard.bounds, topCard.side).damage.bounds
-        : null;
-  const size = Math.max(
-    14,
-    Math.min(topCard.bounds.width, topCard.bounds.height) * 0.22
-  );
+  // A counter being created sits exactly where the scene will paint it: v1
+  // measures every counter from the host image's painted (rotated) box.
+  const presentation =
+    stack.slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0';
+  const painted =
+    topCard.rotationQuarterTurns % 2 === 0
+      ? topCard.bounds
+      : {
+          x:
+            topCard.bounds.x +
+            topCard.bounds.width / 2 -
+            topCard.bounds.height / 2,
+          y:
+            topCard.bounds.y +
+            topCard.bounds.height / 2 -
+            topCard.bounds.width / 2,
+          width: topCard.bounds.height,
+          height: topCard.bounds.width,
+        };
+  const item = layoutLegacyActiveQ0Markers(painted, topCard.side)[input.kind];
   return {
     id: `${topCard.id}:${input.kind}-editor`,
     parentCardId: topCard.id,
@@ -1262,18 +1494,8 @@ const markerEditorMarker = (
     kind: input.kind,
     presentation,
     value: input.initialValue,
-    bounds: characterizedBounds ?? {
-      x:
-        input.kind === 'specialCondition'
-          ? topCard.bounds.x
-          : topCard.bounds.x + topCard.bounds.width - size,
-      y: topCard.bounds.y,
-      width: size,
-      height: size,
-    },
-    zIndex:
-      sibling?.zIndex ??
-      topCard.zIndex + (characterizedBounds === null ? 100 : 1),
+    bounds: item.bounds,
+    zIndex: topCard.zIndex + item.sourceZIndex,
     label: `${input.kind}: ${input.initialValue}`,
   };
 };
@@ -1477,9 +1699,10 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   const previewCards = preview
     ? preview.kind === 'card'
       ? scene.cards.filter((card) => card.id === preview.cardId)
-      : scene.cards
-          .filter((card) => card.parentId === preview.stackId)
-          .sort((left, right) => left.zIndex - right.zIndex)
+      : legacyStackPreviewOrder(
+          state.view?.stacks[preview.stackId],
+          scene.cards.filter((card) => card.parentId === preview.stackId)
+        )
     : [];
   const openedZone = state.presentation.openedZoneId
     ? (scene.zones.find(
@@ -1503,12 +1726,28 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         )
       : undefined;
 
+  const workAreaZones = scene.zones.filter(
+    (zone) => zone.kind === 'inspection' || zone.kind === 'attachmentResolution'
+  );
+
   return (
     <div
       className={`ptcgsim-legacy-board-overlays${darkMode ? ' is-dark' : ''}`}
       data-legacy-board-overlays="true"
       style={{ width: scene.viewport.width, height: scene.viewport.height }}
     >
+      {workAreaZones.map((zone) => (
+        <WorkAreaPanel
+          key={zone.id}
+          state={state}
+          zone={zone}
+          cards={scene.cards.filter((card) => card.parentId === zone.id)}
+          captureContextAnchor={(cardId, zoneId, bounds) =>
+            setContextAnchor({ cardId, zoneId, bounds })
+          }
+          actions={actions}
+        />
+      ))}
       {openedZone ? (
         <ZoneBrowser
           key={openedZone.id}
@@ -1543,7 +1782,8 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           card={contextCard}
           anchorBounds={
             contextAnchor?.cardId === contextCard.id &&
-            contextAnchor.zoneId === state.presentation.openedZoneId
+            (contextAnchor.zoneId === state.presentation.openedZoneId ||
+              contextAnchor.zoneId === contextCard.parentId)
               ? contextAnchor.bounds
               : undefined
           }

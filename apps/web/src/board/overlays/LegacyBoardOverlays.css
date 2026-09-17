@@ -356,7 +356,8 @@
 }
 
 .ptcgsim-legacy-zone-cards button[aria-pressed='true'] {
-  outline: 4px solid rgb(143 215 153 / 86.4%);
+  /* v1 `.highlight`: the selected card wears the blue ring. */
+  outline: 4px solid rgb(90 110 188 / 86.4%);
   outline-offset: 1px;
 }
 
@@ -404,4 +405,109 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+/* v1 #viewCards / #attachedCards: translucent popup over the player's frame. */
+.ptcgsim-legacy-work-area {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 0 0 15px 15px;
+  background: rgb(169 169 169 / 50%);
+  box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-work-area[data-work-area-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+}
+
+.ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-work-area {
+  background: rgb(21 21 21 / 87%);
+}
+
+.ptcgsim-legacy-work-area-header {
+  position: absolute;
+  top: -3%;
+  left: 50%;
+  box-sizing: border-box;
+  width: 100%;
+  border: 2px solid rgb(112 129 196);
+  border-radius: 15px 15px 0 0;
+  background: #7081c4;
+  box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
+  color: #fff;
+  /* v1 authors 3vh inside a half-height frame, i.e. 1.5% of the window. */
+  font-size: clamp(12px, 1.5vh, 20px);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.ptcgsim-legacy-work-area[data-overlay-side='opponent']
+  .ptcgsim-legacy-work-area-header {
+  top: auto;
+  bottom: -3%;
+  border-radius: 0 0 15px 15px;
+  transform: translate(-50%, 50%);
+}
+
+.ptcgsim-legacy-work-area-card {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.275rem;
+  background: #777;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.ptcgsim-legacy-work-area-card:disabled {
+  cursor: default;
+}
+
+.ptcgsim-legacy-work-area[data-overlay-side='opponent']
+  .ptcgsim-legacy-work-area-card {
+  transform: rotate(180deg);
+}
+
+.ptcgsim-legacy-work-area-card[aria-pressed='true'] {
+  box-shadow: 0 0 0 4px rgb(90 110 188 / 86.4%);
+}
+
+.ptcgsim-legacy-work-area-card .ptcgsim-legacy-overlay-card-image.is-zone {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-work-area-card
+  .ptcgsim-legacy-overlay-card-image.is-zone[data-overlay-image-state='ready'] {
+  display: block;
+}
+
+.ptcgsim-legacy-work-area-buttons {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  display: flex;
+  box-sizing: border-box;
+  width: 96%;
+  padding: 10px;
+  border-radius: 15px;
+  background: #dadada;
+  box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
+  gap: 10px;
+  justify-content: center;
+  transform: translateX(-50%);
+}
+
+.ptcgsim-legacy-work-area-buttons .ptcgsim-legacy-zone-button {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  margin: 0;
 }

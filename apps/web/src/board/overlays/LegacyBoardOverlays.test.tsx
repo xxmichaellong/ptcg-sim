@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
@@ -15,6 +16,7 @@ import {
 } from '../BoardSessionController.js';
 import {
   LegacyBoardOverlays,
+  legacyStackPreviewOrder,
   legacyStackPreviewFrameStyle,
   legacyZoneBrowserFrameStyle,
   resolveOpenedZoneDropTarget,
@@ -1432,8 +1434,9 @@ describe('legacy board overlays', () => {
       5
     );
     expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
-    expect(editor.style.background).toBe('#efefef');
-    expect(editor.style.color).toBe('#111');
+    // An unrecognised condition draws v1's white circle with black text.
+    expect(editor.style.background).toBe('rgb(255, 255, 255)');
+    expect(editor.style.color).toBe('rgb(0, 0, 0)');
 
     await act(async () => {
       editor.focus();
@@ -1462,5 +1465,199 @@ describe('legacy board overlays', () => {
     ).toHaveBeenCalledExactlyOnceWith(cardId, ' B ');
     expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
     expect(JSON.stringify(legacyScene.markers)).toBe(markerSnapshot);
+  });
+  it('paints the source work-area popup with its cards and bulk buttons', async () => {
+    // Move two of the fixture's hand cards into a "Looking at cards..."
+    // inspection; the scene lays them out where v1's popup images sit and
+    // the overlay draws the popup around them.
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === firstPlayer
+    )!;
+    const [first, second] = hand.cards;
+    if (!first || !second) throw new Error('Fixture hand is too small');
+    const inspectingView: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+      },
+      workAreas: {
+        ...view.workAreas,
+        [firstPlayer]: {
+          inspection: {
+            id: 'work-area:inspection',
+            cards: [first, second],
+            sourceZoneId: hand.id,
+          },
+          attachmentResolution: null,
+        },
+      },
+    };
+    const inspectingScene = createBoardSceneForViewport(inspectingView, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    const callbacks = {
+      ...actions(),
+      emitCardIntent: vi.fn(),
+      invokeWorkAreaAction: vi.fn(),
+    };
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({ view: inspectingView, scene: inspectingScene }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const panel = host.querySelector<HTMLElement>(
+      '[data-legacy-work-area="inspection"]'
+    )!;
+    const zone = inspectingScene.zones.find(
+      (candidate) => candidate.id === 'work-area:inspection'
+    )!;
+    const local = inspectingScene.layout.players.find(
+      (frame) => frame.side === 'local'
+    )!;
+    // 69% x 75% of the player's frame plus 20px padding and a 1px border,
+    // centred in the frame.
+    expect(zone.bounds.width).toBeCloseTo(local.bounds.width * 0.69 + 42);
+    expect(zone.bounds.height).toBeCloseTo(local.bounds.height * 0.75 + 42);
+    expect(zone.bounds.x + zone.bounds.width / 2).toBeCloseTo(
+      local.bounds.x + local.bounds.width / 2
+    );
+    expect(Number.parseFloat(panel.style.left)).toBeCloseTo(zone.bounds.x);
+    expect(Number.parseFloat(panel.style.width)).toBeCloseTo(zone.bounds.width);
+    expect(
+      panel.querySelector('.ptcgsim-legacy-work-area-header')?.textContent
+    ).toBe('Looking at cards...');
+    expect(
+      [...panel.querySelectorAll('[data-work-area-action]')].map(
+        (button) => button.textContent
+      )
+    ).toEqual([
+      'Discard all',
+      'Shuffle all',
+      'Shuffle to bottom',
+      'Lost Zone all',
+      'To Hand',
+    ]);
+
+    const cards = [
+      ...panel.querySelectorAll<HTMLButtonElement>('[data-work-area-card-id]'),
+    ];
+    expect(cards.map((card) => card.dataset.workAreaCardId)).toEqual([
+      first.id,
+      second.id,
+    ]);
+    // Each popup card sits exactly over its scene card (33% of the content
+    // height, flowing left to right).
+    const firstNode = inspectingScene.cards.find(
+      (card) => card.id === first.id
+    )!;
+    expect(firstNode.bounds.height).toBeCloseTo(
+      local.bounds.height * 0.75 * 0.33
+    );
+    expect(zone.bounds.x + Number.parseFloat(cards[0]!.style.left)).toBeCloseTo(
+      firstNode.bounds.x
+    );
+    expect(zone.bounds.y + Number.parseFloat(cards[0]!.style.top)).toBeCloseTo(
+      firstNode.bounds.y
+    );
+    const secondNode = inspectingScene.cards.find(
+      (card) => card.id === second.id
+    )!;
+    expect(secondNode.bounds.x).toBeGreaterThan(firstNode.bounds.x);
+    expect(secondNode.bounds.y).toBe(firstNode.bounds.y);
+
+    await act(async () => {
+      cards[1]!.click();
+    });
+    expect(callbacks.emitCardIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardSelected',
+      cardId: second.id,
+    });
+    await act(async () => {
+      panel
+        .querySelector<HTMLButtonElement>(
+          '[data-work-area-action="shuffleBottom"]'
+        )!
+        .click();
+    });
+    expect(callbacks.invokeWorkAreaAction).toHaveBeenCalledExactlyOnceWith(
+      'inspection',
+      'shuffleBottom'
+    );
+
+    // A spectator sees the popup but none of its bulk buttons.
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            view: { ...inspectingView, viewer: { kind: 'spectator' } },
+            scene: inspectingScene,
+            canSubmitCommands: false,
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-legacy-work-area] [data-work-area-action]')
+    ).toHaveLength(0);
+    expect(
+      host.querySelector<HTMLButtonElement>('[data-work-area-card-id]')
+        ?.disabled
+    ).toBe(true);
+  });
+  it('lists a stack preview top card first and then its attachments newest-first, as v1 does', () => {
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const original = view.stacks[stackId]!;
+    // Give the fixture's active a second stage and a second attachment by
+    // borrowing two hand cards, then lay it out again.
+    const hand = view.zones[`zone:${firstPlayer}:hand`]!;
+    const [stage, extra] = hand.cards;
+    if (!stage || !extra) throw new Error('Fixture hand is too small');
+    const stack = {
+      ...original,
+      evolutionCards: [...original.evolutionCards, stage],
+      attachmentCards: [...original.attachmentCards, extra],
+    };
+    const richScene = createBoardSceneForViewport(
+      {
+        ...view,
+        zones: {
+          ...view.zones,
+          [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+        },
+        stacks: { ...view.stacks, [stackId]: stack },
+      },
+      {
+        geometryVersion: 1,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        bottomPlayerId: firstPlayer,
+        splitRatio: 0.5,
+      }
+    );
+    const cards = richScene.cards.filter((card) => card.parentId === stackId);
+    expect(cards).toHaveLength(
+      stack.evolutionCards.length + stack.attachmentCards.length
+    );
+    const ordered = legacyStackPreviewOrder(stack, cards).map(
+      (card) => card.id
+    );
+    expect(ordered).toEqual([
+      stack.evolutionCards.at(-1)!.id,
+      ...[...stack.attachmentCards].reverse().map((card) => card.id),
+      ...stack.evolutionCards
+        .slice(0, -1)
+        .reverse()
+        .map((card) => card.id),
+    ]);
   });
 });

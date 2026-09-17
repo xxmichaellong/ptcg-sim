@@ -56,13 +56,16 @@ const isSelectedOpenedZoneCardTarget = (
   selectedCardId: string | null,
   openedZoneId: string | null
 ): boolean => {
-  if (
-    !(target instanceof Element) ||
-    selectedCardId === null ||
-    openedZoneId === null
-  ) {
+  if (!(target instanceof Element) || selectedCardId === null) {
     return false;
   }
+  // A work-area popup card is a table card in its own right: once selected
+  // there, v1's keybinds move it like any other selected card.
+  const workAreaCard = target.closest<HTMLElement>('[data-work-area-card-id]');
+  if (workAreaCard) {
+    return workAreaCard.dataset.workAreaCardId === selectedCardId;
+  }
+  if (openedZoneId === null) return false;
   const card = target.closest<HTMLElement>('[data-overlay-card-id]');
   const zone = card?.closest<HTMLElement>('[data-legacy-zone-browser]');
   return (
