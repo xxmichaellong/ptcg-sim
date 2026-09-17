@@ -69,6 +69,8 @@ export interface GamePresentationCoordinatorOptions {
   readonly clearTransientEffects?: () => void;
   /** Clears local data when the authoritative room/viewer identity changes. */
   readonly bindPresentationIdentity?: (identity?: string) => void;
+  /** v1's solo table announces no arrivals or departures; multiplayer does. */
+  readonly announcePresence?: boolean;
   readonly reportFailure?: GamePresentationFailureReporter;
 }
 
@@ -103,6 +105,7 @@ export class GamePresentationCoordinator {
     replaceReplayActivity,
     clearTransientEffects,
     bindPresentationIdentity,
+    announcePresence = true,
     reportFailure = (error, context) =>
       console.error('Game presentation failed', context, error),
   }: GamePresentationCoordinatorOptions) {
@@ -289,7 +292,7 @@ export class GamePresentationCoordinator {
       () => live.getSnapshot().view?.revision ?? 0,
       adapters,
       reportPresenceEffectFailure,
-      () => replay.getSnapshot().mode === 'live'
+      () => announcePresence && replay.getSnapshot().mode === 'live'
     );
     const replayEffectSink = createPresentationEffectSink(
       () => replay.getSnapshot().view,

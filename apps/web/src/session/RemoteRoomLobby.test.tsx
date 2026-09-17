@@ -513,8 +513,9 @@ describe('remote room lobby wiring', () => {
     // replays the mount with a fresh owner: the first owner's creation is
     // aborted with it and the live owner's creation is the one mounted.
     expect(createRoom).toHaveBeenCalledTimes(2);
+    // Solo is always v1's Blue, never the Multiplayer fallback name.
     for (const call of createRoom.mock.calls) {
-      expect(call[0]).toMatchObject({ displayName: 'Froakie', mode: 'solo' });
+      expect(call[0]).toMatchObject({ displayName: 'Blue', mode: 'solo' });
     }
     expect(createRoom.mock.calls[0]?.[0].signal.aborted).toBe(true);
     expect(createRoom.mock.calls[1]?.[0].signal.aborted).toBe(false);
@@ -548,7 +549,7 @@ describe('remote room lobby wiring', () => {
     expect(createRoom).toHaveBeenCalledOnce();
     expect(createRoom.mock.calls[0]?.[0]).toMatchObject({
       buildId: 'test-build',
-      displayName: 'Froakie',
+      displayName: 'Blue',
       mode: 'solo',
       rendererKind: 'dom',
     });

@@ -415,6 +415,14 @@ export const createRemoteRoom = async (
       },
       {
         ...dependencies.bootstrapDependencies,
+        runtime: {
+          ...dependencies.bootstrapDependencies?.runtime,
+          presentation: {
+            ...dependencies.bootstrapDependencies?.runtime?.presentation,
+            // v1's solo table never announced its lone player arriving.
+            announcePresence: parsed.value.mode !== 'solo',
+          },
+        },
         fetch: fetchImplementation,
         origin: origin.origin,
       }

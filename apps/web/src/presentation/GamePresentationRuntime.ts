@@ -16,6 +16,8 @@ export interface GamePresentationRuntimeOptions {
   readonly replay: ReplayPresentationSource;
   readonly policy?: Partial<PresentationRuntimePolicy>;
   readonly reportFailure?: GamePresentationFailureReporter;
+  /** v1's solo table announces no arrivals or departures; multiplayer does. */
+  readonly announcePresence?: boolean;
   /** Optional renderer-facing consumers owned at the same lifecycle boundary. */
   readonly consumers?: PresentationConsumerRuntimeOptions;
 }
@@ -33,6 +35,7 @@ export class GamePresentationRuntime extends PresentationRuntime {
     replay,
     policy,
     reportFailure,
+    announcePresence,
     consumers,
   }: GamePresentationRuntimeOptions) {
     super(policy);
@@ -40,6 +43,7 @@ export class GamePresentationRuntime extends PresentationRuntime {
       live,
       replay,
       adapters: this.adapters,
+      ...(announcePresence === undefined ? {} : { announcePresence }),
       replaceReplayActivity: this.replaceActivity,
       clearTransientEffects: this.clearTransientEffects,
       bindPresentationIdentity: this.bindIdentity,

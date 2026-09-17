@@ -360,9 +360,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     }
     await expect(playerTwo.page.locator('#p2MessageInput')).toHaveValue('');
 
+    // v1's free button posts its flower as an unnamed player line.
     await playerTwo.page.locator('#p2FREEBUTTON').click();
     await expect(
-      creator.page.locator('#p2Chatbox').getByText('Red: 🌺', { exact: true })
+      creator.page.locator('#p2Chatbox').getByText('🌺', { exact: true })
     ).toBeVisible();
 
     await playerTwo.page.locator('#p2AttackButton').click();

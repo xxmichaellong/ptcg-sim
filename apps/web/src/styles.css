@@ -253,9 +253,42 @@ select {
   margin-right: 0.5vw;
 }
 
+/*
+ * v1 paints its wallpaper on <body> under a 75% white wash
+ * (global-variables.js) and then lays #cover, an 85% white sheet, over the
+ * whole page; a custom background replaces the wallpaper and keeps the
+ * cover. The cover is a pseudo-element here so the route's own
+ * background-image stays exactly the selected image.
+ */
+.remote-room-route {
+  background-color: #fff;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.remote-room-route[data-room-background='default'] {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 75%), rgb(255 255 255 / 75%)),
+    url('https://wallpapercave.com/wp/wp10484598.jpg');
+}
+
+.remote-room-route::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgb(255 255 255 / 85%);
+  pointer-events: none;
+}
+
 .remote-room-route--dark {
-  background: rgb(8 18 18);
+  /* v1 .dark-mode-1 recolours <body> and leaves its wallpaper in place. */
+  background-color: rgb(8 18 18);
   color: #fff;
+}
+
+.remote-room-route--dark::before {
+  background: rgb(0 0 0 / 90%);
 }
 
 .remote-room-route--dark .legacy-room-sidebar,
@@ -583,6 +616,16 @@ select {
   box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
 }
 
+/* v1 swaps the sidebar buttons to the red seat colour when the board flips. */
+.opp-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(188 90 113 / 86.4%),
+    rgb(158 60 83 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
 .chat-button-container {
   display: flex;
   align-items: center;
@@ -611,6 +654,10 @@ select {
 
 .chat-button-container button.self-color:hover:not(:disabled) {
   background-color: rgb(116 129 183 / 86.4%);
+}
+
+.chat-button-container button.opp-color:hover:not(:disabled) {
+  background-color: rgb(189 112 130 / 86.4%);
 }
 
 .chat-button-container button.spectator-color:hover:not(:disabled) {
@@ -654,6 +701,10 @@ select {
 
 .sidebox-button-container button.self-color:hover {
   background-color: rgb(116 129 183 / 86.4%);
+}
+
+.sidebox-button-container button.opp-color:hover {
+  background-color: rgb(189 112 130 / 86.4%);
 }
 
 .sidebox-button-container button.neutral-color:hover {
@@ -727,6 +778,18 @@ select {
   width: 100%;
   font-size: small;
   text-align: center;
+}
+
+/* v1 index.css: links inherit their colour and underline only on hover. */
+.legacy-activity-feed a,
+#links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacy-activity-feed a:hover,
+#links a:hover {
+  text-decoration: underline;
 }
 
 #donationsLink {

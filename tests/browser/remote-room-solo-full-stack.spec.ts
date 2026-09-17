@@ -303,10 +303,10 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   ).toHaveText([
     'Blue used their VSTAR!',
     'Blue used their GX!',
-    'Player 2 used their VSTAR!',
-    'Player 2 used their GX!',
+    'Red used their VSTAR!',
+    'Red used their GX!',
     'Blue reset their VSTAR',
-    'Player 2 reset their GX',
+    'Red reset their GX',
   ]);
 
   const liveRevisionBeforeReplayImport = await page

@@ -152,15 +152,17 @@ export const initializeNewRoom = async (
   if (new Set(credentialDigests).size !== credentialDigests.length) {
     throw new Error('Capability digest source produced duplicate credentials');
   }
+  // v1's solo table calls its two seats Blue and Red; a multiplayer seat is
+  // renamed by whoever takes it.
   const state = createEmptyMatch(asMatchId(input.matchId), [
     {
       playerId: playerOneId,
-      displayName: 'Player 1',
+      displayName: input.mode === 'solo' ? 'Blue' : 'Player 1',
       cardBackUrl: input.playerOneCardBackUrl,
     },
     {
       playerId: playerTwoId,
-      displayName: 'Player 2',
+      displayName: input.mode === 'solo' ? 'Red' : 'Player 2',
       cardBackUrl: input.playerTwoCardBackUrl,
     },
   ]);

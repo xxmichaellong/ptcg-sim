@@ -78,6 +78,12 @@ const layoutFor = (
   };
 };
 
+/** The seat the viewer would see at the bottom before any flip. */
+const ownPlayerIdOf = (
+  view: NonNullable<ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']>
+): string | undefined =>
+  view.viewer.kind === 'player' ? view.viewer.playerId : view.playerOrder[0];
+
 const viewIdentity = (
   view: ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
 ): string | undefined =>
@@ -101,6 +107,7 @@ export const RemoteSessionBoard = ({
   hideOpponentHand = false,
   playmatExpanded = false,
   onPlaymatExpandedChange,
+  onPerspectiveChange,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -115,6 +122,8 @@ export const RemoteSessionBoard = ({
   readonly hideOpponentHand?: boolean;
   readonly playmatExpanded?: boolean;
   readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
+  /** Reports whether the table is shown from the other seat (Alt-F / flip). */
+  readonly onPerspectiveChange?: (flipped: boolean) => void;
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
@@ -133,6 +142,7 @@ export const RemoteSessionBoard = ({
   const onSubmissionRef = useRef(onSubmission);
   const playmatExpandedRef = useRef(playmatExpanded);
   const onPlaymatExpandedChangeRef = useRef(onPlaymatExpandedChange);
+  const onPerspectiveChangeRef = useRef(onPerspectiveChange);
   displayPolicyRef.current = {
     roomMode,
     hideOpponentHand,
@@ -143,6 +153,7 @@ export const RemoteSessionBoard = ({
   onSubmissionRef.current = onSubmission;
   playmatExpandedRef.current = playmatExpanded;
   onPlaymatExpandedChangeRef.current = onPlaymatExpandedChange;
+  onPerspectiveChangeRef.current = onPerspectiveChange;
   const [boardState, setBoardState] = useState<
     BoardSessionControllerState | undefined
   >();
@@ -212,6 +223,12 @@ export const RemoteSessionBoard = ({
     const publishLayout = (): void => {
       if (disposed || !runtime) return;
       setLayout(runtime.getCharacterizedLayoutSnapshot());
+      // v1 recolours the sidebar buttons when the board is flipped; the
+      // viewer's own seat is at the bottom unless they turned it around.
+      const own = ownPlayerIdOf(view);
+      onPerspectiveChangeRef.current?.(
+        own !== undefined && runtime.getLayoutState().bottomPlayerId !== own
+      );
     };
     const scheduleViewportSynchronization = (): void => {
       if (disposed || resizeFrame !== undefined) return;
@@ -354,6 +371,16 @@ export const RemoteSessionBoard = ({
     () => ({
       emitOpenedZoneCardIntent: (intent) => {
         runtimeRef.current?.emitOpenedZoneCardIntent(intent);
+      },
+      emitCardIntent: (intent) => {
+        runtimeRef.current?.emitIntent(intent);
+      },
+      invokeWorkAreaAction: (source, action) => {
+        runtimeRef.current?.emitLegacyOverlayAction({
+          kind: 'workArea',
+          source,
+          action,
+        });
       },
       previewCard: (cardId) => {
         runtimeRef.current?.emitIntent({

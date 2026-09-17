@@ -166,7 +166,13 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
               onToggleHandSort(frame.playerId, event.currentTarget.checked)
             }
           />
-          <span className={playerSide === 'local' ? 'self-text' : 'opp-text'}>
+          {/* The frame's own rotation decides the counter-flip, as v1's
+              flipBoard swaps self-text/opp-text; the colour follows the seat. */}
+          <span
+            className={
+              frame.rotationQuarterTurns === 2 ? 'opp-text' : 'self-text'
+            }
+          >
             Sort
           </span>
         </label>

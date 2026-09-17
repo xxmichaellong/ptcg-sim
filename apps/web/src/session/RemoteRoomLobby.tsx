@@ -396,10 +396,9 @@ export const RemoteRoomLobby = ({
     }
     const active = beginOperation('solo');
     if (!active) return;
-    const displayName = normalizeDisplayName(
-      name,
-      dependencies.fallbackDisplayName
-    );
+    // v1's solo table is always Blue against Red, whatever the Multiplayer
+    // Name box says.
+    const displayName = 'Blue';
     try {
       const result = await dependencies.createRoom({
         buildId,
@@ -418,8 +417,7 @@ export const RemoteRoomLobby = ({
       delete active.owner.guestRuntime;
       previous?.result.dispose();
       active.owner.invitation.clear();
-      // Solo takes a generated name for the room when the visitor typed
-      // none; that stand-in is not written back into the Multiplayer Name
+      // Solo's fixed name is never written back into the Multiplayer Name
       // box, which v1 leaves for the visitor to fill in themselves.
       setRoomCode('');
       setReceipt(undefined);

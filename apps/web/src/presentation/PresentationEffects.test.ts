@@ -193,6 +193,31 @@ describe('presentationEffectsForEvent', () => {
         message: 'Watcher: <safe text>',
       }),
     ]);
+    // v1's sidebar free button appends its flower as an unnamed player line.
+    expect(
+      presentationEffectsForChatMessage({ ...player, message: '🌺' }, 15)
+    ).toEqual([
+      {
+        kind: 'activity',
+        revision: 15,
+        eventType: 'ChatMessage',
+        category: 'player',
+        playerId: 'spike-blue',
+        message: '🌺',
+      },
+      expect.objectContaining({ kind: 'accessibility', message: '🌺' }),
+    ]);
+    // A spectator typing the same flower is still a named spectator line.
+    expect(
+      presentationEffectsForChatMessage({
+        type: 'ChatMessage',
+        protocolVersion: 2,
+        messageId: 'chat-spectator-flower',
+        displayName: 'Watcher',
+        message: '🌺',
+        createdAtMs: 1_000,
+      })[0]
+    ).toMatchObject({ category: 'spectator', message: 'Watcher: 🌺' });
   });
 
   it('gates chat delivery and isolates effect failures', () => {

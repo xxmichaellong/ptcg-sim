@@ -136,6 +136,7 @@ export class LegacyGamePresentationRuntime {
     replay,
     policy,
     reportFailure,
+    announcePresence,
     reportConsumerFailure,
     scheduleAnnouncementClear = scheduleDefaultAnnouncementClear,
   }: LegacyGamePresentationRuntimeOptions) {
@@ -149,6 +150,7 @@ export class LegacyGamePresentationRuntime {
         replay,
         ...(policy ? { policy } : {}),
         ...(reportFailure ? { reportFailure } : {}),
+        ...(announcePresence === undefined ? {} : { announcePresence }),
         consumers: {
           announceAccessibility: this.liveRegionController.announce,
           // Legacy flip-coin.js only appended the resolved result to chat.

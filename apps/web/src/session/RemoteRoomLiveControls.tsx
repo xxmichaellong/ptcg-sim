@@ -86,6 +86,7 @@ export const RemoteRoomLiveControls = ({
   session,
   presentation,
   roomMode = 'multiplayer',
+  boardFlipped = false,
   onLeave,
   onExportState,
   onImportReplayFile,
@@ -108,6 +109,8 @@ export const RemoteRoomLiveControls = ({
   readonly session: RemoteRoomLiveSession;
   readonly presentation: RemoteRoomLivePresentation;
   readonly roomMode?: 'solo' | 'multiplayer';
+  /** v1 flipBoard swaps the seat colour of every sidebar action button. */
+  readonly boardFlipped?: boolean;
   readonly onLeave?: () => void;
   readonly onExportState?: () => void;
   readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
@@ -130,6 +133,7 @@ export const RemoteRoomLiveControls = ({
   readonly reportSavedGameResumeSuccess?: () => void;
 }) => {
   const state = useGameSession(session);
+  const seatColor = boardFlipped ? 'opp-color' : 'self-color';
   const [message, setMessage] = useState('');
   const [pendingBoth, setPendingBoth] = useState<{
     readonly commandId: string;
@@ -408,7 +412,7 @@ export const RemoteRoomLiveControls = ({
             <button
               id={solo ? 'attackButton' : 'p2AttackButton'}
               type="button"
-              className="self-color"
+              className={seatColor}
               onClick={() => submitTable('attack')}
             >
               Attack
@@ -416,7 +420,7 @@ export const RemoteRoomLiveControls = ({
             <button
               id={solo ? 'passButton' : 'p2PassButton'}
               type="button"
-              className="self-color"
+              className={seatColor}
               onClick={() => submitTable('pass')}
             >
               Pass
@@ -425,7 +429,7 @@ export const RemoteRoomLiveControls = ({
               <button
                 id="undoButton"
                 type="button"
-                className="self-color"
+                className={seatColor}
                 onClick={submitSoloUndo}
               >
                 Undo
@@ -436,7 +440,7 @@ export const RemoteRoomLiveControls = ({
         <button
           id={solo ? 'FREEBUTTON' : 'p2FREEBUTTON'}
           type="button"
-          className={playerControls ? 'self-color' : 'spectator-color'}
+          className={playerControls ? seatColor : 'spectator-color'}
           disabled={!ready}
           aria-label="Send flower"
           onClick={() => session.sendChat('🌺')}
@@ -464,7 +468,7 @@ export const RemoteRoomLiveControls = ({
             <button
               id={solo ? 'setupButton' : 'p2SetupButton'}
               type="button"
-              className="self-color"
+              className={seatColor}
               onClick={() => submitLifecycle('setup')}
             >
               Set Up
@@ -472,7 +476,7 @@ export const RemoteRoomLiveControls = ({
             <button
               id={solo ? 'resetButton' : 'p2ResetButton'}
               type="button"
-              className="self-color"
+              className={seatColor}
               onClick={() => submitLifecycle('reset')}
             >
               Reset
@@ -531,6 +535,28 @@ export const RemoteRoomLiveControls = ({
         role="menu"
         hidden={!options.open}
       >
+        {/* v1 lists replay first, then the game-state items, then the log. */}
+        {solo && onImportReplayFile && (
+          <div id="jsonReplayDiv" role="none">
+            <button
+              id="importReplay"
+              type="button"
+              role="menuitem"
+              disabled={!ready || state.replayLoading || replayImportPending}
+              onClick={() => replayFileInputRef.current?.click()}
+            >
+              Enter replay mode
+            </button>
+            <input
+              id="jsonReplay"
+              ref={replayFileInputRef}
+              type="file"
+              accept=".json"
+              hidden
+              onChange={(event) => void importReplayFile(event)}
+            />
+          </div>
+        )}
         {onExportState && (
           <button
             id="exportState"
@@ -574,27 +600,6 @@ export const RemoteRoomLiveControls = ({
               accept=".ptcgsave"
               hidden
               onChange={(event) => void resumeSavedGame(event)}
-            />
-          </div>
-        )}
-        {solo && onImportReplayFile && (
-          <div id="jsonReplayDiv" role="none">
-            <button
-              id="importReplay"
-              type="button"
-              role="menuitem"
-              disabled={!ready || state.replayLoading || replayImportPending}
-              onClick={() => replayFileInputRef.current?.click()}
-            >
-              Enter replay mode
-            </button>
-            <input
-              id="jsonReplay"
-              ref={replayFileInputRef}
-              type="file"
-              accept=".json"
-              hidden
-              onChange={(event) => void importReplayFile(event)}
             />
           </div>
         )}
