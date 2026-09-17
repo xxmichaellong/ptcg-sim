@@ -601,6 +601,50 @@ describe('remote room lobby wiring', () => {
     expect(invitation.dispose).toHaveBeenCalledOnce();
   });
 
+  it('lets the holder of a player invitation choose to watch, as v1 room keys did', async () => {
+    const invitation = custody();
+    invitation.acceptPaste.mockImplementation((event) => {
+      event.preventDefault();
+      return {
+        roomCode: ROOM_CODE,
+        requestedRole: 'player' as const,
+        expiresAt: 40_000,
+      };
+    });
+    const guest = runtime({ label: 'guest' });
+    invitation.bootstrap.mockResolvedValueOnce({
+      runtime: guest.value,
+      mode: 'multiplayer',
+      requestedRole: 'spectator',
+    });
+    const createRoom = vi.fn();
+    const { host, root } = await mount(
+      lobbyDependencies(invitation, createRoom)
+    );
+    const roomInput = element<HTMLInputElement>(host, '#roomIdInput');
+    await act(async () => {
+      paste(roomInput, RAW_HANDOFF);
+      await flush();
+    });
+    const spectator = element<HTMLInputElement>(host, '#spectatorModeCheckbox');
+    // A player invitation neither forces nor forbids watching.
+    expect(spectator.checked).toBe(false);
+    expect(spectator.disabled).toBe(false);
+    await act(async () => {
+      spectator.click();
+      await flush();
+    });
+    expect(spectator.checked).toBe(true);
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+    expect(invitation.bootstrap.mock.calls[0]?.[0]).toMatchObject({
+      asSpectator: true,
+    });
+    await act(async () => root.unmount());
+  });
+
   it('generates with the chosen identity and copies role-bound invitations directly from the button gesture', async () => {
     const invitation = custody();
     const created = creationResult();
@@ -645,7 +689,9 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
     expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
-    expect(host.textContent).toContain('Spectator invitation copied.');
+    // The button confirms the copy; the lobby narrates nothing, as in v1.
+    expect(element(host, '#copyButton').className).toBe('copied');
+    expect(host.querySelector('.lobby-status')).toBeNull();
     expect(host.innerHTML).not.toContain('secret-bearer');
 
     await act(async () => root.unmount());
@@ -703,6 +749,8 @@ describe('remote room lobby wiring', () => {
       buildId: 'test-build',
       displayName: 'Froakie',
       rendererKind: 'dom',
+      // A spectator invitation locks the choice on; it is passed along.
+      asSpectator: true,
     });
     expect(invitation.bootstrap.mock.calls[0]?.[0]).not.toHaveProperty(
       'requestedRole'
@@ -1016,7 +1064,7 @@ describe('remote room lobby wiring', () => {
       host.querySelector('[data-app-route="remote-room-lobby"]')
     ).not.toBeNull();
     expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
-    expect(host.textContent).toContain('Left room.');
+    expect(host.querySelector('.lobby-status')).toBeNull();
     expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
     expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
       true

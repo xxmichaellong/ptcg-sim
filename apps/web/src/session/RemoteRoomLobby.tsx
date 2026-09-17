@@ -355,7 +355,6 @@ export const RemoteRoomLobby = ({
       name,
       dependencies.fallbackDisplayName
     );
-    setStatus('Generating room…');
     try {
       const result = await dependencies.createRoom({
         buildId,
@@ -379,7 +378,6 @@ export const RemoteRoomLobby = ({
       setRoomCode(result.invitations.roomCode);
       setReceipt(undefined);
       setCopyConfirmed(false);
-      setStatus('Room generated. Copy a temporary invitation to share it.');
     } catch (error) {
       if (!active.owner.disposed) {
         setStatus(safeFailureMessage('generate', error));
@@ -402,7 +400,6 @@ export const RemoteRoomLobby = ({
       name,
       dependencies.fallbackDisplayName
     );
-    setStatus('Starting Solo mode…');
     try {
       const result = await dependencies.createRoom({
         buildId,
@@ -456,7 +453,6 @@ export const RemoteRoomLobby = ({
       endOperation(active.owner);
       return;
     }
-    setStatus('Copying temporary invitation…');
     setCopyConfirmed(false);
     try {
       const copy = spectator
@@ -468,7 +464,7 @@ export const RemoteRoomLobby = ({
             undefined,
             active.abort.signal
           );
-      const copied = await copy;
+      await copy;
       if (active.owner.disposed) return;
       if (active.owner.copyReset !== undefined) {
         clearTimeout(active.owner.copyReset);
@@ -479,9 +475,6 @@ export const RemoteRoomLobby = ({
           setCopyConfirmed(false);
         }
       }, 1_000);
-      setStatus(
-        `${copied.requestedRole === 'spectator' ? 'Spectator' : 'Player'} invitation copied.`
-      );
     } catch (error) {
       if (!active.owner.disposed) {
         setStatus(safeFailureMessage('copy', error));
@@ -505,9 +498,6 @@ export const RemoteRoomLobby = ({
       setReceipt(accepted);
       setRoomCode(accepted.roomCode);
       setSpectator(accepted.requestedRole === 'spectator');
-      setStatus(
-        `${accepted.requestedRole === 'spectator' ? 'Spectator' : 'Player'} invitation ready.`
-      );
     } catch (error) {
       setReceipt(undefined);
       setStatus(safeFailureMessage('join', error));
@@ -552,12 +542,12 @@ export const RemoteRoomLobby = ({
       name,
       dependencies.fallbackDisplayName
     );
-    setStatus('Joining room…');
     try {
       const result = await active.owner.invitation.bootstrap({
         buildId,
         displayName,
         rendererKind,
+        asSpectator: spectator,
         signal: active.abort.signal,
       });
       if (active.owner.disposed || ownerRef.current !== active.owner) {
@@ -607,7 +597,7 @@ export const RemoteRoomLobby = ({
     setCopyConfirmed(false);
     setConnected(undefined);
     setParkedSolo(undefined);
-    setStatus('Left room.');
+    setStatus(undefined);
   };
 
   const handleResumeSavedGame = async (
@@ -1035,7 +1025,10 @@ export const RemoteRoomLobby = ({
                 type="checkbox"
                 id="spectatorModeCheckbox"
                 checked={spectator}
-                disabled={busy || receipt !== undefined}
+                // A spectator invitation only ever watches; a player
+                // invitation leaves the choice to its holder, as v1's room
+                // key did.
+                disabled={busy || receipt?.requestedRole === 'spectator'}
                 onChange={(event) => setSpectator(event.target.checked)}
               />
               <label htmlFor="spectatorModeCheckbox">Join as spectator</label>

@@ -125,7 +125,6 @@ interface ProtectedInputHarnessWindow extends Window {
     readonly advanceSoloReplay: () => void;
     readonly seekSoloReplayStart: () => void;
     readonly exitSoloReplay: () => void;
-    readonly completePendingCommands: () => void;
     readonly dispose: () => void;
   };
 }
@@ -272,25 +271,8 @@ const drag = async (
       '[data-react-dom-protected-input-harness] .ptcgsim-board-surface'
     )
   ).toHaveAttribute('data-dragging', 'false');
-  // A drop that queued a command holds the card on its drop point until the
-  // command resolves; a drop the controller refused returns it at once.
-  const queued = (await evidence(page)).submissionResults.some(
-    (result) => result.queued
-  );
-  if (queued) {
-    await expect
-      .poll(async () => (await evidence(page)).presentation.settling.length)
-      .toBe(1);
-    const held = await source.boundingBox();
-    if (!held) throw new Error('Drag source lost its rendered geometry');
-    expect(sameRectangle(held, before)).toBe(false);
-    await page.evaluate(() => {
-      const harness = (window as ProtectedInputHarnessWindow)
-        .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
-      if (!harness) throw new Error('Missing protected-input harness');
-      harness.completePendingCommands();
-    });
-  }
+  // The harness resolves every queued command at once (it has no authority
+  // to publish), so the card returns to its authoritative place either way.
   await expect.poll(() => source.boundingBox()).toEqual(before);
 };
 

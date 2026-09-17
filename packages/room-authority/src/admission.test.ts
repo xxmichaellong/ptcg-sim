@@ -268,6 +268,87 @@ describe('room capability admission', () => {
     });
   });
 
+  it('admits a spectator on a player invitation without claiming the seat, never the reverse', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const issued = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: seatTwoToken, requestedRole: 'player' },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+    const invitationDigest = digest(issued.invitation);
+
+    // v1 let the holder of the room key choose to watch; the recipient of a
+    // player invitation may do the same.
+    const watching = await issueRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(watching.accepted).toBe(true);
+    if (!watching.accepted) return;
+    const admitted = await redeemRoomAdmissionTicket(
+      watching.snapshot,
+      {
+        admissionTicket: watching.admissionTicket,
+        resumeCapability: watching.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      },
+      10_002,
+      dependencies(crypto, storage)
+    );
+    expect(admitted.accepted).toBe(true);
+    if (!admitted.accepted) return;
+    expect(admitted.session.viewer).toEqual({ kind: 'spectator' });
+    // The seat the invitation was for is still free for its player.
+    expect(admitted.snapshot.admission?.seats[p2]?.claimedSessionId).toBeNull();
+    expect(admitted.snapshot.admission?.invitations).toHaveProperty(
+      invitationDigest
+    );
+    const player = await issueRoomAdmissionTicket(
+      admitted.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_003,
+      dependencies(crypto, storage)
+    );
+    expect(player.accepted).toBe(true);
+
+    // A spectator invitation still cannot be turned into a seat.
+    const spectatorInvitation = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: spectatorToken, requestedRole: 'spectator' },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    expect(spectatorInvitation.accepted).toBe(true);
+    if (!spectatorInvitation.accepted) return;
+    expect(
+      await issueRoomAdmissionTicket(
+        spectatorInvitation.snapshot,
+        {
+          capability: spectatorInvitation.invitation,
+          displayName: 'Climber',
+          requestedRole: 'player',
+        },
+        10_001,
+        dependencies(crypto, storage)
+      )
+    ).toMatchObject({ accepted: false, code: 'invalid_capability' });
+  });
+
   it('rotates a retrying invitation exchange so a lost ticket response is recoverable', async () => {
     const storage = persistence();
     const crypto = createCrypto();

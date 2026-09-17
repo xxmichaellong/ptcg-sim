@@ -208,11 +208,7 @@ export const RemoteRoomRoute = ({
     if (!onCopyInvitation) return;
     const copied = await onCopyInvitation(role).catch(() => false);
     setCopyNotice(
-      copied
-        ? role === 'player'
-          ? 'Player invitation copied'
-          : 'Spectator invitation copied'
-        : 'Could not copy an invitation'
+      copied ? 'Invitation copied' : 'Could not copy an invitation'
     );
     if (copyNoticeTimer.current !== undefined) {
       clearTimeout(copyNoticeTimer.current);
@@ -390,26 +386,15 @@ export const RemoteRoomRoute = ({
                         {copyNotice ?? status}
                       </div>
                       {onCopyInvitation && state.sessionPhase === 'ready' && (
-                        <>
-                          <button
-                            id="roomHeaderCopyButton"
-                            type="button"
-                            title="Copy a player invitation"
-                            aria-label="Copy a player invitation"
-                            onClick={() => void copyInvitation('player')}
-                          >
-                            ⧉
-                          </button>
-                          <button
-                            id="roomHeaderCopySpectatorButton"
-                            type="button"
-                            title="Copy a spectator invitation"
-                            aria-label="Copy a spectator invitation"
-                            onClick={() => void copyInvitation('spectator')}
-                          >
-                            👁
-                          </button>
-                        </>
+                        <button
+                          id="roomHeaderCopyButton"
+                          type="button"
+                          title="Copy an invitation"
+                          aria-label="Copy an invitation"
+                          onClick={() => void copyInvitation('player')}
+                        >
+                          ⧉
+                        </button>
                       )}
                     </div>
                   )}

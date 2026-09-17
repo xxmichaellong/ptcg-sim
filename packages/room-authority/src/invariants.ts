@@ -732,11 +732,13 @@ const collectAuthoritySnapshotProblemsInternal = (
           if (!invitation) {
             problems.push('admission ticket references a missing invitation');
           } else {
+            // A ticket carries at most the role its invitation offered: a
+            // player invitation backs a player ticket for its own seat or a
+            // spectator ticket; a spectator invitation backs only spectators.
             if (
-              invitation.role !== ticket.role ||
-              (invitation.role === 'player' &&
-                (ticket.role !== 'player' ||
-                  invitation.playerId !== ticket.playerId))
+              ticket.role === 'player' &&
+              (invitation.role !== 'player' ||
+                invitation.playerId !== ticket.playerId)
             ) {
               problems.push('admission ticket invitation role does not match');
             }

@@ -125,8 +125,6 @@ export interface ReactDomProtectedInputHarness {
   readonly getEvidence: () => ReactDomProtectedInputEvidence;
   readonly clearEvidence: () => void;
   readonly setDarkMode: (enabled: boolean) => void;
-  /** Resolves every queued command, as a publication or rejection would. */
-  readonly completePendingCommands: () => void;
   readonly enterSoloReplay: () => void;
   readonly advanceSoloReplay: () => void;
   readonly seekSoloReplayStart: () => void;
@@ -346,31 +344,31 @@ export const mountReactDomProtectedInputHarness = async (
       if (command.type === 'ApplySoloUndo') soloUndoPending = true;
       clientSequence += 1;
       const commandId = `protected-input-command-${clientSequence}`;
-      // Mirror the real session's queue: the command is pending while it is
-      // in flight (the board holds a dropped card on its drop point for that
-      // long) and leaves the queue once resolved. This harness has no
-      // authority to publish, so a test resolves it with
-      // `completePendingCommands()`.
+      // Mirror the real session's queue, then resolve at once: this harness
+      // has no authority to publish, so nothing it queues can ever land, and
+      // a command that is pending forever would leave its prediction (or a
+      // dropped card's hold) on the table for the rest of the test. The
+      // prediction lifecycle itself is covered against the real session.
+      const pending = {
+        commandId,
+        clientSequence,
+        commandType: command.type,
+        state: 'queued' as const,
+      };
       liveState = {
         ...liveState,
-        pendingCommands: [
-          ...liveState.pendingCommands,
-          {
-            commandId,
-            clientSequence,
-            commandType: command.type,
-            state: 'queued',
-          },
-        ],
+        pendingCommands: [...liveState.pendingCommands, pending],
+      };
+      emitLive();
+      liveState = {
+        ...liveState,
+        pendingCommands: liveState.pendingCommands.filter(
+          (candidate) => candidate !== pending
+        ),
       };
       emitLive();
       return { queued: true, commandId, clientSequence };
     },
-  };
-  const completePendingCommands = (): void => {
-    if (liveState.pendingCommands.length === 0) return;
-    liveState = { ...liveState, pendingCommands: [] };
-    emitLive();
   };
   const replayListeners = new Set<() => void>();
   const replay: BoardSessionReplaySource = {
@@ -767,7 +765,6 @@ export const mountReactDomProtectedInputHarness = async (
       darkMode = enabled;
       renderOverlays();
     },
-    completePendingCommands,
     enterSoloReplay: () => {
       requireSnapshot();
       if (replayState.mode === 'replay') return;

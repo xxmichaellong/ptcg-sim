@@ -425,22 +425,15 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
       'Room ABCDEFGH2345'
     );
-    // v1's header copy button; here it mints invitations for either role.
-    await act(async () => {
-      host
-        .querySelector<HTMLButtonElement>('#roomHeaderCopySpectatorButton')!
-        .click();
-    });
-    expect(onCopyInvitation).toHaveBeenCalledWith('spectator');
-    expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
-      'Spectator invitation copied'
-    );
+    // v1's header copy button: one invitation, whose holder may choose to
+    // watch instead of play.
     await act(async () => {
       host.querySelector<HTMLButtonElement>('#roomHeaderCopyButton')!.click();
     });
     expect(onCopyInvitation).toHaveBeenCalledWith('player');
+    expect(host.querySelector('#roomHeaderCopySpectatorButton')).toBeNull();
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
-      'Player invitation copied'
+      'Invitation copied'
     );
     expect(host.querySelector('#p2AttackButton')).not.toBeNull();
     expect(host.querySelector('#p2PassButton')).not.toBeNull();

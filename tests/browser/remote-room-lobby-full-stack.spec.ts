@@ -68,9 +68,7 @@ const pasteInvitation = async (
     await expect(spectator).not.toBeChecked();
   }
   await expect(spectator).toBeDisabled();
-  await expect(page.locator('.lobby-status')).toHaveText(
-    `${role === 'spectator' ? 'Spectator' : 'Player'} invitation ready.`
-  );
+  await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
 
 const joinReadyRoom = async (page: Page): Promise<void> => {
@@ -224,9 +222,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await creator.page.locator('#nameInput').fill('Blue');
     await creator.page.locator('#generateIdButton').click();
     await expect(creator.page.locator('#roomIdInput')).toHaveValue(ROOM_CODE);
-    await expect(creator.page.locator('.lobby-status')).toHaveText(
-      'Room generated. Copy a temporary invitation to share it.'
-    );
+    await expect(creator.page.locator('.lobby-status')).toHaveCount(0);
 
     const rotatedPlayer = await copyFreshInvitation(creator.page);
     const activePlayer = await copyFreshInvitation(creator.page, rotatedPlayer);
@@ -606,9 +602,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'rgb(8, 18, 18)'
     );
     await expect(playerTwo.page.locator('#roomIdInput')).toHaveValue('');
-    await expect(playerTwo.page.locator('.lobby-status')).toHaveText(
-      'Left room.'
-    );
+    await expect(playerTwo.page.locator('.lobby-status')).toHaveCount(0);
     await expect(
       creator.page
         .locator('#p2Chatbox')

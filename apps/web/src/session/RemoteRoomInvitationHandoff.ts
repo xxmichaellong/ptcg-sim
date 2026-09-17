@@ -44,6 +44,8 @@ export interface RemoteRoomInvitationJoinInput {
   readonly buildId: string;
   readonly displayName: string;
   readonly rendererKind: RendererKind;
+  /** Watch rather than take the seat a player invitation offers. */
+  readonly asSpectator?: boolean;
   readonly signal?: AbortSignal;
 }
 

@@ -1104,8 +1104,12 @@ export const issueRoomAdmissionTicket = async (
       expected !== null &&
       dependencies.crypto.equalDigest(expected, suppliedDigest);
     const invitation = invitations[suppliedDigest];
+    // v1 let whoever held the room's key choose to watch instead of play.
+    // A player invitation therefore also admits a spectator: watching is
+    // strictly less than the seat it could have claimed, and the seat itself
+    // stays unclaimed for the player it was meant for.
     if (!masterCapability) {
-      if (invitation?.role !== 'spectator') {
+      if (invitation?.role !== 'spectator' && invitation?.role !== 'player') {
         return ticketRejection(current, 'invalid_capability');
       }
       sourceInvitationDigest = suppliedDigest;
@@ -1244,13 +1248,15 @@ export const redeemRoomAdmissionTicket = async (
   const sourceInvitation = ticket.sourceInvitationDigest
     ? current.admission.invitations[ticket.sourceInvitationDigest]
     : undefined;
+  // A ticket may carry at most the role its invitation offered: a player
+  // invitation backs a player ticket for its own seat or a spectator ticket;
+  // a spectator invitation backs only a spectator ticket.
   if (
     ticket.sourceInvitationDigest &&
     (!sourceInvitation ||
       sourceInvitation.expiresAt <= now ||
-      sourceInvitation.role !== ticket.role ||
-      (sourceInvitation.role === 'player' &&
-        (ticket.role !== 'player' ||
+      (ticket.role === 'player' &&
+        (sourceInvitation.role !== 'player' ||
           sourceInvitation.playerId !== ticket.playerId)))
   ) {
     return rejection(current, 'invalid_capability');
@@ -1283,7 +1289,11 @@ export const redeemRoomAdmissionTicket = async (
         },
     dependencies,
     ticketDigest,
-    ticket.sourceInvitationDigest
+    // A spectator riding a player invitation does not use it up: the seat,
+    // and the invitation that claims it, remain for the player.
+    ticket.role === 'spectator' && sourceInvitation?.role === 'player'
+      ? undefined
+      : ticket.sourceInvitationDigest
   );
 };
 

@@ -268,6 +268,11 @@ export interface RemoteRoomInvitationBootstrapInput {
   readonly displayName: string;
   readonly rendererKind: RendererKind;
   readonly invitation: unknown;
+  /**
+   * Watch instead of play. v1 let the holder of the room key choose; a
+   * player invitation admits a spectator too (the room refuses the reverse).
+   */
+  readonly asSpectator?: boolean;
   readonly signal?: AbortSignal;
 }
 
@@ -291,7 +296,9 @@ export const bootstrapRemoteRoomInvitation = async (
       buildId: input.buildId,
       roomCode: parsed.value.roomCode,
       displayName: input.displayName,
-      requestedRole: parsed.value.requestedRole,
+      requestedRole: input.asSpectator
+        ? 'spectator'
+        : parsed.value.requestedRole,
       capability: parsed.value.invitation,
       rendererKind: input.rendererKind,
       ...(input.signal ? { signal: input.signal } : {}),
