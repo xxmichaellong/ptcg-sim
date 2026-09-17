@@ -60,9 +60,10 @@ export const pasteInvitation = async (
   await roomInput.focus();
   await page.keyboard.press('Control+V');
   await expect(roomInput).toHaveValue(ROOM_CODE);
-  await expect(page.locator('.lobby-status')).toHaveText(
-    'Player invitation ready.'
-  );
+  // A pasted player invitation leaves the spectator choice to its holder and,
+  // as in v1, announces nothing.
+  await expect(page.locator('#spectatorModeCheckbox')).toBeEnabled();
+  await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
 
 export const joinReadyRoom = async (page: Page): Promise<void> => {
