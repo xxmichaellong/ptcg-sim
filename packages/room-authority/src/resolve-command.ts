@@ -1099,6 +1099,27 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
+      // v1's deck viewer accumulates: viewing more cards while a view is
+      // open adds them to it. Extend the owner's open deck inspection rather
+      // than letting game-core refuse a second one.
+      const openInspection = state.workAreas[ownerId]?.inspection;
+      const extend =
+        openInspection &&
+        openInspection.sourceZoneId === playerZoneId(ownerId, 'deck')
+          ? {
+              expectedInspection: {
+                inspectionId: openInspection.inspectionId,
+                workAreaId: openInspection.id,
+                cardIds: [...openInspection.cardIds],
+                viewerIdsByCardId: Object.fromEntries(
+                  openInspection.cardIds.map((cardId) => [
+                    cardId,
+                    [...(openInspection.viewerIdsByCardId[cardId] ?? [])],
+                  ])
+                ),
+              },
+            }
+          : {};
       return {
         accepted: true,
         command: {
@@ -1108,6 +1129,7 @@ export const resolveWireCommand = (
             wire.visibility === 'public' ? state.playerOrder : [actorId],
           count: wire.count,
           edge: wire.edge,
+          ...extend,
         },
       };
     }

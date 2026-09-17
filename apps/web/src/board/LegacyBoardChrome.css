@@ -179,3 +179,34 @@
   border-top: 0.4vh solid #3498db;
   border-radius: 50%;
 }
+
+/* v1 `#handLabel`: the hand Sort checkbox at the container's left edge, just
+   above the hand. The opponent frame is rotated a half turn, so its text is
+   flipped back upright the way v1's `.opp-text` is. */
+.ptcgsim-legacy-board-chrome .legacy-hand-sort {
+  position: absolute;
+  bottom: 29.5%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort--local {
+  color: rgb(90 110 188 / 86.4%);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort--opponent {
+  color: rgb(188 90 113 / 86.4%);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort .opp-text {
+  transform: scale(-1, -1);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort input {
+  margin: 0 0.25em 0 0;
+  cursor: pointer;
+}

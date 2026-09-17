@@ -45,6 +45,60 @@ const players = {
 describe('LegacyBoardChrome', () => {
   afterEach(() => document.body.replaceChildren());
 
+  it('paints v1 hand Sort checkboxes in each player frame and reports their state', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const toggleHandSort = vi.fn();
+    const actions = {
+      takeTurn: vi.fn(),
+      flipCoin: vi.fn(),
+      flipBoard: vi.fn(),
+      refreshImages: vi.fn(),
+      toggleFullscreen: vi.fn(),
+      toggleOncePerGame: vi.fn(),
+      toggleHandSort,
+    };
+    await act(async () =>
+      root.render(
+        <LegacyBoardChrome
+          layout={createBoardLayoutSnapshot(layoutState())}
+          localPlayerId={asPlayerId('spike-blue')}
+          players={players}
+          darkMode={false}
+          actions={actions}
+          sortedHandPlayerIds={new Set([asPlayerId('spike-red')])}
+        />
+      )
+    );
+    const own = host.querySelector<HTMLInputElement>('#sortHandCheckbox')!;
+    const opponent = host.querySelector<HTMLInputElement>(
+      '#oppSortHandCheckbox'
+    )!;
+    expect(own.checked).toBe(false);
+    expect(opponent.checked).toBe(true);
+    // Each checkbox lives in its player's rotated frame, at v1's `#handLabel`
+    // spot, with the opponent's text flipped back upright.
+    expect(
+      own
+        .closest('[data-player-frame-chrome]')
+        ?.getAttribute('data-player-side')
+    ).toBe('local');
+    expect(
+      opponent
+        .closest('[data-player-frame-chrome]')
+        ?.getAttribute('data-player-side')
+    ).toBe('opponent');
+    expect(
+      opponent.parentElement?.querySelector('.opp-text')?.textContent
+    ).toBe('Sort');
+    await act(async () => own.click());
+    expect(toggleHandSort).toHaveBeenCalledWith(asPlayerId('spike-blue'), true);
+    await act(async () => opponent.click());
+    expect(toggleHandSort).toHaveBeenCalledWith(asPlayerId('spike-red'), false);
+    await act(async () => root.unmount());
+  });
+
   it('paints source-shaped physical handles and delegates every legacy control', async () => {
     const host = document.createElement('div');
     document.body.append(host);
@@ -143,6 +197,8 @@ describe('LegacyBoardChrome', () => {
       asPlayerId('spike-blue'),
       'gx'
     );
+    // No Sort checkbox is painted until a route supplies the callback.
+    expect(host.querySelector('#sortHandCheckbox')).toBeNull();
 
     const flipped = createBoardLayoutSnapshot(
       flipBoardLayoutState(layoutState())

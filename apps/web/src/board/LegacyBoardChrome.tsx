@@ -17,6 +17,8 @@ export interface LegacyBoardChromeActions {
     playerId: PlayerId,
     marker: 'gx' | 'vstar'
   ) => void;
+  /** v1's per-hand Sort checkbox; paint-only, never a command. */
+  readonly toggleHandSort?: (playerId: PlayerId, sorted: boolean) => void;
 }
 
 export interface LegacyBoardChromeVisibility {
@@ -79,13 +81,26 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   playerSide,
   darkMode,
   onToggle,
+  handSorted,
+  onToggleHandSort,
 }: {
   readonly frame: BoardPlayerLayout;
   readonly player: MatchViewState['players'][string];
   readonly playerSide: 'local' | 'opponent';
   readonly darkMode: boolean;
   readonly onToggle: LegacyBoardChromeActions['toggleOncePerGame'];
+  readonly handSorted: boolean;
+  readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
 }) {
+  // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
+  // the text flipped back upright on the rotated opponent frame. The label
+  // uses `clamp(10px, 4vh, 20px)` of the container height, like the counts.
+  const sortFontSize = Math.min(
+    20,
+    Math.max(10, frame.frameBounds.height * 0.04)
+  );
+  const sortCheckboxId =
+    playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
   const button = (marker: 'gx' | 'vstar') => {
     const used =
       marker === 'gx'
@@ -135,6 +150,27 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
         {button('vstar')}
         {button('gx')}
       </div>
+      {onToggleHandSort && (
+        <label
+          className={`legacy-hand-sort legacy-hand-sort--${playerSide}`}
+          htmlFor={sortCheckboxId}
+          data-hand-sort-player={frame.playerId}
+          data-player-side={playerSide}
+          style={{ fontSize: sortFontSize }}
+        >
+          <input
+            id={sortCheckboxId}
+            type="checkbox"
+            checked={handSorted}
+            onChange={(event) =>
+              onToggleHandSort(frame.playerId, event.currentTarget.checked)
+            }
+          />
+          <span className={playerSide === 'local' ? 'self-text' : 'opp-text'}>
+            Sort
+          </span>
+        </label>
+      )}
     </div>
   );
 });
@@ -152,6 +188,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   actions,
   visibility = DEFAULT_VISIBILITY,
   refreshingImages = false,
+  sortedHandPlayerIds,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly localPlayerId: PlayerId;
@@ -160,6 +197,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   readonly actions: LegacyBoardChromeActions;
   readonly visibility?: LegacyBoardChromeVisibility;
   readonly refreshingImages?: boolean;
+  /** Players whose hand is painted sorted (the v1 Sort checkbox state). */
+  readonly sortedHandPlayerIds?: ReadonlySet<PlayerId>;
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -202,6 +241,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             playerSide={frame.playerId === localPlayerId ? 'local' : 'opponent'}
             darkMode={darkMode}
             onToggle={actions.toggleOncePerGame}
+            handSorted={sortedHandPlayerIds?.has(frame.playerId) ?? false}
+            onToggleHandSort={actions.toggleHandSort}
           />
         ) : null;
       })}

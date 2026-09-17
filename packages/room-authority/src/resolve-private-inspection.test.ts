@@ -41,7 +41,7 @@ const session = (playerId: typeof p1): AuthoritySession => ({
   recentOutcomes: [],
 });
 
-const fixture = () => {
+const fixture = (deckSize = 14) => {
   let state = createEmptyMatch(asMatchId('private-authority-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
@@ -59,7 +59,7 @@ const fixture = () => {
             category: 'Pokémon',
             imageUrl: '/private.png',
           },
-          count: 14,
+          count: deckSize,
         },
       ],
     },
@@ -338,6 +338,59 @@ describe('private inspection authority resolution', () => {
         DEFAULT_AUTHORITY_POLICY
       )
     ).toEqual({ accepted: false, code: 'stale_reference' });
+  });
+
+  it('extends an open deck view when more cards are viewed, as v1 accumulates', () => {
+    // Seven in hand, six prizes, and enough left in the deck to view twice.
+    const prepared = fixture(20);
+    const opened = executeCommand(
+      prepared.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    if (!opened.accepted) throw new Error(opened.message);
+    const canonical = opened.state.workAreas[p1]!.inspection!;
+    const resolved = resolveWireCommand(
+      opened.state,
+      prepared.identities,
+      session(p1),
+      {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: p1,
+        count: 3,
+        edge: 'bottom',
+        visibility: 'private',
+      },
+      DEFAULT_AUTHORITY_POLICY
+    );
+    expect(resolved).toEqual({
+      accepted: true,
+      command: {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 3,
+        edge: 'bottom',
+        expectedInspection: {
+          inspectionId: canonical.inspectionId,
+          workAreaId: canonical.id,
+          cardIds: [...canonical.cardIds],
+          viewerIdsByCardId: Object.fromEntries(
+            canonical.cardIds.map((cardId) => [cardId, [p1]])
+          ),
+        },
+      },
+    });
+    if (!resolved.accepted) throw new Error('expected acceptance');
+    const extended = executeCommand(opened.state, resolved.command, context);
+    if (!extended.accepted) throw new Error(extended.message);
+    expect(extended.state.workAreas[p1]!.inspection!.cardIds).toHaveLength(5);
   });
 
   it('resolves a projected work-area handle to the private inspection token', () => {

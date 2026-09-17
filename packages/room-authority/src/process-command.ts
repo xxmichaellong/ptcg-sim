@@ -428,7 +428,10 @@ export const processAuthorityCommand = async (
       );
       if (execution.accepted) {
         nextState = execution.state;
-        eventBatch = execution.batch;
+        eventBatch =
+          session.viewer.kind === 'player'
+            ? { ...execution.batch, actorPlayerId: session.viewer.playerId }
+            : execution.batch;
         outcome = {
           commandId: envelope.commandId,
           clientSequence: envelope.clientSequence,

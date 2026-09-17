@@ -2,6 +2,7 @@ import type {
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
+import type { PlayerId } from '@ptcgsim/game-core';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   DEFAULT_BOARD_PREFERENCES,
@@ -32,6 +33,7 @@ import type {
 } from '../renderer-spike-handle.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
 import { useReplaySession } from '../replay/useReplaySession.js';
+import { applyHandSortDisplay } from './hand-sort-display.js';
 import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
@@ -118,13 +120,24 @@ export const RemoteSessionBoard = ({
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
-  const displayPolicyRef = useRef({ roomMode, hideOpponentHand });
+  const [sortedHandPlayerIds, setSortedHandPlayerIds] = useState<
+    ReadonlySet<PlayerId>
+  >(() => new Set());
+  const displayPolicyRef = useRef({
+    roomMode,
+    hideOpponentHand,
+    sortedHandPlayerIds,
+  });
   const preferencesRef = useRef(preferences);
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
   const playmatExpandedRef = useRef(playmatExpanded);
   const onPlaymatExpandedChangeRef = useRef(onPlaymatExpandedChange);
-  displayPolicyRef.current = { roomMode, hideOpponentHand };
+  displayPolicyRef.current = {
+    roomMode,
+    hideOpponentHand,
+    sortedHandPlayerIds,
+  };
   preferencesRef.current = preferences;
   onIntentRef.current = onIntent;
   onSubmissionRef.current = onSubmission;
@@ -244,12 +257,14 @@ export const RemoteSessionBoard = ({
           preferences: preferencesRef.current,
           transformView: (sourceView, source) => {
             const policy = displayPolicyRef.current;
-            return source.kind === 'live' && policy.roomMode === 'solo'
-              ? applySoloOpponentHandVisibility(
-                  sourceView,
-                  policy.hideOpponentHand
-                )
-              : sourceView;
+            const covered =
+              source.kind === 'live' && policy.roomMode === 'solo'
+                ? applySoloOpponentHandVisibility(
+                    sourceView,
+                    policy.hideOpponentHand
+                  )
+                : sourceView;
+            return applyHandSortDisplay(covered, policy.sortedHandPlayerIds);
           },
           onIntent: (intent) => onIntentRef.current(intent),
           onSubmission: (command, result) =>
@@ -327,7 +342,7 @@ export const RemoteSessionBoard = ({
     const runtime = runtimeRef.current;
     if (!runtime) return;
     runtime.synchronizeSources();
-  }, [hideOpponentHand, roomMode]);
+  }, [hideOpponentHand, roomMode, sortedHandPlayerIds]);
 
   useEffect(() => {
     runtimeRef.current?.setShellMode(
@@ -456,6 +471,15 @@ export const RemoteSessionBoard = ({
   );
   const chromeActions = useMemo(
     () => ({
+      toggleHandSort: (playerId: PlayerId, sorted: boolean): void => {
+        setSortedHandPlayerIds((current) => {
+          if (current.has(playerId) === sorted) return current;
+          const next = new Set(current);
+          if (sorted) next.add(playerId);
+          else next.delete(playerId);
+          return next;
+        });
+      },
       takeTurn: (): void => {
         runtimeRef.current?.emitLegacyShortcutAction({
           action: 'startOwnTurn',
@@ -513,6 +537,7 @@ export const RemoteSessionBoard = ({
               darkMode={preferences.darkMode}
               actions={chromeActions}
               refreshingImages={refreshingImages}
+              sortedHandPlayerIds={sortedHandPlayerIds}
               visibility={{
                 playerActions:
                   boardState.source?.kind === 'live' &&

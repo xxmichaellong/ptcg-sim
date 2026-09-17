@@ -53,12 +53,24 @@ export const narrationEventsForBatch = (
       event.type === 'TableActionDeclared' && event.action === 'startTurn'
   );
   const compound = narrateCompound(batch, state, previousState);
-  if (compound) return compound;
-  return batch.events.flatMap((event) =>
-    turnDraw && event.type === 'CardsDrawn'
-      ? []
-      : narrate(event, batch.revision, state, previousState)
-  );
+  const lines =
+    compound ??
+    batch.events.flatMap((event) =>
+      turnDraw && event.type === 'CardsDrawn'
+        ? []
+        : narrate(event, batch.revision, state, previousState)
+    );
+  // The ledger records who submitted the command; v1 names that initiator
+  // even when it was the opponent moving your cards. Older batches carry no
+  // actor and fall back to the card's owner.
+  const actorPlayerId = batch.actorPlayerId;
+  return actorPlayerId && state.players[actorPlayerId]
+    ? lines.map((line) =>
+        line.playerId === actorPlayerId
+          ? line
+          : { ...line, playerId: actorPlayerId }
+      )
+    : lines;
 };
 
 /**
@@ -266,9 +278,17 @@ const narrate = (
         event.destinationZoneId
       );
       if (!playerId || !source || !destination) return [];
+      // A card placed at index 0 of a non-empty deck went "to top of deck"
+      // (v1's moveToDeckTop); a plain drop appends, which v1 calls "to deck".
+      const previousDeck = previousState.zones[event.destinationZoneId];
+      const toTop =
+        destination === 'deck' &&
+        source !== 'deck' &&
+        event.destinationIndex === 0 &&
+        (previousDeck?.cardIds.length ?? 0) > 0;
       return [
-        moved(revision, playerId, 'moved', source, {
-          destination,
+        moved(revision, playerId, toTop ? 'movedToDeckTop' : 'moved', source, {
+          ...(toTop ? {} : { destination }),
           cardName: publicName(state, previousState, event.cardId),
         }),
       ];

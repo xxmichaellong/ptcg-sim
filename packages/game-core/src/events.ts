@@ -465,4 +465,11 @@ export type DomainEvent =
 export interface EventBatch {
   readonly revision: number;
   readonly events: readonly DomainEvent[];
+  /**
+   * The seat whose command produced this batch, when it was a player's
+   * command. Recorded so the battle log can name who acted -- v1 names the
+   * initiator even when it was the opponent moving your cards -- and absent
+   * on batches written before it was recorded or produced by the room itself.
+   */
+  readonly actorPlayerId?: PlayerId;
 }

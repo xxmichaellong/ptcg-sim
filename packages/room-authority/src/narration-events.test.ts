@@ -250,6 +250,44 @@ describe('battle-log narration', () => {
     ]);
   });
 
+  it('says "to top of deck" for a card placed on top and "to deck" for a drop', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const top = step(
+      state,
+      {
+        type: 'MoveCardToDeckTop',
+        playerId: p1,
+        cardId: hand.cardIds[0]!,
+        expectedSourceId: hand.id,
+      },
+      context
+    );
+    expect(top.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: top.state.revision,
+        playerId: p1,
+        verb: 'movedToDeckTop',
+        source: 'hand',
+      },
+    ]);
+    const dropped = step(
+      state,
+      {
+        type: 'MoveCard',
+        cardId: hand.cardIds[0]!,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: playerZoneId(p1, 'deck'),
+      },
+      context
+    );
+    expect(dropped.narration[0]).toMatchObject({
+      verb: 'moved',
+      destination: 'deck',
+    });
+  });
+
   it('tells shuffle-into-deck and switch-with-deck-top as v1 single lines', () => {
     const { state, context } = table();
     const hand = state.zones[playerZoneId(p1, 'hand')]!;
@@ -299,6 +337,35 @@ describe('battle-log narration', () => {
         source: 'hand',
       },
     ]);
+  });
+
+  it('names the recorded actor rather than the card owner when they differ', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const result = executeCommand(
+      state,
+      {
+        type: 'MoveCard',
+        cardId: hand.cardIds[0]!,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      context
+    );
+    if (!result.accepted) throw new Error(result.message);
+    const byOpponent = narrationEventsForBatch(
+      { ...result.batch, actorPlayerId: p2 },
+      result.state,
+      state
+    );
+    expect(byOpponent).toHaveLength(1);
+    expect(byOpponent[0]!.playerId).toBe(p2);
+    const unrecorded = narrationEventsForBatch(
+      result.batch,
+      result.state,
+      state
+    );
+    expect(unrecorded[0]!.playerId).toBe(p1);
   });
 
   it('leaves the turn draw to "drew for turn"', () => {
