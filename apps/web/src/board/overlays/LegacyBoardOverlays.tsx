@@ -63,6 +63,8 @@ export type {
 
 export interface LegacyBoardOverlayActions {
   readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => void;
+  /** Opens one card's full preview from inside the stack view. */
+  readonly previewCard?: (cardId: ViewCardId) => void;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
     action: LegacyBoardContextActionId,
@@ -815,7 +817,20 @@ const Preview = ({
       onKeyDown={onKeyDown}
     >
       {cards.map((card) => (
-        <OverlayCardImage key={card.id} card={card} variant="stack" />
+        <button
+          key={card.id}
+          type="button"
+          className="ptcgsim-legacy-stack-preview-card"
+          data-stack-preview-card-id={card.id}
+          data-preview-tabbable="true"
+          aria-label={`Preview ${card.label}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            actions.previewCard?.(card.id);
+          }}
+        >
+          <OverlayCardImage card={card} variant="stack" />
+        </button>
       ))}
     </div>
   );
@@ -849,6 +864,49 @@ export const sortRecipientSafeZoneCards = (
       return left.index - right.index;
     })
     .map(({ card }) => card);
+
+/**
+ * Sets a native drag image that survives the source element turning
+ * transparent: a detached copy of the card, sized like the button it was
+ * picked up from and held at the same grab offset. The copy must be in the
+ * document when `setDragImage` runs, so it is parked off-screen and removed
+ * once the drag has started.
+ */
+const installDragImage = (
+  event: {
+    readonly currentTarget: HTMLElement;
+    readonly clientX: number;
+    readonly clientY: number;
+    readonly dataTransfer: DataTransfer;
+  },
+  imageUrl: string
+): void => {
+  const source = event.currentTarget;
+  const bounds = source.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) return;
+  const document = source.ownerDocument;
+  const ghost = document.createElement('img');
+  ghost.src = imageUrl;
+  ghost.alt = '';
+  ghost.setAttribute('data-zone-drag-image', 'true');
+  Object.assign(ghost.style, {
+    position: 'fixed',
+    top: '-10000px',
+    left: '-10000px',
+    width: `${bounds.width}px`,
+    height: `${bounds.height}px`,
+    borderRadius: '0.275rem',
+    pointerEvents: 'none',
+  });
+  document.body.append(ghost);
+  event.dataTransfer.setDragImage(
+    ghost,
+    event.clientX - bounds.left,
+    event.clientY - bounds.top
+  );
+  // The browser has captured the image by the next frame.
+  setTimeout(() => ghost.remove(), 0);
+};
 
 /** Maps a client-space pointer onto the scene's physical viewport. */
 export const openedZoneDropPoint = (
@@ -1073,14 +1131,20 @@ const ZoneBrowser = ({
                 return;
               }
               activeDragCardId.current = card.id;
-              setDraggingCardId(card.id);
               if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData(
                   'application/x-ptcgsim-opened-zone-card',
                   'card'
                 );
+                // The browser fades out as soon as the drag starts (so the
+                // drop can reach the table beneath), and the native drag
+                // image is snapped after this handler returns -- from a
+                // transparent element. Hand the browser its own copy of the
+                // card to carry under the cursor, as v1's image drag does.
+                installDragImage(event, card.imageUrl);
               }
+              setDraggingCardId(card.id);
               actions.dismiss('selection');
             }}
             onDragEnd={finishDrag}

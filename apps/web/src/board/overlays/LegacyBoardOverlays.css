@@ -396,3 +396,12 @@
   img {
   border-radius: 0.3rem;
 }
+
+/* v1 full view: each card in the stack view can be opened on its own. */
+.ptcgsim-legacy-stack-preview-card {
+  display: contents;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}

@@ -475,13 +475,39 @@ describe('remote room lobby wiring', () => {
   it('opens on the Solo table when the page lands there, once even under StrictMode', async () => {
     const invitation = custody();
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
-    const createRoom = vi.fn(async () => created.value);
+    let releaseCreation: (() => void) | undefined;
+    const createRoom = vi.fn(
+      (input: { readonly signal: AbortSignal }) =>
+        new Promise<typeof created.value>((resolve) => {
+          // The aborted first creation never resolves; only the live
+          // owner's does.
+          if (!input.signal.aborted) {
+            releaseCreation = () => resolve(created.value);
+          }
+        })
+    );
     const { host, root } = await mount(
       lobbyDependencies(invitation, createRoom),
       true,
       'solo'
     );
-    await act(async () => flush());
+    // While the room is still being created the page already shows the
+    // Solo panel -- welcome text, Solo tab selected -- never Multiplayer.
+    expect(element<HTMLButtonElement>(host, '#p1Button').className).toBe(
+      'selected-page'
+    );
+    expect(element<HTMLElement>(host, '#p1Box').hidden).toBe(false);
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
+    expect(host.querySelector('#p1Box #chatbox')?.textContent).toContain(
+      'Welcome to PTCG-sim!'
+    );
+    expect(element<HTMLButtonElement>(host, '#setupButton').disabled).toBe(
+      true
+    );
+    await act(async () => {
+      releaseCreation?.();
+      await flush();
+    });
 
     // v1 opens on Solo; nobody has to press a tab to get a table. StrictMode
     // replays the mount with a fresh owner: the first owner's creation is
@@ -498,7 +524,7 @@ describe('remote room lobby wiring', () => {
     expect(roomRouteHarness.roomMode).toBe('solo');
 
     await act(async () => root.unmount());
-    expect(created.dispose).toHaveBeenCalledTimes(2);
+    expect(created.dispose).toHaveBeenCalledOnce();
   });
 
   it('starts one-player authority from Solo and parks it across source tab navigation', async () => {

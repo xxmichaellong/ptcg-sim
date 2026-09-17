@@ -20,6 +20,7 @@ import {
   RemoteRoomInvitationJoinCustody,
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
+import { LegacyWelcome } from './LegacyWelcome.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import { RemoteSessionBoard } from './RemoteSessionBoard.js';
 import {
@@ -271,9 +272,11 @@ export const RemoteRoomLobby = ({
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
-  const [activePanel, setActivePanel] = useState<'lobby' | 'deck' | 'settings'>(
-    'lobby'
-  );
+  // 'solo' is the Solo panel while its room is still being created (or has
+  // failed): v1 opens on Solo, so the page must not flash Multiplayer first.
+  const [activePanel, setActivePanel] = useState<
+    'lobby' | 'deck' | 'settings' | 'solo'
+  >(landing === 'solo' ? 'solo' : 'lobby');
   const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
   const [deckCustody, setDeckCustody] = useState<LegacyDeckBuilderCustody>();
   const [preferences, setPreferences] = useState<
@@ -387,7 +390,7 @@ export const RemoteRoomLobby = ({
   };
 
   const handleSolo = async (): Promise<void> => {
-    setActivePanel('lobby');
+    setActivePanel('solo');
     if (parkedSolo) {
       setParkedSolo(undefined);
       setConnected(parkedSolo);
@@ -801,7 +804,10 @@ export const RemoteRoomLobby = ({
           <button
             id="p1Button"
             type="button"
-            className="not-selected-page"
+            className={
+              activePanel === 'solo' ? 'selected-page' : 'not-selected-page'
+            }
+            aria-current={activePanel === 'solo' ? 'page' : undefined}
             disabled={busy}
             onClick={() => void handleSolo()}
           >
@@ -844,6 +850,115 @@ export const RemoteRoomLobby = ({
             Settings
           </button>
         </nav>
+        <section
+          id="p1Box"
+          className="legacy-room-sidebox"
+          hidden={activePanel !== 'solo'}
+          aria-busy={operation === 'solo'}
+        >
+          <div className="legacy-presentation-surface">
+            <div
+              id="chatbox"
+              className="legacy-activity-feed"
+              role="log"
+              aria-label="Game activity"
+            >
+              <div className="legacy-activity-intro" data-activity-intro="true">
+                <LegacyWelcome />
+              </div>
+              {status && (
+                <p className="announcement lobby-status" role="status">
+                  {status}
+                </p>
+              )}
+            </div>
+          </div>
+          <div id="chatboxButtonContainer" className="chat-button-container">
+            <button
+              id="attackButton"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              Attack
+            </button>
+            <button
+              id="passButton"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              Pass
+            </button>
+            <button
+              id="undoButton"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              Undo
+            </button>
+            <button
+              id="FREEBUTTON"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              🌺
+            </button>
+          </div>
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Type your message here..."
+            disabled
+          />
+          <div
+            id="bottomP1ButtonContainer"
+            className="sidebox-button-container"
+          >
+            <button
+              id="setupButton"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              Set Up
+            </button>
+            <button
+              id="resetButton"
+              type="button"
+              className="self-color"
+              disabled
+            >
+              Reset
+            </button>
+            <button
+              id="setupBothButton"
+              type="button"
+              className="neutral-color"
+              disabled
+            >
+              Set Up Both
+            </button>
+            <button
+              id="resetBothButton"
+              type="button"
+              className="neutral-color"
+              disabled
+            >
+              Reset Both
+            </button>
+            <button
+              id="optionsButton"
+              type="button"
+              className="neutral-color"
+              disabled
+            >
+              Options
+            </button>
+          </div>
+        </section>
         <section
           id="p2Box"
           className="legacy-room-sidebox legacy-lobby-sidebox"
@@ -952,7 +1067,7 @@ export const RemoteRoomLobby = ({
               open={activePanel === 'deck'}
               alternateEnabled={parkedSolo?.mode === 'solo'}
               installOnSessionAttach
-              onRequestClose={() => setActivePanel('lobby')}
+              onRequestClose={() => void handleSolo()}
               onCustodyChange={setDeckCustody}
               {...(deckCustody
                 ? {

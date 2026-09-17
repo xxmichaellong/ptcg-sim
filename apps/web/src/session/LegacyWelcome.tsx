@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import changelogMarkup from './legacy-changelog.html?raw';
+
 const TUTORIAL_EMBED_URL =
   'https://www.youtube.com/embed/t3qAhO_p3mk?si=jxysgkLxaAoaSw1I';
 const REPOSITORY_URL = 'https://github.com/xxmichaellong/ptcg-sim';
@@ -19,7 +21,9 @@ export const LegacyWelcome = ({
 }: {
   readonly buildId?: string;
 }) => {
-  const [page, setPage] = useState<'tutorial' | 'donations' | null>(null);
+  const [page, setPage] = useState<
+    'tutorial' | 'donations' | 'changelog' | null
+  >(null);
   useEffect(() => {
     if (page === null) return;
     const close = (event: KeyboardEvent): void => {
@@ -32,14 +36,25 @@ export const LegacyWelcome = ({
     <>
       <strong style={{ fontSize: '115%' }}>Welcome to PTCG-sim!</strong>
       <p style={{ fontSize: '105%' }}>
-        <a
+        <strong
           id="changelogLink"
-          href={`${REPOSITORY_URL}/releases`}
-          target="_blank"
-          rel="noreferrer"
+          role="button"
+          tabIndex={0}
+          aria-expanded={page === 'changelog'}
+          onClick={() =>
+            setPage((current) => (current === 'changelog' ? null : 'changelog'))
+          }
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setPage((current) =>
+                current === 'changelog' ? null : 'changelog'
+              );
+            }
+          }}
         >
           {buildId} ⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖
-        </a>
+        </strong>
       </p>
       <p style={{ fontSize: '105%' }}>
         PTCG-sim is an{' '}
@@ -113,6 +128,17 @@ export const LegacyWelcome = ({
             allowFullScreen
           />
         </div>
+      )}
+      {page === 'changelog' && (
+        // v1's `#changelog` page: the shipped release notes, authored as
+        // static markup in the repository and toggled by the version link;
+        // clicking anywhere on it closes it, as in v1.
+        <div
+          id="changelog"
+          data-open="true"
+          onClick={() => setPage(null)}
+          dangerouslySetInnerHTML={{ __html: changelogMarkup }}
+        />
       )}
       {page === 'donations' && (
         <div id="donationsPage" data-open="true" onClick={() => setPage(null)}>

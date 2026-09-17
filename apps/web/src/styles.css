@@ -320,8 +320,10 @@ select {
   height: 80%;
 }
 
-/* The wrapper owns the v1 chatbox's remaining 80%-ish live sidebox space. */
-.legacy-room-sidebox--live .legacy-activity-feed--multiplayer {
+/* Inside a room sidebox the surface wrapper is the flex remainder above the
+   controls -- v1's "85% of the sidebox" once the fixed-height rows are
+   taken out -- so the feed fills it rather than leaving a grey gap. */
+.legacy-room-sidebox .legacy-activity-feed {
   height: 100%;
 }
 
@@ -764,6 +766,7 @@ select {
   transform: translateY(50%);
 }
 
+#changelog,
 #donationsPage {
   position: fixed;
   top: 0;
@@ -777,9 +780,14 @@ select {
   background: rgb(222 221 221 / 85.2%);
 }
 
-#donationsPage a {
+#donationsPage a,
+#changelog a {
   color: rgb(91 91 173);
   text-decoration: underline;
+}
+
+#changelog {
+  cursor: pointer;
 }
 
 /* v1 `#roomHeaderCopyButton`: a bare copy control beside the room header. */

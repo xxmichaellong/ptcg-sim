@@ -226,7 +226,16 @@ export type BoardIntent =
       readonly y: number;
     }
   | { readonly kind: 'CardContextRequested'; readonly cardId: ViewCardId }
-  | { readonly kind: 'CardPreviewRequested'; readonly cardId: ViewCardId }
+  | {
+      readonly kind: 'CardPreviewRequested';
+      readonly cardId: ViewCardId;
+      /**
+       * Show this one card even when it sits in a play stack, whose default
+       * preview is the whole stack (v1's full view); clicking a card inside
+       * that view opens the card itself.
+       */
+      readonly single?: boolean;
+    }
   | { readonly kind: 'ZoneOpened'; readonly zoneId: string }
   | { readonly kind: 'BoardResizeRequested'; readonly splitRatio: number };
 

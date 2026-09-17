@@ -1250,18 +1250,27 @@ const handleIntent = (
       ]);
     }
     case 'CardPreviewRequested': {
+      // A single-card preview may be asked for from inside the stack view,
+      // where lower evolutions and attachments are not interactive on the
+      // table; any card the scene knows can be looked at.
       const card = scene.cards.find(
         (candidate) =>
-          candidate.id === intent.cardId && hasPresentableCard(candidate.id)
+          candidate.id === intent.cardId &&
+          (intent.single
+            ? allowOpenedZoneCard
+              ? hasOpenedZoneCard(state, scene, candidate.id)
+              : true
+            : hasPresentableCard(candidate.id))
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
-      const preview: BoardPreviewState = view.stacks[card.parentId]
-        ? {
-            kind: 'stack',
-            stackId: card.parentId,
-            focusCardId: intent.cardId,
-          }
-        : { kind: 'card', cardId: intent.cardId };
+      const preview: BoardPreviewState =
+        view.stacks[card.parentId] && !intent.single
+          ? {
+              kind: 'stack',
+              stackId: card.parentId,
+              focusCardId: intent.cardId,
+            }
+          : { kind: 'card', cardId: intent.cardId };
       const next = nextState(state, {
         presentation: {
           ...state.presentation,

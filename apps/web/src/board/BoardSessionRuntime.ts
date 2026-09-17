@@ -224,6 +224,14 @@ export class BoardSessionRuntime {
     return adapter.emitOpenedZoneCardIntent(intent);
   }
 
+  /** Route-owned overlays emit table intents through the same controller. */
+  emitIntent(intent: BoardIntent): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitIntent(intent);
+  }
+
   /** Resolves route-owned overlay controls through the installed safe view. */
   emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
     this.assertUsable();

@@ -2486,6 +2486,40 @@ describe('headless board session controller', () => {
     expect(result.state.view?.zones['zone:spike-blue:discard']).toBeDefined();
   });
 
+  it('opens one card from inside the stack view when asked for a single preview', () => {
+    const base = createRendererSpikeView();
+    let state = install(initialFrame(base));
+    const stack = base.stacks['stack:blue:active']!;
+    const top = stack.evolutionCards.at(-1)!;
+    const attachment = stack.attachmentCards[0]!;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardPreviewRequested', cardId: top.id },
+    }).state;
+    expect(state.overlays.preview).toEqual({
+      kind: 'stack',
+      stackId: stack.id,
+      focusCardId: top.id,
+    });
+    // v1's full view: clicking a card in it shows that card on its own,
+    // attachments included even though they are not interactive on the table.
+    const single = apply(state, {
+      kind: 'RendererIntent',
+      intent: {
+        kind: 'CardPreviewRequested',
+        cardId: attachment.id,
+        single: true,
+      },
+    });
+    expect(single.state.overlays.preview).toEqual({
+      kind: 'card',
+      cardId: attachment.id,
+    });
+    expect(single.effects.map((effect) => effect.kind)).not.toContain(
+      'IntentRejected'
+    );
+  });
+
   it('closes stack preview when its focus card moves out of that stack', () => {
     const base = createRendererSpikeView();
     let state = install(initialFrame(base));

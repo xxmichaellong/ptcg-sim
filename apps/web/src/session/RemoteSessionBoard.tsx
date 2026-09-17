@@ -355,6 +355,13 @@ export const RemoteSessionBoard = ({
       emitOpenedZoneCardIntent: (intent) => {
         runtimeRef.current?.emitOpenedZoneCardIntent(intent);
       },
+      previewCard: (cardId) => {
+        runtimeRef.current?.emitIntent({
+          kind: 'CardPreviewRequested',
+          cardId,
+          single: true,
+        });
+      },
       dismiss: (scope) => {
         runtimeRef.current?.dismissLocalPresentation(scope);
       },
