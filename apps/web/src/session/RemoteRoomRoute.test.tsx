@@ -221,9 +221,8 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2Box')).toBeNull();
     expect(host.querySelector('#chatbox')).not.toBeNull();
     expect(host.querySelector('#p2Chatbox')).toBeNull();
-    expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
-      'connecting'
-    );
+    // No header while connecting: v1 narrates nothing until the room is live.
+    expect(host.querySelector('#roomHeaderText')).toBeNull();
     expect(host.querySelector('main')?.dataset.sessionPhase).toBe('connecting');
 
     await act(async () => {
@@ -386,9 +385,7 @@ describe('RemoteRoomRoute', () => {
     ).toBe(true);
     expect(host.querySelector('#p2AttackButton')).toBeNull();
     expect(host.textContent).not.toContain(admissionTicket);
-    expect(
-      host.querySelector('#roomHeaderText')?.getAttribute('data-session-phase')
-    ).toBe('connecting');
+    expect(host.querySelector('#roomHeaderText')).toBeNull();
     expect(host.querySelector('#deckImport')).toBeNull();
 
     await openDeck(host);

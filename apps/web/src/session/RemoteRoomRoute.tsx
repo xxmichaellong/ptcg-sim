@@ -230,11 +230,14 @@ export const RemoteRoomRoute = ({
       {({ state, chrome, controls, exitReplay }) => {
         const soloLive = !chrome.active && roomMode === 'solo';
         const feedId = chrome.active || soloLive ? 'chatbox' : 'p2Chatbox';
+        // The header names the room once it is live, or reports a failure.
+        // Connection phases in between are not narrated -- v1 shows nothing
+        // while it connects, and the tabs already tell where you are.
         const status =
           state.failure?.message ??
           (state.sessionPhase === 'ready'
             ? `Room ${runtime.roomCode}`
-            : state.sessionPhase);
+            : undefined);
         const leaveReplay = (): void => {
           options.setOpen(false);
           exitReplay();
@@ -377,7 +380,8 @@ export const RemoteRoomRoute = ({
                 hidden={activePanel !== 'room'}
               >
                 {!chrome.active &&
-                  (!soloLive || state.sessionPhase !== 'ready') && (
+                  (!soloLive || state.failure !== undefined) &&
+                  (status !== undefined || copyNotice !== undefined) && (
                     <div id="roomHeader">
                       <div
                         id="roomHeaderText"
