@@ -153,7 +153,6 @@ const ZoneNode = memo(function ZoneNode({
 const CardNode = memo(function CardNode({
   card,
   selected,
-  hovered,
   targetable,
   drag,
   settle,
@@ -162,7 +161,6 @@ const CardNode = memo(function CardNode({
 }: {
   readonly card: CardSceneNode;
   readonly selected: boolean;
-  readonly hovered: boolean;
   readonly targetable: boolean;
   readonly drag: BoardPresentation['drag'];
   readonly settle: SettlingCard | null;
@@ -237,13 +235,14 @@ const CardNode = memo(function CardNode({
         border: 0,
         borderRadius: legacyBorderRadius,
         background: '#777',
+        // v1 colours: a selected card wears the blue `.highlight` ring, an
+        // attach/evolve target the green `.selectHighlight` ring, and a
+        // merely hovered card nothing at all.
         boxShadow: targetable
           ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
           : selected
-            ? `rgba(143, 215, 153, 0.864) 0 0 0 4px, ${legacyShadow}`
-            : hovered
-              ? `rgba(90, 110, 188, 0.864) 0 0 0 3px, ${legacyShadow}`
-              : legacyShadow,
+            ? `rgba(90, 110, 188, 0.864) 0 0 0 4px, ${legacyShadow}`
+            : legacyShadow,
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
@@ -571,7 +570,6 @@ export const BoardSurface = ({
             key={card.renderKey}
             card={card}
             selected={presentation.selectedCardId === card.id}
-            hovered={presentation.hoveredCardId === card.id}
             targetable={presentation.targetableCardIds.includes(card.id)}
             drag={
               presentation.drag?.cardId === card.id ? presentation.drag : null

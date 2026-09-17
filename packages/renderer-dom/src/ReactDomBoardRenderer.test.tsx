@@ -1374,7 +1374,7 @@ describe('React DOM board renderer', () => {
     expect(card.style.width).toBe(restingWidth);
     expect(card.style.height).toBe(restingHeight);
     expect(card.style.boxShadow).toContain(
-      'rgba(143, 215, 153, 0.864) 0 0 0 4px'
+      'rgba(90, 110, 188, 0.864) 0 0 0 4px'
     );
     expect(card.style.boxShadow).toContain(restingShadow);
 

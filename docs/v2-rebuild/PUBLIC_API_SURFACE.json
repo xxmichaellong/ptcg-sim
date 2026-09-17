@@ -1462,6 +1462,10 @@
               "kind": "value"
             },
             {
+              "name": "layoutLegacyPlayRow",
+              "kind": "value"
+            },
+            {
               "name": "layoutLegacyPlaySlotCards",
               "kind": "value"
             },
@@ -1483,6 +1487,14 @@
             },
             {
               "name": "layoutLegacyTwoEnergyAttachmentStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyWorkAreaCards",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyWorkAreaPanel",
               "kind": "value"
             },
             {
@@ -1519,6 +1531,10 @@
             },
             {
               "name": "LEGACY_SIDEBAR_WIDTH_RATIO",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_WORK_AREA_PANEL_V1",
               "kind": "value"
             },
             {
@@ -1574,6 +1590,26 @@
               "kind": "value"
             },
             {
+              "name": "LegacyPlayRowAttachmentBox",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyPlayRowAttachmentKind",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyPlayRowCardBox",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyPlayRowStackInput",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyPlayRowStackLayout",
+              "kind": "type"
+            },
+            {
               "name": "legacyResizeHandlesCollide",
               "kind": "value"
             },
@@ -1599,6 +1635,10 @@
             },
             {
               "name": "LegacyTwoEnergyAttachmentStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyWorkAreaPanelLayout",
               "kind": "type"
             },
             {

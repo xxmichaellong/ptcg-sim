@@ -16,6 +16,7 @@ import {
   layoutLegacyPlaySlotCards,
   layoutLegacyPlayStackHitRegions,
   layoutLegacySingleEnergyTrainerToolAttachmentStack,
+  layoutLegacyPlayRow,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
   layoutLegacyTwoEnergyAttachmentStack,
@@ -1631,5 +1632,185 @@ describe('renderer-neutral legacy board layout', () => {
         })
       )
     ).toThrow('clamping');
+  });
+});
+
+describe('general legacy play-row layout', () => {
+  // Every expectation below was measured on the real v1 runtime at
+  // 1440x900 (play area 1087.19px wide): container boxes, image boxes and
+  // inline styles were read back after v1's post-move refreshBoard.
+  const layout = createBoardLayoutSnapshot(
+    state({ viewport: { width: 1440, height: 900, devicePixelRatio: 1 } })
+  );
+  const active = findBoardLayoutRegion(layout, 'local', 'active');
+  const bench = findBoardLayoutRegion(layout, 'local', 'bench');
+  const aspect = 80.9 / 112.5;
+  const expectRectNear = (actual: Rect, expected: Rect): void => {
+    expect(actual.x).toBeCloseTo(expected.x, 0);
+    expect(actual.y).toBeCloseTo(expected.y, 0);
+    expect(actual.width).toBeCloseTo(expected.width, 0);
+    expect(actual.height).toBeCloseTo(expected.height, 0);
+  };
+
+  it('matches v1 for three Energy and a Tool on the active with counters', () => {
+    const [stack] = layoutLegacyPlayRow(active, aspect, [
+      {
+        evolutionCount: 1,
+        attachments: ['energy', 'energy', 'energy', 'tool'],
+        rotationQuarterTurns: 0,
+      },
+    ]);
+    expectRectNear(stack!.flexItemBounds, {
+      x: 464.2,
+      y: 481.5,
+      width: 151.667,
+      height: 126,
+    });
+    expect(stack!.cssomClientWidth).toBe(91);
+    expectRectNear(stack!.evolutionCards[0]!.bounds, {
+      x: 464.2,
+      y: 481.5,
+      width: 90.6,
+      height: 126,
+    });
+    expect(stack!.attachmentCards.map((card) => card.bounds.x)).toEqual(
+      [1, 2, 3, 4].map((layer) => expect.closeTo(464.2 + (91 / 6) * layer, 0))
+    );
+    expect(stack!.attachmentCards.map((card) => card.sourceZIndex)).toEqual([
+      -1, -2, -3, -4,
+    ]);
+    expect(
+      stack!.attachmentCards.map((card) => card.rotationQuarterTurns)
+    ).toEqual([0, 0, 0, 1]);
+  });
+
+  it('matches v1 for a three-stage active stack with one Energy', () => {
+    const [stack] = layoutLegacyPlayRow(active, aspect, [
+      { evolutionCount: 3, attachments: ['energy'], rotationQuarterTurns: 0 },
+    ]);
+    expectRectNear(stack!.flexItemBounds, {
+      x: 490.4,
+      y: 481.5,
+      width: 106.167,
+      height: 126,
+    });
+    // The basic peeks 2/15 above the top card, the middle stage 1/15.
+    expect(stack!.evolutionCards.map((card) => card.bounds.y)).toEqual([
+      expect.closeTo(469.4, 0),
+      expect.closeTo(475.4, 0),
+      481.5,
+    ]);
+    expect(stack!.evolutionCards.map((card) => card.sourceZIndex)).toEqual([
+      -2, -1, 0,
+    ]);
+    expect(stack!.attachmentCards[0]!.bounds.x).toBeCloseTo(505.6, 0);
+  });
+
+  it('matches v1 bench margins for plain, Tool-bearing and quarter-turned containers', () => {
+    const row = layoutLegacyPlayRow(bench, aspect, [
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 },
+      {
+        evolutionCount: 1,
+        attachments: ['energy', 'energy', 'tool'],
+        rotationQuarterTurns: 0,
+      },
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 1 },
+    ]);
+    expect(row.map((stack) => stack.flexItemBounds.x)).toEqual([
+      expect.closeTo(362, 0),
+      expect.closeTo(451.5, 0),
+      expect.closeTo(607.4, 0),
+    ]);
+    // Unadorned containers keep the image's painted width (v1 rounds it to
+    // 81 in adjustCards; the sub-pixel difference is deliberately ignored).
+    expect(row.map((stack) => stack.flexItemBounds.width)).toEqual([
+      expect.closeTo(80.9, 1),
+      121.5,
+      expect.closeTo(80.9, 1),
+    ]);
+    expect(row[1]!.attachmentCards.map((card) => card.bounds.x)).toEqual([
+      expect.closeTo(465, 0),
+      expect.closeTo(478.5, 0),
+      expect.closeTo(492, 0),
+    ]);
+  });
+
+  it('keeps Energy layers ahead of a Tool that was attached first', () => {
+    const [stack] = layoutLegacyPlayRow(bench, aspect, [
+      {
+        evolutionCount: 1,
+        attachments: ['tool', 'energy'],
+        rotationQuarterTurns: 0,
+      },
+    ]);
+    expect(stack!.attachmentCards.map((card) => card.sourceZIndex)).toEqual([
+      -2, -1,
+    ]);
+    expect(stack!.attachmentCards[0]!.bounds.x).toBeCloseTo(
+      stack!.flexItemBounds.x + 27,
+      0
+    );
+    expect(stack!.attachmentCards[1]!.bounds.x).toBeCloseTo(
+      stack!.flexItemBounds.x + 13.5,
+      0
+    );
+  });
+
+  it('flex-shrinks an overflowing bench the way the browser does', () => {
+    const row = layoutLegacyPlayRow(
+      bench,
+      aspect,
+      Array.from({ length: 8 }, () => ({
+        evolutionCount: 1,
+        attachments: ['energy', 'energy'] as const,
+        rotationQuarterTurns: 0 as const,
+      }))
+    );
+    expect(row.map((stack) => stack.flexItemBounds.x)).toEqual(
+      [108.7, 216, 323.4, 430.7, 538, 645.4, 752.7, 860.1].map((x) =>
+        expect.closeTo(x, 0)
+      )
+    );
+    expect(row[0]!.flexItemBounds.width).toBeCloseTo(98.8, 0);
+    // Attachment offsets still come from the unshrunk base width.
+    expect(row[0]!.attachmentCards[1]!.bounds.x).toBeCloseTo(135.7, 0);
+  });
+
+  it('collapses with a frame that has been dragged shut instead of failing', () => {
+    // The resize handles can leave a player frame all but shut; the bench
+    // row inside it then has no height at all.
+    const shut = {
+      ...bench,
+      physicalDeclaredBounds: { ...bench.physicalDeclaredBounds, height: 0 },
+    };
+    const [stack] = layoutLegacyPlayRow(shut, aspect, [
+      { evolutionCount: 2, attachments: ['energy'], rotationQuarterTurns: 0 },
+    ]);
+    expect(stack!.flexItemBounds.height).toBe(0);
+    expect(stack!.evolutionCards[1]!.bounds).toMatchObject({
+      width: 0,
+      height: 0,
+    });
+    expect(stack!.attachmentCards[0]!.bounds.width).toBe(0);
+  });
+
+  it('mirrors the row through the rotated opponent frame', () => {
+    const opponentBench = findBoardLayoutRegion(layout, 'opponent', 'bench');
+    const [stack] = layoutLegacyPlayRow(opponentBench, aspect, [
+      { evolutionCount: 2, attachments: ['energy'], rotationQuarterTurns: 0 },
+    ]);
+    const bounds = opponentBench.physicalContentBoxBounds;
+    const localWidth = 81 + 13.5;
+    const localX = (bounds.width - localWidth - bounds.width * 0.01) / 2;
+    expect(stack!.flexItemBounds.x).toBeCloseTo(
+      bounds.x + bounds.width - localX - localWidth
+    );
+    expect(stack!.evolutionCards[1]!.bounds.x).toBeCloseTo(
+      bounds.x + bounds.width - localX - 80.9
+    );
+    expect(stack!.attachmentCards[0]!.bounds.x).toBeCloseTo(
+      stack!.evolutionCards[1]!.bounds.x - 13.5
+    );
+    expect(stack!.evolutionCards[0]!.bounds.y).toBeCloseTo(bounds.y + 5.4);
   });
 });

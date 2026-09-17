@@ -371,6 +371,60 @@ states, and input behavior retain the previous scene path or remain explicit
 later slices. Pixi consumes the same renderer-neutral scene geometry for the
 qualifying state, but its paint and hit parity remain unverified.
 
+#### General play-row geometry (supersedes the characterized gates)
+
+The narrowly gated helpers above were the oracle-building phase. Playtesting
+against the live v1 site showed that every stack outside those exact shapes
+(three Energy, a Tool attached before an Energy, an Energy on a bench card, a
+counter next to an attachment, a quarter-turned host, a crowded bench) fell to
+a generic diagonal fan that looked nothing like v1. `layoutLegacyPlayRow`
+(`packages/renderer-contract/src/layout.ts`) now models the v1 flex row for
+any stack shape and `createBoardScene` uses it for every active and bench
+row:
+
+- A play-container's flex basis is the image width for a lone basic and
+  otherwise `round(clientWidth) + n * round(clientWidth) / 6` per attachment,
+  as `attachCard`/`evolveCard`/`adjustCards` write it back.
+- Lower evolution stages sit `clientWidth / 15` higher per layer behind the
+  top card (basic furthest up); Energy attachments take layers 1..n at
+  `clientWidth / 6` steps to the right and Tools always follow them (v1
+  re-attaches Tools behind every Energy), each one layer further back.
+- Tools paint a quarter turn from their host; Energy never follows a host's
+  rotation (rotateCard only turns Pokémon-typed images).
+- Margins: bench containers carry the stylesheet 1%, a Tool host 2%, a
+  quarter-turned bench host 2%/3%, a container turned back to 0/180 0%/1%.
+- The row is centred and, when its outer widths overflow the slot, shrinks
+  each container in proportion to its basis but never below its image, the
+  way `flex-shrink: 1` with `min-width: auto` does; an overflowing row still
+  centres.
+- Counters are laid out from the host's painted (rotated) box for every stack
+  via `layoutLegacyActiveQ0Markers`; there is no generic marker path for
+  in-play stacks any more.
+
+`packages/renderer-contract/src/layout.test.ts` pins the algorithm to boxes
+measured on the live v1 site at 1440x900 (three Energy plus a Tool with
+counters, a three-stage stack with an Energy, plain/Tool-bearing/turned bench
+containers, an eight-stack overflowing bench, and the opponent mirror), and
+every checked-in v1 runtime oracle above still passes through the general
+path. The one sub-pixel choice: v1's `adjustCards` rounds a lone basic's
+container to the integer client width after any move; the model keeps the
+fractional image width there, which is what the inert oracle recordings hold
+and differs from live v1 by under a quarter of a pixel.
+
+#### Work-area popups
+
+v1's `#viewCards` ("Looking at cards...") and `#attachedCards` ("Move
+attached cards") are 69% x 75% translucent panels centred in the owner's
+frame with a header tab and a row of bulk buttons; their images flow inline at
+33% of the content height. `layoutLegacyWorkAreaPanel`/`layoutLegacyWorkAreaCards`
+place the inspection and attachment-resolution cards exactly where those
+images sit, and the route's `WorkAreaPanel` overlay paints the panel chrome
+plus its own draggable, selectable copies of the cards over them. The bulk
+buttons map to `ResolveInspectionCards`/`ResolveStagedCards` destinations and
+"Leave in play" to `RestoreStagedStack` through the `workArea` overlay action.
+As in v1 the popup is not modal and Escape leaves it open; a spectator sees it
+without buttons.
+
 A fifth source-backed Chromium checkpoint now separates the simplest attachment
 path from the older mixed five-card transcription. One face-up Energy attaches
 to one unrotated active Pokémon on each physical side at the default 1600×900

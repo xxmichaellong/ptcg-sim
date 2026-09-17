@@ -16,13 +16,12 @@ import {
   layoutLegacyActiveQ0Markers,
   layoutLegacyBenchQ0Markers,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacyPlayRow,
   layoutLegacyPlaySlotCards,
   layoutLegacySingleEnergyTrainerToolAttachmentStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
   layoutLegacyTwoEnergyAttachmentStack,
-  type BoardLayoutRegion,
-  type BoardLayoutSnapshot,
   type BoardLayoutState,
 } from './layout.js';
 import {
@@ -35,6 +34,14 @@ import type { Rect } from './model.js';
 import { createRendererSpikeView } from './spike-fixture.js';
 
 const p1 = asPlayerId('p1');
+
+/** Bounds matcher that ignores last-bit float noise between equivalent formulas. */
+const nearRect = (rect: Rect) => ({
+  x: expect.closeTo(rect.x, 6),
+  y: expect.closeTo(rect.y, 6),
+  width: expect.closeTo(rect.width, 6),
+  height: expect.closeTo(rect.height, 6),
+});
 const p2 = asPlayerId('p2');
 const knownCardId = asViewCardId('view-card-known');
 const hiddenCardId = asViewCardId('view-card-hidden');
@@ -853,10 +860,11 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
-  it('degrades to generic geometry when a play slot would flex-shrink', () => {
+  it('flex-shrinks an overflowing play slot the way the legacy browser row does', () => {
     // A tall, narrow window makes the authored active card wider than its
-    // region. Legacy would flex-shrink there and the model has no characterized
-    // answer, so the scene must fall back rather than fail to build.
+    // region. The row cannot shrink a lone card below its image, so the
+    // browser centres the overflow; the scene follows the same rule instead
+    // of switching to a different geometry.
     const portrait = {
       ...characterizedEvolutionLayoutState,
       viewport: { width: 600, height: 1600, devicePixelRatio: 1 },
@@ -875,19 +883,25 @@ describe('renderer-neutral board scene', () => {
       [p1, 'local'],
       [p2, 'opponent'],
     ] as const) {
+      const region = findBoardLayoutRegion(layout, side, 'active');
       const stack = view.stacks[`stack:${playerId}:active-markers`]!;
       const node = scene.cards.find(
         (candidate) => candidate.id === stack.evolutionCards[0]!.id
       );
       expect(node, `${side} active card must still render`).toBeDefined();
-      // Generic evolution z-index, i.e. not the characterized source order.
+      const cardWidth = region.physicalDeclaredBounds.height * (63 / 88);
+      expect(cardWidth).toBeGreaterThan(region.physicalDeclaredBounds.width);
+      expect(node?.bounds.width).toBeCloseTo(cardWidth);
+      expect(node?.bounds.x).toBeCloseTo(
+        region.physicalDeclaredBounds.x +
+          (region.physicalDeclaredBounds.width - cardWidth) / 2
+      );
       expect(node?.zIndex).toBe(300);
       expect(
         scene.markers
           .filter((marker) => marker.parentCardId === node?.id)
-          .every((marker) => marker.presentation === 'generic'),
-        `${side} markers must fall back with their card`
-      ).toBe(true);
+          .map((marker) => marker.presentation)
+      ).toEqual(['legacyActiveQ0', 'legacyActiveQ0', 'legacyActiveQ0']);
     }
   });
 
@@ -922,7 +936,7 @@ describe('renderer-neutral board scene', () => {
           parentId: stackId,
           side,
           role: 'stackEvolution',
-          bounds: expectedCardBounds,
+          bounds: nearRect(expectedCardBounds),
           zIndex: 300,
           rotationQuarterTurns: side === 'local' ? 0 : 2,
         });
@@ -961,7 +975,7 @@ describe('renderer-neutral board scene', () => {
               kind,
               presentation: 'legacyActiveQ0',
               value,
-              bounds: expectedMarkers[kind].bounds,
+              bounds: nearRect(expectedMarkers[kind].bounds),
               zIndex: 300 + expectedMarkers[kind].sourceZIndex,
               label: `${kind}: ${value}`,
             });
@@ -1405,12 +1419,13 @@ describe('renderer-neutral board scene', () => {
       kind: 'abilityUsed',
       presentation: 'generic',
     });
+    // Once in play, the retained marker paints as the stack's legacy tab.
     expect(
       after.markers.find((marker) => marker.id === incomingAbilityId)
     ).toMatchObject({
       parentCardId: incomingCard.id,
       kind: 'abilityUsed',
-      presentation: 'generic',
+      presentation: 'legacyActiveQ0',
     });
     expect(
       after.markers.find((marker) => marker.id === transferredDamageId)
@@ -1506,668 +1521,6 @@ describe('renderer-neutral board scene', () => {
     ];
     expect(markerIds(forward)).toEqual(expected);
     expect(markerIds(reversed)).toEqual(expected);
-  });
-
-  it('fails sole-bench q0 presentation closed outside the exact stack, control, and layout shape', () => {
-    const baseView = createCanonicalBenchMarkerView();
-    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackKey = 'stack:p1:bench-markers';
-    const controlKey = 'stack:p1:bench-marker-control';
-    const original = baseView.stacks[stackKey]!;
-    const originalBase = original.evolutionCards[0]!;
-    const control = baseView.stacks[controlKey]!;
-    const controlBase = control.evolutionCards[0]!;
-    if (originalBase.kind !== 'known' || controlBase.kind !== 'known') {
-      throw new Error('Canonical bench marker fixture cards must be known');
-    }
-    const withLocal = (
-      stack: MatchViewState['stacks'][string] = original,
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!,
-      controlStack: MatchViewState['stacks'][string] = control,
-      extraStacks: MatchViewState['stacks'] = {}
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: {
-        ...baseView.stacks,
-        ...extraStacks,
-        [controlKey]: controlStack,
-        [stackKey]: stack,
-      },
-    });
-    const expectFallback = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot = layout
-    ) => {
-      const scene = createBoardScene(view, targetLayout);
-      const stack = view.stacks[stackKey];
-      const boardReferencesStack =
-        view.boards[p1]?.activeStackId === stackKey ||
-        view.boards[p1]?.benchStackIds.includes(stackKey);
-      if (!stack || !boardReferencesStack) {
-        expect(
-          scene.cards.some((card) =>
-            stack?.evolutionCards.some((entry) => entry.id === card.id)
-          )
-        ).toBe(false);
-        return;
-      }
-      const topId = stack.evolutionCards.at(-1)?.id;
-      if (!topId) {
-        expect(scene.cards.some((card) => card.parentId === stack.id)).toBe(
-          false
-        );
-        return;
-      }
-      const topCard = scene.cards.find((card) => card.id === topId);
-      expect(topCard).toBeDefined();
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing p1 bench-marker fallback player');
-      const slotBounds = findBoardLayoutRegion(
-        targetLayout,
-        side,
-        stack.slot
-      ).physicalContentBoxBounds;
-      const cardHeight = slotBounds.height;
-      const cardWidth = Math.min(cardHeight * (63 / 88), slotBounds.width);
-      const count =
-        stack.slot === 'active'
-          ? view.boards[p1]!.activeStackId === null
-            ? 0
-            : 1
-          : view.boards[p1]!.benchStackIds.length;
-      const index =
-        stack.slot === 'active'
-          ? 0
-          : view.boards[p1]!.benchStackIds.indexOf(stackKey);
-      const gap = Math.min(slotBounds.width * 0.005, 6);
-      const step = Math.min(
-        cardWidth + gap,
-        (slotBounds.width - cardWidth) / Math.max(1, count - 1)
-      );
-      const rowWidth = cardWidth + step * (count - 1);
-      expect(topCard).toMatchObject({
-        bounds: {
-          x:
-            slotBounds.x +
-            Math.max(0, (slotBounds.width - rowWidth) / 2) +
-            step * index,
-          y: slotBounds.y + slotBounds.height - cardHeight,
-          width: cardWidth,
-          height: cardHeight,
-        },
-        zIndex: 300 + stack.evolutionCards.length - 1,
-      });
-      const targetMarkers = scene.markers.filter(
-        (marker) => marker.parentCardId === topId
-      );
-      expect(
-        targetMarkers.every((marker) => marker.presentation === 'generic')
-      ).toBe(true);
-    };
-
-    const energyAttachment = {
-      ...originalBase,
-      id: asViewCardId('bench-marker-fallback-energy'),
-      definitionId: energyDefinitionId,
-      category: 'Energy' as const,
-    };
-    const extraEvolution = {
-      ...originalBase,
-      id: asViewCardId('bench-marker-fallback-evolution'),
-    };
-    for (const stack of [
-      { ...original, specialCondition: 'P' },
-      { ...original, evolutionCards: [] },
-      {
-        ...original,
-        evolutionCards: [originalBase, extraEvolution],
-      },
-      { ...original, attachmentCards: [energyAttachment] },
-      { ...original, rotationQuarterTurns: 1 as const },
-      {
-        ...original,
-        evolutionCards: [
-          { ...originalBase, orientationQuarterTurns: 1 as const },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, face: 'down' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed' as const,
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      { ...original, boardPlayerId: p2 },
-      { ...original, slot: 'active' as const },
-      { ...original, id: 'bench-marker-fallback-mismatched-stack-id' },
-    ] as const satisfies readonly MatchViewState['stacks'][string][]) {
-      expectFallback(withLocal(stack));
-    }
-
-    for (const controlStack of [
-      { ...control, damage: 10 },
-      { ...control, specialCondition: 'P' },
-      { ...control, abilityUsed: true },
-      { ...control, evolutionCards: [] },
-      {
-        ...control,
-        evolutionCards: [controlBase, extraEvolution],
-      },
-      { ...control, attachmentCards: [energyAttachment] },
-      { ...control, rotationQuarterTurns: 1 as const },
-      {
-        ...control,
-        evolutionCards: [
-          { ...controlBase, orientationQuarterTurns: 1 as const },
-        ],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, abilityUsed: true }],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, category: 'Trainer' as const }],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, category: 'Energy' as const }],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, category: 'Unknown' as const }],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, face: 'down' as const }],
-      },
-      {
-        ...control,
-        evolutionCards: [
-          {
-            kind: 'concealed' as const,
-            id: controlBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...control,
-        evolutionCards: [{ ...controlBase, ownerId: p2 }],
-      },
-      { ...control, boardPlayerId: p2 },
-      { ...control, id: 'bench-marker-fallback-mismatched-control-id' },
-    ] as const satisfies readonly MatchViewState['stacks'][string][]) {
-      expectFallback(withLocal(original, baseView.boards[p1]!, controlStack));
-    }
-    expect(() =>
-      createBoardScene(
-        withLocal(original, baseView.boards[p1]!, {
-          ...control,
-          slot: 'bench',
-        }),
-        layout
-      )
-    ).toThrow('No layout slot');
-
-    expectFallback(
-      withLocal(original, {
-        activeStackId: null,
-        benchStackIds: [stackKey],
-      })
-    );
-    const extraBench = {
-      ...original,
-      id: 'stack:p1:bench-marker-extra',
-      evolutionCards: [
-        {
-          ...originalBase,
-          id: asViewCardId('stack:p1:bench-marker-extra:base'),
-        },
-      ],
-      damage: null,
-      abilityUsed: false,
-    };
-    for (const benchStackIds of [
-      [stackKey, extraBench.id],
-      [extraBench.id, stackKey],
-    ]) {
-      expectFallback(
-        withLocal(
-          original,
-          { activeStackId: controlKey, benchStackIds },
-          control,
-          { [extraBench.id]: extraBench }
-        )
-      );
-    }
-    expectFallback(
-      withLocal(original, {
-        activeStackId: controlKey,
-        benchStackIds: [],
-      })
-    );
-
-    const forgeLocalBench = (
-      mutate: (region: BoardLayoutRegion) => BoardLayoutRegion
-    ): BoardLayoutSnapshot => {
-      const mutatePlayer = (player: (typeof layout.players)[number]) =>
-        player.playerId === p1
-          ? {
-              ...player,
-              regions: player.regions.map((region) =>
-                region.kind === 'bench' ? mutate(region) : region
-              ),
-            }
-          : player;
-      return {
-        ...layout,
-        players: [
-          mutatePlayer(layout.players[0]),
-          mutatePlayer(layout.players[1]),
-        ],
-      };
-    };
-    for (const forgedLayout of [
-      forgeLocalBench((region) => ({ ...region, id: 'local:active' })),
-      forgeLocalBench((region) => ({ ...region, playerId: p2 })),
-      forgeLocalBench((region) => ({ ...region, side: 'opponent' })),
-      forgeLocalBench((region) => ({ ...region, physicalSide: 'upper' })),
-      forgeLocalBench((region) => ({ ...region, surface: 'zone' })),
-      forgeLocalBench((region) => ({
-        ...region,
-        playerLocalNormalizedBounds: {
-          ...region.playerLocalNormalizedBounds,
-          x: region.playerLocalNormalizedBounds.x + 0.01,
-        },
-      })),
-      forgeLocalBench((region) => ({
-        ...region,
-        physicalDeclaredBounds: {
-          ...region.physicalDeclaredBounds,
-          x: region.physicalDeclaredBounds.x + 1,
-        },
-      })),
-      forgeLocalBench((region) => ({
-        ...region,
-        physicalBorderBoxBounds: {
-          ...region.physicalBorderBoxBounds,
-          x: region.physicalBorderBoxBounds.x + 1,
-        },
-      })),
-      forgeLocalBench((region) => ({
-        ...region,
-        physicalContentBoxBounds: {
-          ...region.physicalContentBoxBounds,
-          x: region.physicalContentBoxBounds.x + 1,
-        },
-      })),
-    ]) {
-      expectFallback(baseView, forgedLayout);
-    }
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          sharedPlacement: 'handleMidpoint',
-        },
-      },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
-    }
-  });
-
-  it('fails pristine-q0 marker presentation closed for every projected shape and layout boundary', () => {
-    const baseView = createPristineActiveMarkerView();
-    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackKey = 'stack:p1:active-markers';
-    const original = baseView.stacks[stackKey]!;
-    const originalBase = original.evolutionCards[0]!;
-    if (originalBase.kind !== 'known') {
-      throw new Error('Pristine marker fixture base must be known');
-    }
-    const withLocalStack = (
-      stack: MatchViewState['stacks'][string],
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!,
-      extraStacks: MatchViewState['stacks'] = {}
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: { ...baseView.stacks, ...extraStacks, [stackKey]: stack },
-    });
-    const genericSlotBounds = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot
-    ): Rect => {
-      const stack = view.stacks[stackKey]!;
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing p1 marker fallback side');
-      const bounds = findBoardLayoutRegion(
-        targetLayout,
-        side,
-        stack.slot
-      ).physicalContentBoxBounds;
-      const height = bounds.height;
-      const width = Math.min(height * (63 / 88), bounds.width);
-      const count =
-        stack.slot === 'active'
-          ? view.boards[p1]!.activeStackId === null
-            ? 0
-            : 1
-          : view.boards[p1]!.benchStackIds.length;
-      const index =
-        stack.slot === 'active'
-          ? 0
-          : view.boards[p1]!.benchStackIds.indexOf(stackKey);
-      const gap = Math.min(bounds.width * 0.005, 6);
-      const step = Math.min(
-        width + gap,
-        (bounds.width - width) / Math.max(1, count - 1)
-      );
-      const rowWidth = width + step * (count - 1);
-      return {
-        x: bounds.x + Math.max(0, (bounds.width - rowWidth) / 2) + step * index,
-        y: bounds.y + bounds.height - height,
-        width,
-        height,
-      };
-    };
-    const expectFallback = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot = layout
-    ) => {
-      const scene = createBoardScene(view, targetLayout);
-      const stack = view.stacks[stackKey]!;
-      const topIndex = stack.evolutionCards.length - 1;
-      const topId = stack.evolutionCards[topIndex]!.id;
-      const topCard = scene.cards.find((card) => card.id === topId)!;
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing p1 marker fallback player');
-      expect(topCard).toMatchObject({
-        bounds: genericSlotBounds(view, targetLayout),
-        zIndex: 300 + topIndex,
-      });
-      const size = Math.max(
-        14,
-        Math.min(topCard.bounds.width, topCard.bounds.height) * 0.22
-      );
-      const values = {
-        damage: stack.damage === null ? null : String(stack.damage),
-        specialCondition: stack.specialCondition,
-        abilityUsed: stack.abilityUsed ? 'used' : null,
-      } as const;
-      for (const [kind, offset] of [
-        ['damage', 0],
-        ['specialCondition', 1],
-        ['abilityUsed', 2],
-      ] as const) {
-        const value = values[kind];
-        const marker = scene.markers.find(
-          (candidate) => candidate.id === `${topId}:${kind}`
-        );
-        if (value === null) {
-          expect(marker).toBeUndefined();
-        } else {
-          expect(marker).toMatchObject({
-            parentCardId: topId,
-            side,
-            kind,
-            presentation: 'generic',
-            value,
-            bounds: {
-              x: topCard.bounds.x + topCard.bounds.width - size,
-              y: topCard.bounds.y + offset * size,
-              width: size,
-              height: size,
-            },
-            zIndex: topCard.zIndex + 100 + offset,
-          });
-        }
-      }
-    };
-
-    const attachment = {
-      ...originalBase,
-      id: asViewCardId('marker-fallback-energy'),
-      definitionId: energyDefinitionId,
-      category: 'Energy' as const,
-    };
-    const extraEvolution = {
-      ...originalBase,
-      id: asViewCardId('marker-fallback-evolution'),
-    };
-    for (const stack of [
-      { ...original, evolutionCards: [originalBase, extraEvolution] },
-      { ...original, attachmentCards: [attachment] },
-      { ...original, rotationQuarterTurns: 1 as const },
-      {
-        ...original,
-        evolutionCards: [
-          { ...originalBase, orientationQuarterTurns: 1 as const },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, face: 'down' as const }],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed' as const,
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      { ...original, boardPlayerId: p2 },
-      { ...original, id: 'marker-fallback-mismatched-stack-id' },
-    ] as const satisfies readonly MatchViewState['stacks'][string][]) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const benchCard = {
-      ...originalBase,
-      id: asViewCardId('marker-fallback-bench-base'),
-    };
-    const benchStack = {
-      ...original,
-      id: 'stack:p1:marker-fallback-bench',
-      slot: 'bench' as const,
-      evolutionCards: [benchCard],
-      damage: null,
-      specialCondition: null,
-      abilityUsed: false,
-    };
-    expectFallback(
-      withLocalStack(
-        original,
-        {
-          activeStackId: stackKey,
-          benchStackIds: [benchStack.id],
-        },
-        { [benchStack.id]: benchStack }
-      )
-    );
-    expectFallback(
-      withLocalStack(
-        { ...original, slot: 'bench' },
-        { activeStackId: null, benchStackIds: [stackKey] }
-      )
-    );
-
-    const forgeLocalActive = (
-      mutate: (region: BoardLayoutRegion) => BoardLayoutRegion
-    ): BoardLayoutSnapshot => {
-      const mutatePlayer = (player: (typeof layout.players)[number]) =>
-        player.playerId === p1
-          ? {
-              ...player,
-              regions: player.regions.map((region) =>
-                region.kind === 'active' ? mutate(region) : region
-              ),
-            }
-          : player;
-      return {
-        ...layout,
-        players: [
-          mutatePlayer(layout.players[0]),
-          mutatePlayer(layout.players[1]),
-        ],
-      };
-    };
-    const forgedLayouts: readonly BoardLayoutSnapshot[] = [
-      forgeLocalActive((region) => ({ ...region, id: 'local:bench' })),
-      forgeLocalActive((region) => ({ ...region, playerId: p2 })),
-      forgeLocalActive((region) => ({ ...region, side: 'opponent' })),
-      forgeLocalActive((region) => ({ ...region, physicalSide: 'upper' })),
-      forgeLocalActive((region) => ({ ...region, surface: 'zone' })),
-      forgeLocalActive((region) => ({
-        ...region,
-        playerLocalNormalizedBounds: {
-          ...region.playerLocalNormalizedBounds,
-          x: region.playerLocalNormalizedBounds.x + 0.01,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalDeclaredBounds: {
-          ...region.physicalDeclaredBounds,
-          x: region.physicalDeclaredBounds.x + 1,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalBorderBoxBounds: {
-          ...region.physicalBorderBoxBounds,
-          x: region.physicalBorderBoxBounds.x + 1,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalContentBoxBounds: {
-          ...region.physicalContentBoxBounds,
-          x: region.physicalContentBoxBounds.x + 1,
-        },
-      })),
-    ];
-    for (const forgedLayout of forgedLayouts) {
-      expectFallback(baseView, forgedLayout);
-    }
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          sharedPlacement: 'handleMidpoint',
-        },
-      },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
-    }
-
-    const markerless = createPristineActiveMarkerView(
-      noActiveMarkers,
-      noActiveMarkers
-    );
-    expect(createBoardScene(markerless, layout).markers).toEqual([]);
   });
 
   it('diffs stable marker identities and every renderer-visible marker field', () => {
@@ -2764,478 +2117,29 @@ describe('renderer-neutral board scene', () => {
       ).toEqual([survivor.id, baseState.id]);
     }
 
-    const content = active.physicalContentBoxBounds;
-    const genericBaseHeight = Math.min(
-      content.height,
-      content.width / (63 / 88)
-    );
-    const genericBaseWidth = genericBaseHeight * (63 / 88);
-    const genericBaseBounds = {
-      x: content.x + (content.width - genericBaseWidth) / 2,
-      y: content.y + content.height - genericBaseHeight,
-      width: genericBaseWidth,
-      height: genericBaseHeight,
-    };
     const emptyScene = createBoardScene(withAttachments([]), layout);
+    const plain = layoutLegacyPlaySlotCards(active, [63 / 88])![0]!;
     expect(findCard(emptyScene, baseState.id)).toMatchObject({
-      bounds: genericBaseBounds,
+      bounds: nearRect(plain),
       zIndex: 300,
     });
     expect(findCard(emptyScene, firstEnergyState.id)).toBeUndefined();
     expect(findCard(emptyScene, secondEnergyState.id)).toBeUndefined();
 
-    const invalidSurvivor = { ...firstEnergyState, face: 'down' as const };
-    const invalidScene = createBoardScene(
-      withAttachments([invalidSurvivor]),
+    // v1 attaches a face-down Energy exactly like a face-up one.
+    const faceDownSurvivor = { ...firstEnergyState, face: 'down' as const };
+    const faceDownScene = createBoardScene(
+      withAttachments([faceDownSurvivor]),
       layout
     );
-    const genericAttachmentWidth = genericBaseBounds.width * 0.7;
-    expect(findCard(invalidScene, baseState.id)).toMatchObject({
-      bounds: genericBaseBounds,
+    expect(findCard(faceDownScene, baseState.id)).toMatchObject({
+      bounds: expectedOneEnergy.base.bounds,
       zIndex: 300,
     });
-    expect(findCard(invalidScene, invalidSurvivor.id)).toMatchObject({
-      bounds: {
-        x: genericBaseBounds.x + genericBaseBounds.width * 0.42,
-        y: genericBaseBounds.y + genericBaseBounds.height * 0.18,
-        width: genericAttachmentWidth,
-        height: genericAttachmentWidth / (63 / 88),
-      },
-      zIndex: 250,
-    });
-    expect(findCard(invalidScene, invalidSurvivor.id)?.bounds).not.toEqual(
-      expectedOneEnergy.energy.bounds
-    );
-  });
-
-  it('fails closed outside the exact two-Energy eligibility gate', () => {
-    const baseView = createTwoEnergyAttachmentView();
-    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackId = 'stack:p1:two-energy';
-    const original = baseView.stacks[stackId]!;
-    const originalBase = original.evolutionCards[0]!;
-    const firstEnergy = original.attachmentCards[0]!;
-    const secondEnergy = original.attachmentCards[1]!;
-    if (
-      originalBase.kind !== 'known' ||
-      firstEnergy.kind !== 'known' ||
-      secondEnergy.kind !== 'known'
-    ) {
-      throw new Error('Two-Energy fallback fixture cards must be known');
-    }
-    const withLocalStack = (
-      stack: MatchViewState['stacks'][string],
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!,
-      additionalStacks: MatchViewState['stacks'] = {}
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: {
-        ...baseView.stacks,
-        ...additionalStacks,
-        [stackId]: stack,
-      },
-    });
-    const genericBounds = (
-      targetLayout: BoardLayoutSnapshot,
-      kind: 'active' | 'bench' = 'active'
-    ) => {
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing p1 layout for two-Energy fallback');
-      const region = findBoardLayoutRegion(targetLayout, side, kind);
-      const content = region.physicalContentBoxBounds;
-      const cardHeight = Math.min(content.height, content.width / (63 / 88));
-      const cardWidth = cardHeight * (63 / 88);
-      const base = {
-        x: content.x + (content.width - cardWidth) / 2,
-        y: content.y + content.height - cardHeight,
-        width: cardWidth,
-        height: cardHeight,
-      };
-      return {
-        side,
-        base,
-      };
-    };
-    const expectFallback = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot = layout,
-      kind: 'active' | 'bench' = 'active'
-    ) => {
-      const expected = genericBounds(targetLayout, kind);
-      const scene = createBoardScene(view, targetLayout);
-      const stack = view.stacks[stackId];
-      if (!stack) throw new Error('Missing two-Energy fallback stack');
-      const baseState = stack.evolutionCards.find(
-        (card) => card.id === originalBase.id
-      );
-      const firstState = stack.attachmentCards.find(
-        (card) => card.id === firstEnergy.id
-      );
-      const secondState = stack.attachmentCards.find(
-        (card) => card.id === secondEnergy.id
-      );
-      const base = scene.cards.find((card) => card.id === originalBase.id);
-      const first = scene.cards.find((card) => card.id === firstEnergy.id);
-      const second = scene.cards.find((card) => card.id === secondEnergy.id);
-      if (baseState) {
-        const baseIndex = stack.evolutionCards.indexOf(baseState);
-        const evolutionOffset = Math.min(10, expected.base.height * 0.035);
-        expect(base).toMatchObject({
-          side: expected.side,
-          bounds: {
-            ...expected.base,
-            y:
-              expected.base.y -
-              evolutionOffset * (stack.evolutionCards.length - baseIndex - 1),
-          },
-          zIndex: 300 + baseIndex,
-        });
-      } else {
-        expect(base).toBeUndefined();
-      }
-      if (firstState) {
-        const firstIndex = stack.attachmentCards.indexOf(firstState);
-        const attachmentWidth = expected.base.width * 0.7;
-        expect(first).toMatchObject({
-          side: expected.side,
-          bounds: {
-            x: expected.base.x + expected.base.width * 0.42 + firstIndex * 8,
-            y: expected.base.y + expected.base.height * 0.18 + firstIndex * 5,
-            width: attachmentWidth,
-            height: attachmentWidth / (63 / 88),
-          },
-          zIndex: 250 + firstIndex,
-        });
-      } else {
-        expect(first).toBeUndefined();
-      }
-      if (secondState) {
-        const secondIndex = stack.attachmentCards.indexOf(secondState);
-        const attachmentWidth = expected.base.width * 0.7;
-        expect(second).toMatchObject({
-          side: expected.side,
-          bounds: {
-            x: expected.base.x + expected.base.width * 0.42 + secondIndex * 8,
-            y: expected.base.y + expected.base.height * 0.18 + secondIndex * 5,
-            width: attachmentWidth,
-            height: attachmentWidth / (63 / 88),
-          },
-          zIndex: 250 + secondIndex,
-        });
-      } else {
-        expect(second).toBeUndefined();
-      }
-    };
-    const replaceAttachment = (
-      index: 0 | 1,
-      card: MatchViewState['stacks'][string]['attachmentCards'][number]
-    ): MatchViewState['stacks'][string] => ({
-      ...original,
-      attachmentCards: original.attachmentCards.map((current, currentIndex) =>
-        currentIndex === index ? card : current
-      ),
-    });
-
-    const sameShapeFallbacks: readonly MatchViewState['stacks'][string][] = [
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' }],
-      },
-      replaceAttachment(0, { ...firstEnergy, category: 'Pokémon' }),
-      replaceAttachment(0, { ...firstEnergy, category: 'Unknown' }),
-      replaceAttachment(0, {
-        ...firstEnergy,
-        definitionId: trainerDefinitionId,
-        category: 'Trainer',
-      }),
-      replaceAttachment(1, { ...secondEnergy, category: 'Pokémon' }),
-      replaceAttachment(1, { ...secondEnergy, category: 'Unknown' }),
-      {
-        ...original,
-        attachmentCards: [
-          {
-            ...firstEnergy,
-            definitionId: trainerDefinitionId,
-            category: 'Trainer',
-          },
-          {
-            ...secondEnergy,
-            definitionId: trainerDefinitionId,
-            category: 'Trainer',
-          },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed',
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      replaceAttachment(0, {
-        kind: 'concealed',
-        id: firstEnergy.id,
-        ownerId: p1,
-        cardBackUrl: '/blue-back.png',
-        publiclyRevealed: false,
-      }),
-      replaceAttachment(1, {
-        kind: 'concealed',
-        id: secondEnergy.id,
-        ownerId: p1,
-        cardBackUrl: '/blue-back.png',
-        publiclyRevealed: false,
-      }),
-      { ...original, evolutionCards: [{ ...originalBase, face: 'down' }] },
-      replaceAttachment(0, { ...firstEnergy, face: 'down' }),
-      replaceAttachment(1, { ...secondEnergy, face: 'down' }),
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, orientationQuarterTurns: 1 }],
-      },
-      replaceAttachment(0, {
-        ...firstEnergy,
-        orientationQuarterTurns: 1,
-      }),
-      replaceAttachment(1, {
-        ...secondEnergy,
-        orientationQuarterTurns: 1,
-      }),
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      replaceAttachment(0, { ...firstEnergy, abilityUsed: true }),
-      replaceAttachment(1, { ...secondEnergy, abilityUsed: true }),
-      { ...original, rotationQuarterTurns: 1 },
-      { ...original, damage: 10 },
-      { ...original, specialCondition: 'Poisoned' },
-      { ...original, abilityUsed: true },
-      { ...original, id: 'stack:mismatched-id' },
-      { ...original, boardPlayerId: p2 },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      replaceAttachment(0, { ...firstEnergy, ownerId: p2 }),
-      replaceAttachment(1, { ...secondEnergy, ownerId: p2 }),
-    ];
-    for (const stack of sameShapeFallbacks) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const mixedStack = replaceAttachment(1, {
-      ...secondEnergy,
-      definitionId: trainerDefinitionId,
-      category: 'Trainer',
-    });
-    const mixedScene = createBoardScene(withLocalStack(mixedStack), layout);
-    const expectedMixed = layoutLegacySingleEnergyTrainerToolAttachmentStack(
-      findBoardLayoutRegion(layout, 'local', 'active'),
-      63 / 88
-    );
-    expect(
-      mixedScene.cards.find((card) => card.id === originalBase.id)
-    ).toMatchObject({ bounds: expectedMixed.base.bounds, zIndex: 300 });
-    expect(
-      mixedScene.cards.find((card) => card.id === firstEnergy.id)
-    ).toMatchObject({ bounds: expectedMixed.energy.bounds, zIndex: 299 });
-    expect(
-      mixedScene.cards.find((card) => card.id === secondEnergy.id)
-    ).toMatchObject({
-      bounds: expectedMixed.tool.bounds,
-      zIndex: 298,
-      rotationQuarterTurns: 1,
-    });
-
-    for (const stack of [
-      { ...original, evolutionCards: [] },
-      {
-        ...original,
-        evolutionCards: [
-          originalBase,
-          { ...originalBase, id: asViewCardId('fallback-extra-base') },
-        ],
-      },
-      { ...original, attachmentCards: [] },
-      {
-        ...original,
-        attachmentCards: [
-          firstEnergy,
-          secondEnergy,
-          { ...secondEnergy, id: asViewCardId('fallback-third-energy') },
-        ],
-      },
-    ] as const satisfies readonly MatchViewState['stacks'][string][]) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const oneEnergyStack = {
-      ...original,
-      attachmentCards: [firstEnergy],
-    };
-    const oneEnergyScene = createBoardScene(
-      withLocalStack(oneEnergyStack),
-      layout
-    );
-    const active = findBoardLayoutRegion(layout, 'local', 'active');
-    const expectedOneEnergy = layoutLegacySingleEnergyAttachmentStack(
-      active,
-      63 / 88
-    );
-    expect(
-      oneEnergyScene.cards.find((card) => card.id === firstEnergy.id)
-    ).toMatchObject({
+    expect(findCard(faceDownScene, faceDownSurvivor.id)).toMatchObject({
       bounds: expectedOneEnergy.energy.bounds,
       zIndex: 299,
-      rotationQuarterTurns: 0,
     });
-
-    const trainer = {
-      ...firstEnergy,
-      definitionId: trainerDefinitionId,
-      category: 'Trainer' as const,
-    };
-    const oneToolScene = createBoardScene(
-      withLocalStack({ ...original, attachmentCards: [trainer] }),
-      layout
-    );
-    const expectedTool = layoutLegacySingleTrainerToolAttachmentStack(
-      active,
-      63 / 88
-    );
-    expect(
-      oneToolScene.cards.find((card) => card.id === trainer.id)
-    ).toMatchObject({
-      bounds: expectedTool.tool.bounds,
-      zIndex: 299,
-      rotationQuarterTurns: 1,
-    });
-
-    const emptyBench = {
-      id: 'stack:p1:two-energy-empty-bench',
-      boardPlayerId: p1,
-      slot: 'bench' as const,
-      evolutionCards: [],
-      attachmentCards: [],
-      rotationQuarterTurns: 0 as const,
-      damage: null,
-      specialCondition: null,
-      abilityUsed: false,
-    };
-    expectFallback(
-      withLocalStack(
-        original,
-        {
-          activeStackId: stackId,
-          benchStackIds: [emptyBench.id],
-        },
-        { [emptyBench.id]: emptyBench }
-      )
-    );
-
-    const benchStack = { ...original, slot: 'bench' as const };
-    expectFallback(
-      withLocalStack(benchStack, {
-        activeStackId: null,
-        benchStackIds: [stackId],
-      }),
-      layout,
-      'bench'
-    );
-
-    const [localPlayer, opponentPlayer] = layout.players;
-    const forgedLayouts: readonly BoardLayoutSnapshot[] = [
-      {
-        ...layout,
-        players: [
-          {
-            ...localPlayer,
-            regions: localPlayer.regions.map((region) =>
-              region.kind === 'active'
-                ? {
-                    ...region,
-                    physicalDeclaredBounds: {
-                      ...region.physicalDeclaredBounds,
-                      x: region.physicalDeclaredBounds.x + 1,
-                    },
-                  }
-                : region
-            ),
-          },
-          opponentPlayer,
-        ],
-      },
-      {
-        ...layout,
-        players: [
-          {
-            ...localPlayer,
-            regions: localPlayer.regions.map((region) =>
-              region.kind === 'active'
-                ? {
-                    ...region,
-                    physicalContentBoxBounds: {
-                      ...region.physicalContentBoxBounds,
-                      x: region.physicalContentBoxBounds.x + 1,
-                    },
-                  }
-                : region
-            ),
-          },
-          opponentPlayer,
-        ],
-      },
-    ];
-    for (const forgedLayout of forgedLayouts) {
-      expectFallback(baseView, forgedLayout);
-    }
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          sharedPlacement: 'handleMidpoint',
-        },
-      },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      const targetLayout = createBoardLayoutSnapshot(layoutState);
-      expectFallback(baseView, targetLayout);
-    }
   });
 
   it('uses canonical one-Energy/Trainer-as-Tool active geometry, order, and rotated hits', () => {
@@ -3566,498 +2470,6 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
-  it('fails closed to generic geometry outside the mixed attachment gate', () => {
-    const baseView = createSingleEnergyTrainerToolAttachmentView();
-    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackId = 'stack:p1:single-energy-trainer-tool';
-    const original = baseView.stacks[stackId]!;
-    const originalBase = original.evolutionCards[0]!;
-    const originalEnergy = original.attachmentCards[0]!;
-    const originalTool = original.attachmentCards[1]!;
-    if (
-      originalBase.kind !== 'known' ||
-      originalEnergy.kind !== 'known' ||
-      originalTool.kind !== 'known'
-    ) {
-      throw new Error('Mixed fallback fixture cards must be known');
-    }
-    const withLocalStack = (
-      stack: MatchViewState['stacks'][string],
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!,
-      extraStacks: MatchViewState['stacks'] = {}
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: { ...baseView.stacks, ...extraStacks, [stackId]: stack },
-    });
-    const genericSlotBounds = (
-      targetLayout: BoardLayoutSnapshot,
-      view: MatchViewState
-    ): Rect => {
-      const stack = view.stacks[stackId]!;
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing local mixed fallback layout');
-      const region = findBoardLayoutRegion(targetLayout, side, stack.slot);
-      const bounds = region.physicalContentBoxBounds;
-      const height = bounds.height;
-      const width = Math.min(height * (63 / 88), bounds.width);
-      const count =
-        stack.slot === 'active'
-          ? view.boards[p1]!.activeStackId
-            ? 1
-            : 0
-          : view.boards[p1]!.benchStackIds.length;
-      const index =
-        stack.slot === 'active'
-          ? 0
-          : view.boards[p1]!.benchStackIds.indexOf(stackId);
-      const gap = Math.min(bounds.width * 0.005, 6);
-      const step = Math.min(
-        width + gap,
-        (bounds.width - width) / Math.max(1, count - 1)
-      );
-      const rowWidth = width + step * (count - 1);
-      return {
-        x: bounds.x + Math.max(0, (bounds.width - rowWidth) / 2) + step * index,
-        y: bounds.y + bounds.height - height,
-        width,
-        height,
-      };
-    };
-    const expectFallback = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot = layout
-    ) => {
-      const scene = createBoardScene(view, targetLayout);
-      const stack = view.stacks[stackId]!;
-      const slot = genericSlotBounds(targetLayout, view);
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing mixed fallback player side');
-      const evolutionOffset = Math.min(10, slot.height * 0.035);
-      stack.evolutionCards.forEach((card, index) => {
-        expect(scene.cards.find((node) => node.id === card.id)).toMatchObject({
-          bounds: {
-            ...slot,
-            y:
-              slot.y -
-              evolutionOffset * (stack.evolutionCards.length - index - 1),
-          },
-          zIndex: 300 + index,
-        });
-      });
-      stack.attachmentCards.forEach((card, index) => {
-        expect(scene.cards.find((node) => node.id === card.id)).toMatchObject({
-          bounds: {
-            x: slot.x + slot.width * 0.42 + index * 8,
-            y: slot.y + slot.height * 0.18 + index * 5,
-            width: slot.width * 0.7,
-            height: slot.height * 0.7,
-          },
-          zIndex: 250 + index,
-          rotationQuarterTurns: (((card.kind === 'known'
-            ? card.orientationQuarterTurns
-            : 0) +
-            (side === 'opponent' ? 2 : 0)) %
-            4) as 0 | 1 | 2 | 3,
-        });
-      });
-    };
-
-    const sameShapeFallbacks: readonly MatchViewState['stacks'][string][] = [
-      {
-        ...original,
-        attachmentCards: [originalTool, originalEnergy],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' }],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          { ...originalEnergy, category: 'Unknown' },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          { ...originalEnergy, category: 'Pokémon' },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          { ...originalEnergy, category: 'Trainer' },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          { ...originalTool, category: 'Pokémon' },
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          { ...originalTool, category: 'Unknown' },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed',
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          {
-            kind: 'concealed',
-            id: originalEnergy.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          {
-            kind: 'concealed',
-            id: originalTool.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, ownerId: p2 }, originalTool],
-      },
-      {
-        ...original,
-        attachmentCards: [originalEnergy, { ...originalTool, ownerId: p2 }],
-      },
-      { ...original, evolutionCards: [{ ...originalBase, face: 'down' }] },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, face: 'down' }, originalTool],
-      },
-      {
-        ...original,
-        attachmentCards: [originalEnergy, { ...originalTool, face: 'down' }],
-      },
-      { ...original, rotationQuarterTurns: 1 },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, orientationQuarterTurns: 1 }],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          { ...originalEnergy, orientationQuarterTurns: 1 },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          { ...originalTool, orientationQuarterTurns: 1 },
-        ],
-      },
-      { ...original, damage: 10 },
-      { ...original, specialCondition: 'Poisoned' },
-      { ...original, abilityUsed: true },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          { ...originalEnergy, abilityUsed: true },
-          originalTool,
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          { ...originalTool, abilityUsed: true },
-        ],
-      },
-      { ...original, id: 'stack:mismatched-mixed-id' },
-      { ...original, boardPlayerId: p2 },
-    ];
-    for (const stack of sameShapeFallbacks) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    expectFallback(
-      withLocalStack({
-        ...original,
-        evolutionCards: [
-          originalBase,
-          {
-            ...originalBase,
-            id: asViewCardId('mixed-fallback-extra-evolution'),
-          },
-        ],
-      })
-    );
-    expectFallback(
-      withLocalStack({
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          originalTool,
-          {
-            ...originalEnergy,
-            id: asViewCardId('mixed-fallback-extra-attachment'),
-          },
-        ],
-      })
-    );
-
-    const oneEnergyScene = createBoardScene(
-      withLocalStack({
-        ...original,
-        attachmentCards: [originalEnergy],
-      }),
-      layout
-    );
-    const expectedOneEnergy = layoutLegacySingleEnergyAttachmentStack(
-      findBoardLayoutRegion(layout, 'local', 'active'),
-      63 / 88
-    );
-    expect(
-      oneEnergyScene.cards.find((card) => card.id === originalEnergy.id)
-    ).toMatchObject({
-      bounds: expectedOneEnergy.energy.bounds,
-      zIndex: 299,
-      rotationQuarterTurns: 0,
-    });
-    const oneToolScene = createBoardScene(
-      withLocalStack({ ...original, attachmentCards: [originalTool] }),
-      layout
-    );
-    const expectedOneTool = layoutLegacySingleTrainerToolAttachmentStack(
-      findBoardLayoutRegion(layout, 'local', 'active'),
-      63 / 88
-    );
-    expect(
-      oneToolScene.cards.find((card) => card.id === originalTool.id)
-    ).toMatchObject({
-      bounds: expectedOneTool.tool.bounds,
-      zIndex: 299,
-      rotationQuarterTurns: 1,
-    });
-    const twoEnergyScene = createBoardScene(
-      withLocalStack({
-        ...original,
-        attachmentCards: [
-          originalEnergy,
-          {
-            ...originalTool,
-            definitionId: energyDefinitionId,
-            category: 'Energy',
-          },
-        ],
-      }),
-      layout
-    );
-    const expectedTwoEnergy = layoutLegacyTwoEnergyAttachmentStack(
-      findBoardLayoutRegion(layout, 'local', 'active'),
-      63 / 88
-    );
-    expect(
-      twoEnergyScene.cards.find((card) => card.id === originalTool.id)
-    ).toMatchObject({
-      bounds: expectedTwoEnergy.energies[1].bounds,
-      zIndex: 298,
-      rotationQuarterTurns: 0,
-    });
-
-    const controlId = 'stack:p1:mixed-dirty-control';
-    const control = {
-      id: controlId,
-      boardPlayerId: p1,
-      slot: 'bench' as const,
-      evolutionCards: [
-        {
-          ...originalBase,
-          id: asViewCardId(`${controlId}:base`),
-        },
-      ],
-      attachmentCards: [],
-      rotationQuarterTurns: 0 as const,
-      damage: 10,
-      specialCondition: null,
-      abilityUsed: false,
-    };
-    expectFallback(
-      withLocalStack(
-        original,
-        { activeStackId: stackId, benchStackIds: [controlId] },
-        { [controlId]: control }
-      )
-    );
-
-    const activeControl = {
-      ...control,
-      slot: 'active' as const,
-      damage: null,
-      attachmentCards: [
-        {
-          ...originalEnergy,
-          id: asViewCardId(`${controlId}:attachment`),
-        },
-      ],
-    };
-    expectFallback(
-      withLocalStack(
-        { ...original, slot: 'bench' },
-        { activeStackId: controlId, benchStackIds: [stackId] },
-        { [controlId]: activeControl }
-      )
-    );
-
-    expectFallback(
-      withLocalStack(
-        { ...original, slot: 'bench' },
-        { activeStackId: null, benchStackIds: [stackId] }
-      )
-    );
-
-    const cleanControl = { ...control, damage: null };
-    const secondControlId = 'stack:p1:mixed-second-control';
-    const secondControl = {
-      ...cleanControl,
-      id: secondControlId,
-      evolutionCards: [
-        {
-          ...cleanControl.evolutionCards[0]!,
-          id: asViewCardId(`${secondControlId}:base`),
-        },
-      ],
-    };
-    expectFallback(
-      withLocalStack(
-        original,
-        {
-          activeStackId: stackId,
-          benchStackIds: [controlId, secondControlId],
-        },
-        {
-          [controlId]: cleanControl,
-          [secondControlId]: secondControl,
-        }
-      )
-    );
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
-    }
-
-    const [localPlayer, opponentPlayer] = layout.players;
-    const forgedActiveLayout: BoardLayoutSnapshot = {
-      ...layout,
-      players: [
-        {
-          ...localPlayer,
-          regions: localPlayer.regions.map((region) =>
-            region.kind === 'active'
-              ? {
-                  ...region,
-                  physicalDeclaredBounds: {
-                    ...region.physicalDeclaredBounds,
-                    x: region.physicalDeclaredBounds.x + 1,
-                  },
-                }
-              : region
-          ),
-        },
-        opponentPlayer,
-      ],
-    };
-    expectFallback(baseView, forgedActiveLayout);
-
-    const cleanBenchView = withLocalStack(
-      { ...original, slot: 'bench' },
-      { activeStackId: controlId, benchStackIds: [stackId] },
-      {
-        [controlId]: {
-          ...cleanControl,
-          slot: 'active',
-        },
-      }
-    );
-    const forgedBenchLayout: BoardLayoutSnapshot = {
-      ...layout,
-      players: [
-        {
-          ...localPlayer,
-          regions: localPlayer.regions.map((region) =>
-            region.kind === 'bench'
-              ? {
-                  ...region,
-                  playerLocalNormalizedBounds: {
-                    ...region.playerLocalNormalizedBounds,
-                    x: region.playerLocalNormalizedBounds.x + 0.01,
-                  },
-                }
-              : region
-          ),
-        },
-        opponentPlayer,
-      ],
-    };
-    expectFallback(cleanBenchView, forgedBenchLayout);
-  });
-
   it('uses stable one-Trainer-as-Tool active geometry and rotated input footprints', () => {
     const view = createSingleTrainerToolAttachmentView();
     const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
@@ -4238,765 +2650,185 @@ describe('renderer-neutral board scene', () => {
     ).toEqual(geometryProjection(scene));
   });
 
-  it('fails closed to generic stack geometry outside the Trainer-as-Tool gate', () => {
-    const baseView = createSingleTrainerToolAttachmentView();
+  it('lays every bench stack out with the general legacy play-row geometry', () => {
+    // Shapes the narrow oracles never covered: a crowded bench mixing a plain
+    // basic, a stack carrying two Energy and a Tool, and a quarter-turned host
+    // with an Energy; markers sit on the host's painted (rotated) box and a
+    // Tool paints a quarter turn while Energy never follows the host.
+    const view = createView();
+    const card = (
+      id: string,
+      category: 'Pokémon' | 'Energy' | 'Trainer',
+      abilityUsed = false
+    ) => ({
+      kind: 'known' as const,
+      id: asViewCardId(id),
+      definitionId:
+        category === 'Pokémon'
+          ? definitionId
+          : category === 'Energy'
+            ? energyDefinitionId
+            : trainerDefinitionId,
+      ownerId: p1,
+      category,
+      face: 'up' as const,
+      orientationQuarterTurns: 0 as const,
+      abilityUsed,
+      publiclyRevealed: false,
+    });
+    const stacks = {
+      'stack:p1:active': {
+        id: 'stack:p1:active',
+        boardPlayerId: p1,
+        slot: 'active' as const,
+        evolutionCards: [card('active:base', 'Pokémon')],
+        attachmentCards: [],
+        rotationQuarterTurns: 0 as const,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      },
+      'stack:p1:plain': {
+        id: 'stack:p1:plain',
+        boardPlayerId: p1,
+        slot: 'bench' as const,
+        evolutionCards: [card('plain:base', 'Pokémon')],
+        attachmentCards: [],
+        rotationQuarterTurns: 0 as const,
+        damage: 20,
+        specialCondition: null,
+        abilityUsed: false,
+      },
+      'stack:p1:loaded': {
+        id: 'stack:p1:loaded',
+        boardPlayerId: p1,
+        slot: 'bench' as const,
+        evolutionCards: [card('loaded:base', 'Pokémon')],
+        attachmentCards: [
+          card('loaded:tool', 'Trainer'),
+          card('loaded:energy-1', 'Energy'),
+          card('loaded:energy-2', 'Energy'),
+        ],
+        rotationQuarterTurns: 0 as const,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: true,
+      },
+      'stack:p1:turned': {
+        id: 'stack:p1:turned',
+        boardPlayerId: p1,
+        slot: 'bench' as const,
+        evolutionCards: [card('turned:base', 'Pokémon')],
+        attachmentCards: [card('turned:energy', 'Energy')],
+        rotationQuarterTurns: 1 as const,
+        damage: 50,
+        specialCondition: null,
+        abilityUsed: false,
+      },
+    };
     const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackId = 'stack:p1:single-trainer-tool';
-    const original = baseView.stacks[stackId]!;
-    const originalBase = original.evolutionCards[0]!;
-    const originalTool = original.attachmentCards[0]!;
-    if (originalBase.kind !== 'known' || originalTool.kind !== 'known') {
-      throw new Error('Trainer-as-Tool fallback fixture cards must be known');
-    }
-    const withLocalStack = (
-      stack: MatchViewState['stacks'][string],
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: { ...baseView.stacks, [stackId]: stack },
-    });
-    const genericBounds = (
-      targetLayout: BoardLayoutSnapshot,
-      kind: 'active' | 'bench' = 'active'
-    ) => {
-      const side = targetLayout.players.find(
-        (player) => player.playerId === p1
-      )?.side;
-      if (!side) throw new Error('Missing p1 layout for Tool fallback');
-      const region = findBoardLayoutRegion(targetLayout, side, kind);
-      const content = region.physicalContentBoxBounds;
-      const cardHeight = Math.min(content.height, content.width / (63 / 88));
-      const cardWidth = cardHeight * (63 / 88);
-      const base = {
-        x: content.x + (content.width - cardWidth) / 2,
-        y: content.y + content.height - cardHeight,
-        width: cardWidth,
-        height: cardHeight,
-      };
-      return {
-        side,
-        base,
-        tool: {
-          x: base.x + base.width * 0.42,
-          y: base.y + base.height * 0.18,
-          width: base.width * 0.7,
-          height: base.height * 0.7,
-        },
-      };
-    };
-    const expectFallback = (
-      view: MatchViewState,
-      targetLayout: BoardLayoutSnapshot = layout
-    ) => {
-      const expected = genericBounds(targetLayout);
-      const scene = createBoardScene(view, targetLayout);
-      const stack = view.stacks[stackId]!;
-      const baseCard = stack.evolutionCards.find(
-        (card) => card.id === originalBase.id
-      );
-      const toolCard = stack.attachmentCards.find(
-        (card) => card.id === originalTool.id
-      );
-      const base = scene.cards.find((card) => card.id === originalBase.id);
-      const tool = scene.cards.find((card) => card.id === originalTool.id);
-      if (baseCard) {
-        const baseIndex = stack.evolutionCards.indexOf(baseCard);
-        const evolutionOffset = Math.min(10, expected.base.height * 0.035);
-        expect(base).toMatchObject({
-          bounds: {
-            ...expected.base,
-            y:
-              expected.base.y -
-              evolutionOffset * (stack.evolutionCards.length - baseIndex - 1),
-          },
-          zIndex: 300 + baseIndex,
-          rotationQuarterTurns: ((stack.rotationQuarterTurns +
-            (baseCard.kind === 'known' ? baseCard.orientationQuarterTurns : 0) +
-            (expected.side === 'opponent' ? 2 : 0)) %
-            4) as 0 | 1 | 2 | 3,
-        });
-      }
-      if (toolCard) {
-        expect(tool).toMatchObject({
-          bounds: expected.tool,
-          zIndex: 250,
-          rotationQuarterTurns: (((toolCard.kind === 'known'
-            ? toolCard.orientationQuarterTurns
-            : 0) +
-            (expected.side === 'opponent' ? 2 : 0)) %
-            4) as 0 | 1 | 2 | 3,
-        });
-      }
-    };
-
-    const sameShapeFallbacks: readonly MatchViewState['stacks'][string][] = [
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalTool, category: 'Pokémon' }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalTool, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed',
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          {
-            kind: 'concealed',
-            id: originalTool.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      { ...original, evolutionCards: [{ ...originalBase, face: 'down' }] },
-      { ...original, attachmentCards: [{ ...originalTool, face: 'down' }] },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, orientationQuarterTurns: 1 }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalTool, orientationQuarterTurns: 1 }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalTool, abilityUsed: true }],
-      },
-      { ...original, rotationQuarterTurns: 1 },
-      { ...original, damage: 10 },
-      { ...original, specialCondition: 'Poisoned' },
-      { ...original, abilityUsed: true },
-      { ...original, id: 'stack:mismatched-id' },
-      { ...original, boardPlayerId: p2 },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalTool, ownerId: p2 }],
-      },
-    ];
-    for (const stack of sameShapeFallbacks) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const countFallbacks: readonly MatchViewState['stacks'][string][] = [
-      { ...original, evolutionCards: [] },
-      {
-        ...original,
-        evolutionCards: [
-          originalBase,
-          { ...originalBase, id: asViewCardId('tool-fallback-extra-base') },
-        ],
-      },
-      { ...original, attachmentCards: [] },
-      {
-        ...original,
-        attachmentCards: [
-          originalTool,
-          { ...originalTool, id: asViewCardId('tool-fallback-extra-tool') },
-        ],
-      },
-    ];
-    for (const stack of countFallbacks) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const benchStack = { ...original, slot: 'bench' as const };
-    const benchScene = createBoardScene(
-      withLocalStack(benchStack, {
-        activeStackId: null,
-        benchStackIds: [stackId],
-      }),
-      layout
-    );
-    const expectedBench = genericBounds(layout, 'bench');
-    expect(
-      benchScene.cards.find((card) => card.id === originalBase.id)
-    ).toMatchObject({ bounds: expectedBench.base, zIndex: 300 });
-    expect(
-      benchScene.cards.find((card) => card.id === originalTool.id)
-    ).toMatchObject({
-      bounds: expectedBench.tool,
-      zIndex: 250,
-      rotationQuarterTurns: 0,
-    });
-
-    const emptyBench = {
-      id: 'stack:p1:tool-empty-bench',
-      boardPlayerId: p1,
-      slot: 'bench' as const,
-      evolutionCards: [],
-      attachmentCards: [],
-      rotationQuarterTurns: 0 as const,
-      damage: null,
-      specialCondition: null,
-      abilityUsed: false,
-    };
-    expectFallback({
-      ...baseView,
-      boards: {
-        ...baseView.boards,
-        [p1]: {
-          ...baseView.boards[p1]!,
-          benchStackIds: [emptyBench.id],
-        },
-      },
-      stacks: { ...baseView.stacks, [emptyBench.id]: emptyBench },
-    });
-
-    const forgeLocalActive = (
-      mutate: (region: BoardLayoutRegion) => BoardLayoutRegion
-    ): BoardLayoutSnapshot => {
-      const mutatePlayer = (player: (typeof layout.players)[number]) =>
-        player.playerId === p1
-          ? {
-              ...player,
-              regions: player.regions.map((region) =>
-                region.kind === 'active' ? mutate(region) : region
-              ),
-            }
-          : player;
-      return {
-        ...layout,
-        players: [
-          mutatePlayer(layout.players[0]),
-          mutatePlayer(layout.players[1]),
-        ],
-      };
-    };
-    const localActive = findBoardLayoutRegion(layout, 'local', 'active');
-    const forgedLayouts: readonly BoardLayoutSnapshot[] = [
-      forgeLocalActive((region) => ({ ...region, id: 'local:bench' })),
-      forgeLocalActive((region) => ({ ...region, playerId: p2 })),
-      forgeLocalActive((region) => ({ ...region, side: 'opponent' })),
-      forgeLocalActive((region) => ({ ...region, physicalSide: 'upper' })),
-      forgeLocalActive((region) => ({ ...region, surface: 'zone' })),
-      forgeLocalActive((region) => ({
-        ...region,
-        playerLocalNormalizedBounds: {
-          ...region.playerLocalNormalizedBounds,
-          x: region.playerLocalNormalizedBounds.x + 0.01,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalDeclaredBounds: {
-          ...region.physicalDeclaredBounds,
-          x: region.physicalDeclaredBounds.x + 1,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalBorderBoxBounds: {
-          ...region.physicalBorderBoxBounds,
-          x: region.physicalBorderBoxBounds.x + 1,
-        },
-      })),
-      forgeLocalActive((region) => ({
-        ...region,
-        physicalContentBoxBounds: {
-          ...region.physicalContentBoxBounds,
-          x: region.physicalContentBoxBounds.x + 1,
-        },
-      })),
-    ];
-    expect(localActive.surface).toBe('playSlot');
-    for (const forgedLayout of forgedLayouts) {
-      expectFallback(baseView, forgedLayout);
-    }
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          sharedPlacement: 'handleMidpoint',
-        },
-      },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
-    }
-
-    const energyView = withLocalStack({
-      ...original,
-      attachmentCards: [
-        {
-          ...originalTool,
-          definitionId: energyDefinitionId,
-          category: 'Energy',
-        },
-      ],
-    });
-    const energyScene = createBoardScene(energyView, layout);
-    const expectedEnergy = layoutLegacySingleEnergyAttachmentStack(
-      findBoardLayoutRegion(layout, 'local', 'active'),
-      63 / 88
-    );
-    expect(
-      energyScene.cards.find((card) => card.id === originalTool.id)
-    ).toMatchObject({
-      bounds: expectedEnergy.energy.bounds,
-      zIndex: 299,
-      rotationQuarterTurns: 0,
-    });
-  });
-
-  it('retains exact fallback geometry outside the one-Energy eligibility gate', () => {
-    const baseView = createSingleEnergyAttachmentView();
-    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
-    const stackId = 'stack:p1:single-energy';
-    const original = baseView.stacks[stackId]!;
-    const originalBase = original.evolutionCards[0]!;
-    const originalEnergy = original.attachmentCards[0]!;
-    if (originalBase.kind !== 'known' || originalEnergy.kind !== 'known') {
-      throw new Error('One-Energy fallback fixture cards must be known');
-    }
-    const active = findBoardLayoutRegion(layout, 'local', 'active');
-    const fallbackHeight = active.physicalContentBoxBounds.height;
-    const fallbackWidth = fallbackHeight * (63 / 88);
-    const fallbackBaseBounds = {
-      x:
-        active.physicalContentBoxBounds.x +
-        (active.physicalContentBoxBounds.width - fallbackWidth) / 2,
-      y: active.physicalContentBoxBounds.y,
-      width: fallbackWidth,
-      height: fallbackHeight,
-    };
-    const fallbackEnergyBounds = {
-      x: fallbackBaseBounds.x + fallbackBaseBounds.width * 0.42,
-      y: fallbackBaseBounds.y + fallbackBaseBounds.height * 0.18,
-      width: fallbackBaseBounds.width * 0.7,
-      height: fallbackBaseBounds.height * 0.7,
-    };
-    const withLocalStack = (
-      stack: MatchViewState['stacks'][string],
-      board: MatchViewState['boards'][string] = baseView.boards[p1]!
-    ): MatchViewState => ({
-      ...baseView,
-      boards: { ...baseView.boards, [p1]: board },
-      stacks: { ...baseView.stacks, [stackId]: stack },
-    });
-    const expectFallback = (view: MatchViewState) => {
-      const scene = createBoardScene(view, layout);
-      expect(
-        scene.cards.find((card) => card.id === originalBase.id)
-      ).toMatchObject({ bounds: fallbackBaseBounds, zIndex: 300 });
-      expect(
-        scene.cards.find((card) => card.id === originalEnergy.id)
-      ).toMatchObject({ bounds: fallbackEnergyBounds, zIndex: 250 });
-    };
-    const sameShapeFallbacks: readonly MatchViewState['stacks'][string][] = [
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Trainer' }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, category: 'Energy' }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, category: 'Pokémon' }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, category: 'Unknown' }],
-      },
-      {
-        ...original,
-        evolutionCards: [
-          {
-            kind: 'concealed',
-            id: originalBase.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      {
-        ...original,
-        attachmentCards: [
-          {
-            kind: 'concealed',
-            id: originalEnergy.id,
-            ownerId: p1,
-            cardBackUrl: '/blue-back.png',
-            publiclyRevealed: false,
-          },
-        ],
-      },
-      { ...original, evolutionCards: [{ ...originalBase, face: 'down' }] },
-      { ...original, attachmentCards: [{ ...originalEnergy, face: 'down' }] },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, orientationQuarterTurns: 1 }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, orientationQuarterTurns: 1 }],
-      },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, abilityUsed: true }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, abilityUsed: true }],
-      },
-      { ...original, rotationQuarterTurns: 1 },
-      { ...original, damage: 10 },
-      { ...original, specialCondition: 'Poisoned' },
-      { ...original, abilityUsed: true },
-      { ...original, id: 'stack:mismatched-id' },
-      { ...original, boardPlayerId: p2 },
-      {
-        ...original,
-        evolutionCards: [{ ...originalBase, ownerId: p2 }],
-      },
-      {
-        ...original,
-        attachmentCards: [{ ...originalEnergy, ownerId: p2 }],
-      },
-    ];
-    for (const stack of sameShapeFallbacks) {
-      expectFallback(withLocalStack(stack));
-    }
-
-    const countFallbacks: readonly MatchViewState['stacks'][string][] = [
-      { ...original, evolutionCards: [] },
-      {
-        ...original,
-        evolutionCards: [
-          originalBase,
-          { ...originalBase, id: asViewCardId('fallback-extra-base') },
-        ],
-      },
-      { ...original, attachmentCards: [] },
-    ];
-    for (const stack of countFallbacks) {
-      const scene = createBoardScene(withLocalStack(stack), layout);
-      const base = scene.cards.find((card) => card.id === originalBase.id);
-      const energy = scene.cards.find((card) => card.id === originalEnergy.id);
-      if (base) expect(base.zIndex).toBe(300);
-      if (energy) expect(energy.zIndex).toBe(250);
-      if (stack.attachmentCards.length === 0) {
-        expect(base?.bounds).toEqual(fallbackBaseBounds);
-        expect(base?.bounds).not.toEqual(
-          layoutLegacySingleEnergyAttachmentStack(active, 63 / 88).base.bounds
-        );
-      }
-    }
-
-    const secondEnergy = {
-      ...originalEnergy,
-      id: asViewCardId('fallback-extra-energy'),
-    };
-    const twoEnergyScene = createBoardScene(
-      withLocalStack({
-        ...original,
-        attachmentCards: [originalEnergy, secondEnergy],
-      }),
-      layout
-    );
-    const expectedTwoEnergy = layoutLegacyTwoEnergyAttachmentStack(
-      active,
-      63 / 88
-    );
-    expect(
-      twoEnergyScene.cards.find((card) => card.id === originalEnergy.id)
-    ).toMatchObject({
-      bounds: expectedTwoEnergy.energies[0].bounds,
-      zIndex: 299,
-    });
-    expect(
-      twoEnergyScene.cards.find((card) => card.id === secondEnergy.id)
-    ).toMatchObject({
-      bounds: expectedTwoEnergy.energies[1].bounds,
-      zIndex: 298,
-    });
-
-    const benchStack = { ...original, slot: 'bench' as const };
-    const benchScene = createBoardScene(
-      withLocalStack(benchStack, {
-        activeStackId: null,
-        benchStackIds: [stackId],
-      }),
-      layout
-    );
-    expect(
-      benchScene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
-    ).toBe(250);
-
-    const emptyBench = {
-      id: 'stack:p1:empty-bench',
-      boardPlayerId: p1,
-      slot: 'bench' as const,
-      evolutionCards: [],
-      attachmentCards: [],
-      rotationQuarterTurns: 0 as const,
-      damage: null,
-      specialCondition: null,
-      abilityUsed: false,
-    };
-    expectFallback({
-      ...baseView,
-      boards: {
-        ...baseView.boards,
-        [p1]: {
-          ...baseView.boards[p1]!,
-          benchStackIds: [emptyBench.id],
-        },
-      },
-      stacks: { ...baseView.stacks, [emptyBench.id]: emptyBench },
-    });
-
-    const [localPlayer, opponentPlayer] = layout.players;
-    const forgedLayout = {
-      ...layout,
-      players: [
-        {
-          ...localPlayer,
-          regions: localPlayer.regions.map((region) =>
-            region.kind === 'active'
-              ? {
-                  ...region,
-                  physicalDeclaredBounds: {
-                    ...region.physicalDeclaredBounds,
-                    x: region.physicalDeclaredBounds.x + 1,
-                  },
-                }
-              : region
-          ),
-        },
-        opponentPlayer,
-      ] as const,
-    };
-    const forgedScene = createBoardScene(baseView, forgedLayout);
-    expect(
-      forgedScene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
-    ).toBe(250);
-    const opponentActiveRegion = opponentPlayer.regions.find(
-      (region) => region.kind === 'active'
-    );
-    if (!opponentActiveRegion) {
-      throw new Error('Missing opponent active region for forgery test');
-    }
-    const forgedSideLayout = {
-      ...layout,
-      players: [
-        {
-          ...localPlayer,
-          regions: localPlayer.regions.map((region) =>
-            region.kind === 'active'
-              ? { ...opponentActiveRegion, playerId: p1 }
-              : region
-          ),
-        },
-        opponentPlayer,
-      ] as const,
-    };
-    const forgedSideScene = createBoardScene(baseView, forgedSideLayout);
-    expect(
-      forgedSideScene.cards.find((card) => card.id === originalEnergy.id)
-        ?.zIndex
-    ).toBe(250);
-
-    for (const layoutState of [
-      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-        },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
-        vertical: {
-          ...characterizedEvolutionLayoutState.vertical,
-          sharedPlacement: 'handleMidpoint',
-        },
-      },
-      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-    ] as const satisfies readonly BoardLayoutState[]) {
-      const scene = createBoardScene(
-        baseView,
-        createBoardLayoutSnapshot(layoutState)
-      );
-      expect(
-        scene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
-      ).toBe(250);
-    }
-  });
-
-  it('retains the existing stack fallback outside the narrow evolution gate', () => {
-    const base = createOrdinaryEvolutionView();
-    const localActive = base.stacks['stack:p1:active']!;
-    const opponentActive = base.stacks['stack:p2:active']!;
-    const localBench = base.stacks['stack:p1:bench']!;
-    const attachment = {
-      ...localActive.evolutionCards[0]!,
-      id: asViewCardId('fallback-attachment'),
-      category: 'Energy' as const,
-    };
-    const extraBenchCard = {
-      ...localBench.evolutionCards[0]!,
-      id: asViewCardId('fallback-extra-bench-card'),
-    };
-    const view: MatchViewState = {
-      ...base,
-      boards: {
-        ...base.boards,
-        [p1]: {
-          ...base.boards[p1]!,
-          benchStackIds: ['stack:p1:bench', 'stack:p1:bench-extra'],
-        },
-      },
-      stacks: {
-        ...base.stacks,
-        [localActive.id]: {
-          ...localActive,
-          attachmentCards: [attachment],
-        },
-        [opponentActive.id]: {
-          ...opponentActive,
-          rotationQuarterTurns: 1,
-        },
-        'stack:p1:bench-extra': {
-          id: 'stack:p1:bench-extra',
-          boardPlayerId: p1,
-          slot: 'bench',
-          evolutionCards: [extraBenchCard],
-          attachmentCards: [],
-          rotationQuarterTurns: 0,
-          damage: null,
-          specialCondition: null,
-          abilityUsed: false,
-        },
-      },
-    };
     const scene = createBoardScene(
-      view,
-      createBoardLayoutSnapshot(characterizedEvolutionLayoutState)
+      {
+        ...view,
+        zones: Object.fromEntries(
+          Object.entries(view.zones).map(([id, zone]) => [
+            id,
+            { ...zone, cards: [] },
+          ])
+        ),
+        boards: {
+          [p1]: {
+            activeStackId: 'stack:p1:active',
+            benchStackIds: [
+              'stack:p1:plain',
+              'stack:p1:loaded',
+              'stack:p1:turned',
+            ],
+          },
+          [p2]: { activeStackId: null, benchStackIds: [] },
+        },
+        stacks,
+      },
+      layout
     );
-    for (const stackId of [localActive.id, opponentActive.id, localBench.id]) {
-      const nodes = view.stacks[stackId]!.evolutionCards.map((card) =>
-        scene.cards.find((candidate) => candidate.id === card.id)
-      );
-      expect(nodes.map((node) => node?.zIndex)).toEqual([300, 301, 302]);
-    }
-    expect(
-      view.stacks['stack:p2:bench']!.evolutionCards.map(
-        (card) =>
-          scene.cards.find((candidate) => candidate.id === card.id)?.zIndex
-      )
-    ).toEqual([298, 299, 300]);
+    const bench = findBoardLayoutRegion(layout, 'local', 'bench');
+    const expected = layoutLegacyPlayRow(bench, CARD_ASPECT_RATIO, [
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 },
+      {
+        evolutionCount: 1,
+        attachments: ['tool', 'energy', 'energy'],
+        rotationQuarterTurns: 0,
+      },
+      { evolutionCount: 1, attachments: ['energy'], rotationQuarterTurns: 1 },
+    ]);
+    const find = (id: string) =>
+      scene.cards.find((candidate) => candidate.id === asViewCardId(id));
 
-    const expectFallbackForLayout = (layoutState: BoardLayoutState) => {
-      const fallbackScene = createBoardScene(
-        base,
-        createBoardLayoutSnapshot(layoutState)
-      );
-      expect(
-        base.stacks['stack:p1:active']!.evolutionCards.map(
-          (card) =>
-            fallbackScene.cards.find((candidate) => candidate.id === card.id)
-              ?.zIndex
-        )
-      ).toEqual([300, 301, 302]);
+    expect(find('plain:base')).toMatchObject({
+      bounds: expected[0]!.evolutionCards[0]!.bounds,
+      zIndex: 300,
+      rotationQuarterTurns: 0,
+    });
+    // Tool attached first still paints behind both Energy, a quarter turn on.
+    expect(find('loaded:tool')).toMatchObject({
+      bounds: expected[1]!.attachmentCards[0]!.bounds,
+      zIndex: 297,
+      rotationQuarterTurns: 1,
+    });
+    expect(find('loaded:energy-1')).toMatchObject({
+      bounds: expected[1]!.attachmentCards[1]!.bounds,
+      zIndex: 299,
+      rotationQuarterTurns: 0,
+    });
+    expect(find('loaded:energy-2')?.zIndex).toBe(298);
+    expect(find('loaded:energy-2')?.bounds.x).toBeGreaterThan(
+      find('loaded:energy-1')!.bounds.x
+    );
+    // The turned host rotates; its Energy stays upright at the same offset.
+    expect(find('turned:base')).toMatchObject({
+      bounds: expected[2]!.evolutionCards[0]!.bounds,
+      rotationQuarterTurns: 1,
+    });
+    expect(find('turned:energy')).toMatchObject({
+      bounds: expected[2]!.attachmentCards[0]!.bounds,
+      rotationQuarterTurns: 0,
+    });
+    // Containers keep v1's order and margins left to right.
+    expect(
+      [find('plain:base'), find('loaded:base'), find('turned:base')].map(
+        (node) => node!.bounds.x
+      )
+    ).toEqual(expected.map((stack) => stack.evolutionCards[0]!.bounds.x));
+
+    const marker = (id: string) =>
+      scene.markers.find((candidate) => candidate.id === id);
+    const plainBounds = find('plain:base')!.bounds;
+    expect(marker(`${asViewCardId('plain:base')}:damage`)).toMatchObject({
+      presentation: 'legacyBenchQ0',
+      bounds: nearRect(
+        layoutLegacyActiveQ0Markers(plainBounds, 'local').damage.bounds
+      ),
+    });
+    expect(marker(`${asViewCardId('loaded:base')}:abilityUsed`)).toMatchObject({
+      presentation: 'legacyBenchQ0',
+      bounds: nearRect(
+        layoutLegacyActiveQ0Markers(find('loaded:base')!.bounds, 'local')
+          .abilityUsed.bounds
+      ),
+    });
+    // A quarter-turned host's counter sits on its painted (rotated) box.
+    const turned = find('turned:base')!.bounds;
+    const painted = {
+      x: turned.x + turned.width / 2 - turned.height / 2,
+      y: turned.y + turned.height / 2 - turned.width / 2,
+      width: turned.height,
+      height: turned.width,
     };
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      shellMode: 'fullscreen',
-    });
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      vertical: {
-        ...characterizedEvolutionLayoutState.vertical,
-        lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
-        upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
-      },
-    });
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      vertical: {
-        ...characterizedEvolutionLayoutState.vertical,
-        lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
-      },
-    });
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      vertical: {
-        ...characterizedEvolutionLayoutState.vertical,
-        sharedPlacement: 'handleMidpoint',
-      },
-    });
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      bottomPlayerId: p2,
+    expect(marker(`${asViewCardId('turned:base')}:damage`)).toMatchObject({
+      presentation: 'legacyBenchQ0',
+      bounds: nearRect(
+        layoutLegacyActiveQ0Markers(painted, 'local').damage.bounds
+      ),
     });
   });
 

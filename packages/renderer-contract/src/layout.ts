@@ -1,4 +1,4 @@
-import type { PlayerId } from '@ptcgsim/game-core';
+import type { PlayerId, QuarterTurns } from '@ptcgsim/game-core';
 
 import { assertViewport } from './geometry.js';
 import type {
@@ -1760,6 +1760,359 @@ export const layoutLegacySingleEnergyTrainerToolAttachmentStack = (
     energy,
     tool,
   };
+};
+
+/**
+ * v1's `#viewCards` / `#attachedCards` popup: a fixed panel centred in the
+ * player's frame, 69% x 75% of it plus a 20px padding and 1px border, whose
+ * images are inline at 33% of the content height with 0.5% margins. Inside the
+ * rotated opponent frame the same box sits at the frame's authored top, which
+ * is physically the edge nearest the table centre.
+ */
+export const LEGACY_WORK_AREA_PANEL_V1 = {
+  widthRatio: 0.69,
+  heightRatio: 0.75,
+  paddingPx: 20,
+  borderPx: 1,
+  cardHeightRatio: 0.33,
+  cardMarginRatio: 0.005,
+  /** The inline strut below a baseline-aligned image in v1's 16px line box. */
+  lineStrutPx: 4,
+} as const;
+
+export interface LegacyWorkAreaPanelLayout {
+  /** Border box of the popup. */
+  readonly bounds: Rect;
+  /** Content box the cards flow in. */
+  readonly contentBounds: Rect;
+  readonly cardHeight: number;
+  readonly cardMargin: number;
+}
+
+export const layoutLegacyWorkAreaPanel = (
+  frame: Rect,
+  side: BoardSide
+): LegacyWorkAreaPanelLayout => {
+  if (
+    !Number.isFinite(frame.x) ||
+    !Number.isFinite(frame.y) ||
+    !Number.isFinite(frame.width) ||
+    !Number.isFinite(frame.height) ||
+    frame.width < 0 ||
+    frame.height < 0
+  ) {
+    throw new Error('Work-area panel frame must be finite and non-negative');
+  }
+  const spec = LEGACY_WORK_AREA_PANEL_V1;
+  const contentWidth = frame.width * spec.widthRatio;
+  const contentHeight = frame.height * spec.heightRatio;
+  const edge = spec.paddingPx + spec.borderPx;
+  const width = contentWidth + 2 * edge;
+  const height = contentHeight + 2 * edge;
+  const x = frame.x + (frame.width - width) / 2;
+  // `.self-view` centres the box; `.opp-view` pins its authored top to the
+  // frame's authored top, i.e. its physical bottom to the frame's bottom.
+  const y =
+    side === 'local'
+      ? frame.y + (frame.height - height) / 2
+      : frame.y + frame.height - height;
+  return {
+    bounds: { x, y, width, height },
+    contentBounds: {
+      x: x + edge,
+      y: y + edge,
+      width: contentWidth,
+      height: contentHeight,
+    },
+    cardHeight: contentHeight * spec.cardHeightRatio,
+    cardMargin: contentWidth * spec.cardMarginRatio,
+  };
+};
+
+/**
+ * Inline-flow card boxes inside the popup: left to right, wrapping when the
+ * next image would overflow the content width. The opponent's frame is
+ * rotated, so its flow runs right-to-left and bottom-up.
+ */
+export const layoutLegacyWorkAreaCards = (
+  panel: LegacyWorkAreaPanelLayout,
+  side: BoardSide,
+  count: number,
+  cardAspectRatio: number
+): readonly Rect[] => {
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error('Work-area card count must be a non-negative integer');
+  }
+  if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
+    throw new Error('Work-area card aspect ratio must be positive');
+  }
+  const { contentBounds, cardHeight, cardMargin } = panel;
+  const cardWidth = cardHeight * cardAspectRatio;
+  const pitchX = cardWidth + 2 * cardMargin;
+  const pitchY =
+    cardHeight + 2 * cardMargin + LEGACY_WORK_AREA_PANEL_V1.lineStrutPx;
+  const perRow =
+    pitchX > 0 ? Math.max(1, Math.floor(contentBounds.width / pitchX)) : 1;
+  return Array.from({ length: count }, (_, index) => {
+    const column = index % perRow;
+    const row = Math.floor(index / perRow);
+    const localX = contentBounds.x + cardMargin + column * pitchX;
+    const localY = contentBounds.y + cardMargin + row * pitchY;
+    return side === 'local'
+      ? { x: localX, y: localY, width: cardWidth, height: cardHeight }
+      : {
+          x:
+            contentBounds.x +
+            contentBounds.width -
+            (localX - contentBounds.x) -
+            cardWidth,
+          y:
+            contentBounds.y +
+            contentBounds.height -
+            (localY - contentBounds.y) -
+            cardHeight,
+          width: cardWidth,
+          height: cardHeight,
+        };
+  });
+};
+
+export type LegacyPlayRowAttachmentKind = 'energy' | 'tool';
+
+export interface LegacyPlayRowStackInput {
+  /** Bottom-to-top evolution card count; at least one. */
+  readonly evolutionCount: number;
+  /** Attachments in canonical stack order. */
+  readonly attachments: readonly LegacyPlayRowAttachmentKind[];
+  /** Whole-stack rotation; Energy attachments never follow it. */
+  readonly rotationQuarterTurns: QuarterTurns;
+}
+
+export interface LegacyPlayRowCardBox {
+  /** Pre-transform card box; renderers rotate it around its centre. */
+  readonly bounds: Rect;
+  /** The exact image z-index emitted by v1 attachCard/resetImage. */
+  readonly sourceZIndex: number;
+}
+
+export interface LegacyPlayRowAttachmentBox extends LegacyPlayRowCardBox {
+  /** Tools paint a quarter turn from the host; Energy stays upright. */
+  readonly rotationQuarterTurns: 0 | 1;
+}
+
+export interface LegacyPlayRowStackLayout {
+  /** The play-container border box after flex centring and shrink. */
+  readonly flexItemBounds: Rect;
+  /** Integer CSSOM base width v1 uses for its width/6 and width/15 steps. */
+  readonly cssomClientWidth: number;
+  /** Indexed like the input's evolution cards (bottom-to-top). */
+  readonly evolutionCards: readonly LegacyPlayRowCardBox[];
+  /** Indexed like the input's attachments. */
+  readonly attachmentCards: readonly LegacyPlayRowAttachmentBox[];
+}
+
+const legacyPlayContainerMargins = (
+  kind: BoardLayoutRegionKind,
+  rotationQuarterTurns: QuarterTurns,
+  hasTool: boolean
+): { readonly left: number; readonly right: number } => {
+  // v1 rotateCard: a quarter-turned bench container takes 2%/3% margins and
+  // a container rotated back to 0/180 takes 0%/1%; syncRotation gives a Tool
+  // host a 2% trailing margin; otherwise the bench's stylesheet 1% applies.
+  if (rotationQuarterTurns === 1 || rotationQuarterTurns === 3) {
+    if (kind === 'bench') return { left: 0.02, right: 0.03 };
+    return { left: 0, right: hasTool ? 0.02 : 0 };
+  }
+  if (rotationQuarterTurns === 2) return { left: 0, right: 0.01 };
+  if (hasTool) return { left: 0, right: 0.02 };
+  return { left: 0, right: kind === 'bench' ? 0.01 : 0 };
+};
+
+/**
+ * Lays out every play-container of one active or bench row the way v1's
+ * flex row does, for any stack shape: the container is an inline-block whose
+ * width v1 grows by one sixth of the rounded base width per attachment; lower
+ * evolution stages sit width/15 higher per layer behind the top card; Energy
+ * then Tool attachments step width/6 to the right behind the host, each one
+ * layer further back; a Tool paints a quarter turn from its host. Containers
+ * are centred in the row and flex-shrink proportionally (never below the base
+ * image) when their margins and widths overflow it. Opponent rows are the
+ * same layout mirrored through the rotated player frame.
+ */
+export const layoutLegacyPlayRow = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number,
+  stacks: readonly LegacyPlayRowStackInput[]
+): readonly LegacyPlayRowStackLayout[] => {
+  if (
+    region.surface !== 'playSlot' ||
+    (region.kind !== 'active' && region.kind !== 'bench')
+  ) {
+    throw new Error('Play-row layout requires an active or bench play slot');
+  }
+  if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
+    throw new Error('Play-row card aspect ratio must be positive');
+  }
+  // The play slots carry no padding or border, so the authored rectangle is
+  // the flex container's content box.
+  const bounds = region.physicalDeclaredBounds;
+  if (
+    !Number.isFinite(bounds.x) ||
+    !Number.isFinite(bounds.y) ||
+    !Number.isFinite(bounds.width) ||
+    !Number.isFinite(bounds.height) ||
+    bounds.width < 0 ||
+    bounds.height < 0
+  ) {
+    throw new Error('Play-row bounds must be finite and non-negative');
+  }
+  for (const stack of stacks) {
+    if (
+      !Number.isSafeInteger(stack.evolutionCount) ||
+      stack.evolutionCount < 1
+    ) {
+      throw new Error('Play-row stacks need at least one evolution card');
+    }
+  }
+  if (stacks.length === 0) return [];
+
+  // A frame dragged shut leaves a zero-height row; its cards collapse with it
+  // rather than failing the scene.
+  const cardHeight = bounds.height;
+  const cardWidth = cardHeight * cardAspectRatio;
+  const cssomClientWidth = Math.round(cardWidth);
+  const attachmentStep = cssomClientWidth / 6;
+  const evolutionStep = cssomClientWidth / 15;
+
+  const items = stacks.map((stack) => {
+    const margins = legacyPlayContainerMargins(
+      region.kind,
+      stack.rotationQuarterTurns,
+      stack.attachments.includes('tool')
+    );
+    return {
+      // A lone basic keeps `width: auto`, i.e. the image's painted width; v1
+      // writes the rounded CSSOM width back once it evolves the card or grows
+      // the container for an attachment (adjustCards later rounds a lone
+      // basic too, a sub-pixel difference the oracles do not resolve).
+      basis:
+        stack.attachments.length === 0 && stack.evolutionCount === 1
+          ? cardWidth
+          : cssomClientWidth + stack.attachments.length * attachmentStep,
+      marginLeft: bounds.width * margins.left,
+      marginRight: bounds.width * margins.right,
+    };
+  });
+
+  // CSS flex shrink: each unfrozen item gives up overflow in proportion to
+  // its basis, but never below its min-content size, the base image.
+  const widths = items.map((item) => item.basis);
+  const outer = items.reduce(
+    (total, item) => total + item.basis + item.marginLeft + item.marginRight,
+    0
+  );
+  let free = bounds.width - outer;
+  if (free < 0) {
+    const frozen = new Set<number>();
+    let remaining = -free;
+    for (let pass = 0; pass < items.length && remaining > 0; pass += 1) {
+      const unfrozen = items
+        .map((_, index) => index)
+        .filter((index) => !frozen.has(index));
+      const basisTotal = unfrozen.reduce(
+        (total, index) => total + items[index]!.basis,
+        0
+      );
+      if (unfrozen.length === 0 || basisTotal <= 0) break;
+      let clamped = false;
+      let recovered = 0;
+      for (const index of unfrozen) {
+        const target =
+          items[index]!.basis - (remaining * items[index]!.basis) / basisTotal;
+        if (target < cardWidth) {
+          frozen.add(index);
+          recovered += items[index]!.basis - cardWidth;
+          widths[index] = cardWidth;
+          clamped = true;
+        } else {
+          widths[index] = target;
+        }
+      }
+      if (!clamped) break;
+      remaining -= recovered;
+    }
+    const shrunkOuter = items.reduce(
+      (total, item, index) =>
+        total + widths[index]! + item.marginLeft + item.marginRight,
+      0
+    );
+    free = bounds.width - shrunkOuter;
+  }
+
+  // justify-content: center also centres an overflowing row. The opponent
+  // frame is the same row turned half a turn, so it is walked right-to-left
+  // with its margins swapped and every card measured from the container's
+  // far edge.
+  const mirror = region.side !== 'local';
+  const order = stacks.map((_, index) => index);
+  if (mirror) order.reverse();
+  let cursor = bounds.x + free / 2;
+  const layouts: LegacyPlayRowStackLayout[] = [];
+  for (const index of order) {
+    const stack = stacks[index]!;
+    const item = items[index]!;
+    const width = widths[index]!;
+    const leading = mirror ? item.marginRight : item.marginLeft;
+    const trailing = mirror ? item.marginLeft : item.marginRight;
+    const containerX = cursor + leading;
+    cursor = containerX + width + trailing;
+    const baseX = mirror ? containerX + width - cardWidth : containerX;
+    const stepDirection = mirror ? -1 : 1;
+    const evolutionCards: LegacyPlayRowCardBox[] = Array.from(
+      { length: stack.evolutionCount },
+      (_, canonicalIndex) => {
+        const layerFromTop = stack.evolutionCount - canonicalIndex - 1;
+        return {
+          bounds: {
+            x: baseX,
+            y: bounds.y - stepDirection * evolutionStep * layerFromTop,
+            width: cardWidth,
+            height: cardHeight,
+          },
+          sourceZIndex: layerFromTop === 0 ? 0 : -layerFromTop,
+        };
+      }
+    );
+    // Energy attachments keep the low layers; v1 re-attaches Tools behind
+    // every Energy so they always end up furthest right and furthest back.
+    const energyCount = stack.attachments.filter(
+      (kind) => kind === 'energy'
+    ).length;
+    let energyLayer = 0;
+    let toolLayer = energyCount;
+    const attachmentCards = stack.attachments.map(
+      (kind): LegacyPlayRowAttachmentBox => {
+        const layer = kind === 'energy' ? (energyLayer += 1) : (toolLayer += 1);
+        return {
+          bounds: {
+            x: baseX + stepDirection * attachmentStep * layer,
+            y: bounds.y,
+            width: cardWidth,
+            height: cardHeight,
+          },
+          sourceZIndex: -layer,
+          rotationQuarterTurns: kind === 'tool' ? 1 : 0,
+        };
+      }
+    );
+    layouts[index] = {
+      flexItemBounds: { x: containerX, y: bounds.y, width, height: cardHeight },
+      cssomClientWidth,
+      evolutionCards,
+      attachmentCards,
+    };
+  }
+  return layouts;
 };
 
 /**
