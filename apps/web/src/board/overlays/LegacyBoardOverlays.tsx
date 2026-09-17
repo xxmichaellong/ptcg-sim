@@ -839,10 +839,11 @@ const Preview = ({
           type="button"
           className="ptcgsim-legacy-stack-preview-card"
           data-stack-preview-card-id={card.id}
-          data-preview-tabbable="true"
           aria-label={`Preview ${card.label}`}
           // Keep focus on the stack view itself (its keyboard boundary and
-          // Escape handling live there); a click still opens the card.
+          // Escape handling live there, and v1's stack view has no tab stops);
+          // a click still opens the card.
+          tabIndex={-1}
           onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.stopPropagation();
