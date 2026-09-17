@@ -602,26 +602,156 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.socket.serverOpen();
     test.socket.serverMessage(welcome(viewAt(1)));
     const scene = test.adapter.getSnapshot().scene!;
-    const card = scene.cards.find((candidate) =>
+    const [card, secondCard] = scene.cards.filter((candidate) =>
       candidate.parentId.endsWith(':hand')
-    )!;
+    );
     const target = scene.zones.find((candidate) =>
       candidate.id.endsWith(':discard')
     )!;
     const intent = {
       kind: 'CardDropRequested' as const,
-      cardId: card.id,
+      cardId: card!.id,
       targetId: target.id,
+      x: 0,
+      y: 0,
     };
 
     expect(test.adapter.emitIntent(intent)).toBe(true);
     expect(test.submissions[0]?.result.queued).toBe(true);
+    // The queued move is predicted: the card already shows in the discard,
+    // so the same drop again is stale rather than a second submission.
+    const predicted = test.adapter.getSnapshot();
+    expect(
+      predicted.scene?.cards.find((candidate) => candidate.id === card!.id)
+        ?.parentId
+    ).toBe(target.id);
+    expect(predicted.view?.revision).toBe(1);
     expect(test.adapter.emitIntent(intent)).toBe(true);
+    expect(test.submissions).toHaveLength(1);
+    expect(test.adapter.emitIntent({ ...intent, cardId: secondCard!.id })).toBe(
+      true
+    );
     expect(test.submissions[1]?.result).toEqual({
       queued: false,
       reason: 'queue_full',
     });
     expect(test.adapter.getSnapshot()).not.toHaveProperty('outbox');
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it('shows a predicted move at once, keeps it across the publication that carries it, and drops it on rejection', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const initial = test.adapter.getSnapshot();
+    const scene = initial.scene!;
+    const card = scene.cards.find((candidate) =>
+      candidate.parentId.endsWith(':hand')
+    )!;
+    const discard = scene.zones.find((candidate) =>
+      candidate.id.endsWith(':discard')
+    )!;
+    const parentOf = (cardId: string) =>
+      test.adapter
+        .getSnapshot()
+        .scene?.cards.find((candidate) => candidate.id === cardId)?.parentId;
+    const handId = card.parentId;
+
+    expect(
+      test.adapter.emitIntent({
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: discard.id,
+        x: 10,
+        y: 10,
+      })
+    ).toBe(true);
+    // Predicted immediately: the table shows the card in the discard at the
+    // same authoritative revision, and no drop hold is needed.
+    expect(parentOf(card.id)).toBe(discard.id);
+    expect(test.adapter.getSnapshot().view?.revision).toBe(1);
+    expect(test.adapter.getSnapshot().presentation.settling).toEqual([]);
+    // The authoritative view itself is untouched.
+    expect(
+      test.live
+        .getSnapshot()
+        .view?.zones[handId]?.cards.some(
+          (candidate) => candidate.id === card.id
+        )
+    ).toBe(true);
+
+    // The publication carrying the move: the prediction no longer applies
+    // (the card is already in the discard) and simply falls away.
+    const authoritative = test.live.getSnapshot().view!;
+    const moved: MatchViewState = {
+      ...viewAt(2),
+      zones: {
+        ...authoritative.zones,
+        [handId]: {
+          ...authoritative.zones[handId]!,
+          cards: authoritative.zones[handId]!.cards.filter(
+            (candidate) => candidate.id !== card.id
+          ),
+        },
+        [discard.id]: {
+          ...authoritative.zones[discard.id]!,
+          cards: [
+            ...authoritative.zones[discard.id]!.cards,
+            authoritative.zones[handId]!.cards.find(
+              (candidate) => candidate.id === card.id
+            )!,
+          ],
+        },
+      },
+    };
+    test.socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'board-command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 2,
+    });
+    test.socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'board-command-1',
+      executedClientSequence: 1,
+      snapshot: moved,
+    });
+    expect(test.adapter.getSnapshot().view?.revision).toBe(2);
+    expect(parentOf(card.id)).toBe(discard.id);
+    expect(test.live.getSnapshot().pendingCommands).toEqual([]);
+
+    // A rejected command's prediction is withdrawn: the card returns to the
+    // authoritative view's hand.
+    const second = test.adapter
+      .getSnapshot()
+      .scene!.cards.find((candidate) => candidate.parentId === handId)!;
+    expect(
+      test.adapter.emitIntent({
+        kind: 'CardDropRequested',
+        cardId: second.id,
+        targetId: discard.id,
+        x: 10,
+        y: 10,
+      })
+    ).toBe(true);
+    expect(parentOf(second.id)).toBe(discard.id);
+    test.socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'board-command-2',
+      clientSequence: 2,
+      accepted: false,
+      revision: 2,
+      code: 'stale_reference',
+    });
+    expect(parentOf(second.id)).toBe(handId);
+    expect(test.adapter.getSnapshot().view?.revision).toBe(2);
+
     test.adapter.dispose();
     test.replay.dispose();
     test.live.disconnect();

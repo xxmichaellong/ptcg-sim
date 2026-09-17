@@ -26,6 +26,7 @@ import {
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
+import { predictWireCommand } from './predictWireCommand.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 
@@ -123,6 +124,16 @@ export class BoardSessionAdapter {
   private nextFrameToken = 0;
   private disposed = false;
   private lastPendingCommandIds: readonly string[] = [];
+  /**
+   * Optimistic predictions for queued commands, oldest first. Each is
+   * re-applied on top of every authoritative view until its command leaves
+   * the session queue, so the table shows a command's outcome immediately
+   * and the publication that carries it replaces the prediction seamlessly.
+   */
+  private predictions: readonly {
+    readonly commandId: string;
+    readonly command: WireGameCommand;
+  }[] = [];
 
   constructor(private readonly options: BoardSessionAdapterOptions) {
     this.controller = new BoardSessionController({
@@ -266,8 +277,31 @@ export class BoardSessionAdapter {
     const liveState = this.options.live.getSnapshot();
     const source = sourceFor(replayState);
     const sourceView = viewFor(replayState, liveState);
-    const view = sourceView
-      ? (this.options.transformView?.(sourceView, source) ?? sourceView)
+    const pendingIds = new Set(
+      liveState.pendingCommands.map((pending) => pending.commandId)
+    );
+    // Only live views carry predictions, and only for commands still in
+    // flight; a prediction that no longer applies (its card moved, or the
+    // publication already shows the effect) is dropped rather than shown.
+    if (source.kind !== 'live') {
+      this.predictions = [];
+    } else if (
+      this.predictions.some((entry) => !pendingIds.has(entry.commandId))
+    ) {
+      this.predictions = this.predictions.filter((entry) =>
+        pendingIds.has(entry.commandId)
+      );
+    }
+    const predictedView =
+      sourceView && source.kind === 'live'
+        ? this.predictions.reduce<MatchViewState>(
+            (current, entry) =>
+              predictWireCommand(current, entry.command) ?? current,
+            sourceView
+          )
+        : sourceView;
+    const view = predictedView
+      ? (this.options.transformView?.(predictedView, source) ?? predictedView)
       : undefined;
     const boundary = this.boundaryFor(replayState, source, view);
     const frame: BoardProjectionFrame = {
@@ -340,13 +374,32 @@ export class BoardSessionAdapter {
       this.options.emitRendererEffect(effect);
       return;
     }
+    // Decide the prediction against the view the command was built from,
+    // before the session republishes its queue and this adapter resyncs.
+    const predicted =
+      this.options.replay.getSnapshot().mode === 'live' &&
+      predictWireCommand(
+        this.options.live.getSnapshot().view ??
+          this.controller.getSnapshot().view!,
+        effect.command
+      ) !== null;
     const result = this.submitIfStillAllowed(effect.command);
     this.options.onSubmission?.(effect.command, result);
     if (result.queued) {
+      if (predicted) {
+        this.predictions = [
+          ...this.predictions,
+          { commandId: result.commandId, command: effect.command },
+        ];
+      }
       this.controller.dispatch({
         kind: 'SubmissionQueued',
         commandId: result.commandId,
+        predicted,
       });
+      // The queue republish that submit() triggered arrived before the
+      // prediction was recorded; project it now.
+      if (predicted) this.synchronize();
     } else {
       this.controller.dispatch({ kind: 'SubmissionRejected' });
     }

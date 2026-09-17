@@ -166,8 +166,16 @@ export type BoardSessionControllerAction =
       readonly scope?: BoardPresentationDismissScope;
     }
   | { readonly kind: 'SubmissionRejected' }
-  /** The adapter queued the command emitted by the newest accepted drop. */
-  | { readonly kind: 'SubmissionQueued'; readonly commandId: string };
+  /**
+   * The adapter queued the command emitted by the newest accepted drop.
+   * A predicted command already shows its outcome on the table, so its
+   * drop hold is released rather than bound to the command.
+   */
+  | {
+      readonly kind: 'SubmissionQueued';
+      readonly commandId: string;
+      readonly predicted?: boolean;
+    };
 
 export type BoardIntentRejectionReason =
   | 'no_installed_view'
@@ -1828,15 +1836,17 @@ export const reduceBoardSessionController = (
         (entry) => entry.commandId === null
       );
       if (newestUnbound < 0) return ignored(state);
-      const settling = entries.map((entry, index) =>
-        index === newestUnbound
-          ? { ...entry, commandId: action.commandId }
-          : entry
-      );
+      const settling = action.predicted
+        ? entries.filter((_, index) => index !== newestUnbound)
+        : entries.map((entry, index) =>
+            index === newestUnbound
+              ? { ...entry, commandId: action.commandId }
+              : entry
+          );
+      const presentation = { ...state.presentation, settling };
       return accepted(
-        nextState(state, {
-          presentation: { ...state.presentation, settling },
-        })
+        nextState(state, { presentation }),
+        action.predicted ? [{ kind: 'InstallPresentation', presentation }] : []
       );
     }
   }
