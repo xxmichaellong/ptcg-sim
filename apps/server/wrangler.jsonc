@@ -14,6 +14,7 @@
       "/v2/*",
       "!/v2/assets/cardback.png",
       "!/v2/assets/favicon.ico",
+      "!/v2/assets/blank-logo.png",
     ],
   },
   "durable_objects": {
