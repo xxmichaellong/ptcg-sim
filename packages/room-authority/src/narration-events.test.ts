@@ -250,6 +250,57 @@ describe('battle-log narration', () => {
     ]);
   });
 
+  it('tells shuffle-into-deck and switch-with-deck-top as v1 single lines', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const shuffled = step(
+      state,
+      {
+        type: 'ShuffleCardIntoDeck',
+        playerId: p1,
+        cardId: hand.cardIds[0]!,
+        expectedSourceId: hand.id,
+      },
+      context
+    );
+    expect(shuffled.batch.events.map((event) => event.type)).toEqual([
+      'CardMoved',
+      'ZoneShuffled',
+    ]);
+    expect(shuffled.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: shuffled.state.revision,
+        playerId: p1,
+        verb: 'shuffledIntoDeck',
+        source: 'hand',
+      },
+    ]);
+    const switched = step(
+      state,
+      {
+        type: 'SwapCardWithDeckTop',
+        playerId: p1,
+        cardId: hand.cardIds[0]!,
+        expectedSourceId: hand.id,
+      },
+      context
+    );
+    expect(switched.batch.events.map((event) => event.type)).toEqual([
+      'CardMoved',
+      'CardMoved',
+    ]);
+    expect(switched.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: switched.state.revision,
+        playerId: p1,
+        verb: 'switchedWithDeckTop',
+        source: 'hand',
+      },
+    ]);
+  });
+
   it('leaves the turn draw to "drew for turn"', () => {
     const { state, context } = table();
     const turn = step(state, { type: 'StartTurn', playerId: p1 }, context);

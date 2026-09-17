@@ -52,11 +52,76 @@ export const narrationEventsForBatch = (
     (event) =>
       event.type === 'TableActionDeclared' && event.action === 'startTurn'
   );
+  const compound = narrateCompound(batch, state, previousState);
+  if (compound) return compound;
   return batch.events.flatMap((event) =>
     turnDraw && event.type === 'CardsDrawn'
       ? []
       : narrate(event, batch.revision, state, previousState)
   );
+};
+
+/**
+ * Two v1 actions are single log lines but several domain events: shuffling
+ * one card into the deck (a departure to the deck, then a deck shuffle) and
+ * switching a card with the deck top (two moves through the deck top). They
+ * are recognised by batch shape so the log reads as v1's one line.
+ */
+const narrateCompound = (
+  batch: EventBatch,
+  state: MatchState,
+  previousState: MatchState
+): readonly Narration[] | null => {
+  const events = batch.events;
+  const isDeckZone = (zoneId: ZoneId): boolean =>
+    (state.zones[zoneId] ?? previousState.zones[zoneId])?.kind === 'deck';
+  if (events.length === 2) {
+    const [first, second] = events;
+    // "shuffled X from hand into deck"
+    if (
+      first?.type === 'CardMoved' &&
+      second?.type === 'ZoneShuffled' &&
+      first.destinationZoneId === second.zoneId &&
+      isDeckZone(second.zoneId) &&
+      !isDeckZone(first.expectedSourceZoneId)
+    ) {
+      const playerId = ownerOf(state, previousState, first.cardId);
+      const source = zoneSource(
+        state,
+        previousState,
+        first.expectedSourceZoneId
+      );
+      if (!playerId || !source) return null;
+      return [
+        moved(batch.revision, playerId, 'shuffledIntoDeck', source, {
+          cardName: publicName(state, previousState, first.cardId),
+        }),
+      ];
+    }
+    // "switched X from hand with top of deck"
+    if (
+      first?.type === 'CardMoved' &&
+      second?.type === 'CardMoved' &&
+      isDeckZone(first.destinationZoneId) &&
+      first.destinationIndex === 0 &&
+      second.expectedSourceZoneId === first.destinationZoneId &&
+      second.destinationZoneId === first.expectedSourceZoneId
+    ) {
+      const playerId = ownerOf(state, previousState, first.cardId);
+      const source = zoneSource(
+        state,
+        previousState,
+        first.expectedSourceZoneId
+      );
+      if (!playerId || !source) return null;
+      return [
+        moved(batch.revision, playerId, 'switchedWithDeckTop', source, {
+          cardName: publicName(state, previousState, first.cardId),
+        }),
+      ];
+    }
+  }
+  return null;
 };
 
 const spectator = { kind: 'spectator' } as const;
