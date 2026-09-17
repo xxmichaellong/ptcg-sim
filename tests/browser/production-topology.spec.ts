@@ -55,14 +55,20 @@ test('built SPA and room authority share one production-like Worker origin', asy
     if (pathname) authorityRequests.push(pathname);
   });
 
+  // A production build ignores the developer room flag: the page opens on
+  // the lobby (held on the Multiplayer panel so no room is created here)
+  // with the static board and no dev-room handle.
   const rootResponse = await page.goto(
-    '/?dev-room=1&renderer=dom&name=Production%20Preview'
+    '/?dev-room=1&room-lobby=1&renderer=dom&name=Production%20Preview'
   );
   expect(rootResponse?.status()).toBe(200);
   expect(rootResponse?.headers()['content-type']).toContain('text/html');
   await expect(
-    page.getByRole('heading', { name: 'Renderer parity spike' })
+    page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Renderer parity spike' })
+  ).toHaveCount(0);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   await expect(page.locator('canvas')).toHaveCount(0);
   await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
@@ -163,8 +169,10 @@ test('built SPA and room authority share one production-like Worker origin', asy
   expect(await missingStaticAsset.text()).toBe('Not Found');
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
+    // Any path falls back to the SPA; held on the lobby so the fallback
+    // itself is what is measured, not the Solo landing's room creation.
     const spaResponse = await page.goto(
-      `/production-preview/${cycle}?renderer=dom&dev-room=1`
+      `/production-preview/${cycle}?renderer=dom&dev-room=1&room-lobby=1`
     );
     expect(spaResponse?.status()).toBe(200);
     expect(spaResponse?.headers()['content-type']).toContain('text/html');
