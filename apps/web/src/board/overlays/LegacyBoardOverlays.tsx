@@ -281,7 +281,24 @@ const useFocusBoundary = (
     }
     const first = element.querySelector<HTMLElement>(focusSelector) ?? element;
     first.focus();
+    // A previous overlay's queued focus restoration (see the cleanup below)
+    // can land after this setup on a slow frame and pull focus back to the
+    // table; claim it again once that microtask has run.
+    const reclaim = element.ownerDocument.defaultView?.requestAnimationFrame(
+      () => {
+        if (
+          focusCycle.current === cycle &&
+          element.isConnected &&
+          !element.contains(element.ownerDocument.activeElement)
+        ) {
+          first.focus();
+        }
+      }
+    );
     return () => {
+      if (reclaim !== undefined) {
+        element.ownerDocument.defaultView?.cancelAnimationFrame(reclaim);
+      }
       const previous = opener.current;
       const current = element.ownerDocument.activeElement;
       if (!previous?.isConnected || !element.contains(current)) return;
