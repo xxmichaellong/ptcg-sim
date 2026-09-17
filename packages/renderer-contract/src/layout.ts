@@ -134,6 +134,11 @@ export interface BoardLayoutState {
   readonly bottomPlayerId: PlayerId;
   readonly shellMode: BoardShellMode;
   readonly vertical: BoardVerticalLayoutState;
+  /**
+   * How far each player's hand row is scrolled, in physical pixels, when it
+   * is wider than its frame (v1's `#hand` scrollLeft). Absent means 0.
+   */
+  readonly handScrollPx?: Readonly<Record<string, number>>;
 }
 
 export interface BoxEdgesPx {
@@ -267,6 +272,8 @@ export interface BoardLayoutSnapshot {
     BoardResizeHandleLayout,
   ];
   readonly shared: BoardSharedLayout;
+  /** Per-player hand scroll offsets carried from the layout state. */
+  readonly handScrollPx: Readonly<Record<string, number>>;
 }
 
 export interface BoardPlayStackCardHitRegion {
@@ -1014,6 +1021,7 @@ export const createBoardLayoutSnapshot = (
           LEGACY_BOARD_SHARED_V1.boardControlsHeightRatio,
       },
     },
+    handScrollPx: { ...(state.handScrollPx ?? {}) },
   };
 };
 

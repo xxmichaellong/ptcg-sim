@@ -78,6 +78,22 @@ const layoutFor = (
   };
 };
 
+/**
+ * v1 flipBoard runs in Solo, for spectators, and in a room where both
+ * players enabled "board flip" (coaching mode); a flipped player then acts
+ * for the seat at the bottom.
+ */
+const boardFlipAllowed = (
+  roomMode: 'solo' | 'multiplayer',
+  view: ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
+): boolean => {
+  if (roomMode === 'solo' || view?.viewer.kind === 'spectator') return true;
+  if (!view || view.viewer.kind !== 'player') return false;
+  return view.playerOrder.every(
+    (playerId) => view.players[playerId]?.coachingConsent === true
+  );
+};
+
 /** The seat the viewer would see at the bottom before any flip. */
 const ownPlayerIdOf = (
   view: NonNullable<ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']>
@@ -122,8 +138,14 @@ export const RemoteSessionBoard = ({
   readonly hideOpponentHand?: boolean;
   readonly playmatExpanded?: boolean;
   readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
-  /** Reports whether the table is shown from the other seat (Alt-F / flip). */
-  readonly onPerspectiveChange?: (flipped: boolean) => void;
+  /**
+   * Reports the table's perspective: whether it is flipped and which seat
+   * now sits at the bottom and takes the sidebar's actions (v1's initiator).
+   */
+  readonly onPerspectiveChange?: (perspective: {
+    readonly flipped: boolean;
+    readonly actingPlayerId: string | undefined;
+  }) => void;
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
@@ -132,10 +154,17 @@ export const RemoteSessionBoard = ({
   const [sortedHandPlayerIds, setSortedHandPlayerIds] = useState<
     ReadonlySet<PlayerId>
   >(() => new Set());
-  const displayPolicyRef = useRef({
+  const displayPolicyRef = useRef<{
+    roomMode: 'solo' | 'multiplayer';
+    hideOpponentHand: boolean;
+    sortedHandPlayerIds: ReadonlySet<PlayerId>;
+    /** The seat at the bottom of the board; its hand is never the hidden one. */
+    actingPlayerId: string | undefined;
+  }>({
     roomMode,
     hideOpponentHand,
     sortedHandPlayerIds,
+    actingPlayerId: undefined,
   });
   const preferencesRef = useRef(preferences);
   const onIntentRef = useRef(onIntent);
@@ -144,6 +173,7 @@ export const RemoteSessionBoard = ({
   const onPlaymatExpandedChangeRef = useRef(onPlaymatExpandedChange);
   const onPerspectiveChangeRef = useRef(onPerspectiveChange);
   displayPolicyRef.current = {
+    ...displayPolicyRef.current,
     roomMode,
     hideOpponentHand,
     sortedHandPlayerIds,
@@ -226,9 +256,16 @@ export const RemoteSessionBoard = ({
       // v1 recolours the sidebar buttons when the board is flipped; the
       // viewer's own seat is at the bottom unless they turned it around.
       const own = ownPlayerIdOf(view);
-      onPerspectiveChangeRef.current?.(
-        own !== undefined && runtime.getLayoutState().bottomPlayerId !== own
-      );
+      const bottom = runtime.getLayoutState().bottomPlayerId;
+      const flipped = own !== undefined && bottom !== own;
+      displayPolicyRef.current = {
+        ...displayPolicyRef.current,
+        actingPlayerId: view.viewer.kind === 'player' ? bottom : undefined,
+      };
+      onPerspectiveChangeRef.current?.({
+        flipped,
+        actingPlayerId: view.viewer.kind === 'player' ? bottom : undefined,
+      });
     };
     const scheduleViewportSynchronization = (): void => {
       if (disposed || resizeFrame !== undefined) return;
@@ -278,7 +315,8 @@ export const RemoteSessionBoard = ({
               source.kind === 'live' && policy.roomMode === 'solo'
                 ? applySoloOpponentHandVisibility(
                     sourceView,
-                    policy.hideOpponentHand
+                    policy.hideOpponentHand,
+                    policy.actingPlayerId
                   )
                 : sourceView;
             return applyHandSortDisplay(covered, policy.sortedHandPlayerIds);
@@ -577,9 +615,7 @@ export const RemoteSessionBoard = ({
                   boardState.source?.kind === 'live' &&
                   boardState.canSubmitCommands &&
                   boardState.view?.viewer.kind === 'player',
-                flipBoard:
-                  roomMode === 'solo' ||
-                  boardState.view?.viewer.kind === 'spectator',
+                flipBoard: boardFlipAllowed(roomMode, boardState.view),
               }}
             />
           ) : null}
@@ -592,10 +628,7 @@ export const RemoteSessionBoard = ({
             state={boardState}
             darkMode={preferences.darkMode}
             soloUndoEnabled={roomMode === 'solo'}
-            boardFlipEnabled={
-              roomMode === 'solo' ||
-              boardState.view?.viewer.kind === 'spectator'
-            }
+            boardFlipEnabled={boardFlipAllowed(roomMode, boardState.view)}
             {...keyboardActions}
           />
         </>

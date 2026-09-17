@@ -54,6 +54,7 @@ const copyLayoutState = (state: BoardLayoutState): BoardLayoutState => ({
   ...state,
   viewport: { ...state.viewport },
   playerIds: [...state.playerIds],
+  ...(state.handScrollPx ? { handScrollPx: { ...state.handScrollPx } } : {}),
   vertical: {
     lowerFrame: { ...state.vertical.lowerFrame },
     upperFrame: { ...state.vertical.upperFrame },
@@ -105,7 +106,22 @@ const sameLayoutState = (
     right.vertical.upperHandle.bottomRatio &&
   left.vertical.upperHandle.heightRatio ===
     right.vertical.upperHandle.heightRatio &&
-  left.vertical.sharedPlacement === right.vertical.sharedPlacement;
+  left.vertical.sharedPlacement === right.vertical.sharedPlacement &&
+  sameHandScroll(left.handScrollPx, right.handScrollPx);
+
+const sameHandScroll = (
+  left: BoardLayoutState['handScrollPx'],
+  right: BoardLayoutState['handScrollPx']
+): boolean => {
+  const keys = new Set([
+    ...Object.keys(left ?? {}),
+    ...Object.keys(right ?? {}),
+  ]);
+  for (const key of keys) {
+    if ((left?.[key] ?? 0) !== (right?.[key] ?? 0)) return false;
+  }
+  return true;
+};
 
 /**
  * Renderer-neutral vertical composition for opt-in board candidates. It owns
@@ -163,6 +179,7 @@ export class BoardSessionRuntime {
         },
         emitPresentationUpdate: (update) =>
           this.adapter?.emitPresentationUpdate(update),
+        scrollZone: (zoneId, offsetPx) => this.scrollZone(zoneId, offsetPx),
         reportError: this.reportError,
         reportStatus: (status) => {
           if (status.kind === 'failed') {
@@ -386,6 +403,30 @@ export class BoardSessionRuntime {
 
   flipBoard(): void {
     this.replaceLayoutState(flipBoardLayoutState(this.layoutState));
+  }
+
+  /**
+   * v1's `#hand` scrolls when its cards overflow; the renderer reports the
+   * scroll offset so the next scene lays the cards out where they are shown.
+   */
+  scrollZone(zoneId: string, offsetPx: number): void {
+    if (this.disposed || this.rendererFailure) return;
+    const zone = this.adapter
+      ?.getSnapshot()
+      .scene?.zones.find((candidate) => candidate.id === zoneId);
+    if (!zone?.playerId || zone.kind !== 'hand') return;
+    const next = Math.max(
+      0,
+      Math.round(Number.isFinite(offsetPx) ? offsetPx : 0)
+    );
+    if ((this.layoutState.handScrollPx?.[zone.playerId] ?? 0) === next) return;
+    this.replaceLayoutState({
+      ...this.layoutState,
+      handScrollPx: {
+        ...(this.layoutState.handScrollPx ?? {}),
+        [zone.playerId]: next,
+      },
+    });
   }
 
   resizeBoard(handleId: BoardResizeHandleId, clientY: number): void {

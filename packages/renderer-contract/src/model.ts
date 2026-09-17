@@ -90,6 +90,15 @@ export interface ZoneSceneNode {
   readonly zIndex: number;
   readonly label: string;
   readonly interactive: boolean;
+  /**
+   * Present when the zone's row is wider than the zone and scrolls, as v1's
+   * `#hand { overflow-x: auto }` does: the full row width and how far the
+   * renderer has scrolled it (already applied to the card boxes).
+   */
+  readonly scroll?: {
+    readonly contentWidth: number;
+    readonly offsetPx: number;
+  };
 }
 
 export type CardSceneRole =
@@ -263,6 +272,8 @@ export interface BoardRendererAdapters {
   readonly emitPresentationUpdate: (update: BoardPresentationUpdate) => void;
   readonly reportError: (error: unknown) => void;
   readonly reportStatus?: (status: BoardRendererStatus) => void;
+  /** A scrolling zone (the hand) reports its new offset for the next scene. */
+  readonly scrollZone?: (zoneId: string, offsetPx: number) => void;
 }
 
 export type BoardRendererStatus =

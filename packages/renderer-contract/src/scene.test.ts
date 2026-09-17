@@ -12,6 +12,7 @@ import { CARD_ASPECT_RATIO, layoutPlayerZone } from './geometry.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   findBoardLayoutRegion,
   layoutLegacyActiveQ0Markers,
   layoutLegacyBenchQ0Markers,
@@ -661,36 +662,85 @@ describe('renderer-neutral board scene', () => {
       );
     }
 
-    // A hand wider than the row compresses its step instead of scrolling.
-    const wide = createBoardSceneForViewport(
-      {
-        ...view,
-        zones: {
-          'zone:p1:hand': {
-            id: 'zone:p1:hand',
-            kind: 'hand',
+    // A hand wider than the row keeps every card full size and scrolls, as
+    // v1's `#hand { overflow-x: auto }` does: the row starts at the frame's
+    // left, the zone reports the row width, and the renderer's offset shifts
+    // the cards (clamped to the row's end).
+    const wideView = {
+      ...view,
+      zones: {
+        'zone:p1:hand': {
+          id: 'zone:p1:hand',
+          kind: 'hand' as const,
+          ownerId: p1,
+          cards: Array.from({ length: 30 }, (_, index) => ({
+            kind: 'concealed' as const,
+            id: asViewCardId(`wide:${index}`),
             ownerId: p1,
-            cards: Array.from({ length: 30 }, (_, index) => ({
-              kind: 'concealed' as const,
-              id: asViewCardId(`wide:${index}`),
-              ownerId: p1,
-              cardBackUrl: '/back.png',
-              publiclyRevealed: false,
-            })),
-          },
+            cardBackUrl: '/back.png',
+            publiclyRevealed: false,
+          })),
         },
       },
-      { ...options, viewport: playArea }
-    );
+    };
+    const wide = createBoardSceneForViewport(wideView, {
+      ...options,
+      viewport: playArea,
+    });
     const wideCards = wide.cards.filter(
       (card) => card.parentId === 'zone:p1:hand'
     );
     expect(wideCards[0]!.bounds.x).toBeCloseTo(0.0025 * frameWidth);
+    expect(wideCards[1]!.bounds.x - wideCards[0]!.bounds.x).toBeCloseTo(step);
     const last = wideCards.at(-1)!;
-    expect(last.bounds.x + last.bounds.width).toBeCloseTo(
-      frameWidth - 0.0025 * frameWidth
-    );
     expect(last.bounds.width).toBeCloseTo(width);
+    expect(last.bounds.x + last.bounds.width).toBeGreaterThan(frameWidth);
+    const wideZone = wide.zones.find((zone) => zone.id === 'zone:p1:hand')!;
+    expect(wideZone.scroll).toEqual({
+      contentWidth: expect.closeTo(step * 30, 6),
+      offsetPx: 0,
+    });
+    expect(scene.zones.find((zone) => zone.id === 'zone:p1:hand')!.scroll).toBe(
+      undefined
+    );
+
+    const scrolled = createBoardScene(
+      wideView,
+      createBoardLayoutSnapshot({
+        geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        playerIds: [p1, p2],
+        bottomPlayerId: p1,
+        shellMode: 'sidebar',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+        handScrollPx: { [p1]: 250 },
+      })
+    );
+    const scrolledCards = scrolled.cards.filter(
+      (card) => card.parentId === 'zone:p1:hand'
+    );
+    expect(scrolledCards[0]!.bounds.x).toBeCloseTo(0.0025 * frameWidth - 250);
+    expect(
+      scrolled.zones.find((zone) => zone.id === 'zone:p1:hand')!.scroll
+    ).toMatchObject({ offsetPx: 250 });
+    const overscrolled = createBoardScene(
+      wideView,
+      createBoardLayoutSnapshot({
+        geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        playerIds: [p1, p2],
+        bottomPlayerId: p1,
+        shellMode: 'sidebar',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+        handScrollPx: { [p1]: 100_000 },
+      })
+    );
+    const overscrolledZone = overscrolled.zones.find(
+      (zone) => zone.id === 'zone:p1:hand'
+    )!;
+    expect(overscrolledZone.scroll!.offsetPx).toBeCloseTo(
+      step * 30 - overscrolledZone.contentBounds.width
+    );
   });
 
   it('paints a known deck as its owner card back on the table but as faces in the viewer', () => {

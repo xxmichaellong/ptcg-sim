@@ -1551,6 +1551,70 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('scrolls an overflowing hand like v1 and reports the offset for the next scene', async () => {
+    const scrollZone = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+      scrollZone,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const base = createScene();
+    const scene: BoardScene = {
+      ...base,
+      zones: base.zones.map((zone) =>
+        zone.id === 'zone:p1:hand'
+          ? { ...zone, scroll: { contentWidth: 2400, offsetPx: 120 } }
+          : zone
+      ),
+    };
+    await mountInAct(renderer, host, scene);
+    const hand = host.querySelector<HTMLElement>(
+      '[data-zone-id="zone:p1:hand"]'
+    )!;
+    expect(hand.style.overflowX).toBe('auto');
+    expect(hand.style.overflowY).toBe('hidden');
+    expect(
+      hand.querySelector<HTMLElement>('[data-zone-scroll-spacer]')?.style.width
+    ).toBe('2400px');
+
+    act(() => {
+      hand.scrollLeft = 300;
+      hand.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    expect(scrollZone).toHaveBeenLastCalledWith('zone:p1:hand', 300);
+
+    // A wheel over the cards, which paint above the container, scrolls too.
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    const zone = scene.zones.find(
+      (candidate) => candidate.id === 'zone:p1:hand'
+    )!;
+    surface.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: scene.viewport.width,
+        height: scene.viewport.height,
+      }) as DOMRect;
+    act(() => {
+      // happy-dom's WheelEvent carries no pointer position of its own.
+      const wheel = new WheelEvent('wheel', { bubbles: true, deltaY: 40 });
+      Object.defineProperties(wheel, {
+        clientX: { value: zone.bounds.x + 5 },
+        clientY: { value: zone.bounds.y + 5 },
+      });
+      surface.dispatchEvent(wheel);
+    });
+    expect(scrollZone).toHaveBeenLastCalledWith('zone:p1:hand', 160);
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('paints controller-owned targets and emits a neutral background intent', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

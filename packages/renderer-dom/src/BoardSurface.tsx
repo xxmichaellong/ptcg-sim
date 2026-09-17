@@ -131,20 +131,36 @@ const ZoneNode = memo(function ZoneNode({
   showOutline,
   dropTarget,
   emitIntent,
+  scrollZone,
 }: {
   readonly zone: ZoneSceneNode;
   readonly showOutline: boolean;
   /** The zone under a dragged card: v1 tints it with `.highlightBox`. */
   readonly dropTarget: boolean;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
+  readonly scrollZone: BoardRendererAdapters['scrollZone'];
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // v1 `#hand { overflow-x: auto }`: an overflowing hand is a real scroll
+  // container. Its scrollbar and wheel move the offset, which the scene then
+  // applies to the card boxes, so the element follows the scene's offset.
+  useLayoutEffect(() => {
+    const element = scrollRef.current;
+    const scroll = zone.scroll;
+    if (!element || !scroll) return;
+    if (Math.abs(element.scrollLeft - scroll.offsetPx) >= 1) {
+      element.scrollLeft = scroll.offsetPx;
+    }
+  }, [zone.scroll]);
   return (
     <div
+      ref={scrollRef}
       className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
       data-zone-id={zone.id}
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       data-drop-target={dropTarget ? 'true' : undefined}
+      data-zone-scroll-width={zone.scroll?.contentWidth}
       aria-label={`${zone.label}, ${zone.count} cards`}
       aria-haspopup={zone.interactive ? 'dialog' : undefined}
       role={zone.interactive ? 'button' : undefined}
@@ -159,6 +175,12 @@ const ZoneNode = memo(function ZoneNode({
             : 'transparent',
         boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
         pointerEvents: zone.interactive ? 'auto' : 'none',
+        ...(zone.scroll
+          ? { overflowX: 'auto' as const, overflowY: 'hidden' as const }
+          : {}),
+      }}
+      onScroll={(event) => {
+        if (zone.scroll) scrollZone?.(zone.id, event.currentTarget.scrollLeft);
       }}
       onDoubleClick={() => {
         if (zone.interactive) {
@@ -188,6 +210,13 @@ const ZoneNode = memo(function ZoneNode({
           pointerEvents: 'none',
         }}
       />
+      {zone.scroll ? (
+        <div
+          data-zone-scroll-spacer={zone.id}
+          aria-hidden="true"
+          style={{ width: zone.scroll.contentWidth, height: 1 }}
+        />
+      ) : null}
     </div>
   );
 });
@@ -550,6 +579,41 @@ export const BoardSurface = ({
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
       data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
+      onWheel={(event) => {
+        // The cards paint above the hand's scroll container, so a wheel over
+        // them scrolls the row the way it would over v1's `#hand`.
+        const bounds = surfaceRef.current?.getBoundingClientRect();
+        if (!bounds || bounds.width <= 0 || bounds.height <= 0) return;
+        const x =
+          ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width;
+        const y =
+          ((event.clientY - bounds.top) * scene.viewport.height) /
+          bounds.height;
+        const zone = scene.zones.find(
+          (candidate) =>
+            candidate.scroll !== undefined &&
+            x >= candidate.bounds.x &&
+            x <= candidate.bounds.x + candidate.bounds.width &&
+            y >= candidate.bounds.y &&
+            y <= candidate.bounds.y + candidate.bounds.height
+        );
+        if (!zone?.scroll) return;
+        const delta =
+          Math.abs(event.deltaX) > Math.abs(event.deltaY)
+            ? event.deltaX
+            : event.deltaY;
+        if (delta === 0) return;
+        adapters.scrollZone?.(
+          zone.id,
+          Math.max(
+            0,
+            Math.min(
+              zone.scroll.contentWidth - zone.bounds.width,
+              zone.scroll.offsetPx + delta
+            )
+          )
+        );
+      }}
       onPointerDown={(event) => {
         const target = pointerCard(event);
         if (!target) {
@@ -624,6 +688,7 @@ export const BoardSurface = ({
           showOutline={preferences.showZoneOutlines}
           dropTarget={dragTargetId === zone.id}
           emitIntent={adapters.emitIntent}
+          scrollZone={adapters.scrollZone}
         />
       ))}
       {scene.cards
