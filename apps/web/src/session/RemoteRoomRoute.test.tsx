@@ -341,6 +341,7 @@ describe('RemoteRoomRoute', () => {
       kind: 'image' as const,
       url: 'https://images.example.test/table.png',
     }));
+    const onCopyInvitation = vi.fn(async () => true);
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -353,6 +354,7 @@ describe('RemoteRoomRoute', () => {
           onIntent={onIntent}
           onSubmission={onSubmission}
           onLeave={onLeave}
+          onCopyInvitation={onCopyInvitation}
           onResumeSavedGame={onResumeSavedGame}
           confirmHeaderLeave={confirmHeaderLeave}
           downloadTextFile={downloadTextFile}
@@ -425,6 +427,23 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('main')?.dataset.sessionPhase).toBeUndefined();
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
       'Room ABCDEFGH2345'
+    );
+    // v1's header copy button; here it mints invitations for either role.
+    await act(async () => {
+      host
+        .querySelector<HTMLButtonElement>('#roomHeaderCopySpectatorButton')!
+        .click();
+    });
+    expect(onCopyInvitation).toHaveBeenCalledWith('spectator');
+    expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
+      'Spectator invitation copied'
+    );
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('#roomHeaderCopyButton')!.click();
+    });
+    expect(onCopyInvitation).toHaveBeenCalledWith('player');
+    expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
+      'Player invitation copied'
     );
     expect(host.querySelector('#p2AttackButton')).not.toBeNull();
     expect(host.querySelector('#p2PassButton')).not.toBeNull();

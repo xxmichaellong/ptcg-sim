@@ -8,7 +8,7 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
@@ -79,6 +79,14 @@ export interface RemoteRoomRouteProps {
   ) => Promise<void>;
   /** Parks a live solo authority while the source Multiplayer tab is open. */
   readonly onMultiplayerNavigate?: () => void;
+  /**
+   * Mints and copies a fresh invitation from inside the room, for the seat
+   * that holds creator custody. v1's room header has a copy button; here it
+   * copies an invitation rather than the bare room code, which cannot admit.
+   */
+  readonly onCopyInvitation?: (
+    role: 'player' | 'spectator'
+  ) => Promise<boolean>;
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
@@ -115,6 +123,7 @@ export const RemoteRoomRoute = ({
   onLeave,
   onResumeSavedGame,
   onMultiplayerNavigate,
+  onCopyInvitation,
   preferences: ownedPreferences,
   onPreferencesChange,
   hideOpponentHand: ownedHideOpponentHand,
@@ -182,6 +191,33 @@ export const RemoteRoomRoute = ({
         downloadTextFile('ptcgsim-perspective-replay.json', contents)
       )
       .catch(() => undefined);
+  };
+  const [copyNotice, setCopyNotice] = useState<string>();
+  const copyNoticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(
+    () => () => {
+      if (copyNoticeTimer.current !== undefined) {
+        clearTimeout(copyNoticeTimer.current);
+      }
+    },
+    []
+  );
+  const copyInvitation = async (
+    role: 'player' | 'spectator'
+  ): Promise<void> => {
+    if (!onCopyInvitation) return;
+    const copied = await onCopyInvitation(role).catch(() => false);
+    setCopyNotice(
+      copied
+        ? role === 'player'
+          ? 'Player invitation copied'
+          : 'Spectator invitation copied'
+        : 'Could not copy an invitation'
+    );
+    if (copyNoticeTimer.current !== undefined) {
+      clearTimeout(copyNoticeTimer.current);
+    }
+    copyNoticeTimer.current = setTimeout(() => setCopyNotice(undefined), 2500);
   };
   const exportLivePerspective = (): void => {
     void runtime.replay.requestReplayArtifact().then((result) => {
@@ -347,8 +383,30 @@ export const RemoteRoomRoute = ({
                         id="roomHeaderText"
                         data-session-phase={state.sessionPhase}
                       >
-                        {status}
+                        {copyNotice ?? status}
                       </div>
+                      {onCopyInvitation && state.sessionPhase === 'ready' && (
+                        <>
+                          <button
+                            id="roomHeaderCopyButton"
+                            type="button"
+                            title="Copy a player invitation"
+                            aria-label="Copy a player invitation"
+                            onClick={() => void copyInvitation('player')}
+                          >
+                            ⧉
+                          </button>
+                          <button
+                            id="roomHeaderCopySpectatorButton"
+                            type="button"
+                            title="Copy a spectator invitation"
+                            aria-label="Copy a spectator invitation"
+                            onClick={() => void copyInvitation('spectator')}
+                          >
+                            👁
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 <LegacyPresentationSurface

@@ -669,6 +669,20 @@ export const RemoteRoomLobby = ({
     }
   };
 
+  /** In-room copy for the creator: v1's room header copy button. */
+  const handleCopyInvitationFromRoom = async (
+    role: 'player' | 'spectator'
+  ): Promise<boolean> => {
+    const owner = ownerRef.current;
+    const creator = owner?.creator;
+    if (!owner || owner.disposed || !creator) return false;
+    const invitations = creator.result.invitations;
+    await (role === 'spectator'
+      ? invitations.copySpectatorInvitation()
+      : invitations.copyPlayerInvitation());
+    return true;
+  };
+
   const handleMultiplayerNavigate = (): void => {
     if (!connected || connected.mode !== 'solo') return;
     setParkedSolo(connected);
@@ -711,6 +725,9 @@ export const RemoteRoomLobby = ({
           onLeave={handleLeave}
           onResumeSavedGame={handleResumeSavedGame}
           onMultiplayerNavigate={handleMultiplayerNavigate}
+          {...(connected.mode === 'multiplayer' && ownerRef.current?.creator
+            ? { onCopyInvitation: handleCopyInvitationFromRoom }
+            : {})}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
           hideOpponentHand={hideOpponentHand}
