@@ -534,7 +534,7 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
 }) => {
   const errors = collectRuntimeErrors(page);
   for (const renderer of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer=${renderer}`);
+    await page.goto(`/?renderer-spike=1&renderer=${renderer}`);
     await waitForReady(page);
     const cover = await page.evaluate(() => {
       const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
@@ -643,7 +643,7 @@ test('native and shared input follow center-rotated card paint in both candidate
 }) => {
   const errors = collectRuntimeErrors(page);
   for (const rendererKind of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer=${rendererKind}`);
+    await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
     await waitForReady(page);
     await page.evaluate(async () => {
       const spike = window.__PTCG_RENDERER_SPIKE__;
@@ -785,13 +785,18 @@ test('native and shared input follow center-rotated card paint in both candidate
         }),
       ])
     );
+    // The drop carries its physical point so the card can settle there.
     expect(
       JSON.parse((await host.getAttribute('data-intents'))!)
-    ).toContainEqual({
-      kind: 'CardDropRequested',
-      cardId: 'rotation-source',
-      targetId: 'rotation-target-stack',
-    });
+    ).toContainEqual(
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: 'rotation-source',
+        targetId: 'rotation-target-stack',
+        x: expect.any(Number),
+        y: expect.any(Number),
+      })
+    );
 
     await host.evaluate((element) => {
       if (!(element instanceof HTMLElement)) return;
@@ -815,11 +820,15 @@ test('native and shared input follow center-rotated card paint in both candidate
     );
     expect(
       JSON.parse((await host.getAttribute('data-intents'))!)
-    ).toContainEqual({
-      kind: 'CardDropRequested',
-      cardId: 'rotation-source',
-      targetId: 'rotation-target-zone',
-    });
+    ).toContainEqual(
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: 'rotation-source',
+        targetId: 'rotation-target-zone',
+        x: expect.any(Number),
+        y: expect.any(Number),
+      })
+    );
 
     const teardownError = await page.evaluate(async () => {
       const fixtureWindow = window as typeof window & {
@@ -858,7 +867,7 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
   const errors = collectRuntimeErrors(page);
   const evidence: Record<string, unknown> = {};
   for (const rendererKind of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer=${rendererKind}`);
+    await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
     await waitForReady(page);
     evidence[rendererKind] = await page.evaluate(async () => {
       const spike = window.__PTCG_RENDERER_SPIKE__;

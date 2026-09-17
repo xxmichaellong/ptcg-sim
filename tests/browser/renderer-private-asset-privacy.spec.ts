@@ -762,7 +762,17 @@ test('recipient projection never requests concealed face assets across reveal an
     const privateObserver = await install(fixture.scenes.privateObserver, {
       clearFirst: true,
     });
-    expect(facePaths(privateObserver)).toEqual(fixture.privateBoardPaths);
+    // The granted card is the deck's only card, so its board node is the
+    // deck cover -- and a deck cover paints the owner's card back on the
+    // table whatever the viewer knows (v1's `#deckCover`); the face belongs
+    // to the zone viewer. The projection carries the face (asserted above),
+    // but the table paint requests nothing.
+    expect(
+      fixture.scenes.privateObserver.cards.find(
+        (card) => card.renderKey !== null && card.imageUrl.includes('/face-')
+      )?.tableImageUrl
+    ).toBeDefined();
+    expect(facePaths(privateObserver)).toEqual([]);
     expect(
       requests
         .filter(
@@ -771,7 +781,7 @@ test('recipient projection never requests concealed face assets across reveal an
             request.path.includes('/face-')
         )
         .map((request) => request.path)
-    ).toEqual(fixture.privateBoardPaths);
+    ).toEqual([]);
 
     phase = 'private-close';
     const privateClosed = await install(fixture.scenes.privateClosed);
@@ -825,12 +835,10 @@ test('recipient projection never requests concealed face assets across reveal an
     const requestedFacePaths = requests
       .filter((request) => request.path.includes('/face-'))
       .map((request) => request.path);
+    // The privately granted deck card is the deck cover, which paints the
+    // card back; its face is never requested by the table.
     expect(new Set(requestedFacePaths)).toEqual(
-      new Set([
-        ...fixture.publicPrizeBoardPaths,
-        ...fixture.privateBoardPaths,
-        fixture.staleBoardPath,
-      ])
+      new Set([...fixture.publicPrizeBoardPaths, fixture.staleBoardPath])
     );
     expect(
       requestedFacePaths.filter((path) =>

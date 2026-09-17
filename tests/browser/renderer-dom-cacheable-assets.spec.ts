@@ -117,8 +117,12 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         const cards = Array.from({ length: assetCount }, (_, index) => {
           const source = sourceScene.cards[index % sourceScene.cards.length];
           requireCondition(source, `Missing source card ${index}`);
+          // A deck cover paints its `tableImageUrl`; these synthetic cards
+          // must paint exactly the asset they are given.
+          const { tableImageUrl: _tableImageUrl, ...sourceWithoutCover } =
+            source;
           return {
-            ...source,
+            ...sourceWithoutCover,
             id: `cache-asset-card-${String(index).padStart(3, '0')}` as typeof source.id,
             renderKey: `card:cache-asset-card-${String(index).padStart(3, '0')}`,
             imageUrl: assetUrls[index]!,

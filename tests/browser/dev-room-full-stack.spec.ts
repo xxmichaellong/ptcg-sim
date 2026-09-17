@@ -917,7 +917,7 @@ test('document navigation churn releases each creator room before the next mount
       );
     }, cycle);
 
-    await page.goto(`/navigation-away-${cycle}?renderer=dom`);
+    await page.goto(`/navigation-away-${cycle}?renderer=dom&room-lobby=1`);
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
     await expect(page.locator('canvas')).toHaveCount(0);
     expect(

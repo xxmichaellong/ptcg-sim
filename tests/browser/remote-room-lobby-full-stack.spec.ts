@@ -270,8 +270,12 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         page.locator(`img[src="${CUSTOM_CARD_BACK_URL}"]`).first()
       ).toBeVisible();
     }
+    // Player two's table paints the custom back on the deck cover (asserted
+    // visible above). Whether that paint hits the network again after the
+    // deck panel's preview already fetched the same URL is up to the memory
+    // cache, so only the first fetch is required.
     expect(customCardBackRequests.get(playerTwo.page)).toBeGreaterThanOrEqual(
-      2
+      1
     );
     expect(customCardBackRequests.get(creator.page)).toBeGreaterThanOrEqual(1);
     expect(customCardBackRequests.get(spectator.page)).toBeGreaterThanOrEqual(

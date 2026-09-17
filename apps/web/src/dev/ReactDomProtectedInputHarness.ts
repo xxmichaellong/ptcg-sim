@@ -125,6 +125,8 @@ export interface ReactDomProtectedInputHarness {
   readonly getEvidence: () => ReactDomProtectedInputEvidence;
   readonly clearEvidence: () => void;
   readonly setDarkMode: (enabled: boolean) => void;
+  /** Resolves every queued command, as a publication or rejection would. */
+  readonly completePendingCommands: () => void;
   readonly enterSoloReplay: () => void;
   readonly advanceSoloReplay: () => void;
   readonly seekSoloReplayStart: () => void;
@@ -236,7 +238,7 @@ export const mountReactDomProtectedInputHarness = async (
       sharedPlacement: DEFAULT_BOARD_VERTICAL_LAYOUT_V1.sharedPlacement,
     },
   };
-  const liveState: ClientSessionState = {
+  let liveState: ClientSessionState = {
     phase: 'ready',
     role: 'player',
     playerId: firstPlayerId,
@@ -318,9 +320,16 @@ export const mountReactDomProtectedInputHarness = async (
   const reportedErrors: string[] = [];
   let clientSequence = 0;
   let soloUndoPending = false;
+  const liveListeners = new Set<() => void>();
+  const emitLive = (): void => {
+    for (const listener of [...liveListeners]) listener();
+  };
   const live: BoardSessionLiveSource = {
     getSnapshot: () => liveState,
-    subscribe: () => () => undefined,
+    subscribe: (listener) => {
+      liveListeners.add(listener);
+      return () => liveListeners.delete(listener);
+    },
     declareMulligan: () => {
       mulliganDeclarations += 1;
       return true;
@@ -336,12 +345,32 @@ export const mountReactDomProtectedInputHarness = async (
       submissions.push(command);
       if (command.type === 'ApplySoloUndo') soloUndoPending = true;
       clientSequence += 1;
-      return {
-        queued: true,
-        commandId: `protected-input-command-${clientSequence}`,
-        clientSequence,
+      const commandId = `protected-input-command-${clientSequence}`;
+      // Mirror the real session's queue: the command is pending while it is
+      // in flight (the board holds a dropped card on its drop point for that
+      // long) and leaves the queue once resolved. This harness has no
+      // authority to publish, so a test resolves it with
+      // `completePendingCommands()`.
+      liveState = {
+        ...liveState,
+        pendingCommands: [
+          ...liveState.pendingCommands,
+          {
+            commandId,
+            clientSequence,
+            commandType: command.type,
+            state: 'queued',
+          },
+        ],
       };
+      emitLive();
+      return { queued: true, commandId, clientSequence };
     },
+  };
+  const completePendingCommands = (): void => {
+    if (liveState.pendingCommands.length === 0) return;
+    liveState = { ...liveState, pendingCommands: [] };
+    emitLive();
   };
   const replayListeners = new Set<() => void>();
   const replay: BoardSessionReplaySource = {
@@ -738,6 +767,7 @@ export const mountReactDomProtectedInputHarness = async (
       darkMode = enabled;
       renderOverlays();
     },
+    completePendingCommands,
     enterSoloReplay: () => {
       requireSnapshot();
       if (replayState.mode === 'replay') return;

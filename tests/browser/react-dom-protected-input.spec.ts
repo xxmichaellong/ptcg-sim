@@ -50,7 +50,7 @@ interface ProtectedInputFixture {
 
 interface ProtectedInputEvidence {
   readonly submissions: readonly unknown[];
-  readonly submissionResults: readonly unknown[];
+  readonly submissionResults: readonly { readonly queued: boolean }[];
   readonly rejections: readonly unknown[];
   readonly overlayRejections: readonly unknown[];
   readonly overlayActions: readonly unknown[];
@@ -69,6 +69,7 @@ interface ProtectedInputEvidence {
       readonly targetId: string | null;
     } | null;
     readonly openedZoneId: string | null;
+    readonly settling: readonly { readonly cardId: string }[];
   };
   readonly overlays: {
     readonly contextMenuCardId: string | null;
@@ -124,6 +125,7 @@ interface ProtectedInputHarnessWindow extends Window {
     readonly advanceSoloReplay: () => void;
     readonly seekSoloReplayStart: () => void;
     readonly exitSoloReplay: () => void;
+    readonly completePendingCommands: () => void;
     readonly dispose: () => void;
   };
 }
@@ -270,6 +272,25 @@ const drag = async (
       '[data-react-dom-protected-input-harness] .ptcgsim-board-surface'
     )
   ).toHaveAttribute('data-dragging', 'false');
+  // A drop that queued a command holds the card on its drop point until the
+  // command resolves; a drop the controller refused returns it at once.
+  const queued = (await evidence(page)).submissionResults.some(
+    (result) => result.queued
+  );
+  if (queued) {
+    await expect
+      .poll(async () => (await evidence(page)).presentation.settling.length)
+      .toBe(1);
+    const held = await source.boundingBox();
+    if (!held) throw new Error('Drag source lost its rendered geometry');
+    expect(sameRectangle(held, before)).toBe(false);
+    await page.evaluate(() => {
+      const harness = (window as ProtectedInputHarnessWindow)
+        .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+      if (!harness) throw new Error('Missing protected-input harness');
+      harness.completePendingCommands();
+    });
+  }
   await expect.poll(() => source.boundingBox()).toEqual(before);
 };
 
@@ -407,7 +428,14 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
   await expect
     .poll(async () => (await evidence(page)).sourceKind)
     .toBe('replay');
-  await page.mouse.click(sourcePoint.x, sourcePoint.y);
+  // Entering replay resets the renderer; wait for the replay scene to be
+  // painted again before clicking, or the click lands on the empty host.
+  await expect(source).toBeVisible();
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBeNull();
+  const replaySourcePoint = await exposedCardPoint(source);
+  await page.mouse.click(replaySourcePoint.x, replaySourcePoint.y);
   await page.keyboard.press('q');
   await expect
     .poll(() => evidence(page))
@@ -460,11 +488,11 @@ test('native DOM input reaches protected controller state, lower-stack departure
       {
         kind: 'IntentRejected',
         reason: 'no_op',
-        intent: {
+        intent: expect.objectContaining({
           kind: 'CardDropRequested',
           cardId: fixture.sourceCardId,
           targetId: fixture.sourceZoneId,
-        },
+        }),
       },
     ]);
   const noOpEvidence = await evidence(page);

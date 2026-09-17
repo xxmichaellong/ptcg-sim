@@ -116,7 +116,9 @@ const createTopOwnerStadiumCandidateScene = () => {
   );
   return {
     ...scene,
-    cards: scene.cards.map((card) => ({
+    // Paint every card, deck cover included, with the same test back so the
+    // comparison is about geometry alone.
+    cards: scene.cards.map(({ tableImageUrl: _tableImageUrl, ...card }) => ({
       ...card,
       imageUrl: '/v2/assets/cardback.png',
     })),
