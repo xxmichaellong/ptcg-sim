@@ -5,6 +5,8 @@ import {
 } from '@ptcgsim/game-core';
 import type { PresentationEvent } from '@ptcgsim/protocol';
 
+import { narrationEventsForBatch } from './narration-events.js';
+
 type PresentationCardSource = Extract<
   PresentationEvent,
   { readonly type: 'PublicCardsRevealed' }
@@ -40,13 +42,27 @@ const publiclyKnownCardName = (
   return state.definitions[card.definitionId]?.name;
 };
 
+/**
+ * @param state the state after the batch was applied
+ * @param previousState the state the batch was applied to; card names are
+ *   disclosed when public on either side of the batch
+ */
 export const presentationEventsForBatch = (
   batch: EventBatch,
-  state: MatchState
+  state: MatchState,
+  previousState: MatchState
 ): readonly PresentationEvent[] => {
   if (state.revision !== batch.revision) {
     throw new Error('Presentation state revision does not match event batch');
   }
+  const narration = narrationEventsForBatch(batch, state, previousState);
+  return [...narration, ...declarationEventsForBatch(batch, state)];
+};
+
+const declarationEventsForBatch = (
+  batch: EventBatch,
+  state: MatchState
+): readonly PresentationEvent[] => {
   return batch.events.flatMap((event): PresentationEvent[] => {
     if (event.type === 'CoinFlipped') {
       return [

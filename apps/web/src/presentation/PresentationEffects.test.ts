@@ -352,6 +352,183 @@ describe('presentationEffectsForEvent', () => {
     });
   });
 
+  it('narrates card actions in the v1 battle-log grammar', () => {
+    const view = createRendererSpikeView();
+    const line = (event: PresentationEvent) =>
+      messages(presentationEffectsForEvent(event, view))[0];
+    const at = { revision: 9, playerId: 'spike-blue' } as const;
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
+        source: 'hand',
+        destination: 'bench',
+        cardName: 'Pikachu',
+      })
+    ).toBe('player:Blue moved Pikachu from hand to bench');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
+        source: 'hand',
+        destination: 'deck',
+      })
+    ).toBe('player:Blue moved card from hand to deck');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
+        source: 'inspection',
+        destination: 'lostZone',
+        cardName: 'Pikachu',
+      })
+    ).toBe('player:Blue moved Pikachu from deck to lost zone');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'attached',
+        source: 'hand',
+        destination: 'active',
+        cardName: 'Lightning Energy',
+        targetCardName: 'Pikachu',
+      })
+    ).toBe('player:Blue attached Lightning Energy from hand to Pikachu');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'evolved',
+        source: 'hand',
+        destination: 'bench',
+        cardName: 'Raichu',
+        targetCardName: 'Pikachu',
+      })
+    ).toBe('player:Blue evolved Pikachu into Raichu');
+    expect(
+      line({ type: 'CardMoved', ...at, verb: 'movedToDeckTop', source: 'deck' })
+    ).toBe('player:Blue moved card from deck to top of deck');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'switchedWithDeckTop',
+        source: 'inspection',
+        cardName: 'Pikachu',
+      })
+    ).toBe('player:Blue switched Pikachu from deck with top of deck');
+    expect(line({ type: 'CardsDrawn', ...at, cardCount: 1 })).toBe(
+      'player:Blue drew a card'
+    );
+    expect(line({ type: 'CardsDrawn', ...at, cardCount: 3 })).toBe(
+      'player:Blue drew 3 cards'
+    );
+    expect(line({ type: 'ZoneShuffled', ...at, source: 'deck' })).toBe(
+      'player:Blue shuffled deck'
+    );
+    expect(
+      line({ type: 'DeckCardsLooked', ...at, cardCount: 2, edge: 'top' })
+    ).toBe('player:Blue looked at top 2 card(s) of deck');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'moved',
+        cardCount: 3,
+        source: 'board',
+        destination: 'discard',
+      })
+    ).toBe('player:Blue moved 3 card(s) from board to discard');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'shuffled',
+        cardCount: 3,
+        source: 'board',
+        destination: 'deck',
+      })
+    ).toBe('player:Blue shuffled 3 card(s) from board to deck');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'shuffled',
+        cardCount: 6,
+        source: 'prizes',
+        destination: 'deckBottom',
+      })
+    ).toBe('player:Blue shuffled prizes to bottom of deck');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'shuffled',
+        cardCount: 6,
+        source: 'discard',
+        destination: 'deck',
+      })
+    ).toBe('player:Blue shuffled discard into deck');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'discarded',
+        cardCount: 2,
+        source: 'attachmentResolution',
+        destination: 'discard',
+      })
+    ).toBe('player:Blue discarded 2 attached card(s)');
+    expect(
+      line({
+        type: 'CardsResolved',
+        ...at,
+        verb: 'left',
+        cardCount: 2,
+        source: 'attachmentResolution',
+        destination: 'play',
+      })
+    ).toBe('player:Blue left 2 attached card(s) in play');
+    expect(
+      line({ type: 'HandReplaced', ...at, mode: 'discard', drawCount: 0 })
+    ).toBe('player:Blue discarded hand');
+    expect(
+      line({
+        type: 'HandReplaced',
+        ...at,
+        mode: 'shuffleIntoDeck',
+        drawCount: 5,
+      })
+    ).toBe('player:Blue shuffled hand into deck and drew 5 card(s)');
+    expect(
+      line({
+        type: 'CardCategoryChanged',
+        ...at,
+        category: 'Trainer',
+        cardName: 'Pikachu',
+      })
+    ).toBe('player:Blue changed Pikachu into a tool');
+    expect(
+      line({
+        type: 'AbilityUsed',
+        ...at,
+        source: 'active',
+        cardName: 'Pikachu',
+      })
+    ).toBe("player:Blue used Pikachu's ability");
+    expect(
+      line({
+        type: 'AbilityUsed',
+        ...at,
+        source: 'stadium',
+        cardName: 'Path to the Peak',
+      })
+    ).toBe('player:Blue used Path to the Peak');
+  });
+
   it('announces an invalid deck when setup had nothing to draw', () => {
     const view = createRendererSpikeView();
     expect(

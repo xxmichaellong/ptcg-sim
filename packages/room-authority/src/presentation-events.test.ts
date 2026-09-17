@@ -131,6 +131,7 @@ describe('presentation event privacy', () => {
           },
         ],
       },
+      state,
       state
     );
     expect(events).toEqual([
@@ -149,9 +150,11 @@ describe('presentation event privacy', () => {
   });
 
   it('includes only the public name needed for single-card reveal parity', () => {
+    const revealed = stateWithSecret('Public Pikachu', true);
     const events = presentationEventsForBatch(
       publicRevealBatch(true),
-      stateWithSecret('Public Pikachu', true)
+      revealed,
+      revealed
     );
 
     expect(events).toEqual([
@@ -182,8 +185,8 @@ describe('presentation event privacy', () => {
     ];
 
     for (const batch of batches) {
-      const alphaEvents = presentationEventsForBatch(batch, alpha);
-      const betaEvents = presentationEventsForBatch(batch, beta);
+      const alphaEvents = presentationEventsForBatch(batch, alpha, alpha);
+      const betaEvents = presentationEventsForBatch(batch, beta, beta);
       expect(alphaEvents).toEqual(betaEvents);
       const serialized = JSON.stringify(alphaEvents);
       expect(serialized).not.toContain('Hidden Alpha');
@@ -217,6 +220,7 @@ describe('presentation event privacy', () => {
           },
         ],
       },
+      state,
       state
     );
     expect(events).toEqual([
@@ -239,6 +243,7 @@ describe('presentation event privacy', () => {
     expect(() =>
       presentationEventsForBatch(
         publicRevealBatch(true),
+        stateWithSecret('Still hidden', false),
         stateWithSecret('Still hidden', false)
       )
     ).toThrow('not known to the spectator projection');

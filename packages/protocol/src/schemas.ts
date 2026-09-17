@@ -734,7 +734,107 @@ const OncePerGameMarkerSetPresentationEventSchema = v.object({
   used: v.boolean(),
 });
 
+/**
+ * Battle-log narration for card movement, in v1's grammar. Names are present
+ * only when the card is publicly known before or after the move; the client
+ * prints "card" otherwise, exactly as v1 does for hidden-zone moves.
+ */
+const CardMovedPresentationEventSchema = v.object({
+  type: v.literal('CardMoved'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  verb: v.picklist([
+    'moved',
+    'attached',
+    'evolved',
+    'shuffledIntoDeck',
+    'movedToDeckTop',
+    'movedToDeckBottom',
+    'switchedWithDeckTop',
+  ] as const),
+  source: PresentationCardSourceSchema,
+  destination: v.optional(PresentationCardSourceSchema),
+  cardName: v.optional(boundedString(256)),
+  targetCardName: v.optional(boundedString(256)),
+});
+
+const CardsDrawnPresentationEventSchema = v.object({
+  type: v.literal('CardsDrawn'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  cardCount: PositiveIntegerSchema,
+});
+
+const ZoneShuffledPresentationEventSchema = v.object({
+  type: v.literal('ZoneShuffled'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: PresentationCardSourceSchema,
+});
+
+const DeckCardsLookedPresentationEventSchema = v.object({
+  type: v.literal('DeckCardsLooked'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  cardCount: PositiveIntegerSchema,
+  edge: v.picklist(['top', 'bottom'] as const),
+});
+
+/** Several cards moved at once: "moved 3 card(s) from board to discard". */
+const CardsResolvedPresentationEventSchema = v.object({
+  type: v.literal('CardsResolved'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  verb: v.picklist(['moved', 'shuffled', 'discarded', 'left'] as const),
+  cardCount: PositiveIntegerSchema,
+  source: PresentationCardSourceSchema,
+  destination: v.picklist([
+    'hand',
+    'discard',
+    'lostZone',
+    'deck',
+    'deckBottom',
+    'play',
+  ] as const),
+});
+
+const HandReplacedPresentationEventSchema = v.object({
+  type: v.literal('HandReplaced'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  mode: v.picklist([
+    'discard',
+    'shuffleIntoDeck',
+    'shuffleToDeckBottom',
+  ] as const),
+  drawCount: NonNegativeIntegerSchema,
+});
+
+const CardCategoryChangedPresentationEventSchema = v.object({
+  type: v.literal('CardCategoryChanged'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  category: v.picklist(['Pokémon', 'Trainer', 'Energy', 'Unknown'] as const),
+  cardName: v.optional(boundedString(256)),
+});
+
+const AbilityUsedPresentationEventSchema = v.object({
+  type: v.literal('AbilityUsed'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: PresentationCardSourceSchema,
+  cardName: v.optional(boundedString(256)),
+});
+
 export const PresentationEventSchema = v.variant('type', [
+  CardMovedPresentationEventSchema,
+  CardsDrawnPresentationEventSchema,
+  ZoneShuffledPresentationEventSchema,
+  DeckCardsLookedPresentationEventSchema,
+  CardsResolvedPresentationEventSchema,
+  HandReplacedPresentationEventSchema,
+  CardCategoryChangedPresentationEventSchema,
+  AbilityUsedPresentationEventSchema,
   v.object({
     type: v.literal('CoinFlipped'),
     revision: RevisionSchema,

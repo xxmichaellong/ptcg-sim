@@ -106,6 +106,27 @@ const cardSourceName = (source: PresentationCardSource): string => {
   return unhandled;
 };
 
+/**
+ * v1 names the deck-viewer popup "deck" in its messages (`convertZoneName`
+ * maps `viewCards` to `deck`); the inspection work area is its counterpart.
+ */
+const narratedSourceName = (source: PresentationCardSource): string =>
+  source === 'inspection' ? 'deck' : cardSourceName(source);
+
+const cardsPhrase = (count: number): string => `${count} card(s)`;
+
+const narratedCardName = (cardName: string | undefined): string =>
+  cardName ?? 'card';
+
+const playerEffects = (
+  event: PresentationEvent,
+  playerId: string,
+  message: string
+): readonly PresentationEffect[] => [
+  activity(event, 'player', message, playerId),
+  accessibility(event, message),
+];
+
 const activity = (
   event: PresentationEvent,
   category: ActivityPresentationEffect['category'],
@@ -140,6 +161,140 @@ export const presentationEffectsForEvent = (
   view?: PresentationView
 ): readonly PresentationEffect[] => {
   switch (event.type) {
+    case 'CardMoved': {
+      const actor = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const source = narratedSourceName(event.source);
+      const target =
+        event.targetCardName ??
+        (event.destination ? narratedSourceName(event.destination) : 'deck');
+      const message = (() => {
+        switch (event.verb) {
+          case 'moved':
+            return `${actor} moved ${card} from ${source} to ${target}`;
+          case 'attached':
+            return `${actor} attached ${card} from ${source} to ${target}`;
+          case 'evolved':
+            return `${actor} evolved ${target} into ${card}`;
+          case 'shuffledIntoDeck':
+            return `${actor} shuffled ${card} from ${source} into deck`;
+          case 'movedToDeckTop':
+            return `${actor} moved ${card} from ${source} to top of deck`;
+          case 'movedToDeckBottom':
+            return `${actor} moved ${card} from ${source} to bottom of deck`;
+          case 'switchedWithDeckTop':
+            return `${actor} switched ${card} from ${source} with top of deck`;
+        }
+      })();
+      return playerEffects(event, event.playerId, message);
+    }
+    case 'CardsDrawn':
+      return playerEffects(
+        event,
+        event.playerId,
+        event.cardCount === 1
+          ? `${playerName(view, event.playerId)} drew a card`
+          : `${playerName(view, event.playerId)} drew ${event.cardCount} cards`
+      );
+    case 'ZoneShuffled':
+      return playerEffects(
+        event,
+        event.playerId,
+        `${playerName(view, event.playerId)} shuffled ${narratedSourceName(
+          event.source
+        )}`
+      );
+    case 'DeckCardsLooked':
+      return playerEffects(
+        event,
+        event.playerId,
+        `${playerName(view, event.playerId)} looked at ${event.edge} ${cardsPhrase(
+          event.cardCount
+        )} of deck`
+      );
+    case 'CardsResolved': {
+      const actor = playerName(view, event.playerId);
+      const count = cardsPhrase(event.cardCount);
+      const source = narratedSourceName(event.source);
+      const message = (() => {
+        switch (event.verb) {
+          case 'left':
+            return `${actor} left ${event.cardCount} attached card(s) in play`;
+          case 'discarded':
+            return event.source === 'attachmentResolution'
+              ? `${actor} discarded ${event.cardCount} attached card(s)`
+              : `${actor} discarded ${count}`;
+          case 'shuffled':
+            if (event.destination === 'deckBottom') {
+              return event.source === 'prizes'
+                ? `${actor} shuffled prizes to bottom of deck`
+                : `${actor} shuffled ${count} to bottom of deck`;
+            }
+            return event.source === 'discard'
+              ? `${actor} shuffled discard into deck`
+              : event.source === 'attachmentResolution'
+                ? `${actor} shuffled ${event.cardCount} attached card(s) into deck`
+                : event.source === 'board'
+                  ? `${actor} shuffled ${count} from board to deck`
+                  : `${actor} shuffled ${count} into deck`;
+          case 'moved': {
+            const destination =
+              event.destination === 'lostZone'
+                ? 'lost zone'
+                : event.destination === 'deckBottom'
+                  ? 'bottom of deck'
+                  : event.destination;
+            return `${actor} moved ${count} from ${source} to ${destination}`;
+          }
+        }
+      })();
+      return playerEffects(event, event.playerId, message);
+    }
+    case 'HandReplaced': {
+      const actor = playerName(view, event.playerId);
+      const base =
+        event.mode === 'discard'
+          ? `${actor} discarded hand`
+          : event.mode === 'shuffleIntoDeck'
+            ? `${actor} shuffled hand into deck`
+            : `${actor} shuffled hand to bottom of deck`;
+      return playerEffects(
+        event,
+        event.playerId,
+        event.drawCount > 0
+          ? `${base} and drew ${cardsPhrase(event.drawCount)}`
+          : base
+      );
+    }
+    case 'CardCategoryChanged': {
+      const typeName =
+        event.category === 'Energy'
+          ? 'an energy'
+          : event.category === 'Pokémon'
+            ? 'a Pokémon'
+            : event.category === 'Trainer'
+              ? 'a tool'
+              : 'an unknown type';
+      return playerEffects(
+        event,
+        event.playerId,
+        `${playerName(view, event.playerId)} changed ${narratedCardName(
+          event.cardName
+        )} into ${typeName}`
+      );
+    }
+    case 'AbilityUsed':
+      return playerEffects(
+        event,
+        event.playerId,
+        event.source === 'stadium'
+          ? `${playerName(view, event.playerId)} used ${narratedCardName(
+              event.cardName
+            )}`
+          : `${playerName(view, event.playerId)} used ${narratedCardName(
+              event.cardName
+            )}'s ability`
+      );
     case 'CoinFlipped': {
       const name = playerName(view, event.playerId);
       const message = `${name} flipped ${event.result}`;

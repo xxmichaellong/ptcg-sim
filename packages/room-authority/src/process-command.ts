@@ -229,7 +229,8 @@ const projectForSessions = (
   snapshot: RoomAuthoritySnapshot,
   dependencies: AuthorityDependencies,
   coveringCommandId: string,
-  eventBatch: EventBatch
+  eventBatch: EventBatch,
+  previousState: MatchState
 ): {
   readonly snapshot: RoomAuthoritySnapshot;
   readonly deliveries: readonly AuthorityDelivery[];
@@ -240,7 +241,8 @@ const projectForSessions = (
   // immutable event list can be shared by every recipient projection.
   const presentationEvents = presentationEventsForBatch(
     eventBatch,
-    snapshot.state
+    snapshot.state,
+    previousState
   );
   for (const session of Object.values(snapshot.sessions)) {
     if (!session.active) continue;
@@ -559,7 +561,8 @@ export const processAuthorityCommand = async (
         candidate,
         dependencies,
         envelope.commandId,
-        publicationEventBatch
+        publicationEventBatch,
+        current.state
       )
     );
     candidate = projected.snapshot;

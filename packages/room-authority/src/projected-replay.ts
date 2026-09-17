@@ -227,7 +227,7 @@ export const buildProjectedReplay = (
       snapshot: projected.snapshot,
       ...(localDisclosure ? { localDisclosure } : {}),
       presentationEvents: entry
-        ? presentationEventsForBatch(entry.batch, state)
+        ? presentationEventsForBatch(entry.batch, state, states[index - 1]!)
         : [],
     });
   }
