@@ -25,10 +25,16 @@ const coveredCard = (
  */
 export const applySoloOpponentHandVisibility = (
   view: MatchViewState,
-  hidden: boolean
+  hidden: boolean,
+  actingPlayerId?: string
 ): MatchViewState => {
   if (!hidden || view.viewer.kind !== 'player') return view;
-  const viewerPlayerId = view.viewer.playerId;
+  // v1 flipBoard covers whichever hand is now at the top: the "opponent" is
+  // the seat the viewer is not currently playing from.
+  const viewerPlayerId =
+    actingPlayerId && view.players[actingPlayerId]
+      ? actingPlayerId
+      : view.viewer.playerId;
   let changed = false;
   const zones = Object.fromEntries(
     Object.entries(view.zones).map(([zoneId, zone]) => {

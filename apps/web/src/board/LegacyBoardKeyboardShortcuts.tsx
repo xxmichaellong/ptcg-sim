@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 
+import { actingPlayerIdOf } from './acting-seat.js';
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import { LegacyBoardShortcutReference } from './LegacyBoardShortcutReference.js';
 import {
@@ -97,10 +98,11 @@ export const LegacyBoardKeyboardShortcuts = ({
     useState(false);
   const selectedCardId = state.presentation.selectedCardId;
   const isSpectator = state.view?.viewer.kind === 'spectator';
+  // V opens the deck of the seat at the bottom of the board (v1's
+  // initiator), which a flipped Solo board makes the other seat.
   const deckViewPlayerId =
-    state.view?.viewer.kind === 'player'
-      ? state.view.viewer.playerId
-      : state.scene?.bottomPlayerId;
+    actingPlayerIdOf(state.view, state.scene?.bottomPlayerId) ??
+    state.scene?.bottomPlayerId;
   const deckViewZoneId = state.scene?.zones.find(
     (zone) =>
       zone.kind === 'deck' &&

@@ -304,6 +304,128 @@ describe('authoritative room command transaction', () => {
     expect(moved.snapshot.state.zones[handId]!.cardIds).toHaveLength(6);
   });
 
+  it('draws, flips and empties the hand for the seat a flipped Solo board names', async () => {
+    // v1's flipped board acts for the bottom seat; the wire commands carry
+    // that seat and the same gate as SetupPlayer decides who may do so.
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const entries = Array.from({ length: 14 }, (_, index) => ({
+      definition: {
+        id: `flipped-seat-definition-${index}`,
+        name: `Flipped seat card ${index}`,
+        category: 'Trainer' as const,
+        imageUrl: `https://flipped-cards.example/${index}.png`,
+      },
+      count: 1,
+    }));
+    const loaded = await processAuthorityCommand(
+      createSoloSnapshot(),
+      command('session-player-one', 1, 'load-flipped-seat', {
+        type: 'LoadDeck',
+        targetPlayerId: p2,
+        entries,
+      }),
+      dependencies
+    );
+    const drew = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'draw-for-flipped-seat',
+        { type: 'DrawCards', count: 3, targetPlayerId: p2 },
+        loaded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(drew.committed).toBe(true);
+    expect(
+      drew.snapshot.state.zones[playerZoneId(p2, 'hand')]!.cardIds
+    ).toHaveLength(3);
+    // v1 narrates the initiator, the seat at the bottom: "Red drew 3 cards".
+    const drawPublication = drew.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (drawPublication?.type !== 'StatePublication') {
+      throw new Error('Draw omitted the player publication');
+    }
+    expect(drawPublication.presentationEvents).toEqual([
+      expect.objectContaining({
+        type: 'CardsDrawn',
+        playerId: p2,
+        cardCount: 3,
+      }),
+    ]);
+    expect(
+      drew.snapshot.state.zones[playerZoneId(p1, 'hand')]!.cardIds
+    ).toHaveLength(0);
+
+    const flipped = await processAuthorityCommand(
+      drew.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'coin-for-flipped-seat',
+        { type: 'FlipCoin', targetPlayerId: p2 },
+        drew.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(flipped.committed).toBe(true);
+    const coinPublication = flipped.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (coinPublication?.type !== 'StatePublication') {
+      throw new Error('Coin flip omitted the player publication');
+    }
+    expect(coinPublication.presentationEvents).toEqual([
+      expect.objectContaining({ type: 'CoinFlipped', playerId: p2 }),
+    ]);
+
+    const discarded = await processAuthorityCommand(
+      flipped.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'discard-hand-for-flipped-seat',
+        { type: 'DiscardHandAndDraw', count: 1, targetPlayerId: p2 },
+        flipped.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(discarded.committed).toBe(true);
+    expect(
+      discarded.snapshot.state.zones[playerZoneId(p2, 'discard')]!.cardIds
+    ).toHaveLength(3);
+    expect(
+      discarded.snapshot.state.zones[playerZoneId(p2, 'hand')]!.cardIds
+    ).toHaveLength(1);
+
+    const forged = await processAuthorityCommand(
+      discarded.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'draw-for-nobody',
+        { type: 'DrawCards', count: 1, targetPlayerId: 'not-a-seat' },
+        discarded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(
+      forged.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+    expect(forged.snapshot.state.revision).toBe(
+      discarded.snapshot.state.revision
+    );
+  });
+
   it('commits the event, new state, frontier, and outcome before ordered delivery', async () => {
     const persistence = createPersistence();
     const current = createSnapshot();

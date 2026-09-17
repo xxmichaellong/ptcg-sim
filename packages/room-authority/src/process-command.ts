@@ -2,7 +2,9 @@ import {
   cloneMatchState,
   executeCommand,
   type EventBatch,
+  type GameCommand,
   type MatchState,
+  type PlayerId,
 } from '@ptcgsim/game-core';
 import {
   PROTOCOL_VERSION,
@@ -274,6 +276,34 @@ const projectForSessions = (
   };
 };
 
+/**
+ * v1 narrates its "initiator", the seat at the bottom of the board. A seat
+ * acting for the other seat (a flipped Solo or coaching board) names that
+ * seat on the wire, and the seat-bound commands read that way in the log:
+ * "Red drew 3 cards", "Red flipped heads". Card movement keeps naming the
+ * submitting seat, as v1 does when a player moves the opponent's cards.
+ */
+const narratedActorOf = (command: GameCommand): PlayerId | undefined => {
+  switch (command.type) {
+    case 'DrawCards':
+    case 'DiscardHandAndDraw':
+    case 'ShuffleHandIntoDeckAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw':
+    case 'FlipCoin':
+    case 'MovePrizesToDeckBottom':
+    case 'SetupPlayer':
+    case 'ResetPlayer':
+    case 'StartTurn':
+    case 'DeclareAttack':
+    case 'PassTurn':
+      return command.playerId;
+    case 'ApplySoloUndo':
+      return command.targetPlayerId;
+    default:
+      return undefined;
+  }
+};
+
 export const processAuthorityCommand = async (
   current: RoomAuthoritySnapshot,
   envelope: CommandEnvelope,
@@ -430,7 +460,12 @@ export const processAuthorityCommand = async (
         nextState = execution.state;
         eventBatch =
           session.viewer.kind === 'player'
-            ? { ...execution.batch, actorPlayerId: session.viewer.playerId }
+            ? {
+                ...execution.batch,
+                actorPlayerId:
+                  narratedActorOf(resolution.command) ??
+                  session.viewer.playerId,
+              }
             : execution.batch;
         outcome = {
           commandId: envelope.commandId,

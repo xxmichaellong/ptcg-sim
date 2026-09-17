@@ -1,5 +1,7 @@
-import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+
+import { targetSeatField } from './acting-seat.js';
 
 import {
   isLegacyBoardCategoryChoice,
@@ -203,8 +205,15 @@ const retainResolution = (
 /** Maps characterized shortcut requests onto existing stale-safe resolvers. */
 export const resolveLegacyBoardShortcutAction = (
   view: MatchViewState,
-  request: LegacyBoardShortcutActionRequest
+  request: LegacyBoardShortcutActionRequest,
+  actingPlayerId?: PlayerId
 ): LegacyBoardShortcutActionResolution => {
+  // Unselected shortcuts act for v1's initiator, the seat at the bottom of
+  // the board: the viewer, or the other seat once the board is flipped.
+  const acting =
+    view.viewer.kind === 'player'
+      ? (actingPlayerId ?? view.viewer.playerId)
+      : undefined;
   switch (request.action) {
     case 'rotateSelectedCard': {
       if (typeof request.single !== 'boolean') {
@@ -226,11 +235,7 @@ export const resolveLegacyBoardShortcutAction = (
         return { ok: false, reason: 'not_player' };
       }
       return retainResolution(
-        resolveLooseBoardAction(
-          view,
-          view.viewer.playerId,
-          request.destination
-        ),
+        resolveLooseBoardAction(view, acting!, request.destination),
         false
       );
     }
@@ -252,10 +257,10 @@ export const resolveLegacyBoardShortcutAction = (
       ) {
         return { ok: false, reason: 'invalid_value' };
       }
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      const viewerId = view.viewer.playerId;
+      const viewerId = acting;
       if (!view.players[viewerId]) {
         return { ok: false, reason: 'stale_player' };
       }
@@ -277,7 +282,11 @@ export const resolveLegacyBoardShortcutAction = (
       if (request.action === 'drawOwnDeck') {
         return {
           ok: true,
-          command: { type: 'DrawCards', count },
+          command: {
+            type: 'DrawCards',
+            count,
+            ...targetSeatField(view, viewerId),
+          },
           dismissSelection: false,
         };
       }
@@ -294,57 +303,54 @@ export const resolveLegacyBoardShortcutAction = (
       };
     }
     case 'flipCoin': {
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      if (!view.players[view.viewer.playerId]) {
+      if (!view.players[acting]) {
         return { ok: false, reason: 'stale_player' };
       }
       return {
         ok: true,
-        command: { type: 'FlipCoin' },
+        command: { type: 'FlipCoin', ...targetSeatField(view, acting) },
         dismissSelection: false,
       };
     }
     case 'setupOwnPlayer':
     case 'resetOwnPlayer': {
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
       return retainResolution(
         resolveLifecycleAction(
           view,
-          view.viewer.playerId,
+          acting,
           request.action === 'setupOwnPlayer' ? 'setup' : 'reset'
         ),
         false
       );
     }
     case 'startOwnTurn': {
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
       return retainResolution(
-        resolveTableAction(view, view.viewer.playerId, 'startTurn'),
+        resolveTableAction(view, acting, 'startTurn'),
         false
       );
     }
     case 'undoOwnLastMove': {
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      return retainResolution(
-        resolveSoloUndoAction(view, view.viewer.playerId),
-        false
-      );
+      return retainResolution(resolveSoloUndoAction(view, acting), false);
     }
     case 'discardOwnHandAndDraw':
     case 'shuffleOwnHandAndDraw':
     case 'shuffleOwnHandToDeckBottomAndDraw': {
-      if (view.viewer.kind !== 'player') {
+      if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      const viewerId = view.viewer.playerId;
+      const viewerId = acting;
       if (!view.players[viewerId]) {
         return { ok: false, reason: 'stale_player' };
       }
@@ -391,6 +397,7 @@ export const resolveLegacyBoardShortcutAction = (
                 ? 'ShuffleHandIntoDeckAndDraw'
                 : 'ShuffleHandToDeckBottomAndDraw',
           count,
+          ...targetSeatField(view, viewerId),
         },
         dismissSelection: false,
       };

@@ -1,5 +1,6 @@
 import type {
   MatchViewState,
+  PlayerId,
   ViewCard,
   ViewCardId,
   WorkAreaCardsDestination,
@@ -390,10 +391,11 @@ export const parseLegacySpecialConditionInput = (
 const commandForShuffle = (
   view: MatchViewState,
   zone: ViewZone,
-  expectedKind: 'deck' | 'prizes'
+  expectedKind: 'deck' | 'prizes',
+  actingPlayerId: PlayerId | null
 ): LegacyBoardOverlayActionResolution => {
   if (zone.kind !== expectedKind) return rejected('unsupported_target');
-  if (view.viewer.kind !== 'player' || zone.ownerId !== view.viewer.playerId) {
+  if (view.viewer.kind !== 'player' || zone.ownerId !== actingPlayerId) {
     return rejected('unsupported_target');
   }
   if (zone.cards.length === 0) return rejected('empty_zone');
@@ -405,12 +407,16 @@ const resolveContextAction = (
   request: Extract<
     LegacyBoardOverlayActionRequest,
     { readonly kind: 'context' }
-  >
+  >,
+  actingPlayerId: PlayerId | undefined
 ): LegacyBoardOverlayActionResolution => {
   const located = locateCard(view, request.cardId);
   if (!located) return rejected('stale_card');
   const zone = located.zone;
-  const viewerId = view.viewer.kind === 'player' ? view.viewer.playerId : null;
+  // "Own" here is v1's selfView: the seat at the bottom of the board.
+  const viewerId =
+    actingPlayerId ??
+    (view.viewer.kind === 'player' ? view.viewer.playerId : null);
 
   switch (request.action) {
     case 'toggleAbility':
@@ -483,7 +489,7 @@ const resolveContextAction = (
       }
     case 'shufflePrizes':
       return zone?.ownerId === viewerId
-        ? commandForShuffle(view, zone, 'prizes')
+        ? commandForShuffle(view, zone, 'prizes', viewerId)
         : rejected('unsupported_target');
     case 'togglePrizes': {
       if (zone?.kind !== 'prizes' || zone.ownerId === null) {
@@ -504,7 +510,7 @@ const resolveContextAction = (
         : rejected('unsupported_target');
     case 'shufflePrizesToDeckBottom':
       return zone?.kind === 'prizes' && zone.ownerId === viewerId
-        ? resolvePrizeDeckBottomAction(view)
+        ? resolvePrizeDeckBottomAction(view, viewerId ?? undefined)
         : rejected('unsupported_target');
     case 'discardHand':
     case 'shuffleHandToDeck':
@@ -513,7 +519,8 @@ const resolveContextAction = (
         view,
         request.action,
         request.cardId,
-        request.value
+        request.value,
+        actingPlayerId
       );
     case 'toggleOpponentHand': {
       if (
@@ -536,7 +543,7 @@ const resolveContextAction = (
         : rejected('unsupported_target');
     case 'shuffleDeck':
       return zone
-        ? commandForShuffle(view, zone, 'deck')
+        ? commandForShuffle(view, zone, 'deck', viewerId)
         : rejected('unsupported_target');
     case 'drawCards':
     case 'viewDeckTop':
@@ -545,7 +552,8 @@ const resolveContextAction = (
         view,
         request.action,
         request.cardId,
-        request.value
+        request.value,
+        actingPlayerId
       );
     case 'discardBoard':
       return zone?.kind === 'board' && zone.ownerId !== null
@@ -601,18 +609,22 @@ const resolveContextAction = (
 
 const resolveZoneAction = (
   view: MatchViewState,
-  request: Extract<LegacyBoardOverlayActionRequest, { readonly kind: 'zone' }>
+  request: Extract<LegacyBoardOverlayActionRequest, { readonly kind: 'zone' }>,
+  actingPlayerId: PlayerId | undefined
 ): LegacyBoardOverlayActionResolution => {
   const zone = view.zones[request.zoneId];
   if (!zone) return rejected('stale_zone');
+  const viewerId =
+    actingPlayerId ??
+    (view.viewer.kind === 'player' ? view.viewer.playerId : null);
   switch (request.action) {
     case 'shuffleDeck':
-      return commandForShuffle(view, zone, 'deck');
+      return commandForShuffle(view, zone, 'deck', viewerId);
     case 'shuffleDiscardToDeck':
       if (
         zone.kind !== 'discard' ||
         view.viewer.kind !== 'player' ||
-        zone.ownerId !== view.viewer.playerId
+        zone.ownerId !== viewerId
       ) {
         return rejected('unsupported_target');
       }
@@ -629,13 +641,14 @@ const resolveZoneAction = (
  */
 export const resolveLegacyBoardOverlayAction = (
   view: MatchViewState,
-  request: LegacyBoardOverlayActionRequest
+  request: LegacyBoardOverlayActionRequest,
+  actingPlayerId?: PlayerId
 ): LegacyBoardOverlayActionResolution => {
   if (view.viewer.kind !== 'player') return rejected('not_player');
   return request.kind === 'context'
-    ? resolveContextAction(view, request)
+    ? resolveContextAction(view, request, actingPlayerId)
     : request.kind === 'zone'
-      ? resolveZoneAction(view, request)
+      ? resolveZoneAction(view, request, actingPlayerId)
       : resolveWorkAreaAction(view, request);
 };
 

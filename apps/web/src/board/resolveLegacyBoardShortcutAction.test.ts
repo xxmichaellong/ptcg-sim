@@ -491,6 +491,82 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'stale_player' });
   });
 
+  it('acts for the seat at the bottom of a flipped board, as v1 keybinds act for the initiator', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const viewerId = view.viewer.playerId;
+    const other = view.playerOrder.find((playerId) => playerId !== viewerId)!;
+    const otherDeck = Object.values(view.zones).find(
+      (zone) => zone.kind === 'deck' && zone.ownerId === other
+    )!;
+
+    // The bottom seat's own-only shortcuts target that seat; commands that
+    // are actor-bound on the wire name it explicitly.
+    for (const [request, command] of [
+      [
+        { action: 'setupOwnPlayer' },
+        { type: 'SetupPlayer', targetPlayerId: other },
+      ],
+      [
+        { action: 'startOwnTurn' },
+        { type: 'StartTurn', targetPlayerId: other },
+      ],
+      [
+        { action: 'undoOwnLastMove' },
+        { type: 'ApplySoloUndo', targetPlayerId: other },
+      ],
+      [{ action: 'flipCoin' }, { type: 'FlipCoin', targetPlayerId: other }],
+      [
+        { action: 'drawOwnDeck', count: 2 },
+        { type: 'DrawCards', count: 2, targetPlayerId: other },
+      ],
+      [
+        { action: 'shuffleOwnDeck' },
+        { type: 'ShuffleZone', zoneId: otherDeck.id },
+      ],
+      [
+        { action: 'inspectOwnDeck', count: 1, edge: 'top' },
+        {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: other,
+          count: 1,
+          edge: 'top',
+          visibility: 'private',
+        },
+      ],
+    ] as const) {
+      expect(resolveLegacyBoardShortcutAction(view, request, other)).toEqual({
+        ok: true,
+        command,
+        dismissSelection: false,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(
+        view,
+        { action: 'discardOwnHandAndDraw', value: '1' },
+        other
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'DiscardHandAndDraw', count: 1, targetPlayerId: other },
+    });
+    // An unflipped board keeps the wire commands free of a target seat.
+    expect(
+      resolveLegacyBoardShortcutAction(
+        view,
+        { action: 'drawOwnDeck', count: 1 },
+        viewerId
+      )
+    ).toEqual({
+      ok: true,
+      command: { type: 'DrawCards', count: 1 },
+      dismissSelection: false,
+    });
+  });
+
   it('owns unselected hand prompts and clamps their existing atomic commands', () => {
     const view = createRendererSpikeView();
     if (view.viewer.kind !== 'player') {

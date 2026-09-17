@@ -87,6 +87,7 @@ export const RemoteRoomLiveControls = ({
   presentation,
   roomMode = 'multiplayer',
   boardFlipped = false,
+  actingPlayerId,
   onLeave,
   onExportState,
   onImportReplayFile,
@@ -111,6 +112,11 @@ export const RemoteRoomLiveControls = ({
   readonly roomMode?: 'solo' | 'multiplayer';
   /** v1 flipBoard swaps the seat colour of every sidebar action button. */
   readonly boardFlipped?: boolean;
+  /**
+   * The seat the sidebar acts for: v1's initiator, the seat at the bottom
+   * of the board. Defaults to the viewer's own seat.
+   */
+  readonly actingPlayerId?: string;
   readonly onLeave?: () => void;
   readonly onExportState?: () => void;
   readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
@@ -149,7 +155,13 @@ export const RemoteRoomLiveControls = ({
   const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
   const continuationAbortRef = useRef<AbortController | undefined>(undefined);
   const options = useDismissibleRoomOptions();
-  const playerId = ownPlayerId(state);
+  const ownSeat = ownPlayerId(state);
+  const playerId =
+    ownSeat !== undefined &&
+    actingPlayerId &&
+    state.view?.players[actingPlayerId]
+      ? actingPlayerId
+      : ownSeat;
   const playerControls = playerId !== undefined;
   const solo = roomMode === 'solo';
   const ready = state.phase === 'ready';

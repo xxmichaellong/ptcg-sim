@@ -1,5 +1,7 @@
-import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+
+import { targetSeatField } from './acting-seat.js';
 
 export const LEGACY_BOARD_COUNT_ACTION_IDS = [
   'discardHand',
@@ -86,12 +88,15 @@ export const resolveLegacyBoardCountAction = (
   view: MatchViewState,
   action: LegacyBoardCountActionId,
   cardId: ViewCardId,
-  value?: string
+  value?: string,
+  actingPlayerId?: PlayerId
 ): LegacyBoardCountActionResolution => {
   if (view.viewer.kind !== 'player') {
     return { ok: false, reason: 'not_player' };
   }
-  const viewerId = view.viewer.playerId;
+  // The seat at the bottom of the board (v1's selfView) owns the own-only
+  // entries; a flipped Solo board draws and discards for the other seat.
+  const viewerId = actingPlayerId ?? view.viewer.playerId;
   const zone = Object.values(view.zones).find((candidate) =>
     candidate.cards.some((card) => card.id === cardId)
   );
@@ -138,13 +143,21 @@ export const resolveLegacyBoardCountAction = (
               ? 'ShuffleHandIntoDeckAndDraw'
               : 'ShuffleHandToDeckBottomAndDraw',
         count,
+        ...targetSeatField(view, viewerId),
       },
     };
   }
 
   const count = Math.min(requested, zone.cards.length, MAX_WIRE_COUNT);
   if (action === 'drawCards') {
-    return { ok: true, command: { type: 'DrawCards', count } };
+    return {
+      ok: true,
+      command: {
+        type: 'DrawCards',
+        count,
+        ...targetSeatField(view, viewerId),
+      },
+    };
   }
   return {
     ok: true,

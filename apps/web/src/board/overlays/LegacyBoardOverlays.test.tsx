@@ -270,6 +270,43 @@ describe('legacy board overlays', () => {
     ).toEqual([]);
   });
 
+  it('gives the own-only menu entries to the seat at the bottom of a flipped board', () => {
+    // v1's selfView: after Alt-F in Solo the other seat's deck offers Draw
+    // and its hand the discard/shuffle entries, while the viewer's own hand
+    // reads as the opponent's.
+    const opponent = view.playerOrder[1]!;
+    const flippedScene = createBoardSceneForViewport(view, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: opponent,
+      splitRatio: 0.5,
+    });
+    const flipped = state({ scene: flippedScene });
+    const entryIds = (card: CardSceneNode) =>
+      selectLegacyContextEntries(flipped, card)
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => entry.id);
+    const opponentDeck = flippedScene.cards.find(
+      (card) =>
+        card.parentId.endsWith(`:${opponent}:deck`) &&
+        card.primaryAction?.kind === 'openZone'
+    )!;
+    expect(entryIds(opponentDeck)).toContain('drawCards');
+    const opponentHand = flippedScene.cards.find((card) =>
+      card.parentId.endsWith(`:${opponent}:hand`)
+    )!;
+    expect(entryIds(opponentHand)).toEqual(
+      expect.arrayContaining(['discardHand', 'shuffleHandToDeck'])
+    );
+    const ownHand = flippedScene.cards.find((card) =>
+      card.parentId.endsWith(`:${firstPlayer}:hand`)
+    )!;
+    expect(entryIds(ownHand)).toEqual(
+      expect.arrayContaining(['toggleOpponentHand', 'randomOpponentHandCard'])
+    );
+    expect(entryIds(ownHand)).not.toContain('discardHand');
+  });
+
   it('delegates a focused context-menu action to controller-owned teardown', async () => {
     const card = cardIn(`:${firstPlayer}:hand`);
     const callbacks = actions();

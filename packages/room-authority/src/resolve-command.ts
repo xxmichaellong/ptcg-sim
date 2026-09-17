@@ -700,11 +700,22 @@ export const resolveWireCommand = (
         },
       };
     }
-    case 'MovePrizesToDeckBottom':
+    case 'MovePrizesToDeckBottom': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
-        command: { type: 'MovePrizesToDeckBottom', playerId: actorId },
+        command: { type: 'MovePrizesToDeckBottom', playerId: targetPlayerId },
       };
+    }
     case 'ShuffleZone': {
       const zone = state.zones[wire.zoneId];
       if (!zone) return rejected('stale_reference');
@@ -714,11 +725,28 @@ export const resolveWireCommand = (
         command: { type: 'ShuffleZone', zoneId: asZoneId(wire.zoneId) },
       };
     }
-    case 'DrawCards':
+    case 'DrawCards': {
+      // v1's flipped solo board (and a coaching flip) act for the seat at
+      // the bottom; the same gate as SetupPlayer decides who may do that.
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
-        command: { type: 'DrawCards', playerId: actorId, count: wire.count },
+        command: {
+          type: 'DrawCards',
+          playerId: targetPlayerId,
+          count: wire.count,
+        },
       };
+    }
     case 'PlayRandomCardFaceDown': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
       if (!state.players[targetPlayerId]) return rejected('stale_reference');
@@ -830,15 +858,26 @@ export const resolveWireCommand = (
     }
     case 'DiscardHandAndDraw':
     case 'ShuffleHandIntoDeckAndDraw':
-    case 'ShuffleHandToDeckBottomAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
         command: {
           type: wire.type,
-          playerId: actorId,
+          playerId: targetPlayerId,
           count: wire.count,
         },
       };
+    }
     case 'SetDamage':
     case 'SetSpecialCondition':
     case 'SetAbilityUsed':
@@ -1193,11 +1232,22 @@ export const resolveWireCommand = (
         },
       };
     }
-    case 'FlipCoin':
+    case 'FlipCoin': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
-        command: { type: 'FlipCoin', playerId: actorId },
+        command: { type: 'FlipCoin', playerId: targetPlayerId },
       };
+    }
   }
   const exhaustive: never = wire;
   void exhaustive;

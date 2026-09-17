@@ -437,20 +437,37 @@ const moveZoneContents = (
   });
 };
 
-/** Draws from the top of the viewer's own deck, which the viewer can read. */
-const drawOwn = (
+/** The seat a command acts for: the viewer unless it names another player. */
+const targetSeat = (
   view: MatchViewState,
   viewerId: PlayerId,
+  targetPlayerId: string | undefined
+): PlayerId | null => {
+  if (targetPlayerId === undefined) return viewerId;
+  return view.players[targetPlayerId] ? (targetPlayerId as PlayerId) : null;
+};
+
+/** Draws from the top of a seat's deck into its hand. */
+const drawFor = (
+  view: MatchViewState,
+  viewerId: PlayerId,
+  playerId: PlayerId,
   count: number
 ): MatchViewState | null => {
-  const deck = ownZone(view, viewerId, 'deck');
-  const hand = ownZone(view, viewerId, 'hand');
+  const deck = ownZone(view, playerId, 'deck');
+  const hand = ownZone(view, playerId, 'hand');
   if (!deck || !hand) return null;
   const drawn = deck.cards.slice(0, count);
   if (drawn.length === 0) return view;
   return withZone(
     withZone(view, { ...deck, cards: deck.cards.slice(drawn.length) }),
-    { ...hand, cards: [...hand.cards, ...drawn] }
+    {
+      ...hand,
+      cards: [
+        ...hand.cards,
+        ...drawn.map((card) => asPlacedIn(view, viewerId, hand, card)),
+      ],
+    }
   );
 };
 
@@ -678,24 +695,32 @@ const predict = (
         command.type === 'MoveCardToDeckTop' ? 0 : undefined
       );
     }
-    case 'DrawCards':
-      return drawOwn(view, viewerId, command.count);
+    case 'DrawCards': {
+      // A flipped solo board draws for the seat at the bottom; that seat's
+      // deck is readable in solo, and the card is shown as a back otherwise.
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      return target ? drawFor(view, viewerId, target, command.count) : null;
+    }
     case 'DiscardHandAndDraw': {
-      const hand = ownZone(view, viewerId, 'hand');
-      const discard = ownZone(view, viewerId, 'discard');
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const hand = ownZone(view, target, 'hand');
+      const discard = ownZone(view, target, 'discard');
       if (!hand || !discard) return null;
       const emptied =
         hand.cards.length === 0
           ? view
           : moveZoneContents(view, viewerId, hand.id, discard.id);
-      return emptied ? drawOwn(emptied, viewerId, command.count) : null;
+      return emptied ? drawFor(emptied, viewerId, target, command.count) : null;
     }
     case 'ShuffleHandIntoDeckAndDraw':
     case 'ShuffleHandToDeckBottomAndDraw': {
       // The deck is reshuffled by the room, so which cards come back cannot
       // be known here; only the hand leaving is shown.
-      const hand = ownZone(view, viewerId, 'hand');
-      const deck = ownZone(view, viewerId, 'deck');
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const hand = ownZone(view, target, 'hand');
+      const deck = ownZone(view, target, 'deck');
       if (!hand || !deck || hand.cards.length === 0) return null;
       return moveZoneContents(view, viewerId, hand.id, deck.id);
     }

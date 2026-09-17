@@ -24,6 +24,7 @@ import {
   toggleReplayLocalDisclosure,
   type ReplayLocalDisplayState,
 } from './replayLocalDisclosure.js';
+import { actingPlayerIdOf } from './acting-seat.js';
 import {
   resolveLegacyBoardOverlayAction,
   type LegacyBoardOverlayInput,
@@ -1499,7 +1500,7 @@ const handleOverlayAction = (
   }
   const resolution = (
     dependencies.resolveOverlayAction ?? resolveLegacyBoardOverlayAction
-  )(view, request);
+  )(view, request, actingPlayerIdOf(view, scene.bottomPlayerId));
   if (!resolution.ok) {
     return rejectOverlayAction(state, request, resolution.reason);
   }
@@ -1593,7 +1594,7 @@ const handleShortcutAction = (
   }
   const resolution = (
     dependencies.resolveShortcutAction ?? resolveLegacyBoardShortcutAction
-  )(view, request);
+  )(view, request, actingPlayerIdOf(view, scene.bottomPlayerId));
   if (!resolution.ok) {
     return rejectShortcutAction(state, request, resolution.reason);
   }

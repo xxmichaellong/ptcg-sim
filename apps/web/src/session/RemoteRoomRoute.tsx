@@ -145,7 +145,10 @@ export const RemoteRoomRoute = ({
     'room'
   );
   const [playmatExpanded, setPlaymatExpanded] = useState(false);
-  const [boardFlipped, setBoardFlipped] = useState(false);
+  const [perspective, setPerspective] = useState<{
+    readonly flipped: boolean;
+    readonly actingPlayerId: string | undefined;
+  }>({ flipped: false, actingPlayerId: undefined });
   const [locallyActivatedDeck, setLocallyActivatedDeck] = useState(false);
   const deckActivated = deckSurfaceActivated || locallyActivatedDeck;
   const openDeck = (): void => {
@@ -282,7 +285,7 @@ export const RemoteRoomRoute = ({
                 hideOpponentHand={hideOpponentHand}
                 playmatExpanded={playmatExpanded}
                 onPlaymatExpandedChange={setPlaymatExpanded}
-                onPerspectiveChange={setBoardFlipped}
+                onPerspectiveChange={setPerspective}
               />
             </section>
             <aside
@@ -413,7 +416,10 @@ export const RemoteRoomRoute = ({
                     session={runtime.session}
                     presentation={runtime.presentation}
                     roomMode={roomMode}
-                    boardFlipped={boardFlipped}
+                    boardFlipped={perspective.flipped}
+                    {...(perspective.actingPlayerId
+                      ? { actingPlayerId: perspective.actingPlayerId }
+                      : {})}
                     {...(onLeave ? { onLeave } : {})}
                     onExportState={exportLivePerspective}
                     onImportReplayFile={(contents) =>

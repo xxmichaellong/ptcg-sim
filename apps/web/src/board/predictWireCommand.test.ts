@@ -206,6 +206,32 @@ describe('predictWireCommand', () => {
     expect(damaged.stacks[active.id]!.damage).toBe(60);
   });
 
+  it('draws for the seat a flipped board names, showing cards it cannot read as backs', () => {
+    const redDeck = view.zones[`zone:${red}:deck`]!;
+    const redHand = view.zones[`zone:${red}:hand`]!;
+    const drawn = predictWireCommand(view, {
+      type: 'DrawCards',
+      count: 1,
+      targetPlayerId: red,
+    })!;
+    expect(drawn.zones[redDeck.id]!.cards).toHaveLength(
+      redDeck.cards.length - 1
+    );
+    const arrived = drawn.zones[redHand.id]!.cards.at(-1)!;
+    expect(arrived.id).toBe(redDeck.cards[0]!.id);
+    // The spike viewer is Blue; Red's hand is not readable, so the card
+    // arrives as a back, exactly as the room will publish it.
+    expect(arrived.kind).toBe('concealed');
+    expect(drawn.zones[hand.id]!.cards).toHaveLength(hand.cards.length);
+    expect(
+      predictWireCommand(view, {
+        type: 'DrawCards',
+        count: 1,
+        targetPlayerId: 'not-a-seat',
+      })
+    ).toBeNull();
+  });
+
   it('predicts nothing for spectators or for commands it does not model', () => {
     expect(
       predictWireCommand(

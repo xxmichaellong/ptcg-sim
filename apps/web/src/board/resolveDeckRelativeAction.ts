@@ -1,5 +1,7 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
+import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+
+import { targetSeatField } from './acting-seat.js';
 
 import { locateViewCardActionSource } from './locateViewCardActionSource.js';
 
@@ -104,12 +106,13 @@ export type PrizeDeckBottomActionResolution =
     };
 
 export const resolvePrizeDeckBottomAction = (
-  view: MatchViewState
+  view: MatchViewState,
+  actingPlayerId?: PlayerId
 ): PrizeDeckBottomActionResolution => {
   if (view.viewer.kind !== 'player') {
     return { ok: false, reason: 'not_player' };
   }
-  const playerId = view.viewer.playerId;
+  const playerId = actingPlayerId ?? view.viewer.playerId;
   const prizes = Object.values(view.zones).find(
     (zone) => zone.kind === 'prizes' && zone.ownerId === playerId
   );
@@ -117,7 +120,13 @@ export const resolvePrizeDeckBottomAction = (
   if (prizes.cards.length === 0) {
     return { ok: false, reason: 'empty_prizes' };
   }
-  return { ok: true, command: { type: 'MovePrizesToDeckBottom' } };
+  return {
+    ok: true,
+    command: {
+      type: 'MovePrizesToDeckBottom',
+      ...targetSeatField(view, playerId),
+    },
+  };
 };
 
 export const submitPrizeDeckBottomAction = (

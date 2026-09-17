@@ -320,11 +320,16 @@ export const WireGameCommandSchema = v.variant('type', [
     cardId: IdentifierSchema,
     expectedSourceId: IdentifierSchema,
   }),
-  v.object({ type: v.literal('MovePrizesToDeckBottom') }),
+  v.object({
+    type: v.literal('MovePrizesToDeckBottom'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
   v.object({ type: v.literal('ShuffleZone'), zoneId: IdentifierSchema }),
   v.object({
     type: v.literal('DrawCards'),
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
+    /** The seat that draws; defaults to the submitting seat. */
+    targetPlayerId: v.optional(IdentifierSchema),
   }),
   v.strictObject({
     type: v.literal('PlayRandomCardFaceDown'),
@@ -373,14 +378,17 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('DiscardHandAndDraw'),
     count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
   }),
   v.object({
     type: v.literal('ShuffleHandIntoDeckAndDraw'),
     count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
   }),
   v.object({
     type: v.literal('ShuffleHandToDeckBottomAndDraw'),
     count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
   }),
   v.object({
     type: v.literal('SetDamage'),
@@ -485,7 +493,10 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('ApplySoloUndo'),
     targetPlayerId: IdentifierSchema,
   }),
-  v.object({ type: v.literal('FlipCoin') }),
+  v.object({
+    type: v.literal('FlipCoin'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
 ]);
 
 const HelloSchema = v.object({

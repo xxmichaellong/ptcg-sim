@@ -73,6 +73,33 @@ describe('Solo opponent-hand display preference', () => {
     expect(JSON.stringify(prepared.view)).toBe(before);
   });
 
+  it('covers whichever hand is at the top once the board is flipped', () => {
+    // v1 flipBoard swaps the covered hand: the viewer now plays the other
+    // seat, so their own hand is the "opponent" one.
+    const prepared = disclosedView();
+    const ownHand = Object.values(prepared.view.zones).find(
+      (zone) =>
+        zone.kind === 'hand' &&
+        prepared.view.viewer.kind === 'player' &&
+        zone.ownerId === prepared.view.viewer.playerId
+    )!;
+    const flipped = applySoloOpponentHandVisibility(
+      prepared.view,
+      true,
+      prepared.opponentHand.ownerId ?? undefined
+    );
+    expect(
+      flipped.zones[prepared.opponentHand.id]!.cards.every(
+        (card) => card.kind === 'known'
+      )
+    ).toBe(true);
+    expect(
+      flipped.zones[ownHand.id]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+  });
+
   it('is a no-op while unchecked or for a spectator projection', () => {
     const { view } = disclosedView();
     expect(applySoloOpponentHandVisibility(view, false)).toBe(view);

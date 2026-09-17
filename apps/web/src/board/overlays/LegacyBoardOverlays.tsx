@@ -25,6 +25,7 @@ import {
   type RefObject,
 } from 'react';
 
+import { actingPlayerIdOf } from '../acting-seat.js';
 import type {
   BoardPresentationDismissScope,
   BoardSessionControllerState,
@@ -173,7 +174,11 @@ export const selectLegacyContextEntries = (
   }
   const location = zoneForCard(state, card);
   if (!location) return [];
-  const own = location.playerId === state.view.viewer.playerId;
+  // v1's selfView: the own-only entries belong to the seat at the bottom of
+  // the board, which a flipped Solo board makes the other seat.
+  const own =
+    location.playerId ===
+    actingPlayerIdOf(state.view, state.scene?.bottomPlayerId);
   const opponent = location.playerId !== null && !own;
   if (!state.canSubmitCommands) {
     const permitsReplayDisclosure =
