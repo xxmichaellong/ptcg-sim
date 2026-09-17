@@ -1486,6 +1486,15 @@ describe('React DOM board renderer', () => {
     expect(hand.style.left).toBe('16px');
     expect(hand.style.top).toBe('90px');
     expect(hand.style.color).toBe('rgba(188, 90, 113, 0.864)');
+    // v1's dark mode greys the pile counts and leaves the hand count its
+    // side colour (`#handText` outranks `.dark-mode-3`).
+    act(() =>
+      renderer.setPreferences({ ...DEFAULT_BOARD_PREFERENCES, darkMode: true })
+    );
+    expect(deck.style.color).toBe('rgb(149, 149, 149)');
+    expect(hand.style.color).toBe('rgba(188, 90, 113, 0.864)');
+    act(() => renderer.setPreferences(DEFAULT_BOARD_PREFERENCES));
+    expect(deck.style.color).toBe('#000');
 
     act(() =>
       renderer.installScene(

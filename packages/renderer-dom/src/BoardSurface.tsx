@@ -288,8 +288,10 @@ const CardNode = memo(function CardNode({
 
 const ZoneCountNode = memo(function ZoneCountNode({
   node,
+  darkMode,
 }: {
   readonly node: ZoneCountSceneNode;
+  readonly darkMode: boolean;
 }) {
   // The anchor is one corner of the text box; the other three follow from
   // the text's own size, which is why this is positioned by the anchored
@@ -315,7 +317,10 @@ const ZoneCountNode = memo(function ZoneCountNode({
         zIndex: node.zIndex,
         fontSize: node.fontSizePx,
         lineHeight: 'normal',
-        color: node.color,
+        // v1 toggles `.dark-mode-3` on every count text: the pile counts turn
+        // grey, while the hand count keeps its side colour.
+        color:
+          darkMode && node.kind !== 'hand' ? 'rgb(149, 149, 149)' : node.color,
         whiteSpace: 'nowrap',
         pointerEvents: 'none',
         userSelect: 'none',
@@ -583,7 +588,11 @@ export const BoardSurface = ({
         <MarkerNode key={marker.id} marker={marker} />
       ))}
       {scene.counts.map((node) => (
-        <ZoneCountNode key={node.id} node={node} />
+        <ZoneCountNode
+          key={node.id}
+          node={node}
+          darkMode={preferences.darkMode}
+        />
       ))}
     </div>
   );
