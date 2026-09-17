@@ -672,9 +672,18 @@ export const RemoteRoomLobby = ({
     const creator = owner?.creator;
     if (!owner || owner.disposed || !creator) return false;
     const invitations = creator.result.invitations;
-    await (role === 'spectator'
-      ? invitations.copySpectatorInvitation()
-      : invitations.copyPlayerInvitation());
+    if (role === 'spectator') {
+      await invitations.copySpectatorInvitation();
+      return true;
+    }
+    // One key, as in v1: a player invitation while a seat is free (its
+    // holder may still choose to watch), a spectator invitation once both
+    // seats are taken.
+    try {
+      await invitations.copyPlayerInvitation();
+    } catch {
+      await invitations.copySpectatorInvitation();
+    }
     return true;
   };
 
