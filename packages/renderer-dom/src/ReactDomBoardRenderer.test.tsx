@@ -1518,6 +1518,39 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('tints the zone under a dragged card the way v1 highlights a drop target', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const zone = host.querySelector<HTMLElement>(
+      '[data-zone-id="zone:p1:hand"]'
+    )!;
+    const restingBackground = zone.style.background;
+
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { cardId, x: 12, y: 12, targetId: 'zone:p1:hand' },
+      })
+    );
+    expect(zone.getAttribute('data-drop-target')).toBe('true');
+    expect(zone.style.background).toBe('rgba(90, 110, 188, 0.3)');
+
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(zone.getAttribute('data-drop-target')).toBeNull();
+    expect(zone.style.background).toBe(restingBackground);
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('paints controller-owned targets and emits a neutral background intent', async () => {
     const emitIntent = vi.fn();
     const renderer = new ReactDomBoardRenderer({

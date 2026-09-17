@@ -41,9 +41,27 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
 /** Geometry sentinels only; visible chrome and resize input remain route-owned. */
 const PlayerFrameNode = memo(function PlayerFrameNode({
   frame,
+  darkMode,
 }: {
   readonly frame: BoardScene['layout']['players'][number];
+  readonly darkMode: boolean;
 }) {
+  // v1's `#boardCenterDesign`: each player frame paints half of the table's
+  // centre circles on its authored top edge (16vw and 4vw of the frame's
+  // own viewport), so the two halves meet at the divider. The frame clips
+  // them and the cards paint over them.
+  const outer = frame.bounds.width * 0.16;
+  const inner = frame.bounds.width * 0.04;
+  const centreY = frame.rotationQuarterTurns === 2 ? frame.bounds.height : 0;
+  const circle = (size: number, background: string) => ({
+    position: 'absolute' as const,
+    left: frame.bounds.width / 2 - size / 2,
+    top: centreY - size / 2,
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    background,
+  });
   return (
     <div
       data-player-frame-id={frame.playerId}
@@ -51,8 +69,24 @@ const PlayerFrameNode = memo(function PlayerFrameNode({
       data-player-physical-side={frame.physicalSide}
       data-player-rotation={frame.rotationQuarterTurns}
       aria-hidden="true"
-      style={{ ...absoluteRect(frame.bounds, -10), pointerEvents: 'none' }}
-    />
+      style={{
+        ...absoluteRect(frame.bounds, -10),
+        overflow: 'hidden',
+        pointerEvents: 'none',
+      }}
+    >
+      <div
+        data-board-circle="outer"
+        style={circle(outer, 'rgba(164, 164, 216, 0.112)')}
+      />
+      <div
+        data-board-circle="inner"
+        style={circle(
+          inner,
+          darkMode ? 'rgb(8, 18, 18)' : 'rgba(255, 255, 255, 0.6)'
+        )}
+      />
+    </div>
   );
 });
 
@@ -95,10 +129,13 @@ const BoardControlsAnchorNode = memo(function BoardControlsAnchorNode({
 const ZoneNode = memo(function ZoneNode({
   zone,
   showOutline,
+  dropTarget,
   emitIntent,
 }: {
   readonly zone: ZoneSceneNode;
   readonly showOutline: boolean;
+  /** The zone under a dragged card: v1 tints it with `.highlightBox`. */
+  readonly dropTarget: boolean;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
 }) {
   return (
@@ -107,6 +144,7 @@ const ZoneNode = memo(function ZoneNode({
       data-zone-id={zone.id}
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
+      data-drop-target={dropTarget ? 'true' : undefined}
       aria-label={`${zone.label}, ${zone.count} cards`}
       aria-haspopup={zone.interactive ? 'dialog' : undefined}
       role={zone.interactive ? 'button' : undefined}
@@ -114,7 +152,11 @@ const ZoneNode = memo(function ZoneNode({
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
         borderRadius: 15,
-        background: showOutline ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+        background: dropTarget
+          ? 'rgba(90, 110, 188, 0.3)'
+          : showOutline
+            ? 'rgba(255, 255, 255, 0.1)'
+            : 'transparent',
         boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
         pointerEvents: zone.interactive ? 'auto' : 'none',
       }}
@@ -154,6 +196,7 @@ const CardNode = memo(function CardNode({
   card,
   selected,
   targetable,
+  dropTarget,
   drag,
   settle,
   emitIntent,
@@ -162,6 +205,8 @@ const CardNode = memo(function CardNode({
   readonly card: CardSceneNode;
   readonly selected: boolean;
   readonly targetable: boolean;
+  /** The stack card under a dragged card: v1 rings it like a selection. */
+  readonly dropTarget: boolean;
   readonly drag: BoardPresentation['drag'];
   readonly settle: SettlingCard | null;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
@@ -240,7 +285,7 @@ const CardNode = memo(function CardNode({
         // merely hovered card nothing at all.
         boxShadow: targetable
           ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
-          : selected
+          : selected || dropTarget
             ? `rgba(90, 110, 188, 0.864) 0 0 0 4px, ${legacyShadow}`
             : legacyShadow,
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
@@ -480,6 +525,19 @@ export const BoardSurface = ({
       // Capture can already be released by the browser on cancellation.
     }
   };
+  // A drag's target is the id of the stack or zone under the pointer; v1
+  // rings the stack's visible top card and tints a zone container.
+  const dragTargetId = presentation.drag?.targetId ?? null;
+  const dropTargetCardId =
+    dragTargetId === null
+      ? null
+      : (scene.cards
+          .filter(
+            (card) =>
+              card.parentId === dragTargetId && card.role === 'stackEvolution'
+          )
+          .sort((left, right) => right.zIndex - left.zIndex)[0]?.id ?? null);
+
   return (
     <div
       ref={surfaceRef}
@@ -547,7 +605,11 @@ export const BoardSurface = ({
       }}
     >
       {scene.layout.players.map((frame) => (
-        <PlayerFrameNode key={frame.playerId} frame={frame} />
+        <PlayerFrameNode
+          key={frame.playerId}
+          frame={frame}
+          darkMode={preferences.darkMode}
+        />
       ))}
       {scene.layout.resizeHandles.map((handle) => (
         <ResizeHandleNode key={handle.id} handle={handle} />
@@ -560,6 +622,7 @@ export const BoardSurface = ({
           key={zone.id}
           zone={zone}
           showOutline={preferences.showZoneOutlines}
+          dropTarget={dragTargetId === zone.id}
           emitIntent={adapters.emitIntent}
         />
       ))}
@@ -571,6 +634,7 @@ export const BoardSurface = ({
             card={card}
             selected={presentation.selectedCardId === card.id}
             targetable={presentation.targetableCardIds.includes(card.id)}
+            dropTarget={dropTargetCardId === card.id}
             drag={
               presentation.drag?.cardId === card.id ? presentation.drag : null
             }

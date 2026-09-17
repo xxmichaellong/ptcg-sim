@@ -32,6 +32,13 @@ security and persistence review where relevant, and release-note disposition.
 | PX-009 | A default administrative password can create a production authority boundary.                                                               | V2 inherits no default admin credential and fails closed when required deployment configuration is absent or invalid.                                        | `SECURITY_EXCEPTION` | SEC-001/SEC-003; server configuration, bundle-boundary, and telemetry redaction tests                           |
 | PX-010 | Solo undo derives from two client-side action histories, so interleaved shared changes have no single reliable last-command order.          | V2 keeps the same visible Solo-only Undo control but uses authoritative whole-match order, exact resolved outcomes, and a bounded 128-checkpoint tail.       | `APPROVED_FIX`       | ADR-014; game-core and room-authority solo-undo tests                                                           |
 
+## Open differences awaiting a product decision
+
+| ID     | V1 behavior                                                                                                                                               | V2 today                                                                                                                                            | Status | Evidence                                             |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------- |
+| PX-011 | In Solo, flipping the board makes the other seat the "self view": its deck menu gains Draw card(s), its hand menu the discard/shuffle entries, and so on. | The flip only turns the table; wire `DrawCards` and the hand commands act on the submitting seat, so the other seat's own-only entries stay hidden. | `OPEN` | `V1_FILE_AUDIT.md`; `keybinds.js`, `click-events.js` |
+| PX-012 | A hand wider than its row keeps every card full size and scrolls horizontally (`#hand { overflow-x: auto }`, `adjustAlignment`).                          | The row compresses the cards to fit.                                                                                                                | `OPEN` | `V1_FILE_AUDIT.md`; measured 27-card hands on both   |
+
 ## Approved compatibility deferral
 
 ADR-021 defers v1 saved-game/action-history files and old `/import?key=` share

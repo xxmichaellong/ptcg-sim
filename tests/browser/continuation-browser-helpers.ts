@@ -77,7 +77,7 @@ export const joinReadyRoom = async (page: Page): Promise<void> => {
 
 export const roomCode = async (page: Page): Promise<string> => {
   const status = await page.locator('#roomHeaderText').innerText();
-  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(status);
+  const match = /^id: ([A-HJ-NP-Z2-9]{12})$/u.exec(status);
   if (!match?.[1]) throw new Error(`Unexpected room status: ${status}`);
   return match[1];
 };

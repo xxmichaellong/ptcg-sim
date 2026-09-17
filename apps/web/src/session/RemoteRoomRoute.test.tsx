@@ -423,7 +423,7 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#room-board')?.textContent).toBe('1');
     expect(host.querySelector('main')?.dataset.sessionPhase).toBeUndefined();
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
-      'Room ABCDEFGH2345'
+      'id: ABCDEFGH2345'
     );
     // v1's header copy button: one invitation, whose holder may choose to
     // watch instead of play.

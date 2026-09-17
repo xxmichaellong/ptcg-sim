@@ -262,8 +262,14 @@ select {
  */
 .remote-room-route {
   background-color: #fff;
+  /* global-variables.js shifts the wallpaper left while the sidebar shows. */
+  background-position: -200px 0;
   background-repeat: no-repeat;
   background-size: 100% 100%;
+}
+
+.remote-room-route:has(.board-column--fullscreen) {
+  background-position: 0 0;
 }
 
 .remote-room-route[data-room-background='default'] {

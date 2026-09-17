@@ -173,7 +173,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     );
 
     await expect(sourceOpponent.page.locator('#roomHeaderText')).toHaveText(
-      `Room ${sourceRoomCode}`
+      `id: ${sourceRoomCode}`
     );
     await expect(
       sourceOpponent.page.locator('#roomHeaderText')
