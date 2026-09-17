@@ -63,11 +63,14 @@ const pasteInvitation = async (
   await expect(roomInput).toHaveValue(ROOM_CODE);
   const spectator = page.locator('#spectatorModeCheckbox');
   if (role === 'spectator') {
+    // A spectator invitation only ever watches.
     await expect(spectator).toBeChecked();
+    await expect(spectator).toBeDisabled();
   } else {
+    // A player invitation leaves the choice to its holder, as v1's key did.
     await expect(spectator).not.toBeChecked();
+    await expect(spectator).toBeEnabled();
   }
-  await expect(spectator).toBeDisabled();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
 

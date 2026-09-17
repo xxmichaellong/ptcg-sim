@@ -868,8 +868,8 @@ export const RemoteRoomLobby = ({
               <div className="legacy-activity-intro" data-activity-intro="true">
                 <LegacyWelcome />
               </div>
-              {status && (
-                <p className="announcement lobby-status" role="status">
+              {status && activePanel === 'solo' && (
+                <p className="announcement solo-status" role="status">
                   {status}
                 </p>
               )}

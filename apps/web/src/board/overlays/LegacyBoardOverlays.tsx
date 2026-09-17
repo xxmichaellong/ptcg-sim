@@ -824,6 +824,9 @@ const Preview = ({
           data-stack-preview-card-id={card.id}
           data-preview-tabbable="true"
           aria-label={`Preview ${card.label}`}
+          // Keep focus on the stack view itself (its keyboard boundary and
+          // Escape handling live there); a click still opens the card.
+          onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.stopPropagation();
             actions.previewCard?.(card.id);
