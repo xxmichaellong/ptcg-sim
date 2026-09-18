@@ -173,6 +173,50 @@ export const LegacyWelcome = ({
               Paypal Donation Link
             </a>
           </h3>
+          <strong>SPONSOR TIERS</strong>
+          <br />
+          <br />
+          <strong>$5/mo - SoulSilver Tier</strong>
+          <ul>
+            <li>Custom flair on Discord &amp; open reign on self-nicknames.</li>
+            <li>Access to early beta testing.</li>
+            <li>
+              Shoutout in every changelog during the time you are subscribed
+              for.
+            </li>
+            <li>
+              Get a sponsor tag on your GitHub profile (if sponsoring via
+              GitHub, not applicable for sponsors through PayPal. Currently in
+              the process of getting my GH sponsor page approved 😛).
+            </li>
+            <li>My eternal thanks!!!!!</li>
+          </ul>
+          <strong>$25/mo - HeartGold Tier</strong>
+          <ul>
+            <li>Receive all of the benefits of the previous tiers.</li>
+            <li>
+              Access to an exclusive Discord channel for priority
+              suggestions/feature proposals/troubleshooting support.
+            </li>
+          </ul>
+          <strong>$100/mo - Platinum Tier</strong>
+          <ul>
+            <li>Receive all of the benefits of the previous tiers.</li>
+            <li>
+              Seriously do not think anyone will subscribe to this, but I would
+              be immensely grateful.
+            </li>
+            <li>Direct access to me (I will give you my phone number).</li>
+            <li>
+              I&apos;ll sign, kiss, and mail you a signed bulk card of your
+              choice (if I have it lol).
+            </li>
+          </ul>
+          <strong>$15 - One-time Donation</strong>
+          <ul>
+            <li>Shoutout in the next changelog.</li>
+            <li>My eternal thanks!!!!!</li>
+          </ul>
         </div>
       )}
     </>

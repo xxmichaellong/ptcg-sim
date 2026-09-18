@@ -12,7 +12,11 @@ import {
   type FormEvent,
 } from 'react';
 
-import { downloadDeckCsvText } from './deck-browser-io.js';
+import {
+  DECKLIST_CSV_FILENAME,
+  downloadDeckCsvText,
+  type DeckCsvDownloadDependencies,
+} from './deck-browser-io.js';
 import { importPastedDecklist } from './pasted-decklist-import.js';
 import type {
   ImportPastedDecklistOptions,
@@ -54,7 +58,10 @@ export interface LegacyDeckImportPanelProps {
   readonly open: boolean;
   readonly samples?: PopularDecklistSource;
   readonly importDecklist?: PastedDecklistImporter;
-  readonly downloadCsv?: (source: string) => boolean;
+  readonly downloadCsv?: (
+    source: string,
+    dependencies?: DeckCsvDownloadDependencies
+  ) => boolean;
   readonly onChangeCardBack?: (target: DeckBuilderTarget) => void;
 }
 
@@ -287,7 +294,13 @@ export const LegacyDeckImportPanel = ({
   };
 
   const saveReview = (): void => {
-    if (review) downloadCsv(serializeEditableDecklistRows(review.rows));
+    // v1's Save writes `decklist.csv`; the builder's Export Deck keeps its
+    // own `ptcg-sim-deck.csv`.
+    if (review) {
+      downloadCsv(serializeEditableDecklistRows(review.rows), {
+        filename: DECKLIST_CSV_FILENAME,
+      });
+    }
   };
 
   return (

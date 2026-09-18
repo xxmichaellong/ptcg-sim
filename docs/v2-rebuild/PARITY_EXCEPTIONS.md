@@ -32,6 +32,12 @@ security and persistence review where relevant, and release-note disposition.
 | PX-009 | A default administrative password can create a production authority boundary.                                                               | V2 inherits no default admin credential and fails closed when required deployment configuration is absent or invalid.                                        | `SECURITY_EXCEPTION` | SEC-001/SEC-003; server configuration, bundle-boundary, and telemetry redaction tests                           |
 | PX-010 | Solo undo derives from two client-side action histories, so interleaved shared changes have no single reliable last-command order.          | V2 keeps the same visible Solo-only Undo control but uses authoritative whole-match order, exact resolved outcomes, and a bounded 128-checkpoint tail.       | `APPROVED_FIX`       | ADR-014; game-core and room-authority solo-undo tests                                                           |
 
+## Open differences awaiting a product decision
+
+| ID     | V1 behavior                                                                                                                                              | V2 today                                                                                                                                                                                    | Status | Evidence                                  |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| PX-013 | `zones.js` registers the open `viewCards` / `attachedCards` popups as drop targets, so a card can be dragged from elsewhere into the set being resolved. | Dragging out of a popup works; dropping into one is refused as `unsupported_target`. Accepting it needs a command that inserts an arbitrary card into a work area, with its own invariants. | `OPEN` | `V1_FILE_AUDIT.md`; `resolveBoardDrop.ts` |
+
 ## Resolved after the 2026-09-17 audit
 
 The two behaviours the file-by-file audit left open were carried on the

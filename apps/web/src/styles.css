@@ -855,6 +855,56 @@ select {
   text-decoration: underline;
 }
 
+/* v1 authors these lists inline in index.ejs; the changelog fragment keeps
+   its own inline styles, so this only has to dress the donations page. */
+/* v1 pop-up-message.js: a white card centred over the play area (37.75% of
+   the window, i.e. the middle of the board half) with a single OK button. */
+.custom-popup {
+  position: fixed;
+  top: 50%;
+  left: 37.75%;
+  z-index: 9999;
+  padding: 20px;
+  border: 2px solid #424242;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 0 10px rgb(0 0 0 / 20%);
+  color: #111;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.custom-popup .popup-content {
+  text-align: center;
+}
+
+.custom-popup .popup-button {
+  display: block;
+  margin: 15px auto 0;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 5px;
+  background: #333;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.custom-popup .popup-button:hover {
+  background: #555;
+}
+
+#donationsPage ul {
+  margin-block: 10px 20px;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+#donationsPage li {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
 #changelog {
   cursor: pointer;
 }

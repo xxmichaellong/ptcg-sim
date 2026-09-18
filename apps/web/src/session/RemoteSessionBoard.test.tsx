@@ -308,6 +308,98 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it("offers v1's stop-revealing modal after a room reveal of an own hand card", async () => {
+    // v1 reveal-and-hide.js shows "Press OK to stop revealing card to
+    // opponent" when a player reveals a card from their own hand in a room;
+    // acknowledging it hides the card again.
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          onIntent={vi.fn()}
+          roomMode="multiplayer"
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const hand = Object.values(baseView.zones).find(
+      (zone) =>
+        zone.kind === 'hand' &&
+        baseView.viewer.kind === 'player' &&
+        zone.ownerId === baseView.viewer.playerId
+    )!;
+    const cardId = hand.cards[0]!.id;
+    const card = host.querySelector<HTMLElement>(`[data-card-id="${cardId}"]`)!;
+
+    await act(async () => card.click());
+    await act(async () => {
+      card.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'z',
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(session.submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SetPublicReveal',
+        cardId,
+        revealed: true,
+      })
+    );
+
+    const popup = host.querySelector<HTMLElement>('[data-legacy-popup]')!;
+    expect(popup.textContent).toContain(
+      'Press OK to stop revealing card to opponent'
+    );
+
+    // The room publishes the reveal; acknowledging then hides it again.
+    const revealed: MatchViewState = {
+      ...baseView,
+      revision: 11,
+      zones: {
+        ...baseView.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.map((entry) =>
+            entry.id === cardId && entry.kind === 'known'
+              ? { ...entry, publiclyRevealed: true, face: 'up' as const }
+              : entry
+          ),
+        },
+      },
+    };
+    await act(async () => {
+      session.publish({ ...session.getSnapshot(), view: revealed });
+    });
+    await waitForRevision(host, 11);
+    session.submit.mockClear();
+    await act(async () =>
+      popup.querySelector<HTMLButtonElement>('.popup-button')!.click()
+    );
+    expect(session.submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SetPublicReveal',
+        cardId,
+        revealed: false,
+      })
+    );
+    expect(host.querySelector('[data-legacy-popup]')).toBeNull();
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it('applies the hide-hand preference only to a live Solo display view', async () => {
     const disclosed = withDisclosedOpponentHand();
     const session = new FakeRemoteBoardSession({

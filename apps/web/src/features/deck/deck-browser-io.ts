@@ -13,6 +13,8 @@ import {
  */
 export const MAX_DECK_CSV_FILE_BYTES = 3_000_003;
 export const DECK_CSV_FILENAME = 'ptcg-sim-deck.csv';
+/** v1's deck-import review Save writes this name. */
+export const DECKLIST_CSV_FILENAME = 'decklist.csv';
 
 export type DeckCsvFileImportFailure =
   | { readonly ok: false; readonly reason: 'aborted' }
@@ -63,6 +65,8 @@ export const importDeckCsvFile = async (
 export interface DeckCsvDownloadDependencies {
   readonly document?: Document;
   readonly url?: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
+  /** v1 names the deck builder's export and the review Save differently. */
+  readonly filename?: string;
 }
 
 /** Downloads already-serialized deck CSV and always releases its object URL. */
@@ -90,7 +94,7 @@ export const downloadDeckCsvText = (
     );
     link = documentObject.createElement('a');
     link.href = objectUrl;
-    link.download = DECK_CSV_FILENAME;
+    link.download = dependencies.filename ?? DECK_CSV_FILENAME;
     link.style.display = 'none';
     documentObject.body.append(link);
     link.click();

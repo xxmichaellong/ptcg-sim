@@ -448,7 +448,11 @@
   .ptcgsim-legacy-work-area-header {
   top: auto;
   bottom: -3%;
+  /* opp-containers.css paints the upper frame's headers in the red seat
+     colour, as its resizer and counts are. */
+  border: 2px solid #c47083;
   border-radius: 0 0 15px 15px;
+  background: rgb(196 112 131);
   transform: translate(-50%, 50%);
 }
 

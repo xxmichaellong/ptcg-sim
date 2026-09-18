@@ -340,8 +340,10 @@ describe('LegacyDeckImportPanel', () => {
     await select(row.querySelector('select')!, 'Trainer');
     await editCell(cells[3]!, `  ${arbitraryUrl}  `);
     await click(host.querySelector('#saveButton')!);
+    // v1's review Save writes `decklist.csv`, not the builder's export name.
     expect(downloadCsv).toHaveBeenCalledWith(
-      `${CSV_HEADER_FOR_TEST}\n3,Handmade Card,Trainer,  ${arbitraryUrl}  `
+      `${CSV_HEADER_FOR_TEST}\n3,Handmade Card,Trainer,  ${arbitraryUrl}  `,
+      { filename: 'decklist.csv' }
     );
     expect(store.getSnapshot().slots.main.deck).toEqual({});
 

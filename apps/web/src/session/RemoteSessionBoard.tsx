@@ -2,7 +2,7 @@ import type {
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { PlayerId } from '@ptcgsim/game-core';
+import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   DEFAULT_BOARD_PREFERENCES,
@@ -23,6 +23,7 @@ import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortc
 import { ReactDomBoardResizeInteraction } from '../board/ReactDomBoardResizeInteraction.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import { refreshLegacyBoardImages } from '../board/refreshLegacyBoardImages.js';
+import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
 import {
   LegacyBoardOverlays,
   type LegacyBoardOverlayActions,
@@ -92,6 +93,22 @@ const boardFlipAllowed = (
   return view.playerOrder.every(
     (playerId) => view.players[playerId]?.coachingConsent === true
   );
+};
+
+/**
+ * True when the card is in the viewer's own hand, which is the only case v1
+ * follows a reveal with its "press OK to stop revealing" modal.
+ */
+const revealedOwnHandCardId = (
+  view: MatchViewState | undefined,
+  cardId: string
+): boolean => {
+  if (!view || view.viewer.kind !== 'player') return false;
+  const viewerPlayerId = view.viewer.playerId;
+  const hand = Object.values(view.zones).find(
+    (zone) => zone.kind === 'hand' && zone.ownerId === viewerPlayerId
+  );
+  return hand?.cards.some((card) => card.id === cardId) === true;
 };
 
 /** The seat the viewer would see at the bottom before any flip. */
@@ -192,6 +209,9 @@ export const RemoteSessionBoard = ({
   });
   const [layout, setLayout] = useState<BoardLayoutSnapshot>();
   const [refreshingImages, setRefreshingImages] = useState(false);
+  // v1 reveal-and-hide.js: revealing a card from your own hand in a room
+  // opens a modal that ends the reveal when it is acknowledged.
+  const [revealNotice, setRevealNotice] = useState<ViewCardId | null>(null);
   const imageRefreshGenerationRef = useRef(0);
 
   useEffect(
@@ -322,8 +342,21 @@ export const RemoteSessionBoard = ({
             return applyHandSortDisplay(covered, policy.sortedHandPlayerIds);
           },
           onIntent: (intent) => onIntentRef.current(intent),
-          onSubmission: (command, result) =>
-            onSubmissionRef.current?.(command, result),
+          onSubmission: (command, result) => {
+            onSubmissionRef.current?.(command, result);
+            if (
+              result.queued &&
+              command.type === 'SetPublicReveal' &&
+              command.revealed &&
+              displayPolicyRef.current.roomMode === 'multiplayer' &&
+              revealedOwnHandCardId(
+                runtimeRef.current?.getBoardSnapshot()?.view,
+                command.cardId
+              )
+            ) {
+              setRevealNotice(command.cardId as ViewCardId);
+            }
+          },
           reportError: (error) => console.error('[board-session]', error),
           reportRendererStatus: (status) => {
             if (!disposed) setRendererStatus(status);
@@ -633,6 +666,28 @@ export const RemoteSessionBoard = ({
           />
         </>
       ) : null}
+      {revealNotice !== null && (
+        <div className="custom-popup" data-legacy-popup="reveal">
+          <div className="popup-content">
+            Press OK to stop revealing card to opponent
+            <button
+              type="button"
+              className="popup-button"
+              autoFocus
+              onClick={() => {
+                const view = runtimeRef.current?.getBoardSnapshot()?.view;
+                const resolution = view
+                  ? resolvePublicCardVisibilityAction(view, revealNotice, false)
+                  : { ok: false as const };
+                if (resolution.ok) session.submit(resolution.command);
+                setRevealNotice(null);
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       <span
         className="renderer-status"
         role="status"

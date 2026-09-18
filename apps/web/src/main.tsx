@@ -1,6 +1,7 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
+import { announceMobileNotice } from './mobile-notice.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
 import './styles.css';
 
@@ -39,6 +40,9 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
       rendererKind,
       landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
     };
+
+// v1 tells a phone or tablet, once on load, that the sim expects a desktop.
+announceMobileNotice();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');

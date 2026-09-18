@@ -103,6 +103,34 @@ decision.
 | `client/src/assets/*`                                                   | Card back, blank logo, favicon, theme backgrounds.                                                                                                                                                                           | `apps/web/public/v2/assets/*`; theme backgrounds still load from `ptcgsim.online/src/assets`.                                                                                            | SAME     |
 | `server/server.js`                                                      | Express + Socket.IO rooms (2 players + spectators, reconnect grace), SQLite key/value store for share links, `/import?key=`, an admin password.                                                                              | Cloudflare Worker + Durable Object rooms with capabilities and invitations, continuation saves (ADR-012), no default admin credential (PX-009), share links deferred (ADR-021).          | IMPROVED |
 
+## Second pass (2026-09-18): the large files read in full
+
+The first pass covered every file; this pass re-read the ones that were only
+sampled -- `index.ejs` (1,023 lines), both frame documents, `index.css`
+(1,844 lines), `import.js`, `sample.decklists.js`, `native-deck-builder.js`,
+`socket-event-listeners.js`, `reveal-and-hide.js`, `resizer.js` -- element by
+element. Five gaps were found and closed:
+
+| Gap                                                                                                                 | v2 now                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `index.ejs` warns a phone or tablet on load that the sim expects a desktop.                                         | `announceMobileNotice` in `apps/web/src/mobile-notice.ts`, same user-agent list and wording. |
+| The Sponsors & Donations page lists four sponsor tiers; v2 stopped after the two links.                             | The tier lists are back in `LegacyWelcome`, styled like v1's inline `<ul>`.                  |
+| The upper frame paints its popup headers in the red seat colour (`opp-containers.css`), not the lower frame's blue. | The work-area popup header follows its side.                                                 |
+| The deck-import review's Save writes `decklist.csv`; only the builder's Export writes `ptcg-sim-deck.csv`.          | Both filenames are carried.                                                                  |
+| Revealing a card from your own hand in a room opens "Press OK to stop revealing card to opponent" (`showPopup`).    | The same modal, in v1's `custom-popup` markup and styling; OK submits the hide.              |
+
+Three v1 behaviours were deliberately not replicated, each for a reason:
+
+- **`keybindSleep.js`** freezes keybinds for 350 ms whenever a remote action
+  arrives, because v1 addresses cards by array index and a board that changed
+  underneath could make a keybind act on the wrong card. v2 addresses cards by
+  stable id and every command carries expectations that fail closed, so the
+  freeze would only add input latency.
+- **"Loading spectator view..."** marks v1's spectator catching up on the
+  action log. v2 spectators receive a projection; there is no catch-up phase.
+- **Dropping a card into an open work-area popup** (v1 lists `viewCards` and
+  `attachedCards` as drop targets): recorded as PX-013 below.
+
 ## Open items found by this audit
 
 Both items the audit left open (the flipped Solo board acting for the other
