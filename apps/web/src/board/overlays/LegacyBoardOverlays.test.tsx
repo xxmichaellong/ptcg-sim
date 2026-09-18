@@ -1,0 +1,1700 @@
+// @vitest-environment happy-dom
+
+import type { MatchViewState } from '@ptcgsim/game-core';
+import {
+  createBoardSceneForViewport,
+  createRendererSpikeView,
+  type CardSceneNode,
+} from '@ptcgsim/renderer-contract';
+import { act, createElement, StrictMode } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  createInitialBoardSessionControllerState,
+  type BoardSessionControllerState,
+} from '../BoardSessionController.js';
+import {
+  LegacyBoardOverlays,
+  legacyStackPreviewOrder,
+  legacyStackPreviewFrameStyle,
+  legacyZoneBrowserFrameStyle,
+  resolveOpenedZoneDropTarget,
+  selectLegacyContextEntries,
+  sortRecipientSafeZoneCards,
+  type LegacyBoardOverlayActions,
+} from './LegacyBoardOverlays.js';
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+const view = createRendererSpikeView();
+const firstPlayer = view.playerOrder[0]!;
+const scene = createBoardSceneForViewport(view, {
+  geometryVersion: 1,
+  viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+  bottomPlayerId: firstPlayer,
+  splitRatio: 0.5,
+});
+
+const state = (
+  patch: Partial<BoardSessionControllerState> = {}
+): BoardSessionControllerState => ({
+  ...createInitialBoardSessionControllerState(),
+  generation: 1,
+  sessionPhase: 'ready',
+  source: { kind: 'live' },
+  view,
+  scene,
+  canSubmitCommands: true,
+  ...patch,
+});
+
+const cardIn = (suffix: string): CardSceneNode => {
+  const card = scene.cards.find((candidate) =>
+    candidate.parentId.endsWith(suffix)
+  );
+  if (!card) throw new Error(`Missing fixture card in ${suffix}`);
+  return card;
+};
+
+const actions = (): LegacyBoardOverlayActions => ({
+  emitOpenedZoneCardIntent: vi.fn(),
+  dismiss: vi.fn(),
+  invokeContextAction: vi.fn(),
+  invokeZoneAction: vi.fn(),
+  submitDamageInput: vi.fn(),
+  submitSpecialConditionInput: vi.fn(),
+  submitCountInput: vi.fn(),
+  submitShortcutCountInput: vi.fn(),
+  submitCategoryChoice: vi.fn(),
+  submitMoveChoice: vi.fn(),
+});
+
+describe('legacy board overlays', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    host = document.createElement('div');
+    document.body.replaceChildren(host);
+    root = createRoot(host);
+  });
+
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('projects source iframe-relative overlays into physical player frames', () => {
+    const local = scene.layout.players.find((frame) => frame.side === 'local')!;
+    const opponent = scene.layout.players.find(
+      (frame) => frame.side === 'opponent'
+    )!;
+    expect(local.bounds).toEqual({
+      x: 0,
+      y: 360,
+      width: 1280,
+      height: 360,
+    });
+    expect(opponent.bounds).toEqual({
+      x: 0,
+      y: 0,
+      width: 1280,
+      height: 360,
+    });
+    const localStack = legacyStackPreviewFrameStyle(local, 'local');
+    expect(localStack).toMatchObject({
+      left: 640,
+      top: 540,
+      transform: 'translate(-50%, -50%)',
+    });
+    expect(localStack.width).toBeCloseTo(883.2, 10);
+    expect(localStack.height).toBeCloseTo(252, 10);
+    const opponentStack = legacyStackPreviewFrameStyle(opponent, 'opponent');
+    expect(opponentStack).toMatchObject({
+      left: 640,
+      top: 180,
+      transform: 'translate(-50%, -50%) rotate(180deg)',
+    });
+    expect(opponentStack.width).toBeCloseTo(883.2, 10);
+    expect(opponentStack.height).toBeCloseTo(252, 10);
+    expect(legacyZoneBrowserFrameStyle(local, 'local')).toEqual({
+      left: 640,
+      top: 540,
+      width: 1088,
+      height: 270,
+      transform: 'translate(-50%, -50%)',
+    });
+    expect(legacyZoneBrowserFrameStyle(opponent, 'opponent')).toEqual({
+      left: 640,
+      top: 68,
+      width: 1088,
+      height: 270,
+      transform: 'translateX(-50%)',
+    });
+  });
+
+  it('selects the source-ordered player menu without granting authority', () => {
+    const actionIds = (card: CardSceneNode) =>
+      selectLegacyContextEntries(state(), card)
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => entry.id);
+    const localHand = cardIn(`:${firstPlayer}:hand`);
+    expect(
+      selectLegacyContextEntries(state(), localHand).map((entry) => [
+        entry.kind,
+        entry.id,
+        entry.label,
+      ])
+    ).toEqual([
+      ['header', 'hand', 'Hand'],
+      ['action', 'discardHand', 'Discard hand'],
+      ['action', 'shuffleHandToDeck', 'Shuffle hand to deck'],
+      ['action', 'shuffleHandToDeckBottom', 'Shuffle hand to bottom'],
+      ['action', 'moveCard', 'Move card...'],
+      ['action', 'revealCard', 'Reveal/hide card'],
+    ]);
+
+    const opponent = view.playerOrder[1]!;
+    const opponentHand = cardIn(`:${opponent}:hand`);
+    expect(
+      selectLegacyContextEntries(state(), opponentHand)
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => entry.id)
+    ).toEqual([
+      'toggleOpponentHand',
+      'randomOpponentHandCard',
+      'moveCard',
+      'revealCard',
+    ]);
+
+    const active = cardIn('stack:blue:active');
+    expect(actionIds(active)).toEqual([
+      'toggleAbility',
+      'setDamage',
+      'setSpecialCondition',
+      'moveCard',
+      'revealCard',
+      'changeCardType',
+    ]);
+    expect(actionIds(cardIn(`:${firstPlayer}:prizes`))).toEqual([
+      'shufflePrizes',
+      'revealPrizes',
+      'togglePrizes',
+      'shufflePrizesToDeckBottom',
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(actionIds(cardIn(`:${firstPlayer}:deck`))).toEqual([
+      'shuffleDeck',
+      'drawCards',
+      'viewDeckTop',
+      'viewDeckBottom',
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(actionIds(cardIn(`:${firstPlayer}:board`))).toEqual([
+      'discardBoard',
+      'moveBoardToHand',
+      'shuffleBoardToDeck',
+      'moveBoardToLostZone',
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(actionIds(cardIn(`:${firstPlayer}:discard`))).toEqual([
+      'toggleAbility',
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(actionIds(cardIn(`:${firstPlayer}:lostZone`))).toEqual([
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(actionIds(cardIn('zone:shared:stadium'))).toEqual([
+      'toggleAbility',
+      'moveCard',
+      'revealCard',
+    ]);
+    expect(
+      selectLegacyContextEntries(
+        state({ source: { kind: 'replay' }, canSubmitCommands: false }),
+        localHand
+      )
+    ).toEqual([]);
+
+    const replayState = state({
+      source: {
+        kind: 'replay',
+        replayId: 'solo-replay',
+        playbackGeneration: 1,
+        frameIndex: 0,
+      },
+      canSubmitCommands: false,
+      replayLocalDisplay: {
+        disclosure: {
+          definitions: [],
+          zoneIds: [
+            `zone:${firstPlayer}:prizes`,
+            `zone:${opponent}:prizes`,
+            `zone:${opponent}:hand`,
+          ],
+          cards: [],
+        },
+        zoneModes: {},
+        cardModes: {},
+      },
+    });
+    expect(
+      selectLegacyContextEntries(
+        replayState,
+        cardIn(`:${firstPlayer}:prizes`)
+      ).map((entry) => [entry.kind, entry.id])
+    ).toEqual([
+      ['header', 'prizes'],
+      ['action', 'revealPrizes'],
+      ['action', 'togglePrizes'],
+      ['action', 'revealCard'],
+    ]);
+    expect(
+      selectLegacyContextEntries(replayState, cardIn(`:${opponent}:hand`)).map(
+        (entry) => [entry.kind, entry.id]
+      )
+    ).toEqual([
+      ['header', 'hand'],
+      ['action', 'toggleOpponentHand'],
+      ['action', 'revealCard'],
+    ]);
+    expect(
+      selectLegacyContextEntries(replayState, cardIn(`:${firstPlayer}:deck`))
+    ).toEqual([]);
+  });
+
+  it('gives the own-only menu entries to the seat at the bottom of a flipped board', () => {
+    // v1's selfView: after Alt-F in Solo the other seat's deck offers Draw
+    // and its hand the discard/shuffle entries, while the viewer's own hand
+    // reads as the opponent's.
+    const opponent = view.playerOrder[1]!;
+    const flippedScene = createBoardSceneForViewport(view, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: opponent,
+      splitRatio: 0.5,
+    });
+    const flipped = state({ scene: flippedScene });
+    const entryIds = (card: CardSceneNode) =>
+      selectLegacyContextEntries(flipped, card)
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => entry.id);
+    const opponentDeck = flippedScene.cards.find(
+      (card) =>
+        card.parentId.endsWith(`:${opponent}:deck`) &&
+        card.primaryAction?.kind === 'openZone'
+    )!;
+    expect(entryIds(opponentDeck)).toContain('drawCards');
+    const opponentHand = flippedScene.cards.find((card) =>
+      card.parentId.endsWith(`:${opponent}:hand`)
+    )!;
+    expect(entryIds(opponentHand)).toEqual(
+      expect.arrayContaining(['discardHand', 'shuffleHandToDeck'])
+    );
+    const ownHand = flippedScene.cards.find((card) =>
+      card.parentId.endsWith(`:${firstPlayer}:hand`)
+    )!;
+    expect(entryIds(ownHand)).toEqual(
+      expect.arrayContaining(['toggleOpponentHand', 'randomOpponentHandCard'])
+    );
+    expect(entryIds(ownHand)).not.toContain('discardHand');
+  });
+
+  it('delegates a focused context-menu action to controller-owned teardown', async () => {
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const callbacks = actions();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const menu = host.querySelector<HTMLElement>(
+      '[data-legacy-card-context-menu]'
+    );
+    expect(menu?.getAttribute('role')).toBe('menu');
+    const firstAction = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="discardHand"]'
+    );
+    expect(document.activeElement).toBe(firstAction);
+
+    firstAction?.click();
+    expect(callbacks.invokeContextAction).toHaveBeenCalledExactlyOnceWith(
+      'discardHand',
+      card.id
+    );
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+  });
+
+  it('recreates the ordered category submenu and delegates one typed choice', async () => {
+    const activeStack = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    const card = scene.cards.find((candidate) => candidate.id === cardId)!;
+    const callbacks = actions();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const trigger = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="changeCardType"]'
+    )!;
+    const submenu = host.querySelector<HTMLElement>(
+      '[data-context-submenu="changeCardType"]'
+    )!;
+    const choices = [
+      ...submenu.querySelectorAll<HTMLButtonElement>('[data-category-choice]'),
+    ];
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(choices.map((choice) => choice.textContent)).toEqual([
+      'to Energy',
+      'to Tool',
+      'to Pokémon',
+    ]);
+    expect(choices.map((choice) => choice.dataset.categoryChoice)).toEqual([
+      'Energy',
+      'Trainer',
+      'Pokémon',
+    ]);
+
+    await act(async () => {
+      trigger.focus();
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      await Promise.resolve();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[0]);
+
+    await act(async () => {
+      choices[0]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[1]);
+    await act(async () => {
+      choices[1]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'End',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[2]);
+    await act(async () => {
+      choices[2]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowLeft',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    await act(async () => trigger.click());
+    await act(async () => choices[1]!.click());
+    expect(callbacks.submitCategoryChoice).toHaveBeenCalledExactlyOnceWith(
+      card.id,
+      'Trainer'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+  });
+
+  it('recreates the ordered move submenu and delegates one typed choice', async () => {
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const callbacks = actions();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const trigger = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="moveCard"]'
+    )!;
+    const submenu = host.querySelector<HTMLElement>(
+      '[data-context-submenu="moveCard"]'
+    )!;
+    const choices = [
+      ...submenu.querySelectorAll<HTMLButtonElement>('[data-move-choice]'),
+    ];
+    expect(trigger.parentElement?.classList.contains('is-boundary')).toBe(true);
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(choices.map((choice) => choice.textContent)).toEqual([
+      'to Board',
+      'to Deck (top)',
+      'to Deck (bottom)',
+      'to Deck (switch)',
+      'to Deck (shuffle)',
+    ]);
+    expect(choices.map((choice) => choice.dataset.moveChoice)).toEqual([
+      'board',
+      'deckTop',
+      'deckBottom',
+      'deckSwitch',
+      'deckShuffle',
+    ]);
+
+    await act(async () => {
+      trigger.focus();
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      await Promise.resolve();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[0]);
+    await act(async () => {
+      choices[0]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'End',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[4]);
+    await act(async () => {
+      trigger.parentElement?.dispatchEvent(
+        new MouseEvent('mouseout', {
+          bubbles: true,
+          relatedTarget: document.body,
+        })
+      );
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[4]);
+    await act(async () => {
+      choices[4]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    await act(async () => trigger.click());
+    await act(async () => choices[3]!.click());
+    expect(callbacks.submitMoveChoice).toHaveBeenCalledExactlyOnceWith(
+      card.id,
+      'deckSwitch'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+  });
+
+  it('runs each controller count descriptor through one strict-safe native prompt', async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:deck`);
+    const prompt = vi
+      .fn()
+      .mockReturnValueOnce(' 3 ')
+      .mockReturnValueOnce('2.5')
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce('2');
+    const alert = vi.fn();
+    vi.stubGlobal('prompt', prompt);
+    vi.stubGlobal('alert', alert);
+    const renderInput = async (
+      input: NonNullable<BoardSessionControllerState['overlays']['input']>
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(
+            StrictMode,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                overlays: {
+                  contextMenuCardId: null,
+                  preview: null,
+                  input,
+                },
+              }),
+              darkMode: false,
+              actions: callbacks,
+            })
+          )
+        );
+      });
+    };
+
+    await renderInput({
+      kind: 'count',
+      action: 'drawCards',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'Draw how many cards?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(prompt).toHaveBeenCalledExactlyOnceWith('Draw how many cards?', '1');
+    expect(callbacks.submitCountInput).toHaveBeenCalledExactlyOnceWith(
+      'drawCards',
+      card.id,
+      ' 3 '
+    );
+
+    await renderInput({
+      kind: 'count',
+      action: 'viewDeckTop',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'How many cards do you want to look at?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the view amount.',
+    });
+    expect(alert).toHaveBeenCalledExactlyOnceWith(
+      'Please enter a valid number for the view amount.'
+    );
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+
+    await renderInput({
+      kind: 'count',
+      action: 'viewDeckBottom',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'How many cards do you want to look at?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the view amount.',
+    });
+    expect(prompt).toHaveBeenCalledTimes(3);
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(callbacks.dismiss).toHaveBeenCalledTimes(2);
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+
+    await renderInput({
+      kind: 'shortcutCount',
+      action: 'shuffleOwnHandAndDraw',
+      playerId: firstPlayer,
+      zoneId: `zone:${firstPlayer}:hand`,
+      message: 'Draw how many cards?',
+      initialValue: '0',
+      minimum: 0,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(prompt).toHaveBeenCalledTimes(4);
+    expect(callbacks.submitShortcutCountInput).toHaveBeenCalledExactlyOnceWith(
+      'shuffleOwnHandAndDraw',
+      '2'
+    );
+  });
+
+  it('projects recipient-safe card, stack, and zone images into source-shaped dialogs', async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:hand`);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host
+        .querySelector('[data-legacy-card-preview]')
+        ?.getAttribute('data-preview-kind')
+    ).toBe('card');
+    expect(
+      host
+        .querySelector<HTMLImageElement>('[data-overlay-card-id]')
+        ?.getAttribute('src')
+    ).toBe(card.imageUrl);
+
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const stackCards = scene.cards.filter(
+      (candidate) => candidate.parentId === stackId
+    );
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: {
+                kind: 'stack',
+                stackId,
+                focusCardId: stackCards[0]!.id,
+              },
+              input: null,
+            },
+          }),
+          darkMode: true,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll(
+        '[data-preview-kind="stack"] [data-overlay-card-id]'
+      )
+    ).toHaveLength(stackCards.length);
+
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              drag: null,
+              openedZoneId: discard.id,
+            },
+            overlays: { contextMenuCardId: null, preview: null, input: null },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const browser = host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser]'
+    );
+    expect(browser?.getAttribute('aria-label')).toContain(
+      `${discard.count} cards`
+    );
+    expect(
+      host.querySelectorAll('[data-legacy-zone-browser] [data-overlay-card-id]')
+    ).toHaveLength(discardCards.length);
+    expect(document.activeElement).toBe(
+      host.querySelector('[data-zone-close]')
+    );
+
+    const duplicate = host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser] [data-overlay-card-id]'
+    );
+    await act(async () => {
+      duplicate?.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+      );
+    });
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardContextRequested',
+      cardId: discardCards[0]!.id,
+    });
+  });
+
+  it('traps card-preview focus and exposes only the topmost nested dialog as modal', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const card = scene.cards.find(
+      (candidate) => candidate.parentId === discard.id
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              targetableCardIds: [],
+              drag: null,
+              openedZoneId: discard.id,
+            },
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const browser = host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser]'
+    )!;
+    const preview = host.querySelector<HTMLElement>(
+      '[data-preview-kind="card"]'
+    )!;
+    expect(preview.getAttribute('aria-modal')).toBe('true');
+    expect(browser.getAttribute('aria-modal')).toBeNull();
+    expect(browser.getAttribute('aria-hidden')).toBe('true');
+    expect(browser.hasAttribute('inert')).toBe(true);
+    expect(document.activeElement).toBe(preview);
+
+    const tab = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(preview.dispatchEvent(tab)).toBe(false);
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(preview);
+  });
+
+  it('keeps stable overlay-card geometry through arbitrary image failure and recovery', async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const renderPreview = async (imageUrl: string) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              scene: {
+                ...scene,
+                cards: scene.cards.map((candidate) =>
+                  candidate.id === card.id
+                    ? { ...candidate, imageUrl }
+                    : candidate
+                ),
+              },
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'card', cardId: card.id },
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+    };
+
+    await renderPreview('https://images.example.invalid/broken.png');
+    const wrapper = host.querySelector<HTMLElement>(
+      '[data-overlay-image-card-id]'
+    )!;
+    const image = wrapper.querySelector<HTMLImageElement>('img')!;
+    expect(wrapper.classList).toContain('is-preview');
+    expect(wrapper.getAttribute('data-overlay-image-state')).toBe('loading');
+
+    await act(async () => image.dispatchEvent(new Event('error')));
+    expect(wrapper.getAttribute('data-overlay-image-state')).toBe('failed');
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(getComputedStyle(wrapper).aspectRatio).toBe('5 / 7');
+    expect(getComputedStyle(image).opacity).toBe('0');
+
+    await renderPreview('https://images.example.invalid/recovered.png');
+    const stableWrapper = host.querySelector<HTMLElement>(
+      '[data-overlay-image-card-id]'
+    )!;
+    const stableImage = stableWrapper.querySelector<HTMLImageElement>('img')!;
+    expect(stableWrapper).toBe(wrapper);
+    expect(stableImage).toBe(image);
+    expect(stableWrapper.getAttribute('data-overlay-image-state')).toBe(
+      'loading'
+    );
+    await act(async () => stableImage.dispatchEvent(new Event('load')));
+    expect(stableWrapper.getAttribute('data-overlay-image-state')).toBe(
+      'ready'
+    );
+    expect(getComputedStyle(stableImage).opacity).toBe('1');
+  });
+
+  it('sorts only disclosed labels locally and restores authoritative scene order', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const canonicalCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const labels = ['Zulu', 'Alpha', 'Alpha'];
+    const relabeledCards = scene.cards.map((card) => {
+      const index = canonicalCards.findIndex(
+        (candidate) => candidate.id === card.id
+      );
+      return index === -1 ? card : { ...card, label: labels[index]! };
+    });
+    const overlayState = state({
+      scene: { ...scene, cards: relabeledCards },
+      presentation: {
+        selectedCardId: null,
+        hoveredCardId: null,
+        drag: null,
+        openedZoneId: discard.id,
+      },
+    });
+    const cardIds = () =>
+      [...host.querySelectorAll('[data-overlay-card-id]')].map((node) =>
+        node.getAttribute('data-overlay-card-id')
+      );
+
+    const concealedCards = [
+      { ...canonicalCards[1]!, label: 'Face-down card' },
+      { ...canonicalCards[0]!, label: 'Face-down card' },
+    ];
+    expect(
+      sortRecipientSafeZoneCards(concealedCards).map((card) => card.id)
+    ).toEqual([canonicalCards[1]!.id, canonicalCards[0]!.id]);
+    expect(concealedCards.map((card) => card.id)).toEqual([
+      canonicalCards[1]!.id,
+      canonicalCards[0]!.id,
+    ]);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+
+    const sort = host.querySelector<HTMLInputElement>(
+      '[data-zone-action="sortZone"]'
+    )!;
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(true);
+    expect(cardIds()).toEqual([
+      canonicalCards[1]!.id,
+      canonicalCards[2]!.id,
+      canonicalCards[0]!.id,
+    ]);
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(false);
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(true);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state(),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelector<HTMLInputElement>('[data-zone-action="sortZone"]')
+        ?.checked
+    ).toBe(false);
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+  });
+
+  it('keeps recipient-safe discard ability markers attached through local sorting', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const markedCard = discardCards[0]!;
+    const viewDiscard = view.zones[discard.id]!;
+    const markedView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [discard.id]: {
+          ...viewDiscard,
+          cards: viewDiscard.cards.map((card) =>
+            card.id === markedCard.id && card.kind === 'known'
+              ? { ...card, abilityUsed: true }
+              : card
+          ),
+        },
+      },
+    };
+    const opened = (nextView: typeof view) =>
+      state({
+        view: nextView,
+        presentation: {
+          selectedCardId: null,
+          hoveredCardId: null,
+          targetableCardIds: [],
+          drag: null,
+          openedZoneId: discard.id,
+        },
+      });
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(markedView),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const markerSelector = `[data-opened-zone-ability-marker][data-marker-card-id="${markedCard.id}"]`;
+    const marker = host.querySelector<HTMLElement>(markerSelector)!;
+    expect(marker).not.toBeNull();
+    expect(marker.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      marker
+        .closest('[data-overlay-card-id]')
+        ?.getAttribute('data-overlay-card-id')
+    ).toBe(markedCard.id);
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(1);
+
+    await act(async () =>
+      host
+        .querySelector<HTMLInputElement>('[data-zone-action="sortZone"]')!
+        .click()
+    );
+    expect(
+      host
+        .querySelector<HTMLElement>(markerSelector)
+        ?.closest('[data-overlay-card-id]')
+        ?.getAttribute('data-overlay-card-id')
+    ).toBe(markedCard.id);
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(view),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(0);
+
+    const deck = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:deck`
+    )!;
+    const viewDeck = view.zones[deck.id]!;
+    const invalidDeckView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [deck.id]: {
+          ...viewDeck,
+          cards: viewDeck.cards.map((card, index) =>
+            index === 0 && card.kind === 'known'
+              ? { ...card, abilityUsed: true }
+              : card
+          ),
+        },
+      },
+    };
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            view: invalidDeckView,
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              targetableCardIds: [],
+              drag: null,
+              openedZoneId: deck.id,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-opened-zone-ability-marker]')
+    ).toHaveLength(0);
+  });
+
+  it('routes writable opened-zone drags through the shared scene hit test', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const hand = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:hand`
+    )!;
+    const overlayState = state({
+      presentation: {
+        selectedCardId: discardCards[0]!.id,
+        hoveredCardId: null,
+        targetableCardIds: [],
+        drag: null,
+        openedZoneId: discard.id,
+      },
+    });
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: scene.viewport.width,
+      bottom: scene.viewport.height,
+      width: scene.viewport.width,
+      height: scene.viewport.height,
+      toJSON: () => ({}),
+    });
+    const source = host.querySelector<HTMLButtonElement>(
+      `[data-overlay-card-id="${discardCards[0]!.id}"]`
+    )!;
+    expect(source.getAttribute('draggable')).toBe('true');
+    const transfer = {
+      dropEffect: 'none',
+      effectAllowed: 'none',
+      setData: vi.fn(),
+    };
+    const event = (type: string, clientX = 0, clientY = 0): Event => {
+      const dispatched = new Event(type, {
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperties(dispatched, {
+        clientX: { value: clientX },
+        clientY: { value: clientY },
+        dataTransfer: { value: transfer },
+      });
+      return dispatched;
+    };
+
+    await act(async () => source.dispatchEvent(event('dragstart')));
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('selection');
+    expect(transfer.effectAllowed).toBe('move');
+    expect(transfer.setData).toHaveBeenCalledExactlyOnceWith(
+      'application/x-ptcgsim-opened-zone-card',
+      'card'
+    );
+    expect(
+      host
+        .querySelector('[data-legacy-zone-browser]')
+        ?.getAttribute('data-zone-dragging-card')
+    ).toBe(String(discardCards[0]!.id));
+
+    const targetX = hand.bounds.x + hand.bounds.width / 2;
+    const targetY = hand.bounds.y + hand.bounds.height / 2;
+    await act(async () =>
+      document.dispatchEvent(event('drop', targetX, targetY))
+    );
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardDropRequested',
+      cardId: discardCards[0]!.id,
+      targetId: hand.id,
+      x: targetX,
+      y: targetY,
+    });
+    expect(
+      host
+        .querySelector('[data-legacy-zone-browser]')
+        ?.hasAttribute('data-zone-dragging-card')
+    ).toBe(false);
+
+    expect(
+      resolveOpenedZoneDropTarget(
+        scene,
+        { left: 100, top: 50, width: 640, height: 360 },
+        discardCards[0]!.id,
+        100 + (targetX * 640) / scene.viewport.width,
+        50 + (targetY * 360) / scene.viewport.height
+      )
+    ).toBe(hand.id);
+    expect(
+      resolveOpenedZoneDropTarget(
+        scene,
+        { left: 0, top: 0, width: 0, height: 0 },
+        discardCards[0]!.id,
+        targetX,
+        targetY
+      )
+    ).toBeNull();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: { ...overlayState, canSubmitCommands: false },
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const readOnly = host.querySelector<HTMLButtonElement>(
+      `[data-overlay-card-id="${discardCards[0]!.id}"]`
+    )!;
+    expect(readOnly.getAttribute('draggable')).toBe('false');
+    await act(async () => readOnly.dispatchEvent(event('dragstart')));
+    expect(callbacks.dismiss).toHaveBeenCalledTimes(1);
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves the source discard confirmation without adding one to deck shuffle', async () => {
+    const callbacks = actions();
+    const confirm = vi
+      .fn()
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+    vi.stubGlobal('confirm', confirm);
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const opened = (zoneId: string) =>
+      state({
+        presentation: {
+          selectedCardId: null,
+          hoveredCardId: null,
+          targetableCardIds: [],
+          drag: null,
+          openedZoneId: zoneId,
+        },
+      });
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(discard.id),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const discardAction = host.querySelector<HTMLButtonElement>(
+      '[data-zone-action="shuffleDiscardToDeck"]'
+    )!;
+    await act(async () => discardAction.click());
+    expect(confirm).toHaveBeenCalledExactlyOnceWith(
+      'Are you sure you want to shuffle all cards into the deck?'
+    );
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => discardAction.click());
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
+      'shuffleDiscardToDeck',
+      discard.id
+    );
+
+    const deck = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:deck`
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: opened(deck.id),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('[data-zone-action="shuffleDeck"]')!
+        .click()
+    );
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(callbacks.invokeZoneAction).toHaveBeenNthCalledWith(
+      2,
+      'shuffleDeck',
+      deck.id
+    );
+  });
+
+  it('preserves the external opener across StrictMode focus-effect replay', async () => {
+    const callbacks = actions();
+    const opener = document.createElement('button');
+    opener.textContent = 'Open deck';
+    document.body.prepend(opener);
+    opener.focus();
+    const deck = scene.zones.find(
+      (candidate) =>
+        candidate.id === `zone:${firstPlayer}:deck` && candidate.interactive
+    )!;
+    const renderOpenedZone = async (openedZoneId: string | null) => {
+      await act(async () => {
+        root.render(
+          createElement(
+            StrictMode,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                presentation: {
+                  selectedCardId: null,
+                  hoveredCardId: null,
+                  drag: null,
+                  openedZoneId,
+                },
+              }),
+              darkMode: false,
+              actions: callbacks,
+            })
+          )
+        );
+        await Promise.resolve();
+      });
+    };
+
+    await renderOpenedZone(deck.id);
+    expect(document.activeElement).toBe(
+      host.querySelector('[data-zone-close]')
+    );
+
+    await renderOpenedZone(null);
+    expect(host.querySelector('[data-legacy-zone-browser]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('anchors a bounded temporary damage editor without mutating scene markers', async () => {
+    const callbacks = actions();
+    const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const marker = scene.markers.find(
+      (candidate) =>
+        candidate.parentCardId === cardId && candidate.kind === 'damage'
+    )!;
+    const markerSnapshot = JSON.stringify(scene.markers);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: null,
+              input: { kind: 'damage', cardId, initialValue: '120' },
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const editor = host.querySelector<HTMLDivElement>(
+      '[data-legacy-marker-editor="damage"]'
+    )!;
+    expect(editor.textContent).toBe('120');
+    expect(editor.getAttribute('role')).toBe('textbox');
+    expect(editor.getAttribute('aria-label')).toBe('Damage counter');
+    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
+      marker.bounds.x,
+      5
+    );
+    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
+    expect(Number.parseFloat(editor.style.width)).toBeCloseTo(
+      marker.bounds.width,
+      5
+    );
+    expect(Number.parseFloat(editor.style.height)).toBeCloseTo(
+      marker.bounds.height,
+      5
+    );
+
+    await act(async () => {
+      editor.focus();
+      editor.blur();
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+    vi.mocked(callbacks.dismiss).mockClear();
+
+    await act(async () => {
+      editor.focus();
+      editor.textContent = '70.5';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(editor.getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(editor);
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+
+    await act(async () => {
+      editor.textContent = '70';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(callbacks.submitDamageInput).toHaveBeenCalledExactlyOnceWith(
+      cardId,
+      '70'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
+    expect(JSON.stringify(scene.markers)).toBe(markerSnapshot);
+
+    vi.mocked(callbacks.submitDamageInput).mockClear();
+    await act(async () => {
+      editor.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledWith('input');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+  });
+
+  it('anchors the active condition editor and follows the legacy draft palette', async () => {
+    const callbacks = actions();
+    const legacyScene = createBoardSceneForViewport(view, {
+      geometryVersion: 1,
+      viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const marker = legacyScene.markers.find(
+      (candidate) =>
+        candidate.parentCardId === cardId &&
+        candidate.kind === 'specialCondition'
+    )!;
+    const markerSnapshot = JSON.stringify(legacyScene.markers);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            scene: legacyScene,
+            overlays: {
+              contextMenuCardId: null,
+              preview: null,
+              input: {
+                kind: 'specialCondition',
+                cardId,
+                initialValue: 'Poisoned',
+              },
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const editor = host.querySelector<HTMLDivElement>(
+      '[data-legacy-marker-editor="specialCondition"]'
+    )!;
+    expect(editor.textContent).toBe('Poisoned');
+    expect(editor.getAttribute('aria-label')).toBe('Special condition');
+    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
+      marker.bounds.x,
+      5
+    );
+    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
+    // An unrecognised condition draws v1's white circle with black text.
+    expect(editor.style.background).toBe('rgb(255, 255, 255)');
+    expect(editor.style.color).toBe('rgb(0, 0, 0)');
+
+    await act(async () => {
+      editor.focus();
+      editor.textContent = 'Pa';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    });
+    expect(editor.style.background).toBe('rgb(255, 255, 0)');
+    expect(editor.style.color).toBe('rgb(0, 0, 0)');
+
+    await act(async () => {
+      editor.textContent = 'condition text too long';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(editor.getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(editor);
+    expect(callbacks.submitSpecialConditionInput).not.toHaveBeenCalled();
+
+    await act(async () => {
+      editor.textContent = ' B ';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(
+      callbacks.submitSpecialConditionInput
+    ).toHaveBeenCalledExactlyOnceWith(cardId, ' B ');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+    expect(JSON.stringify(legacyScene.markers)).toBe(markerSnapshot);
+  });
+  it('paints the source work-area popup with its cards and bulk buttons', async () => {
+    // Move two of the fixture's hand cards into a "Looking at cards..."
+    // inspection; the scene lays them out where v1's popup images sit and
+    // the overlay draws the popup around them.
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === firstPlayer
+    )!;
+    const [first, second] = hand.cards;
+    if (!first || !second) throw new Error('Fixture hand is too small');
+    const inspectingView: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+      },
+      workAreas: {
+        ...view.workAreas,
+        [firstPlayer]: {
+          inspection: {
+            id: 'work-area:inspection',
+            cards: [first, second],
+            sourceZoneId: hand.id,
+          },
+          attachmentResolution: null,
+        },
+      },
+    };
+    const inspectingScene = createBoardSceneForViewport(inspectingView, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    const callbacks = {
+      ...actions(),
+      emitCardIntent: vi.fn(),
+      invokeWorkAreaAction: vi.fn(),
+    };
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({ view: inspectingView, scene: inspectingScene }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const panel = host.querySelector<HTMLElement>(
+      '[data-legacy-work-area="inspection"]'
+    )!;
+    const zone = inspectingScene.zones.find(
+      (candidate) => candidate.id === 'work-area:inspection'
+    )!;
+    const local = inspectingScene.layout.players.find(
+      (frame) => frame.side === 'local'
+    )!;
+    // 69% x 75% of the player's frame plus 20px padding and a 1px border,
+    // centred in the frame.
+    expect(zone.bounds.width).toBeCloseTo(local.bounds.width * 0.69 + 42);
+    expect(zone.bounds.height).toBeCloseTo(local.bounds.height * 0.75 + 42);
+    expect(zone.bounds.x + zone.bounds.width / 2).toBeCloseTo(
+      local.bounds.x + local.bounds.width / 2
+    );
+    expect(Number.parseFloat(panel.style.left)).toBeCloseTo(zone.bounds.x);
+    expect(Number.parseFloat(panel.style.width)).toBeCloseTo(zone.bounds.width);
+    expect(
+      panel.querySelector('.ptcgsim-legacy-work-area-header')?.textContent
+    ).toBe('Looking at cards...');
+    expect(
+      [...panel.querySelectorAll('[data-work-area-action]')].map(
+        (button) => button.textContent
+      )
+    ).toEqual([
+      'Discard all',
+      'Shuffle all',
+      'Shuffle to bottom',
+      'Lost Zone all',
+      'To Hand',
+    ]);
+
+    const cards = [
+      ...panel.querySelectorAll<HTMLButtonElement>('[data-work-area-card-id]'),
+    ];
+    expect(cards.map((card) => card.dataset.workAreaCardId)).toEqual([
+      first.id,
+      second.id,
+    ]);
+    // Each popup card sits exactly over its scene card (33% of the content
+    // height, flowing left to right).
+    const firstNode = inspectingScene.cards.find(
+      (card) => card.id === first.id
+    )!;
+    expect(firstNode.bounds.height).toBeCloseTo(
+      local.bounds.height * 0.75 * 0.33
+    );
+    expect(zone.bounds.x + Number.parseFloat(cards[0]!.style.left)).toBeCloseTo(
+      firstNode.bounds.x
+    );
+    expect(zone.bounds.y + Number.parseFloat(cards[0]!.style.top)).toBeCloseTo(
+      firstNode.bounds.y
+    );
+    const secondNode = inspectingScene.cards.find(
+      (card) => card.id === second.id
+    )!;
+    expect(secondNode.bounds.x).toBeGreaterThan(firstNode.bounds.x);
+    expect(secondNode.bounds.y).toBe(firstNode.bounds.y);
+
+    await act(async () => {
+      cards[1]!.click();
+    });
+    expect(callbacks.emitCardIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardSelected',
+      cardId: second.id,
+    });
+    await act(async () => {
+      panel
+        .querySelector<HTMLButtonElement>(
+          '[data-work-area-action="shuffleBottom"]'
+        )!
+        .click();
+    });
+    expect(callbacks.invokeWorkAreaAction).toHaveBeenCalledExactlyOnceWith(
+      'inspection',
+      'shuffleBottom'
+    );
+
+    // A spectator sees the popup but none of its bulk buttons.
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            view: { ...inspectingView, viewer: { kind: 'spectator' } },
+            scene: inspectingScene,
+            canSubmitCommands: false,
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelectorAll('[data-legacy-work-area] [data-work-area-action]')
+    ).toHaveLength(0);
+    expect(
+      host.querySelector<HTMLButtonElement>('[data-work-area-card-id]')
+        ?.disabled
+    ).toBe(true);
+  });
+  it('lists a stack preview top card first and then its attachments newest-first, as v1 does', () => {
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const original = view.stacks[stackId]!;
+    // Give the fixture's active a second stage and a second attachment by
+    // borrowing two hand cards, then lay it out again.
+    const hand = view.zones[`zone:${firstPlayer}:hand`]!;
+    const [stage, extra] = hand.cards;
+    if (!stage || !extra) throw new Error('Fixture hand is too small');
+    const stack = {
+      ...original,
+      evolutionCards: [...original.evolutionCards, stage],
+      attachmentCards: [...original.attachmentCards, extra],
+    };
+    const richScene = createBoardSceneForViewport(
+      {
+        ...view,
+        zones: {
+          ...view.zones,
+          [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+        },
+        stacks: { ...view.stacks, [stackId]: stack },
+      },
+      {
+        geometryVersion: 1,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        bottomPlayerId: firstPlayer,
+        splitRatio: 0.5,
+      }
+    );
+    const cards = richScene.cards.filter((card) => card.parentId === stackId);
+    expect(cards).toHaveLength(
+      stack.evolutionCards.length + stack.attachmentCards.length
+    );
+    const ordered = legacyStackPreviewOrder(stack, cards).map(
+      (card) => card.id
+    );
+    expect(ordered).toEqual([
+      stack.evolutionCards.at(-1)!.id,
+      ...[...stack.attachmentCards].reverse().map((card) => card.id),
+      ...stack.evolutionCards
+        .slice(0, -1)
+        .reverse()
+        .map((card) => card.id),
+    ]);
+  });
+});

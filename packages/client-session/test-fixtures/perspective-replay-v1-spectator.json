@@ -1,0 +1,63 @@
+{
+  "format": "ptcgsim-perspective-replay",
+  "formatVersion": 1,
+  "integrity": {
+    "algorithm": "SHA-256",
+    "digest": "7e443c930a5d4aea660e50631a5f7a8afddb7e6bb824a27b494b79c8d8095995"
+  },
+  "privacy": {
+    "canonicalState": false,
+    "kind": "viewer-projection",
+    "resumable": false,
+    "viewer": { "kind": "spectator" }
+  },
+  "protocolVersion": 2,
+  "replay": {
+    "endRevision": 0,
+    "frames": [
+      {
+        "presentationEvents": [],
+        "snapshot": {
+          "boards": {
+            "blue": { "activeStackId": null, "benchStackIds": [] },
+            "red": { "activeStackId": null, "benchStackIds": [] }
+          },
+          "definitions": {},
+          "lifecycle": "lobby",
+          "matchId": "fixture-match",
+          "playerOrder": ["blue", "red"],
+          "players": {
+            "blue": {
+              "cardBackUrl": "/v2/assets/cardback.png",
+              "coachingConsent": false,
+              "displayName": "Blue",
+              "id": "blue",
+              "oncePerGame": { "gxUsed": false, "vstarUsed": false }
+            },
+            "red": {
+              "cardBackUrl": "https://images.example.test/red-back.png",
+              "coachingConsent": false,
+              "displayName": "Red",
+              "id": "red",
+              "oncePerGame": { "gxUsed": false, "vstarUsed": false }
+            }
+          },
+          "privateInspections": [],
+          "revision": 0,
+          "stacks": {},
+          "turn": { "currentPlayerId": "blue", "number": 0 },
+          "viewer": { "kind": "spectator" },
+          "workAreas": {
+            "blue": { "attachmentResolution": null, "inspection": null },
+            "red": { "attachmentResolution": null, "inspection": null }
+          },
+          "zones": {}
+        }
+      }
+    ],
+    "replayId": "file-v1-golden-spectator",
+    "startRevision": 0,
+    "truncated": false,
+    "viewer": { "kind": "spectator" }
+  }
+}
