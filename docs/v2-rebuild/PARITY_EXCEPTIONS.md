@@ -2,7 +2,7 @@
 
 - Status: **accepted seed register; expand when a newly discovered behavior is
   classified**
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-23
 - Scope: intentional v2 departures from observable v1 behavior
 
 ## Rule
