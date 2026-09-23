@@ -120,6 +120,54 @@ describe('ephemeral room chat service', () => {
     });
   });
 
+  it('attributes a line to the seat the sender is acting for, or fails closed', async () => {
+    let messageId = 0;
+    const setup = serviceFixture({
+      nextMessageIdCandidate: () => `attribution-${++messageId}`,
+    });
+    // An ordinary room: the other seat is not this player's to speak for.
+    await expect(
+      setup.service.prepareDelivery({
+        snapshot: snapshot(),
+        sessionId: 'player',
+        connectionId: 'connection-one',
+        message: 'from the bottom seat',
+        targetPlayerId: opponentId,
+      })
+    ).resolves.toMatchObject({
+      accepted: true,
+      message: { playerId, displayName: 'Authenticated Player' },
+    });
+
+    // Solo: v1's flipped board speaks as the seat at the bottom.
+    await expect(
+      setup.service.prepareDelivery({
+        snapshot: { ...snapshot(), mode: 'solo' },
+        sessionId: 'player',
+        connectionId: 'connection-two',
+        message: 'from the bottom seat',
+        targetPlayerId: opponentId,
+      })
+    ).resolves.toMatchObject({
+      accepted: true,
+      message: { playerId: opponentId, displayName: 'Opponent' },
+    });
+
+    // A seat that is not in the room cannot be borrowed either.
+    await expect(
+      setup.service.prepareDelivery({
+        snapshot: { ...snapshot(), mode: 'solo' },
+        sessionId: 'player',
+        connectionId: 'connection-three',
+        message: 'from nobody',
+        targetPlayerId: 'not-a-player',
+      })
+    ).resolves.toMatchObject({
+      accepted: true,
+      message: { playerId, displayName: 'Authenticated Player' },
+    });
+  });
+
   it('fails closed without consuming the durable budget when time is invalid', async () => {
     const setup = serviceFixture({ now: () => Number.NaN });
 

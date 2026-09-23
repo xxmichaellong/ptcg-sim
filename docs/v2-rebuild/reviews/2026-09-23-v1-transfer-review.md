@@ -55,6 +55,26 @@ reviewer stated them.
   wallpaper, its `-200px` offset, its 75% white gradient and the 85% `#cover`
   sheet on the room route. The radial gradient the finding cites is the outer
   app shell behind that route. The prize-sizing half stands.
+- **F-10 closed.** The three ephemeral paths now carry the seat the sender is
+  acting for -- v1's `systemState.initiator`, which a flipped board moves to
+  the other seat -- for chat lines, mulligan declarations and deck-view
+  declarations. The room authenticates the request against the sender's own
+  seat and v1's flip rules (Solo, or a room where both players enabled board
+  flip) and falls back to the sender's seat otherwise, so it asks for
+  attribution rather than asserting it; a name that is not a seat in the room
+  is refused the same way. Evidence: `session-acting-seat.test.ts`,
+  `room-chat.test.ts`, `session-hub.test.ts`,
+  `RemoteRoomLiveControls.test.tsx`. v1's other deck-view wording, where the
+  deck owner differs from the actor, belongs to its deck-cover click; v2's
+  `V` keybind opens the acting seat's own deck, which is v1's keybind path.
+- **`.vscode/launch.json` corrected.** It launched Chrome against the legacy
+  `localhost:4000`; it now points at the v2 dev server.
+- **F-09 closed.** `scripts/generate-legacy-old-card-types.mjs` replaces v1's
+  `find-old-type-database_updater.py`: same upstream corpus, same key and
+  run-length shape, run with `--data <clone>`, plus a `--check` mode that
+  reports every committed threshold a newer corpus would contradict and counts
+  the keys it adds. The provenance comment in `legacy-card-type-lookup.ts`
+  now points at it. Evidence: `generate-legacy-old-card-types.test.mjs`.
 - **B-01 explained.** The renderer-churn spec navigates to the lobby when the
   Vite dev server hot-reloads mid-run, which is what concurrent edits to the
   workspace during the review caused. The same spec passes on a quiet tree:

@@ -277,19 +277,19 @@ export class BoardSessionRuntime {
   }
 
   /** Route-owned keyboard seam for an ephemeral, non-command declaration. */
-  declareMulligan(): boolean {
+  declareMulligan(actingPlayerId?: string): boolean {
     this.assertUsable();
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
-    return adapter.declareMulligan();
+    return adapter.declareMulligan(actingPlayerId);
   }
 
   /** Route-owned keyboard seam for an ephemeral deck-view declaration. */
-  declareDeckView(): boolean {
+  declareDeckView(actingPlayerId?: string): boolean {
     this.assertUsable();
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
-    return adapter.declareDeckView();
+    return adapter.declareDeckView(actingPlayerId);
   }
 
   /** Reconstructs the current recipient-safe scene without changing game state. */

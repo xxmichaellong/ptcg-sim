@@ -251,7 +251,8 @@ describe('RemoteRoomLiveControls', () => {
       enter = pressEnter(message);
     });
     expect(enter.defaultPrevented).toBe(true);
-    expect(session.sendChat).toHaveBeenCalledWith('hello room');
+    // The line is attributed to the seat the sidebar is acting for.
+    expect(session.sendChat).toHaveBeenCalledWith('hello room', 'spike-blue');
     expect(message.value).toBe('');
 
     await act(async () => {
@@ -275,7 +276,7 @@ describe('RemoteRoomLiveControls', () => {
       element<HTMLButtonElement>(host, '#p2SetupButton').click();
       element<HTMLButtonElement>(host, '#p2ResetButton').click();
     });
-    expect(session.sendChat).toHaveBeenCalledWith('🌺');
+    expect(session.sendChat).toHaveBeenCalledWith('🌺', 'spike-blue');
     expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
       { type: 'DeclareAttack', targetPlayerId: playerId },
       { type: 'PassTurn', targetPlayerId: playerId },
@@ -462,7 +463,11 @@ describe('RemoteRoomLiveControls', () => {
       pressEnter(message);
       element<HTMLButtonElement>(host, '#leaveRoomButton').click();
     });
-    expect(session.sendChat).toHaveBeenCalledWith('spectator message');
+    // A spectator has no seat to act for, so attribution stays theirs.
+    expect(session.sendChat).toHaveBeenCalledWith(
+      'spectator message',
+      undefined
+    );
     expect(onLeave).not.toHaveBeenCalled();
 
     await act(async () =>

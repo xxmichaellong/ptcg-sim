@@ -282,7 +282,13 @@ export class RemoteGameSession {
     return { queued: true, commandId, clientSequence };
   }
 
-  sendChat(message: string): boolean {
+  /**
+   * `actingPlayerId` names the seat the sender is acting for -- v1's
+   * `systemState.initiator`, which a flipped board moves to the other seat.
+   * The room authenticates it and falls back to the sender's own seat, so it
+   * asks for attribution rather than asserting it.
+   */
+  sendChat(message: string, actingPlayerId?: string): boolean {
     if (this.state.phase !== 'ready') return false;
     const normalized = message.trim();
     if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
@@ -292,28 +298,35 @@ export class RemoteGameSession {
       type: 'SendChat',
       protocolVersion: PROTOCOL_VERSION,
       message: normalized,
+      ...(actingPlayerId === undefined
+        ? {}
+        : { targetPlayerId: actingPlayerId }),
     });
   }
 
-  /** Sends no player identity; the bound room session owns attribution. */
-  declareMulligan(): boolean {
+  declareMulligan(actingPlayerId?: string): boolean {
     if (this.state.phase !== 'ready' || this.state.role !== 'player') {
       return false;
     }
     return this.send({
       type: 'DeclareMulligan',
       protocolVersion: PROTOCOL_VERSION,
+      ...(actingPlayerId === undefined
+        ? {}
+        : { targetPlayerId: actingPlayerId }),
     });
   }
 
-  /** Sends no player or zone identity; the bound room session owns attribution. */
-  declareDeckView(): boolean {
+  declareDeckView(actingPlayerId?: string): boolean {
     if (this.state.phase !== 'ready' || this.state.role !== 'player') {
       return false;
     }
     return this.send({
       type: 'DeclareDeckView',
       protocolVersion: PROTOCOL_VERSION,
+      ...(actingPlayerId === undefined
+        ? {}
+        : { targetPlayerId: actingPlayerId }),
     });
   }
 

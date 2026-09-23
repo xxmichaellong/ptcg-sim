@@ -57,6 +57,8 @@ export class RoomChatService {
     readonly sessionId: string;
     readonly connectionId: string;
     readonly message: string;
+    /** The seat the sender is acting for; authenticated, never trusted. */
+    readonly targetPlayerId?: string;
   }): Promise<RoomChatPreparation> {
     const session = input.snapshot.sessions[input.sessionId];
     if (!session?.active) {
@@ -113,7 +115,8 @@ export class RoomChatService {
 
       const identity = sessionPresentationIdentity(
         input.snapshot,
-        input.sessionId
+        input.sessionId,
+        input.targetPlayerId
       );
       if (!identity) {
         throw new Error('Chat session has no presentation identity');

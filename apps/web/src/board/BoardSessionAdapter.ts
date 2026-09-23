@@ -210,17 +210,18 @@ export class BoardSessionAdapter {
   }
 
   /** Sends an ephemeral room declaration only from a writable live player view. */
-  declareMulligan(): boolean {
-    return this.declareFromLivePlayer('declareMulligan');
+  declareMulligan(actingPlayerId?: string): boolean {
+    return this.declareFromLivePlayer('declareMulligan', actingPlayerId);
   }
 
   /** Sends an ephemeral room declaration only from a writable live player view. */
-  declareDeckView(): boolean {
-    return this.declareFromLivePlayer('declareDeckView');
+  declareDeckView(actingPlayerId?: string): boolean {
+    return this.declareFromLivePlayer('declareDeckView', actingPlayerId);
   }
 
   private declareFromLivePlayer(
-    declaration: 'declareMulligan' | 'declareDeckView'
+    declaration: 'declareMulligan' | 'declareDeckView',
+    actingPlayerId?: string
   ): boolean {
     if (this.disposed) return false;
     const replay = this.options.replay.getSnapshot();
@@ -233,7 +234,7 @@ export class BoardSessionAdapter {
     ) {
       return false;
     }
-    return this.options.live[declaration]?.() ?? false;
+    return this.options.live[declaration]?.(actingPlayerId) ?? false;
   }
 
   refreshScene(): boolean {

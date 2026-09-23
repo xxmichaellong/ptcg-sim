@@ -1209,6 +1209,9 @@ describe('serialized room session hub', () => {
         type: 'DeclareMulligan',
         protocolVersion: PROTOCOL_VERSION,
         playerId: p2,
+        // An ordinary room has no flipped acting seat to borrow, so the
+        // request falls back to the sender's own seat.
+        targetPlayerId: p2,
       })
     );
 

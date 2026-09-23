@@ -403,7 +403,9 @@ export const RemoteRoomLiveControls = ({
     if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
       return;
     }
-    if (session.sendChat(normalized)) setMessage('');
+    // v1 prefixes the line with `systemState.initiator`'s name, which a
+    // flipped board moves to the other seat.
+    if (session.sendChat(normalized, playerId)) setMessage('');
   };
   const handleMessageKeyDown = (
     event: KeyboardEvent<HTMLInputElement>
@@ -455,7 +457,7 @@ export const RemoteRoomLiveControls = ({
           className={playerControls ? seatColor : 'spectator-color'}
           disabled={!ready}
           aria-label="Send flower"
-          onClick={() => session.sendChat('🌺')}
+          onClick={() => session.sendChat('🌺', playerId)}
         >
           🌺
         </button>

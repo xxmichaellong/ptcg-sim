@@ -532,22 +532,30 @@ const CommandSchema = v.object({
   command: WireGameCommandSchema,
 });
 
+/**
+ * `targetPlayerId` on these three names the seat the sender is acting for,
+ * which on a flipped board is the seat at the bottom (v1's
+ * `systemState.initiator`). It is a request, never an identity: the room
+ * authenticates it against the sender's own seat and the room's flip rules,
+ * and falls back to the sender's seat when it is not theirs to act for.
+ */
 const SendChatSchema = v.object({
   type: v.literal('SendChat'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
   message: boundedString(MAX_CHAT_CODE_UNITS),
+  targetPlayerId: v.optional(IdentifierSchema),
 });
 
-/** Parameterless intent: the room authority derives the declaring player. */
 const DeclareMulliganSchema = v.object({
   type: v.literal('DeclareMulligan'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
+  targetPlayerId: v.optional(IdentifierSchema),
 });
 
-/** Parameterless intent: the room authority derives the player viewing a deck. */
 const DeclareDeckViewSchema = v.object({
   type: v.literal('DeclareDeckView'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
+  targetPlayerId: v.optional(IdentifierSchema),
 });
 
 const PingSchema = v.object({

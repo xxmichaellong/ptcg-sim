@@ -565,11 +565,16 @@ export const RemoteSessionBoard = ({
       onDismissPresentation: (): void => {
         runtimeRef.current?.dismissLocalPresentation();
       },
+      // v1 declares for `systemState.initiator`: the seat at the bottom.
       onDeclareMulligan: (): void => {
-        runtimeRef.current?.declareMulligan();
+        runtimeRef.current?.declareMulligan(
+          displayPolicyRef.current.actingPlayerId
+        );
       },
       onDeclareDeckView: (): void => {
-        runtimeRef.current?.declareDeckView();
+        runtimeRef.current?.declareDeckView(
+          displayPolicyRef.current.actingPlayerId
+        );
       },
     }),
     [refreshImages]

@@ -41,8 +41,8 @@ Carried since it was written: decklist-versus-alphabetical sorting (F-01),
 live-session leave warnings (F-02), popup ingress (PX-013/F-05), loose-board
 sizing and append scrolling (F-03) and prize card sizing (F-07, whose
 default-background half turned out not to be a difference) are implemented and
-closed. Still open: source-data maintenance (F-09) and the flipped-seat
-ephemeral announcements (F-10).
+closed, as are the flipped-seat ephemeral announcements (F-10) and the
+source-data maintenance gap (F-09). No finding from that review is open.
 
 PX-013 was the only row in this section and is now closed; the F-numbered
 findings that remain stay tracked in the review until they are carried or the

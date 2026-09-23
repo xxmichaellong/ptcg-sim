@@ -26,7 +26,10 @@ import {
 
 import { establishSession } from './session-handshake.js';
 import { RoomChatService } from './room-chat.js';
-import { sessionPresentationIdentity } from './session-presentation-identity.js';
+import {
+  actingPlayerIdForSession,
+  sessionPresentationIdentity,
+} from './session-presentation-identity.js';
 import {
   CLIENT_FRAME_WINDOW_MS,
   MAX_CLIENT_FRAMES_PER_WINDOW,
@@ -984,6 +987,9 @@ export class RoomSessionHub {
           sessionId: boundSessionId,
           connectionId: connection.id,
           message: message.message,
+          ...(message.targetPlayerId === undefined
+            ? {}
+            : { targetPlayerId: message.targetPlayerId }),
         });
         if (prepared.accepted) {
           this.broadcastToActiveSessions(snapshot, prepared.message);
@@ -1015,7 +1021,13 @@ export class RoomSessionHub {
           event: {
             type: 'MulliganDeclared',
             revision: snapshot.state.revision,
-            playerId: session.viewer.playerId,
+            // v1 declares for `systemState.initiator`, the seat at the bottom.
+            playerId:
+              actingPlayerIdForSession(
+                snapshot,
+                boundSessionId,
+                message.targetPlayerId
+              ) ?? session.viewer.playerId,
           },
         });
         return;
@@ -1043,7 +1055,12 @@ export class RoomSessionHub {
           event: {
             type: 'DeckViewDeclared',
             revision: snapshot.state.revision,
-            playerId: session.viewer.playerId,
+            playerId:
+              actingPlayerIdForSession(
+                snapshot,
+                boundSessionId,
+                message.targetPlayerId
+              ) ?? session.viewer.playerId,
           },
         });
         return;
