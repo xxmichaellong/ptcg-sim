@@ -103,6 +103,16 @@ export type GameCommand =
       readonly destinationIndex?: number;
     }
   | {
+      /**
+       * v1 registers the open `viewCards` / `attachedCards` popups as drop
+       * targets, so a card can be dragged into the set being resolved and
+       * then leave with it through the popup's bulk buttons.
+       */
+      readonly type: 'MoveCardToWorkArea';
+      readonly cardId: CardInstanceId;
+      readonly expectedWorkAreaId: WorkAreaId;
+    }
+  | {
       readonly type: 'MoveStagedCard';
       readonly cardId: CardInstanceId;
       readonly expectedWorkAreaId: WorkAreaId;

@@ -437,6 +437,31 @@ const moveZoneContents = (
   });
 };
 
+/** The zone or stack that currently holds a card, by id. */
+const containerOfCard = (
+  view: MatchViewState,
+  cardId: string
+): string | null => {
+  for (const zone of Object.values(view.zones)) {
+    if (zone.cards.some((card) => card.id === cardId)) return zone.id;
+  }
+  for (const stack of Object.values(view.stacks)) {
+    if (
+      stack.evolutionCards.some((card) => card.id === cardId) ||
+      stack.attachmentCards.some((card) => card.id === cardId)
+    ) {
+      return stack.id;
+    }
+  }
+  return null;
+};
+
+/** A card entering a work area leaves play: v1 restores its resting look. */
+const asOutOfPlay = (card: ViewCard): ViewCard =>
+  card.kind === 'known'
+    ? { ...card, face: 'up', orientationQuarterTurns: 0, abilityUsed: false }
+    : card;
+
 /** The seat a command acts for: the viewer unless it names another player. */
 const targetSeat = (
   view: MatchViewState,
@@ -571,7 +596,8 @@ const predict = (
       if (
         !board ||
         board.activeStackId !== command.expectedActiveStackId ||
-        board.benchStackIds.join(' ') !== command.expectedBenchStackIds.join(' ')
+        board.benchStackIds.join('\u0000') !==
+          command.expectedBenchStackIds.join('\u0000')
       ) {
         return null;
       }
@@ -624,6 +650,49 @@ const predict = (
       }
       return next;
     }
+    case 'MoveCardToWorkArea': {
+      const areas = view.workAreas[viewerId];
+      if (!areas) return null;
+      const target =
+        areas.inspection?.id === command.expectedWorkAreaId
+          ? 'inspection'
+          : areas.attachmentResolution?.id === command.expectedWorkAreaId
+            ? 'attachmentResolution'
+            : null;
+      if (!target) return null;
+      const sourceId = containerOfCard(view, command.cardId);
+      if (!sourceId) return null;
+      const taken = takeFromSource(view, sourceId, command.cardId);
+      if (!taken) return null;
+      const nextAreas = taken.view.workAreas[viewerId];
+      const card = asOutOfPlay(taken.card);
+      if (target === 'inspection') {
+        const inspection = nextAreas?.inspection;
+        if (!inspection) return null;
+        return withWorkAreas(taken.view, viewerId, {
+          ...nextAreas,
+          inspection: { ...inspection, cards: [...inspection.cards, card] },
+        });
+      }
+      const staged = nextAreas?.attachmentResolution;
+      if (!staged) return null;
+      // The staged window files an arrival the way the room does: a Pokemon
+      // joins the evolution column, anything else the attachments.
+      const evolution = card.kind === 'known' && card.category === 'Pokémon';
+      return withWorkAreas(taken.view, viewerId, {
+        ...nextAreas,
+        attachmentResolution: {
+          ...staged,
+          cards: [...staged.cards, card],
+          evolutionCards: evolution
+            ? [...staged.evolutionCards, card]
+            : staged.evolutionCards,
+          attachmentCards: evolution
+            ? staged.attachmentCards
+            : [...staged.attachmentCards, card],
+        },
+      });
+    }
     case 'MoveInspectedCard':
     case 'MoveStagedCard': {
       const taken = takeFromWorkArea(
@@ -655,7 +724,8 @@ const predict = (
         !board ||
         staged.evolutionCards.length === 0 ||
         board.activeStackId !== command.expectedActiveStackId ||
-        board.benchStackIds.join(' ') !== command.expectedBenchStackIds.join(' ')
+        board.benchStackIds.join('\u0000') !==
+          command.expectedBenchStackIds.join('\u0000')
       ) {
         return null;
       }
@@ -751,8 +821,8 @@ const predict = (
       const board = ownZone(view, owner, 'board');
       if (
         !board ||
-        board.cards.map((card) => card.id).join(' ') !==
-          command.expectedBoardCardIds.join(' ')
+        board.cards.map((card) => card.id).join('\u0000') !==
+          command.expectedBoardCardIds.join('\u0000')
       ) {
         return null;
       }

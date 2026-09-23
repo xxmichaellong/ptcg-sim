@@ -192,6 +192,60 @@ describe('predictWireCommand', () => {
     expect(cardIn(detached, attachment.id)).toBe(discard.id);
   });
 
+  it('files a card dragged into an open popup the way the room will', () => {
+    // A staged window is open once a loaded stack departs; a hand card
+    // dropped into it joins the attachments, and a Pokemon the evolutions.
+    const top = active.evolutionCards.at(-1)!;
+    const staged = predictWireCommand(view, {
+      type: 'MoveCardFromStack',
+      cardId: top.id,
+      expectedStackId: active.id,
+      destinationZoneId: discard.id,
+    })!;
+    const area = staged.workAreas[blue]!.attachmentResolution!;
+    const handCard = staged.zones[hand.id]!.cards[0]!;
+    const predicted = predictWireCommand(staged, {
+      type: 'MoveCardToWorkArea',
+      cardId: handCard.id,
+      expectedWorkAreaId: area.id,
+    })!;
+    const filed = predicted.workAreas[blue]!.attachmentResolution!;
+    expect(cardIn(predicted, handCard.id)).toBe(area.id);
+    expect(predicted.zones[hand.id]!.cards).toHaveLength(
+      staged.zones[hand.id]!.cards.length - 1
+    );
+    const pokemon =
+      handCard.kind === 'known' && handCard.category === 'Pokémon';
+    expect(filed.evolutionCards).toHaveLength(
+      area.evolutionCards.length + (pokemon ? 1 : 0)
+    );
+    expect(filed.attachmentCards).toHaveLength(
+      area.attachmentCards.length + (pokemon ? 0 : 1)
+    );
+    // The card is out of play: face up, upright, with its marker cleared.
+    expect(filed.cards.at(-1)).toMatchObject({
+      id: handCard.id,
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+    });
+    // A popup that is not open, and a card that is nowhere, predict nothing.
+    expect(
+      predictWireCommand(staged, {
+        type: 'MoveCardToWorkArea',
+        cardId: handCard.id,
+        expectedWorkAreaId: 'closed-work-area',
+      })
+    ).toBeNull();
+    expect(
+      predictWireCommand(staged, {
+        type: 'MoveCardToWorkArea',
+        cardId: 'missing-card',
+        expectedWorkAreaId: area.id,
+      })
+    ).toBeNull();
+  });
+
   it('draws from the top of the viewer own deck and updates counters', () => {
     const drawn = predictWireCommand(view, { type: 'DrawCards', count: 2 })!;
     expect(drawn.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 2);

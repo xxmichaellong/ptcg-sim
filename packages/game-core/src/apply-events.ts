@@ -2128,6 +2128,290 @@ const applyEventInternal = (
         ),
       };
     }
+    case 'CardMovedToWorkArea': {
+      const areas = state.workAreas[event.playerId];
+      if (!areas) throw new Error('Work-area arrival has no work areas');
+      const inspection = areas.inspection;
+      const resolution = areas.attachmentResolution;
+      const destination =
+        event.target === 'inspection' ? inspection : resolution;
+      if (!destination || destination.id !== event.expectedWorkAreaId) {
+        throw new Error('Work-area arrival does not match the open work area');
+      }
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing moved card ${event.cardId}`);
+      if (card.ownerId !== event.playerId) {
+        throw new Error('Work areas only hold their own player cards');
+      }
+      let zones = state.zones;
+      let stacks = state.stacks;
+      let boards = state.boards;
+      let nextInspection = inspection;
+      let nextResolution = resolution;
+      const affectedCardIds = new Set<CardInstanceId>([event.cardId]);
+      switch (event.source.kind) {
+        case 'zone': {
+          const source = requireZone(state, event.source.zoneId);
+          if (!source.cardIds.includes(event.cardId)) {
+            throw new Error('Work-area arrival source zone lost the card');
+          }
+          zones = {
+            ...zones,
+            [source.id]: {
+              ...source,
+              cardIds: source.cardIds.filter(
+                (cardId) => cardId !== event.cardId
+              ),
+            },
+          };
+          break;
+        }
+        case 'stackAttachment':
+        case 'stackLowerEvolution':
+        case 'stackSoleEvolution': {
+          const stack = requireStack(state, event.source.stackId);
+          const fromAttachments = event.source.kind === 'stackAttachment';
+          const list = fromAttachments
+            ? stack.attachmentCardIds
+            : stack.evolutionCardIds;
+          if (!list.includes(event.cardId)) {
+            throw new Error('Work-area arrival source stack lost the card');
+          }
+          if (event.source.kind === 'stackSoleEvolution') {
+            if (
+              stack.evolutionCardIds.length !== 1 ||
+              stack.attachmentCardIds.length > 0
+            ) {
+              throw new Error('Sole-evolution arrival left dependents behind');
+            }
+            const remainingStacks = { ...stacks };
+            delete remainingStacks[stack.id];
+            stacks = remainingStacks;
+            boards = removeStackFromBoards(state, new Set([stack.id]));
+            break;
+          }
+          if (
+            event.source.kind === 'stackLowerEvolution' &&
+            stack.evolutionCardIds.at(-1) === event.cardId
+          ) {
+            throw new Error('Lower-evolution arrival named the top card');
+          }
+          stacks = {
+            ...stacks,
+            [stack.id]: {
+              ...stack,
+              ...(fromAttachments
+                ? {
+                    attachmentCardIds: stack.attachmentCardIds.filter(
+                      (cardId) => cardId !== event.cardId
+                    ),
+                  }
+                : {
+                    evolutionCardIds: stack.evolutionCardIds.filter(
+                      (cardId) => cardId !== event.cardId
+                    ),
+                  }),
+            },
+          };
+          break;
+        }
+        case 'stackTopWithDependents': {
+          // v1 moves the host and then `relocateAttachedCards` follows with
+          // its dependents; the whole stack leaves play in one step.
+          const source = event.source;
+          const stack = requireStack(state, source.stackId);
+          if (
+            !sameCardOrder(
+              stack.evolutionCardIds,
+              source.expectedEvolutionCardIds
+            ) ||
+            !sameCardOrder(
+              stack.attachmentCardIds,
+              source.expectedAttachmentCardIds
+            ) ||
+            stack.evolutionCardIds.at(-1) !== event.cardId
+          ) {
+            throw new Error('Work-area arrival does not match expected stack');
+          }
+          const remainingEvolutionCardIds = stack.evolutionCardIds.slice(0, -1);
+          const remainingAttachmentCardIds = [...stack.attachmentCardIds];
+          const remainingCardIds = [
+            ...[...remainingEvolutionCardIds].reverse(),
+            ...remainingAttachmentCardIds,
+          ];
+          if (remainingCardIds.length === 0) {
+            throw new Error(
+              'Work-area arrival named dependents it has none of'
+            );
+          }
+          for (const cardId of remainingCardIds) affectedCardIds.add(cardId);
+          const remainingStacks = { ...stacks };
+          delete remainingStacks[stack.id];
+          stacks = remainingStacks;
+          boards = removeStackFromBoards(state, new Set([stack.id]));
+          if (source.attachmentResolution) {
+            if (resolution) {
+              throw new Error(
+                'Attachment resolution work area is already occupied'
+              );
+            }
+            if (
+              source.attachmentResolution.suggestedSlot !== stack.slot ||
+              !sameCardOrder(
+                source.attachmentResolution.cardIds,
+                remainingCardIds
+              ) ||
+              !sameCardOrder(
+                source.attachmentResolution.evolutionCardIds,
+                remainingEvolutionCardIds
+              ) ||
+              !sameCardOrder(
+                source.attachmentResolution.attachmentCardIds,
+                remainingAttachmentCardIds
+              )
+            ) {
+              throw new Error('Work-area arrival has invalid dependent cards');
+            }
+            nextResolution = {
+              id: source.attachmentResolution.id,
+              sourceStackId: stack.id,
+              cardIds: [...remainingCardIds],
+              evolutionCardIds: [...remainingEvolutionCardIds],
+              attachmentCardIds: [...remainingAttachmentCardIds],
+              suggestedSlot: source.attachmentResolution.suggestedSlot,
+            };
+            break;
+          }
+          // No new window: the dependents join the one this arrival targets.
+          if (event.target !== 'attachmentResolution' || !resolution) {
+            throw new Error('Work-area arrival has nowhere for its dependents');
+          }
+          nextResolution = {
+            ...resolution,
+            cardIds: [...resolution.cardIds, ...remainingCardIds],
+            evolutionCardIds: [
+              ...resolution.evolutionCardIds,
+              ...remainingEvolutionCardIds,
+            ],
+            attachmentCardIds: [
+              ...resolution.attachmentCardIds,
+              ...remainingAttachmentCardIds,
+            ],
+          };
+          break;
+        }
+        case 'inspection': {
+          if (!inspection || inspection.id !== event.source.workAreaId) {
+            throw new Error('Work-area arrival source inspection changed');
+          }
+          const remaining = inspection.cardIds.filter(
+            (cardId) => cardId !== event.cardId
+          );
+          if (remaining.length === inspection.cardIds.length) {
+            throw new Error(
+              'Work-area arrival source inspection lost the card'
+            );
+          }
+          nextInspection =
+            remaining.length === 0
+              ? null
+              : {
+                  ...inspection,
+                  cardIds: remaining,
+                  viewerIdsByCardId: cloneInspectionViewerIds(
+                    remaining,
+                    inspection.viewerIdsByCardId
+                  ),
+                };
+          break;
+        }
+        case 'attachmentResolution': {
+          if (!resolution || resolution.id !== event.source.workAreaId) {
+            throw new Error('Work-area arrival source staging changed');
+          }
+          const without = (cardIds: readonly CardInstanceId[]) =>
+            cardIds.filter((cardId) => cardId !== event.cardId);
+          const remaining = without(resolution.cardIds);
+          if (remaining.length === resolution.cardIds.length) {
+            throw new Error('Work-area arrival source staging lost the card');
+          }
+          nextResolution =
+            remaining.length === 0
+              ? null
+              : {
+                  ...resolution,
+                  cardIds: remaining,
+                  evolutionCardIds: without(resolution.evolutionCardIds),
+                  attachmentCardIds: without(resolution.attachmentCardIds),
+                };
+          break;
+        }
+      }
+      // A card in a work area is out of play: v1's moveCard resets its
+      // rotation, restores its original category and turns it face up.
+      const arrivedCard: CardInstance = {
+        ...card,
+        currentCategory: card.originalCategory,
+        face: 'up',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      };
+      if (event.target === 'inspection') {
+        const open = nextInspection;
+        if (!open || open.id !== event.expectedWorkAreaId) {
+          throw new Error('Inspection arrival lost its work area');
+        }
+        const existingViewerIds =
+          open.viewerIdsByCardId[open.cardIds[0]!] ?? [];
+        if (
+          event.viewerIds.length !== existingViewerIds.length ||
+          event.viewerIds.some(
+            (viewerId, index) => viewerId !== existingViewerIds[index]
+          )
+        ) {
+          throw new Error('Inspection arrival viewers differ from the set');
+        }
+        nextInspection = {
+          ...open,
+          cardIds: [...open.cardIds, event.cardId],
+          viewerIdsByCardId: {
+            ...cloneInspectionViewerIds(open.cardIds, open.viewerIdsByCardId),
+            [event.cardId]: [...event.viewerIds],
+          },
+        };
+      } else {
+        const open = nextResolution;
+        if (!open || open.id !== event.expectedWorkAreaId) {
+          throw new Error('Attached-card arrival lost its work area');
+        }
+        const asEvolution = arrivedCard.currentCategory === 'Pokémon';
+        nextResolution = {
+          ...open,
+          cardIds: [...open.cardIds, event.cardId],
+          evolutionCardIds: asEvolution
+            ? [...open.evolutionCardIds, event.cardId]
+            : open.evolutionCardIds,
+          attachmentCardIds: asEvolution
+            ? open.attachmentCardIds
+            : [...open.attachmentCardIds, event.cardId],
+        };
+      }
+      return {
+        ...state,
+        cards: { ...state.cards, [event.cardId]: arrivedCard },
+        zones,
+        stacks,
+        boards,
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            inspection: nextInspection,
+            attachmentResolution: nextResolution,
+          },
+        },
+        visibility: retireVisibility(state, affectedCardIds, affectedCardIds),
+      };
+    }
     case 'StagedCardMoved': {
       const areas = state.workAreas[event.playerId];
       const resolution = areas?.attachmentResolution;

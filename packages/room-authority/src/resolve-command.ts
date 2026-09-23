@@ -487,6 +487,39 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'MoveCardToWorkArea': {
+      // v1's popups accept drops as well as produce them: a card dragged onto
+      // the deck viewer or the attached-card window joins that set. The area
+      // must be the actor's own open window, as with every other work-area
+      // command, and the card must be one the actor may move.
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      const areas = state.workAreas[actorId];
+      const open =
+        areas?.inspection?.id === wire.expectedWorkAreaId ||
+        areas?.attachmentResolution?.id === wire.expectedWorkAreaId;
+      if (!open) return rejected('stale_reference');
+      if (
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy
+        )
+      ) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveCardToWorkArea',
+          cardId: card.cardId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+        },
+      };
+    }
     case 'MoveStagedCard': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');

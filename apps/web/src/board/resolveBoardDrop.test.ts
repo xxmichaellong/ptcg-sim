@@ -2,6 +2,7 @@ import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
+  resolveBoardDropTarget,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
@@ -230,6 +231,75 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('drops a board card onto the painted popup the way v1 does', () => {
+    const input = fixture();
+    const playerId = input.view.playerOrder[0]!;
+    const hand = input.view.zones[`zone:${playerId}:hand`]!;
+    const [inspected, dragged] = hand.cards;
+    if (!inspected || !dragged) throw new Error('hand fixture is required');
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter((card) => card.id !== inspected.id),
+        },
+      },
+      workAreas: {
+        ...input.view.workAreas,
+        [playerId]: {
+          ...input.view.workAreas[playerId]!,
+          inspection: {
+            id: 'inspection-work-area',
+            sourceZoneId: hand.id,
+            cards: [inspected],
+          },
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const panel = scene.zones.find(
+      (zone) => zone.id === 'inspection-work-area'
+    )!;
+    // A pointer released anywhere over the painted popup resolves to it,
+    // whether it lands on the window itself or on a card already inside.
+    const targetId = resolveBoardDropTarget(
+      scene,
+      dragged.id,
+      panel.bounds.x + panel.bounds.width / 2,
+      panel.bounds.y + panel.bounds.height / 2
+    );
+    expect(targetId).toBe('inspection-work-area');
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: dragged.id,
+        targetId: targetId!,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardToWorkArea',
+        cardId: dragged.id,
+        expectedWorkAreaId: 'inspection-work-area',
+      },
+    });
+    // Dropping a card back onto the popup it already sits in changes nothing.
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: inspected.id,
+        targetId: 'inspection-work-area',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
+  });
+
   it('rejects a card visible through another player inspection without submitting', () => {
     const input = fixture();
     const sceneCard = localHandCard(input);
@@ -355,7 +425,7 @@ describe('board drop command resolution', () => {
     });
   });
 
-  it('fails closed for spectators and unknown or work-area targets', () => {
+  it('fails closed for spectators and unknown targets', () => {
     const input = fixture();
     const card = localHandCard(input);
     expect(
@@ -395,8 +465,31 @@ describe('board drop command resolution', () => {
         },
       ],
     };
+    // v1's popups take drops too, so the viewer's own window accepts one.
     expect(
       resolveBoardDrop(input.view, workAreaScene, {
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: 'inspection-one',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardToWorkArea',
+        cardId: card.id,
+        expectedWorkAreaId: 'inspection-one',
+      },
+    });
+    // The opponent's window is theirs alone, as every other work-area move is.
+    const opponentId = input.view.playerOrder[1]!;
+    const opponentScene: BoardScene = {
+      ...workAreaScene,
+      zones: workAreaScene.zones.map((zone) =>
+        zone.id === 'inspection-one' ? { ...zone, playerId: opponentId } : zone
+      ),
+    };
+    expect(
+      resolveBoardDrop(input.view, opponentScene, {
         kind: 'CardDropRequested',
         cardId: card.id,
         targetId: 'inspection-one',

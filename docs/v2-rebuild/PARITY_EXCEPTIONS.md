@@ -34,9 +34,40 @@ security and persistence review where relevant, and release-note disposition.
 
 ## Open differences awaiting a product decision
 
-| ID     | V1 behavior                                                                                                                                              | V2 today                                                                                                                                                                                    | Status | Evidence                                  |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| PX-013 | `zones.js` registers the open `viewCards` / `attachedCards` popups as drop targets, so a card can be dragged from elsewhere into the set being resolved. | Dragging out of a popup works; dropping into one is refused as `unsupported_target`. Accepting it needs a command that inserts an arbitrary card into a work area, with its own invariants. | `OPEN` | `V1_FILE_AUDIT.md`; `resolveBoardDrop.ts` |
+The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) also
+records unresolved differences beyond PX-013: decklist-versus-alphabetical
+sorting (F-01), live-session leave warnings (F-02), loose-board sizing/scrolling
+(F-03), and prize/default-background presentation (F-07). These are **open
+findings, not approved exceptions**. Source-data maintenance is tracked as
+F-09. The review's inventory supersedes earlier broad SAME claims. Popup
+ingress (PX-013) is implemented and closed; see below.
+
+PX-013 was the only row in this section and is now closed; the F-numbered
+findings above stay tracked in the review until the owner rules on them.
+
+## Resolved after the 2026-09-23 review
+
+PX-013 is closed. `zones.js` registers the open `viewCards` / `attachedCards`
+popups as drop targets, and v2 now does the same: `MoveCardToWorkArea` takes a
+card from a zone, a play stack, or the other popup into the open work area,
+restoring its out-of-play look (original category, face up, upright, marker
+cleared) and inheriting the inspection's viewers, and the battle log prints
+v1's line ("moved X from hand to deck", "to attached cards"). A loaded host
+takes its stack with it exactly as v1's `relocateAttachedCards` does: the
+dependents open the attached-card window, or join it when that window is the
+drop target. The only refusal left is v2's existing one-window rule, shared
+with every other stack departure: a host with dependents cannot open a second
+attached-card window while one is already open. Evidence: `work-area-arrival-commands.test.ts`,
+`resolve-work-area-arrival.test.ts`, `resolveBoardDrop.test.ts`,
+`predictWireCommand.test.ts`, `narration-events.test.ts`.
+
+Review qualification: [F-05](reviews/2026-09-23-v1-transfer-review.md#f-05--medium--open-popup-ingress-is-only-partially-restored)
+raised the top-card-with-dependents refusal as an open parity gap, because
+legacy `relocateAttachedCards` stages those dependents. That compound move is
+now implemented and covered by `work-area-arrival-commands.test.ts`; what
+remains is only the one-open-window rule v2 applies to every stack departure.
+F-10 in the same review retains the known flipped-seat ephemeral-announcement
+difference.
 
 ## Resolved after the 2026-09-17 audit
 

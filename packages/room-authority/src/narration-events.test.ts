@@ -134,6 +134,81 @@ describe('battle-log narration', () => {
     expect(JSON.stringify(hidden.narration)).not.toContain('Secret');
   });
 
+  it('narrates a card dragged into an open popup as a move to that popup', () => {
+    const { state, context } = table();
+    const opened = step(
+      state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    const hand = opened.state.zones[playerZoneId(p1, 'hand')]!;
+    const cardId = hand.cardIds[0]!;
+    const moved = step(
+      opened.state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId,
+        expectedWorkAreaId: opened.state.workAreas[p1]!.inspection!.id,
+      },
+      context
+    );
+    // v1's `convertZoneName` calls the deck viewer "deck", which the client
+    // renders from this source/destination pair. Hand and popup are both
+    // private, so the line stays unnamed exactly as a hand-to-deck move does.
+    expect(moved.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: moved.state.revision,
+        playerId: p1,
+        verb: 'moved',
+        source: 'hand',
+        destination: 'inspection',
+      },
+    ]);
+
+    // A public source is named, as any other move out of the discard is.
+    const discarded = step(
+      opened.state,
+      {
+        type: 'MoveCard',
+        cardId: hand.cardIds[1]!,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      context
+    );
+    const name =
+      discarded.state.definitions[
+        discarded.state.cards[hand.cardIds[1]!]!.definitionId
+      ]!.name;
+    const fromDiscard = step(
+      discarded.state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: hand.cardIds[1]!,
+        expectedWorkAreaId: discarded.state.workAreas[p1]!.inspection!.id,
+      },
+      context
+    );
+    expect(fromDiscard.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: fromDiscard.state.revision,
+        playerId: p1,
+        verb: 'moved',
+        source: 'discard',
+        destination: 'inspection',
+        cardName: name,
+      },
+    ]);
+  });
+
   it('narrates attaching and evolving with the target Pokémon by name', () => {
     const { state, context } = table();
     const hand = state.zones[playerZoneId(p1, 'hand')]!;

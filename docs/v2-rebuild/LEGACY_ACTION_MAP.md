@@ -1221,11 +1221,12 @@ uses the existing public-interaction room policy.
 
 All three reset stack-level and legal per-card ability markers. Attack and pass
 discard only the target player's loose board and leave turn state and card faces
-unchanged. Start-turn discards both players' loose boards, reveals every
-face-down evolution and attachment card in play, then draws from the target
-player's deck and advances the shared turn. Matching legacy behavior, an empty
-deck still commits cleanup and an `emptyDeck` fact but does not increment the
-turn or draw a card. GX and VSTAR markers are independent and are not reset.
+unchanged. Start-turn discards both players' loose boards. When the target
+player's deck is nonempty, it reveals every face-down evolution and attachment
+card in play, draws, and advances the shared turn. Matching legacy behavior, an
+empty deck still commits cleanup and an `emptyDeck` fact but does not reveal
+in-play cards, increment the turn, or draw a card. GX and VSTAR markers are
+independent and are not reset.
 
 This intentionally fixes one clear v1 call-site defect: `takeTurn` invokes
 `discardBoard(initiator, ...)` twice while changing only the message initiator,

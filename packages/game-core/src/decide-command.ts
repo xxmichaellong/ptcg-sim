@@ -14,7 +14,7 @@ import {
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
-import type { DomainEvent } from './events.js';
+import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
 import {
   activeInspectionViewerIds,
@@ -372,6 +372,136 @@ const decideTopEvolutionDeparture = (
         : null,
     },
   };
+};
+
+type WorkAreaArrivalResolution =
+  | { readonly accepted: true; readonly source: WorkAreaArrivalSource }
+  | CommandRejection;
+
+/** Classifies where a card dragged into an open work area is coming from. */
+const workAreaArrivalSource = (
+  state: MatchState,
+  location: CardLocation,
+  target: 'inspection' | 'attachmentResolution',
+  context: CommandContext
+): WorkAreaArrivalResolution => {
+  switch (location.kind) {
+    case 'zone':
+      return {
+        accepted: true,
+        source: { kind: 'zone', zoneId: location.zoneId },
+      };
+    case 'stackAttachment':
+      return {
+        accepted: true,
+        source: { kind: 'stackAttachment', stackId: location.stackId },
+      };
+    case 'stackEvolution': {
+      const stack = state.stacks[location.stackId];
+      if (!stack) return reject('stale_reference', 'Play stack changed');
+      const isTop = location.index === stack.evolutionCardIds.length - 1;
+      if (!isTop) {
+        return {
+          accepted: true,
+          source: { kind: 'stackLowerEvolution', stackId: stack.id },
+        };
+      }
+      const evolutionCardIds = stack.evolutionCardIds.slice(0, -1);
+      const attachmentCardIds = [...stack.attachmentCardIds];
+      if (evolutionCardIds.length + attachmentCardIds.length === 0) {
+        return {
+          accepted: true,
+          source: { kind: 'stackSoleEvolution', stackId: stack.id },
+        };
+      }
+      // v1's `relocateAttachedCards` sends the dependents of a host leaving
+      // for anywhere but active/bench to the attached-card window. Dragging
+      // into that window puts them straight there; dragging into the deck
+      // viewer opens one, under the same one-window rule as any departure.
+      const areas = state.workAreas[stack.boardPlayerId];
+      if (!areas) return reject('not_found', 'Play stack has no work areas');
+      const staged = (): WorkAreaArrivalResolution => {
+        if (target === 'attachmentResolution') {
+          return {
+            accepted: true,
+            source: {
+              kind: 'stackTopWithDependents',
+              stackId: stack.id,
+              expectedEvolutionCardIds: [...stack.evolutionCardIds],
+              expectedAttachmentCardIds: [...stack.attachmentCardIds],
+              attachmentResolution: null,
+            },
+          };
+        }
+        if (areas.attachmentResolution) {
+          return reject(
+            'conflict',
+            'Resolve the existing attached-card work area first'
+          );
+        }
+        const workAreaId = context.nextWorkAreaId();
+        if (
+          Object.values(state.workAreas).some(
+            (candidate) =>
+              candidate.inspection?.id === workAreaId ||
+              candidate.attachmentResolution?.id === workAreaId
+          )
+        ) {
+          return reject(
+            'conflict',
+            `Work area ID factory returned duplicate ${workAreaId}`
+          );
+        }
+        return {
+          accepted: true,
+          source: {
+            kind: 'stackTopWithDependents',
+            stackId: stack.id,
+            expectedEvolutionCardIds: [...stack.evolutionCardIds],
+            expectedAttachmentCardIds: [...stack.attachmentCardIds],
+            attachmentResolution: {
+              id: workAreaId,
+              cardIds: [
+                ...[...evolutionCardIds].reverse(),
+                ...attachmentCardIds,
+              ],
+              evolutionCardIds,
+              attachmentCardIds,
+              suggestedSlot: stack.slot,
+            },
+          },
+        };
+      };
+      return staged();
+    }
+    case 'inspectionWorkArea': {
+      const inspection = state.workAreas[location.playerId]?.inspection;
+      if (!inspection) {
+        return reject('stale_reference', 'Inspection work area changed');
+      }
+      if (target === 'inspection') {
+        return reject('invalid_command', 'Card is already in this work area');
+      }
+      return {
+        accepted: true,
+        source: { kind: 'inspection', workAreaId: inspection.id },
+      };
+    }
+    case 'attachmentResolutionWorkArea': {
+      const resolution =
+        state.workAreas[location.playerId]?.attachmentResolution;
+      if (!resolution) {
+        return reject('stale_reference', 'Attached-card work area changed');
+      }
+      if (target === 'attachmentResolution') {
+        return reject('invalid_command', 'Card is already in this work area');
+      }
+      return {
+        accepted: true,
+        source: { kind: 'attachmentResolution', workAreaId: resolution.id },
+      };
+    }
+  }
 };
 
 const decideEvolutionCardDepartureToZone = (
@@ -936,17 +1066,6 @@ const decideTableAction = (
   }
 
   if (command.type === 'StartTurn') {
-    const revealedCardIds = Object.values(state.stacks)
-      .flatMap((stack) => [
-        ...stack.evolutionCardIds,
-        ...stack.attachmentCardIds,
-      ])
-      .filter((cardId) => state.cards[cardId]?.face === 'down')
-      .sort();
-    if (revealedCardIds.length > 0) {
-      events.push({ type: 'InPlayCardsRevealed', cardIds: revealedCardIds });
-    }
-
     const deck = state.zones[playerZoneId(command.playerId, 'deck')];
     const hand = state.zones[playerZoneId(command.playerId, 'hand')];
     if (!deck || !hand) {
@@ -962,6 +1081,17 @@ const decideTableAction = (
       });
       return accept(...events);
     }
+    const revealedCardIds = Object.values(state.stacks)
+      .flatMap((stack) => [
+        ...stack.evolutionCardIds,
+        ...stack.attachmentCardIds,
+      ])
+      .filter((cardId) => state.cards[cardId]?.face === 'down')
+      .sort();
+    if (revealedCardIds.length > 0) {
+      events.push({ type: 'InPlayCardsRevealed', cardIds: revealedCardIds });
+    }
+
     if (state.turn.number >= Number.MAX_SAFE_INTEGER) {
       return reject('precondition_failed', 'Turn number cannot advance safely');
     }
@@ -1404,6 +1534,57 @@ export const decideCommand = (
           )
         ),
         concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'MoveCardToWorkArea': {
+      const card = state.cards[command.cardId];
+      if (!card) {
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      }
+      const destinationEntry = Object.entries(state.workAreas).find(
+        ([, areas]) =>
+          areas.inspection?.id === command.expectedWorkAreaId ||
+          areas.attachmentResolution?.id === command.expectedWorkAreaId
+      );
+      if (!destinationEntry) {
+        return reject('stale_reference', 'Work area is no longer open');
+      }
+      const [workAreaPlayerIdValue, destinationAreas] = destinationEntry;
+      const workAreaPlayerId = workAreaPlayerIdValue as PlayerId;
+      // v1's popups live in their owner's frame and hold only that player's
+      // cards; dropping someone else's card into one has no legacy meaning.
+      if (card.ownerId !== workAreaPlayerId) {
+        return reject(
+          'precondition_failed',
+          'A work area only holds its own player cards'
+        );
+      }
+      const target =
+        destinationAreas.inspection?.id === command.expectedWorkAreaId
+          ? 'inspection'
+          : 'attachmentResolution';
+      const location = findCardLocation(state, command.cardId);
+      if (!location) {
+        return reject('stale_reference', 'Card is no longer in play');
+      }
+      const source = workAreaArrivalSource(state, location, target, context);
+      if (!source.accepted) return source;
+      const viewerIds =
+        target === 'inspection'
+          ? [
+              ...(destinationAreas.inspection!.viewerIdsByCardId[
+                destinationAreas.inspection!.cardIds[0]!
+              ] ?? []),
+            ]
+          : [];
+      return accept({
+        type: 'CardMovedToWorkArea',
+        playerId: workAreaPlayerId,
+        target,
+        expectedWorkAreaId: command.expectedWorkAreaId,
+        cardId: card.id,
+        source: source.source,
+        viewerIds,
       });
     }
     case 'MoveStagedCard': {

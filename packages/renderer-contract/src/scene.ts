@@ -242,8 +242,8 @@ const rotateRectInFrame = (bounds: Rect, frame: Rect): Rect => ({
  * `max-height: calc(100% - 3vh)` inside the content box, sit on
  * `margin-bottom: 2vh` with `.25vw` either side, and the flex row is centred
  * until it overflows. Both `vh` and `vw` resolve against the player container,
- * not the outer page, because each side is its own iframe. Where v1 then
- * scrolls, v2 keeps every card in view by compressing the step instead.
+ * not the outer page, because each side is its own iframe. Overflow keeps
+ * card size stable and scrolls horizontally, matching v1.
  *
  * v1 lets the image's natural aspect set the width; v2 uses the standard card
  * ratio so the row does not depend on which image happens to load.

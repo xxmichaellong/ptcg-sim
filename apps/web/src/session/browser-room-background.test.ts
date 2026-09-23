@@ -56,8 +56,8 @@ describe('browser room background', () => {
   });
 
   it.each([
-    [0.1, 'https://ptcgsim.online/src/assets/background1.jpg'],
-    [0.9, 'https://ptcgsim.online/src/assets/background2.webp'],
+    [0.1, '/v2/assets/background1.jpg'],
+    [0.9, '/v2/assets/background2.webp'],
   ])(
     'preloads the source theme choice for random value %s',
     async (random, url) => {

@@ -4,8 +4,8 @@ export const INVALID_ROOM_BACKGROUND_MESSAGE =
   'Please enter a valid image URL.';
 
 const THEME_BACKGROUND_URLS = Object.freeze([
-  'https://ptcgsim.online/src/assets/background1.jpg',
-  'https://ptcgsim.online/src/assets/background2.webp',
+  '/v2/assets/background1.jpg',
+  '/v2/assets/background2.webp',
 ] as const);
 
 export type RoomBackground =

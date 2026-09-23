@@ -244,6 +244,10 @@ describe('atomic table actions', () => {
     );
     if (!result.accepted) throw new Error(result.message);
 
+    // v1 take-turn.js only reveals cards inside the non-empty-deck branch.
+    expect(
+      result.batch.events.some((event) => event.type === 'InPlayCardsRevealed')
+    ).toBe(false);
     expect(result.state.turn).toEqual(emptied.turn);
     expect(
       result.batch.events.some((event) => event.type === 'CardsDrawn')
@@ -258,7 +262,7 @@ describe('atomic table actions', () => {
     expect(result.state.zones[playerZoneId(p1, 'board')]!.cardIds).toEqual([]);
     expect(result.state.zones[playerZoneId(p2, 'board')]!.cardIds).toEqual([]);
     for (const cardId of prepared.faceDown) {
-      expect(result.state.cards[cardId]!.face).toBe('up');
+      expect(result.state.cards[cardId]!.face).toBe('down');
     }
     assertMatchInvariants(result.state);
   });

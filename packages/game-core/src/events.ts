@@ -20,6 +20,40 @@ import type {
   WorkAreaCardsDestination,
 } from './commands.js';
 
+/**
+ * Where a card dragged into a work area came from. A sole evolution takes the
+ * whole stack with it; a top evolution that still carries lower stages or
+ * attachments takes the stack too and stages those dependents, exactly as v1's
+ * `relocateAttachedCards` does for any departure outside active/bench.
+ */
+export type WorkAreaArrivalSource =
+  | { readonly kind: 'zone'; readonly zoneId: ZoneId }
+  | { readonly kind: 'stackAttachment'; readonly stackId: StackId }
+  | { readonly kind: 'stackLowerEvolution'; readonly stackId: StackId }
+  | { readonly kind: 'stackSoleEvolution'; readonly stackId: StackId }
+  | {
+      readonly kind: 'stackTopWithDependents';
+      readonly stackId: StackId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      /**
+       * The staged window the dependents open, as a stack departure does, or
+       * null when the arrival's own target is the staged window they join.
+       */
+      readonly attachmentResolution: {
+        readonly id: WorkAreaId;
+        readonly cardIds: readonly CardInstanceId[];
+        readonly evolutionCardIds: readonly CardInstanceId[];
+        readonly attachmentCardIds: readonly CardInstanceId[];
+        readonly suggestedSlot: PlaySlot;
+      } | null;
+    }
+  | { readonly kind: 'inspection'; readonly workAreaId: WorkAreaId }
+  | {
+      readonly kind: 'attachmentResolution';
+      readonly workAreaId: WorkAreaId;
+    };
+
 export type DomainEvent =
   | {
       readonly type: 'DeckLoaded';
@@ -217,6 +251,18 @@ export type DomainEvent =
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+    }
+  | {
+      /** A card dragged into an open inspection/attached-card work area. */
+      readonly type: 'CardMovedToWorkArea';
+      /** The work area's owner, which is also the card's owner. */
+      readonly playerId: PlayerId;
+      readonly target: 'inspection' | 'attachmentResolution';
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly cardId: CardInstanceId;
+      readonly source: WorkAreaArrivalSource;
+      /** Exact private viewers for an inspection arrival; empty otherwise. */
+      readonly viewerIds: readonly PlayerId[];
     }
   | {
       readonly type: 'StagedCardMoved';

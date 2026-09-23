@@ -392,6 +392,18 @@ const narrate = (
         }),
       ];
     }
+    case 'CardMovedToWorkArea': {
+      // v1 logs the arrival with the same grammar as any other move; its
+      // popups are named "deck" and "attached cards" in the battle log.
+      const source = locationSource(previousState, event.cardId);
+      if (!source) return [];
+      return [
+        moved(revision, event.playerId, 'moved', source, {
+          destination: event.target,
+          cardName: publicName(state, previousState, event.cardId),
+        }),
+      ];
+    }
     case 'InspectedCardMoved':
     case 'StagedCardMoved': {
       const destination = zoneSource(

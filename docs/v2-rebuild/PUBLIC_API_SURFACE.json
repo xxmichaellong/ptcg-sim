@@ -730,6 +730,10 @@
               "kind": "type"
             },
             {
+              "name": "WorkAreaArrivalSource",
+              "kind": "type"
+            },
+            {
               "name": "WorkAreaCardsDestination",
               "kind": "type"
             },

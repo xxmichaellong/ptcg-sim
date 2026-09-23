@@ -192,6 +192,37 @@ export const resolveBoardDrop = (
     };
   }
 
+  // v1's work-area popups are drop targets as well as sources: a card dragged
+  // onto the open deck viewer or attached-card window joins that set.
+  const workAreaTarget = scene.zones.find(
+    (zone) =>
+      zone.id === intent.targetId &&
+      (zone.kind === 'inspection' || zone.kind === 'attachmentResolution')
+  );
+  if (workAreaTarget) {
+    if (workAreaTarget.playerId !== view.viewer.playerId) {
+      return rejected('unsupported_target');
+    }
+    if (
+      sourceInspection?.id === workAreaTarget.id ||
+      sourceStaged?.id === workAreaTarget.id
+    ) {
+      return rejected('no_op');
+    }
+    const card = scene.cards.find((entry) => entry.id === intent.cardId);
+    if (card && card.ownerId !== view.viewer.playerId) {
+      return rejected('unsupported_source');
+    }
+    return {
+      ok: true,
+      command: {
+        type: 'MoveCardToWorkArea',
+        cardId: intent.cardId,
+        expectedWorkAreaId: workAreaTarget.id,
+      },
+    };
+  }
+
   const slot = playSlotTarget(scene, intent.targetId);
   if (slot?.playerId) {
     const destinationSlot = slot.kind === 'active' ? 'active' : 'bench';

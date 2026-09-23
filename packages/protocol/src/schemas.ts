@@ -264,6 +264,13 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationIndex: v.optional(NonNegativeIntegerSchema),
   }),
   v.object({
+    // A card dragged into an open work-area popup, as v1's `viewCards` and
+    // `attachedCards` containers accept drops from anywhere on the board.
+    type: v.literal('MoveCardToWorkArea'),
+    cardId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
+  }),
+  v.object({
     type: v.literal('MoveStagedCard'),
     cardId: IdentifierSchema,
     expectedWorkAreaId: IdentifierSchema,

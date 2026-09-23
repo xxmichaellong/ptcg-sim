@@ -388,6 +388,7 @@ export const MODEL_COMMAND_GENERATORS = {
     };
   },
   MoveInspectedCard: () => undefined,
+  MoveCardToWorkArea: () => undefined,
   MoveStagedCard: () => undefined,
   RestoreStagedStack: () => undefined,
   ResolveStagedCards: () => undefined,
