@@ -54,7 +54,7 @@ const copyLayoutState = (state: BoardLayoutState): BoardLayoutState => ({
   ...state,
   viewport: { ...state.viewport },
   playerIds: [...state.playerIds],
-  ...(state.handScrollPx ? { handScrollPx: { ...state.handScrollPx } } : {}),
+  ...(state.zoneScrollPx ? { zoneScrollPx: { ...state.zoneScrollPx } } : {}),
   vertical: {
     lowerFrame: { ...state.vertical.lowerFrame },
     upperFrame: { ...state.vertical.upperFrame },
@@ -107,11 +107,11 @@ const sameLayoutState = (
   left.vertical.upperHandle.heightRatio ===
     right.vertical.upperHandle.heightRatio &&
   left.vertical.sharedPlacement === right.vertical.sharedPlacement &&
-  sameHandScroll(left.handScrollPx, right.handScrollPx);
+  sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
-const sameHandScroll = (
-  left: BoardLayoutState['handScrollPx'],
-  right: BoardLayoutState['handScrollPx']
+const sameZoneScroll = (
+  left: BoardLayoutState['zoneScrollPx'],
+  right: BoardLayoutState['zoneScrollPx']
 ): boolean => {
   const keys = new Set([
     ...Object.keys(left ?? {}),
@@ -406,25 +406,28 @@ export class BoardSessionRuntime {
   }
 
   /**
-   * v1's `#hand` scrolls when its cards overflow; the renderer reports the
-   * scroll offset so the next scene lays the cards out where they are shown.
+   * v1's `#hand` scrolls sideways and its `#board` downwards when their cards
+   * overflow; the renderer reports the scroll offset so the next scene lays
+   * the cards out where they are shown.
    */
   scrollZone(zoneId: string, offsetPx: number): void {
     if (this.disposed || this.rendererFailure) return;
     const zone = this.adapter
       ?.getSnapshot()
       .scene?.zones.find((candidate) => candidate.id === zoneId);
-    if (!zone?.playerId || zone.kind !== 'hand') return;
+    if (!zone?.playerId || (zone.kind !== 'hand' && zone.kind !== 'board')) {
+      return;
+    }
     const next = Math.max(
       0,
       Math.round(Number.isFinite(offsetPx) ? offsetPx : 0)
     );
-    if ((this.layoutState.handScrollPx?.[zone.playerId] ?? 0) === next) return;
+    if ((this.layoutState.zoneScrollPx?.[zone.id] ?? 0) === next) return;
     this.replaceLayoutState({
       ...this.layoutState,
-      handScrollPx: {
-        ...(this.layoutState.handScrollPx ?? {}),
-        [zone.playerId]: next,
+      zoneScrollPx: {
+        ...(this.layoutState.zoneScrollPx ?? {}),
+        [zone.id]: next,
       },
     });
   }

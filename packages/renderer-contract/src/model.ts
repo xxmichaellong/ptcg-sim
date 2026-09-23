@@ -91,12 +91,14 @@ export interface ZoneSceneNode {
   readonly label: string;
   readonly interactive: boolean;
   /**
-   * Present when the zone's row is wider than the zone and scrolls, as v1's
-   * `#hand { overflow-x: auto }` does: the full row width and how far the
-   * renderer has scrolled it (already applied to the card boxes).
+   * Present when the zone's content is longer than the zone and scrolls, as
+   * v1's `#hand { overflow-x: auto }` and `#board { overflow-y: auto }` do:
+   * the axis, the content's full extent along it, and how far the renderer
+   * has scrolled (already applied to the card boxes).
    */
   readonly scroll?: {
-    readonly contentWidth: number;
+    readonly axis: 'x' | 'y';
+    readonly contentLength: number;
     readonly offsetPx: number;
   };
 }

@@ -10,7 +10,6 @@ import {
   assertLayoutOptions,
   containsPoint,
   containsPointInRotatedRect,
-  insetRect,
 } from './geometry.js';
 import {
   createBoardLayoutSnapshot,
@@ -180,53 +179,47 @@ export const createBoardSceneForViewport = (
   return createBoardScene(view, createBoardLayoutSnapshot(layoutState));
 };
 
-const fitCard = (bounds: Rect, heightRatio = 0.92): Rect => {
-  const height = bounds.height * heightRatio;
-  const width = height * CARD_ASPECT_RATIO;
-  const scale = Math.min(1, bounds.width / width);
-  const finalWidth = width * scale;
-  const finalHeight = height * scale;
-  return {
-    x: bounds.x + (bounds.width - finalWidth) / 2,
-    y: bounds.y + bounds.height - finalHeight,
-    width: finalWidth,
-    height: finalHeight,
-  };
-};
+/**
+ * v1's prize images are inline, so each line rests on the strut baseline and
+ * leaves the font's descent below it. Measured at 4px for v1's 16px stack.
+ */
+const LEGACY_PRIZE_LINE_GAP_PX = 4;
 
-const layoutPrizeGrid = (bounds: Rect, count: number): Rect[] => {
+/**
+ * v1 `#prizes`: a plain block of inline images, two per line, each with
+ * `margin-left: .1vw`, `max-width: calc(50% - .1vw)` and a `max-height` the
+ * prize observer switches between 33% (up to six prizes) and 23% (above six).
+ * Whichever constraint binds first sets the size; the aspect does the rest.
+ * Beyond the box the lines simply overflow, as v1's block does.
+ */
+const layoutLegacyPrizeColumn = (
+  contentBounds: Rect,
+  frame: Rect,
+  side: BoardSide,
+  count: number
+): Rect[] => {
   if (count === 0) return [];
-  const rows = Math.max(3, Math.ceil(count / 2));
-  const cellWidth = bounds.width / 2;
-  const cellHeight = bounds.height / rows;
+  const vw = frame.width / 100;
+  const local =
+    side === 'opponent'
+      ? rotateRectInFrame(contentBounds, frame)
+      : contentBounds;
+  const marginLeft = 0.1 * vw;
+  const maxWidth = local.width / 2 - marginLeft;
+  const maxHeight = local.height * (count <= 6 ? 0.33 : 0.23);
+  const width = Math.max(0, Math.min(maxWidth, maxHeight * CARD_ASPECT_RATIO));
+  const height = width / CARD_ASPECT_RATIO;
+  const stepX = width + marginLeft;
+  const stepY = height + LEGACY_PRIZE_LINE_GAP_PX;
   return Array.from({ length: count }, (_, index) => {
-    const cell: Rect = {
-      x: bounds.x + (index % 2) * cellWidth,
-      y: bounds.y + Math.floor(index / 2) * cellHeight,
-      width: cellWidth,
-      height: cellHeight,
+    const rect = {
+      x: local.x + marginLeft + (index % 2) * stepX,
+      y: local.y + Math.floor(index / 2) * stepY,
+      width,
+      height,
     };
-    return fitCard(cell, 0.96);
+    return side === 'opponent' ? rotateRectInFrame(rect, frame) : rect;
   });
-};
-
-const layoutBoardGrid = (bounds: Rect, count: number): Rect[] => {
-  if (count === 0) return [];
-  const columns = Math.max(1, Math.min(6, Math.ceil(Math.sqrt(count * 1.5))));
-  const rows = Math.ceil(count / columns);
-  const cellWidth = bounds.width / columns;
-  const cellHeight = bounds.height / rows;
-  return Array.from({ length: count }, (_, index) =>
-    fitCard(
-      {
-        x: bounds.x + (index % columns) * cellWidth,
-        y: bounds.y + Math.floor(index / columns) * cellHeight,
-        width: cellWidth,
-        height: cellHeight,
-      },
-      0.9
-    )
-  );
 };
 
 /** Half-turn of a rectangle about the centre of its enclosing frame. */
@@ -309,37 +302,90 @@ const layoutLegacyHandRow = (
       width,
       height,
     })),
-    scroll: { contentWidth: rowWidth, offsetPx },
+    scroll: { axis: 'x', contentLength: rowWidth, offsetPx },
   };
 };
 
+/** v1 `#board img { height: 70% }`. */
+const LEGACY_LOOSE_BOARD_HEIGHT_RATIO = 0.7;
+
+/**
+ * v1 `#board`: a wrapping flex row of images 70% of the content height tall
+ * with `.25vw` margins, each line centred and its cards bottom-aligned, under
+ * `overflow-y: auto`. Two lines never fit -- 70% twice is more than the box --
+ * so a second line always scrolls, and `board-observer.js` scrolls to the
+ * bottom whenever cards arrive. As with the hand, an overflowing region is
+ * laid out in physical space, because the renderer's scroll container cannot
+ * reach negative space.
+ */
+const layoutLegacyLooseBoardRows = (
+  contentBounds: Rect,
+  frame: Rect,
+  side: BoardSide,
+  count: number,
+  scrollOffsetPx: number
+): LegacyHandRowLayout => {
+  if (count === 0) return { cards: [] };
+  const vw = frame.width / 100;
+  const local =
+    side === 'opponent'
+      ? rotateRectInFrame(contentBounds, frame)
+      : contentBounds;
+  const height = Math.max(0, local.height * LEGACY_LOOSE_BOARD_HEIGHT_RATIO);
+  const width = height * CARD_ASPECT_RATIO;
+  const margin = 0.25 * vw;
+  const stepX = width + 2 * margin;
+  const stepY = height + 2 * margin;
+  const perRow = Math.max(1, Math.floor(local.width / Math.max(stepX, 1)));
+  const rows = Math.ceil(count / perRow);
+  const lineStart = (row: number): number => {
+    const inRow = Math.min(perRow, count - row * perRow);
+    return local.x + (local.width - inRow * stepX) / 2 + margin;
+  };
+  if (rows <= 1) {
+    // One line stretches to the whole box and `align-items: flex-end` rests
+    // its cards on the bottom.
+    const y = local.y + local.height - margin - height;
+    const startX = lineStart(0);
+    return {
+      cards: Array.from({ length: count }, (_, index) => {
+        const rect = { x: startX + stepX * index, y, width, height };
+        return side === 'opponent' ? rotateRectInFrame(rect, frame) : rect;
+      }),
+    };
+  }
+  const contentLength = rows * stepY;
+  const offsetPx = Math.max(
+    0,
+    Math.min(contentLength - contentBounds.height, scrollOffsetPx)
+  );
+  return {
+    cards: Array.from({ length: count }, (_, index) => {
+      const row = Math.floor(index / perRow);
+      const column = index % perRow;
+      return {
+        x: contentBounds.x + (lineStart(row) - local.x) + stepX * column,
+        y: contentBounds.y + row * stepY + margin - offsetPx,
+        width,
+        height,
+      };
+    }),
+    scroll: { axis: 'y', contentLength, offsetPx },
+  };
+};
+
+/** Every zone whose cards are not laid out as a scrolling row. */
 const layoutZoneCards = (
-  kind: MatchViewState['zones'][string]['kind'],
+  kind: Exclude<MatchViewState['zones'][string]['kind'], 'hand' | 'board'>,
   bounds: Rect,
   count: number,
   containedBlockAlignment: LegacyContainedCardBlockAlignment,
-  owner: {
-    readonly frame: Rect;
-    readonly side: BoardSide;
-    readonly scrollOffsetPx: number;
-  } | null
+  owner: { readonly frame: Rect; readonly side: BoardSide } | null
 ): Rect[] => {
   switch (kind) {
-    case 'hand':
-      if (!owner) throw new Error('Hand zone must belong to a player');
-      return [
-        ...layoutLegacyHandRow(
-          bounds,
-          owner.frame,
-          owner.side,
-          count,
-          owner.scrollOffsetPx
-        ).cards,
-      ];
     case 'prizes':
-      return layoutPrizeGrid(insetRect(bounds, 3), count);
-    case 'board':
-      return layoutBoardGrid(insetRect(bounds, 5), count);
+      if (!owner) throw new Error('Prizes must belong to a player');
+      return layoutLegacyPrizeColumn(bounds, owner.frame, owner.side, count);
     case 'stadium':
     case 'deck':
     case 'discard':
@@ -604,16 +650,19 @@ export const createBoardScene = (
     const contentBounds = region
       ? copyRect(region.physicalContentBoxBounds)
       : copyRect(bounds);
-    // v1's hand scrolls when its full-size cards overflow the row; the
-    // renderer's scroll offset shifts the cards here so paint and input agree.
-    const handRow =
-      zone.kind === 'hand' && zone.ownerId
-        ? layoutLegacyHandRow(
+    // v1's hand scrolls sideways and its loose board downwards once the cards
+    // overflow; the renderer's scroll offset shifts the cards here so paint
+    // and input agree.
+    const scrollingRow =
+      zone.ownerId && (zone.kind === 'hand' || zone.kind === 'board')
+        ? (zone.kind === 'hand'
+            ? layoutLegacyHandRow
+            : layoutLegacyLooseBoardRows)(
             contentBounds,
             playerLayout(zone.ownerId).frameBounds,
             playerLayout(zone.ownerId).side,
             zone.cards.length,
-            layout.handScrollPx[zone.ownerId] ?? 0
+            layout.zoneScrollPx[zone.id] ?? 0
           )
         : null;
     zones.push({
@@ -631,7 +680,7 @@ export const createBoardScene = (
         zone.ownerId ? view.players[zone.ownerId]?.displayName : undefined
       ),
       interactive: true,
-      ...(handRow?.scroll ? { scroll: handRow.scroll } : {}),
+      ...(scrollingRow?.scroll ? { scroll: scrollingRow.scroll } : {}),
     });
     if (region?.countLabel && zone.ownerId && isCountedZoneKind(zone.kind)) {
       counts.push({
@@ -661,10 +710,10 @@ export const createBoardScene = (
         : side === 'opponent'
           ? 'end'
           : 'start';
-    const cardBounds = handRow
-      ? [...handRow.cards]
+    const cardBounds = scrollingRow
+      ? [...scrollingRow.cards]
       : layoutZoneCards(
-          zone.kind,
+          zone.kind as Exclude<typeof zone.kind, 'hand' | 'board'>,
           contentBounds,
           zone.cards.length,
           containedBlockAlignment,
@@ -672,7 +721,6 @@ export const createBoardScene = (
             ? {
                 frame: playerLayout(zone.ownerId).frameBounds,
                 side: playerLayout(zone.ownerId).side,
-                scrollOffsetPx: 0,
               }
             : null
         );

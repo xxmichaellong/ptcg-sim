@@ -1551,6 +1551,65 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('scrolls the loose board downwards and jumps to the newest card', async () => {
+    const scrollZone = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+      scrollZone,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const base = createScene();
+    const boardBounds = { x: 600, y: 100, width: 180, height: 220 };
+    const withBoardScroll = (contentLength: number): BoardScene => ({
+      ...base,
+      zones: [
+        ...base.zones,
+        {
+          id: 'zone:p1:board',
+          playerId,
+          side: 'local' as const,
+          kind: 'board' as const,
+          bounds: boardBounds,
+          contentBounds: boardBounds,
+          surface: 'zone' as const,
+          count: 4,
+          zIndex: 10,
+          label: 'Blue board',
+          interactive: true,
+          scroll: { axis: 'y' as const, contentLength, offsetPx: 0 },
+        },
+      ],
+    });
+    await mountInAct(renderer, host, withBoardScroll(400));
+    const board = host.querySelector<HTMLElement>(
+      '[data-zone-id="zone:p1:board"]'
+    )!;
+    expect(board.style.overflowY).toBe('auto');
+    expect(board.style.overflowX).toBe('hidden');
+    expect(
+      board.querySelector<HTMLElement>('[data-zone-scroll-spacer]')?.style
+        .height
+    ).toBe('400px');
+
+    act(() => {
+      board.scrollTop = 90;
+      board.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    expect(scrollZone).toHaveBeenLastCalledWith('zone:p1:board', 90);
+
+    // v1's board-observer.js scrolls to the bottom whenever cards arrive.
+    await act(async () => renderer.installScene(withBoardScroll(700), []));
+    expect(board.scrollTop).toBeCloseTo(700 - boardBounds.height);
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('scrolls an overflowing hand like v1 and reports the offset for the next scene', async () => {
     const scrollZone = vi.fn();
     const renderer = new ReactDomBoardRenderer({
@@ -1566,7 +1625,14 @@ describe('React DOM board renderer', () => {
       ...base,
       zones: base.zones.map((zone) =>
         zone.id === 'zone:p1:hand'
-          ? { ...zone, scroll: { contentWidth: 2400, offsetPx: 120 } }
+          ? {
+              ...zone,
+              scroll: {
+                axis: 'x' as const,
+                contentLength: 2400,
+                offsetPx: 120,
+              },
+            }
           : zone
       ),
     };

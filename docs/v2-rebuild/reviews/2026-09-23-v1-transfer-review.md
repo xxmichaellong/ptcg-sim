@@ -38,6 +38,19 @@ reviewer stated them.
   as `relocateAttachedCards` does. What remains is v2's one-open-window rule,
   which already governs every other stack departure. Evidence:
   `work-area-arrival-commands.test.ts`.
+- **F-03 closed.** The loose board now reproduces `#board`: images 70% of the
+  content height with `.25vw` margins, lines centred and bottom-aligned, and
+  `overflow-y: auto` once a second line appears, which it always does because
+  70% twice is more than the box. The renderer scrolls to the bottom when
+  cards arrive, as `board-observer.js` does. Measured against the real v1
+  runtime at 1440x900 (94.5px cards, 73.05px step, rows 99.94px apart) and
+  pinned in `scene.test.ts`.
+- **F-07, prize half closed.** Prizes are laid out as v1's inline block: two
+  per line, `margin-left: .1vw`, `max-width: calc(50% - .1vw)`, and the prize
+  observer's 33%/23% maximum height, whichever binds first. Measured against
+  the real v1 runtime (31.5 x 44.016 cards at x 6.078/38.656, lines 48.016
+  apart -- the 4px inline baseline gap) and pinned in `scene.test.ts`. Above
+  six prizes the extra lines overflow the box, as the source block does.
 - **F-07, default background half: not a difference.** `styles.css` puts v1's
   wallpaper, its `-200px` offset, its 75% white gradient and the 85% `#cover`
   sheet on the room route. The radial gradient the finding cites is the outer

@@ -141,17 +141,36 @@ const ZoneNode = memo(function ZoneNode({
   readonly scrollZone: BoardRendererAdapters['scrollZone'];
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  // v1 `#hand { overflow-x: auto }`: an overflowing hand is a real scroll
-  // container. Its scrollbar and wheel move the offset, which the scene then
-  // applies to the card boxes, so the element follows the scene's offset.
+  const grownRef = useRef<number | null>(null);
+  // v1 `#hand { overflow-x: auto }` and `#board { overflow-y: auto }`: an
+  // overflowing zone is a real scroll container. Its scrollbar and wheel move
+  // the offset, which the scene then applies to the card boxes, so the element
+  // follows the scene's offset. `board-observer.js` additionally scrolls the
+  // loose board to the bottom whenever cards arrive, which is reproduced by
+  // jumping to the end when the content grows.
   useLayoutEffect(() => {
     const element = scrollRef.current;
     const scroll = zone.scroll;
-    if (!element || !scroll) return;
+    if (!element || !scroll) {
+      grownRef.current = null;
+      return;
+    }
+    const appended =
+      zone.kind === 'board' &&
+      grownRef.current !== null &&
+      scroll.contentLength > grownRef.current;
+    grownRef.current = scroll.contentLength;
+    if (scroll.axis === 'y') {
+      const target = appended
+        ? Math.max(0, scroll.contentLength - zone.bounds.height)
+        : scroll.offsetPx;
+      if (Math.abs(element.scrollTop - target) >= 1) element.scrollTop = target;
+      return;
+    }
     if (Math.abs(element.scrollLeft - scroll.offsetPx) >= 1) {
       element.scrollLeft = scroll.offsetPx;
     }
-  }, [zone.scroll]);
+  }, [zone.scroll, zone.kind, zone.bounds.height]);
   return (
     <div
       ref={scrollRef}
@@ -160,7 +179,8 @@ const ZoneNode = memo(function ZoneNode({
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       data-drop-target={dropTarget ? 'true' : undefined}
-      data-zone-scroll-width={zone.scroll?.contentWidth}
+      data-zone-scroll-axis={zone.scroll?.axis}
+      data-zone-scroll-length={zone.scroll?.contentLength}
       aria-label={`${zone.label}, ${zone.count} cards`}
       aria-haspopup={zone.interactive ? 'dialog' : undefined}
       role={zone.interactive ? 'button' : undefined}
@@ -176,11 +196,19 @@ const ZoneNode = memo(function ZoneNode({
         boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
         pointerEvents: zone.interactive ? 'auto' : 'none',
         ...(zone.scroll
-          ? { overflowX: 'auto' as const, overflowY: 'hidden' as const }
+          ? zone.scroll.axis === 'y'
+            ? { overflowY: 'auto' as const, overflowX: 'hidden' as const }
+            : { overflowX: 'auto' as const, overflowY: 'hidden' as const }
           : {}),
       }}
       onScroll={(event) => {
-        if (zone.scroll) scrollZone?.(zone.id, event.currentTarget.scrollLeft);
+        if (!zone.scroll) return;
+        scrollZone?.(
+          zone.id,
+          zone.scroll.axis === 'y'
+            ? event.currentTarget.scrollTop
+            : event.currentTarget.scrollLeft
+        );
       }}
       onDoubleClick={() => {
         if (zone.interactive) {
@@ -214,7 +242,11 @@ const ZoneNode = memo(function ZoneNode({
         <div
           data-zone-scroll-spacer={zone.id}
           aria-hidden="true"
-          style={{ width: zone.scroll.contentWidth, height: 1 }}
+          style={
+            zone.scroll.axis === 'y'
+              ? { width: 1, height: zone.scroll.contentLength }
+              : { width: zone.scroll.contentLength, height: 1 }
+          }
         />
       ) : null}
     </div>
@@ -580,8 +612,8 @@ export const BoardSurface = ({
       data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
       onWheel={(event) => {
-        // The cards paint above the hand's scroll container, so a wheel over
-        // them scrolls the row the way it would over v1's `#hand`.
+        // The cards paint above the scroll container, so a wheel over them
+        // scrolls the region the way it would over v1's `#hand` or `#board`.
         const bounds = surfaceRef.current?.getBoundingClientRect();
         if (!bounds || bounds.width <= 0 || bounds.height <= 0) return;
         const x =
@@ -603,12 +635,14 @@ export const BoardSurface = ({
             ? event.deltaX
             : event.deltaY;
         if (delta === 0) return;
+        const extent =
+          zone.scroll.axis === 'y' ? zone.bounds.height : zone.bounds.width;
         adapters.scrollZone?.(
           zone.id,
           Math.max(
             0,
             Math.min(
-              zone.scroll.contentWidth - zone.bounds.width,
+              zone.scroll.contentLength - extent,
               zone.scroll.offsetPx + delta
             )
           )

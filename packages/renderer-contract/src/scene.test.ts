@@ -697,7 +697,8 @@ describe('renderer-neutral board scene', () => {
     expect(last.bounds.x + last.bounds.width).toBeGreaterThan(frameWidth);
     const wideZone = wide.zones.find((zone) => zone.id === 'zone:p1:hand')!;
     expect(wideZone.scroll).toEqual({
-      contentWidth: expect.closeTo(step * 30, 6),
+      axis: 'x',
+      contentLength: expect.closeTo(step * 30, 6),
       offsetPx: 0,
     });
     expect(scene.zones.find((zone) => zone.id === 'zone:p1:hand')!.scroll).toBe(
@@ -713,7 +714,7 @@ describe('renderer-neutral board scene', () => {
         bottomPlayerId: p1,
         shellMode: 'sidebar',
         vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
-        handScrollPx: { [p1]: 250 },
+        zoneScrollPx: { 'zone:p1:hand': 250 },
       })
     );
     const scrolledCards = scrolled.cards.filter(
@@ -732,7 +733,7 @@ describe('renderer-neutral board scene', () => {
         bottomPlayerId: p1,
         shellMode: 'sidebar',
         vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
-        handScrollPx: { [p1]: 100_000 },
+        zoneScrollPx: { 'zone:p1:hand': 100_000 },
       })
     );
     const overscrolledZone = overscrolled.zones.find(
@@ -740,6 +741,179 @@ describe('renderer-neutral board scene', () => {
     )!;
     expect(overscrolledZone.scroll!.offsetPx).toBeCloseTo(
       step * 30 - overscrolledZone.contentBounds.width
+    );
+  });
+
+  it('lays prizes out as v1 does: two inline images per line, width-limited', () => {
+    // Recorded from the real v1 runtime at 1440x900: `#prizes` is 75.219 x
+    // 203.5 with 5px padding, and six prize images measure 31.5 x 44.016 at
+    // x 6.078 / 38.656 and y 5, 53.016, 101.031 inside it. The .1vw margin
+    // and the 4px inline line gap are the only spacing.
+    const prizeCards = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        kind: 'concealed' as const,
+        id: asViewCardId(`zone:p1:prizes:${index}`),
+        ownerId: p1,
+        cardBackUrl: '/back.png',
+        publiclyRevealed: false,
+      }));
+    const frameWidth = 1440 * 0.755;
+    const playArea = { width: frameWidth, height: 900, devicePixelRatio: 1 };
+    const sceneFor = (count: number) =>
+      createBoardSceneForViewport(
+        {
+          ...createView(),
+          zones: {
+            'zone:p1:prizes': {
+              id: 'zone:p1:prizes',
+              kind: 'prizes',
+              ownerId: p1,
+              cards: prizeCards(count),
+            },
+          },
+        },
+        { ...options, viewport: playArea }
+      );
+    const six = sceneFor(6);
+    const zone = six.zones.find((node) => node.id === 'zone:p1:prizes')!;
+    expect(zone.bounds.width).toBeCloseTo(75.22, 1);
+    expect(zone.bounds.height).toBeCloseTo(203.5, 1);
+    const cards = six.cards.filter(
+      (card) => card.parentId === 'zone:p1:prizes'
+    );
+    const marginLeft = 0.001 * frameWidth;
+    for (const [index, card] of cards.entries()) {
+      expect(card.bounds.width).toBeCloseTo(31.5, 1);
+      expect(card.bounds.height).toBeCloseTo(44.016, 1);
+      expect(card.bounds.x - zone.bounds.x).toBeCloseTo(
+        5 + marginLeft + (index % 2) * (card.bounds.width + marginLeft),
+        1
+      );
+      expect(card.bounds.y - zone.bounds.y).toBeCloseTo(
+        5 + Math.floor(index / 2) * (card.bounds.height + 4),
+        1
+      );
+    }
+
+    // v1's prize observer drops the maximum height from 33% to 23% above six
+    // prizes. At this size the .1vw-inset half width still binds first, so
+    // the cards keep their size and the extra lines simply overflow, exactly
+    // as the source block does.
+    const nine = sceneFor(9);
+    const nineCards = nine.cards.filter(
+      (card) => card.parentId === 'zone:p1:prizes'
+    );
+    expect(nineCards).toHaveLength(9);
+    expect(nineCards[0]!.bounds.height).toBeCloseTo(44.016, 1);
+    expect(nineCards[8]!.bounds.y - zone.bounds.y).toBeCloseTo(
+      5 + 4 * (nineCards[8]!.bounds.height + 4),
+      1
+    );
+    // The fifth line runs past the bottom of the box, as it does in v1.
+    expect(
+      nineCards[8]!.bounds.y + nineCards[8]!.bounds.height
+    ).toBeGreaterThan(zone.bounds.y + zone.bounds.height);
+  });
+
+  it('wraps and scrolls the loose board the way v1 does: 70% cards, .25vw margins', () => {
+    const looseCards = (ownerId: PlayerId, zoneId: string, count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        kind: 'concealed' as const,
+        id: asViewCardId(`${zoneId}:${index}`),
+        ownerId,
+        cardBackUrl: '/back.png',
+        publiclyRevealed: false,
+      }));
+    const frameWidth = 1440 * 0.755;
+    const playArea = { width: frameWidth, height: 900, devicePixelRatio: 1 };
+    const boardView = (count: number): MatchViewState => ({
+      ...createView(),
+      zones: {
+        'zone:p1:board': {
+          id: 'zone:p1:board',
+          kind: 'board',
+          ownerId: p1,
+          cards: looseCards(p1, 'zone:p1:board', count),
+        },
+      },
+    });
+    const single = createBoardSceneForViewport(boardView(3), {
+      ...options,
+      viewport: playArea,
+    });
+    const zone = single.zones.find((node) => node.id === 'zone:p1:board')!;
+    // v1 `#board img { height: 70%; margin: .25vw }`, resolved against the
+    // content box the 5px padding already leaves.
+    const content = zone.contentBounds;
+    const margin = 0.0025 * frameWidth;
+    const height = content.height * 0.7;
+    const width = height * CARD_ASPECT_RATIO;
+    const stepX = width + 2 * margin;
+    const cards = single.cards.filter(
+      (card) => card.parentId === 'zone:p1:board'
+    );
+    expect(cards).toHaveLength(3);
+    for (const [index, card] of cards.entries()) {
+      expect(card.bounds.height).toBeCloseTo(height);
+      expect(card.bounds.width).toBeCloseTo(width);
+      // One line stretches to the box and `align-items: flex-end` rests the
+      // cards on its bottom; the line itself is centred.
+      expect(card.bounds.y).toBeCloseTo(
+        content.y + content.height - margin - height
+      );
+      expect(card.bounds.x).toBeCloseTo(
+        content.x + (content.width - stepX * 3) / 2 + margin + stepX * index
+      );
+    }
+    expect(zone.scroll).toBeUndefined();
+
+    // Enough cards to wrap: a second line never fits (70% twice is more than
+    // the box), so the region scrolls vertically as v1's `overflow-y: auto`.
+    const perRow = Math.floor(content.width / stepX);
+    const wrapped = createBoardSceneForViewport(boardView(perRow + 2), {
+      ...options,
+      viewport: playArea,
+    });
+    const wrappedZone = wrapped.zones.find(
+      (node) => node.id === 'zone:p1:board'
+    )!;
+    const wrappedCards = wrapped.cards.filter(
+      (card) => card.parentId === 'zone:p1:board'
+    );
+    const stepY = height + 2 * margin;
+    expect(wrappedZone.scroll).toEqual({
+      axis: 'y',
+      contentLength: expect.closeTo(stepY * 2, 6),
+      offsetPx: 0,
+    });
+    expect(wrappedCards[0]!.bounds.y).toBeCloseTo(content.y + margin);
+    expect(
+      wrappedCards[perRow]!.bounds.y - wrappedCards[0]!.bounds.y
+    ).toBeCloseTo(stepY);
+    // The short last line is centred on its own, as `justify-content: center`
+    // does per line.
+    expect(wrappedCards[perRow]!.bounds.x).toBeCloseTo(
+      content.x + (content.width - stepX * 2) / 2 + margin
+    );
+
+    // The renderer's offset scrolls the rows and clamps at the end.
+    const scrolled = createBoardScene(
+      boardView(perRow + 2),
+      createBoardLayoutSnapshot({
+        geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+        viewport: playArea,
+        playerIds: [p1, p2],
+        bottomPlayerId: p1,
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+        zoneScrollPx: { 'zone:p1:board': 1_000 },
+      })
+    );
+    const scrolledZone = scrolled.zones.find(
+      (node) => node.id === 'zone:p1:board'
+    )!;
+    expect(scrolledZone.scroll!.offsetPx).toBeCloseTo(
+      stepY * 2 - scrolledZone.contentBounds.height
     );
   });
 

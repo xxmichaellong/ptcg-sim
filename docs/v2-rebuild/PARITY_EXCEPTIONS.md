@@ -38,10 +38,10 @@ The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) records
 differences beyond PX-013. These are **open findings, not approved
 exceptions**, and the review's inventory supersedes earlier broad SAME claims.
 Carried since it was written: decklist-versus-alphabetical sorting (F-01),
-live-session leave warnings (F-02) and popup ingress (PX-013/F-05) are
-implemented and closed. Still open: loose-board sizing and append scrolling
-(F-03), prize card sizing (F-07 -- its default-background half turned out not
-to be a difference), source-data maintenance (F-09), and the flipped-seat
+live-session leave warnings (F-02), popup ingress (PX-013/F-05), loose-board
+sizing and append scrolling (F-03) and prize card sizing (F-07, whose
+default-background half turned out not to be a difference) are implemented and
+closed. Still open: source-data maintenance (F-09) and the flipped-seat
 ephemeral announcements (F-10).
 
 PX-013 was the only row in this section and is now closed; the F-numbered
