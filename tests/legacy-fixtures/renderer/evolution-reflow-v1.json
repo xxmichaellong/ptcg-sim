@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Manually reviewed Chromium 151 CSS-pixel capture of four isolated, source-pinned DOM replays of the checked-in ordinary moveCardBundle -> evolveCard -> refreshBoard path. The legacy HTML, CSS, and cardback asset are loaded directly; application/network modules remain inert, and their relevant mutation logic is narrowly transcribed. The transient evolve output is diagnostic only. Stable geometry is captured after the empty-wrapper MutationObserver settles across two animation frames.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "canonicalEvolutionOrder": ["base", "middle", "top"],
+    "cases": [
+      "local-active",
+      "local-bench",
+      "opponent-active",
+      "opponent-bench"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.0001
+  },
+  "scope": {
+    "included": [
+      "ordinary attachment-free second evolution onto an existing two-card Pokémon chain",
+      "unrotated portrait cards in otherwise empty local/opponent active and bench zones",
+      "the synchronous post-evolve diagnostic state and the settled post-refresh state",
+      "integer CSSOM clientWidth offsets, legacy logical/DOM order, paint/hit order, wrapper margins, and asynchronous empty-wrapper cleanup"
+    ],
+    "excluded": [
+      "Energy, Trainer, Tool, and unrelated Pokémon attachments",
+      "damage, ability, and special-condition counters",
+      "BREAK cards, per-card rotation, group rotation, and quarter-turn bounds",
+      "mixed or noncanonical card dimensions and concealed card metadata",
+      "face-down, reveal, hide, and source mutation behavior",
+      "multiple bench stacks, flex shrink, overflow, and cross-stack overlap",
+      "resize, fullscreen, explicit board flip, and physical ownership changes",
+      "active/bench transfers, promotion, swapping, departure, removal, and lower-layer removal",
+      "leaveAll restoration and other history-dependent reconstruction paths",
+      "previews, click, drag, context-menu, message, network, and server behavior",
+      "candidate DOM/Pixi parity and production renderer correctness",
+      "the synchronous ghost wrapper as a stable or user-visible rendered result"
+    ]
+  },
+  "provenance": [
+    {
+      "path": "client/index.ejs",
+      "encoding": "utf8",
+      "sha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/self-containers.html",
+      "encoding": "utf8",
+      "sha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "encoding": "utf8",
+      "sha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "encoding": "utf8",
+      "sha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "encoding": "utf8",
+      "sha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "encoding": "utf8",
+      "sha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "encoding": "binary",
+      "sha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "encoding": "utf8",
+      "sha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "encoding": "utf8",
+      "sha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "encoding": "utf8",
+      "sha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-bundle.js",
+      "encoding": "utf8",
+      "sha256": "06ffbe2fd8b39eb78eee817667d059aef4ea56772b12393ffc1d625c4f949ed2"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card.js",
+      "encoding": "utf8",
+      "sha256": "5737c45ff7b45a71dee661b42cbba7b2ee6e1c852ee530ec4369b85493e794e3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/evolve-card.js",
+      "encoding": "utf8",
+      "sha256": "73c65e2947f5e731c571c02da9dd7e7b0ae93452424a41c13ecaec9e7cd9b8aa"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/attach-card.js",
+      "encoding": "utf8",
+      "sha256": "711302b5dfdf757aa21b3a4ef1c83c582f6a14d60db31aaf8f81afdcd05203b4"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+      "encoding": "utf8",
+      "sha256": "b682db984c742521ee231d8e273ea0dc28e7561ce47234ef58971f6c8ab1c86e"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+      "encoding": "utf8",
+      "sha256": "4e9d65ca703a1949fb6d603b596acf30eb0bf141c5228c3496542ae086ef822c"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/decrease-card-layer.js",
+      "encoding": "utf8",
+      "sha256": "30aec3ad82a6da83d669e660ba4816576724cc2e3b48f7e2bb2f6b7548c552c3"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "encoding": "utf8",
+      "sha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "outer player frames, opponent half-turn, and active/bench DOM regions",
+      "sources": [
+        "client/index.ejs",
+        "client/self-containers.html",
+        "client/opp-containers.html",
+        "client/src/css/index.css",
+        "client/src/css/self-containers.css",
+        "client/src/css/opp-containers.css"
+      ]
+    },
+    {
+      "claim": "controlled card dimensions and reset state",
+      "sources": [
+        "client/src/assets/cardback.png",
+        "client/src/setup/deck-constructor/card.js",
+        "client/src/setup/image-logic/reset-image.js"
+      ]
+    },
+    {
+      "claim": "ordinary move entry, target selection, evolution retargeting, integer wrapper width, and unconditional refresh",
+      "sources": [
+        "client/src/setup/zones/get-zone.js",
+        "client/src/actions/move-card-bundle/move-card-bundle.js",
+        "client/src/actions/move-card-bundle/move-card.js",
+        "client/src/actions/move-card-bundle/evolve-card.js",
+        "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+        "client/src/actions/move-card-bundle/decrease-card-layer.js"
+      ]
+    },
+    {
+      "claim": "lower-evolution reattachment, DOM insertion, z order, zero rotation, and asynchronous empty-wrapper cleanup",
+      "sources": [
+        "client/src/actions/move-card-bundle/attach-card.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+        "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+        "client/src/actions/general/rotate-card.js"
+      ]
+    },
+    {
+      "claim": "post-refresh logical normalization and stable integer-width reflow",
+      "sources": [
+        "client/src/setup/sizing/refresh-board.js",
+        "client/src/setup/sizing/resizer.js"
+      ]
+    }
+  ],
+  "phaseInvariants": {
+    "preEvolution": {
+      "logicalOrder": ["middle", "base"],
+      "domOrder": ["middle", "base"],
+      "topLayer": 1,
+      "zIndexes": [0, -1]
+    },
+    "transientPostEvolution": {
+      "logicalOrder": ["top", "middle", "base"],
+      "domOrder": ["top", "base", "middle"],
+      "topLayer": 2,
+      "zIndexesByLogicalOrder": [0, -1, -2],
+      "inlineMarginRight": "1%",
+      "inlineMarginLeft": "0%"
+    },
+    "stablePostRefresh": {
+      "logicalOrder": ["top", "middle", "base"],
+      "domOrder": ["top", "base", "middle"],
+      "hitOrder": ["top", "middle", "base"],
+      "topLayer": 2,
+      "zIndexesByLogicalOrder": [0, -1, -2],
+      "synchronousWrapperCount": 2,
+      "stableWrapperCount": 1
+    }
+  },
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": {
+        "a": 1,
+        "b": 0,
+        "c": 0,
+        "d": 1,
+        "rotationDegrees": 0
+      },
+      "opponent": {
+        "a": -1,
+        "b": 0,
+        "c": 0,
+        "d": -1,
+        "rotationDegrees": 180
+      }
+    },
+    "slotMetrics": {
+      "active": {
+        "topClientWidth": 91,
+        "topClientHeight": 126,
+        "cardWidth": 90.5625,
+        "cardHeight": 126,
+        "middleBottomPx": 6.06667,
+        "baseBottomPx": 12.1333,
+        "stableComputedMarginRightPx": 0,
+        "transientComputedMarginRightPx": 3.85938
+      },
+      "bench": {
+        "topClientWidth": 81,
+        "topClientHeight": 113,
+        "cardWidth": 80.859375,
+        "cardHeight": 112.5,
+        "middleBottomPx": 5.4,
+        "baseBottomPx": 10.8,
+        "stableComputedMarginRightPx": 9.53125,
+        "transientComputedMarginRightPx": 9.53125
+      }
+    },
+    "stacks": [
+      {
+        "id": "local-active-evolution-stack",
+        "physicalBounds": {
+          "x": 558.484375,
+          "y": 481.5,
+          "width": 91,
+          "height": 126
+        },
+        "stableFrameLocalBounds": {
+          "x": 558.484375,
+          "y": 31.5,
+          "width": 91,
+          "height": 126
+        },
+        "transientFrameLocalBounds": {
+          "x": 556.5625,
+          "y": 31.5,
+          "width": 91,
+          "height": 126
+        }
+      },
+      {
+        "id": "local-bench-evolution-stack",
+        "physicalBounds": {
+          "x": 552.6875,
+          "y": 630,
+          "width": 81,
+          "height": 112.5
+        },
+        "stableFrameLocalBounds": {
+          "x": 552.6875,
+          "y": 180,
+          "width": 81,
+          "height": 112.5
+        },
+        "transientFrameLocalBounds": {
+          "x": 552.6875,
+          "y": 180,
+          "width": 81,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "opponent-active-evolution-stack",
+        "physicalBounds": {
+          "x": 558.515625,
+          "y": 292.5,
+          "width": 91,
+          "height": 126
+        },
+        "stableFrameLocalBounds": {
+          "x": 558.484375,
+          "y": 31.5,
+          "width": 91,
+          "height": 126
+        },
+        "transientFrameLocalBounds": {
+          "x": 556.5625,
+          "y": 31.5,
+          "width": 91,
+          "height": 126
+        }
+      },
+      {
+        "id": "opponent-bench-evolution-stack",
+        "physicalBounds": {
+          "x": 574.3125,
+          "y": 157.5,
+          "width": 81,
+          "height": 112.5
+        },
+        "stableFrameLocalBounds": {
+          "x": 552.6875,
+          "y": 180,
+          "width": 81,
+          "height": 112.5
+        },
+        "transientFrameLocalBounds": {
+          "x": 552.6875,
+          "y": 180,
+          "width": 81,
+          "height": 112.5
+        }
+      }
+    ],
+    "cards": [
+      {
+        "id": "local-active-evolution-base",
+        "physicalBounds": {
+          "x": 558.484375,
+          "y": 469.375,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "local-active-evolution-middle",
+        "physicalBounds": {
+          "x": 558.484375,
+          "y": 475.4375,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "local-active-evolution-top",
+        "physicalBounds": {
+          "x": 558.484375,
+          "y": 481.5,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "local-bench-evolution-base",
+        "physicalBounds": {
+          "x": 552.6875,
+          "y": 619.203125,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "local-bench-evolution-middle",
+        "physicalBounds": {
+          "x": 552.6875,
+          "y": 624.609375,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "local-bench-evolution-top",
+        "physicalBounds": {
+          "x": 552.6875,
+          "y": 630,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "opponent-active-evolution-base",
+        "physicalBounds": {
+          "x": 558.953125,
+          "y": 304.625,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "opponent-active-evolution-middle",
+        "physicalBounds": {
+          "x": 558.953125,
+          "y": 298.5625,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "opponent-active-evolution-top",
+        "physicalBounds": {
+          "x": 558.953125,
+          "y": 292.5,
+          "width": 90.5625,
+          "height": 126
+        }
+      },
+      {
+        "id": "opponent-bench-evolution-base",
+        "physicalBounds": {
+          "x": 574.453125,
+          "y": 168.296875,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "opponent-bench-evolution-middle",
+        "physicalBounds": {
+          "x": 574.453125,
+          "y": 162.890625,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      },
+      {
+        "id": "opponent-bench-evolution-top",
+        "physicalBounds": {
+          "x": 574.453125,
+          "y": 157.5,
+          "width": 80.859375,
+          "height": 112.5
+        }
+      }
+    ]
+  }
+}

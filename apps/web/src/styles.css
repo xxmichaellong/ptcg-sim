@@ -1,0 +1,929 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body,
+button,
+input,
+select {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #f0f0f7, #c9cad4);
+}
+
+.board-column {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 75.5%;
+  height: 100%;
+}
+
+.board-column--fullscreen {
+  width: 100%;
+}
+
+.board-spike-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.renderer-surface-host {
+  position: absolute;
+  inset: 0;
+}
+
+.renderer-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.legacy-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 24%;
+  height: 100%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-tabs {
+  display: flex;
+  align-items: end;
+  width: 100%;
+  height: 5vh;
+  background: rgb(145 145 145);
+}
+
+.legacy-tabs button {
+  width: 25%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.legacy-tabs .selected-page {
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgb(200 200 200);
+  /* The selected tab is the top of the panel beneath it, not a separate box. */
+  border-bottom: 0;
+  background: linear-gradient(to bottom, rgb(250 250 250), rgb(230 230 230));
+  color: #333;
+}
+
+.spike-controls {
+  margin: 0.5rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.spike-controls h1 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.spike-controls label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.spike-controls select,
+.spike-controls output {
+  width: 100%;
+  padding: 0.45rem;
+}
+
+.spike-controls output {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 4px;
+  background: #ececf1;
+}
+
+.legacy-presentation-surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.legacy-room-sidebar {
+  border-left: 0;
+}
+
+.legacy-room-tabs {
+  position: relative;
+  z-index: 1400;
+  overflow: hidden;
+  border-left: 2px solid rgb(145 145 145);
+  border-top-left-radius: 5px;
+  box-sizing: border-box;
+}
+
+.legacy-room-tabs button {
+  width: 30%;
+  padding: 1vh;
+  font-size: 1.75vh;
+}
+
+.legacy-room-sidebox {
+  position: relative;
+  /* Above the deck-builder workspace (900), as v1's sidebox is at 1300. The
+   * closed workspace parks underneath the sidebar with an 8px toggle peeking
+   * out; without this it shows through the panel instead. */
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 95vh;
+  min-height: 0;
+  padding: 0.5%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-room-sidebox[hidden] {
+  display: none;
+}
+
+#p1Box {
+  border-radius: 0 10px 0 0;
+}
+
+.legacy-room-settings #settingsToggles {
+  display: block;
+  width: 100%;
+  height: min-content;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.legacy-room-settings label {
+  position: relative;
+  cursor: pointer;
+}
+
+.legacy-room-settings #darkModeCheckbox,
+.legacy-room-settings #showZonesCheckbox,
+.legacy-room-settings #hideHandCheckbox,
+.legacy-room-settings #keybindReminder {
+  margin-top: 1vh;
+}
+
+.legacy-room-settings #changeBackgroundButton {
+  margin: 1vh;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 0.3rem;
+  color: #fff;
+  font-size: 2vh;
+  cursor: pointer;
+}
+
+.legacy-room-settings #changeBackgroundButton:hover {
+  background-color: rgb(150 144 144 / 86.4%);
+}
+
+.legacy-room-settings #keybindReminder {
+  width: 100%;
+  color: grey;
+  text-align: center;
+}
+
+.legacy-room-settings .shift-font {
+  font-family: monospace;
+}
+
+.legacy-room-settings #twitterDescription {
+  position: absolute;
+  bottom: 2%;
+  left: 5%;
+  display: block;
+  max-width: 90%;
+  font-weight: bold;
+}
+
+.legacy-room-settings #twitterDescription a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacy-room-settings #twitterDescription a:hover {
+  text-decoration: underline;
+}
+
+.legacy-room-settings #twitterHandle {
+  display: flex;
+  align-items: center;
+  margin-top: 1vh;
+  font-weight: normal;
+}
+
+.legacy-room-settings #twitterHandle svg {
+  width: auto;
+  height: 2vh;
+  margin-right: 0.5vw;
+}
+
+/*
+ * v1 paints its wallpaper on <body> under a 75% white wash
+ * (global-variables.js) and then lays #cover, an 85% white sheet, over the
+ * whole page; a custom background replaces the wallpaper and keeps the
+ * cover. The cover is a pseudo-element here so the route's own
+ * background-image stays exactly the selected image.
+ */
+.remote-room-route {
+  background-color: #fff;
+  /* global-variables.js shifts the wallpaper left while the sidebar shows. */
+  background-position: -200px 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.remote-room-route:has(.board-column--fullscreen) {
+  background-position: 0 0;
+}
+
+.remote-room-route[data-room-background='default'] {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 75%), rgb(255 255 255 / 75%)),
+    url('https://wallpapercave.com/wp/wp10484598.jpg');
+}
+
+.remote-room-route::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgb(255 255 255 / 85%);
+  pointer-events: none;
+}
+
+.remote-room-route--dark {
+  /* v1 .dark-mode-1 recolours <body> and leaves its wallpaper in place. */
+  background-color: rgb(8 18 18);
+  color: #fff;
+}
+
+.remote-room-route--dark::before {
+  background: rgb(0 0 0 / 90%);
+}
+
+.remote-room-route--dark .legacy-room-sidebar,
+.remote-room-route--dark .legacy-room-sidebox,
+.remote-room-route--dark .legacy-tabs .selected-page {
+  background: #000;
+  color: #fff;
+}
+
+.remote-room-route--dark .legacy-room-settings #settingsToggles,
+.remote-room-route--dark .legacy-activity-feed,
+.remote-room-route--dark .legacy-lobby-sidebox #p2ExplanationBox,
+.remote-room-route--dark .legacy-lobby-sidebox #nameInput,
+.remote-room-route--dark .legacy-lobby-sidebox #roomIdInput,
+.remote-room-route--dark #p2MessageInput,
+.remote-room-route--dark #messageInput {
+  background: rgb(8 18 18);
+  color: #fff;
+}
+
+.remote-room-route--dark .legacy-activity-feed .self-text,
+.remote-room-route--dark .legacy-activity-feed .opp-text {
+  color: rgb(149 149 149);
+}
+
+.legacy-room-sidebox > .legacy-presentation-surface {
+  flex: 1;
+  min-height: 0;
+}
+
+.legacy-room-sidebox #roomHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 2.5vh;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.legacy-room-sidebox #roomHeaderText {
+  width: 98%;
+  margin-right: 5px;
+  padding-block: 0.1vh;
+  border: 2px solid rgb(97 206 164);
+  border-radius: 10px;
+  background: rgb(157 209 189);
+  font-size: 2vh;
+  text-align: center;
+}
+
+.legacy-activity-feed {
+  width: 100%;
+  height: 85%;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+
+.legacy-activity-feed--multiplayer {
+  height: 80%;
+}
+
+/* Inside a room sidebox the surface wrapper is the flex remainder above the
+   controls -- v1's "85% of the sidebox" once the fixed-height rows are
+   taken out -- so the feed fills it rather than leaving a grey gap. */
+.legacy-room-sidebox .legacy-activity-feed {
+  height: 100%;
+}
+
+.legacy-activity-feed .self-text,
+.legacy-activity-feed .opp-text,
+.legacy-activity-feed .self-message,
+.legacy-activity-feed .opp-message,
+.legacy-activity-feed .spectator-message,
+.legacy-activity-feed .announcement {
+  display: block;
+  margin: 0.5vh 0 0;
+  padding: 0.25vh 1vh;
+  overflow-wrap: break-word;
+  border-radius: 10px;
+  color: #000;
+  font-size: 1.75vh;
+}
+
+.legacy-activity-feed .self-text {
+  width: fit-content;
+  background: rgb(211 219 250 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .opp-text {
+  width: fit-content;
+  background: rgb(247 217 223 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .self-message {
+  width: fit-content;
+  background-color: rgb(142 155 209 / 86.4%);
+  text-align: left;
+  user-select: text;
+}
+
+.legacy-activity-feed .opp-message {
+  width: fit-content;
+  background-color: rgb(187 120 136 / 86.4%);
+  text-align: left;
+  user-select: text;
+}
+
+.legacy-activity-feed .spectator-message {
+  width: fit-content;
+  background-color: rgb(228 214 145);
+  text-align: left;
+  user-select: text;
+}
+
+.legacy-activity-feed .announcement {
+  background: rgb(205 203 203);
+  text-align: center;
+  user-select: text;
+}
+
+.presentation-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.legacy-room-sidebox #optionsContextMenu {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 3.5rem;
+  z-index: 2;
+  padding: 0.35rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.legacy-room-sidebox #optionsContextMenu[hidden] {
+  display: none;
+}
+
+.legacy-room-sidebox #exitReplay {
+  padding: 0.3vh 1vw;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.legacy-room-sidebox #optionsContextMenu button {
+  display: block;
+  width: 100%;
+  padding: 3px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.75vh;
+  text-align: left;
+  cursor: pointer;
+}
+
+.legacy-room-sidebox #optionsContextMenu button:hover {
+  background-color: #757575;
+  color: #fff;
+}
+
+.legacy-lobby-sidebox #p2ExplanationBox {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.legacy-explanation-gap {
+  margin-top: 0.5em;
+}
+
+.legacy-lobby-sidebox #lobby {
+  width: 100%;
+  margin-top: 5%;
+}
+
+.legacy-lobby-sidebox #nameInput {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 2vh;
+}
+
+.legacy-lobby-sidebox #roomId {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.legacy-lobby-sidebox #roomIdInput {
+  width: 80%;
+  padding: 1vh;
+  border: 0;
+  border-radius: 10px;
+  font-size: 2vh;
+}
+
+.legacy-lobby-sidebox #copyButton {
+  display: flex;
+  margin: 10px;
+  padding: 0.5vh;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+}
+
+.legacy-lobby-sidebox #copyButton svg {
+  width: 4vh;
+  height: 4vh;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.legacy-lobby-sidebox #copyButton.copied {
+  background-color: #b7d9b8;
+  color: #333;
+}
+
+.legacy-lobby-sidebox #generateIdButton {
+  padding: 1vh;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  font-size: 2vh;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.legacy-lobby-sidebox #generateIdButton:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
+}
+
+.legacy-lobby-sidebox #coachingModeLabel,
+.legacy-lobby-sidebox #spectatorModeLabel {
+  margin-bottom: 0.3vh;
+  font-size: medium;
+}
+
+.legacy-lobby-sidebox #spectatorModeLabel {
+  margin-bottom: 1.5vh;
+}
+
+.legacy-lobby-sidebox label {
+  cursor: pointer;
+}
+
+.legacy-lobby-sidebox #coachingModeLabel span {
+  font-size: smaller;
+  font-style: italic;
+}
+
+.legacy-lobby-sidebox #joinRoomButton {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #666, #4c4b46);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  font-size: 2.5vh;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.legacy-lobby-sidebox #joinRoomButton:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #555, #333);
+}
+
+.legacy-lobby-sidebox button:disabled,
+.legacy-lobby-sidebox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.legacy-lobby-sidebox #lobby[aria-busy='true'] button:disabled,
+.legacy-lobby-sidebox #lobby[aria-busy='true'] input:disabled {
+  cursor: wait;
+}
+
+.legacy-lobby-sidebox .lobby-status {
+  width: 100%;
+  margin: 1rem 0 0;
+  padding: 0.5rem;
+  overflow-wrap: anywhere;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1.75vh;
+}
+
+.self-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(90 110 188 / 86.4%),
+    rgb(60 80 158 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+/* v1 swaps the sidebar buttons to the red seat colour when the board flips. */
+.opp-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(188 90 113 / 86.4%),
+    rgb(158 60 83 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+.chat-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin-block: 0.5vh;
+  overflow: hidden;
+  gap: 0.5vw;
+  box-sizing: border-box;
+}
+
+.chat-button-container button {
+  flex: 1;
+  padding: 7px;
+  border: 0;
+  border-radius: 0.5vw;
+  color: #fff;
+  font-size: 2vh;
+  cursor: pointer;
+}
+
+.chat-button-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.chat-button-container button.self-color:hover:not(:disabled) {
+  background-color: rgb(116 129 183 / 86.4%);
+}
+
+.chat-button-container button.opp-color:hover:not(:disabled) {
+  background-color: rgb(189 112 130 / 86.4%);
+}
+
+.chat-button-container button.spectator-color:hover:not(:disabled) {
+  background-color: rgb(217 200 117);
+}
+
+#p2AttackButton,
+#attackButton {
+  border-radius: 0 0.5vw 0.5vw 0;
+}
+
+#p2FREEBUTTON,
+#FREEBUTTON {
+  border-radius: 0.5vw 0 0 0.5vw;
+}
+
+#p2MessageInput,
+#messageInput {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0 0 10px 10px;
+}
+
+#messageInput {
+  outline: none;
+  background: #f9f9f9;
+  color: #333;
+  font-size: 2vh;
+}
+
+#messageInput::placeholder {
+  color: #999;
+}
+
+#p2BottomButtonContainer,
+#bottomP1ButtonContainer {
+  width: 100%;
+}
+
+.sidebox-button-container button.self-color:hover {
+  background-color: rgb(116 129 183 / 86.4%);
+}
+
+.sidebox-button-container button.opp-color:hover {
+  background-color: rgb(189 112 130 / 86.4%);
+}
+
+.sidebox-button-container button.neutral-color:hover {
+  background-color: rgb(150 144 144 / 86.4%);
+}
+
+/* Shared by the mounted room replay shell and later normal sidebox actions. */
+.sidebox-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin-block: 10px;
+  overflow: hidden;
+}
+
+.sidebox-button-container button {
+  width: 19%;
+  padding: 7px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.75vh;
+  cursor: pointer;
+}
+
+.neutral-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(112 112 112 / 86.4%),
+    rgb(82 82 82 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+.spectator-color {
+  background: linear-gradient(to bottom, rgb(205 188 103), rgb(175 158 83));
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+/* v1's Solo welcome panel (index.ejs `#chatbox` opening content). */
+.legacy-activity-intro #changelogLink {
+  color: #5b9bd5;
+  border-bottom: 1px solid #5b9bd5;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.legacy-activity-intro .shift-font {
+  font-family: monospace;
+}
+
+#tutorialButton {
+  margin-left: 50%;
+  padding: 0 6px 2px;
+  border: 2px solid #a89850;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: #fff;
+  transform: translateX(-50%);
+}
+
+#tutorialButton:hover {
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
+  cursor: pointer;
+}
+
+#links {
+  width: 100%;
+  font-size: small;
+  text-align: center;
+}
+
+/* v1 index.css: links inherit their colour and underline only on hover. */
+.legacy-activity-feed a,
+#links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacy-activity-feed a:hover,
+#links a:hover {
+  text-decoration: underline;
+}
+
+#donationsLink {
+  margin-top: 1vh;
+  font-weight: bold;
+}
+
+#donationsLink:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#line {
+  width: 100%;
+  height: 0.1vh;
+  margin-top: 0.5vh;
+  background: rgb(230 230 230);
+}
+
+#videoContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 50%);
+}
+
+#videoContainer iframe {
+  position: absolute;
+  bottom: 50%;
+  left: 10%;
+  width: 55.5%;
+  height: 60%;
+  transform: translateY(50%);
+}
+
+#changelog,
+#donationsPage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  width: 76%;
+  height: 100%;
+  padding: 60px;
+  overflow: auto;
+  background: rgb(222 221 221 / 85.2%);
+}
+
+#donationsPage a,
+#changelog a {
+  color: rgb(91 91 173);
+  text-decoration: underline;
+}
+
+/* v1 authors these lists inline in index.ejs; the changelog fragment keeps
+   its own inline styles, so this only has to dress the donations page. */
+/* v1 pop-up-message.js: a white card centred over the play area (37.75% of
+   the window, i.e. the middle of the board half) with a single OK button. */
+.custom-popup {
+  position: fixed;
+  top: 50%;
+  left: 37.75%;
+  z-index: 9999;
+  padding: 20px;
+  border: 2px solid #424242;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 0 10px rgb(0 0 0 / 20%);
+  color: #111;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.custom-popup .popup-content {
+  text-align: center;
+}
+
+.custom-popup .popup-button {
+  display: block;
+  margin: 15px auto 0;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 5px;
+  background: #333;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.custom-popup .popup-button:hover {
+  background: #555;
+}
+
+#donationsPage ul {
+  margin-block: 10px 20px;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+#donationsPage li {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+#changelog {
+  cursor: pointer;
+}
+
+/* v1 `#roomHeaderCopyButton`: a bare copy control beside the room header. */
+#roomHeaderCopyButton,
+#roomHeaderCopySpectatorButton {
+  display: flex;
+  flex: none;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgb(90 90 90);
+  font-size: 2.5vh;
+  cursor: pointer;
+}
+
+#roomHeaderCopyButton:hover,
+#roomHeaderCopySpectatorButton:hover {
+  color: #000;
+}

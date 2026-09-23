@@ -1,0 +1,71 @@
+import { lazy, StrictMode, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App, type AppRoute } from './App.js';
+import { installLeaveGuard } from './leave-guard.js';
+import { announceMobileNotice } from './mobile-notice.js';
+import { readRendererKind } from './RendererSpikeBoard.js';
+import './styles.css';
+
+// Developer-only escape hatch: `?dev-room=1` boots the real remote-room stack
+// (durable room creation, ADR-018 ticket exchange, socket session, projection,
+// presentation, board) instead of the static renderer spike. Guarded by
+// `import.meta.env.DEV` so the branch and its module drop out of production
+// builds entirely.
+// The `lazy` call must itself sit behind `import.meta.env.DEV`. Guarding only
+// the usage still leaves the dynamic `import()` reachable, and the bundler then
+// emits the dev chunk into production output.
+const DevRoomHost = import.meta.env.DEV
+  ? lazy(async () => ({
+      default: (await import('./dev/DevRoomHost.js')).DevRoomHost,
+    }))
+  : null;
+
+const parameters = new URLSearchParams(window.location.search);
+const rendererKind = readRendererKind(parameters.get('renderer'));
+const roomMode =
+  parameters.get('room-mode') === 'solo' ? 'solo' : 'multiplayer';
+const devRoomRequested =
+  DevRoomHost !== null && parameters.get('dev-room') === '1';
+// The lobby is the application. The renderer parity spike -- a developer
+// comparison of the two board renderers over one synthetic placeholder scene
+// -- stays reachable at `?renderer-spike=1` for the geometry gates that use
+// it, but it is never what a visitor lands on. A visitor lands on the Solo
+// table, as in v1; `room-lobby=1` opens on the Multiplayer panel instead,
+// which is what the browser gates and existing links use.
+const rendererSpikeRequested = parameters.get('renderer-spike') === '1';
+const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
+  ? undefined
+  : {
+      kind: 'remote-room-lobby',
+      buildId: import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2-web',
+      rendererKind,
+      landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
+    };
+
+// v1 tells a phone or tablet, once on load, that the sim expects a desktop.
+announceMobileNotice();
+// ...and asks before a reload or a closed tab discards the table.
+installLeaveGuard();
+
+const root = document.getElementById('root');
+if (!root) throw new Error('Missing application root');
+
+createRoot(root).render(
+  <StrictMode>
+    {devRoomRequested && DevRoomHost ? (
+      <Suspense
+        fallback={
+          <main className="app-shell" data-app-route="dev-room-loading" />
+        }
+      >
+        <DevRoomHost
+          displayName={parameters.get('name')?.trim() || 'Developer'}
+          mode={roomMode}
+          rendererKind={rendererKind}
+        />
+      </Suspense>
+    ) : (
+      <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
+    )}
+  </StrictMode>
+);

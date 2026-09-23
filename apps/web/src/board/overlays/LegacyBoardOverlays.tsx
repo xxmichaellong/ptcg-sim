@@ -1,0 +1,1816 @@
+import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import {
+  isLegacyMarkerPresentation,
+  layoutLegacyActiveQ0Markers,
+  legacyMarkerAppearance,
+  legacyMarkerCssColor,
+  resolveBoardDropTarget,
+  type BoardScene,
+  type BoardScenePlayerFrame,
+  type CardSceneNode,
+  type MarkerSceneNode,
+  type Rect,
+  type ZoneSceneNode,
+} from '@ptcgsim/renderer-contract';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type CSSProperties,
+  type RefObject,
+} from 'react';
+
+import { actingPlayerIdOf } from '../acting-seat.js';
+import type {
+  BoardPresentationDismissScope,
+  BoardSessionControllerState,
+  OpenedZoneCardIntent,
+} from '../BoardSessionController.js';
+import type {
+  LegacyBoardCategoryChoice,
+  LegacyBoardContextActionId,
+  LegacyBoardMoveChoice,
+  LegacyBoardZoneActionId,
+} from '../resolveLegacyBoardOverlayAction.js';
+import {
+  LEGACY_BOARD_CATEGORY_CHOICES,
+  LEGACY_BOARD_MOVE_CHOICES,
+  LEGACY_BOARD_WORK_AREA_ACTIONS,
+  parseLegacyDamageInput,
+  parseLegacySpecialConditionInput,
+  type LegacyBoardWorkAreaActionId,
+  type LegacyBoardWorkAreaSource,
+} from '../resolveLegacyBoardOverlayAction.js';
+import {
+  parseLegacyCountInput,
+  type LegacyBoardCountActionId,
+  type LegacyBoardCountPrompt,
+} from '../resolveLegacyBoardCountAction.js';
+import type {
+  LegacyBoardShortcutCountPrompt,
+  LegacyOwnHandShortcutAction,
+} from '../resolveLegacyBoardShortcutAction.js';
+import './LegacyBoardOverlays.css';
+
+export type {
+  LegacyBoardCategoryChoice,
+  LegacyBoardContextActionId,
+  LegacyBoardMoveChoice,
+  LegacyBoardWorkAreaActionId,
+  LegacyBoardWorkAreaSource,
+  LegacyBoardZoneActionId,
+} from '../resolveLegacyBoardOverlayAction.js';
+
+export interface LegacyBoardOverlayActions {
+  readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => void;
+  /** Table-owned card intents from the work-area popups' own card images. */
+  readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
+  /** Opens one card's full preview from inside the stack view. */
+  readonly previewCard?: (cardId: ViewCardId) => void;
+  /** One of the bulk buttons along the bottom of a work-area popup. */
+  readonly invokeWorkAreaAction?: (
+    source: LegacyBoardWorkAreaSource,
+    action: LegacyBoardWorkAreaActionId
+  ) => void;
+  readonly dismiss: (scope: BoardPresentationDismissScope) => void;
+  readonly invokeContextAction: (
+    action: LegacyBoardContextActionId,
+    cardId: ViewCardId
+  ) => void;
+  readonly invokeZoneAction: (
+    action: LegacyBoardZoneActionId,
+    zoneId: string
+  ) => void;
+  readonly submitDamageInput: (cardId: ViewCardId, value: string) => void;
+  readonly submitSpecialConditionInput: (
+    cardId: ViewCardId,
+    value: string
+  ) => void;
+  readonly submitCountInput: (
+    action: LegacyBoardCountActionId,
+    cardId: ViewCardId,
+    value: string
+  ) => void;
+  readonly submitShortcutCountInput: (
+    action: LegacyOwnHandShortcutAction,
+    value: string
+  ) => void;
+  readonly submitCategoryChoice: (
+    cardId: ViewCardId,
+    category: LegacyBoardCategoryChoice
+  ) => void;
+  readonly submitMoveChoice: (
+    cardId: ViewCardId,
+    destination: LegacyBoardMoveChoice
+  ) => void;
+}
+
+type ContextEntry =
+  | {
+      readonly kind: 'header';
+      readonly id: string;
+      readonly label: string;
+    }
+  | {
+      readonly kind: 'action';
+      readonly id: string;
+      readonly label: string;
+      readonly action: LegacyBoardContextActionId;
+      readonly boundary: boolean;
+    };
+
+const header = (id: string, label: string): ContextEntry => ({
+  kind: 'header',
+  id,
+  label,
+});
+
+const action = (
+  actionId: LegacyBoardContextActionId,
+  label: string,
+  boundary = false
+): ContextEntry => ({
+  kind: 'action',
+  id: actionId,
+  label,
+  action: actionId,
+  boundary,
+});
+
+const zoneForCard = (
+  state: BoardSessionControllerState,
+  card: CardSceneNode
+): {
+  readonly id: string;
+  readonly kind: ZoneSceneNode['kind'];
+  readonly playerId: ZoneSceneNode['playerId'];
+} | null => {
+  const direct = state.scene?.zones.find((zone) => zone.id === card.parentId);
+  if (direct) {
+    return { id: direct.id, kind: direct.kind, playerId: direct.playerId };
+  }
+  const stack = state.view?.stacks[card.parentId];
+  return stack
+    ? {
+        id: stack.id,
+        kind: stack.slot,
+        playerId: stack.boardPlayerId,
+      }
+    : null;
+};
+
+/** Mirrors the legacy menu's source order without authorizing any mutation. */
+export const selectLegacyContextEntries = (
+  state: BoardSessionControllerState,
+  card: CardSceneNode
+): readonly ContextEntry[] => {
+  if (state.view?.viewer.kind !== 'player') {
+    return [];
+  }
+  const location = zoneForCard(state, card);
+  if (!location) return [];
+  // v1's selfView: the own-only entries belong to the seat at the bottom of
+  // the board, which a flipped Solo board makes the other seat.
+  const own =
+    location.playerId ===
+    actingPlayerIdOf(state.view, state.scene?.bottomPlayerId);
+  const opponent = location.playerId !== null && !own;
+  if (!state.canSubmitCommands) {
+    const permitsReplayDisclosure =
+      state.sessionPhase === 'ready' &&
+      state.source?.kind === 'replay' &&
+      state.replayLocalDisplay?.disclosure.zoneIds.includes(location.id);
+    if (!permitsReplayDisclosure) return [];
+    if (location.kind === 'prizes') {
+      return [
+        header('prizes', 'Prizes'),
+        action('revealPrizes', 'Reveal/hide prizes'),
+        action('togglePrizes', 'Look/cover prizes'),
+        action('revealCard', 'Reveal/hide card'),
+      ];
+    }
+    if (location.kind === 'hand' && opponent) {
+      return [
+        header('hand', 'Hand'),
+        action('toggleOpponentHand', 'Look/cover hand'),
+        action('revealCard', 'Reveal/hide card'),
+      ];
+    }
+    return [];
+  }
+  const entries: ContextEntry[] = [];
+
+  if (
+    location.kind === 'active' ||
+    location.kind === 'bench' ||
+    location.kind === 'stadium' ||
+    location.kind === 'discard'
+  ) {
+    entries.push(action('toggleAbility', 'Toggle ability/effect'));
+  }
+  if (location.kind === 'active' || location.kind === 'bench') {
+    entries.push(action('setDamage', 'Damage counter'));
+  }
+  if (location.kind === 'active') {
+    entries.push(action('setSpecialCondition', 'Special condition'));
+  }
+  if (location.kind === 'prizes') {
+    entries.push(header('prizes', 'Prizes'));
+    if (own) entries.push(action('shufflePrizes', 'Shuffle prizes'));
+    entries.push(
+      action('revealPrizes', 'Reveal/hide prizes'),
+      action('togglePrizes', 'Look/cover prizes')
+    );
+    if (own) {
+      entries.push(
+        action('shufflePrizesToDeckBottom', 'Shuffle to deck (bottom)')
+      );
+    }
+  }
+  if (location.kind === 'hand') {
+    entries.push(header('hand', 'Hand'));
+    if (own) {
+      entries.push(
+        action('discardHand', 'Discard hand'),
+        action('shuffleHandToDeck', 'Shuffle hand to deck'),
+        action('shuffleHandToDeckBottom', 'Shuffle hand to bottom')
+      );
+    } else if (opponent) {
+      entries.push(
+        action('toggleOpponentHand', 'Look/cover hand'),
+        action('randomOpponentHandCard', 'Pick random card')
+      );
+    }
+  }
+  if (location.kind === 'deck') {
+    entries.push(header('deck', 'Deck'), action('shuffleDeck', 'Shuffle deck'));
+    if (own) entries.push(action('drawCards', 'Draw card(s)'));
+    entries.push(
+      action('viewDeckTop', 'View top card(s)'),
+      action('viewDeckBottom', 'View bottom card(s)')
+    );
+  }
+  if (location.kind === 'board') {
+    entries.push(
+      header('board', 'Playboard'),
+      action('discardBoard', 'Discard all'),
+      action('moveBoardToHand', 'Move all to hand'),
+      action('shuffleBoardToDeck', 'Shuffle all to deck'),
+      action('moveBoardToLostZone', 'Lost Zone all')
+    );
+  }
+
+  entries.push(
+    action('moveCard', 'Move card...', true),
+    action('revealCard', 'Reveal/hide card')
+  );
+  if (location.kind === 'active' || location.kind === 'bench') {
+    entries.push(action('changeCardType', 'Change type...'));
+  }
+  return entries;
+};
+
+const useFocusBoundary = (
+  container: RefObject<HTMLElement | null>,
+  focusSelector: string,
+  identity: string
+): void => {
+  const opener = useRef<HTMLElement | null>(null);
+  const focusCycle = useRef(0);
+  useLayoutEffect(() => {
+    const cycle = focusCycle.current + 1;
+    focusCycle.current = cycle;
+    const element = container.current;
+    if (!element) return;
+    const active = element.ownerDocument.activeElement;
+    // Keep the external opener captured by the first setup. React StrictMode
+    // immediately replays layout effects while focus is already inside the
+    // overlay; replacing the opener in that replay would leave us trying to
+    // restore focus to a button that disappears with the overlay.
+    if (active instanceof HTMLElement && !element.contains(active)) {
+      opener.current = active;
+    }
+    const first = element.querySelector<HTMLElement>(focusSelector) ?? element;
+    first.focus();
+    // A previous overlay's queued focus restoration (see the cleanup below)
+    // can land after this setup on a slow frame and pull focus back to the
+    // table; claim it again once that microtask has run.
+    const reclaim = element.ownerDocument.defaultView?.requestAnimationFrame(
+      () => {
+        if (
+          focusCycle.current === cycle &&
+          element.isConnected &&
+          !element.contains(element.ownerDocument.activeElement)
+        ) {
+          first.focus();
+        }
+      }
+    );
+    return () => {
+      if (reclaim !== undefined) {
+        element.ownerDocument.defaultView?.cancelAnimationFrame(reclaim);
+      }
+      const previous = opener.current;
+      const current = element.ownerDocument.activeElement;
+      if (!previous?.isConnected || !element.contains(current)) return;
+      queueMicrotask(() => {
+        // React StrictMode replays layout effects without unmounting the DOM.
+        // A replacement setup cancels the first cleanup's queued restoration;
+        // a genuine overlay removal has no replacement cycle and still returns
+        // focus to the opener.
+        const activeNow = element.ownerDocument.activeElement;
+        const replacementClaimedFocus =
+          activeNow instanceof HTMLElement &&
+          activeNow !== element.ownerDocument.body &&
+          activeNow !== current &&
+          !element.contains(activeNow);
+        if (
+          focusCycle.current === cycle &&
+          previous.isConnected &&
+          !replacementClaimedFocus
+        ) {
+          previous.focus();
+        }
+      });
+    };
+  }, [container, focusSelector, identity]);
+};
+
+const useOutsideDismiss = (
+  container: RefObject<HTMLElement | null>,
+  dismiss: () => void,
+  ignoreClosest?: string
+): void => {
+  useEffect(() => {
+    const element = container.current;
+    const document = element?.ownerDocument;
+    if (!element || !document) return;
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target;
+      if (element.contains(target as Node)) return;
+      if (
+        ignoreClosest &&
+        target instanceof Element &&
+        target.closest(ignoreClosest)
+      ) {
+        return;
+      }
+      dismiss();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [container, dismiss, ignoreClosest]);
+};
+
+const trapModalTab = (
+  event: ReactKeyboardEvent<HTMLElement>,
+  container: HTMLElement,
+  selector: string
+): void => {
+  if (event.key !== 'Tab') return;
+  const items = [...container.querySelectorAll<HTMLElement>(selector)];
+  if (items.length === 0) {
+    event.preventDefault();
+    container.focus();
+    return;
+  }
+  const active = container.ownerDocument.activeElement;
+  if (event.shiftKey && (active === items[0] || active === container)) {
+    event.preventDefault();
+    items.at(-1)?.focus();
+  } else if (!event.shiftKey && active === items.at(-1)) {
+    event.preventDefault();
+    items[0]?.focus();
+  }
+};
+
+const moveMenuFocus = (
+  event: ReactKeyboardEvent<HTMLElement>,
+  direction: 'first' | 'last' | 'next' | 'previous',
+  selector = ':scope > ul > li > [role="menuitem"]'
+): void => {
+  const menu = event.currentTarget;
+  const items = [...menu.querySelectorAll<HTMLElement>(selector)];
+  if (items.length === 0) return;
+  const current = items.indexOf(
+    menu.ownerDocument.activeElement as HTMLElement
+  );
+  const index =
+    direction === 'first'
+      ? 0
+      : direction === 'last'
+        ? items.length - 1
+        : direction === 'next'
+          ? (current + 1 + items.length) % items.length
+          : (current - 1 + items.length) % items.length;
+  items[index]?.focus();
+  event.preventDefault();
+};
+
+interface ContextSubmenuChoice<Value extends string> {
+  readonly value: Value;
+  readonly label: string;
+}
+
+const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategoryChoice>[] =
+  LEGACY_BOARD_CATEGORY_CHOICES.map((category) => ({
+    value: category,
+    label: category === 'Trainer' ? 'to Tool' : `to ${category}`,
+  }));
+
+const MOVE_CHOICE_LABELS = {
+  board: 'to Board',
+  deckTop: 'to Deck (top)',
+  deckBottom: 'to Deck (bottom)',
+  deckSwitch: 'to Deck (switch)',
+  deckShuffle: 'to Deck (shuffle)',
+} as const satisfies Readonly<Record<LegacyBoardMoveChoice, string>>;
+
+const MOVE_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardMoveChoice>[] =
+  LEGACY_BOARD_MOVE_CHOICES.map((destination) => ({
+    value: destination,
+    label: MOVE_CHOICE_LABELS[destination],
+  }));
+
+const ContextSubmenu = <Value extends string>({
+  entry,
+  open,
+  ariaLabel,
+  choiceKind,
+  choices,
+  onOpenChange,
+  onSelect,
+}: {
+  readonly entry: Extract<ContextEntry, { readonly kind: 'action' }>;
+  readonly open: boolean;
+  readonly ariaLabel: string;
+  readonly choiceKind: 'category' | 'move';
+  readonly choices: readonly ContextSubmenuChoice<Value>[];
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSelect: (value: Value) => void;
+}) => {
+  const trigger = useRef<HTMLButtonElement>(null);
+  const submenu = useRef<HTMLUListElement>(null);
+  return (
+    <li
+      className={`has-submenu${entry.boundary ? ' is-boundary' : ''}`}
+      data-submenu-open={open ? 'true' : undefined}
+      role="none"
+      onMouseEnter={() => onOpenChange(true)}
+      onMouseLeave={(event) => {
+        if (
+          event.currentTarget.contains(
+            event.currentTarget.ownerDocument.activeElement
+          )
+        ) {
+          return;
+        }
+        onOpenChange(false);
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onOpenChange(false);
+        }
+      }}
+    >
+      <button
+        ref={trigger}
+        type="button"
+        role="menuitem"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        data-context-action={entry.action}
+        onClick={() => onOpenChange(true)}
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenChange(true);
+          queueMicrotask(() => {
+            submenu.current
+              ?.querySelector<HTMLElement>('[role="menuitem"]')
+              ?.focus();
+          });
+        }}
+      >
+        {entry.label}
+      </button>
+      <ul
+        ref={submenu}
+        className="ptcgsim-legacy-card-sub-menu"
+        data-context-submenu={entry.action}
+        role="menu"
+        aria-label={ariaLabel}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenChange(false);
+            trigger.current?.focus();
+          } else if (event.key === 'ArrowDown') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'next', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'ArrowUp') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'previous', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'Home') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'first', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'End') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'last', ':scope > li > [role="menuitem"]');
+          }
+        }}
+      >
+        {choices.map((choice) => (
+          <li key={choice.value} role="none">
+            <button
+              type="button"
+              role="menuitem"
+              data-category-choice={
+                choiceKind === 'category' ? choice.value : undefined
+              }
+              data-move-choice={
+                choiceKind === 'move' ? choice.value : undefined
+              }
+              onClick={() => onSelect(choice.value)}
+            >
+              {choice.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+};
+
+const visualCardBounds = (card: CardSceneNode) => {
+  if (card.rotationQuarterTurns % 2 === 0) return card.bounds;
+  const centerX = card.bounds.x + card.bounds.width / 2;
+  const centerY = card.bounds.y + card.bounds.height / 2;
+  return {
+    x: centerX - card.bounds.height / 2,
+    y: centerY - card.bounds.width / 2,
+    width: card.bounds.height,
+    height: card.bounds.width,
+  };
+};
+
+const ContextMenu = ({
+  state,
+  card,
+  anchorBounds,
+  darkMode,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly card: CardSceneNode;
+  readonly anchorBounds?: Rect;
+  readonly darkMode: boolean;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const container = useRef<HTMLDivElement>(null);
+  const [openSubmenu, setOpenSubmenu] = useState<
+    'changeCardType' | 'moveCard' | null
+  >(null);
+  const dismiss = useCallback(() => actions.dismiss('context'), [actions]);
+  const entries = useMemo(
+    () => selectLegacyContextEntries(state, card),
+    [card, state]
+  );
+  useFocusBoundary(container, '[role="menuitem"]', String(card.id));
+  useOutsideDismiss(container, dismiss);
+  useEffect(() => setOpenSubmenu(null), [card.id]);
+  const bounds = anchorBounds ?? visualCardBounds(card);
+  const width = 180;
+  const preferredLeft = Math.max(
+    0,
+    Math.min(bounds.x + bounds.width, state.scene!.viewport.width - width)
+  );
+  const [position, setPosition] = useState({
+    left: preferredLeft,
+    top: Math.max(0, Math.min(bounds.y, state.scene!.viewport.height)),
+  });
+  useLayoutEffect(() => {
+    const element = container.current;
+    if (!element) return;
+    const measuredHeight = element.getBoundingClientRect().height;
+    const next = {
+      left: preferredLeft,
+      top: Math.max(
+        0,
+        Math.min(bounds.y, state.scene!.viewport.height - measuredHeight)
+      ),
+    };
+    setPosition((current) =>
+      current.left === next.left && current.top === next.top ? current : next
+    );
+  }, [bounds.y, card.id, entries.length, preferredLeft, state.scene]);
+
+  return (
+    <div
+      ref={container}
+      className={`ptcgsim-legacy-card-context-menu${darkMode ? ' is-dark' : ''}`}
+      data-legacy-card-context-menu="true"
+      data-context-card-id={card.id}
+      role="menu"
+      aria-label={`Actions for ${card.label}`}
+      tabIndex={-1}
+      style={position}
+      onContextMenu={(event) => event.preventDefault()}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          dismiss();
+        } else if (event.key === 'ArrowDown') {
+          moveMenuFocus(event, 'next');
+        } else if (event.key === 'ArrowUp') {
+          moveMenuFocus(event, 'previous');
+        } else if (event.key === 'Home') {
+          moveMenuFocus(event, 'first');
+        } else if (event.key === 'End') {
+          moveMenuFocus(event, 'last');
+        }
+      }}
+    >
+      <ul>
+        {entries.length === 0 ? (
+          <li className="ptcgsim-legacy-context-empty" role="none">
+            No actions available
+          </li>
+        ) : (
+          entries.map((entry) =>
+            entry.kind === 'header' ? (
+              <li
+                key={entry.id}
+                className="ptcgsim-legacy-context-header"
+                role="presentation"
+              >
+                {entry.label}
+              </li>
+            ) : entry.action === 'moveCard' ? (
+              <ContextSubmenu
+                key={entry.id}
+                entry={entry}
+                open={openSubmenu === 'moveCard'}
+                ariaLabel="Move card"
+                choiceKind="move"
+                choices={MOVE_SUBMENU_CHOICES}
+                onOpenChange={(open) =>
+                  setOpenSubmenu(open ? 'moveCard' : null)
+                }
+                onSelect={(destination) => {
+                  actions.submitMoveChoice(card.id, destination);
+                }}
+              />
+            ) : entry.action === 'changeCardType' ? (
+              <ContextSubmenu
+                key={entry.id}
+                entry={entry}
+                open={openSubmenu === 'changeCardType'}
+                ariaLabel="Change card type"
+                choiceKind="category"
+                choices={CATEGORY_SUBMENU_CHOICES}
+                onOpenChange={(open) =>
+                  setOpenSubmenu(open ? 'changeCardType' : null)
+                }
+                onSelect={(category) => {
+                  actions.submitCategoryChoice(card.id, category);
+                }}
+              />
+            ) : (
+              <li
+                key={entry.id}
+                className={entry.boundary ? 'is-boundary' : undefined}
+                role="none"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  data-context-action={entry.action}
+                  onClick={() => {
+                    actions.invokeContextAction(entry.action, card.id);
+                  }}
+                >
+                  {entry.label}
+                </button>
+              </li>
+            )
+          )
+        )}
+      </ul>
+    </div>
+  );
+};
+
+const STACK_PREVIEW_WIDTH_RATIO = 0.69;
+const STACK_PREVIEW_HEIGHT_RATIO = 0.7;
+const ZONE_BROWSER_WIDTH_RATIO = 0.85;
+const ZONE_BROWSER_HEIGHT_RATIO = 0.75;
+const ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX = 22;
+
+export const legacyStackPreviewFrameStyle = (
+  frame: BoardScenePlayerFrame,
+  side: CardSceneNode['side']
+): CSSProperties => ({
+  left: frame.bounds.x + frame.bounds.width / 2,
+  top: frame.bounds.y + frame.bounds.height / 2,
+  width: frame.bounds.width * STACK_PREVIEW_WIDTH_RATIO,
+  height: frame.bounds.height * STACK_PREVIEW_HEIGHT_RATIO,
+  transform: `translate(-50%, -50%)${side === 'opponent' ? ' rotate(180deg)' : ''}`,
+});
+
+export const legacyZoneBrowserFrameStyle = (
+  frame: BoardScenePlayerFrame,
+  side: ZoneSceneNode['side']
+): CSSProperties => {
+  const contentHeight = frame.bounds.height * ZONE_BROWSER_HEIGHT_RATIO;
+  return {
+    left: frame.bounds.x + frame.bounds.width / 2,
+    top:
+      side === 'opponent'
+        ? frame.bounds.y +
+          frame.bounds.height -
+          contentHeight -
+          ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX
+        : frame.bounds.y + frame.bounds.height / 2,
+    width: frame.bounds.width * ZONE_BROWSER_WIDTH_RATIO,
+    height: contentHeight,
+    transform:
+      side === 'opponent' ? 'translateX(-50%)' : 'translate(-50%, -50%)',
+  };
+};
+
+const OverlayCardImage = ({
+  card,
+  variant,
+}: {
+  readonly card: CardSceneNode;
+  readonly variant: 'preview' | 'stack' | 'zone';
+}) => {
+  const [loadedImage, setLoadedImage] = useState<{
+    readonly imageUrl: string;
+    readonly state: 'ready' | 'failed';
+  } | null>(null);
+  const state =
+    loadedImage?.imageUrl === card.imageUrl ? loadedImage.state : 'loading';
+  return (
+    <span
+      className={`ptcgsim-legacy-overlay-card-image is-${variant}`}
+      style={{ aspectRatio: '5 / 7' }}
+      data-overlay-image-state={state}
+      data-overlay-image-card-id={card.id}
+      aria-hidden={variant === 'zone' ? 'true' : undefined}
+    >
+      <img
+        src={card.imageUrl}
+        alt={variant === 'zone' ? '' : card.label}
+        style={{ opacity: state === 'ready' ? 1 : 0 }}
+        data-overlay-card-id={variant === 'zone' ? undefined : card.id}
+        draggable={false}
+        onLoad={() =>
+          setLoadedImage({ imageUrl: card.imageUrl, state: 'ready' })
+        }
+        onError={() =>
+          setLoadedImage({ imageUrl: card.imageUrl, state: 'failed' })
+        }
+      />
+    </span>
+  );
+};
+
+/**
+ * v1's full view lists the play-container's images in DOM order: the top
+ * card first, then every card attached to it newest-first, because each
+ * attachment is inserted directly after its host.
+ */
+export const legacyStackPreviewOrder = (
+  stack:
+    | Pick<
+        MatchViewState['stacks'][string],
+        'evolutionCards' | 'attachmentCards'
+      >
+    | undefined,
+  cards: readonly CardSceneNode[]
+): readonly CardSceneNode[] => {
+  if (!stack) {
+    return [...cards].sort((left, right) => right.zIndex - left.zIndex);
+  }
+  const byId = new Map(cards.map((card) => [card.id, card]));
+  const ordered = [
+    ...stack.evolutionCards.slice(-1),
+    ...[...stack.attachmentCards].reverse(),
+    ...stack.evolutionCards.slice(0, -1).reverse(),
+  ].flatMap((card) => {
+    const node = byId.get(card.id);
+    return node ? [node] : [];
+  });
+  const listed = new Set(ordered.map((card) => card.id));
+  return [...ordered, ...cards.filter((card) => !listed.has(card.id))];
+};
+
+const Preview = ({
+  cards,
+  kind,
+  frame,
+  actions,
+}: {
+  readonly cards: readonly CardSceneNode[];
+  readonly kind: 'card' | 'stack';
+  readonly frame?: BoardScenePlayerFrame;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const container = useRef<HTMLDivElement>(null);
+  const dismiss = useCallback(() => actions.dismiss('preview'), [actions]);
+  const identity = cards.map((card) => card.id).join(':');
+  useFocusBoundary(container, '[data-preview-focus]', identity);
+  useOutsideDismiss(container, dismiss);
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (container.current) {
+      trapModalTab(event, container.current, '[data-preview-tabbable]');
+    }
+    if (
+      event.key === 'Escape' ||
+      (!event.altKey && !event.ctrlKey && !event.metaKey && event.key === 'v')
+    ) {
+      event.preventDefault();
+      dismiss();
+    }
+  };
+
+  return kind === 'card' ? (
+    <div
+      ref={container}
+      className="ptcgsim-legacy-card-preview"
+      data-legacy-card-preview="true"
+      data-preview-kind="card"
+      role="dialog"
+      aria-modal="true"
+      aria-label={cards[0]?.label ?? 'Card preview'}
+      tabIndex={-1}
+      data-preview-focus="true"
+      onClick={dismiss}
+      onKeyDown={onKeyDown}
+    >
+      {cards[0] ? <OverlayCardImage card={cards[0]} variant="preview" /> : null}
+    </div>
+  ) : (
+    <div
+      ref={container}
+      className="ptcgsim-legacy-stack-preview"
+      data-legacy-card-preview="true"
+      data-preview-kind="stack"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Card stack preview"
+      data-overlay-side={cards[0]?.side}
+      tabIndex={-1}
+      data-preview-focus="true"
+      style={
+        frame && cards[0]
+          ? legacyStackPreviewFrameStyle(frame, cards[0].side)
+          : undefined
+      }
+      onKeyDown={onKeyDown}
+    >
+      {cards.map((card) => (
+        <button
+          key={card.id}
+          type="button"
+          className="ptcgsim-legacy-stack-preview-card"
+          data-stack-preview-card-id={card.id}
+          aria-label={`Preview ${card.label}`}
+          // Keep focus on the stack view itself (its keyboard boundary and
+          // Escape handling live there, and v1's stack view has no tab stops);
+          // a click still opens the card.
+          tabIndex={-1}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={(event) => {
+            event.stopPropagation();
+            actions.previewCard?.(card.id);
+          }}
+        >
+          <OverlayCardImage card={card} variant="stack" />
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const zoneAction = (
+  zone: ZoneSceneNode
+): { readonly id: LegacyBoardZoneActionId; readonly label: string } | null =>
+  zone.kind === 'deck'
+    ? { id: 'shuffleDeck', label: 'Shuffle' }
+    : zone.kind === 'discard'
+      ? { id: 'shuffleDiscardToDeck', label: 'Shuffle all to Deck' }
+      : null;
+
+const DISCARD_SHUFFLE_CONFIRMATION =
+  'Are you sure you want to shuffle all cards into the deck?';
+
+/**
+ * Produces a paint-only ordering from data already disclosed in the scene, in
+ * v1's order: `zones/general.js` walks the declared decklist and appends every
+ * card of each name in turn. Equal ranks -- copies of one name -- and cards
+ * the viewer cannot read retain authoritative scene order, which keeps
+ * concealed and duplicate cards stable without consulting opaque IDs or
+ * hidden definitions.
+ */
+export const sortRecipientSafeZoneCards = (
+  cards: readonly CardSceneNode[]
+): readonly CardSceneNode[] =>
+  cards
+    .map((card, index) => ({
+      card,
+      index,
+      rank: card.decklistRank ?? Number.MAX_SAFE_INTEGER,
+    }))
+    .sort((left, right) =>
+      left.rank === right.rank
+        ? left.index - right.index
+        : left.rank - right.rank
+    )
+    .map(({ card }) => card);
+
+/**
+ * Sets a native drag image that survives the source element turning
+ * transparent: a detached copy of the card, sized like the button it was
+ * picked up from and held at the same grab offset. The copy must be in the
+ * document when `setDragImage` runs, so it is parked off-screen and removed
+ * once the drag has started.
+ */
+const installDragImage = (
+  event: {
+    readonly currentTarget: HTMLElement;
+    readonly clientX: number;
+    readonly clientY: number;
+    readonly dataTransfer: DataTransfer;
+  },
+  imageUrl: string
+): void => {
+  const source = event.currentTarget;
+  const bounds = source.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) return;
+  const document = source.ownerDocument;
+  const ghost = document.createElement('img');
+  ghost.src = imageUrl;
+  ghost.alt = '';
+  ghost.setAttribute('data-zone-drag-image', 'true');
+  Object.assign(ghost.style, {
+    position: 'fixed',
+    top: '-10000px',
+    left: '-10000px',
+    width: `${bounds.width}px`,
+    height: `${bounds.height}px`,
+    borderRadius: '0.275rem',
+    pointerEvents: 'none',
+  });
+  document.body.append(ghost);
+  event.dataTransfer.setDragImage(
+    ghost,
+    event.clientX - bounds.left,
+    event.clientY - bounds.top
+  );
+  // The browser has captured the image by the next frame.
+  setTimeout(() => ghost.remove(), 0);
+};
+
+/** Maps a client-space pointer onto the scene's physical viewport. */
+export const openedZoneDropPoint = (
+  scene: BoardScene,
+  surfaceBounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  clientX: number,
+  clientY: number
+): { readonly x: number; readonly y: number } | null => {
+  if (
+    surfaceBounds.width <= 0 ||
+    surfaceBounds.height <= 0 ||
+    !Number.isFinite(clientX) ||
+    !Number.isFinite(clientY)
+  ) {
+    return null;
+  }
+  return {
+    x:
+      ((clientX - surfaceBounds.left) * scene.viewport.width) /
+      surfaceBounds.width,
+    y:
+      ((clientY - surfaceBounds.top) * scene.viewport.height) /
+      surfaceBounds.height,
+  };
+};
+
+export const resolveOpenedZoneDropTarget = (
+  scene: BoardScene,
+  surfaceBounds: Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>,
+  sourceCardId: ViewCardId,
+  clientX: number,
+  clientY: number
+): string | null => {
+  const point = openedZoneDropPoint(scene, surfaceBounds, clientX, clientY);
+  if (!point) return null;
+  return resolveBoardDropTarget(scene, sourceCardId, point.x, point.y);
+};
+
+const ZoneBrowser = ({
+  state,
+  zone,
+  cards,
+  frame,
+  obscured,
+  captureContextAnchor,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly zone: ZoneSceneNode;
+  readonly cards: readonly CardSceneNode[];
+  readonly frame?: BoardScenePlayerFrame;
+  readonly obscured: boolean;
+  readonly captureContextAnchor: (
+    cardId: ViewCardId,
+    zoneId: string,
+    bounds: Rect
+  ) => void;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const container = useRef<HTMLElement>(null);
+  const activeDragCardId = useRef<ViewCardId | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
+  const [sortEnabled, setSortEnabled] = useState(false);
+  const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
+  useFocusBoundary(container, '[data-zone-close]', zone.id);
+  useOutsideDismiss(
+    container,
+    dismiss,
+    '[data-legacy-card-preview], [data-legacy-card-context-menu]'
+  );
+  const primary = zoneAction(zone);
+  const renderedCards = useMemo(
+    () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
+    [cards, sortEnabled]
+  );
+  const abilityMarkedCardIds = useMemo(() => {
+    if (zone.kind !== 'discard') return new Set<ViewCardId>();
+    const viewZone = state.view?.zones[zone.id];
+    if (!viewZone || viewZone.kind !== 'discard') return new Set<ViewCardId>();
+    return new Set(
+      viewZone.cards.flatMap((card) =>
+        card.kind === 'known' && card.abilityUsed ? [card.id] : []
+      )
+    );
+  }, [state.view, zone.id, zone.kind]);
+  const finishDrag = useCallback(() => {
+    activeDragCardId.current = null;
+    setDraggingCardId(null);
+  }, []);
+  useEffect(() => {
+    const element = container.current;
+    const document = element?.ownerDocument;
+    const scene = state.scene;
+    if (!element || !document || !scene) return;
+    const onDragOver = (event: DragEvent): void => {
+      if (activeDragCardId.current === null) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+    const onDrop = (event: DragEvent): void => {
+      const cardId = activeDragCardId.current;
+      if (cardId === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const stillOwned = cards.some(
+        (card) => card.id === cardId && card.parentId === zone.id
+      );
+      const overlay = element.closest<HTMLElement>(
+        '[data-legacy-board-overlays]'
+      );
+      const surfaceBounds = overlay?.getBoundingClientRect();
+      const point =
+        stillOwned && surfaceBounds
+          ? openedZoneDropPoint(
+              scene,
+              surfaceBounds,
+              event.clientX,
+              event.clientY
+            )
+          : null;
+      const targetId = point
+        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+        : null;
+      finishDrag();
+      if (targetId && point) {
+        actions.emitOpenedZoneCardIntent({
+          kind: 'CardDropRequested',
+          cardId,
+          targetId,
+          x: point.x,
+          y: point.y,
+        });
+      }
+    };
+    document.addEventListener('dragover', onDragOver, true);
+    document.addEventListener('drop', onDrop, true);
+    return () => {
+      document.removeEventListener('dragover', onDragOver, true);
+      document.removeEventListener('drop', onDrop, true);
+    };
+  }, [actions, cards, finishDrag, state.scene, zone.id]);
+
+  return (
+    <section
+      ref={container}
+      className="ptcgsim-legacy-zone-browser"
+      data-legacy-zone-browser="true"
+      data-zone-browser-id={zone.id}
+      data-zone-browser-kind={zone.kind}
+      data-zone-dragging-card={draggingCardId ?? undefined}
+      role="dialog"
+      aria-modal={obscured ? undefined : 'true'}
+      aria-hidden={obscured ? 'true' : undefined}
+      inert={obscured ? true : undefined}
+      aria-label={`${zone.label}, ${zone.count} cards`}
+      data-overlay-side={zone.side}
+      tabIndex={-1}
+      style={frame ? legacyZoneBrowserFrameStyle(frame, zone.side) : undefined}
+      onKeyDown={(event) => {
+        if (container.current) {
+          trapModalTab(
+            event,
+            container.current,
+            'button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
+          );
+        }
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          dismiss();
+        }
+      }}
+    >
+      <div className="ptcgsim-legacy-zone-toolbar">
+        {primary ? (
+          <button
+            type="button"
+            className="ptcgsim-legacy-zone-button"
+            data-zone-action={primary.id}
+            onClick={() => {
+              if (
+                primary.id === 'shuffleDiscardToDeck' &&
+                !window.confirm(DISCARD_SHUFFLE_CONFIRMATION)
+              ) {
+                return;
+              }
+              actions.invokeZoneAction(primary.id, zone.id);
+            }}
+          >
+            {primary.label}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="ptcgsim-legacy-zone-button"
+          data-zone-close="true"
+          onClick={dismiss}
+        >
+          Close
+        </button>
+        <label>
+          <input
+            type="checkbox"
+            data-zone-action="sortZone"
+            checked={sortEnabled}
+            onChange={(event) => setSortEnabled(event.currentTarget.checked)}
+          />{' '}
+          Sort
+        </label>
+      </div>
+      <div className="ptcgsim-legacy-zone-cards">
+        {renderedCards.map((card) => (
+          <button
+            type="button"
+            key={card.id}
+            data-overlay-card-id={card.id}
+            aria-label={card.label}
+            aria-pressed={state.presentation.selectedCardId === card.id}
+            draggable={state.canSubmitCommands}
+            onDragStart={(event) => {
+              if (!state.canSubmitCommands) {
+                event.preventDefault();
+                return;
+              }
+              activeDragCardId.current = card.id;
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData(
+                  'application/x-ptcgsim-opened-zone-card',
+                  'card'
+                );
+                // The browser fades out as soon as the drag starts (so the
+                // drop can reach the table beneath), and the native drag
+                // image is snapped after this handler returns -- from a
+                // transparent element. Hand the browser its own copy of the
+                // card to carry under the cursor, as v1's image drag does.
+                installDragImage(event, card.imageUrl);
+              }
+              setDraggingCardId(card.id);
+              actions.dismiss('selection');
+            }}
+            onDragEnd={finishDrag}
+            onClick={() =>
+              actions.emitOpenedZoneCardIntent({
+                kind: 'CardSelected',
+                cardId: card.id,
+              })
+            }
+            onDoubleClick={() =>
+              actions.emitOpenedZoneCardIntent({
+                kind: 'CardPreviewRequested',
+                cardId: card.id,
+              })
+            }
+            onContextMenu={(event) => {
+              event.preventDefault();
+              const bounds = event.currentTarget.getBoundingClientRect();
+              captureContextAnchor(card.id, zone.id, {
+                x: bounds.x,
+                y: bounds.y,
+                width: bounds.width,
+                height: bounds.height,
+              });
+              actions.emitOpenedZoneCardIntent({
+                kind: 'CardContextRequested',
+                cardId: card.id,
+              });
+            }}
+          >
+            <OverlayCardImage card={card} variant="zone" />
+            {abilityMarkedCardIds.has(card.id) ? (
+              <span
+                className="ptcgsim-legacy-zone-ability-marker"
+                data-opened-zone-ability-marker="true"
+                data-marker-card-id={card.id}
+                aria-hidden="true"
+              />
+            ) : null}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+/**
+ * v1's `#viewCards` ("Looking at cards...") and `#attachedCards` ("Move
+ * attached cards") popups. The scene already lays the area's cards out where
+ * the popup's inline images sit, so this paints the popup chrome around them
+ * and its own copies of the cards on top for dragging, selecting, previewing
+ * and the context menu. It is not modal and, as in v1, Escape leaves it open:
+ * the cards must be resolved with the buttons or by moving them.
+ */
+const WorkAreaPanel = ({
+  state,
+  zone,
+  cards,
+  captureContextAnchor,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly zone: ZoneSceneNode;
+  readonly cards: readonly CardSceneNode[];
+  readonly captureContextAnchor: (
+    cardId: ViewCardId,
+    zoneId: string,
+    bounds: Rect
+  ) => void;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const container = useRef<HTMLElement>(null);
+  const activeDragCardId = useRef<ViewCardId | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
+  const source: LegacyBoardWorkAreaSource =
+    zone.kind === 'inspection' ? 'inspection' : 'staged';
+  const own =
+    state.view?.viewer.kind === 'player' &&
+    zone.playerId === state.view.viewer.playerId;
+  const heading =
+    zone.kind === 'inspection'
+      ? 'Looking at cards...'
+      : own
+        ? 'Move attached cards'
+        : 'Opponent moving cards...';
+  const emit = actions.emitCardIntent;
+  const finishDrag = useCallback(() => {
+    activeDragCardId.current = null;
+    setDraggingCardId(null);
+  }, []);
+  useEffect(() => {
+    const element = container.current;
+    const document = element?.ownerDocument;
+    const scene = state.scene;
+    if (!element || !document || !scene || !emit) return;
+    const onDragOver = (event: DragEvent): void => {
+      if (activeDragCardId.current === null) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+    const onDrop = (event: DragEvent): void => {
+      const cardId = activeDragCardId.current;
+      if (cardId === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const stillOwned = cards.some(
+        (card) => card.id === cardId && card.parentId === zone.id
+      );
+      const overlay = element.closest<HTMLElement>(
+        '[data-legacy-board-overlays]'
+      );
+      const surfaceBounds = overlay?.getBoundingClientRect();
+      const point =
+        stillOwned && surfaceBounds
+          ? openedZoneDropPoint(
+              scene,
+              surfaceBounds,
+              event.clientX,
+              event.clientY
+            )
+          : null;
+      const targetId = point
+        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+        : null;
+      finishDrag();
+      if (targetId && point) {
+        emit({
+          kind: 'CardDropRequested',
+          cardId,
+          targetId,
+          x: point.x,
+          y: point.y,
+        });
+      }
+    };
+    document.addEventListener('dragover', onDragOver, true);
+    document.addEventListener('drop', onDrop, true);
+    return () => {
+      document.removeEventListener('dragover', onDragOver, true);
+      document.removeEventListener('drop', onDrop, true);
+    };
+  }, [cards, emit, finishDrag, state.scene, zone.id]);
+  const interactive = own && state.canSubmitCommands && emit !== undefined;
+
+  return (
+    <section
+      ref={container}
+      className="ptcgsim-legacy-work-area"
+      data-legacy-work-area={source}
+      data-work-area-id={zone.id}
+      data-overlay-side={zone.side}
+      data-work-area-dragging-card={draggingCardId ?? undefined}
+      aria-label={heading}
+      style={{
+        left: zone.bounds.x,
+        top: zone.bounds.y,
+        width: zone.bounds.width,
+        height: zone.bounds.height,
+      }}
+    >
+      <div className="ptcgsim-legacy-work-area-header">{heading}</div>
+      {cards.map((card) => (
+        <button
+          type="button"
+          key={card.id}
+          className="ptcgsim-legacy-work-area-card"
+          data-work-area-card-id={card.id}
+          aria-label={card.label}
+          aria-pressed={state.presentation.selectedCardId === card.id}
+          disabled={!interactive}
+          draggable={interactive}
+          style={{
+            left: card.bounds.x - zone.bounds.x,
+            top: card.bounds.y - zone.bounds.y,
+            width: card.bounds.width,
+            height: card.bounds.height,
+          }}
+          onDragStart={(event) => {
+            if (!interactive) {
+              event.preventDefault();
+              return;
+            }
+            activeDragCardId.current = card.id;
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData(
+                'application/x-ptcgsim-work-area-card',
+                'card'
+              );
+              installDragImage(event, card.imageUrl);
+            }
+            setDraggingCardId(card.id);
+            actions.dismiss('selection');
+          }}
+          onDragEnd={finishDrag}
+          onClick={() => emit?.({ kind: 'CardSelected', cardId: card.id })}
+          onDoubleClick={() =>
+            emit?.({ kind: 'CardPreviewRequested', cardId: card.id })
+          }
+          onContextMenu={(event) => {
+            event.preventDefault();
+            if (!emit) return;
+            const bounds = event.currentTarget.getBoundingClientRect();
+            captureContextAnchor(card.id, zone.id, {
+              x: bounds.x,
+              y: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+            });
+            emit({ kind: 'CardContextRequested', cardId: card.id });
+          }}
+        >
+          <OverlayCardImage card={card} variant="zone" />
+        </button>
+      ))}
+      {interactive && actions.invokeWorkAreaAction ? (
+        <div className="ptcgsim-legacy-work-area-buttons">
+          {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => (
+            <button
+              type="button"
+              key={button.id}
+              className="ptcgsim-legacy-zone-button"
+              data-work-area-action={button.id}
+              onClick={() => actions.invokeWorkAreaAction?.(source, button.id)}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
+const markerEditorMarker = (
+  state: BoardSessionControllerState
+): MarkerSceneNode | null => {
+  const input = state.overlays.input;
+  const scene = state.scene;
+  const view = state.view;
+  if (
+    !input ||
+    input.kind === 'count' ||
+    input.kind === 'shortcutCount' ||
+    !scene ||
+    !view
+  ) {
+    return null;
+  }
+  const selected = scene.cards.find((card) => card.id === input.cardId);
+  const stack = selected ? view.stacks[selected.parentId] : undefined;
+  const topCardId = stack?.evolutionCards.at(-1)?.id;
+  const topCard = topCardId
+    ? scene.cards.find((card) => card.id === topCardId)
+    : undefined;
+  if (!stack || !topCard || topCard.side === 'shared') return null;
+  const existing = scene.markers.find(
+    (marker) => marker.parentCardId === topCard.id && marker.kind === input.kind
+  );
+  if (existing) return existing;
+  // A counter being created sits exactly where the scene will paint it: v1
+  // measures every counter from the host image's painted (rotated) box.
+  const presentation =
+    stack.slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0';
+  const painted =
+    topCard.rotationQuarterTurns % 2 === 0
+      ? topCard.bounds
+      : {
+          x:
+            topCard.bounds.x +
+            topCard.bounds.width / 2 -
+            topCard.bounds.height / 2,
+          y:
+            topCard.bounds.y +
+            topCard.bounds.height / 2 -
+            topCard.bounds.width / 2,
+          width: topCard.bounds.height,
+          height: topCard.bounds.width,
+        };
+  const item = layoutLegacyActiveQ0Markers(painted, topCard.side)[input.kind];
+  return {
+    id: `${topCard.id}:${input.kind}-editor`,
+    parentCardId: topCard.id,
+    side: topCard.side,
+    kind: input.kind,
+    presentation,
+    value: input.initialValue,
+    bounds: item.bounds,
+    zIndex: topCard.zIndex + item.sourceZIndex,
+    label: `${input.kind}: ${input.initialValue}`,
+  };
+};
+
+const MarkerEditor = ({
+  state,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const input = state.overlays.input;
+  const marker = markerEditorMarker(state);
+  const editor = useRef<HTMLDivElement>(null);
+  const cancelled = useRef(false);
+  const [invalid, setInvalid] = useState(false);
+  const [draft, setDraft] = useState(input?.initialValue ?? '');
+  const [edited, setEdited] = useState(false);
+  useLayoutEffect(() => {
+    if (
+      editor.current &&
+      input &&
+      input.kind !== 'count' &&
+      input.kind !== 'shortcutCount'
+    ) {
+      editor.current.textContent = input.initialValue;
+    }
+  }, [input]);
+  if (
+    !input ||
+    input.kind === 'count' ||
+    input.kind === 'shortcutCount' ||
+    !marker
+  ) {
+    return null;
+  }
+  const legacy = isLegacyMarkerPresentation(marker.presentation);
+  const markerWasPresent = state.scene?.markers.some(
+    (candidate) =>
+      candidate.parentCardId === marker.parentCardId &&
+      candidate.kind === input.kind
+  );
+  const appearance =
+    legacy ||
+    (input.kind === 'specialCondition' && (edited || !markerWasPresent))
+      ? legacyMarkerAppearance({ ...marker, value: draft })
+      : null;
+  const submit = (element: HTMLDivElement): void => {
+    if (cancelled.current) return;
+    const value = element.textContent ?? '';
+    if (value === input.initialValue) {
+      actions.dismiss('input');
+      return;
+    }
+    const parsed =
+      input.kind === 'damage'
+        ? parseLegacyDamageInput(value)
+        : parseLegacySpecialConditionInput(value);
+    if (parsed === undefined) {
+      setInvalid(true);
+      element.focus();
+      return;
+    }
+    if (input.kind === 'damage') {
+      actions.submitDamageInput(input.cardId, value);
+    } else {
+      actions.submitSpecialConditionInput(input.cardId, value);
+    }
+  };
+
+  return (
+    <div
+      ref={editor}
+      className="ptcgsim-legacy-marker-editor"
+      data-legacy-marker-editor={input.kind}
+      data-marker-card-id={input.cardId}
+      role="textbox"
+      aria-label={
+        input.kind === 'damage' ? 'Damage counter' : 'Special condition'
+      }
+      aria-invalid={invalid}
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck={false}
+      inputMode={input.kind === 'damage' ? 'numeric' : 'text'}
+      onInput={(event) => {
+        setDraft(event.currentTarget.textContent ?? '');
+        setEdited(true);
+        setInvalid(false);
+      }}
+      onBlur={(event) => submit(event.currentTarget)}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.currentTarget.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          cancelled.current = true;
+          actions.dismiss('input');
+        }
+      }}
+      style={{
+        position: 'absolute',
+        left: marker.bounds.x,
+        top: marker.bounds.y,
+        width: marker.bounds.width,
+        height: marker.bounds.height,
+        zIndex: marker.zIndex,
+        display: legacy ? 'block' : 'grid',
+        placeItems: legacy ? undefined : 'center',
+        overflow: 'hidden',
+        borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
+        background: appearance
+          ? legacyMarkerCssColor(appearance.fill)
+          : input.kind === 'damage'
+            ? '#e64242'
+            : '#efefef',
+        color: appearance
+          ? legacyMarkerCssColor(appearance.text)
+          : input.kind === 'damage'
+            ? '#fff'
+            : '#111',
+        fontSize:
+          appearance?.fontSizePx ?? Math.max(10, marker.bounds.height * 0.42),
+        fontWeight: legacy ? undefined : 700,
+        lineHeight: legacy ? `${marker.bounds.width}px` : undefined,
+        textAlign: 'center',
+        pointerEvents: 'auto',
+        outline: invalid ? '2px solid #fff' : 'none',
+      }}
+    />
+  );
+};
+
+// The object identity survives React's development StrictMode effect probe, so
+// one controller prompt can never produce two native modal dialogs.
+type LegacyBoardCountInput =
+  LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
+
+const promptedCountInputs = new WeakSet<LegacyBoardCountInput>();
+
+const CountPrompt = ({
+  input,
+  actions,
+}: {
+  readonly input: LegacyBoardCountInput;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  useEffect(() => {
+    if (promptedCountInputs.has(input)) return;
+    promptedCountInputs.add(input);
+    const value = window.prompt(input.message, input.initialValue);
+    if (value === null) {
+      if (input.kind === 'shortcutCount') {
+        window.alert(input.invalidMessage);
+      }
+      actions.dismiss('input');
+      return;
+    }
+    if (parseLegacyCountInput(value, input.minimum) === undefined) {
+      window.alert(input.invalidMessage);
+      actions.dismiss('input');
+      return;
+    }
+    if (input.kind === 'shortcutCount') {
+      actions.submitShortcutCountInput(input.action, value);
+    } else {
+      actions.submitCountInput(input.action, input.cardId, value);
+    }
+  }, [actions, input]);
+  return null;
+};
+
+/**
+ * Renderer-external legacy popup paint. It consumes only recipient-safe scene
+ * data and semantic controller callbacks; it never owns canonical game state.
+ */
+export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
+  state,
+  darkMode,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly darkMode: boolean;
+  readonly actions: LegacyBoardOverlayActions;
+}) {
+  const [contextAnchor, setContextAnchor] = useState<{
+    readonly cardId: ViewCardId;
+    readonly zoneId: string;
+    readonly bounds: Rect;
+  } | null>(null);
+  const scene = state.scene;
+  if (!scene) return null;
+  const contextCard = state.overlays.contextMenuCardId
+    ? (scene.cards.find(
+        (card) => card.id === state.overlays.contextMenuCardId
+      ) ?? null)
+    : null;
+  const preview = state.overlays.preview;
+  const previewCards = preview
+    ? preview.kind === 'card'
+      ? scene.cards.filter((card) => card.id === preview.cardId)
+      : legacyStackPreviewOrder(
+          state.view?.stacks[preview.stackId],
+          scene.cards.filter((card) => card.parentId === preview.stackId)
+        )
+    : [];
+  const openedZone = state.presentation.openedZoneId
+    ? (scene.zones.find(
+        (zone) => zone.id === state.presentation.openedZoneId
+      ) ?? null)
+    : null;
+  const openedZoneCards = openedZone
+    ? scene.cards.filter((card) => card.parentId === openedZone.id)
+    : [];
+  const openedZoneFrame = openedZone?.playerId
+    ? scene.layout.players.find(
+        (player) => player.playerId === openedZone.playerId
+      )
+    : undefined;
+  const previewFrame =
+    preview?.kind === 'stack'
+      ? scene.layout.players.find(
+          (player) =>
+            player.playerId ===
+            state.view?.stacks[preview.stackId]?.boardPlayerId
+        )
+      : undefined;
+
+  const workAreaZones = scene.zones.filter(
+    (zone) => zone.kind === 'inspection' || zone.kind === 'attachmentResolution'
+  );
+
+  return (
+    <div
+      className={`ptcgsim-legacy-board-overlays${darkMode ? ' is-dark' : ''}`}
+      data-legacy-board-overlays="true"
+      style={{ width: scene.viewport.width, height: scene.viewport.height }}
+    >
+      {workAreaZones.map((zone) => (
+        <WorkAreaPanel
+          key={zone.id}
+          state={state}
+          zone={zone}
+          cards={scene.cards.filter((card) => card.parentId === zone.id)}
+          captureContextAnchor={(cardId, zoneId, bounds) =>
+            setContextAnchor({ cardId, zoneId, bounds })
+          }
+          actions={actions}
+        />
+      ))}
+      {openedZone ? (
+        <ZoneBrowser
+          key={openedZone.id}
+          state={state}
+          zone={openedZone}
+          cards={openedZoneCards}
+          frame={openedZoneFrame}
+          obscured={preview !== null}
+          captureContextAnchor={(cardId, zoneId, bounds) =>
+            setContextAnchor({ cardId, zoneId, bounds })
+          }
+          actions={actions}
+        />
+      ) : null}
+      {state.overlays.input?.kind === 'count' ||
+      state.overlays.input?.kind === 'shortcutCount' ? (
+        <CountPrompt
+          key={`${state.overlays.input.kind}:${state.overlays.input.action}:${state.overlays.input.zoneId}`}
+          input={state.overlays.input}
+          actions={actions}
+        />
+      ) : state.overlays.input ? (
+        <MarkerEditor
+          key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
+          state={state}
+          actions={actions}
+        />
+      ) : null}
+      {contextCard ? (
+        <ContextMenu
+          state={state}
+          card={contextCard}
+          anchorBounds={
+            contextAnchor?.cardId === contextCard.id &&
+            (contextAnchor.zoneId === state.presentation.openedZoneId ||
+              contextAnchor.zoneId === contextCard.parentId)
+              ? contextAnchor.bounds
+              : undefined
+          }
+          darkMode={darkMode}
+          actions={actions}
+        />
+      ) : null}
+      {preview ? (
+        <Preview
+          cards={previewCards}
+          kind={preview.kind}
+          frame={previewFrame}
+          actions={actions}
+        />
+      ) : null}
+    </div>
+  );
+});

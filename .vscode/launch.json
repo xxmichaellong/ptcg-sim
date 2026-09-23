@@ -4,9 +4,9 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome against localhost",
-      "url": "http://localhost:4000",
-      "webRoot": "${workspaceFolder}"
+      "name": "Launch Chrome against the v2 web app",
+      "url": "http://127.0.0.1:4173",
+      "webRoot": "${workspaceFolder}/apps/web"
     }
   ]
 }
