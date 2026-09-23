@@ -147,9 +147,9 @@ Both items the audit left open (the flipped Solo board acting for the other
 seat; the scrolling hand) were carried the same day. Two minor differences
 remain:
 
-- The zone Sort checkbox orders by card name, where v1 ordered by decklist
-  position (duplicates group either way); decklist order is not recoverable
-  from the recipient-safe view.
+- ~~The zone Sort checkbox orders by card name, where v1 ordered by decklist
+  position.~~ Carried: the projection discloses a display-only decklist rank
+  for cards the viewer may read, and both sorts paint v1's declared order.
 - On a flipped board the ephemeral declarations (chat prefix, "mulligans",
   "is looking through … deck") still carry the connected seat's name; the
   seat-bound commands (draw, coin, setup, turn, hand actions, undo) narrate

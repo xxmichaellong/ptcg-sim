@@ -34,16 +34,19 @@ security and persistence review where relevant, and release-note disposition.
 
 ## Open differences awaiting a product decision
 
-The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) also
-records unresolved differences beyond PX-013: decklist-versus-alphabetical
-sorting (F-01), live-session leave warnings (F-02), loose-board sizing/scrolling
-(F-03), and prize/default-background presentation (F-07). These are **open
-findings, not approved exceptions**. Source-data maintenance is tracked as
-F-09. The review's inventory supersedes earlier broad SAME claims. Popup
-ingress (PX-013) is implemented and closed; see below.
+The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) records
+differences beyond PX-013. These are **open findings, not approved
+exceptions**, and the review's inventory supersedes earlier broad SAME claims.
+Carried since it was written: decklist-versus-alphabetical sorting (F-01),
+live-session leave warnings (F-02) and popup ingress (PX-013/F-05) are
+implemented and closed. Still open: loose-board sizing and append scrolling
+(F-03), prize card sizing (F-07 -- its default-background half turned out not
+to be a difference), source-data maintenance (F-09), and the flipped-seat
+ephemeral announcements (F-10).
 
 PX-013 was the only row in this section and is now closed; the F-numbered
-findings above stay tracked in the review until the owner rules on them.
+findings that remain stay tracked in the review until they are carried or the
+owner rules on them.
 
 ## Resolved after the 2026-09-23 review
 
