@@ -75,6 +75,14 @@ reviewer stated them.
   reports every committed threshold a newer corpus would contradict and counts
   the keys it adds. The provenance comment in `legacy-card-type-lookup.ts`
   now points at it. Evidence: `generate-legacy-old-card-types.test.mjs`.
+- **Popup geometry measured, after the fact.** The work-area panels were
+  authored from v1's CSS rather than measured, which is what produced two
+  wrong layouts elsewhere. Measuring `#viewCards` in the real runtime at
+  1440x900 confirms the model exactly: a 792.016 x 379.5 panel, cards 111.375
+  tall on an 87.234 pitch, eight to a row, rows 122.875 apart -- card height
+  plus two 0.5% margins plus the 4px inline strut -- and `overflow: visible`,
+  so extra rows spill as they do in v1. The card zoom and the stack expansion
+  are transcribed from v1's own inline styles and match line for line.
 - **B-01 explained.** The renderer-churn spec navigates to the lobby when the
   Vite dev server hot-reloads mid-run, which is what concurrent edits to the
   workspace during the review caused. The same spec passes on a quiet tree:
