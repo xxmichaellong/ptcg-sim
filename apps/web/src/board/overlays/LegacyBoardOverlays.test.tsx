@@ -864,7 +864,7 @@ describe('legacy board overlays', () => {
     expect(getComputedStyle(stableImage).opacity).toBe('1');
   });
 
-  it('sorts only disclosed labels locally and restores authoritative scene order', async () => {
+  it('sorts only disclosed decklist ranks locally and restores authoritative scene order', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:discard`
@@ -872,12 +872,14 @@ describe('legacy board overlays', () => {
     const canonicalCards = scene.cards.filter(
       (candidate) => candidate.parentId === discard.id
     );
-    const labels = ['Zulu', 'Alpha', 'Alpha'];
+    // v1 paints the declared decklist order, so the last-declared card sorts
+    // last and the two copies of one name keep their authoritative order.
+    const ranks = [9, 2, 2];
     const relabeledCards = scene.cards.map((card) => {
       const index = canonicalCards.findIndex(
         (candidate) => candidate.id === card.id
       );
-      return index === -1 ? card : { ...card, label: labels[index]! };
+      return index === -1 ? card : { ...card, decklistRank: ranks[index]! };
     });
     const overlayState = state({
       scene: { ...scene, cards: relabeledCards },
@@ -893,9 +895,18 @@ describe('legacy board overlays', () => {
         node.getAttribute('data-overlay-card-id')
       );
 
+    // A card the viewer cannot read carries no rank and never moves.
     const concealedCards = [
-      { ...canonicalCards[1]!, label: 'Face-down card' },
-      { ...canonicalCards[0]!, label: 'Face-down card' },
+      {
+        ...canonicalCards[1]!,
+        label: 'Face-down card',
+        decklistRank: undefined,
+      },
+      {
+        ...canonicalCards[0]!,
+        label: 'Face-down card',
+        decklistRank: undefined,
+      },
     ];
     expect(
       sortRecipientSafeZoneCards(concealedCards).map((card) => card.id)

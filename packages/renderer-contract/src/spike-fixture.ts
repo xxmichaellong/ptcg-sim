@@ -47,6 +47,9 @@ export const createRendererSpikeView = (): MatchViewState => {
       orientationQuarterTurns: 0,
       abilityUsed: false,
       publiclyRevealed: false,
+      // A real projection ranks each card by its place in the owner's
+      // declared decklist; the fixture declares its cards in creation order.
+      decklistRank: index,
     };
   };
   const concealed = (ownerId: PlayerId, back: string): ViewCard => ({

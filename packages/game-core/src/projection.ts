@@ -42,6 +42,14 @@ export interface KnownViewCard {
   readonly orientationQuarterTurns: QuarterTurns;
   readonly abilityUsed: boolean;
   readonly publiclyRevealed: boolean;
+  /**
+   * Where this card's name first appears in its owner's declared decklist,
+   * which is the order v1's Sort checkbox paints (`zones/general.js` walks
+   * `deckData` and appends every card of each name in turn). Every copy of a
+   * name shares one rank, so the display order can be rebuilt without telling
+   * two copies apart. Absent for a card that is not in the deck baseline.
+   */
+  readonly decklistRank?: number;
 }
 
 export interface ConcealedViewCard {
@@ -211,6 +219,18 @@ export const projectMatch = (
 ): MatchViewState => {
   const key = viewerKey(viewer);
   const definitions: Record<string, ViewCardDefinition> = {};
+  // v1's Sort walks the decklist in declared order. The baseline deck list
+  // keeps that order, and ranking by the first card of each definition keeps
+  // copies indistinguishable, as they are in v1.
+  const decklistRanks = new Map<CardDefinitionId, number>();
+  for (const cardIds of Object.values(state.deckLists)) {
+    cardIds.forEach((cardId, index) => {
+      const definitionId = state.cards[cardId]?.definitionId;
+      if (definitionId !== undefined && !decklistRanks.has(definitionId)) {
+        decklistRanks.set(definitionId, index);
+      }
+    });
+  }
 
   const projectCard = (cardId: CardInstanceId): ViewCard => {
     const card = state.cards[cardId];
@@ -244,6 +264,7 @@ export const projectMatch = (
     if (!definitions[definitionId]) {
       definitions[definitionId] = projectDefinition(definitionId, definition);
     }
+    const decklistRank = decklistRanks.get(card.definitionId);
     return {
       kind: 'known',
       id,
@@ -254,6 +275,7 @@ export const projectMatch = (
       orientationQuarterTurns: card.orientationQuarterTurns,
       abilityUsed: card.abilityUsed,
       publiclyRevealed: state.visibility.publicCardIds.includes(card.id),
+      ...(decklistRank === undefined ? {} : { decklistRank }),
     };
   };
 

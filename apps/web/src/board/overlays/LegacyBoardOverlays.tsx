@@ -916,20 +916,27 @@ const DISCARD_SHUFFLE_CONFIRMATION =
   'Are you sure you want to shuffle all cards into the deck?';
 
 /**
- * Produces a paint-only ordering from data already disclosed in the scene.
- * Equal labels retain authoritative scene order, which keeps concealed and
- * duplicate cards stable without consulting opaque IDs or hidden definitions.
+ * Produces a paint-only ordering from data already disclosed in the scene, in
+ * v1's order: `zones/general.js` walks the declared decklist and appends every
+ * card of each name in turn. Equal ranks -- copies of one name -- and cards
+ * the viewer cannot read retain authoritative scene order, which keeps
+ * concealed and duplicate cards stable without consulting opaque IDs or
+ * hidden definitions.
  */
 export const sortRecipientSafeZoneCards = (
   cards: readonly CardSceneNode[]
 ): readonly CardSceneNode[] =>
   cards
-    .map((card, index) => ({ card, index }))
-    .sort((left, right) => {
-      if (left.card.label < right.card.label) return -1;
-      if (left.card.label > right.card.label) return 1;
-      return left.index - right.index;
-    })
+    .map((card, index) => ({
+      card,
+      index,
+      rank: card.decklistRank ?? Number.MAX_SAFE_INTEGER,
+    }))
+    .sort((left, right) =>
+      left.rank === right.rank
+        ? left.index - right.index
+        : left.rank - right.rank
+    )
     .map(({ card }) => card);
 
 /**

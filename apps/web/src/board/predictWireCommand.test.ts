@@ -246,6 +246,43 @@ describe('predictWireCommand', () => {
     ).toBeNull();
   });
 
+  it('drags a loaded host into the deck viewer and stages its dependents', () => {
+    // v1's relocateAttachedCards, predicted: the host joins the open popup
+    // and the rest of its stack opens the attached-card window.
+    const inspectionView: MatchViewState = {
+      ...view,
+      workAreas: {
+        ...view.workAreas,
+        [blue]: {
+          ...view.workAreas[blue]!,
+          inspection: {
+            id: 'predicted-inspection',
+            sourceZoneId: deck.id,
+            cards: [deck.cards[0]!],
+          },
+        },
+      },
+      zones: {
+        ...view.zones,
+        [deck.id]: { ...deck, cards: deck.cards.slice(1) },
+      },
+    };
+    const host = active.evolutionCards.at(-1)!;
+    const predicted = predictWireCommand(inspectionView, {
+      type: 'MoveCardToWorkArea',
+      cardId: host.id,
+      expectedWorkAreaId: 'predicted-inspection',
+    })!;
+    expect(predicted.stacks[active.id]).toBeUndefined();
+    expect(predicted.boards[blue]!.activeStackId).toBeNull();
+    expect(
+      predicted.workAreas[blue]!.inspection!.cards.map((card) => card.id)
+    ).toEqual([deck.cards[0]!.id, host.id]);
+    expect(predicted.workAreas[blue]!.attachmentResolution!.cards).toHaveLength(
+      active.evolutionCards.length - 1 + active.attachmentCards.length
+    );
+  });
+
   it('draws from the top of the viewer own deck and updates counters', () => {
     const drawn = predictWireCommand(view, { type: 'DrawCards', count: 2 })!;
     expect(drawn.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 2);

@@ -2,11 +2,13 @@ import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 
 /**
  * v1's hand "Sort" checkbox (`#sortHandCheckbox` in each player container)
- * reorders the painted hand without touching the array behind it. This is the
- * same paint-only projection: the hand's cards are ordered by disclosed name,
- * equal names and concealed cards keep their authoritative order, and no
- * command is emitted. The projection leaves aliases untouched, so a sorted
- * hand submits exactly what an unsorted one would.
+ * reorders the painted hand without touching the array behind it. v1 walks the
+ * declared decklist and appends every card of each name in turn, so this is
+ * the same paint-only projection in that order: cards sort by the decklist
+ * rank the projection discloses, equal ranks and concealed cards keep their
+ * authoritative order, and no command is emitted. The projection leaves
+ * aliases untouched, so a sorted hand submits exactly what an unsorted one
+ * would.
  */
 export const applyHandSortDisplay = (
   view: MatchViewState,
@@ -24,17 +26,19 @@ export const applyHandSortDisplay = (
       ) {
         return [zoneId, zone];
       }
-      const nameOf = (card: (typeof zone.cards)[number]): string =>
+      // A card the viewer cannot read has no decklist rank to sort by and
+      // keeps the front of the row, where its authoritative order is intact.
+      const rankOf = (card: (typeof zone.cards)[number]): number =>
         card.kind === 'known'
-          ? (view.definitions[card.definitionId]?.name ?? '')
-          : '';
+          ? (card.decklistRank ?? Number.MAX_SAFE_INTEGER)
+          : -1;
       const cards = zone.cards
-        .map((card, index) => ({ card, index, name: nameOf(card) }))
-        .sort((left, right) => {
-          if (left.name < right.name) return -1;
-          if (left.name > right.name) return 1;
-          return left.index - right.index;
-        })
+        .map((card, index) => ({ card, index, rank: rankOf(card) }))
+        .sort((left, right) =>
+          left.rank === right.rank
+            ? left.index - right.index
+            : left.rank - right.rank
+        )
         .map(({ card }) => card);
       if (cards.every((card, index) => card === zone.cards[index])) {
         return [zoneId, zone];

@@ -587,6 +587,9 @@ const KnownViewCardSchema = v.object({
   orientationQuarterTurns: QuarterTurnsSchema,
   abilityUsed: v.boolean(),
   publiclyRevealed: v.boolean(),
+  // Display-only decklist position, shared by every copy of a name, so the
+  // Sort checkbox can paint v1's declared order.
+  decklistRank: v.optional(NonNegativeIntegerSchema),
 });
 
 const ConcealedViewCardSchema = v.object({

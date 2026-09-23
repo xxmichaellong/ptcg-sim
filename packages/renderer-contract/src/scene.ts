@@ -378,6 +378,7 @@ const makeCardNode = (
     | 'imageUrl'
     | 'concealed'
     | 'label'
+    | 'decklistRank'
     | 'renderKey'
     | 'rotationQuarterTurns'
   > & {
@@ -397,6 +398,9 @@ const makeCardNode = (
     imageUrl: cardImageUrl(view, card),
     concealed: isConcealedForRendering(card),
     label: cardLabel(view, card),
+    ...(card.kind === 'known' && card.decklistRank !== undefined
+      ? { decklistRank: card.decklistRank }
+      : {}),
     ...input,
     renderKey:
       input.renderKey === undefined

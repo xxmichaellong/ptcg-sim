@@ -128,6 +128,11 @@ export interface CardSceneNode {
   readonly tableImageUrl?: string;
   readonly concealed: boolean;
   readonly label: string;
+  /**
+   * The owner's declared decklist position for this card's name, when the
+   * viewer may read it. v1's Sort checkbox paints that order.
+   */
+  readonly decklistRank?: number;
   readonly interactive: boolean;
   /** Stable physical view identity; null retains logic/overlay data without painting. */
   readonly renderKey: string | null;
