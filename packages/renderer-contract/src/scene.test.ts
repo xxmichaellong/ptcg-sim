@@ -886,6 +886,13 @@ describe('renderer-neutral board scene', () => {
       contentLength: expect.closeTo(stepY * 2, 6),
       offsetPx: 0,
     });
+    // Anything scrolled out of the region is clipped, as v1's overflow does.
+    for (const card of wrappedCards) {
+      expect(card.clipBounds).toEqual(wrappedZone.bounds);
+    }
+    expect(
+      single.cards.find((card) => card.parentId === 'zone:p1:board')?.clipBounds
+    ).toBeUndefined();
     expect(wrappedCards[0]!.bounds.y).toBeCloseTo(content.y + margin);
     expect(
       wrappedCards[perRow]!.bounds.y - wrappedCards[0]!.bounds.y

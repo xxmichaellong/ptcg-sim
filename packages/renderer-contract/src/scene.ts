@@ -744,6 +744,9 @@ export const createBoardScene = (
           bounds: cardRect,
           zIndex: isLegacyPileKind(zone.kind) ? pileZIndex : 100 + index,
           interactive: isLegacyPileKind(zone.kind) ? isPileTop : true,
+          // A scrolling zone clips what has scrolled out of it, as v1's
+          // `overflow` does, instead of painting it over the board.
+          ...(scrollingRow?.scroll ? { clipBounds: copyRect(bounds) } : {}),
           ...(isLegacyPileKind(zone.kind) && !isPileTop
             ? { renderKey: null }
             : {}),

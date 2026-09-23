@@ -1551,6 +1551,55 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('clips a card that has scrolled out of its zone', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const base = createScene();
+    const region = { x: 0, y: 400, width: 800, height: 200 };
+    const scene: BoardScene = {
+      ...base,
+      cards: base.cards.map((card) => ({
+        ...card,
+        // Half of the card sits above the top of its scrolling zone.
+        bounds: { ...card.bounds, x: 40, y: 337 },
+        clipBounds: region,
+      })),
+    };
+    await mountInAct(renderer, host, scene);
+    const element = host.querySelector<HTMLElement>('[data-card-id]')!;
+    // 63 of the card's 126px are above the region, and nothing else is out.
+    expect(element.style.clipPath).toBe('inset(63px 0px 0px 0px)');
+
+    // The opponent frame's half turn puts the same physical inset on the
+    // card's own bottom edge.
+    await act(async () =>
+      renderer.installScene(
+        {
+          ...scene,
+          revision: 2,
+          cards: scene.cards.map((card) => ({
+            ...card,
+            rotationQuarterTurns: 2 as const,
+          })),
+        },
+        []
+      )
+    );
+    expect(
+      host.querySelector<HTMLElement>('[data-card-id]')!.style.clipPath
+    ).toBe('inset(0px 0px 63px 0px)');
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('scrolls the loose board downwards and jumps to the newest card', async () => {
     const scrollZone = vi.fn();
     const renderer = new ReactDomBoardRenderer({

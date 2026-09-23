@@ -284,6 +284,26 @@ const CardNode = memo(function CardNode({
         y: held.y - card.bounds.height / 2,
       }
     : card.bounds;
+  // v1's scrolling zones clip what has scrolled out of them. `clip-path` is
+  // applied before the element's own transform, so the physical insets are
+  // rotated into the card's local frame: its local top edge points physically
+  // right after one quarter turn, down after two, and so on. Cards in a
+  // scrolling row only ever carry the opponent frame's half turn.
+  const clip = ((): string | undefined => {
+    const region = card.clipBounds;
+    if (!region || held) return undefined;
+    const physical = [
+      region.y - bounds.y,
+      bounds.x + bounds.width - (region.x + region.width),
+      bounds.y + bounds.height - (region.y + region.height),
+      region.x - bounds.x,
+    ].map((inset) => Math.max(0, inset));
+    if (physical.every((inset) => inset === 0)) return undefined;
+    const local = physical.map(
+      (_, index) => physical[(index + card.rotationQuarterTurns) % 4] ?? 0
+    );
+    return `inset(${local.map((inset) => `${String(inset)}px`).join(' ')})`;
+  })();
   const legacyBorderRadius =
     card.side === 'local'
       ? '0.275rem'
@@ -351,6 +371,7 @@ const CardNode = memo(function CardNode({
             : legacyShadow,
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
+        ...(clip ? { clipPath: clip } : {}),
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
         transformOrigin: 'center',
       }}

@@ -131,6 +131,12 @@ export interface CardSceneNode {
   readonly concealed: boolean;
   readonly label: string;
   /**
+   * The painted region this card is confined to, when its parent is a zone
+   * that scrolls: v1's `overflow` clips what has scrolled out of the box
+   * rather than letting it paint over the rest of the board.
+   */
+  readonly clipBounds?: Rect;
+  /**
    * The owner's declared decklist position for this card's name, when the
    * viewer may read it. v1's Sort checkbox paints that order.
    */

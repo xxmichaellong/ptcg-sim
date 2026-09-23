@@ -699,6 +699,8 @@ test('native and shared input follow center-rotated card paint in both candidate
             },
           ],
           cards: [
+            // These are real scene cards moved to fixture coordinates, so any
+            // clip region they carried from their own zone no longer applies.
             {
               ...sourceTemplate,
               id: 'rotation-source' as typeof sourceTemplate.id,
@@ -706,6 +708,7 @@ test('native and shared input follow center-rotated card paint in both candidate
               bounds: { x: 20, y: 100, width: 60, height: 100 },
               zIndex: 200,
               rotationQuarterTurns: 0,
+              clipBounds: undefined,
             },
             {
               ...targetTemplate,
@@ -714,6 +717,7 @@ test('native and shared input follow center-rotated card paint in both candidate
               bounds: { x: 200, y: 100, width: 60, height: 100 },
               zIndex: 300,
               rotationQuarterTurns: 3,
+              clipBounds: undefined,
             },
           ],
           markers: [],
