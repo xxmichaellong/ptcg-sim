@@ -7,7 +7,33 @@ import {
   type TestInfo,
 } from '@playwright/test';
 
+import { CARD_ASPECT_RATIO } from '../../packages/renderer-contract/src/geometry.js';
+import {
+  LEGACY_STACK_PREVIEW_V1,
+  legacyStackPreviewCardHeightRatio,
+} from '../../packages/renderer-contract/src/layout.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
+
+/** v1 `.full-view`: 20px padding and a 1px border around the card flow. */
+const STACK_PREVIEW_EDGE_PX = 21;
+
+/**
+ * How much bigger than v1 the stack expansion paints its cards (PX-015). The
+ * popup itself still has to match the source exactly; only the cards inside
+ * it are sized to the set.
+ */
+const stackPreviewCardScale = (
+  surface: ElementPaint['bounds'],
+  cardCount: number
+): number =>
+  legacyStackPreviewCardHeightRatio(
+    {
+      width: surface.width - 2 * STACK_PREVIEW_EDGE_PX,
+      height: surface.height - 2 * STACK_PREVIEW_EDGE_PX,
+    },
+    cardCount,
+    CARD_ASPECT_RATIO
+  ) / LEGACY_STACK_PREVIEW_V1.cardHeightRatio;
 
 interface OverlayFixture {
   readonly ownPlayerId: string;
@@ -571,7 +597,9 @@ const expectSurfaceToMatch = (
   candidate: SurfacePaint,
   source: SurfacePaint,
   description: string,
-  compareImageMargin: boolean
+  compareImageMargin: boolean,
+  /** Present for the stack expansion, whose cards are sized to the set. */
+  imageScale?: number
 ): void => {
   expectBoundsToMatch(
     candidate.surface.bounds,
@@ -595,11 +623,38 @@ const expectSurfaceToMatch = (
   for (const [index, sourceImage] of source.images.entries()) {
     const candidateImage = candidate.images[index];
     expect(candidateImage, `${description} image ${index}`).toBeDefined();
-    expectBoundsToMatch(
-      candidateImage!.bounds,
-      sourceImage.bounds,
-      `${description} image ${index}`
-    );
+    if (imageScale === undefined) {
+      expectBoundsToMatch(
+        candidateImage!.bounds,
+        sourceImage.bounds,
+        `${description} image ${index}`
+      );
+    } else {
+      // PX-015: v1's flat 24% becomes the largest size that fits the set, so
+      // the card keeps v1's shape at a known scale and stays in the panel.
+      for (const key of ['width', 'height'] as const) {
+        expect(
+          candidateImage!.bounds[key],
+          `${description} image ${index} ${key}`
+        ).toBeCloseTo(sourceImage.bounds[key] * imageScale, 1);
+      }
+      expect(candidateImage!.bounds.x).toBeGreaterThanOrEqual(
+        candidate.surface.bounds.x - 0.5
+      );
+      expect(candidateImage!.bounds.y).toBeGreaterThanOrEqual(
+        candidate.surface.bounds.y - 0.5
+      );
+      expect(
+        candidateImage!.bounds.x + candidateImage!.bounds.width
+      ).toBeLessThanOrEqual(
+        candidate.surface.bounds.x + candidate.surface.bounds.width + 0.5
+      );
+      expect(
+        candidateImage!.bounds.y + candidateImage!.bounds.height
+      ).toBeLessThanOrEqual(
+        candidate.surface.bounds.y + candidate.surface.bounds.height + 0.5
+      );
+    }
     expect(candidateImage).toMatchObject({
       src: sourceImage.src,
       label: sourceImage.label,
@@ -832,13 +887,21 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
     candidateLocalStack,
     source.localStack,
     'local stack preview',
-    true
+    true,
+    stackPreviewCardScale(
+      candidateLocalStack.surface.bounds,
+      source.localStack.images.length
+    )
   );
   expectSurfaceToMatch(
     candidateOpponentStack,
     source.opponentStack,
     'opponent stack preview',
-    true
+    true,
+    stackPreviewCardScale(
+      candidateOpponentStack.surface.bounds,
+      source.opponentStack.images.length
+    )
   );
   expectSurfaceToMatch(
     candidateLocalZone,

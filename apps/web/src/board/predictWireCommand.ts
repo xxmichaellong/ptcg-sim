@@ -496,6 +496,44 @@ const drawFor = (
   );
 };
 
+/** v1's table actions clear every ability marker on the table first. */
+const clearAbilityMarkers = (view: MatchViewState): MatchViewState => {
+  const clearCard = (card: ViewCard): ViewCard =>
+    card.kind === 'known' && card.abilityUsed
+      ? { ...card, abilityUsed: false }
+      : card;
+  const zones = Object.fromEntries(
+    Object.entries(view.zones).map(([zoneId, zone]) => [
+      zoneId,
+      { ...zone, cards: zone.cards.map(clearCard) },
+    ])
+  );
+  const stacks = Object.fromEntries(
+    Object.entries(view.stacks).map(([stackId, stack]) => [
+      stackId,
+      {
+        ...stack,
+        abilityUsed: false,
+        evolutionCards: stack.evolutionCards.map(clearCard),
+        attachmentCards: stack.attachmentCards.map(clearCard),
+      },
+    ])
+  );
+  return { ...view, zones, stacks };
+};
+
+/** Discards one seat's loose board, which every table action does. */
+const discardLooseBoard = (
+  view: MatchViewState,
+  viewerId: PlayerId,
+  playerId: PlayerId
+): MatchViewState => {
+  const board = ownZone(view, playerId, 'board');
+  const discard = ownZone(view, playerId, 'discard');
+  if (!board || !discard || board.cards.length === 0) return view;
+  return moveZoneContents(view, viewerId, board.id, discard.id) ?? view;
+};
+
 const predict = (
   view: MatchViewState,
   command: WireGameCommand,
@@ -764,6 +802,29 @@ const predict = (
         taken.card,
         command.type === 'MoveCardToDeckTop' ? 0 : undefined
       );
+    }
+    case 'StartTurn':
+    case 'PassTurn':
+    case 'DeclareAttack': {
+      // v1 clears the ability markers and the loose board immediately, and a
+      // started turn draws and advances the counter. The coin is the one
+      // table control that cannot be predicted: only the room rolls it.
+      const playerId = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!playerId) return null;
+      let next = clearAbilityMarkers(view);
+      const seats =
+        command.type === 'StartTurn' ? view.playerOrder : [playerId];
+      for (const seat of seats) next = discardLooseBoard(next, viewerId, seat);
+      if (command.type !== 'StartTurn') return next;
+      const deck = ownZone(next, playerId, 'deck');
+      // v1's empty deck commits the cleanup and stops: no draw, no new turn.
+      if (!deck || deck.cards.length === 0) return next;
+      const drawn = drawFor(next, viewerId, playerId, 1);
+      if (!drawn) return null;
+      return {
+        ...drawn,
+        turn: { number: view.turn.number + 1, currentPlayerId: playerId },
+      };
     }
     case 'DrawCards': {
       // A flipped solo board draws for the seat at the bottom; that seat's

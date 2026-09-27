@@ -8,7 +8,11 @@ import {
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   findBoardLayoutRegion,
   flipBoardLayoutState,
+  LEGACY_BENCH_GROUP_GAP_BONUS_RATIO,
   LEGACY_BOARD_AFFORDANCES_V1,
+  LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS,
+  LEGACY_STACK_PREVIEW_V1,
+  legacyStackPreviewCardHeightRatio,
   layoutLegacyActiveQ0Markers,
   layoutLegacyBenchQ0Markers,
   layoutLegacyContainedCard,
@@ -1707,15 +1711,22 @@ describe('general legacy play-row layout', () => {
   });
 
   it('matches v1 bench margins for plain, Tool-bearing and quarter-turned containers', () => {
-    const row = layoutLegacyPlayRow(bench, aspect, [
-      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 },
-      {
-        evolutionCount: 1,
-        attachments: ['energy', 'energy', 'tool'],
-        rotationQuarterTurns: 0,
-      },
-      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 1 },
-    ]);
+    // v1's own spacing: the authored gap bonus (PX-014) is off here, so these
+    // numbers stay the ones recorded from the real runtime.
+    const row = layoutLegacyPlayRow(
+      bench,
+      aspect,
+      [
+        { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 },
+        {
+          evolutionCount: 1,
+          attachments: ['energy', 'energy', 'tool'],
+          rotationQuarterTurns: 0,
+        },
+        { evolutionCount: 1, attachments: [], rotationQuarterTurns: 1 },
+      ],
+      0
+    );
     expect(row.map((stack) => stack.flexItemBounds.x)).toEqual([
       expect.closeTo(362, 0),
       expect.closeTo(451.5, 0),
@@ -1764,7 +1775,8 @@ describe('general legacy play-row layout', () => {
         evolutionCount: 1,
         attachments: ['energy', 'energy'] as const,
         rotationQuarterTurns: 0 as const,
-      }))
+      })),
+      0
     );
     expect(row.map((stack) => stack.flexItemBounds.x)).toEqual(
       [108.7, 216, 323.4, 430.7, 538, 645.4, 752.7, 860.1].map((x) =>
@@ -1774,6 +1786,85 @@ describe('general legacy play-row layout', () => {
     expect(row[0]!.flexItemBounds.width).toBeCloseTo(98.8, 0);
     // Attachment offsets still come from the unshrunk base width.
     expect(row[0]!.attachmentCards[1]!.bounds.x).toBeCloseTo(135.7, 0);
+  });
+
+  it('widens the gap between bench groups by the authored bonus (PX-014)', () => {
+    const stacks = [
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 as const },
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 as const },
+      { evolutionCount: 1, attachments: [], rotationQuarterTurns: 0 as const },
+    ];
+    const source = layoutLegacyPlayRow(bench, aspect, stacks, 0);
+    const spaced = layoutLegacyPlayRow(bench, aspect, stacks);
+    const width = bench.physicalDeclaredBounds.width;
+    const gaps = (row: typeof source) =>
+      row
+        .slice(1)
+        .map(
+          (stack, index) =>
+            stack.flexItemBounds.x -
+            (row[index]!.flexItemBounds.x + row[index]!.flexItemBounds.width)
+        );
+    for (const [index, gap] of gaps(spaced).entries()) {
+      expect(gap - gaps(source)[index]!).toBeCloseTo(
+        LEGACY_BENCH_GROUP_GAP_BONUS_RATIO * width,
+        6
+      );
+    }
+    // Widths are untouched and the row stays centred on the same point, so a
+    // lone bench Pokemon sits exactly where v1 puts it.
+    expect(spaced.map((stack) => stack.flexItemBounds.width)).toEqual(
+      source.map((stack) => stack.flexItemBounds.width)
+    );
+    const centre = (row: typeof source) =>
+      (row[0]!.flexItemBounds.x +
+        row.at(-1)!.flexItemBounds.x +
+        row.at(-1)!.flexItemBounds.width) /
+      2;
+    expect(centre(spaced)).toBeCloseTo(centre(source), 6);
+    const [lone] = layoutLegacyPlayRow(bench, aspect, [stacks[0]!]);
+    const [loneSource] = layoutLegacyPlayRow(bench, aspect, [stacks[0]!], 0);
+    expect(lone!.flexItemBounds.x).toBeCloseTo(loneSource!.flexItemBounds.x, 6);
+  });
+
+  it('sizes the stack expansion to the set it is showing (PX-015)', () => {
+    // The popup over a 1087 x 450 frame: 69% x 70% of it.
+    const content = { width: 1087.1875 * 0.69, height: 450 * 0.7 };
+    const ratio = (count: number) =>
+      legacyStackPreviewCardHeightRatio(content, count, CARD_ASPECT_RATIO);
+    // A short stack fills the panel instead of floating in it, and v1's flat
+    // 24% is the floor, never the answer for a small set.
+    expect(ratio(1)).toBe(LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS.maximum);
+    expect(ratio(2)).toBe(LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS.maximum);
+    expect(ratio(6)).toBeGreaterThan(LEGACY_STACK_PREVIEW_V1.cardHeightRatio);
+    // It only ever shrinks as the set grows, and never past v1's own size.
+    const ratios = Array.from({ length: 24 }, (_, index) => ratio(index + 1));
+    for (const [index, value] of ratios.entries()) {
+      expect(value).toBeLessThanOrEqual(ratios[index - 1] ?? value);
+      expect(value).toBeGreaterThanOrEqual(
+        LEGACY_STACK_PREVIEW_V1.cardHeightRatio
+      );
+    }
+    // Every card of a set it can fit stays inside the panel.
+    for (const count of [1, 2, 3, 5, 8, 12]) {
+      const height = ratio(count) * content.height;
+      const margin = content.width * LEGACY_STACK_PREVIEW_V1.cardMarginRatio;
+      const perRow = Math.floor(
+        content.width / (height * CARD_ASPECT_RATIO + 2 * margin)
+      );
+      const rows = Math.ceil(count / Math.max(1, perRow));
+      expect(
+        rows * (height + 2 * margin + LEGACY_STACK_PREVIEW_V1.lineStrutPx)
+      ).toBeLessThanOrEqual(content.height + 0.001);
+    }
+    // A degenerate panel or count falls back to v1's size rather than throw.
+    expect(
+      legacyStackPreviewCardHeightRatio(
+        { width: 0, height: 0 },
+        4,
+        CARD_ASPECT_RATIO
+      )
+    ).toBe(LEGACY_STACK_PREVIEW_V1.cardHeightRatio);
   });
 
   it('collapses with a frame that has been dragged shut instead of failing', () => {

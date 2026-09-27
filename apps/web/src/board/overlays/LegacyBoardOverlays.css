@@ -211,7 +211,8 @@
     [data-overlay-image-state='ready']
   ) {
   display: inline-block;
-  height: 24%;
+  /* v1 paints a flat 24%; the panel sizes its cards to the set (PX-015). */
+  height: var(--ptcgsim-stack-card-height, 24%);
   margin: 0.5%;
   border-radius: 0.275rem;
   box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
@@ -229,7 +230,7 @@
   img {
   display: inline-block;
   width: auto;
-  height: 24%;
+  height: var(--ptcgsim-stack-card-height, 24%);
   margin: 0.5%;
   border-radius: 0.275rem;
   box-shadow: 0 2px 4px rgb(0 0 0 / 30%);

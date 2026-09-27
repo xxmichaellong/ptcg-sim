@@ -7,8 +7,11 @@
   display: flex;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+  /* v1's `#selfResizer`/`#oppResizer` are ordinary elements that show the
+     row-resize cursor on hover. The drag itself is captured on the board
+     host by hit rectangle, so the pill only has to be hoverable. */
   cursor: row-resize;
-  pointer-events: none;
+  pointer-events: auto;
   transform: translateY(50%) scaleX(-1);
 }
 

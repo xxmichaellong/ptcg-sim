@@ -1788,6 +1788,74 @@ export const LEGACY_WORK_AREA_PANEL_V1 = {
   lineStrutPx: 4,
 } as const;
 
+/**
+ * v1's stack expansion (`.full-view`): double-clicking a card in play turns
+ * its play-container into a 69% x 70% popup whose cards are inline images at
+ * `height: 24%` with `margin: .5%`.
+ *
+ * v2 keeps the popup but sizes its cards to the set (PX-015): v1's fixed 24%
+ * leaves a two-card stack floating in an empty panel. The ratio below is the
+ * largest that still fits every card, capped so a single card cannot fill the
+ * whole panel and floored at v1's own 24%, past which the rows spill exactly
+ * as v1's do.
+ */
+export const LEGACY_STACK_PREVIEW_V1 = {
+  cardHeightRatio: 0.24,
+  cardMarginRatio: 0.005,
+  /** The inline strut below a baseline-aligned image in v1's 16px line box. */
+  lineStrutPx: 4,
+} as const;
+
+export const LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS = {
+  minimum: LEGACY_STACK_PREVIEW_V1.cardHeightRatio,
+  maximum: 0.55,
+} as const;
+
+/**
+ * The card height, as a ratio of the popup's content height, that shows a
+ * stack of `count` cards as large as it can while keeping every card inside
+ * the panel.
+ */
+export const legacyStackPreviewCardHeightRatio = (
+  contentBounds: { readonly width: number; readonly height: number },
+  count: number,
+  cardAspectRatio: number,
+  bounds: {
+    readonly minimum: number;
+    readonly maximum: number;
+  } = LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS
+): number => {
+  const { minimum, maximum } = bounds;
+  if (
+    !Number.isSafeInteger(count) ||
+    count < 1 ||
+    !Number.isFinite(contentBounds.width) ||
+    !Number.isFinite(contentBounds.height) ||
+    contentBounds.width <= 0 ||
+    contentBounds.height <= 0 ||
+    !Number.isFinite(cardAspectRatio) ||
+    cardAspectRatio <= 0
+  ) {
+    return minimum;
+  }
+  const margin = contentBounds.width * LEGACY_STACK_PREVIEW_V1.cardMarginRatio;
+  const strut = LEGACY_STACK_PREVIEW_V1.lineStrutPx;
+  let best = 0;
+  // Every row count the set could be dealt into; the winner is whichever
+  // shape lets the cards be biggest, which is what the eye picks too.
+  for (let rows = 1; rows <= count; rows += 1) {
+    const perRow = Math.ceil(count / rows);
+    const byHeight =
+      (contentBounds.height / rows - 2 * margin - strut) / contentBounds.height;
+    const byWidth =
+      (contentBounds.width / perRow - 2 * margin) /
+      cardAspectRatio /
+      contentBounds.height;
+    best = Math.max(best, Math.min(byHeight, byWidth));
+  }
+  return Math.max(minimum, Math.min(maximum, best));
+};
+
 export interface LegacyWorkAreaPanelLayout {
   /** Border box of the popup. */
   readonly bounds: Rect;
@@ -1919,21 +1987,37 @@ export interface LegacyPlayRowStackLayout {
   readonly attachmentCards: readonly LegacyPlayRowAttachmentBox[];
 }
 
+/**
+ * Extra breathing room between bench groups, as a ratio of the bench row's
+ * width, on top of whatever margins v1 gives the containers. This is the one
+ * authored departure from v1's bench spacing (PX-014): it is split evenly
+ * across each container's two sides, so the gap between neighbours grows by
+ * exactly this much while a centred row -- a lone bench Pokemon especially --
+ * stays where v1 puts it.
+ */
+export const LEGACY_BENCH_GROUP_GAP_BONUS_RATIO = 0.005;
+
 const legacyPlayContainerMargins = (
   kind: BoardLayoutRegionKind,
   rotationQuarterTurns: QuarterTurns,
-  hasTool: boolean
+  hasTool: boolean,
+  gapBonusRatio: number
 ): { readonly left: number; readonly right: number } => {
   // v1 rotateCard: a quarter-turned bench container takes 2%/3% margins and
   // a container rotated back to 0/180 takes 0%/1%; syncRotation gives a Tool
   // host a 2% trailing margin; otherwise the bench's stylesheet 1% applies.
+  const bonus = kind === 'bench' ? gapBonusRatio / 2 : 0;
+  const withBonus = (left: number, right: number) => ({
+    left: left + bonus,
+    right: right + bonus,
+  });
   if (rotationQuarterTurns === 1 || rotationQuarterTurns === 3) {
-    if (kind === 'bench') return { left: 0.02, right: 0.03 };
-    return { left: 0, right: hasTool ? 0.02 : 0 };
+    if (kind === 'bench') return withBonus(0.02, 0.03);
+    return withBonus(0, hasTool ? 0.02 : 0);
   }
-  if (rotationQuarterTurns === 2) return { left: 0, right: 0.01 };
-  if (hasTool) return { left: 0, right: 0.02 };
-  return { left: 0, right: kind === 'bench' ? 0.01 : 0 };
+  if (rotationQuarterTurns === 2) return withBonus(0, 0.01);
+  if (hasTool) return withBonus(0, 0.02);
+  return withBonus(0, kind === 'bench' ? 0.01 : 0);
 };
 
 /**
@@ -1950,7 +2034,12 @@ const legacyPlayContainerMargins = (
 export const layoutLegacyPlayRow = (
   region: BoardLayoutRegion,
   cardAspectRatio: number,
-  stacks: readonly LegacyPlayRowStackInput[]
+  stacks: readonly LegacyPlayRowStackInput[],
+  /**
+   * Extra room between bench groups (PX-014). Pass 0 for v1's own spacing,
+   * which is what the source oracles compare against.
+   */
+  benchGroupGapBonusRatio: number = LEGACY_BENCH_GROUP_GAP_BONUS_RATIO
 ): readonly LegacyPlayRowStackLayout[] => {
   if (
     region.surface !== 'playSlot' ||
@@ -1996,7 +2085,8 @@ export const layoutLegacyPlayRow = (
     const margins = legacyPlayContainerMargins(
       region.kind,
       stack.rotationQuarterTurns,
-      stack.attachments.includes('tool')
+      stack.attachments.includes('tool'),
+      benchGroupGapBonusRatio
     );
     return {
       // A lone basic keeps `width: auto`, i.e. the image's painted width; v1

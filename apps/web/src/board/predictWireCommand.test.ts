@@ -323,6 +323,55 @@ describe('predictWireCommand', () => {
     ).toBeNull();
   });
 
+  it('starts a turn optimistically: markers, loose boards, draw and counter', () => {
+    const board = view.zones[`zone:${blue}:board`]!;
+    const markedStack = { ...active, abilityUsed: true };
+    const staged: MatchViewState = {
+      ...view,
+      stacks: { ...view.stacks, [active.id]: markedStack },
+    };
+    const predicted = predictWireCommand(staged, {
+      type: 'StartTurn',
+      targetPlayerId: blue,
+    })!;
+    // v1 clears every ability marker and discards both loose boards first.
+    expect(predicted.stacks[active.id]!.abilityUsed).toBe(false);
+    expect(predicted.zones[board.id]!.cards).toHaveLength(0);
+    expect(predicted.zones[discard.id]!.cards).toHaveLength(
+      discard.cards.length + board.cards.length
+    );
+    // Then it draws for the seat and advances the shared counter.
+    expect(predicted.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 1);
+    expect(predicted.zones[hand.id]!.cards.at(-1)!.id).toBe(deck.cards[0]!.id);
+    expect(predicted.turn).toEqual({
+      number: view.turn.number + 1,
+      currentPlayerId: blue,
+    });
+
+    // An empty deck commits the cleanup and stops, as v1's take-turn does.
+    const emptyDeck: MatchViewState = {
+      ...staged,
+      zones: { ...staged.zones, [deck.id]: { ...deck, cards: [] } },
+    };
+    const stalled = predictWireCommand(emptyDeck, {
+      type: 'StartTurn',
+      targetPlayerId: blue,
+    })!;
+    expect(stalled.turn).toEqual(view.turn);
+    expect(stalled.zones[board.id]!.cards).toHaveLength(0);
+
+    // Attack and pass clear the acting seat's board only, and never draw.
+    const passed = predictWireCommand(staged, {
+      type: 'PassTurn',
+      targetPlayerId: blue,
+    })!;
+    expect(passed.zones[hand.id]!.cards).toHaveLength(hand.cards.length);
+    expect(passed.turn).toEqual(view.turn);
+    expect(passed.zones[`zone:${red}:board`]!.cards).toEqual(
+      view.zones[`zone:${red}:board`]!.cards
+    );
+  });
+
   it('predicts nothing for spectators or for commands it does not model', () => {
     expect(
       predictWireCommand(
@@ -333,8 +382,10 @@ describe('predictWireCommand', () => {
     expect(
       predictWireCommand(view, { type: 'ShuffleZone', zoneId: deck.id })
     ).toBeNull();
+    // The coin is deliberately never predicted: the room rolls it, and a
+    // guessed face would have to be taken back half the time.
     expect(
-      predictWireCommand(view, { type: 'StartTurn', targetPlayerId: red })
+      predictWireCommand(view, { type: 'FlipCoin', targetPlayerId: blue })
     ).toBeNull();
   });
 });

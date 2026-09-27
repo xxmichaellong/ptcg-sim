@@ -1,9 +1,11 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import {
+  CARD_ASPECT_RATIO,
   isLegacyMarkerPresentation,
   layoutLegacyActiveQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
+  legacyStackPreviewCardHeightRatio,
   resolveBoardDropTarget,
   type BoardScene,
   type BoardScenePlayerFrame,
@@ -717,14 +719,28 @@ const ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX = 22;
 
 export const legacyStackPreviewFrameStyle = (
   frame: BoardScenePlayerFrame,
-  side: CardSceneNode['side']
-): CSSProperties => ({
-  left: frame.bounds.x + frame.bounds.width / 2,
-  top: frame.bounds.y + frame.bounds.height / 2,
-  width: frame.bounds.width * STACK_PREVIEW_WIDTH_RATIO,
-  height: frame.bounds.height * STACK_PREVIEW_HEIGHT_RATIO,
-  transform: `translate(-50%, -50%)${side === 'opponent' ? ' rotate(180deg)' : ''}`,
-});
+  side: CardSceneNode['side'],
+  cardCount = 1
+): CSSProperties => {
+  const width = frame.bounds.width * STACK_PREVIEW_WIDTH_RATIO;
+  const height = frame.bounds.height * STACK_PREVIEW_HEIGHT_RATIO;
+  // v1 paints every card of the expansion at a flat 24%, which leaves a short
+  // stack adrift in an empty panel. The cards are sized to the set instead
+  // (PX-015); the CSS keeps 24% as its fallback.
+  const cardHeightRatio = legacyStackPreviewCardHeightRatio(
+    { width, height },
+    Math.max(1, cardCount),
+    CARD_ASPECT_RATIO
+  );
+  return {
+    left: frame.bounds.x + frame.bounds.width / 2,
+    top: frame.bounds.y + frame.bounds.height / 2,
+    width,
+    height,
+    transform: `translate(-50%, -50%)${side === 'opponent' ? ' rotate(180deg)' : ''}`,
+    ['--ptcgsim-stack-card-height' as string]: `${String(cardHeightRatio * 100)}%`,
+  };
+};
 
 export const legacyZoneBrowserFrameStyle = (
   frame: BoardScenePlayerFrame,
@@ -874,7 +890,7 @@ const Preview = ({
       data-preview-focus="true"
       style={
         frame && cards[0]
-          ? legacyStackPreviewFrameStyle(frame, cards[0].side)
+          ? legacyStackPreviewFrameStyle(frame, cards[0].side, cards.length)
           : undefined
       }
       onKeyDown={onKeyDown}

@@ -41,7 +41,12 @@ export class ReactDomBoardResizeInteraction {
     const view = host.ownerDocument.defaultView;
     if (!view) throw new Error('Board resize host has no owning window');
     this.view = view;
-    host.addEventListener('pointerdown', this.handlePointerDown, true);
+    // The press is watched on the window, not the host: v1's resizer pills
+    // are ordinary elements that show the row-resize cursor, so they sit
+    // above the board and would otherwise swallow the press before the
+    // host's capture listener could see it. The hit test is unchanged --
+    // only a point inside a handle's rectangle starts a resize.
+    view.addEventListener('pointerdown', this.handlePointerDown, true);
     view.addEventListener('pointermove', this.handlePointerMove, true);
     view.addEventListener('pointerup', this.handlePointerEnd, true);
     view.addEventListener('pointercancel', this.handlePointerEnd, true);
@@ -53,7 +58,7 @@ export class ReactDomBoardResizeInteraction {
     if (this.disposed) return;
     this.disposed = true;
     this.active = null;
-    this.host.removeEventListener('pointerdown', this.handlePointerDown, true);
+    this.view.removeEventListener('pointerdown', this.handlePointerDown, true);
     this.view.removeEventListener('pointermove', this.handlePointerMove, true);
     this.view.removeEventListener('pointerup', this.handlePointerEnd, true);
     this.view.removeEventListener('pointercancel', this.handlePointerEnd, true);

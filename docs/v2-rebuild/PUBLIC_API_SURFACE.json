@@ -1510,6 +1510,10 @@
               "kind": "value"
             },
             {
+              "name": "LEGACY_BENCH_GROUP_GAP_BONUS_RATIO",
+              "kind": "value"
+            },
+            {
               "name": "LEGACY_BOARD_AFFORDANCES_V1",
               "kind": "value"
             },
@@ -1535,6 +1539,14 @@
             },
             {
               "name": "LEGACY_SIDEBAR_WIDTH_RATIO",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_STACK_PREVIEW_V1",
               "kind": "value"
             },
             {
@@ -1636,6 +1648,10 @@
             {
               "name": "LegacySingleTrainerToolAttachmentStackLayout",
               "kind": "type"
+            },
+            {
+              "name": "legacyStackPreviewCardHeightRatio",
+              "kind": "value"
             },
             {
               "name": "LegacyTwoEnergyAttachmentStackLayout",
