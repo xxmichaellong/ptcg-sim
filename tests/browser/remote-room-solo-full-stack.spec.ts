@@ -59,7 +59,9 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   );
   await expect(page.locator('#p2Button')).toHaveClass('not-selected-page');
   await expect(page.locator('#p1Box')).toBeVisible();
-  await expect(page.locator('#p2Box')).toHaveCount(0);
+  // The Multiplayer panel is a sidebar panel over this table now, so it is
+  // present and hidden rather than absent.
+  await expect(page.locator('#p2Box')).toBeHidden();
   await expect(page.locator('#chatbox')).toBeVisible();
   await expect(page.locator('#roomHeader')).toHaveCount(0);
   for (const id of [
@@ -251,9 +253,10 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     .toBe(true);
 
   await page.locator('#p2Button').click();
-  await expect(
-    page.locator('[data-app-route="remote-room-lobby"]')
-  ).toBeVisible();
+  // The Multiplayer tab opens its panel over this table rather than replacing
+  // the route, so the game is still on screen behind it.
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await expect(page.locator('#p2Box')).toBeVisible();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
   await expect(page.locator('#roomIdInput')).toHaveValue('');
   await page.locator('#deckImportButton').click();

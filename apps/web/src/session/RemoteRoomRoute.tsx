@@ -8,7 +8,14 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
@@ -80,6 +87,14 @@ export interface RemoteRoomRouteProps {
   /** Parks a live solo authority while the source Multiplayer tab is open. */
   readonly onMultiplayerNavigate?: () => void;
   /**
+   * v1's Multiplayer tab is a sidebar panel over the same table, not another
+   * page: the lobby hands its panel down so a live Solo board stays mounted
+   * while its owner reads it. Parking still happens, but only when they act
+   * on it. Without this the tab falls back to `onMultiplayerNavigate`.
+   */
+  readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
+  readonly onMultiplayerPanelOpen?: () => void;
+  /**
    * Mints and copies a fresh invitation from inside the room, for the seat
    * that holds creator custody. v1's room header has a copy button; here it
    * copies an invitation rather than the bare room code, which cannot admit.
@@ -123,6 +138,8 @@ export const RemoteRoomRoute = ({
   onLeave,
   onResumeSavedGame,
   onMultiplayerNavigate,
+  multiplayerPanel,
+  onMultiplayerPanelOpen,
   onCopyInvitation,
   preferences: ownedPreferences,
   onPreferencesChange,
@@ -141,9 +158,9 @@ export const RemoteRoomRoute = ({
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
     ...(requestBackground ? { requestBackground } : {}),
   });
-  const [activePanel, setActivePanel] = useState<'room' | 'deck' | 'settings'>(
-    'room'
-  );
+  const [activePanel, setActivePanel] = useState<
+    'room' | 'multiplayer' | 'deck' | 'settings'
+  >('room');
   const [playmatExpanded, setPlaymatExpanded] = useState(false);
   const [perspective, setPerspective] = useState<{
     readonly flipped: boolean;
@@ -229,6 +246,10 @@ export const RemoteRoomRoute = ({
     <ReplayModeShell coordinator={runtime.replay}>
       {({ state, chrome, controls, exitReplay }) => {
         const soloLive = !chrome.active && roomMode === 'solo';
+        const multiplayerPanelSelected =
+          soloLive && multiplayerPanel !== undefined
+            ? activePanel === 'multiplayer'
+            : false;
         const feedId = chrome.active || soloLive ? 'chatbox' : 'p2Chatbox';
         // The header names the room once it is live ("id: CODE", as v1's
         // joinGame handler writes it), or reports a failure. Connection phases
@@ -328,16 +349,30 @@ export const RemoteRoomRoute = ({
                     id="p2Button"
                     type="button"
                     className={
-                      !soloLive && activePanel === 'room'
+                      multiplayerPanelSelected ||
+                      (!soloLive && activePanel === 'room')
                         ? 'selected-page'
                         : 'not-selected-page'
                     }
                     aria-current={
-                      !soloLive && activePanel === 'room' ? 'page' : undefined
+                      multiplayerPanelSelected ||
+                      (!soloLive && activePanel === 'room')
+                        ? 'page'
+                        : undefined
                     }
                     onClick={() => {
-                      if (soloLive) onMultiplayerNavigate?.();
-                      else setActivePanel('room');
+                      if (!soloLive) {
+                        setActivePanel('room');
+                        return;
+                      }
+                      // The panel comes down from the lobby, so the table can
+                      // stay where it is while its owner reads it.
+                      if (multiplayerPanel) {
+                        setActivePanel('multiplayer');
+                        onMultiplayerPanelOpen?.();
+                        return;
+                      }
+                      onMultiplayerNavigate?.();
                     }}
                   >
                     Multiplayer
@@ -505,6 +540,7 @@ export const RemoteRoomRoute = ({
                   </div>
                 )}
               </section>
+              {multiplayerPanel?.(activePanel !== 'multiplayer')}
               <RemoteRoomSettings
                 hidden={activePanel !== 'settings'}
                 preferences={effectivePreferences}

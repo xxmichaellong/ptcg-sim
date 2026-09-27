@@ -4,7 +4,7 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import type { ClipboardEvent as ReactClipboardEvent } from 'react';
+import type { ClipboardEvent as ReactClipboardEvent, ReactNode } from 'react';
 
 import {
   RendererSpikeBoard,
@@ -349,6 +349,9 @@ export const RemoteRoomLobby = ({
   };
 
   const handleGenerate = async (): Promise<void> => {
+    // Reading the Multiplayer panel leaves a live Solo table alone; acting on
+    // it is the real transition, and that is where v1's park belongs.
+    parkSoloForMultiplayer();
     const active = beginOperation('generate');
     if (!active) return;
     const displayName = normalizeDisplayName(
@@ -512,6 +515,7 @@ export const RemoteRoomLobby = ({
   };
 
   const handleJoin = async (): Promise<void> => {
+    parkSoloForMultiplayer();
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
     const normalizedRoomCode = roomCode.trim().toUpperCase();
@@ -685,6 +689,15 @@ export const RemoteRoomLobby = ({
     return true;
   };
 
+  /**
+   * Moves a live Solo table into the park so the Multiplayer panel's own
+   * room can take the screen. Doing nothing when Solo is not live keeps this
+   * safe to call from every entry point into a multiplayer room.
+   */
+  const parkSoloForMultiplayer = (): void => {
+    if (connected?.mode === 'solo') handleMultiplayerNavigate();
+  };
+
   const handleMultiplayerNavigate = (): void => {
     if (!connected || connected.mode !== 'solo') return;
     setParkedSolo(connected);
@@ -696,6 +709,113 @@ export const RemoteRoomLobby = ({
     // v1 says nothing when you leave the Solo tab; the game simply waits.
     setStatus(undefined);
   };
+
+  const busy = operation !== undefined;
+
+  /**
+   * v1's Multiplayer tab is a panel in the sidebar, not another page. The
+   * lobby owns its state, so it renders the panel and hands it to whoever
+   * shows the sidebar: itself, or a live Solo room that must stay mounted
+   * while its owner reads it.
+   */
+  const renderMultiplayerPanel = (hidden: boolean): ReactNode => (
+    <section
+      id="p2Box"
+      className="legacy-room-sidebox legacy-lobby-sidebox"
+      hidden={hidden}
+    >
+      <div id="p2ExplanationBox">
+        <strong>Online Multiplayer Mode</strong>
+        <div className="legacy-explanation-gap" />
+        Generate a room, then copy a temporary invitation to share only with the
+        intended player or spectator. Recipients paste it into Room ID before
+        joining.
+      </div>
+      <div id="lobby" aria-busy={busy}>
+        <input
+          id="nameInput"
+          type="text"
+          placeholder="Name"
+          aria-label="Name"
+          value={name}
+          disabled={busy}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <div id="roomId">
+          <input
+            id="roomIdInput"
+            type="text"
+            placeholder="Room ID"
+            aria-label="Room ID"
+            value={roomCode}
+            disabled={busy}
+            onPaste={handlePaste}
+            onDrop={(event) => {
+              event.preventDefault();
+              setStatus('Paste a temporary invitation into Room ID.');
+            }}
+            onChange={(event) => handleRoomCodeChange(event.target.value)}
+          />
+          <button
+            id="copyButton"
+            type="button"
+            className={copyConfirmed ? 'copied' : undefined}
+            aria-label="Copy invitation"
+            disabled={busy}
+            onClick={() => void handleCopy()}
+          >
+            <CopyIcon />
+          </button>
+          <button
+            id="generateIdButton"
+            type="button"
+            disabled={busy}
+            onClick={() => void handleGenerate()}
+          >
+            Generate
+          </button>
+        </div>
+        <div id="coachingModeLabel">
+          <input
+            type="checkbox"
+            id="coachingModeCheckbox"
+            checked={coachingConsent}
+            disabled={busy}
+            onChange={(event) => setCoachingConsent(event.target.checked)}
+          />
+          <label htmlFor="coachingModeCheckbox">
+            Enable board flip <span>(both players must enable)</span>
+          </label>
+        </div>
+        <div id="spectatorModeLabel">
+          <input
+            type="checkbox"
+            id="spectatorModeCheckbox"
+            checked={spectator}
+            // A spectator invitation only ever watches; a player
+            // invitation leaves the choice to its holder, as v1's room
+            // key did.
+            disabled={busy || receipt?.requestedRole === 'spectator'}
+            onChange={(event) => setSpectator(event.target.checked)}
+          />
+          <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
+        </div>
+        <button
+          id="joinRoomButton"
+          type="button"
+          disabled={busy}
+          onClick={() => void handleJoin()}
+        >
+          Join Room
+        </button>
+      </div>
+      {status && (
+        <p className="lobby-status" role="status" aria-live="polite">
+          {status}
+        </p>
+      )}
+    </section>
+  );
 
   if (connected) {
     return (
@@ -728,6 +848,12 @@ export const RemoteRoomLobby = ({
           onLeave={handleLeave}
           onResumeSavedGame={handleResumeSavedGame}
           onMultiplayerNavigate={handleMultiplayerNavigate}
+          {...(connected.mode === 'solo'
+            ? {
+                multiplayerPanel: renderMultiplayerPanel,
+                onMultiplayerPanelOpen: () => setActivePanel('lobby'),
+              }
+            : {})}
           {...(connected.mode === 'multiplayer' && ownerRef.current?.creator
             ? { onCopyInvitation: handleCopyInvitationFromRoom }
             : {})}
@@ -749,8 +875,6 @@ export const RemoteRoomLobby = ({
       </>
     );
   }
-
-  const busy = operation !== undefined;
   return (
     <main
       className={`app-shell remote-room-route${
@@ -959,102 +1083,7 @@ export const RemoteRoomLobby = ({
             </button>
           </div>
         </section>
-        <section
-          id="p2Box"
-          className="legacy-room-sidebox legacy-lobby-sidebox"
-          hidden={activePanel !== 'lobby'}
-        >
-          <div id="p2ExplanationBox">
-            <strong>Online Multiplayer Mode</strong>
-            <div className="legacy-explanation-gap" />
-            Generate a room, then copy a temporary invitation to share only with
-            the intended player or spectator. Recipients paste it into Room ID
-            before joining.
-          </div>
-          <div id="lobby" aria-busy={busy}>
-            <input
-              id="nameInput"
-              type="text"
-              placeholder="Name"
-              aria-label="Name"
-              value={name}
-              disabled={busy}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <div id="roomId">
-              <input
-                id="roomIdInput"
-                type="text"
-                placeholder="Room ID"
-                aria-label="Room ID"
-                value={roomCode}
-                disabled={busy}
-                onPaste={handlePaste}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  setStatus('Paste a temporary invitation into Room ID.');
-                }}
-                onChange={(event) => handleRoomCodeChange(event.target.value)}
-              />
-              <button
-                id="copyButton"
-                type="button"
-                className={copyConfirmed ? 'copied' : undefined}
-                aria-label="Copy invitation"
-                disabled={busy}
-                onClick={() => void handleCopy()}
-              >
-                <CopyIcon />
-              </button>
-              <button
-                id="generateIdButton"
-                type="button"
-                disabled={busy}
-                onClick={() => void handleGenerate()}
-              >
-                Generate
-              </button>
-            </div>
-            <div id="coachingModeLabel">
-              <input
-                type="checkbox"
-                id="coachingModeCheckbox"
-                checked={coachingConsent}
-                disabled={busy}
-                onChange={(event) => setCoachingConsent(event.target.checked)}
-              />
-              <label htmlFor="coachingModeCheckbox">
-                Enable board flip <span>(both players must enable)</span>
-              </label>
-            </div>
-            <div id="spectatorModeLabel">
-              <input
-                type="checkbox"
-                id="spectatorModeCheckbox"
-                checked={spectator}
-                // A spectator invitation only ever watches; a player
-                // invitation leaves the choice to its holder, as v1's room
-                // key did.
-                disabled={busy || receipt?.requestedRole === 'spectator'}
-                onChange={(event) => setSpectator(event.target.checked)}
-              />
-              <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
-            </div>
-            <button
-              id="joinRoomButton"
-              type="button"
-              disabled={busy}
-              onClick={() => void handleJoin()}
-            >
-              Join Room
-            </button>
-          </div>
-          {status && (
-            <p className="lobby-status" role="status" aria-live="polite">
-              {status}
-            </p>
-          )}
-        </section>
+        {renderMultiplayerPanel(activePanel !== 'lobby')}
         <RemoteRoomSettings
           hidden={activePanel !== 'settings'}
           preferences={effectivePreferences}
