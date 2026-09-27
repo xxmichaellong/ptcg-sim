@@ -287,8 +287,8 @@ describe('dragging a card into an open work area', () => {
     expect(staged.attachmentCardIds).toEqual([energyId]);
     expect(staged.suggestedSlot).toBe('active');
 
-    // With that window already open, a second loaded host joins it instead of
-    // opening a second one, and the deck viewer refuses to open a rival.
+    // With that window already open, a second loaded host can go into either
+    // popup: its Energy joins the same attached-card window in both cases.
     const secondPokemonId = next.zones[playerZoneId(p1, 'hand')]!.cardIds.find(
       (cardId) => next.cards[cardId]!.currentCategory === 'Pokémon'
     )!;
@@ -320,17 +320,24 @@ describe('dragging a card into an open work area', () => {
       },
       context
     );
-    expect(
-      rejected(
-        second,
-        {
-          type: 'MoveCardToWorkArea',
-          cardId: secondPokemonId,
-          expectedWorkAreaId: workAreaId,
-        },
-        context
-      )
-    ).toBe('conflict');
+    const joinedInspection = accepted(
+      second,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: secondPokemonId,
+        expectedWorkAreaId: workAreaId,
+      },
+      context
+    );
+    expect(joinedInspection.workAreas[p1]!.inspection!.cardIds).toContain(
+      secondPokemonId
+    );
+    expect(joinedInspection.workAreas[p1]!.attachmentResolution).toMatchObject({
+      id: staged.id,
+      cardIds: [energyId, secondEnergyId],
+      attachmentCardIds: [energyId, secondEnergyId],
+    });
+    expect(joinedInspection.stacks[secondStackId]).toBeUndefined();
     const merged = accepted(
       second,
       {

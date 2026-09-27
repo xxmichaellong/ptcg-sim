@@ -555,7 +555,7 @@ describe('explicit card departures', () => {
     assertMatchInvariants(restored.state);
   });
 
-  it('protects an occupied work area without blocking independent stack departures', () => {
+  it('stages a second stack departure in the already open attached-card window', () => {
     const commandContext = context();
     const loaded = executeCommand(
       emptyMatch(),
@@ -616,18 +616,24 @@ describe('explicit card departures', () => {
     state = firstDeparture.state;
     const occupied = state.workAreas[p1]!.attachmentResolution!;
 
-    expect(
-      executeCommand(
-        state,
-        {
-          type: 'MoveCardFromStack',
-          cardId: secondTop!,
-          expectedStackId: secondStackId,
-          destinationZoneId: discardId,
-        },
-        commandContext
-      )
-    ).toMatchObject({ accepted: false, code: 'conflict' });
+    const secondDeparture = executeCommand(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: secondTop!,
+        expectedStackId: secondStackId,
+        destinationZoneId: discardId,
+      },
+      commandContext
+    );
+    if (!secondDeparture.accepted) throw new Error(secondDeparture.message);
+    state = secondDeparture.state;
+    const merged = state.workAreas[p1]!.attachmentResolution!;
+    expect(merged.id).toBe(occupied.id);
+    expect(merged.cardIds).toEqual([firstBase, secondBase]);
+    expect(merged.evolutionCardIds).toEqual([firstBase, secondBase]);
+    expect(state.stacks[secondStackId]).toBeUndefined();
+    assertMatchInvariants(state);
 
     const independentDeparture = executeCommand(
       state,
@@ -644,8 +650,26 @@ describe('explicit card departures', () => {
     }
     expect(
       independentDeparture.state.workAreas[p1]?.attachmentResolution
-    ).toEqual(occupied);
+    ).toEqual(merged);
     assertMatchInvariants(independentDeparture.state);
+
+    const resolved = executeCommand(
+      independentDeparture.state,
+      {
+        type: 'ResolveStagedCards',
+        playerId: p1,
+        expectedWorkAreaId: merged.id,
+        destination: 'hand',
+      },
+      commandContext
+    );
+    if (!resolved.accepted) throw new Error(resolved.message);
+    expect(resolved.state.workAreas[p1]!.attachmentResolution).toBeNull();
+    expect(resolved.state.zones[playerZoneId(p1, 'hand')]!.cardIds).toEqual([
+      firstBase,
+      secondBase,
+    ]);
+    assertMatchInvariants(resolved.state);
   });
 
   it('promotes, swaps, reorders, and demotes whole play stacks atomically', () => {

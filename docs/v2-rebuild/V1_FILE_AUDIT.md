@@ -138,8 +138,8 @@ Dropping a card into an open work-area popup (v1 lists `viewCards` and
 `attachedCards` as drop targets) was the third; it was implemented afterwards
 as `MoveCardToWorkArea` and PX-013 is closed. A host dragged in takes its
 stack with it and stages the dependents, as v1's `relocateAttachedCards` does;
-the only refusal left is v2's one-window rule for the attached-card popup,
-which already governs every other stack departure.
+later dependents join an already open attached-card popup, including when the
+host goes to the inspection popup or another zone.
 
 ## Open items found by this audit
 

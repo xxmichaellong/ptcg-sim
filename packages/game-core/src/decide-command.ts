@@ -329,15 +329,12 @@ const decideTopEvolutionDeparture = (
   const hasDependents = evolutionCardIds.length + attachmentCardIds.length > 0;
   const areas = state.workAreas[stack.boardPlayerId];
   if (!areas) return reject('not_found', 'Play stack has no work areas');
-  if (hasDependents && areas.attachmentResolution) {
-    return reject(
-      'conflict',
-      'Resolve the existing attached-card work area first'
-    );
-  }
-  const workAreaId = hasDependents ? context.nextWorkAreaId() : null;
+  const workAreaId = hasDependents
+    ? (areas.attachmentResolution?.id ?? context.nextWorkAreaId())
+    : null;
   if (
     workAreaId &&
+    !areas.attachmentResolution &&
     Object.values(state.workAreas).some(
       (candidate) =>
         candidate.inspection?.id === workAreaId ||
@@ -417,7 +414,7 @@ const workAreaArrivalSource = (
       // v1's `relocateAttachedCards` sends the dependents of a host leaving
       // for anywhere but active/bench to the attached-card window. Dragging
       // into that window puts them straight there; dragging into the deck
-      // viewer opens one, under the same one-window rule as any departure.
+      // viewer opens or joins the attached-card window.
       const areas = state.workAreas[stack.boardPlayerId];
       if (!areas) return reject('not_found', 'Play stack has no work areas');
       const staged = (): WorkAreaArrivalResolution => {
@@ -433,14 +430,10 @@ const workAreaArrivalSource = (
             },
           };
         }
-        if (areas.attachmentResolution) {
-          return reject(
-            'conflict',
-            'Resolve the existing attached-card work area first'
-          );
-        }
-        const workAreaId = context.nextWorkAreaId();
+        const workAreaId =
+          areas.attachmentResolution?.id ?? context.nextWorkAreaId();
         if (
+          !areas.attachmentResolution &&
           Object.values(state.workAreas).some(
             (candidate) =>
               candidate.inspection?.id === workAreaId ||

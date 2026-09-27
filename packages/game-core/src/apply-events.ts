@@ -1922,8 +1922,12 @@ const applyEventInternal = (
       if (!areas) {
         throw new Error(`Missing work areas for ${event.boardPlayerId}`);
       }
-      if (event.attachmentResolution && areas.attachmentResolution) {
-        throw new Error('Attachment resolution work area is already occupied');
+      if (
+        event.attachmentResolution &&
+        areas.attachmentResolution &&
+        areas.attachmentResolution.id !== event.attachmentResolution.id
+      ) {
+        throw new Error('Attachment resolution work area changed');
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
@@ -1977,18 +1981,34 @@ const applyEventInternal = (
           [event.boardPlayerId]: {
             ...areas,
             attachmentResolution: event.attachmentResolution
-              ? {
-                  id: event.attachmentResolution.id,
-                  sourceStackId: stack.id,
-                  cardIds: [...event.attachmentResolution.cardIds],
-                  evolutionCardIds: [
-                    ...event.attachmentResolution.evolutionCardIds,
-                  ],
-                  attachmentCardIds: [
-                    ...event.attachmentResolution.attachmentCardIds,
-                  ],
-                  suggestedSlot: event.attachmentResolution.suggestedSlot,
-                }
+              ? areas.attachmentResolution
+                ? {
+                    ...areas.attachmentResolution,
+                    cardIds: [
+                      ...areas.attachmentResolution.cardIds,
+                      ...event.attachmentResolution.cardIds,
+                    ],
+                    evolutionCardIds: [
+                      ...areas.attachmentResolution.evolutionCardIds,
+                      ...event.attachmentResolution.evolutionCardIds,
+                    ],
+                    attachmentCardIds: [
+                      ...areas.attachmentResolution.attachmentCardIds,
+                      ...event.attachmentResolution.attachmentCardIds,
+                    ],
+                  }
+                : {
+                    id: event.attachmentResolution.id,
+                    sourceStackId: stack.id,
+                    cardIds: [...event.attachmentResolution.cardIds],
+                    evolutionCardIds: [
+                      ...event.attachmentResolution.evolutionCardIds,
+                    ],
+                    attachmentCardIds: [
+                      ...event.attachmentResolution.attachmentCardIds,
+                    ],
+                    suggestedSlot: event.attachmentResolution.suggestedSlot,
+                  }
               : areas.attachmentResolution,
           },
         },
@@ -2250,10 +2270,11 @@ const applyEventInternal = (
           stacks = remainingStacks;
           boards = removeStackFromBoards(state, new Set([stack.id]));
           if (source.attachmentResolution) {
-            if (resolution) {
-              throw new Error(
-                'Attachment resolution work area is already occupied'
-              );
+            if (
+              resolution &&
+              resolution.id !== source.attachmentResolution.id
+            ) {
+              throw new Error('Attachment resolution work area changed');
             }
             if (
               source.attachmentResolution.suggestedSlot !== stack.slot ||
@@ -2272,14 +2293,27 @@ const applyEventInternal = (
             ) {
               throw new Error('Work-area arrival has invalid dependent cards');
             }
-            nextResolution = {
-              id: source.attachmentResolution.id,
-              sourceStackId: stack.id,
-              cardIds: [...remainingCardIds],
-              evolutionCardIds: [...remainingEvolutionCardIds],
-              attachmentCardIds: [...remainingAttachmentCardIds],
-              suggestedSlot: source.attachmentResolution.suggestedSlot,
-            };
+            nextResolution = resolution
+              ? {
+                  ...resolution,
+                  cardIds: [...resolution.cardIds, ...remainingCardIds],
+                  evolutionCardIds: [
+                    ...resolution.evolutionCardIds,
+                    ...remainingEvolutionCardIds,
+                  ],
+                  attachmentCardIds: [
+                    ...resolution.attachmentCardIds,
+                    ...remainingAttachmentCardIds,
+                  ],
+                }
+              : {
+                  id: source.attachmentResolution.id,
+                  sourceStackId: stack.id,
+                  cardIds: [...remainingCardIds],
+                  evolutionCardIds: [...remainingEvolutionCardIds],
+                  attachmentCardIds: [...remainingAttachmentCardIds],
+                  suggestedSlot: source.attachmentResolution.suggestedSlot,
+                };
             break;
           }
           // No new window: the dependents join the one this arrival targets.

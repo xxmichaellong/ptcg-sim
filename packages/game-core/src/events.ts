@@ -37,8 +37,8 @@ export type WorkAreaArrivalSource =
       readonly expectedEvolutionCardIds: readonly CardInstanceId[];
       readonly expectedAttachmentCardIds: readonly CardInstanceId[];
       /**
-       * The staged window the dependents open, as a stack departure does, or
-       * null when the arrival's own target is the staged window they join.
+       * The staged window the dependents open or join, as a stack departure
+       * does; null when the arrival's own target is that staged window.
        */
       readonly attachmentResolution: {
         readonly id: WorkAreaId;
@@ -226,6 +226,7 @@ export type DomainEvent =
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+      /** The attached-card window to open or join; null without dependents. */
       readonly attachmentResolution: {
         readonly id: WorkAreaId;
         readonly cardIds: readonly CardInstanceId[];

@@ -35,9 +35,10 @@ reviewer stated them.
   navigation-heavy browser specs passing with it installed.
 - **F-05 closed.** The compound move the finding asked for is implemented: a
   host dragged into a popup takes its stack with it and stages the dependents,
-  as `relocateAttachedCards` does. What remains is v2's one-open-window rule,
-  which already governs every other stack departure. Evidence:
-  `work-area-arrival-commands.test.ts`.
+  as `relocateAttachedCards` does. A later review removed the remaining
+  occupied-window refusal: dependents now join the open attached-card popup
+  when a host moves into the inspection popup or an ordinary zone. Evidence:
+  `work-area-arrival-commands.test.ts`, `movement-departures.test.ts`.
 - **F-03 closed.** The loose board now reproduces `#board`: images 70% of the
   content height with `.25vw` margins, lines centred and bottom-aligned, and
   `overflow-y: auto` once a second line appears, which it always does because
