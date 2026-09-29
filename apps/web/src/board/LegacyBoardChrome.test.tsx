@@ -99,6 +99,60 @@ describe('LegacyBoardChrome', () => {
     await act(async () => root.unmount());
   });
 
+  it('marks the coin control as waiting on the room, and only that one', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const actions = {
+      takeTurn: vi.fn(),
+      flipCoin: vi.fn(),
+      flipBoard: vi.fn(),
+      refreshImages: vi.fn(),
+      toggleFullscreen: vi.fn(),
+      toggleOncePerGame: vi.fn(),
+    };
+    const layout = createBoardLayoutSnapshot(layoutState());
+    const render = async (coinPending: boolean): Promise<void> => {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode={false}
+            actions={actions}
+            coinPending={coinPending}
+          />
+        )
+      );
+    };
+    const coin = () =>
+      host.querySelector<HTMLButtonElement>('#flipCoinButton button');
+    const turn = () =>
+      host.querySelector<HTMLButtonElement>('#turnButton button');
+
+    await render(false);
+    expect(coin()?.getAttribute('aria-busy')).toBeNull();
+    expect(coin()?.dataset.controlPending).toBeUndefined();
+
+    // The coin is the one control that cannot be predicted, so it is the one
+    // control that says it is waiting.
+    await render(true);
+    expect(coin()?.getAttribute('aria-busy')).toBe('true');
+    expect(coin()?.dataset.controlPending).toBe('true');
+    expect(turn()?.getAttribute('aria-busy')).toBeNull();
+    // It stays pressable: v1 lets you flip again while one is in flight.
+    expect(coin()?.disabled).toBe(false);
+    coin()?.click();
+    expect(actions.flipCoin).toHaveBeenCalled();
+
+    await render(false);
+    expect(coin()?.getAttribute('aria-busy')).toBeNull();
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it('paints source-shaped physical handles and delegates every legacy control', async () => {
     const host = document.createElement('div');
     document.body.append(host);

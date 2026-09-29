@@ -79,6 +79,9 @@ const layoutFor = (
   };
 };
 
+/** How long the Coin control may say it is waiting if no answer arrives. */
+const COIN_PENDING_CEILING_MS = 4_000;
+
 /**
  * v1 flipBoard runs in Solo, for spectators, and in a room where both
  * players enabled "board flip" (coaching mode); a flipped player then acts
@@ -209,6 +212,11 @@ export const RemoteSessionBoard = ({
   });
   const [layout, setLayout] = useState<BoardLayoutSnapshot>();
   const [refreshingImages, setRefreshingImages] = useState(false);
+  // Only the room rolls the coin, so the face cannot be predicted the way
+  // every other command is. The control says it is waiting instead, which is
+  // what the delay actually is.
+  const [coinPending, setCoinPending] = useState(false);
+  const coinPendingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   // v1 reveal-and-hide.js: revealing a card from your own hand in a room
   // opens a modal that ends the reveal when it is acknowledged.
   const [revealNotice, setRevealNotice] = useState<ViewCardId | null>(null);
@@ -220,6 +228,8 @@ export const RemoteSessionBoard = ({
     },
     []
   );
+
+  useEffect(() => () => clearTimeout(coinPendingTimerRef.current), []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -272,6 +282,8 @@ export const RemoteSessionBoard = ({
     };
     const publishLayout = (): void => {
       if (disposed || !runtime) return;
+      // Any publication means the room has answered, coin included.
+      setCoinPending(false);
       setLayout(runtime.getCharacterizedLayoutSnapshot());
       // v1 recolours the sidebar buttons when the board is flipped; the
       // viewer's own seat is at the bottom unless they turned it around.
@@ -596,7 +608,18 @@ export const RemoteSessionBoard = ({
         });
       },
       flipCoin: (): void => {
-        runtimeRef.current?.emitLegacyShortcutAction({ action: 'flipCoin' });
+        const submitted = runtimeRef.current?.emitLegacyShortcutAction({
+          action: 'flipCoin',
+        });
+        if (submitted === false) return;
+        setCoinPending(true);
+        clearTimeout(coinPendingTimerRef.current);
+        // The publication that carries the result clears this; the ceiling is
+        // only here so a rejected or lost command cannot leave it spinning.
+        coinPendingTimerRef.current = setTimeout(
+          () => setCoinPending(false),
+          COIN_PENDING_CEILING_MS
+        );
       },
       flipBoard: (): void => {
         runtimeRef.current?.flipBoard();
@@ -647,6 +670,7 @@ export const RemoteSessionBoard = ({
               darkMode={preferences.darkMode}
               actions={chromeActions}
               refreshingImages={refreshingImages}
+              coinPending={coinPending}
               sortedHandPlayerIds={sortedHandPlayerIds}
               visibility={{
                 playerActions:

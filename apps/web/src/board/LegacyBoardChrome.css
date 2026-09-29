@@ -153,6 +153,27 @@
   transition: all 0.3s ease;
 }
 
+/* Only the room rolls the coin, so the control says it is waiting rather than
+   showing a face it might have to take back. */
+.ptcgsim-legacy-board-chrome
+  .legacy-board-control-button[data-control-pending='true'] {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ptcgsim-legacy-board-chrome
+    .legacy-board-control-button[data-control-pending='true'] {
+    animation: ptcgsim-control-pending 0.9s ease-in-out infinite;
+  }
+}
+
+@keyframes ptcgsim-control-pending {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .ptcgsim-legacy-board-chrome .legacy-board-control-button:hover {
   background: linear-gradient(to bottom, rgb(220 220 220), rgb(200 200 200));
   box-shadow: 0 4px 8px rgb(0 0 0 / 20%);

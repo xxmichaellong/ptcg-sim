@@ -55,18 +55,23 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
   onClick,
   children,
   darkMode,
+  pending = false,
 }: {
   readonly id: string;
   readonly label: string;
   readonly onClick: () => void;
   readonly children: ReactNode;
   readonly darkMode: boolean;
+  /** Marks a control that is waiting on the room rather than predicting it. */
+  readonly pending?: boolean;
 }) {
   return (
     <div id={id} className="tooltip" onClick={onClick}>
       <button
         type="button"
         className={`legacy-board-control-button${darkMode ? ' dark-mode-2' : ''}`}
+        data-control-pending={pending ? 'true' : undefined}
+        aria-busy={pending || undefined}
       >
         {children}
       </button>
@@ -194,6 +199,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   actions,
   visibility = DEFAULT_VISIBILITY,
   refreshingImages = false,
+  coinPending = false,
   sortedHandPlayerIds,
 }: {
   readonly layout: BoardLayoutSnapshot;
@@ -203,6 +209,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   readonly actions: LegacyBoardChromeActions;
   readonly visibility?: LegacyBoardChromeVisibility;
   readonly refreshingImages?: boolean;
+  /** The room has been asked for a coin and has not answered yet. */
+  readonly coinPending?: boolean;
   /** Players whose hand is painted sorted (the v1 Sort checkbox state). */
   readonly sortedHandPlayerIds?: ReadonlySet<PlayerId>;
 }) {
@@ -301,6 +309,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
               label="Flip coin"
               onClick={actions.flipCoin}
               darkMode={darkMode}
+              pending={coinPending}
             >
               Coin
             </LegacyTooltipButton>
