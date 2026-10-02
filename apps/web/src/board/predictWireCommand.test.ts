@@ -325,7 +325,23 @@ describe('predictWireCommand', () => {
 
   it('starts a turn optimistically: markers, loose boards, draw and counter', () => {
     const board = view.zones[`zone:${blue}:board`]!;
-    const markedStack = { ...active, abilityUsed: true };
+    const [top, ...rest] = active.evolutionCards;
+    if (top?.kind !== 'known') throw new Error('known active card required');
+    // A face-down card the viewer can read turns up with the turn; one it
+    // cannot read waits for the room to publish its face.
+    const hidden = {
+      kind: 'concealed' as const,
+      id: 'hidden-in-play',
+      ownerId: red,
+      cardBackUrl: '',
+      publiclyRevealed: false as const,
+    };
+    const markedStack = {
+      ...active,
+      abilityUsed: true,
+      evolutionCards: [{ ...top, face: 'down' as const }, ...rest],
+      attachmentCards: [...active.attachmentCards, hidden],
+    };
     const staged: MatchViewState = {
       ...view,
       stacks: { ...view.stacks, [active.id]: markedStack },
@@ -340,6 +356,11 @@ describe('predictWireCommand', () => {
     expect(predicted.zones[discard.id]!.cards).toHaveLength(
       discard.cards.length + board.cards.length
     );
+    expect(predicted.stacks[active.id]!.evolutionCards[0]).toMatchObject({
+      id: top.id,
+      face: 'up',
+    });
+    expect(predicted.stacks[active.id]!.attachmentCards.at(-1)).toBe(hidden);
     // Then it draws for the seat and advances the shared counter.
     expect(predicted.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 1);
     expect(predicted.zones[hand.id]!.cards.at(-1)!.id).toBe(deck.cards[0]!.id);
@@ -359,6 +380,10 @@ describe('predictWireCommand', () => {
     })!;
     expect(stalled.turn).toEqual(view.turn);
     expect(stalled.zones[board.id]!.cards).toHaveLength(0);
+    // The engine reveals nothing on an empty deck either.
+    expect(stalled.stacks[active.id]!.evolutionCards[0]).toMatchObject({
+      face: 'down',
+    });
 
     // Attack and pass clear the acting seat's board only, and never draw.
     const passed = predictWireCommand(staged, {

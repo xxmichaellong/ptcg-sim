@@ -522,6 +522,29 @@ const clearAbilityMarkers = (view: MatchViewState): MatchViewState => {
   return { ...view, zones, stacks };
 };
 
+/**
+ * A started turn turns every face-down card in play face up. Only the cards
+ * the viewer can already read are flipped here; the room's publication
+ * brings the faces of the rest.
+ */
+const revealKnownInPlay = (view: MatchViewState): MatchViewState => {
+  const reveal = (card: ViewCard): ViewCard =>
+    card.kind === 'known' && card.face === 'down'
+      ? { ...card, face: 'up' }
+      : card;
+  const stacks = Object.fromEntries(
+    Object.entries(view.stacks).map(([stackId, stack]) => [
+      stackId,
+      {
+        ...stack,
+        evolutionCards: stack.evolutionCards.map(reveal),
+        attachmentCards: stack.attachmentCards.map(reveal),
+      },
+    ])
+  );
+  return { ...view, stacks };
+};
+
 /** Discards one seat's loose board, which every table action does. */
 const discardLooseBoard = (
   view: MatchViewState,
@@ -819,7 +842,7 @@ const predict = (
       const deck = ownZone(next, playerId, 'deck');
       // v1's empty deck commits the cleanup and stops: no draw, no new turn.
       if (!deck || deck.cards.length === 0) return next;
-      const drawn = drawFor(next, viewerId, playerId, 1);
+      const drawn = drawFor(revealKnownInPlay(next), viewerId, playerId, 1);
       if (!drawn) return null;
       return {
         ...drawn,
