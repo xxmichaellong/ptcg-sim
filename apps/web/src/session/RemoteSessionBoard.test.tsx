@@ -713,6 +713,10 @@ describe('RemoteSessionBoard replay binding', () => {
       expect(session.submit).toHaveBeenCalledWith({ type: 'FlipCoin' });
       expect(coinPending()).toBe('true');
 
+      // A local publication -- opening the deck -- is not the room's answer.
+      await openLocalDeck(host);
+      expect(coinPending()).toBe('true');
+
       // The answer is an ordinary board publication, well inside the ceiling.
       await act(async () =>
         session.publish({ ...session.getSnapshot(), view: atRevision(11) })

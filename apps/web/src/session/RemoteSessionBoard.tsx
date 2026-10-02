@@ -259,12 +259,17 @@ export const RemoteSessionBoard = ({
     setLayout(undefined);
     setRendererStatus({ kind: 'mounting' });
 
+    let publishedRevision: number | undefined;
     const publish = (): void => {
       if (disposed || !runtime) return;
-      // The room answers a coin with a board publication; the coin is never
-      // predicted, so nothing published before the press can clear it.
-      setCoinPending(false);
       const snapshot = runtime.getBoardSnapshot();
+      // The room answers a coin with a new revision. Hover, selection and
+      // predicted commands publish too, but none of them advance it.
+      const revision = snapshot?.view?.revision;
+      if (revision !== publishedRevision) {
+        publishedRevision = revision;
+        setCoinPending(false);
+      }
       setBoardState(snapshot);
       const renderer = runtime.getRenderer();
       if (!snapshot?.scene || !renderer) {
