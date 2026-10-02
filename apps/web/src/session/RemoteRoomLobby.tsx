@@ -349,9 +349,6 @@ export const RemoteRoomLobby = ({
   };
 
   const handleGenerate = async (): Promise<void> => {
-    // Reading the Multiplayer panel leaves a live Solo table alone; acting on
-    // it is the real transition, and that is where v1's park belongs.
-    parkSoloForMultiplayer();
     const active = beginOperation('generate');
     if (!active) return;
     const displayName = normalizeDisplayName(
@@ -370,6 +367,10 @@ export const RemoteRoomLobby = ({
         result.dispose();
         return;
       }
+      // Reading the Multiplayer panel leaves a live Solo table alone; a room
+      // that actually exists is the real transition, and that is where v1's
+      // park belongs. A refused generate leaves the table where it was.
+      parkSoloForMultiplayer();
       const previous = active.owner.creator;
       active.owner.creator = { result, displayName };
       active.owner.guestRuntime?.dispose();
@@ -515,7 +516,9 @@ export const RemoteRoomLobby = ({
   };
 
   const handleJoin = async (): Promise<void> => {
-    parkSoloForMultiplayer();
+    // No park here: a join that succeeds replaces the live table outright,
+    // and one that is refused must leave both the table and the pasted
+    // invitation where they were.
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
     const normalizedRoomCode = roomCode.trim().toUpperCase();

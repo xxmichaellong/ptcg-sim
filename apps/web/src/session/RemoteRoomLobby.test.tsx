@@ -5,7 +5,7 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import type { DeckCard } from '@ptcgsim/deck-core';
-import { StrictMode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -85,6 +85,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onBackgroundChange,
     roomMode,
     onMultiplayerNavigate,
+    multiplayerPanel,
     deckStore,
     cardBackStore,
     onResumeSavedGame,
@@ -99,6 +100,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onBackgroundChange?: (background: RoomBackground) => void;
     readonly roomMode?: 'solo' | 'multiplayer';
     readonly onMultiplayerNavigate?: () => void;
+    readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
     readonly onResumeSavedGame?: (
@@ -135,6 +137,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
             Leave
           </button>
         )}
+        {multiplayerPanel?.(false)}
       </main>
     );
   },
@@ -600,6 +603,54 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(invitation.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('leaves a live Solo table and its pasted invitation alone when a join is refused', async () => {
+    const invitation = custody();
+    invitation.bootstrap.mockRejectedValueOnce(
+      Object.assign(new Error('internal detail'), { code: 'room_not_found' })
+    );
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const { host, root } = await mount(
+      lobbyDependencies(
+        invitation,
+        vi.fn(async () => created.value)
+      )
+    );
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#p1Button').click();
+      await flush();
+    });
+    expect(invitation.clear).toHaveBeenCalledOnce();
+
+    // The Multiplayer panel is read over the live table; pasting into it and
+    // pressing Join is the first thing that could move the table.
+    await act(async () => {
+      paste(element(host, '#roomIdInput'), RAW_HANDOFF);
+    });
+    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe(
+      ROOM_CODE
+    );
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+
+    expect(invitation.bootstrap).toHaveBeenCalledOnce();
+    expect(
+      host.querySelector('[data-app-route="test-remote-room"]')
+    ).not.toBeNull();
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    expect(created.dispose).not.toHaveBeenCalled();
+    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe(
+      ROOM_CODE
+    );
+    expect(invitation.clear).toHaveBeenCalledOnce();
+    expect(element(host, '.lobby-status').textContent).not.toContain(
+      'internal detail'
+    );
+
+    await act(async () => root.unmount());
   });
 
   it('lets the holder of a player invitation choose to watch, as v1 room keys did', async () => {
