@@ -1857,6 +1857,14 @@ describe('general legacy play-row layout', () => {
         rows * (height + 2 * margin + LEGACY_STACK_PREVIEW_V1.lineStrutPx)
       ).toBeLessThanOrEqual(content.height + 0.001);
     }
+    // A row the width decides is left a pixel short of the panel, so layout
+    // rounding cannot wrap its last card onto a line that does not fit.
+    // Six cards on one line is the width-bound shape for this panel.
+    const sixHeight = ratio(6) * content.height;
+    const sixMargin = content.width * LEGACY_STACK_PREVIEW_V1.cardMarginRatio;
+    const sixRow = 6 * (sixHeight * CARD_ASPECT_RATIO + 2 * sixMargin);
+    expect(sixRow).toBeGreaterThan(content.width - 2);
+    expect(sixRow).toBeLessThanOrEqual(content.width - 1 + 1e-9);
     // A degenerate panel or count falls back to v1's size rather than throw.
     expect(
       legacyStackPreviewCardHeightRatio(

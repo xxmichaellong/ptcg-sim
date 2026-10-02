@@ -1806,6 +1806,12 @@ export const LEGACY_STACK_PREVIEW_V1 = {
   lineStrutPx: 4,
 } as const;
 
+/**
+ * Width each row of the stack expansion keeps free, so a row sized to fill
+ * the panel exactly is not pushed onto a second line by subpixel rounding.
+ */
+const LEGACY_STACK_PREVIEW_ROW_SLACK_PX = 1;
+
 export const LEGACY_STACK_PREVIEW_CARD_HEIGHT_BOUNDS = {
   minimum: LEGACY_STACK_PREVIEW_V1.cardHeightRatio,
   maximum: 0.55,
@@ -1848,7 +1854,8 @@ export const legacyStackPreviewCardHeightRatio = (
     const byHeight =
       (contentBounds.height / rows - 2 * margin - strut) / contentBounds.height;
     const byWidth =
-      (contentBounds.width / perRow - 2 * margin) /
+      ((contentBounds.width - LEGACY_STACK_PREVIEW_ROW_SLACK_PX) / perRow -
+        2 * margin) /
       cardAspectRatio /
       contentBounds.height;
     best = Math.max(best, Math.min(byHeight, byWidth));
