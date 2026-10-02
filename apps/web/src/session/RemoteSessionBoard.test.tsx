@@ -682,6 +682,50 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it('stops waiting on the coin as soon as the room publishes its answer', async () => {
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          roomMode="multiplayer"
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    const coinPending = () =>
+      host
+        .querySelector('#flipCoinButton [data-control-pending]')
+        ?.getAttribute('data-control-pending') ?? null;
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#flipCoinButton button')?.click()
+      );
+      expect(session.submit).toHaveBeenCalledWith({ type: 'FlipCoin' });
+      expect(coinPending()).toBe('true');
+
+      // The answer is an ordinary board publication, well inside the ceiling.
+      await act(async () =>
+        session.publish({ ...session.getSnapshot(), view: atRevision(11) })
+      );
+      expect(coinPending()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
   it('shows live session status until a recipient view exists', async () => {
     const { view: _view, ...withoutView } = initialState();
     const session = new FakeRemoteBoardSession({

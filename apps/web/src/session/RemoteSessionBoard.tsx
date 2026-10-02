@@ -261,6 +261,9 @@ export const RemoteSessionBoard = ({
 
     const publish = (): void => {
       if (disposed || !runtime) return;
+      // The room answers a coin with a board publication; the coin is never
+      // predicted, so nothing published before the press can clear it.
+      setCoinPending(false);
       const snapshot = runtime.getBoardSnapshot();
       setBoardState(snapshot);
       const renderer = runtime.getRenderer();
@@ -282,8 +285,6 @@ export const RemoteSessionBoard = ({
     };
     const publishLayout = (): void => {
       if (disposed || !runtime) return;
-      // Any publication means the room has answered, coin included.
-      setCoinPending(false);
       setLayout(runtime.getCharacterizedLayoutSnapshot());
       // v1 recolours the sidebar buttons when the board is flipped; the
       // viewer's own seat is at the bottom unless they turned it around.
