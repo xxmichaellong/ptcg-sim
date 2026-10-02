@@ -10,6 +10,9 @@ interface ActiveResizePointer {
   readonly playAreaHeight: number;
 }
 
+/** v1's `#selfResizer` / `#oppResizer` pills, painted by the board chrome. */
+const RESIZER_PILL_SELECTOR = '.legacy-board-resizer';
+
 const containsPoint = (
   bounds: BoardLayoutSnapshot['resizeHandles'][number]['bounds'],
   x: number,
@@ -45,7 +48,9 @@ export class ReactDomBoardResizeInteraction {
     // are ordinary elements that show the row-resize cursor, so they sit
     // above the board and would otherwise swallow the press before the
     // host's capture listener could see it. The hit test is unchanged --
-    // only a point inside a handle's rectangle starts a resize.
+    // only a point inside a handle's rectangle starts a resize -- and only a
+    // press that lands on the board or a pill counts, so popups and modals
+    // drawn over a handle keep their own clicks.
     view.addEventListener('pointerdown', this.handlePointerDown, true);
     view.addEventListener('pointermove', this.handlePointerMove, true);
     view.addEventListener('pointerup', this.handlePointerEnd, true);
@@ -68,6 +73,7 @@ export class ReactDomBoardResizeInteraction {
 
   private readonly handlePointerDown = (event: PointerEvent): void => {
     if (this.disposed || this.active) return;
+    if (!this.startsOnBoard(event.target)) return;
     const layout = this.getLayout();
     const point = this.toBoardPoint(
       event,
@@ -111,6 +117,14 @@ export class ReactDomBoardResizeInteraction {
   private readonly handleWindowBlur = (): void => {
     this.active = null;
   };
+
+  private startsOnBoard(target: EventTarget | null): boolean {
+    if (!(target instanceof Node)) return false;
+    if (this.host.contains(target)) return true;
+    const element =
+      target instanceof Element ? target : target.parentElement;
+    return element?.closest(RESIZER_PILL_SELECTOR) != null;
+  }
 
   private toBoardPoint(
     event: Pick<PointerEvent, 'clientX' | 'clientY'>,

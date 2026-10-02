@@ -1213,6 +1213,27 @@ describe('opt-in React DOM board session runtime', () => {
     ).toBe('none');
     const lower = handleCenter('lower');
     const before = runtime.getLayoutState();
+    // A popup drawn over the handle keeps its own press; v1's pill, which
+    // sits outside the host, still starts the drag.
+    const popup = document.createElement('div');
+    const pill = document.createElement('div');
+    pill.className = 'legacy-board-resizer';
+    document.body.append(popup, pill);
+    const overPopup = pointer('pointerdown', 40, lower.x, lower.y);
+    act(() => {
+      expect(popup.dispatchEvent(overPopup)).toBe(true);
+      window.dispatchEvent(pointer('pointermove', 40, lower.x, 480));
+      window.dispatchEvent(pointer('pointerup', 40, lower.x, 480));
+    });
+    expect(overPopup.defaultPrevented).toBe(false);
+    expect(runtime.getLayoutState()).toEqual(before);
+    const onPill = pointer('pointerdown', 39, lower.x, lower.y);
+    act(() => {
+      expect(pill.dispatchEvent(onPill)).toBe(false);
+      window.dispatchEvent(pointer('pointerup', 39, lower.x, lower.y));
+    });
+    popup.remove();
+    pill.remove();
     const down = pointer('pointerdown', 41, lower.x, lower.y);
     act(() => {
       expect(surface.dispatchEvent(down)).toBe(false);
