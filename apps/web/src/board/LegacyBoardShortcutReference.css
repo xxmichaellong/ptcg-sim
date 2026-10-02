@@ -1,0 +1,79 @@
+.ptcgsim-legacy-shortcut-reference {
+  position: fixed;
+  z-index: 100001;
+  top: 50%;
+  left: 38%;
+  display: none;
+  width: 72%;
+  height: 95%;
+  padding: 0 15px 15px;
+  transform: translate(-50%, -50%);
+  box-sizing: content-box;
+  border: 1px solid #ccc;
+  border-radius: 1%;
+  background-color: rgb(200 200 200 / 87.3%);
+  box-shadow: 0 0 10px rgb(0 0 0 / 50%);
+  color: #000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.ptcgsim-legacy-shortcut-reference.is-visible {
+  display: block;
+}
+
+.ptcgsim-legacy-shortcut-reference.is-dark {
+  background-color: rgb(21 21 21 / 87%);
+  color: #fff;
+}
+
+.ptcgsim-legacy-shortcut-sections {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.ptcgsim-legacy-shortcut-section {
+  flex: 1;
+}
+
+.ptcgsim-legacy-shortcut-column {
+  margin-right: 10px;
+  padding: 5px;
+}
+
+.ptcgsim-legacy-shortcut-column h1 {
+  margin: 0;
+  padding: 0;
+  font-size: 2vh;
+}
+
+.ptcgsim-legacy-shortcut-column ul,
+.ptcgsim-legacy-shortcut-column li {
+  margin: 0;
+  padding: 0;
+  font-size: 1.6vh;
+}
+
+.ptcgsim-legacy-shortcut-column li {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4vh;
+}
+
+.ptcgsim-legacy-shortcut-column li.is-indented {
+  margin-top: 0;
+  padding-left: 10px;
+  font-size: 1.5vh;
+}
+
+.ptcgsim-legacy-shortcut-macos-note {
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+}
+
+.ptcgsim-legacy-shortcut-macos-note p {
+  font-size: 1.5vh;
+}

@@ -1,0 +1,1590 @@
+{
+  "reviewDate": "2026-09-23",
+  "baselineCommit": "0264d859d05a0b027aaca80e31ffb36568ab8b97",
+  "scope": "Every tracked file under client/ and server/; shared root support files discussed in report",
+  "files": [
+    {
+      "path": "client/index.ejs",
+      "purpose": "Outer page metadata, sidebar, deck builder, settings, menus, replay, shortcuts, tutorial, changelog, sponsors and analytics.",
+      "targets": [
+        "apps/web/index.html",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderWorkspace.tsx",
+        "apps/web/src/features/deck/LegacyDeckImportPanel.tsx",
+        "apps/web/src/session/LegacyWelcome.tsx",
+        "apps/web/src/styles.css"
+      ],
+      "disposition": "Mixed; gaps F-02/F-07",
+      "evidence": "Component/unit/browser evidence; EJS/socket CDN and old import injection retired; analytics beacon not carried",
+      "sourceSha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "purpose": "Upper mirrored player frame, labels and popups with own/opponent button visibility.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Partial; gap F-05",
+      "evidence": "Simple-card ingress added concurrently; host with dependents still refused; see F-05",
+      "sourceSha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/package.json",
+      "purpose": "Legacy client workspace name only.",
+      "targets": ["apps/web/package.json"],
+      "disposition": "Replaced",
+      "evidence": "React/Vite workspace has explicit build/runtime dependencies",
+      "sourceSha256": "d5ae99fe6644cb9fe4645eadd2987df5ddacad6e51e9612feb3cb0fa61d38344"
+    },
+    {
+      "path": "client/self-containers.html",
+      "purpose": "Lower player zones/covers/counts/Sort/GX/VSTAR plus browser and work-area controls.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Partial; gap F-05",
+      "evidence": "Simple-card ingress added concurrently; host with dependents still refused; see F-05",
+      "sourceSha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/src/actions/chat-buttons/chat-buttons.js",
+      "purpose": "Attack/pass reset all ability tabs, narrate and discard acting player's loose board.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/session/RemoteRoomLiveControls.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "table-action-commands.test.ts",
+      "sourceSha256": "965536598e042e951543c740f212f77bab3954740108c4ab3e063236c3773cef"
+    },
+    {
+      "path": "client/src/actions/counters/ability-counter.js",
+      "purpose": "Create/remove translucent ability tabs, resize listeners and stadium-specific color.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-contract/src/marker-presentation.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "card-annotation-commands.test.ts; marker-presentation.test.ts; PX-003",
+      "sourceSha256": "1d9961ba428ab91de4ac2fdeda78b0bce6214bd42b5b4d64f73cc3f649862016"
+    },
+    {
+      "path": "client/src/actions/counters/damage-counter.js",
+      "purpose": "Editable orange damage circle, input synchronization and removal at zero/blank.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/renderer-contract/src/marker-presentation.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "stack-state-commands.test.ts; marker-presentation.test.ts",
+      "sourceSha256": "8cdc2c64cfa4f862f4dad4b675eb3f6c48735a959fd9639143bb5154862806c6"
+    },
+    {
+      "path": "client/src/actions/counters/reset-counters.js",
+      "purpose": "Remove ability tabs everywhere on turn/attack/pass.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "table-action-commands.test.ts",
+      "sourceSha256": "163f03e8719d3724baf61b121272d036509640411b2e65d28e5cedaee86f6f0f"
+    },
+    {
+      "path": "client/src/actions/counters/special-condition.js",
+      "purpose": "Editable condition text, P/B/A/PA/C colors and blank/zero removal.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/renderer-contract/src/marker-presentation.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "stack-state-commands.test.ts; marker-presentation.test.ts",
+      "sourceSha256": "ec31a48ed4fab4685c3d8cb2f159d5d2f8a101432eae5809a4b10688841633be"
+    },
+    {
+      "path": "client/src/actions/counters/use-ability.js",
+      "purpose": "Mark card ability/effect used; distinct stadium narration.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/room-authority/src/narration-events.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "card-annotation-commands.test.ts; narration-events.test.ts",
+      "sourceSha256": "0c7f9f2f9143626464f71ac23c4d72ab2dcef2118092547c614c0c14a19acb3d"
+    },
+    {
+      "path": "client/src/actions/general/VSTAR-GX.js",
+      "purpose": "Toggle GX/VSTAR usage independently per seat; used/reset narration and button appearance.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/LegacyBoardChrome.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "once-per-game-commands.test.ts; LegacyBoardChrome.test.tsx",
+      "sourceSha256": "79c5e31a327b7bf6b0aeb8d0552fdf4b23d3c88bf71737ffa799c965873cf90e"
+    },
+    {
+      "path": "client/src/actions/general/board-actions.js",
+      "purpose": "Resolve every loose board card to discard/hand/lost zone or shuffle into deck; count narration.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "apps/web/src/board/resolveLegacyBoardShortcutAction.ts",
+        "packages/room-authority/src/narration-events.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "loose-board-commands.test.ts",
+      "sourceSha256": "22e8442948863d6e496abcaca5db2e3dbc7e87d95563c61b1e1802d188c49ad4"
+    },
+    {
+      "path": "client/src/actions/general/change-type.js",
+      "purpose": "Change category then move card to loose board, staging dependents; category resets outside play.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "card-annotation-commands.test.ts",
+      "sourceSha256": "7a746ae9ccc04a6180817f661b8a885c028c4c88d36c92f85a3ee8c34b54b108"
+    },
+    {
+      "path": "client/src/actions/general/close-popups.js",
+      "purpose": "Deselect, restore expanded stacks, outside-dismiss browsers; retain nonempty work areas.",
+      "targets": [
+        "apps/web/src/board/BoardSessionController.ts",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "BoardSessionController.test.ts; legacy-runtime-escape-shortcut.spec.ts",
+      "sourceSha256": "034c677d0ec5e314f1ec2702cd02eec3ba76bc28d3f3fe658803765fb7ee7451"
+    },
+    {
+      "path": "client/src/actions/general/count.js",
+      "purpose": "Deck, discard, lost-zone and hand counts for both seats.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "scene.test.ts; legacy-dom-geometry.spec.ts",
+      "sourceSha256": "cfe0ed3af8e8a540348727c188595b0caa1324f4d5be260fd98b231c2f2b9167"
+    },
+    {
+      "path": "client/src/actions/general/flip-board.js",
+      "purpose": "Swap frames, colors, resizers, acting seat and hidden hands; rotate stadium and popup labels.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "apps/web/src/session/RemoteSessionBoard.tsx",
+        "apps/web/src/session/RemoteRoomRoute.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "legacy-runtime-board-flip-shortcut.spec.ts; solo-opponent-hand-visibility.test.ts",
+      "sourceSha256": "349f3c77d940c3bfe375feb362a012742c537c8eabef2f99c2794764136e5398"
+    },
+    {
+      "path": "client/src/actions/general/flip-coin.js",
+      "purpose": "Heads/tails random result and log line.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/presentation/PresentationEffects.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "coin-flip-command.test.ts; authority owns randomness",
+      "sourceSha256": "b043781e73d0a42dc12bd22dd8e500b40c83bf8958ae4312fc9ea4f339a01727"
+    },
+    {
+      "path": "client/src/actions/general/reset.js",
+      "purpose": "Clear player zones, owned stadium, counters and markers; rebuild deck and reset turn.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/lifecycle-reset.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "lifecycle-commands.test.ts",
+      "sourceSha256": "f212906a3c2e4447662ed2bcb0f9913376781dbca92cfe6598686316f21f32b1"
+    },
+    {
+      "path": "client/src/actions/general/reveal-and-hide.js",
+      "purpose": "Private look/cover, public reveal/hide, random face-down play; own-hand reveal OK dialog.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/projection.ts",
+        "apps/web/src/session/RemoteSessionBoard.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "private-inspection-commands.test.ts; RemoteSessionBoard.test.tsx; consent boundary ADR-017",
+      "sourceSha256": "f5d55189818966e8e83fa25823507a459f258a218f1bc1cdbcec77b4184b9999"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "purpose": "Quarter-turn stack/stadium; single BREAK rotation; reset and synchronize attachments/markers.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "packages/renderer-contract/src/layout.ts",
+        "packages/renderer-contract/src/marker-presentation.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "stack-state-commands.test.ts; legacy-runtime-break-refresh-oracle.spec.ts",
+      "sourceSha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/actions/general/setup.js",
+      "purpose": "Reset, shuffle once, draw up to seven and set up to six prizes; setup narration.",
+      "targets": ["packages/game-core/src/decide-command.ts"],
+      "disposition": "Mapped",
+      "evidence": "lifecycle-commands.test.ts",
+      "sourceSha256": "1ba1861fa52b6871cfc3b76f1feb4ce347f18650c2d057d42d7fd40cf76e5ebe"
+    },
+    {
+      "path": "client/src/actions/general/take-turn.js",
+      "purpose": "Clear loose board/ability markers; only with deck cards reveal in-play cards, draw and increment turn.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/room-authority/src/narration-events.ts"
+      ],
+      "disposition": "Fixed F-04",
+      "evidence": "table-action-commands.test.ts; source also calls discardBoard twice for the same initiator, see F-08",
+      "sourceSha256": "ca66152acfd2431b66599bd5ee2518e2ca05ebcd21be3e40415a0ff977a879ef"
+    },
+    {
+      "path": "client/src/actions/general/undo.js",
+      "purpose": "Solo undo via replay, loading label and narration; guards overlapping undo.",
+      "targets": [
+        "packages/game-core/src/solo-undo.ts",
+        "packages/room-authority/src/solo-undo-history.ts",
+        "apps/web/src/session/RemoteRoomLiveControls.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "solo-undo-command.test.ts; ADR-014/PX-010 (whole-match 128-checkpoint history)",
+      "sourceSha256": "65121e08546472d049c574ed9b290bf59f2105c0444f15b5148f26c6910ebb44"
+    },
+    {
+      "path": "client/src/actions/keybinds/keybindSleep.js",
+      "purpose": "350ms overlapping delay after remote mutation when a positional selection exists.",
+      "targets": [
+        "apps/web/src/board/BoardSessionController.ts",
+        "packages/client-session/src/session.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "stable aliases/revisions and stale-scene rejection replace positional timing; no visible sleep required",
+      "sourceSha256": "4d1256ab5f07b3c5507315545e294d182f9af8f9742af5ec4b5799db37c7007d"
+    },
+    {
+      "path": "client/src/actions/keybinds/keybinds.js",
+      "purpose": "Complete key map with selected/unselected branches, Alt/Ctrl, input exclusion, Shift reference and replay/spectator guards.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardShortcutAction.ts",
+        "apps/web/src/board/LegacyBoardKeyboardShortcuts.tsx",
+        "apps/web/src/board/LegacyBoardShortcutReference.tsx"
+      ],
+      "disposition": "Mapped with gap F-10",
+      "evidence": "resolveLegacyBoardShortcutAction.test.ts; legacy-runtime shortcut browser suites; PX-001; flipped-seat ephemeral attribution differs",
+      "sourceSha256": "f04ab70230e7ac4df75d3320dc3f0f0df36fa971c08d4e32a0e1368021324b6a"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/attach-card.js",
+      "purpose": "Attach energy/tool/Pokémon; offsets, rotation and move tools behind new energy.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/attachment-order.ts",
+        "packages/renderer-contract/src/layout.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "attachment-ordering.test.ts; legacy-energy-attachment-reflow-geometry.spec.ts",
+      "sourceSha256": "711302b5dfdf757aa21b3a4ef1c83c582f6a14d60db31aaf8f81afdcd05203b4"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/auto-move-active-bench-card.js",
+      "purpose": "Displace occupied active, promote sole bench, or swap explicitly targeted stacks.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "movement-departures.test.ts",
+      "sourceSha256": "133f78d3e3a2ef2233d56526ee7db0ea8f63ba11ea8f2bde78567e4149bac750"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/decrease-card-layer.js",
+      "purpose": "Decrement attachment layer and container width after departure.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "packages/renderer-contract/src/scene.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "legacy-energy-attachment-reflow-geometry.spec.ts; derived geometry replaces mutable counters",
+      "sourceSha256": "30aec3ad82a6da83d669e660ba4816576724cc2e3b48f7e2bb2f6b7548c552c3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/evolve-card.js",
+      "purpose": "Replace top, transfer damage, remove old condition/ability, reset rotation and reattach dependents.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "packages/renderer-contract/src/layout.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "place-card-on-play-stack.test.ts; legacy-runtime-evolution-marker-transfer.spec.ts",
+      "sourceSha256": "73c65e2947f5e731c571c02da9dd7e7b0ae93452424a41c13ecaec9e7cd9b8aa"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "purpose": "Promote loose card to Pokémon play container; set margins; install cleanup/resize observers.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "card-annotation-commands.test.ts; ReactDomBoardRenderer.test.tsx; PX-003",
+      "sourceSha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-bundle.js",
+      "purpose": "Narrate movement, mutate/reflow, then synchronize action; refresh formerly mutated order.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/room-authority/src/process-command.ts",
+        "packages/room-authority/src/narration-events.ts",
+        "packages/renderer-contract/src/scene.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "movement-departures.test.ts; PX-005",
+      "sourceSha256": "06ffbe2fd8b39eb78eee817667d059aef4ea56772b12393ffc1d625c4f949ed2"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-message.js",
+      "purpose": "Movement grammar, destination host names, attached origins and hidden-card redaction.",
+      "targets": [
+        "packages/room-authority/src/narration-events.ts",
+        "apps/web/src/presentation/PresentationEffects.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "narration-events.test.ts; projected recipient visibility replaces client secrecy",
+      "sourceSha256": "3fd54839c86304e121834f67f938d5b3b1c06932e0ec195a3f592ee12a3841d1"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card.js",
+      "purpose": "Route all moves, attachments, evolution, swaps, staging, covers, visibility, counters and type resets.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "apps/web/src/board/resolveBoardDrop.ts"
+      ],
+      "disposition": "Partial; gap F-05",
+      "evidence": "Simple-card ingress added concurrently; host with dependents still refused; see F-05",
+      "sourceSha256": "5737c45ff7b45a71dee661b42cbba7b2ee6e1c852ee530ec4369b85493e794e3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+      "purpose": "Carry dependents with host or stage them after host departure; retain damage for devolution.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "staged-attachment-ordering.test.ts; staged-bulk-commands.test.ts",
+      "sourceSha256": "b682db984c742521ee231d8e273ea0dc28e7561ce47234ef58971f6c8ab1c86e"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+      "purpose": "Close gaps and fix z-order after attachment removal.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "packages/renderer-contract/src/scene.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "legacy-energy-attachment-reflow-geometry.spec.ts",
+      "sourceSha256": "4e9d65ca703a1949fb6d603b596acf30eb0bf141c5228c3496542ae086ef822c"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-counters.js",
+      "purpose": "Move markers with cards, remove damage/ability outside play and conditions outside active.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "packages/renderer-contract/src/marker-presentation.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "card-annotation-commands.test.ts; legacy-marker-movement-geometry.spec.ts",
+      "sourceSha256": "c6388f8168517732371accfaf75569fd17d2ba994c14ce7a5b30e4ad0d9af441"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-cover.js",
+      "purpose": "Discard/lost-zone newest card covers; deck back appears/disappears at zero/one.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "scene.test.ts; legacy-contained-card-geometry.spec.ts",
+      "sourceSha256": "43185fb48481e6ac471605a36f332160a546d5deb1c67488adf2615ae3617cbb"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-stadium-card.js",
+      "purpose": "Bump prior stadium to its owner discard; orient replacement to controller.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/renderer-contract/src/scene.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "stadium-movement-command.test.ts",
+      "sourceSha256": "0809043c9c45c7fb2ac62f70afd12325bf0e3671128ce6c2744dd8ad9a101219"
+    },
+    {
+      "path": "client/src/actions/zones/deck-actions.js",
+      "purpose": "Draw prompt/clamp; top/bottom inspection; single-card top/bottom/shuffle/swap/board commands.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/resolveDeckRelativeAction.ts",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "deck-relative-commands.test.ts; legacy-runtime-deck-shortcuts.spec.ts",
+      "sourceSha256": "9fce603a8765f0aefbbcc99b4b01e2fca5df80052d1e5bc5b75e4343b6aef071"
+    },
+    {
+      "path": "client/src/actions/zones/general.js",
+      "purpose": "Bulk popup resolutions, Leave in play, Close and decklist-order display sorting.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/session/hand-sort-display.ts"
+      ],
+      "disposition": "Gap F-01",
+      "evidence": "staged-bulk-commands.test.ts; inspection-bulk-commands.test.ts; sort order differs",
+      "sourceSha256": "a3705990b5aa3a790bf45e2e0dd327febf1f0d781d8b478faf905d0e67343cfd"
+    },
+    {
+      "path": "client/src/actions/zones/hand-actions.js",
+      "purpose": "Starting hand/prizes; discard/shuffle/shuffle-bottom hand then prompted draw, allowing zero.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/resolveLegacyBoardCountAction.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "composite-zone-commands.test.ts; resolveLegacyBoardCountAction.test.ts",
+      "sourceSha256": "c9692ccc6f65cc7f4ea988bdb780efc4b088affc66ad7dbfcdc05f67983ceb41"
+    },
+    {
+      "path": "client/src/actions/zones/prizes-actions.js",
+      "purpose": "Shuffle prizes and append to deck bottom, empty prizes no-op.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "deck-relative-commands.test.ts",
+      "sourceSha256": "0d6d0058609ea78df0f4bd02800cabf3d428aa5d71a986f3b4edd8dc50a62f6b"
+    },
+    {
+      "path": "client/src/actions/zones/shuffle-zone.js",
+      "purpose": "Fisher-Yates indices shared with peer; rearrange zone, repaint and narrate.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts",
+        "packages/room-authority/src/process-command.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "composite-zone-commands.test.ts; authority resolves random order once",
+      "sourceSha256": "ca5915f74ce0eb1ff64c1731b20f45b3a520bd5865533ce6716a7bc4b4f5cdac"
+    },
+    {
+      "path": "client/src/assets/background1.jpg",
+      "purpose": "First random theme backdrop.",
+      "targets": ["apps/web/public/v2/assets/background1.jpg"],
+      "disposition": "Fixed F-06",
+      "evidence": "Byte-for-byte comparison against bundled v2 asset",
+      "sourceSha256": "d90d10bb962e87cfeca3923a8603827b3a8f774e20724e0242f5cfaaab29280d"
+    },
+    {
+      "path": "client/src/assets/background2.webp",
+      "purpose": "Second random theme backdrop.",
+      "targets": ["apps/web/public/v2/assets/background2.webp"],
+      "disposition": "Fixed F-06",
+      "evidence": "Byte-for-byte comparison against bundled v2 asset",
+      "sourceSha256": "91312f336e140fc2e49f20ebf93acb000eb7c685c0e25b8217c9e31ddff54446"
+    },
+    {
+      "path": "client/src/assets/blank-logo.png",
+      "purpose": "Social/share preview logo.",
+      "targets": ["apps/web/public/v2/assets/blank-logo.png"],
+      "disposition": "Bytes equal",
+      "evidence": "Byte-for-byte comparison against bundled v2 asset",
+      "sourceSha256": "a26a0f311b8d23624261bd6e6ef97756329c8c68bd63cda2fe1d03750ee6fa41"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "purpose": "Default hidden-card/deck-back art.",
+      "targets": ["apps/web/public/v2/assets/cardback.png"],
+      "disposition": "Bytes equal",
+      "evidence": "Byte-for-byte comparison against bundled v2 asset",
+      "sourceSha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/assets/favicon.ico",
+      "purpose": "Browser tab/site icon.",
+      "targets": ["apps/web/public/v2/assets/favicon.ico"],
+      "disposition": "Bytes equal",
+      "evidence": "Byte-for-byte comparison against bundled v2 asset",
+      "sourceSha256": "426c91bedefc9854da53fbb1ced670d33b84935dd931f011eab94531b55a55be"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "purpose": "All outer-shell sizing/colors, hover states, dark mode, sidebar/deck panels, menu layers, dialogs and loading spinner.",
+      "targets": [
+        "apps/web/src/styles.css",
+        "apps/web/src/features/deck/LegacyDeckBuilderWorkspace.css",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.css"
+      ],
+      "disposition": "Mixed; gap F-07",
+      "evidence": "Source reviewed selector-by-selector; browser suite covers selected states, not exhaustive pixel equivalence",
+      "sourceSha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "purpose": "Upper frame colors, flipped text, attachment tabs and opposite popup transforms.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "apps/web/src/board/LegacyBoardChrome.css",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.css"
+      ],
+      "disposition": "Mixed; F-03/F-07",
+      "evidence": "Source geometry and transformed-overlay oracles; loose-board/prize implementations differ",
+      "sourceSha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "purpose": "Lower frame zone geometry, hand scrolling, prize sizing, board overflow, stacks, markers and popup styles.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "apps/web/src/board/LegacyBoardChrome.css",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.css"
+      ],
+      "disposition": "Mixed; F-03/F-07",
+      "evidence": "Source geometry and marker oracles; loose-board/prize implementations differ",
+      "sourceSha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/front-end.js",
+      "purpose": "Entry point re-exports global state then installs network, DOM, observers and imported save.",
+      "targets": ["apps/web/src/main.tsx"],
+      "disposition": "Replaced",
+      "evidence": "main.tsx chooses v2 route and mounts React; RemoteRoomRoute.test.tsx",
+      "sourceSha256": "8e32c81b308b85293cba0435be5f0b466f3007901ac07630ea8d0cc7003cb10f"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
+      "purpose": "Damage, special condition, ability toggle and energy/tool/Pokémon type menu handlers.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "packages/game-core/src/decide-command.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "resolveLegacyBoardOverlayAction.test.ts; LegacyBoardOverlays.test.tsx",
+      "sourceSha256": "a7d50832cea32727a2bbb1957887d45a52f701c6b6d465e84e32338e42217940"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/board-buttons.js",
+      "purpose": "Discard, hand, shuffle and lost-zone loose-board menu handlers.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "apps/web/src/board/resolveLooseBoardAction.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "resolveLooseBoardAction.test.ts",
+      "sourceSha256": "57d8b1c5a21ae59533de6f50425362513ba1e5900151ab1875188355a0b915e4"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/deck-buttons.js",
+      "purpose": "Shuffle, prompted draw and top/bottom inspection menu handlers.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "apps/web/src/board/resolveLegacyBoardCountAction.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "resolveLegacyBoardCountAction.test.ts",
+      "sourceSha256": "f5c87714644415c87755fb29d5641bbb7175ae1510084b929da7496954229448"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/general-buttons.js",
+      "purpose": "Single-card deck edges/swap/shuffle, board and reveal/hide menu handlers.",
+      "targets": ["apps/web/src/board/resolveLegacyBoardOverlayAction.ts"],
+      "disposition": "Mapped",
+      "evidence": "resolveLegacyBoardOverlayAction.test.ts",
+      "sourceSha256": "87b1a3aa7641c08b2093a190ff56c2fcabe84351c06a5b0ccc4edbc8fb7862d5"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/hand-buttons.js",
+      "purpose": "Opposing hand look/cover/random pick; own discard/shuffle/bottom-and-draw menus.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "packages/game-core/src/decide-command.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "private-inspection consent boundary; resolveRandomFaceDownAction.test.ts",
+      "sourceSha256": "8fda2b8c80d41a0c20c07a112011643fdb9ec48387bac95dbb7bd2af1c24a974"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/initialize-card-context-menu.js",
+      "purpose": "Register all six menu families once.",
+      "targets": [
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/board/BoardSessionController.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "React overlay lifecycle; LegacyBoardOverlays.test.tsx",
+      "sourceSha256": "17346200b683c393467740ee40e4bc754ea694126fc8da1aa69c688fdd3dd4b8"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/prizes-buttons.js",
+      "purpose": "Shuffle, private look/cover, public reveal/hide and deck-bottom prize menus.",
+      "targets": [
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts",
+        "packages/game-core/src/decide-command.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "public-visibility-commands.test.ts; deck-relative-commands.test.ts",
+      "sourceSha256": "4508318a9c344a1272500d7a6565ad967caf5a0ab18fa6be9815ba9ecf83e384"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/initialize-document-event-listeners.js",
+      "purpose": "Compose context menu, sidebar, table and window startup.",
+      "targets": [
+        "apps/web/src/main.tsx",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteSessionBoard.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "React lifecycle and ownership rather than global startup chain",
+      "sourceSha256": "76f605efe5948797815c8cf39f851db938d06ca7bea845938d7e03b7c2d16305"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/header-buttons.js",
+      "purpose": "Solo/multiplayer/deck/settings tabs, confirmed room leave, persist draft on close and dismiss welcome overlays.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "RemoteRoomRoute.test.tsx; LegacyDeckBuilderSession.test.tsx",
+      "sourceSha256": "3d0501c5929551f95e710542427bcf54420013320f0da69f9c31da6d2b3b93a3"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/import-deck.js",
+      "purpose": "P1/P2 target sync, multiplayer restrictions, import loading indicator and popular/random buttons.",
+      "targets": [
+        "apps/web/src/features/deck/LegacyDeckImportPanel.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "LegacyDeckImportPanel.test.tsx; LegacyDeckBuilderSession.test.tsx",
+      "sourceSha256": "bfb72bfcb592098f59adcfb290c47de881a5b7c6a846e4bd4bd580aca4982273"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/initialize-sidebox.js",
+      "purpose": "Register header, solo, room, settings, import and builder surfaces.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "Route/component composition replaces global registration",
+      "sourceSha256": "b02973d498263a9ce27ee2376da070e3c78e31335900936bb8c618d5c4db7922"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/native-deck-builder-load-feedback.js",
+      "purpose": "Unused helper to display loaded/error badge and success button class.",
+      "targets": ["apps/web/src/features/deck/LegacyDeckBuilderSession.tsx"],
+      "disposition": "Retired helper",
+      "evidence": "No runtime importer in frozen client; live builder feedback owned by session",
+      "sourceSha256": "0cb74bae62ec1f080b783471ce6ad8951f4388522f545f20de1e3e394568f943"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/native-deck-builder-renderers.js",
+      "purpose": "Escaped card-result thumbnails; deck art rows with counts and accessible plus/minus buttons.",
+      "targets": ["apps/web/src/features/deck/LegacyDeckBuilderWorkspace.tsx"],
+      "disposition": "Refactored",
+      "evidence": "LegacyDeckBuilderWorkspace.test.tsx; legacy-deck-builder-browser-parity.spec.ts",
+      "sourceSha256": "e6a0098c0e111c8e648eb3a5b0a91523f9149a134650e6e1f72df8357305844a"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/native-deck-builder-sync.js",
+      "purpose": "Convert loaded rows to CSV then grouped builder state.",
+      "targets": [
+        "apps/web/src/features/deck/deck-install-adapter.ts",
+        "apps/web/src/features/deck/deck-builder-store.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "deck-install-adapter.test.ts; LegacyDeckBuilderSession.test.tsx",
+      "sourceSha256": "3a63111b7097e7bf93d491d97774d033f5b287cb619e8703479742cd8edfb48a"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/native-deck-builder.js",
+      "purpose": "Builder targets/drafts, search/filter/sort, previews, custom-image probe, advisory validation, CSV, clear and auto-load on exit.",
+      "targets": [
+        "apps/web/src/features/deck/LegacyDeckBuilderWorkspace.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx",
+        "apps/web/src/features/deck/deck-builder-store.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "LegacyDeckBuilderWorkspace.test.tsx; LegacyDeckBuilderSession.test.tsx; legacy-deck-builder-browser-parity.spec.ts",
+      "sourceSha256": "785e09c01a344b00ded0c73f88c20180f518988245c33816d18a9a2e72bbeae4"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js",
+      "purpose": "Setup/reset one/both; Options, import/export state, replay stepping, log and fullscreen.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/replay/LegacyReplayControls.tsx",
+        "apps/web/src/session/browser-room-options.ts"
+      ],
+      "disposition": "Mixed / ADR-021",
+      "evidence": "Live and replay controls retained; v1 saves/URLs deferred; new continuation is distinct from perspective replay",
+      "sourceSha256": "3a0f439d6c48bb8790be73fd69f4a913a2e2d1f011f922aa78da90e225f51036"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/changelog.js",
+      "purpose": "Toggle changelog, hide donations, click panel to dismiss.",
+      "targets": [
+        "apps/web/src/session/LegacyWelcome.tsx",
+        "apps/web/src/session/legacy-changelog.html"
+      ],
+      "disposition": "Mapped",
+      "evidence": "LegacyWelcome.test.tsx; source changelog content comparison",
+      "sourceSha256": "2dbba4c246e805e3cafb5842f4399de1a9c5b5aec605da783c1ddc53294e1d13"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/chat-buttons.js",
+      "purpose": "Attack/pass/undo/flower and trim-and-send Enter chat.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/presentation/SessionChatDispatcher.ts"
+      ],
+      "disposition": "Mapped with gap F-10",
+      "evidence": "RemoteRoomLiveControls.test.tsx; SessionChatDispatcher.test.ts; flipped-seat ephemeral attribution differs",
+      "sourceSha256": "bea8b713a6e24cbf593c2ba8e773894f7fcc9fa0b8143ae0ee4dc78467a5ae60"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/donations-link.js",
+      "purpose": "Toggle sponsor/donation panel with links and tiers; dismiss on panel click.",
+      "targets": ["apps/web/src/session/LegacyWelcome.tsx"],
+      "disposition": "Mapped",
+      "evidence": "LegacyWelcome.test.tsx; original content retained in component",
+      "sourceSha256": "cef50b5ff99217019af69f210bb765bc1633fb90ff15546fe41f7b28524dd371"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/initialize-p1-page.js",
+      "purpose": "Compose five Solo event registration groups.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/session/LegacyWelcome.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "RemoteRoomRoute.test.tsx",
+      "sourceSha256": "42e4375a32281d89b286eb398529bd8182d1ececd453dc264f9a099cffc701b7"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p1/tutorial.js",
+      "purpose": "Open embedded tutorial and close/remove iframe on backdrop click.",
+      "targets": ["apps/web/src/session/LegacyWelcome.tsx"],
+      "disposition": "Mapped",
+      "evidence": "LegacyWelcome.test.tsx",
+      "sourceSha256": "6757704a9940666e094a6bbef77e77136606eca41f604a7bd516e7cbe690a894"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p2/bottom-buttons.js",
+      "purpose": "Own setup/reset and room Options anchoring.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/session/RemoteRoomRoute.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "RemoteRoomLiveControls.test.tsx",
+      "sourceSha256": "112fac88702af6da82b35695003e51fbabb5c5e42c3cd65c2d523cad8fec2f95"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p2/chat-buttons.js",
+      "purpose": "Room attack/pass/flower and player/spectator chat attribution.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/presentation/SessionChatDispatcher.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "RemoteRoomLiveControls.test.tsx; SessionChatDispatcher.test.ts",
+      "sourceSha256": "8a5162424ac7a6d753f6901570ca31fcbe2c655687efbbf78536f184e869c3e1"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p2/initialize-p2-page.js",
+      "purpose": "Compose chat/bottom/room event groups.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "apps/web/src/session/RemoteRoomLiveControls.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "RemoteRoomRoute.test.tsx",
+      "sourceSha256": "64eae79efaaf27005856d5d1bdc278e9e980c3a0b0f005690010d474a3d5e617"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/p2/room-buttons.js",
+      "purpose": "Generate/copy/join ID, random name list, spectator admission, confirmed leave and restore solo deck.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/session/RemoteRoomInvitationHandoff.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "ADR-020 invitation replaces public room credential; RemoteRoomLobby.test.tsx",
+      "sourceSha256": "2ecbffb9ad0a38687f92c7bb31f3069b4088fa814df969a0729dcf8bda9d8ad3"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/sidebox/settings.js",
+      "purpose": "Wire dark/outline/background controls and Solo opposite-hand hiding to acting perspective.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomSettings.tsx",
+        "apps/web/src/session/RemoteSessionBoard.tsx",
+        "apps/web/src/session/solo-opponent-hand-visibility.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "solo-opponent-hand-visibility.test.ts; RemoteSessionBoard.test.tsx",
+      "sourceSha256": "a01405533a861d8270fcf27ad74f34140f1bd17783ed74a6bd37bf66cf1e4d7b"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/board-buttons.js",
+      "purpose": "Turn/coin/flip/refresh/playmat expansion, spectator/replay guards and seat GX/VSTAR buttons.",
+      "targets": [
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "apps/web/src/session/RemoteSessionBoard.tsx",
+        "apps/web/src/session/RemoteRoomRoute.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "LegacyBoardChrome.test.tsx; RemoteSessionBoard.test.tsx",
+      "sourceSha256": "d21e4710f2e64dcfe1e12893904bc9435e3afa725eb0ba2683719b70259b8f50"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/documents.js",
+      "purpose": "Click/contextmenu dismissal and keyboard events across both iframes and outer document.",
+      "targets": [
+        "apps/web/src/board/BoardSessionController.ts",
+        "apps/web/src/board/LegacyBoardKeyboardShortcuts.tsx",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "LegacyBoardKeyboardShortcuts.test.tsx; route teardown tests",
+      "sourceSha256": "679be44ac48aadd7065d92cd91c45c716716a74161659171e16dea046973c3aa"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/initialize-table.js",
+      "purpose": "Compose board controls, global events, resizers, zone buttons/drop targets.",
+      "targets": [
+        "apps/web/src/session/RemoteSessionBoard.tsx",
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "RemoteSessionBoard.test.tsx",
+      "sourceSha256": "1e333103193366c77dffe748992a24ddd6d02a4f48cb399945f337b14d505ae8"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/resizer.js",
+      "purpose": "Register two frame resize handles.",
+      "targets": [
+        "apps/web/src/board/ReactDomBoardResizeInteraction.ts",
+        "apps/web/src/board/LegacyBoardChrome.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "ReactDomBoardSessionRuntime.test.ts",
+      "sourceSha256": "a9b94bee1b91e5906734e8279bffb224ffef334b92ed27893940e4b5e0f6eece"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/zone-buttons.js",
+      "purpose": "Per-seat browser Close/Shuffle/Sort; discard-all confirmation; staged/inspection bulk resolutions.",
+      "targets": [
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts"
+      ],
+      "disposition": "Gap F-01",
+      "evidence": "LegacyBoardOverlays.test.tsx; sort changed to alphabetical",
+      "sourceSha256": "9746a005d7cd9f3665ff6b903457979ddc4431b3b692a44cebac60e72d2e1bd5"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/table/zones.js",
+      "purpose": "Register all zone and popup drag targets, including inspection/staged work areas.",
+      "targets": [
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/board/resolveBoardDrop.ts"
+      ],
+      "disposition": "Partial; gap F-05",
+      "evidence": "Simple-card ingress added concurrently; host with dependents still refused; see F-05",
+      "sourceSha256": "598de646787efdb2261da8923d383466da9a03a33a85a55bf3468ba2ffe1a043"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/window/window.js",
+      "purpose": "Resize realigns/reflows board; beforeunload warns of unsaved game loss.",
+      "targets": [
+        "apps/web/src/board/ReactDomBoardResizeInteraction.ts",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/features/deck/deck-browser-io.ts"
+      ],
+      "disposition": "Gap F-02",
+      "evidence": "Only dirty builder drafts currently register beforeunload",
+      "sourceSha256": "8b0c48e293d80bf01e0f62d825661d575644f697a18e77bb79dfa15b5feb1788"
+    },
+    {
+      "path": "client/src/initialization/global-variables/global-variables.js",
+      "purpose": "Socket, version, frame references, solo/room decks/names, card backs, acting seat, selection and default background.",
+      "targets": [
+        "packages/client-session/src/session.ts",
+        "packages/game-core/src/model.ts",
+        "apps/web/src/board/BoardSessionController.ts",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/styles.css"
+      ],
+      "disposition": "Mixed; gap F-07",
+      "evidence": "State split across authority/view/local channels; default background not identical",
+      "sourceSha256": "9d1ec2b64118bef701096fffd4faa46dd375722755da62407b1724ed46bd6668"
+    },
+    {
+      "path": "client/src/initialization/load-import-data/load-import-data.js",
+      "purpose": "Replay server-injected saved action JSON from old share URL on startup.",
+      "targets": ["packages/legacy-import/src/conversion-transaction.ts"],
+      "disposition": "Deferred",
+      "evidence": "ADR-021 explicitly keeps old save/share URL import outside first release",
+      "sourceSha256": "3a1d685a9723131818218161b14b4721d1970ce6af4ba7e22978fb415a5e5887"
+    },
+    {
+      "path": "client/src/initialization/mutation-observers/board-observer.js",
+      "purpose": "Automatically scroll loose playboard to newest appended cards.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Gap F-03",
+      "evidence": "No loose-board scroll owner; layoutBoardGrid shrinks cards to fit",
+      "sourceSha256": "554b0a3e9cf3b6c1d2407fcfeb7ec6342760bc0a0a6bbcb5c0c1f5edcb40f9fc"
+    },
+    {
+      "path": "client/src/initialization/mutation-observers/hand-observer.js",
+      "purpose": "Recompute hand centering after card insertion/removal.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "Full-size horizontal hand scrolling and centering implemented",
+      "sourceSha256": "89ae2a93833bebc638df70db9afa987ee426b4a3bb3ce7b14b48ff44e9430fe6"
+    },
+    {
+      "path": "client/src/initialization/mutation-observers/initialize-mutation-observers.js",
+      "purpose": "Register board/hand/prize/stadium observers.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Mixed",
+      "evidence": "Declarative replacement; F-03 and F-07 remain",
+      "sourceSha256": "ba6d22a28c9882d740e6e8417c3a28e6374e43d214db2ba4725b9380da777dca"
+    },
+    {
+      "path": "client/src/initialization/mutation-observers/prizes-observer.js",
+      "purpose": "Use 33% maximum card height up to six prizes, 23% above six.",
+      "targets": ["packages/renderer-contract/src/scene.ts"],
+      "disposition": "Gap F-07",
+      "evidence": "layoutPrizeGrid instead sizes a fitted two-column grid with variable rows",
+      "sourceSha256": "12229a99282b477c1f161c2395768baa3c6e866b65054052d15ab7ee781a5519"
+    },
+    {
+      "path": "client/src/initialization/mutation-observers/stadium-observer.js",
+      "purpose": "Push stadium and toolbar behind any visible popup.",
+      "targets": [
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "react-dom-transformed-overlay-paint.spec.ts; overlay ownership replaces style observation",
+      "sourceSha256": "31def9048d5153f8cfb5bafc33bb8eea49f912be0c3e3cf7132fab3fcf5b77ee"
+    },
+    {
+      "path": "client/src/initialization/socket-event-listeners/socket-event-listeners.js",
+      "purpose": "Join/reject/reconnect/leave, sync intervals, inbound mutations/disclosure/chat and save URL feedback.",
+      "targets": [
+        "packages/client-session/src/session.ts",
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "packages/room-authority/src/process-command.ts",
+        "apps/web/src/presentation/SessionPresenceDispatcher.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "RemoteRoomRuntime.test.ts; session.test.ts; ADR-009/020/021; room-full error is inline, not old modal",
+      "sourceSha256": "dfb38c6810085512e46421e2b417e4a57da2390b652d2d75078ddb0eca412618"
+    },
+    {
+      "path": "client/src/setup/chatbox/append-message.js",
+      "purpose": "Text-safe styled log messages, solo/room selection, automatic bottom scroll and peer broadcast.",
+      "targets": [
+        "apps/web/src/presentation/LegacyPresentationSurface.tsx",
+        "apps/web/src/presentation/SessionChatDispatcher.ts"
+      ],
+      "disposition": "Mapped with gap F-10",
+      "evidence": "LegacyPresentationSurface.test.tsx; SessionChatDispatcher.test.ts; flipped-seat ephemeral attribution differs",
+      "sourceSha256": "218c796afaba1addf5f139cbed1e9e9cdaa590c7c472fcdf82d429c3f3c5062c"
+    },
+    {
+      "path": "client/src/setup/chatbox/export-chat.js",
+      "purpose": "Numbered battle-log text download and local clear.",
+      "targets": [
+        "apps/web/src/session/browser-room-options.ts",
+        "apps/web/src/session/RemoteRoomRoute.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "browser-room-options.test.ts; RemoteRoomRoute.test.tsx",
+      "sourceSha256": "65d536cc5095f7aa41afaa045544c8d532f5e527c845f67a3fd41d8c00fedcc4"
+    },
+    {
+      "path": "client/src/setup/chatbox/hide-options-context-menu.js",
+      "purpose": "Close Options on outside mousedown and remove listener.",
+      "targets": ["apps/web/src/session/useDismissibleRoomOptions.ts"],
+      "disposition": "Refactored",
+      "evidence": "RemoteRoomRoute.test.tsx",
+      "sourceSha256": "b0a98d19efc057e2aa226a8adbd877394c9a86782dc053d0eb1b76c21dc264bf"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/card-compare.test.mjs",
+      "purpose": "Shape detection and recursive variant equality cases.",
+      "targets": ["packages/deck-core/src/card-compare.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "b4dba9e938f50c58554cf4e656c6902b5f07b78913d41f813132acd34cbf44af"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/card-search-sort.test.mjs",
+      "purpose": "Local pool filtering, asc/desc and date/name tie breaks; no visible cap.",
+      "targets": ["packages/deck-core/src/card-search.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "b639ba6312eaca59948b344575abcc485ecea77d4249ff4717a097b4436a3520"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/card-search.test.mjs",
+      "purpose": "Normalization and name/stage search plans.",
+      "targets": ["packages/deck-core/src/card-search.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "d1c6842eca34441a3fb0812fd9dee00b1d25f89e0cc1fa4878908853615c559f"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/card-sort.test.mjs",
+      "purpose": "Flatten/count and stable supertype ordering.",
+      "targets": ["packages/deck-core/src/card-sort.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "27d7b36a3f13c1a784a61251e1384fceec467e17024f30e4e2efa8edc21c8688"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/csv-adapter.test.mjs",
+      "purpose": "Image selection and simulator CSV round trips.",
+      "targets": ["packages/deck-core/src/csv-adapter.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "7ff6c23768aac919a18104c701d5444579697d1916247eaaa375af78894dc15a"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/deck-state.test.mjs",
+      "purpose": "Immutable variant editing, counts, filtering and format recognition.",
+      "targets": ["packages/deck-core/src/deck-state.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "c9a9fd32b8accd412fa1e28f054a24f69dd26d68bc162bf543f3d17dcc3bf1b7"
+    },
+    {
+      "path": "client/src/setup/deck-builder/__tests__/deck-validation.test.mjs",
+      "purpose": "Deck size/copy/pool rules and majority/tie/empty format detection.",
+      "targets": ["packages/deck-core/src/deck-validation.test.ts"],
+      "disposition": "Retained + ported",
+      "evidence": "All seven source test files executed by test:legacy; 79 tests",
+      "sourceSha256": "e425d072d79109e8cc02e198cb77364a606d25a54fc17768ef0b9dbcec7b4c0a"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/card-compare.mjs",
+      "purpose": "Identify database/formatted cards; recursively compare variants ignoring image/count.",
+      "targets": ["packages/deck-core/src/card-compare.ts"],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/card-compare.test.ts; existing legacy tests retained",
+      "sourceSha256": "f7af323ff09ebaea4efff4f9c61a2528eae3dd7d6e69c7efb635c1cc1bac5882"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/card-search.mjs",
+      "purpose": "Normalize E4/LV.X/stars/delta/EX/GX; query/dedupe, hydrate capped details and local pool/date/name controls.",
+      "targets": [
+        "packages/deck-core/src/card-search.ts",
+        "apps/web/src/features/deck/tcgdex-card-catalog.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/card-search.test.ts; existing legacy tests retained",
+      "sourceSha256": "d6b9adae1eff2c71b00c441a6b107b6e6a9611ef3aa79861e835c4b38e026fca"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/card-sort.mjs",
+      "purpose": "Stable Pokémon/Trainer/Energy order; flatten variants with counts.",
+      "targets": ["packages/deck-core/src/card-sort.ts"],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/card-sort.test.ts; existing legacy tests retained",
+      "sourceSha256": "36343f8b2250185a3a65c9627c2e3e18d8325de6596f9d2d970ce18015afe001"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/csv-adapter.mjs",
+      "purpose": "QTY/Name/Type/URL import/export; direct and legacy image URL compatibility.",
+      "targets": ["packages/deck-core/src/csv-adapter.ts"],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/csv-adapter.test.ts; existing legacy tests retained",
+      "sourceSha256": "c74944d6b166ee4726659f84fa64b39b8c31060107840d0d475a5162ee10538c"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/deck-state.mjs",
+      "purpose": "Immutable grouped variants; add/remove/count/filter and import-format detection.",
+      "targets": ["packages/deck-core/src/deck-state.ts"],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/deck-state.test.ts; existing legacy tests retained",
+      "sourceSha256": "824baa771c087df41426e1cc7d509ac05151b00e3d5ea4cd592360aa3bae0889"
+    },
+    {
+      "path": "client/src/setup/deck-builder/core/deck-validation.mjs",
+      "purpose": "Advisory 20/60-card validation, 2/4 copy limits, energy exemption, pool mixing and majority detection.",
+      "targets": ["packages/deck-core/src/deck-validation.ts"],
+      "disposition": "Refactored",
+      "evidence": "packages/deck-core/src/deck-validation.test.ts; existing legacy tests retained",
+      "sourceSha256": "01f9fbb4a8ac4892ed09f022cf1eb8b1a6e711e8b345dbcc1eec261608cdecf0"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/build-deck.js",
+      "purpose": "Expand deck quantities to image cards, deck back and image preload.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "apps/web/src/features/deck/deck-install-adapter.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "lifecycle-commands.test.ts; deck-install-adapter.test.ts",
+      "sourceSha256": "56bfd07e5df40abb41794e5099787ac9e3eec4b7806d30f60b8aca61b5b0581e"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "purpose": "Card model coupled to image, click, double-click, drag and context-menu listeners.",
+      "targets": [
+        "packages/game-core/src/model.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/BoardSessionController.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "ReactDomBoardRenderer.test.tsx; native interaction suites",
+      "sourceSha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/cover.js",
+      "purpose": "Clickable/draggable deck/discard/lost-zone covers with same movement/context routes.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/BoardSessionController.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "legacy-contained-card-geometry.spec.ts; resolveDeckRelativeAction.test.ts",
+      "sourceSha256": "a48e39ff8b54ef2f44ea114b092cf3c3d4d8f9cb05258762f12846538d6335b8"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/exchange-data.js",
+      "purpose": "Share deck/name/back, reset on join and enable flip only when both consent.",
+      "targets": [
+        "packages/room-authority/src/admission.ts",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx",
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/projection.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "admission.test.ts; private-inspection-commands.test.ts; ADR-017 removes private deck broadcast",
+      "sourceSha256": "23b29c224af27830417d259418feb09a39f35b3f43b052def781b8bfb59fbb17"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/find-old-type-database.js",
+      "purpose": "Historical set/prefix/suffix classification thresholds.",
+      "targets": [
+        "packages/deck-core/src/legacy-old-card-types.json",
+        "packages/deck-core/src/legacy-card-type-lookup.ts"
+      ],
+      "disposition": "Data equal",
+      "evidence": "All 243 table groups deep-compared, not sampled",
+      "sourceSha256": "fb9e115a15c502c337ead91496c2d498aa6f7f1425101ca47547c54ff2900af2"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/find-old-type-database_updater.py",
+      "purpose": "Offline generation of historical thresholds from a separately cloned card corpus.",
+      "targets": [
+        "packages/deck-core/src/legacy-card-type-lookup.ts",
+        "packages/deck-core/src/legacy-old-card-types.json"
+      ],
+      "disposition": "Tooling gap F-09",
+      "evidence": "Runtime data retained exactly; no v2 regeneration command found; old generator still exists",
+      "sourceSha256": "65b835c49a9e45ae1b00dbed832cc708114a879bcc35d595e99aa151f0f1bab5"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/find-old-type.js",
+      "purpose": "Split old ID into prefix/digits/suffix, zero and threshold classification.",
+      "targets": ["packages/deck-core/src/legacy-card-type-lookup.ts"],
+      "disposition": "Mapped",
+      "evidence": "pasted-decklist.test.ts; exact imported tables",
+      "sourceSha256": "0602f38332b219905b50af47177007a2d10fee6ae6d9f7b147c02388a52994a7"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/find-type.js",
+      "purpose": "Current set threshold tables, promo aliases and letter-prefixed subset numbers.",
+      "targets": [
+        "packages/deck-core/src/legacy-card-type-lookup.ts",
+        "packages/deck-core/src/legacy-card-types.json"
+      ],
+      "disposition": "Data equal",
+      "evidence": "All 106 table groups deep-compared; pasted-decklist.test.ts",
+      "sourceSha256": "46c5e242664f99079f2b3c01f6741219e1504f0da491f5a4e53449c62c9076e1"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/import.js",
+      "purpose": "Text parsing, set aliases, languages, API fallback, image probe, editable review/confirm/cancel/save, load/reset and card back.",
+      "targets": [
+        "packages/deck-core/src/pasted-decklist.ts",
+        "apps/web/src/features/deck/LegacyDeckImportPanel.tsx",
+        "apps/web/src/features/deck/pasted-decklist-import.ts",
+        "apps/web/src/features/deck/deck-install-adapter.ts",
+        "apps/web/src/session/browser-card-back.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "pasted-decklist.test.ts; LegacyDeckImportPanel.test.tsx; browser-card-back.test.ts",
+      "sourceSha256": "01cbf5cfc5ea688ed954bc1c92f3bc0906bee5ec076714a06a523324984bba4f"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/sample.decklists.js",
+      "purpose": "Era/deck menus and two-stage random selection plus full historical deck corpus.",
+      "targets": [
+        "apps/web/src/features/deck/popular-decklists.ts",
+        "apps/web/src/features/deck/popular-decklists-data.json",
+        "apps/web/src/features/deck/LegacyDeckImportPanel.tsx"
+      ],
+      "disposition": "Data equal",
+      "evidence": "All 22 groups and all deck text deep-compared; popular-decklists.test.ts",
+      "sourceSha256": "88cfc37dc8d9251f31dedc2217376c46dca53a4978753e8c7328f1f2144fb526"
+    },
+    {
+      "path": "client/src/setup/general/accept-action.js",
+      "purpose": "Allowlisted legacy action dispatcher and replay checks.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/room-authority/src/process-command.ts",
+        "packages/legacy-import/src/conversion-transaction.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "protocol.test.ts; conversion-transaction.test.ts; ADR-021 defers old file UI",
+      "sourceSha256": "954e15e2361c2537e79436075f8d0dc2663855d4f07ef7a88aef7c001ea2c124"
+    },
+    {
+      "path": "client/src/setup/general/add-action-data.js",
+      "purpose": "Attempt to cap action history at 30; unused helper reassigns local parameters.",
+      "targets": ["packages/room-authority/src/replay-history.ts"],
+      "disposition": "Retired helper",
+      "evidence": "No live importer of addToActionData; bounded authority history replaces old arrays",
+      "sourceSha256": "6dfa314c951c846674c05f3f1460b8f633be1b0f19eefa73deb5cea604a24190"
+    },
+    {
+      "path": "client/src/setup/general/catch-up-actions.js",
+      "purpose": "Translate relative player parameters and replay missing peer actions after reset/deck changes.",
+      "targets": [
+        "packages/client-session/src/session.ts",
+        "packages/room-authority/src/process-command.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "session.test.ts; coordinator.test.ts",
+      "sourceSha256": "73a2ad2a8aadd17a1795a0724a0529a57bc5d72862d2376dea3bbed03739227c"
+    },
+    {
+      "path": "client/src/setup/general/clean-action-data.js",
+      "purpose": "Clear counters/history/opponent deck on lifecycle transitions.",
+      "targets": [
+        "packages/client-session/src/session.ts",
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "packages/room-authority/src/process-command.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "RemoteRoomRoute.test.tsx; session.test.ts",
+      "sourceSha256": "53b5d022ffce42cdd4b764b31c7ca616520599fee50a2f335dff7c2944b58b65"
+    },
+    {
+      "path": "client/src/setup/general/determine-deckdata.js",
+      "purpose": "Select self, solo opponent or multiplayer opponent deck.",
+      "targets": [
+        "apps/web/src/features/deck/deck-builder-store.ts",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx",
+        "packages/game-core/src/projection.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "LegacyDeckBuilderSession.test.tsx; opponent private deck is no longer shipped wholesale",
+      "sourceSha256": "f575e37a4bc266af9f46faac83182c1050aa3abb0a087f531e13656ad0ed8177"
+    },
+    {
+      "path": "client/src/setup/general/determine-username.js",
+      "purpose": "Resolve Blue/Red solo names or room participant names.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "packages/room-authority/src/narration-events.ts",
+        "apps/web/src/presentation/PresentationEffects.ts"
+      ],
+      "disposition": "Mapped",
+      "evidence": "RemoteRoomLobby.test.tsx; narration-events.test.ts",
+      "sourceSha256": "2620ed0b5c3afb52b0c460ea2be154a59a2460ec254075367cbee2975e8a38ad"
+    },
+    {
+      "path": "client/src/setup/general/pop-up-message.js",
+      "purpose": "Modal text and OK callback, board blocked until own-hand reveal ends.",
+      "targets": ["apps/web/src/session/RemoteSessionBoard.tsx"],
+      "disposition": "Mapped",
+      "evidence": "RemoteSessionBoard.test.tsx (this helper is used by reveal, not deck-import errors)",
+      "sourceSha256": "18b888a8072a9f8062fc8a79585210e67f87c2079d9cf9a38a618bec4410a906"
+    },
+    {
+      "path": "client/src/setup/general/preload-image.js",
+      "purpose": "Hidden DOM image warmup removed only on successful load.",
+      "targets": [
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/refreshLegacyBoardImages.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "ReactDomBoardRenderer.test.tsx; PX-004",
+      "sourceSha256": "0cccbf346f48cb3634550395ba8d4e91c817f85dedb2120dac36d7a469cd45a3"
+    },
+    {
+      "path": "client/src/setup/general/process-action.js",
+      "purpose": "Peer request/push, per-seat counters, undo suppression and export history.",
+      "targets": [
+        "packages/room-authority/src/process-command.ts",
+        "packages/client-session/src/session.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "process-command.test.ts; session.test.ts; acknowledged authoritative order",
+      "sourceSha256": "9b2c856968791aae178fdae22fb959ad5ec9d47d60f448080e2aefa2affc7859"
+    },
+    {
+      "path": "client/src/setup/general/replay-block.js",
+      "purpose": "Allow local viewing while blocking gameplay mutations in replay.",
+      "targets": [
+        "apps/web/src/replay/ReplayModeShell.tsx",
+        "apps/web/src/board/BoardSessionController.ts",
+        "apps/web/src/board/replayLocalDisclosure.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "replayLocalDisclosure.test.ts; ReplayModeShell.test.tsx; PX-001",
+      "sourceSha256": "4dd09824a78f9c3ca743739283306eec2b66aeeae0924d3e4c5e28bf5c880f9d"
+    },
+    {
+      "path": "client/src/setup/general/resync-actions.js",
+      "purpose": "Broadcast entire self history on peer catch-up request.",
+      "targets": ["packages/client-session/src/session.ts"],
+      "disposition": "Replaced",
+      "evidence": "session.test.ts; revisioned snapshots and resume",
+      "sourceSha256": "66bdf0085dc3763db1cbd0bdfa5e41148e13fdd23e4b0e42c9179772f4318637"
+    },
+    {
+      "path": "client/src/setup/general/shuffle.js",
+      "purpose": "Fisher-Yates permutation and array rearrangement.",
+      "targets": [
+        "packages/game-core/src/decide-command.ts",
+        "packages/game-core/src/apply-events.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "composite-zone-commands.test.ts; deterministic injected shuffle with recorded outcome",
+      "sourceSha256": "77baa59b8dc97629989f2e1c6285f57e5d3aeb12b722a437247c822a6409921b"
+    },
+    {
+      "path": "client/src/setup/home-header/header-toggle.js",
+      "purpose": "Show one sidebar tab, selected/dark styling, replay options and import notice reset.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomRoute.tsx",
+        "apps/web/src/features/deck/LegacyDeckBuilderSession.tsx",
+        "apps/web/src/replay/ReplayModeShell.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "RemoteRoomRoute.test.tsx; LegacyDeckBuilderSession.test.tsx",
+      "sourceSha256": "7cb75044096af120840573607eba32c3260ddd5ff328ed0e06f8398736cc0508"
+    },
+    {
+      "path": "client/src/setup/image-logic/click-events.js",
+      "purpose": "Identify pile/card, select, attach target, context menu matrix, double-click expanded stack/card.",
+      "targets": [
+        "apps/web/src/board/BoardSessionController.ts",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx",
+        "apps/web/src/board/resolveAttachEvolveTargeting.ts",
+        "apps/web/src/board/resolveLegacyBoardOverlayAction.ts"
+      ],
+      "disposition": "Mapped with gap F-10",
+      "evidence": "LegacyBoardOverlays.test.tsx; resolveAttachEvolveTargeting.test.ts; flipped-seat ephemeral attribution differs",
+      "sourceSha256": "12c1b0a7285295227195be932bf62b94eef5379e44aa53d839fb8b60944af431"
+    },
+    {
+      "path": "client/src/setup/image-logic/drag.js",
+      "purpose": "Native drag opacity, highlights, pile top drops, attachment targeting and popup drag/drop.",
+      "targets": [
+        "apps/web/src/board/BoardSessionController.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/resolveBoardDrop.ts"
+      ],
+      "disposition": "Partial; gap F-05",
+      "evidence": "Simple-card ingress added concurrently; host with dependents still refused; see F-05",
+      "sourceSha256": "453d802d8f862972fbfddad97342105a776c066110cb0afc309eb685a5c897a5"
+    },
+    {
+      "path": "client/src/setup/image-logic/remove-images.js",
+      "purpose": "Remove image nodes while preserving popup headers/buttons.",
+      "targets": [
+        "packages/renderer-dom/src/BoardSurface.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Replaced",
+      "evidence": "React declarative reconciliation owns child lifecycle",
+      "sourceSha256": "85f0795a99bcab580fffe998b15d6548432703d49eeb91d8f024749b9da3e750"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "purpose": "Clear attachment linkage/layers/transforms/classes while preserving in-play BREAK.",
+      "targets": [
+        "packages/game-core/src/apply-events.ts",
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-contract/src/layout.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "movement-departures.test.ts; legacy-runtime-break-refresh-oracle.spec.ts",
+      "sourceSha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/setup/settings/settings.js",
+      "purpose": "Dark palette, zone outlines, validated custom/blank/random theme background.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomSettings.tsx",
+        "apps/web/src/session/browser-room-background.ts",
+        "apps/web/src/styles.css"
+      ],
+      "disposition": "Fixed F-06; gap F-07",
+      "evidence": "browser-room-background.test.ts; bundled themes now survive v1 retirement; default backdrop differs",
+      "sourceSha256": "0412bb23d8bceea6599b62c2e95ca0d9f78a9e20c69ec4517f1743311f1bb03c"
+    },
+    {
+      "path": "client/src/setup/sizing/adjust-alignment.js",
+      "purpose": "Center hand when it fits; left-align overflow for scrolling.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "packages/renderer-dom/src/BoardSurface.tsx"
+      ],
+      "disposition": "Mapped",
+      "evidence": "hand overflow implemented in layoutLegacyHandRow and ZoneNode",
+      "sourceSha256": "dd4cc738df73415facc3b89f93d16883c43df4dea8a046a2989141b988433a95"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "purpose": "Rebuild play containers/order and markers; reload visible images with spinner.",
+      "targets": [
+        "packages/renderer-contract/src/scene.ts",
+        "apps/web/src/board/refreshLegacyBoardImages.ts",
+        "apps/web/src/board/LegacyBoardChrome.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "legacy-runtime-break-refresh-oracle.spec.ts; PX-005 keeps refresh logically pure",
+      "sourceSha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "purpose": "Two handles, overlap pushing, frame/stadium/control positioning and mirrored resize gestures.",
+      "targets": [
+        "packages/renderer-contract/src/layout.ts",
+        "apps/web/src/board/ReactDomBoardResizeInteraction.ts"
+      ],
+      "disposition": "Refactored",
+      "evidence": "layout.test.ts; ReactDomBoardSessionRuntime.test.ts; resize browser tests",
+      "sourceSha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
+    },
+    {
+      "path": "client/src/setup/spectator/handle-spectator-buttons.js",
+      "purpose": "Hide mutation controls for spectators while retaining chat/flower and room options.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLiveControls.tsx",
+        "apps/web/src/board/LegacyBoardChrome.tsx",
+        "apps/web/src/board/overlays/LegacyBoardOverlays.tsx"
+      ],
+      "disposition": "Refactored",
+      "evidence": "RemoteRoomLiveControls.test.tsx; authority enforces role as well as UI",
+      "sourceSha256": "58d651d77ca05b5f930384c16431707af07eaaa3c8549fa633a06fa0dbc5eb00"
+    },
+    {
+      "path": "client/src/setup/spectator/spectator-join.js",
+      "purpose": "Join UI and polling replay of a chosen player's history; loading/reconnect timer.",
+      "targets": [
+        "apps/web/src/session/RemoteRoomLobby.tsx",
+        "packages/client-session/src/session.ts",
+        "packages/game-core/src/projection.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "RemoteRoomLobby.test.tsx; admission.test.ts; ADR-009/017 restrict hidden information",
+      "sourceSha256": "c37c09d3dbc77eb99ecb44402f889708e9556ac28e54d9f3ca2aaa92e28f4a00"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "purpose": "Mutable per-player zone arrays and DOM/cover lookup; shared stadium.",
+      "targets": [
+        "packages/game-core/src/model.ts",
+        "packages/game-core/src/create-match.ts",
+        "packages/renderer-contract/src/scene.ts"
+      ],
+      "disposition": "Replaced",
+      "evidence": "location-index.test.ts; invariant suites; stable zone/card identity",
+      "sourceSha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "server/package.json",
+      "purpose": "Express/Socket.IO/EJS/SQLite runtime and nodemon startup dependencies.",
+      "targets": ["apps/server/package.json"],
+      "disposition": "Replaced",
+      "evidence": "V2 Worker/Durable Object build; v1 package retained for fallback/oracles",
+      "sourceSha256": "7960a0b594787386d829792f5eb019a06f259e2cd23e7f9a33bf342cf4cb253d"
+    },
+    {
+      "path": "server/server.js",
+      "purpose": "Serve page/assets/share URLs, two-seat/spectator rooms, peer event relay, disconnect cleanup, SQLite saves and admin UI.",
+      "targets": [
+        "apps/server/src/worker.ts",
+        "packages/room-authority/src/admission.ts",
+        "packages/room-authority/src/process-command.ts"
+      ],
+      "disposition": "Replaced / deferred compatibility",
+      "evidence": "ADR-005/007/018/020/021; runtime-tests; unsafe admin default and four-character save keys removed (PX-008/009)",
+      "sourceSha256": "397557676ed915eba07fd52de84893a9149a5ee7dd91ce603c1d7545689f333a"
+    }
+  ]
+}

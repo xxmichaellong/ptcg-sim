@@ -1,0 +1,46 @@
+[
+  {
+    "version": "1.5.1"
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [
+      [
+        ["2", "Pikachu", "Pokémon", "https://cards.example/pikachu.png"],
+        ["3", "Lightning Energy", "Energy", "https://cards.example/energy.png"]
+      ]
+    ]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [""]
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "setup",
+    "parameters": [[4, 3, 2, 1, 0]]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "changeCardBack",
+    "parameters": ["https://cards.example/back.png"]
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "takeTurn",
+    "parameters": ["self"]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "reset",
+    "parameters": [false, true, true]
+  }
+]
