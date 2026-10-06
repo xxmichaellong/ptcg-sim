@@ -121,8 +121,7 @@ export class ReactDomBoardResizeInteraction {
   private startsOnBoard(target: EventTarget | null): boolean {
     if (!(target instanceof Node)) return false;
     if (this.host.contains(target)) return true;
-    const element =
-      target instanceof Element ? target : target.parentElement;
+    const element = target instanceof Element ? target : target.parentElement;
     return element?.closest(RESIZER_PILL_SELECTOR) != null;
   }
 
