@@ -360,7 +360,7 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
-  it('routes U only for a solo-capable unselected surface', async () => {
+  it('routes U only for an undo-capable unselected surface', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();
     const dispatch = (target: EventTarget = document) =>
@@ -386,7 +386,7 @@ describe('legacy board keyboard shortcut bridge', () => {
         createElement(LegacyBoardKeyboardShortcuts, {
           state,
           onRequest,
-          soloUndoEnabled: true,
+          undoSeat: 'acting',
         })
       );
     });
@@ -394,6 +394,23 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(onRequest).toHaveBeenCalledExactlyOnceWith({
       action: 'undoOwnLastMove',
     });
+
+    // A multiplayer route asks for the player's own move, flipped or not.
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          undoSeat: 'own',
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onRequest).toHaveBeenLastCalledWith({
+      action: 'undoOwnLastMove',
+      ownSeat: true,
+    });
+    onRequest.mockClear();
 
     await act(async () => {
       root.render(
@@ -406,7 +423,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             },
           },
           onRequest,
-          soloUndoEnabled: true,
+          undoSeat: 'acting',
         })
       );
     });
@@ -417,7 +434,7 @@ describe('legacy board keyboard shortcut bridge', () => {
     input.focus();
     expect(dispatch(input)).toBe(true);
     input.remove();
-    expect(onRequest).toHaveBeenCalledTimes(1);
+    expect(onRequest).not.toHaveBeenCalled();
   });
 
   it('routes modifier-agnostic M through the separate unselected announcement callback', async () => {

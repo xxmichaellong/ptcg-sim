@@ -893,7 +893,7 @@ event batches under a pinned event/state version. New clients never execute
 arbitrary legacy function names. Public replay uses projected frames and cannot
 reveal secrets that were not public at that revision.
 
-The implemented authority schema v7 persists one hashed canonical replay base
+The implemented authority schema v8 persists one hashed canonical replay base
 plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 512 KiB of serialized event data. Rejected commands do not enter replay
 history. When either bound is exceeded, the oldest event is applied to the base
@@ -1084,27 +1084,32 @@ coordinator/RPC path proves model and real-runtime convergence across their
 failure and eviction boundaries. See `CONTINUATION_CUSTODY.md` for the closed
 production gates.
 
-Solo undo is a new authoritative transition with a monotonically increasing
+Undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v7 stores
-one hashed base state plus a bounded active-branch tail of resolved event
-batches. It reconstructs the selected checkpoint inside the trusted boundary,
-then persists the exact restored canonical state in the resolved undo event so
-ordinary event replay remains self-contained. The event must be alone in its
-batch. The client supplies only the announcement target and cannot select or
-upload history.
+connection count is never used to infer permission. Since authority schema v8
+(ADR-026) undo has no history of its own: it reads the replay history above.
+Scanning that tail from its base yields the undo stack (a move is pushed, an
+undo pops the move it reverted, a deck load clears it), and the checkpoint
+before the top move is rebuilt from the base and checked once against the
+replay entry's recorded hash. The resolved undo event records the difference
+from the current state to that checkpoint, checked against `checkpointHash`
+when applied, so ordinary event replay remains self-contained without storing
+a second copy of the state. The event must be alone in its batch. The client
+supplies only the announcement target and cannot select or upload history.
 
-The tail contains at most 128 entries by default and advances its base through
-the oldest resolved event when compacted. Deck replacement and first-time seat
-metadata mutation clear it; rejected commands and undo itself never create a
-new checkpoint. Random decisions are therefore restored exactly and are never
-rerun. Undo rotates every projection alias before publication to prevent
-correlation with a discarded hidden branch. Audit history is not deleted,
-reconnect restores the new branch without replaying the presentation fact, and
-multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v7, while schema-v2 and schema-v3 rooms retain
+Undo depth is therefore whatever the replay window still holds, and an undo is
+itself an entry in that window. Deck replacement and first-time seat metadata
+mutation clear the stack; rejected commands and undo itself never push to it.
+Random decisions are therefore restored exactly and are never rerun. Undo
+rotates every projection alias before publication to prevent correlation with
+a discarded hidden branch. Audit history is not deleted, and reconnect
+restores the new branch without replaying the presentation fact. In
+multiplayer each batch records its issuing seat, and a player may take back
+only their own move while it is still the newest one standing. Stored
+authority-v1 rooms migrate explicitly to multiplayer, while schema-v2 and
+schema-v3 rooms retain
 their explicit mode. All prior schemas receive empty solo history and a replay
 base rooted at their migrated current canonical state because their older event
 tails do not contain the v2 match-state visibility scope required for safe
@@ -1113,14 +1118,16 @@ history while receiving empty one-time-ticket and invitation registries.
 Schema-v5 rooms retain their compatible ticket registry and receive an empty
 invitation registry. Schema-v6 rooms derive the new durable player-seat ceiling
 from their already-persisted mode and fail closed if their sessions or seat
-claims contradict it.
+claims contradict it. Schema-v8 drops the retired separate undo history from
+every earlier snapshot; undo events written before it embed the whole restored
+state and are still applied.
 
 ADR-014 accepts whole-match authority order, not v1's two independent client
 action arrays. This avoids replaying one seat's JavaScript side effects over
 later shared-state changes. The target player remains only a
 presentation/announcement field. `PARITY_EXCEPTIONS.md` records this narrow
-interleaved-history correctness fix while preserving the visible Solo-only Undo
-control.
+interleaved-history correctness fix (PX-010) and the owner-requested
+multiplayer Undo control (PX-016).
 
 ## Legacy conversion
 

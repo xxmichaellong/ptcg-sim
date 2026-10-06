@@ -23,7 +23,7 @@ import type {
   AuthorityMode,
   AuthorityPolicy,
   AuthoritySession,
-  SoloUndoCheckpoint,
+  UndoCheckpoint,
 } from './model.js';
 
 export type CommandResolution =
@@ -79,7 +79,7 @@ export const resolveWireCommand = (
   observedRevision: number = state.revision,
   undoContext: {
     readonly mode: AuthorityMode;
-    readonly checkpoint?: SoloUndoCheckpoint;
+    readonly checkpoint?: UndoCheckpoint;
   } = { mode: 'multiplayer' }
 ): CommandResolution => {
   if (session.viewer.kind !== 'player') return rejected('unauthorized');
@@ -1249,9 +1249,13 @@ export const resolveWireCommand = (
       };
     }
     case 'ApplySoloUndo': {
-      if (undoContext.mode !== 'solo') return rejected('unauthorized');
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
       if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      // Solo's controller announces the undo for whichever seat is at the
+      // bottom; a multiplayer player only ever takes back their own move.
+      if (undoContext.mode !== 'solo' && targetPlayerId !== actorId) {
+        return rejected('unauthorized');
+      }
       if (!undoContext.checkpoint) return rejected('precondition_failed');
       return {
         accepted: true,

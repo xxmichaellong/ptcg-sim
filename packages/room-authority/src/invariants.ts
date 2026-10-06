@@ -1,7 +1,6 @@
 import {
   applyEventBatch,
   assertMatchInvariants,
-  soloUndoCheckpointProblem,
   stableHash,
   stableSerialize,
   type EventBatch,
@@ -17,7 +16,6 @@ import {
   MAX_OUTSTANDING_ROOM_INVITATIONS,
   MAX_REPLAY_EVENT_BATCHES,
   MAX_REPLAY_EVENT_BYTES,
-  MAX_SOLO_UNDO_CHECKPOINTS,
   type AuthoritySnapshotValidation,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
@@ -26,7 +24,6 @@ import {
   type ReplayHistoryEntry,
   type RoomAuthoritySnapshot,
 } from './model.js';
-import { replaySoloUndoHistory } from './solo-undo-history.js';
 import {
   replayHistoryByteFacts,
   replayHistoryEntryBytes,
@@ -52,7 +49,6 @@ interface AuthoritySnapshotValidationRecord {
   readonly mode: RoomAuthoritySnapshot['mode'];
   readonly state: RoomAuthoritySnapshot['state'];
   readonly stateRevision: number;
-  readonly soloUndoHistory: RoomAuthoritySnapshot['soloUndoHistory'];
   readonly replayHistory: RoomAuthoritySnapshot['replayHistory'];
   readonly identities: RoomAuthoritySnapshot['identities'];
   readonly sessions: RoomAuthoritySnapshot['sessions'];
@@ -89,7 +85,6 @@ const validationRecordMatches = (
   record.mode === snapshot.mode &&
   record.state === snapshot.state &&
   record.stateRevision === snapshot.state.revision &&
-  record.soloUndoHistory === snapshot.soloUndoHistory &&
   record.replayHistory === snapshot.replayHistory &&
   record.identities === snapshot.identities &&
   record.sessions === snapshot.sessions &&
@@ -112,7 +107,6 @@ const registerAuthoritySnapshotValidation = (
     mode: snapshot.mode,
     state: snapshot.state,
     stateRevision: snapshot.state.revision,
-    soloUndoHistory: snapshot.soloUndoHistory,
     replayHistory: snapshot.replayHistory,
     identities: snapshot.identities,
     sessions: snapshot.sessions,
@@ -227,13 +221,9 @@ export const prepareValidatedReplayHistoryTransition = (
   maximumEventBytes: number
 ): ValidatedReplayHistoryTransition => {
   const currentRecord = validationRecords.get(currentValidation);
-  if (
-    current.mode !== 'multiplayer' ||
-    !currentRecord ||
-    !validationRecordMatches(currentRecord, current)
-  ) {
+  if (!currentRecord || !validationRecordMatches(currentRecord, current)) {
     throw new Error(
-      'Incremental replay transition requires a validated multiplayer snapshot'
+      'Incremental replay transition requires a validated current snapshot'
     );
   }
   if (
@@ -338,82 +328,6 @@ const collectAuthoritySnapshotProblemsInternal = (
   if (snapshot.mode !== 'solo' && snapshot.mode !== 'multiplayer') {
     problems.push('authority mode must be solo or multiplayer');
   }
-  if (
-    typeof snapshot.soloUndoHistory !== 'object' ||
-    snapshot.soloUndoHistory === null ||
-    !Array.isArray(snapshot.soloUndoHistory.entries)
-  ) {
-    problems.push('authority solo undo history is malformed');
-  } else {
-    const history = snapshot.soloUndoHistory;
-    if (history.entries.length > MAX_SOLO_UNDO_CHECKPOINTS) {
-      problems.push('authority has too many solo undo history entries');
-    }
-    if (
-      snapshot.mode === 'multiplayer' &&
-      (history.baseState !== null || history.entries.length > 0)
-    ) {
-      problems.push('multiplayer authority cannot retain solo undo history');
-    }
-    if ((history.baseState === null) !== (history.baseStateHash === null)) {
-      problems.push('solo undo base state and hash must both be present');
-    }
-    if (history.entries.length > 0 && history.baseState === null) {
-      problems.push('solo undo entries require a base state');
-    }
-    if (history.baseState) {
-      const baseProblem = soloUndoCheckpointProblem(
-        snapshot.state,
-        history.baseState
-      );
-      if (baseProblem) problems.push(baseProblem);
-      if (stableHash(history.baseState) !== history.baseStateHash) {
-        problems.push('solo undo base hash does not match its state');
-      }
-    }
-    let priorRevision = -1;
-    for (const entry of history.entries) {
-      if (
-        entry.revertedCommandId.length < 1 ||
-        entry.revertedCommandId.length > 128
-      ) {
-        problems.push('solo undo entry has an invalid command ID');
-      }
-      if (
-        !Number.isSafeInteger(entry.checkpointRevision) ||
-        entry.checkpointRevision < 0 ||
-        !Number.isSafeInteger(entry.revertedRevision) ||
-        entry.revertedRevision !== entry.checkpointRevision + 1 ||
-        entry.revertedRevision > snapshot.state.revision
-      ) {
-        problems.push('solo undo entry has invalid revision metadata');
-      }
-      if (entry.checkpointRevision <= priorRevision) {
-        problems.push('solo undo entry revisions are not increasing');
-      }
-      priorRevision = entry.checkpointRevision;
-      if (
-        entry.events.length === 0 ||
-        entry.events.some((event) => event.type === 'UndoApplied')
-      ) {
-        problems.push('solo undo entry has an invalid resolved event tail');
-      }
-    }
-    if (history.baseState) {
-      try {
-        const replayed = replaySoloUndoHistory(
-          history,
-          snapshot.state.revision
-        );
-        if (!replayed || stableHash(replayed) !== stableHash(snapshot.state)) {
-          problems.push('solo undo history does not reconstruct current state');
-        }
-      } catch {
-        problems.push('solo undo history cannot be replayed');
-      }
-    }
-  }
-
   if (validateReplayHistory) {
     if (
       typeof snapshot.replayHistory !== 'object' ||
@@ -902,11 +816,6 @@ export const assertAdmissionTransactionTransition = (
     if (!structurallyEqual(candidate.state, current.state)) {
       problems.push(`${kind} changed match state`);
     }
-    if (
-      !structurallyEqual(candidate.soloUndoHistory, current.soloUndoHistory)
-    ) {
-      problems.push(`${kind} changed solo undo history`);
-    }
     if (!structurallyEqual(candidate.replayHistory, current.replayHistory)) {
       problems.push(`${kind} changed replay history`);
     }
@@ -1380,13 +1289,6 @@ export const assertAdmissionTransactionTransition = (
           problems.push('seat claim changed state outside its display name');
         }
         if (
-          candidate.soloUndoHistory.baseState !== null ||
-          candidate.soloUndoHistory.baseStateHash !== null ||
-          candidate.soloUndoHistory.entries.length !== 0
-        ) {
-          problems.push('seat claim did not clear solo undo history');
-        }
-        if (
           candidate.replayHistory.entries.length !== 0 ||
           !structurallyEqual(
             candidate.replayHistory.baseState,
@@ -1649,12 +1551,6 @@ export const assertAuthorityTransactionTransition = (
   if (!structurallyEqual(candidate.admission, current.admission)) {
     problems.push('command candidate changed admission state');
   }
-  if (
-    current.mode === 'multiplayer' &&
-    !structurallyEqual(candidate.soloUndoHistory, current.soloUndoHistory)
-  ) {
-    problems.push('multiplayer command candidate changed solo undo history');
-  }
   if (outcome.accepted === true) {
     if (transaction.eventBatch) {
       problems.push(
@@ -1674,11 +1570,6 @@ export const assertAuthorityTransactionTransition = (
     }
     if (!structurallyEqual(candidate.identities, current.identities)) {
       problems.push('rejected command changed projection identities');
-    }
-    if (
-      !structurallyEqual(candidate.soloUndoHistory, current.soloUndoHistory)
-    ) {
-      problems.push('rejected command changed solo undo history');
     }
   }
 
@@ -1713,7 +1604,7 @@ export const assertAuthorityTransactionTransition = (
   if (problems.length > 0) throw new AuthoritySnapshotInvariantError(problems);
 };
 
-export const validateMultiplayerAuthorityCandidate = (
+export const validateAuthorityCommandCandidate = (
   current: RoomAuthoritySnapshot,
   currentValidation: AuthoritySnapshotValidation,
   candidate: RoomAuthoritySnapshot,
@@ -1725,11 +1616,7 @@ export const validateMultiplayerAuthorityCandidate = (
   replayTransitionValidation?: ReplayHistoryTransitionValidation
 ): AuthoritySnapshotValidation => {
   const currentRecord = validationRecords.get(currentValidation);
-  if (
-    current.mode !== 'multiplayer' ||
-    !currentRecord ||
-    !validationRecordMatches(currentRecord, current)
-  ) {
+  if (!currentRecord || !validationRecordMatches(currentRecord, current)) {
     return validateAuthoritySnapshot(candidate);
   }
 
@@ -1791,9 +1678,6 @@ export const validateMultiplayerAuthorityCandidate = (
   }
   if (candidate.authorityVersion !== current.authorityVersion + 1) {
     problems.push('command candidate did not advance one authority version');
-  }
-  if (candidate.soloUndoHistory !== current.soloUndoHistory) {
-    problems.push('multiplayer command candidate changed solo undo history');
   }
   if (candidate.admission !== current.admission) {
     problems.push('command candidate changed admission state');

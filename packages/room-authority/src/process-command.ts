@@ -1,5 +1,4 @@
 import {
-  cloneMatchState,
   executeCommand,
   type EventBatch,
   type GameCommand,
@@ -21,14 +20,10 @@ import {
   authoritySnapshotValidationMatches,
   prepareValidatedReplayHistoryTransition,
   validateAuthoritySnapshot,
-  validateMultiplayerAuthorityCandidate,
+  validateAuthorityCommandCandidate,
   type ValidatedReplayHistoryTransition,
 } from './invariants.js';
-import {
-  MAX_REPLAY_EVENT_BATCHES,
-  MAX_REPLAY_EVENT_BYTES,
-  MAX_SOLO_UNDO_CHECKPOINTS,
-} from './model.js';
+import { MAX_REPLAY_EVENT_BATCHES, MAX_REPLAY_EVENT_BYTES } from './model.js';
 import type {
   AuthorityDelivery,
   AuthorityCommandTiming,
@@ -44,14 +39,7 @@ import type {
 } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
 import { presentationEventsForBatch } from './presentation-events.js';
-import { appendReplayHistory } from './replay-history.js';
-import {
-  appendSoloUndoHistory,
-  cloneSoloUndoHistory,
-  emptySoloUndoHistory,
-  materializeSoloUndoCheckpoint,
-  popSoloUndoHistory,
-} from './solo-undo-history.js';
+import { undoCheckpointFor } from './undo-history.js';
 
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
@@ -153,15 +141,6 @@ const createAuthorityCommandTimer = (
     }),
   };
 };
-
-const cloneSession = (session: AuthoritySession): AuthoritySession => ({
-  ...session,
-  viewer:
-    session.viewer.kind === 'player'
-      ? { kind: 'player', playerId: session.viewer.playerId }
-      : { kind: 'spectator' },
-  recentOutcomes: session.recentOutcomes.map((outcome) => ({ ...outcome })),
-});
 
 const resultMessage = (outcome: PersistedCommandOutcome): ServerMessage => ({
   type: 'CommandResult',
@@ -318,14 +297,6 @@ export const processAuthorityCommand = async (
         ? supplied!
         : validateAuthoritySnapshot(current);
       if (
-        !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
-        dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
-        dependencies.policy.maximumSoloUndoCheckpoints >
-          MAX_SOLO_UNDO_CHECKPOINTS
-      ) {
-        throw new Error('Solo undo checkpoint policy is invalid');
-      }
-      if (
         !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
         dependencies.policy.maximumReplayEventBatches < 1 ||
         dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
@@ -424,8 +395,13 @@ export const processAuthorityCommand = async (
 
   const resolved = timer.measureAuthority('resolutionAndExecutionMs', () => {
     const undoCheckpoint =
-      current.mode === 'solo' && envelope.command.type === 'ApplySoloUndo'
-        ? materializeSoloUndoCheckpoint(current.soloUndoHistory)
+      envelope.command.type === 'ApplySoloUndo' &&
+      session.viewer.kind === 'player'
+        ? undoCheckpointFor(
+            current.replayHistory,
+            current.mode,
+            session.viewer.playerId
+          )
         : undefined;
     const resolution = resolveWireCommand(
       current.state,
@@ -465,6 +441,10 @@ export const processAuthorityCommand = async (
                 actorPlayerId:
                   narratedActorOf(resolution.command) ??
                   session.viewer.playerId,
+                issuer: {
+                  playerId: session.viewer.playerId,
+                  commandId: envelope.commandId,
+                },
               }
             : execution.batch;
         outcome = {
@@ -491,74 +471,28 @@ export const processAuthorityCommand = async (
   let canonicalEventBatch = eventBatch;
 
   let candidate = timer.measureAuthority('historyAndCandidateMs', () => {
-    let soloUndoHistory =
-      current.mode === 'multiplayer'
-        ? current.soloUndoHistory
-        : cloneSoloUndoHistory(current.soloUndoHistory);
-    if (accepted && current.mode === 'solo') {
-      if (envelope.command.type === 'ApplySoloUndo') {
-        soloUndoHistory = popSoloUndoHistory(soloUndoHistory);
-      } else if (envelope.command.type === 'LoadDeck') {
-        // Loading a new deck replaces canonical card identities and is the same
-        // non-undoable history boundary as the legacy deck exchange.
-        soloUndoHistory = emptySoloUndoHistory();
-      } else {
-        if (!eventBatch) {
-          throw new Error(
-            'Accepted solo command did not produce an event batch'
-          );
-        }
-        soloUndoHistory = appendSoloUndoHistory(
-          soloUndoHistory,
-          current.state,
-          envelope.commandId,
-          eventBatch,
-          dependencies.policy.maximumSoloUndoCheckpoints
-        );
-      }
-    }
+    // Validated snapshots are frozen, so a candidate shares every part of
+    // the current one that the command left alone.
     let replayHistory = current.replayHistory;
-    let candidateState: MatchState =
-      current.mode === 'multiplayer'
-        ? current.state
-        : cloneMatchState(current.state);
+    let candidateState: MatchState = current.state;
     if (accepted) {
       if (!eventBatch) {
         throw new Error('Accepted command did not produce an event batch');
       }
-      if (current.mode === 'multiplayer') {
-        replayTransition = prepareValidatedReplayHistoryTransition(
-          current,
-          currentSnapshotValidation,
-          eventBatch,
-          nextState,
-          dependencies.policy.maximumReplayEventBatches,
-          dependencies.policy.maximumReplayEventBytes
-        );
-        canonicalEventBatch = replayTransition.eventBatch;
-        candidateState = replayTransition.resultingState;
-        replayHistory = replayTransition.replayHistory;
-      } else {
-        candidateState = cloneMatchState(nextState);
-        replayHistory = appendReplayHistory(
-          replayHistory,
-          eventBatch,
-          candidateState,
-          dependencies.policy.maximumReplayEventBatches,
-          dependencies.policy.maximumReplayEventBytes
-        );
-      }
+      replayTransition = prepareValidatedReplayHistoryTransition(
+        current,
+        currentSnapshotValidation,
+        eventBatch,
+        nextState,
+        dependencies.policy.maximumReplayEventBatches,
+        dependencies.policy.maximumReplayEventBytes
+      );
+      canonicalEventBatch = replayTransition.eventBatch;
+      candidateState = replayTransition.resultingState;
+      replayHistory = replayTransition.replayHistory;
     }
 
-    const sessions =
-      current.mode === 'multiplayer'
-        ? { ...current.sessions }
-        : Object.fromEntries(
-            Object.entries(current.sessions).map(([id, value]) => [
-              id,
-              cloneSession(value),
-            ])
-          );
+    const sessions = { ...current.sessions };
     sessions[session.id] = appendOutcome(
       sessions[session.id]!,
       outcome,
@@ -569,21 +503,11 @@ export const processAuthorityCommand = async (
       authorityVersion: current.authorityVersion + 1,
       mode: current.mode,
       state: candidateState,
-      soloUndoHistory,
       replayHistory,
       identities:
         accepted && envelope.command.type === 'ApplySoloUndo'
           ? emptyProjectionIdentityState()
-          : current.mode === 'multiplayer'
-            ? current.identities
-            : {
-                cardAliases: current.identities.cardAliases.map((entry) => ({
-                  ...entry,
-                })),
-                definitionAliases: current.identities.definitionAliases.map(
-                  (entry) => ({ ...entry })
-                ),
-              },
+          : current.identities,
       sessions,
       ...(current.admission ? { admission: current.admission } : {}),
     } satisfies RoomAuthoritySnapshot;
@@ -610,19 +534,17 @@ export const processAuthorityCommand = async (
   const candidateSnapshotValidation = timer.measureAuthority(
     'candidateValidationMs',
     () =>
-      current.mode === 'multiplayer'
-        ? validateMultiplayerAuthorityCandidate(
-            current,
-            currentSnapshotValidation,
-            candidate,
-            session.id,
-            outcome,
-            dependencies.policy.maximumRecentOutcomesPerSession,
-            dependencies.policy.maximumReplayEventBatches,
-            dependencies.policy.maximumReplayEventBytes,
-            replayTransition?.validation
-          )
-        : validateAuthoritySnapshot(candidate)
+      validateAuthorityCommandCandidate(
+        current,
+        currentSnapshotValidation,
+        candidate,
+        session.id,
+        outcome,
+        dependencies.policy.maximumRecentOutcomesPerSession,
+        dependencies.policy.maximumReplayEventBatches,
+        dependencies.policy.maximumReplayEventBytes,
+        replayTransition?.validation
+      )
   );
 
   await timer.measurePersistence(() =>

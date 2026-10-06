@@ -220,9 +220,6 @@ const validateRestorePlan = async (
     Object.keys(plan.snapshot.sessions).length !== 0 ||
     plan.snapshot.identities.cardAliases.length !== 0 ||
     plan.snapshot.identities.definitionAliases.length !== 0 ||
-    plan.snapshot.soloUndoHistory.baseState !== null ||
-    plan.snapshot.soloUndoHistory.baseStateHash !== null ||
-    plan.snapshot.soloUndoHistory.entries.length !== 0 ||
     !admission ||
     admission.playerSeatLimit !== 2 ||
     admission.spectatorCapabilityDigest !== null ||

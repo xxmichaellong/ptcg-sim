@@ -35,6 +35,7 @@ import { isConcealedZone } from './concealed-zone.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
 import { stableHash } from './stable-hash.js';
+import { applyMatchStatePatch } from './state-patch.js';
 
 const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
@@ -3643,10 +3644,16 @@ const applyEventInternal = (
       };
     }
     case 'UndoApplied': {
+      if (event.fromRevision !== state.revision) {
+        throw new Error('Undo event is malformed');
+      }
+      const restoredState =
+        'restorePatch' in event
+          ? applyMatchStatePatch(state, event.restorePatch)
+          : event.restoredState;
       if (
-        event.fromRevision !== state.revision ||
-        event.checkpointRevision !== event.restoredState.revision ||
-        stableHash(event.restoredState) !== event.checkpointHash ||
+        event.checkpointRevision !== restoredState.revision ||
+        stableHash(restoredState) !== event.checkpointHash ||
         event.revertedCommandId.length < 1 ||
         event.revertedCommandId.length > 128 ||
         !Number.isSafeInteger(event.revertedRevision) ||
@@ -3654,14 +3661,14 @@ const applyEventInternal = (
         event.revertedRevision > event.fromRevision ||
         !state.players[event.actorPlayerId] ||
         !state.players[event.targetPlayerId] ||
-        !event.restoredState.players[event.actorPlayerId] ||
-        !event.restoredState.players[event.targetPlayerId] ||
-        soloUndoCheckpointProblem(state, event.restoredState)
+        !restoredState.players[event.actorPlayerId] ||
+        !restoredState.players[event.targetPlayerId] ||
+        soloUndoCheckpointProblem(state, restoredState)
       ) {
         throw new Error('Undo event is malformed');
       }
       return {
-        ...cloneMatchState(event.restoredState),
+        ...cloneMatchState(restoredState),
         // applyEventBatch owns the public monotonic revision. Keeping the
         // current value here ensures the next event in a malformed multi-event
         // batch cannot observe an old checkpoint revision.

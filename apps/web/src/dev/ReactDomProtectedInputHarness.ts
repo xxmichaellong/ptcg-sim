@@ -676,7 +676,7 @@ export const mountReactDomProtectedInputHarness = async (
             createElement(LegacyBoardKeyboardShortcuts, {
               state: current,
               darkMode,
-              soloUndoEnabled: true,
+              undoSeat: 'acting',
               onRequest: (request) => {
                 shortcutActions.push(request);
                 runtime.emitLegacyShortcutAction(request);

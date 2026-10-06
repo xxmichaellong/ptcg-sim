@@ -1,6 +1,5 @@
 import type {
   CommandContext,
-  DomainEvent,
   EventBatch,
   MatchState,
   PlayerId,
@@ -14,8 +13,7 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 7 as const;
-export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 8 as const;
 export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
 export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
 export const MAX_OUTSTANDING_ADMISSION_TICKETS = 32;
@@ -121,32 +119,22 @@ export interface RoomAuthoritySnapshot {
   readonly authorityVersion: number;
   readonly mode: AuthorityMode;
   readonly state: MatchState;
-  readonly soloUndoHistory: SoloUndoHistory;
+  /**
+   * The match's bounded history. Replays and undo both read it: undo takes
+   * back the newest move still on its stack, so there is no second copy.
+   */
   readonly replayHistory: ReplayHistory;
   readonly identities: ProjectionIdentityState;
   readonly sessions: Readonly<Record<string, AuthoritySession>>;
   readonly admission?: RoomAdmissionState;
 }
 
-export interface SoloUndoCheckpoint {
+/** The state an undo restores, derived from the replay history. */
+export interface UndoCheckpoint {
   readonly state: MatchState;
   readonly stateHash: string;
   readonly revertedCommandId: string;
   readonly revertedRevision: number;
-}
-
-export interface SoloUndoHistoryEntry {
-  readonly checkpointRevision: number;
-  readonly checkpointHash: string;
-  readonly revertedCommandId: string;
-  readonly revertedRevision: number;
-  readonly events: readonly DomainEvent[];
-}
-
-export interface SoloUndoHistory {
-  readonly baseState: MatchState | null;
-  readonly baseStateHash: string | null;
-  readonly entries: readonly SoloUndoHistoryEntry[];
 }
 
 export interface ReplayHistoryEntry {
@@ -269,7 +257,6 @@ export interface AdmissionPersistence {
 export interface AuthorityPolicy {
   readonly allowOpponentPublicInteraction: boolean;
   readonly maximumRecentOutcomesPerSession: number;
-  readonly maximumSoloUndoCheckpoints: number;
   readonly maximumReplayEventBatches: number;
   readonly maximumReplayEventBytes: number;
 }
@@ -319,7 +306,6 @@ export interface AuthorityCommandTimingBreakdown extends AuthorityPersistenceTim
 export const DEFAULT_AUTHORITY_POLICY: AuthorityPolicy = {
   allowOpponentPublicInteraction: true,
   maximumRecentOutcomesPerSession: 128,
-  maximumSoloUndoCheckpoints: MAX_SOLO_UNDO_CHECKPOINTS,
   maximumReplayEventBatches: MAX_REPLAY_EVENT_BATCHES,
   maximumReplayEventBytes: MAX_REPLAY_EVENT_BYTES,
 };

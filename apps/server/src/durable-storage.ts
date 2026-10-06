@@ -501,6 +501,10 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
     schemaVersion === 4;
   const legacyAdmissionSchema =
     legacySchema || schemaVersion === 5 || schemaVersion === 6;
+  // Schema 8 retired the separate solo undo history: undo now reads the
+  // replay history every snapshot already keeps.
+  const retiredUndoHistory =
+    schemaVersion !== AUTHORITY_SNAPSHOT_SCHEMA_VERSION;
   if (schemaVersion === 1) {
     const state = migrateMatchState(rawState);
     candidate = {
@@ -508,11 +512,6 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
       state,
       mode: 'multiplayer',
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: createReplayHistory(state),
     };
   } else if (schemaVersion === 2) {
@@ -521,11 +520,6 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
       state,
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: createReplayHistory(state),
     };
   } else if (schemaVersion === 3) {
@@ -534,11 +528,6 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
       state,
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: createReplayHistory(state),
     };
   } else if (schemaVersion === 4) {
@@ -561,7 +550,7 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
           }
         : {}),
     };
-  } else if (schemaVersion === 6) {
+  } else if (schemaVersion === 6 || schemaVersion === 7) {
     candidate = {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -571,16 +560,18 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
   } else {
     throw new Error('Stored room snapshot has an unsupported schema');
   }
+  if (retiredUndoHistory) {
+    const { soloUndoHistory: _retired, ...current } =
+      candidate as RoomAuthoritySnapshot & {
+        readonly soloUndoHistory?: unknown;
+      };
+    candidate = current;
+  }
   const state = migrateMatchState(candidate.state);
   if (state !== candidate.state) {
     candidate = {
       ...candidate,
       state,
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: createReplayHistory(state),
     };
   }

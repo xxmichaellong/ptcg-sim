@@ -15,7 +15,8 @@ import {
   asWorkAreaId,
 } from './ids.js';
 import { assertMatchInvariants } from './invariants.js';
-import { stableHash } from './stable-hash.js';
+import { stableHash, stableSerialize } from './stable-hash.js';
+import { diffMatchState } from './state-patch.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -95,13 +96,51 @@ describe('solo undo domain transition', () => {
         fromRevision: drawn.state.revision,
         checkpointRevision: checkpoint.revision,
         checkpointHash: stableHash(checkpoint),
-        restoredState: checkpoint,
+        restorePatch: diffMatchState(drawn.state, checkpoint),
       },
     ]);
+    // The event records what the draw changed, not a copy of the whole match.
+    const patchBytes = stableSerialize(undone.batch.events).length;
+    expect(patchBytes * 5).toBeLessThan(stableSerialize(checkpoint).length);
     expect(undone.state.zones[playerZoneId(p1, 'hand')]?.cardIds).toHaveLength(
       0
     );
     assertMatchInvariants(undone.state);
+  });
+
+  it('rejects a restore patch that does not reproduce its checkpoint', () => {
+    const adapter = context();
+    const checkpoint = preparedState();
+    const drawn = executeCommand(
+      checkpoint,
+      { type: 'DrawCards', playerId: p1, count: 2 },
+      adapter
+    );
+    if (!drawn.accepted) throw new Error(drawn.message);
+    const patch = diffMatchState(drawn.state, checkpoint);
+    const handPath = ['zones', playerZoneId(p1, 'hand'), 'cardIds'];
+    const tampered = patch.filter(
+      (operation) => operation.path.join('/') !== handPath.join('/')
+    );
+    expect(tampered.length).toBeLessThan(patch.length);
+    expect(() =>
+      applyEventBatch(drawn.state, {
+        revision: drawn.state.revision + 1,
+        events: [
+          {
+            type: 'UndoApplied',
+            actorPlayerId: p1,
+            targetPlayerId: p1,
+            revertedCommandId: 'draw-command',
+            revertedRevision: drawn.state.revision,
+            fromRevision: drawn.state.revision,
+            checkpointRevision: checkpoint.revision,
+            checkpointHash: stableHash(checkpoint),
+            restorePatch: tampered,
+          },
+        ],
+      })
+    ).toThrow('Undo event is malformed');
   });
 
   it('does not re-run randomness while restoring a randomized checkpoint', () => {

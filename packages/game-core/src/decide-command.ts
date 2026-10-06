@@ -35,7 +35,6 @@ import type {
   MatchState,
   PlayStack,
 } from './model.js';
-import { cloneMatchState } from './clone.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
@@ -44,6 +43,7 @@ import { isConcealedZone } from './concealed-zone.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
 import { stableHash } from './stable-hash.js';
+import { diffMatchState } from './state-patch.js';
 
 export interface CommandAccepted {
   readonly accepted: true;
@@ -3007,7 +3007,6 @@ export const decideCommand = (
       if (checkpointProblem) {
         return reject('precondition_failed', checkpointProblem);
       }
-      const restoredState = cloneMatchState(command.checkpoint);
       return accept({
         type: 'UndoApplied',
         actorPlayerId: command.actorPlayerId,
@@ -3015,9 +3014,9 @@ export const decideCommand = (
         revertedCommandId: command.revertedCommandId,
         revertedRevision: command.revertedRevision,
         fromRevision: state.revision,
-        checkpointRevision: restoredState.revision,
-        checkpointHash: stableHash(restoredState),
-        restoredState,
+        checkpointRevision: command.checkpoint.revision,
+        checkpointHash: stableHash(command.checkpoint),
+        restorePatch: diffMatchState(state, command.checkpoint),
       });
     }
     case 'FlipCoin': {

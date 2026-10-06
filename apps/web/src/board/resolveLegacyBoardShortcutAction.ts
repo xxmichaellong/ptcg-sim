@@ -87,7 +87,14 @@ export type LegacyBoardShortcutActionRequest =
   | { readonly action: 'setupOwnPlayer' }
   | { readonly action: 'resetOwnPlayer' }
   | { readonly action: 'startOwnTurn' }
-  | { readonly action: 'undoOwnLastMove' }
+  | {
+      readonly action: 'undoOwnLastMove';
+      /**
+       * Take back the viewer's own move rather than the bottom seat's. A
+       * multiplayer player only ever undoes their own, flipped board or not.
+       */
+      readonly ownSeat?: boolean;
+    }
   | {
       readonly action: 'rotateSelectedCard';
       readonly cardId: ViewCardId;
@@ -342,7 +349,13 @@ export const resolveLegacyBoardShortcutAction = (
       if (view.viewer.kind !== 'player' || acting === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      return retainResolution(resolveSoloUndoAction(view, acting), false);
+      return retainResolution(
+        resolveSoloUndoAction(
+          view,
+          request.ownSeat ? view.viewer.playerId : acting
+        ),
+        false
+      );
     }
     case 'discardOwnHandAndDraw':
     case 'shuffleOwnHandAndDraw':

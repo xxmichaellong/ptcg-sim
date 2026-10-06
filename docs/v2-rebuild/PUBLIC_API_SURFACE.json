@@ -378,6 +378,10 @@
               "kind": "value"
             },
             {
+              "name": "applyMatchStatePatch",
+              "kind": "value"
+            },
+            {
               "name": "asCardDefinitionId",
               "kind": "value"
             },
@@ -530,6 +534,10 @@
               "kind": "type"
             },
             {
+              "name": "diffMatchState",
+              "kind": "value"
+            },
+            {
               "name": "DomainEvent",
               "kind": "type"
             },
@@ -595,6 +603,14 @@
             },
             {
               "name": "MatchState",
+              "kind": "type"
+            },
+            {
+              "name": "MatchStatePatch",
+              "kind": "type"
+            },
+            {
+              "name": "MatchStatePatchOperation",
               "kind": "type"
             },
             {
@@ -703,6 +719,10 @@
             },
             {
               "name": "TurnState",
+              "kind": "type"
+            },
+            {
+              "name": "UndoAppliedEvent",
               "kind": "type"
             },
             {
@@ -1838,10 +1858,6 @@
               "kind": "value"
             },
             {
-              "name": "appendSoloUndoHistory",
-              "kind": "value"
-            },
-            {
               "name": "assertAdmissionTransactionTransition",
               "kind": "value"
             },
@@ -1938,10 +1954,6 @@
               "kind": "value"
             },
             {
-              "name": "cloneSoloUndoHistory",
-              "kind": "value"
-            },
-            {
               "name": "collectAuthoritySnapshotProblems",
               "kind": "value"
             },
@@ -1990,10 +2002,6 @@
               "kind": "value"
             },
             {
-              "name": "emptySoloUndoHistory",
-              "kind": "value"
-            },
-            {
               "name": "expireDisconnectedRoomSessions",
               "kind": "value"
             },
@@ -2014,10 +2022,6 @@
               "kind": "value"
             },
             {
-              "name": "materializeSoloUndoCheckpoint",
-              "kind": "value"
-            },
-            {
               "name": "MAX_OUTSTANDING_ADMISSION_TICKETS",
               "kind": "value"
             },
@@ -2031,10 +2035,6 @@
             },
             {
               "name": "MAX_REPLAY_EVENT_BYTES",
-              "kind": "value"
-            },
-            {
-              "name": "MAX_SOLO_UNDO_CHECKPOINTS",
               "kind": "value"
             },
             {
@@ -2052,10 +2052,6 @@
             {
               "name": "PersistedCommandOutcome",
               "kind": "type"
-            },
-            {
-              "name": "popSoloUndoHistory",
-              "kind": "value"
             },
             {
               "name": "prepareValidatedReplayHistoryTransition",
@@ -2126,10 +2122,6 @@
               "kind": "type"
             },
             {
-              "name": "replaySoloUndoHistory",
-              "kind": "value"
-            },
-            {
               "name": "resolveViewCard",
               "kind": "value"
             },
@@ -2182,16 +2174,16 @@
               "kind": "value"
             },
             {
-              "name": "SoloUndoCheckpoint",
+              "name": "UndoCheckpoint",
               "kind": "type"
             },
             {
-              "name": "SoloUndoHistory",
-              "kind": "type"
+              "name": "undoCheckpointFor",
+              "kind": "value"
             },
             {
-              "name": "SoloUndoHistoryEntry",
-              "kind": "type"
+              "name": "validateAuthorityCommandCandidate",
+              "kind": "value"
             },
             {
               "name": "validateAuthoritySnapshot",
@@ -2200,10 +2192,6 @@
             {
               "name": "ValidatedReplayHistoryTransition",
               "kind": "type"
-            },
-            {
-              "name": "validateMultiplayerAuthorityCandidate",
-              "kind": "value"
             },
             {
               "name": "viewerIdentityKey",

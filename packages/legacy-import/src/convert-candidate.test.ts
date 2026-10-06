@@ -6,6 +6,7 @@ import {
   createEmptyMatch,
   playerZoneId,
   stableHash,
+  stableSerialize,
   stadiumZoneId,
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
@@ -3280,7 +3281,13 @@ describe('legacy v1 canonical candidate builder', () => {
     for (const record of undoRecords) {
       const event = record.batches[0]!.events[0];
       if (event?.type !== 'UndoApplied') throw new Error('Missing undo event');
-      expect(event.checkpointHash).toBe(stableHash(event.restoredState));
+      // Undo records the difference it restores, verified against
+      // `checkpointHash` when applied, not a copy of the whole match.
+      expect(event).toHaveProperty('restorePatch');
+      expect(event).not.toHaveProperty('restoredState');
+      expect(stableSerialize(event).length).toBeLessThan(
+        stableSerialize(result.state).length / 2
+      );
     }
     expect(result.state.revision).toBe(6);
     expect(result.state.zones[playerZoneId(selfId, 'deck')]?.cardIds).toEqual([

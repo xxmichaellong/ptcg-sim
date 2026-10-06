@@ -373,8 +373,24 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       ).toBeVisible();
     }
 
+    // A multiplayer player takes back only their own newest move: the
+    // creator has nothing of theirs to undo, Red can take the attack back.
+    await creator.page.locator('#p2UndoButton').click();
+    await playerTwo.page.locator('#p2UndoButton').click();
+    for (const page of [creator.page, playerTwo.page, spectator.page]) {
+      await expect(
+        page
+          .locator('#p2Chatbox')
+          .getByText('Red took back their last move!', { exact: true })
+      ).toBeVisible();
+    }
+    await expect(
+      creator.page.locator('#p2Chatbox').getByText(/took back/)
+    ).toHaveCount(1);
+
     await expect(spectator.page.locator('#p2AttackButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2PassButton')).toHaveCount(0);
+    await expect(spectator.page.locator('#p2UndoButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2SetupButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2ResetButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2FREEBUTTON')).toHaveClass(

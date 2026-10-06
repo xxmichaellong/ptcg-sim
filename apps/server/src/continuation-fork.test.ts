@@ -144,7 +144,6 @@ const snapshotFixture = (): RoomAuthoritySnapshot => {
     authorityVersion: 19,
     mode: 'multiplayer',
     state: loaded.state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: appendReplayHistory(
       createReplayHistory(initial),
       loaded.batch,
@@ -293,11 +292,7 @@ describe('continuation fork transformation', () => {
     expect(result.snapshot.authorityVersion).toBe(0);
     expect(result.snapshot.sessions).toEqual({});
     expect(result.snapshot.identities).toEqual(emptyProjectionIdentityState());
-    expect(result.snapshot.soloUndoHistory).toEqual({
-      baseState: null,
-      baseStateHash: null,
-      entries: [],
-    });
+    expect(result.snapshot).not.toHaveProperty('soloUndoHistory');
     expect(source.snapshot).toEqual(sourceBefore);
 
     const admission = result.snapshot.admission!;

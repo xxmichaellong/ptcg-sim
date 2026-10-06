@@ -201,11 +201,6 @@ export const prepareContinuationFork = async (
     authorityVersion: 0,
     mode: 'multiplayer',
     state: structuredClone(source.snapshot.state),
-    soloUndoHistory: {
-      baseState: null,
-      baseStateHash: null,
-      entries: [],
-    },
     replayHistory: structuredClone(source.snapshot.replayHistory),
     identities: emptyProjectionIdentityState(),
     sessions: {},

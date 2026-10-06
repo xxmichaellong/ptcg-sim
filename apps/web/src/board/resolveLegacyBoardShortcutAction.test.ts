@@ -517,6 +517,11 @@ describe('legacy board shortcut action resolver', () => {
         { action: 'undoOwnLastMove' },
         { type: 'ApplySoloUndo', targetPlayerId: other },
       ],
+      // A multiplayer player takes back only their own move, flipped or not.
+      [
+        { action: 'undoOwnLastMove', ownSeat: true },
+        { type: 'ApplySoloUndo', targetPlayerId: viewerId },
+      ],
       [{ action: 'flipCoin' }, { type: 'FlipCoin', targetPlayerId: other }],
       [
         { action: 'drawOwnDeck', count: 2 },

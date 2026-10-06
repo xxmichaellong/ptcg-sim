@@ -42,6 +42,7 @@ import {
 import {
   DEFAULT_AUTHORITY_POLICY,
   RoomAuthorityCoordinator,
+  undoCheckpointFor,
   type AuthoritySnapshotStore,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
@@ -3831,7 +3832,12 @@ describe('client/server multiplayer contract', () => {
       targetPlayerId: playerId,
       revertedRevision: 3,
     });
-    expect(room.store.snapshot?.soloUndoHistory.entries).toHaveLength(1);
+    // Setup is now the newest move standing; the deck load before it is the
+    // boundary nothing can be taken back past.
+    expect(
+      undoCheckpointFor(room.store.snapshot!.replayHistory, 'solo', playerId)
+        ?.revertedCommandId
+    ).toBe('Blue-command-2');
     expect(
       room.store.commandCommits.at(-1)?.eventBatch?.events[0]
     ).toMatchObject({
@@ -3856,6 +3862,118 @@ describe('client/server multiplayer contract', () => {
       presentationCount
     );
     expect(room.store.commandCommits).toHaveLength(4);
+  });
+
+  it('lets a multiplayer player take back their own newest move for everyone at the table', async () => {
+    const room = await fixture('multiplayer');
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const scheduler = new ManualScheduler();
+    const blue = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const red = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+      scheduler,
+    });
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const blueId = blue.session.getSnapshot().playerId;
+    const redId = red.session.getSnapshot().playerId;
+    if (!blueId || !redId) throw new Error('Missing admitted players');
+    const flushAll = async () => {
+      await blue.factory.flush();
+      await red.factory.flush();
+      await spectator.factory.flush();
+    };
+
+    blue.session.submit({
+      type: 'LoadDeck',
+      entries: Array.from({ length: 12 }, (_, index) => ({
+        definition: {
+          id: `multiplayer-undo-definition-${index}`,
+          name: `Multiplayer undo card ${index}`,
+          category: 'Trainer' as const,
+          imageUrl: `/multiplayer-undo-card-${index}.png`,
+        },
+        count: 1,
+      })),
+    });
+    await flushAll();
+    blue.session.submit({ type: 'DrawCards', count: 2 });
+    await flushAll();
+    const zoneOf = (
+      view: NonNullable<ReturnType<typeof red.session.getSnapshot>['view']>,
+      kind: 'hand' | 'deck'
+    ) =>
+      Object.values(view.zones).find(
+        (zone) => zone.ownerId === blueId && zone.kind === kind
+      )!;
+    const redBefore = red.session.getSnapshot().view!;
+    expect(redBefore.revision).toBe(2);
+    expect(zoneOf(redBefore, 'hand').cards).toHaveLength(2);
+    const redDeckAliases = zoneOf(redBefore, 'deck').cards.map(
+      (card) => card.id
+    );
+
+    // Red cannot take back Blue's draw.
+    red.session.submit({ type: 'ApplySoloUndo', targetPlayerId: redId });
+    await flushAll();
+    expect(red.session.getSnapshot().completedCommands.at(-1)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+
+    // A reconnect is not a seat claim: Blue's draw is still theirs to undo.
+    red.factory.latest().networkDrop();
+    scheduler.runNext();
+    red.factory.latest().open();
+    await flushAll();
+    expect(red.session.getSnapshot().view?.revision).toBe(2);
+
+    blue.session.submit({ type: 'ApplySoloUndo', targetPlayerId: blueId });
+    await flushAll();
+    for (const client of [blue, red, spectator]) {
+      const snapshot = client.session.getSnapshot();
+      expect(snapshot.view?.revision).toBe(3);
+      expect(zoneOf(snapshot.view!, 'hand').cards).toHaveLength(0);
+      expect(zoneOf(snapshot.view!, 'deck').cards).toHaveLength(12);
+      expect(snapshot.presentationEvents.at(-1)).toEqual({
+        type: 'UndoApplied',
+        revision: 3,
+        actorPlayerId: blueId,
+        targetPlayerId: blueId,
+        revertedRevision: 2,
+      });
+    }
+    // The cards that came back carry fresh aliases for the opponent, so the
+    // discarded branch cannot be matched against the restored one.
+    const restoredAliases = zoneOf(
+      red.session.getSnapshot().view!,
+      'deck'
+    ).cards.map((card) => card.id);
+    expect(
+      restoredAliases.some((alias) => redDeckAliases.includes(alias))
+    ).toBe(false);
+
+    // The deck load is a boundary nothing is taken back past.
+    blue.session.submit({ type: 'ApplySoloUndo', targetPlayerId: blueId });
+    await flushAll();
+    expect(blue.session.getSnapshot().completedCommands.at(-1)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    expect(room.store.snapshot?.state.revision).toBe(3);
   });
 
   it('discloses and controls the opponent hand only for the admitted solo player', async () => {

@@ -52,7 +52,6 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     authorityVersion: 0,
     mode: 'multiplayer',
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {},
@@ -1001,9 +1000,6 @@ describe('room capability admission', () => {
     expect(left.session).not.toHaveProperty('resumeCapabilityDigest');
     expect(left.snapshot.state).toBe(claimed.snapshot.state);
     expect(left.snapshot.replayHistory).toBe(claimed.snapshot.replayHistory);
-    expect(left.snapshot.soloUndoHistory).toBe(
-      claimed.snapshot.soloUndoHistory
-    );
     expect(storage.transactions.at(-1)).toMatchObject({
       kind: 'session_left',
       sessionId: claimed.session.id,

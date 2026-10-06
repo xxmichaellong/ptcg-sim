@@ -20,7 +20,6 @@ import {
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { createReplayHistory } from './replay-history.js';
-import { emptySoloUndoHistory } from './solo-undo-history.js';
 
 export type AdmissionRequest =
   | {
@@ -858,9 +857,6 @@ const admitAuthorizedSession = async (
     ...current,
     authorityVersion: current.authorityVersion + 1,
     state,
-    soloUndoHistory: claimedPlayerId
-      ? emptySoloUndoHistory()
-      : current.soloUndoHistory,
     replayHistory: claimedPlayerId
       ? createReplayHistory(state)
       : current.replayHistory,

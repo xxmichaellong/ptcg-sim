@@ -33,7 +33,6 @@ const snapshot = (): RoomAuthoritySnapshot => {
     authorityVersion: 0,
     mode: 'multiplayer',
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {},

@@ -48,7 +48,6 @@ const snapshotWith = (options: {
     authorityVersion: 0,
     mode: options.mode,
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     admission: {

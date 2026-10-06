@@ -695,7 +695,11 @@ export const RemoteSessionBoard = ({
           <LegacyBoardKeyboardShortcuts
             state={boardState}
             darkMode={preferences.darkMode}
-            soloUndoEnabled={roomMode === 'solo'}
+            {...(roomMode === 'solo'
+              ? { undoSeat: 'acting' as const }
+              : roomMode === 'multiplayer'
+                ? { undoSeat: 'own' as const }
+                : {})}
             boardFlipEnabled={boardFlipAllowed(roomMode, boardState.view)}
             {...keyboardActions}
           />

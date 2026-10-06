@@ -36,7 +36,6 @@ const snapshot = (input: {
     authorityVersion: 1,
     mode: input.mode,
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {

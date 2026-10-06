@@ -65,7 +65,6 @@ const snapshotFixture = (): RoomAuthoritySnapshot => {
     authorityVersion: 3,
     mode: 'multiplayer',
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     admission: {

@@ -11,7 +11,7 @@ import { emptyProjectionIdentityState } from './identity-registry.js';
 import {
   DEFAULT_AUTHORITY_POLICY,
   type AuthoritySession,
-  type SoloUndoCheckpoint,
+  type UndoCheckpoint,
 } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
 
@@ -25,7 +25,7 @@ const state = {
   revision: 3,
 };
 const checkpointState = { ...cloneMatchState(state), revision: 2 };
-const checkpoint: SoloUndoCheckpoint = {
+const checkpoint: UndoCheckpoint = {
   state: checkpointState,
   stateHash: stableHash(checkpointState),
   revertedCommandId: 'move-command',
@@ -64,29 +64,37 @@ describe('solo undo authority resolution', () => {
     });
   });
 
-  it('rejects multiplayer mode and missing solo history', () => {
-    expect(
+  it("confines a multiplayer undo to the player's own seat and needs a checkpoint", () => {
+    const resolve = (
+      targetPlayerId: string,
+      context: Parameters<typeof resolveWireCommand>[6]
+    ) =>
       resolveWireCommand(
         state,
         emptyProjectionIdentityState(),
         player,
-        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        { type: 'ApplySoloUndo', targetPlayerId },
         DEFAULT_AUTHORITY_POLICY,
         state.revision,
-        { mode: 'multiplayer', checkpoint }
-      )
-    ).toEqual({ accepted: false, code: 'unauthorized' });
-    expect(
-      resolveWireCommand(
-        state,
-        emptyProjectionIdentityState(),
-        player,
-        { type: 'ApplySoloUndo', targetPlayerId: p1 },
-        DEFAULT_AUTHORITY_POLICY,
-        state.revision,
-        { mode: 'solo' }
-      )
-    ).toEqual({ accepted: false, code: 'precondition_failed' });
+        context
+      );
+    expect(resolve(p1, { mode: 'multiplayer', checkpoint })).toMatchObject({
+      accepted: true,
+      command: { actorPlayerId: p1, targetPlayerId: p1 },
+    });
+    // Solo's controller may name either seat; a multiplayer player may not.
+    expect(resolve(p2, { mode: 'multiplayer', checkpoint })).toEqual({
+      accepted: false,
+      code: 'unauthorized',
+    });
+    expect(resolve(p1, { mode: 'multiplayer' })).toEqual({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    expect(resolve(p1, { mode: 'solo' })).toEqual({
+      accepted: false,
+      code: 'precondition_failed',
+    });
   });
 
   it('rejects stale revisions, missing targets, and spectators', () => {

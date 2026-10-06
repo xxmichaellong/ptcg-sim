@@ -1,8 +1,15 @@
 # ADR-014: preserve bounded authoritative solo undo
 
-- Status: **ACCEPTED**
+- Status: **ACCEPTED**, storage and Solo-only scope superseded by ADR-026
 - Decision date: 2026-09-14
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-10-06
+
+> ADR-026 (2026-10-06) keeps this record's whole-match order, exact
+> restoration, new-revision undo, and alias rotation, but derives undo from
+> the replay history instead of a second stored history, records the restore
+> as a patch, and allows a multiplayer player to take back their own newest
+> move. The storage description below is historical.
+
 - Scope: undo semantics, history, and hidden identity
 
 ## Context

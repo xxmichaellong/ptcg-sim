@@ -200,9 +200,12 @@ export const RemoteRoomLiveControls = ({
       });
     }
   };
-  const submitSoloUndo = (): void => {
-    if (!playerId || !state.view || !solo) return;
-    const resolution = resolveSoloUndoAction(state.view, playerId);
+  const submitUndo = (): void => {
+    // Solo takes back the bottom seat's move; a multiplayer player only ever
+    // takes back their own, whichever way the board is turned.
+    const target = solo ? playerId : ownSeat;
+    if (!target || !state.view) return;
+    const resolution = resolveSoloUndoAction(state.view, target);
     if (resolution.ok) session.submit(resolution.command);
   };
   useEffect(() => {
@@ -439,16 +442,14 @@ export const RemoteRoomLiveControls = ({
             >
               Pass
             </button>
-            {solo && (
-              <button
-                id="undoButton"
-                type="button"
-                className={seatColor}
-                onClick={submitSoloUndo}
-              >
-                Undo
-              </button>
-            )}
+            <button
+              id={solo ? 'undoButton' : 'p2UndoButton'}
+              type="button"
+              className={seatColor}
+              onClick={submitUndo}
+            >
+              Undo
+            </button>
           </>
         )}
         <button

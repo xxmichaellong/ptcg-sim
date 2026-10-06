@@ -19,6 +19,7 @@ import type {
   LooseBoardCardsDestination,
   WorkAreaCardsDestination,
 } from './commands.js';
+import type { MatchStatePatch } from './state-patch.js';
 
 /**
  * Where a card dragged into a work area came from. A sole evolution takes the
@@ -492,22 +493,32 @@ export type DomainEvent =
       readonly marker: 'gx' | 'vstar';
       readonly used: boolean;
     }
-  | {
-      readonly type: 'UndoApplied';
-      readonly actorPlayerId: PlayerId;
-      readonly targetPlayerId: PlayerId;
-      readonly revertedCommandId: string;
-      readonly revertedRevision: number;
-      readonly fromRevision: number;
-      readonly checkpointRevision: number;
-      readonly checkpointHash: string;
-      readonly restoredState: MatchState;
-    }
+  | UndoAppliedEvent
   | {
       readonly type: 'CoinFlipped';
       readonly playerId: PlayerId;
       readonly result: 'heads' | 'tails';
     };
+
+interface UndoAppliedEventBase {
+  readonly type: 'UndoApplied';
+  readonly actorPlayerId: PlayerId;
+  readonly targetPlayerId: PlayerId;
+  readonly revertedCommandId: string;
+  readonly revertedRevision: number;
+  readonly fromRevision: number;
+  readonly checkpointRevision: number;
+  readonly checkpointHash: string;
+}
+
+/**
+ * Restores the checkpoint before a taken-back command. Undo records the
+ * difference from the current state; events written before that carry the
+ * whole restored state and are still read.
+ */
+export type UndoAppliedEvent =
+  | (UndoAppliedEventBase & { readonly restorePatch: MatchStatePatch })
+  | (UndoAppliedEventBase & { readonly restoredState: MatchState });
 
 export interface EventBatch {
   readonly revision: number;
@@ -519,4 +530,13 @@ export interface EventBatch {
    * on batches written before it was recorded or produced by the room itself.
    */
   readonly actorPlayerId?: PlayerId;
+  /**
+   * The seat whose own command produced this batch, and that command's id.
+   * Unlike `actorPlayerId` this is never the seat a command was aimed at, so
+   * multiplayer undo can tell a player's own move from one made for them.
+   */
+  readonly issuer?: {
+    readonly playerId: PlayerId;
+    readonly commandId: string;
+  };
 }

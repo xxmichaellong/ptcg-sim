@@ -307,7 +307,7 @@ a manual tabletop simulator.
 | [ADR-011-CLIENT-STATE-CHANNELS.md](./ADR-011-CLIENT-STATE-CHANNELS.md)                             | Accepted authoritative, pending, and presentation client channels                                            |
 | [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md)             | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                               | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
-| [ADR-014-SOLO-UNDO.md](./ADR-014-SOLO-UNDO.md)                                                     | Accepted authoritative bounded Solo-only undo semantics                                                      |
+| [ADR-014-SOLO-UNDO.md](./ADR-014-SOLO-UNDO.md)                                                     | Accepted authoritative bounded undo semantics; storage and Solo-only scope superseded by ADR-026             |
 | [ADR-015-REFERENCE-PERFORMANCE-PROFILE.md](./ADR-015-REFERENCE-PERFORMANCE-PROFILE.md)             | Accepted physical laptop, network shaping, sampling, and quantitative release evidence contract              |
 | [ADR-016-EVENT-LEDGER-AND-PERSPECTIVE-REPLAY.md](./ADR-016-EVENT-LEDGER-AND-PERSPECTIVE-REPLAY.md) | Accepted bounded authoritative ledger and role-projected replay architecture                                 |
 | [ADR-017-COACHING-AND-PRIVATE-INSPECTION.md](./ADR-017-COACHING-AND-PRIVATE-INSPECTION.md)         | Accepted mutual-consent private-inspection and reconnect lifetime                                            |
@@ -319,6 +319,7 @@ a manual tabletop simulator.
 | [ADR-023-DESKTOP-BROWSER-SUPPORT.md](./ADR-023-DESKTOP-BROWSER-SUPPORT.md)                         | Accepted desktop browser, operating-system, minimum viewport, and release evidence matrix                    |
 | [ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md](./ADR-024-FIRST-RELEASE-ACCESSIBILITY-PARITY.md)   | Accepted accessibility-parity commitment, explicit non-claims, and release evidence boundary                 |
 | [ADR-025-PRE-ADMISSION-SOCKET-ABUSE.md](./ADR-025-PRE-ADMISSION-SOCKET-ABUSE.md)                   | Accepted layered room/edge pre-admission availability defense and public rollout gate                        |
+| [ADR-026-MULTIPLAYER-UNDO.md](./ADR-026-MULTIPLAYER-UNDO.md)                                       | Accepted replay-derived undo in both modes and own-newest-move multiplayer undo                              |
 | [ACCESSIBILITY_PARITY.md](./ACCESSIBILITY_PARITY.md)                                               | Automated evidence map and manual first-release keyboard/screen-reader audit record                          |
 | [PARITY_EXCEPTIONS.md](./PARITY_EXCEPTIONS.md)                                                     | Canonical approved correctness, lifecycle, security, and compatibility departures from v1                    |
 | [CONTINUATION_CUSTODY.md](./CONTINUATION_CUSTODY.md)                                               | Implemented server/browser private-custody contract and closed activation/UI gates                           |

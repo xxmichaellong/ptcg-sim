@@ -651,8 +651,8 @@ Work:
   authoritative replacement, generation-safe reconnect, and supersession.
   Add stale presentation-intent cancellation at the application boundary.
 - Implement opponent-action request semantics, coaching/flip behavior, presence,
-  chat, spectator projection, and hidden inspection/reveal. Preserve the current
-  absence of multiplayer undo unless a separate product ADR authorizes it.
+  chat, spectator projection, and hidden inspection/reveal. ADR-026 authorizes
+  multiplayer undo of a player's own newest move.
 - Build deterministic two/three-client simulations and browser contexts.
 - Connect the implemented closed server telemetry/health boundary to operational
   dashboards, destinations, and alerts before external beta use. Ratify the

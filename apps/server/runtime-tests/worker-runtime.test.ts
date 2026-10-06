@@ -75,7 +75,7 @@ describe('Cloudflare Worker runtime', () => {
       status: 'ok',
       buildId: 'local-development',
       protocolVersion: 2,
-      authoritySchemaVersion: 7,
+      authoritySchemaVersion: 8,
       matchStateSchemaVersion: 3,
     });
   });

@@ -26,7 +26,7 @@ import {
   assertAuthoritySnapshotInvariants,
   prepareValidatedReplayHistoryTransition,
   validateAuthoritySnapshot,
-  validateMultiplayerAuthorityCandidate,
+  validateAuthorityCommandCandidate,
   type ReplayHistoryTransitionValidation,
 } from './invariants.js';
 import { createReplayHistory } from './replay-history.js';
@@ -41,6 +41,7 @@ import {
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { processAuthorityCommand } from './process-command.js';
+import { undoCheckpointFor } from './undo-history.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -73,7 +74,6 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     authorityVersion: 0,
     mode: 'multiplayer',
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     admission: {
@@ -198,6 +198,11 @@ const command = (
   lastSeenRevision: revision,
   command: gameCommand,
 });
+
+/** The command an undo by the solo controller would take back next. */
+const nextUndo = (snapshot: RoomAuthoritySnapshot): string | undefined =>
+  undoCheckpointFor(snapshot.replayHistory, snapshot.mode, p1)
+    ?.revertedCommandId;
 
 const loadDeck = (sessionId = 'session-player-one'): CommandEnvelope =>
   command(sessionId, 1, 'load-deck-command', {
@@ -945,7 +950,7 @@ describe('authoritative room command transaction', () => {
       },
     };
 
-    const wrongLimitValidation = validateMultiplayerAuthorityCandidate(
+    const wrongLimitValidation = validateAuthorityCommandCandidate(
       current,
       currentValidation,
       candidate,
@@ -969,7 +974,7 @@ describe('authoritative room command transaction', () => {
       )
     ).toBe(false);
 
-    const validation = validateMultiplayerAuthorityCandidate(
+    const validation = validateAuthorityCommandCandidate(
       current,
       currentValidation,
       candidate,
@@ -1035,7 +1040,7 @@ describe('authoritative room command transaction', () => {
     ).toBe(false);
 
     const replayedCandidate = structuredClone(candidate);
-    const replayedValidation = validateMultiplayerAuthorityCandidate(
+    const replayedValidation = validateAuthorityCommandCandidate(
       current,
       currentValidation,
       replayedCandidate,
@@ -1062,7 +1067,7 @@ describe('authoritative room command transaction', () => {
     const corrupt = structuredClone(candidate);
     corrupt.replayHistory.entries[0]!.resultingStateHash = 'corrupt';
     expect(() =>
-      validateMultiplayerAuthorityCandidate(
+      validateAuthorityCommandCandidate(
         current,
         currentValidation,
         corrupt,
@@ -1116,7 +1121,7 @@ describe('authoritative room command transaction', () => {
       },
     };
     expect(() =>
-      validateMultiplayerAuthorityCandidate(
+      validateAuthorityCommandCandidate(
         acceptedCurrent,
         acceptedCurrentValidation,
         acceptedCandidate,
@@ -1174,7 +1179,7 @@ describe('authoritative room command transaction', () => {
         },
       };
       expect(() =>
-        validateMultiplayerAuthorityCandidate(
+        validateAuthorityCommandCandidate(
           current,
           currentValidation,
           candidate,
@@ -1213,7 +1218,7 @@ describe('authoritative room command transaction', () => {
       },
     };
     expect(() =>
-      validateMultiplayerAuthorityCandidate(
+      validateAuthorityCommandCandidate(
         current,
         currentValidation,
         candidate,
@@ -1304,7 +1309,6 @@ describe('authoritative room command transaction', () => {
     expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
     expect(result.snapshot.state).toBe(current.state);
     expect(result.snapshot.replayHistory).toBe(current.replayHistory);
-    expect(result.snapshot.soloUndoHistory).toBe(current.soloUndoHistory);
     expect(result.snapshot.identities).toBe(current.identities);
     expect(result.snapshot.admission).toBe(current.admission);
     expect(result.snapshot.sessions['session-player-one']).toBe(
@@ -2010,11 +2014,9 @@ describe('authoritative room command transaction', () => {
       loadDeck(),
       dependencies
     );
-    expect(loaded.snapshot.soloUndoHistory).toEqual({
-      baseState: null,
-      baseStateHash: null,
-      entries: [],
-    });
+    // Loading a deck replaces every card identity: nothing before it can be
+    // taken back.
+    expect(nextUndo(loaded.snapshot)).toBeUndefined();
 
     const setup = await processAuthorityCommand(
       loaded.snapshot,
@@ -2027,7 +2029,7 @@ describe('authoritative room command transaction', () => {
       ),
       dependencies
     );
-    expect(setup.snapshot.soloUndoHistory.entries).toHaveLength(1);
+    expect(nextUndo(setup.snapshot)).toBe('setup-for-undo');
     const setupState = setup.snapshot.state;
     const handId = playerZoneId(p1, 'hand');
     const setupSpectatorPublication = setup.deliveries.find(
@@ -2053,7 +2055,7 @@ describe('authoritative room command transaction', () => {
       ),
       dependencies
     );
-    expect(played.snapshot.soloUndoHistory.entries).toHaveLength(2);
+    expect(nextUndo(played.snapshot)).toBe('random-command-to-undo');
 
     const undone = await processAuthorityCommand(
       played.snapshot,
@@ -2067,7 +2069,7 @@ describe('authoritative room command transaction', () => {
       dependencies
     );
     expect(undone.snapshot.state).toEqual({ ...setupState, revision: 4 });
-    expect(undone.snapshot.soloUndoHistory.entries).toHaveLength(1);
+    expect(nextUndo(undone.snapshot)).toBe('setup-for-undo');
     expect(persistence.transactions.at(-1)?.eventBatch?.events).toEqual([
       expect.objectContaining({
         type: 'UndoApplied',
@@ -2130,7 +2132,7 @@ describe('authoritative room command transaction', () => {
       dependencies
     );
     expect(branched.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(true);
-    expect(branched.snapshot.soloUndoHistory.entries).toHaveLength(2);
+    expect(nextUndo(branched.snapshot)).toBe('branched-marker-command');
 
     const branchUndo = await processAuthorityCommand(
       branched.snapshot,
@@ -2146,7 +2148,7 @@ describe('authoritative room command transaction', () => {
     expect(branchUndo.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(
       false
     );
-    expect(branchUndo.snapshot.soloUndoHistory.entries).toHaveLength(1);
+    expect(nextUndo(branchUndo.snapshot)).toBe('setup-for-undo');
 
     const secondUndo = await processAuthorityCommand(
       branchUndo.snapshot,
@@ -2160,7 +2162,7 @@ describe('authoritative room command transaction', () => {
       dependencies
     );
     expect(secondUndo.snapshot.state.revision).toBe(7);
-    expect(secondUndo.snapshot.soloUndoHistory.entries).toEqual([]);
+    expect(nextUndo(secondUndo.snapshot)).toBeUndefined();
     expect(secondUndo.snapshot.state.zones[handId]?.cardIds).toEqual([]);
 
     const emptyUndo = await processAuthorityCommand(
@@ -2182,31 +2184,112 @@ describe('authoritative room command transaction', () => {
     });
   });
 
-  it('rejects undo through the multiplayer authority transaction', async () => {
+  it('lets a multiplayer player take back only their own newest move', async () => {
     const persistence = createPersistence();
-    const result = await processAuthorityCommand(
-      createSnapshot(),
-      command('session-player-one', 1, 'multiplayer-undo-command', {
+    const dependencies = createDependencies(persistence);
+    let current = createSnapshot();
+    const sequences: Record<string, number> = {};
+    const send = async (
+      sessionId: string,
+      commandId: string,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      sequences[sessionId] = (sequences[sessionId] ?? 0) + 1;
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]!,
+          commandId,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      return result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === sessionId &&
+          delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    const marker = (targetPlayerId: string, marker: 'gx' | 'vstar') => ({
+      type: 'SetOncePerGameMarker' as const,
+      targetPlayerId,
+      marker,
+      used: true,
+    });
+    const blue = 'session-player-one';
+    const red = 'session-player-two';
+    const undo = { type: 'ApplySoloUndo' as const, targetPlayerId: p1 };
+
+    await send(blue, 'blue-gx', marker(p1, 'gx'));
+    await send(blue, 'blue-vstar', marker(p1, 'vstar'));
+    await send(red, 'red-gx', marker(p2, 'gx'));
+    expect(current.state.revision).toBe(3);
+
+    // Red's move is the newest: Blue's moves under it are locked in.
+    expect(await send(blue, 'blue-undo-locked', undo)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    // Nobody undoes for the other seat, and spectators undo nothing.
+    expect(
+      await send(red, 'red-undo-for-blue', {
         type: 'ApplySoloUndo',
         targetPlayerId: p1,
-      }),
-      createDependencies(persistence)
-    );
-    expect(result.snapshot.state.revision).toBe(0);
-    expect(result.deliveries.at(-1)?.message).toMatchObject({
-      type: 'CommandResult',
-      accepted: false,
-      code: 'unauthorized',
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+    expect(
+      await send('session-spectator', 'spectator-undo', undo)
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+
+    // Red takes back their own move, which hands the newest one back to Blue.
+    const redUndo = await send(red, 'red-undo', {
+      type: 'ApplySoloUndo',
+      targetPlayerId: p2,
     });
-    expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
+    expect(redUndo).toMatchObject({ accepted: true });
+    expect(current.state.players[p2]?.oncePerGame.gxUsed).toBe(false);
+    expect(persistence.transactions.at(-1)?.eventBatch).toMatchObject({
+      issuer: { playerId: p2, commandId: 'red-undo' },
+      events: [
+        expect.objectContaining({
+          type: 'UndoApplied',
+          actorPlayerId: p2,
+          targetPlayerId: p2,
+          revertedCommandId: 'red-gx',
+        }),
+      ],
+    });
+
+    // Blue steps back through their own consecutive moves.
+    expect(await send(blue, 'blue-undo-1', undo)).toMatchObject({
+      accepted: true,
+    });
+    expect(current.state.players[p1]?.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(await send(blue, 'blue-undo-2', undo)).toMatchObject({
+      accepted: true,
+    });
+    expect(current.state.players[p1]?.oncePerGame.gxUsed).toBe(false);
+    expect(await send(blue, 'blue-undo-3', undo)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    // Every multiplayer step went through the incremental validator.
+    expect(current.mode).toBe('multiplayer');
+    assertAuthoritySnapshotInvariants(current);
   });
 
-  it('retains only the configured suffix of solo checkpoints', async () => {
+  it('takes back only moves still inside the bounded replay history', async () => {
     const persistence = createPersistence();
     const base = createDependencies(persistence);
     const dependencies = {
       ...base,
-      policy: { ...base.policy, maximumSoloUndoCheckpoints: 2 },
+      policy: { ...base.policy, maximumReplayEventBatches: 2 },
     };
     let current = createSoloSnapshot();
     const markerCommands = [
@@ -2243,16 +2326,10 @@ describe('authoritative room command transaction', () => {
       );
       current = result.snapshot;
     }
-    expect(
-      current.soloUndoHistory.entries.map(
-        (checkpoint) => checkpoint.revertedCommandId
-      )
-    ).toEqual(['bounded-command-2', 'bounded-command-3']);
-    expect(
-      current.soloUndoHistory.entries.map(
-        (checkpoint) => checkpoint.checkpointRevision
-      )
-    ).toEqual([1, 2]);
+    // The first move was compacted into the history's base, so its
+    // checkpoint is gone; the two after it remain.
+    expect(current.replayHistory.baseState.revision).toBe(1);
+    expect(nextUndo(current)).toBe('bounded-command-3');
 
     const firstUndo = await processAuthorityCommand(
       current,
@@ -2271,6 +2348,9 @@ describe('authoritative room command transaction', () => {
     });
     expect(firstUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(true);
 
+    // The undo is itself a history entry, so it pushed the second move's
+    // checkpoint out of the two-entry window: nothing older can come back.
+    expect(nextUndo(firstUndo.snapshot)).toBeUndefined();
     const secondUndo = await processAuthorityCommand(
       firstUndo.snapshot,
       command(
@@ -2282,11 +2362,13 @@ describe('authoritative room command transaction', () => {
       ),
       dependencies
     );
-    expect(secondUndo.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(
-      true
-    );
+    expect(secondUndo.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'precondition_failed',
+    });
     expect(secondUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(
-      false
+      true
     );
   });
 

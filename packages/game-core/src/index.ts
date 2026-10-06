@@ -13,4 +13,5 @@ export * from './model.js';
 export * from './projection.js';
 export * from './public-visibility.js';
 export * from './stable-hash.js';
+export * from './state-patch.js';
 export * from './solo-undo.js';

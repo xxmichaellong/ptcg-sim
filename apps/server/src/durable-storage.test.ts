@@ -67,7 +67,6 @@ const initialSnapshot = (
     authorityVersion: 0,
     mode: 'multiplayer',
     state,
-    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {
@@ -889,7 +888,6 @@ describe('Durable Object authority snapshot store', () => {
     const storage = new MemoryDurableStorage();
     const {
       mode: _mode,
-      soloUndoHistory: _history,
       replayHistory: _replayHistory,
       ...legacy
     } = initialSnapshot();
@@ -902,11 +900,6 @@ describe('Durable Object authority snapshot store', () => {
     expect(restored).toMatchObject({
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
       mode: 'multiplayer',
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: {
         baseState: { revision: 0 },
         entries: [],
@@ -1018,11 +1011,6 @@ describe('Durable Object authority snapshot store', () => {
           },
         },
       },
-      soloUndoHistory: {
-        baseState: null,
-        baseStateHash: null,
-        entries: [],
-      },
       replayHistory: {
         baseState: { revision: 1 },
         entries: [],
@@ -1128,11 +1116,7 @@ describe('Durable Object authority snapshot store', () => {
       baseState: { revision: opened.state.revision },
       entries: [],
     });
-    expect(restored!.soloUndoHistory).toEqual({
-      baseState: null,
-      baseStateHash: null,
-      entries: [],
-    });
+    expect(restored).not.toHaveProperty('soloUndoHistory');
     expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
@@ -1306,7 +1290,7 @@ describe('Durable Object authority snapshot store', () => {
         clientSequence: 2,
         commandId: 'canonical-rejected-command',
         lastSeenRevision: 1,
-        command: { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        command: { type: 'ApplySoloUndo', targetPlayerId: 'not-a-seat' },
       },
       {
         ...dependencies,
@@ -1409,7 +1393,7 @@ describe('Durable Object authority snapshot store', () => {
     expect(journal?.eventBatch?.revision).toBe(1);
   });
 
-  it('keeps solo commands on the full predecessor-validation path', async () => {
+  it('lets a proven solo command take the frontier fast path, as multiplayer does', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const initial = {
@@ -1446,9 +1430,11 @@ describe('Durable Object authority snapshot store', () => {
       }
     );
 
+    // Solo used to revalidate its whole predecessor because its separate
+    // undo history changed on every move; one shared history removed that.
     expect(result.committed).toBe(true);
-    expect(result.timing.breakdown.frontierFastPathHit).toBe(0);
-    expect(storage.transactionGetKeys).toContain(
+    expect(result.timing.breakdown.frontierFastPathHit).toBe(1);
+    expect(storage.transactionGetKeys).not.toContain(
       AUTHORITY_SNAPSHOT_STORAGE_KEY
     );
   });
@@ -1945,6 +1931,81 @@ describe('Durable Object authority snapshot store', () => {
       mode: 'solo',
       admission: { playerSeatLimit: 1 },
     });
+  });
+
+  it('migrates v7 snapshots off the retired undo history and keeps old undo events readable', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = unclaimedSnapshot();
+    const base = current.state;
+    const noIds = {
+      nextCardId: () => asCardInstanceId('unused-card'),
+      nextStackId: () => asStackId('unused-stack'),
+      nextInspectionId: () => asInspectionId('unused-inspection'),
+      nextWorkAreaId: () => asWorkAreaId('unused-work-area'),
+      shuffle: <Value>(values: readonly Value[]) => [...values],
+      randomInt: () => 0,
+    };
+    const marked = executeCommand(
+      base,
+      { type: 'SetOncePerGameMarker', playerId: p1, marker: 'gx', used: true },
+      noIds
+    );
+    if (!marked.accepted) throw new Error(marked.message);
+    // Before schema 8 an undo carried the whole restored state.
+    const legacyUndo = {
+      revision: 2,
+      events: [
+        {
+          type: 'UndoApplied' as const,
+          actorPlayerId: p1,
+          targetPlayerId: p1,
+          revertedCommandId: 'legacy-marker',
+          revertedRevision: 1,
+          fromRevision: 1,
+          checkpointRevision: 0,
+          checkpointHash: stableHash(base),
+          restoredState: cloneMatchState(base),
+        },
+      ],
+    };
+    let replayHistory = appendReplayHistory(
+      createReplayHistory(base),
+      marked.batch,
+      marked.state,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches
+    );
+    const undoneState = { ...cloneMatchState(base), revision: 2 };
+    replayHistory = appendReplayHistory(
+      replayHistory,
+      legacyUndo,
+      undoneState,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches
+    );
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      snapshot: {
+        ...current,
+        schemaVersion: 7,
+        mode: 'solo',
+        state: undoneState,
+        replayHistory,
+        soloUndoHistory: {
+          baseState: base,
+          baseStateHash: stableHash(base),
+          entries: [],
+        },
+      },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      mode: 'solo',
+      state: { revision: 2 },
+    });
+    expect(restored).not.toHaveProperty('soloUndoHistory');
+    expect(restored!.replayHistory.entries).toHaveLength(2);
+    expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
   it('fails closed when a migrated solo snapshot already has two player sessions', async () => {

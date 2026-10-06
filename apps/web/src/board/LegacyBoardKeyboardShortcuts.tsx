@@ -31,8 +31,12 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly onDeclareMulligan?: () => void;
   /** Non-authoritative deck-view announcement; omitted until a route wires it. */
   readonly onDeclareDeckView?: () => void;
-  /** Supplied only by a route that knows it represents a solo room. */
-  readonly soloUndoEnabled?: boolean;
+  /**
+   * Whose move U takes back, supplied only by a route that knows the room's
+   * mode: Solo's bottom seat (`acting`) or a multiplayer player's own move
+   * (`own`). Omitted, U does nothing.
+   */
+  readonly undoSeat?: 'acting' | 'own';
   /** Supplied for a solo player or an explicitly authorized coaching view. */
   readonly boardFlipEnabled?: boolean;
   /** Mirrors the route-owned legacy theme without changing shortcut policy. */
@@ -90,7 +94,7 @@ export const LegacyBoardKeyboardShortcuts = ({
   onDismissPresentation,
   onDeclareMulligan,
   onDeclareDeckView,
-  soloUndoEnabled = false,
+  undoSeat,
   boardFlipEnabled = false,
   darkMode = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
@@ -192,8 +196,12 @@ export const LegacyBoardKeyboardShortcuts = ({
       const declaresMulligan =
         event.key.toLowerCase() === 'm' || event.code === 'KeyM';
       const enabledUnselectedRequest =
-        unselectedRequest?.action === 'undoOwnLastMove' && !soloUndoEnabled
-          ? null
+        unselectedRequest?.action === 'undoOwnLastMove'
+          ? undoSeat === undefined
+            ? null
+            : undoSeat === 'own'
+              ? { ...unselectedRequest, ownSeat: true }
+              : unselectedRequest
           : unselectedRequest;
       const request =
         selectedRequest ??
@@ -259,7 +267,7 @@ export const LegacyBoardKeyboardShortcuts = ({
     isSpectator,
     selectedCardId,
     boardFlipEnabled,
-    soloUndoEnabled,
+    undoSeat,
     state.overlays.preview,
     state.presentation.openedZoneId,
     state.view?.viewer.kind,

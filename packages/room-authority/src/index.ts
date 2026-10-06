@@ -8,4 +8,4 @@ export * from './presentation-events.js';
 export * from './projected-replay.js';
 export * from './replay-history.js';
 export * from './resolve-command.js';
-export * from './solo-undo-history.js';
+export * from './undo-history.js';
