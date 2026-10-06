@@ -6,6 +6,11 @@ import {
   type Page,
 } from '@playwright/test';
 
+import {
+  CLIENT_FRAME_WINDOW_MS,
+  MAX_CLIENT_FRAMES_PER_WINDOW,
+} from '../../apps/server/src/session-hub-limits.js';
+
 // Playwright trace snapshots retain a full copy of every 47/60-card dialog at
 // every locator action. Besides producing a >100 MB artifact, that observer
 // perturbs the DOM/heap population this test is intended to measure. The gate
@@ -18,6 +23,8 @@ const SCENE_REVISIONS_PER_CYCLE = 4;
 const RENDER_COMMITS_PER_CYCLE = 12;
 const MAXIMUM_RETAINED_HEAP_RATIO = 1.1;
 const MEMORY_SAMPLE_ATTEMPTS = 3;
+/** Room frames one cycle may send, with room for heartbeats. */
+const CLIENT_FRAMES_PER_CYCLE_HEADROOM = 32;
 const MAIN_FACE_URL = '/v2/assets/cardback.png?solo-churn=main';
 const ALTERNATE_FACE_URL = '/v2/assets/cardback.png?solo-churn=alternate';
 
@@ -84,6 +91,42 @@ const readRevision = async (page: Page): Promise<number> => {
     throw new Error(`Invalid rendered revision: ${String(value)}`);
   }
   return revision;
+};
+
+const clientFramesSent = new WeakMap<Page, number[]>();
+
+/** Records every frame the page sends on a room socket. */
+const trackClientFrames = (page: Page): void => {
+  const sentAt: number[] = [];
+  clientFramesSent.set(page, sentAt);
+  page.on('websocket', (socket) => {
+    socket.on('framesent', () => sentAt.push(Date.now()));
+  });
+};
+
+/**
+ * Waits until the next cycle fits under the room's per-connection message
+ * limit. The room answers fast enough that unpaced cycles exceed it, and the
+ * room then closes the socket as it would for any client that floods it --
+ * which is the room working, not the churn this test measures. Keeping every
+ * sliding window under the limit also keeps the room's fixed window under it.
+ */
+const stayUnderClientFrameLimit = async (page: Page): Promise<void> => {
+  const sentAt = clientFramesSent.get(page);
+  if (!sentAt) throw new Error('Client frames are not tracked for this page');
+  for (;;) {
+    const now = Date.now();
+    while (sentAt.length > 0 && now - sentAt[0]! >= CLIENT_FRAME_WINDOW_MS) {
+      sentAt.shift();
+    }
+    if (
+      sentAt.length + CLIENT_FRAMES_PER_CYCLE_HEADROOM <=
+      MAX_CLIENT_FRAMES_PER_WINDOW
+    ) {
+      return;
+    }
+    await page.waitForTimeout(sentAt[0]! + CLIENT_FRAME_WINDOW_MS - now + 50);
+  }
 };
 
 const submitBoth = async (
@@ -367,6 +410,7 @@ const runCycle = async (
   readonly setup: ResourceEvidence;
   readonly zoneBrowserOpenings: number;
 }> => {
+  await stayUnderClientFrameLimit(page);
   await submitBoth(page, 'setup');
   const setupZoneBrowserOpenings = await churnDeckZoneBrowsers(page, renderer);
   const setup = await readResourceEvidence(page, renderer);
@@ -507,6 +551,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   page,
 }, testInfo) => {
   test.setTimeout(600_000);
+  trackClientFrames(page);
   const errors = collectRuntimeErrors(page);
   let roomCreations = 0;
   let openedGameSockets = 0;
