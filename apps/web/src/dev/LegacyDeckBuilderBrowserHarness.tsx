@@ -62,6 +62,7 @@ class BrowserHarnessSession implements DeckInstallSession {
           commandId,
           clientSequence,
           commandType: command.type,
+          command: structuredClone(command),
           state: 'in_flight',
         },
       ],

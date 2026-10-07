@@ -32,6 +32,7 @@ import {
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import { submitTableAction } from '../../apps/web/src/board/resolveTableAction.js';
+import { predictWireCommand } from '../../apps/web/src/board/predictWireCommand.js';
 import {
   RoomSessionHub,
   WebCryptoAuthoritySource,
@@ -49,6 +50,7 @@ import {
   type RoomAuthoritySnapshot,
 } from '../../packages/room-authority/src/index.js';
 import type { MatchViewState } from '../../packages/game-core/src/index.js';
+import type { WireGameCommand } from '../../packages/protocol/src/index.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
@@ -3974,6 +3976,157 @@ describe('client/server multiplayer contract', () => {
       code: 'precondition_failed',
     });
     expect(room.store.snapshot?.state.revision).toBe(3);
+  });
+
+  it('predicts the same table the room publishes for every newly predicted command', async () => {
+    const room = await fixture('solo');
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const me = player.session.getSnapshot().playerId;
+    if (!me) throw new Error('Missing solo player');
+    const categories = ['Pokémon', 'Trainer', 'Energy'] as const;
+    player.session.submit({
+      type: 'LoadDeck',
+      entries: Array.from({ length: 30 }, (_, index) => ({
+        definition: {
+          id: `prediction-definition-${index}`,
+          name: `Prediction card ${index}`,
+          category: categories[index % 3]!,
+          imageUrl: `/prediction-card-${index}.png`,
+        },
+        count: 2,
+      })),
+    });
+    await player.factory.flush();
+    player.session.submit({ type: 'SetupPlayer' });
+    await player.factory.flush();
+
+    const view = () => {
+      const current = player.session.getSnapshot().view;
+      if (!current) throw new Error('Missing view');
+      return current;
+    };
+    const zone = (current: MatchViewState, kind: string) =>
+      Object.values(current.zones).find(
+        (candidate) => candidate.ownerId === me && candidate.kind === kind
+      )!;
+    // What the table shows, independent of aliases the room may rotate. A
+    // deck's order is never shown, so only its size counts.
+    const summarize = (current: MatchViewState) => {
+      const face = (card: MatchViewState['zones'][string]['cards'][number]) =>
+        card.kind === 'known'
+          ? `${current.definitions[card.definitionId]?.name}|${card.face}|${card.publiclyRevealed}`
+          : 'back';
+      return {
+        zones: Object.values(current.zones)
+          .map((candidate) => ({
+            kind: candidate.kind,
+            ownerId: candidate.ownerId,
+            cards:
+              candidate.kind === 'deck'
+                ? candidate.cards.length
+                : candidate.cards.map(face),
+          }))
+          .sort((left, right) =>
+            `${left.ownerId}:${left.kind}`.localeCompare(
+              `${right.ownerId}:${right.kind}`
+            )
+          ),
+        inspections: Object.entries(current.workAreas).map(
+          ([playerId, areas]) => [
+            playerId,
+            areas.inspection?.cards.map(face) ?? null,
+          ]
+        ),
+        players: Object.values(current.players).map(
+          (candidate) => candidate.oncePerGame
+        ),
+      };
+    };
+    const expectPredicted = async (
+      build: (current: MatchViewState) => WireGameCommand
+    ) => {
+      const before = view();
+      const command = build(before);
+      const predicted = predictWireCommand(before, command);
+      expect(predicted, command.type).not.toBeNull();
+      expect(player.session.submit(command).queued).toBe(true);
+      await player.factory.flush();
+      expect(player.session.getSnapshot().pendingCommands).toEqual([]);
+      expect(
+        player.session.getSnapshot().completedCommands.at(-1)
+      ).toMatchObject({ accepted: true });
+      expect(summarize(predicted!), command.type).toEqual(summarize(view()));
+    };
+    const handCard = (current: MatchViewState, index = 0) =>
+      zone(current, 'hand').cards[index]!;
+
+    await expectPredicted(() => ({
+      type: 'SetOncePerGameMarker',
+      targetPlayerId: me,
+      marker: 'gx',
+      used: true,
+    }));
+    await expectPredicted((current) => ({
+      type: 'SetPublicReveal',
+      cardId: handCard(current).id,
+      expectedSourceId: zone(current, 'hand').id,
+      revealed: true,
+    }));
+    await expectPredicted((current) => ({
+      type: 'MoveCardToStadium',
+      cardId: handCard(current).id,
+      expectedSourceId: zone(current, 'hand').id,
+      expectedStadiumCardId: null,
+    }));
+    // A second stadium sends the first to its owner's discard.
+    await expectPredicted((current) => ({
+      type: 'MoveCardToStadium',
+      cardId: handCard(current).id,
+      expectedSourceId: zone(current, 'hand').id,
+      expectedStadiumCardId: Object.values(current.zones).find(
+        (candidate) => candidate.kind === 'stadium'
+      )!.cards[0]!.id,
+    }));
+    await expectPredicted((current) => ({
+      type: 'SwapCardWithDeckTop',
+      cardId: handCard(current, 1).id,
+      expectedSourceId: zone(current, 'hand').id,
+    }));
+    await expectPredicted(() => ({
+      type: 'ExtractDeckCardsForInspection',
+      ownerPlayerId: me,
+      count: 3,
+      edge: 'top',
+      visibility: 'private',
+    }));
+    await expectPredicted((current) => ({
+      type: 'ResolveInspectionCards',
+      expectedWorkAreaId: current.workAreas[me]!.inspection!.id,
+      destination: 'discard',
+    }));
+    await expectPredicted(() => ({
+      type: 'ExtractDeckCardsForInspection',
+      ownerPlayerId: me,
+      count: 2,
+      edge: 'bottom',
+      visibility: 'private',
+    }));
+    await expectPredicted((current) => ({
+      type: 'CloseInspection',
+      expectedWorkAreaId: current.workAreas[me]!.inspection!.id,
+      returnTo: 'top',
+    }));
+    await expectPredicted(() => ({
+      type: 'DeclareAttack',
+      targetPlayerId: me,
+    }));
+    await expectPredicted(() => ({ type: 'PassTurn', targetPlayerId: me }));
+    await expectPredicted(() => ({ type: 'StartTurn', targetPlayerId: me }));
   });
 
   it('discloses and controls the opponent hand only for the admitted solo player', async () => {

@@ -3,7 +3,7 @@ import type {
   MatchViewState,
   ViewCardDefinition,
 } from '@ptcgsim/game-core';
-import type { ServerMessage } from '@ptcgsim/protocol';
+import type { ServerMessage, WireGameCommand } from '@ptcgsim/protocol';
 
 export type ClientSessionPhase =
   | 'idle'
@@ -23,6 +23,13 @@ export interface PendingCommandSummary {
   readonly commandId: string;
   readonly clientSequence: number;
   readonly commandType: string;
+  /**
+   * The command as this client built it. It is the client's own input, so
+   * exposing it discloses nothing; the board predicts its outcome from here,
+   * which covers every submission path rather than only the ones that remember
+   * to register a prediction.
+   */
+  readonly command: WireGameCommand;
   readonly state: 'queued' | 'in_flight' | 'awaiting_publication';
 }
 

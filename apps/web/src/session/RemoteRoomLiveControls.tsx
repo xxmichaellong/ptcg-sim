@@ -141,11 +141,6 @@ export const RemoteRoomLiveControls = ({
   const state = useGameSession(session);
   const seatColor = boardFlipped ? 'opp-color' : 'self-color';
   const [message, setMessage] = useState('');
-  const [pendingBoth, setPendingBoth] = useState<{
-    readonly commandId: string;
-    readonly action: 'setup' | 'reset';
-    readonly targetPlayerId: string;
-  }>();
   const [replayImportPending, setReplayImportPending] = useState(false);
   const [continuationPending, setContinuationPending] = useState<
     'save' | 'resume'
@@ -177,27 +172,18 @@ export const RemoteRoomLiveControls = ({
     if (resolution.ok) session.submit(resolution.command);
   };
   const submitBothLifecycle = (action: 'setup' | 'reset'): void => {
-    if (!playerId || !state.view || !solo || pendingBoth) return;
+    if (!playerId || !state.view || !solo) return;
+    // Both seats are queued at once. The second is built on the first one's
+    // predicted outcome, and the session brings it up to the revision the
+    // first produces, so it is not refused as stale and never waits a round
+    // trip of its own.
     const targets = [
       playerId,
       ...state.view.playerOrder.filter((candidate) => candidate !== playerId),
     ];
-    const firstPlayerId = targets[0];
-    const secondPlayerId = targets[1];
-    if (!firstPlayerId) return;
-    const resolution = resolveLifecycleAction(
-      state.view,
-      firstPlayerId,
-      action
-    );
-    if (!resolution.ok) return;
-    const submission = session.submit(resolution.command);
-    if (submission.queued && secondPlayerId) {
-      setPendingBoth({
-        commandId: submission.commandId,
-        action,
-        targetPlayerId: secondPlayerId,
-      });
+    for (const target of targets) {
+      const resolution = resolveLifecycleAction(state.view, target, action);
+      if (!resolution.ok || !session.submit(resolution.command).queued) return;
     }
   };
   const submitUndo = (): void => {
@@ -208,25 +194,6 @@ export const RemoteRoomLiveControls = ({
     const resolution = resolveSoloUndoAction(state.view, target);
     if (resolution.ok) session.submit(resolution.command);
   };
-  useEffect(() => {
-    if (!pendingBoth) return;
-    if (state.phase !== 'ready') {
-      setPendingBoth(undefined);
-      return;
-    }
-    const completed = state.completedCommands.find(
-      (candidate) => candidate.commandId === pendingBoth.commandId
-    );
-    if (!completed) return;
-    setPendingBoth(undefined);
-    if (!completed.accepted || !state.view) return;
-    const resolution = resolveLifecycleAction(
-      state.view,
-      pendingBoth.targetPlayerId,
-      pendingBoth.action
-    );
-    if (resolution.ok) session.submit(resolution.command);
-  }, [pendingBoth, session, state]);
   useEffect(
     () => () => {
       replayImportAbortRef.current?.abort();
@@ -502,7 +469,6 @@ export const RemoteRoomLiveControls = ({
                   id="setupBothButton"
                   type="button"
                   className="neutral-color"
-                  disabled={pendingBoth !== undefined}
                   onClick={() => submitBothLifecycle('setup')}
                 >
                   Set Up Both
@@ -511,7 +477,6 @@ export const RemoteRoomLiveControls = ({
                   id="resetBothButton"
                   type="button"
                   className="neutral-color"
-                  disabled={pendingBoth !== undefined}
                   onClick={() => submitBothLifecycle('reset')}
                 >
                   Reset Both

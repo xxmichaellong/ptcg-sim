@@ -275,6 +275,8 @@ export interface BoardSessionControllerOptions {
     error: unknown,
     effect: BoardSessionControllerEffect
   ) => void;
+  /** Called each time the dispatch queue drains. */
+  readonly onIdle?: () => void;
 }
 
 const EMPTY_OVERLAYS: BoardOverlayState = {
@@ -1907,8 +1909,12 @@ export class BoardSessionController {
     } finally {
       this.dispatching = false;
     }
+    if (!this.disposed) this.options.onIdle?.();
     return true;
   }
+
+  /** Whether an action is being reduced or its effects delivered right now. */
+  isDispatching = (): boolean => this.dispatching;
 
   dispose(): void {
     if (this.disposed) return;

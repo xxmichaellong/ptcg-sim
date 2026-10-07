@@ -757,6 +757,91 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('withdraws a prediction whose command is settled inside the same dispatch', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const scene = test.adapter.getSnapshot().scene!;
+    const card = scene.cards.find((candidate) =>
+      candidate.parentId.endsWith(':hand')
+    )!;
+    const discard = scene.zones.find((candidate) =>
+      candidate.id.endsWith(':discard')
+    )!;
+    // The room refuses the move before the submission even returns, so the
+    // session shows the command queued and then gone, both while the board
+    // is still dispatching the drop.
+    const submit = test.live.submit.bind(test.live);
+    vi.spyOn(test.live, 'submit').mockImplementation((command) => {
+      const result = submit(command);
+      if (result.queued) {
+        test.socket.serverMessage({
+          type: 'CommandResult',
+          protocolVersion: PROTOCOL_VERSION,
+          commandId: result.commandId,
+          clientSequence: result.clientSequence,
+          accepted: false,
+          revision: 1,
+          code: 'stale_reference',
+        });
+      }
+      return result;
+    });
+
+    expect(
+      test.adapter.emitIntent({
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: discard.id,
+        x: 10,
+        y: 10,
+      })
+    ).toBe(true);
+    expect(test.live.getSnapshot().pendingCommands).toEqual([]);
+    expect(
+      test.adapter
+        .getSnapshot()
+        .scene?.cards.find((candidate) => candidate.id === card.id)?.parentId
+    ).toBe(card.parentId);
+
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it('predicts a command submitted outside the board, as the sidebar controls do', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const scene = test.adapter.getSnapshot().scene!;
+    const card = scene.cards.find((candidate) =>
+      candidate.parentId.endsWith(':hand')
+    )!;
+    const discard = scene.zones.find((candidate) =>
+      candidate.id.endsWith(':discard')
+    )!;
+
+    // Straight to the session, never through the controller's submitter.
+    expect(
+      test.live.submit({
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: card.parentId,
+        destinationZoneId: discard.id,
+      }).queued
+    ).toBe(true);
+    expect(
+      test.adapter
+        .getSnapshot()
+        .scene?.cards.find((candidate) => candidate.id === card.id)?.parentId
+    ).toBe(discard.id);
+    expect(test.adapter.getSnapshot().view?.revision).toBe(1);
+
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('routes an open overlay target through the real guarded submitter', () => {
     const test = setup();
     test.socket.serverOpen();

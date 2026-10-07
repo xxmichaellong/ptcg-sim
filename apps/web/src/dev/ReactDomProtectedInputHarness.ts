@@ -354,6 +354,7 @@ export const mountReactDomProtectedInputHarness = async (
         commandId,
         clientSequence,
         commandType: command.type,
+        command,
         state: 'queued' as const,
       };
       liveState = {

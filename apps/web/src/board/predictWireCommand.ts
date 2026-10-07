@@ -69,6 +69,15 @@ const asPlacedIn = (
   return concealed;
 };
 
+/**
+ * A card that moves stops being publicly revealed: the room retires every
+ * moved card's public visibility as it leaves its container.
+ */
+const departed = (card: ViewCard): ViewCard =>
+  card.kind === 'known' && card.publiclyRevealed
+    ? { ...card, publiclyRevealed: false }
+    : card;
+
 const withZone = (view: MatchViewState, zone: Zone): MatchViewState => ({
   ...view,
   zones: { ...view.zones, [zone.id]: zone },
@@ -115,7 +124,7 @@ const takeFromZone = (
   if (!zone) return null;
   const index = zone.cards.findIndex((card) => card.id === cardId);
   if (index < 0) return null;
-  const card = zone.cards[index]!;
+  const card = departed(zone.cards[index]!);
   return {
     view: withZone(view, {
       ...zone,
@@ -180,14 +189,14 @@ const takeFromStack = (
           (_, position) => position !== attachmentIndex
         ),
       }),
-      card: stack.attachmentCards[attachmentIndex]!,
+      card: departed(stack.attachmentCards[attachmentIndex]!),
     };
   }
   const evolutionIndex = stack.evolutionCards.findIndex(
     (card) => card.id === cardId
   );
   if (evolutionIndex < 0) return null;
-  const card = stack.evolutionCards[evolutionIndex]!;
+  const card = departed(stack.evolutionCards[evolutionIndex]!);
   if (evolutionIndex < stack.evolutionCards.length - 1) {
     return {
       view: withStack(view, {
@@ -228,16 +237,17 @@ const takeFromWorkArea = (
   for (const [playerId, areas] of Object.entries(view.workAreas)) {
     const inspection = areas.inspection;
     if (inspection?.id === workAreaId) {
-      const card = inspection.cards.find(
+      const found = inspection.cards.find(
         (candidate) => candidate.id === cardId
       );
-      if (!card) return null;
+      if (!found) return null;
+      const card = departed(found);
       return {
         view: withWorkAreas(view, playerId as PlayerId, {
           ...areas,
           inspection: {
             ...inspection,
-            cards: inspection.cards.filter((candidate) => candidate !== card),
+            cards: inspection.cards.filter((candidate) => candidate !== found),
           },
         }),
         card,
@@ -245,11 +255,12 @@ const takeFromWorkArea = (
     }
     const staged = areas.attachmentResolution;
     if (staged?.id === workAreaId) {
-      const card = staged.cards.find((candidate) => candidate.id === cardId);
-      if (!card) return null;
+      const found = staged.cards.find((candidate) => candidate.id === cardId);
+      if (!found) return null;
+      const card = departed(found);
       const remaining = {
         ...staged,
-        cards: staged.cards.filter((candidate) => candidate !== card),
+        cards: staged.cards.filter((candidate) => candidate !== found),
         evolutionCards: staged.evolutionCards.filter(
           (candidate) => candidate.id !== cardId
         ),
@@ -429,7 +440,9 @@ const moveZoneContents = (
   cards.splice(
     at,
     0,
-    ...source.cards.map((card) => asPlacedIn(view, viewerId, destination, card))
+    ...source.cards.map((card) =>
+      asPlacedIn(view, viewerId, destination, departed(card))
+    )
   );
   return withZone(withZone(view, { ...source, cards: [] }), {
     ...destination,
@@ -959,7 +972,238 @@ const predict = (
       return updateCard(view, command.cardId, (card) =>
         card.kind === 'known' ? { ...card, face: command.face } : card
       );
+    case 'SetOncePerGameMarker': {
+      const playerId = command.targetPlayerId as PlayerId;
+      const player = view.players[playerId];
+      if (!player) return null;
+      return {
+        ...view,
+        players: {
+          ...view.players,
+          [playerId]: {
+            ...player,
+            oncePerGame: {
+              ...player.oncePerGame,
+              [command.marker === 'gx' ? 'gxUsed' : 'vstarUsed']: command.used,
+            },
+          },
+        },
+      };
+    }
+    case 'MoveCardToStadium': {
+      // Only a card leaving a zone (normally the hand); leaving a stack or a
+      // work area takes the room's departure rules and waits for it.
+      const stadium = Object.values(view.zones).find(
+        (zone) => zone.kind === 'stadium'
+      );
+      if (!stadium) return null;
+      const incumbent = stadium.cards[0] ?? null;
+      if (
+        stadium.cards.length > 1 ||
+        (incumbent?.id ?? null) !== command.expectedStadiumCardId
+      ) {
+        return null;
+      }
+      const taken = takeFromZone(
+        view,
+        command.expectedSourceId,
+        command.cardId
+      );
+      if (!taken) return null;
+      let next = taken.view;
+      if (incumbent) {
+        // The room sends the stadium it replaces to its owner's discard.
+        const cleared = takeFromZone(next, stadium.id, incumbent.id);
+        const discard = ownZone(next, incumbent.ownerId, 'discard');
+        if (!cleared || !discard) return null;
+        const placed = placeInZone(
+          cleared.view,
+          viewerId,
+          discard.id,
+          incumbent
+        );
+        if (!placed) return null;
+        next = placed;
+      }
+      return placeInZone(next, viewerId, stadium.id, taken.card, 0);
+    }
+    case 'SwapCardWithDeckTop': {
+      // The zone case only: the card goes on top of its owner's deck and the
+      // old top card takes its exact place.
+      const source = view.zones[command.expectedSourceId];
+      if (!source || source.kind === 'deck') return null;
+      const index = source.cards.findIndex(
+        (card) => card.id === command.cardId
+      );
+      if (index < 0) return null;
+      const card = source.cards[index]!;
+      const deck = ownZone(view, card.ownerId, 'deck');
+      const top = deck?.cards[0];
+      if (!deck || !top) return null;
+      const withTopOut = withZone(view, {
+        ...deck,
+        cards: deck.cards.slice(1),
+      });
+      const swappedSource = withZone(withTopOut, {
+        ...source,
+        cards: source.cards.map((candidate, position) =>
+          position === index
+            ? asPlacedIn(withTopOut, viewerId, source, departed(top))
+            : candidate
+        ),
+      });
+      return placeInZone(swappedSource, viewerId, deck.id, departed(card), 0);
+    }
+    case 'SetPublicReveal':
+      return updateCard(view, command.cardId, (card) =>
+        card.kind === 'known'
+          ? { ...card, publiclyRevealed: command.revealed }
+          : card
+      );
+    case 'SetZonePublicReveal': {
+      const zone = view.zones[command.zoneId];
+      if (!zone) return null;
+      const expected = new Set(command.expectedCardIds);
+      return withZone(view, {
+        ...zone,
+        cards: zone.cards.map((card) =>
+          expected.has(card.id) && card.kind === 'known'
+            ? { ...card, publiclyRevealed: command.revealed }
+            : card
+        ),
+      });
+    }
+    case 'ExtractDeckCardsForInspection': {
+      // Opening "look at the top/bottom N" when no look is already open. The
+      // owner can read their own deck, so the cards are known; a deck the
+      // viewer cannot read waits for the room to show its faces.
+      const owner = command.ownerPlayerId as PlayerId;
+      const areas = view.workAreas[owner];
+      const deck = ownZone(view, owner, 'deck');
+      if (!areas || areas.inspection || !deck) return null;
+      const count = Math.min(command.count, deck.cards.length);
+      if (count === 0) return null;
+      // The room lists a bottom look from the bottom card up.
+      const cards =
+        command.edge === 'top'
+          ? deck.cards.slice(0, count)
+          : deck.cards.slice(deck.cards.length - count).reverse();
+      if (cards.some((card) => card.kind !== 'known')) return null;
+      const remaining =
+        command.edge === 'top'
+          ? deck.cards.slice(count)
+          : deck.cards.slice(0, deck.cards.length - count);
+      return withWorkAreas(
+        withZone(view, { ...deck, cards: remaining }),
+        owner,
+        {
+          ...areas,
+          inspection: {
+            id: `predicted-inspection:${owner}`,
+            cards,
+            sourceZoneId: deck.id,
+          },
+        }
+      );
+    }
+    case 'CloseInspection': {
+      const found = inspectionById(view, command.expectedWorkAreaId);
+      if (!found) return null;
+      const source = view.zones[found.inspection.sourceZoneId];
+      if (!source) return null;
+      const returned = found.inspection.cards.map((card) =>
+        asPlacedIn(view, viewerId, source, departed(card))
+      );
+      return withWorkAreas(
+        withZone(view, {
+          ...source,
+          cards:
+            command.returnTo === 'top'
+              ? [...returned, ...source.cards]
+              : [...source.cards, ...returned],
+        }),
+        found.playerId,
+        { ...found.areas, inspection: null }
+      );
+    }
+    case 'ResolveInspectionCards': {
+      const found = inspectionById(view, command.expectedWorkAreaId);
+      if (!found) return null;
+      return resolveWorkAreaCards(
+        withWorkAreas(view, found.playerId, {
+          ...found.areas,
+          inspection: null,
+        }),
+        viewerId,
+        found.playerId,
+        found.inspection.cards,
+        command.destination
+      );
+    }
+    case 'ResolveStagedCards': {
+      for (const [playerId, areas] of Object.entries(view.workAreas)) {
+        const staged = areas.attachmentResolution;
+        if (staged?.id !== command.expectedWorkAreaId) continue;
+        return resolveWorkAreaCards(
+          withWorkAreas(view, playerId as PlayerId, {
+            ...areas,
+            attachmentResolution: null,
+          }),
+          viewerId,
+          playerId as PlayerId,
+          staged.cards,
+          command.destination
+        );
+      }
+      return null;
+    }
     default:
       return null;
   }
+};
+
+const inspectionById = (view: MatchViewState, workAreaId: string) => {
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+    if (areas.inspection?.id === workAreaId) {
+      return {
+        playerId: playerId as PlayerId,
+        areas,
+        inspection: areas.inspection,
+      };
+    }
+  }
+  return null;
+};
+
+/**
+ * Sends a work area's cards to one of the owner's zones. A shuffle only
+ * reorders the deck, which the table does not show, so the cards join it and
+ * the room's publication brings the order.
+ */
+const resolveWorkAreaCards = (
+  view: MatchViewState,
+  viewerId: PlayerId,
+  owner: PlayerId,
+  cards: readonly ViewCard[],
+  destination:
+    'discard' | 'lostZone' | 'hand' | 'shuffleIntoDeck' | 'shuffleToDeckBottom'
+): MatchViewState | null => {
+  const zone = ownZone(
+    view,
+    owner,
+    destination === 'shuffleIntoDeck' || destination === 'shuffleToDeckBottom'
+      ? 'deck'
+      : destination
+  );
+  if (!zone) return null;
+  const placed = cards.map((card) =>
+    asPlacedIn(view, viewerId, zone, departed(asOutOfPlay(card)))
+  );
+  return withZone(view, {
+    ...zone,
+    cards:
+      destination === 'shuffleIntoDeck'
+        ? [...placed, ...zone.cards]
+        : [...zone.cards, ...placed],
+  });
 };

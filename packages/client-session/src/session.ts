@@ -35,7 +35,10 @@ type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 type CommandResult = Extract<ServerMessage, { type: 'CommandResult' }>;
 
 interface PendingCommand {
-  readonly envelope: CommandEnvelope;
+  /** Fixed once first sent: a retry must be byte-identical. */
+  envelope: CommandEnvelope;
+  /** Whether `lastSeenRevision` has been settled before the first send. */
+  revisionSettled?: boolean;
   status: PendingCommandSummary['state'];
   retries: number;
   publicationRevision?: number;
@@ -169,6 +172,8 @@ export class RemoteGameSession {
   private readonly policy: ClientSessionPolicy;
   private readonly listeners = new Set<() => void>();
   private readonly pending: PendingCommand[] = [];
+  /** Recent revisions this client's own accepted commands produced. */
+  private readonly ownRevisions = new Set<number>();
   private readonly pingTimes = new Map<number, number>();
   private state: ClientSessionState = initialState();
   private options?: Omit<
@@ -898,6 +903,14 @@ export class RemoteGameSession {
       return;
     }
     head.result = message;
+    if (message.accepted) {
+      this.ownRevisions.add(message.revision);
+      // Only revisions newer than the oldest queued command matter.
+      if (this.ownRevisions.size > 256) {
+        const oldest = Math.min(...this.ownRevisions);
+        this.ownRevisions.delete(oldest);
+      }
+    }
     if (
       message.accepted &&
       (head.publicationRevision ?? -1) < message.revision
@@ -933,12 +946,7 @@ export class RemoteGameSession {
         completed,
         this.policy.maximumCompletedCommands
       ),
-      pendingCommands: this.pending.map((item) => ({
-        commandId: item.envelope.commandId,
-        clientSequence: item.envelope.clientSequence,
-        commandType: item.envelope.command.type,
-        state: item.status,
-      })),
+      pendingCommands: this.pendingSummaries(),
     });
     this.sendHead();
   }
@@ -947,6 +955,7 @@ export class RemoteGameSession {
     if (this.state.phase !== 'ready') return;
     const head = this.pending[0];
     if (!head || head.status !== 'queued') return;
+    this.settleLastSeenRevision(head);
     const generation = this.socketGeneration;
     const sessionId = this.sessionId;
     head.status = 'in_flight';
@@ -970,6 +979,27 @@ export class RemoteGameSession {
     ) {
       this.reconnectTransport('Command write failed');
     }
+  }
+
+  /**
+   * A command records the revision its sender saw. One queued behind this
+   * client's own commands was built on their predicted outcome, so once they
+   * have landed it is brought up to the revision they produced -- otherwise
+   * a turn, attack or undo pressed right after a move would be refused as
+   * stale. Only revisions this client produced count: if anyone else changed
+   * the match meanwhile the command keeps what its sender actually saw, and
+   * the room rejects it as it should.
+   */
+  private settleLastSeenRevision(head: PendingCommand): void {
+    if (head.revisionSettled) return;
+    head.revisionSettled = true;
+    const seen = head.envelope.lastSeenRevision;
+    const current = this.state.view?.revision ?? seen;
+    if (current <= seen) return;
+    for (let revision = seen + 1; revision <= current; revision += 1) {
+      if (!this.ownRevisions.has(revision)) return;
+    }
+    head.envelope = { ...head.envelope, lastSeenRevision: current };
   }
 
   private retryHead(): void {
@@ -1148,6 +1178,7 @@ export class RemoteGameSession {
       commandId: item.envelope.commandId,
       clientSequence: item.envelope.clientSequence,
       commandType: item.envelope.command.type,
+      command: item.envelope.command,
       state: item.status,
     }));
   }

@@ -497,6 +497,72 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('sends a command queued behind its own moves at the revision they produced', () => {
+    const test = setup();
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    test.session.submit({ type: 'PassTurn', targetPlayerId: 'blue' });
+    expect(clientFrame(socket, 1)).toMatchObject({ lastSeenRevision: 0 });
+
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-1',
+      executedClientSequence: 1,
+      snapshot: view(1),
+    });
+
+    // Built on the coin's predicted outcome: only this client's own revision
+    // came between, so the pass is not stale.
+    expect(clientFrame(socket, 2)).toMatchObject({
+      commandId: 'command-2',
+      lastSeenRevision: 1,
+    });
+  });
+
+  it('keeps what the sender saw when someone else changed the match meanwhile', () => {
+    const test = setup();
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    test.session.submit({ type: 'PassTurn', targetPlayerId: 'blue' });
+
+    // The opponent's move lands first, then this client's coin.
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+    });
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 2,
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-1',
+      executedClientSequence: 1,
+      snapshot: view(2),
+    });
+
+    expect(clientFrame(socket, 2)).toMatchObject({
+      commandId: 'command-2',
+      lastSeenRevision: 0,
+    });
+  });
+
   it('suppresses a duplicate solo undo until the pending authority result settles', () => {
     const test = setup();
     const socket = test.admit();

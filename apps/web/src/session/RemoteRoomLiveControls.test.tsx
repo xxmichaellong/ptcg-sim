@@ -333,54 +333,9 @@ describe('RemoteRoomLiveControls', () => {
       element<HTMLButtonElement>(host, '#resetButton').click();
       element<HTMLButtonElement>(host, '#setupBothButton').click();
     });
-    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
-      true
-    );
-    expect(element<HTMLButtonElement>(host, '#resetBothButton').disabled).toBe(
-      true
-    );
-    const setupBothSubmission = session.submit.mock.results.at(-1)!
-      .value as Extract<SubmitCommandResult, { readonly queued: true }>;
-    await act(async () => {
-      const current = session.getSnapshot();
-      session.setState({
-        ...current,
-        view: { ...current.view!, revision: current.view!.revision + 1 },
-        completedCommands: [
-          ...current.completedCommands,
-          {
-            commandId: setupBothSubmission.commandId,
-            clientSequence: setupBothSubmission.clientSequence,
-            accepted: true,
-            revision: current.view!.revision + 1,
-          },
-        ],
-      });
-    });
-    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
-      false
-    );
     await act(async () =>
       element<HTMLButtonElement>(host, '#resetBothButton').click()
     );
-    const resetBothSubmission = session.submit.mock.results.at(-1)!
-      .value as Extract<SubmitCommandResult, { readonly queued: true }>;
-    await act(async () => {
-      const current = session.getSnapshot();
-      session.setState({
-        ...current,
-        view: { ...current.view!, revision: current.view!.revision + 1 },
-        completedCommands: [
-          ...current.completedCommands,
-          {
-            commandId: resetBothSubmission.commandId,
-            clientSequence: resetBothSubmission.clientSequence,
-            accepted: true,
-            revision: current.view!.revision + 1,
-          },
-        ],
-      });
-    });
 
     expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
       { type: 'DeclareAttack', targetPlayerId: playerId },
@@ -399,40 +354,27 @@ describe('RemoteRoomLiveControls', () => {
     expect(session.listenerCount()).toBe(0);
   });
 
-  it('does not submit the second solo lifecycle command when the first is rejected', async () => {
+  it('queues both solo seats at once instead of waiting a round trip between them', async () => {
     const session = new FakeLiveSession();
     const { host, root } = await mount(session, { roomMode: 'solo' });
+    const otherPlayerId = playerView.playerOrder.find(
+      (candidate) => candidate !== playerId
+    )!;
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#setupBothButton').click()
     );
-    const firstSubmission = session.submit.mock.results[0]!.value as Extract<
-      SubmitCommandResult,
-      { readonly queued: true }
-    >;
-    await act(async () => {
-      const current = session.getSnapshot();
-      session.setState({
-        ...current,
-        completedCommands: [
-          {
-            commandId: firstSubmission.commandId,
-            clientSequence: firstSubmission.clientSequence,
-            accepted: false,
-            revision: current.view!.revision,
-            code: 'precondition_failed',
-          },
-        ],
-      });
-    });
-
-    expect(session.submit).toHaveBeenCalledOnce();
+    // The second seat goes into the queue straight behind the first; the
+    // session brings it up to the first one's revision before sending it.
+    expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
+      { type: 'SetupPlayer', targetPlayerId: playerId },
+      { type: 'SetupPlayer', targetPlayerId: otherPlayerId },
+    ]);
     expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
       false
     );
     await act(async () => root.unmount());
   });
-
   it('retains chat for spectators while withholding player-only mutations', async () => {
     const session = new FakeLiveSession({
       ...baseState(),

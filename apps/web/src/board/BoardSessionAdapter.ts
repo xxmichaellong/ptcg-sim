@@ -124,21 +124,17 @@ export class BoardSessionAdapter {
   private nextFrameToken = 0;
   private disposed = false;
   private lastPendingCommandIds: readonly string[] = [];
-  /**
-   * Optimistic predictions for queued commands, oldest first. Each is
-   * re-applied on top of every authoritative view until its command leaves
-   * the session queue, so the table shows a command's outcome immediately
-   * and the publication that carries it replaces the prediction seamlessly.
-   */
-  private predictions: readonly {
-    readonly commandId: string;
-    readonly command: WireGameCommand;
-  }[] = [];
+  private synchronizeWhenIdle = false;
 
   constructor(private readonly options: BoardSessionAdapterOptions) {
     this.controller = new BoardSessionController({
       createScene: options.createScene,
       emitEffect: this.handleControllerEffect,
+      onIdle: () => {
+        if (!this.synchronizeWhenIdle) return;
+        this.synchronizeWhenIdle = false;
+        this.synchronize();
+      },
       ...(options.reportEffectFailure
         ? { reportEffectFailure: options.reportEffectFailure }
         : {}),
@@ -274,30 +270,28 @@ export class BoardSessionAdapter {
 
   synchronize = (): boolean => {
     if (this.disposed) return false;
+    // A session change inside a dispatch (a submission's queue update, say)
+    // waits for the dispatch to drain. A frame built now would measure its
+    // boundary against a state the queued frames are about to replace, and
+    // two quick changes -- a prediction shown, then withdrawn -- could leave
+    // the first one standing. One synchronize afterwards reads both.
+    if (this.controller.isDispatching()) {
+      this.synchronizeWhenIdle = true;
+      return true;
+    }
     const replayState = this.options.replay.getSnapshot();
     const liveState = this.options.live.getSnapshot();
     const source = sourceFor(replayState);
     const sourceView = viewFor(replayState, liveState);
-    const pendingIds = new Set(
-      liveState.pendingCommands.map((pending) => pending.commandId)
-    );
-    // Only live views carry predictions, and only for commands still in
-    // flight; a prediction that no longer applies (its card moved, or the
-    // publication already shows the effect) is dropped rather than shown.
-    if (source.kind !== 'live') {
-      this.predictions = [];
-    } else if (
-      this.predictions.some((entry) => !pendingIds.has(entry.commandId))
-    ) {
-      this.predictions = this.predictions.filter((entry) =>
-        pendingIds.has(entry.commandId)
-      );
-    }
+    // Only live views carry predictions, and only for commands still in the
+    // session's queue -- whichever control submitted them. A prediction that
+    // no longer applies (its card moved, or the publication already shows the
+    // effect) returns null and is simply not shown.
     const predictedView =
       sourceView && source.kind === 'live'
-        ? this.predictions.reduce<MatchViewState>(
-            (current, entry) =>
-              predictWireCommand(current, entry.command) ?? current,
+        ? liveState.pendingCommands.reduce<MatchViewState>(
+            (current, pending) =>
+              predictWireCommand(current, pending.command) ?? current,
             sourceView
           )
         : sourceView;
@@ -387,12 +381,6 @@ export class BoardSessionAdapter {
     const result = this.submitIfStillAllowed(effect.command);
     this.options.onSubmission?.(effect.command, result);
     if (result.queued) {
-      if (predicted) {
-        this.predictions = [
-          ...this.predictions,
-          { commandId: result.commandId, command: effect.command },
-        ];
-      }
       this.controller.dispatch({
         kind: 'SubmissionQueued',
         commandId: result.commandId,
