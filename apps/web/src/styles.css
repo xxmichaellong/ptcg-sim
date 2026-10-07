@@ -89,11 +89,12 @@ select {
 
 .legacy-tabs .selected-page {
   border-radius: 10px 10px 0 0;
-  border: 1px solid rgb(200 200 200);
-  /* The selected tab is the top of the panel beneath it, not a separate box. */
-  border-bottom: 0;
+  /* v1's `.selected-page` also declares a 1px border, but
+   * `#topButtonContainer button { border: none }` outranks it, so the tab
+   * v1 actually paints has none -- only the shadow. */
   background: linear-gradient(to bottom, rgb(250 250 250), rgb(230 230 230));
-  color: #333;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  color: #000;
 }
 
 .spike-controls {
@@ -147,6 +148,9 @@ select {
 
 .legacy-room-tabs button {
   width: 30%;
+  /* v1 sizes each tab to its padding and text and bottom-aligns it in the
+   * 5vh bar, leaving a strip of the grey bar above it. */
+  height: auto;
   padding: 1vh;
   font-size: 1.75vh;
 }
@@ -163,7 +167,9 @@ select {
   width: 100%;
   height: 95vh;
   min-height: 0;
-  padding: 0.5%;
+  /* v1's `padding: 0.5%` is on a fixed box, so it resolves against the
+   * viewport; here the percentage would resolve against the sidebar. */
+  padding: 0.5vw;
   border-left: 2px solid rgb(145 145 145);
   background: rgb(231 228 228);
 }
@@ -315,14 +321,17 @@ select {
   color: #fff;
 }
 
-.remote-room-route--dark .legacy-activity-feed .self-text,
-.remote-room-route--dark .legacy-activity-feed .opp-text {
-  color: rgb(149 149 149);
+.legacy-room-sidebox > .legacy-presentation-surface {
+  /* v1's chat box is a flex item 85% tall (80% in Multiplayer) that shrinks
+   * with its siblings when the column overflows, so the button rows give up
+   * height too. Taking only the leftover space would leave them at full
+   * height and the chat box short. */
+  flex: 0 1 85%;
+  min-height: 0;
 }
 
-.legacy-room-sidebox > .legacy-presentation-surface {
-  flex: 1;
-  min-height: 0;
+#p2Box > .legacy-presentation-surface {
+  flex-basis: 80%;
 }
 
 .legacy-room-sidebox #roomHeader {
@@ -520,7 +529,8 @@ select {
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #777;
+  /* v1 greys its black icon with `filter: invert(50%)`. */
+  color: rgb(128 128 128);
   cursor: pointer;
 }
 
@@ -531,7 +541,7 @@ select {
   stroke: currentcolor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
 .legacy-lobby-sidebox #copyButton.copied {

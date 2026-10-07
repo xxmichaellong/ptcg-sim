@@ -573,13 +573,38 @@ describe('React DOM board renderer', () => {
     const host = document.createElement('div');
     document.body.append(host);
 
-    await mountInAct(renderer, host, createScene());
+    const base = createScene();
+    await mountInAct(renderer, host, {
+      ...base,
+      zones: [
+        ...base.zones,
+        {
+          ...base.zones[0]!,
+          id: 'zone:p1:discard',
+          kind: 'discard',
+          bounds: { x: 700, y: 250, width: 90, height: 126 },
+          contentBounds: { x: 700, y: 250, width: 90, height: 126 },
+          label: 'Blue discard',
+        },
+      ],
+    });
     const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
-    const zone = host.querySelector<HTMLElement>('[data-zone-id]')!;
+    const hand = host.querySelector<HTMLElement>(
+      '[data-zone-id="zone:p1:hand"]'
+    )!;
+    const zone = host.querySelector<HTMLElement>(
+      '[data-zone-id="zone:p1:discard"]'
+    )!;
     expect(surface.style.background).toBe('transparent');
     expect(surface.dataset.showZoneOutlines).toBe('true');
     expect(zone.style.background).toBe('rgba(255, 255, 255, 0.1)');
     expect(zone.style.boxShadow).toBe('2px 2px 5px rgba(0, 0, 0, 0.1)');
+    // v1 never outlines a hand: it draws the seat's line along the edge that
+    // faces the board instead.
+    expect(hand.style.background).toBe('transparent');
+    expect(hand.style.boxShadow).toBe(
+      'inset 0 3px 0 rgba(90, 110, 188, 0.864)'
+    );
 
     act(() =>
       renderer.setPreferences({
@@ -590,10 +615,10 @@ describe('React DOM board renderer', () => {
     expect(surface.dataset.showZoneOutlines).toBe('false');
     expect(zone.style.background).toBe('transparent');
     expect(zone.style.boxShadow).toBe('none');
-    expect(zone.getAttribute('role')).toBe('button');
-    expect(zone.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(zone.tabIndex).toBe(0);
-    zone.dispatchEvent(
+    expect(hand.getAttribute('role')).toBe('button');
+    expect(hand.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(hand.tabIndex).toBe(0);
+    hand.dispatchEvent(
       new MouseEvent('dblclick', { bubbles: true, detail: 2 })
     );
     expect(emitIntent).toHaveBeenCalledWith({

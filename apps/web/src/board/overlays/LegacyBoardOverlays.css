@@ -9,6 +9,8 @@
 
 .ptcgsim-legacy-card-context-menu {
   position: absolute;
+  /* v1's 180px is the content box; its border sits outside it. */
+  box-sizing: content-box;
   width: 180px;
   border: 1px solid #ccc;
   background: #fff;

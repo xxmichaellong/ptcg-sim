@@ -564,6 +564,39 @@ const visualCardBounds = (card: CardSceneNode) => {
   };
 };
 
+/**
+ * Where v1 opens the card menu (`click-events.js`), in screen terms. On the
+ * viewer's half it sits above a hand or prize card, left of a deck or discard
+ * cover, and right of everything else. The opponent's container is turned
+ * around, so the same rules land mirrored: right of a cover, left of a prize
+ * or Lost Zone card, and below everything else. Cards outside both
+ * containers, such as the stadium, take the right-hand default.
+ */
+export const legacyContextMenuOrigin = (
+  bounds: Rect,
+  zoneKind: string | undefined,
+  upperHalf: boolean,
+  menu: { readonly width: number; readonly height: number }
+): { readonly left: number; readonly top: number } => {
+  const right = bounds.x + bounds.width;
+  if (!upperHalf) {
+    if (zoneKind === 'deck' || zoneKind === 'discard') {
+      return { left: bounds.x - menu.width, top: bounds.y };
+    }
+    if (zoneKind === 'hand' || zoneKind === 'prizes') {
+      return { left: bounds.x, top: bounds.y - menu.height };
+    }
+    return { left: right, top: bounds.y };
+  }
+  if (zoneKind === 'deck' || zoneKind === 'discard') {
+    return { left: right, top: bounds.y };
+  }
+  if (zoneKind === 'prizes' || zoneKind === 'lostZone') {
+    return { left: bounds.x - menu.width, top: bounds.y };
+  }
+  return { left: bounds.x, top: bounds.y + bounds.height };
+};
+
 const ContextMenu = ({
   state,
   card,
@@ -590,30 +623,49 @@ const ContextMenu = ({
   useOutsideDismiss(container, dismiss);
   useEffect(() => setOpenSubmenu(null), [card.id]);
   const bounds = anchorBounds ?? visualCardBounds(card);
-  const width = 180;
-  const preferredLeft = Math.max(
-    0,
-    Math.min(bounds.x + bounds.width, state.scene!.viewport.width - width)
+  const scene = state.scene!;
+  // A card opened in a zone popup is no longer the table's cover or hand
+  // card -- in v1 its parent is the popup, not `deckCover` or `hand` -- so
+  // it takes the default placement.
+  const zoneKind = anchorBounds
+    ? undefined
+    : scene.zones.find((zone) => zone.id === card.parentId)?.kind;
+  const upperHalf =
+    card.side !== 'shared' &&
+    bounds.y + bounds.height / 2 < scene.layout.playAreaBounds.height / 2;
+  const placement = (size: {
+    readonly width: number;
+    readonly height: number;
+  }) => {
+    const raw = legacyContextMenuOrigin(bounds, zoneKind, upperHalf, size);
+    return {
+      left: Math.max(0, Math.min(raw.left, scene.viewport.width - size.width)),
+      top: Math.max(0, Math.min(raw.top, scene.viewport.height - size.height)),
+    };
+  };
+  const [position, setPosition] = useState(() =>
+    placement({ width: 180, height: 0 })
   );
-  const [position, setPosition] = useState({
-    left: preferredLeft,
-    top: Math.max(0, Math.min(bounds.y, state.scene!.viewport.height)),
-  });
   useLayoutEffect(() => {
     const element = container.current;
     if (!element) return;
-    const measuredHeight = element.getBoundingClientRect().height;
-    const next = {
-      left: preferredLeft,
-      top: Math.max(
-        0,
-        Math.min(bounds.y, state.scene!.viewport.height - measuredHeight)
-      ),
-    };
+    const measured = element.getBoundingClientRect();
+    const next = placement({ width: measured.width, height: measured.height });
     setPosition((current) =>
       current.left === next.left && current.top === next.top ? current : next
     );
-  }, [bounds.y, card.id, entries.length, preferredLeft, state.scene]);
+    // `placement` reads only the values listed here.
+  }, [
+    bounds.x,
+    bounds.y,
+    bounds.width,
+    bounds.height,
+    card.id,
+    entries.length,
+    zoneKind,
+    upperHalf,
+    scene,
+  ]);
 
   return (
     <div
@@ -1188,6 +1240,9 @@ const ZoneBrowser = ({
             {primary.label}
           </button>
         ) : null}
+        {/* v1's markup breaks the line between these controls, which centres
+            them with a space between each; JSX would drop it. */}
+        {primary ? ' ' : null}
         <button
           type="button"
           className="ptcgsim-legacy-zone-button"
@@ -1195,7 +1250,7 @@ const ZoneBrowser = ({
           onClick={dismiss}
         >
           Close
-        </button>
+        </button>{' '}
         <label>
           <input
             type="checkbox"

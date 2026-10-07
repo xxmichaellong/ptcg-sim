@@ -678,6 +678,15 @@ export const RemoteSessionBoard = ({
               refreshingImages={refreshingImages}
               coinPending={coinPending}
               sortedHandPlayerIds={sortedHandPlayerIds}
+              coveredByPopup={
+                boardState.presentation.openedZoneId !== null ||
+                boardState.scene.zones.some(
+                  (zone) =>
+                    (zone.kind === 'inspection' ||
+                      zone.kind === 'attachmentResolution') &&
+                    zone.count > 0
+                )
+              }
               visibility={{
                 playerActions:
                   boardState.source?.kind === 'live' &&

@@ -232,6 +232,8 @@
 }
 
 .native-deck-builder-validation-dot {
+  /* v1 sizes the dot's content box; its border sits outside the 0.9vh. */
+  box-sizing: content-box;
   width: 0.9vh;
   min-width: 0.9vh;
   height: 0.9vh;

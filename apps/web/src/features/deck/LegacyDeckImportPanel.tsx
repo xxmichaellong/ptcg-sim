@@ -358,11 +358,16 @@ export const LegacyDeckImportPanel = ({
           }
         />
         <div id="importBottom">
-          <div className="legacy-deck-samples" ref={samplesMenu}>
+          {/* The whole wrapper leaves the row during review, as v1's book
+              does; an empty one would still take its margin and a gap. */}
+          <div
+            className="legacy-deck-samples"
+            ref={samplesMenu}
+            hidden={Boolean(review)}
+          >
             <button
               id="decklistsButton"
               type="button"
-              hidden={Boolean(review)}
               aria-expanded={samplesOpen}
               aria-controls="decklistsContextMenu"
               onClick={toggleSamples}

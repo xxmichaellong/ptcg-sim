@@ -730,9 +730,8 @@ export const RemoteRoomLobby = ({
       <div id="p2ExplanationBox">
         <strong>Online Multiplayer Mode</strong>
         <div className="legacy-explanation-gap" />
-        Generate a room, then copy a temporary invitation to share only with the
-        intended player or spectator. Recipients paste it into Room ID before
-        joining.
+        Generate a room, then copy a temporary invitation for one player or
+        spectator. They paste it into Room ID to join.
       </div>
       <div id="lobby" aria-busy={busy}>
         <input
@@ -785,7 +784,7 @@ export const RemoteRoomLobby = ({
             checked={coachingConsent}
             disabled={busy}
             onChange={(event) => setCoachingConsent(event.target.checked)}
-          />
+          />{' '}
           <label htmlFor="coachingModeCheckbox">
             Enable board flip <span>(both players must enable)</span>
           </label>
@@ -800,7 +799,7 @@ export const RemoteRoomLobby = ({
             // key did.
             disabled={busy || receipt?.requestedRole === 'spectator'}
             onChange={(event) => setSpectator(event.target.checked)}
-          />
+          />{' '}
           <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
         </div>
         <button

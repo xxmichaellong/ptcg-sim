@@ -99,7 +99,9 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
 }) {
   // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
   // the text flipped back upright on the rotated opponent frame. The label
-  // uses `clamp(10px, 4vh, 20px)` of the container height, like the counts.
+  // box is `font-size: 5vh` of the container, which sets the space between
+  // the checkbox and the word; the word itself is `clamp(10px, 4vh, 20px)`,
+  // like the counts.
   const sortFontSize = Math.min(
     20,
     Math.max(10, frame.frameBounds.height * 0.04)
@@ -161,7 +163,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
           htmlFor={sortCheckboxId}
           data-hand-sort-player={frame.playerId}
           data-player-side={playerSide}
-          style={{ fontSize: sortFontSize }}
+          style={{ fontSize: frame.frameBounds.height * 0.05 }}
         >
           <input
             id={sortCheckboxId}
@@ -170,13 +172,20 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
             onChange={(event) =>
               onToggleHandSort(frame.playerId, event.currentTarget.checked)
             }
-          />
+          />{' '}
           {/* The frame's own rotation decides the counter-flip, as v1's
               flipBoard swaps self-text/opp-text; the colour follows the seat. */}
           <span
             className={
               frame.rotationQuarterTurns === 2 ? 'opp-text' : 'self-text'
             }
+            // v1's dark mode greys every `.self-text`/`.opp-text` in the
+            // containers (`.dark-mode-3`); the word has no colour of its own
+            // to outrank it, unlike the hand count's `#handText`.
+            style={{
+              fontSize: sortFontSize,
+              ...(darkMode ? { color: 'rgb(149, 149, 149)' } : {}),
+            }}
           >
             Sort
           </span>
@@ -201,6 +210,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   refreshingImages = false,
   coinPending = false,
   sortedHandPlayerIds,
+  coveredByPopup = false,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly localPlayerId: PlayerId;
@@ -213,6 +223,12 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   readonly coinPending?: boolean;
   /** Players whose hand is painted sorted (the v1 Sort checkbox state). */
   readonly sortedHandPlayerIds?: ReadonlySet<PlayerId>;
+  /**
+   * A zone or work-area popup is open. v1's stadium observer then drops the
+   * board controls behind `#cover`, the page's 85% sheet, so they show faded
+   * and take no clicks until it closes.
+   */
+  readonly coveredByPopup?: boolean;
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -292,6 +308,14 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           left: anchor.x,
           top: anchor.y,
           height: anchor.height,
+          ...(coveredByPopup
+            ? {
+                // What is left of the controls through v1's cover: 85% white,
+                // or the 90% dark sheet in dark mode.
+                opacity: darkMode ? 0.1 : 0.15,
+                pointerEvents: 'none' as const,
+              }
+            : {}),
         }}
       >
         {visibility.playerActions && (

@@ -83,7 +83,8 @@
 }
 
 .legacy-deck-import #importBottom {
-  position: relative;
+  /* Not positioned, as in v1: the wand's `right: 5%` measures from the whole
+   * panel, not from this row inside its padding. */
   display: flex;
   align-items: center;
   width: 100%;
@@ -112,6 +113,15 @@
 .legacy-deck-import #saveButton {
   width: 20%;
   padding: 0.7vh;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.legacy-deck-import #confirmButton {
+  margin-left: 0.3vw;
 }
 
 .legacy-deck-import #cancelButton {
@@ -127,7 +137,6 @@
 .legacy-deck-import #randomButton {
   border: 0;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
   cursor: pointer;
   font-size: x-large;
 }
@@ -141,6 +150,8 @@
   position: absolute;
   right: 5%;
   background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  /* Only the wand casts a shadow in v1; the book does not. */
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
 }
 
 .legacy-deck-import .legacy-deck-samples {
@@ -281,10 +292,6 @@
 
 .legacy-deck-review-table td {
   padding: 0.3vh 2vw;
-}
-
-.legacy-deck-review-table select {
-  width: 100%;
 }
 
 .remote-room-route--dark .legacy-deck-import textarea,

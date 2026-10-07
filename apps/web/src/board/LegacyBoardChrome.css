@@ -211,8 +211,8 @@
   position: absolute;
   bottom: 29.5%;
   left: 0;
-  display: inline-flex;
-  align-items: center;
+  display: block;
+  white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
@@ -231,6 +231,11 @@
 }
 
 .ptcgsim-legacy-board-chrome .legacy-hand-sort input {
-  margin: 0 0.25em 0 0;
+  /* The browser's own checkbox margin, which v1 leaves in place. */
+  margin: 3px 3px 3px 4px;
   cursor: pointer;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort span {
+  display: inline-block;
 }

@@ -126,15 +126,63 @@ const BoardControlsAnchorNode = memo(function BoardControlsAnchorNode({
   );
 });
 
+/**
+ * The containers v1's Show Zones setting outlines (`settings.js`
+ * `showOutlines`): the hand and the loose board never get one.
+ */
+const OUTLINED_ZONE_KINDS: ReadonlySet<ZoneSceneNode['kind']> = new Set([
+  'active',
+  'bench',
+  'prizes',
+  'deck',
+  'lostZone',
+  'discard',
+  'stadium',
+]);
+
+/**
+ * v1's `#hand { border-top: 3px solid ... }` in each player's container: blue
+ * for the viewer, red for the opponent, on the edge facing the board -- the
+ * opponent's container is turned around, so theirs sits on the hand's lower
+ * edge.
+ */
+interface HandDivider {
+  readonly edge: 'top' | 'bottom';
+  readonly color: string;
+}
+
+const handDividerFor = (
+  zone: ZoneSceneNode,
+  players: BoardScene['layout']['players']
+): HandDivider | undefined => {
+  if (zone.kind !== 'hand') return undefined;
+  const frame = players.find(
+    (candidate) => candidate.playerId === zone.playerId
+  );
+  if (!frame) return undefined;
+  return {
+    edge: frame.physicalSide === 'lower' ? 'top' : 'bottom',
+    color:
+      frame.side === 'local'
+        ? 'rgba(90, 110, 188, 0.864)'
+        : 'rgba(188, 90, 113, 0.864)',
+  };
+};
+
 const ZoneNode = memo(function ZoneNode({
   zone,
   showOutline,
+  handDividerEdge,
+  handDividerColor,
   dropTarget,
   emitIntent,
   scrollZone,
 }: {
   readonly zone: ZoneSceneNode;
   readonly showOutline: boolean;
+  /** Primitives, so the memoized node is not repainted every render. */
+  readonly handDividerEdge: HandDivider['edge'] | undefined;
+  readonly handDividerColor: string | undefined;
   /** The zone under a dragged card: v1 tints it with `.highlightBox`. */
   readonly dropTarget: boolean;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
@@ -194,6 +242,14 @@ const ZoneNode = memo(function ZoneNode({
             ? 'rgba(255, 255, 255, 0.1)'
             : 'transparent',
         boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
+        ...(handDividerEdge && handDividerColor
+          ? {
+              borderRadius: 0,
+              // An inset shadow paints v1's 3px border without moving the
+              // zone's children, whose content box already starts below it.
+              boxShadow: `inset 0 ${handDividerEdge === 'top' ? 3 : -3}px 0 ${handDividerColor}`,
+            }
+          : {}),
         pointerEvents: zone.interactive ? 'auto' : 'none',
         ...(zone.scroll
           ? zone.scroll.axis === 'y'
@@ -736,16 +792,23 @@ export const BoardSurface = ({
       <BoardControlsAnchorNode
         anchor={scene.layout.shared.boardControlsAnchor}
       />
-      {scene.zones.map((zone) => (
-        <ZoneNode
-          key={zone.id}
-          zone={zone}
-          showOutline={preferences.showZoneOutlines}
-          dropTarget={dragTargetId === zone.id}
-          emitIntent={adapters.emitIntent}
-          scrollZone={adapters.scrollZone}
-        />
-      ))}
+      {scene.zones.map((zone) => {
+        const divider = handDividerFor(zone, scene.layout.players);
+        return (
+          <ZoneNode
+            key={zone.id}
+            zone={zone}
+            showOutline={
+              preferences.showZoneOutlines && OUTLINED_ZONE_KINDS.has(zone.kind)
+            }
+            handDividerEdge={divider?.edge}
+            handDividerColor={divider?.color}
+            dropTarget={dragTargetId === zone.id}
+            emitIntent={adapters.emitIntent}
+            scrollZone={adapters.scrollZone}
+          />
+        );
+      })}
       {scene.cards
         .filter((card) => card.renderKey !== null)
         .map((card) => (
