@@ -1,4 +1,6 @@
 import { defineConfig } from '@playwright/test';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { CONTINUATION_HTTP_DRAIN_VALUE } from './apps/server/src/continuation-http-activation.js';
 
@@ -69,6 +71,17 @@ const continuationVariables = Object.entries({
  * the local lane injects only deterministic test bindings on Wrangler's
  * command line and never changes the deployable configuration.
  */
+/**
+ * Each run's server starts from empty Durable Object storage. The test uses a
+ * fixed room code, so a shared `.wrangler/state` would carry that room's
+ * continuation ledger -- and its per-player creation limit -- from one local
+ * run into the next until saves are refused.
+ */
+const freshServerState = join(
+  tmpdir(),
+  `ptcgsim-continuation-4177-${process.pid}-${Date.now()}`
+);
+
 export default defineConfig({
   testDir: './tests/browser',
   testMatch: 'continuation-drain.spec.ts',
@@ -91,7 +104,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4177 ${continuationVariables}`,
+          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4177 --persist-to ${freshServerState} ${continuationVariables}`,
           url: `${LOCAL_CONTINUATION_DRAIN_URL}/v2/health`,
           reuseExistingServer: false,
           timeout: 90_000,

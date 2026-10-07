@@ -1,4 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const LOCAL_CONTINUATION_PREVIEW_URL = 'http://127.0.0.1:4176';
 const externalContinuationPreviewUrl =
@@ -37,6 +39,17 @@ const continuationVariables = Object.entries({
  * A separately provisioned managed preview can be exercised by setting
  * PTCGSIM_CONTINUATION_PREVIEW_URL; in that mode Playwright starts no server.
  */
+/**
+ * Each run's server starts from empty Durable Object storage. The test uses a
+ * fixed room code, so a shared `.wrangler/state` would carry that room's
+ * continuation ledger -- and its per-player creation limit -- from one local
+ * run into the next until saves are refused.
+ */
+const freshServerState = join(
+  tmpdir(),
+  `ptcgsim-continuation-4176-${process.pid}-${Date.now()}`
+);
+
 export default defineConfig({
   testDir: './tests/browser',
   testMatch: 'continuation-full-stack.spec.ts',
@@ -92,7 +105,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4176 ${continuationVariables}`,
+          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4176 --persist-to ${freshServerState} ${continuationVariables}`,
           url: `${LOCAL_CONTINUATION_PREVIEW_URL}/v2/health`,
           reuseExistingServer: false,
           timeout: 90_000,
