@@ -63,6 +63,11 @@ export interface CardInspectorProps {
   readonly view: MatchViewState | undefined;
   readonly scene: BoardScene | undefined;
   readonly reducedMotion: boolean;
+  /**
+   * A zone browser or card preview is open: it shows its cards large
+   * itself, so the inspector closes at once and stays closed.
+   */
+  readonly suppressed?: boolean;
 }
 
 /**
@@ -75,6 +80,7 @@ export const CardInspector = ({
   view,
   scene,
   reducedMotion,
+  suppressed = false,
 }: CardInspectorProps) => {
   const hoveredId = useSyncExternalStore(
     store.subscribeCard,
@@ -155,11 +161,13 @@ export const CardInspector = ({
   }, [store, reducedMotion, shown?.inspection.cardId]);
 
   const inspection = shown?.inspection;
+  // Suppression fades the open card out rather than dropping it.
+  const open = inspection !== undefined && !suppressed;
   return (
     <aside
       className="card-inspector"
       data-card-inspector=""
-      data-open={shown ? 'true' : 'false'}
+      data-open={open ? 'true' : 'false'}
       data-side={shown?.side ?? 'right'}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
       aria-hidden="true"

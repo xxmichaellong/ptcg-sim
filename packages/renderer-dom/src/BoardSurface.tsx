@@ -570,14 +570,18 @@ const ZoneCountNode = memo(function ZoneCountNode({
       aria-hidden="true"
       style={
         table
-          ? {
+          ? ({
               position: 'absolute',
               ...horizontal,
               ...vertical,
               zIndex: 9_200,
               pointerEvents: 'none',
               userSelect: 'none',
-            }
+              // The hand's badge carries its owner's colour, as v1's text did.
+              ...(node.kind === 'hand'
+                ? { '--ptcgsim-count-tint': node.color }
+                : {}),
+            } as CSSProperties)
           : {
               position: 'absolute',
               ...horizontal,

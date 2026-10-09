@@ -91,4 +91,30 @@ describe('CardInspector', () => {
     await act(async () => store.set(null));
     await act(async () => root.unmount());
   });
+
+  it('stays closed while a zone browser or card preview shows cards large', async () => {
+    const { store, root, inspector } = await mount();
+    await act(async () => store.set({ cardId: handCards[0]!.id, x: 0, y: 0 }));
+    await act(async () => vi.advanceTimersByTime(150));
+    expect(inspector.dataset.open).toBe('true');
+    const render = (suppressed: boolean) =>
+      act(async () =>
+        root.render(
+          <CardInspector
+            store={store}
+            view={view}
+            scene={scene}
+            reducedMotion={false}
+            suppressed={suppressed}
+          />
+        )
+      );
+    await render(true);
+    expect(inspector.dataset.open).toBe('false');
+    // The card stays mounted so it fades out instead of vanishing.
+    expect(inspector.querySelector('.card-inspector__card')).not.toBeNull();
+    await render(false);
+    expect(inspector.dataset.open).toBe('true');
+    await act(async () => root.unmount());
+  });
 });

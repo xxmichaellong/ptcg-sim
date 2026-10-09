@@ -211,6 +211,91 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it('stacks deck, discard and a readable Lost Zone down the outer column', () => {
+    for (const [width, height] of [
+      [1024, 768],
+      [1280, 720],
+      [1440, 900],
+      [1920, 1080],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(stateAt(width, height));
+      for (const side of ['local', 'opponent'] as const) {
+        const deck = region(snapshot, side, 'deck').physicalDeclaredBounds;
+        const discard = region(
+          snapshot,
+          side,
+          'discard'
+        ).physicalDeclaredBounds;
+        const lost = region(snapshot, side, 'lostZone').physicalDeclaredBounds;
+        const bench = region(snapshot, side, 'bench').physicalDeclaredBounds;
+        const label = `${width} ${side}`;
+        // One column of equal piles, deck nearest the centre line.
+        expect(discard.x, label).toBeCloseTo(deck.x, 5);
+        expect(lost.x, label).toBeCloseTo(deck.x, 5);
+        expect(lost.height, label).toBeCloseTo(deck.height, 5);
+        const order = [deck, discard, lost].map((rect) => rect.y);
+        expect(order, label).toEqual(
+          side === 'local'
+            ? [...order].sort((a, b) => a - b)
+            : [...order].sort((a, b) => b - a)
+        );
+        // Big enough to read its top card: never far below a bench card.
+        expect(lost.height / bench.height, label).toBeGreaterThan(0.8);
+        // Its corner badge stays on the screen.
+        expect(lost.y, label).toBeGreaterThanOrEqual(10);
+        expect(lost.y + lost.height, label).toBeLessThanOrEqual(height - 10);
+      }
+    }
+  });
+
+  it("puts each hand's count at the far end of its strip, clear of every zone", () => {
+    for (const [width, height] of [
+      [1280, 720],
+      [1440, 900],
+      [1920, 1080],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(stateAt(width, height));
+      for (const player of snapshot.players) {
+        const hand = player.regions.find(
+          (candidate) => candidate.kind === 'hand'
+        )!;
+        const count = hand.countLabel!;
+        // A 22px badge, up to 48px wide, grows away from the anchor.
+        const badge: Rect = {
+          x:
+            count.horizontalAlign === 'left'
+              ? count.anchor.x
+              : count.anchor.x - 48,
+          y:
+            count.verticalAlign === 'top'
+              ? count.anchor.y
+              : count.anchor.y - 22,
+          width: 48,
+          height: 22,
+        };
+        const label = `${width} ${player.side}`;
+        expect(
+          inside(badge, player.frameBounds),
+          `${label} inside its half`
+        ).toBe(true);
+        for (const other of player.regions) {
+          if (other.kind === 'hand') continue;
+          expect(
+            overlaps(badge, other.physicalDeclaredBounds),
+            `${label} / ${other.kind}`
+          ).toBe(false);
+        }
+        // It sits level with the hand, past its last card.
+        const strip = hand.physicalDeclaredBounds;
+        expect(badge.y, label).toBeGreaterThanOrEqual(strip.y);
+        expect(badge.y + badge.height, label).toBeLessThanOrEqual(
+          strip.y + strip.height
+        );
+        expect(overlaps(badge, strip), label).toBe(false);
+      }
+    }
+  });
+
   it('runs the hand off the screen edge and overlaps it when crowded', () => {
     const content = { x: 100, y: 600, width: 700, height: 130 };
     const three = layoutTableHand(content, 'local', 3);

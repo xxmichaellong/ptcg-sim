@@ -19,10 +19,10 @@ import type { BoardSide, BoardViewport, Rect } from './model.js';
  * Geometry v2: the table laid out like the official play mat at sizes you
  * can read (ADR-027). Each half follows the mat -- prizes as a 2 x 3 grid on
  * the outer left, the Active at the centre line with a staging area beside
- * it, five bench slots below, deck and discard down the right, the Lost Zone
- * in the corner by the hand -- and the hand runs along the screen edge, its
- * cards partly off-screen until hovered. The opponent's half is the same mat
- * turned around, with a slimmer hand strip.
+ * it, five bench slots below, deck, discard and Lost Zone down the right --
+ * and the hand runs along the screen edge, its cards partly off-screen until
+ * hovered. The opponent's half is the same mat turned around, with a slimmer
+ * hand strip.
  *
  * It produces the same snapshot shape as v1, so scenes, hit-testing and
  * renderers are unchanged; only the numbers differ.
@@ -105,6 +105,11 @@ export const TABLE_HAND_VISIBLE_SHARE = 0.8;
  */
 export const TABLE_CONTROL_CORNER_PX = 96;
 
+/** Room at the far end of each hand strip for its card-count badge. */
+const HAND_COUNT_SLOT_PX = 44;
+/** The least clear space between a pile and the screen edge. */
+const PILE_EDGE_MARGIN_PX = 12;
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 
 interface LocalRegion {
@@ -150,30 +155,29 @@ const layoutHalf = (
     width: 2 * prizeWidth + prizeGap,
     height: active + gap + bench,
   };
-  // Deck over discard down the right, each the size of a bench card.
-  const pileWidth = bench * CARD_ASPECT_RATIO;
+  // Deck, discard and Lost Zone down the right, from the centre line toward
+  // the player's edge, each the size of a bench card where the half is tall
+  // enough. The Lost Zone is a full pile, not a corner token: Lost Zone decks
+  // read its top card and count all game.
+  const pileHeight = Math.max(
+    0,
+    Math.min(
+      bench,
+      (height - margin - Math.max(PILE_EDGE_MARGIN_PX, margin / 2) - 2 * gap) /
+        3
+    )
+  );
+  const pileWidth = pileHeight * CARD_ASPECT_RATIO;
   const pileLeft = width - margin - pileWidth;
-  const deck: Rect = {
+  const pileAt = (index: number): Rect => ({
     x: pileLeft,
-    y: activeTop + (active - bench) / 2,
+    y: activeTop + index * (pileHeight + gap),
     width: pileWidth,
-    height: bench,
-  };
-  const discard: Rect = {
-    x: pileLeft,
-    y: benchTop,
-    width: pileWidth,
-    height: bench,
-  };
-  // The Lost Zone sits in the corner by the hand, below the discard.
-  const lostHeight = Math.max(0, Math.min(bench * 0.82, handStrip - margin));
-  const lostWidth = lostHeight * CARD_ASPECT_RATIO;
-  const lostZone: Rect = {
-    x: width - margin - lostWidth,
-    y: handTop + Math.max(0, (handStrip - lostHeight) / 2),
-    width: lostWidth,
-    height: lostHeight,
-  };
+    height: pileHeight,
+  });
+  const deck = pileAt(0);
+  const discard = pileAt(1);
+  const lostZone = pileAt(2);
 
   const middleLeft = prizes.x + prizes.width + gap * 1.5;
   const middleRight = pileLeft - gap * 1.5;
@@ -201,7 +205,7 @@ const layoutHalf = (
     height: bench,
   };
   const handLeft = margin + TABLE_CONTROL_CORNER_PX;
-  const handRight = lostZone.x - gap * 1.5;
+  const handRight = pileLeft - gap * 1.5 - HAND_COUNT_SLOT_PX;
   const handRect: Rect = {
     x: handLeft,
     y: handTop,
@@ -249,7 +253,8 @@ const countLabelFor = (
   side: BoardSide
 ): BoardLayoutCountLabel => {
   // Piles wear their count as a badge on the corner nearest the player; the
-  // hand shows its count at the end of its strip.
+  // hand shows its count in the slot kept at the far end of its strip, level
+  // with the tops of its cards.
   if (anchor === 'pile') {
     return side === 'local'
       ? {
@@ -270,18 +275,15 @@ const countLabelFor = (
   }
   return side === 'local'
     ? {
-        anchor: { x: physical.x, y: physical.y },
+        anchor: { x: physical.x + physical.width + 8, y: physical.y + 6 },
         horizontalAlign: 'left',
-        verticalAlign: 'bottom',
+        verticalAlign: 'top',
         fontSizePx: 13,
       }
     : {
-        anchor: {
-          x: physical.x + physical.width,
-          y: physical.y + physical.height,
-        },
+        anchor: { x: physical.x - 8, y: physical.y + physical.height - 6 },
         horizontalAlign: 'right',
-        verticalAlign: 'top',
+        verticalAlign: 'bottom',
         fontSizePx: 13,
       };
 };

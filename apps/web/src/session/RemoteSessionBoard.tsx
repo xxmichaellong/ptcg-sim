@@ -739,6 +739,10 @@ export const RemoteSessionBoard = ({
             view={boardState.view}
             scene={boardState.scene}
             reducedMotion={preferences.reducedMotion}
+            suppressed={
+              boardState.presentation.openedZoneId !== null ||
+              boardState.overlays.preview !== null
+            }
           />
           <LegacyBoardKeyboardShortcuts
             state={boardState}

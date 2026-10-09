@@ -172,6 +172,10 @@ export const BOARD_SURFACE_CSS = `
   text-align: center;
   white-space: normal;
 }
+/* Counted piles keep their name clear of the badge on the near corner. */
+.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='local']::after {
+  right: 16px;
+}
 /* The opponent's mat is turned round: its labels sit at the far corner. */
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
   left: auto;
@@ -180,7 +184,7 @@ export const BOARD_SURFACE_CSS = `
   bottom: 6px;
 }
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
-  left: 4px;
+  left: 16px;
   right: 4px;
   top: 8px;
   bottom: auto;
@@ -228,9 +232,21 @@ export const BOARD_SURFACE_CSS = `
 }
 .ptcgsim-zone-count--badge.ptcgsim-zone-count-hand {
   margin: 0;
-  translate: 0 -10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 6px;
+  border-color: color-mix(in oklab, var(--ptcgsim-count-tint, currentColor) 70%, transparent);
 }
-.ptcgsim-zone-count--badge.ptcgsim-zone-count-hand[data-zone-count-side='opponent'] {
-  translate: 0 10px;
+/* Two fanned cards: this is the hand's count, not a pile's. */
+.ptcgsim-zone-count--badge.ptcgsim-zone-count-hand::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: var(--ptcgsim-count-tint, currentColor);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1.6' y='3.6' width='7.4' height='10.4' rx='1.4' transform='rotate(-14 5.3 8.8)' fill='white'/%3E%3Crect x='6.6' y='1.8' width='7.4' height='10.4' rx='1.4' transform='rotate(9 10.3 7)' fill='white' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask-mode: luminance;
 }
 `;
