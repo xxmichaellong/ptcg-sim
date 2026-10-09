@@ -728,7 +728,10 @@ export const RemoteSessionBoard = ({
                   ? boardState.view.viewer.playerId
                   : undefined)
               }
-              reducedMotion={preferences.reducedMotion}
+              // At "instant" the coin shows its result without a toss.
+              reducedMotion={
+                preferences.reducedMotion || preferences.animationSpeed === 0
+              }
             />
           ) : null}
           <LegacyBoardOverlays

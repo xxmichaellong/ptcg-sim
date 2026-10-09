@@ -345,7 +345,10 @@
   --ptcgsim-focus-ring: var(--color-accent);
   --ptcgsim-hover-scale: 1.04;
   --ptcgsim-lift-scale: 1.07;
-  --ptcgsim-motion-hover-duration: var(--duration-normal);
+  /* Scaled by the animation speed (0 at "instant" and under reduced motion). */
+  --ptcgsim-motion-hover-duration: calc(
+    var(--duration-normal) * var(--motion-scale, 1)
+  );
   --ptcgsim-motion-hover-easing: var(--ease-snappy);
   /* The physical damage counters: yellow 10, orange 50, red 100. */
   --ptcgsim-counter-10: #ffe100;
@@ -353,8 +356,9 @@
   --ptcgsim-counter-100: #e70012;
 }
 
+/* The system's preference applies unless the player chose full motion. */
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root:not([data-motion='full']) {
     --ptcgsim-motion-hover-duration: 0ms;
   }
 }

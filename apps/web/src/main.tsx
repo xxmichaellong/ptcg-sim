@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { announceMobileNotice } from './mobile-notice.js';
+import { installPageMotion } from './motion/page-motion.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
@@ -45,6 +46,9 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
       landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
     };
 
+// Reduced motion and animation speed apply to the whole page from the
+// first paint, not only once a room is open.
+installPageMotion();
 // v1 tells a phone or tablet, once on load, that the sim expects a desktop.
 announceMobileNotice();
 // ...and asks before a reload or a closed tab discards the table.

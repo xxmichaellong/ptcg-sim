@@ -20,9 +20,11 @@
   translate: var(--inspector-enter-x, 24px) 0;
   scale: 0.96;
   transition:
-    opacity var(--duration-fast) var(--ease-out),
-    translate var(--duration-snappy) var(--ease-snappy),
-    scale var(--duration-snappy) var(--ease-snappy);
+    opacity calc(var(--duration-fast) * var(--motion-scale, 1)) var(--ease-out),
+    translate calc(var(--duration-snappy) * var(--motion-scale, 1))
+      var(--ease-snappy),
+    scale calc(var(--duration-snappy) * var(--motion-scale, 1))
+      var(--ease-snappy);
 }
 .card-inspector[data-side='left'] {
   left: 0;
@@ -55,8 +57,9 @@
     0 0 0 1px oklch(1 0 0 / 0.08);
   transform: rotateX(var(--inspector-tilt-x, 0deg))
     rotateY(var(--inspector-tilt-y, 0deg));
-  transition: transform 160ms var(--ease-out);
-  animation: card-inspector-swap var(--duration-normal) var(--ease-out);
+  transition: transform calc(160ms * var(--motion-scale, 1)) var(--ease-out);
+  animation: card-inspector-swap
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
 }
 @keyframes card-inspector-swap {
   from {
@@ -78,7 +81,7 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: var(--inspector-light, 0);
-  transition: opacity 240ms var(--ease-out);
+  transition: opacity calc(240ms * var(--motion-scale, 1)) var(--ease-out);
 }
 .card-inspector__glare {
   background: radial-gradient(
@@ -151,7 +154,7 @@
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .card-inspector__card {
+  :root:not([data-motion='full']) .card-inspector__card {
     transform: none;
     animation: none;
   }

@@ -19,7 +19,10 @@
   );
   color: var(--color-text-on-accent);
   text-shadow: 0 2px 12px oklch(0 0 0 / 0.45);
-  animation: turn-banner 1350ms var(--ease-in-out) both;
+  /* A notice as much as a flourish: faster or slower with the animation
+     speed, but never gone before it can be read. */
+  animation: turn-banner max(900ms, calc(1350ms * var(--motion-scale, 1)))
+    var(--ease-in-out) both;
 }
 .turn-banner[data-side='local'] {
   --turn-banner-tint: oklch(0.5 0.15 var(--hue-you) / 0.82);
@@ -59,11 +62,12 @@
     translate: 0 -50%;
   }
 }
-:root[data-motion='reduced'] .turn-banner {
+:root[data-motion='reduced'] .turn-banner,
+:root[data-motion-speed='instant'] .turn-banner {
   animation-name: turn-banner-fade;
 }
 @media (prefers-reduced-motion: reduce) {
-  .turn-banner {
+  :root:not([data-motion='full']) .turn-banner {
     animation-name: turn-banner-fade;
   }
 }

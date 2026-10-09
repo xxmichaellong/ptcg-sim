@@ -43,16 +43,26 @@ describe('TurnBanner', () => {
     expect(banner.textContent).toContain('Turn 5');
     expect(banner.dataset.side).toBe('opponent');
     expect(banner.getAttribute('aria-hidden')).toBe('true');
-    await act(async () => vi.advanceTimersByTime(1_400));
+    // It leaves when its animation ends, however long the speed made it.
+    await act(async () => {
+      banner.dispatchEvent(new Event('animationend', { bubbles: true }));
+    });
     expect(host.querySelector('[data-turn-banner]')).toBeNull();
 
     await render(atTurn(6, 'spike-blue'));
     expect(host.querySelector('[data-turn-banner]')?.textContent).toContain(
       'Your turn'
     );
-    await act(async () => vi.advanceTimersByTime(1_400));
-    // Going back (an undo, a replay seek) is not a new turn.
+    // Going back (an undo, a replay seek) is not a new turn, and takes down
+    // a banner that is still showing.
+    await act(async () => vi.advanceTimersByTime(300));
+    expect(host.querySelector('[data-turn-banner]')).not.toBeNull();
     await render(atTurn(5, 'spike-red'));
+    expect(host.querySelector('[data-turn-banner]')).toBeNull();
+    // Without animations the backstop still clears it.
+    await render(atTurn(6, 'spike-blue'));
+    expect(host.querySelector('[data-turn-banner]')).not.toBeNull();
+    await act(async () => vi.advanceTimersByTime(2_600));
     expect(host.querySelector('[data-turn-banner]')).toBeNull();
     await act(async () => root.unmount());
   });

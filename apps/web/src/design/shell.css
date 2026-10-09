@@ -170,7 +170,8 @@ textarea {
   color: var(--color-text);
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
-  animation: rail-row-in var(--duration-normal) var(--ease-out);
+  animation: rail-row-in calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-out);
 }
 .remote-room-route .legacy-activity-feed .self-text,
 .remote-room-route .legacy-activity-feed .opp-text {
@@ -362,7 +363,8 @@ textarea {
   box-shadow: var(--shadow-4), var(--highlight-top);
   backdrop-filter: blur(16px);
   transform-origin: bottom right;
-  animation: rail-menu-in var(--duration-normal) var(--ease-snappy);
+  animation: rail-menu-in calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-snappy);
 }
 .remote-room-route .legacy-room-sidebox #optionsContextMenu button {
   min-height: 32px;

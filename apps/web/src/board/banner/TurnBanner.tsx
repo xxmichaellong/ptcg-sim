@@ -17,7 +17,12 @@ export interface TurnBannerProps {
 }
 
 /** How long the banner stays before it slides away. */
-const VISIBLE_MS = 1_350;
+/**
+ * The banner leaves when its animation ends (its length follows the
+ * animation speed); this is only the backstop for a page that runs no
+ * animations at all, longer than the slowest speed plays it.
+ */
+const FALLBACK_VISIBLE_MS = 2_500;
 
 /**
  * A brief banner across the table when a new turn starts. It never takes
@@ -36,6 +41,8 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
     const last = lastRef.current;
     lastRef.current = { matchId, turnNumber };
     if (!last || last.matchId !== matchId || turnNumber <= last.turnNumber) {
+      // Going back mid-banner (an undo, a replay seek) takes it down.
+      setAnnouncement(null);
       return undefined;
     }
     const player = currentPlayerId ? view?.players[currentPlayerId] : undefined;
@@ -48,7 +55,7 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
       turnNumber,
       side: currentPlayerId === bottomPlayerId ? 'local' : 'opponent',
     });
-    const timer = setTimeout(() => setAnnouncement(null), VISIBLE_MS);
+    const timer = setTimeout(() => setAnnouncement(null), FALLBACK_VISIBLE_MS);
     return () => clearTimeout(timer);
     // The view object changes with every publication; only the turn matters,
     // so the rest of it is read when the turn changes rather than tracked.
@@ -62,6 +69,9 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
       data-turn-banner=""
       data-side={announcement.side}
       aria-hidden="true"
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) setAnnouncement(null);
+      }}
     >
       <span className="turn-banner__title">{announcement.title}</span>
       <span className="turn-banner__turn">Turn {announcement.turnNumber}</span>
