@@ -262,6 +262,37 @@ describe('BoardMotionDirector', () => {
     now.mockRestore();
   });
 
+  it('lets go of a flight the moment its card is picked up, even when the scene is unchanged', () => {
+    const test = setup();
+    const before = sceneOf(base);
+    const after = sceneOf(moved());
+    test.register(before);
+    test.register(after);
+    test.director.commit(null, before, undefined, paintedOf(before), new Set());
+    test.director.commit(
+      before,
+      after,
+      { cause: 'advance' },
+      paintedOf(after),
+      new Set()
+    );
+    const key = cardKey(played);
+    const element = test.elements.get(key)!;
+    const [flight] = flightsOn(element);
+    expect(element.dataset.flying).toBe('');
+    // Grabbed mid-air: only the presentation changed, so the scene is the
+    // same object and carries no motion.
+    test.director.commit(
+      after,
+      after,
+      undefined,
+      paintedOf(after),
+      new Set([key])
+    );
+    expect(flight!.cancel).toHaveBeenCalled();
+    expect(element.dataset.flying).toBeUndefined();
+  });
+
   it('says when the table starts and stops moving on its own', async () => {
     const test = setup();
     const activity: boolean[] = [];

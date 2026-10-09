@@ -95,10 +95,10 @@ export const BOARD_SURFACE_CSS = `
   /* On the table the hand runs off the screen edge: a hovered card rises
      fully into view, above its neighbours (in its own frame, so the
      opponent's turned hand rises toward the centre). */
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:enabled:hover {
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover {
     z-index: 8500 !important;
   }
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:enabled:hover > .ptcgsim-card__body {
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover > .ptcgsim-card__body {
     translate: 0 -22%;
     scale: 1.06;
   }
@@ -111,7 +111,7 @@ export const BOARD_SURFACE_CSS = `
 }
 .ptcgsim-card[data-held] > .ptcgsim-card__body {
   scale: var(--ptcgsim-lift-scale, 1.06);
-  transition-duration: 120ms;
+  transition-duration: calc(120ms * var(--motion-scale, 1));
 }
 .ptcgsim-card[data-held] .ptcgsim-card__face {
   --ptcgsim-lift: 6;
@@ -130,6 +130,10 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card > .ptcgsim-card__body {
   scale: none !important;
   rotate: none !important;
+}
+/* A hovered hand card still rises into view (it is mostly off the screen),
+   only without the slide. */
+.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card:not([data-in-hand]:hover) > .ptcgsim-card__body {
   translate: none !important;
 }
 

@@ -160,6 +160,11 @@ export class BoardMotionDirector {
     const lastPainted = new Map(this.painted);
     this.painted.clear();
     for (const [key, card] of painted) this.painted.set(key, card);
+    // A card picked up (or held where it was dropped) belongs to the
+    // pointer, even mid-flight and even when only the presentation changed.
+    for (const key of held) {
+      if (this.flights.has(key)) this.stopFlight(key);
+    }
     if (!motion || !previous || previous === next) return;
     const cause = motion.cause;
     if (cause === 'replace' || cause === 'layout') {

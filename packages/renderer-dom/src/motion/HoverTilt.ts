@@ -46,12 +46,23 @@ export class HoverTilt {
   private body: HTMLElement | null = null;
   private frame: number | null = null;
   private pending: { readonly x: number; readonly y: number } | null = null;
-  private relaxTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Cards relaxing back to flat after the pointer left, each on its own clock. */
+  private readonly relaxing = new Map<
+    HTMLElement,
+    ReturnType<typeof setTimeout>
+  >();
   private enabled = true;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
-    if (!enabled) this.leave(true);
+    if (!enabled) {
+      this.leave(true);
+      for (const [body, timer] of this.relaxing) {
+        clearTimeout(timer);
+        this.flatten(body);
+      }
+      this.relaxing.clear();
+    }
   }
 
   /** The pointer is over `card` (its button) at this client position. */
@@ -70,9 +81,11 @@ export class HoverTilt {
       this.leave();
       this.body = body;
     }
-    if (this.relaxTimer !== null) {
-      clearTimeout(this.relaxTimer);
-      this.relaxTimer = null;
+    // Back on a card that was relaxing: it leans again instead.
+    const relaxing = this.relaxing.get(body);
+    if (relaxing !== undefined) {
+      clearTimeout(relaxing);
+      this.relaxing.delete(body);
     }
     body.dataset.tilt = '';
     this.pending = localPointer(
@@ -97,27 +110,34 @@ export class HoverTilt {
     body.style.setProperty('--ptcgsim-tilt-x', '0deg');
     body.style.setProperty('--ptcgsim-tilt-y', '0deg');
     body.style.setProperty('--ptcgsim-glare', '0');
-    const finish = () => {
-      if (this.body === body) return;
-      delete body.dataset.tilt;
-      for (const name of [
-        '--ptcgsim-tilt-x',
-        '--ptcgsim-tilt-y',
-        '--ptcgsim-glare',
-        '--ptcgsim-glare-x',
-        '--ptcgsim-glare-y',
-      ]) {
-        body.style.removeProperty(name);
-      }
-    };
+    const previous = this.relaxing.get(body);
+    if (previous !== undefined) clearTimeout(previous);
     if (immediately) {
-      finish();
+      this.relaxing.delete(body);
+      this.flatten(body);
       return;
     }
-    this.relaxTimer = setTimeout(() => {
-      this.relaxTimer = null;
-      finish();
-    }, RELAX_MS);
+    this.relaxing.set(
+      body,
+      setTimeout(() => {
+        this.relaxing.delete(body);
+        if (this.body !== body) this.flatten(body);
+      }, RELAX_MS)
+    );
+  }
+
+  /** Done relaxing: the card is flat again and carries no tilt state. */
+  private flatten(body: HTMLElement): void {
+    delete body.dataset.tilt;
+    for (const name of [
+      '--ptcgsim-tilt-x',
+      '--ptcgsim-tilt-y',
+      '--ptcgsim-glare',
+      '--ptcgsim-glare-x',
+      '--ptcgsim-glare-y',
+    ]) {
+      body.style.removeProperty(name);
+    }
   }
 
   private schedule(): void {
