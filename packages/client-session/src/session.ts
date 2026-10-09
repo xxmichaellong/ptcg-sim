@@ -835,6 +835,14 @@ export class RemoteGameSession {
       return;
     }
     const advancesView = !current || candidate.revision > current.revision;
+    // Mark the covered command before anyone sees the new view, so no
+    // observer folds its outcome over a view that already contains it.
+    if (message.coveringCommandId) {
+      const pending = this.pending.find(
+        (item) => item.envelope.commandId === message.coveringCommandId
+      );
+      if (pending) pending.publicationRevision = message.snapshot.revision;
+    }
     const presentationEvents =
       candidate.revision > previousRevision && message.presentationEvents
         ? appendManyBounded(
@@ -847,14 +855,9 @@ export class RemoteGameSession {
       this.updateState({
         ...(advancesView ? { view: candidate } : {}),
         presentationEvents,
+        pendingCommands: this.pendingSummaries(),
       });
       if (!this.isCurrent(generation) || this.state.phase !== 'ready') return;
-    }
-    if (message.coveringCommandId) {
-      const pending = this.pending.find(
-        (item) => item.envelope.commandId === message.coveringCommandId
-      );
-      if (pending) pending.publicationRevision = message.snapshot.revision;
     }
     this.finishHeadIfComplete();
     this.publishPending();
@@ -1181,6 +1184,9 @@ export class RemoteGameSession {
       commandType: item.envelope.command.type,
       command: item.envelope.command,
       state: item.status,
+      ...(item.publicationRevision !== undefined
+        ? { published: true as const }
+        : {}),
     }));
   }
 

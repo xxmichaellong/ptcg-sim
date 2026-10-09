@@ -286,12 +286,16 @@ export class BoardSessionAdapter {
     // Only live views carry predictions, and only for commands still in the
     // session's queue -- whichever control submitted them. A prediction that
     // no longer applies (its card moved, or the publication already shows the
-    // effect) returns null and is simply not shown.
+    // effect) returns null and is simply not shown. A command whose
+    // publication has landed is skipped outright: a draw has no precondition
+    // that fails once applied, and would otherwise be shown twice.
     const predictedView =
       sourceView && source.kind === 'live'
         ? liveState.pendingCommands.reduce<MatchViewState>(
             (current, pending) =>
-              predictWireCommand(current, pending.command) ?? current,
+              pending.published
+                ? current
+                : (predictWireCommand(current, pending.command) ?? current),
             sourceView
           )
         : sourceView;

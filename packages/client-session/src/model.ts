@@ -31,6 +31,12 @@ export interface PendingCommandSummary {
    */
   readonly command: WireGameCommand;
   readonly state: 'queued' | 'in_flight' | 'awaiting_publication';
+  /**
+   * Set once a publication carrying this command's outcome has landed, which
+   * the room sends before the command's result: the view already shows it,
+   * so a prediction must not apply it a second time.
+   */
+  readonly published?: true;
 }
 
 export interface CompletedCommandSummary {

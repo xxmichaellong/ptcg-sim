@@ -757,6 +757,66 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('applies a predicted draw once while its publication waits for the result', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const handId = 'zone:spike-blue:hand';
+    const deckId = 'zone:spike-blue:deck';
+    const handCount = () =>
+      test.adapter.getSnapshot().view?.zones[handId]?.cards.length ?? 0;
+    const before = handCount();
+    const seen: number[] = [];
+    const unsubscribe = test.adapter.subscribe(() => {
+      seen.push(handCount());
+    });
+
+    expect(test.live.submit({ type: 'DrawCards', count: 1 }).queued).toBe(true);
+    expect(handCount()).toBe(before + 1);
+
+    // The room publishes the draw before it answers the command. A draw has
+    // no "already applied" precondition, so folding the still-pending command
+    // over the new view would show a second, phantom card.
+    const authoritative = test.live.getSnapshot().view!;
+    const deck = authoritative.zones[deckId]!;
+    const hand = authoritative.zones[handId]!;
+    const drawn: MatchViewState = {
+      ...viewAt(2),
+      zones: {
+        ...authoritative.zones,
+        [deckId]: { ...deck, cards: deck.cards.slice(1) },
+        [handId]: {
+          ...hand,
+          cards: [...hand.cards, { ...deck.cards[0]!, id: 'drawn-alias' }],
+        },
+      },
+    } as MatchViewState;
+    test.socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'board-command-1',
+      executedClientSequence: 1,
+      snapshot: drawn,
+    });
+    expect(test.live.getSnapshot().pendingCommands).toHaveLength(1);
+    expect(handCount()).toBe(before + 1);
+    test.socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'board-command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 2,
+    });
+    expect(handCount()).toBe(before + 1);
+    expect(Math.max(...seen)).toBe(before + 1);
+
+    unsubscribe();
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('withdraws a prediction whose command is settled inside the same dispatch', () => {
     const test = setup();
     test.socket.serverOpen();

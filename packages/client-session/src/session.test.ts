@@ -729,6 +729,21 @@ describe('RemoteGameSession', () => {
     const socket = test.admit();
     test.session.submit({ type: 'FlipCoin' });
     test.session.submit({ type: 'ResetPlayer' });
+    // Every observer of the new view must already see its command marked as
+    // published, so no prediction applies it on top of the view a second time.
+    const observed: Array<{
+      readonly revision: number | undefined;
+      readonly published: boolean | undefined;
+    }> = [];
+    const unsubscribe = test.session.subscribe(() => {
+      const state = test.session.getSnapshot();
+      observed.push({
+        revision: state.view?.revision,
+        published: state.pendingCommands.find(
+          (pending) => pending.commandId === 'command-1'
+        )?.published,
+      });
+    });
 
     socket.serverMessage({
       type: 'StatePublication',
@@ -737,7 +752,19 @@ describe('RemoteGameSession', () => {
       executedClientSequence: 1,
       snapshot: view(1),
     });
+    unsubscribe();
     expect(test.session.getSnapshot().pendingCommands).toHaveLength(2);
+    expect(observed.length).toBeGreaterThan(0);
+    expect(
+      observed
+        .filter((entry) => entry.revision === 1)
+        .map((entry) => entry.published)
+    ).toEqual(observed.filter((entry) => entry.revision === 1).map(() => true));
+    expect(
+      test.session
+        .getSnapshot()
+        .pendingCommands.map((pending) => pending.published)
+    ).toEqual([true, undefined]);
     socket.serverMessage({
       type: 'CommandResult',
       protocolVersion: PROTOCOL_VERSION,
