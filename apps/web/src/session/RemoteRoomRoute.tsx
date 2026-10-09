@@ -212,11 +212,20 @@ export const RemoteRoomRoute = ({
         : { animationSpeed: motion.durationScale }),
     };
   }, [storedPreferences, motion.reduced, motion.durationScale]);
-  // The whole page wears the table's theme: Night or Day.
+  // The whole page wears the table's theme (Night or Day) and its motion
+  // choice, so chrome and overlays animate -- or don't -- like the board.
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = effectivePreferences.darkMode ? 'night' : 'day';
   }, [effectivePreferences.darkMode]);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.motion = motion.reduced ? 'reduced' : 'full';
+    root.style.setProperty(
+      '--motion-scale',
+      String(motion.reduced ? 0 : motion.durationScale)
+    );
+  }, [motion.reduced, motion.durationScale]);
   const publishPreferences = (next: BoardPreferences): void => {
     if (onPreferencesChange) onPreferencesChange(next);
     else setLocalPreferences(next);
