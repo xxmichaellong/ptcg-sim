@@ -6,6 +6,14 @@ import type {
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';
+import {
+  ONCE_PER_GAME_TILE_ASPECT,
+  OncePerGameTile,
+} from './OncePerGameTile.js';
+
+/** The GX and VSTAR targets stay well over 32px tall at every board size. */
+const ONCE_PER_GAME_MIN_TARGET_PX = 36;
+const ONCE_PER_GAME_TILE_PADDING = 4;
 
 export interface LegacyBoardChromeActions {
   readonly takeTurn: () => void;
@@ -108,6 +116,14 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   );
   const sortCheckboxId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
+  // The real markers are small tiles; the button around one stays a
+  // comfortable target (at least 32px tall) whatever the frame's size.
+  const tileHeight =
+    Math.max(
+      ONCE_PER_GAME_MIN_TARGET_PX,
+      Math.min(48, frame.frameBounds.height * 0.11)
+    ) -
+    ONCE_PER_GAME_TILE_PADDING * 2;
   const button = (marker: 'gx' | 'vstar') => {
     const used =
       marker === 'gx'
@@ -126,12 +142,14 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
         aria-label={`${player.displayName} ${label}`}
         aria-pressed={used}
         style={{
-          height: Math.min(20, Math.max(10, frame.frameBounds.height * 0.06)),
-          fontSize: Math.min(15, Math.max(10, frame.frameBounds.height * 0.04)),
+          height: tileHeight + ONCE_PER_GAME_TILE_PADDING * 2,
+          width:
+            tileHeight * ONCE_PER_GAME_TILE_ASPECT[marker] +
+            ONCE_PER_GAME_TILE_PADDING * 2,
         }}
         onClick={() => onToggle(frame.playerId, marker)}
       >
-        {label}
+        <OncePerGameTile marker={marker} />
       </button>
     );
   };

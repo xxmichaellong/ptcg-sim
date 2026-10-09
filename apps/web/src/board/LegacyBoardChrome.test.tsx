@@ -8,6 +8,8 @@ import {
   type BoardLayoutState,
 } from '@ptcgsim/renderer-contract';
 import { asPlayerId } from '@ptcgsim/game-core';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -97,6 +99,115 @@ describe('LegacyBoardChrome', () => {
     await act(async () => opponent.click());
     expect(toggleHandSort).toHaveBeenCalledWith(asPlayerId('spike-red'), false);
     await act(async () => root.unmount());
+  });
+
+  it('paints GX and VSTAR as tiles that turn face down when used', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const toggleOncePerGame = vi.fn();
+    const actions = {
+      takeTurn: vi.fn(),
+      flipCoin: vi.fn(),
+      flipBoard: vi.fn(),
+      refreshImages: vi.fn(),
+      toggleFullscreen: vi.fn(),
+      toggleOncePerGame,
+    };
+    const layout = createBoardLayoutSnapshot(layoutState());
+    const render = async (gxUsed: boolean): Promise<void> => {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={{
+              ...players,
+              'spike-blue': {
+                ...players['spike-blue'],
+                oncePerGame: { gxUsed, vstarUsed: true },
+              },
+            }}
+            darkMode={false}
+            actions={actions}
+          />
+        )
+      );
+    };
+    const marker = (side: 'local' | 'opponent', kind: 'gx' | 'vstar') =>
+      host.querySelector<HTMLButtonElement>(
+        `[data-player-side="${side}"][data-once-per-game-marker="${kind}"]`
+      )!;
+
+    await render(false);
+    const gx = marker('local', 'gx');
+    // A real button with the player's name, its state and both faces.
+    expect(gx.tagName).toBe('BUTTON');
+    expect(gx.getAttribute('aria-label')).toBe('Blue GX');
+    expect(gx.getAttribute('aria-pressed')).toBe('false');
+    const tile = gx.querySelector<HTMLElement>('.once-per-game-tile')!;
+    expect(tile.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      [...tile.children].map((face) => face.className.split(' ').at(-1))
+    ).toEqual([
+      'once-per-game-tile__face--front',
+      'once-per-game-tile__face--back',
+    ]);
+    expect(tile.querySelectorAll('svg')).toHaveLength(2);
+    // Inline SVG ids stay unique across the four tiles on the page.
+    const ids = [...host.querySelectorAll('[id]')]
+      .map((element) => element.id)
+      .filter((id) => /^(gx|vstar)-/.test(id));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const side of ['local', 'opponent'] as const) {
+      for (const kind of ['gx', 'vstar'] as const) {
+        const button = marker(side, kind);
+        expect(
+          Number.parseFloat(button.style.height),
+          `${side} ${kind}`
+        ).toBeGreaterThanOrEqual(32);
+        // The VSTAR die-cut is wider than the GX tile.
+        expect(Number.parseFloat(button.style.width)).toBeGreaterThan(
+          Number.parseFloat(button.style.height)
+        );
+      }
+    }
+    expect(marker('local', 'vstar').getAttribute('aria-pressed')).toBe('true');
+    expect(marker('opponent', 'gx').getAttribute('aria-pressed')).toBe('true');
+
+    await act(async () => gx.click());
+    expect(toggleOncePerGame).toHaveBeenCalledExactlyOnceWith(
+      asPlayerId('spike-blue'),
+      'gx'
+    );
+    // The room's answer turns it over; the same node keeps focus and input.
+    await render(true);
+    expect(marker('local', 'gx')).toBe(gx);
+    expect(gx.getAttribute('aria-pressed')).toBe('true');
+    expect(gx.classList).toContain('used-special-move');
+    await render(false);
+    expect(gx.getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('turns the tiles in 3D and keeps them still when motion is reduced', () => {
+    const css = readFileSync(
+      join(import.meta.dirname, 'LegacyBoardChrome.css'),
+      'utf8'
+    );
+    expect(css).toMatch(
+      /\[aria-pressed='true'\]\s+\.once-per-game-tile\s*\{\s*transform: rotateY\(180deg\);/
+    );
+    expect(css).toContain('backface-visibility: hidden;');
+    expect(css).toMatch(
+      /transition: transform var\(--duration-slow, 320ms\)\s+var\(--ease-snappy/
+    );
+    expect(css).toMatch(
+      /:root\[data-motion='reduced'\] \.ptcgsim-legacy-board-chrome \.once-per-game-tile,/
+    );
   });
 
   it('marks the coin control as waiting on the room, and only that one', async () => {

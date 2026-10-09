@@ -43,9 +43,7 @@ interface ChromeHarnessWindow extends Window {
 const MAX_MISMATCHED_PIXELS = 1_536;
 const MAX_HANDLE_MISMATCHES = 512;
 const MAX_CONTROL_MISMATCHES = 1_280;
-const MAX_ONCE_PER_GAME_MISMATCHES = 1_792;
 const MAX_BASE_CHANNEL_DELTA = 128;
-const MAX_ONCE_PER_GAME_CHANNEL_DELTA = 136;
 
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
@@ -218,23 +216,51 @@ const captureCandidateOncePerGameControls = async (
     )
   ) as OncePerGameControlGeometry;
 
-const expectControlGeometryWithin = (
+/**
+ * The GX and VSTAR markers are real-size tiles now (ADR-027), so they are not
+ * v1's 20px text buttons: each is a target at least 32px tall, centred on
+ * v1's button, and each row stays anchored at the edge v1 anchors it -- the
+ * local row's right edge (GX, last), and the opponent's half-turned row's
+ * physical right edge (VSTAR, first in its own frame).
+ */
+const expectOncePerGameControlsAnchored = (
   actual: OncePerGameControlGeometry,
   expected: OncePerGameControlGeometry,
   state: ChromeState
 ): void => {
+  const centerY = (
+    rect: OncePerGameControlGeometry[keyof OncePerGameControlGeometry]
+  ) => rect.y + rect.height / 2;
+  const right = (
+    rect: OncePerGameControlGeometry[keyof OncePerGameControlGeometry]
+  ) => rect.x + rect.width;
   for (const key of Object.keys(expected) as Array<
     keyof OncePerGameControlGeometry
   >) {
-    for (const dimension of ['x', 'y', 'width', 'height'] as const) {
-      expect
-        .soft(
-          Math.abs(actual[key][dimension] - expected[key][dimension]),
-          `${state} ${key}.${dimension}`
-        )
-        .toBeLessThanOrEqual(2);
-    }
+    expect
+      .soft(actual[key].height, `${state} ${key}.height`)
+      .toBeGreaterThanOrEqual(32);
+    expect
+      .soft(
+        Math.abs(centerY(actual[key]) - centerY(expected[key])),
+        `${state} ${key}.centerY`
+      )
+      .toBeLessThanOrEqual(2);
   }
+  for (const key of ['local-gx', 'opponent-vstar'] as const) {
+    expect
+      .soft(
+        Math.abs(right(actual[key]) - right(expected[key])),
+        `${state} ${key}.anchoredEdge`
+      )
+      .toBeLessThanOrEqual(2);
+  }
+  expect
+    .soft(right(actual['local-vstar']), `${state} local order`)
+    .toBeLessThanOrEqual(actual['local-gx'].x);
+  expect
+    .soft(right(actual['opponent-gx']), `${state} opponent order`)
+    .toBeLessThanOrEqual(actual['opponent-vstar'].x);
 };
 
 const mountCandidateChrome = async (page: Page): Promise<void> => {
@@ -489,7 +515,7 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       contentType: 'application/json',
     });
     await attachComparison(testInfo, state, source.image, candidate);
-    expectControlGeometryWithin(
+    expectOncePerGameControlsAnchored(
       candidateControls,
       source.oncePerGameControls,
       state
@@ -507,11 +533,10 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
     // The source paints transformed fixed nodes in the document compositor;
     // the candidate paints equivalent absolute nodes in an isolated route
     // layer. Chromium builds rasterize that fringe differently, so retain
-    // strict base-chrome, handle-band, shared-control, marker-control, and
-    // channel bounds. Marker controls have a dedicated region because source
-    // iframe text rasterization is measurably different from top-level DOM
-    // text even when their rectangles agree within two pixels. Soft
-    // assertions preserve every state attachment when one bound regresses.
+    // strict base-chrome, handle-band, shared-control and channel bounds.
+    // The GX and VSTAR region is excluded: those markers are redesigned
+    // tiles (ADR-027) whose geometry is asserted above. Soft assertions
+    // preserve every state attachment when one bound regresses.
     expect
       .soft(
         comparison.handleMismatches + comparison.controlMismatches,
@@ -526,22 +551,10 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       .toBeLessThanOrEqual(MAX_CONTROL_MISMATCHES);
     expect
       .soft(
-        comparison.oncePerGameMismatches,
-        `${state} painted once-per-game controls`
-      )
-      .toBeLessThanOrEqual(MAX_ONCE_PER_GAME_MISMATCHES);
-    expect
-      .soft(
         comparison.maximumBaseChannelDelta,
         `${state} base-chrome maximum channel delta`
       )
       .toBeLessThanOrEqual(MAX_BASE_CHANNEL_DELTA);
-    expect
-      .soft(
-        comparison.maximumOncePerGameChannelDelta,
-        `${state} once-per-game maximum channel delta`
-      )
-      .toBeLessThanOrEqual(MAX_ONCE_PER_GAME_CHANNEL_DELTA);
   }
   await testInfo.attach('legacy-board-chrome-pixel-comparison.json', {
     body: Buffer.from(JSON.stringify(comparisons, null, 2)),
