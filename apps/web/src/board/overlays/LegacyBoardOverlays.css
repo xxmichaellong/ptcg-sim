@@ -359,15 +359,6 @@
   left: auto;
 }
 
-.ptcgsim-legacy-card-preview {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 50%);
-  pointer-events: auto;
-}
-
 /* ---- Overlay card images ---------------------------------------------- */
 /* A card face: the generic card radius, the blank card colour until the
    image arrives, then the image fading in over it. */
@@ -393,13 +384,6 @@
   opacity: 1;
 }
 
-/* v1's inline images: a preview or stack card shows at its own size once
-   loaded. */
-.ptcgsim-legacy-overlay-card-image.is-preview[data-overlay-image-state='ready'],
-.ptcgsim-legacy-overlay-card-image.is-stack[data-overlay-image-state='ready'] {
-  display: contents;
-}
-
 /* A card in a pile or work area fills the button it sits in. */
 .ptcgsim-legacy-overlay-card-image.is-zone {
   width: 100%;
@@ -413,51 +397,185 @@
   transition: opacity var(--duration-fast, 140ms) ease;
 }
 
-.ptcgsim-legacy-card-preview
-  .ptcgsim-legacy-overlay-card-image.is-preview:not(
-    [data-overlay-image-state='ready']
-  ) {
-  width: min(90vw, calc(90vh * 5 / 7));
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 1rem;
-}
+/* ---- Card preview ----------------------------------------------------- */
+/* The card as large as the board allows (88% of its height), on a scrim. It
+   zooms out of the card it was opened from (overlayMotion.ts) and tilts
+   toward the pointer under a glare that follows it; under reduced motion it
+   only fades, and holds still. */
+.ptcgsim-legacy-card-preview {
+  --ptcgsim-preview-height: min(
+    calc(var(--ptcgsim-overlay-board-height, 100vh) * 0.88),
+    calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 88 / 63)
+  );
 
-.ptcgsim-legacy-card-preview
-  .ptcgsim-legacy-overlay-card-image.is-preview[data-overlay-image-state='ready']
-  img {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: auto;
-  height: auto;
-  max-width: 90%;
-  max-height: 90%;
-  transform: translate(-50%, -50%);
-  border-radius: 1rem;
-}
-
-.ptcgsim-legacy-stack-preview {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 69%;
-  height: 70%;
-  padding: 20px;
-  overflow: visible;
-  box-sizing: content-box;
-  transform: translate(-50%, -50%);
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background: rgb(169 169 169 / 50%);
-  box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-scrim);
+  backdrop-filter: blur(6px) saturate(0.9);
+  cursor: zoom-out;
   pointer-events: auto;
+  animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
+    var(--ease-out) backwards;
 }
 
-.ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-stack-preview {
-  background: rgb(59 59 59 / 87%);
+.ptcgsim-legacy-card-preview:focus-visible {
+  outline: none;
 }
 
+.ptcgsim-card-preview-stage {
+  display: block;
+  animation: ptcgsim-overlay-preview-in var(--overlay-slow-duration)
+    var(--ease-snappy) backwards;
+}
+
+.ptcgsim-card-preview-tilt {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: calc(var(--ptcgsim-preview-height) * 63 / 88);
+  height: var(--ptcgsim-preview-height);
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  box-shadow: var(--shadow-5);
+  transform: perspective(900px) rotateX(var(--ptcgsim-tilt-x, 0deg))
+    rotateY(var(--ptcgsim-tilt-y, 0deg));
+  transition: transform var(--duration-slow, 320ms) var(--ease-out);
+  will-change: transform;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-preview img {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  transition: opacity var(--duration-fast, 140ms) ease;
+}
+
+/* A soft highlight that follows the pointer across the card. */
+.ptcgsim-card-preview-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    circle at var(--ptcgsim-glare-x, 50%) var(--ptcgsim-glare-y, 30%),
+    color-mix(in oklch, var(--neutral-0) 55%, transparent),
+    color-mix(in oklch, var(--neutral-0) 12%, transparent) 30%,
+    transparent 60%
+  );
+  mix-blend-mode: overlay;
+  opacity: var(--ptcgsim-glare-opacity, 0);
+  pointer-events: none;
+  transition: opacity var(--duration-slow, 320ms) var(--ease-out);
+}
+
+:root[data-motion='reduced'] .ptcgsim-card-preview-tilt {
+  transform: none;
+  transition: none;
+}
+
+:root[data-motion='reduced'] .ptcgsim-card-preview-glare {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-card-preview-tilt {
+    transform: none;
+    transition: none;
+  }
+
+  :root:not([data-motion='full']) .ptcgsim-card-preview-glare {
+    display: none;
+  }
+}
+
+/* Leaving, the card sinks back a little as the scrim fades. */
+.ptcgsim-legacy-board-overlays
+  .ptcgsim-overlay-ghost.is-exit-preview
+  .ptcgsim-card-preview-stage {
+  animation: ptcgsim-overlay-preview-out var(--overlay-exit-duration)
+    var(--ease-in) forwards !important;
+}
+
+/* ---- Stack view ------------------------------------------------------- */
+/* The stack's cards upright over their player's half, as large as the board
+   allows (overlayLayout.ts); it grows out of the stack on the table. */
+.ptcgsim-legacy-stack-preview {
+  position: absolute;
+  display: flex;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  backdrop-filter: blur(16px) saturate(1.2);
+  pointer-events: auto;
+  animation: ptcgsim-overlay-menu-in var(--overlay-enter-duration)
+    var(--ease-snappy) backwards;
+}
+
+.ptcgsim-legacy-stack-preview:focus-visible {
+  outline: none;
+}
+
+/* Each card in the stack view opens on its own. */
+.ptcgsim-legacy-stack-preview-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: calc(var(--ptcgsim-stack-card-height, 200px) * 63 / 88);
+  height: var(--ptcgsim-stack-card-height, 200px);
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: transparent;
+  box-shadow: var(--shadow-2);
+  cursor: zoom-in;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-legacy-stack-preview-card:hover {
+  box-shadow: var(--shadow-3);
+  translate: 0 -4px;
+}
+
+:root[data-motion='reduced'] .ptcgsim-legacy-stack-preview-card:hover {
+  translate: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-legacy-stack-preview-card:hover {
+    translate: none;
+  }
+}
+
+.ptcgsim-legacy-overlay-card-image.is-stack {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-stack img {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  transition: opacity var(--duration-fast, 140ms) ease;
+}
+
+/* ---- Marker editor ---------------------------------------------------- */
 .ptcgsim-legacy-marker-editor {
   box-sizing: border-box;
   margin: 0;
@@ -465,42 +583,6 @@
   cursor: text;
   user-select: text;
   white-space: nowrap;
-}
-
-.ptcgsim-legacy-stack-preview
-  .ptcgsim-legacy-overlay-card-image.is-stack:not(
-    [data-overlay-image-state='ready']
-  ) {
-  display: inline-block;
-  /* v1 paints a flat 24%; the panel sizes its cards to the set (PX-015). */
-  height: var(--ptcgsim-stack-card-height, 24%);
-  margin: 0.5%;
-  border-radius: 0.275rem;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
-}
-
-.ptcgsim-legacy-stack-preview[data-overlay-side='opponent']
-  .ptcgsim-legacy-overlay-card-image.is-stack:not(
-    [data-overlay-image-state='ready']
-  ) {
-  border-radius: 0.3rem;
-}
-
-.ptcgsim-legacy-stack-preview
-  .ptcgsim-legacy-overlay-card-image.is-stack[data-overlay-image-state='ready']
-  img {
-  display: inline-block;
-  width: auto;
-  height: var(--ptcgsim-stack-card-height, 24%);
-  margin: 0.5%;
-  border-radius: 0.275rem;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
-}
-
-.ptcgsim-legacy-stack-preview[data-overlay-side='opponent']
-  .ptcgsim-legacy-overlay-card-image.is-stack[data-overlay-image-state='ready']
-  img {
-  border-radius: 0.3rem;
 }
 
 /* ---- Panels: shared chrome -------------------------------------------- */
@@ -921,15 +1003,6 @@
 .ptcgsim-legacy-zone-browser.is-opponent .ptcgsim-legacy-zone-ability-marker {
   background: var(--color-opponent);
   opacity: 0.5;
-}
-
-/* v1 full view: each card in the stack view can be opened on its own. */
-.ptcgsim-legacy-stack-preview-card {
-  display: contents;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
 }
 
 /* ---- Work areas ("Looking at cards...", "Move attached cards") -------- */

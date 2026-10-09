@@ -19,14 +19,18 @@ import {
 import {
   LegacyBoardOverlays,
   legacyStackPreviewOrder,
-  legacyStackPreviewFrameStyle,
   resolveOpenedZoneDropTarget,
   selectLegacyContextEntries,
   sortRecipientSafeZoneCards,
+  stackPreviewFrameStyle,
   zoneCopyCounts,
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
-import { workAreaPanelLayout, zoneBrowserLayout } from './overlayLayout.js';
+import {
+  stackPreviewLayout,
+  workAreaPanelLayout,
+  zoneBrowserLayout,
+} from './overlayLayout.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -147,7 +151,7 @@ describe('legacy board overlays', () => {
     await act(async () => overlayRoot?.render(createElement(OverlayHost)));
   };
 
-  it('projects source iframe-relative overlays into physical player frames', () => {
+  it('lays the stack view out upright over its player frame, sized to its cards', () => {
     const local = scene.layout.players.find((frame) => frame.side === 'local')!;
     const opponent = scene.layout.players.find(
       (frame) => frame.side === 'opponent'
@@ -164,22 +168,31 @@ describe('legacy board overlays', () => {
       width: 1280,
       height: 360,
     });
-    const localStack = legacyStackPreviewFrameStyle(local, 'local');
-    expect(localStack).toMatchObject({
-      left: 640,
-      top: 540,
-      transform: 'translate(-50%, -50%)',
-    });
-    expect(localStack.width).toBeCloseTo(883.2, 10);
-    expect(localStack.height).toBeCloseTo(252, 10);
-    const opponentStack = legacyStackPreviewFrameStyle(opponent, 'opponent');
-    expect(opponentStack).toMatchObject({
-      left: 640,
-      top: 180,
-      transform: 'translate(-50%, -50%) rotate(180deg)',
-    });
-    expect(opponentStack.width).toBeCloseTo(883.2, 10);
-    expect(opponentStack.height).toBeCloseTo(252, 10);
+    // v1's 69% x 70% frame box (883.2 x 252 here) and the opponent's
+    // half-turn were v1 visuals, retired by ADR-027: the view now fits its
+    // cards, drawn as large as the board allows, upright on either half.
+    for (const [frame, count] of [
+      [local, 2],
+      [opponent, 2],
+      [local, 7],
+    ] as const) {
+      const layout = stackPreviewLayout(frame.bounds, scene.viewport, count);
+      const style = stackPreviewFrameStyle(frame, scene.viewport, count);
+      expect(style).toEqual({
+        left: layout.left,
+        top: layout.top,
+        width: layout.width,
+        height: layout.height,
+        '--ptcgsim-stack-card-height': `${layout.cardHeight.toFixed(2)}px`,
+      });
+      expect(style.transform).toBeUndefined();
+    }
+    const pair = stackPreviewLayout(local.bounds, scene.viewport, 2);
+    expect(pair.cardHeight).toBeCloseTo(720 * 0.34);
+    expect(pair.left + pair.width / 2).toBeCloseTo(640);
+    expect(pair.top + pair.height / 2).toBeCloseTo(540);
+    const opponentPair = stackPreviewLayout(opponent.bounds, scene.viewport, 2);
+    expect(opponentPair.top + opponentPair.height / 2).toBeCloseTo(180);
   });
 
   it('selects the source-ordered player menu without granting authority', () => {

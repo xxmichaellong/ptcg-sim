@@ -1,11 +1,9 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import {
-  CARD_ASPECT_RATIO,
   isLegacyMarkerPresentation,
   layoutLegacyActiveQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
-  legacyStackPreviewCardHeightRatio,
   resolveBoardDropTarget,
   type BoardScene,
   type BoardScenePlayerFrame,
@@ -90,12 +88,19 @@ import {
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
+  stackPreviewLayout,
   workAreaPanelLayout,
   zoneBrowserLayout,
   type OverlayBoardSize,
   type OverlayPanelLayout,
 } from './overlayLayout.js';
-import { useOverlayExit } from './overlayMotion.js';
+import {
+  createTiltHandlers,
+  sceneRectToClient,
+  useOverlayExit,
+  zoomFromRect,
+  type ClientRectLike,
+} from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -1090,34 +1095,6 @@ const ContextMenu = ({
   );
 };
 
-const STACK_PREVIEW_WIDTH_RATIO = 0.69;
-const STACK_PREVIEW_HEIGHT_RATIO = 0.7;
-
-export const legacyStackPreviewFrameStyle = (
-  frame: BoardScenePlayerFrame,
-  side: CardSceneNode['side'],
-  cardCount = 1
-): CSSProperties => {
-  const width = frame.bounds.width * STACK_PREVIEW_WIDTH_RATIO;
-  const height = frame.bounds.height * STACK_PREVIEW_HEIGHT_RATIO;
-  // v1 paints every card of the expansion at a flat 24%, which leaves a short
-  // stack adrift in an empty panel. The cards are sized to the set instead
-  // (PX-015); the CSS keeps 24% as its fallback.
-  const cardHeightRatio = legacyStackPreviewCardHeightRatio(
-    { width, height },
-    Math.max(1, cardCount),
-    CARD_ASPECT_RATIO
-  );
-  return {
-    left: frame.bounds.x + frame.bounds.width / 2,
-    top: frame.bounds.y + frame.bounds.height / 2,
-    width,
-    height,
-    transform: `translate(-50%, -50%)${side === 'opponent' ? ' rotate(180deg)' : ''}`,
-    ['--ptcgsim-stack-card-height' as string]: `${String(cardHeightRatio * 100)}%`,
-  };
-};
-
 /** A panel's box and its cards' height, as inline style. */
 const panelStyle = (
   layout: OverlayPanelLayout,
@@ -1129,6 +1106,22 @@ const panelStyle = (
   height: layout.height,
   [cardHeightProperty as string]: `${layout.cardHeight.toFixed(2)}px`,
 });
+
+/**
+ * The stack view's box over its player's half (see `stackPreviewLayout`),
+ * its cards sized to the set. v1 turned the opponent's half around, which
+ * left their cards upside down here; this view is for reading, so every
+ * stack reads upright.
+ */
+export const stackPreviewFrameStyle = (
+  frame: BoardScenePlayerFrame,
+  board: OverlayBoardSize,
+  cardCount = 1
+): CSSProperties =>
+  panelStyle(
+    stackPreviewLayout(frame.bounds, board, cardCount),
+    '--ptcgsim-stack-card-height'
+  );
 
 /** The zone browser's visible title for each kind of pile. */
 const ZONE_BROWSER_TITLES: Partial<Record<ZoneSceneNode['kind'], string>> = {
@@ -1279,22 +1272,118 @@ export const legacyStackPreviewOrder = (
   return [...ordered, ...cards.filter((card) => !listed.has(card.id))];
 };
 
+/** Where the card about to be previewed was clicked, in client space. */
+interface PreviewSource {
+  readonly cardId: string;
+  readonly rect: ClientRectLike;
+  readonly at: number;
+}
+
+/** A click older than this did not ask for the preview being opened. */
+const PREVIEW_SOURCE_MAX_AGE_MS = 1000;
+
+/** The stack view's transform origin: the stack's card on the table. */
+const stackPreviewOrigin = (
+  layout: OverlayPanelLayout,
+  source: Rect | undefined
+): string | undefined => {
+  if (!source) return undefined;
+  const x = Math.min(
+    Math.max(source.x + source.width / 2 - layout.left, 0),
+    layout.width
+  );
+  const y = Math.min(
+    Math.max(source.y + source.height / 2 - layout.top, 0),
+    layout.height
+  );
+  return `${x.toFixed(1)}px ${y.toFixed(1)}px`;
+};
+
+/** The card elements a preview can be asked for from, by their id attribute. */
+const PREVIEW_SOURCE_SELECTOR =
+  '[data-stack-preview-card-id], button[data-overlay-card-id], [data-work-area-card-id], [data-card-id]';
+
+const previewSourceOf = (event: MouseEvent): PreviewSource | null => {
+  const target = event.target;
+  if (!(target instanceof Element)) return null;
+  const element = target.closest<HTMLElement>(PREVIEW_SOURCE_SELECTOR);
+  const cardId =
+    element?.dataset.stackPreviewCardId ??
+    element?.dataset.overlayCardId ??
+    element?.dataset.workAreaCardId ??
+    element?.dataset.cardId;
+  if (!element || !cardId) return null;
+  const rect = element.getBoundingClientRect();
+  return {
+    cardId,
+    rect: {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    },
+    at: event.timeStamp,
+  };
+};
+
+/**
+ * The card preview (double-click, or V on a selected card) and the stack view
+ * (V or double-click on a card in play). The card preview shows the card as
+ * large as the board allows, zooming out of the card it was opened from and
+ * tilting toward the pointer under a moving glare; the stack view lays the
+ * stack's cards out upright over their player's half.
+ */
 const Preview = ({
   cards,
   kind,
   frame,
+  board,
+  viewport,
+  sourceBounds,
+  source,
   actions,
 }: {
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
   readonly frame?: BoardScenePlayerFrame;
+  readonly board: OverlayBoardSize;
+  readonly viewport: BoardScene['viewport'];
+  /** Where the previewed card (or the stack's top card) is on the table. */
+  readonly sourceBounds?: Rect;
+  readonly source: RefObject<PreviewSource | null>;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLSpanElement>(null);
+  const tiltTarget = useRef<HTMLSpanElement>(null);
+  const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
   const dismiss = useCallback(() => actions.dismiss('preview'), [actions]);
   const identity = cards.map((card) => card.id).join(':');
   useFocusBoundary(container, '[data-preview-focus]', identity);
   useOutsideDismiss(container, dismiss);
+  useOverlayExit(container, 'preview');
+  const previewedCardId = kind === 'card' ? cards[0]?.id : undefined;
+  // The card zooms out of where it was clicked -- a card on the table, in a
+  // pile or in the stack view -- or, opened from the keyboard, out of where
+  // the table shows it.
+  useLayoutEffect(() => {
+    const element = stage.current;
+    if (previewedCardId === undefined || !element) return;
+    const recent = source.current;
+    const now = element.ownerDocument.defaultView?.performance.now() ?? 0;
+    const root = element.closest('[data-legacy-board-overlays]');
+    const from =
+      recent?.cardId === String(previewedCardId) &&
+      now - recent.at < PREVIEW_SOURCE_MAX_AGE_MS
+        ? recent.rect
+        : root && sourceBounds
+          ? sceneRectToClient(root, viewport, sourceBounds)
+          : null;
+    const animation = zoomFromRect(element, from);
+    return () => animation?.cancel();
+    // Zoom once per previewed card: later scene updates must not replay it,
+    // so the source is read when the card changes and not tracked after.
+  }, [previewedCardId]);
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (container.current) {
       trapModalTab(event, container.current, '[data-preview-tabbable]');
@@ -1322,12 +1411,24 @@ const Preview = ({
       onClick={dismiss}
       onKeyDown={onKeyDown}
     >
-      {cards[0] ? <OverlayCardImage card={cards[0]} variant="preview" /> : null}
+      {cards[0] ? (
+        <span
+          ref={stage}
+          className="ptcgsim-card-preview-stage"
+          onPointerMove={tilt.onPointerMove}
+          onPointerLeave={tilt.onPointerLeave}
+        >
+          <span ref={tiltTarget} className="ptcgsim-card-preview-tilt">
+            <OverlayCardImage card={cards[0]} variant="preview" />
+            <span className="ptcgsim-card-preview-glare" aria-hidden="true" />
+          </span>
+        </span>
+      ) : null}
     </div>
   ) : (
     <div
       ref={container}
-      className="ptcgsim-legacy-stack-preview"
+      className={`ptcgsim-legacy-stack-preview is-${cards[0]?.side ?? 'local'}`}
       data-legacy-card-preview="true"
       data-preview-kind="stack"
       role="dialog"
@@ -1338,7 +1439,14 @@ const Preview = ({
       data-preview-focus="true"
       style={
         frame && cards[0]
-          ? legacyStackPreviewFrameStyle(frame, cards[0].side, cards.length)
+          ? {
+              ...stackPreviewFrameStyle(frame, board, cards.length),
+              // The view grows out of the stack it shows.
+              transformOrigin: stackPreviewOrigin(
+                stackPreviewLayout(frame.bounds, board, cards.length),
+                sourceBounds
+              ),
+            }
           : undefined
       }
       onKeyDown={onKeyDown}
@@ -2318,6 +2426,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   // Where the last right-click (or context-menu key) happened, so the menu
   // can grow out of it. Read only when a menu is placed; never state.
   const contextPointer = useRef<ContextPointer | null>(null);
+  // Which card was last clicked, and where, so a preview it opens can zoom
+  // out of it. Read only when a preview opens; never state.
+  const previewSource = useRef<PreviewSource | null>(null);
   useEffect(() => {
     const onContextMenu = (event: MouseEvent): void => {
       contextPointer.current = {
@@ -2326,9 +2437,18 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         at: event.timeStamp,
       };
     };
+    const onClick = (event: MouseEvent): void => {
+      const found = previewSourceOf(event);
+      if (found) previewSource.current = found;
+    };
     document.addEventListener('contextmenu', onContextMenu, true);
-    return () =>
+    document.addEventListener('click', onClick, true);
+    document.addEventListener('dblclick', onClick, true);
+    return () => {
       document.removeEventListener('contextmenu', onContextMenu, true);
+      document.removeEventListener('click', onClick, true);
+      document.removeEventListener('dblclick', onClick, true);
+    };
   }, []);
   const scene = state.scene;
   if (!scene) return null;
@@ -2362,6 +2482,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
             state.view?.stacks[preview.stackId]?.boardPlayerId
         )
       : undefined;
+  // The card on the table a preview grows out of: the previewed card, or the
+  // top of the stack shown.
+  const previewSourceCard = previewCards[0];
 
   const workAreaZones = scene.zones.filter(
     (zone) => zone.kind === 'inspection' || zone.kind === 'attachmentResolution'
@@ -2441,6 +2564,12 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           cards={previewCards}
           kind={preview.kind}
           frame={previewFrame}
+          board={scene.viewport}
+          viewport={scene.viewport}
+          sourceBounds={
+            previewSourceCard ? visualCardBounds(previewSourceCard) : undefined
+          }
+          source={previewSource}
           actions={actions}
         />
       ) : null}

@@ -178,18 +178,24 @@ export interface ClientRectLike {
  * on the table or in a pile) to where it already is: a FLIP on the
  * compositor's `translate` and `scale`, so layout and hit-testing never see
  * the in-between frames. Reduced motion, instant speed, a missing source or
- * a browser without the Web Animations API skip it.
+ * a browser without the Web Animations API skip it, leaving the element's
+ * CSS entrance to play; otherwise the zoom replaces that entrance.
  */
 export const zoomFromRect = (
   element: HTMLElement,
   source: ClientRectLike | null
-): void => {
-  if (!source || source.width <= 0 || source.height <= 0) return;
-  if (typeof element.animate !== 'function') return;
+): Animation | null => {
+  if (!source || source.width <= 0 || source.height <= 0) return null;
+  if (typeof element.animate !== 'function') return null;
   const motion = readOverlayMotion(element);
-  if (motion.reduced || motion.scale <= 0) return;
+  if (motion.reduced || motion.scale <= 0) return null;
+  // Measure where the element rests, not a frame of its CSS entrance.
+  element.style.animation = 'none';
   const target = element.getBoundingClientRect();
-  if (target.width <= 0 || target.height <= 0) return;
+  if (target.width <= 0 || target.height <= 0) {
+    element.style.removeProperty('animation');
+    return null;
+  }
   // Client pixels to the element's own pixels, should the board be scaled.
   const localScale =
     element.offsetWidth > 0 ? target.width / element.offsetWidth : 1;
@@ -215,10 +221,10 @@ export const zoomFromRect = (
     'cubic-bezier(0.2, 0.8, 0.2, 1)'
   );
   try {
-    element.animate(keyframes, { duration, easing, fill: 'backwards' });
+    return element.animate(keyframes, { duration, easing, fill: 'backwards' });
   } catch {
     // An engine without `linear()` easings rejects the token.
-    element.animate(keyframes, {
+    return element.animate(keyframes, {
       duration,
       easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
       fill: 'backwards',
