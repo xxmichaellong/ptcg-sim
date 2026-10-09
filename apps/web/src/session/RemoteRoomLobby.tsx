@@ -408,6 +408,8 @@ export const RemoteRoomLobby = ({
       setRoomCode(result.invitations.roomCode);
       setReceipt(undefined);
       setCopyConfirmed(false);
+      // A retry that works retires the failure it follows.
+      setStatus(undefined);
     } catch (error) {
       if (!active.owner.disposed) {
         setStatus(safeFailureMessage('generate', error));
@@ -498,6 +500,7 @@ export const RemoteRoomLobby = ({
         clearTimeout(active.owner.copyReset);
       }
       setCopyConfirmed(true);
+      setStatus(undefined);
       active.owner.copyReset = setTimeout(() => {
         if (ownerRef.current === active.owner && !active.owner.disposed) {
           setCopyConfirmed(false);

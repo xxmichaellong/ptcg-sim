@@ -764,6 +764,40 @@ describe('remote room lobby wiring', () => {
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
+  it('retires a failure message once the retried generate and copy succeed', async () => {
+    const created = creationResult();
+    const createRoom = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue(created.value);
+    const { host, root } = await mount(
+      lobbyDependencies(custody(), createRoom)
+    );
+    const generate = async () =>
+      act(async () => {
+        element<HTMLButtonElement>(host, '#generateIdButton').click();
+        await flush();
+      });
+
+    await generate();
+    expect(host.querySelector('.lobby-status')).not.toBeNull();
+    await generate();
+    expect(host.querySelector('.lobby-status')).toBeNull();
+
+    created.copyPlayerInvitation.mockRejectedValueOnce(new Error('denied'));
+    const copy = async () =>
+      act(async () => {
+        element<HTMLButtonElement>(host, '#copyButton').click();
+        await flush();
+      });
+    await copy();
+    expect(host.querySelector('.lobby-status')).not.toBeNull();
+    await copy();
+    expect(host.querySelector('.lobby-status')).toBeNull();
+
+    await act(async () => root.unmount());
+  });
+
   it('offers online save and resume only once the Worker reports them enabled', async () => {
     for (const reported of [false, true]) {
       const created = creationResult();
