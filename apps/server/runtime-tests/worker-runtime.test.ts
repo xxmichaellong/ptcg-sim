@@ -268,11 +268,23 @@ describe('Cloudflare Worker runtime', () => {
         })
       );
     // Bad claims are answered by the room until this requester's own edge
-    // budget runs out, well before the room's shared 60 a minute.
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      expect((await claim(created.roomCode)).status).toBe(400);
+    // budget runs out, well before the room's shared 60 a minute. The edge
+    // limiter counts in fixed 60-second windows, so a burst that straddles a
+    // window boundary gets a fresh budget part-way: count the answers up to
+    // the first refusal rather than expecting it at exactly the 21st.
+    let answered = 0;
+    let limited: Response | undefined;
+    for (let attempt = 0; attempt < 45 && !limited; attempt += 1) {
+      const response = await claim(created.roomCode);
+      if (response.status === 429) limited = response;
+      else {
+        expect(response.status).toBe(400);
+        answered += 1;
+      }
     }
-    const limited = await claim(created.roomCode);
+    expect(answered).toBeGreaterThanOrEqual(20);
+    expect(answered).toBeLessThan(45);
+    if (!limited) throw new Error('The requester was never rate limited');
     expect(limited.status).toBe(429);
     expect(limited.headers.get('Retry-After')).toBe('60');
     await expect(limited.json()).resolves.toEqual({ error: 'rate_limited' });
