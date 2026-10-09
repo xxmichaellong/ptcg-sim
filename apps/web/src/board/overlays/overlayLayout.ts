@@ -27,9 +27,12 @@ export interface OverlayPanelLayout {
 /** The largest a card in a panel is drawn: a third of the board, at most 300px. */
 export const OVERLAY_CARD_HEIGHT_RATIO = 0.34;
 export const OVERLAY_CARD_MAX_HEIGHT = 300;
-/** The size big piles step down to, so a deck shows more than two rows. */
-export const OVERLAY_COMPACT_CARD_HEIGHT_RATIO = 0.24;
-export const OVERLAY_COMPACT_CARD_MAX_HEIGHT = 216;
+/**
+ * The size big piles step down to, so a deck shows more than two rows. Never
+ * below v1's largest pile browser (the Lost Zone's, about 25% of the board).
+ */
+export const OVERLAY_COMPACT_CARD_HEIGHT_RATIO = 0.26;
+export const OVERLAY_COMPACT_CARD_MAX_HEIGHT = 280;
 /** Below this a card is not worth drawing larger than the table does. */
 export const OVERLAY_CARD_MIN_HEIGHT = 72;
 

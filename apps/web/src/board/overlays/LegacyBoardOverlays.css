@@ -398,13 +398,13 @@
 }
 
 /* ---- Card preview ----------------------------------------------------- */
-/* The card as large as the board allows (88% of its height), on a scrim. It
-   zooms out of the card it was opened from (overlayMotion.ts) and tilts
-   toward the pointer under a glare that follows it; under reduced motion it
-   only fades, and holds still. */
+/* The card as large as the board allows (92% of its height, a little above
+   v1's 90%), on a scrim. It zooms out of the card it was opened from
+   (overlayMotion.ts) and tilts toward the pointer under a glare that follows
+   it; under reduced motion it only fades, and holds still. */
 .ptcgsim-legacy-card-preview {
   --ptcgsim-preview-height: min(
-    calc(var(--ptcgsim-overlay-board-height, 100vh) * 0.88),
+    calc(var(--ptcgsim-overlay-board-height, 100vh) * 0.92),
     calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 88 / 63)
   );
 

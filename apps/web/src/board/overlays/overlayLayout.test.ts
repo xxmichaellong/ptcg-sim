@@ -67,7 +67,7 @@ describe('overlay layout', () => {
   it('steps a big pile down to the compact size and uses the board to show it', () => {
     const deck = zoneBrowserLayout(LAPTOP, 47);
     expect(deck.cardHeight).toBeLessThan(overlayLargeCardHeight(LAPTOP));
-    expect(deck.cardHeight).toBeCloseTo(Math.min(900 * 0.24, 216));
+    expect(deck.cardHeight).toBeCloseTo(Math.min(900 * 0.26, 280));
     // Still about twice v1's deck browser card (74px tall at this size).
     expect(deck.cardHeight).toBeGreaterThan(2 * 74);
     expectOnBoard(deck, LAPTOP);
@@ -89,7 +89,9 @@ describe('overlay layout', () => {
       (contentWidth + 12) / (300 * CARD_ASPECT_RATIO + 12)
     );
     expect(zoneBrowserLayout(LAPTOP, perRow * 2).cardHeight).toBe(300);
-    expect(zoneBrowserLayout(LAPTOP, perRow * 2 + 1).cardHeight).toBe(216);
+    expect(zoneBrowserLayout(LAPTOP, perRow * 2 + 1).cardHeight).toBeCloseTo(
+      900 * 0.26
+    );
   });
 
   it('grows a work area around the scene box it covers, on the board', () => {

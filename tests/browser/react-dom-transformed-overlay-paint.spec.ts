@@ -7,37 +7,12 @@ import {
   type TestInfo,
 } from '@playwright/test';
 
-import { CARD_ASPECT_RATIO } from '../../packages/renderer-contract/src/geometry.js';
-import {
-  LEGACY_STACK_PREVIEW_V1,
-  legacyStackPreviewCardHeightRatio,
-} from '../../packages/renderer-contract/src/layout.js';
+import { alphaOf } from './support/computed-color.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 import {
   answerOverlayConfirm,
   openOverlayDialogs,
 } from './support/overlay-dialogs.js';
-
-/** v1 `.full-view`: 20px padding and a 1px border around the card flow. */
-const STACK_PREVIEW_EDGE_PX = 21;
-
-/**
- * How much bigger than v1 the stack expansion paints its cards (PX-015). The
- * popup itself still has to match the source exactly; only the cards inside
- * it are sized to the set.
- */
-const stackPreviewCardScale = (
-  surface: ElementPaint['bounds'],
-  cardCount: number
-): number =>
-  legacyStackPreviewCardHeightRatio(
-    {
-      width: surface.width - 2 * STACK_PREVIEW_EDGE_PX,
-      height: surface.height - 2 * STACK_PREVIEW_EDGE_PX,
-    },
-    cardCount,
-    CARD_ASPECT_RATIO
-  ) / LEGACY_STACK_PREVIEW_V1.cardHeightRatio;
 
 interface OverlayFixture {
   readonly ownPlayerId: string;
@@ -572,104 +547,65 @@ const mountLegacyPiles = async (
   await settlePaint(page);
 };
 
-const expectBoundsToMatch = (
-  candidate: ElementPaint['bounds'],
-  source: ElementPaint['bounds'],
-  description: string
-): void => {
-  for (const key of ['x', 'y', 'width', 'height'] as const) {
-    expect(
-      candidate[key],
-      `${description} ${key}: candidate ${candidate[key]}, source ${source[key]}`
-    ).toBeCloseTo(source[key], 4);
-  }
-};
-
-const expectBoundsWithin = (
-  candidate: ElementPaint['bounds'],
-  source: ElementPaint['bounds'],
-  tolerance: number,
-  description: string
-): void => {
-  for (const key of ['x', 'y', 'width', 'height'] as const) {
-    expect(
-      Math.abs(candidate[key] - source[key]),
-      `${description} ${key}: candidate ${candidate[key]}, source ${source[key]}`
-    ).toBeLessThanOrEqual(tolerance);
-  }
-};
-
-const expectSurfaceToMatch = (
+/**
+ * ADR-027 redesigns the overlays' look, so v1 supplies their content: the
+ * same cards, in the same order, with the same images and names. The new
+ * paint must show every card upright, rounded, in v1's shape and never
+ * smaller than v1 drew it, on a raised surface inside the window.
+ */
+const expectSurfaceDesign = (
   candidate: SurfacePaint,
   source: SurfacePaint,
   description: string,
-  compareImageMargin: boolean,
-  /** Present for the stack expansion, whose cards are sized to the set. */
-  imageScale?: number
+  /** Zone browsers are solid panels; the stack view sits on a scrim. */
+  panel: boolean
 ): void => {
-  expectBoundsToMatch(
-    candidate.surface.bounds,
-    source.surface.bounds,
-    description
+  const bounds = candidate.surface.bounds;
+  expect(bounds.x, `${description} left`).toBeGreaterThanOrEqual(-0.5);
+  expect(bounds.y, `${description} top`).toBeGreaterThanOrEqual(-0.5);
+  expect(bounds.x + bounds.width, `${description} right`).toBeLessThanOrEqual(
+    1280.5
   );
-  expect(candidate.surface).toMatchObject({
-    backgroundColor: source.surface.backgroundColor,
-    borderColor: source.surface.borderColor,
-    borderRadius: source.surface.borderRadius,
-    borderStyle: source.surface.borderStyle,
-    borderWidth: source.surface.borderWidth,
-    boxShadow: source.surface.boxShadow,
-    boxSizing: source.surface.boxSizing,
-    overflowX: source.surface.overflowX,
-    overflowY: source.surface.overflowY,
-    padding: source.surface.padding,
-    position: source.surface.position,
-  });
-  expect(candidate.images).toHaveLength(source.images.length);
+  expect(bounds.y + bounds.height, `${description} bottom`).toBeLessThanOrEqual(
+    720.5
+  );
+  expect(['absolute', 'fixed']).toContain(candidate.surface.position);
+  if (panel) {
+    expect(
+      alphaOf(candidate.surface.backgroundColor),
+      `${description} surface`
+    ).toBeGreaterThan(0.9);
+    expect(candidate.surface.boxShadow, `${description} elevation`).not.toBe(
+      'none'
+    );
+    expect(
+      parseFloat(candidate.surface.borderRadius),
+      `${description} radius`
+    ).toBeGreaterThan(0);
+  }
+  expect(
+    candidate.images.map((image) => [image.src, image.label]),
+    `${description} cards`
+  ).toEqual(source.images.map((image) => [image.src, image.label]));
   for (const [index, sourceImage] of source.images.entries()) {
-    const candidateImage = candidate.images[index];
-    expect(candidateImage, `${description} image ${index}`).toBeDefined();
-    if (imageScale === undefined) {
-      expectBoundsToMatch(
-        candidateImage!.bounds,
-        sourceImage.bounds,
-        `${description} image ${index}`
-      );
-    } else {
-      // PX-015: v1's flat 24% becomes the largest size that fits the set, so
-      // the card keeps v1's shape at a known scale and stays in the panel.
-      for (const key of ['width', 'height'] as const) {
-        expect(
-          candidateImage!.bounds[key],
-          `${description} image ${index} ${key}`
-        ).toBeCloseTo(sourceImage.bounds[key] * imageScale, 1);
-      }
-      expect(candidateImage!.bounds.x).toBeGreaterThanOrEqual(
-        candidate.surface.bounds.x - 0.5
-      );
-      expect(candidateImage!.bounds.y).toBeGreaterThanOrEqual(
-        candidate.surface.bounds.y - 0.5
-      );
-      expect(
-        candidateImage!.bounds.x + candidateImage!.bounds.width
-      ).toBeLessThanOrEqual(
-        candidate.surface.bounds.x + candidate.surface.bounds.width + 0.5
-      );
-      expect(
-        candidateImage!.bounds.y + candidateImage!.bounds.height
-      ).toBeLessThanOrEqual(
-        candidate.surface.bounds.y + candidate.surface.bounds.height + 0.5
-      );
-    }
-    expect(candidateImage).toMatchObject({
-      src: sourceImage.src,
-      label: sourceImage.label,
-      borderRadius: sourceImage.borderRadius,
-      boxShadow: sourceImage.boxShadow,
-    });
-    if (compareImageMargin) {
-      expect(candidateImage!.margin).toBe(sourceImage.margin);
-    }
+    const image = candidate.images[index]!;
+    const label = `${description} image ${index}`;
+    expect(image.bounds.width, `${label} width`).toBeGreaterThanOrEqual(
+      sourceImage.bounds.width - 0.5
+    );
+    expect(image.bounds.height, `${label} height`).toBeGreaterThanOrEqual(
+      sourceImage.bounds.height - 0.5
+    );
+    expect(
+      Math.abs(
+        image.bounds.width / image.bounds.height -
+          sourceImage.bounds.width / sourceImage.bounds.height
+      ),
+      `${label} shape`
+    ).toBeLessThanOrEqual(0.01);
+    expect(image.transform, `${label} upright`).toMatch(
+      /^(none|matrix\(1, 0, 0, 1, [^)]*\))$/u
+    );
   }
 };
 
@@ -683,7 +619,7 @@ const attachPng = (
     contentType: 'image/png',
   });
 
-test('transformed stack and zone overlays retain real-v1 paint and protected semantics', async ({
+test('transformed stack and zone overlays keep real-v1 content and protected semantics in the ADR-027 paint', async ({
   browser,
   page,
 }, testInfo) => {
@@ -755,8 +691,9 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
   const primaryZoneAction = zone.locator(
     '[data-zone-action="shuffleDiscardToDeck"]'
   );
-  await page.keyboard.press('Tab');
-  await expect(sort).toBeFocused();
+  // The trap holds; the order is the panel's reading order (ADR-027): Close
+  // ends the header, the cards follow, and Tab wraps to the header's first
+  // action, then Sort.
   await page.keyboard.press('Tab');
   await expect(firstZoneCard).toBeFocused();
   await primaryZoneAction.focus();
@@ -764,6 +701,9 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
   await expect(lastZoneCard).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(primaryZoneAction).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(sort).toBeFocused();
+  await primaryZoneAction.focus();
   await page.keyboard.press('Escape');
   await expect(localZoneTarget).toBeFocused();
 
@@ -889,37 +829,29 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
     }
   })();
 
-  expectSurfaceToMatch(
+  expectSurfaceDesign(
     candidateLocalStack,
     source.localStack,
     'local stack preview',
-    true,
-    stackPreviewCardScale(
-      candidateLocalStack.surface.bounds,
-      source.localStack.images.length
-    )
+    false
   );
-  expectSurfaceToMatch(
+  expectSurfaceDesign(
     candidateOpponentStack,
     source.opponentStack,
     'opponent stack preview',
-    true,
-    stackPreviewCardScale(
-      candidateOpponentStack.surface.bounds,
-      source.opponentStack.images.length
-    )
+    false
   );
-  expectSurfaceToMatch(
+  expectSurfaceDesign(
     candidateLocalZone,
     source.localZone,
     'local discard browser',
-    false
+    true
   );
-  expectSurfaceToMatch(
+  expectSurfaceDesign(
     candidateOpponentZone,
     source.opponentZone,
     'opponent discard browser',
-    false
+    true
   );
 
   const evidence = await page.evaluate(() => {
@@ -1001,7 +933,7 @@ test('transformed stack and zone overlays retain real-v1 paint and protected sem
   ]);
 });
 
-test('opened discard ability markers retain real-v1 card association and paint', async ({
+test('opened discard ability markers keep real-v1 card association', async ({
   browser,
   page,
 }) => {
@@ -1030,6 +962,9 @@ test('opened discard ability markers retain real-v1 card association and paint',
   const localAssets = await assetsFor(zone);
   await settlePaint(page);
   const candidateLocal = await abilityMarkerPaint(candidateMarker);
+  const candidateLocalCard = (await zone
+    .locator(`button[data-overlay-card-id="${localCardId}"]`)
+    .boundingBox())!;
   await page.keyboard.press('Escape');
 
   const opponentZoneId = `zone:${fixture.opponentPlayerId}:discard`;
@@ -1048,6 +983,9 @@ test('opened discard ability markers retain real-v1 card association and paint',
   const opponentAssets = await assetsFor(zone);
   await settlePaint(page);
   const candidateOpponent = await abilityMarkerPaint(candidateMarker);
+  const candidateOpponentCard = (await zone
+    .locator(`button[data-overlay-card-id="${opponentCardId}"]`)
+    .boundingBox())!;
   await page.keyboard.press('Escape');
 
   const sourcePage = await browser.newPage({
@@ -1096,30 +1034,31 @@ test('opened discard ability markers retain real-v1 card association and paint',
     await settlePaint(sourcePage);
     const sourceOpponent = await abilityMarkerPaint(sourceOpponentMarker);
 
-    expectBoundsWithin(
-      candidateLocal.bounds,
-      sourceLocal.bounds,
-      2,
-      'local opened-discard ability marker'
-    );
-    expect(candidateLocal).toMatchObject({
-      backgroundColor: sourceLocal.backgroundColor,
-      borderRadius: sourceLocal.borderRadius,
-      position: sourceLocal.position,
-      zIndex: sourceLocal.zIndex,
-    });
-    expectBoundsWithin(
-      candidateOpponent.bounds,
-      sourceOpponent.bounds,
-      2,
-      'opponent opened-discard ability marker'
-    );
-    expect(candidateOpponent).toMatchObject({
-      backgroundColor: sourceOpponent.backgroundColor,
-      borderRadius: sourceOpponent.borderRadius,
-      position: sourceOpponent.position,
-      zIndex: sourceOpponent.zIndex,
-    });
+    // ADR-027 lays the browser out anew, so v1 supplies the association:
+    // each marker sits on its own card and is at least v1's size.
+    for (const [label, paint, legacy, cardBounds] of [
+      ['local', candidateLocal, sourceLocal, candidateLocalCard],
+      ['opponent', candidateOpponent, sourceOpponent, candidateOpponentCard],
+    ] as const) {
+      const centreX = paint.bounds.x + paint.bounds.width / 2;
+      const centreY = paint.bounds.y + paint.bounds.height / 2;
+      expect(centreX, `${label} marker over its card`).toBeGreaterThanOrEqual(
+        cardBounds.x
+      );
+      expect(centreX, `${label} marker over its card`).toBeLessThanOrEqual(
+        cardBounds.x + cardBounds.width
+      );
+      expect(centreY, `${label} marker over its card`).toBeGreaterThanOrEqual(
+        cardBounds.y
+      );
+      expect(centreY, `${label} marker over its card`).toBeLessThanOrEqual(
+        cardBounds.y + cardBounds.height
+      );
+      expect(paint.bounds.width, `${label} marker size`).toBeGreaterThanOrEqual(
+        legacy.bounds.width - 1
+      );
+      expect(paint.position, `${label} marker position`).toBe(legacy.position);
+    }
     expect(loaded.missingPaths).toEqual([]);
     expect(sourceErrors).toEqual([]);
   } finally {
@@ -1283,7 +1222,7 @@ test('opened-pile selected-card shortcuts retain real-v1 protected lifecycle', a
   expect(errors).toEqual([]);
 });
 
-test('full opened piles retain real-v1 density and scrolling on both player frames', async ({
+test('full opened piles keep real-v1 content and scroll end to end on both player frames', async ({
   browser,
   page,
 }, testInfo) => {
@@ -1417,24 +1356,15 @@ test('full opened piles retain real-v1 density and scrolling on both player fram
     const key = `${entry.user}:${entry.zoneId}`;
     const sourcePaint = source.get(key);
     expect(sourcePaint, `${key} source capture`).toBeDefined();
-    expectSurfaceToMatch(
+    // Same cards in the same order, never smaller than v1's; each panel
+    // scrolls end to end under a fixed toolbar (checked above), at its own
+    // density rather than v1's.
+    expectSurfaceDesign(
       entry.paint,
       sourcePaint!.paint,
       `${entry.user} ${entry.zoneId} browser`,
-      false
+      true
     );
-    for (const phase of ['scrollStart', 'scrollEnd'] as const) {
-      for (const metric of [
-        'clientHeight',
-        'scrollHeight',
-        'scrollTop',
-      ] as const) {
-        expect(entry[phase][metric], `${key} ${phase} ${metric}`).toBeCloseTo(
-          sourcePaint![phase][metric],
-          1
-        );
-      }
-    }
   }
   expect(errors).toEqual([]);
   await testInfo.attach('legacy-opened-pile-density-metrics.json', {

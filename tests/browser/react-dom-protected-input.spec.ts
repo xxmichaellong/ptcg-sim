@@ -6,6 +6,7 @@ import {
   type Page,
 } from '@playwright/test';
 
+import { alphaOf } from './support/computed-color.js';
 import {
   LEGACY_SHORTCUT_REFERENCE_ENTRIES,
   LEGACY_SHORTCUT_REFERENCE_HEADINGS,
@@ -705,11 +706,14 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await expect(preview.locator('img')).toHaveAttribute('src', sourceImage);
   const previewBounds = await preview.boundingBox();
   expect(previewBounds).toEqual({ x: 0, y: 0, width: 1280, height: 720 });
-  expect(
+  // ADR-027: a scrim that dims the board without hiding it.
+  const scrimAlpha = alphaOf(
     await preview.evaluate(
       (element) => getComputedStyle(element).backgroundColor
     )
-  ).toBe('rgba(0, 0, 0, 0.5)');
+  );
+  expect(scrimAlpha).toBeGreaterThan(0.2);
+  expect(scrimAlpha).toBeLessThan(0.95);
   await page.keyboard.press('v');
   await expect(preview).toHaveCount(0);
   await expect(sourceCard).toBeFocused();
@@ -766,13 +770,16 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     if (!harness) throw new Error('Missing protected-input harness');
     harness.setDarkMode(true);
   });
+  // The theme is app-wide (ADR-027); the browser stays a solid panel.
   await expect
-    .poll(() =>
-      zoneBrowser.evaluate(
-        (element) => getComputedStyle(element).backgroundColor
+    .poll(async () =>
+      alphaOf(
+        await zoneBrowser.evaluate(
+          (element) => getComputedStyle(element).backgroundColor
+        )
       )
     )
-    .toBe('rgba(21, 21, 21, 0.87)');
+    .toBeGreaterThan(0.9);
   const zoneCard = zoneBrowser.locator('[data-overlay-card-id]').first();
   const zoneCardBounds = await zoneCard.boundingBox();
   if (!zoneCardBounds) throw new Error('Opened-zone card has no bounds');
@@ -796,12 +803,21 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     .toBe(fixture.destinationCardIds[0]);
   await expect(menu).toBeVisible();
   expect(
-    await menu.evaluate((element) => getComputedStyle(element).backgroundColor)
-  ).toBe('rgb(0, 0, 0)');
+    alphaOf(
+      await menu.evaluate(
+        (element) => getComputedStyle(element).backgroundColor
+      )
+    )
+  ).toBeGreaterThan(0.9);
   const zoneMenuBounds = await menu.boundingBox();
   if (!zoneMenuBounds) throw new Error('Opened-zone menu has no bounds');
+  // Beside its card, or pushed back onto the screen when it would overflow.
+  expect(zoneMenuBounds.x + zoneMenuBounds.width).toBeLessThanOrEqual(1280);
   expect(zoneMenuBounds.x).toBeCloseTo(
-    Math.min(zoneCardBounds.x + zoneCardBounds.width, 1280 - 180),
+    Math.min(
+      zoneCardBounds.x + zoneCardBounds.width,
+      1280 - zoneMenuBounds.width
+    ),
     0
   );
   await page.keyboard.press('Escape');
@@ -3066,17 +3082,19 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
     'true'
   );
   await expect(reference).toHaveCSS('display', 'block');
-  await expect(reference).toHaveCSS(
-    'background-color',
-    'rgba(200, 200, 200, 0.875)'
-  );
-  await expect(reference).toHaveCSS('color', 'rgb(0, 0, 0)');
-  expect(await reference.boundingBox()).toEqual({
-    x: 16,
-    y: 14,
-    width: 1184,
-    height: 872,
+  // ADR-027 draws it as a solid keycap sheet over the board, on screen.
+  const sheetPaint = await reference.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { background: style.backgroundColor, color: style.color };
   });
+  expect(alphaOf(sheetPaint.background)).toBeGreaterThan(0.9);
+  expect(sheetPaint.color).not.toBe(sheetPaint.background);
+  const sheetBounds = (await reference.boundingBox())!;
+  expect(sheetBounds.x).toBeGreaterThanOrEqual(0);
+  expect(sheetBounds.y).toBeGreaterThanOrEqual(0);
+  expect(sheetBounds.x + sheetBounds.width).toBeLessThanOrEqual(1600);
+  expect(sheetBounds.y + sheetBounds.height).toBeLessThanOrEqual(900);
+  expect(sheetBounds.width).toBeGreaterThan(900);
   expect(
     await reference
       .locator('h1')
@@ -3162,11 +3180,14 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
     harness.setDarkMode(true);
   });
   await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS(
-    'background-color',
-    'rgba(21, 21, 21, 0.87)'
-  );
-  await expect(reference).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(reference).toHaveCSS('display', 'block');
+  expect(
+    alphaOf(
+      await reference.evaluate(
+        (element) => getComputedStyle(element).backgroundColor
+      )
+    )
+  ).toBeGreaterThan(0.9);
   await page.keyboard.up('ShiftLeft');
 
   await page.evaluate(() => {

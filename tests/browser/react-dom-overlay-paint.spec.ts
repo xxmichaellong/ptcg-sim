@@ -7,6 +7,7 @@ import {
   type TestInfo,
 } from '@playwright/test';
 
+import { alphaOf } from './support/computed-color.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 interface OverlayFixture {
@@ -37,6 +38,7 @@ interface OverlayHarnessWindow extends Window {
 interface MenuRowMetrics {
   readonly label: string;
   readonly kind: 'header' | 'action';
+  readonly height: number;
   readonly display: string;
   readonly padding: string;
   readonly backgroundColor: string;
@@ -54,6 +56,7 @@ interface MenuMetrics {
   readonly borderStyle: string;
   readonly borderWidth: string;
   readonly boxShadow: string;
+  readonly borderRadius: string;
   readonly position: string;
   readonly rows: readonly MenuRowMetrics[];
 }
@@ -68,6 +71,7 @@ interface SubmenuMetrics {
   readonly boxShadow: string;
   readonly boxSizing: string;
   readonly padding: string;
+  readonly borderRadius: string;
   readonly position: string;
   readonly rows: readonly MenuRowMetrics[];
 }
@@ -79,6 +83,7 @@ interface PreviewMetrics {
   readonly image: {
     readonly centerX: number;
     readonly centerY: number;
+    readonly height: number;
     readonly maxWidth: string;
     readonly maxHeight: string;
     readonly borderRadius: string;
@@ -218,6 +223,7 @@ const menuMetrics = (menu: Locator): Promise<MenuMetrics> =>
             row.classList.contains('ptcgsim-legacy-context-header')
               ? ('header' as const)
               : ('action' as const),
+          height: painted.getBoundingClientRect().height,
           display: paintedStyle.display,
           padding: paintedStyle.padding,
           backgroundColor: paintedStyle.backgroundColor,
@@ -240,6 +246,7 @@ const menuMetrics = (menu: Locator): Promise<MenuMetrics> =>
       borderStyle: style.borderStyle,
       borderWidth: style.borderWidth,
       boxShadow: style.boxShadow,
+      borderRadius: style.borderRadius,
       position: style.position,
       rows,
     };
@@ -258,6 +265,7 @@ const submenuMetrics = (submenu: Locator): Promise<SubmenuMetrics> =>
         return {
           label: painted.textContent?.replaceAll(/\s+/g, ' ').trim() ?? '',
           kind: 'action' as const,
+          height: painted.getBoundingClientRect().height,
           display: paintedStyle.display,
           padding: paintedStyle.padding,
           backgroundColor: paintedStyle.backgroundColor,
@@ -282,51 +290,74 @@ const submenuMetrics = (submenu: Locator): Promise<SubmenuMetrics> =>
       boxShadow: style.boxShadow,
       boxSizing: style.boxSizing,
       padding: style.padding,
+      borderRadius: style.borderRadius,
       position: style.position,
       rows,
     };
   });
 
-const expectSubmenuMetricsToMatch = (
-  candidate: SubmenuMetrics,
-  source: SubmenuMetrics
+/**
+ * ADR-027 redesigns the menus' look, so v1 supplies only their structure.
+ * The new paint must stay a solid, rounded, raised surface that is never
+ * narrower or smaller-type than v1's, with v1's cursors.
+ */
+const expectMenuDesign = (
+  candidate: MenuMetrics | SubmenuMetrics,
+  legacy: MenuMetrics | SubmenuMetrics,
+  label: string
 ): void => {
-  expect(candidate.rows.map((row) => row.label)).toEqual(
-    source.rows.map((row) => row.label)
+  expect(
+    candidate.rows.map((row) => [row.kind, row.label]),
+    `${label} rows`
+  ).toEqual(legacy.rows.map((row) => [row.kind, row.label]));
+  expect(
+    alphaOf(candidate.backgroundColor),
+    `${label} surface`
+  ).toBeGreaterThan(0.9);
+  expect(candidate.borderStyle, `${label} border`).toBe('solid');
+  expect(candidate.boxShadow, `${label} elevation`).not.toBe('none');
+  expect(parseFloat(candidate.borderRadius), `${label} radius`).toBeGreaterThan(
+    0
   );
-  expect(candidate).toMatchObject({
-    backgroundColor: source.backgroundColor,
-    borderColor: source.borderColor,
-    borderStyle: source.borderStyle,
-    borderWidth: source.borderWidth,
-    boxShadow: source.boxShadow,
-    boxSizing: source.boxSizing,
-    padding: source.padding,
-    position: source.position,
-  });
-  expect(
-    Math.abs(candidate.bounds.width - source.bounds.width)
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(candidate.bounds.height - source.bounds.height)
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(candidate.offsetFromParent.x - source.offsetFromParent.x)
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(candidate.offsetFromParent.y - source.offsetFromParent.y)
-  ).toBeLessThanOrEqual(1);
-  for (const [index, sourceRow] of source.rows.entries()) {
-    expect(candidate.rows[index]).toMatchObject({
-      padding: sourceRow.padding,
-      backgroundColor: sourceRow.backgroundColor,
-      color: sourceRow.color,
-      cursor: sourceRow.cursor,
-      fontFamily: sourceRow.fontFamily,
-      fontSize: sourceRow.fontSize,
-      fontWeight: sourceRow.fontWeight,
-    });
+  expect(['absolute', 'fixed'], `${label} position`).toContain(
+    candidate.position
+  );
+  expect(candidate.bounds.width, `${label} width`).toBeGreaterThanOrEqual(
+    legacy.bounds.width - 2
+  );
+  for (const [index, legacyRow] of legacy.rows.entries()) {
+    const row = candidate.rows[index]!;
+    expect(row.cursor, `${label} row ${index} cursor`).toBe(legacyRow.cursor);
+    expect(row.fontFamily, `${label} row ${index} font`).toMatch(/Inter/u);
+    // Section headers are small caps, never below 11px; actions read at
+    // least as large as v1's.
+    expect(
+      parseFloat(row.fontSize),
+      `${label} row ${index} type size`
+    ).toBeGreaterThanOrEqual(
+      row.kind === 'header' ? 11 : parseFloat(legacyRow.fontSize)
+    );
+    if (row.kind === 'action') {
+      // A comfortable pointer target.
+      expect(row.height, `${label} row ${index} height`).toBeGreaterThanOrEqual(
+        28
+      );
+    }
   }
+};
+
+const expectSubmenuBesideParent = (
+  candidate: SubmenuMetrics,
+  label: string
+): void => {
+  // Opens beside its row (either side), level with it or shifted up to fit.
+  const right = candidate.offsetFromParent.x;
+  const left = -(candidate.offsetFromParent.x + candidate.bounds.width);
+  expect(
+    Math.min(Math.abs(right), Math.abs(left)),
+    `${label} beside its row`
+  ).toBeLessThanOrEqual(12);
+  expect(candidate.offsetFromParent.y, `${label} level`).toBeLessThanOrEqual(8);
 };
 
 const previewMetrics = (preview: Locator): Promise<PreviewMetrics> =>
@@ -337,6 +368,15 @@ const previewMetrics = (preview: Locator): Promise<PreviewMetrics> =>
     if (!image) throw new Error('Preview has no image');
     const imageRect = image.getBoundingClientRect();
     const imageStyle = getComputedStyle(image);
+    // The rounding may belong to a clipping frame around the image.
+    let rounded: Element = image;
+    while (
+      rounded !== element &&
+      rounded.parentElement &&
+      parseFloat(getComputedStyle(rounded).borderTopLeftRadius) === 0
+    ) {
+      rounded = rounded.parentElement;
+    }
     return {
       bounds: {
         x: rect.x,
@@ -349,9 +389,10 @@ const previewMetrics = (preview: Locator): Promise<PreviewMetrics> =>
       image: {
         centerX: imageRect.x + imageRect.width / 2,
         centerY: imageRect.y + imageRect.height / 2,
+        height: imageRect.height,
         maxWidth: imageStyle.maxWidth,
         maxHeight: imageStyle.maxHeight,
-        borderRadius: imageStyle.borderRadius,
+        borderRadius: getComputedStyle(rounded).borderRadius,
       },
     };
   });
@@ -686,7 +727,7 @@ const captureLegacyReplayDisclosure = async (
   }
 };
 
-test('route-owned context and card-preview paint retain real-v1 structure', async ({
+test('route-owned context and card-preview keep real-v1 structure in the ADR-027 paint', async ({
   browser,
   page,
 }, testInfo: TestInfo) => {
@@ -703,38 +744,7 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
   const candidateMenu = await menu.screenshot({ animations: 'disabled' });
   const candidateMenuMetrics = await menuMetrics(menu);
 
-  expect(candidateMenuMetrics.rows.map((row) => row.label)).toEqual(
-    source.menuMetrics.rows.map((row) => row.label)
-  );
-  expect(candidateMenuMetrics.rows.map((row) => row.kind)).toEqual(
-    source.menuMetrics.rows.map((row) => row.kind)
-  );
-  expect(candidateMenuMetrics.backgroundColor).toBe(
-    source.menuMetrics.backgroundColor
-  );
-  expect(candidateMenuMetrics.borderColor).toBe(source.menuMetrics.borderColor);
-  expect(candidateMenuMetrics.borderStyle).toBe(source.menuMetrics.borderStyle);
-  expect(candidateMenuMetrics.borderWidth).toBe(source.menuMetrics.borderWidth);
-  expect(candidateMenuMetrics.boxShadow).toBe(source.menuMetrics.boxShadow);
-  expect(candidateMenuMetrics.position).toBe(source.menuMetrics.position);
-  expect(
-    Math.abs(
-      candidateMenuMetrics.bounds.width - source.menuMetrics.bounds.width
-    )
-  ).toBeLessThanOrEqual(2);
-  for (const [index, sourceRow] of source.menuMetrics.rows.entries()) {
-    const candidateRow = candidateMenuMetrics.rows[index];
-    expect(candidateRow, `candidate menu row ${index}`).toBeDefined();
-    expect(candidateRow).toMatchObject({
-      padding: sourceRow.padding,
-      backgroundColor: sourceRow.backgroundColor,
-      color: sourceRow.color,
-      cursor: sourceRow.cursor,
-      fontFamily: sourceRow.fontFamily,
-      fontSize: sourceRow.fontSize,
-      fontWeight: sourceRow.fontWeight,
-    });
-  }
+  expectMenuDesign(candidateMenuMetrics, source.menuMetrics, 'card menu');
 
   await page.keyboard.press('Escape');
   const categoryCard = host.locator(
@@ -754,10 +764,12 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
   const candidateMoveSubmenuMetrics = await submenuMetrics(
     candidateMoveSubmenuLocator
   );
-  expectSubmenuMetricsToMatch(
+  expectMenuDesign(
     candidateMoveSubmenuMetrics,
-    source.moveSubmenuMetrics
+    source.moveSubmenuMetrics,
+    'move submenu'
   );
+  expectSubmenuBesideParent(candidateMoveSubmenuMetrics, 'move submenu');
   await menu.locator('[data-context-action="changeCardType"]').hover();
   const candidateSubmenuLocator = menu.locator(
     '[data-context-submenu="changeCardType"]'
@@ -768,7 +780,12 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
     animations: 'disabled',
   });
   const candidateSubmenuMetrics = await submenuMetrics(candidateSubmenuLocator);
-  expectSubmenuMetricsToMatch(candidateSubmenuMetrics, source.submenuMetrics);
+  expectMenuDesign(
+    candidateSubmenuMetrics,
+    source.submenuMetrics,
+    'type submenu'
+  );
+  expectSubmenuBesideParent(candidateSubmenuMetrics, 'type submenu');
 
   await page.keyboard.press('Escape');
   await card.dblclick();
@@ -782,8 +799,39 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
     mask: [preview.locator('img')],
     maskColor: '#000',
   });
+  // The preview zooms out of its card; read it once it has landed.
+  await preview.evaluate((element) =>
+    Promise.all(
+      element
+        .getAnimations({ subtree: true })
+        .map((animation) => animation.finished.catch(() => undefined))
+    )
+  );
   const candidatePreviewMetrics = await previewMetrics(preview);
-  expect(candidatePreviewMetrics).toEqual(source.previewMetrics);
+  // ADR-027: a dimming scrim over the board with the card centred on it,
+  // rounded, and never smaller than v1's preview.
+  const scrimAlpha = alphaOf(candidatePreviewMetrics.backgroundColor);
+  expect(scrimAlpha).toBeGreaterThan(0.2);
+  expect(scrimAlpha).toBeLessThan(0.95);
+  expect(['absolute', 'fixed']).toContain(candidatePreviewMetrics.position);
+  const scrim = candidatePreviewMetrics.bounds;
+  // The card tilts toward the pointer, which moves its painted box a little.
+  expect(
+    Math.abs(
+      candidatePreviewMetrics.image.centerX - (scrim.x + scrim.width / 2)
+    )
+  ).toBeLessThanOrEqual(8);
+  expect(
+    Math.abs(
+      candidatePreviewMetrics.image.centerY - (scrim.y + scrim.height / 2)
+    )
+  ).toBeLessThanOrEqual(8);
+  expect(candidatePreviewMetrics.image.height).toBeGreaterThanOrEqual(
+    source.previewMetrics.image.height - 1
+  );
+  expect(
+    parseFloat(candidatePreviewMetrics.image.borderRadius)
+  ).toBeGreaterThan(0);
 
   await Promise.all([
     testInfo.attach('legacy-context-menu-source.png', {
@@ -982,41 +1030,16 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
     ownBack: candidatePrizeHidden.imageSrc,
     opponentBack: candidateHandHidden.imageSrc,
   });
-  const expectMenuPaint = (
-    candidate: MenuMetrics,
-    legacy: MenuMetrics
-  ): void => {
-    expect(candidate.rows.map((row) => [row.kind, row.label])).toEqual(
-      legacy.rows.map((row) => [row.kind, row.label])
-    );
-    expect(candidate).toMatchObject({
-      backgroundColor: legacy.backgroundColor,
-      borderColor: legacy.borderColor,
-      borderStyle: legacy.borderStyle,
-      borderWidth: legacy.borderWidth,
-      boxShadow: legacy.boxShadow,
-      position: legacy.position,
-    });
-    expect(
-      Math.abs(candidate.bounds.width - legacy.bounds.width)
-    ).toBeLessThanOrEqual(2);
-    expect(
-      Math.abs(candidate.bounds.height - legacy.bounds.height)
-    ).toBeLessThanOrEqual(2);
-    for (const [index, legacyRow] of legacy.rows.entries()) {
-      expect(candidate.rows[index]).toMatchObject({
-        padding: legacyRow.padding,
-        backgroundColor: legacyRow.backgroundColor,
-        color: legacyRow.color,
-        cursor: legacyRow.cursor,
-        fontFamily: legacyRow.fontFamily,
-        fontSize: legacyRow.fontSize,
-        fontWeight: legacyRow.fontWeight,
-      });
-    }
-  };
-  expectMenuPaint(candidatePrizeMenuMetrics, source.prizeMenuMetrics);
-  expectMenuPaint(candidateHandMenuMetrics, source.handMenuMetrics);
+  expectMenuDesign(
+    candidatePrizeMenuMetrics,
+    source.prizeMenuMetrics,
+    'prize menu'
+  );
+  expectMenuDesign(
+    candidateHandMenuMetrics,
+    source.handMenuMetrics,
+    'hand menu'
+  );
 
   const expectStableFaceSwap = (
     hidden: ReplayCardPaintMetrics,
