@@ -6,6 +6,7 @@ import {
   consumeContinuationRestoreRateLimit,
   consumeContinuationRevocationRateLimit,
   consumeRoomCreationRateLimit,
+  consumeRoomIngressRateLimit,
   readRequestRateLimitDecision,
   ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS,
 } from './request-rate-limit.js';
@@ -67,6 +68,30 @@ describe('anonymous edge request rate limits', () => {
     });
     expect(limit).toHaveBeenCalledOnce();
     expect(limit.mock.calls[0]?.[0].key).toMatch(/^[0-9a-f]{64}$/u);
+  });
+
+  it('scopes room ingress by operation and room as well as requester', async () => {
+    const keys: string[] = [];
+    const binding = {
+      limit: vi.fn(async ({ key }: { readonly key: string }) => {
+        keys.push(key);
+        return { success: true };
+      }),
+    };
+    const input = request('203.0.113.42');
+    for (const [operation, roomCode] of [
+      ['admission_ticket', 'ABCDEFGH2345'],
+      ['admission_ticket', 'ABCDEFGH2345'],
+      ['admission_ticket', 'ZYXWVUTS9876'],
+      ['invitation', 'ABCDEFGH2345'],
+    ] as const) {
+      await expect(
+        consumeRoomIngressRateLimit(input, binding, operation, roomCode)
+      ).resolves.toEqual({ allowed: true, retryAfterSeconds: 60 });
+    }
+    expect(keys[0]).toBe(keys[1]);
+    expect(new Set(keys).size).toBe(3);
+    expect(keys.join()).not.toContain('203.0.113.42');
   });
 
   it('uses independent anonymous scopes for continuation lifecycle operations', async () => {

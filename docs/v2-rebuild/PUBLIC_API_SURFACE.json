@@ -2262,6 +2262,10 @@
               "kind": "value"
             },
             {
+              "name": "consumeRoomIngressRateLimit",
+              "kind": "value"
+            },
+            {
               "name": "CONTINUATION_CREATION_RATE_LIMIT_RETRY_SECONDS",
               "kind": "value"
             },
@@ -2434,6 +2438,10 @@
               "kind": "value"
             },
             {
+              "name": "ROOM_INGRESS_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
               "name": "ROOM_LIFECYCLE_STORAGE_KEY",
               "kind": "value"
             },
@@ -2476,6 +2484,10 @@
             {
               "name": "RoomExpiredError",
               "kind": "type-value"
+            },
+            {
+              "name": "RoomIngressOperation",
+              "kind": "type"
             },
             {
               "name": "RoomInitializationLifecycle",

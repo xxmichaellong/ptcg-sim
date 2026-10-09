@@ -70,6 +70,8 @@ import {
   consumeContinuationRestoreRateLimit,
   consumeContinuationRevocationRateLimit,
   consumeRoomCreationRateLimit,
+  consumeRoomIngressRateLimit,
+  type RoomIngressOperation,
 } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
@@ -107,6 +109,7 @@ interface Env {
   readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
+  readonly ROOM_INGRESS_RATE_LIMITER: RateLimit;
 }
 
 interface SocketAttachment {
@@ -1114,17 +1117,42 @@ const worker: ExportedHandler<Env> = {
         );
       }
     }
+    const forwardToRoom = async (
+      roomCode: string,
+      operation: RoomIngressOperation,
+      route: ServerHttpRoute
+    ): Promise<Response> => {
+      const decision = await consumeRoomIngressRateLimit(
+        request,
+        env.ROOM_INGRESS_RATE_LIMITER,
+        operation,
+        roomCode
+      );
+      if (!decision.allowed) {
+        return observeHttp(telemetry, route, () =>
+          json({ error: 'rate_limited' }, 429, {
+            'Retry-After': String(decision.retryAfterSeconds),
+          })
+        );
+      }
+      return env.PTCG_ROOM.getByName(roomCode).fetch(request);
+    };
     const code = roomCodeFromPath(url.pathname);
     if (request.method === 'GET' && code) {
+      // ADR-025: the upgrade is throttled by a managed edge rule, not here.
       return env.PTCG_ROOM.getByName(code).fetch(request);
     }
     const admissionCode = admissionRoomCodeFromPath(url.pathname);
     if (admissionCode) {
-      return env.PTCG_ROOM.getByName(admissionCode).fetch(request);
+      return forwardToRoom(
+        admissionCode,
+        'admission_ticket',
+        'admission_ticket'
+      );
     }
     const invitationCode = invitationRoomCodeFromPath(url.pathname);
     if (invitationCode) {
-      return env.PTCG_ROOM.getByName(invitationCode).fetch(request);
+      return forwardToRoom(invitationCode, 'invitation', 'room_invitation');
     }
     return observeHttp(
       telemetry,

@@ -255,6 +255,30 @@ describe('Cloudflare Worker runtime', () => {
     expect(afterExpiry.alarm).toBe(initial.lifecycle.unclaimedExpiresAt);
   });
 
+  it('meters room ingress per requester before it reaches the room budget', async () => {
+    const created = await createRoom();
+    const other = await createRoom();
+    const claim = (roomCode: string) =>
+      exports.default.fetch(
+        new Request(`${ORIGIN}/v2/rooms/${roomCode}/admission-tickets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+          body: JSON.stringify({}),
+        })
+      );
+    // Bad claims are answered by the room until this requester's own edge
+    // budget runs out, well before the room's shared 60 a minute.
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      expect((await claim(created.roomCode)).status).toBe(400);
+    }
+    const limited = await claim(created.roomCode);
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('Retry-After')).toBe('60');
+    await expect(limited.json()).resolves.toEqual({ error: 'rate_limited' });
+    // The budget is per room, so the requester's other rooms are untouched.
+    expect((await claim(other.roomCode)).status).toBe(400);
+  });
+
   it('closes a socket on its first binary frame instead of answering it', async () => {
     const created = await createRoom();
     const socket = await connect(created);

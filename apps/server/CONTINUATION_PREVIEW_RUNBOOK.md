@@ -47,16 +47,16 @@ Before generating a bundle, record:
 - a build ID matching the commit under test;
 - a new bounded key ID that contains no secret information;
 - a deliberately small preview shard count and leases-per-shard value;
-- four unused, contiguous positive rate-limit namespace IDs in the target
+- five unused, contiguous positive rate-limit namespace IDs in the target
   Cloudflare account; and
 - the account/profile, test window, cost owner, evidence owner, and teardown
   owner.
 
-The generator maps `--rate-namespace-base` through base plus three, in this
+The generator maps `--rate-namespace-base` through base plus four, in this
 order: room create, continuation create, continuation restore, continuation
-revoke. It proves that those values do not overlap the four IDs in the
-checked-in production configuration. It cannot inspect the rest of a
-Cloudflare account, so the operator must verify that all four are otherwise
+revoke, room ingress. It proves that those values do not overlap the IDs in
+the checked-in production and preview configurations. It cannot inspect the
+rest of a Cloudflare account, so the operator must verify that all five are otherwise
 unused. Cloudflare documents that a namespace ID is an account-unique positive
 integer and that reuse across Workers deliberately shares counters. See the
 [Rate Limiting binding contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
@@ -92,7 +92,7 @@ corepack pnpm run prepare:continuation-preview -- \
 ```
 
 Inspect only `manifest.json` and `wrangler.json`. Confirm the exact Worker name,
-build ID, quota product, four bindings/IDs, Durable Object bindings/exports,
+build ID, quota product, five bindings/IDs, Durable Object bindings/exports,
 absolute source/asset paths, `workers_dev: true`, and absence of `routes`,
 `domains`, `CONTINUATION_HTTP_ACTIVATION`, `CONTINUATION_KEYRING`, and
 `CONTINUATION_QUOTA_CONFIGURATION` from `wrangler.json`.
@@ -106,7 +106,7 @@ corepack pnpm --filter @ptcgsim/server-v2 exec wrangler deploy \
   --config "$PTCGSIM_PREVIEW_BUNDLE/wrangler.json"
 ```
 
-The dry run must list exactly three Durable Object bindings, four distinct rate
+The dry run must list exactly three Durable Object bindings, five distinct rate
 limit bindings, and `BUILD_ID`; it must not list any continuation activation,
 keyring, or quota variable. This checked-in generator was locally rehearsed
 against the pinned Wrangler version. A dry run is not managed evidence.

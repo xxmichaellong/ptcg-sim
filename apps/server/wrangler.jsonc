@@ -45,6 +45,14 @@
       },
     },
     {
+      "name": "ROOM_INGRESS_RATE_LIMITER",
+      "namespace_id": "260903005",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
       "name": "CONTINUATION_CREATION_RATE_LIMITER",
       "namespace_id": "260903002",
       "simple": {
@@ -120,6 +128,14 @@
           "namespace_id": "260903101",
           "simple": {
             "limit": 12,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ROOM_INGRESS_RATE_LIMITER",
+          "namespace_id": "260903105",
+          "simple": {
+            "limit": 20,
             "period": 60,
           },
         },

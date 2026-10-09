@@ -46,6 +46,13 @@ required before ADR-005 becomes accepted.
   requests per hashed edge identity per 60 seconds. This intentionally coarse,
   location-local limit protects allocation but is not an authorization or
   accounting primitive.
+- A second binding permits 20 admission-ticket and 20 invitation requests per
+  hashed edge identity, room, and operation per 60 seconds, checked before the
+  request reaches the room. Each room's budgets below are shared by everyone
+  who knows its code and are spent before the credential is checked, so this
+  keeps one source from exhausting them and locking the room's players out.
+  The WebSocket upgrade is not covered here; ADR-025 assigns it to a managed
+  edge rule.
 - Each room separately persists exact fixed-window budgets: 24 invitation
   issues, 60 admission-ticket exchanges, 120 WebSocket upgrades, 120 `Hello`
   attempts, and 120 chat deliveries per 60 seconds. Chat also has an

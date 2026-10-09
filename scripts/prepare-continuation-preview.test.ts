@@ -190,7 +190,7 @@ describe('continuation managed-preview provisioner', () => {
     });
     assert.deepEqual(
       result.manifest.rateLimitNamespaces.map(({ namespaceId }) => namespaceId),
-      ['260904101', '260904102', '260904103', '260904104']
+      ['260904101', '260904102', '260904103', '260904104', '260904105']
     );
     assert.deepEqual(
       (

@@ -56,6 +56,7 @@ const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([
   'CONTINUATION_CREATION_RATE_LIMITER',
   'CONTINUATION_RESTORE_RATE_LIMITER',
   'CONTINUATION_REVOCATION_RATE_LIMITER',
+  'ROOM_INGRESS_RATE_LIMITER',
 ]);
 const MAXIMUM_PREVIOUS_CREDENTIAL_BYTES = 8 * 1024;
 const KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
@@ -247,7 +248,8 @@ const validateArguments = (
   if (
     !Number.isSafeInteger(arguments_.rateNamespaceBase) ||
     arguments_.rateNamespaceBase <= 0 ||
-    arguments_.rateNamespaceBase > Number.MAX_SAFE_INTEGER - 3
+    arguments_.rateNamespaceBase >
+      Number.MAX_SAFE_INTEGER - (EXPECTED_RATE_LIMIT_BINDINGS.length - 1)
   ) {
     throw new Error('--rate-namespace-base cannot allocate four safe IDs');
   }
@@ -434,7 +436,10 @@ const buildPreviewWranglerConfig = (
   readonly rateLimitNamespaces: readonly PreviewRateLimitNamespace[];
 } => {
   const sourceRateLimits = source.ratelimits;
-  if (!Array.isArray(sourceRateLimits) || sourceRateLimits.length !== 4) {
+  if (
+    !Array.isArray(sourceRateLimits) ||
+    sourceRateLimits.length !== EXPECTED_RATE_LIMIT_BINDINGS.length
+  ) {
     throw new Error('Checked-in Wrangler rate-limit topology changed');
   }
   const sourceNamespaceIds = new Set<number>();

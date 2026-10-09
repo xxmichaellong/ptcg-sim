@@ -2,6 +2,7 @@ export const ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_CREATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS = 60;
+export const ROOM_INGRESS_RATE_LIMIT_RETRY_SECONDS = 60;
 
 export interface EdgeRateLimitBinding {
   readonly limit: (options: {
@@ -98,6 +99,33 @@ export const consumeContinuationRestoreRateLimit = async (
   return {
     allowed: outcome.success,
     retryAfterSeconds: CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
+
+export type RoomIngressOperation = 'admission_ticket' | 'invitation';
+
+/**
+ * A room's own budgets are shared by everyone who knows its code and are
+ * spent before any credential is checked. This edge budget is per requester,
+ * room and operation, so one address cannot drain a room's shared budget and
+ * lock its players out; it sits well below each room budget for that reason.
+ * The WebSocket upgrade is left to ADR-025's managed edge rule.
+ */
+export const consumeRoomIngressRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding,
+  operation: RoomIngressOperation,
+  roomCode: string
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(
+      request,
+      `room_ingress:${operation}:${roomCode}`
+    ),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: ROOM_INGRESS_RATE_LIMIT_RETRY_SECONDS,
   };
 };
 
