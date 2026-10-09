@@ -1,9 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import {
-  attachForegroundPaintComparison,
-  compareForegroundScreenshots,
-} from './support/foreground-paint-comparison.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 interface BrowserDeckHarness {
@@ -39,13 +35,6 @@ declare global {
 }
 
 const VIEWPORT = { width: 1600, height: 900 } as const;
-const GEOMETRY_TOLERANCE_PX = 2;
-const PAINT_OPTIONS = Object.freeze({
-  spatialTolerance: 3,
-  channelTolerance: 24,
-  foregroundChannelThreshold: 250,
-});
-const MAX_UNMATCHED_PAINT_RATIO = 0.005;
 
 const LANDMARKS = [
   '#deckImport',
@@ -96,6 +85,7 @@ interface SurfaceCapture {
       string,
       {
         readonly tag: string;
+        readonly name: string;
         readonly text: string;
         readonly placeholder: string | null;
         readonly textareaFontFamily: string | null;
@@ -159,6 +149,7 @@ const collectSurface = (page: Page): Promise<SurfaceCapture> =>
         string,
         {
           tag: string;
+          name: string;
           text: string;
           placeholder: string | null;
           textareaFontFamily: string | null;
@@ -169,6 +160,13 @@ const collectSurface = (page: Page): Promise<SurfaceCapture> =>
         if (!element) throw new Error(`Missing Deck control #${id}`);
         controls[id] = {
           tag: element.tagName,
+          name: (
+            element.getAttribute('aria-label') ??
+            element.textContent ??
+            ''
+          )
+            .replace(/\s+/gu, ' ')
+            .trim(),
           text:
             element instanceof HTMLSelectElement
               ? [...element.options]
@@ -248,59 +246,47 @@ const openCandidateDeckBuilder = async (
   await disableMotion(page);
 };
 
-const expectGeometryParity = (
+/**
+ * ADR-027 redesigns the Deck panel's copy, type and layout, so v1 supplies
+ * its structure: every control is still there under its id and element,
+ * selects offer the same values, the decklist fields keep a placeholder,
+ * every button has a name, and every region of the panel is on screen.
+ */
+const expectStructuralParity = (
   source: SurfaceCapture,
   candidate: SurfaceCapture
 ): void => {
-  for (const selector of LANDMARKS) {
-    for (const field of ['x', 'y', 'width', 'height'] as const) {
-      expect
-        .soft(
-          Math.abs(
-            candidate.landmarks[selector]![field] -
-              source.landmarks[selector]![field]
-          ),
-          `${selector} ${field}: source ${source.landmarks[selector]![field]}, candidate ${candidate.landmarks[selector]![field]}`
-        )
-        .toBeLessThanOrEqual(GEOMETRY_TOLERANCE_PX);
+  for (const [id, legacy] of Object.entries(source.controls)) {
+    const control = candidate.controls[id]!;
+    expect(control.tag, `#${id} element`).toBe(legacy.tag);
+    if (legacy.tag === 'SELECT') {
+      const values = (text: string) =>
+        text.split('|').map((option) => option.split(':')[0]);
+      expect(values(control.text), `#${id} options`).toEqual(
+        values(legacy.text)
+      );
     }
+    if (legacy.placeholder !== null) {
+      expect(control.placeholder, `#${id} placeholder`).toBeTruthy();
+    }
+    if (legacy.tag === 'BUTTON') {
+      expect(control.name, `#${id} name`).not.toBe('');
+    }
+  }
+  for (const selector of LANDMARKS) {
+    // On screen wherever v1 shows it (P1's field hides while P2's is open).
+    const legacy = source.landmarks[selector]!;
+    if (legacy.width === 0 || legacy.height === 0) continue;
+    const box = candidate.landmarks[selector]!;
+    expect(box.width, `${selector} width`).toBeGreaterThan(0);
+    expect(box.height, `${selector} height`).toBeGreaterThan(0);
+    expect(box.x + box.width, `${selector} right`).toBeLessThanOrEqual(
+      VIEWPORT.width + 1
+    );
   }
 };
 
-const expectPaintParity = async (
-  testInfo: TestInfo,
-  candidatePage: Page,
-  sourcePage: Page,
-  state: string
-): Promise<void> => {
-  const [sourcePaint, candidatePaint] = await Promise.all([
-    sourcePage.screenshot({ animations: 'disabled', caret: 'hide' }),
-    candidatePage.screenshot({ animations: 'disabled', caret: 'hide' }),
-  ]);
-  const comparison = await compareForegroundScreenshots(
-    candidatePage,
-    sourcePaint,
-    candidatePaint,
-    PAINT_OPTIONS
-  );
-  await attachForegroundPaintComparison(
-    testInfo,
-    `legacy-deck-builder-${state}`,
-    sourcePaint,
-    candidatePaint,
-    comparison
-  );
-  expect(
-    comparison.unmatchedSourceRatio,
-    `${state} unmatched source paint`
-  ).toBeLessThanOrEqual(MAX_UNMATCHED_PAINT_RATIO);
-  expect(
-    comparison.unmatchedCandidateRatio,
-    `${state} unmatched candidate paint`
-  ).toBeLessThanOrEqual(MAX_UNMATCHED_PAINT_RATIO);
-};
-
-test('the composed React Deck surface matches the open real-v1 browser surface', async ({
+test('the composed React Deck surface keeps the open real-v1 browser structure', async ({
   browser,
   page,
 }, testInfo: TestInfo) => {
@@ -329,10 +315,7 @@ test('the composed React Deck surface matches the open real-v1 browser surface',
       ),
       contentType: 'application/json',
     });
-    expect(candidateSurface.controls).toEqual(sourceSurface.controls);
-    expectGeometryParity(sourceSurface, candidateSurface);
-
-    await expectPaintParity(testInfo, page, source, 'open-main');
+    expectStructuralParity(sourceSurface, candidateSurface);
 
     await Promise.all([
       source.locator('#altImportHeaderButton').click(),
@@ -352,8 +335,7 @@ test('the composed React Deck surface matches the open real-v1 browser surface',
       collectSurface(source),
       collectSurface(page),
     ]);
-    expectGeometryParity(sourceAlternate, candidateAlternate);
-    await expectPaintParity(testInfo, page, source, 'open-alternate');
+    expectStructuralParity(sourceAlternate, candidateAlternate);
 
     await source.locator('#settingsButton').click();
     await source.locator('#darkModeCheckbox').check();
@@ -365,7 +347,11 @@ test('the composed React Deck surface matches the open real-v1 browser surface',
     });
     await settlePaint(source);
     await settlePaint(page);
-    await expectPaintParity(testInfo, page, source, 'open-alternate-dark');
+    const [sourceDark, candidateDark] = await Promise.all([
+      collectSurface(source),
+      collectSurface(page),
+    ]);
+    expectStructuralParity(sourceDark, candidateDark);
 
     expect(sourceErrors).toEqual([]);
     expect(candidateErrors).toEqual([]);
