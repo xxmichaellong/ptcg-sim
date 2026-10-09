@@ -68,6 +68,15 @@ summarised in `EXPERIENCE_DESIGN.md`.
   screenshots, overlay paint geometry) are re-baselined against the new
   design or retired; tests that pin behaviour, privacy, paint order and the
   v1 layout model are kept.
+- Re-baselining keeps v1 as the source of _content and semantics_: the same
+  menu rows, cards, images, names, controls and select values, in the same
+  order, with the same cursors, modal semantics, focus trap and focus
+  return. The new paint is held to invariants instead of v1's pixels: solid,
+  rounded, raised surfaces on the screen, and cards and type never smaller
+  than v1 drew them (`react-dom-overlay-paint`,
+  `react-dom-transformed-overlay-paint`, `react-dom-protected-input`,
+  `legacy-deck-builder-browser-parity`). A tab order follows the new reading
+  order of a panel; keystrokes (Enter confirms, Escape cancels) do not move.
 - Visual regressions get their own baseline screenshots of the new look.
 - The renderer-spike route keeps installing scenes without a motion cause, so
   the geometry oracles still read final rectangles immediately.

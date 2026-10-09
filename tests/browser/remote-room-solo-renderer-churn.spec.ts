@@ -449,13 +449,13 @@ const alignMemorySnapshotPhase = async (
   readonly liveRegionChildren: number;
   readonly images: number;
 }> => {
-  if (expectedLiveRegionChildren === undefined) {
-    await expect(page.locator('.presentation-live-region > *')).toHaveCount(1);
-  } else {
-    await expect(page.locator('.presentation-live-region > *')).toHaveCount(
-      expectedLiveRegionChildren
-    );
-  }
+  // Compare memory with the announcement queue drained: each announcement
+  // dwells for a second, so whether one is still showing at a fixed point
+  // depends on how long the cycle took, not on what it leaked.
+  await expect(page.locator('.presentation-live-region > *')).toHaveCount(
+    expectedLiveRegionChildren ?? 0,
+    { timeout: 30_000 }
+  );
   await page.waitForFunction(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     if (!scene) return false;
@@ -716,7 +716,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
 
   const baselinePresentationPhase = await alignMemorySnapshotPhase(page);
   expect(baselinePresentationPhase).toEqual({
-    liveRegionChildren: 1,
+    liveRegionChildren: 0,
     images: 2,
   });
   const baseline = await readResourceEvidence(page, renderer);
