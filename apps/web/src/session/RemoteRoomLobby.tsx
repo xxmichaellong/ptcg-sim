@@ -14,6 +14,7 @@ import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAct
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import {
   createRemoteRoom,
+  RemoteRoomInvitationError,
   type RemoteRoomCreationResult,
 } from './RemoteRoomCreation.js';
 import {
@@ -686,7 +687,13 @@ export const RemoteRoomLobby = ({
     // seats are taken.
     try {
       await invitations.copyPlayerInvitation();
-    } catch {
+    } catch (error) {
+      if (
+        !(error instanceof RemoteRoomInvitationError) ||
+        error.code !== 'seat_unavailable'
+      ) {
+        throw error;
+      }
       await invitations.copySpectatorInvitation();
     }
     return true;

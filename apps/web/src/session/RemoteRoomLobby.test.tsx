@@ -12,7 +12,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
-import type { RemoteRoomCreationResult } from './RemoteRoomCreation.js';
+import {
+  RemoteRoomInvitationError,
+  type RemoteRoomCreationResult,
+} from './RemoteRoomCreation.js';
 import {
   RemoteRoomLobby,
   type RemoteRoomLobbyDependencies,
@@ -42,6 +45,8 @@ const roomRouteHarness = vi.hoisted(() => ({
   onMultiplayerNavigate: undefined as (() => void) | undefined,
   deckStore: undefined as DeckBuilderStore | undefined,
   cardBackStore: undefined as CardBackCustodyStore | undefined,
+  onCopyInvitation: undefined as
+    ((role: 'player' | 'spectator') => Promise<boolean>) | undefined,
   onResumeSavedGame: undefined as
     | ((
         contents: string,
@@ -88,6 +93,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     multiplayerPanel,
     deckStore,
     cardBackStore,
+    onCopyInvitation,
     onResumeSavedGame,
   }: {
     readonly runtime: { readonly label?: string };
@@ -103,6 +109,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
+    readonly onCopyInvitation?: (
+      role: 'player' | 'spectator'
+    ) => Promise<boolean>;
     readonly onResumeSavedGame?: (
       contents: string,
       deliverOpponentInvitation: (text: string) => Promise<void>,
@@ -119,6 +128,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onMultiplayerNavigate = onMultiplayerNavigate;
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
+    roomRouteHarness.onCopyInvitation = onCopyInvitation;
     roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
     return (
       <main data-app-route="test-remote-room">
@@ -748,6 +758,42 @@ describe('remote room lobby wiring', () => {
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('copies a spectator invitation from the room only once the player seat is taken', async () => {
+    const invitation = custody();
+    const created = creationResult();
+    const createRoom = vi.fn(async () => created.value);
+    const { host, root } = await mount(
+      lobbyDependencies(invitation, createRoom)
+    );
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+
+    // A transient failure is reported, never swapped for a spectator link
+    // the recipient could not take the seat with.
+    const copy = roomRouteHarness.onCopyInvitation!;
+    created.copyPlayerInvitation.mockRejectedValueOnce(
+      new RemoteRoomInvitationError('issue_failed')
+    );
+    await expect(copy('player')).rejects.toMatchObject({
+      code: 'issue_failed',
+    });
+    expect(created.copySpectatorInvitation).not.toHaveBeenCalled();
+
+    created.copyPlayerInvitation.mockRejectedValueOnce(
+      new RemoteRoomInvitationError('seat_unavailable')
+    );
+    await expect(copy('player')).resolves.toBe(true);
+    expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
+
+    await act(async () => root.unmount());
   });
 
   it('intercepts a pasted bearer, renders only its safe receipt, and derives guest role inside custody', async () => {

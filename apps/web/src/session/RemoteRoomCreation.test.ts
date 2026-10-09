@@ -461,6 +461,14 @@ describe('remote room invitation custody', () => {
     for (const [response, code] of [
       [Response.json({ error: 'busy' }, { status: 503 }), 'issue_failed'],
       [
+        Response.json({ error: 'seat_unavailable' }, { status: 409 }),
+        'seat_unavailable',
+      ],
+      [
+        Response.json({ error: 'room_not_ready' }, { status: 409 }),
+        'issue_failed',
+      ],
+      [
         Response.json(
           {
             invitation: 'short',

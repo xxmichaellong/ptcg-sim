@@ -54,6 +54,7 @@ export type RemoteRoomInvitationFailureCode =
   | 'issue_failed'
   | 'invalid_response'
   | 'expired_invitation'
+  | 'seat_unavailable'
   | 'clipboard_unavailable'
   | 'clipboard_failed'
   | 'copy_in_progress'
@@ -207,6 +208,21 @@ export class RemoteRoomInvitationCustody {
     } catch {
       throw new RemoteRoomInvitationError(
         this.#abort.signal.aborted ? 'disposed' : 'issue_failed'
+      );
+    }
+    if (response.status === 409) {
+      // Both seats taken is an answer, not a failure: the caller may offer a
+      // spectator invitation instead.
+      const conflict = await readBoundedJsonResponse(
+        response,
+        MAX_INVITATION_RESPONSE_BYTES
+      );
+      const error =
+        conflict.ok && typeof conflict.value === 'object' && conflict.value
+          ? (conflict.value as { readonly error?: unknown }).error
+          : undefined;
+      throw new RemoteRoomInvitationError(
+        error === 'seat_unavailable' ? 'seat_unavailable' : 'issue_failed'
       );
     }
     if (response.status !== 201) {
