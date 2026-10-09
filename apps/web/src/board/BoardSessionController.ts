@@ -11,6 +11,7 @@ import {
   type BoardPresentationUpdate,
   type BoardScene,
   type BoardSceneInstallMode,
+  type BoardSceneMotion,
   type SettlingCard,
 } from '@ptcgsim/renderer-contract';
 import {
@@ -87,6 +88,12 @@ export interface BoardProjectionFrame {
    * session has either published the accepted move or recorded a rejection.
    */
   readonly pendingCommandIds?: readonly string[];
+  /**
+   * Set by the source when a same-revision frame comes from this client's own
+   * queue: a prediction just shown (`predict`) or one the room refused and
+   * the frame withdraws (`rollback`).
+   */
+  readonly motionHint?: 'predict' | 'rollback';
 }
 
 export type BoardPreviewState =
@@ -138,7 +145,11 @@ export interface BoardSessionControllerState {
 
 export type BoardSessionControllerAction =
   | { readonly kind: 'FrameReceived'; readonly frame: BoardProjectionFrame }
-  | { readonly kind: 'RefreshScene' }
+  | {
+      readonly kind: 'RefreshScene';
+      /** A plain relayout snaps; a flip turns the table. */
+      readonly cause?: 'layout' | 'flip';
+    }
   | { readonly kind: 'RendererIntent'; readonly intent: BoardIntent }
   | {
       readonly kind: 'OpenedZoneCardIntent';
@@ -213,6 +224,8 @@ export type BoardSessionControllerEffect =
       readonly kind: 'InstallScene';
       readonly scene: BoardScene;
       readonly mode: BoardSceneInstallMode;
+      /** Why the scene changed, so the renderer knows whether cards travel. */
+      readonly motion: BoardSceneMotion;
     }
   | {
       readonly kind: 'InstallPresentation';
@@ -800,6 +813,7 @@ const installFrame = (
           kind: 'InstallScene',
           scene: retainedScene,
           mode: 'replace',
+          motion: { cause: 'replace' },
         });
       }
       if (presentationChanged) {
@@ -924,7 +938,12 @@ const installFrame = (
         reason: 'session_not_ready',
       });
     }
-    effects.push({ kind: 'InstallScene', scene, mode: 'replace' });
+    effects.push({
+      kind: 'InstallScene',
+      scene,
+      mode: 'replace',
+      motion: { cause: 'replace' },
+    });
     if (!samePresentation(state.presentation, next.presentation)) {
       effects.push({
         kind: 'InstallPresentation',
@@ -1118,7 +1137,17 @@ const installFrame = (
   if (resetsRenderer) {
     effects.push({ kind: 'ResetRenderer', reason: 'identity_changed' });
   }
-  effects.push({ kind: 'InstallScene', scene, mode: installMode });
+  // A same-revision frame from this client's queue animates as a prediction
+  // or a rollback; a forward step animates as the room's move; anything that
+  // cleared local state (a new recipient, a seek, a resync) simply appears.
+  const motion: BoardSceneMotion = mustClearLocal
+    ? { cause: 'replace' }
+    : frame.motionHint
+      ? { cause: frame.motionHint }
+      : installMode === 'advance' || frame.boundary === 'refresh'
+        ? { cause: 'advance' }
+        : { cause: 'replace' };
+  effects.push({ kind: 'InstallScene', scene, mode: installMode, motion });
   if (!samePresentation(state.presentation, next.presentation)) {
     effects.push({
       kind: 'InstallPresentation',
@@ -1493,7 +1522,12 @@ const handleOverlayAction = (
       ...local,
     });
     return accepted(next, [
-      { kind: 'InstallScene', scene: localScene, mode: 'replace' },
+      {
+        kind: 'InstallScene',
+        scene: localScene,
+        mode: 'replace',
+        motion: { cause: 'layout' },
+      },
       { kind: 'InstallPresentation', presentation: next.presentation },
     ]);
   }
@@ -1701,7 +1735,8 @@ const handleOncePerGameAction = (
 
 const refreshScene = (
   state: BoardSessionControllerState,
-  dependencies: BoardSessionControllerDependencies
+  dependencies: BoardSessionControllerDependencies,
+  cause: 'layout' | 'flip' = 'layout'
 ): BoardSessionControllerReduction => {
   const view = state.view;
   if (!view) return rejected(state);
@@ -1730,7 +1765,7 @@ const refreshScene = (
       kind: 'CancelRendererInteraction',
       reason: 'projection_config_changed',
     },
-    { kind: 'InstallScene', scene, mode: 'replace' },
+    { kind: 'InstallScene', scene, mode: 'replace', motion: { cause } },
   ];
   if (!samePresentation(state.presentation, presentation)) {
     effects.push({ kind: 'InstallPresentation', presentation });
@@ -1781,7 +1816,7 @@ export const reduceBoardSessionController = (
     case 'FrameReceived':
       return installFrame(state, action.frame, dependencies);
     case 'RefreshScene':
-      return refreshScene(state, dependencies);
+      return refreshScene(state, dependencies, action.cause);
     case 'RendererIntent':
       return handleIntent(state, action.intent, dependencies);
     case 'OpenedZoneCardIntent':

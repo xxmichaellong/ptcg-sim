@@ -1342,6 +1342,14 @@
               "kind": "type"
             },
             {
+              "name": "BoardSceneMotion",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSceneMotionCause",
+              "kind": "type"
+            },
+            {
               "name": "BoardScenePlayerFrame",
               "kind": "type"
             },
@@ -1443,6 +1451,10 @@
             },
             {
               "name": "DEFAULT_BOARD_VIEWPORT",
+              "kind": "value"
+            },
+            {
+              "name": "defaultSceneMotion",
               "kind": "value"
             },
             {

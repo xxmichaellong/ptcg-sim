@@ -275,6 +275,30 @@ export type BoardPresentationEvent =
 
 export type BoardSceneInstallMode = 'advance' | 'replace';
 
+/**
+ * Why a scene is being installed, so a renderer can decide how the table gets
+ * from the old scene to the new one:
+ * - `advance`: the room moved the game forward (a publication or replay step);
+ *   cards travel to their new places.
+ * - `predict`: this client's own action, shown before the room confirms it.
+ * - `rollback`: a prediction the room refused is withdrawn; cards go home.
+ * - `layout`: the same table at a new size, split or scroll; nothing travels.
+ * - `flip`: the viewer turned the table around.
+ * - `replace`: a discontinuity (reconnect, replay seek, undo, a new viewer);
+ *   anything in motion stops and the scene simply appears.
+ */
+export type BoardSceneMotionCause =
+  'advance' | 'predict' | 'rollback' | 'layout' | 'flip' | 'replace';
+
+export interface BoardSceneMotion {
+  readonly cause: BoardSceneMotionCause;
+}
+
+/** The motion a bare install mode implies when no cause was supplied. */
+export const defaultSceneMotion = (
+  mode: BoardSceneInstallMode
+): BoardSceneMotion => ({ cause: mode === 'advance' ? 'advance' : 'replace' });
+
 export type BoardPresentationUpdate = {
   readonly kind: 'DragChanged';
   readonly drag: BoardPresentation['drag'];
@@ -333,7 +357,8 @@ export interface BoardRenderer {
   installScene(
     scene: BoardScene,
     events: readonly BoardPresentationEvent[],
-    mode?: BoardSceneInstallMode
+    mode?: BoardSceneInstallMode,
+    motion?: BoardSceneMotion
   ): void;
   installPresentation(presentation: BoardPresentation): void;
   /** Clears renderer-owned pointer capture, drag, and suppressed-click state. */

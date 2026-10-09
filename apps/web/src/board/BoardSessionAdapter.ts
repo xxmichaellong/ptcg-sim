@@ -233,8 +233,8 @@ export class BoardSessionAdapter {
     return this.options.live[declaration]?.(actingPlayerId) ?? false;
   }
 
-  refreshScene(): boolean {
-    return this.controller.dispatch({ kind: 'RefreshScene' });
+  refreshScene(cause: 'layout' | 'flip' = 'layout'): boolean {
+    return this.controller.dispatch({ kind: 'RefreshScene', cause });
   }
 
   emitPresentationUpdate(update: BoardPresentationUpdate): boolean {
@@ -303,6 +303,10 @@ export class BoardSessionAdapter {
       ? (this.options.transformView?.(predictedView, source) ?? predictedView)
       : undefined;
     const boundary = this.boundaryFor(replayState, source, view);
+    const motionHint =
+      source.kind === 'live' && boundary === 'refresh'
+        ? this.queueMotionHint(liveState)
+        : undefined;
     const frame: BoardProjectionFrame = {
       // The adapter may intentionally reproject one upstream generation after
       // a route-local display policy or layout change. Keep controller
@@ -325,10 +329,38 @@ export class BoardSessionAdapter {
       pendingCommandIds: liveState.pendingCommands.map(
         (pending) => pending.commandId
       ),
+      ...(motionHint ? { motionHint } : {}),
     };
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
     return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
+
+  /**
+   * A same-revision live frame changed because this client's own queue did:
+   * a command the room refused has left it (its prediction is withdrawn), or
+   * a new one joined it (its prediction is shown).
+   */
+  private queueMotionHint(
+    liveState: ReturnType<BoardSessionAdapterOptions['live']['getSnapshot']>
+  ): 'predict' | 'rollback' | undefined {
+    const current = new Set(
+      liveState.pendingCommands.map((pending) => pending.commandId)
+    );
+    const previous = new Set(this.lastPendingCommandIds);
+    const refused = this.lastPendingCommandIds.some(
+      (commandId) =>
+        !current.has(commandId) &&
+        liveState.completedCommands.some(
+          (completed) =>
+            completed.commandId === commandId && !completed.accepted
+        )
+    );
+    if (refused) return 'rollback';
+    const queued = liveState.pendingCommands.some(
+      (pending) => !previous.has(pending.commandId)
+    );
+    return queued ? 'predict' : undefined;
+  }
 
   private boundaryFor(
     current: ReplaySessionCoordinatorState,

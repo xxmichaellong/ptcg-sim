@@ -301,6 +301,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         kind: 'InstallScene',
         scene: test.adapter.getSnapshot().scene,
         mode: 'replace',
+        motion: { cause: 'advance' },
       },
     ]);
     expect(transformedSources).toContain('live');
@@ -353,6 +354,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         kind: 'InstallScene',
         scene: test.adapter.getSnapshot().scene,
         mode: 'replace',
+        motion: { cause: 'advance' },
       },
     ]);
   });
@@ -658,6 +660,11 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         .getSnapshot()
         .scene?.cards.find((candidate) => candidate.id === cardId)?.parentId;
     const handId = card.parentId;
+    // Why each scene arrived, as the renderer is told.
+    const lastMotion = () =>
+      test.rendererEffects
+        .filter((effect) => effect.kind === 'InstallScene')
+        .at(-1)?.motion.cause;
 
     expect(
       test.adapter.emitIntent({
@@ -671,6 +678,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     // Predicted immediately: the table shows the card in the discard at the
     // same authoritative revision, and no drop hold is needed.
     expect(parentOf(card.id)).toBe(discard.id);
+    expect(lastMotion()).toBe('predict');
     expect(test.adapter.getSnapshot().view?.revision).toBe(1);
     expect(test.adapter.getSnapshot().presentation.settling).toEqual([]);
     // The authoritative view itself is untouched.
@@ -724,6 +732,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(test.adapter.getSnapshot().view?.revision).toBe(2);
     expect(parentOf(card.id)).toBe(discard.id);
     expect(test.live.getSnapshot().pendingCommands).toEqual([]);
+    expect(lastMotion()).toBe('advance');
 
     // A rejected command's prediction is withdrawn: the card returns to the
     // authoritative view's hand.
@@ -750,6 +759,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
       code: 'stale_reference',
     });
     expect(parentOf(second.id)).toBe(handId);
+    expect(lastMotion()).toBe('rollback');
     expect(test.adapter.getSnapshot().view?.revision).toBe(2);
 
     test.adapter.dispose();
@@ -1106,6 +1116,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
         kind: 'InstallScene',
         scene: test.adapter.getSnapshot().scene,
         mode: 'replace',
+        motion: { cause: 'layout' },
       },
       {
         kind: 'InstallPresentation',

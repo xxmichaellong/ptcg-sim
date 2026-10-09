@@ -369,7 +369,10 @@ export class BoardSessionRuntime {
     if (this.rendererMountError) throw this.rendererMountError;
   }
 
-  replaceLayoutState(layout: BoardLayoutState): boolean {
+  replaceLayoutState(
+    layout: BoardLayoutState,
+    cause: 'layout' | 'flip' = 'layout'
+  ): boolean {
     this.assertUsable();
     const nextState = retainLayoutState(layout);
     const nextSnapshot = retainLayoutSnapshot(nextState);
@@ -379,7 +382,7 @@ export class BoardSessionRuntime {
     if (!changesScene) return false;
     this.layoutState = nextState;
     this.layoutSnapshot = nextSnapshot;
-    this.adapter?.refreshScene();
+    this.adapter?.refreshScene(cause);
     this.adapter?.synchronize();
     this.notifyLayoutListeners();
     return true;
@@ -402,7 +405,7 @@ export class BoardSessionRuntime {
   }
 
   flipBoard(): void {
-    this.replaceLayoutState(flipBoardLayoutState(this.layoutState));
+    this.replaceLayoutState(flipBoardLayoutState(this.layoutState), 'flip');
   }
 
   /**
@@ -535,7 +538,7 @@ export class BoardSessionRuntime {
         if (this.rendererReady) {
           try {
             renderer.resize(effect.scene.viewport);
-            renderer.installScene(effect.scene, [], effect.mode);
+            renderer.installScene(effect.scene, [], effect.mode, effect.motion);
           } catch (cause) {
             throw this.failRendererAndReport(
               cause,
@@ -585,7 +588,10 @@ export class BoardSessionRuntime {
         if (!scene) return;
         renderer.resize(scene.viewport);
         if (scene !== initialScene) {
-          renderer.installScene(scene, [], this.desiredSceneMode);
+          // Catching up after mount: the table simply appears as it is.
+          renderer.installScene(scene, [], this.desiredSceneMode, {
+            cause: 'replace',
+          });
         }
         if (this.desiredPresentation !== initialPresentation) {
           renderer.installPresentation(this.desiredPresentation);

@@ -155,7 +155,12 @@ describe('headless board session controller', () => {
     expect(result.state.canSubmitCommands).toBe(true);
     expect(result.state).not.toHaveProperty('presentationEvents');
     expect(result.effects).toEqual([
-      { kind: 'InstallScene', scene: result.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallScene',
+        scene: result.state.scene,
+        mode: 'replace',
+        motion: { cause: 'replace' },
+      },
     ]);
   });
 
@@ -202,7 +207,12 @@ describe('headless board session controller', () => {
     expect(resync.state.presentation.selectedCardId).toBeNull();
     expect(resync.effects.slice(0, 2)).toEqual([
       { kind: 'ResetRenderer', reason: 'identity_changed' },
-      { kind: 'InstallScene', scene: resync.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallScene',
+        scene: resync.state.scene,
+        mode: 'replace',
+        motion: { cause: 'replace' },
+      },
     ]);
   });
 
@@ -234,6 +244,7 @@ describe('headless board session controller', () => {
         kind: 'InstallScene',
         scene: refreshed.state.scene,
         mode: 'replace',
+        motion: { cause: 'advance' },
       },
     ]);
     expect(
@@ -306,12 +317,25 @@ describe('headless board session controller', () => {
         kind: 'CancelRendererInteraction',
         reason: 'projection_config_changed',
       },
-      { kind: 'InstallScene', scene: result.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallScene',
+        scene: result.state.scene,
+        mode: 'replace',
+        motion: { cause: 'layout' },
+      },
       {
         kind: 'InstallPresentation',
         presentation: result.state.presentation,
       },
     ]);
+    // Turning the table is a refresh too, but one the renderer animates.
+    const flipped = apply(result.state, {
+      kind: 'RefreshScene',
+      cause: 'flip',
+    });
+    expect(
+      flipped.effects.find((effect) => effect.kind === 'InstallScene')
+    ).toMatchObject({ mode: 'replace', motion: { cause: 'flip' } });
 
     const invalid = apply(
       result.state,
@@ -2230,7 +2254,12 @@ describe('headless board session controller', () => {
     expect(shown.state.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
     expect(shown.state.overlays.contextMenuCardId).toBeNull();
     expect(shown.effects).toEqual([
-      { kind: 'InstallScene', scene: shown.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallScene',
+        scene: shown.state.scene,
+        mode: 'replace',
+        motion: { cause: 'layout' },
+      },
       {
         kind: 'InstallPresentation',
         presentation: DEFAULT_BOARD_PRESENTATION,
@@ -2812,6 +2841,7 @@ describe('headless board session controller', () => {
         kind: 'InstallScene',
         scene: installedReplay.state.scene,
         mode: 'replace',
+        motion: { cause: 'replace' },
       },
     ]);
   });
@@ -2826,7 +2856,12 @@ describe('headless board session controller', () => {
       expect(result.outcome).toBe('accepted');
       expect(result.effects.slice(0, 2)).toEqual([
         { kind: 'ResetRenderer', reason: 'identity_changed' },
-        { kind: 'InstallScene', scene: result.state.scene, mode: 'replace' },
+        {
+          kind: 'InstallScene',
+          scene: result.state.scene,
+          mode: 'replace',
+          motion: { cause: 'replace' },
+        },
       ]);
       return result.state;
     };
