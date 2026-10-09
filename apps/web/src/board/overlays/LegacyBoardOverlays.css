@@ -932,111 +932,169 @@
   cursor: pointer;
 }
 
-/* v1 #viewCards / #attachedCards: translucent popup over the player's frame. */
+/* ---- Work areas ("Looking at cards...", "Move attached cards") -------- */
+/* A panel over the player's half: one scrolling row of large cards and the
+   bulk buttons. overlayLayout.ts places it over the box where the scene
+   paints its own copies of the cards, and sizes the cards. */
 .ptcgsim-legacy-work-area {
+  --ptcgsim-work-card-width: calc(
+    var(--ptcgsim-work-card-height, 200px) * 63 / 88
+  );
+
   position: absolute;
+  display: flex;
   box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 0 0 15px 15px;
-  background: rgb(169 169 169 / 50%);
-  box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  backdrop-filter: blur(16px) saturate(1.2);
+  color: var(--color-text);
   pointer-events: auto;
+  animation: ptcgsim-overlay-panel-in var(--overlay-enter-duration)
+    var(--ease-snappy) backwards;
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-out),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 
+/* Dragging a card out: the panel gets out of the way of the drop. */
 .ptcgsim-legacy-work-area[data-work-area-dragging-card] {
   z-index: -2;
   opacity: 0;
 }
 
-.ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-work-area {
-  background: rgb(21 21 21 / 87%);
+/* The player whose cards these are, by seat colour. */
+.ptcgsim-legacy-work-area .ptcgsim-overlay-header {
+  flex: none;
+  box-shadow: inset 3px 0 0 var(--color-you);
+  border-top-left-radius: var(--radius-lg);
 }
 
-.ptcgsim-legacy-work-area-header {
-  position: absolute;
-  top: -3%;
-  left: 50%;
-  box-sizing: border-box;
-  width: 100%;
-  border: 2px solid rgb(112 129 196);
-  border-radius: 15px 15px 0 0;
-  background: #7081c4;
-  box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
-  color: #fff;
-  /* v1 authors 3vh inside a half-height frame, i.e. 1.5% of the window. */
-  font-size: clamp(12px, 1.5vh, 20px);
-  text-align: center;
-  transform: translate(-50%, -50%);
+.ptcgsim-legacy-work-area.is-opponent .ptcgsim-overlay-header {
+  box-shadow: inset 3px 0 0 var(--color-opponent);
 }
 
-.ptcgsim-legacy-work-area[data-overlay-side='opponent']
-  .ptcgsim-legacy-work-area-header {
-  top: auto;
-  bottom: -3%;
-  /* opp-containers.css paints the upper frame's headers in the red seat
-     colour, as its resizer and counts are. */
-  border: 2px solid #c47083;
-  border-radius: 0 0 15px 15px;
-  background: rgb(196 112 131);
-  transform: translate(-50%, 50%);
+.ptcgsim-overlay-hint {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptcgsim-legacy-work-area-cards {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow: auto hidden;
+  overscroll-behavior: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+  transition: opacity var(--duration-fast) ease;
 }
 
 .ptcgsim-legacy-work-area-card {
-  position: absolute;
+  position: relative;
   display: block;
   box-sizing: border-box;
+  width: var(--ptcgsim-work-card-width);
+  height: var(--ptcgsim-work-card-height, 200px);
+  flex: none;
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 0.275rem;
-  background: #777;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: transparent;
+  box-shadow: var(--shadow-2);
   cursor: pointer;
-  overflow: hidden;
+  scroll-snap-align: center;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-legacy-work-area-card:not(:disabled):hover {
+  box-shadow: var(--shadow-3);
+  translate: 0 -4px;
 }
 
 .ptcgsim-legacy-work-area-card:disabled {
   cursor: default;
 }
 
-.ptcgsim-legacy-work-area[data-overlay-side='opponent']
-  .ptcgsim-legacy-work-area-card {
-  transform: rotate(180deg);
+.ptcgsim-legacy-work-area-card:focus-visible {
+  outline: 3px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 3px;
 }
 
 .ptcgsim-legacy-work-area-card[aria-pressed='true'] {
-  box-shadow: 0 0 0 4px rgb(90 110 188 / 86.4%);
+  box-shadow:
+    0 0 0 var(--ptcgsim-ring-width, 3px)
+      var(--ptcgsim-ring-selected, var(--color-gold)),
+    var(--shadow-3);
 }
 
-.ptcgsim-legacy-work-area-card .ptcgsim-legacy-overlay-card-image.is-zone {
-  width: 100%;
-  height: 100%;
+:root[data-motion='reduced'] .ptcgsim-legacy-work-area-card:hover {
+  translate: none;
 }
 
-.ptcgsim-legacy-work-area-card
-  .ptcgsim-legacy-overlay-card-image.is-zone[data-overlay-image-state='ready'] {
-  display: block;
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-legacy-work-area-card:hover {
+    translate: none;
+  }
 }
 
+/* 58px with its padding, as overlayLayout.ts budgets for. */
 .ptcgsim-legacy-work-area-buttons {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
   display: flex;
   box-sizing: border-box;
-  width: 96%;
-  padding: 10px;
-  border-radius: 15px;
-  background: #dadada;
-  box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
-  gap: 10px;
+  height: 58px;
+  flex: none;
+  align-items: flex-start;
   justify-content: center;
-  transform: translateX(-50%);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  transition: opacity var(--duration-fast) ease;
 }
 
-.ptcgsim-legacy-work-area-buttons .ptcgsim-legacy-zone-button {
-  flex: 1 1 0;
+.ptcgsim-legacy-work-area-buttons .ptcgsim-overlay-button {
   min-width: 0;
-  width: auto;
-  margin: 0;
+  max-width: 190px;
+  flex: 1 1 0;
+}
+
+/* "Show board" held: only the button stays. */
+.ptcgsim-legacy-work-area.is-peeking {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-work-area.is-peeking .ptcgsim-overlay-header {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.ptcgsim-legacy-work-area.is-peeking .ptcgsim-legacy-work-area-cards,
+.ptcgsim-legacy-work-area.is-peeking .ptcgsim-legacy-work-area-buttons,
+.ptcgsim-legacy-work-area.is-peeking .ptcgsim-overlay-heading {
+  opacity: 0;
+}
+
+.ptcgsim-legacy-work-area.is-peeking .ptcgsim-peek-button {
+  background-color: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text);
 }

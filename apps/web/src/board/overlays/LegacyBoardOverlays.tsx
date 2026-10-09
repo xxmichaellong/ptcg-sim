@@ -20,6 +20,7 @@ import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown'
 import { ArrowLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowLineUp';
 import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
 import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
+import { ArrowUDownLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowUDownLeft';
 import { BinocularsIcon } from '@phosphor-icons/react/dist/csr/Binoculars';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
@@ -89,6 +90,7 @@ import {
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
+  workAreaPanelLayout,
   zoneBrowserLayout,
   type OverlayBoardSize,
   type OverlayPanelLayout,
@@ -1813,24 +1815,40 @@ const ZoneBrowser = ({
   );
 };
 
+/** The icon on each work-area button. */
+const WORK_AREA_ACTION_ICONS: Readonly<
+  Record<LegacyBoardWorkAreaActionId, Icon>
+> = {
+  discardAll: TrashIcon,
+  shuffleAll: ShuffleIcon,
+  shuffleBottom: ArrowFatLinesDownIcon,
+  lostZoneAll: SpiralIcon,
+  toHand: HandGrabbingIcon,
+  leaveInPlay: ArrowUDownLeftIcon,
+};
+
 /**
  * v1's `#viewCards` ("Looking at cards...") and `#attachedCards` ("Move
- * attached cards") popups. The scene already lays the area's cards out where
- * the popup's inline images sit, so this paints the popup chrome around them
- * and its own copies of the cards on top for dragging, selecting, previewing
- * and the context menu. It is not modal and, as in v1, Escape leaves it open:
- * the cards must be resolved with the buttons or by moving them.
+ * attached cards") popups: a panel of large cards in one scrolling row, with
+ * the bulk buttons beneath. The scene still lays the area's cards out where
+ * v1's popup sat and paints them there, so the panel always covers that box
+ * (see `workAreaPanelLayout`) and paints its own copies of the cards for
+ * dragging, selecting, previewing and the context menu. It is not modal and,
+ * as in v1, Escape leaves it open: the cards are in a work area of the game,
+ * and must be resolved with the buttons or by moving them.
  */
 const WorkAreaPanel = ({
   state,
   zone,
   cards,
+  board,
   captureContextAnchor,
   actions,
 }: {
   readonly state: BoardSessionControllerState;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
+  readonly board: OverlayBoardSize;
   readonly captureContextAnchor: (
     cardId: ViewCardId,
     zoneId: string,
@@ -1841,6 +1859,8 @@ const WorkAreaPanel = ({
   const container = useRef<HTMLElement>(null);
   const activeDragCardId = useRef<ViewCardId | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
+  const [peeking, setPeeking] = useState(false);
+  useOverlayExit(container, 'panel');
   const source: LegacyBoardWorkAreaSource =
     zone.kind === 'inspection' ? 'inspection' : 'staged';
   const own =
@@ -1910,91 +1930,115 @@ const WorkAreaPanel = ({
     };
   }, [cards, emit, finishDrag, state.scene, zone.id]);
   const interactive = own && state.canSubmitCommands && emit !== undefined;
+  const withActions = interactive && actions.invokeWorkAreaAction !== undefined;
+  const layout = workAreaPanelLayout(
+    zone.bounds,
+    board,
+    cards.length,
+    withActions
+  );
+  const hint = withActions
+    ? 'Drag a card out, or move them all with a button below'
+    : own
+      ? undefined
+      : zone.kind === 'inspection'
+        ? 'Your opponent is looking at these cards'
+        : 'Your opponent is moving these cards';
 
   return (
     <section
       ref={container}
-      className="ptcgsim-legacy-work-area"
+      className={`ptcgsim-legacy-work-area is-${zone.side}${peeking ? ' is-peeking' : ''}`}
       data-legacy-work-area={source}
       data-work-area-id={zone.id}
       data-overlay-side={zone.side}
       data-work-area-dragging-card={draggingCardId ?? undefined}
       aria-label={heading}
-      style={{
-        left: zone.bounds.x,
-        top: zone.bounds.y,
-        width: zone.bounds.width,
-        height: zone.bounds.height,
-      }}
+      style={panelStyle(layout, '--ptcgsim-work-card-height')}
     >
-      <div className="ptcgsim-legacy-work-area-header">{heading}</div>
-      {cards.map((card) => (
-        <button
-          type="button"
-          key={card.id}
-          className="ptcgsim-legacy-work-area-card"
-          data-work-area-card-id={card.id}
-          aria-label={card.label}
-          aria-pressed={state.presentation.selectedCardId === card.id}
-          disabled={!interactive}
-          draggable={interactive}
-          style={{
-            left: card.bounds.x - zone.bounds.x,
-            top: card.bounds.y - zone.bounds.y,
-            width: card.bounds.width,
-            height: card.bounds.height,
-          }}
-          onDragStart={(event) => {
-            if (!interactive) {
+      <header className="ptcgsim-overlay-header">
+        <div className="ptcgsim-overlay-heading">
+          <h2 className="ptcgsim-overlay-title ptcgsim-legacy-work-area-header">
+            {heading}
+          </h2>
+          <span className="ptcgsim-overlay-count">
+            {cards.length} {cards.length === 1 ? 'card' : 'cards'}
+          </span>
+          {hint ? <span className="ptcgsim-overlay-hint">{hint}</span> : null}
+        </div>
+        <div className="ptcgsim-overlay-actions">
+          <ShowBoardButton peeking={peeking} onPeekChange={setPeeking} />
+        </div>
+      </header>
+      <div className="ptcgsim-legacy-work-area-cards">
+        {cards.map((card) => (
+          <button
+            type="button"
+            key={card.id}
+            className="ptcgsim-legacy-work-area-card"
+            data-work-area-card-id={card.id}
+            aria-label={card.label}
+            aria-pressed={state.presentation.selectedCardId === card.id}
+            disabled={!interactive}
+            draggable={interactive}
+            onDragStart={(event) => {
+              if (!interactive) {
+                event.preventDefault();
+                return;
+              }
+              activeDragCardId.current = card.id;
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData(
+                  'application/x-ptcgsim-work-area-card',
+                  'card'
+                );
+                installDragImage(event, card.imageUrl);
+              }
+              setDraggingCardId(card.id);
+              actions.dismiss('selection');
+            }}
+            onDragEnd={finishDrag}
+            onClick={() => emit?.({ kind: 'CardSelected', cardId: card.id })}
+            onDoubleClick={() =>
+              emit?.({ kind: 'CardPreviewRequested', cardId: card.id })
+            }
+            onContextMenu={(event) => {
               event.preventDefault();
-              return;
-            }
-            activeDragCardId.current = card.id;
-            if (event.dataTransfer) {
-              event.dataTransfer.effectAllowed = 'move';
-              event.dataTransfer.setData(
-                'application/x-ptcgsim-work-area-card',
-                'card'
-              );
-              installDragImage(event, card.imageUrl);
-            }
-            setDraggingCardId(card.id);
-            actions.dismiss('selection');
-          }}
-          onDragEnd={finishDrag}
-          onClick={() => emit?.({ kind: 'CardSelected', cardId: card.id })}
-          onDoubleClick={() =>
-            emit?.({ kind: 'CardPreviewRequested', cardId: card.id })
-          }
-          onContextMenu={(event) => {
-            event.preventDefault();
-            if (!emit) return;
-            const bounds = event.currentTarget.getBoundingClientRect();
-            captureContextAnchor(card.id, zone.id, {
-              x: bounds.x,
-              y: bounds.y,
-              width: bounds.width,
-              height: bounds.height,
-            });
-            emit({ kind: 'CardContextRequested', cardId: card.id });
-          }}
-        >
-          <OverlayCardImage card={card} variant="zone" />
-        </button>
-      ))}
-      {interactive && actions.invokeWorkAreaAction ? (
+              if (!emit) return;
+              const bounds = event.currentTarget.getBoundingClientRect();
+              captureContextAnchor(card.id, zone.id, {
+                x: bounds.x,
+                y: bounds.y,
+                width: bounds.width,
+                height: bounds.height,
+              });
+              emit({ kind: 'CardContextRequested', cardId: card.id });
+            }}
+          >
+            <OverlayCardImage card={card} variant="zone" />
+          </button>
+        ))}
+      </div>
+      {withActions ? (
         <div className="ptcgsim-legacy-work-area-buttons">
-          {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => (
-            <button
-              type="button"
-              key={button.id}
-              className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
-              data-work-area-action={button.id}
-              onClick={() => actions.invokeWorkAreaAction?.(source, button.id)}
-            >
-              {button.label}
-            </button>
-          ))}
+          {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
+            const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
+            return (
+              <button
+                type="button"
+                key={button.id}
+                className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
+                data-work-area-action={button.id}
+                onClick={() =>
+                  actions.invokeWorkAreaAction?.(source, button.id)
+                }
+              >
+                <ActionIcon aria-hidden="true" />
+                {button.label}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </section>
@@ -2341,6 +2385,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           state={state}
           zone={zone}
           cards={scene.cards.filter((card) => card.parentId === zone.id)}
+          board={scene.viewport}
           captureContextAnchor={(cardId, zoneId, bounds) =>
             setContextAnchor({ cardId, zoneId, bounds })
           }

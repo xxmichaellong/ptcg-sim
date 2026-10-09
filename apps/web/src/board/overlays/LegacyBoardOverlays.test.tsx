@@ -26,7 +26,7 @@ import {
   zoneCopyCounts,
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
-import { zoneBrowserLayout } from './overlayLayout.js';
+import { workAreaPanelLayout, zoneBrowserLayout } from './overlayLayout.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -2038,11 +2038,43 @@ describe('legacy board overlays', () => {
     expect(zone.bounds.x + zone.bounds.width / 2).toBeCloseTo(
       local.bounds.x + local.bounds.width / 2
     );
-    expect(Number.parseFloat(panel.style.left)).toBeCloseTo(zone.bounds.x);
-    expect(Number.parseFloat(panel.style.width)).toBeCloseTo(zone.bounds.width);
+    // The panel no longer traces v1's popup box (ADR-027): it covers that
+    // box -- the scene still paints its own copies of the cards there -- and
+    // grows around it to draw the cards at a third of the board's height.
+    const layout = workAreaPanelLayout(
+      zone.bounds,
+      inspectingScene.viewport,
+      2,
+      true
+    );
+    const panelBox = {
+      left: Number.parseFloat(panel.style.left),
+      top: Number.parseFloat(panel.style.top),
+      width: Number.parseFloat(panel.style.width),
+      height: Number.parseFloat(panel.style.height),
+    };
+    expect(panelBox.left).toBeCloseTo(layout.left);
+    expect(panelBox.top).toBeCloseTo(layout.top);
+    expect(panelBox.width).toBeCloseTo(layout.width);
+    expect(panelBox.height).toBeCloseTo(layout.height);
+    expect(panelBox.left).toBeLessThanOrEqual(zone.bounds.x);
+    expect(panelBox.top).toBeLessThanOrEqual(zone.bounds.y);
+    expect(panelBox.left + panelBox.width).toBeGreaterThanOrEqual(
+      zone.bounds.x + zone.bounds.width
+    );
+    expect(panelBox.top + panelBox.height).toBeGreaterThanOrEqual(
+      zone.bounds.y + zone.bounds.height
+    );
+    expect(layout.cardHeight).toBeCloseTo(Math.min(720 * 0.34, 300));
+    expect(panel.style.getPropertyValue('--ptcgsim-work-card-height')).toBe(
+      `${layout.cardHeight.toFixed(2)}px`
+    );
     expect(
       panel.querySelector('.ptcgsim-legacy-work-area-header')?.textContent
     ).toBe('Looking at cards...');
+    expect(panel.querySelector('.ptcgsim-overlay-count')?.textContent).toBe(
+      '2 cards'
+    );
     expect(
       [...panel.querySelectorAll('[data-work-area-action]')].map(
         (button) => button.textContent
@@ -2062,20 +2094,16 @@ describe('legacy board overlays', () => {
       first.id,
       second.id,
     ]);
-    // Each popup card sits exactly over its scene card (33% of the content
-    // height, flowing left to right).
+    // The scene keeps v1's layout for its own copies (33% of the content
+    // height, flowing left to right); the panel's cards flow in its own row
+    // and take no position from them.
     const firstNode = inspectingScene.cards.find(
       (card) => card.id === first.id
     )!;
     expect(firstNode.bounds.height).toBeCloseTo(
       local.bounds.height * 0.75 * 0.33
     );
-    expect(zone.bounds.x + Number.parseFloat(cards[0]!.style.left)).toBeCloseTo(
-      firstNode.bounds.x
-    );
-    expect(zone.bounds.y + Number.parseFloat(cards[0]!.style.top)).toBeCloseTo(
-      firstNode.bounds.y
-    );
+    expect(cards[0]!.getAttribute('style')).toBeNull();
     const secondNode = inspectingScene.cards.find(
       (card) => card.id === second.id
     )!;
@@ -2122,6 +2150,14 @@ describe('legacy board overlays', () => {
       host.querySelector<HTMLButtonElement>('[data-work-area-card-id]')
         ?.disabled
     ).toBe(true);
+    // Read-only, the panel says whose cards these are and keeps Show board.
+    const readOnly = host.querySelector<HTMLElement>(
+      '[data-legacy-work-area]'
+    )!;
+    expect(readOnly.querySelector('.ptcgsim-overlay-hint')?.textContent).toBe(
+      'Your opponent is looking at these cards'
+    );
+    expect(readOnly.querySelector('.ptcgsim-peek-button')).not.toBeNull();
   });
   it('lists a stack preview top card first and then its attachments newest-first, as v1 does', () => {
     const stackId = view.boards[firstPlayer]!.activeStackId!;
