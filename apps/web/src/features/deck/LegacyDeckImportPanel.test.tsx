@@ -186,7 +186,58 @@ describe('LegacyDeckImportPanel', () => {
     await click(host.querySelector('#altImportHeaderButton')!);
     expect(store.getSnapshot().target).toBe('main');
     expect(host.querySelector<HTMLElement>('#invalidText')?.hidden).toBe(false);
-    expect(host.querySelector('#invalidText')?.textContent).toBe('Solo only!');
+    expect(host.querySelector('#invalidText')?.textContent).toBe(
+      'P2 decks are for Solo only.'
+    );
+  });
+
+  it('names the book and wand in words and closes both menus with Escape', async () => {
+    await mount();
+    const book = host.querySelector<HTMLButtonElement>('#decklistsButton')!;
+    const wand = host.querySelector<HTMLButtonElement>('#randomButton')!;
+    expect(book.textContent).toBe('Popular decks');
+    expect(wand.textContent).toBe('Random');
+    expect(host.textContent).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
+    for (const icon of host.querySelectorAll('svg')) {
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    }
+
+    const escape = async () =>
+      act(async () => {
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+        );
+      });
+
+    await click(book);
+    await vi.waitFor(() =>
+      expect(
+        host.querySelector<HTMLElement>('#decklistsContextMenu')?.hidden
+      ).toBe(false)
+    );
+    // The opened menu takes focus on its current season.
+    expect(document.activeElement?.textContent).toBe('Era One');
+    expect(book.getAttribute('aria-expanded')).toBe('true');
+    await escape();
+    expect(
+      host.querySelector<HTMLElement>('#decklistsContextMenu')?.hidden
+    ).toBe(true);
+    expect(document.activeElement).toBe(book);
+
+    const language = host.querySelector<HTMLButtonElement>(
+      '#changeLanguageButton'
+    )!;
+    await click(language);
+    expect(host.querySelector<HTMLElement>('#languageDropdown')?.hidden).toBe(
+      false
+    );
+    expect(document.activeElement?.getAttribute('aria-checked')).toBe('true');
+    expect(document.activeElement?.textContent).toBe('English');
+    await escape();
+    expect(host.querySelector<HTMLElement>('#languageDropdown')?.hidden).toBe(
+      true
+    );
+    expect(document.activeElement).toBe(language);
   });
 
   it('loads the book lazily and preserves separate target text for book and random choices', async () => {
@@ -336,9 +387,15 @@ describe('LegacyDeckImportPanel', () => {
       '#decklistTable tbody tr'
     )!;
     const cells = row.querySelectorAll<HTMLTableCellElement>('td');
+    // Missing cells are marked in words as well as colour.
+    expect(cells[2]?.getAttribute('aria-invalid')).toBe('true');
+    expect(cells[3]?.getAttribute('aria-invalid')).toBe('true');
+    expect(cells[0]?.hasAttribute('aria-invalid')).toBe(false);
+    expect(cells[4]?.textContent).toBe('Needs type, image URL');
     const arbitraryUrl = 'custom+unsafe://any-player-host/card?exact=yes';
     await select(row.querySelector('select')!, 'Trainer');
     await editCell(cells[3]!, `  ${arbitraryUrl}  `);
+    expect(cells[4]?.textContent).toBe('Ready');
     await click(host.querySelector('#saveButton')!);
     // v1's review Save writes `decklist.csv`, not the builder's export name.
     expect(downloadCsv).toHaveBeenCalledWith(

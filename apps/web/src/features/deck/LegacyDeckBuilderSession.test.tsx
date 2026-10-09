@@ -272,7 +272,9 @@ describe('LegacyDeckBuilderSession', () => {
     expect(host.querySelector('#deckImport')).not.toBeNull();
     expect(host.querySelector('#nativeDeckBuilderWorkspace')).not.toBeNull();
     await click('#altImportHeaderButton');
-    expect(host.querySelector('#invalidText')?.textContent).toBe('Solo only!');
+    expect(host.querySelector('#invalidText')?.textContent).toBe(
+      'P2 decks are for Solo only.'
+    );
     expect(
       host.querySelector('#nativeDeckBuilderTargetMain')?.classList
     ).toContain('native-target-selected');

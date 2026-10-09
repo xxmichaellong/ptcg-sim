@@ -1,301 +1,541 @@
+/* The Deck tab's sidebar panel (paste a decklist, popular decks, language,
+   card back) and the review table it opens over the board. Controls come
+   from design/panel-controls.css. */
+
 .legacy-deck-import {
   position: relative;
   z-index: 1300;
   align-items: stretch;
   gap: 0;
-  padding: 0.5vw;
 }
 
 .legacy-deck-import[hidden],
-.legacy-deck-import [hidden],
-.legacy-deck-review-table[hidden] {
+.legacy-deck-import [hidden]:not(.ds-menu) {
   display: none !important;
 }
 
-.legacy-deck-import #importButtonContainer {
+.legacy-deck-import .deck-import-panel {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
   width: 100%;
-  height: 3%;
-  padding-top: 1vh;
-  box-sizing: content-box;
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--highlight-top), var(--shadow-3);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    translate var(--ds-enter-duration) var(--ease-snappy);
 }
 
-.legacy-deck-import #importButtonContainer button {
-  width: 50%;
-  padding: 0.5vh;
+@starting-style {
+  .legacy-deck-import .deck-import-panel {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.legacy-deck-import .deck-import-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legacy-deck-import .deck-import-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+/* P1 / P2: a segmented control; the dot is the seat's colour. */
+.legacy-deck-import .deck-seat-toggle {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+.legacy-deck-import .deck-seat-toggle button {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-2);
   border: 0;
-  border-radius: 0.5rem 0.5rem 0 0;
-  background-color: rgb(171 171 171 / 86.4%);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
   cursor: pointer;
-  font-size: 2vh;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out);
 }
 
-.legacy-deck-import #importButtonContainer button[aria-disabled='true'] {
-  cursor: default;
+.legacy-deck-import .deck-seat-toggle button::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-you);
+  opacity: 0.45;
+}
+
+.legacy-deck-import .deck-seat-toggle button[data-seat='opponent']::before {
+  background: var(--color-opponent);
+}
+
+.legacy-deck-import .deck-seat-toggle button:hover:not([aria-disabled='true']) {
+  color: var(--color-text);
+}
+
+.legacy-deck-import
+  .deck-seat-toggle
+  button:active:not([aria-disabled='true']) {
+  scale: var(--ds-press-scale);
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-pressed='true'] {
+  background: var(--color-surface-3);
+  box-shadow: var(--highlight-top), var(--shadow-1);
+  color: var(--color-text);
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-pressed='true']::before {
+  opacity: 1;
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-disabled='true'] {
+  cursor: not-allowed;
   opacity: 0.5;
 }
 
-.legacy-deck-import .main-select {
-  border: 0.25vw solid rgb(40 57 124 / 86.4%) !important;
-  background: linear-gradient(
-    to bottom,
-    rgb(90 110 188 / 86.4%),
-    rgb(60 80 158 / 86.4%)
-  ) !important;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-  color: #fff;
-  font-weight: bold;
+.legacy-deck-import .deck-seat-toggle button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
-.legacy-deck-import .alt-select {
-  border: 0.25vw solid rgb(153 58 81 / 86.4%) !important;
-  background: linear-gradient(
-    to bottom,
-    rgb(188 90 113 / 86.4%),
-    rgb(158 60 83 / 86.4%)
-  ) !important;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-  color: #fff;
-  font-weight: bold;
-}
-
-.legacy-deck-import #mainDeckImportInput,
-.legacy-deck-import #altDeckImportInput {
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-  padding: 2vh;
-  border-radius: 5px 5px 10px 10px;
-  outline: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 1.75vh;
-  resize: none;
-}
-
-.legacy-deck-import #mainDeckImportInput {
-  border: 0.2vw solid rgb(40 57 124 / 86.4%);
+.legacy-deck-import .deck-import-text {
+  flex: 1 1 auto;
+  min-height: 120px;
+  padding: var(--space-3);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  box-shadow: inset 3px 0 0 var(--color-you);
 }
 
 .legacy-deck-import #altDeckImportInput {
-  border: 0.2vw solid rgb(153 58 81 / 86.4%);
+  box-shadow: inset 3px 0 0 var(--color-opponent);
 }
 
-.legacy-deck-import #importBottom {
-  /* Not positioned, as in v1: the wand's `right: 5%` measures from the whole
-   * panel, not from this row inside its padding. */
-  display: flex;
-  align-items: center;
+.legacy-deck-import .deck-import-text:focus {
+  box-shadow:
+    inset 3px 0 0 var(--color-you),
+    0 0 0 3px var(--color-accent-soft);
+}
+
+.legacy-deck-import #altDeckImportInput:focus {
+  box-shadow:
+    inset 3px 0 0 var(--color-opponent),
+    0 0 0 3px var(--color-accent-soft);
+}
+
+/* Popular decks · Random, then Import across the row; in review, Confirm
+   across the row and Cancel · Save under it. */
+.legacy-deck-import .deck-import-actions {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.legacy-deck-import .deck-import-actions .ds-button {
   width: 100%;
-  min-height: 0;
-  margin-top: 1vh;
-  gap: 0.5vw;
 }
 
-.legacy-deck-import #importButton,
-.legacy-deck-import #confirmButton {
-  border: 0;
-  border-radius: 0.5rem;
-  background: linear-gradient(to bottom, #95c6b4, #72ab97);
-  color: #fff;
-  cursor: pointer;
-  font-weight: bold;
+.legacy-deck-import .deck-import-primary {
+  grid-column: 1 / -1;
+  order: -1;
 }
 
 .legacy-deck-import #importButton {
-  width: 25%;
-  height: 3.5vh;
-}
-
-.legacy-deck-import #confirmButton,
-.legacy-deck-import #cancelButton,
-.legacy-deck-import #saveButton {
-  width: 20%;
-  padding: 0.7vh;
-  border: 0;
-  border-radius: 0.5rem;
-  color: #fff;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.legacy-deck-import #confirmButton {
-  margin-left: 0.3vw;
-}
-
-.legacy-deck-import #cancelButton {
-  border: 0;
-  border-radius: 0.5rem;
-  background: linear-gradient(to bottom, #e19b94, #b9857b);
-  color: #fff;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.legacy-deck-import #decklistsButton,
-.legacy-deck-import #randomButton {
-  border: 0;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: x-large;
-}
-
-.legacy-deck-import #decklistsButton {
-  padding-block: 0.5vh 0.3vh;
-  background: linear-gradient(to bottom, #b0b0b0, #909090);
-}
-
-.legacy-deck-import #randomButton {
-  position: absolute;
-  right: 5%;
-  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
-  /* Only the wand casts a shadow in v1; the book does not. */
-  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  order: 1;
 }
 
 .legacy-deck-import .legacy-deck-samples {
-  position: relative;
-  margin-left: 0.3vw;
+  min-width: 0;
 }
 
+/* Two panes: seasons on the left, that season's decks on the right. */
 .legacy-deck-import .decklists-context-menu {
   position: absolute;
-  z-index: 2;
-  bottom: 100%;
+  z-index: var(--z-popover);
+  right: 0;
+  bottom: calc(100% + var(--space-2));
   left: 0;
-  width: max-content;
-  height: fit-content;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-  color: #141414;
+  max-height: min(62vh, 560px);
+  overflow: hidden;
 }
 
-.legacy-deck-import .decklists-context-menu-item {
-  position: relative;
+.legacy-deck-import .decklists-context-menu:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--space-1);
+}
+
+.legacy-deck-import .decklists-groups,
+.legacy-deck-import .decklists-decks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  max-height: calc(min(62vh, 560px) - 2 * var(--space-1) - 2px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.legacy-deck-import .decklists-decks {
+  padding-left: var(--space-1);
+  border-left: 1px solid var(--color-border);
+}
+
+.legacy-deck-import .decklists-group {
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+
+.legacy-deck-import .decklists-group span,
+.legacy-deck-import .decklists-decks .ds-menu-item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-import .decklists-group svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-faint);
+}
+
+.legacy-deck-import .decklists-group[data-active='true'] {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+}
+
+.legacy-deck-import .decklists-group[data-active='true'] svg {
+  color: var(--color-text);
+}
+
+.legacy-deck-import .decklists-decks .ds-menu-item {
   display: block;
-  width: 100%;
-  padding: 0.3vh 1vw;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font-size: small;
-  text-align: left;
+  font-size: var(--text-sm);
+  line-height: 32px;
 }
 
-.legacy-deck-import .decklists-context-menu-sub-menu {
+.legacy-deck-import .deck-import-notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.legacy-deck-import .deck-import-notices:not(:has(> :not([hidden]))) {
   display: none;
-  position: absolute;
-  top: 0;
-  left: 99%;
-  width: 112%;
-  min-width: max-content;
-  height: max-content;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #c1c1c1;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-  color: #141414;
-  font-weight: normal;
 }
 
-.legacy-deck-import .decklists-context-menu-item:hover > span,
-.legacy-deck-import .decklists-context-menu-item:focus-within > span,
-.legacy-deck-import .decklists-context-menu-sub-menu button:hover,
-.legacy-deck-import .decklists-context-menu-sub-menu button:focus-visible {
-  background-color: #f0f0f0;
-  font-weight: bold;
+.legacy-deck-import .deck-import-extras {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
 }
 
-.legacy-deck-import
-  .decklists-context-menu-item:hover
-  > .decklists-context-menu-sub-menu,
-.legacy-deck-import
-  .decklists-context-menu-item:focus-within
-  > .decklists-context-menu-sub-menu {
-  display: block;
+.legacy-deck-import .deck-import-extras .ds-button {
+  justify-content: flex-start;
+  width: 100%;
+  font-size: var(--text-sm);
 }
 
-.legacy-deck-import #successText,
-.legacy-deck-import #failedText,
-.legacy-deck-import #loadingText,
-.legacy-deck-import #invalidText {
-  font-size: 1.75vh;
-}
-
-.legacy-deck-import #uploadButtonsContainer {
-  align-self: flex-start;
-  margin: 0.3vw;
-}
-
-.legacy-deck-import #changeCardBackButton,
-.legacy-deck-import #changeLanguageButton {
-  padding: 3px 6px;
-  border: 0;
-  border-radius: 0.3rem;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1.5vh;
+.legacy-deck-import .deck-import-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .legacy-deck-import .language-container {
-  display: inline-block;
   position: relative;
+}
+
+.legacy-deck-import .deck-import-caret {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  color: var(--color-text-faint);
 }
 
 .legacy-deck-import #languageDropdown {
   position: absolute;
-  z-index: 3;
-  bottom: 100%;
-  left: 0;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  box-shadow: 0 8px 16px rgb(0 0 0 / 20%);
+  z-index: var(--z-popover);
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  min-width: 180px;
 }
 
-.legacy-deck-import #languageDropdown ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.legacy-deck-import .deck-language-check {
+  visibility: hidden;
 }
 
-.legacy-deck-import #languageDropdown li button {
+.legacy-deck-import [aria-checked='true'] > .deck-language-check {
+  visibility: visible;
+}
+
+/* ---- Review table ------------------------------------------------------ */
+
+.deck-review {
+  position: fixed;
+  z-index: var(--z-popover);
+  inset: 0 auto 0 0;
+  display: flex;
+  box-sizing: border-box;
+  width: calc(100% - var(--rail-width, 24%));
+  padding: var(--space-4);
+  background: var(--color-scrim);
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    display var(--ds-enter-duration) allow-discrete;
+}
+
+.deck-review[hidden] {
+  display: none;
+  opacity: 0;
+  transition-duration: var(--ds-exit-duration);
+}
+
+@starting-style {
+  .deck-review:not([hidden]) {
+    opacity: 0;
+  }
+
+  .deck-review:not([hidden]) .deck-review-panel {
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.deck-review .deck-review-panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
-  padding: 10px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-4);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  transition: translate var(--ds-enter-duration) var(--ease-snappy);
 }
 
-.legacy-deck-import #languageDropdown li button:hover,
-.legacy-deck-import #languageDropdown li button:focus-visible {
-  background-color: #d7d7d7;
-  color: #141414;
+.deck-review .deck-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.deck-review .deck-review-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.deck-review .deck-review-title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.deck-review .deck-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  align-items: baseline;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.deck-review .deck-review-count {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+}
+
+.deck-review .deck-review-issues,
+.deck-review .deck-review-ready {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin-left: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+
+.deck-review .deck-review-issues {
+  color: var(--ds-warning-text);
+}
+
+.deck-review .deck-review-ready {
+  color: var(--ds-success-text);
+}
+
+.deck-review .deck-review-summary svg,
+.deck-review .deck-review-flag svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.deck-review .deck-review-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.deck-review .deck-review-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .legacy-deck-review-table {
-  display: block;
-  position: fixed;
-  z-index: 1000;
-  inset: 0 auto 0 0;
-  width: 76%;
-  height: 100%;
-  padding: 30px;
-  overflow: auto;
-  background: rgb(222 221 221 / 85.2%);
-  font-size: 1.75vh;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.legacy-deck-review-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-align: left;
+  text-transform: uppercase;
 }
 
 .legacy-deck-review-table td {
-  padding: 0.3vh 2vw;
+  padding: var(--space-1-5) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.remote-room-route--dark .legacy-deck-import textarea,
-.remote-room-route--dark .legacy-deck-review-table {
-  background: #000;
-  color: #fff;
+.legacy-deck-review-table tbody tr:hover td {
+  background: var(--color-surface-hover);
+}
+
+.legacy-deck-review-table th.deck-review-qty,
+.legacy-deck-review-table td.deck-review-qty {
+  width: 72px;
+  text-align: center;
+}
+
+.legacy-deck-review-table td.deck-review-qty {
+  font-size: var(--text-lg);
+}
+
+.legacy-deck-review-table th.deck-review-type {
+  width: 168px;
+}
+
+.legacy-deck-review-table th.deck-review-status {
+  width: 200px;
+}
+
+.legacy-deck-review-table .deck-review-type .ds-select {
+  height: 30px;
+  font-size: var(--text-sm);
+}
+
+.legacy-deck-review-table .deck-review-cell {
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: text;
+}
+
+.legacy-deck-review-table .deck-review-cell:focus {
+  background: var(--color-surface-sunken);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* Long image URLs stay on one line until edited. */
+.legacy-deck-review-table .deck-review-url {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-review-table .deck-review-url:focus {
+  color: var(--color-text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.legacy-deck-review-table td[data-invalid='true'] {
+  background: var(--color-danger-soft);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklch, var(--color-danger) 70%, transparent);
+}
+
+.legacy-deck-review-table .deck-review-cell[data-invalid='true']:focus {
+  box-shadow: inset 0 0 0 2px var(--color-danger);
+}
+
+.legacy-deck-review-table .deck-review-flag {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.legacy-deck-review-table .deck-review-flag.is-invalid {
+  color: var(--ds-danger-text);
+}
+
+.legacy-deck-review-table .deck-review-flag.is-ready {
+  color: var(--ds-success-text);
 }
