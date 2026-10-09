@@ -38,18 +38,18 @@ against yourself -- and never like operating a form.
 
 The redesign is built from a small set of primitives, each with one owner.
 
-| Primitive          | Where                                  | What it owns                                                                                  |
-| ------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Spring             | `renderer-contract/src/spring.ts`      | Closed-form damped spring (state at any instant), CSS `linear()` easings, velocity tracker    |
-| Motion settings    | `web/src/motion/motion-settings.ts`    | Reduce motion (system/reduce/full), animation speed, persistence                              |
-| Scene motion cause | `renderer-contract/src/model.ts`       | Why a scene was installed: `advance`, `predict`, `rollback`, `layout`, `flip`, `replace`      |
-| Motion planner     | `renderer-contract/src/motion-plan.ts` | Pure: previous + next scene → flights, ghosts, counter pulses                                 |
-| Motion director    | `renderer-dom/src/motion/`             | Runs a plan on the compositor (WAAPI), retargets mid-flight, ghosts, reduced motion           |
-| Card anatomy       | `renderer-dom/src/BoardSurface.tsx`    | Button (input, final rect, quarter turn) > body (lift, tilt, swing) > face (art, ring, shine) |
-| Design tokens      | `web/src/design/tokens.css`            | Colour, type, space, radii, elevation, motion; read by the renderer through `var()`           |
-| Overlay primitives | `web/src/ui/`                          | Dialog, confirm, popover, menu, context menu, tooltip, toast                                  |
-| Card inspector     | `web/src/board/`                       | The large docked card view on hover/focus, with holo finish                                   |
-| Geometry v2        | `renderer-contract/src/layout-v2.ts`   | The play-mat layout at readable sizes                                                         |
+| Primitive          | Where                                   | What it owns                                                                                  |
+| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Spring             | `renderer-contract/src/spring.ts`       | Closed-form damped spring (state at any instant), CSS `linear()` easings, velocity tracker    |
+| Motion settings    | `web/src/motion/motion-settings.ts`     | Reduce motion (system/reduce/full), animation speed, persistence                              |
+| Scene motion cause | `renderer-contract/src/model.ts`        | Why a scene was installed: `advance`, `predict`, `rollback`, `layout`, `flip`, `replace`      |
+| Motion planner     | `renderer-contract/src/motion-plan.ts`  | Pure: previous + next scene → flights, ghosts, counter pulses                                 |
+| Motion director    | `renderer-dom/src/motion/`              | Runs a plan on the compositor (WAAPI), retargets mid-flight, ghosts, reduced motion           |
+| Card anatomy       | `renderer-dom/src/BoardSurface.tsx`     | Button (input, final rect, quarter turn) > body (lift, tilt, swing) > face (art, ring, shine) |
+| Design tokens      | `web/src/design/tokens.css`             | Colour, type, space, radii, elevation, motion; read by the renderer through `var()`           |
+| Overlay primitives | `web/src/ui/`                           | Dialog, confirm, popover, menu, context menu, tooltip, toast                                  |
+| Card inspector     | `web/src/board/`                        | The large docked card view on hover/focus, with holo finish                                   |
+| Geometry v2        | `renderer-contract/src/layout-table.ts` | The play-mat layout at readable sizes                                                         |
 
 ### 2.1 Motion
 
@@ -116,34 +116,42 @@ foil index (malie.io, mirrored) is a later step.
   selection, mint for valid targets, a calm neutral surface for chrome. Text
   contrast ≥ 4.5:1.
 - **Icons**: Phosphor; energy types use the rulebook's own symbols.
-- **Counters**: the real accessories -- yellow 10, orange 50, red 100 damage
-  discs; Burn and Poison markers; GX and VSTAR tiles that turn face-down when
-  used; a gold coin. Asleep, Paralyzed and Confused stay rotations, as at the
-  table.
+- **Counters**: the real accessories -- one damage disc showing the total,
+  coloured like the counters you would stack (yellow below 50, orange from
+  50, red from 100); Burn and Poison markers; GX and VSTAR tiles that turn
+  face-down when used; a gold coin. Asleep, Paralyzed and Confused stay
+  rotations, as at the table.
 
 ## 4. Layout (geometry v2)
 
 Each half follows the official play mat: prizes as a 2 × 3 grid on the
-outer left, the Lost Zone above them; the Active at the centre line; five
-bench slots below it; deck at the right with the discard below; the stadium
-on the seam. The hand runs along the bottom edge as a fan that rises on hover;
-the opponent's hand is a row of backs along the top. The chrome becomes a
-right rail (log, chat, settings) that can collapse, and a small action dock.
-Target sizes at 1440 × 900: hand and Active ≈ 150 px tall, bench ≈ 125 px,
-prizes ≈ 80 px. A docked inspector shows the hovered card at ≈ 40% of the
-screen height.
+outer left; the Active at the centre line, with the staging area (v1's loose
+board) beside it; five bench slots below; deck, discard and Lost Zone down
+the outer right as equal piles; the stadium on the seam. The hand runs along
+the screen edge, partly off it until hovered, with its count at the far end
+of its strip; the opponent's half is the same mat turned around, with a
+slimmer hand strip. Each player's VSTAR/GX tiles and hand-sort switch sit in
+the corner beside their hand, and the table controls (turn, coin, flip,
+refresh, full screen) sit on the seam. The chrome is a right rail (tabs, log,
+chat, actions) `clamp(300px, 23vw, 380px)` wide.
+
+At 1440 × 900 the Active is about 165 px tall, a bench card about 141 px,
+hand cards about 165 px, prizes about 100 px. The docked inspector shows the
+hovered card at up to two-thirds of the screen height (600 px at most), on
+the side away from it.
 
 ## 5. Order of work
 
 1. Foundations: spring, motion settings, scene motion cause, planner. ✅
-2. Card anatomy and the motion director (flights, ghosts, pulses, retarget).
-3. Drag physics (lift, swing, release velocity) and hover (lift, tilt, glare).
-4. Design tokens, fonts, icons; the renderer reads tokens.
-5. Overlay primitives; every native dialog replaced.
-6. Card inspector with holo.
-7. Geometry v2 and the new chrome.
-8. Real counters and markers; coin flip, shuffle, turn banner, board flip.
-9. Re-baselined visual tests and screenshots of the new look.
+2. Card anatomy and the motion director (flights, ghosts, pulses, retarget). ✅
+3. Drag physics (lift, swing, release velocity) and hover (lift, tilt, glare). ✅
+4. Design tokens, fonts, icons; the renderer reads tokens. ✅
+5. Overlay primitives; every native dialog replaced. ✅
+6. Card inspector with holo. ✅
+7. Geometry v2 and the new chrome. ✅
+8. Real counters and markers; coin flip, shuffle, turn banner, board flip. ✅
+9. Re-baselined visual tests ✅; committed baseline screenshots of the new
+   look are still to do.
 
 ## 6. Tests
 
