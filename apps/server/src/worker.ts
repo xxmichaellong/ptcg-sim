@@ -665,8 +665,11 @@ export class PtcgRoom extends DurableObject<Env> {
       // The protocol is text-only, and a binary frame never reaches the hub's
       // ingress limits. Answering each one would hand any socket an unmetered
       // way to make the room work, so the first one ends the connection.
-      await this.disconnectSocket(socket);
-      socket.close(1003, 'Binary messages are not supported');
+      try {
+        await this.disconnectSocket(socket);
+      } finally {
+        socket.close(1003, 'Binary messages are not supported');
+      }
       return;
     }
     const runtime = await this.runtimePromise;
