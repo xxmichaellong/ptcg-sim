@@ -798,17 +798,17 @@
 
 .ptcgsim-overlay-button.is-primary {
   border-color: transparent;
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-fill);
   color: var(--color-text-on-accent);
 }
 
 .ptcgsim-overlay-button.is-primary:hover {
-  background-color: var(--color-accent-hover);
+  background-color: var(--color-accent-fill-hover);
   background-image: none;
 }
 
 .ptcgsim-overlay-button.is-primary:active {
-  background-color: var(--color-accent-pressed);
+  background-color: var(--color-accent-fill-pressed);
   background-image: none;
 }
 

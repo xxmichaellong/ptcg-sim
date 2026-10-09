@@ -242,6 +242,12 @@
   --color-accent-hover: oklch(0.67 0.17 var(--hue-you));
   --color-accent-pressed: oklch(0.57 0.16 var(--hue-you));
   --color-accent-soft: oklch(0.62 0.17 var(--hue-you) / 0.18);
+  /* Solid controls with --color-text-on-accent labels: at least 4.5:1. The
+     brighter --color-accent stays for icons, rings and borders on the
+     dark surfaces, where it needs 3:1 against them instead. */
+  --color-accent-fill: oklch(0.53 0.17 var(--hue-you));
+  --color-accent-fill-hover: oklch(0.56 0.17 var(--hue-you));
+  --color-accent-fill-pressed: oklch(0.49 0.16 var(--hue-you));
 
   --color-you: oklch(0.7 0.15 var(--hue-you));
   --color-you-soft: oklch(0.7 0.15 var(--hue-you) / 0.2);
@@ -251,6 +257,7 @@
   --color-mint: oklch(0.82 0.14 var(--hue-mint));
   --color-danger: oklch(0.64 0.21 25);
   --color-danger-soft: oklch(0.64 0.21 25 / 0.18);
+  --color-danger-fill: oklch(0.55 0.2 25);
   --color-warning: oklch(0.8 0.16 75);
   --color-success: oklch(0.76 0.15 155);
 
@@ -295,6 +302,9 @@
   --color-accent-hover: oklch(0.5 0.18 var(--hue-you));
   --color-accent-pressed: oklch(0.46 0.17 var(--hue-you));
   --color-accent-soft: oklch(0.55 0.18 var(--hue-you) / 0.14);
+  --color-accent-fill: var(--color-accent);
+  --color-accent-fill-hover: var(--color-accent-hover);
+  --color-accent-fill-pressed: var(--color-accent-pressed);
 
   --color-you: oklch(0.52 0.17 var(--hue-you));
   --color-you-soft: oklch(0.52 0.17 var(--hue-you) / 0.16);
@@ -304,6 +314,7 @@
   --color-mint: oklch(0.62 0.15 var(--hue-mint));
   --color-danger: oklch(0.55 0.21 25);
   --color-danger-soft: oklch(0.55 0.21 25 / 0.14);
+  --color-danger-fill: var(--color-danger);
   --color-warning: oklch(0.66 0.16 70);
   --color-success: oklch(0.58 0.15 155);
 

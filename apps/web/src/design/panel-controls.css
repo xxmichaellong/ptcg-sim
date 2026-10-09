@@ -11,9 +11,9 @@
 
 :root {
   --ds-control-height: 34px;
-  --ds-primary-bg: color-mix(in oklch, var(--color-accent) 80%, black);
-  --ds-primary-bg-hover: color-mix(in oklch, var(--color-accent) 88%, black);
-  --ds-primary-bg-pressed: color-mix(in oklch, var(--color-accent) 72%, black);
+  --ds-primary-bg: var(--color-accent-fill);
+  --ds-primary-bg-hover: var(--color-accent-fill-hover);
+  --ds-primary-bg-pressed: var(--color-accent-fill-pressed);
   --ds-accent-text: color-mix(
     in oklch,
     var(--color-accent) 72%,

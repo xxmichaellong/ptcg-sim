@@ -97,12 +97,12 @@
 }
 
 .ptcgsim-ui-button[data-variant='primary'] {
-  background: var(--color-accent);
+  background: var(--color-accent-fill);
   color: var(--color-text-on-accent);
 }
 
 .ptcgsim-ui-button[data-variant='primary']:active:not(:disabled) {
-  background: var(--color-accent-pressed);
+  background: var(--color-accent-fill-pressed);
 }
 
 .ptcgsim-ui-button[data-variant='secondary'] {
@@ -119,17 +119,17 @@
 }
 
 .ptcgsim-ui-button[data-variant='danger'] {
-  background: var(--color-danger);
+  background: var(--color-danger-fill);
   color: var(--color-text-on-accent);
 }
 
 .ptcgsim-ui-button[data-variant='danger']:active:not(:disabled) {
-  background: color-mix(in oklch, var(--color-danger), black 12%);
+  background: color-mix(in oklch, var(--color-danger-fill), black 12%);
 }
 
 @media (hover: hover) {
   .ptcgsim-ui-button[data-variant='primary']:hover:not(:disabled):not(:active) {
-    background: var(--color-accent-hover);
+    background: var(--color-accent-fill-hover);
   }
 
   .ptcgsim-ui-button[data-variant='secondary']:hover:not(:disabled) {
@@ -141,7 +141,7 @@
   }
 
   .ptcgsim-ui-button[data-variant='danger']:hover:not(:disabled):not(:active) {
-    background: color-mix(in oklch, var(--color-danger), white 10%);
+    background: color-mix(in oklch, var(--color-danger-fill), white 6%);
   }
 }
 

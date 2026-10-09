@@ -199,7 +199,7 @@ textarea {
 }
 .remote-room-route .legacy-activity-feed .self-message {
   margin-left: auto;
-  background: var(--color-accent);
+  background: var(--color-accent-fill);
   color: var(--color-text-on-accent);
   border-bottom-right-radius: var(--radius-xs);
 }
@@ -287,19 +287,20 @@ textarea {
 .remote-room-route #FREEBUTTON {
   border-radius: var(--radius-md);
 }
+/* White labels on the side colours stay at 4.5:1 or better top to bottom. */
 .remote-room-route .self-color {
   background: linear-gradient(
     to bottom,
-    oklch(0.64 0.16 var(--hue-you)),
-    oklch(0.56 0.16 var(--hue-you))
+    oklch(0.56 0.16 var(--hue-you)),
+    oklch(0.5 0.16 var(--hue-you))
   );
   color: var(--color-text-on-accent);
 }
 .remote-room-route .opp-color {
   background: linear-gradient(
     to bottom,
-    oklch(0.62 0.17 var(--hue-opponent)),
-    oklch(0.54 0.17 var(--hue-opponent))
+    oklch(0.56 0.18 var(--hue-opponent)),
+    oklch(0.5 0.18 var(--hue-opponent))
   );
   color: var(--color-text-on-accent);
 }
@@ -315,11 +316,11 @@ textarea {
   .chat-button-container
   button.self-color:hover:not(:disabled),
 .remote-room-route .sidebox-button-container button.self-color:hover {
-  background: oklch(0.68 0.16 var(--hue-you));
+  background: oklch(0.56 0.16 var(--hue-you));
 }
 .remote-room-route .chat-button-container button.opp-color:hover:not(:disabled),
 .remote-room-route .sidebox-button-container button.opp-color:hover {
-  background: oklch(0.66 0.17 var(--hue-opponent));
+  background: oklch(0.58 0.18 var(--hue-opponent));
 }
 .remote-room-route .sidebox-button-container button.neutral-color:hover {
   background: var(--color-surface-3);
@@ -398,13 +399,13 @@ textarea {
   height: 34px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--color-accent);
+  background: var(--color-accent-fill);
   color: var(--color-text-on-accent);
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
 }
 .custom-popup .popup-button:hover {
-  background: var(--color-accent-hover);
+  background: var(--color-accent-fill-hover);
 }
 
 /* ---- Settings panel ---------------------------------------------------- */
