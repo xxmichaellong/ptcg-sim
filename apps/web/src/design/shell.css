@@ -79,6 +79,8 @@ textarea {
 
 /* ---- The rail ------------------------------------------------------ */
 .remote-room-route .legacy-room-sidebar {
+  /* Above the parked deck builder (900), as v1's sidebar was. */
+  z-index: 1300;
   width: var(--rail-width);
   display: flex;
   flex-direction: column;

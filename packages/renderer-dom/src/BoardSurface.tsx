@@ -479,6 +479,11 @@ const CardNode = memo(function CardNode({
       data-card-primary-action={card.primaryAction?.kind}
       data-ring={ring}
       data-held={drag ? 'drag' : settle ? 'settle' : undefined}
+      data-in-hand={
+        card.role === 'zone' && card.parentId.endsWith(':hand')
+          ? 'true'
+          : undefined
+      }
       aria-label={card.label}
       aria-haspopup={
         card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined

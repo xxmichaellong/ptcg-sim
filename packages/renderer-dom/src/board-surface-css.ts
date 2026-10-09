@@ -21,8 +21,11 @@ export const BOARD_SURFACE_CSS = `
   inset: 0;
   display: block;
   transform-origin: 50% 55%;
-  transition: scale var(--ptcgsim-motion-hover-duration, 170ms)
-    var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1));
+  transition:
+    scale var(--ptcgsim-motion-hover-duration, 170ms)
+      var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1)),
+    translate var(--ptcgsim-motion-hover-duration, 170ms)
+      var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1));
 }
 .ptcgsim-card__face {
   position: absolute;
@@ -46,6 +49,8 @@ export const BOARD_SURFACE_CSS = `
     rotateY(var(--ptcgsim-tilt-y, 0deg));
   transition:
     scale var(--ptcgsim-motion-hover-duration, 170ms)
+      var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1)),
+    translate var(--ptcgsim-motion-hover-duration, 170ms)
       var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1)),
     transform 120ms ease-out;
 }
@@ -87,6 +92,16 @@ export const BOARD_SURFACE_CSS = `
     var(--ptcgsim-ring-target, rgb(143 215 153 / 0.86));
 }
 @media (hover: hover) and (pointer: fine) {
+  /* On the table the hand runs off the screen edge: a hovered card rises
+     fully into view, above its neighbours (in its own frame, so the
+     opponent's turned hand rises toward the centre). */
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:enabled:hover {
+    z-index: 8500 !important;
+  }
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:enabled:hover > .ptcgsim-card__body {
+    translate: 0 -22%;
+    scale: 1.06;
+  }
   .ptcgsim-board-surface[data-dragging='false'] .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
     scale: var(--ptcgsim-hover-scale, 1.035);
   }
@@ -115,6 +130,7 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card > .ptcgsim-card__body {
   scale: none !important;
   rotate: none !important;
+  translate: none !important;
 }
 
 /* ---- The play-mat table (geometry v2) ---------------------------------- */
