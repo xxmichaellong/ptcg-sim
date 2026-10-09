@@ -1686,6 +1686,10 @@
               "kind": "type"
             },
             {
+              "name": "PerceptualSpring",
+              "kind": "type"
+            },
+            {
               "name": "PlayerZoneGeometryKind",
               "kind": "type"
             },
@@ -1708,6 +1712,42 @@
             {
               "name": "sideForPlayer",
               "kind": "value"
+            },
+            {
+              "name": "SPRING_PRESETS",
+              "kind": "value"
+            },
+            {
+              "name": "SpringConfig",
+              "kind": "type"
+            },
+            {
+              "name": "springEasing",
+              "kind": "value"
+            },
+            {
+              "name": "springFromPerceptual",
+              "kind": "value"
+            },
+            {
+              "name": "SpringPresetName",
+              "kind": "type"
+            },
+            {
+              "name": "springSettleTime",
+              "kind": "value"
+            },
+            {
+              "name": "SpringState",
+              "kind": "type"
+            },
+            {
+              "name": "springStateAt",
+              "kind": "value"
+            },
+            {
+              "name": "VelocityTracker",
+              "kind": "type-value"
             },
             {
               "name": "ZoneCountSceneNode",

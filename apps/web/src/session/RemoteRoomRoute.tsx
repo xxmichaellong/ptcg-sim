@@ -14,10 +14,12 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
+import { motionSettings } from '../motion/motion-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
@@ -189,7 +191,17 @@ export const RemoteRoomRoute = ({
   const hideOpponentHand = onHideOpponentHandChange
     ? (ownedHideOpponentHand ?? false)
     : localHideOpponentHand;
-  const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const motion = useSyncExternalStore(
+    motionSettings().subscribe,
+    motionSettings().getSnapshot
+  );
+  // Reduced motion is the player's (or the system's) choice, never stored in
+  // the board preferences the route publishes upward.
+  const storedPreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const effectivePreferences =
+    storedPreferences.reducedMotion === motion.reduced
+      ? storedPreferences
+      : { ...storedPreferences, reducedMotion: motion.reduced };
   const publishPreferences = (next: BoardPreferences): void => {
     if (onPreferencesChange) onPreferencesChange(next);
     else setLocalPreferences(next);
@@ -307,7 +319,7 @@ export const RemoteRoomRoute = ({
                 rendererKind={rendererKind}
                 onIntent={onIntent}
                 {...(onSubmission ? { onSubmission } : {})}
-                {...(preferences ? { preferences } : {})}
+                preferences={effectivePreferences}
                 roomMode={roomMode}
                 hideOpponentHand={hideOpponentHand}
                 playmatExpanded={playmatExpanded}

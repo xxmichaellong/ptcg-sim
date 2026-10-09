@@ -6,3 +6,4 @@ export * from './marker-presentation.js';
 export * from './model.js';
 export * from './scene.js';
 export * from './spike-fixture.js';
+export * from './spring.js';

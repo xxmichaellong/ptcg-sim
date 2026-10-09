@@ -470,7 +470,14 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
-    expect(boardHarness.props?.preferences).toBeUndefined();
+    // The board always gets preferences: reduced motion follows the player's
+    // motion settings even before anything else is chosen.
+    expect(boardHarness.props?.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: false,
+      showZoneOutlines: true,
+    });
 
     await act(async () => boardHarness.props?.onPlaymatExpandedChange?.(true));
     expect(host.querySelector('.board-column')?.dataset.boardShell).toBe(
@@ -584,7 +591,14 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('main') as HTMLElement).style.backgroundImage
     ).toBe('url("https://images.example.test/table.png")');
-    expect(boardHarness.props?.preferences).toBeUndefined();
+    // The board always gets preferences: reduced motion follows the player's
+    // motion settings even before anything else is chosen.
+    expect(boardHarness.props?.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: false,
+      showZoneOutlines: true,
+    });
     expect(socket.sent).toHaveLength(sentBeforeSettings);
     expect(onSubmission).not.toHaveBeenCalled();
 
