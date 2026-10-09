@@ -10,12 +10,35 @@ import {
   type BoardRendererDiagnostics,
   type BoardScene,
   type BoardSceneInstallMode,
+  type BoardSceneMotion,
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { BoardSurface } from './BoardSurface.js';
+
+/**
+ * Several installs can land in one React commit. The commit then shows the
+ * last scene, and must move like the most disruptive install among them: a
+ * relayout or a discontinuity snaps even when a prediction rode along.
+ */
+const MOTION_PRECEDENCE: Readonly<Record<BoardSceneMotion['cause'], number>> = {
+  advance: 0,
+  predict: 1,
+  rollback: 2,
+  flip: 3,
+  layout: 4,
+  replace: 5,
+};
+
+const strongerMotion = (
+  current: BoardSceneMotion | undefined,
+  next: BoardSceneMotion
+): BoardSceneMotion =>
+  current && MOTION_PRECEDENCE[current.cause] > MOTION_PRECEDENCE[next.cause]
+    ? current
+    : next;
 
 class BoardRendererErrorBoundary extends Component<
   {
@@ -53,6 +76,8 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   private finishPendingMount: (() => void) | null = null;
   private failPendingMount: ((error: unknown) => void) | null = null;
   private cancelMountedInteraction: (() => void) | null = null;
+  /** Motion of the installs since the last commit; cleared on commit. */
+  private pendingMotion: BoardSceneMotion | undefined;
 
   constructor(adapters: BoardRendererAdapters) {
     this.adapters = adapters;
@@ -107,7 +132,8 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   installScene(
     scene: BoardScene,
     events: readonly BoardPresentationEvent[],
-    mode: BoardSceneInstallMode = 'advance'
+    mode: BoardSceneInstallMode = 'advance',
+    motion?: BoardSceneMotion
   ): void {
     const root = this.requireRoot();
     assertViewport(scene.viewport);
@@ -121,6 +147,11 @@ export class ReactDomBoardRenderer implements BoardRenderer {
       }
     }
     this.scene = scene;
+    // Only an explicit cause animates. Installs without one -- the parity
+    // harness, tests -- keep painting final rectangles immediately.
+    this.pendingMotion = motion
+      ? strongerMotion(this.pendingMotion, motion)
+      : { cause: 'replace' };
     if (this.presentation) this.renderNow(root);
   }
 
@@ -246,12 +277,14 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     const presentation = this.presentation;
     if (!scene || !presentation) return;
     let committed = false;
+    const motion = this.pendingMotion;
     const recordCommit = () => {
       // Strict Mode replays layout effects in development. Count the renderer
       // commit once while retaining the replay that catches unsafe effects.
       if (committed) return;
       committed = true;
       this.renderCommits += 1;
+      if (this.pendingMotion === motion) this.pendingMotion = undefined;
       onCommit?.();
     };
     const surface = (
@@ -262,6 +295,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
             presentation={presentation}
             preferences={this.preferences}
             adapters={this.adapters}
+            {...(motion ? { motion } : {})}
             onCommit={recordCommit}
             setInteractionCancellation={this.setInteractionCancellation}
           />

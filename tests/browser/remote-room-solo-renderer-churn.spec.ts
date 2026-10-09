@@ -212,7 +212,19 @@ const churnDeckZoneBrowsers = async (
   return decks.length;
 };
 
-const readResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
+const readResourceEvidence = async (
+  page: Page,
+  renderer: JSHandle<unknown>
+) => {
+  // Cards in flight and their short-lived ghosts are transient nodes; the
+  // resource signature is compared once the table has stopped moving.
+  await expect(
+    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+  ).toHaveCount(1);
+  return readSettledResourceEvidence(page, renderer);
+};
+
+const readSettledResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
   page.evaluate((baselineRenderer) => {
     const spike = window.__PTCG_RENDERER_SPIKE__;
     const diagnostics = spike?.renderer.getDiagnostics?.();

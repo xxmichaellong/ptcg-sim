@@ -16,6 +16,7 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BOARD_SURFACE_CSS } from './board-surface-css.js';
 import { ReactDomBoardRenderer } from './ReactDomBoardRenderer.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -354,7 +355,7 @@ describe('React DOM board renderer', () => {
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
   });
 
-  it('preserves the legacy card edge paint for each board side', async () => {
+  it('draws every card as a rounded face whose shadow falls down-screen at any quarter turn', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),
       emitPresentationUpdate: vi.fn(),
@@ -364,24 +365,39 @@ describe('React DOM board renderer', () => {
     document.body.append(host);
     await mountInAct(renderer, host, createScene());
 
-    for (const [side, borderRadius, boxShadow] of [
-      ['local', '0.275rem', '0 2px 4px rgba(0, 0, 0, 0.3)'],
-      ['opponent', '0.3rem', '0 2px 4px rgba(0, 0, 0, 0.3)'],
-      ['shared', '0.375rem', '0 2px 4px rgba(0, 0, 0, 0.5)'],
+    // The shadow offsets are in the card's own frame, so each quarter turn
+    // points them somewhere else to keep them physically below the card.
+    for (const [rotationQuarterTurns, x, y] of [
+      [0, '0', '1'],
+      [1, '1', '0'],
+      [2, '0', '-1'],
+      [3, '-1', '0'],
     ] as const) {
       const scene = createScene();
       act(() =>
         renderer.installScene(
           {
             ...scene,
-            cards: scene.cards.map((card) => ({ ...card, side })),
+            cards: scene.cards.map((card) => ({
+              ...card,
+              rotationQuarterTurns,
+            })),
           },
           []
         )
       );
-      const card = host.querySelector<HTMLElement>('[data-card-id]');
-      expect(card?.style.borderRadius).toBe(borderRadius);
-      expect(card?.style.boxShadow).toBe(boxShadow);
+      const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+      expect(card.style.transform).toBe(
+        `rotate(${rotationQuarterTurns * 90}deg)`
+      );
+      expect(card.style.getPropertyValue('--ptcgsim-shadow-x')).toBe(x);
+      expect(card.style.getPropertyValue('--ptcgsim-shadow-y')).toBe(y);
+      // The button itself paints nothing: the face carries the art.
+      expect(card.style.background).toBe('transparent');
+      const face = card.querySelector<HTMLElement>(
+        ':scope > .ptcgsim-card__body > .ptcgsim-card__face'
+      )!;
+      expect(face.querySelector('img')).not.toBeNull();
     }
 
     await act(async () => {
@@ -495,7 +511,14 @@ describe('React DOM board renderer', () => {
     image.dispatchEvent(new Event('error'));
     expect(image.dataset.cardImageState).toBe('failed');
     expect(image.style.visibility).toBe('hidden');
-    expect(card.style.background).toBe('#777');
+    // The face keeps the neutral blank (a design token) behind a failed image.
+    expect(card.querySelector('.ptcgsim-card__face')).not.toBeNull();
+    expect(BOARD_SURFACE_CSS).toContain(
+      'background: var(--ptcgsim-card-blank, #777)'
+    );
+    expect(BOARD_SURFACE_CSS).toContain(
+      'border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%)'
+    );
 
     card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(emitIntent).toHaveBeenCalledWith({
@@ -1383,8 +1406,8 @@ describe('React DOM board renderer', () => {
     const card = host.querySelector<HTMLElement>('[data-card-id]')!;
     const restingWidth = card.style.width;
     const restingHeight = card.style.height;
-    const restingShadow = card.style.boxShadow;
     expect(card.style.borderWidth).toBe('0px');
+    expect(card.dataset.ring).toBeUndefined();
 
     act(() =>
       renderer.installPresentation({
@@ -1393,18 +1416,15 @@ describe('React DOM board renderer', () => {
       })
     );
     expect(card.getAttribute('aria-pressed')).toBe('true');
-    // v1 highlights with `box-shadow: 0 0 0 4px`; a border on a fixed-size
-    // box would be taken out of the image area and visibly shrink the card.
+    // The ring is a box-shadow on the face (the sheet's `data-ring` rule); a
+    // border on a fixed-size box would be taken out of the image area.
+    expect(card.dataset.ring).toBe('selected');
     expect(card.style.borderWidth).toBe('0px');
     expect(card.style.width).toBe(restingWidth);
     expect(card.style.height).toBe(restingHeight);
-    expect(card.style.boxShadow).toContain(
-      'rgba(90, 110, 188, 0.864) 0 0 0 4px'
-    );
-    expect(card.style.boxShadow).toContain(restingShadow);
 
     act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
-    expect(card.style.boxShadow).toBe(restingShadow);
+    expect(card.dataset.ring).toBeUndefined();
 
     await act(async () => {
       renderer.destroy();
@@ -1773,7 +1793,7 @@ describe('React DOM board renderer', () => {
       })
     );
     const card = host.querySelector<HTMLElement>('[data-card-id]')!;
-    expect(card.style.boxShadow).toBe('rgba(143, 215, 153, 0.864) 0 0 0 4px');
+    expect(card.dataset.ring).toBe('target');
     const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
     act(() =>
       surface.dispatchEvent(

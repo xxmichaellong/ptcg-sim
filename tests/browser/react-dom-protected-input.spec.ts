@@ -309,9 +309,11 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
         targetableCardIds: [fixture.activeTopCardId],
       },
     });
-  await expect(target).toHaveCSS(
+  // The target ring is drawn on the card's face, ahead of its shadow.
+  await expect(target).toHaveAttribute('data-ring', 'target');
+  await expect(target.locator('.ptcgsim-card__face')).toHaveCSS(
     'box-shadow',
-    'rgba(143, 215, 153, 0.863) 0px 0px 0px 4px'
+    /^rgba\(143, 215, 153, 0\.86\d*\) 0px 0px 0px 4px, /
   );
 
   await page.keyboard.press('Escape');

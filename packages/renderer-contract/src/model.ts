@@ -19,6 +19,11 @@ export interface BoardPreferences {
   readonly darkMode: boolean;
   /** Paints the legacy translucent zone/stadium containers when enabled. */
   readonly showZoneOutlines: boolean;
+  /**
+   * Duration multiplier for the table's own motion (1 is normal, larger is
+   * slower, 0 skips travel). Absent means normal. Dragging is never scaled.
+   */
+  readonly animationSpeed?: number;
 }
 
 export interface BoardPresentation {

@@ -142,7 +142,11 @@ test('React DOM contains external card asset failures and recovers the stable ca
   await installUrl(missingUrl);
   await expect(image).toHaveAttribute('data-card-image-state', 'failed');
   await expect(image).toHaveCSS('visibility', 'hidden');
-  await expect(card).toHaveCSS('background-color', 'rgb(119, 119, 119)');
+  // The face keeps its neutral blank behind the hidden image.
+  await expect(card.locator('.ptcgsim-card__face')).toHaveCSS(
+    'background-color',
+    'rgb(119, 119, 119)'
+  );
   await expect(card).toBeEnabled();
   await card.click();
   await expect(page.locator('output')).toContainText('CardSelected');
@@ -201,20 +205,27 @@ test('React DOM contains external card asset failures and recovers the stable ca
       naturalHeight: 32_768,
       currentSrc: redirectChainUrl,
     });
-  const [oversizedCardBounds, oversizedImageBounds] = await Promise.all([
-    card.boundingBox(),
-    image.boundingBox(),
-  ]);
+  // The pointer still rests on the card from the clicks above, so its face is
+  // lifted by the hover scale. The button's box is unchanged; the image stays
+  // inside the face, whatever its natural size.
+  const face = card.locator('.ptcgsim-card__face');
+  const [oversizedCardBounds, oversizedImageBounds, faceBounds] =
+    await Promise.all([
+      card.boundingBox(),
+      image.boundingBox(),
+      face.boundingBox(),
+    ]);
   expect(oversizedCardBounds).toEqual(initialCardBounds);
   if (!oversizedImageBounds) throw new Error('Missing oversized image bounds');
-  expect(oversizedImageBounds.x).toBeGreaterThanOrEqual(initialCardBounds.x);
-  expect(oversizedImageBounds.y).toBeGreaterThanOrEqual(initialCardBounds.y);
+  if (!faceBounds) throw new Error('Missing card face bounds');
+  expect(oversizedImageBounds.x).toBeGreaterThanOrEqual(faceBounds.x - 0.01);
+  expect(oversizedImageBounds.y).toBeGreaterThanOrEqual(faceBounds.y - 0.01);
   expect(
     oversizedImageBounds.x + oversizedImageBounds.width
-  ).toBeLessThanOrEqual(initialCardBounds.x + initialCardBounds.width);
+  ).toBeLessThanOrEqual(faceBounds.x + faceBounds.width + 0.01);
   expect(
     oversizedImageBounds.y + oversizedImageBounds.height
-  ).toBeLessThanOrEqual(initialCardBounds.y + initialCardBounds.height);
+  ).toBeLessThanOrEqual(faceBounds.y + faceBounds.height + 0.01);
   await expect(image).toHaveAttribute('data-asset-identity-witness', 'stable');
   await expect(card).toHaveAttribute('data-card-id', targetId);
   await expect(card).toBeEnabled();

@@ -22,13 +22,15 @@ export const refreshLegacyBoardImages = async (
       )
       .map((card) => String(card.id))
   );
+  // Each card's own art: the face's image, not a turn-over overlay.
   const images = Array.from(
-    host.querySelectorAll<HTMLImageElement>('[data-card-id] > img')
-  ).filter(
-    (image) =>
-      image.parentElement?.dataset.cardId !== undefined &&
-      reloadableCardIds.has(image.parentElement.dataset.cardId)
-  );
+    host.querySelectorAll<HTMLImageElement>(
+      '[data-card-id] > .ptcgsim-card__body > .ptcgsim-card__face > img:not(.ptcgsim-card__turn)'
+    )
+  ).filter((image) => {
+    const cardId = image.closest<HTMLElement>('[data-card-id]')?.dataset.cardId;
+    return cardId !== undefined && reloadableCardIds.has(cardId);
+  });
   await Promise.all(
     images.map(async (image) => {
       try {

@@ -1,5 +1,6 @@
 import {
   BoardDragController,
+  VelocityTracker,
   isLegacyMarkerPresentation,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
@@ -10,6 +11,7 @@ import type {
   BoardPresentation,
   BoardRendererAdapters,
   BoardScene,
+  BoardSceneMotion,
   CardSceneNode,
   MarkerSceneNode,
   SettlingCard,
@@ -27,6 +29,13 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+
+import { BOARD_SURFACE_CSS } from './board-surface-css.js';
+import {
+  BoardMotionDirector,
+  type PaintedCard,
+} from './motion/BoardMotionDirector.js';
+import { DragSwing } from './motion/DragSwing.js';
 
 const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   position: 'absolute',
@@ -309,6 +318,19 @@ const ZoneNode = memo(function ZoneNode({
   );
 });
 
+/**
+ * A shadow is cast down-screen whatever way the card is turned. These are the
+ * offsets, in the card's own (rotated) frame, that point physically down.
+ */
+const SHADOW_DIRECTION: Readonly<
+  Record<CardSceneNode['rotationQuarterTurns'], readonly [number, number]>
+> = {
+  0: [0, 1],
+  1: [1, 0],
+  2: [0, -1],
+  3: [-1, 0],
+};
+
 const CardNode = memo(function CardNode({
   card,
   selected,
@@ -318,6 +340,7 @@ const CardNode = memo(function CardNode({
   settle,
   emitIntent,
   consumeSuppressedClick,
+  registerElement,
 }: {
   readonly card: CardSceneNode;
   readonly selected: boolean;
@@ -328,8 +351,17 @@ const CardNode = memo(function CardNode({
   readonly settle: SettlingCard | null;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
+  readonly registerElement: (
+    renderKey: string,
+    element: HTMLElement | null
+  ) => void;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
+  const renderKey = card.renderKey ?? '';
+  const ref = useCallback(
+    (element: HTMLButtonElement | null) => registerElement(renderKey, element),
+    [registerElement, renderKey]
+  );
   // A card that was just dropped stays centred on its drop point until the
   // authoritative move lands, exactly as it was painted while dragging.
   const held = drag ?? settle;
@@ -360,16 +392,16 @@ const CardNode = memo(function CardNode({
     );
     return `inset(${local.map((inset) => `${String(inset)}px`).join(' ')})`;
   })();
-  const legacyBorderRadius =
-    card.side === 'local'
-      ? '0.275rem'
-      : card.side === 'opponent'
-        ? '0.3rem'
-        : '0.375rem';
-  const legacyShadow =
-    card.side === 'shared'
-      ? '0 2px 4px rgba(0, 0, 0, 0.5)'
-      : '0 2px 4px rgba(0, 0, 0, 0.3)';
+  // Selection, targets and drop targets are rings drawn with box-shadow on
+  // the face, never with a border, so the art keeps its full size.
+  const ring = targetable
+    ? 'target'
+    : selected
+      ? 'selected'
+      : dropTarget
+        ? 'drop'
+        : undefined;
+  const [shadowX, shadowY] = SHADOW_DIRECTION[card.rotationQuarterTurns];
   const context = (event: ReactMouseEvent) => {
     event.preventDefault();
     emitIntent({ kind: 'CardContextRequested', cardId: card.id });
@@ -395,42 +427,35 @@ const CardNode = memo(function CardNode({
   }, [card.tableImageUrl, card.imageUrl]);
   return (
     <button
+      ref={ref}
       type="button"
       className="ptcgsim-card"
       data-card-id={card.id}
       data-card-role={card.role}
       data-card-primary-action={card.primaryAction?.kind}
+      data-ring={ring}
+      data-held={drag ? 'drag' : settle ? 'settle' : undefined}
       aria-label={card.label}
       aria-haspopup={
         card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
       }
       aria-pressed={card.primaryAction ? undefined : selected}
-      style={{
-        ...absoluteRect(bounds, drag ? 10_000 : settle ? 9_000 : card.zIndex),
-        display: 'block',
-        margin: 0,
-        padding: 0,
-        // Selection and hover are rings drawn with box-shadow, never with a
-        // border. The card is a fixed-size box, so a border would be taken
-        // out of its content area and shrink the image inside -- which is
-        // exactly what v1 avoids by highlighting with box-shadow.
-        border: 0,
-        borderRadius: legacyBorderRadius,
-        background: '#777',
-        // v1 colours: a selected card wears the blue `.highlight` ring, an
-        // attach/evolve target the green `.selectHighlight` ring, and a
-        // merely hovered card nothing at all.
-        boxShadow: targetable
-          ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
-          : selected || dropTarget
-            ? `rgba(90, 110, 188, 0.864) 0 0 0 4px, ${legacyShadow}`
-            : legacyShadow,
-        cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
-        overflow: 'hidden',
-        ...(clip ? { clipPath: clip } : {}),
-        transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
-        transformOrigin: 'center',
-      }}
+      style={
+        {
+          ...absoluteRect(bounds, drag ? 10_000 : settle ? 9_000 : card.zIndex),
+          display: 'block',
+          margin: 0,
+          padding: 0,
+          border: 0,
+          background: 'transparent',
+          cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
+          ...(clip ? { clipPath: clip } : {}),
+          transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
+          transformOrigin: 'center',
+          '--ptcgsim-shadow-x': String(shadowX),
+          '--ptcgsim-shadow-y': String(shadowY),
+        } as CSSProperties
+      }
       disabled={!card.interactive}
       onClick={() => {
         if (!consumeSuppressedClick(card.id)) {
@@ -444,26 +469,24 @@ const CardNode = memo(function CardNode({
       }}
       onContextMenu={context}
     >
-      <img
-        ref={imageRef}
-        src={card.tableImageUrl ?? card.imageUrl}
-        alt=""
-        draggable={false}
-        onLoad={(event) => {
-          event.currentTarget.dataset.cardImageState = 'ready';
-          event.currentTarget.style.visibility = 'visible';
-        }}
-        onError={(event) => {
-          event.currentTarget.dataset.cardImageState = 'failed';
-          event.currentTarget.style.visibility = 'hidden';
-        }}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
+      <span className="ptcgsim-card__body" data-card-body="">
+        <span className="ptcgsim-card__face">
+          <img
+            ref={imageRef}
+            src={card.tableImageUrl ?? card.imageUrl}
+            alt=""
+            draggable={false}
+            onLoad={(event) => {
+              event.currentTarget.dataset.cardImageState = 'ready';
+              event.currentTarget.style.visibility = 'visible';
+            }}
+            onError={(event) => {
+              event.currentTarget.dataset.cardImageState = 'failed';
+              event.currentTarget.style.visibility = 'hidden';
+            }}
+          />
+        </span>
+      </span>
     </button>
   );
 });
@@ -561,11 +584,43 @@ const MarkerNode = memo(function MarkerNode({
   );
 });
 
+/** Where each painted card is drawn this commit, including held cards. */
+const paintedCards = (
+  scene: BoardScene,
+  presentation: BoardPresentation
+): {
+  readonly painted: Map<string, PaintedCard>;
+  readonly held: Set<string>;
+} => {
+  const painted = new Map<string, PaintedCard>();
+  const held = new Set<string>();
+  for (const card of scene.cards) {
+    if (card.renderKey === null) continue;
+    const hold =
+      presentation.drag?.cardId === card.id
+        ? presentation.drag
+        : presentation.settling.find((entry) => entry.cardId === card.id);
+    if (hold) held.add(card.renderKey);
+    painted.set(card.renderKey, {
+      rect: hold
+        ? {
+            ...card.bounds,
+            x: hold.x - card.bounds.width / 2,
+            y: hold.y - card.bounds.height / 2,
+          }
+        : card.bounds,
+      rotationQuarterTurns: card.rotationQuarterTurns,
+    });
+  }
+  return { painted, held };
+};
+
 export const BoardSurface = ({
   scene,
   presentation,
   preferences,
   adapters,
+  motion,
   onCommit,
   setInteractionCancellation,
 }: {
@@ -573,10 +628,53 @@ export const BoardSurface = ({
   readonly presentation: BoardPresentation;
   readonly preferences: BoardPreferences;
   readonly adapters: BoardRendererAdapters;
+  /** Why this scene arrived; absent means it simply appears. */
+  readonly motion?: BoardSceneMotion;
   readonly onCommit?: () => void;
   readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  // Everything painted sits on this table. Motion that moves the whole table
+  // (the board flip) animates it, never the surface: the surface is what
+  // pointer input and the resize handles measure.
+  const tableRef = useRef<HTMLDivElement>(null);
+  const ghostLayerRef = useRef<HTMLDivElement>(null);
+  const director = useMemo(() => new BoardMotionDirector(), []);
+  const swing = useMemo(() => new DragSwing(), []);
+  const velocity = useMemo(() => new VelocityTracker(100), []);
+  const previousSceneRef = useRef<BoardScene | null>(null);
+  useLayoutEffect(
+    () => () => {
+      director.destroy();
+      swing.stop();
+    },
+    [director, swing]
+  );
+  useLayoutEffect(() => {
+    director.attach(tableRef.current, ghostLayerRef.current);
+    // `data-motion` says whether the table is still moving on its own, for
+    // anything that must wait for it to settle (tests, screenshots).
+    director.onActivity = (active) => {
+      if (surfaceRef.current) {
+        surfaceRef.current.dataset.motion = active ? 'active' : 'idle';
+      }
+    };
+  });
+  const animationSpeed = preferences.animationSpeed ?? 1;
+  useLayoutEffect(() => {
+    director.setSettings({
+      reduced: preferences.reducedMotion,
+      durationScale: animationSpeed,
+    });
+    swing.setEnabled(!preferences.reducedMotion);
+  }, [director, swing, preferences.reducedMotion, animationSpeed]);
+  // Every commit tells the director where cards are now drawn; a new scene
+  // also gets a motion plan from the last one.
+  useLayoutEffect(() => {
+    const { painted, held } = paintedCards(scene, presentation);
+    director.commit(previousSceneRef.current, scene, motion, painted, held);
+    previousSceneRef.current = scene;
+  }, [director, scene, presentation, motion]);
   const capturedPointerRef = useRef<{
     readonly element: HTMLElement;
     readonly pointerId: number;
@@ -590,6 +688,22 @@ export const BoardSurface = ({
       dragController.consumeSuppressedClick(cardId),
     [dragController]
   );
+  const registerElement = director.register;
+  const draggedCardId = presentation.drag?.cardId ?? null;
+  const draggedCard =
+    draggedCardId === null
+      ? undefined
+      : scene.cards.find((card) => card.id === draggedCardId);
+  useLayoutEffect(() => {
+    if (!draggedCard?.renderKey) {
+      swing.release();
+      return;
+    }
+    const body = surfaceRef.current?.querySelector<HTMLElement>(
+      `[data-card-id="${CSS.escape(String(draggedCard.id))}"] > .ptcgsim-card__body`
+    );
+    swing.attach(body ?? null);
+  }, [swing, draggedCard?.id, draggedCard?.renderKey]);
   useLayoutEffect(() => {
     onCommit?.();
   }, [onCommit]);
@@ -688,6 +802,7 @@ export const BoardSurface = ({
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
       data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
+      data-motion="idle"
       onWheel={(event) => {
         // The cards paint above the scroll container, so a wheel over them
         // scrolls the region the way it would over v1's `#hand` or `#board`.
@@ -749,10 +864,22 @@ export const BoardSurface = ({
         const input = pointerInput(event);
         if (input && dragController.pointerMove(scene, input)) {
           event.preventDefault();
+          velocity.add(input.x, input.y, event.timeStamp);
+          if (draggedCard) {
+            swing.lean(velocity.velocity().x, draggedCard.bounds.width);
+          }
         }
       }}
       onPointerUp={(event) => {
         const input = pointerInput(event);
+        const released = draggedCard;
+        if (input && released?.renderKey) {
+          velocity.add(input.x, input.y, event.timeStamp);
+          const { x, y } = velocity.velocity(event.timeStamp);
+          director.noteRelease(released.renderKey, x, y);
+        }
+        velocity.reset();
+        swing.release();
         if (input && dragController.pointerUp(scene, input)) {
           event.preventDefault();
         }
@@ -760,6 +887,8 @@ export const BoardSurface = ({
       }}
       onPointerCancel={(event) => {
         dragController.cancel(event.pointerId);
+        velocity.reset();
+        swing.release();
         releaseCapture(event);
       }}
       onLostPointerCapture={(event) => {
@@ -779,66 +908,89 @@ export const BoardSurface = ({
         contain: 'strict',
       }}
     >
-      {scene.layout.players.map((frame) => (
-        <PlayerFrameNode
-          key={frame.playerId}
-          frame={frame}
-          darkMode={preferences.darkMode}
-        />
-      ))}
-      {scene.layout.resizeHandles.map((handle) => (
-        <ResizeHandleNode key={handle.id} handle={handle} />
-      ))}
-      <BoardControlsAnchorNode
-        anchor={scene.layout.shared.boardControlsAnchor}
-      />
-      {scene.zones.map((zone) => {
-        const divider = handDividerFor(zone, scene.layout.players);
-        return (
-          <ZoneNode
-            key={zone.id}
-            zone={zone}
-            showOutline={
-              preferences.showZoneOutlines && OUTLINED_ZONE_KINDS.has(zone.kind)
-            }
-            handDividerEdge={divider?.edge}
-            handDividerColor={divider?.color}
-            dropTarget={dragTargetId === zone.id}
-            emitIntent={adapters.emitIntent}
-            scrollZone={adapters.scrollZone}
-          />
-        );
-      })}
-      {scene.cards
-        .filter((card) => card.renderKey !== null)
-        .map((card) => (
-          <CardNode
-            key={card.renderKey}
-            card={card}
-            selected={presentation.selectedCardId === card.id}
-            targetable={presentation.targetableCardIds.includes(card.id)}
-            dropTarget={dropTargetCardId === card.id}
-            drag={
-              presentation.drag?.cardId === card.id ? presentation.drag : null
-            }
-            settle={
-              presentation.settling.find((entry) => entry.cardId === card.id) ??
-              null
-            }
-            emitIntent={adapters.emitIntent}
-            consumeSuppressedClick={consumeSuppressedClick}
+      <style>{BOARD_SURFACE_CSS}</style>
+      <div
+        ref={tableRef}
+        className="ptcgsim-board-table"
+        style={{ position: 'absolute', inset: 0 }}
+      >
+        {scene.layout.players.map((frame) => (
+          <PlayerFrameNode
+            key={frame.playerId}
+            frame={frame}
+            darkMode={preferences.darkMode}
           />
         ))}
-      {scene.markers.map((marker) => (
-        <MarkerNode key={marker.id} marker={marker} />
-      ))}
-      {scene.counts.map((node) => (
-        <ZoneCountNode
-          key={node.id}
-          node={node}
-          darkMode={preferences.darkMode}
+        {scene.layout.resizeHandles.map((handle) => (
+          <ResizeHandleNode key={handle.id} handle={handle} />
+        ))}
+        <BoardControlsAnchorNode
+          anchor={scene.layout.shared.boardControlsAnchor}
         />
-      ))}
+        {scene.zones.map((zone) => {
+          const divider = handDividerFor(zone, scene.layout.players);
+          return (
+            <ZoneNode
+              key={zone.id}
+              zone={zone}
+              showOutline={
+                preferences.showZoneOutlines &&
+                OUTLINED_ZONE_KINDS.has(zone.kind)
+              }
+              handDividerEdge={divider?.edge}
+              handDividerColor={divider?.color}
+              dropTarget={dragTargetId === zone.id}
+              emitIntent={adapters.emitIntent}
+              scrollZone={adapters.scrollZone}
+            />
+          );
+        })}
+        {scene.cards
+          .filter((card) => card.renderKey !== null)
+          .map((card) => (
+            <CardNode
+              key={card.renderKey}
+              card={card}
+              selected={presentation.selectedCardId === card.id}
+              targetable={presentation.targetableCardIds.includes(card.id)}
+              dropTarget={dropTargetCardId === card.id}
+              drag={
+                presentation.drag?.cardId === card.id ? presentation.drag : null
+              }
+              settle={
+                presentation.settling.find(
+                  (entry) => entry.cardId === card.id
+                ) ?? null
+              }
+              emitIntent={adapters.emitIntent}
+              consumeSuppressedClick={consumeSuppressedClick}
+              registerElement={registerElement}
+            />
+          ))}
+        <div
+          ref={ghostLayerRef}
+          className="ptcgsim-ghost-layer"
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            // Above resting cards, below a card in flight: a pile's old top
+            // keeps the pile covered until the incoming card lands on it.
+            zIndex: 8_900,
+          }}
+        />
+        {scene.markers.map((marker) => (
+          <MarkerNode key={marker.id} marker={marker} />
+        ))}
+        {scene.counts.map((node) => (
+          <ZoneCountNode
+            key={node.id}
+            node={node}
+            darkMode={preferences.darkMode}
+          />
+        ))}
+      </div>
     </div>
   );
 };
