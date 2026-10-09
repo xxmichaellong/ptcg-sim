@@ -212,6 +212,11 @@ export const RemoteRoomRoute = ({
         : { animationSpeed: motion.durationScale }),
     };
   }, [storedPreferences, motion.reduced, motion.durationScale]);
+  // The whole page wears the table's theme: Night or Day.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = effectivePreferences.darkMode ? 'night' : 'day';
+  }, [effectivePreferences.darkMode]);
   const publishPreferences = (next: BoardPreferences): void => {
     if (onPreferencesChange) onPreferencesChange(next);
     else setLocalPreferences(next);

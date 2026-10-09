@@ -4,6 +4,7 @@ import { App, type AppRoute } from './App.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { announceMobileNotice } from './mobile-notice.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
+import './design/tokens.css';
 import './styles.css';
 
 // Developer-only escape hatch: `?dev-room=1` boots the real remote-room stack
