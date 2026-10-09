@@ -1,0 +1,158 @@
+/*
+ * The card inspector: a large, readable card docked beside the board. The
+ * holo finishes reimplement the well-known technique (a pointer-tracked
+ * glare plus a rainbow foil in colour-dodge); no code is borrowed.
+ */
+.card-inspector {
+  position: absolute;
+  inset-block: 0;
+  --inspector-card-height: min(66vh, 600px);
+  width: min(
+    46%,
+    calc(var(--inspector-card-height) * 63 / 88 + 2 * var(--space-6))
+  );
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 5000;
+  perspective: 1100px;
+  opacity: 0;
+  translate: var(--inspector-enter-x, 24px) 0;
+  scale: 0.96;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    translate var(--duration-snappy) var(--ease-snappy),
+    scale var(--duration-snappy) var(--ease-snappy);
+}
+.card-inspector[data-side='left'] {
+  left: 0;
+  --inspector-enter-x: -24px;
+}
+.card-inspector[data-side='right'] {
+  right: 0;
+  --inspector-enter-x: 24px;
+}
+.card-inspector[data-open='true'] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+
+.card-inspector__card {
+  position: relative;
+  /* As tall as fits, but never wider than its panel. */
+  width: min(
+    calc(100% - 2 * var(--space-6)),
+    calc(var(--inspector-card-height) * 63 / 88)
+  );
+  max-height: 92%;
+  aspect-ratio: 63 / 88;
+  border-radius: 4.8% / 3.4%;
+  overflow: hidden;
+  background: var(--neutral-700);
+  box-shadow:
+    var(--shadow-5),
+    0 0 0 1px oklch(1 0 0 / 0.08);
+  transform: rotateX(var(--inspector-tilt-x, 0deg))
+    rotateY(var(--inspector-tilt-y, 0deg));
+  transition: transform 160ms var(--ease-out);
+  animation: card-inspector-swap var(--duration-normal) var(--ease-out);
+}
+@keyframes card-inspector-swap {
+  from {
+    opacity: 0.4;
+    scale: 0.985;
+  }
+}
+.card-inspector__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-inspector__glare,
+.card-inspector__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--inspector-light, 0);
+  transition: opacity 240ms var(--ease-out);
+}
+.card-inspector__glare {
+  background: radial-gradient(
+    farthest-corner circle at var(--inspector-pointer-x, 50%)
+      var(--inspector-pointer-y, 35%),
+    oklch(1 0 0 / 0.55) 4%,
+    oklch(1 0 0 / 0.18) 22%,
+    oklch(0 0 0 / 0.36) 92%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* Rainbow foil: a stack of spectral bands that slides with the pointer at a
+   reduced rate (parallax), brightened through colour-dodge. */
+.card-inspector__shine {
+  --bands: repeating-linear-gradient(
+    115deg,
+    oklch(0.78 0.2 20) 0%,
+    oklch(0.85 0.18 85) 5%,
+    oklch(0.84 0.17 150) 10%,
+    oklch(0.78 0.16 230) 15%,
+    oklch(0.74 0.2 300) 20%,
+    oklch(0.78 0.2 20) 25%
+  );
+  background-image:
+    var(--bands),
+    repeating-linear-gradient(
+      55deg,
+      oklch(0.2 0 0 / 0.5) 0% 1.4%,
+      oklch(0.7 0 0 / 0.4) 2.2% 3%
+    );
+  background-size:
+    260% 260%,
+    140% 140%;
+  background-position:
+    calc(var(--inspector-pointer-x, 50%) * 0.6 + 20%)
+      calc(var(--inspector-pointer-y, 50%) * 0.6 + 20%),
+    center;
+  background-blend-mode: hard-light;
+  mix-blend-mode: color-dodge;
+  filter: brightness(0.62) contrast(1.6) saturate(1.25);
+}
+.card-inspector__card[data-finish='rainbow'] .card-inspector__shine {
+  opacity: calc(
+    var(--inspector-light, 0) * (0.42 + var(--inspector-from-centre, 0) * 0.28)
+  );
+}
+/* Ordinary holo: the foil sits in the art window only. */
+.card-inspector__card[data-finish='holo'] .card-inspector__shine {
+  clip-path: inset(10.5% 8% 47.5% 8% round 1.5%);
+  opacity: calc(var(--inspector-light, 0) * 0.5);
+}
+.card-inspector__card[data-finish='sheen'] .card-inspector__shine {
+  display: none;
+}
+
+.card-inspector[data-reduced-motion='true'],
+:root[data-motion='reduced'] .card-inspector {
+  transition: opacity var(--duration-fast) linear;
+  translate: 0 0;
+  scale: 1;
+}
+.card-inspector[data-reduced-motion='true'] .card-inspector__card,
+:root[data-motion='reduced'] .card-inspector__card {
+  transform: none;
+  animation: none;
+}
+.card-inspector[data-reduced-motion='true'] .card-inspector__shine,
+.card-inspector[data-reduced-motion='true'] .card-inspector__glare {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-inspector__card {
+    transform: none;
+    animation: none;
+  }
+}

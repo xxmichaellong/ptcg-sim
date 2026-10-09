@@ -1218,6 +1218,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardCardHover",
+              "kind": "type"
+            },
+            {
               "name": "BoardDragController",
               "kind": "type-value"
             },

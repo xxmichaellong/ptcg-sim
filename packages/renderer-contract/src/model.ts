@@ -309,6 +309,17 @@ export type BoardPresentationUpdate = {
   readonly drag: BoardPresentation['drag'];
 };
 
+/**
+ * The card under the pointer and where the pointer is on it, in the card's
+ * own frame (offsets from its centre, -0.5..0.5). Purely presentational: it
+ * never reaches the controller or the room.
+ */
+export interface BoardCardHover {
+  readonly cardId: ViewCardId;
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface BoardRendererAdapters {
   readonly emitIntent: (intent: BoardIntent) => void;
   readonly emitPresentationUpdate: (update: BoardPresentationUpdate) => void;
@@ -316,6 +327,11 @@ export interface BoardRendererAdapters {
   readonly reportStatus?: (status: BoardRendererStatus) => void;
   /** A scrolling zone (the hand) reports its new offset for the next scene. */
   readonly scrollZone?: (zoneId: string, offsetPx: number) => void;
+  /**
+   * The hovered card and pointer, at most once per frame; null when the
+   * pointer leaves the cards or a drag begins.
+   */
+  readonly reportCardHover?: (hover: BoardCardHover | null) => void;
 }
 
 export type BoardRendererStatus =

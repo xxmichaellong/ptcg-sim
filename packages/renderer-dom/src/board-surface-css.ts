@@ -40,6 +40,32 @@ export const BOARD_SURFACE_CSS = `
       var(--ptcgsim-card-shadow, rgb(0 0 0 / 0.32));
   transition: box-shadow var(--ptcgsim-motion-hover-duration, 170ms) ease-out;
 }
+/* The hovered card leans toward the pointer (HoverTilt sets the angles). */
+.ptcgsim-card__body[data-tilt] {
+  transform: perspective(820px) rotateX(var(--ptcgsim-tilt-x, 0deg))
+    rotateY(var(--ptcgsim-tilt-y, 0deg));
+  transition:
+    scale var(--ptcgsim-motion-hover-duration, 170ms)
+      var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1)),
+    transform 120ms ease-out;
+}
+/* ...and catches the light where the pointer is. */
+.ptcgsim-card__face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--ptcgsim-glare-x, 50%) var(--ptcgsim-glare-y, 30%),
+    rgb(255 255 255 / 0.42),
+    rgb(255 255 255 / 0.08) 38%,
+    rgb(255 255 255 / 0) 62%
+  );
+  mix-blend-mode: overlay;
+  opacity: var(--ptcgsim-glare, 0);
+  transition: opacity 220ms ease-out;
+}
 .ptcgsim-card__face > img {
   display: block;
   width: 100%;

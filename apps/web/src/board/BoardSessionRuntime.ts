@@ -5,6 +5,7 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   flipBoardLayoutState,
   resizeBoardLayoutState,
+  type BoardCardHover,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type BoardIntent,
@@ -48,6 +49,8 @@ export interface BoardSessionRuntimeOptions {
   readonly onSubmission?: BoardSessionAdapterOptions['onSubmission'];
   readonly reportError?: (error: unknown) => void;
   readonly reportRendererStatus?: (status: BoardRendererStatus) => void;
+  /** The hovered card, for a route-owned inspector. Presentational only. */
+  readonly onCardHover?: (hover: BoardCardHover | null) => void;
 }
 
 const copyLayoutState = (state: BoardLayoutState): BoardLayoutState => ({
@@ -180,6 +183,13 @@ export class BoardSessionRuntime {
         emitPresentationUpdate: (update) =>
           this.adapter?.emitPresentationUpdate(update),
         scrollZone: (zoneId, offsetPx) => this.scrollZone(zoneId, offsetPx),
+        reportCardHover: (hover) => {
+          try {
+            this.options.onCardHover?.(hover);
+          } catch (error) {
+            this.reportError(error);
+          }
+        },
         reportError: this.reportError,
         reportStatus: (status) => {
           if (status.kind === 'failed') {

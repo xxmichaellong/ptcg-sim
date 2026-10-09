@@ -36,6 +36,11 @@ import {
   type PaintedCard,
 } from './motion/BoardMotionDirector.js';
 import { DragSwing } from './motion/DragSwing.js';
+import {
+  HoverTilt,
+  localPointer,
+  type QuarterTurn,
+} from './motion/HoverTilt.js';
 
 const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   position: 'absolute',
@@ -641,14 +646,26 @@ export const BoardSurface = ({
   const ghostLayerRef = useRef<HTMLDivElement>(null);
   const director = useMemo(() => new BoardMotionDirector(), []);
   const swing = useMemo(() => new DragSwing(), []);
+  const tilt = useMemo(() => new HoverTilt(), []);
+  const hoveredRef = useRef<{
+    readonly cardId: CardSceneNode['id'];
+    x: number;
+    y: number;
+  } | null>(null);
+  const hoverFrameRef = useRef<number | null>(null);
   const velocity = useMemo(() => new VelocityTracker(100), []);
   const previousSceneRef = useRef<BoardScene | null>(null);
   useLayoutEffect(
     () => () => {
       director.destroy();
       swing.stop();
+      tilt.leave(true);
+      if (hoverFrameRef.current !== null) {
+        cancelAnimationFrame(hoverFrameRef.current);
+        hoverFrameRef.current = null;
+      }
     },
-    [director, swing]
+    [director, swing, tilt]
   );
   useLayoutEffect(() => {
     director.attach(tableRef.current, ghostLayerRef.current);
@@ -667,7 +684,8 @@ export const BoardSurface = ({
       durationScale: animationSpeed,
     });
     swing.setEnabled(!preferences.reducedMotion);
-  }, [director, swing, preferences.reducedMotion, animationSpeed]);
+    tilt.setEnabled(!preferences.reducedMotion);
+  }, [director, swing, tilt, preferences.reducedMotion, animationSpeed]);
   // Every commit tells the director where cards are now drawn; a new scene
   // also gets a motion plan from the last one.
   useLayoutEffect(() => {
@@ -694,6 +712,74 @@ export const BoardSurface = ({
     draggedCardId === null
       ? undefined
       : scene.cards.find((card) => card.id === draggedCardId);
+  const paintedById = useMemo(
+    () =>
+      new Map(
+        scene.cards
+          .filter((card) => card.renderKey !== null)
+          .map((card) => [String(card.id), card])
+      ),
+    [scene]
+  );
+  const reportCardHover = adapters.reportCardHover;
+  const scheduleHoverReport = () => {
+    if (!reportCardHover || hoverFrameRef.current !== null) return;
+    if (typeof requestAnimationFrame !== 'function') {
+      reportCardHover(hoveredRef.current ? { ...hoveredRef.current } : null);
+      return;
+    }
+    hoverFrameRef.current = requestAnimationFrame(() => {
+      hoverFrameRef.current = null;
+      reportCardHover(hoveredRef.current ? { ...hoveredRef.current } : null);
+    });
+  };
+  const clearHover = () => {
+    tilt.leave();
+    if (hoveredRef.current) {
+      hoveredRef.current = null;
+      scheduleHoverReport();
+    }
+  };
+  // The hovered card leans toward the pointer and is reported for the
+  // inspector. Touch has no hover; a drag ends it.
+  const trackHover = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (presentation.drag || event.pointerType === 'touch') {
+      clearHover();
+      return;
+    }
+    const element =
+      event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-card-id]')
+        : null;
+    const card = element?.dataset.cardId
+      ? paintedById.get(element.dataset.cardId)
+      : undefined;
+    if (!element || !card) {
+      clearHover();
+      return;
+    }
+    const turn = card.rotationQuarterTurns as QuarterTurn;
+    if (card.interactive) {
+      tilt.track(element, event.clientX, event.clientY, turn);
+    } else {
+      tilt.leave();
+    }
+    if (card.concealed) {
+      if (hoveredRef.current) {
+        hoveredRef.current = null;
+        scheduleHoverReport();
+      }
+      return;
+    }
+    const point = localPointer(
+      element.getBoundingClientRect(),
+      event.clientX,
+      event.clientY,
+      turn
+    );
+    hoveredRef.current = { cardId: card.id, x: point.x, y: point.y };
+    scheduleHoverReport();
+  };
   useLayoutEffect(() => {
     if (!draggedCard?.renderKey) {
       swing.release();
@@ -863,13 +949,17 @@ export const BoardSurface = ({
       onPointerMove={(event) => {
         const input = pointerInput(event);
         if (input && dragController.pointerMove(scene, input)) {
+          clearHover();
           event.preventDefault();
           velocity.add(input.x, input.y, event.timeStamp);
           if (draggedCard) {
             swing.lean(velocity.velocity().x, draggedCard.bounds.width);
           }
+        } else {
+          trackHover(event);
         }
       }}
+      onPointerLeave={() => clearHover()}
       onPointerUp={(event) => {
         const input = pointerInput(event);
         const released = draggedCard;

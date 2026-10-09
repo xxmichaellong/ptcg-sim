@@ -18,6 +18,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
 import { LegacyBoardChrome } from '../board/LegacyBoardChrome.js';
+import {
+  CardHoverStore,
+  CardInspector,
+} from '../board/inspector/CardInspector.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import { ReactDomBoardResizeInteraction } from '../board/ReactDomBoardResizeInteraction.js';
@@ -171,6 +175,8 @@ export const RemoteSessionBoard = ({
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
+  // The hovered card, for the inspector; never part of game state.
+  const hoverStore = useMemo(() => new CardHoverStore(), []);
   const [sortedHandPlayerIds, setSortedHandPlayerIds] = useState<
     ReadonlySet<PlayerId>
   >(() => new Set());
@@ -379,6 +385,7 @@ export const RemoteSessionBoard = ({
           reportRendererStatus: (status) => {
             if (!disposed) setRendererStatus(status);
           },
+          onCardHover: hoverStore.set,
         });
         runtimeRef.current = runtime;
         await runtime.mount(host);
@@ -700,6 +707,12 @@ export const RemoteSessionBoard = ({
             state={boardState}
             darkMode={preferences.darkMode}
             actions={overlayActions}
+          />
+          <CardInspector
+            store={hoverStore}
+            view={boardState.view}
+            scene={boardState.scene}
+            reducedMotion={preferences.reducedMotion}
           />
           <LegacyBoardKeyboardShortcuts
             state={boardState}
