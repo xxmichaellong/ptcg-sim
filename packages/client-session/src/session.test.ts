@@ -563,6 +563,52 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('forgets its own revisions when the session is replaced', () => {
+    const test = setup();
+    const first = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    first.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+
+    // A new room counts revisions from scratch; revision 1 there is the
+    // opponent's, not the coin this client flipped in the old room.
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    test.session.submit({ type: 'PassTurn', targetPlayerId: 'blue' });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+    });
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-2',
+      clientSequence: 1,
+      accepted: true,
+      revision: 2,
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-2',
+      executedClientSequence: 1,
+      snapshot: view(2),
+    });
+
+    expect(clientFrame(socket, 2)).toMatchObject({
+      commandId: 'command-3',
+      lastSeenRevision: 0,
+    });
+  });
+
   it('suppresses a duplicate solo undo until the pending authority result settles', () => {
     const test = setup();
     const socket = test.admit();

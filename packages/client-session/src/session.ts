@@ -220,6 +220,7 @@ export class RemoteGameSession {
     this.socketGeneration += 1;
     this.closeSocket(1000, 'Session replaced');
     this.pending.length = 0;
+    this.ownRevisions.clear();
     this.pingTimes.clear();
     this.replayTransfer = undefined;
     this.options = {
