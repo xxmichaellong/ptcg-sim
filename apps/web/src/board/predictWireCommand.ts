@@ -47,6 +47,10 @@ type WorkAreas = MatchViewState['workAreas'][string];
 const zoneKindOf = (view: MatchViewState, zoneId: string) =>
   view.zones[zoneId]?.kind;
 
+const hiddenFromViewer = (zone: Zone, viewerId: PlayerId): boolean =>
+  zone.kind === 'prizes' ||
+  ((zone.kind === 'hand' || zone.kind === 'deck') && zone.ownerId !== viewerId);
+
 /** A card entering a zone the viewer cannot read is shown as its back. */
 const asPlacedIn = (
   view: MatchViewState,
@@ -54,11 +58,9 @@ const asPlacedIn = (
   zone: Zone,
   card: ViewCard
 ): ViewCard => {
-  const hiddenFromViewer =
-    zone.kind === 'prizes' ||
-    ((zone.kind === 'hand' || zone.kind === 'deck') &&
-      zone.ownerId !== viewerId);
-  if (!hiddenFromViewer || card.kind === 'concealed') return card;
+  if (!hiddenFromViewer(zone, viewerId) || card.kind === 'concealed') {
+    return card;
+  }
   const concealed: ConcealedViewCard = {
     kind: 'concealed',
     id: card.id,
@@ -1040,6 +1042,11 @@ const predict = (
       const deck = ownZone(view, card.ownerId, 'deck');
       const top = deck?.cards[0];
       if (!deck || !top) return null;
+      // A top card the viewer cannot read would land face-up in a zone it
+      // can; only the room knows that face, so it waits for the publication.
+      if (top.kind === 'concealed' && !hiddenFromViewer(source, viewerId)) {
+        return null;
+      }
       const withTopOut = withZone(view, {
         ...deck,
         cards: deck.cards.slice(1),

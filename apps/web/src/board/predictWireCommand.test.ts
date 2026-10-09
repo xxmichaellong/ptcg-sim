@@ -283,6 +283,35 @@ describe('predictWireCommand', () => {
     );
   });
 
+  it('swaps with a deck top only where the old top stays a back', () => {
+    const redHand = view.zones[`zone:${red}:hand`]!;
+    const redDeck = view.zones[`zone:${red}:deck`]!;
+    const redDiscard = view.zones[`zone:${red}:discard`]!;
+    const intoHiddenHand = predictWireCommand(view, {
+      type: 'SwapCardWithDeckTop',
+      cardId: redHand.cards[0]!.id,
+      expectedSourceId: redHand.id,
+    })!;
+    expect(intoHiddenHand.zones[redHand.id]!.cards[0]).toMatchObject({
+      id: redDeck.cards[0]!.id,
+      kind: 'concealed',
+    });
+    expect(intoHiddenHand.zones[redDeck.id]!.cards[0]!.id).toBe(
+      redHand.cards[0]!.id
+    );
+    // The room publishes the old top's face in a readable zone, and only the
+    // room knows it, so the swap is not guessed as a card back.
+    for (const source of [hand, redDiscard]) {
+      expect(
+        predictWireCommand(view, {
+          type: 'SwapCardWithDeckTop',
+          cardId: source.cards[0]!.id,
+          expectedSourceId: source.id,
+        })
+      ).toBeNull();
+    }
+  });
+
   it('draws from the top of the viewer own deck and updates counters', () => {
     const drawn = predictWireCommand(view, { type: 'DrawCards', count: 2 })!;
     expect(drawn.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 2);
