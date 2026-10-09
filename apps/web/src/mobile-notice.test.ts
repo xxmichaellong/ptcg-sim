@@ -28,13 +28,27 @@ describe('legacy mobile notice', () => {
     expect(desktop).not.toHaveBeenCalled();
   });
 
-  it('never fails startup when the dialog is unavailable or blocked', () => {
+  it('never fails startup when the agent is unknown or the notice fails', () => {
     expect(announceMobileNotice(undefined, vi.fn())).toBe(false);
-    expect(announceMobileNotice('Android 14', undefined)).toBe(false);
     expect(
       announceMobileNotice('Android 14', () => {
         throw new Error('blocked');
       })
     ).toBe(false);
+  });
+
+  it('raises a persistent toast by default instead of a native alert', async () => {
+    const alert = vi.fn();
+    vi.stubGlobal('alert', alert);
+    const toastModule = await import('./ui/toast.js');
+    const toast = vi.spyOn(toastModule, 'toast');
+    expect(announceMobileNotice('Android 14')).toBe(true);
+    expect(alert).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledExactlyOnceWith({
+      title: 'Best on a desktop',
+      body: LEGACY_MOBILE_NOTICE,
+      timeout: 0,
+    });
+    vi.unstubAllGlobals();
   });
 });
