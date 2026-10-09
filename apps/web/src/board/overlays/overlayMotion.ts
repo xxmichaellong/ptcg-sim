@@ -73,6 +73,19 @@ export const useOverlayExit = (
     return () => {
       const parent = element.parentElement;
       if (!parent) return;
+      // Nothing to see leave: a panel a drag has hidden (its drag-state
+      // attributes would be stripped from the copy, bringing it back).
+      const style =
+        element.ownerDocument.defaultView?.getComputedStyle(element);
+      if (
+        style &&
+        (style.visibility === 'hidden' ||
+          style.display === 'none' ||
+          Number.parseFloat(style.opacity) < 0.5)
+      ) {
+        return;
+      }
+      const previousSibling = element.previousSibling;
       const nextSibling = element.nextSibling;
       const ghost = element.cloneNode(true) as HTMLElement;
       // Freeze the last frame: the ghost must not reflow when it loses the
@@ -93,9 +106,18 @@ export const useOverlayExit = (
           ghost.style.width = `${String(width)}px`;
           ghost.style.height = `${String(height)}px`;
         }
+        // Keep the original paint order: siblings that closed with it (a
+        // scrim and its panel) are gone, so anchor on whichever neighbour
+        // is still there, or the start if it was first.
         parent.insertBefore(
           ghost,
-          nextSibling?.parentNode === parent ? nextSibling : null
+          previousSibling?.parentNode === parent
+            ? previousSibling.nextSibling
+            : nextSibling?.parentNode === parent
+              ? nextSibling
+              : previousSibling === null
+                ? parent.firstChild
+                : null
         );
         if (scrolled.length > 0) {
           const copies = [ghost, ...ghost.querySelectorAll('*')];

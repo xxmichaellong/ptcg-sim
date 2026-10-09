@@ -734,6 +734,70 @@ describe('legacy board overlays', () => {
     expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
   });
 
+  it('leaves no ghost for an overlay that was hidden when it closed', async () => {
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const renderMenu = async (
+      contextMenuCardId: CardSceneNode['id'] | null
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              overlays: { contextMenuCardId, preview: null, input: null },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        );
+        await Promise.resolve();
+      });
+    };
+    await renderMenu(card.id);
+    // A drag hides a panel by its state attributes, which a ghost loses:
+    // a copy would flash back into view.
+    host.querySelector<HTMLElement>(
+      '[data-legacy-card-context-menu]'
+    )!.style.opacity = '0';
+    await renderMenu(null);
+    expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
+  });
+
+  it('fades a closed zone browser out with its scrim beneath its panel', async () => {
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const render = async (openedZoneId: string | null) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              presentation: {
+                selectedCardId: null,
+                hoveredCardId: null,
+                drag: null,
+                openedZoneId,
+              },
+              overlays: { contextMenuCardId: null, preview: null, input: null },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        );
+        await Promise.resolve();
+      });
+    };
+    await render(discard.id);
+    expect(host.querySelector('[data-legacy-zone-browser]')).not.toBeNull();
+    await render(null);
+    const ghosts = [
+      ...host.querySelectorAll<HTMLElement>('.ptcgsim-overlay-ghost'),
+    ];
+    expect(
+      ghosts.map((ghost) => ghost.classList.contains('is-exit-scrim'))
+    ).toEqual([true, false]);
+    expect(ghosts[1]!.classList).toContain('is-exit-panel');
+  });
+
   it('asks each controller count descriptor in one StrictMode-safe prompt dialog', async () => {
     await mountOverlayHost();
     const callbacks = actions();
