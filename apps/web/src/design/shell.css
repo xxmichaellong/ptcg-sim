@@ -516,6 +516,18 @@ textarea {
 .board-spike-host[data-geometry='2'] .legacy-hand-sort span {
   font-size: var(--text-xs) !important;
 }
+/* v1's translucent side colours vanish on the Day felt: the word reads in
+   the muted text colour on either felt, and the box carries the seat. */
+.board-spike-host[data-geometry='2'] .legacy-hand-sort,
+.board-spike-host[data-geometry='2'] .legacy-hand-sort span {
+  color: var(--color-text-muted) !important;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--local input {
+  accent-color: var(--color-you);
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--opponent input {
+  accent-color: var(--color-opponent);
+}
 /* The opponent's strip is slimmer: markers side by side, Sort above. */
 .board-spike-host[data-geometry='2']
   .legacy-player-frame-chrome[data-player-layout-side='opponent']

@@ -260,8 +260,8 @@
 }
 
 .legacy-deck-import .deck-import-extras {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
@@ -271,6 +271,18 @@
   justify-content: flex-start;
   width: 100%;
   font-size: var(--text-sm);
+}
+
+/* Change Card Back keeps its whole label and takes the spare width; the
+   language picker moves to its own line when both no longer fit. */
+.legacy-deck-import .deck-import-extras > #changeCardBackButton {
+  flex: 1 0 auto;
+  width: auto;
+}
+
+.legacy-deck-import .deck-import-extras > .language-container {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 .legacy-deck-import .deck-import-label {
