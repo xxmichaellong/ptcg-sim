@@ -1,79 +1,216 @@
+/*
+ * The Shift reference: a sheet over the table, shown only while Shift is
+ * held. It rises and fades in, and fades out when Shift is released.
+ */
 .ptcgsim-legacy-shortcut-reference {
+  --shortcut-enter-duration: calc(
+    var(--duration-normal, 200ms) * var(--motion-scale, 1)
+  );
+  --shortcut-exit-duration: calc(
+    var(--duration-fast, 140ms) * var(--motion-scale, 1)
+  );
+  --shortcut-enter-offset: 8px;
+
   position: fixed;
   z-index: 100001;
   top: 50%;
   left: 38%;
   display: none;
-  width: 72%;
-  height: 95%;
-  padding: 0 15px 15px;
+  box-sizing: border-box;
+  width: min(72%, 1180px);
+  max-height: 94%;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  overflow: auto;
   transform: translate(-50%, -50%);
-  box-sizing: content-box;
-  border: 1px solid #ccc;
-  border-radius: 1%;
-  background-color: rgb(200 200 200 / 87.3%);
-  box-shadow: 0 0 10px rgb(0 0 0 / 50%);
-  color: #000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  pointer-events: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  backdrop-filter: blur(16px) saturate(1.2);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  opacity: 0;
+  translate: 0 var(--shortcut-enter-offset);
+  pointer-events: none;
   user-select: none;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+  transition-behavior: allow-discrete;
+  transition-duration: var(--shortcut-exit-duration);
+  transition-property: opacity, translate, display;
+  transition-timing-function: var(--ease-in);
 }
 
 .ptcgsim-legacy-shortcut-reference.is-visible {
   display: block;
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition-duration: var(--shortcut-enter-duration);
+  transition-timing-function: var(--ease-snappy);
 }
 
-.ptcgsim-legacy-shortcut-reference.is-dark {
-  background-color: rgb(21 21 21 / 87%);
-  color: #fff;
+@starting-style {
+  .ptcgsim-legacy-shortcut-reference.is-visible {
+    opacity: 0;
+    translate: 0 var(--shortcut-enter-offset);
+  }
+}
+
+:root[data-motion='reduced'] .ptcgsim-legacy-shortcut-reference {
+  --shortcut-enter-duration: 120ms;
+  --shortcut-exit-duration: 100ms;
+  --shortcut-enter-offset: 0px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-legacy-shortcut-reference {
+    --shortcut-enter-duration: 120ms;
+    --shortcut-exit-duration: 100ms;
+    --shortcut-enter-offset: 0px;
+  }
+}
+
+.ptcgsim-shortcut-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.ptcgsim-shortcut-title-text {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.ptcgsim-shortcut-title-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
 }
 
 .ptcgsim-legacy-shortcut-sections {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-6);
 }
 
 .ptcgsim-legacy-shortcut-section {
-  flex: 1;
-}
-
-.ptcgsim-legacy-shortcut-column {
-  margin-right: 10px;
-  padding: 5px;
+  display: grid;
+  gap: var(--space-5);
 }
 
 .ptcgsim-legacy-shortcut-column h1 {
-  margin: 0;
-  padding: 0;
-  font-size: 2vh;
+  margin: 0 0 var(--space-1);
+  padding: 0 0 var(--space-1-5);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
 }
 
-.ptcgsim-legacy-shortcut-column ul,
-.ptcgsim-legacy-shortcut-column li {
+.ptcgsim-legacy-shortcut-column ul {
   margin: 0;
   padding: 0;
-  font-size: 1.6vh;
+  list-style: none;
 }
 
 .ptcgsim-legacy-shortcut-column li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-top: 0.4vh;
+  gap: var(--space-3);
+  min-height: 26px;
+  margin: 0;
+  padding: var(--space-0-5) 0;
 }
 
 .ptcgsim-legacy-shortcut-column li.is-indented {
-  margin-top: 0;
-  padding-left: 10px;
-  font-size: 1.5vh;
+  position: relative;
+  min-height: 24px;
+  padding-left: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-legacy-shortcut-column li.is-indented::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+  background: var(--color-border-strong);
+  content: '';
+}
+
+.ptcgsim-shortcut-label {
+  min-width: 0;
+}
+
+/* v1's bracketed text, kept for screen readers and copy. */
+.ptcgsim-shortcut-source {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+.ptcgsim-shortcut-keys {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ptcgsim-shortcut-plus,
+.ptcgsim-shortcut-then {
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+}
+
+.ptcgsim-legacy-shortcut-reference kbd,
+.ptcgsim-legacy-shortcut-macos-note code {
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  line-height: 1;
 }
 
 .ptcgsim-legacy-shortcut-macos-note {
-  position: absolute;
-  bottom: 0;
-  left: 20px;
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .ptcgsim-legacy-shortcut-macos-note p {
-  font-size: 1.5vh;
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-legacy-shortcut-macos-note strong {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
 }
