@@ -562,7 +562,11 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   context,
   page,
 }, testInfo) => {
-  test.setTimeout(600_000);
+  // The table animates every Set Up and Reset (cards fly, the deck riffles
+  // once they land) and every pile browser opens and closes with motion:
+  // about 5s a cycle, 140 cycles. Motion stays on so its nodes are churned
+  // too.
+  test.setTimeout(1_200_000);
   trackClientFrames(page);
   const errors = collectRuntimeErrors(page);
   let roomCreations = 0;
