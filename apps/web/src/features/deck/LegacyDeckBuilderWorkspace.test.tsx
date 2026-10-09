@@ -194,6 +194,9 @@ describe('LegacyDeckBuilderWorkspace', () => {
     expect(
       host.querySelector('#nativeDeckBuilderCardsPanel')?.textContent
     ).toBe('No cards added yet.');
+    expect(
+      host.querySelector<HTMLElement>('#nativeDeckBuilderEdgeToggle')?.hidden
+    ).toBe(true);
     expect(host.querySelector('#nativeCustomCardPreviewImage')).not.toBeNull();
     expect(
       host.querySelector('#nativeDeckBuilderCardPreviewImage')

@@ -29,6 +29,10 @@
     visibility var(--ds-enter-duration);
 }
 
+.native-deck-builder-edge-toggle {
+  display: none;
+}
+
 .native-deck-builder-inner {
   position: relative;
   display: flex;

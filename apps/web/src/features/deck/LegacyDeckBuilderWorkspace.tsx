@@ -1,4 +1,5 @@
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
+import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { CheckCircleIcon } from '@phosphor-icons/react/dist/csr/CheckCircle';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
@@ -885,6 +886,17 @@ export const LegacyDeckBuilderWorkspace = ({
         aria-hidden={!open}
         inert={!open}
       >
+        {/* v1's collapse toggle, never shown; kept for the id contract. */}
+        <button
+          id="nativeDeckBuilderEdgeToggle"
+          type="button"
+          className="native-deck-builder-edge-toggle"
+          aria-label="Collapse deck builder workspace"
+          title="Collapse deck builder workspace"
+          hidden
+        >
+          <CaretLeftIcon {...decorative} weight="bold" />
+        </button>
         <div className="native-deck-builder-inner" data-seat={seat}>
           <div className="native-deck-builder-header">
             <div className="native-deck-builder-heading">
