@@ -205,7 +205,7 @@ describe('confirmAction', () => {
     expect(dialog()).toBeNull();
   });
 
-  it('paints a dangerous confirm red and focuses Cancel first', async () => {
+  it('paints a dangerous confirm red but, like v1, lets Enter confirm it', async () => {
     await mountHost();
     void (await inAct(() =>
       confirmAction({ title: 'Delete your deck?', tone: 'danger' })
@@ -213,7 +213,7 @@ describe('confirmAction', () => {
     await settle();
     expect(dialog()?.dataset.tone).toBe('danger');
     expect(button('confirm').dataset.variant).toBe('danger');
-    expect(document.activeElement).toBe(button('cancel'));
+    expect(document.activeElement).toBe(button('confirm'));
   });
 
   it('closes and resolves false when its signal aborts', async () => {

@@ -445,7 +445,8 @@ describe('LegacyDeckBuilderWorkspace', () => {
         'Are you sure you want to delete your deck?'
       );
       expect(dialogButton('confirm').dataset.variant).toBe('danger');
-      expect(document.activeElement).toBe(dialogButton('cancel'));
+      // Like v1's confirm(), Enter would answer yes.
+      expect(document.activeElement).toBe(dialogButton('confirm'));
       await click(dialogButton('cancel'));
       await settle();
       expect(store.getSnapshot().slots.main.deck.Main?.totalCount).toBe(1);

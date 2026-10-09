@@ -6,7 +6,13 @@ import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from 'react';
 
 import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
 import changelogMarkup from './legacy-changelog.html?raw';
@@ -62,6 +68,7 @@ const WelcomeSheet = ({
         ? { 'aria-labelledby': labelledBy }
         : { 'aria-label': label })}
       onClick={onClose}
+      onKeyDown={keepTabInside}
     >
       <div className="welcome-sheet">
         <button
@@ -77,6 +84,28 @@ const WelcomeSheet = ({
       </div>
     </div>
   );
+};
+
+const TABBABLE =
+  'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), iframe, [tabindex]:not([tabindex="-1"])';
+
+/** A modal sheet keeps Tab and Shift+Tab among its own controls. */
+const keepTabInside = (event: ReactKeyboardEvent<HTMLElement>): void => {
+  if (event.key !== 'Tab') return;
+  const tabbable = [
+    ...event.currentTarget.querySelectorAll<HTMLElement>(TABBABLE),
+  ];
+  const first = tabbable[0];
+  const last = tabbable.at(-1);
+  if (!first || !last) return;
+  const active = document.activeElement;
+  const inside = active instanceof Node && event.currentTarget.contains(active);
+  if (
+    event.shiftKey ? active === first || !inside : active === last || !inside
+  ) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
 };
 
 /**

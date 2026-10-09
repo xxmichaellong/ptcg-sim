@@ -18,7 +18,7 @@ export interface ConfirmOptions {
   readonly confirmLabel?: string;
   /** Defaults to "Cancel". */
   readonly cancelLabel?: string;
-  /** `danger` paints the confirm button red and focuses Cancel first. */
+  /** `danger` paints the confirm button red. */
   readonly tone?: DialogTone;
   /** Aborting closes the dialog and resolves `false`. */
   readonly signal?: AbortSignal;

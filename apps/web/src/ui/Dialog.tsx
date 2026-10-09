@@ -224,8 +224,8 @@ export interface ConfirmDialogProps extends Omit<ConfirmOptions, 'signal'> {
 }
 
 /**
- * A yes/no question (role=alertdialog). A dangerous action focuses Cancel
- * first, so Enter never destroys anything by accident.
+ * A yes/no question (role=alertdialog). It opens on its confirm button, as
+ * v1's browser confirm() did, so Enter answers yes and Escape answers no.
  */
 export const ConfirmDialog = ({
   open,
@@ -239,7 +239,6 @@ export const ConfirmDialog = ({
   onClosed,
 }: ConfirmDialogProps) => {
   const confirmRef = useRef<HTMLButtonElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
   return (
     <DialogSurface
       kind="alert"
@@ -253,12 +252,13 @@ export const ConfirmDialog = ({
       title={title}
       description={body}
       tone={tone}
-      initialFocus={tone === 'danger' ? cancelRef : confirmRef}
+      // v1 asked with the browser's confirm(), where Enter means OK: every
+      // tone keeps that keystroke, a dangerous one is only painted red.
+      initialFocus={confirmRef}
       {...(finalFocus ? { finalFocus } : {})}
     >
       <div className="ptcgsim-ui-dialog__actions">
         <BaseDialog.Close
-          ref={cancelRef}
           className="ptcgsim-ui-button"
           data-variant="secondary"
           data-dialog-action="cancel"

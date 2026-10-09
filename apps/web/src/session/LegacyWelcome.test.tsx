@@ -136,6 +136,37 @@ describe('LegacyWelcome', () => {
     host.remove();
   });
 
+  it('keeps Tab inside an open page, as a modal dialog must', async () => {
+    const { host, root } = await mount();
+    const donations = host.querySelector<HTMLButtonElement>('#donationsLink')!;
+    donations.focus();
+    await act(async () => donations.click());
+    const page = host.querySelector<HTMLElement>('#donationsPage')!;
+    const tabbable = [
+      ...page.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)'),
+    ];
+    expect(tabbable.length).toBeGreaterThan(1);
+    const tab = async (shiftKey: boolean) =>
+      act(async () => {
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Tab',
+            shiftKey,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+    // Close is focused first; Shift+Tab wraps to the last control.
+    expect(document.activeElement).toBe(tabbable[0]);
+    await tab(true);
+    expect(document.activeElement).toBe(tabbable.at(-1));
+    await tab(false);
+    expect(document.activeElement).toBe(tabbable[0]);
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it('closes an open page on Escape, but not on an Escape that closes a dialog', async () => {
     const { host, root } = await mount();
     await act(async () =>

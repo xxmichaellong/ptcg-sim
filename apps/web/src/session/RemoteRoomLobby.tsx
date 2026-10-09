@@ -795,7 +795,7 @@ export const RemoteRoomLobby = ({
             </header>
             <div className="ds-field">
               <label className="ds-label" htmlFor="nameInput">
-                Your name
+                Name
               </label>
               <input
                 id="nameInput"

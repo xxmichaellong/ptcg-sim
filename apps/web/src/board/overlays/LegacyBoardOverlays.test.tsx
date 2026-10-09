@@ -1754,7 +1754,8 @@ describe('legacy board overlays', () => {
     shuffle.focus();
     await act(async () => shuffle.click());
     await settleDialogs();
-    expect(document.activeElement).toBe(dialogButton('cancel'));
+    // Like v1's confirm(), Enter would answer yes.
+    expect(document.activeElement).toBe(dialogButton('confirm'));
     await act(async () => dialogButton('cancel').click());
     await settleDialogs();
     expect(openDialogs()).toHaveLength(0);
