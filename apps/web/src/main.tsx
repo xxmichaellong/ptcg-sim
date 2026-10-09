@@ -4,6 +4,7 @@ import { App, type AppRoute } from './App.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { announceMobileNotice } from './mobile-notice.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
+import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
 import './styles.css';
 import './design/shell.css';
@@ -52,22 +53,26 @@ installLeaveGuard();
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');
 
+// One overlay host for the whole page: the lobby, the room, the Deck panel
+// and the dev room all raise their dialogs and toasts through it.
 createRoot(root).render(
   <StrictMode>
-    {devRoomRequested && DevRoomHost ? (
-      <Suspense
-        fallback={
-          <main className="app-shell" data-app-route="dev-room-loading" />
-        }
-      >
-        <DevRoomHost
-          displayName={parameters.get('name')?.trim() || 'Developer'}
-          mode={roomMode}
-          rendererKind={rendererKind}
-        />
-      </Suspense>
-    ) : (
-      <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
-    )}
+    <OverlayHost>
+      {devRoomRequested && DevRoomHost ? (
+        <Suspense
+          fallback={
+            <main className="app-shell" data-app-route="dev-room-loading" />
+          }
+        >
+          <DevRoomHost
+            displayName={parameters.get('name')?.trim() || 'Developer'}
+            mode={roomMode}
+            rendererKind={rendererKind}
+          />
+        </Suspense>
+      ) : (
+        <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
+      )}
+    </OverlayHost>
   </StrictMode>
 );
