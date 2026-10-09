@@ -216,5 +216,8 @@ describe('development room route churn', () => {
       created.every((entry) => entry.socket.close.mock.calls.length === 1)
     ).toBe(true);
     expect(document.body.childElementCount).toBe(0);
-  }, 10_000);
+    // Twenty full route mounts take about 3-4s alone and in CI, but several
+    // seconds more beside the rest of the suite on a loaded machine. The
+    // headroom is for that load; a genuine hang still fails.
+  }, 30_000);
 });
