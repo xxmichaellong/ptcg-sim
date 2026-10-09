@@ -12,6 +12,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -198,10 +199,19 @@ export const RemoteRoomRoute = ({
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
-  const effectivePreferences =
-    storedPreferences.reducedMotion === motion.reduced
-      ? storedPreferences
-      : { ...storedPreferences, reducedMotion: motion.reduced };
+  const effectivePreferences = useMemo((): BoardPreferences => {
+    // Motion always comes from the player's motion settings, whatever an
+    // earlier publish may have carried along.
+    const { animationSpeed: _stored, ...rest } = storedPreferences;
+    return {
+      ...rest,
+      reducedMotion: motion.reduced,
+      // The renderer treats an absent speed as normal.
+      ...(motion.durationScale === 1
+        ? {}
+        : { animationSpeed: motion.durationScale }),
+    };
+  }, [storedPreferences, motion.reduced, motion.durationScale]);
   const publishPreferences = (next: BoardPreferences): void => {
     if (onPreferencesChange) onPreferencesChange(next);
     else setLocalPreferences(next);

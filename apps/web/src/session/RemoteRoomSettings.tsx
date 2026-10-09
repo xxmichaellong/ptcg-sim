@@ -1,4 +1,11 @@
 import type { BoardPreferences } from '@ptcgsim/renderer-contract';
+import { useSyncExternalStore } from 'react';
+
+import {
+  motionSettings,
+  type AnimationSpeed,
+  type ReduceMotionChoice,
+} from '../motion/motion-settings.js';
 
 export interface RemoteRoomSettingsProps {
   readonly hidden: boolean;
@@ -19,6 +26,68 @@ const TwitterMark = () => (
     />
   </svg>
 );
+
+const REDUCE_MOTION_LABELS: Readonly<Record<ReduceMotionChoice, string>> = {
+  system: 'Match my system',
+  reduce: 'On',
+  full: 'Off',
+};
+
+const ANIMATION_SPEED_LABELS: Readonly<Record<AnimationSpeed, string>> = {
+  relaxed: 'Relaxed',
+  normal: 'Normal',
+  fast: 'Fast',
+  instant: 'Instant',
+};
+
+/**
+ * How much the table moves. Kept in the page's motion settings (local to
+ * this browser), not in the board preferences the route publishes.
+ */
+const MotionSettingsControls = () => {
+  const store = motionSettings();
+  const motion = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  return (
+    <div id="motionSettings" className="legacy-room-motion-settings">
+      <div>
+        <label htmlFor="reduceMotionSelect">Reduce motion</label>
+        <select
+          id="reduceMotionSelect"
+          value={motion.reduceMotion}
+          onChange={(event) =>
+            store.update({
+              reduceMotion: event.currentTarget.value as ReduceMotionChoice,
+            })
+          }
+        >
+          {Object.entries(REDUCE_MOTION_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="animationSpeedSelect">Animation speed</label>
+        <select
+          id="animationSpeedSelect"
+          value={motion.animationSpeed}
+          onChange={(event) =>
+            store.update({
+              animationSpeed: event.currentTarget.value as AnimationSpeed,
+            })
+          }
+        >
+          {Object.entries(ANIMATION_SPEED_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Source-shaped, route-local Settings surface. Only controls with a closed
@@ -76,6 +145,7 @@ export const RemoteRoomSettings = ({
         </label>
       </div>
     </div>
+    <MotionSettingsControls />
     <button
       id="changeBackgroundButton"
       type="button"
