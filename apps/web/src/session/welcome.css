@@ -1,0 +1,343 @@
+/* The Solo panel's welcome card and its pages (tutorial, release notes,
+   sponsors). Controls come from design/panel-controls.css. */
+
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--highlight-top), var(--shadow-3);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    translate var(--ds-enter-duration) var(--ease-snappy);
+}
+
+@starting-style {
+  .welcome-card {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.welcome-card .welcome-hero {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.welcome-card .welcome-logo {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 2px 6px oklch(0 0 0 / 0.3));
+}
+
+.welcome-card .welcome-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.welcome-card .welcome-title {
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.005em;
+}
+
+/* The build and a "What's new" link to the release notes. */
+.welcome-card .welcome-version {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--space-2);
+  border: 1px solid color-mix(in oklch, var(--color-accent) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--ds-accent-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out);
+}
+
+.welcome-card .welcome-version svg {
+  width: 13px;
+  height: 13px;
+  color: var(--color-gold);
+}
+
+.welcome-card .welcome-version:hover {
+  background: color-mix(in oklch, var(--color-accent) 28%, transparent);
+}
+
+.welcome-card .welcome-version:active {
+  scale: var(--ds-press-scale);
+}
+
+.welcome-card .welcome-version:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.welcome-card .welcome-version-build {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.welcome-card .welcome-version-label {
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.welcome-card .welcome-lead {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.welcome-card .ds-link {
+  color: var(--ds-accent-text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentcolor 45%, transparent);
+}
+
+.welcome-card .welcome-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome-card .welcome-steps li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.welcome-card .welcome-steps svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--color-you);
+}
+
+.welcome-card .welcome-steps strong {
+  font-weight: var(--weight-semibold);
+}
+
+.welcome-card .welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.welcome-card .welcome-actions .ds-button {
+  flex: 1 1 auto;
+}
+
+.welcome-card .welcome-action-primary {
+  flex-basis: 100%;
+}
+
+.welcome-card a.ds-button {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.welcome-card .welcome-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+
+.welcome-card .welcome-footer-link {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.welcome-card .welcome-footer-link:hover {
+  text-decoration: underline;
+}
+
+.welcome-card .welcome-footer-link svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-opponent);
+}
+
+.welcome-card .welcome-footer-note {
+  color: var(--color-text-faint);
+}
+
+/* ---- Pages ------------------------------------------------------------ */
+
+.welcome-overlay {
+  position: fixed;
+  z-index: var(--z-dialog);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+  background: var(--color-scrim);
+  cursor: default;
+  transition: opacity var(--ds-enter-duration) var(--ease-out);
+}
+
+.welcome-overlay .welcome-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(760px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--space-6) var(--space-8) var(--space-8);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-5);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  line-height: 1.6;
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    translate var(--ds-enter-duration) var(--ease-snappy),
+    scale var(--ds-enter-duration) var(--ease-snappy);
+}
+
+@starting-style {
+  .welcome-overlay {
+    opacity: 0;
+  }
+
+  .welcome-overlay .welcome-sheet {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.welcome-overlay .welcome-sheet-close {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  float: right;
+  margin: calc(var(--space-2) * -1) calc(var(--space-4) * -1) 0 0;
+  background: var(--color-surface-3);
+}
+
+.welcome-overlay .welcome-sheet-title {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.welcome-overlay .welcome-sheet-body {
+  max-width: 68ch;
+}
+
+.welcome-overlay .welcome-sheet-body h2 {
+  margin: var(--space-6) 0 var(--space-2);
+  color: var(--color-text);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.welcome-overlay .welcome-sheet-body h2:first-child {
+  margin-top: 0;
+}
+
+.welcome-overlay .welcome-sheet-body h3 {
+  margin: var(--space-3) 0;
+  font-size: var(--text-lg);
+}
+
+.welcome-overlay .welcome-sheet-body p {
+  margin: var(--space-2) 0;
+}
+
+.welcome-overlay .welcome-sheet-body ul {
+  margin-block: var(--space-2) var(--space-4);
+  padding-left: var(--space-5);
+  list-style-type: disc;
+}
+
+.welcome-overlay .welcome-sheet-body li {
+  margin-bottom: var(--space-2);
+}
+
+.welcome-overlay .welcome-sheet-body hr {
+  margin: var(--space-6) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.welcome-overlay .welcome-sheet-body a {
+  color: var(--ds-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The tutorial is a 16:9 frame rather than a reading sheet. */
+.welcome-overlay--video .welcome-sheet {
+  width: min(1040px, 100%);
+  padding: var(--space-3);
+  overflow: visible;
+}
+
+.welcome-overlay--video .welcome-sheet-close {
+  position: absolute;
+  top: calc(var(--space-10) * -1);
+  right: 0;
+  float: none;
+  margin: 0;
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-2);
+}
+
+.welcome-overlay--video .welcome-video {
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: oklch(0 0 0);
+  aspect-ratio: 16 / 9;
+}
+
+.welcome-overlay--video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

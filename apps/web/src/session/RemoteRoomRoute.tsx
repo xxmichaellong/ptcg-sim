@@ -487,7 +487,17 @@ export const RemoteRoomRoute = ({
                   runtime={runtime.presentation}
                   perspective={state.view}
                   feedId={feedId}
-                  {...(soloLive ? { intro: <LegacyWelcome /> } : {})}
+                  {...(soloLive
+                    ? {
+                        intro: (
+                          <LegacyWelcome
+                            {...(chrome.visibility.deckImport
+                              ? { onLoadDeck: openDeck }
+                              : {})}
+                          />
+                        ),
+                      }
+                    : {})}
                 />
                 {!chrome.active && (
                   <RemoteRoomLiveControls

@@ -1028,7 +1028,12 @@ export const RemoteRoomLobby = ({
               aria-label="Game activity"
             >
               <div className="legacy-activity-intro" data-activity-intro="true">
-                <LegacyWelcome />
+                <LegacyWelcome
+                  onLoadDeck={() => {
+                    setDeckSurfaceActivated(true);
+                    setActivePanel('deck');
+                  }}
+                />
               </div>
               {status && activePanel === 'solo' && (
                 <p className="announcement solo-status" role="status">
