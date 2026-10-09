@@ -138,6 +138,23 @@ const click = async (element: Element) => {
   });
 };
 
+const summary = (root: ParentNode) => {
+  const panel = root.querySelector('#nativeDeckBuilderSummaryPanel')!;
+  const count = (group: string) =>
+    panel.querySelector(`[data-group="${group}"] strong`)?.textContent;
+  return {
+    total: panel
+      .querySelector('.native-deck-builder-summary-total')
+      ?.textContent?.replace(/\s+/gu, ' '),
+    pokemon: count('pokemon'),
+    trainer: count('trainer'),
+    energy: count('energy'),
+    progress: panel
+      .querySelector('[role="progressbar"]')
+      ?.getAttribute('aria-valuenow'),
+  };
+};
+
 describe('LegacyDeckBuilderWorkspace', () => {
   it('retains the source IDs, labels, defaults, closed inert state, and empty presentation', async () => {
     await mount({ open: false });
@@ -167,9 +184,13 @@ describe('LegacyDeckBuilderWorkspace', () => {
       host.querySelector<HTMLButtonElement>('#nativeDeckBuilderPlayButton')
         ?.disabled
     ).toBe(true);
-    expect(
-      host.querySelector('#nativeDeckBuilderSummaryPanel')?.textContent
-    ).toBe('Total: 0 · Pokémon: 0 · Trainer: 0 · Energy: 0');
+    expect(summary(host)).toEqual({
+      total: 'Total: 0 / 60 cards',
+      pokemon: '0',
+      trainer: '0',
+      energy: '0',
+      progress: '0',
+    });
     expect(
       host.querySelector('#nativeDeckBuilderCardsPanel')?.textContent
     ).toBe('No cards added yet.');
@@ -251,9 +272,19 @@ describe('LegacyDeckBuilderWorkspace', () => {
 
     await click(resultButton);
     expect(store.getSnapshot().slots.main.deck.Beta?.totalCount).toBe(1);
+    // A Pocket card makes this a 20-card Pocket deck.
+    expect(summary(host)).toEqual({
+      total: 'Total: 1 / 20 cards',
+      pokemon: '1',
+      trainer: '0',
+      energy: '0',
+      progress: '1',
+    });
+    // The result now says how many of that name the deck holds.
     expect(
-      host.querySelector('#nativeDeckBuilderSummaryPanel')?.textContent
-    ).toBe('Total: 1 · Pokémon: 1 · Trainer: 0 · Energy: 0');
+      resultButton.querySelector('.native-deck-builder-result-count')
+        ?.textContent
+    ).toBe('1 in deck');
   });
 
   it('cancels an obsolete search and ignores its late result', async () => {
@@ -328,8 +359,10 @@ describe('LegacyDeckBuilderWorkspace', () => {
     await click(host.querySelector('#nativeDeckBuilderTargetAlt')!);
     expect(store.getSnapshot().target).toBe('alternate');
     expect(
-      host.querySelector('#nativeDeckBuilderImportCsvLabel')?.className
-    ).toContain('opp-color');
+      host
+        .querySelector('#nativeDeckBuilderImportCsvLabel')
+        ?.getAttribute('data-seat')
+    ).toBe('opponent');
     await click(host.querySelector('#nativeDeckBuilderExportCsv')!);
     expect(downloadDeck).toHaveBeenCalledWith(
       store.getSnapshot().slots.alternate.deck
@@ -383,8 +416,6 @@ describe('LegacyDeckBuilderWorkspace', () => {
     )!;
 
     expect(alternate.getAttribute('aria-disabled')).toBe('true');
-    expect(alternate.style.cursor).toBe('default');
-    expect(alternate.style.opacity).toBe('0.5');
     await click(alternate);
     expect(store.getSnapshot().target).toBe('main');
   });
@@ -485,6 +516,78 @@ describe('LegacyDeckBuilderWorkspace', () => {
         .querySelector('#nativeDeckBuilderCardPreviewScrim')
         ?.hasAttribute('hidden')
     ).toBe(true);
+  });
+
+  it('opens the CSV picker from a real Import Deck button', async () => {
+    await mount();
+    const button = host.querySelector<HTMLButtonElement>(
+      '#nativeDeckBuilderImportCsvLabel'
+    )!;
+    const fileInput = host.querySelector<HTMLInputElement>(
+      '#nativeDeckBuilderCsvImport'
+    )!;
+    const picker = vi.fn();
+    fileInput.addEventListener('click', picker);
+
+    expect(button.tagName).toBe('BUTTON');
+    expect(button.textContent).toBe('Import Deck');
+    await click(button);
+    expect(picker).toHaveBeenCalledOnce();
+  });
+
+  it('closes the card preview with Escape and returns focus to the card', async () => {
+    const deckCard = card('Pikachu', 'arbitrary:deck-art');
+    const store = new DeckBuilderStore({ mainDeck: deckWith(deckCard, 3) });
+    await mount({ store });
+    const row = host.querySelector<HTMLElement>('[data-deck-index]')!;
+    // The row reads as one sentence; the badge and name repeat it visually.
+    expect(row.querySelector('.ds-visually-hidden')?.textContent).toBe(
+      'x3 — Pikachu (Pokémon)'
+    );
+    const preview = row.querySelector<HTMLButtonElement>(
+      '.native-deck-builder-deck-card'
+    )!;
+    preview.focus();
+    await click(preview);
+    const scrim = host.querySelector<HTMLElement>(
+      '#nativeDeckBuilderCardPreviewScrim'
+    )!;
+    expect(scrim.hidden).toBe(false);
+    expect(scrim.getAttribute('role')).toBe('dialog');
+    expect(document.activeElement).toBe(scrim);
+
+    await act(async () => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      );
+    });
+    expect(scrim.hidden).toBe(true);
+    expect(document.activeElement).toBe(preview);
+  });
+
+  it('groups the deck by supertype and pops a count only when it changes', async () => {
+    const pokemon = card('Pikachu', 'arbitrary:pikachu');
+    const energy = card('Fire Energy', 'arbitrary:fire', {
+      supertype: 'Energy',
+    });
+    const store = new DeckBuilderStore({
+      mainDeck: { ...deckWith(pokemon, 2), ...deckWith(energy, 4) },
+    });
+    await mount({ store });
+    const groups = [
+      ...host.querySelectorAll('.native-deck-builder-deck-group'),
+    ].map((group) => group.getAttribute('aria-label'));
+    expect(groups).toEqual(['Pokémon cards', 'Energy cards']);
+    const badge = () =>
+      host.querySelector(
+        '[data-deck-index="0"] .native-deck-builder-deck-count'
+      )!;
+    expect(badge().textContent).toBe('2');
+    expect(badge().classList.contains('is-bumped')).toBe(false);
+
+    await click(host.querySelector('[data-deck-index="0"] [data-add-index]')!);
+    expect(badge().textContent).toBe('3');
+    expect(badge().classList.contains('is-bumped')).toBe(true);
   });
 
   it('aborts pending catalog and file work on teardown', async () => {
