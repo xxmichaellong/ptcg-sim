@@ -86,4 +86,82 @@
   "observability": {
     "enabled": true,
   },
+  // The top level is production. A preview deploy must never replace it or
+  // share its Durable Object storage, even inside the same Cloudflare
+  // account, so it selects this environment, a Worker of its own. Bindings,
+  // vars and exports are not inherited by an environment and are restated;
+  // the rate namespaces are distinct so preview traffic never spends
+  // production's budgets.
+  "env": {
+    "preview": {
+      "name": "ptcgsim-v2-preview",
+      "vars": {
+        "BUILD_ID": "local-development",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PTCG_ROOM",
+            "class_name": "PtcgRoom",
+          },
+          {
+            "name": "PTCG_CONTINUATION",
+            "class_name": "PtcgContinuation",
+          },
+          {
+            "name": "PTCG_CONTINUATION_QUOTA",
+            "class_name": "PtcgContinuationQuota",
+          },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "ROOM_CREATION_RATE_LIMITER",
+          "namespace_id": "260903101",
+          "simple": {
+            "limit": 12,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_CREATION_RATE_LIMITER",
+          "namespace_id": "260903102",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+          "namespace_id": "260903103",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+          "namespace_id": "260903104",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+      ],
+      "exports": {
+        "PtcgContinuation": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgContinuationQuota": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgRoom": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+      },
+    },
+  },
 }

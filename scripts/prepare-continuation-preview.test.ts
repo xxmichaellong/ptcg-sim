@@ -395,13 +395,15 @@ describe('continuation managed-preview provisioner', () => {
       }),
       /quota configuration is invalid/iu
     );
-    await assert.rejects(
-      prepareContinuationPreview({
-        ...baseOptions(join(parent, 'overlap')),
-        rateNamespaceBase: 260_903_001,
-      }),
-      /must not overlap/u
-    );
+    for (const rateNamespaceBase of [260_903_001, 260_903_101]) {
+      await assert.rejects(
+        prepareContinuationPreview({
+          ...baseOptions(join(parent, `overlap-${rateNamespaceBase}`)),
+          rateNamespaceBase,
+        }),
+        /must not overlap/u
+      );
+    }
 
     const driftedConfig = join(parent, 'wrangler-drifted.jsonc');
     const checkedIn = await readFile(sourceConfig, 'utf8');

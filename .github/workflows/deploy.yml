@@ -43,6 +43,21 @@ jobs:
     timeout-minutes: 45
     environment: ${{ inputs.environment }}
     steps:
+      # The GitHub environment picks credentials; this picks the Worker. Each
+      # environment has a Worker of its own in wrangler.jsonc, so a preview
+      # deploy or rollback cannot replace production even when both share a
+      # Cloudflare account. Production is the top-level configuration, so it
+      # passes no --env. An environment without a Worker is refused.
+      - name: Select the Worker
+        id: target
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          case "$ENVIRONMENT" in
+            production) echo "flags=" >> "$GITHUB_OUTPUT"; echo "worker=ptcgsim-v2" >> "$GITHUB_OUTPUT" ;;
+            preview) echo "flags=--env preview" >> "$GITHUB_OUTPUT"; echo "worker=ptcgsim-v2-preview" >> "$GITHUB_OUTPUT" ;;
+            *) echo "No Worker is configured for environment '$ENVIRONMENT'"; exit 1 ;;
+          esac
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Install Node.js
@@ -75,7 +90,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/server
-          command: deploy --var BUILD_ID:${{ github.sha }}
+          command: deploy ${{ steps.target.outputs.flags }} --var BUILD_ID:${{ github.sha }}
       # Not a formality: the health endpoint must answer from the edge and name
       # this commit. A deploy that returns any other build id has not landed.
       - name: Verify the deployed build
@@ -103,7 +118,7 @@ jobs:
       - name: Record the deployment
         run: |
           {
-            echo "## Deployed \`ptcgsim-v2\` to **${{ inputs.environment }}**"
+            echo "## Deployed \`${{ steps.target.outputs.worker }}\` to **${{ inputs.environment }}**"
             echo
             echo "- Commit: \`${{ github.sha }}\`"
             echo "- URL: ${{ steps.deploy.outputs.deployment-url }}"
@@ -117,6 +132,21 @@ jobs:
     timeout-minutes: 15
     environment: ${{ inputs.environment }}
     steps:
+      # The GitHub environment picks credentials; this picks the Worker. Each
+      # environment has a Worker of its own in wrangler.jsonc, so a preview
+      # deploy or rollback cannot replace production even when both share a
+      # Cloudflare account. Production is the top-level configuration, so it
+      # passes no --env. An environment without a Worker is refused.
+      - name: Select the Worker
+        id: target
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          case "$ENVIRONMENT" in
+            production) echo "flags=" >> "$GITHUB_OUTPUT"; echo "worker=ptcgsim-v2" >> "$GITHUB_OUTPUT" ;;
+            preview) echo "flags=--env preview" >> "$GITHUB_OUTPUT"; echo "worker=ptcgsim-v2-preview" >> "$GITHUB_OUTPUT" ;;
+            *) echo "No Worker is configured for environment '$ENVIRONMENT'"; exit 1 ;;
+          esac
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Install Node.js
@@ -136,11 +166,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/server
-          command: rollback ${{ inputs.version-id }} --yes --message "Rolled back via GitHub Actions run ${{ github.run_id }}"
+          command: rollback ${{ inputs.version-id }} ${{ steps.target.outputs.flags }} --yes --message "Rolled back via GitHub Actions run ${{ github.run_id }}"
       - name: Record the rollback
         run: |
           {
-            echo "## Rolled back \`ptcgsim-v2\` on **${{ inputs.environment }}**"
+            echo "## Rolled back \`${{ steps.target.outputs.worker }}\` on **${{ inputs.environment }}**"
             echo
             echo "- Target version: \`${{ inputs.version-id || 'previous' }}\`"
             echo "- Durable Object storage was not modified."

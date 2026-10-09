@@ -43,6 +43,7 @@ const EXPECTED_SOURCE_CONFIG_KEYS = Object.freeze([
   'compatibility_date',
   'compatibility_flags',
   'durable_objects',
+  'env',
   'exports',
   'main',
   'name',
@@ -471,6 +472,29 @@ const buildPreviewWranglerConfig = (
       namespaceId: String(arguments_.rateNamespaceBase + index),
     })
   );
+  // The checked-in environments (the managed preview) hold namespaces of
+  // their own, which a generated preview must not spend either.
+  for (const environment of Object.values(
+    objectRecord(source.env, 'Checked-in Wrangler environments')
+  )) {
+    const limiters = objectRecord(
+      environment,
+      'Checked-in Wrangler environment'
+    ).ratelimits;
+    if (!Array.isArray(limiters)) {
+      throw new Error(
+        'Checked-in Wrangler environment rate limits are invalid'
+      );
+    }
+    for (const entry of limiters) {
+      sourceNamespaceIds.add(
+        positiveNamespaceId(
+          objectRecord(entry, 'Checked-in Wrangler rate limiter').namespace_id,
+          'Checked-in Wrangler environment rate-limit namespace'
+        )
+      );
+    }
+  }
   if (
     rateLimitNamespaces.some(({ namespaceId }) =>
       sourceNamespaceIds.has(Number(namespaceId))

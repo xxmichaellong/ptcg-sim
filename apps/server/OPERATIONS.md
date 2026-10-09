@@ -307,6 +307,14 @@ name, Durable Object exports, and rate-limit bindings come from
 `apps/server/wrangler.jsonc`; every Durable Object is SQLite-backed, which the
 free Workers plan supports.
 
+Each environment deploys a Worker of its own, so the two may share a
+Cloudflare account: `production` is the top-level configuration, Worker
+`ptcgsim-v2`, and `preview` is its `preview` environment, Worker
+`ptcgsim-v2-preview`, with its own Durable Object storage and rate-limit
+namespaces. The workflow refuses any other GitHub environment. A manual deploy
+follows the same rule: `wrangler deploy --env preview` for the preview, and
+`--env ''` only when production is meant.
+
 A deploy re-runs the non-browser quality gate on the dispatched commit before
 building. That is not redundant with CI: a dispatch may target an older commit,
 and it must still meet today's bar. It then deploys with `BUILD_ID` stamped to
