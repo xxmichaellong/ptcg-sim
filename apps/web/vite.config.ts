@@ -190,6 +190,18 @@ const v2ServerTarget =
 
 export default defineConfig({
   plugins: [rendererCacheFixture(), rendererRedirectFixture(), react()],
+  // Pre-bundle the UI libraries at start-up. Discovered later, on a first
+  // page load, they make the dev server re-optimise and reload the page,
+  // which restarts whatever the page was doing (a second room, in a test).
+  optimizeDeps: {
+    include: [
+      '@base-ui/react/alert-dialog',
+      '@base-ui/react/dialog',
+      '@base-ui/react/toast',
+      '@base-ui/react/tooltip',
+      '@phosphor-icons/react/dist/csr/*',
+    ],
+  },
   server: {
     proxy: {
       // Scoped to the authority's own routes. A blanket `/v2` rule would also

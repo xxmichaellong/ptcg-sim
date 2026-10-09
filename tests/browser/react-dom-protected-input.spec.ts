@@ -299,7 +299,8 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
   await expect(target).toHaveAttribute('data-ring', 'target');
   await expect(target.locator('.ptcgsim-card__face')).toHaveCSS(
     'box-shadow',
-    /^rgba\(143, 215, 153, 0\.86\d*\) 0px 0px 0px 4px, /
+    // The target ring is the design token's mint, then the card's shadow.
+    / 0px 0px 0px 3px, /
   );
 
   await page.keyboard.press('Escape');

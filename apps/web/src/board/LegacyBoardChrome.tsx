@@ -3,14 +3,13 @@ import type {
   BoardLayoutSnapshot,
   BoardPlayerLayout,
 } from '@ptcgsim/renderer-contract';
-import {
-  ArrowClockwise,
-  ArrowsDownUp,
-  Coin,
-  CornersIn,
-  CornersOut,
-  Plus,
-} from '@phosphor-icons/react';
+// One module per icon: the barrel pulls every icon into the dev server.
+import { ArrowClockwise } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
+import { ArrowsDownUp } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
+import { Coin } from '@phosphor-icons/react/dist/csr/Coin';
+import { CornersIn } from '@phosphor-icons/react/dist/csr/CornersIn';
+import { CornersOut } from '@phosphor-icons/react/dist/csr/CornersOut';
+import { Plus } from '@phosphor-icons/react/dist/csr/Plus';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';

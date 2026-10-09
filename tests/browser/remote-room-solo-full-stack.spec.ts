@@ -140,7 +140,10 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(
     page.locator('#chatbox [data-event-type="PlayerSetup"]')
   ).toHaveCount(2);
-  await expect(page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`)).toBeVisible();
+  // On the table: the Deck panel's own card list shows the face too.
+  await expect(
+    page.locator(`.ptcgsim-board-surface img[src="${SOLO_CARD_FACE_URL}"]`)
+  ).toBeVisible();
   const disclosedHandCard = await page.evaluate((faceUrl) => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     const card = scene?.cards.find(

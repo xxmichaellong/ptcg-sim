@@ -142,10 +142,11 @@ test('React DOM contains external card asset failures and recovers the stable ca
   await installUrl(missingUrl);
   await expect(image).toHaveAttribute('data-card-image-state', 'failed');
   await expect(image).toHaveCSS('visibility', 'hidden');
-  // The face keeps its neutral blank behind the hidden image.
-  await expect(card.locator('.ptcgsim-card__face')).toHaveCSS(
+  // The face keeps its neutral blank (a design token) behind the hidden
+  // image: an opaque surface, never a hole in the table.
+  await expect(card.locator('.ptcgsim-card__face')).not.toHaveCSS(
     'background-color',
-    'rgb(119, 119, 119)'
+    'rgba(0, 0, 0, 0)'
   );
   await expect(card).toBeEnabled();
   await card.click();

@@ -296,7 +296,14 @@ const expectOncePerGameControlsAnchored = (
       )
       .toBeLessThanOrEqual(2);
   }
-  for (const key of ['local-gx', 'opponent-vstar'] as const) {
+  // A frame turned half-way round anchors its row at the physical right edge
+  // of its first marker (VSTAR); an upright frame at its last (GX). Flipping
+  // the board turns the viewer's frame and rights the opponent's.
+  const flipped = state === 'flipped';
+  const anchored = flipped
+    ? (['local-vstar', 'opponent-gx'] as const)
+    : (['local-gx', 'opponent-vstar'] as const);
+  for (const key of anchored) {
     expect
       .soft(
         Math.abs(right(actual[key]) - right(expected[key])),
@@ -304,12 +311,19 @@ const expectOncePerGameControlsAnchored = (
       )
       .toBeLessThanOrEqual(2);
   }
+  // Upright, VSTAR comes first left to right; turned, it comes last.
+  const [localFirst, localSecond] = flipped
+    ? (['local-gx', 'local-vstar'] as const)
+    : (['local-vstar', 'local-gx'] as const);
+  const [opponentFirst, opponentSecond] = flipped
+    ? (['opponent-vstar', 'opponent-gx'] as const)
+    : (['opponent-gx', 'opponent-vstar'] as const);
   expect
-    .soft(right(actual['local-vstar']), `${state} local order`)
-    .toBeLessThanOrEqual(actual['local-gx'].x);
+    .soft(right(actual[localFirst]), `${state} local order`)
+    .toBeLessThanOrEqual(actual[localSecond].x);
   expect
-    .soft(right(actual['opponent-gx']), `${state} opponent order`)
-    .toBeLessThanOrEqual(actual['opponent-vstar'].x);
+    .soft(right(actual[opponentFirst]), `${state} opponent order`)
+    .toBeLessThanOrEqual(actual[opponentSecond].x);
 };
 
 const mountCandidateChrome = async (page: Page): Promise<void> => {

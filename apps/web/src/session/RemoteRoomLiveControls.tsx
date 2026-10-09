@@ -1,4 +1,4 @@
-import { Flower } from '@phosphor-icons/react';
+import { Flower } from '@phosphor-icons/react/dist/csr/Flower';
 import type {
   ClientSessionState,
   RemoteGameSession,
