@@ -1758,6 +1758,10 @@
               "kind": "type"
             },
             {
+              "name": "PileShuffle",
+              "kind": "type"
+            },
+            {
               "name": "planBoardMotion",
               "kind": "value"
             },

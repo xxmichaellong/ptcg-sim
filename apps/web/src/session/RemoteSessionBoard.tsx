@@ -22,6 +22,7 @@ import {
   CardHoverStore,
   CardInspector,
 } from '../board/inspector/CardInspector.js';
+import { TurnBanner } from '../board/banner/TurnBanner.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import { ReactDomBoardResizeInteraction } from '../board/ReactDomBoardResizeInteraction.js';
@@ -708,6 +709,10 @@ export const RemoteSessionBoard = ({
             state={boardState}
             darkMode={preferences.darkMode}
             actions={overlayActions}
+          />
+          <TurnBanner
+            view={boardState.view}
+            bottomPlayerId={boardState.scene.bottomPlayerId}
           />
           <CardInspector
             store={hoverStore}

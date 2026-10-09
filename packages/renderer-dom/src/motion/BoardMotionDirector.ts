@@ -8,6 +8,7 @@ import {
   type CardFlight,
   type CardGhost,
   type MarkerPulse,
+  type PileShuffle,
   type Rect,
   type SpringConfig,
 } from '@ptcgsim/renderer-contract';
@@ -182,6 +183,7 @@ export class BoardMotionDirector {
     }
     for (const ghost of plan.ghosts) this.startGhost(ghost, cause);
     for (const pulse of plan.pulses) this.pulse(pulse);
+    for (const shuffle of plan.shuffles) this.riffle(shuffle);
   }
 
   cancelAll(): void {
@@ -555,6 +557,91 @@ export class BoardMotionDirector {
         easing: 'linear',
       })
     );
+  }
+
+  /**
+   * A riffle over a shuffled pile: two half-decks swing apart and interleave
+   * back, drawn as short-lived copies of the pile's cover over the pile.
+   */
+  private riffle(shuffle: PileShuffle): void {
+    const layer = this.ghostLayer;
+    if (!layer || this.settings.reduced) return;
+    const scale = this.settings.durationScale;
+    const { rect } = shuffle;
+    const spread = rect.width * 0.62;
+    const lift = rect.height * 0.05;
+    const halves = [
+      { side: -1, cards: 2 },
+      { side: 1, cards: 2 },
+    ];
+    halves.forEach(({ side, cards }, halfIndex) => {
+      for (let index = 0; index < cards; index += 1) {
+        const ghost = document.createElement('div');
+        ghost.className = 'ptcgsim-card-ghost ptcgsim-card-ghost--riffle';
+        ghost.setAttribute('aria-hidden', 'true');
+        Object.assign(ghost.style, {
+          position: 'absolute',
+          left: `${rect.x}px`,
+          top: `${rect.y}px`,
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+          transform: `rotate(${shuffle.rotationQuarterTurns * 90}deg)`,
+          pointerEvents: 'none',
+        } satisfies Partial<CSSStyleDeclaration>);
+        const face = document.createElement('div');
+        face.className = 'ptcgsim-card__face';
+        const image = document.createElement('img');
+        image.alt = '';
+        image.draggable = false;
+        image.src = shuffle.imageUrl;
+        face.append(image);
+        ghost.append(face);
+        layer.append(ghost);
+        this.ghosts.add(ghost);
+        this.notify();
+        const remove = () => {
+          ghost.remove();
+          this.ghosts.delete(ghost);
+          this.notify();
+        };
+        if (!canAnimate(ghost)) {
+          remove();
+          continue;
+        }
+        const out = side * spread * (0.7 + index * 0.3);
+        const tilt = side * (5 + index * 2);
+        // The halves interleave: cards from each side land alternately.
+        const landing = 0.62 + (index * 2 + halfIndex) * 0.07;
+        const animation = ghost.animate(
+          [
+            { translate: '0px 0px', rotate: '0deg', offset: 0 },
+            {
+              translate: `${out.toFixed(1)}px ${(-lift).toFixed(1)}px`,
+              rotate: `${tilt}deg`,
+              offset: 0.32,
+            },
+            {
+              translate: `${(out * 0.35).toFixed(1)}px ${(-lift * 0.6).toFixed(1)}px`,
+              rotate: `${tilt * 0.4}deg`,
+              offset: Math.min(0.9, landing - 0.12),
+            },
+            {
+              translate: '0px 0px',
+              rotate: '0deg',
+              offset: Math.min(0.97, landing),
+            },
+            { translate: '0px 0px', rotate: '0deg', offset: 1 },
+          ],
+          {
+            duration: 680 * scale,
+            delay: index * 30 * scale,
+            easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
+            fill: 'backwards',
+          }
+        );
+        void animation.finished.then(remove, remove);
+      }
+    });
   }
 
   /** The whole table turns around when the viewer flips the board. */

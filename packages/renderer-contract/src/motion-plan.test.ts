@@ -93,6 +93,7 @@ describe('planBoardMotion', () => {
         flights: [],
         ghosts: [],
         pulses: [],
+        shuffles: [],
       });
     }
   });
@@ -284,6 +285,36 @@ describe('planBoardMotion', () => {
       after.cards.find((candidate) => candidate.id === card.id)!.bounds
     );
     expect(plan.ghosts).toEqual([]);
+  });
+
+  it('riffles a deck whose every card was re-aliased, and only that', () => {
+    const deck = cardsOf(base, zoneId(blue, 'deck'));
+    const before = sceneOf(base);
+    const shuffled = sceneOf(
+      withZones(base, {
+        [zoneId(blue, 'deck')]: deck.map((_, index) =>
+          freshConcealed(blue, `shuffled-${index}`)
+        ),
+      })
+    );
+    const plan = planBoardMotion(before, shuffled, 'advance');
+    expect(plan.shuffles).toEqual([
+      expect.objectContaining({ zoneId: zoneId(blue, 'deck') }),
+    ]);
+    // The re-keyed cover sits where it was: nothing travels.
+    expect(plan.flights.filter((flight) => flight.kind !== 'enter')).toEqual(
+      []
+    );
+    expect(plan.ghosts).toEqual([]);
+    // A draw changes the count: it is not a shuffle.
+    const { view, card } = freshKnown(base, blue, 'drawn-not-shuffled');
+    const drawn = sceneOf(
+      withZones(view, {
+        [zoneId(blue, 'deck')]: deck.slice(1),
+        [zoneId(blue, 'hand')]: [...cardsOf(base, zoneId(blue, 'hand')), card],
+      })
+    );
+    expect(planBoardMotion(before, drawn, 'advance').shuffles).toEqual([]);
   });
 
   it('pulses a counter whose value changed, even across an evolution', () => {

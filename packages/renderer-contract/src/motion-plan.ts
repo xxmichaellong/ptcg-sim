@@ -69,11 +69,24 @@ export interface MarkerPulse {
   readonly value: string;
 }
 
+/**
+ * A pile that was shuffled: the same number of cards, every one of them
+ * re-aliased. Shuffling is the one change that does that, and the viewer's
+ * own scenes show it, so the riffle reveals nothing new.
+ */
+export interface PileShuffle {
+  readonly zoneId: string;
+  readonly rect: Rect;
+  readonly rotationQuarterTurns: QuarterTurns;
+  readonly imageUrl: string;
+}
+
 export interface MotionPlan {
   readonly cause: BoardSceneMotionCause;
   readonly flights: readonly CardFlight[];
   readonly ghosts: readonly CardGhost[];
   readonly pulses: readonly MarkerPulse[];
+  readonly shuffles: readonly PileShuffle[];
 }
 
 const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
@@ -81,7 +94,40 @@ const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
   flights: [],
   ghosts: [],
   pulses: [],
+  shuffles: [],
 });
+
+/** Piles a shuffle can apply to and that paint a cover worth riffling. */
+const SHUFFLED_PILE_KINDS = new Set(['deck']);
+
+const detectShuffles = (
+  previous: BoardScene,
+  next: BoardScene
+): PileShuffle[] => {
+  const shuffles: PileShuffle[] = [];
+  for (const zone of next.zones) {
+    if (!SHUFFLED_PILE_KINDS.has(zone.kind) || zone.count < 2) continue;
+    const before = previous.zones.find((candidate) => candidate.id === zone.id);
+    if (!before || before.count !== zone.count) continue;
+    const previousIds = new Set(
+      previous.cards
+        .filter((card) => card.parentId === zone.id)
+        .map((card) => String(card.id))
+    );
+    const nextMembers = next.cards.filter((card) => card.parentId === zone.id);
+    if (nextMembers.some((card) => previousIds.has(String(card.id)))) continue;
+    const face =
+      nextMembers.find((card) => card.renderKey !== null) ?? nextMembers[0];
+    if (!face) continue;
+    shuffles.push({
+      zoneId: zone.id,
+      rect: face.bounds,
+      rotationQuarterTurns: face.rotationQuarterTurns,
+      imageUrl: paintedImage(face),
+    });
+  }
+  return shuffles;
+};
 
 /** Seconds between successive cards leaving the same place. */
 export const MOTION_STAGGER_SECONDS = 0.045;
@@ -425,5 +471,11 @@ export const planBoardMotion = (
     });
   }
 
-  return { cause, flights, ghosts, pulses };
+  return {
+    cause,
+    flights,
+    ghosts,
+    pulses,
+    shuffles: detectShuffles(previous, next),
+  };
 };

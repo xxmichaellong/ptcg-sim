@@ -399,6 +399,52 @@ describe('BoardMotionDirector', () => {
     expect(test.ghostLayer.childElementCount).toBe(0);
   });
 
+  it('riffles a shuffled deck with short-lived copies of its cover', () => {
+    const deckId = 'zone:spike-blue:deck';
+    const deck = base.zones[deckId]!.cards;
+    const shuffled: MatchViewState = {
+      ...base,
+      revision: base.revision + 1,
+      zones: {
+        ...base.zones,
+        [deckId]: {
+          ...base.zones[deckId]!,
+          cards: deck.map((card, index) => ({
+            ...card,
+            id: `shuffled-${index}` as CardSceneNode['id'],
+          })),
+        },
+      },
+    };
+    const before = sceneOf(base);
+    const after = sceneOf(shuffled);
+    for (const reduced of [false, true]) {
+      const test = setup();
+      test.director.setSettings({ reduced, durationScale: 1 });
+      test.register(before);
+      test.register(after);
+      test.director.commit(
+        null,
+        before,
+        undefined,
+        paintedOf(before),
+        new Set()
+      );
+      test.director.commit(
+        before,
+        after,
+        { cause: 'advance' },
+        paintedOf(after),
+        new Set()
+      );
+      const riffle = test.ghostLayer.querySelectorAll(
+        '.ptcgsim-card-ghost--riffle'
+      );
+      expect(riffle).toHaveLength(reduced ? 0 : 4);
+      test.director.cancelAll();
+    }
+  });
+
   it('pops a counter whose value changed', () => {
     const test = setup();
     const stackId = 'stack:blue:active';
