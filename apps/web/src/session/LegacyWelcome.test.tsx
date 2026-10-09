@@ -135,4 +135,26 @@ describe('LegacyWelcome', () => {
     await act(async () => root.unmount());
     host.remove();
   });
+
+  it('closes an open page on Escape, but not on an Escape that closes a dialog', async () => {
+    const { host, root } = await mount();
+    await act(async () =>
+      host.querySelector<HTMLElement>('#changelogLink')!.click()
+    );
+    const escape = () =>
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('data-ptcgsim-overlay', 'alert');
+    const cancel = document.createElement('button');
+    dialog.append(cancel);
+    document.body.append(dialog);
+    await act(async () => cancel.dispatchEvent(escape()));
+    expect(host.querySelector('#changelog')).not.toBeNull();
+    dialog.remove();
+
+    await act(async () => document.body.dispatchEvent(escape()));
+    expect(host.querySelector('#changelog')).toBeNull();
+    await act(async () => root.unmount());
+  });
 });

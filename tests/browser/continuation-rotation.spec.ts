@@ -19,7 +19,7 @@ import {
 } from '@playwright/test';
 
 import {
-  CONTINUATION_RESTORE_SUCCESS_MESSAGE,
+  expectContinuationRestoreSuccess,
   ROOM_CODE,
   boardIdentity,
   copyInvitation,
@@ -143,27 +143,20 @@ const restoreSave = async (
       response.request().method() === 'DELETE' && url.pathname === revokePath
     );
   });
-  const successDialog = new Promise<string>((accept) => {
-    page.once('dialog', async (dialog) => {
-      accept(dialog.message());
-      await dialog.accept();
-    });
-  });
   await fileChooser.setFiles({
     name: 'private-rotation-handoff.ptcgsave',
     mimeType: 'text/plain',
     buffer: Buffer.from(artifact.handoffText),
   });
-  const [restoreResponse, revokeResponse, message] = await Promise.all([
+  const [restoreResponse, revokeResponse] = await Promise.all([
     restoreResponsePromise,
     revokeResponsePromise,
-    successDialog,
   ]);
   expect(restoreResponse.status()).toBe(201);
   expect(restoreResponse.headers()['cache-control']).toContain('no-store');
   expect(revokeResponse.status()).toBe(204);
   expect(revokeResponse.headers()['cache-control']).toContain('no-store');
-  expect(message).toBe(CONTINUATION_RESTORE_SUCCESS_MESSAGE);
+  await expectContinuationRestoreSuccess(page);
   return readClipboard(page);
 };
 

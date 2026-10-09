@@ -331,7 +331,9 @@ describe('RemoteRoomRoute', () => {
     const onSubmission = vi.fn();
     const onLeave = vi.fn();
     const onResumeSavedGame = vi.fn(async () => undefined);
-    const confirmHeaderLeave = vi.fn(() => false);
+    const confirmHeaderLeave = vi.fn(
+      (_options: { readonly signal: AbortSignal }) => false
+    );
     const downloadTextFile = vi.fn(
       (_filename: string, _contents: string) => true
     );
@@ -653,6 +655,10 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('#p1Button') as HTMLButtonElement).click()
     );
     expect(confirmHeaderLeave).toHaveBeenCalledOnce();
+    // The question can be withdrawn: the route aborts it when it unmounts.
+    expect(confirmHeaderLeave).toHaveBeenCalledWith({
+      signal: expect.any(AbortSignal),
+    });
     expect(onLeave).not.toHaveBeenCalled();
     confirmHeaderLeave.mockReturnValue(true);
     await act(async () =>

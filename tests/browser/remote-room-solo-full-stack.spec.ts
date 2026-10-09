@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { overlayToast } from './support/overlay-dialogs.js';
+
 const SOLO_CARD_BACK_URL =
   'https://images.example.test/solo-player-two-card-back.png?exact=1';
 const SOLO_CARD_FACE_URL =
@@ -366,18 +368,18 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   );
 
   await page.locator('#optionsButton').click();
-  const replayFailure = page.waitForEvent('dialog');
-  const invalidImport = page.locator('#jsonReplay').setInputFiles({
+  await page.locator('#jsonReplay').setInputFiles({
     name: 'invalid-replay.json',
     mimeType: 'application/json',
     buffer: Buffer.from('{'),
   });
-  const replayFailureDialog = await replayFailure;
-  expect(replayFailureDialog.message()).toBe(
+  // The failure is reported in a danger toast (it was a native alert).
+  const replayFailure = overlayToast(page, 'Could not open the replay');
+  await expect(replayFailure).toBeVisible();
+  await expect(replayFailure).toHaveAttribute('data-tone', 'danger');
+  await expect(replayFailure).toContainText(
     'Error reading file. Please make sure the file is valid.'
   );
-  await replayFailureDialog.dismiss();
-  await invalidImport;
   await expect(page.locator('#p1Button')).toHaveText('Solo');
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',

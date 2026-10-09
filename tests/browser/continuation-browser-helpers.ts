@@ -6,8 +6,9 @@ import {
 } from '@playwright/test';
 
 export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
+export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Saved game resumed';
 export const CONTINUATION_RESTORE_SUCCESS_MESSAGE =
-  'Saved game resumed. A player invitation for the restored room was copied to your clipboard.';
+  'A player invitation for the restored room was copied to your clipboard.';
 export const EXPECTED_REVOKED_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 
@@ -114,3 +115,18 @@ export const exposedBrowserState = (page: Page) =>
         globalThis.sessionStorage.getItem(globalThis.sessionStorage.key(index)!)
     ),
   }));
+
+/**
+ * A restore reports success in a toast (it was a native alert): waits for
+ * the notice and checks its wording.
+ */
+export const expectContinuationRestoreSuccess = async (
+  page: Page
+): Promise<void> => {
+  const notice = page
+    .locator('[data-ptcgsim-overlay="toast"]')
+    .filter({ hasText: CONTINUATION_RESTORE_SUCCESS_TITLE });
+  await expect(notice).toBeVisible();
+  await expect(notice).toHaveAttribute('data-tone', 'success');
+  await expect(notice).toContainText(CONTINUATION_RESTORE_SUCCESS_MESSAGE);
+};

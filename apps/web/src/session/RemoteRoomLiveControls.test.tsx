@@ -10,10 +10,14 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { cancelAllDialogRequests } from '../ui/dialog-requests.js';
+import { OverlayHost } from '../ui/OverlayHost.js';
+import { dismissToast } from '../ui/toast.js';
 import {
   RemoteRoomLiveControls,
   type BrowserContinuationFileReader,
   type BrowserReplayFileReader,
+  type LiveRoomLeaveConfirmation,
   type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
 } from './RemoteRoomLiveControls.js';
@@ -112,7 +116,7 @@ const mount = async (
       deliverOpponentInvitation: (text: string) => Promise<void>,
       signal: AbortSignal
     ) => Promise<void>;
-    readonly confirmLeave?: () => boolean;
+    readonly confirmLeave?: LiveRoomLeaveConfirmation;
     readonly downloadTextFile?: (filename: string, contents: string) => boolean;
     readonly requestFullscreen?: () => boolean;
     readonly readReplayFile?: BrowserReplayFileReader;
@@ -223,10 +227,140 @@ const pressEnter = (
   return event;
 };
 
+/** The application's overlay host, as main.tsx mounts it. */
+const mountOverlayHost = async (): Promise<() => Promise<void>> => {
+  const element = document.createElement('div');
+  document.body.append(element);
+  const root = createRoot(element);
+  await act(async () => root.render(<OverlayHost />));
+  return async () => {
+    await act(async () => {
+      cancelAllDialogRequests();
+      dismissToast();
+      root.unmount();
+    });
+    element.remove();
+  };
+};
+
+/** Lets the dialog host's portal, focus and transitions settle. */
+const settleOverlays = async (): Promise<void> => {
+  for (let round = 0; round < 4; round += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+};
+
 describe('RemoteRoomLiveControls', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     vi.clearAllMocks();
+  });
+
+  it('asks before Leave Room in a danger confirm dialog, once at a time', async () => {
+    const unmountOverlays = await mountOverlayHost();
+    const confirm = vi.fn();
+    vi.stubGlobal('confirm', confirm);
+    try {
+      const onLeave = vi.fn();
+      const { host, root } = await mount(new FakeLiveSession(), { onLeave });
+      const leave = element<HTMLButtonElement>(host, '#leaveRoomButton');
+      const button = (action: string) =>
+        element<HTMLButtonElement>(
+          document,
+          `[data-dialog-action="${action}"]`
+        );
+
+      await act(async () => {
+        leave.click();
+        leave.click();
+      });
+      await settleOverlays();
+      expect(document.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);
+      expect(
+        document.querySelector('[role="alertdialog"]')?.textContent
+      ).toContain(
+        'Are you sure you want to leave the room? Current game state will be lost.'
+      );
+      expect(button('confirm').dataset.variant).toBe('danger');
+      await act(async () => button('cancel').click());
+      await settleOverlays();
+      expect(onLeave).not.toHaveBeenCalled();
+
+      await act(async () => leave.click());
+      await settleOverlays();
+      await act(async () => button('confirm').click());
+      await settleOverlays();
+      expect(onLeave).toHaveBeenCalledOnce();
+      expect(confirm).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+    } finally {
+      vi.unstubAllGlobals();
+      await unmountOverlays();
+    }
+  });
+
+  it('withdraws an unanswered leave question when the controls unmount', async () => {
+    const onLeave = vi.fn();
+    const answer = Promise.withResolvers<boolean>();
+    const confirmLeave = vi.fn<LiveRoomLeaveConfirmation>(() => answer.promise);
+    const { host, root } = await mount(new FakeLiveSession(), {
+      onLeave,
+      confirmLeave,
+    });
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#leaveRoomButton').click()
+    );
+    const signal = confirmLeave.mock.calls[0]?.[0].signal;
+    expect(signal?.aborted).toBe(false);
+
+    await act(async () => root.unmount());
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      answer.resolve(true);
+      await answer.promise;
+    });
+    expect(onLeave).not.toHaveBeenCalled();
+  });
+
+  it('reports a replay that cannot be read in a danger toast', async () => {
+    const unmountOverlays = await mountOverlayHost();
+    const alert = vi.fn();
+    vi.stubGlobal('alert', alert);
+    try {
+      const readReplayFile = vi.fn<BrowserReplayFileReader>(async () => ({
+        ok: false,
+        reason: 'read_failed',
+      }));
+      const { host, root } = await mount(new FakeLiveSession(), {
+        roomMode: 'solo',
+        onImportReplayFile: vi.fn(async () => true),
+        readReplayFile,
+      });
+      const input = element<HTMLInputElement>(host, '#jsonReplay');
+      Object.defineProperty(input, 'files', {
+        configurable: true,
+        value: [new File(['ignored'], 'replay.json')],
+      });
+      await act(async () => {
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        await Promise.resolve();
+      });
+      await settleOverlays();
+      const notice = document.querySelector<HTMLElement>(
+        '[data-ptcgsim-overlay="toast"]'
+      );
+      expect(notice?.dataset.tone).toBe('danger');
+      expect(notice?.textContent).toContain(
+        'Error reading file. Please make sure the file is valid.'
+      );
+      expect(alert).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+    } finally {
+      vi.unstubAllGlobals();
+      await unmountOverlays();
+    }
   });
 
   it('maps the legacy player controls to authenticated chat and atomic commands', async () => {

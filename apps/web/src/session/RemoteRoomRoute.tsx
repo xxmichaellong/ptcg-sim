@@ -50,6 +50,7 @@ import {
 } from './browser-room-options.js';
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useRoomBackground } from './useRoomBackground.js';
+import { confirmAction } from '../ui/dialog-requests.js';
 
 const LegacyDeckBuilderSession = lazy(async () => ({
   default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
@@ -57,10 +58,23 @@ const LegacyDeckBuilderSession = lazy(async () => ({
 }));
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
-const confirmConnectedRoomExit = (): boolean =>
-  globalThis.confirm(
-    'Are you sure you want to leave the room? Battle log will be erased.'
-  );
+
+/**
+ * Asks before the header tab leaves a connected room. Aborting the signal
+ * withdraws the question (the route is going away anyway).
+ */
+export type RoomLeaveConfirmation = (options: {
+  readonly signal: AbortSignal;
+}) => boolean | PromiseLike<boolean>;
+
+const confirmConnectedRoomExit: RoomLeaveConfirmation = ({ signal }) =>
+  confirmAction({
+    title: 'Leave the room?',
+    body: 'Are you sure you want to leave the room? Battle log will be erased.',
+    confirmLabel: 'Leave room',
+    tone: 'danger',
+    signal,
+  });
 
 export interface RemoteRoomRouteProps {
   readonly runtime: RemoteRoomRuntime;
@@ -120,7 +134,7 @@ export interface RemoteRoomRouteProps {
   readonly background?: RoomBackground;
   readonly onBackgroundChange?: (background: RoomBackground) => void;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
-  readonly confirmHeaderLeave?: () => boolean;
+  readonly confirmHeaderLeave?: RoomLeaveConfirmation;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
 }
@@ -162,6 +176,35 @@ export const RemoteRoomRoute = ({
   requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
   const options = useDismissibleRoomOptions();
+  // The header's "leave the room?" question while it is being asked. Only
+  // one at a time; unmounting the route withdraws it.
+  const headerLeaveQuestion = useRef<AbortController | undefined>(undefined);
+  const latestOnLeave = useRef(onLeave);
+  useEffect(() => {
+    latestOnLeave.current = onLeave;
+  }, [onLeave]);
+  useEffect(
+    () => () => {
+      headerLeaveQuestion.current?.abort();
+      headerLeaveQuestion.current = undefined;
+    },
+    []
+  );
+  const leaveFromHeader = (): void => {
+    if (!onLeave || headerLeaveQuestion.current) return;
+    const question = new AbortController();
+    headerLeaveQuestion.current = question;
+    const finish = (confirmed: boolean): void => {
+      if (headerLeaveQuestion.current === question) {
+        headerLeaveQuestion.current = undefined;
+      }
+      if (confirmed && !question.signal.aborted) latestOnLeave.current?.();
+    };
+    void Promise.resolve(confirmHeaderLeave({ signal: question.signal })).then(
+      finish,
+      () => finish(false)
+    );
+  };
   const backgroundSelection = useRoomBackground({
     ...(ownedBackground ? { background: ownedBackground } : {}),
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
@@ -380,8 +423,8 @@ export const RemoteRoomRoute = ({
                       setActivePanel('room');
                     } else if (soloLive) {
                       setActivePanel('room');
-                    } else if (onLeave && confirmHeaderLeave()) {
-                      onLeave();
+                    } else {
+                      leaveFromHeader();
                     }
                   }}
                 >

@@ -1,5 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
+import { answerOverlayConfirm } from './support/overlay-dialogs.js';
+
 const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 const EXPECTED_ROTATION_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 403 (Forbidden)';
@@ -595,19 +597,24 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await playerTwo.page.locator('#clearLog').click();
     await expect(playerTwo.page.locator('#p2Chatbox')).toBeEmpty();
 
-    playerTwo.page.once('dialog', async (dialog) => {
-      expect(dialog.message()).toBe(
-        'Are you sure you want to leave the room? Battle log will be erased.'
-      );
-      await dialog.dismiss();
-    });
+    const headerLeave = answerOverlayConfirm(playerTwo.page, false);
     await playerTwo.page.locator('#p1Button').click();
+    expect(await headerLeave).toEqual({
+      type: 'confirm',
+      message:
+        'Are you sure you want to leave the room? Battle log will be erased.',
+    });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room"]')
     ).toBeVisible();
 
-    playerTwo.page.once('dialog', (dialog) => dialog.accept());
+    const sidebarLeave = answerOverlayConfirm(playerTwo.page, true);
     await playerTwo.page.locator('#leaveRoomButton').click();
+    expect(await sidebarLeave).toEqual({
+      type: 'confirm',
+      message:
+        'Are you sure you want to leave the room? Current game state will be lost.',
+    });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toBeVisible();

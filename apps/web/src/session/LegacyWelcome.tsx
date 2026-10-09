@@ -8,6 +8,7 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
 import changelogMarkup from './legacy-changelog.html?raw';
 
 import '../design/panel-controls.css';
@@ -97,7 +98,10 @@ export const LegacyWelcome = ({
   useEffect(() => {
     if (page === null) return;
     const close = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setPage(null);
+      // Escape in a dialog raised over the page closes only that dialog.
+      if (event.key === 'Escape' && !isOverlayKeyTarget(event.target)) {
+        setPage(null);
+      }
     };
     document.addEventListener('keydown', close);
     return () => document.removeEventListener('keydown', close);

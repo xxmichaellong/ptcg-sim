@@ -37,6 +37,8 @@ import {
 } from './browser-replay-file.js';
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useGameSession } from './useGameSession.js';
+import { confirmAction } from '../ui/dialog-requests.js';
+import { toast } from '../ui/toast.js';
 
 export type RemoteRoomLiveSession = Pick<
   RemoteGameSession,
@@ -55,20 +57,51 @@ const ownPlayerId = (state: ClientSessionState): string | undefined =>
     ? state.view.viewer.playerId
     : undefined;
 
-const reportInvalidReplayFile = (): void =>
-  globalThis.alert('Error reading file. Please make sure the file is valid.');
+const reportInvalidReplayFile = (): void => {
+  toast({
+    title: 'Could not open the replay',
+    body: 'Error reading file. Please make sure the file is valid.',
+    tone: 'danger',
+  });
+};
 
-const reportContinuationFailure = (action: 'save' | 'resume'): void =>
-  globalThis.alert(
+const reportContinuationFailure = (action: 'save' | 'resume'): void => {
+  toast(
     action === 'save'
-      ? 'Could not save this online game. Please try again.'
-      : 'Could not resume this saved game. Please check the file and try again.'
+      ? {
+          title: 'Could not save',
+          body: 'Could not save this online game. Please try again.',
+          tone: 'danger',
+        }
+      : {
+          title: 'Could not resume',
+          body: 'Could not resume this saved game. Please check the file and try again.',
+          tone: 'danger',
+        }
   );
+};
 
-const reportContinuationResumeSuccess = (): void =>
-  globalThis.alert(
-    'Saved game resumed. A player invitation for the restored room was copied to your clipboard.'
-  );
+const reportContinuationResumeSuccess = (): void => {
+  toast({
+    title: 'Saved game resumed',
+    body: 'A player invitation for the restored room was copied to your clipboard.',
+    tone: 'success',
+  });
+};
+
+/** Asks before the sidebar's Leave Room ends a multiplayer game. */
+export type LiveRoomLeaveConfirmation = (options: {
+  readonly signal: AbortSignal;
+}) => boolean | PromiseLike<boolean>;
+
+const confirmLiveRoomLeave: LiveRoomLeaveConfirmation = ({ signal }) =>
+  confirmAction({
+    title: 'Leave the room?',
+    body: 'Are you sure you want to leave the room? Current game state will be lost.',
+    confirmLabel: 'Leave room',
+    tone: 'danger',
+    signal,
+  });
 
 export type BrowserReplayFileReader = (
   file: BrowserReplayFileLike,
@@ -94,10 +127,7 @@ export const RemoteRoomLiveControls = ({
   onImportReplayFile,
   onSaveOnlineGame,
   onResumeSavedGame,
-  confirmLeave = () =>
-    globalThis.confirm(
-      'Are you sure you want to leave the room? Current game state will be lost.'
-    ),
+  confirmLeave = confirmLiveRoomLeave,
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
   readReplayFile = readBrowserReplayFileBytes,
@@ -127,7 +157,7 @@ export const RemoteRoomLiveControls = ({
     deliverOpponentInvitation: OpponentInvitationDelivery,
     signal: AbortSignal
   ) => Promise<void>;
-  readonly confirmLeave?: () => boolean;
+  readonly confirmLeave?: LiveRoomLeaveConfirmation;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
   readonly readReplayFile?: BrowserReplayFileReader;
@@ -151,6 +181,13 @@ export const RemoteRoomLiveControls = ({
   const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
   const continuationAbortRef = useRef<AbortController | undefined>(undefined);
   const options = useDismissibleRoomOptions();
+  // The "leave the room?" question while it is being asked: one at a time,
+  // withdrawn if these controls unmount.
+  const leaveQuestion = useRef<AbortController | undefined>(undefined);
+  const latestOnLeave = useRef(onLeave);
+  useEffect(() => {
+    latestOnLeave.current = onLeave;
+  }, [onLeave]);
   const ownSeat = ownPlayerId(state);
   const playerId =
     ownSeat !== undefined &&
@@ -195,8 +232,23 @@ export const RemoteRoomLiveControls = ({
     const resolution = resolveSoloUndoAction(state.view, target);
     if (resolution.ok) session.submit(resolution.command);
   };
+  const leaveRoom = (): void => {
+    if (!onLeave || leaveQuestion.current) return;
+    const question = new AbortController();
+    leaveQuestion.current = question;
+    const finish = (confirmed: boolean): void => {
+      if (leaveQuestion.current === question) leaveQuestion.current = undefined;
+      if (confirmed && !question.signal.aborted) latestOnLeave.current?.();
+    };
+    void Promise.resolve(confirmLeave({ signal: question.signal })).then(
+      finish,
+      () => finish(false)
+    );
+  };
   useEffect(
     () => () => {
+      leaveQuestion.current?.abort();
+      leaveQuestion.current = undefined;
       replayImportAbortRef.current?.abort();
       const continuation = continuationAbortRef.current;
       continuationAbortRef.current = undefined;
@@ -492,9 +544,7 @@ export const RemoteRoomLiveControls = ({
             id="leaveRoomButton"
             type="button"
             className="neutral-color"
-            onClick={() => {
-              if (confirmLeave()) onLeave();
-            }}
+            onClick={leaveRoom}
           >
             Leave Room
           </button>

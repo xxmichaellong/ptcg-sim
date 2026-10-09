@@ -5,7 +5,7 @@ import {
 import { expect, test } from '@playwright/test';
 
 import {
-  CONTINUATION_RESTORE_SUCCESS_MESSAGE,
+  expectContinuationRestoreSuccess,
   EXPECTED_REVOKED_CONSOLE_ERROR,
   ROOM_CODE,
   boardIdentity,
@@ -121,28 +121,21 @@ test('online save downloads, restores, rotates both players, and revokes its bea
         response.request().method() === 'DELETE' && url.pathname === revokePath
       );
     });
-    const successDialog = new Promise<string>((resolve) => {
-      creator.page.once('dialog', async (dialog) => {
-        resolve(dialog.message());
-        await dialog.accept();
-      });
-    });
     await fileChooser.setFiles({
       name: 'real-browser-round-trip.ptcgsave',
       mimeType: 'text/plain',
       buffer: Buffer.from(saveText),
     });
 
-    const [restoreResponse, revokeResponse, dialogMessage] = await Promise.all([
+    const [restoreResponse, revokeResponse] = await Promise.all([
       restoreResponsePromise,
       revokeResponsePromise,
-      successDialog,
     ]);
     expect(restoreResponse.status()).toBe(201);
     expect(restoreResponse.headers()['cache-control']).toContain('no-store');
     expect(revokeResponse.status()).toBe(204);
     expect(revokeResponse.headers()['cache-control']).toContain('no-store');
-    expect(dialogMessage).toBe(CONTINUATION_RESTORE_SUCCESS_MESSAGE);
+    await expectContinuationRestoreSuccess(creator.page);
 
     await expect(creator.page.locator('#roomHeaderText')).toHaveAttribute(
       'data-session-phase',
