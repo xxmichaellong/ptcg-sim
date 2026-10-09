@@ -5,10 +5,9 @@ import {
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import {
-  PROTOCOL_VERSION,
-  type RoomCreationRequest,
-  type RoomCreationResponse,
+import type {
+  RoomCreationRequest,
+  RoomCreationResponse,
 } from '@ptcgsim/protocol';
 
 import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
@@ -660,15 +659,11 @@ export class PtcgRoom extends DurableObject<Env> {
     message: string | ArrayBuffer
   ) {
     if (typeof message !== 'string') {
-      socket.send(
-        JSON.stringify({
-          type: 'ServerNotice',
-          protocolVersion: PROTOCOL_VERSION,
-          code: 'invalid_message',
-          message: 'Binary messages are not supported',
-          retryable: false,
-        })
-      );
+      // The protocol is text-only, and a binary frame never reaches the hub's
+      // ingress limits. Answering each one would hand any socket an unmetered
+      // way to make the room work, so the first one ends the connection.
+      await this.disconnectSocket(socket);
+      socket.close(1003, 'Binary messages are not supported');
       return;
     }
     const runtime = await this.runtimePromise;

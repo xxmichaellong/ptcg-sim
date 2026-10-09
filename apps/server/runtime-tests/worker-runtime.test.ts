@@ -255,6 +255,18 @@ describe('Cloudflare Worker runtime', () => {
     expect(afterExpiry.alarm).toBe(initial.lifecycle.unclaimedExpiresAt);
   });
 
+  it('closes a socket on its first binary frame instead of answering it', async () => {
+    const created = await createRoom();
+    const socket = await connect(created);
+    const closed = nextSocketClose(socket);
+    socket.send(new Uint8Array([1, 2, 3]));
+    await expect(closed).resolves.toEqual({
+      code: 1003,
+      reason: 'Binary messages are not supported',
+    });
+    expect((await runtimeEvidence(created)).socketCount).toBe(0);
+  });
+
   it('refuses a late Hello without consuming its still-retryable ticket', async () => {
     const created = await createRoom();
     const ticket = await issuePlayerTicket(created);
