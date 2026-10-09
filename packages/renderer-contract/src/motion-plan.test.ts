@@ -299,7 +299,7 @@ describe('planBoardMotion', () => {
     );
     const plan = planBoardMotion(before, shuffled, 'advance');
     expect(plan.shuffles).toEqual([
-      expect.objectContaining({ zoneId: zoneId(blue, 'deck') }),
+      expect.objectContaining({ zoneId: zoneId(blue, 'deck'), delay: 0 }),
     ]);
     // The re-keyed cover sits where it was: nothing travels.
     expect(plan.flights.filter((flight) => flight.kind !== 'enter')).toEqual(
@@ -315,6 +315,53 @@ describe('planBoardMotion', () => {
       })
     );
     expect(planBoardMotion(before, drawn, 'advance').shuffles).toEqual([]);
+    // Nor is a card put on top: the cards already there keep their aliases.
+    const handCard = cardsOf(base, zoneId(blue, 'hand'))[0]!;
+    const onTop = sceneOf(
+      withZones(base, {
+        [zoneId(blue, 'hand')]: cardsOf(base, zoneId(blue, 'hand')).slice(1),
+        [zoneId(blue, 'deck')]: [
+          freshConcealed(blue, `topped-${String(handCard.id)}`),
+          ...deck,
+        ],
+      })
+    );
+    expect(planBoardMotion(before, onTop, 'advance').shuffles).toEqual([]);
+  });
+
+  it('riffles a deck that a hand was shuffled into, once the hand has landed', () => {
+    const deck = cardsOf(base, zoneId(blue, 'deck'));
+    const hand = cardsOf(base, zoneId(blue, 'hand'));
+    const before = sceneOf(base);
+    const shuffledIn = sceneOf(
+      withZones(base, {
+        [zoneId(blue, 'hand')]: [],
+        [zoneId(blue, 'deck')]: [...deck, ...hand].map((_, index) =>
+          freshConcealed(blue, `mulligan-${index}`)
+        ),
+      })
+    );
+    const plan = planBoardMotion(before, shuffledIn, 'advance');
+    expect(plan.shuffles).toHaveLength(1);
+    const [shuffle] = plan.shuffles;
+    expect(shuffle!.zoneId).toBe(zoneId(blue, 'deck'));
+    // The hand flies into the deck first; the riffle waits for the last card.
+    const deckZone = shuffledIn.zones.find(
+      (zone) => zone.id === zoneId(blue, 'deck')
+    )!;
+    const arriving = [
+      ...plan.ghosts.filter(
+        (ghost) =>
+          ghost.to !== null &&
+          ghost.to.x + ghost.to.width / 2 >= deckZone.bounds.x &&
+          ghost.to.x + ghost.to.width / 2 <=
+            deckZone.bounds.x + deckZone.bounds.width
+      ),
+    ];
+    expect(arriving.length).toBeGreaterThan(0);
+    expect(shuffle!.delay).toBeGreaterThan(
+      Math.max(...arriving.map((ghost) => ghost.delay))
+    );
   });
 
   it('pulses a counter whose value changed, even across an evolution', () => {

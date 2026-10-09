@@ -634,7 +634,7 @@ export class BoardMotionDirector {
           ],
           {
             duration: 680 * scale,
-            delay: index * 30 * scale,
+            delay: (shuffle.delay * 1000 + index * 30) * scale,
             easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
             fill: 'backwards',
           }

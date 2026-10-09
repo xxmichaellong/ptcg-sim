@@ -70,15 +70,19 @@ export interface MarkerPulse {
 }
 
 /**
- * A pile that was shuffled: the same number of cards, every one of them
- * re-aliased. Shuffling is the one change that does that, and the viewer's
- * own scenes show it, so the riffle reveals nothing new.
+ * A pile that was shuffled: every card it held before has a new alias. A
+ * shuffle is the one change that re-aliases a whole pile -- drawing, or
+ * putting a card on top, re-aliases only the cards that moved -- so this
+ * also catches a hand, a discard or prizes shuffled in, which change the
+ * count. The viewer's own scenes show it, so the riffle reveals nothing new.
  */
 export interface PileShuffle {
   readonly zoneId: string;
   readonly rect: Rect;
   readonly rotationQuarterTurns: QuarterTurns;
   readonly imageUrl: string;
+  /** Seconds to wait so the cards flying into the pile land first. */
+  readonly delay: number;
 }
 
 export interface MotionPlan {
@@ -100,15 +104,31 @@ const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
 /** Piles a shuffle can apply to and that paint a cover worth riffling. */
 const SHUFFLED_PILE_KINDS = new Set(['deck']);
 
+/** Roughly when a card flying into a pile has landed, after it sets off. */
+const PILE_ARRIVAL_SECONDS = 0.3;
+
+const centreInside = (rect: Rect, outer: Rect): boolean => {
+  const x = rect.x + rect.width / 2;
+  const y = rect.y + rect.height / 2;
+  return (
+    x >= outer.x &&
+    x <= outer.x + outer.width &&
+    y >= outer.y &&
+    y <= outer.y + outer.height
+  );
+};
+
 const detectShuffles = (
   previous: BoardScene,
-  next: BoardScene
+  next: BoardScene,
+  flights: readonly CardFlight[],
+  ghosts: readonly CardGhost[]
 ): PileShuffle[] => {
   const shuffles: PileShuffle[] = [];
   for (const zone of next.zones) {
     if (!SHUFFLED_PILE_KINDS.has(zone.kind) || zone.count < 2) continue;
     const before = previous.zones.find((candidate) => candidate.id === zone.id);
-    if (!before || before.count !== zone.count) continue;
+    if (!before || before.count < 1) continue;
     const previousIds = new Set(
       previous.cards
         .filter((card) => card.parentId === zone.id)
@@ -119,11 +139,33 @@ const detectShuffles = (
     const face =
       nextMembers.find((card) => card.renderKey !== null) ?? nextMembers[0];
     if (!face) continue;
+    const memberRects = new Map(
+      nextMembers.flatMap((card) =>
+        card.renderKey === null ? [] : [[card.renderKey, card.bounds] as const]
+      )
+    );
+    // Cards that travel into the pile; a re-keyed cover that stays put is
+    // not one.
+    const arrivals = [
+      ...flights
+        .filter((flight) => {
+          const rect = memberRects.get(flight.renderKey);
+          return rect !== undefined && !sameRect(flight.from, rect);
+        })
+        .map((flight) => flight.delay),
+      ...ghosts
+        .filter((ghost) => ghost.to && centreInside(ghost.to, zone.bounds))
+        .map((ghost) => ghost.delay),
+    ];
     shuffles.push({
       zoneId: zone.id,
       rect: face.bounds,
       rotationQuarterTurns: face.rotationQuarterTurns,
       imageUrl: paintedImage(face),
+      delay:
+        arrivals.length === 0
+          ? 0
+          : Math.max(...arrivals) + PILE_ARRIVAL_SECONDS,
     });
   }
   return shuffles;
@@ -476,6 +518,6 @@ export const planBoardMotion = (
     flights,
     ghosts,
     pulses,
-    shuffles: detectShuffles(previous, next),
+    shuffles: detectShuffles(previous, next, flights, ghosts),
   };
 };
