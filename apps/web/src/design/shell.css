@@ -15,11 +15,15 @@ body {
   background: var(--color-room);
   color: var(--color-text);
   font-family: var(--font-ui);
-  font-size: var(--text-md);
   font-weight: var(--weight-regular);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'cv11', 'ss01';
+}
+
+/* The root keeps the browser's 16px, so rem tokens mean what they say. */
+body {
+  font-size: var(--text-md);
 }
 
 body,
