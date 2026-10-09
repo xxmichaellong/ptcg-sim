@@ -602,6 +602,138 @@ describe('legacy board overlays', () => {
     expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
+  it('reads keyboard hints from the shortcut catalogue without changing item text', async () => {
+    const opponent = view.playerOrder[1]!;
+    const renderMenu = async (card: CardSceneNode) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              overlays: {
+                contextMenuCardId: card.id,
+                preview: null,
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        );
+      });
+    };
+    const hint = (selector: string) =>
+      host.querySelector<HTMLElement>(selector)?.dataset.menuHint;
+
+    await renderMenu(cardIn(`:${firstPlayer}:hand`));
+    expect(hint('[data-context-action="discardHand"]')).toBe('Alt+D');
+    expect(hint('[data-context-action="shuffleHandToDeck"]')).toBe('Alt+S');
+    expect(hint('[data-context-action="shuffleHandToDeckBottom"]')).toBe(
+      'Alt+↓'
+    );
+    // No catalogue key toggles a reveal both ways, so the row has no hint.
+    expect(hint('[data-context-action="revealCard"]')).toBeUndefined();
+    expect(
+      [...host.querySelectorAll<HTMLElement>('[data-move-choice]')].map(
+        (choice) => [choice.textContent, choice.dataset.menuHint]
+      )
+    ).toEqual([
+      ['to Board', 'Space'],
+      ['to Deck (top)', '↑'],
+      ['to Deck (bottom)', '↓'],
+      ['to Deck (switch)', '→'],
+      ['to Deck (shuffle)', 'S'],
+    ]);
+    expect(
+      host.querySelector('[data-context-action="discardHand"]')?.textContent
+    ).toBe('Discard hand');
+    expect(
+      host
+        .querySelector('[data-context-action="discardHand"]')
+        ?.classList.contains('is-danger')
+    ).toBe(true);
+
+    // Deck keys act on the acting seat's own deck, so the opponent's deck
+    // menu offers the same rows without them.
+    await renderMenu(cardIn(`:${firstPlayer}:deck`));
+    expect(hint('[data-context-action="drawCards"]')).toBe('1–9');
+    expect(hint('[data-context-action="viewDeckTop"]')).toBe('Alt+1–9');
+    expect(hint('[data-context-action="viewDeckBottom"]')).toBe('Ctrl+1–9');
+    await renderMenu(cardIn(`:${opponent}:deck`));
+    expect(
+      host.querySelector('[data-context-action="viewDeckTop"]')
+    ).not.toBeNull();
+    expect(hint('[data-context-action="viewDeckTop"]')).toBeUndefined();
+
+    const activeStack = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const active = scene.cards.find(
+      (candidate) => candidate.id === activeStack.evolutionCards.at(-1)!.id
+    )!;
+    await renderMenu(active);
+    expect(hint('[data-context-action="toggleAbility"]')).toBe('W');
+    expect(
+      [...host.querySelectorAll<HTMLElement>('[data-category-choice]')].map(
+        (choice) => choice.dataset.menuHint
+      )
+    ).toEqual(['Alt+E', 'Alt+T', 'Alt+P']);
+  });
+
+  it('plays a closed menu out as an inert ghost that no selector can find', async () => {
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const renderMenu = async (
+      contextMenuCardId: CardSceneNode['id'] | null
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(
+            StrictMode,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                overlays: { contextMenuCardId, preview: null, input: null },
+              }),
+              darkMode: false,
+              actions: actions(),
+            })
+          )
+        );
+        await Promise.resolve();
+      });
+    };
+
+    await renderMenu(card.id);
+    // StrictMode's effect replay leaves the open menu alone.
+    expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
+
+    await renderMenu(null);
+    expect(host.querySelector('[data-legacy-card-context-menu]')).toBeNull();
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+    expect(host.querySelector('[role="menuitem"]')).toBeNull();
+    const ghosts = host.querySelectorAll<HTMLElement>('.ptcgsim-overlay-ghost');
+    expect(ghosts).toHaveLength(1);
+    const ghost = ghosts[0]!;
+    expect(ghost.classList).toContain('is-exit-menu');
+    expect(ghost.getAttribute('aria-hidden')).toBe('true');
+    expect(ghost.hasAttribute('inert')).toBe(true);
+    const attributes = [ghost, ...ghost.querySelectorAll('*')].flatMap(
+      (element) => element.getAttributeNames()
+    );
+    expect(
+      attributes.filter(
+        (name) =>
+          (name.startsWith('data-') && name !== 'data-menu-hint') ||
+          name === 'role' ||
+          name === 'tabindex' ||
+          name === 'id'
+      )
+    ).toEqual([]);
+    expect(ghost.textContent).toContain('Discard hand');
+
+    await act(async () => {
+      ghost.dispatchEvent(new Event('animationend'));
+    });
+    expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
+  });
+
   it('asks each controller count descriptor in one StrictMode-safe prompt dialog', async () => {
     await mountOverlayHost();
     const callbacks = actions();

@@ -14,6 +14,29 @@ import {
   type Rect,
   type ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
+import type { Icon } from '@phosphor-icons/react';
+import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
+import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
+import { ArrowLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowLineUp';
+import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
+import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
+import { BinocularsIcon } from '@phosphor-icons/react/dist/csr/Binoculars';
+import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
+import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
+import { DiceFiveIcon } from '@phosphor-icons/react/dist/csr/DiceFive';
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
+import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
+import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
+import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
+import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
+import { PawPrintIcon } from '@phosphor-icons/react/dist/csr/PawPrint';
+import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
+import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
+import { SpiralIcon } from '@phosphor-icons/react/dist/csr/Spiral';
+import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
+import { SwapIcon } from '@phosphor-icons/react/dist/csr/Swap';
+import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
+import { WrenchIcon } from '@phosphor-icons/react/dist/csr/Wrench';
 import {
   memo,
   useCallback,
@@ -57,8 +80,14 @@ import type {
   LegacyBoardShortcutCountPrompt,
   LegacyOwnHandShortcutAction,
 } from '../resolveLegacyBoardShortcutAction.js';
+import {
+  catalogueShortcut,
+  shortcutHint,
+  type ShortcutCatalogueKey,
+} from '../shortcutCatalogue.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
+import { useOverlayExit } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -422,16 +451,136 @@ const moveMenuFocus = (
   event.preventDefault();
 };
 
+/**
+ * How each menu row looks: its icon, whether it is destructive, and the
+ * shortcut-catalogue entry its keyboard hint is read from. `own` hints name
+ * a key that acts on the acting seat's own zones, so they are shown only on
+ * that seat's cards; `card` hints act on whichever card is selected.
+ */
+interface ContextActionDecor {
+  readonly icon: Icon;
+  readonly danger?: boolean;
+  readonly shortcut?: ShortcutCatalogueKey & {
+    readonly scope: 'card' | 'own';
+  };
+}
+
+const CONTEXT_ACTION_DECOR: Readonly<
+  Record<LegacyBoardContextActionId, ContextActionDecor>
+> = {
+  toggleAbility: {
+    icon: SparkleIcon,
+    shortcut: {
+      heading: 'Card actions',
+      label: 'Toggle ability/effect',
+      scope: 'card',
+    },
+  },
+  setDamage: { icon: HeartBreakIcon },
+  setSpecialCondition: { icon: FlaskIcon },
+  shufflePrizes: { icon: ShuffleIcon },
+  togglePrizes: { icon: BinocularsIcon },
+  revealPrizes: { icon: EyeIcon },
+  shufflePrizesToDeckBottom: { icon: ArrowFatLinesDownIcon },
+  discardHand: {
+    icon: TrashIcon,
+    danger: true,
+    shortcut: { heading: 'Hand', label: 'Discard hand', scope: 'own' },
+  },
+  shuffleHandToDeck: {
+    icon: ShuffleIcon,
+    shortcut: { heading: 'Hand', label: 'Shuffle hand to deck', scope: 'own' },
+  },
+  shuffleHandToDeckBottom: {
+    icon: ArrowFatLinesDownIcon,
+    shortcut: {
+      heading: 'Hand',
+      label: 'Shuffle hand to bottom',
+      scope: 'own',
+    },
+  },
+  toggleOpponentHand: { icon: BinocularsIcon },
+  randomOpponentHandCard: { icon: DiceFiveIcon },
+  shuffleDeck: {
+    icon: ShuffleIcon,
+    shortcut: { heading: 'Deck', label: 'Shuffle deck', scope: 'own' },
+  },
+  drawCards: {
+    icon: CardsIcon,
+    shortcut: { heading: 'Deck', label: 'Draw card(s)', scope: 'own' },
+  },
+  viewDeckTop: {
+    icon: ArrowLineUpIcon,
+    shortcut: { heading: 'Deck', label: 'View top card(s)', scope: 'own' },
+  },
+  viewDeckBottom: {
+    icon: ArrowLineDownIcon,
+    shortcut: { heading: 'Deck', label: 'View bottom card(s)', scope: 'own' },
+  },
+  discardBoard: {
+    icon: TrashIcon,
+    danger: true,
+    shortcut: { heading: 'Playboard', label: 'Discard all', scope: 'own' },
+  },
+  moveBoardToHand: {
+    icon: HandGrabbingIcon,
+    shortcut: { heading: 'Playboard', label: 'Move all to hand', scope: 'own' },
+  },
+  shuffleBoardToDeck: {
+    icon: ShuffleIcon,
+    shortcut: {
+      heading: 'Playboard',
+      label: 'Shuffle all into deck',
+      scope: 'own',
+    },
+  },
+  moveBoardToLostZone: { icon: SpiralIcon, danger: true },
+  moveCard: { icon: ArrowsOutCardinalIcon },
+  revealCard: { icon: EyeIcon },
+  changeCardType: { icon: SwapIcon },
+};
+
+/** The catalogue's key for one entry, as a compact hint such as `Alt+D`. */
+const catalogueHint = (
+  key: ShortcutCatalogueKey | undefined
+): string | undefined => {
+  const shortcut = key ? catalogueShortcut(key) : undefined;
+  return shortcut ? shortcutHint(shortcut) : undefined;
+};
+
+const contextActionHint = (
+  action: LegacyBoardContextActionId,
+  own: boolean
+): string | undefined => {
+  const shortcut = CONTEXT_ACTION_DECOR[action].shortcut;
+  if (!shortcut || (shortcut.scope === 'own' && !own)) return undefined;
+  return catalogueHint(shortcut);
+};
+
 interface ContextSubmenuChoice<Value extends string> {
   readonly value: Value;
   readonly label: string;
+  readonly icon: Icon;
+  readonly hint?: string;
 }
 
+const CATEGORY_CHOICE_ICONS = {
+  Energy: LightningIcon,
+  Trainer: WrenchIcon,
+  Pokémon: PawPrintIcon,
+} as const satisfies Readonly<Record<LegacyBoardCategoryChoice, Icon>>;
+
 const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategoryChoice>[] =
-  LEGACY_BOARD_CATEGORY_CHOICES.map((category) => ({
-    value: category,
-    label: category === 'Trainer' ? 'to Tool' : `to ${category}`,
-  }));
+  LEGACY_BOARD_CATEGORY_CHOICES.map((category) => {
+    const label = category === 'Trainer' ? 'to Tool' : `to ${category}`;
+    const hint = catalogueHint({ heading: 'Card actions', label });
+    return {
+      value: category,
+      label,
+      icon: CATEGORY_CHOICE_ICONS[category],
+      ...(hint ? { hint } : {}),
+    };
+  });
 
 const MOVE_CHOICE_LABELS = {
   board: 'to Board',
@@ -441,11 +590,53 @@ const MOVE_CHOICE_LABELS = {
   deckShuffle: 'to Deck (shuffle)',
 } as const satisfies Readonly<Record<LegacyBoardMoveChoice, string>>;
 
+const MOVE_CHOICE_ICONS = {
+  board: SquaresFourIcon,
+  deckTop: ArrowLineUpIcon,
+  deckBottom: ArrowLineDownIcon,
+  deckSwitch: ArrowsDownUpIcon,
+  deckShuffle: ShuffleIcon,
+} as const satisfies Readonly<Record<LegacyBoardMoveChoice, Icon>>;
+
 const MOVE_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardMoveChoice>[] =
-  LEGACY_BOARD_MOVE_CHOICES.map((destination) => ({
-    value: destination,
-    label: MOVE_CHOICE_LABELS[destination],
-  }));
+  LEGACY_BOARD_MOVE_CHOICES.map((destination) => {
+    const label = MOVE_CHOICE_LABELS[destination];
+    const hint = catalogueHint({ heading: 'Move card...', label });
+    return {
+      value: destination,
+      label,
+      icon: MOVE_CHOICE_ICONS[destination],
+      ...(hint ? { hint } : {}),
+    };
+  });
+
+/**
+ * A menu row's icon and label. The keyboard hint is drawn by the stylesheet
+ * from `data-menu-hint`, so a row's text -- and its accessible name -- stay
+ * exactly its label.
+ */
+const MenuItemContent = ({
+  icon: ItemIcon,
+  label,
+}: {
+  readonly icon: Icon;
+  readonly label: string;
+}) => (
+  <>
+    <ItemIcon className="ptcgsim-menu-icon" aria-hidden="true" />
+    <span className="ptcgsim-menu-label">{label}</span>
+  </>
+);
+
+/** The submenu's top, relative to its row: its first item lines up with it. */
+const SUBMENU_TOP_OFFSET_PX = -5;
+/** The space between a menu and its submenu (see the stylesheet). */
+const SUBMENU_GAP_PX = 7;
+
+interface SubmenuPlacement {
+  readonly side: 'right' | 'left';
+  readonly shiftY: number;
+}
 
 const ContextSubmenu = <Value extends string>({
   entry,
@@ -466,9 +657,45 @@ const ContextSubmenu = <Value extends string>({
 }) => {
   const trigger = useRef<HTMLButtonElement>(null);
   const submenu = useRef<HTMLUListElement>(null);
+  const [placement, setPlacement] = useState<SubmenuPlacement>({
+    side: 'right',
+    shiftY: 0,
+  });
+  // A submenu opens on the side with room for it, and moves up rather than
+  // running off the bottom of the board.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const list = submenu.current;
+    const row = list?.parentElement;
+    const root = list?.closest<HTMLElement>('[data-legacy-board-overlays]');
+    if (!list || !row || !root) return;
+    const rootRect = root.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    const scale =
+      root.offsetWidth > 0 && rootRect.width > 0
+        ? rootRect.width / root.offsetWidth
+        : 1;
+    const gap = SUBMENU_GAP_PX * scale;
+    const fitsRight = rowRect.right + gap + listRect.width <= rootRect.right;
+    const fitsLeft = rowRect.left - gap - listRect.width >= rootRect.left;
+    const side = fitsRight || !fitsLeft ? 'right' : 'left';
+    const bottom =
+      rowRect.top + SUBMENU_TOP_OFFSET_PX * scale + listRect.height;
+    const overflow = bottom - (rootRect.bottom - 8 * scale);
+    const shiftY =
+      overflow > 0
+        ? -Math.min(overflow, Math.max(0, rowRect.top - rootRect.top)) / scale
+        : 0;
+    setPlacement((current) =>
+      current.side === side && current.shiftY === shiftY
+        ? current
+        : { side, shiftY }
+    );
+  }, [open]);
   return (
     <li
-      className={`has-submenu${entry.boundary ? ' is-boundary' : ''}`}
+      className={`has-submenu${entry.boundary ? ' is-boundary' : ''}${placement.side === 'left' ? ' opens-left' : ''}`}
       data-submenu-open={open ? 'true' : undefined}
       role="none"
       onMouseEnter={() => onOpenChange(true)}
@@ -492,6 +719,7 @@ const ContextSubmenu = <Value extends string>({
         ref={trigger}
         type="button"
         role="menuitem"
+        className="ptcgsim-menu-item"
         aria-haspopup="menu"
         aria-expanded={open}
         data-context-action={entry.action}
@@ -508,7 +736,11 @@ const ContextSubmenu = <Value extends string>({
           });
         }}
       >
-        {entry.label}
+        <MenuItemContent
+          icon={CONTEXT_ACTION_DECOR[entry.action].icon}
+          label={entry.label}
+        />
+        <CaretRightIcon className="ptcgsim-menu-chevron" aria-hidden="true" />
       </button>
       <ul
         ref={submenu}
@@ -516,6 +748,11 @@ const ContextSubmenu = <Value extends string>({
         data-context-submenu={entry.action}
         role="menu"
         aria-label={ariaLabel}
+        style={
+          placement.shiftY === 0
+            ? undefined
+            : { top: SUBMENU_TOP_OFFSET_PX + placement.shiftY }
+        }
         onKeyDown={(event) => {
           if (event.key === 'Escape' || event.key === 'ArrowLeft') {
             event.preventDefault();
@@ -542,15 +779,17 @@ const ContextSubmenu = <Value extends string>({
             <button
               type="button"
               role="menuitem"
+              className="ptcgsim-menu-item"
               data-category-choice={
                 choiceKind === 'category' ? choice.value : undefined
               }
               data-move-choice={
                 choiceKind === 'move' ? choice.value : undefined
               }
+              data-menu-hint={choice.hint}
               onClick={() => onSelect(choice.value)}
             >
-              {choice.label}
+              <MenuItemContent icon={choice.icon} label={choice.label} />
             </button>
           </li>
         ))}
@@ -604,16 +843,44 @@ export const legacyContextMenuOrigin = (
   return { left: bounds.x, top: bounds.y + bounds.height };
 };
 
+/** Where and when the last context menu was asked for, in client space. */
+interface ContextPointer {
+  readonly clientX: number;
+  readonly clientY: number;
+  readonly at: number;
+}
+
+/** A pointer older than this did not open the menu being placed. */
+const CONTEXT_POINTER_MAX_AGE_MS = 1000;
+/** The menu's narrowest width; the stylesheet draws the same. */
+const CONTEXT_MENU_MIN_WIDTH = 232;
+
+/** Whether a card sits in the acting seat's own zones (v1's selfView). */
+const isOwnLocation = (
+  state: BoardSessionControllerState,
+  card: CardSceneNode
+): boolean => {
+  if (state.view?.viewer.kind !== 'player') return false;
+  const location = zoneForCard(state, card);
+  return (
+    location !== null &&
+    location.playerId ===
+      actingPlayerIdOf(state.view, state.scene?.bottomPlayerId)
+  );
+};
+
 const ContextMenu = ({
   state,
   card,
   anchorBounds,
+  pointer,
   darkMode,
   actions,
 }: {
   readonly state: BoardSessionControllerState;
   readonly card: CardSceneNode;
   readonly anchorBounds?: Rect;
+  readonly pointer: RefObject<ContextPointer | null>;
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
@@ -626,8 +893,10 @@ const ContextMenu = ({
     () => selectLegacyContextEntries(state, card),
     [card, state]
   );
+  const own = isOwnLocation(state, card);
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
+  useOverlayExit(container, 'menu');
   useEffect(() => setOpenSubmenu(null), [card.id]);
   const bounds = anchorBounds ?? visualCardBounds(card);
   const scene = state.scene!;
@@ -650,18 +919,56 @@ const ContextMenu = ({
       top: Math.max(0, Math.min(raw.top, scene.viewport.height - size.height)),
     };
   };
-  const [position, setPosition] = useState(() =>
-    placement({ width: 180, height: 0 })
-  );
+  const [position, setPosition] = useState<{
+    readonly left: number;
+    readonly top: number;
+    readonly transformOrigin: string;
+  }>(() => ({
+    ...placement({ width: CONTEXT_MENU_MIN_WIDTH, height: 0 }),
+    transformOrigin: '0px 0px',
+  }));
   useLayoutEffect(() => {
     const element = container.current;
     if (!element) return;
     const measured = element.getBoundingClientRect();
     const next = placement({ width: measured.width, height: measured.height });
-    setPosition((current) =>
-      current.left === next.left && current.top === next.top ? current : next
+    // The menu grows out of the point that asked for it: the pointer when it
+    // was a recent right-click, else the card's centre.
+    const root = element.closest<HTMLElement>('[data-legacy-board-overlays]');
+    const recent = pointer.current;
+    const point =
+      root &&
+      recent &&
+      element.ownerDocument.defaultView &&
+      element.ownerDocument.defaultView.performance.now() - recent.at <
+        CONTEXT_POINTER_MAX_AGE_MS
+        ? openedZoneDropPoint(
+            scene,
+            root.getBoundingClientRect(),
+            recent.clientX,
+            recent.clientY
+          )
+        : null;
+    const anchorX = point?.x ?? bounds.x + bounds.width / 2;
+    const anchorY = point?.y ?? bounds.y + bounds.height / 2;
+    const originX = Math.min(
+      Math.max(anchorX - next.left, 0),
+      element.offsetWidth
     );
-    // `placement` reads only the values listed here.
+    const originY = Math.min(
+      Math.max(anchorY - next.top, 0),
+      element.offsetHeight
+    );
+    const transformOrigin = `${originX.toFixed(1)}px ${originY.toFixed(1)}px`;
+    setPosition((current) =>
+      current.left === next.left &&
+      current.top === next.top &&
+      current.transformOrigin === transformOrigin
+        ? current
+        : { ...next, transformOrigin }
+    );
+    // `placement` reads only the values listed here; the pointer is read
+    // once, when the menu is placed.
   }, [
     bounds.x,
     bounds.y,
@@ -754,12 +1061,17 @@ const ContextMenu = ({
                 <button
                   type="button"
                   role="menuitem"
+                  className={`ptcgsim-menu-item${CONTEXT_ACTION_DECOR[entry.action].danger ? ' is-danger' : ''}`}
                   data-context-action={entry.action}
+                  data-menu-hint={contextActionHint(entry.action, own)}
                   onClick={() => {
                     actions.invokeContextAction(entry.action, card.id);
                   }}
                 >
-                  {entry.label}
+                  <MenuItemContent
+                    icon={CONTEXT_ACTION_DECOR[entry.action].icon}
+                    label={entry.label}
+                  />
                 </button>
               </li>
             )
@@ -1837,6 +2149,21 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
     readonly zoneId: string;
     readonly bounds: Rect;
   } | null>(null);
+  // Where the last right-click (or context-menu key) happened, so the menu
+  // can grow out of it. Read only when a menu is placed; never state.
+  const contextPointer = useRef<ContextPointer | null>(null);
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent): void => {
+      contextPointer.current = {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        at: event.timeStamp,
+      };
+    };
+    document.addEventListener('contextmenu', onContextMenu, true);
+    return () =>
+      document.removeEventListener('contextmenu', onContextMenu, true);
+  }, []);
   const scene = state.scene;
   if (!scene) return null;
   const contextCard = state.overlays.contextMenuCardId
@@ -1883,7 +2210,13 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
     <div
       className={`ptcgsim-legacy-board-overlays${darkMode ? ' is-dark' : ''}`}
       data-legacy-board-overlays="true"
-      style={{ width: scene.viewport.width, height: scene.viewport.height }}
+      style={{
+        width: scene.viewport.width,
+        height: scene.viewport.height,
+        // The board area the overlays size their cards and panels from.
+        ['--ptcgsim-overlay-board-width' as string]: `${String(scene.viewport.width)}px`,
+        ['--ptcgsim-overlay-board-height' as string]: `${String(scene.viewport.height)}px`,
+      }}
     >
       {workAreaZones.map((zone) => (
         <WorkAreaPanel
@@ -1936,6 +2269,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
               ? contextAnchor.bounds
               : undefined
           }
+          pointer={contextPointer}
           darkMode={darkMode}
           actions={actions}
         />
