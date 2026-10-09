@@ -1848,6 +1848,12 @@ describe('legacy board overlays', () => {
     expect(editor.textContent).toBe('120');
     expect(editor.getAttribute('role')).toBe('textbox');
     expect(editor.getAttribute('aria-label')).toBe('Damage counter');
+    const hint = () =>
+      host.querySelector<HTMLElement>('.ptcgsim-marker-editor-hint');
+    expect(hint()?.textContent).toBe('Enter to set · Esc to cancel');
+    expect(hint()?.getAttribute('aria-hidden')).toBe('true');
+    // The ring is the stylesheet's: the field's own box stays the counter's.
+    expect(editor.style.outline).toBe('');
     expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
       marker.bounds.x,
       5
@@ -1879,6 +1885,8 @@ describe('legacy board overlays', () => {
     expect(editor.getAttribute('aria-invalid')).toBe('true');
     expect(document.activeElement).toBe(editor);
     expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+    expect(hint()?.textContent).toBe('A whole number, up to 9990');
+    expect(hint()?.classList).toContain('is-invalid');
 
     await act(async () => {
       editor.textContent = '70';

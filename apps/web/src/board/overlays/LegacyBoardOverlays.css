@@ -576,13 +576,65 @@
 }
 
 /* ---- Marker editor ---------------------------------------------------- */
+/* The counter being edited sits exactly over the counter on the card (its
+   size and colours come from the scene), wearing a ring so it reads as a
+   field: gold while open, the focus colour while typing, the danger colour
+   when a value was refused. Only opacity animates -- its box must stay the
+   counter's. */
 .ptcgsim-legacy-marker-editor {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  outline: 2px solid var(--ptcgsim-ring-selected, var(--color-gold));
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 6px color-mix(in oklch, var(--color-gold) 30%, transparent),
+    var(--shadow-2);
+  caret-color: currentColor;
   cursor: text;
   user-select: text;
   white-space: nowrap;
+  animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
+    var(--ease-out) backwards;
+  transition:
+    outline-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.ptcgsim-legacy-marker-editor:focus {
+  outline-color: var(--ptcgsim-focus-ring, var(--color-accent));
+  box-shadow:
+    0 0 0 6px var(--color-accent-soft),
+    var(--shadow-2);
+}
+
+.ptcgsim-legacy-marker-editor[aria-invalid='true'] {
+  outline-color: var(--color-danger);
+  box-shadow:
+    0 0 0 6px var(--color-danger-soft),
+    var(--shadow-2);
+}
+
+.ptcgsim-marker-editor-hint {
+  position: absolute;
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  pointer-events: none;
+  translate: -50% 0;
+  white-space: nowrap;
+  animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
+    var(--ease-out) backwards;
+}
+
+.ptcgsim-marker-editor-hint.is-invalid {
+  border-color: var(--color-danger);
+  color: var(--color-text);
 }
 
 /* ---- Panels: shared chrome -------------------------------------------- */

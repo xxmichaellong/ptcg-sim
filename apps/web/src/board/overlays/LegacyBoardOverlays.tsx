@@ -2212,6 +2212,9 @@ const markerEditorMarker = (
   };
 };
 
+/** Half the widest marker hint, to keep it on the board near an edge. */
+const MARKER_HINT_HALF_WIDTH_PX = 96;
+
 const MarkerEditor = ({
   state,
   actions,
@@ -2278,7 +2281,7 @@ const MarkerEditor = ({
     }
   };
 
-  return (
+  const field = (
     <div
       ref={editor}
       className="ptcgsim-legacy-marker-editor"
@@ -2338,13 +2341,43 @@ const MarkerEditor = ({
           "var(--font-display, 'Jost Variable', 'Jost', 'Futura', sans-serif)",
         fontWeight: 800,
         fontVariantNumeric: 'tabular-nums',
-        boxShadow: 'var(--shadow-2, 0 2px 6px rgb(0 0 0 / 0.38))',
+        // The counter's own shadow is drawn by the stylesheet, under the ring
+        // that says it is being edited.
         lineHeight: legacy ? `${marker.bounds.width}px` : undefined,
         textAlign: 'center',
         pointerEvents: 'auto',
-        outline: invalid ? '2px solid #fff' : 'none',
       }}
     />
+  );
+  // A counter being edited wears a ring (see the stylesheet) and says how to
+  // finish, or what it accepts once a value has been refused.
+  const hint = invalid
+    ? input.kind === 'damage'
+      ? 'A whole number, up to 9990'
+      : 'At most 16 characters'
+    : 'Enter to set · Esc to cancel';
+  const board = state.scene?.viewport;
+  const hintCenter = marker.bounds.x + marker.bounds.width / 2;
+  return (
+    <>
+      {field}
+      <span
+        className={`ptcgsim-marker-editor-hint${invalid ? ' is-invalid' : ''}`}
+        aria-hidden="true"
+        style={{
+          left: board
+            ? Math.min(
+                Math.max(hintCenter, MARKER_HINT_HALF_WIDTH_PX),
+                board.width - MARKER_HINT_HALF_WIDTH_PX
+              )
+            : hintCenter,
+          top: marker.bounds.y + marker.bounds.height + 8,
+          zIndex: marker.zIndex,
+        }}
+      >
+        {hint}
+      </span>
+    </>
   );
 };
 
