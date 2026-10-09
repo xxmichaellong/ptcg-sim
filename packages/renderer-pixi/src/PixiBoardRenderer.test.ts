@@ -10,6 +10,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  markerLabelFontSizePx,
   type BoardPresentation,
   type MarkerSceneNode,
   type BoardRendererStatus,
@@ -773,38 +774,37 @@ describe('Pixi board interaction cancellation', () => {
       fontWeight: 'bold',
       visible: true,
     });
+    // The Pixi spike paints each token flat in its face colour (ADR-027).
     expectView(condition, {
       shape: 'circle',
-      color: 0x008000,
+      color: 0xb278b4,
       alpha: 1,
       text: 'P',
-      textFill: 0xffffff,
-      fontSize: 22.5,
+      textFill: 0x17120a,
+      fontSize: markerLabelFontSizePx(30, 'P'),
       fontWeight: 'normal',
       visible: true,
     });
     expectView(localAbility, {
       shape: 'roundRect',
-      color: 0x3b8dad,
-      alpha: 0.708,
-      // Legacy ability tabs draw no glyph, so this fill is never painted. It
-      // now matches the DOM renderer's black instead of Pixi's old 0x111111;
-      // the two had drifted while each kept a private palette.
+      color: 0xc8171e,
+      alpha: 1,
+      // The Pixi spike draws no glyph on the tab, so this fill is never
+      // painted; it is the DOM tab's white lettering.
       text: '',
-      textFill: 0x000000,
+      textFill: 0xffffff,
       fontSize: Math.max(10, localAbility.bounds.height * 0.42),
       fontWeight: 'normal',
       visible: false,
     });
     expectView(opponentAbility, {
       shape: 'roundRect',
-      color: 0xff3c00,
-      alpha: 0.392,
-      // Legacy ability tabs draw no glyph, so this fill is never painted. It
-      // now matches the DOM renderer's black instead of Pixi's old 0x111111;
-      // the two had drifted while each kept a private palette.
+      color: 0xc8171e,
+      alpha: 1,
+      // The Pixi spike draws no glyph on the tab, so this fill is never
+      // painted; it is the DOM tab's white lettering.
       text: '',
-      textFill: 0x000000,
+      textFill: 0xffffff,
       fontSize: Math.max(10, opponentAbility.bounds.height * 0.42),
       fontWeight: 'normal',
       visible: false,
@@ -829,11 +829,11 @@ describe('Pixi board interaction cancellation', () => {
     );
     expectView(legacyDamage, {
       shape: 'circle',
-      color: 0xff6200,
+      color: 0xef7a00,
       alpha: 1,
       text: '50',
-      textFill: 0xffffff,
-      fontSize: 15,
+      textFill: 0x17120a,
+      fontSize: markerLabelFontSizePx(30 * 0.92, '50'),
       fontWeight: 'normal',
       visible: true,
     });
@@ -861,11 +861,11 @@ describe('Pixi board interaction cancellation', () => {
     expect(release).not.toHaveBeenCalled();
 
     const palettes = [
-      ['B', 0xff0000, 0xffffff],
-      ['A', 0x0000ff, 0xffffff],
-      ['Pa', 0xffff00, 0x000000],
-      ['C', 0x800080, 0xffffff],
-      ['X', 0xffffff, 0x000000],
+      ['B', 0xd3a757, 0x17120a],
+      ['A', 0x2f3f9e, 0xf4efcf],
+      ['Pa', 0x2b2b30, 0xffd60a],
+      ['C', 0x0f7c78, 0xffffff],
+      ['X', 0xf3efe4, 0x1a1814],
     ] as const;
     let revision = 204;
     let updatedCondition = condition;
@@ -890,7 +890,7 @@ describe('Pixi board interaction cancellation', () => {
         alpha: 1,
         text: value,
         textFill,
-        fontSize: 24,
+        fontSize: markerLabelFontSizePx(32, value),
         fontWeight: 'normal',
         visible: true,
       });
@@ -943,20 +943,20 @@ describe('Pixi board interaction cancellation', () => {
     );
     expectView(benchDamage, {
       shape: 'circle',
-      color: 0xff6200,
+      color: 0xef7a00,
       alpha: 1,
       text: '50',
-      textFill: 0xffffff,
-      fontSize: 13.5,
+      textFill: 0x17120a,
+      fontSize: markerLabelFontSizePx(27 * 0.92, '50'),
       fontWeight: 'normal',
       visible: true,
     });
     expectView(benchAbility, {
       shape: 'roundRect',
-      color: 0x3b8dad,
-      alpha: 0.708,
+      color: 0xc8171e,
+      alpha: 1,
       text: '',
-      textFill: 0x000000,
+      textFill: 0xffffff,
       fontSize: 10,
       fontWeight: 'normal',
       visible: false,
@@ -974,20 +974,20 @@ describe('Pixi board interaction cancellation', () => {
     );
     expectView(legacyDamage, {
       shape: 'circle',
-      color: 0xff6200,
+      color: 0xef7a00,
       alpha: 1,
       text: '50',
-      textFill: 0xffffff,
-      fontSize: 15,
+      textFill: 0x17120a,
+      fontSize: markerLabelFontSizePx(30 * 0.92, '50'),
       fontWeight: 'normal',
       visible: true,
     });
     expectView(localAbility, {
       shape: 'roundRect',
-      color: 0x3b8dad,
-      alpha: 0.708,
+      color: 0xc8171e,
+      alpha: 1,
       text: '',
-      textFill: 0x000000,
+      textFill: 0xffffff,
       fontSize: Math.max(10, localAbility.bounds.height * 0.42),
       fontWeight: 'normal',
       visible: false,
@@ -1232,7 +1232,7 @@ describe('Pixi board interaction cancellation', () => {
         expect(instruction).toMatchObject({
           action: 'fill',
           shape: 'circle',
-          color: 0xff6200,
+          color: 0xe70012,
           alpha: 1,
         });
         expect(instruction.shapeData?.slice(0, 3)).toEqual([
@@ -1242,7 +1242,9 @@ describe('Pixi board interaction cancellation', () => {
         ]);
         expect(view.text.text).toBe(descriptor.value);
         expect(view.text.style.fill).toBe(0xffffff);
-        expect(view.text.style.fontSize).toBe(descriptor.bounds.width / 2);
+        expect(view.text.style.fontSize).toBe(
+          markerLabelFontSizePx(descriptor.bounds.width, descriptor.value)
+        );
         expect(view.text.style.fontWeight).toBe('normal');
         expect(view.text.visible).toBe(true);
       } else {
@@ -1250,8 +1252,8 @@ describe('Pixi board interaction cancellation', () => {
         expect(instruction).toMatchObject({
           action: 'fill',
           shape: 'roundRect',
-          color: descriptor.side === 'local' ? 0x3b8dad : 0xff3c00,
-          alpha: descriptor.side === 'local' ? 0.708 : 0.392,
+          color: 0xc8171e,
+          alpha: 1,
         });
         expect(instruction.shapeData?.slice(0, 5)).toEqual([
           0,
@@ -1261,8 +1263,8 @@ describe('Pixi board interaction cancellation', () => {
           Math.min(descriptor.bounds.width, descriptor.bounds.height) * 0.1,
         ]);
         expect(view.text.text).toBe('');
-        // Invisible glyph fill; unified with the DOM renderer's black.
-        expect(view.text.style.fill).toBe(0x000000);
+        // Invisible glyph fill: the DOM tab's white lettering.
+        expect(view.text.style.fill).toBe(0xffffff);
         expect(view.text.style.fontSize).toBe(10);
         expect(view.text.style.fontWeight).toBe('normal');
         expect(view.text.visible).toBe(false);

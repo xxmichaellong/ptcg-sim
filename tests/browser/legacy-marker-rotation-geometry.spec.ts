@@ -14,6 +14,7 @@ import {
   createBoardScene,
   createRendererSpikeView,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  markerFace,
 } from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/marker-rotation-v1.json' with { type: 'json' };
@@ -626,9 +627,11 @@ test('pristine source active markers match the strict React DOM candidate', asyn
     (typeof capture.cases)[number]['phases'][number]
   >;
 
+  // Only the cards are compared with v1's paint: the markers are redesigned
+  // (ADR-027) and their geometry is asserted above.
   await isolateLegacyIframeCardPaint(
     page,
-    ':is(img[data-legacy-runtime-marker-card-id], [data-legacy-runtime-marker-id])'
+    'img[data-legacy-runtime-marker-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
@@ -803,74 +806,39 @@ test('pristine source active markers match the strict React DOM candidate', asyn
         'legacyActiveQ0'
       );
       await expect(locator).toHaveAttribute('data-marker-side', side);
+      // ADR-027 retires v1's marker paint. The box keeps v1's geometry,
+      // z-order and input transparency; the token painted inside it is the
+      // redesigned accessory, chosen from the same value.
       const style = await locator.evaluate((element) => {
         const computed = getComputedStyle(element);
+        const token = element.querySelector<HTMLElement>('[data-marker-face]');
         return {
-          backgroundColor: computed.backgroundColor,
-          borderRadius: computed.borderRadius,
-          color: computed.color,
-          display: computed.display,
-          fontSize: Number.parseFloat(computed.fontSize),
-          fontWeight: computed.fontWeight,
-          lineHeight: Number.parseFloat(computed.lineHeight),
+          face: token?.dataset.markerFace ?? null,
           pointerEvents: computed.pointerEvents,
           position: computed.position,
-          textAlign: computed.textAlign,
           textContent: element.textContent ?? '',
           zIndex: computed.zIndex,
         };
       });
       expect(style).toMatchObject({
-        backgroundColor: sourceMarker.backgroundColor,
-        borderRadius: sourceMarker.borderRadius,
-        color: sourceMarker.color,
-        display: 'block',
-        fontWeight: '400',
+        face: markerFace(sceneMarker).face,
         pointerEvents: 'none',
         position: 'absolute',
-        textAlign: 'center',
-        textContent: sourceMarker.textContent,
+        textContent:
+          candidateKind === 'damage'
+            ? sourceMarker.textContent
+            : candidateKind === 'abilityUsed'
+              ? 'Ability'
+              : '',
         zIndex: String(sceneMarker.zIndex),
       });
-      const expectedCandidateLineHeight =
-        candidateKind === 'abilityUsed'
-          ? sceneMarker.bounds.width / 3
-          : sceneMarker.bounds.width;
-      expectStructured(
-        style.lineHeight,
-        expectedCandidateLineHeight,
-        `${side}.${candidateKind}.candidateLineHeight`
-      );
-      expect(sourceMarker.inlineLineHeightPx).not.toBeNull();
-      expect(
-        Math.abs(
-          style.lineHeight - (sourceMarker.inlineLineHeightPx as number)
-        ) / (sourceMarker.inlineLineHeightPx as number),
-        `${side}.${candidateKind}.sourceLineHeight`
-      ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
-      if (sourceMarker.inlineFontSizePx !== null) {
-        const expectedCandidateFontSize =
-          candidateKind === 'damage'
-            ? sceneMarker.bounds.width / 2
-            : sceneMarker.bounds.width * 0.75;
-        expectStructured(
-          style.fontSize,
-          expectedCandidateFontSize,
-          `${side}.${candidateKind}.candidateFontSize`
-        );
-        expect(
-          Math.abs(style.fontSize - sourceMarker.inlineFontSizePx) /
-            sourceMarker.inlineFontSizePx,
-          `${side}.${candidateKind}.sourceFontSize`
-        ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
-      }
     }
   }
 
   await isolateCandidateCardPaint(
     page,
     '[data-active-marker-candidate-host]',
-    ':is([data-card-id], [data-marker-id])'
+    '[data-card-id]'
   );
   const candidatePaint = await page.screenshot({
     animations: 'disabled',
@@ -884,7 +852,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
   );
   await attachForegroundPaintComparison(
     testInfo,
-    'legacy-active-marker-paint',
+    'legacy-active-marker-card-paint',
     sourcePaint,
     candidatePaint,
     paintComparison
@@ -897,13 +865,13 @@ test('pristine source active markers match the strict React DOM candidate', asyn
   expect
     .soft(
       paintComparison.unmatchedSourceRatio,
-      `source card/marker paint: ${paintEvidence}`
+      `source card paint: ${paintEvidence}`
     )
     .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
   expect
     .soft(
       paintComparison.unmatchedCandidateRatio,
-      `candidate card/marker paint: ${paintEvidence}`
+      `candidate card paint: ${paintEvidence}`
     )
     .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 

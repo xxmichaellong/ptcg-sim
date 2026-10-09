@@ -14,6 +14,7 @@ import {
   createBoardScene,
   createRendererSpikeView,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  markerFace,
 } from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/bench-marker-rotation-v1.json' with { type: 'json' };
@@ -699,9 +700,11 @@ test('pristine source bench markers match the strict React DOM candidate', async
     (typeof capture.cases)[number]['phases'][number]
   >;
 
+  // Only the cards are compared with v1's paint: the markers are redesigned
+  // (ADR-027) and their geometry is asserted below.
   await isolateLegacyIframeCardPaint(
     page,
-    ':is(img[data-legacy-runtime-marker-card-id], [data-legacy-runtime-marker-id])'
+    'img[data-legacy-runtime-marker-card-id]'
   );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
@@ -904,26 +907,23 @@ test('pristine source bench markers match the strict React DOM candidate', async
       );
       await expect(locator).toHaveAttribute('data-marker-side', side);
       await expect(locator).toHaveAttribute('aria-hidden', 'true');
+      // ADR-027 retires v1's marker paint. The box keeps v1's geometry,
+      // z-order and input transparency; the token painted inside it is the
+      // redesigned accessory, chosen from the same value.
       const style = await locator.evaluate((element) => {
         if (!(element instanceof HTMLElement)) {
           throw new Error('Bench marker candidate is not an HTML element');
         }
         const computed = getComputedStyle(element);
+        const token = element.querySelector<HTMLElement>('[data-marker-face]');
         return {
           ariaHidden: element.getAttribute('aria-hidden'),
-          backgroundColor: computed.backgroundColor,
-          borderRadius: computed.borderRadius,
-          color: computed.color,
           contentEditable: element.contentEditable,
-          display: computed.display,
-          fontSize: Number.parseFloat(computed.fontSize),
-          fontWeight: computed.fontWeight,
+          face: token?.dataset.markerFace ?? null,
           hasContentEditableAttribute: element.hasAttribute('contenteditable'),
           isContentEditable: element.isContentEditable,
-          lineHeight: Number.parseFloat(computed.lineHeight),
           pointerEvents: computed.pointerEvents,
           position: computed.position,
-          textAlign: computed.textAlign,
           textContent: element.textContent ?? '',
           zIndex: computed.zIndex,
         };
@@ -934,49 +934,16 @@ test('pristine source bench markers match the strict React DOM candidate', async
       }
       expect(style).toMatchObject({
         ariaHidden: 'true',
-        backgroundColor: sourceMarker.backgroundColor,
-        borderRadius: sourceMarker.borderRadius,
-        color: sourceMarker.color,
         contentEditable: 'inherit',
-        display: 'block',
-        fontWeight: '400',
+        face: markerFace(sceneMarker).face,
         hasContentEditableAttribute: false,
         isContentEditable: false,
         pointerEvents: 'none',
         position: 'absolute',
-        textAlign: 'center',
-        textContent: sourceMarker.textContent,
+        textContent:
+          candidateKind === 'damage' ? sourceMarker.textContent : 'Ability',
         zIndex: String(sceneMarker.zIndex),
       });
-      const expectedCandidateLineHeight =
-        candidateKind === 'abilityUsed'
-          ? sceneMarker.bounds.width / 3
-          : sceneMarker.bounds.width;
-      expectStructured(
-        style.lineHeight,
-        expectedCandidateLineHeight,
-        `${side}.${candidateKind}.candidateLineHeight`
-      );
-      expect(sourceMarker.inlineLineHeightPx).not.toBeNull();
-      expect(
-        Math.abs(
-          style.lineHeight - (sourceMarker.inlineLineHeightPx as number)
-        ) / (sourceMarker.inlineLineHeightPx as number),
-        `${side}.${candidateKind}.sourceLineHeight`
-      ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
-      if (sourceMarker.inlineFontSizePx !== null) {
-        const expectedCandidateFontSize = sceneMarker.bounds.width / 2;
-        expectStructured(
-          style.fontSize,
-          expectedCandidateFontSize,
-          `${side}.${candidateKind}.candidateFontSize`
-        );
-        expect(
-          Math.abs(style.fontSize - sourceMarker.inlineFontSizePx) /
-            sourceMarker.inlineFontSizePx,
-          `${side}.${candidateKind}.sourceFontSize`
-        ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
-      }
       const hitOrder = await locator.evaluate((element, expectedCardId) => {
         const bounds = element.getBoundingClientRect();
         const host = element.closest('[data-bench-marker-candidate-host]');
@@ -1006,7 +973,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
   await isolateCandidateCardPaint(
     page,
     '[data-bench-marker-candidate-host]',
-    ':is([data-card-id$="-bench-marker-card"], [data-marker-id])'
+    '[data-card-id$="-bench-marker-card"]'
   );
   const candidatePaint = await page.screenshot({
     animations: 'disabled',
@@ -1020,7 +987,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
   );
   await attachForegroundPaintComparison(
     testInfo,
-    'legacy-bench-marker-paint',
+    'legacy-bench-marker-card-paint',
     sourcePaint,
     candidatePaint,
     paintComparison
@@ -1033,13 +1000,13 @@ test('pristine source bench markers match the strict React DOM candidate', async
   expect
     .soft(
       paintComparison.unmatchedSourceRatio,
-      `source card/marker paint: ${paintEvidence}`
+      `source card paint: ${paintEvidence}`
     )
     .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
   expect
     .soft(
       paintComparison.unmatchedCandidateRatio,
-      `candidate card/marker paint: ${paintEvidence}`
+      `candidate card paint: ${paintEvidence}`
     )
     .toBeLessThanOrEqual(SOURCE_CARD_PAINT_MAX_UNMATCHED_RATIO);
 

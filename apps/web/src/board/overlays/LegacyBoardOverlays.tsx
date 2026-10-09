@@ -1704,7 +1704,12 @@ const MarkerEditor = ({
             : '#111',
         fontSize:
           appearance?.fontSizePx ?? Math.max(10, marker.bounds.height * 0.42),
-        fontWeight: legacy ? undefined : 700,
+        // The same face as the counter it edits (`--font-display` is Jost).
+        fontFamily:
+          "var(--font-display, 'Jost Variable', 'Jost', 'Futura', sans-serif)",
+        fontWeight: 800,
+        fontVariantNumeric: 'tabular-nums',
+        boxShadow: 'var(--shadow-2, 0 2px 6px rgb(0 0 0 / 0.38))',
         lineHeight: legacy ? `${marker.bounds.width}px` : undefined,
         textAlign: 'center',
         pointerEvents: 'auto',

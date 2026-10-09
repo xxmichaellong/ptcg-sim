@@ -336,6 +336,10 @@
   --ptcgsim-lift-scale: 1.07;
   --ptcgsim-motion-hover-duration: var(--duration-normal);
   --ptcgsim-motion-hover-easing: var(--ease-snappy);
+  /* The physical damage counters: yellow 10, orange 50, red 100. */
+  --ptcgsim-counter-10: #ffe100;
+  --ptcgsim-counter-50: #ef7a00;
+  --ptcgsim-counter-100: #e70012;
 }
 
 @media (prefers-reduced-motion: reduce) {

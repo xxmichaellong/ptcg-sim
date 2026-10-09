@@ -1462,6 +1462,14 @@
               "kind": "value"
             },
             {
+              "name": "damageCounterBand",
+              "kind": "value"
+            },
+            {
+              "name": "DamageCounterBand",
+              "kind": "type"
+            },
+            {
               "name": "DEFAULT_BOARD_PREFERENCES",
               "kind": "value"
             },
@@ -1738,6 +1746,22 @@
               "kind": "type"
             },
             {
+              "name": "markerFace",
+              "kind": "value"
+            },
+            {
+              "name": "MarkerFace",
+              "kind": "type"
+            },
+            {
+              "name": "MarkerFaceKind",
+              "kind": "type"
+            },
+            {
+              "name": "markerLabelFontSizePx",
+              "kind": "value"
+            },
+            {
               "name": "MarkerPulse",
               "kind": "type"
             },
@@ -1796,6 +1820,14 @@
             {
               "name": "sideForPlayer",
               "kind": "value"
+            },
+            {
+              "name": "specialConditionKind",
+              "kind": "value"
+            },
+            {
+              "name": "SpecialConditionKind",
+              "kind": "type"
             },
             {
               "name": "SPRING_PRESETS",

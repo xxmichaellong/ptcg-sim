@@ -1,9 +1,6 @@
 import {
   BoardDragController,
   VelocityTracker,
-  isLegacyMarkerPresentation,
-  legacyMarkerAppearance,
-  legacyMarkerCssColor,
 } from '@ptcgsim/renderer-contract';
 import type {
   BoardPointerInput,
@@ -13,7 +10,6 @@ import type {
   BoardScene,
   BoardSceneMotion,
   CardSceneNode,
-  MarkerSceneNode,
   SettlingCard,
   ZoneCountSceneNode,
   Rect,
@@ -31,6 +27,8 @@ import {
 } from 'react';
 
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
+import { BOARD_MARKER_CSS } from './markers/marker-css.js';
+import { MarkerNode } from './markers/MarkerNode.js';
 import {
   BoardMotionDirector,
   type PaintedCard,
@@ -604,54 +602,6 @@ const ZoneCountNode = memo(function ZoneCountNode({
   );
 });
 
-const MarkerNode = memo(function MarkerNode({
-  marker,
-}: {
-  readonly marker: MarkerSceneNode;
-}) {
-  const legacy = isLegacyMarkerPresentation(marker.presentation);
-  const appearance = legacy ? legacyMarkerAppearance(marker) : null;
-  return (
-    <div
-      className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
-      data-marker-id={marker.id}
-      data-marker-presentation={marker.presentation}
-      data-marker-side={marker.side}
-      aria-hidden="true"
-      style={
-        legacy
-          ? {
-              ...absoluteRect(marker.bounds, marker.zIndex),
-              display: 'block',
-              borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
-              background: legacyMarkerCssColor(appearance!.fill),
-              color: legacyMarkerCssColor(appearance!.text),
-              fontSize: appearance!.fontSizePx,
-              lineHeight:
-                marker.kind === 'abilityUsed'
-                  ? `${marker.bounds.width / 3}px`
-                  : `${marker.bounds.width}px`,
-              textAlign: 'center',
-              pointerEvents: 'none',
-            }
-          : {
-              ...absoluteRect(marker.bounds, marker.zIndex),
-              display: 'grid',
-              placeItems: 'center',
-              borderRadius: '50%',
-              background: marker.kind === 'damage' ? '#e64242' : '#efefef',
-              color: marker.kind === 'damage' ? '#fff' : '#111',
-              fontSize: Math.max(10, marker.bounds.height * 0.42),
-              fontWeight: 700,
-              pointerEvents: 'none',
-            }
-      }
-    >
-      {appearance ? appearance.label : marker.value}
-    </div>
-  );
-});
-
 /** Where each painted card is drawn this commit, including held cards. */
 const paintedCards = (
   scene: BoardScene,
@@ -1064,6 +1014,7 @@ export const BoardSurface = ({
       }}
     >
       <style>{BOARD_SURFACE_CSS}</style>
+      <style>{BOARD_MARKER_CSS}</style>
       <div
         ref={tableRef}
         className="ptcgsim-board-table"

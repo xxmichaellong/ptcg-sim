@@ -1435,7 +1435,7 @@ describe('legacy board overlays', () => {
     expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
   });
 
-  it('anchors the active condition editor and follows the legacy draft palette', async () => {
+  it('anchors the active condition editor and previews the draft chip palette', async () => {
     const callbacks = actions();
     const legacyScene = createBoardSceneForViewport(view, {
       geometryVersion: 1,
@@ -1482,17 +1482,19 @@ describe('legacy board overlays', () => {
       5
     );
     expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
-    // An unrecognised condition draws v1's white circle with black text.
-    expect(editor.style.background).toBe('rgb(255, 255, 255)');
-    expect(editor.style.color).toBe('rgb(0, 0, 0)');
+    // The draft previews its chip's colours: "Poisoned" is the orchid
+    // Poison marker.
+    expect(editor.style.background).toBe('rgb(178, 120, 180)');
+    expect(editor.style.color).toBe('rgb(23, 18, 10)');
 
     await act(async () => {
       editor.focus();
       editor.textContent = 'Pa';
       editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
     });
-    expect(editor.style.background).toBe('rgb(255, 255, 0)');
-    expect(editor.style.color).toBe('rgb(0, 0, 0)');
+    // v1's "PA" is the Paralyzed chip: a yellow bolt on charcoal.
+    expect(editor.style.background).toBe('rgb(43, 43, 48)');
+    expect(editor.style.color).toBe('rgb(255, 214, 10)');
 
     await act(async () => {
       editor.textContent = 'condition text too long';

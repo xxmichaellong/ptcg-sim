@@ -882,19 +882,17 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
         backgroundColor: style.backgroundColor,
         color: style.color,
         borderRadius: style.borderRadius,
-        fontSize: style.fontSize,
-        lineHeight: style.lineHeight,
       };
     })
   ).toEqual(
-    await renderedDamage.evaluate((element) => {
+    // The editor previews the token it edits: the counter or chip painted
+    // inside the marker box (ADR-027), in its colours.
+    await renderedDamage.locator('[data-marker-face]').evaluate((element) => {
       const style = getComputedStyle(element);
       return {
         backgroundColor: style.backgroundColor,
         color: style.color,
         borderRadius: style.borderRadius,
-        fontSize: style.fontSize,
-        lineHeight: style.lineHeight,
       };
     })
   );
@@ -1007,21 +1005,21 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
         backgroundColor: style.backgroundColor,
         color: style.color,
         borderRadius: style.borderRadius,
-        fontSize: style.fontSize,
-        lineHeight: style.lineHeight,
       };
     })
   ).toEqual(
-    await renderedCondition.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        backgroundColor: style.backgroundColor,
-        color: style.color,
-        borderRadius: style.borderRadius,
-        fontSize: style.fontSize,
-        lineHeight: style.lineHeight,
-      };
-    })
+    // The editor previews the token it edits: the counter or chip painted
+    // inside the marker box (ADR-027), in its colours.
+    await renderedCondition
+      .locator('[data-marker-face]')
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          backgroundColor: style.backgroundColor,
+          color: style.color,
+          borderRadius: style.borderRadius,
+        };
+      })
   );
   await conditionEditor.fill('condition text too long');
   await conditionEditor.press('Enter');
@@ -1031,11 +1029,12 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect((await evidence(page)).overlayActions).toHaveLength(1);
 
   await conditionEditor.fill('Pa');
+  // v1's "PA" previews the Paralyzed chip: a yellow bolt on charcoal.
   await expect(conditionEditor).toHaveCSS(
     'background-color',
-    'rgb(255, 255, 0)'
+    'rgb(43, 43, 48)'
   );
-  await expect(conditionEditor).toHaveCSS('color', 'rgb(0, 0, 0)');
+  await expect(conditionEditor).toHaveCSS('color', 'rgb(255, 214, 10)');
   await conditionEditor.press('Enter');
   await expect(conditionEditor).toHaveCount(0);
   await expect

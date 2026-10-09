@@ -9,6 +9,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
+  markerLabelFontSizePx,
   type MarkerSceneNode,
   type ZoneCountSceneNode,
   type BoardRendererStatus,
@@ -17,6 +18,7 @@ import {
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
+import { BOARD_MARKER_CSS } from './markers/marker-css.js';
 import { ReactDomBoardRenderer } from './ReactDomBoardRenderer.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -94,6 +96,32 @@ const createMarkerScene = (
   revision: number,
   markers: readonly MarkerSceneNode[]
 ): BoardScene => ({ ...createScene(revision), markers });
+
+/** The outer marker box: the scene's rectangle, which geometry tests measure. */
+const markerBox = (node: HTMLElement) => ({
+  position: node.style.position,
+  left: node.style.left,
+  top: node.style.top,
+  width: node.style.width,
+  height: node.style.height,
+  zIndex: node.style.zIndex,
+  pointerEvents: node.style.pointerEvents,
+});
+
+/** The counter or chip painted inside a marker box. */
+const markerToken = (node: HTMLElement) => {
+  const token = node.querySelector<HTMLElement>('.ptcgsim-marker__token')!;
+  const label = token.querySelector<HTMLElement>('.ptcgsim-marker__label');
+  return {
+    face: token.dataset.markerFace,
+    diameter: Number.parseFloat(token.style.width),
+    fill: token.style.getPropertyValue('--ptcgsim-marker-fill'),
+    ink: token.style.getPropertyValue('--ptcgsim-marker-ink'),
+    art: token.style.getPropertyValue('--ptcgsim-marker-art'),
+    label: label?.textContent ?? null,
+    labelFontSize: label ? Number.parseFloat(label.style.fontSize) : null,
+  };
+};
 
 const mountInAct = async (
   renderer: ReactDomBoardRenderer,
@@ -669,7 +697,7 @@ describe('React DOM board renderer', () => {
     });
   });
 
-  it('preserves generic marker appearance and stable keyed DOM identity', async () => {
+  it('paints generic markers as tokens and keeps stable keyed DOM identity', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),
       emitPresentationUpdate: vi.fn(),
@@ -697,27 +725,37 @@ describe('React DOM board renderer', () => {
       markerPresentation: 'generic',
       markerSide: 'local',
     });
-    expect(damageNode.style).toMatchObject({
-      display: 'grid',
-      placeItems: 'center',
-      borderRadius: '50%',
-      background: '#e64242',
-      color: '#fff',
-      fontSize: '10px',
-      fontWeight: '700',
+    expect(damageNode.getAttribute('aria-hidden')).toBe('true');
+    expect(markerBox(damageNode)).toEqual({
+      position: 'absolute',
+      left: '80px',
+      top: '420px',
+      width: '20px',
+      height: '20px',
+      zIndex: '200',
       pointerEvents: 'none',
     });
+    // A total under 50 sits on the small yellow counter.
+    expect(markerToken(damageNode)).toMatchObject({
+      face: 'damage-10',
+      fill: 'var(--ptcgsim-counter-10, rgb(255, 225, 0))',
+      ink: 'rgb(23, 18, 10)',
+      label: '40',
+    });
+    expect(markerToken(damageNode).diameter).toBeCloseTo(20 * 0.84, 6);
+    expect(markerToken(damageNode).labelFontSize).toBeCloseTo(
+      markerLabelFontSizePx(20 * 0.84, '40'),
+      6
+    );
     expect(damageNode.textContent).toBe('40');
-    expect(abilityNode.style).toMatchObject({
-      display: 'grid',
-      borderRadius: '50%',
-      background: '#efefef',
-      color: '#111',
-      fontSize: '10px',
-      fontWeight: '700',
-      pointerEvents: 'none',
-    });
-    expect(abilityNode.textContent).toBe('used');
+    // A single card's ability marker is a square: the tick without the word.
+    expect(abilityNode.style.pointerEvents).toBe('none');
+    const abilityTab = abilityNode.querySelector<HTMLElement>(
+      '[data-marker-face="ability-used"]'
+    )!;
+    expect(abilityTab.dataset.markerTab).toBe('compact');
+    expect(abilityTab.querySelector('.ptcgsim-marker__check')).not.toBeNull();
+    expect(abilityNode.textContent).toBe('');
 
     const moved = marker({
       value: '50',
@@ -734,7 +772,8 @@ describe('React DOM board renderer', () => {
     expect(updatedDamage.textContent).toBe('50');
     expect(updatedDamage.style.left).toBe('120px');
     expect(updatedDamage.style.width).toBe('24px');
-    expect(updatedDamage.style.fontSize).toBe('10.08px');
+    expect(markerToken(updatedDamage).face).toBe('damage-50');
+    expect(markerToken(updatedDamage).diameter).toBeCloseTo(24 * 0.92, 6);
     expect(renderer.getDiagnostics()).toMatchObject({
       renderedMarkerIds: ['stack:p1:active:damage', 'visible-card:abilityUsed'],
       localTextureBindings: 0,
@@ -742,6 +781,29 @@ describe('React DOM board renderer', () => {
       globalTextureReferences: 0,
     });
 
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
+  it('ships the marker paint with the board and reads the shared tokens', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createMarkerScene(1, [marker()]));
+    expect(
+      [...host.querySelectorAll('style')].some(
+        (style) => style.textContent === BOARD_MARKER_CSS
+      )
+    ).toBe(true);
+    expect(BOARD_MARKER_CSS).toContain('--shadow-2,');
+    expect(BOARD_MARKER_CSS).toContain('font-variant-numeric: tabular-nums');
+    expect(BOARD_MARKER_CSS).toContain('--font-display,');
     await act(async () => {
       renderer.destroy();
       await Promise.resolve();
@@ -802,50 +864,60 @@ describe('React DOM board renderer', () => {
     const opponentAbilityNode = host.querySelector<HTMLElement>(
       '[data-marker-id="stack:p2:active:abilityUsed"]'
     )!;
-    expect(damageNode.style).toMatchObject({
-      display: 'block',
-      textAlign: 'center',
-      lineHeight: '30px',
-      borderRadius: '50%',
-      background: 'rgb(255, 98, 0)',
-      color: 'rgb(255, 255, 255)',
-      fontSize: '15px',
-      pointerEvents: 'none',
+    for (const node of [
+      damageNode,
+      conditionNode,
+      localAbilityNode,
+      opponentAbilityNode,
+    ]) {
+      expect(node.style.position).toBe('absolute');
+      expect(node.style.pointerEvents).toBe('none');
+    }
+    expect(markerBox(damageNode)).toMatchObject({
+      left: '20px',
+      top: '30px',
+      width: '30px',
+      height: '30px',
     });
-    expect(conditionNode.style).toMatchObject({
-      display: 'block',
-      textAlign: 'center',
-      lineHeight: '30px',
-      borderRadius: '50%',
-      background: 'rgb(0, 128, 0)',
-      color: 'rgb(255, 255, 255)',
-      fontSize: '22.5px',
-      pointerEvents: 'none',
+    expect(markerToken(damageNode)).toMatchObject({
+      face: 'damage-10',
+      label: '40',
     });
-    expect(localAbilityNode.style).toMatchObject({
-      display: 'block',
-      borderRadius: '10%',
-      background: 'rgba(59, 141, 173, 0.708)',
-      lineHeight: '30px',
-      pointerEvents: 'none',
+    // Poison is the rulebook marker: its artwork carries the meaning.
+    expect(markerToken(conditionNode)).toMatchObject({
+      face: 'poisoned',
+      fill: 'rgb(178, 120, 180)',
+      art: 'rgb(49, 48, 94)',
+      label: null,
     });
-    expect(localAbilityNode.textContent).toBe('');
+    expect(markerToken(conditionNode).diameter).toBeCloseTo(30, 6);
+    expect(
+      conditionNode.querySelector('svg.ptcgsim-marker__art')
+    ).not.toBeNull();
+    expect(conditionNode.textContent).toBe('');
+    for (const node of [localAbilityNode, opponentAbilityNode]) {
+      const tab = node.querySelector<HTMLElement>(
+        '[data-marker-face="ability-used"]'
+      )!;
+      expect(tab.dataset.markerTab).toBe('wide');
+      expect(Number.parseFloat(tab.style.fontSize)).toBeCloseTo(10.8, 6);
+      expect(tab.style.getPropertyValue('--ptcgsim-marker-fill')).toBe(
+        'rgb(200, 23, 30)'
+      );
+      expect(node.textContent).toBe('Ability');
+    }
+    expect(localAbilityNode.style.width).toBe('90px');
     expect(opponentAbilityNode.dataset.markerSide).toBe('opponent');
-    expect(opponentAbilityNode.style.background).toBe(
-      'rgba(255, 60, 0, 0.392)'
-    );
-    expect(opponentAbilityNode.style.lineHeight).toBe('30px');
-    expect(opponentAbilityNode.textContent).toBe('');
 
     const palettes = [
-      ['B', 'rgb(255, 0, 0)', 'rgb(255, 255, 255)'],
-      ['A', 'rgb(0, 0, 255)', 'rgb(255, 255, 255)'],
-      ['Pa', 'rgb(255, 255, 0)', 'rgb(0, 0, 0)'],
-      ['C', 'rgb(128, 0, 128)', 'rgb(255, 255, 255)'],
-      ['X', 'rgb(255, 255, 255)', 'rgb(0, 0, 0)'],
+      ['B', 'burned', ''],
+      ['A', 'asleep', ''],
+      ['Pa', 'paralyzed', ''],
+      ['C', 'confused', ''],
+      ['X', 'condition-note', 'X'],
     ] as const;
     let revision = 2;
-    for (const [value, background, color] of palettes) {
+    for (const [value, face, text] of palettes) {
       const updatedCondition = legacy({
         ...condition,
         value,
@@ -867,9 +939,12 @@ describe('React DOM board renderer', () => {
         '[data-marker-id="stack:p1:active:specialCondition"]'
       )!;
       expect(updatedNode).toBe(conditionNode);
-      expect(updatedNode.textContent).toBe(value);
-      expect(updatedNode.style.background).toBe(background);
-      expect(updatedNode.style.color).toBe(color);
+      expect(markerToken(updatedNode).face, value).toBe(face);
+      expect(updatedNode.textContent, value).toBe(text);
+      expect(
+        updatedNode.querySelector('svg.ptcgsim-marker__art') !== null,
+        value
+      ).toBe(text === '');
     }
 
     act(() =>
@@ -1024,111 +1099,67 @@ describe('React DOM board renderer', () => {
     });
     expect(damageNode.getAttribute('aria-hidden')).toBe('true');
     expect(damageNode.textContent).toBe('130');
-    expect(damageNode.style.position).toBe('absolute');
-    expect({
-      left: damageNode.style.left,
-      top: damageNode.style.top,
-      width: damageNode.style.width,
-      height: damageNode.style.height,
-      zIndex: damageNode.style.zIndex,
-      display: damageNode.style.display,
-      textAlign: damageNode.style.textAlign,
-      lineHeight: damageNode.style.lineHeight,
-      borderRadius: damageNode.style.borderRadius,
-      background: damageNode.style.background,
-      color: damageNode.style.color,
-      fontSize: damageNode.style.fontSize,
-      pointerEvents: damageNode.style.pointerEvents,
-    }).toEqual({
+    expect(markerBox(damageNode)).toEqual({
+      position: 'absolute',
       left: '606.65625px',
       top: '658.125px',
       width: '26.953125px',
       height: '26.953125px',
       zIndex: '301',
-      display: 'block',
-      textAlign: 'center',
-      lineHeight: '26.953125px',
-      borderRadius: '50%',
-      background: 'rgb(255, 98, 0)',
-      color: 'rgb(255, 255, 255)',
-      fontSize: '13.476563px',
       pointerEvents: 'none',
     });
-    expect(localAbilityNode.dataset).toMatchObject({
-      markerPresentation: 'legacyBenchQ0',
-      markerSide: 'local',
+    // 100 and over is the big red counter, with white numerals: black on that
+    // red would miss WCAG AA.
+    expect(markerToken(damageNode)).toMatchObject({
+      face: 'damage-100',
+      fill: 'var(--ptcgsim-counter-100, rgb(231, 0, 18))',
+      ink: 'rgb(255, 255, 255)',
+      label: '130',
     });
-    expect(localAbilityNode.getAttribute('aria-hidden')).toBe('true');
-    expect(localAbilityNode.textContent).toBe('');
-    expect(localAbilityNode.style.position).toBe('absolute');
-    expect({
-      left: localAbilityNode.style.left,
-      top: localAbilityNode.style.top,
-      width: localAbilityNode.style.width,
-      height: localAbilityNode.style.height,
-      zIndex: localAbilityNode.style.zIndex,
-      display: localAbilityNode.style.display,
-      textAlign: localAbilityNode.style.textAlign,
-      lineHeight: localAbilityNode.style.lineHeight,
-      borderRadius: localAbilityNode.style.borderRadius,
-      background: localAbilityNode.style.background,
-      color: localAbilityNode.style.color,
-      fontSize: localAbilityNode.style.fontSize,
-      fontWeight: localAbilityNode.style.fontWeight,
-      pointerEvents: localAbilityNode.style.pointerEvents,
-    }).toEqual({
-      left: '552.75px',
-      top: '686.25px',
-      width: '80.859375px',
-      height: '16.171875px',
-      zIndex: '301',
-      display: 'block',
-      textAlign: 'center',
-      lineHeight: '26.953125px',
-      borderRadius: '10%',
-      background: 'rgba(59, 141, 173, 0.708)',
-      color: 'rgb(0, 0, 0)',
-      fontSize: '',
-      fontWeight: '',
-      pointerEvents: 'none',
-    });
-    expect(opponentAbilityNode.dataset).toMatchObject({
-      markerPresentation: 'legacyBenchQ0',
-      markerSide: 'opponent',
-    });
-    expect(opponentAbilityNode.getAttribute('aria-hidden')).toBe('true');
-    expect(opponentAbilityNode.textContent).toBe('');
-    expect({
-      left: opponentAbilityNode.style.left,
-      top: opponentAbilityNode.style.top,
-      width: opponentAbilityNode.style.width,
-      height: opponentAbilityNode.style.height,
-      zIndex: opponentAbilityNode.style.zIndex,
-      display: opponentAbilityNode.style.display,
-      textAlign: opponentAbilityNode.style.textAlign,
-      lineHeight: opponentAbilityNode.style.lineHeight,
-      borderRadius: opponentAbilityNode.style.borderRadius,
-      background: opponentAbilityNode.style.background,
-      color: opponentAbilityNode.style.color,
-      fontSize: opponentAbilityNode.style.fontSize,
-      fontWeight: opponentAbilityNode.style.fontWeight,
-      pointerEvents: opponentAbilityNode.style.pointerEvents,
-    }).toEqual({
-      left: '574.390625px',
-      top: '197.5625px',
-      width: '80.859375px',
-      height: '16.171875px',
-      zIndex: '301',
-      display: 'block',
-      textAlign: 'center',
-      lineHeight: '26.953125px',
-      borderRadius: '10%',
-      background: 'rgba(255, 60, 0, 0.392)',
-      color: 'rgb(0, 0, 0)',
-      fontSize: '',
-      fontWeight: '',
-      pointerEvents: 'none',
-    });
+    expect(markerToken(damageNode).diameter).toBeCloseTo(26.953125, 6);
+    expect(markerToken(damageNode).labelFontSize).toBeCloseTo(
+      markerLabelFontSizePx(26.953125, '130'),
+      4
+    );
+    for (const [node, side, box] of [
+      [
+        localAbilityNode,
+        'local',
+        {
+          left: '552.75px',
+          top: '686.25px',
+          width: '80.859375px',
+          height: '16.171875px',
+        },
+      ],
+      [
+        opponentAbilityNode,
+        'opponent',
+        {
+          left: '574.390625px',
+          top: '197.5625px',
+          width: '80.859375px',
+          height: '16.171875px',
+        },
+      ],
+    ] as const) {
+      expect(node.dataset).toMatchObject({
+        markerPresentation: 'legacyBenchQ0',
+        markerSide: side,
+      });
+      expect(node.getAttribute('aria-hidden')).toBe('true');
+      expect(markerBox(node)).toEqual({
+        position: 'absolute',
+        ...box,
+        zIndex: '301',
+        pointerEvents: 'none',
+      });
+      expect(
+        node.querySelector<HTMLElement>('[data-marker-face="ability-used"]')
+          ?.dataset.markerTab
+      ).toBe('wide');
+      expect(node.textContent).toBe('Ability');
+    }
     expect(
       host.querySelector('[data-marker-id$=":specialCondition"]')
     ).toBeNull();
@@ -1176,41 +1207,34 @@ describe('React DOM board renderer', () => {
       top: changedDamageNode.style.top,
       width: changedDamageNode.style.width,
       height: changedDamageNode.style.height,
-      lineHeight: changedDamageNode.style.lineHeight,
-      fontSize: changedDamageNode.style.fontSize,
     }).toEqual({
       left: '610px',
       top: '660px',
       width: '30px',
       height: '30px',
-      lineHeight: '30px',
-      fontSize: '15px',
     });
+    expect(markerToken(changedDamageNode).diameter).toBeCloseTo(30, 6);
+    expect(markerToken(changedDamageNode).labelFontSize).toBeCloseTo(
+      markerLabelFontSizePx(30, '140'),
+      6
+    );
     expect({
       left: changedLocalAbilityNode.style.left,
       width: changedLocalAbilityNode.style.width,
       height: changedLocalAbilityNode.style.height,
-      lineHeight: changedLocalAbilityNode.style.lineHeight,
-      background: changedLocalAbilityNode.style.background,
     }).toEqual({
       left: '550px',
       width: '90px',
       height: '18px',
-      lineHeight: '30px',
-      background: 'rgba(59, 141, 173, 0.708)',
     });
     expect({
       left: changedOpponentAbilityNode.style.left,
       width: changedOpponentAbilityNode.style.width,
       height: changedOpponentAbilityNode.style.height,
-      lineHeight: changedOpponentAbilityNode.style.lineHeight,
-      background: changedOpponentAbilityNode.style.background,
     }).toEqual({
       left: '570px',
       width: '90px',
       height: '18px',
-      lineHeight: '30px',
-      background: 'rgba(255, 60, 0, 0.392)',
     });
 
     act(() =>
