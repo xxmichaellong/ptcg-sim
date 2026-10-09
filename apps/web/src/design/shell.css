@@ -456,9 +456,17 @@ textarea {
 /* The bottom action row wraps rather than cutting its labels short. */
 .remote-room-route .sidebox-button-container {
   flex-wrap: wrap;
+  container-type: inline-size;
 }
 .remote-room-route .sidebox-button-container button {
   flex: 1 1 calc(33% - var(--space-1-5));
+}
+/* At the narrowest rail a third is too tight for "Set Up Both" at 13px. */
+@container (max-width: 300px) {
+  .remote-room-route .sidebox-button-container button {
+    padding-inline: var(--space-1);
+    font-size: var(--text-xs);
+  }
 }
 .remote-room-route .chat-button-container button svg {
   display: block;
