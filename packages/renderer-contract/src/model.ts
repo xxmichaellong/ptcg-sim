@@ -62,6 +62,9 @@ export interface Rect {
   readonly height: number;
 }
 
+/** 1: v1's percentage geometry (frozen). 2: the play-mat table (ADR-027). */
+export type BoardLayoutGeometryVersion = 1 | 2;
+
 export interface BoardLayoutOptions {
   readonly viewport: BoardViewport;
   /** The player displayed in the lower half of the board. */
@@ -69,7 +72,7 @@ export interface BoardLayoutOptions {
   /** Fraction of the viewport assigned to the upper player. */
   readonly splitRatio: number;
   /** Preserves the legacy asymmetric free-board geometry. */
-  readonly geometryVersion: 1;
+  readonly geometryVersion: BoardLayoutGeometryVersion;
 }
 
 export type BoardZoneKind =
@@ -207,7 +210,7 @@ export interface BoardSceneResizeHandle {
  * region descriptor already carried by the scene's zone nodes.
  */
 export interface BoardSceneLayout {
-  readonly geometryVersion: 1;
+  readonly geometryVersion: BoardLayoutGeometryVersion;
   readonly outerViewport: BoardViewport;
   readonly shellMode: 'sidebar' | 'fullscreen';
   readonly playAreaBounds: Rect;

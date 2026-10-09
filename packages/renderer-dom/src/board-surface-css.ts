@@ -116,4 +116,105 @@ export const BOARD_SURFACE_CSS = `
   scale: none !important;
   rotate: none !important;
 }
+
+/* ---- The play-mat table (geometry v2) ---------------------------------- */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone {
+  border-radius: var(--radius-md, 10px);
+  transition:
+    background-color var(--duration-fast, 140ms) ease-out,
+    box-shadow var(--duration-fast, 140ms) ease-out;
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--color-felt-line, rgb(255 255 255 / 0.14));
+  background: oklch(1 0 0 / 0.018);
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-board[data-zone-outline='true'] {
+  box-shadow: none;
+  background: none;
+  outline: 1.5px dashed var(--color-felt-line, rgb(255 255 255 / 0.14));
+  outline-offset: -1.5px;
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label]::after {
+  content: attr(data-zone-label);
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  color: var(--color-felt-label, rgb(255 255 255 / 0.45));
+  font: 600 10px/1 var(--font-ui, sans-serif);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* Piles print their name under the card spot, centred, as on the mat. */
+.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label]::after {
+  left: 4px;
+  right: 4px;
+  top: auto;
+  bottom: 8px;
+  font-size: 9px;
+  text-align: center;
+  white-space: normal;
+}
+/* The opponent's mat is turned round: its labels sit at the far corner. */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
+  left: auto;
+  top: auto;
+  right: 8px;
+  bottom: 6px;
+}
+.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
+  left: 4px;
+  right: 4px;
+  top: 8px;
+  bottom: auto;
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-hand {
+  border-radius: 0;
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-drop-target='true'] {
+  background: var(--color-accent-soft, rgb(90 110 188 / 0.25));
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent, rgb(90 110 188)),
+    0 0 24px var(--color-accent-soft, rgb(90 110 188 / 0.3));
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-side='local'] {
+  background: linear-gradient(
+    to top,
+    var(--color-you-soft, rgb(90 110 188 / 0.18)),
+    transparent 22%
+  );
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-side='opponent'] {
+  background: linear-gradient(
+    to bottom,
+    var(--color-opponent-soft, rgb(188 90 113 / 0.18)),
+    transparent 18%
+  );
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-physical-side='lower'] {
+  border-top: 1px solid var(--color-felt-line-strong, rgb(255 255 255 / 0.25));
+}
+.ptcgsim-zone-count--badge {
+  min-width: 26px;
+  height: 22px;
+  margin: -9px;
+  padding: 0 7px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border-strong, rgb(255 255 255 / 0.2));
+  border-radius: 999px;
+  background: var(--color-surface-2, rgb(30 34 44 / 0.94));
+  color: var(--color-text, #fff);
+  font: 700 13px/1 var(--font-display, sans-serif);
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-2, 0 2px 6px rgb(0 0 0 / 0.4));
+}
+.ptcgsim-zone-count--badge.ptcgsim-zone-count-hand {
+  margin: 0;
+  translate: 0 -10px;
+}
+.ptcgsim-zone-count--badge.ptcgsim-zone-count-hand[data-zone-count-side='opponent'] {
+  translate: 0 10px;
+}
 `;

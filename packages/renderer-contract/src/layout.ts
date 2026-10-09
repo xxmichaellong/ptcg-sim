@@ -2,6 +2,7 @@ import type { PlayerId, QuarterTurns } from '@ptcgsim/game-core';
 
 import { assertViewport } from './geometry.js';
 import type {
+  BoardLayoutGeometryVersion,
   BoardSide,
   BoardViewport,
   BoardZoneSurface,
@@ -127,7 +128,7 @@ export interface BoardVerticalLayoutState {
 }
 
 export interface BoardLayoutState {
-  readonly geometryVersion: typeof BOARD_LAYOUT_GEOMETRY_VERSION;
+  readonly geometryVersion: BoardLayoutGeometryVersion;
   /** Outer browser viewport, not the narrower renderer/play-area viewport. */
   readonly viewport: BoardViewport;
   readonly playerIds: readonly [PlayerId, PlayerId];
@@ -258,7 +259,7 @@ export interface BoardSharedLayout {
 }
 
 export interface BoardLayoutSnapshot {
-  readonly geometryVersion: typeof BOARD_LAYOUT_GEOMETRY_VERSION;
+  readonly geometryVersion: BoardLayoutGeometryVersion;
   readonly viewport: BoardViewport;
   readonly shellMode: BoardShellMode;
   readonly playAreaBounds: Rect;

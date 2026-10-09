@@ -1,11 +1,11 @@
 import {
   createEmptyBoardView,
-  DEFAULT_BOARD_PREFERENCES,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent as ReactClipboardEvent, ReactNode } from 'react';
 
+import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import {
   RendererSpikeBoard,
   type RendererKind,
@@ -296,16 +296,16 @@ export const RemoteRoomLobby = ({
       ? { requestBackground: dependencies.requestBackground }
       : {}),
   });
-  const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const effectivePreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
   const setDarkMode = (enabled: boolean): void => {
     setPreferences((current) => ({
-      ...(current ?? DEFAULT_BOARD_PREFERENCES),
+      ...(current ?? ROOM_DEFAULT_PREFERENCES),
       darkMode: enabled,
     }));
   };
   const setZoneOutlines = (visible: boolean): void => {
     setPreferences((current) => ({
-      ...(current ?? DEFAULT_BOARD_PREFERENCES),
+      ...(current ?? ROOM_DEFAULT_PREFERENCES),
       showZoneOutlines: visible,
     }));
   };

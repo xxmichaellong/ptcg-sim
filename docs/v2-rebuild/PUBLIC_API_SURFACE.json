@@ -1242,6 +1242,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardLayoutGeometryVersion",
+              "kind": "type"
+            },
+            {
               "name": "BoardLayoutOptions",
               "kind": "type"
             },
@@ -1446,7 +1450,15 @@
               "kind": "value"
             },
             {
+              "name": "createLayoutSnapshotFor",
+              "kind": "value"
+            },
+            {
               "name": "createRendererSpikeView",
+              "kind": "value"
+            },
+            {
+              "name": "createTableLayoutSnapshot",
               "kind": "value"
             },
             {
@@ -1463,6 +1475,10 @@
             },
             {
               "name": "DEFAULT_BOARD_VIEWPORT",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_TABLE_VERTICAL_LAYOUT",
               "kind": "value"
             },
             {
@@ -1551,6 +1567,22 @@
             },
             {
               "name": "layoutStadium",
+              "kind": "value"
+            },
+            {
+              "name": "layoutTableHand",
+              "kind": "value"
+            },
+            {
+              "name": "layoutTablePile",
+              "kind": "value"
+            },
+            {
+              "name": "layoutTablePrizes",
+              "kind": "value"
+            },
+            {
+              "name": "layoutTableRow",
               "kind": "value"
             },
             {
@@ -1742,6 +1774,14 @@
               "kind": "value"
             },
             {
+              "name": "resizeLayoutStateFor",
+              "kind": "value"
+            },
+            {
+              "name": "resizeTableLayoutState",
+              "kind": "value"
+            },
+            {
               "name": "resolveBoardDropTarget",
               "kind": "value"
             },
@@ -1783,6 +1823,26 @@
             },
             {
               "name": "springStateAt",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_CONTROL_CORNER_PX",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_HAND_VISIBLE_SHARE",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_LAYOUT_GEOMETRY_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_SHELL",
+              "kind": "value"
+            },
+            {
+              "name": "tableRailWidth",
               "kind": "value"
             },
             {

@@ -438,10 +438,11 @@ describe('remote room lobby wiring', () => {
     await act(async () =>
       element<HTMLInputElement>(host, '#showZonesCheckbox').click()
     );
+    // The room starts on the Night table; the checkbox turns it to Day.
     expect(lobbyBoardHarness.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
-      darkMode: true,
+      darkMode: false,
       showZoneOutlines: false,
     });
     const preferencesBeforeHideHand = lobbyBoardHarness.preferences;
@@ -462,7 +463,7 @@ describe('remote room lobby wiring', () => {
     expect(
       element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').dataset
         .darkMode
-    ).toBe('true');
+    ).toBe('false');
     await act(async () => {
       element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
       await flush();
@@ -475,7 +476,7 @@ describe('remote room lobby wiring', () => {
     expect(lobbyBoardHarness.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
-      darkMode: true,
+      darkMode: false,
       showZoneOutlines: false,
     });
     expect(createRoom).not.toHaveBeenCalled();

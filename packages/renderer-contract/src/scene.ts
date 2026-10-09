@@ -26,6 +26,13 @@ import {
   type LegacyContainedCardBlockAlignment,
   type LegacyPileKind,
 } from './layout.js';
+import {
+  TABLE_LAYOUT_GEOMETRY_VERSION,
+  layoutTableHand,
+  layoutTablePile,
+  layoutTablePrizes,
+  layoutTableRow,
+} from './layout-table.js';
 import type {
   BoardLayoutOptions,
   BoardSide,
@@ -653,17 +660,27 @@ export const createBoardScene = (
     // v1's hand scrolls sideways and its loose board downwards once the cards
     // overflow; the renderer's scroll offset shifts the cards here so paint
     // and input agree.
+    const table = layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION;
     const scrollingRow =
       zone.ownerId && (zone.kind === 'hand' || zone.kind === 'board')
-        ? (zone.kind === 'hand'
-            ? layoutLegacyHandRow
-            : layoutLegacyLooseBoardRows)(
-            contentBounds,
-            playerLayout(zone.ownerId).frameBounds,
-            playerLayout(zone.ownerId).side,
-            zone.cards.length,
-            layout.zoneScrollPx[zone.id] ?? 0
-          )
+        ? table
+          ? {
+              cards: (zone.kind === 'hand' ? layoutTableHand : layoutTableRow)(
+                contentBounds,
+                playerLayout(zone.ownerId).side,
+                zone.cards.length
+              ),
+              scroll: undefined,
+            }
+          : (zone.kind === 'hand'
+              ? layoutLegacyHandRow
+              : layoutLegacyLooseBoardRows)(
+              contentBounds,
+              playerLayout(zone.ownerId).frameBounds,
+              playerLayout(zone.ownerId).side,
+              zone.cards.length,
+              layout.zoneScrollPx[zone.id] ?? 0
+            )
         : null;
     zones.push({
       id: zone.id,
@@ -712,18 +729,26 @@ export const createBoardScene = (
           : 'start';
     const cardBounds = scrollingRow
       ? [...scrollingRow.cards]
-      : layoutZoneCards(
-          zone.kind as Exclude<typeof zone.kind, 'hand' | 'board'>,
-          contentBounds,
-          zone.cards.length,
-          containedBlockAlignment,
-          zone.ownerId
-            ? {
-                frame: playerLayout(zone.ownerId).frameBounds,
-                side: playerLayout(zone.ownerId).side,
-              }
-            : null
-        );
+      : table
+        ? zone.kind === 'prizes'
+          ? layoutTablePrizes(
+              contentBounds,
+              side === 'opponent' ? 'opponent' : 'local',
+              zone.cards.length
+            )
+          : layoutTablePile(contentBounds, zone.cards.length)
+        : layoutZoneCards(
+            zone.kind as Exclude<typeof zone.kind, 'hand' | 'board'>,
+            contentBounds,
+            zone.cards.length,
+            containedBlockAlignment,
+            zone.ownerId
+              ? {
+                  frame: playerLayout(zone.ownerId).frameBounds,
+                  side: playerLayout(zone.ownerId).side,
+                }
+              : null
+          );
     zone.cards.forEach((card, index) => {
       const cardRect = cardBounds[index];
       if (!cardRect) return;

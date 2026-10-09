@@ -164,21 +164,28 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         ),
       };
     });
+    // The table takes the window except the rail (ADR-027): at 1280px the
+    // rail is its 300px minimum, with the tabs on top and the panel below.
     expect(initialChrome.board).toEqual({
       x: 0,
       y: 0,
-      width: expect.closeTo(966.4, 1),
+      width: expect.closeTo(980, 1),
       height: 720,
     });
     expect(initialChrome.sidebar).toEqual({
-      x: expect.closeTo(972.8, 1),
+      x: expect.closeTo(980, 1),
       y: 0,
-      width: expect.closeTo(307.2, 1),
+      width: expect.closeTo(300, 1),
       height: 720,
     });
-    expect(initialChrome.tabs.height).toBe(36);
-    expect(initialChrome.sidebox.y).toBe(36);
-    expect(initialChrome.sidebox.height).toBe(684);
+    expect(initialChrome.tabs.x).toBeGreaterThan(initialChrome.sidebar.x);
+    expect(initialChrome.tabs.y).toBeLessThan(initialChrome.sidebox.y);
+    expect(initialChrome.sidebox.y).toBeGreaterThanOrEqual(
+      initialChrome.tabs.y + initialChrome.tabs.height
+    );
+    expect(
+      initialChrome.sidebox.y + initialChrome.sidebox.height
+    ).toBeLessThanOrEqual(720);
     expect(initialChrome.selectedTab?.trim()).toBe('Multiplayer');
     expect(initialChrome.hasRemoteCopyImage).toBe(false);
     await expect(creator.page.locator('#coachingModeLabel')).toContainText(
@@ -413,7 +420,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(rendererStatus).toHaveCSS('height', '1px');
     await expect(rendererStatus).toHaveCSS('clip-path', 'inset(50%)');
     const boardSurface = playerTwo.page.locator('.ptcgsim-board-surface');
-    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
+    const pageTheme = () =>
+      playerTwo.page.evaluate(() => document.documentElement.dataset.theme);
+    // The room starts on the Night table (ADR-027).
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
+    await expect.poll(pageTheme).toBe('night');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
       'true'
@@ -465,11 +476,16 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       creator.page.locator('[data-app-route="remote-room"]')
     ).toHaveAttribute('data-room-background', 'default');
     await playerTwo.page.locator('#hideHandCheckbox').check();
-    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
       'true'
     );
+    // Dark mode off turns the whole page to the Day table, and back.
+    await playerTwo.page.locator('#darkModeCheckbox').uncheck();
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
+    await expect(roomRoute).toHaveAttribute('data-dark-mode', 'false');
+    await expect.poll(pageTheme).toBe('day');
     await playerTwo.page.locator('#darkModeCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     await expect(boardSurface).toHaveCSS(
@@ -477,15 +493,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'rgba(0, 0, 0, 0)'
     );
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
-    await expect(roomRoute).toHaveCSS('background-color', 'rgb(8, 18, 18)');
-    await expect(playerTwo.page.locator('#settings')).toHaveCSS(
-      'background-color',
-      'rgb(0, 0, 0)'
-    );
-    await expect(playerTwo.page.locator('#settingsToggles')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
+    await expect.poll(pageTheme).toBe('night');
     await playerTwo.page.locator('#showZonesCheckbox').check();
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
@@ -503,18 +511,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'data-show-zone-outlines',
       'false'
     );
-    await expect(playerTwo.page.locator('#p2Box')).toHaveCSS(
-      'background-color',
-      'rgb(0, 0, 0)'
-    );
-    await expect(playerTwo.page.locator('.legacy-activity-feed')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
-    await expect(playerTwo.page.locator('#p2MessageInput')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
+    // The rail still wears the Night theme after the tab change: its log and
+    // message input paint opaque surfaces from the design tokens.
+    await expect.poll(pageTheme).toBe('night');
+    for (const selector of ['.legacy-activity-feed', '#p2MessageInput']) {
+      await expect(playerTwo.page.locator(selector)).not.toHaveCSS(
+        'background-color',
+        'rgba(0, 0, 0, 0)'
+      );
+    }
 
     await playerTwo.page.locator('#p2OptionsButton').click();
     const [perspectiveReplay] = await Promise.all([
@@ -609,18 +614,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveAttribute('data-dark-mode', 'true');
-    await expect(playerTwo.page.locator('#p2ExplanationBox')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
-    await expect(playerTwo.page.locator('#nameInput')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
-    await expect(playerTwo.page.locator('#roomIdInput')).toHaveCSS(
-      'background-color',
-      'rgb(8, 18, 18)'
-    );
+    await expect.poll(pageTheme).toBe('night');
     await expect(playerTwo.page.locator('#roomIdInput')).toHaveValue('');
     await expect(playerTwo.page.locator('.lobby-status')).toHaveCount(0);
     await expect(

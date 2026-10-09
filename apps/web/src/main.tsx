@@ -6,6 +6,7 @@ import { announceMobileNotice } from './mobile-notice.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
 import './design/tokens.css';
 import './styles.css';
+import './design/shell.css';
 
 // Developer-only escape hatch: `?dev-room=1` boots the real remote-room stack
 // (durable room creation, ADR-018 ticket exchange, socket session, projection,

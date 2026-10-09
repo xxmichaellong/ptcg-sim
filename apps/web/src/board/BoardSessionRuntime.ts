@@ -1,10 +1,10 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
-  createBoardLayoutSnapshot,
+  createLayoutSnapshotFor,
   createBoardScene,
   DEFAULT_BOARD_PRESENTATION,
   flipBoardLayoutState,
-  resizeBoardLayoutState,
+  resizeLayoutStateFor,
   type BoardCardHover,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -79,7 +79,7 @@ const retainLayoutState = (state: BoardLayoutState): BoardLayoutState =>
   deepFreeze(copyLayoutState(state));
 
 const retainLayoutSnapshot = (state: BoardLayoutState): BoardLayoutSnapshot =>
-  deepFreeze(createBoardLayoutSnapshot(state));
+  deepFreeze(createLayoutSnapshotFor(state));
 
 const sameLayoutState = (
   left: BoardLayoutState,
@@ -447,7 +447,7 @@ export class BoardSessionRuntime {
 
   resizeBoard(handleId: BoardResizeHandleId, clientY: number): void {
     this.replaceLayoutState(
-      resizeBoardLayoutState(this.layoutState, handleId, clientY)
+      resizeLayoutStateFor(this.layoutState, handleId, clientY)
     );
   }
 

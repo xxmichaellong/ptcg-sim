@@ -471,11 +471,12 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
     // The board always gets preferences: reduced motion follows the player's
-    // motion settings even before anything else is chosen.
+    // motion settings even before anything else is chosen, and the room
+    // starts on the Night table.
     expect(boardHarness.props?.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
-      darkMode: false,
+      darkMode: true,
       showZoneOutlines: true,
     });
 
@@ -592,29 +593,33 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('main') as HTMLElement).style.backgroundImage
     ).toBe('url("https://images.example.test/table.png")');
     // The board always gets preferences: reduced motion follows the player's
-    // motion settings even before anything else is chosen.
-    expect(boardHarness.props?.preferences).toEqual({
-      reducedMotion: false,
-      highContrast: false,
-      darkMode: false,
-      showZoneOutlines: true,
-    });
-    expect(socket.sent).toHaveLength(sentBeforeSettings);
-    expect(onSubmission).not.toHaveBeenCalled();
-
-    await act(async () =>
-      (host.querySelector('#darkModeCheckbox') as HTMLInputElement).click()
-    );
+    // motion settings even before anything else is chosen, and the room
+    // starts on the Night table.
     expect(boardHarness.props?.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
       darkMode: true,
       showZoneOutlines: true,
     });
+    expect(socket.sent).toHaveLength(sentBeforeSettings);
+    expect(onSubmission).not.toHaveBeenCalled();
+
     expect(host.querySelector('main')?.dataset.darkMode).toBe('true');
-    expect(host.querySelector('main')?.classList).toContain(
+    // Unticking dark mode turns the table to Day.
+    await act(async () =>
+      (host.querySelector('#darkModeCheckbox') as HTMLInputElement).click()
+    );
+    expect(boardHarness.props?.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: false,
+      showZoneOutlines: true,
+    });
+    expect(host.querySelector('main')?.dataset.darkMode).toBe('false');
+    expect(host.querySelector('main')?.classList).not.toContain(
       'remote-room-route--dark'
     );
+    expect(document.documentElement.dataset.theme).toBe('day');
 
     await act(async () =>
       (host.querySelector('#showZonesCheckbox') as HTMLInputElement).click()
@@ -622,7 +627,7 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
-      darkMode: true,
+      darkMode: false,
       showZoneOutlines: false,
     });
     const preferencesBeforeHideHand = boardHarness.props?.preferences;
@@ -737,7 +742,7 @@ describe('RemoteRoomRoute', () => {
     expect((host.querySelector('#p1Box') as HTMLElement).hidden).toBe(true);
     expect(
       (host.querySelector('#darkModeCheckbox') as HTMLInputElement).checked
-    ).toBe(true);
+    ).toBe(false);
     expect(
       (host.querySelector('#showZonesCheckbox') as HTMLInputElement).checked
     ).toBe(true);

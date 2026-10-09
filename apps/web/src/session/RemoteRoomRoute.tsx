@@ -3,7 +3,6 @@ import {
   type ProjectedReplayArtifact,
 } from '@ptcgsim/client-session';
 import {
-  DEFAULT_BOARD_PREFERENCES,
   type BoardIntent,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
@@ -19,6 +18,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
@@ -198,7 +198,7 @@ export const RemoteRoomRoute = ({
   );
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
-  const storedPreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
   const effectivePreferences = useMemo((): BoardPreferences => {
     // Motion always comes from the player's motion settings, whatever an
     // earlier publish may have carried along.

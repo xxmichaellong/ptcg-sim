@@ -1,3 +1,4 @@
+import { Flower } from '@phosphor-icons/react';
 import type {
   ClientSessionState,
   RemoteGameSession,
@@ -425,9 +426,10 @@ export const RemoteRoomLiveControls = ({
           className={playerControls ? seatColor : 'spectator-color'}
           disabled={!ready}
           aria-label="Send flower"
+          title="Send a flower"
           onClick={() => session.sendChat('🌺', playerId)}
         >
-          🌺
+          <Flower size={18} weight="fill" aria-hidden="true" />
         </button>
       </div>
       <input

@@ -222,6 +222,7 @@
   --color-felt-glow: oklch(0.6 0.08 var(--hue-table) / 0.35);
 
   --color-surface-1: oklch(0.2 0.02 255 / 0.9);
+  --color-rail: oklch(0.185 0.02 255);
   --color-surface-2: oklch(0.245 0.022 255 / 0.94);
   --color-surface-3: oklch(0.29 0.024 255);
   --color-surface-sunken: oklch(0.16 0.018 256 / 0.85);
@@ -274,6 +275,7 @@
   --color-felt-glow: oklch(0.98 0.03 175 / 0.45);
 
   --color-surface-1: oklch(0.985 0.004 85 / 0.92);
+  --color-rail: oklch(0.965 0.006 85);
   --color-surface-2: oklch(0.995 0.002 85 / 0.96);
   --color-surface-3: oklch(0.95 0.006 85);
   --color-surface-sunken: oklch(0.93 0.008 85 / 0.9);

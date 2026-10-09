@@ -56,10 +56,26 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
 const PlayerFrameNode = memo(function PlayerFrameNode({
   frame,
   darkMode,
+  table,
 }: {
   readonly frame: BoardScene['layout']['players'][number];
   readonly darkMode: boolean;
+  /** Geometry v2: the play mat paints itself through the stylesheet. */
+  readonly table: boolean;
 }) {
+  if (table) {
+    return (
+      <div
+        className="ptcgsim-player-frame"
+        data-player-frame-id={frame.playerId}
+        data-player-frame-side={frame.side}
+        data-player-physical-side={frame.physicalSide}
+        data-player-rotation={frame.rotationQuarterTurns}
+        aria-hidden="true"
+        style={{ ...absoluteRect(frame.bounds, -10), pointerEvents: 'none' }}
+      />
+    );
+  }
   // v1's `#boardCenterDesign`: each player frame paints half of the table's
   // centre circles on its authored top edge (16vw and 4vw of the frame's
   // own viewport), so the two halves meet at the divider. The frame clips
@@ -183,6 +199,17 @@ const handDividerFor = (
   };
 };
 
+/** What the play mat prints in each zone (geometry v2). */
+const TABLE_ZONE_LABELS: Partial<Record<ZoneSceneNode['kind'], string>> = {
+  active: 'Active',
+  bench: 'Bench',
+  prizes: 'Prizes',
+  deck: 'Deck',
+  discard: 'Discard',
+  lostZone: 'Lost Zone',
+  stadium: 'Stadium',
+};
+
 const ZoneNode = memo(function ZoneNode({
   zone,
   showOutline,
@@ -191,6 +218,7 @@ const ZoneNode = memo(function ZoneNode({
   dropTarget,
   emitIntent,
   scrollZone,
+  table,
 }: {
   readonly zone: ZoneSceneNode;
   readonly showOutline: boolean;
@@ -201,6 +229,7 @@ const ZoneNode = memo(function ZoneNode({
   readonly dropTarget: boolean;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly scrollZone: BoardRendererAdapters['scrollZone'];
+  readonly table: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const grownRef = useRef<number | null>(null);
@@ -238,6 +267,9 @@ const ZoneNode = memo(function ZoneNode({
       ref={scrollRef}
       className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
       data-zone-id={zone.id}
+      data-zone-side={zone.side}
+      data-zone-outline={table && showOutline ? 'true' : undefined}
+      data-zone-label={table ? TABLE_ZONE_LABELS[zone.kind] : undefined}
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       data-drop-target={dropTarget ? 'true' : undefined}
@@ -249,21 +281,28 @@ const ZoneNode = memo(function ZoneNode({
       tabIndex={zone.interactive ? 0 : undefined}
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
-        borderRadius: 15,
-        background: dropTarget
-          ? 'rgba(90, 110, 188, 0.3)'
-          : showOutline
-            ? 'rgba(255, 255, 255, 0.1)'
-            : 'transparent',
-        boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
-        ...(handDividerEdge && handDividerColor
-          ? {
-              borderRadius: 0,
-              // An inset shadow paints v1's 3px border without moving the
-              // zone's children, whose content box already starts below it.
-              boxShadow: `inset 0 ${handDividerEdge === 'top' ? 3 : -3}px 0 ${handDividerColor}`,
-            }
-          : {}),
+        // The table's zones are painted by the stylesheet from tokens.
+        ...(table
+          ? {}
+          : {
+              borderRadius: 15,
+              background: dropTarget
+                ? 'rgba(90, 110, 188, 0.3)'
+                : showOutline
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'transparent',
+              boxShadow: showOutline
+                ? '2px 2px 5px rgba(0, 0, 0, 0.1)'
+                : 'none',
+              ...(handDividerEdge && handDividerColor
+                ? {
+                    borderRadius: 0,
+                    // An inset shadow paints v1's 3px border without moving
+                    // the zone's children, whose content box starts below it.
+                    boxShadow: `inset 0 ${handDividerEdge === 'top' ? 3 : -3}px 0 ${handDividerColor}`,
+                  }
+                : {}),
+            }),
         pointerEvents: zone.interactive ? 'auto' : 'none',
         ...(zone.scroll
           ? zone.scroll.axis === 'y'
@@ -499,9 +538,12 @@ const CardNode = memo(function CardNode({
 const ZoneCountNode = memo(function ZoneCountNode({
   node,
   darkMode,
+  table,
 }: {
   readonly node: ZoneCountSceneNode;
   readonly darkMode: boolean;
+  /** Geometry v2 shows counts as badges styled by the stylesheet. */
+  readonly table: boolean;
 }) {
   // The anchor is one corner of the text box; the other three follow from
   // the text's own size, which is why this is positioned by the anchored
@@ -516,27 +558,43 @@ const ZoneCountNode = memo(function ZoneCountNode({
       : { bottom: `calc(100% - ${node.anchor.y}px)` };
   return (
     <div
-      className={`ptcgsim-zone-count ptcgsim-zone-count-${node.kind}`}
+      className={`ptcgsim-zone-count ptcgsim-zone-count-${node.kind}${
+        table ? ' ptcgsim-zone-count--badge' : ''
+      }`}
       data-zone-count-for={node.zoneId}
       data-zone-count={node.count}
+      data-zone-count-side={node.side}
       aria-hidden="true"
-      style={{
-        position: 'absolute',
-        ...horizontal,
-        ...vertical,
-        zIndex: node.zIndex,
-        fontSize: node.fontSizePx,
-        lineHeight: 'normal',
-        // v1 toggles `.dark-mode-3` on every count text: the pile counts turn
-        // grey, while the hand count keeps its side colour.
-        color:
-          darkMode && node.kind !== 'hand' ? 'rgb(149, 149, 149)' : node.color,
-        whiteSpace: 'nowrap',
-        pointerEvents: 'none',
-        userSelect: 'none',
-      }}
+      style={
+        table
+          ? {
+              position: 'absolute',
+              ...horizontal,
+              ...vertical,
+              zIndex: 9_200,
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }
+          : {
+              position: 'absolute',
+              ...horizontal,
+              ...vertical,
+              zIndex: node.zIndex,
+              fontSize: node.fontSizePx,
+              lineHeight: 'normal',
+              // v1 toggles `.dark-mode-3` on every count text: the pile counts turn
+              // grey, while the hand count keeps its side colour.
+              color:
+                darkMode && node.kind !== 'hand'
+                  ? 'rgb(149, 149, 149)'
+                  : node.color,
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }
+      }
     >
-      ({node.count})
+      {table ? node.count : `(${node.count})`}
     </div>
   );
 });
@@ -678,6 +736,7 @@ export const BoardSurface = ({
     };
   });
   const animationSpeed = preferences.animationSpeed ?? 1;
+  const table = scene.layout.geometryVersion === 2;
   useLayoutEffect(() => {
     director.setSettings({
       reduced: preferences.reducedMotion,
@@ -888,6 +947,7 @@ export const BoardSurface = ({
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
       data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
+      data-geometry={scene.layout.geometryVersion}
       data-motion="idle"
       onWheel={(event) => {
         // The cards paint above the scroll container, so a wheel over them
@@ -1009,6 +1069,7 @@ export const BoardSurface = ({
             key={frame.playerId}
             frame={frame}
             darkMode={preferences.darkMode}
+            table={table}
           />
         ))}
         {scene.layout.resizeHandles.map((handle) => (
@@ -1032,6 +1093,7 @@ export const BoardSurface = ({
               dropTarget={dragTargetId === zone.id}
               emitIntent={adapters.emitIntent}
               scrollZone={adapters.scrollZone}
+              table={table}
             />
           );
         })}
@@ -1078,6 +1140,7 @@ export const BoardSurface = ({
             key={node.id}
             node={node}
             darkMode={preferences.darkMode}
+            table={table}
           />
         ))}
       </div>

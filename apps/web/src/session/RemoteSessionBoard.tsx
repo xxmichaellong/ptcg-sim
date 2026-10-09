@@ -4,9 +4,8 @@ import type {
 } from '@ptcgsim/client-session';
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
-  BOARD_LAYOUT_GEOMETRY_VERSION,
-  DEFAULT_BOARD_PREFERENCES,
-  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
   type BoardIntent,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -16,6 +15,7 @@ import {
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
 import { LegacyBoardChrome } from '../board/LegacyBoardChrome.js';
 import {
@@ -66,19 +66,20 @@ const layoutFor = (
   if (!firstPlayerId || !secondPlayerId || view.playerOrder.length !== 2) {
     throw new Error('Projected match must have exactly two board players');
   }
+  // The room plays on the play-mat table (geometry v2, ADR-027).
   return {
-    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
     viewport: currentViewport(),
     playerIds: [firstPlayerId, secondPlayerId],
     bottomPlayerId:
       view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId,
     shellMode: playmatExpanded ? 'fullscreen' : 'sidebar',
     vertical: {
-      lowerFrame: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.lowerFrame },
-      upperFrame: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.upperFrame },
-      lowerHandle: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.lowerHandle },
-      upperHandle: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.upperHandle },
-      sharedPlacement: DEFAULT_BOARD_VERTICAL_LAYOUT_V1.sharedPlacement,
+      lowerFrame: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.lowerFrame },
+      upperFrame: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.upperFrame },
+      lowerHandle: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.lowerHandle },
+      upperHandle: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.upperHandle },
+      sharedPlacement: DEFAULT_TABLE_VERTICAL_LAYOUT.sharedPlacement,
     },
   };
 };
@@ -142,7 +143,7 @@ export const RemoteSessionBoard = ({
   rendererKind,
   onIntent,
   onSubmission,
-  preferences = DEFAULT_BOARD_PREFERENCES,
+  preferences = ROOM_DEFAULT_PREFERENCES,
   roomMode = 'multiplayer',
   hideOpponentHand = false,
   playmatExpanded = false,
@@ -667,7 +668,7 @@ export const RemoteSessionBoard = ({
     rendererStatus.kind !== 'destroyed';
 
   return (
-    <div className="board-spike-host">
+    <div className="board-spike-host" data-geometry={layout?.geometryVersion}>
       <div className="renderer-surface-host" ref={hostRef} />
       {showBoardComposition && boardState?.scene ? (
         <>
