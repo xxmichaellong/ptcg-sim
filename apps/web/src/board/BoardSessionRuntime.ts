@@ -47,6 +47,7 @@ export interface BoardSessionRuntimeOptions {
   readonly onIntent?: (intent: BoardIntent) => void;
   readonly onBoardEffect?: (effect: BoardSessionRendererEffect) => void;
   readonly onSubmission?: BoardSessionAdapterOptions['onSubmission'];
+  readonly onCommandRefused?: BoardSessionAdapterOptions['onCommandRefused'];
   readonly reportError?: (error: unknown) => void;
   readonly reportRendererStatus?: (status: BoardRendererStatus) => void;
   /** The hovered card, for a route-owned inspector. Presentational only. */
@@ -490,6 +491,9 @@ export class BoardSessionRuntime {
         : {}),
       ...(this.options.onSubmission
         ? { onSubmission: this.options.onSubmission }
+        : {}),
+      ...(this.options.onCommandRefused
+        ? { onCommandRefused: this.options.onCommandRefused }
         : {}),
       reportEffectFailure: (error) => this.reportError(error),
     });

@@ -1,5 +1,6 @@
 import type {
   ClientSessionState,
+  CompletedCommandSummary,
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
@@ -60,6 +61,11 @@ export interface BoardSessionAdapterOptions {
     command: WireGameCommand,
     result: SubmitCommandResult
   ) => void;
+  /**
+   * The room refused one of this client's queued commands: its prediction
+   * has just been withdrawn from the board. Called once per command.
+   */
+  readonly onCommandRefused?: (completed: CompletedCommandSummary) => void;
   readonly reportEffectFailure?: (
     error: unknown,
     effect: BoardSessionControllerEffect
@@ -302,6 +308,7 @@ export class BoardSessionAdapter {
     const view = predictedView
       ? (this.options.transformView?.(predictedView, source) ?? predictedView)
       : undefined;
+    this.reportRefusals(liveState);
     const boundary = this.boundaryFor(replayState, source, view);
     const motionHint =
       source.kind === 'live' && boundary === 'refresh'
@@ -334,6 +341,24 @@ export class BoardSessionAdapter {
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
     return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
+
+  /** Commands that left the queue since the last frame because the room refused them. */
+  private reportRefusals(
+    liveState: ReturnType<BoardSessionAdapterOptions['live']['getSnapshot']>
+  ): void {
+    const report = this.options.onCommandRefused;
+    if (!report) return;
+    const current = new Set(
+      liveState.pendingCommands.map((pending) => pending.commandId)
+    );
+    for (const commandId of this.lastPendingCommandIds) {
+      if (current.has(commandId)) continue;
+      const completed = liveState.completedCommands.find(
+        (candidate) => candidate.commandId === commandId
+      );
+      if (completed && !completed.accepted) report(completed);
+    }
+  }
 
   /**
    * A same-revision live frame changed because this client's own queue did:

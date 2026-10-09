@@ -236,6 +236,10 @@ const setup = (
     readonly command: ClientMessage extends never ? never : unknown;
     readonly result: ReturnType<RemoteGameSession['submit']>;
   }> = [];
+  const refusals: Array<{
+    readonly commandId: string;
+    readonly code: string | undefined;
+  }> = [];
   const adapter = new BoardSessionAdapter({
     live,
     replay,
@@ -246,6 +250,8 @@ const setup = (
     },
     ...(transformView ? { transformView } : {}),
     onSubmission: (command, result) => submissions.push({ command, result }),
+    onCommandRefused: (completed) =>
+      refusals.push({ commandId: completed.commandId, code: completed.code }),
   });
   live.connect(connection);
   const socket = socketFactory.sockets[0]!;
@@ -255,6 +261,7 @@ const setup = (
     adapter,
     rendererEffects,
     submissions,
+    refusals,
     socketFactory,
     scheduler,
     socket,
@@ -733,6 +740,8 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(parentOf(card.id)).toBe(discard.id);
     expect(test.live.getSnapshot().pendingCommands).toEqual([]);
     expect(lastMotion()).toBe('advance');
+    // An accepted command is not a refusal.
+    expect(test.refusals).toEqual([]);
 
     // A rejected command's prediction is withdrawn: the card returns to the
     // authoritative view's hand.
@@ -761,6 +770,12 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(parentOf(second.id)).toBe(handId);
     expect(lastMotion()).toBe('rollback');
     expect(test.adapter.getSnapshot().view?.revision).toBe(2);
+    // The route hears about the refusal once, with the room's reason.
+    expect(test.refusals).toEqual([
+      { commandId: 'board-command-2', code: 'stale_reference' },
+    ]);
+    test.adapter.synchronize();
+    expect(test.refusals).toHaveLength(1);
 
     test.adapter.dispose();
     test.replay.dispose();

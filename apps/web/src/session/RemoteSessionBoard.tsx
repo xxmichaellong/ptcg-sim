@@ -29,6 +29,7 @@ import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortc
 import { ReactDomBoardResizeInteraction } from '../board/ReactDomBoardResizeInteraction.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import { refreshLegacyBoardImages } from '../board/refreshLegacyBoardImages.js';
+import { refusalNotice } from '../board/refusal-notice.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
 import {
   LegacyBoardOverlays,
@@ -44,6 +45,7 @@ import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinato
 import { useReplaySession } from '../replay/useReplaySession.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
 import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
+import { toast } from '../ui/toast.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
 
@@ -388,6 +390,10 @@ export const RemoteSessionBoard = ({
             ) {
               setRevealNotice(command.cardId as ViewCardId);
             }
+          },
+          // The card has already gone back; say why.
+          onCommandRefused: (completed) => {
+            if (!disposed) toast(refusalNotice(completed.code));
           },
           reportError: (error) => console.error('[board-session]', error),
           reportRendererStatus: (status) => {
