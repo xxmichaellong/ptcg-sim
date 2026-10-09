@@ -1,0 +1,142 @@
+/* The coin over the table. It never takes input. */
+.coin-flip-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.coin-flip {
+  --coin-thickness: calc(var(--coin-size) * 0.07);
+  position: absolute;
+  width: var(--coin-size);
+  height: var(--coin-size);
+  translate: -50% -50%;
+  perspective: calc(var(--coin-size) * 9);
+  transition: opacity var(--duration-normal, 200ms) var(--ease-out, ease-out);
+}
+
+.coin-flip[data-coin-phase='fading'] {
+  opacity: 0;
+}
+
+/* The coin's shadow on the felt: it shrinks and pales as the coin rises. */
+.coin-flip__shadow {
+  position: absolute;
+  inset: 12% 6% -10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(0 0 0 / 0.55),
+    rgb(0 0 0 / 0.25) 60%,
+    rgb(0 0 0 / 0)
+  );
+  opacity: 0.5;
+}
+
+.coin-flip__toss {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.coin-flip__coin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.coin-flip__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.coin-flip__face--heads {
+  transform: translateZ(calc(var(--coin-thickness) / 2));
+}
+
+.coin-flip__face--tails {
+  transform: rotateX(180deg) translateZ(calc(var(--coin-thickness) / 2));
+}
+
+.coin-flip__face > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Seen edge-on mid-turn, the coin is a milled gold band, not nothing. */
+.coin-flip__edge {
+  position: absolute;
+  top: 50%;
+  left: 2%;
+  width: 96%;
+  height: var(--coin-thickness);
+  margin-top: calc(var(--coin-thickness) / -2);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.16) 0 1px,
+      rgb(0 0 0 / 0) 1px 3px
+    ),
+    linear-gradient(90deg, #8d7544, #f3dfa4 30%, #9e8040 62%, #d9be78);
+  transform: rotateX(90deg);
+}
+
+/* The result, read at a glance, then gone. */
+.coin-flip__result {
+  position: absolute;
+  top: calc(100% + var(--space-2, 8px));
+  left: 50%;
+  translate: -50% 0;
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border: 1px solid var(--color-gold, rgb(240 200 90));
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface-2, rgb(38 42 52 / 0.94));
+  box-shadow:
+    var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.42)),
+    var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+  color: var(--color-text, #f4f6fa);
+  font-family: var(--font-display, 'Jost Variable', 'Jost', sans-serif);
+  font-size: var(--text-lg, 16px);
+  font-weight: var(--weight-bold, 700);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  animation: coin-flip-result-in var(--duration-bouncy, 620ms)
+    var(--ease-bouncy, ease-out) both;
+}
+
+/* Reduced motion: the result alone, centred where the coin would be. */
+.coin-flip[data-coin-motion='static'] .coin-flip__result {
+  top: 50%;
+  translate: -50% -50%;
+}
+
+@keyframes coin-flip-result-in {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+
+:root[data-motion='reduced'] .coin-flip,
+.coin-flip[data-coin-motion='static'] {
+  transition: none;
+}
+
+:root[data-motion='reduced'] .coin-flip__result,
+.coin-flip[data-coin-motion='static'] .coin-flip__result {
+  animation: none;
+}
+
+/* Reduced motion never tosses a coin, whatever is queued. */
+:root[data-motion='reduced'] .coin-flip__shadow,
+:root[data-motion='reduced'] .coin-flip__toss {
+  display: none;
+}

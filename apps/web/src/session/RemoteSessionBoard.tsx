@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
+import { CoinFlipOverlay } from '../board/CoinFlipOverlay.js';
 import { LegacyBoardChrome } from '../board/LegacyBoardChrome.js';
 import {
   CardHoverStore,
@@ -37,6 +38,8 @@ import type {
   BoardRendererFactory,
   RendererKind,
 } from '../renderer-spike-handle.js';
+import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
+import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
 import { useReplaySession } from '../replay/useReplaySession.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
@@ -150,6 +153,7 @@ export const RemoteSessionBoard = ({
   playmatExpanded = false,
   onPlaymatExpandedChange,
   onPerspectiveChange,
+  coinFlip,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -172,6 +176,8 @@ export const RemoteSessionBoard = ({
     readonly flipped: boolean;
     readonly actingPlayerId: string | undefined;
   }) => void;
+  /** The presentation runtime's coin, tossed over the table. */
+  readonly coinFlip?: PresentationStateSource<CoinFlipSnapshot>;
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
@@ -703,6 +709,20 @@ export const RemoteSessionBoard = ({
                   boardState.view?.viewer.kind === 'player',
                 flipBoard: boardFlipAllowed(roomMode, boardState.view),
               }}
+            />
+          ) : null}
+          {layout ? (
+            <CoinFlipOverlay
+              {...(coinFlip ? { source: coinFlip } : {})}
+              layout={layout}
+              pending={coinPending}
+              pendingPlayerId={
+                displayPolicyRef.current.actingPlayerId ??
+                (boardState.view?.viewer.kind === 'player'
+                  ? boardState.view.viewer.playerId
+                  : undefined)
+              }
+              reducedMotion={preferences.reducedMotion}
             />
           ) : null}
           <LegacyBoardOverlays

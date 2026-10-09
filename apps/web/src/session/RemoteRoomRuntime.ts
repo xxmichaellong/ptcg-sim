@@ -10,6 +10,7 @@ import {
   type SessionSocketFactory,
 } from '@ptcgsim/client-session';
 
+import { motionSettings } from '../motion/motion-settings.js';
 import { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
 import {
@@ -92,6 +93,10 @@ export class RemoteRoomRuntime {
     try {
       replay = new ReplaySessionCoordinator(this.session);
       presentation = new LegacyGamePresentationRuntime({
+        // Coins follow the page's motion settings, like the board does.
+        reducedMotion: motionSettings().reducedMotion,
+        animationDurationScale: () =>
+          motionSettings().getSnapshot().durationScale,
         ...presentationOptions,
         live: this.session,
         replay,

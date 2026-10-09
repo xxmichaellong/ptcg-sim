@@ -349,6 +349,7 @@ export const RemoteRoomRoute = ({
                 playmatExpanded={playmatExpanded}
                 onPlaymatExpandedChange={setPlaymatExpanded}
                 onPerspectiveChange={setPerspective}
+                coinFlip={runtime.presentation.coinFlip}
               />
             </section>
             <aside

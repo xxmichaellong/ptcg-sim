@@ -944,6 +944,8 @@ export const RemoteRoomLobby = ({
             onIntent={() => undefined}
             roomMode="solo"
             hideOpponentHand={hideOpponentHand}
+            // Test doubles may stand in for the runtime without a presentation.
+            coinFlip={parkedSolo.runtime.presentation?.coinFlip}
             {...(preferences ? { preferences } : {})}
           />
         ) : (

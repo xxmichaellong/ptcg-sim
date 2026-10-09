@@ -214,8 +214,15 @@ describe('LegacyPresentationSurface', () => {
       'Blue flipped heads'
     );
     expect(scheduler.pendingCount).toBe(1);
-    expect(runtime.game.animation.getSnapshot().animations).toEqual([]);
-    expect(host.querySelector('[data-coin-animation]')).toBeNull();
+    // The log and the announcement are unchanged; the table also tosses a
+    // coin onto the room's result, which this surface does not paint.
+    expect(runtime.coinFlip.getSnapshot().flip).toMatchObject({
+      playerId: 'spike-blue',
+      result: 'heads',
+      motion: 'spin',
+      phase: 'spinning',
+    });
+    expect(host.querySelector('.coin-flip')).toBeNull();
 
     await act(async () => {
       live.publish([first, mulligan]);

@@ -3,6 +3,12 @@ import type {
   PresentationStateSource,
 } from './PresentationRuntime.js';
 import type { PresentationConsumerFailureReporter } from './PresentationConsumerRuntime.js';
+import type { ReducedMotionSource } from './PresentationAnimationExecutor.js';
+import {
+  CoinFlipController,
+  type CoinFlipScheduler,
+  type CoinFlipSnapshot,
+} from './CoinFlipController.js';
 import {
   GamePresentationRuntime,
   type GamePresentationRuntimeOptions,
@@ -28,6 +34,15 @@ export interface LegacyGamePresentationRuntimeOptions extends Omit<
   readonly reportConsumerFailure?: PresentationConsumerFailureReporter;
   /** Test seam for the live-region dwell period. */
   readonly scheduleAnnouncementClear?: LegacyAnnouncementScheduler;
+  /**
+   * The player's reduce-motion choice (the motion settings' `reducedMotion`).
+   * When it is on, a coin shows only its result; without it, coins toss.
+   */
+  readonly reducedMotion?: ReducedMotionSource;
+  /** The animation-speed multiplier from the motion settings. */
+  readonly animationDurationScale?: () => number;
+  /** Test seam for the coin's toss and linger timers. */
+  readonly scheduleCoinFlip?: CoinFlipScheduler;
 }
 
 const EMPTY_LIVE_REGION: LegacyLiveRegionSnapshot = { announcement: null };
@@ -120,11 +135,15 @@ class LegacyLiveRegionController implements PresentationStateSource<LegacyLiveRe
 
 /**
  * Route-scoped composition for the legacy sidebar presentation surfaces.
- * Coin results intentionally remain log-only, matching the current UI: the
- * already-resolved animation request is consumed without rerolling or motion.
+ * A coin's result is logged and announced exactly as before; the table also
+ * tosses a coin that lands on the room's already-resolved result (nothing
+ * rerolls), or only shows the result when motion is reduced.
  */
 export class LegacyGamePresentationRuntime {
   private readonly liveRegionController: LegacyLiveRegionController;
+  private readonly coinFlipController: CoinFlipController;
+  /** The coin on the table, for the board's coin overlay. */
+  readonly coinFlip: PresentationStateSource<CoinFlipSnapshot>;
   readonly game: GamePresentationRuntime;
   readonly activityFeed: NonNullable<
     GamePresentationRuntime['consumers']
@@ -139,11 +158,21 @@ export class LegacyGamePresentationRuntime {
     announcePresence,
     reportConsumerFailure,
     scheduleAnnouncementClear = scheduleDefaultAnnouncementClear,
+    reducedMotion,
+    animationDurationScale,
+    scheduleCoinFlip,
   }: LegacyGamePresentationRuntimeOptions) {
     this.liveRegionController = new LegacyLiveRegionController(
       scheduleAnnouncementClear
     );
     this.liveRegion = this.liveRegionController;
+    this.coinFlipController = new CoinFlipController({
+      ...(scheduleCoinFlip ? { schedule: scheduleCoinFlip } : {}),
+      ...(animationDurationScale
+        ? { durationScale: animationDurationScale }
+        : {}),
+    });
+    this.coinFlip = this.coinFlipController;
     try {
       this.game = new GamePresentationRuntime({
         live,
@@ -153,9 +182,10 @@ export class LegacyGamePresentationRuntime {
         ...(announcePresence === undefined ? {} : { announcePresence }),
         consumers: {
           announceAccessibility: this.liveRegionController.announce,
-          // Legacy flip-coin.js only appended the resolved result to chat.
-          animate: () => undefined,
-          presentAnimationWithoutMotion: () => undefined,
+          animate: this.coinFlipController.animate,
+          presentAnimationWithoutMotion:
+            this.coinFlipController.presentWithoutMotion,
+          ...(reducedMotion ? { reducedMotion } : {}),
           ...(reportConsumerFailure
             ? { reportFailure: reportConsumerFailure }
             : {}),
@@ -163,6 +193,7 @@ export class LegacyGamePresentationRuntime {
       });
     } catch (error) {
       this.liveRegionController.dispose();
+      this.coinFlipController.dispose();
       throw error;
     }
     this.activityFeed = this.game.consumers!.activityFeed;
@@ -175,6 +206,7 @@ export class LegacyGamePresentationRuntime {
       this.game.dispose();
     } finally {
       this.liveRegionController.dispose();
+      this.coinFlipController.dispose();
     }
   }
 }
