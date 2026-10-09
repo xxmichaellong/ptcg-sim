@@ -40,10 +40,26 @@ interface ChromeHarnessWindow extends Window {
   };
 }
 
-const MAX_MISMATCHED_PIXELS = 1_536;
-const MAX_HANDLE_MISMATCHES = 512;
-const MAX_CONTROL_MISMATCHES = 1_280;
-const MAX_BASE_CHANNEL_DELTA = 128;
+/** Rectangles agree with v1 within this many CSS pixels. */
+const GEOMETRY_TOLERANCE_PX = 2;
+
+interface ChromeRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Where the shared board controls and resize handles sit on the page. */
+interface BoardControlsGeometry {
+  readonly selfResizer: ChromeRect;
+  readonly oppResizer: ChromeRect;
+  readonly container: ChromeRect;
+  readonly controls: readonly {
+    readonly id: string;
+    readonly rect: ChromeRect;
+  }[];
+}
 
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
@@ -154,12 +170,44 @@ const isolateLegacyChrome = async (page: Page): Promise<void> => {
   await settlePaint(page);
 };
 
+/** The same ids in v1's page and the candidate route. */
+const captureBoardControlsGeometry = (
+  page: Page
+): Promise<BoardControlsGeometry> =>
+  page.evaluate(() => {
+    const rect = (element: Element | null) => {
+      if (!element) throw new Error('Missing board chrome element');
+      const bounds = element.getBoundingClientRect();
+      return {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      };
+    };
+    const container = document.getElementById('boardButtonContainer');
+    if (!container) throw new Error('Missing #boardButtonContainer');
+    return {
+      selfResizer: rect(document.getElementById('selfResizer')),
+      oppResizer: rect(document.getElementById('oppResizer')),
+      container: rect(container),
+      controls: [...container.children]
+        .filter(
+          (child) =>
+            getComputedStyle(child).display !== 'none' &&
+            child.getBoundingClientRect().width > 0
+        )
+        .map((child) => ({ id: child.id, rect: rect(child) })),
+    };
+  });
+
 const captureLegacyChrome = async (
   browser: Browser,
   state: ChromeState
 ): Promise<{
   readonly image: Buffer;
   readonly oncePerGameControls: OncePerGameControlGeometry;
+  readonly boardControls: BoardControlsGeometry;
 }> => {
   const page = await browser.newPage({
     viewport: { width: 1280, height: 720 },
@@ -191,6 +239,7 @@ const captureLegacyChrome = async (
     return {
       image: await page.screenshot({ animations: 'disabled', caret: 'hide' }),
       oncePerGameControls,
+      boardControls: await captureBoardControlsGeometry(page),
     };
   } finally {
     await page.close();
@@ -344,145 +393,73 @@ const attachComparison = async (
   ]);
 };
 
-const comparePixels = async (
-  page: Page,
-  source: Buffer,
-  candidate: Buffer,
-  sourceControls: OncePerGameControlGeometry,
-  candidateControls: OncePerGameControlGeometry
-): Promise<{
-  readonly width: number;
-  readonly height: number;
-  readonly mismatchedPixels: number;
-  readonly maximumChannelDelta: number;
-  readonly maximumBaseChannelDelta: number;
-  readonly maximumOncePerGameChannelDelta: number;
-  readonly mismatchBounds: {
-    readonly left: number;
-    readonly top: number;
-    readonly right: number;
-    readonly bottom: number;
-  } | null;
-  readonly handleMismatches: number;
-  readonly controlMismatches: number;
-  readonly oncePerGameMismatches: number;
-}> =>
-  page.evaluate(
-    async ({ sourceUrl, candidateUrl, sourceControls, candidateControls }) => {
-      const pixels = async (url: string) => {
-        const image = new Image();
-        image.src = url;
-        await image.decode();
-        const canvas = document.createElement('canvas');
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        const context = canvas.getContext('2d', { willReadFrequently: true });
-        if (!context) throw new Error('Screenshot pixel canvas is unavailable');
-        context.drawImage(image, 0, 0);
-        return {
-          width: canvas.width,
-          height: canvas.height,
-          data: context.getImageData(0, 0, canvas.width, canvas.height).data,
-        };
-      };
-      const [expected, actual] = await Promise.all([
-        pixels(sourceUrl),
-        pixels(candidateUrl),
-      ]);
-      if (
-        expected.width !== actual.width ||
-        expected.height !== actual.height
-      ) {
-        throw new Error(
-          `Screenshot dimensions differ: ${expected.width}x${expected.height} versus ${actual.width}x${actual.height}`
-        );
-      }
-      let mismatchedPixels = 0;
-      let maximumChannelDelta = 0;
-      let maximumBaseChannelDelta = 0;
-      let maximumOncePerGameChannelDelta = 0;
-      let left = expected.width;
-      let top = expected.height;
-      let right = -1;
-      let bottom = -1;
-      let handleMismatches = 0;
-      let controlMismatches = 0;
-      let oncePerGameMismatches = 0;
-      const markerRegions = [
-        ...Object.values(sourceControls),
-        ...Object.values(candidateControls),
-      ];
-      const isOncePerGamePixel = (x: number, y: number) =>
-        markerRegions.some(
-          (region) =>
-            x >= region.x - 10 &&
-            x <= region.x + region.width + 10 &&
-            y >= region.y - 10 &&
-            y <= region.y + region.height + 10
-        );
-      for (let offset = 0; offset < expected.data.length; offset += 4) {
-        const pixel = offset / 4;
-        const x = pixel % expected.width;
-        const y = Math.floor(pixel / expected.width);
-        const oncePerGamePixel = isOncePerGamePixel(x, y);
-        let pixelDiffers = false;
-        for (let channel = 0; channel < 4; channel += 1) {
-          const delta = Math.abs(
-            (expected.data[offset + channel] ?? 0) -
-              (actual.data[offset + channel] ?? 0)
-          );
-          maximumChannelDelta = Math.max(maximumChannelDelta, delta);
-          if (oncePerGamePixel) {
-            maximumOncePerGameChannelDelta = Math.max(
-              maximumOncePerGameChannelDelta,
-              delta
-            );
-          } else {
-            maximumBaseChannelDelta = Math.max(maximumBaseChannelDelta, delta);
-          }
-          if (delta !== 0) pixelDiffers = true;
-        }
-        if (pixelDiffers) {
-          mismatchedPixels += 1;
-          left = Math.min(left, x);
-          top = Math.min(top, y);
-          right = Math.max(right, x);
-          bottom = Math.max(bottom, y);
-          if (x < 32) handleMismatches += 1;
-          else if (oncePerGamePixel) oncePerGameMismatches += 1;
-          else controlMismatches += 1;
-        }
-      }
-      return {
-        width: expected.width,
-        height: expected.height,
-        mismatchedPixels,
-        maximumChannelDelta,
-        maximumBaseChannelDelta,
-        maximumOncePerGameChannelDelta,
-        mismatchBounds: right < 0 ? null : { left, top, right, bottom },
-        handleMismatches,
-        controlMismatches,
-        oncePerGameMismatches,
-      };
-    },
-    {
-      sourceUrl: `data:image/png;base64,${source.toString('base64')}`,
-      candidateUrl: `data:image/png;base64,${candidate.toString('base64')}`,
-      sourceControls,
-      candidateControls,
+/**
+ * ADR-027 restyles the controls (token pills with Phosphor icons) and the
+ * resize pills, so their paint is no longer compared with v1. Their geometry
+ * is: the handles keep v1's rectangles, the controls keep v1's anchor, ids
+ * and order, and each control stays centred on v1's row.
+ */
+const expectBoardControlsGeometry = (
+  actual: BoardControlsGeometry,
+  expected: BoardControlsGeometry,
+  state: ChromeState
+): void => {
+  const near = (value: number, target: number, label: string) =>
+    expect
+      .soft(Math.abs(value - target), `${state} ${label}`)
+      .toBeLessThanOrEqual(GEOMETRY_TOLERANCE_PX);
+  for (const handle of ['selfResizer', 'oppResizer'] as const) {
+    for (const dimension of ['x', 'y', 'width', 'height'] as const) {
+      near(
+        actual[handle][dimension],
+        expected[handle][dimension],
+        `${handle}.${dimension}`
+      );
     }
-  );
+  }
+  near(actual.container.x, expected.container.x, 'controls.x');
+  near(actual.container.y, expected.container.y, 'controls.y');
+  near(actual.container.height, expected.container.height, 'controls.height');
+  expect
+    .soft(
+      actual.controls.map((control) => control.id),
+      `${state} control ids`
+    )
+    .toEqual(expected.controls.map((control) => control.id));
+  const centerY = (rect: ChromeRect) => rect.y + rect.height / 2;
+  actual.controls.forEach((control, index) => {
+    const source = expected.controls[index];
+    if (source) {
+      near(
+        centerY(control.rect),
+        centerY(source.rect),
+        `${control.id}.centerY`
+      );
+    }
+    expect
+      .soft(control.rect.height, `${state} ${control.id}.height`)
+      .toBeGreaterThanOrEqual(24);
+    const previous = actual.controls[index - 1];
+    if (previous) {
+      expect
+        .soft(
+          previous.rect.x + previous.rect.width,
+          `${state} ${control.id} follows ${previous.id}`
+        )
+        .toBeLessThanOrEqual(control.rect.x);
+    }
+  });
+  const [first] = actual.controls;
+  const [sourceFirst] = expected.controls;
+  if (first && sourceFirst) near(first.rect.x, sourceFirst.rect.x, 'first.x');
+};
 
-test('route-owned candidate chrome matches real v1 paint through theme, hover, resize, flip and fullscreen', async ({
+test('route-owned candidate chrome keeps v1 geometry through theme, hover, resize, flip and fullscreen', async ({
   browser,
   page,
 }, testInfo) => {
   test.setTimeout(120_000);
   const candidateErrors = collectRuntimeErrors(page);
-  const comparisons: Partial<
-    Record<ChromeState, Awaited<ReturnType<typeof comparePixels>>>
-  > = {};
   await mountCandidateChrome(page);
 
   for (const state of [
@@ -501,12 +478,19 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       caret: 'hide',
     });
     const candidateControls = await captureCandidateOncePerGameControls(page);
+    const candidateBoardControls = await captureBoardControlsGeometry(page);
     await testInfo.attach(`legacy-board-chrome-${state}-geometry.json`, {
       body: Buffer.from(
         JSON.stringify(
           {
-            source: source.oncePerGameControls,
-            candidate: candidateControls,
+            source: {
+              oncePerGame: source.oncePerGameControls,
+              boardControls: source.boardControls,
+            },
+            candidate: {
+              oncePerGame: candidateControls,
+              boardControls: candidateBoardControls,
+            },
           },
           null,
           2
@@ -514,52 +498,19 @@ test('route-owned candidate chrome matches real v1 paint through theme, hover, r
       ),
       contentType: 'application/json',
     });
+    // Both screenshots stay attached as evidence of the redesigned paint.
     await attachComparison(testInfo, state, source.image, candidate);
     expectOncePerGameControlsAnchored(
       candidateControls,
       source.oncePerGameControls,
       state
     );
-    const comparison = await comparePixels(
-      page,
-      source.image,
-      candidate,
-      source.oncePerGameControls,
-      candidateControls
+    expectBoardControlsGeometry(
+      candidateBoardControls,
+      source.boardControls,
+      state
     );
-    comparisons[state] = comparison;
-    expect(comparison.width, `${state} screenshot width`).toBe(1280);
-    expect(comparison.height, `${state} screenshot height`).toBe(720);
-    // The source paints transformed fixed nodes in the document compositor;
-    // the candidate paints equivalent absolute nodes in an isolated route
-    // layer. Chromium builds rasterize that fringe differently, so retain
-    // strict base-chrome, handle-band, shared-control and channel bounds.
-    // The GX and VSTAR region is excluded: those markers are redesigned
-    // tiles (ADR-027) whose geometry is asserted above. Soft assertions
-    // preserve every state attachment when one bound regresses.
-    expect
-      .soft(
-        comparison.handleMismatches + comparison.controlMismatches,
-        `${state} painted base chrome`
-      )
-      .toBeLessThanOrEqual(MAX_MISMATCHED_PIXELS);
-    expect
-      .soft(comparison.handleMismatches, `${state} painted resize handles`)
-      .toBeLessThanOrEqual(MAX_HANDLE_MISMATCHES);
-    expect
-      .soft(comparison.controlMismatches, `${state} painted controls`)
-      .toBeLessThanOrEqual(MAX_CONTROL_MISMATCHES);
-    expect
-      .soft(
-        comparison.maximumBaseChannelDelta,
-        `${state} base-chrome maximum channel delta`
-      )
-      .toBeLessThanOrEqual(MAX_BASE_CHANNEL_DELTA);
   }
-  await testInfo.attach('legacy-board-chrome-pixel-comparison.json', {
-    body: Buffer.from(JSON.stringify(comparisons, null, 2)),
-    contentType: 'application/json',
-  });
 
   await callCandidateHarness(page);
   for (const id of ['turnButton', 'flipCoinButton', 'refreshButton']) {

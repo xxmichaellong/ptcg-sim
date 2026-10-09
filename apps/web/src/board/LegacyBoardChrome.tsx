@@ -3,6 +3,14 @@ import type {
   BoardLayoutSnapshot,
   BoardPlayerLayout,
 } from '@ptcgsim/renderer-contract';
+import {
+  ArrowClockwise,
+  ArrowsDownUp,
+  Coin,
+  CornersIn,
+  CornersOut,
+  Plus,
+} from '@phosphor-icons/react';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';
@@ -39,23 +47,24 @@ const DEFAULT_VISIBILITY: LegacyBoardChromeVisibility = {
   flipBoard: true,
 };
 
-const SELF_GRADIENT =
-  'linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864))';
-const OPPONENT_GRADIENT =
-  'linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864))';
-
+/** The resize pill's box; its seat colour comes from `data-player-side`. */
 const handleStyle = (
   handle: BoardLayoutSnapshot['resizeHandles'][number],
-  viewportHeight: number,
-  background: string
+  viewportHeight: number
 ): CSSProperties => ({
   position: 'absolute',
   left: handle.bounds.x,
   bottom: viewportHeight * handle.authoredBottomRatio,
   width: handle.bounds.width,
   height: handle.bounds.height,
-  background,
 });
+
+const ICON_PROPS = {
+  'aria-hidden': true,
+  focusable: false,
+  weight: 'bold',
+  className: 'legacy-board-control-icon',
+} as const;
 
 const LegacyTooltipButton = memo(function LegacyTooltipButton({
   id,
@@ -80,10 +89,14 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
         className={`legacy-board-control-button${darkMode ? ' dark-mode-2' : ''}`}
         data-control-pending={pending ? 'true' : undefined}
         aria-busy={pending || undefined}
+        aria-label={label}
       >
         {children}
       </button>
-      <span className="tooltiptext">{label}</span>
+      {/* The button carries the same words as its name. */}
+      <span className="tooltiptext" aria-hidden="true">
+        {label}
+      </span>
     </div>
   );
 });
@@ -259,8 +272,6 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   };
   const playerSideAt = (physicalSide: 'lower' | 'upper') =>
     playerAt(physicalSide).playerId === localPlayerId ? 'local' : 'opponent';
-  const gradientAt = (physicalSide: 'lower' | 'upper') =>
-    playerSideAt(physicalSide) === 'local' ? SELF_GRADIENT : OPPONENT_GRADIENT;
   const lower = layout.resizeHandles.find((handle) => handle.id === 'lower');
   const upper = layout.resizeHandles.find((handle) => handle.id === 'upper');
   if (!lower || !upper) throw new Error('Board chrome requires both handles');
@@ -300,11 +311,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
         data-visible-resize-handle-id="lower"
         data-player-side={playerSideAt(lower.controlsPhysicalSide)}
         aria-hidden="true"
-        style={handleStyle(
-          lower,
-          layout.viewport.height,
-          gradientAt(lower.controlsPhysicalSide)
-        )}
+        style={handleStyle(lower, layout.viewport.height)}
       />
       <div
         id="oppResizer"
@@ -312,11 +319,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
         data-visible-resize-handle-id="upper"
         data-player-side={playerSideAt(upper.controlsPhysicalSide)}
         aria-hidden="true"
-        style={handleStyle(
-          upper,
-          layout.viewport.height,
-          gradientAt(upper.controlsPhysicalSide)
-        )}
+        style={handleStyle(upper, layout.viewport.height)}
       />
       <div
         id="boardButtonContainer"
@@ -344,7 +347,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
               onClick={actions.takeTurn}
               darkMode={darkMode}
             >
-              +Turn
+              <Plus {...ICON_PROPS} />
+              <span className="legacy-board-control-text">Turn</span>
             </LegacyTooltipButton>
             <LegacyTooltipButton
               id="flipCoinButton"
@@ -353,7 +357,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
               darkMode={darkMode}
               pending={coinPending}
             >
-              Coin
+              <Coin {...ICON_PROPS} />
+              <span className="legacy-board-control-text">Coin</span>
             </LegacyTooltipButton>
           </>
         )}
@@ -364,7 +369,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             onClick={actions.flipBoard}
             darkMode={darkMode}
           >
-            ⇅
+            <ArrowsDownUp {...ICON_PROPS} />
           </LegacyTooltipButton>
         )}
         <LegacyTooltipButton
@@ -377,7 +382,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             id="refreshIcon"
             style={{ display: refreshingImages ? 'none' : undefined }}
           >
-            ↻
+            <ArrowClockwise {...ICON_PROPS} />
           </div>
           <div
             id="loadingCircle"
@@ -390,7 +395,13 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           onClick={actions.toggleFullscreen}
           darkMode={darkMode}
         >
-          <div id="fullscreenIcon">⌞⌝</div>
+          <div id="fullscreenIcon">
+            {layout.shellMode === 'fullscreen' ? (
+              <CornersIn {...ICON_PROPS} />
+            ) : (
+              <CornersOut {...ICON_PROPS} />
+            )}
+          </div>
         </LegacyTooltipButton>
       </div>
     </div>

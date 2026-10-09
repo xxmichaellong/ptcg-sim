@@ -210,6 +210,94 @@ describe('LegacyBoardChrome', () => {
     );
   });
 
+  it('paints the board controls as icon pills that keep their names and anchors', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const actions = {
+      takeTurn: vi.fn(),
+      flipCoin: vi.fn(),
+      flipBoard: vi.fn(),
+      refreshImages: vi.fn(),
+      toggleFullscreen: vi.fn(),
+      toggleOncePerGame: vi.fn(),
+    };
+    const render = async (shellMode: 'sidebar' | 'fullscreen') =>
+      act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={createBoardLayoutSnapshot({ ...layoutState(), shellMode })}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode={false}
+            actions={actions}
+          />
+        )
+      );
+    await render('sidebar');
+    const controls = [
+      ['turnButton', 'Start turn', 'Turn'],
+      ['flipCoinButton', 'Flip coin', 'Coin'],
+      ['flipBoardButton', 'Flip board', ''],
+      ['refreshButton', 'Refresh images', ''],
+      ['fullscreenPlaymatButton', 'Full screen', ''],
+    ] as const;
+    for (const [id, name, text] of controls) {
+      const wrapper = host.querySelector<HTMLElement>(`#${id}`)!;
+      const button = wrapper.querySelector<HTMLButtonElement>('button')!;
+      expect(button.className, id).toBe('legacy-board-control-button');
+      expect(button.getAttribute('aria-label'), id).toBe(name);
+      // A Phosphor icon replaces v1's glyphs; it is decoration only.
+      const icon = button.querySelector('svg.legacy-board-control-icon');
+      expect(icon?.getAttribute('aria-hidden'), id).toBe('true');
+      expect(button.textContent, id).toBe(text);
+      const tooltip = wrapper.querySelector<HTMLElement>('.tooltiptext')!;
+      expect(tooltip.textContent).toBe(name);
+      expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+    }
+    expect(host.textContent).not.toMatch(/[⇅↻⌞⌝]|\+Turn/u);
+    const sidebarIcon = host.querySelector('#fullscreenIcon')!.innerHTML;
+    await render('fullscreen');
+    // The full-screen control shows which way it will go.
+    expect(host.querySelector('#fullscreenIcon')!.innerHTML).not.toBe(
+      sidebarIcon
+    );
+    expect(
+      host
+        .querySelector('#fullscreenPlaymatButton button')
+        ?.getAttribute('aria-label')
+    ).toBe('Full screen');
+
+    const css = readFileSync(
+      join(import.meta.dirname, 'LegacyBoardChrome.css'),
+      'utf8'
+    );
+    const buttonRule = css.slice(
+      css.indexOf('.ptcgsim-legacy-board-chrome .legacy-board-control-button {')
+    );
+    for (const token of [
+      'var(--color-surface-2',
+      'var(--color-border',
+      'var(--shadow-2',
+      'var(--radius-pill',
+      'var(--duration-instant',
+    ]) {
+      expect(buttonRule.slice(0, buttonRule.indexOf('}')), token).toContain(
+        token
+      );
+    }
+    expect(css).toMatch(
+      /\.legacy-board-control-button:active \{\s*scale: 0\.96;/
+    );
+    expect(css).toContain('.legacy-board-control-button:focus-visible {');
+    expect(css).toMatch(
+      /\.legacy-board-resizer\[data-player-side='local'\] \{\s*--ptcgsim-resizer-seat: var\(--color-you/
+    );
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it('marks the coin control as waiting on the room, and only that one', async () => {
     const host = document.createElement('div');
     document.body.append(host);
@@ -304,8 +392,9 @@ describe('LegacyBoardChrome', () => {
     expect(lower?.dataset.playerSide).toBe('local');
     expect(upper?.dataset.playerSide).toBe('opponent');
     expect(lower?.className).toBe('legacy-board-resizer');
-    expect(lower?.style.background).toContain('rgba(90, 110, 188, 0.864)');
-    expect(upper?.style.background).toContain('rgba(188, 90, 113, 0.864)');
+    // Each pill wears its seat's colour token through `data-player-side`.
+    expect(lower?.style.background).toBe('');
+    expect(upper?.style.background).toBe('');
     expect(Number.parseFloat(lower?.style.left ?? '')).toBeCloseTo(
       initial.resizeHandles[0].bounds.x,
       10
@@ -381,8 +470,6 @@ describe('LegacyBoardChrome', () => {
     );
     expect(lower?.dataset.playerSide).toBe('opponent');
     expect(upper?.dataset.playerSide).toBe('local');
-    expect(lower?.style.background).toContain('rgba(188, 90, 113, 0.864)');
-    expect(upper?.style.background).toContain('rgba(90, 110, 188, 0.864)');
     expect(
       host.querySelector<HTMLButtonElement>('#turnButton button')?.className
     ).toBe('legacy-board-control-button dark-mode-2');
