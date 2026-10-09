@@ -21,6 +21,7 @@ import type {
 } from '../board/BoardSessionAdapter.js';
 import type { BoardOverlayState } from '../board/BoardSessionController.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
+import { OverlayHost } from '../ui/OverlayHost.js';
 import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntime.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import {
@@ -408,7 +409,20 @@ export const mountReactDomProtectedInputHarness = async (
     inset: '0',
     pointerEvents: 'none',
   });
-  host.append(boardHost, overlayHost);
+  // Dialogs (the count prompt, the discard confirmation) get the top layer
+  // of the harness: the legacy popups share its stacking context at z-index
+  // 100000. The layer has no size, so it never intercepts the board.
+  const dialogLayer = document.createElement('div');
+  dialogLayer.dataset.reactDomProtectedInputDialogs = 'true';
+  Object.assign(dialogLayer.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '0',
+    height: '0',
+    zIndex: '2147483647',
+  });
+  host.append(boardHost, overlayHost, dialogLayer);
   document.body.append(host);
 
   const runtime = new ReactDomBoardSessionRuntime({
@@ -665,48 +679,52 @@ export const mountReactDomProtectedInputHarness = async (
   const renderOverlays = (): void => {
     const current = runtime.getBoardSnapshot();
     overlayRoot.render(
-      current
-        ? createElement(
-            Fragment,
-            null,
-            createElement(LegacyBoardOverlays, {
-              state: current,
-              darkMode,
-              actions: overlayCallbacks,
-            }),
-            createElement(LegacyBoardKeyboardShortcuts, {
-              state: current,
-              darkMode,
-              undoSeat: 'acting',
-              onRequest: (request) => {
-                shortcutActions.push(request);
-                runtime.emitLegacyShortcutAction(request);
-              },
-              onLocalIntent: (intent) => {
-                runtime.emitBoardIntent(intent);
-              },
-              onDeclareMulligan: () => {
-                runtime.declareMulligan();
-              },
-              onDeclareDeckView: () => {
-                runtime.declareDeckView();
-              },
-              boardFlipEnabled: true,
-              onFlipBoard: () => {
-                boardFlips += 1;
-                runtime.flipBoard();
-              },
-              onDismissPresentation: () => {
-                presentationDismissals += 1;
-                runtime.dismissLocalPresentation();
-              },
-              onRefreshScene: () => {
-                sceneRefreshes += 1;
-                runtime.refreshScene();
-              },
-            })
-          )
-        : null
+      createElement(
+        OverlayHost,
+        { container: dialogLayer },
+        current
+          ? createElement(
+              Fragment,
+              null,
+              createElement(LegacyBoardOverlays, {
+                state: current,
+                darkMode,
+                actions: overlayCallbacks,
+              }),
+              createElement(LegacyBoardKeyboardShortcuts, {
+                state: current,
+                darkMode,
+                undoSeat: 'acting',
+                onRequest: (request) => {
+                  shortcutActions.push(request);
+                  runtime.emitLegacyShortcutAction(request);
+                },
+                onLocalIntent: (intent) => {
+                  runtime.emitBoardIntent(intent);
+                },
+                onDeclareMulligan: () => {
+                  runtime.declareMulligan();
+                },
+                onDeclareDeckView: () => {
+                  runtime.declareDeckView();
+                },
+                boardFlipEnabled: true,
+                onFlipBoard: () => {
+                  boardFlips += 1;
+                  runtime.flipBoard();
+                },
+                onDismissPresentation: () => {
+                  presentationDismissals += 1;
+                  runtime.dismissLocalPresentation();
+                },
+                onRefreshScene: () => {
+                  sceneRefreshes += 1;
+                  runtime.refreshScene();
+                },
+              })
+            )
+          : null
+      )
     );
   };
   const unsubscribeBoard = runtime.subscribeBoard(renderOverlays);

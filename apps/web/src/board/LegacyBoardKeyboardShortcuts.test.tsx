@@ -360,6 +360,84 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('leaves keys alone inside dialogs and while a count prompt is open', async () => {
+    const onRequest = vi.fn();
+    const onDismissPresentation = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const render = async (
+      input: (typeof state)['overlays']['input']
+    ): Promise<void> => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardKeyboardShortcuts, {
+            state: { ...state, overlays: { ...state.overlays, input } },
+            onRequest,
+            onDismissPresentation,
+          })
+        );
+      });
+    };
+    const altD = () =>
+      new KeyboardEvent('keydown', {
+        key: 'd',
+        code: 'KeyD',
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+    const escape = () =>
+      new KeyboardEvent('keydown', {
+        key: 'Escape',
+        code: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+    await render(null);
+
+    // A confirmation's buttons are not table targets: its keys are its own.
+    const dialog = document.createElement('div');
+    dialog.setAttribute('data-ptcgsim-overlay', 'alert');
+    const confirmButton = document.createElement('button');
+    dialog.append(confirmButton);
+    document.body.append(dialog);
+    expect(confirmButton.dispatchEvent(altD())).toBe(true);
+    expect(confirmButton.dispatchEvent(escape())).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(onDismissPresentation).not.toHaveBeenCalled();
+    // Once answered, a dialog only animates out: a quick next shortcut
+    // pressed while focus is still in it reaches the table.
+    dialog.setAttribute('data-closed', '');
+    expect(confirmButton.dispatchEvent(altD())).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'discardOwnHandAndDraw',
+    });
+    onRequest.mockClear();
+    dialog.remove();
+
+    // Alt+D's question is modal, as v1's native prompt was: a repeated or
+    // stray key cannot ask again or act on the table underneath.
+    await render({
+      kind: 'shortcutCount',
+      action: 'discardOwnHandAndDraw',
+      playerId: 'player-1',
+      zoneId: 'zone:player-1:hand',
+      message: 'Draw how many cards?',
+      initialValue: '0',
+      minimum: 0,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(document.body.dispatchEvent(altD())).toBe(true);
+    expect(document.body.dispatchEvent(escape())).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(onDismissPresentation).not.toHaveBeenCalled();
+
+    await render(null);
+    expect(document.body.dispatchEvent(altD())).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'discardOwnHandAndDraw',
+    });
+  });
+
   it('routes U only for an undo-capable unselected surface', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

@@ -13,6 +13,10 @@ import {
   legacyStackPreviewCardHeightRatio,
 } from '../../packages/renderer-contract/src/layout.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
+import {
+  answerOverlayConfirm,
+  openOverlayDialogs,
+} from './support/overlay-dialogs.js';
 
 /** v1 `.full-view`: 20px padding and a 1px border around the card flow. */
 const STACK_PREVIEW_EDGE_PX = 21;
@@ -311,6 +315,8 @@ const scrollToEnd = async (surface: Locator): Promise<ScrollEvidence> => {
   return readScrollEvidence(surface);
 };
 
+// v1's legacy runtime (the source page) still asks with a native confirm;
+// the v2 candidate asks in the overlay confirmation (answerOverlayConfirm).
 const answerNextConfirmation = (
   page: Page,
   accept: boolean
@@ -1485,7 +1491,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
     '[data-zone-action="shuffleDiscardToDeck"]'
   );
 
-  const cancelledConfirmation = answerNextConfirmation(page, false);
+  const cancelledConfirmation = answerOverlayConfirm(page, false);
   await discardAction.click();
   expect(await cancelledConfirmation).toEqual({
     type: 'confirm',
@@ -1509,7 +1515,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
     reportedErrors: [],
   });
 
-  const acceptedConfirmation = answerNextConfirmation(page, true);
+  const acceptedConfirmation = answerOverlayConfirm(page, true);
   await discardAction.click();
   expect(await acceptedConfirmation).toEqual({
     type: 'confirm',
@@ -1567,6 +1573,8 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
   await expect(zoneBrowser).toHaveCount(0);
   page.off('dialog', dismissUnexpectedCandidateDialog);
   expect(unexpectedCandidateDialogs).toEqual([]);
+  // Deck shuffle never asks, in either dialog form.
+  await expect(openOverlayDialogs(page)).toHaveCount(0);
   await expect(deckTarget).toBeFocused();
   expect(await candidateEvidence(page)).toMatchObject({
     submissions: [

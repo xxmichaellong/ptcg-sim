@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 
+import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
 import { actingPlayerIdOf } from './acting-seat.js';
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import { LegacyBoardShortcutReference } from './LegacyBoardShortcutReference.js';
@@ -107,6 +108,11 @@ export const LegacyBoardKeyboardShortcuts = ({
   const deckViewPlayerId =
     actingPlayerIdOf(state.view, state.scene?.bottomPlayerId) ??
     state.scene?.bottomPlayerId;
+  // A count prompt (Alt+D's "Draw how many cards?") is a modal question, as
+  // v1's native prompt was: the table takes no keys until it is answered.
+  const countPromptOpen =
+    state.overlays.input?.kind === 'count' ||
+    state.overlays.input?.kind === 'shortcutCount';
   const deckViewZoneId = state.scene?.zones.find(
     (zone) =>
       zone.kind === 'deck' &&
@@ -118,6 +124,9 @@ export const LegacyBoardKeyboardShortcuts = ({
       if (
         event.defaultPrevented ||
         event.isComposing ||
+        countPromptOpen ||
+        // Keys pressed in a dialog, toast or tooltip belong to it.
+        isOverlayKeyTarget(event.target) ||
         isLegacyBoardShortcutEditableTarget(event.target) ||
         (isLegacyBoardOverlayTarget(event.target) &&
           !isSelectedOpenedZoneCardTarget(
@@ -268,6 +277,7 @@ export const LegacyBoardKeyboardShortcuts = ({
     selectedCardId,
     boardFlipEnabled,
     undoSeat,
+    countPromptOpen,
     state.overlays.preview,
     state.presentation.openedZoneId,
     state.view?.viewer.kind,

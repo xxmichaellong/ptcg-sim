@@ -57,6 +57,8 @@ import type {
   LegacyBoardShortcutCountPrompt,
   LegacyOwnHandShortcutAction,
 } from '../resolveLegacyBoardShortcutAction.js';
+import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
+import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -281,7 +283,7 @@ const useFocusBoundary = (
   container: RefObject<HTMLElement | null>,
   focusSelector: string,
   identity: string
-): void => {
+): RefObject<HTMLElement | null> => {
   const opener = useRef<HTMLElement | null>(null);
   const focusCycle = useRef(0);
   useLayoutEffect(() => {
@@ -341,6 +343,8 @@ const useFocusBoundary = (
       });
     };
   }, [container, focusSelector, identity]);
+  // The element focus returns to when the overlay goes away.
+  return opener;
 };
 
 const useOutsideDismiss = (
@@ -355,6 +359,9 @@ const useOutsideDismiss = (
     const onPointerDown = (event: PointerEvent): void => {
       const target = event.target;
       if (element.contains(target as Node)) return;
+      // A press inside a dialog raised over the table (a confirmation, a
+      // prompt) answers that dialog; it is not a press on the table.
+      if (isOverlaySurfaceTarget(target)) return;
       if (
         ignoreClosest &&
         target instanceof Element &&
@@ -1113,7 +1120,50 @@ const ZoneBrowser = ({
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
-  useFocusBoundary(container, '[data-zone-close]', zone.id);
+  const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
+  // The "Shuffle all to Deck" confirmation still being asked, if any. It
+  // belongs to this pile: closing the browser withdraws the question.
+  const shuffleConfirmation = useRef<AbortController | undefined>(undefined);
+  useEffect(
+    () => () => {
+      shuffleConfirmation.current?.abort();
+      shuffleConfirmation.current = undefined;
+    },
+    []
+  );
+  const primaryButton = useRef<HTMLButtonElement>(null);
+  const invokePrimaryAction = (id: LegacyBoardZoneActionId): void => {
+    if (id !== 'shuffleDiscardToDeck') {
+      actions.invokeZoneAction(id, zone.id);
+      return;
+    }
+    if (shuffleConfirmation.current) return;
+    const question = new AbortController();
+    shuffleConfirmation.current = question;
+    void confirmAction({
+      title: 'Shuffle all to Deck?',
+      body: DISCARD_SHUFFLE_CONFIRMATION,
+      confirmLabel: 'Shuffle',
+      tone: 'danger',
+      signal: question.signal,
+      // Back to the button if the pile is still open; once the answer has
+      // closed it, to whatever opened the pile, as closing it would.
+      finalFocus: () =>
+        primaryButton.current?.isConnected
+          ? primaryButton.current
+          : opener.current?.isConnected
+            ? opener.current
+            : null,
+    }).then((confirmed) => {
+      if (shuffleConfirmation.current === question) {
+        shuffleConfirmation.current = undefined;
+      }
+      // The controller still refuses a pile that has closed or changed.
+      if (confirmed && !question.signal.aborted) {
+        actions.invokeZoneAction(id, zone.id);
+      }
+    });
+  };
   useOutsideDismiss(
     container,
     dismiss,
@@ -1224,18 +1274,11 @@ const ZoneBrowser = ({
       <div className="ptcgsim-legacy-zone-toolbar">
         {primary ? (
           <button
+            ref={primaryButton}
             type="button"
             className="ptcgsim-legacy-zone-button"
             data-zone-action={primary.id}
-            onClick={() => {
-              if (
-                primary.id === 'shuffleDiscardToDeck' &&
-                !window.confirm(DISCARD_SHUFFLE_CONFIRMATION)
-              ) {
-                return;
-              }
-              actions.invokeZoneAction(primary.id, zone.id);
-            }}
+            onClick={() => invokePrimaryAction(primary.id)}
           >
             {primary.label}
           </button>
@@ -1719,13 +1762,21 @@ const MarkerEditor = ({
   );
 };
 
-// The object identity survives React's development StrictMode effect probe, so
-// one controller prompt can never produce two native modal dialogs.
 type LegacyBoardCountInput =
   LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
 
-const promptedCountInputs = new WeakSet<LegacyBoardCountInput>();
+const VIEW_COUNT_ACTIONS: ReadonlySet<string> = new Set([
+  'viewDeckTop',
+  'viewDeckBottom',
+]);
 
+/**
+ * Asks the controller's pending count question in a prompt dialog. The
+ * question lives as long as the controller holds it: if the table moves on
+ * (the hand or deck it counts is gone), the dialog closes unanswered. An
+ * invalid number keeps the dialog open with the source's message; Cancel or
+ * Escape simply withdraws the question.
+ */
 const CountPrompt = ({
   input,
   actions,
@@ -1733,28 +1784,38 @@ const CountPrompt = ({
   readonly input: LegacyBoardCountInput;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  // Re-rendering with new callbacks must not re-ask: only a new question
+  // does, and the dialog keeps what the player has typed.
+  const latestActions = useRef(actions);
   useEffect(() => {
-    if (promptedCountInputs.has(input)) return;
-    promptedCountInputs.add(input);
-    const value = window.prompt(input.message, input.initialValue);
-    if (value === null) {
-      if (input.kind === 'shortcutCount') {
-        window.alert(input.invalidMessage);
+    latestActions.current = actions;
+  }, [actions]);
+  useEffect(() => {
+    const question = new AbortController();
+    void promptValue({
+      title: input.message,
+      label: 'Number of cards',
+      defaultValue: input.initialValue,
+      inputMode: 'numeric',
+      submitLabel: VIEW_COUNT_ACTIONS.has(input.action) ? 'View' : 'Draw',
+      validate: (value) =>
+        parseLegacyCountInput(value, input.minimum) === undefined
+          ? input.invalidMessage
+          : null,
+      signal: question.signal,
+    }).then((value) => {
+      if (question.signal.aborted) return;
+      const current = latestActions.current;
+      if (value === null) {
+        current.dismiss('input');
+      } else if (input.kind === 'shortcutCount') {
+        current.submitShortcutCountInput(input.action, value);
+      } else {
+        current.submitCountInput(input.action, input.cardId, value);
       }
-      actions.dismiss('input');
-      return;
-    }
-    if (parseLegacyCountInput(value, input.minimum) === undefined) {
-      window.alert(input.invalidMessage);
-      actions.dismiss('input');
-      return;
-    }
-    if (input.kind === 'shortcutCount') {
-      actions.submitShortcutCountInput(input.action, value);
-    } else {
-      actions.submitCountInput(input.action, input.cardId, value);
-    }
-  }, [actions, input]);
+    });
+    return () => question.abort();
+  }, [input]);
   return null;
 };
 

@@ -11,6 +11,12 @@ import {
   LEGACY_SHORTCUT_REFERENCE_HEADINGS,
   LEGACY_SHORTCUT_REFERENCE_MACOS_NOTE,
 } from './support/legacy-shortcut-reference-contract.js';
+import {
+  answerOverlayPrompt,
+  openOverlayDialogs,
+  openOverlayPrompt,
+  overlayToast,
+} from './support/overlay-dialogs.js';
 
 interface ProtectedInputFixture {
   readonly ownPlayerId: string;
@@ -188,30 +194,10 @@ const clearEvidence = (page: Page): Promise<void> =>
     harness.clearEvidence();
   });
 
-const answerNextPrompt = (
-  page: Page,
-  value: string | null
-): Promise<{
-  readonly type: string;
-  readonly message: string;
-  readonly defaultValue: string;
-}> =>
-  new Promise((resolve, reject) => {
-    page.once('dialog', async (dialog) => {
-      const result = {
-        type: dialog.type(),
-        message: dialog.message(),
-        defaultValue: dialog.defaultValue(),
-      };
-      try {
-        if (value === null) await dialog.dismiss();
-        else await dialog.accept(value);
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
+// Count questions are asked in the overlay prompt dialog (they were native
+// prompts); this answers the next one the way the native handler did.
+const answerNextPrompt = (page: Page, value: string | null) =>
+  answerOverlayPrompt(page, value);
 
 const exposedCardPoint = (card: Locator): Promise<Point> =>
   card.evaluate((element) => {
@@ -2290,7 +2276,7 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
   expect(errors).toEqual([]);
 });
 
-test('unselected hand shortcuts stage native counts before atomic authority commands', async ({
+test('unselected hand shortcuts stage prompted counts before atomic authority commands', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -2344,40 +2330,22 @@ test('unselected hand shortcuts stage native counts before atomic authority comm
     expect(current.reportedErrors).toEqual([]);
   }
 
+  // Cancelling Alt+D's question simply withdraws it: no error is reported.
   await clearEvidence(page);
-  const cancelDialogs: {
-    type: string;
-    message: string;
-    defaultValue: string;
-  }[] = [];
-  const handleCancelDialog = async (dialog: Dialog) => {
-    cancelDialogs.push({
-      type: dialog.type(),
-      message: dialog.message(),
-      defaultValue: dialog.defaultValue(),
-    });
-    await dialog.dismiss();
-  };
-  page.on('dialog', handleCancelDialog);
+  const cancelledPrompt = answerNextPrompt(page, null);
   await page.keyboard.press('Alt+KeyD');
-  await expect
-    .poll(() => cancelDialogs)
-    .toEqual([
-      {
-        type: 'prompt',
-        message: 'Draw how many cards?',
-        defaultValue: '0',
-      },
-      {
-        type: 'alert',
-        message: 'Please enter a valid number for the draw amount.',
-        defaultValue: '',
-      },
-    ]);
-  page.off('dialog', handleCancelDialog);
+  expect(await cancelledPrompt).toEqual({
+    type: 'prompt',
+    message: 'Draw how many cards?',
+    defaultValue: '0',
+  });
   await expect
     .poll(async () => (await evidence(page)).overlays.input)
     .toBeNull();
+  await expect(openOverlayDialogs(page)).toHaveCount(0);
+  await expect(
+    overlayToast(page, 'Please enter a valid number for the draw amount.')
+  ).toHaveCount(0);
   let current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([
@@ -2385,45 +2353,39 @@ test('unselected hand shortcuts stage native counts before atomic authority comm
   ]);
   expect(current.shortcutRejections).toEqual([]);
 
+  // An invalid count keeps the question open with v1's message; nothing is
+  // submitted, and Cancel then withdraws it.
   await clearEvidence(page);
-  const dialogs: {
-    type: string;
-    message: string;
-    defaultValue: string;
-  }[] = [];
-  const handleInvalidDialog = async (dialog: Dialog) => {
-    dialogs.push({
-      type: dialog.type(),
-      message: dialog.message(),
-      defaultValue: dialog.defaultValue(),
-    });
-    if (dialog.type() === 'prompt') await dialog.accept('invalid');
-    else await dialog.dismiss();
-  };
-  page.on('dialog', handleInvalidDialog);
   await page.keyboard.press('Alt+KeyS');
-  await expect
-    .poll(() => dialogs)
-    .toEqual([
-      {
-        type: 'prompt',
-        message: 'Draw how many cards?',
-        defaultValue: '0',
-      },
-      {
-        type: 'alert',
-        message: 'Please enter a valid number for the draw amount.',
-        defaultValue: '',
-      },
-    ]);
-  page.off('dialog', handleInvalidDialog);
+  const invalidPrompt = openOverlayPrompt(page);
+  await expect(invalidPrompt).toBeVisible();
+  await expect(invalidPrompt.locator('.ptcgsim-ui-dialog__title')).toHaveText(
+    'Draw how many cards?'
+  );
+  const invalidField = invalidPrompt.locator('.ptcgsim-ui-field__input');
+  await expect(invalidField).toHaveValue('0');
+  await invalidField.fill('invalid');
+  await invalidField.press('Enter');
+  await expect(invalidPrompt.getByRole('alert')).toHaveText(
+    'Please enter a valid number for the draw amount.'
+  );
+  await expect(invalidPrompt).toBeVisible();
   current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([
     { action: 'shuffleOwnHandAndDraw' },
   ]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.overlays.input).toBeNull();
+  await invalidPrompt.locator('[data-dialog-action="cancel"]').click();
+  await expect
+    .poll(async () => (await evidence(page)).overlays.input)
+    .toBeNull();
+  await expect(openOverlayDialogs(page)).toHaveCount(0);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([
+    { action: 'shuffleOwnHandAndDraw' },
+  ]);
 
   const selectedCard = host.locator(
     `[data-card-id="${fixture.activeTopCardId}"]`
@@ -2495,6 +2457,7 @@ test('unselected hand shortcuts stage native counts before atomic authority comm
   }
   page.off('dialog', dismissUnexpectedDialog);
   expect(unexpectedDialogs).toEqual([]);
+  await expect(openOverlayDialogs(page)).toHaveCount(0);
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

@@ -10,6 +10,8 @@ import { act, createElement, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { cancelAllDialogRequests } from '../../ui/dialog-requests.js';
+import { OverlayHost } from '../../ui/OverlayHost.js';
 import {
   createInitialBoardSessionControllerState,
   type BoardSessionControllerState,
@@ -57,6 +59,50 @@ const cardIn = (suffix: string): CardSceneNode => {
   return card;
 };
 
+/** Lets the dialog host's portal, focus and transitions settle. */
+const settleDialogs = async (): Promise<void> => {
+  for (let round = 0; round < 4; round += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+};
+
+const openDialogs = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>(
+    '[data-ptcgsim-overlay="dialog"], [data-ptcgsim-overlay="alert"]'
+  ),
+];
+
+const dialogButton = (action: string): HTMLButtonElement => {
+  const button = document.querySelector<HTMLButtonElement>(
+    `[data-dialog-action="${action}"]`
+  );
+  if (!button) throw new Error(`No dialog ${action} button`);
+  return button;
+};
+
+const dialogField = (): HTMLInputElement => {
+  const input = document.querySelector<HTMLInputElement>(
+    '.ptcgsim-ui-field__input'
+  );
+  if (!input) throw new Error('No prompt field');
+  return input;
+};
+
+const typeAndSubmit = async (value: string): Promise<void> => {
+  const input = dialogField();
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      'value'
+    )?.set?.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => input.form?.requestSubmit());
+  await settleDialogs();
+};
+
 const actions = (): LegacyBoardOverlayActions => ({
   emitOpenedZoneCardIntent: vi.fn(),
   dismiss: vi.fn(),
@@ -73,6 +119,7 @@ const actions = (): LegacyBoardOverlayActions => ({
 describe('legacy board overlays', () => {
   let host: HTMLDivElement;
   let root: Root;
+  let overlayRoot: Root | undefined;
 
   beforeEach(() => {
     host = document.createElement('div');
@@ -81,10 +128,23 @@ describe('legacy board overlays', () => {
   });
 
   afterEach(async () => {
-    await act(async () => root.unmount());
+    await act(async () => {
+      cancelAllDialogRequests();
+      root.unmount();
+      overlayRoot?.unmount();
+    });
+    overlayRoot = undefined;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
+
+  /** The application's overlay host, as main.tsx mounts it. */
+  const mountOverlayHost = async (): Promise<void> => {
+    const element = document.createElement('div');
+    document.body.append(element);
+    overlayRoot = createRoot(element);
+    await act(async () => overlayRoot?.render(createElement(OverlayHost)));
+  };
 
   it('projects source iframe-relative overlays into physical player frames', () => {
     const local = scene.layout.players.find((frame) => frame.side === 'local')!;
@@ -542,20 +602,16 @@ describe('legacy board overlays', () => {
     expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
-  it('runs each controller count descriptor through one strict-safe native prompt', async () => {
+  it('asks each controller count descriptor in one StrictMode-safe prompt dialog', async () => {
+    await mountOverlayHost();
     const callbacks = actions();
     const card = cardIn(`:${firstPlayer}:deck`);
-    const prompt = vi
-      .fn()
-      .mockReturnValueOnce(' 3 ')
-      .mockReturnValueOnce('2.5')
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce('2');
     const alert = vi.fn();
-    vi.stubGlobal('prompt', prompt);
+    const prompt = vi.fn();
     vi.stubGlobal('alert', alert);
+    vi.stubGlobal('prompt', prompt);
     const renderInput = async (
-      input: NonNullable<BoardSessionControllerState['overlays']['input']>
+      input: BoardSessionControllerState['overlays']['input']
     ) => {
       await act(async () => {
         root.render(
@@ -576,6 +632,7 @@ describe('legacy board overlays', () => {
           )
         );
       });
+      await settleDialogs();
     };
 
     await renderInput({
@@ -588,12 +645,19 @@ describe('legacy board overlays', () => {
       minimum: 1,
       invalidMessage: 'Please enter a valid number for the draw amount.',
     });
-    expect(prompt).toHaveBeenCalledExactlyOnceWith('Draw how many cards?', '1');
+    // StrictMode replays the effect; the player still sees one question.
+    expect(openDialogs()).toHaveLength(1);
+    expect(openDialogs()[0]?.textContent).toContain('Draw how many cards?');
+    expect(dialogField().value).toBe('1');
+    expect(dialogField().inputMode).toBe('numeric');
+    expect(dialogButton('submit').textContent).toBe('Draw');
+    await typeAndSubmit(' 3 ');
     expect(callbacks.submitCountInput).toHaveBeenCalledExactlyOnceWith(
       'drawCards',
       card.id,
       ' 3 '
     );
+    expect(openDialogs()).toHaveLength(0);
 
     await renderInput({
       kind: 'count',
@@ -605,26 +669,39 @@ describe('legacy board overlays', () => {
       minimum: 1,
       invalidMessage: 'Please enter a valid number for the view amount.',
     });
-    expect(alert).toHaveBeenCalledExactlyOnceWith(
+    expect(dialogButton('submit').textContent).toBe('View');
+    // An invalid count keeps the question open with the source's message.
+    await typeAndSubmit('2.5');
+    expect(openDialogs()).toHaveLength(1);
+    expect(document.querySelector('[role="alert"]')?.textContent).toBe(
       'Please enter a valid number for the view amount.'
     );
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    await act(async () => dialogButton('cancel').click());
+    await settleDialogs();
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
     expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+    expect(openDialogs()).toHaveLength(0);
 
+    // Cancelling Alt+D's question simply withdraws it -- no error.
     await renderInput({
-      kind: 'count',
-      action: 'viewDeckBottom',
-      cardId: card.id,
-      zoneId: card.parentId,
-      message: 'How many cards do you want to look at?',
-      initialValue: '1',
-      minimum: 1,
-      invalidMessage: 'Please enter a valid number for the view amount.',
+      kind: 'shortcutCount',
+      action: 'discardOwnHandAndDraw',
+      playerId: firstPlayer,
+      zoneId: `zone:${firstPlayer}:hand`,
+      message: 'Draw how many cards?',
+      initialValue: '0',
+      minimum: 0,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
     });
-    expect(prompt).toHaveBeenCalledTimes(3);
-    expect(alert).toHaveBeenCalledTimes(1);
+    expect(dialogField().value).toBe('0');
+    await act(async () => dialogButton('cancel').click());
+    await settleDialogs();
     expect(callbacks.dismiss).toHaveBeenCalledTimes(2);
-    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+    expect(callbacks.dismiss).toHaveBeenLastCalledWith('input');
+    expect(callbacks.submitShortcutCountInput).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-ptcgsim-overlay="toast"]')).toBeNull();
 
     await renderInput({
       kind: 'shortcutCount',
@@ -636,11 +713,52 @@ describe('legacy board overlays', () => {
       minimum: 0,
       invalidMessage: 'Please enter a valid number for the draw amount.',
     });
-    expect(prompt).toHaveBeenCalledTimes(4);
+    await typeAndSubmit('2');
     expect(callbacks.submitShortcutCountInput).toHaveBeenCalledExactlyOnceWith(
       'shuffleOwnHandAndDraw',
       '2'
     );
+    expect(alert).not.toHaveBeenCalled();
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it('withdraws the count question when the controller drops it', async () => {
+    await mountOverlayHost();
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:deck`);
+    const render = async (
+      input: BoardSessionControllerState['overlays']['input']
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              overlays: { contextMenuCardId: null, preview: null, input },
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+      await settleDialogs();
+    };
+    await render({
+      kind: 'count',
+      action: 'drawCards',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'Draw how many cards?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(openDialogs()).toHaveLength(1);
+
+    // The deck it counted is gone: the controller reconciles the input away.
+    await render(null);
+    expect(openDialogs()).toHaveLength(0);
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    expect(callbacks.submitCountInput).not.toHaveBeenCalled();
   });
 
   it('projects recipient-safe card, stack, and zone images into source-shaped dialogs', async () => {
@@ -1232,16 +1350,14 @@ describe('legacy board overlays', () => {
   });
 
   it('preserves the source discard confirmation without adding one to deck shuffle', async () => {
+    await mountOverlayHost();
     const callbacks = actions();
-    const confirm = vi
-      .fn()
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
+    const confirm = vi.fn();
     vi.stubGlobal('confirm', confirm);
     const discard = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:discard`
     )!;
-    const opened = (zoneId: string) =>
+    const opened = (zoneId: string | null) =>
       state({
         presentation: {
           selectedCardId: null,
@@ -1251,55 +1367,153 @@ describe('legacy board overlays', () => {
           openedZoneId: zoneId,
         },
       });
+    const render = async (zoneId: string | null) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: opened(zoneId),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+    };
 
-    await act(async () => {
-      root.render(
-        createElement(LegacyBoardOverlays, {
-          state: opened(discard.id),
-          darkMode: false,
-          actions: callbacks,
-        })
-      );
-    });
-    const discardAction = host.querySelector<HTMLButtonElement>(
-      '[data-zone-action="shuffleDiscardToDeck"]'
-    )!;
-    await act(async () => discardAction.click());
-    expect(confirm).toHaveBeenCalledExactlyOnceWith(
+    await render(discard.id);
+    const discardAction = () =>
+      host.querySelector<HTMLButtonElement>(
+        '[data-zone-action="shuffleDiscardToDeck"]'
+      )!;
+    await act(async () => discardAction().click());
+    await settleDialogs();
+    const question = openDialogs()[0];
+    expect(question?.getAttribute('role')).toBe('alertdialog');
+    expect(question?.textContent).toContain(
       'Are you sure you want to shuffle all cards into the deck?'
     );
+    expect(dialogButton('confirm').dataset.variant).toBe('danger');
+    // Asking twice while the question is open asks once.
+    await act(async () => discardAction().click());
+    await settleDialogs();
+    expect(openDialogs()).toHaveLength(1);
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
 
-    await act(async () => discardAction.click());
-    expect(confirm).toHaveBeenCalledTimes(2);
+    // Pressing inside the dialog answers it; it is not a press outside the
+    // pile browser, so the browser stays open.
+    await act(async () => {
+      dialogButton('cancel').dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true })
+      );
+      dialogButton('cancel').click();
+    });
+    await settleDialogs();
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+    expect(openDialogs()).toHaveLength(0);
+
+    await act(async () => discardAction().click());
+    await settleDialogs();
+    await act(async () => {
+      dialogButton('confirm').dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true })
+      );
+      dialogButton('confirm').click();
+    });
+    await settleDialogs();
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
     expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
       'shuffleDiscardToDeck',
       discard.id
     );
 
+    // Closing the pile withdraws an unanswered question.
+    await act(async () => discardAction().click());
+    await settleDialogs();
+    expect(openDialogs()).toHaveLength(1);
+    await render(null);
+    await settleDialogs();
+    expect(openDialogs()).toHaveLength(0);
+    expect(callbacks.invokeZoneAction).toHaveBeenCalledTimes(1);
+
     const deck = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:deck`
     )!;
-    await act(async () => {
-      root.render(
-        createElement(LegacyBoardOverlays, {
-          state: opened(deck.id),
-          darkMode: false,
-          actions: callbacks,
-        })
-      );
-    });
+    await render(deck.id);
     await act(async () =>
       host
         .querySelector<HTMLButtonElement>('[data-zone-action="shuffleDeck"]')!
         .click()
     );
-    expect(confirm).toHaveBeenCalledTimes(2);
+    await settleDialogs();
+    expect(openDialogs()).toHaveLength(0);
     expect(callbacks.invokeZoneAction).toHaveBeenNthCalledWith(
       2,
       'shuffleDeck',
       deck.id
     );
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('returns focus to the shuffle button on cancel and to the pile opener once confirmed', async () => {
+    await mountOverlayHost();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const opener = document.createElement('button');
+    opener.textContent = 'Discard pile';
+    document.body.prepend(opener);
+    opener.focus();
+    let openedZoneId: string | null = discard.id;
+    const callbacks = actions();
+    const overlays = () =>
+      createElement(LegacyBoardOverlays, {
+        state: state({
+          presentation: {
+            selectedCardId: null,
+            hoveredCardId: null,
+            targetableCardIds: [],
+            drag: null,
+            openedZoneId,
+          },
+        }),
+        darkMode: false,
+        actions: callbacks,
+      });
+    const render = async () => {
+      await act(async () => root.render(overlays()));
+    };
+    // As the controller does: shuffling the pile into the deck closes it,
+    // straight away -- before the confirmation has finished animating out.
+    vi.mocked(callbacks.invokeZoneAction).mockImplementation(() => {
+      openedZoneId = null;
+      root.render(overlays());
+    });
+    await render();
+    await settleDialogs();
+    const shuffle = host.querySelector<HTMLButtonElement>(
+      '[data-zone-action="shuffleDiscardToDeck"]'
+    )!;
+
+    shuffle.focus();
+    await act(async () => shuffle.click());
+    await settleDialogs();
+    expect(document.activeElement).toBe(dialogButton('cancel'));
+    await act(async () => dialogButton('cancel').click());
+    await settleDialogs();
+    expect(openDialogs()).toHaveLength(0);
+    expect(document.activeElement).toBe(shuffle);
+
+    await act(async () => shuffle.click());
+    await settleDialogs();
+    await act(async () => dialogButton('confirm').click());
+    await settleDialogs();
+    expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
+      'shuffleDiscardToDeck',
+      discard.id
+    );
+    expect(host.querySelector('[data-legacy-zone-browser]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
   });
 
   it('preserves the external opener across StrictMode focus-effect replay', async () => {
