@@ -37,6 +37,7 @@ import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
 import { SwapIcon } from '@phosphor-icons/react/dist/csr/Swap';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { WrenchIcon } from '@phosphor-icons/react/dist/csr/Wrench';
+import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import {
   memo,
   useCallback,
@@ -87,6 +88,11 @@ import {
 } from '../shortcutCatalogue.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
+import {
+  zoneBrowserLayout,
+  type OverlayBoardSize,
+  type OverlayPanelLayout,
+} from './overlayLayout.js';
 import { useOverlayExit } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
 
@@ -1084,9 +1090,6 @@ const ContextMenu = ({
 
 const STACK_PREVIEW_WIDTH_RATIO = 0.69;
 const STACK_PREVIEW_HEIGHT_RATIO = 0.7;
-const ZONE_BROWSER_WIDTH_RATIO = 0.85;
-const ZONE_BROWSER_HEIGHT_RATIO = 0.75;
-const ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX = 22;
 
 export const legacyStackPreviewFrameStyle = (
   frame: BoardScenePlayerFrame,
@@ -1113,26 +1116,98 @@ export const legacyStackPreviewFrameStyle = (
   };
 };
 
-export const legacyZoneBrowserFrameStyle = (
-  frame: BoardScenePlayerFrame,
-  side: ZoneSceneNode['side']
-): CSSProperties => {
-  const contentHeight = frame.bounds.height * ZONE_BROWSER_HEIGHT_RATIO;
-  return {
-    left: frame.bounds.x + frame.bounds.width / 2,
-    top:
-      side === 'opponent'
-        ? frame.bounds.y +
-          frame.bounds.height -
-          contentHeight -
-          ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX
-        : frame.bounds.y + frame.bounds.height / 2,
-    width: frame.bounds.width * ZONE_BROWSER_WIDTH_RATIO,
-    height: contentHeight,
-    transform:
-      side === 'opponent' ? 'translateX(-50%)' : 'translate(-50%, -50%)',
-  };
+/** A panel's box and its cards' height, as inline style. */
+const panelStyle = (
+  layout: OverlayPanelLayout,
+  cardHeightProperty: string
+): CSSProperties => ({
+  left: layout.left,
+  top: layout.top,
+  width: layout.width,
+  height: layout.height,
+  [cardHeightProperty as string]: `${layout.cardHeight.toFixed(2)}px`,
+});
+
+/** The zone browser's visible title for each kind of pile. */
+const ZONE_BROWSER_TITLES: Partial<Record<ZoneSceneNode['kind'], string>> = {
+  deck: 'Deck',
+  discard: 'Discard pile',
+  prizes: 'Prizes',
+  lostZone: 'Lost Zone',
+  hand: 'Hand',
+  board: 'Board',
+  stadium: 'Stadium',
 };
+
+/**
+ * How many copies of each card a pile holds, for the badges in the zone
+ * browser: cards the viewer can read, grouped by name and face. Concealed
+ * cards are never counted, so the badges disclose nothing the faces do not.
+ */
+export const zoneCopyCounts = (
+  cards: readonly CardSceneNode[]
+): ReadonlyMap<ViewCardId, number> => {
+  const groups = new Map<string, ViewCardId[]>();
+  for (const card of cards) {
+    if (card.concealed) continue;
+    const key = `${card.label}\u0000${card.imageUrl}`;
+    const group = groups.get(key);
+    if (group) group.push(card.id);
+    else groups.set(key, [card.id]);
+  }
+  const counts = new Map<ViewCardId, number>();
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    for (const id of group) counts.set(id, group.length);
+  }
+  return counts;
+};
+
+/**
+ * "Show board": hides a big panel for as long as it is held down (by pointer,
+ * or Space/Enter), as PTCG Live's peek does, so the table can be read without
+ * closing the panel.
+ */
+const ShowBoardButton = ({
+  peeking,
+  onPeekChange,
+}: {
+  readonly peeking: boolean;
+  readonly onPeekChange: (peeking: boolean) => void;
+}) => (
+  <button
+    type="button"
+    className="ptcgsim-overlay-button is-quiet ptcgsim-peek-button"
+    aria-pressed={peeking}
+    title="Hold to see the board"
+    onPointerDown={(event) => {
+      if (event.button !== 0) return;
+      try {
+        // Keep the release even if the pointer wanders off the button.
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // The pointer is no longer active; the release still arrives.
+      }
+      onPeekChange(true);
+    }}
+    onPointerUp={() => onPeekChange(false)}
+    onPointerCancel={() => onPeekChange(false)}
+    onLostPointerCapture={() => onPeekChange(false)}
+    onKeyDown={(event) => {
+      if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) {
+        event.preventDefault();
+        onPeekChange(true);
+      }
+    }}
+    onKeyUp={(event) => {
+      if (event.key === ' ' || event.key === 'Enter') onPeekChange(false);
+    }}
+    onBlur={() => onPeekChange(false)}
+  >
+    <EyeIcon aria-hidden="true" />
+    Show board
+  </button>
+);
 
 const OverlayCardImage = ({
   card,
@@ -1356,7 +1431,7 @@ const installDragImage = (
     left: '-10000px',
     width: `${bounds.width}px`,
     height: `${bounds.height}px`,
-    borderRadius: '0.275rem',
+    borderRadius: 'var(--ptcgsim-card-radius, 4.8% / 3.4%)',
     pointerEvents: 'none',
   });
   document.body.append(ghost);
@@ -1406,11 +1481,16 @@ export const resolveOpenedZoneDropTarget = (
   return resolveBoardDropTarget(scene, sourceCardId, point.x, point.y);
 };
 
+/**
+ * A pile opened for browsing (deck, discard, Lost Zone, prizes, ...): a modal
+ * panel over most of the board whose cards are drawn large enough to read,
+ * with the pile's name, its count and a badge on each card that has copies.
+ */
 const ZoneBrowser = ({
   state,
   zone,
   cards,
-  frame,
+  board,
   obscured,
   captureContextAnchor,
   actions,
@@ -1418,7 +1498,7 @@ const ZoneBrowser = ({
   readonly state: BoardSessionControllerState;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
-  readonly frame?: BoardScenePlayerFrame;
+  readonly board: OverlayBoardSize;
   readonly obscured: boolean;
   readonly captureContextAnchor: (
     cardId: ViewCardId,
@@ -1428,9 +1508,11 @@ const ZoneBrowser = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
   const activeDragCardId = useRef<ViewCardId | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
+  const [peeking, setPeeking] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
   // The "Shuffle all to Deck" confirmation still being asked, if any. It
@@ -1481,11 +1563,20 @@ const ZoneBrowser = ({
     dismiss,
     '[data-legacy-card-preview], [data-legacy-card-context-menu]'
   );
+  useOverlayExit(container, 'panel');
+  useOverlayExit(scrim, 'scrim');
   const primary = zoneAction(zone);
   const renderedCards = useMemo(
     () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
     [cards, sortEnabled]
   );
+  const copies = useMemo(() => zoneCopyCounts(cards), [cards]);
+  const layout = zoneBrowserLayout(board, cards.length);
+  const title = ZONE_BROWSER_TITLES[zone.kind] ?? zone.label;
+  const owner =
+    zone.playerId !== null
+      ? state.view?.players[zone.playerId]?.displayName
+      : undefined;
   const abilityMarkedCardIds = useMemo(() => {
     if (zone.kind !== 'discard') return new Set<ViewCardId>();
     const viewZone = state.view?.zones[zone.id];
@@ -1554,140 +1645,171 @@ const ZoneBrowser = ({
   }, [actions, cards, finishDrag, state.scene, zone.id]);
 
   return (
-    <section
-      ref={container}
-      className="ptcgsim-legacy-zone-browser"
-      data-legacy-zone-browser="true"
-      data-zone-browser-id={zone.id}
-      data-zone-browser-kind={zone.kind}
-      data-zone-dragging-card={draggingCardId ?? undefined}
-      role="dialog"
-      aria-modal={obscured ? undefined : 'true'}
-      aria-hidden={obscured ? 'true' : undefined}
-      inert={obscured ? true : undefined}
-      aria-label={`${zone.label}, ${zone.count} cards`}
-      data-overlay-side={zone.side}
-      tabIndex={-1}
-      style={frame ? legacyZoneBrowserFrameStyle(frame, zone.side) : undefined}
-      onKeyDown={(event) => {
-        if (container.current) {
-          trapModalTab(
-            event,
-            container.current,
-            'button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
-          );
-        }
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          dismiss();
-        }
-      }}
-    >
-      <div className="ptcgsim-legacy-zone-toolbar">
-        {primary ? (
-          <button
-            ref={primaryButton}
-            type="button"
-            className="ptcgsim-legacy-zone-button"
-            data-zone-action={primary.id}
-            onClick={() => invokePrimaryAction(primary.id)}
-          >
-            {primary.label}
-          </button>
-        ) : null}
-        {/* v1's markup breaks the line between these controls, which centres
-            them with a space between each; JSX would drop it. */}
-        {primary ? ' ' : null}
-        <button
-          type="button"
-          className="ptcgsim-legacy-zone-button"
-          data-zone-close="true"
-          onClick={dismiss}
-        >
-          Close
-        </button>{' '}
-        <label>
-          <input
-            type="checkbox"
-            data-zone-action="sortZone"
-            checked={sortEnabled}
-            onChange={(event) => setSortEnabled(event.currentTarget.checked)}
-          />{' '}
-          Sort
-        </label>
-      </div>
-      <div className="ptcgsim-legacy-zone-cards">
-        {renderedCards.map((card) => (
-          <button
-            type="button"
-            key={card.id}
-            data-overlay-card-id={card.id}
-            aria-label={card.label}
-            aria-pressed={state.presentation.selectedCardId === card.id}
-            draggable={state.canSubmitCommands}
-            onDragStart={(event) => {
-              if (!state.canSubmitCommands) {
-                event.preventDefault();
-                return;
-              }
-              activeDragCardId.current = card.id;
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData(
-                  'application/x-ptcgsim-opened-zone-card',
-                  'card'
-                );
-                // The browser fades out as soon as the drag starts (so the
-                // drop can reach the table beneath), and the native drag
-                // image is snapped after this handler returns -- from a
-                // transparent element. Hand the browser its own copy of the
-                // card to carry under the cursor, as v1's image drag does.
-                installDragImage(event, card.imageUrl);
-              }
-              setDraggingCardId(card.id);
-              actions.dismiss('selection');
-            }}
-            onDragEnd={finishDrag}
-            onClick={() =>
-              actions.emitOpenedZoneCardIntent({
-                kind: 'CardSelected',
-                cardId: card.id,
-              })
-            }
-            onDoubleClick={() =>
-              actions.emitOpenedZoneCardIntent({
-                kind: 'CardPreviewRequested',
-                cardId: card.id,
-              })
-            }
-            onContextMenu={(event) => {
-              event.preventDefault();
-              const bounds = event.currentTarget.getBoundingClientRect();
-              captureContextAnchor(card.id, zone.id, {
-                x: bounds.x,
-                y: bounds.y,
-                width: bounds.width,
-                height: bounds.height,
-              });
-              actions.emitOpenedZoneCardIntent({
-                kind: 'CardContextRequested',
-                cardId: card.id,
-              });
-            }}
-          >
-            <OverlayCardImage card={card} variant="zone" />
-            {abilityMarkedCardIds.has(card.id) ? (
-              <span
-                className="ptcgsim-legacy-zone-ability-marker"
-                data-opened-zone-ability-marker="true"
-                data-marker-card-id={card.id}
-                aria-hidden="true"
-              />
+    <>
+      <div
+        ref={scrim}
+        className={`ptcgsim-overlay-scrim${draggingCardId !== null || peeking ? ' is-hidden' : ''}`}
+        aria-hidden="true"
+      />
+      <section
+        ref={container}
+        className={`ptcgsim-legacy-zone-browser is-${zone.side}${peeking ? ' is-peeking' : ''}`}
+        data-legacy-zone-browser="true"
+        data-zone-browser-id={zone.id}
+        data-zone-browser-kind={zone.kind}
+        data-zone-dragging-card={draggingCardId ?? undefined}
+        role="dialog"
+        aria-modal={obscured ? undefined : 'true'}
+        aria-hidden={obscured ? 'true' : undefined}
+        inert={obscured ? true : undefined}
+        aria-label={`${zone.label}, ${zone.count} cards`}
+        data-overlay-side={zone.side}
+        tabIndex={-1}
+        style={panelStyle(layout, '--ptcgsim-zone-card-height')}
+        onKeyDown={(event) => {
+          if (container.current) {
+            trapModalTab(
+              event,
+              container.current,
+              'button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
+            );
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            dismiss();
+          }
+        }}
+      >
+        <header className="ptcgsim-overlay-header ptcgsim-legacy-zone-toolbar">
+          <div className="ptcgsim-overlay-heading">
+            <h2 className="ptcgsim-overlay-title">{title}</h2>
+            <span className="ptcgsim-overlay-count">
+              {zone.count} {zone.count === 1 ? 'card' : 'cards'}
+            </span>
+            {owner ? (
+              <span className={`ptcgsim-overlay-seat is-${zone.side}`}>
+                {owner}
+              </span>
             ) : null}
-          </button>
-        ))}
-      </div>
-    </section>
+          </div>
+          <div className="ptcgsim-overlay-actions">
+            {primary ? (
+              <button
+                ref={primaryButton}
+                type="button"
+                className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
+                data-zone-action={primary.id}
+                onClick={() => invokePrimaryAction(primary.id)}
+              >
+                <ShuffleIcon aria-hidden="true" />
+                {primary.label}
+              </button>
+            ) : null}
+            <label className="ptcgsim-overlay-toggle">
+              <input
+                type="checkbox"
+                data-zone-action="sortZone"
+                checked={sortEnabled}
+                onChange={(event) =>
+                  setSortEnabled(event.currentTarget.checked)
+                }
+              />
+              Sort
+            </label>
+            <ShowBoardButton peeking={peeking} onPeekChange={setPeeking} />
+            <button
+              type="button"
+              className="ptcgsim-overlay-button is-primary ptcgsim-legacy-zone-button"
+              data-zone-close="true"
+              onClick={dismiss}
+            >
+              <XIcon aria-hidden="true" />
+              Close
+            </button>
+          </div>
+        </header>
+        <div className="ptcgsim-legacy-zone-cards">
+          {renderedCards.length === 0 ? (
+            <p className="ptcgsim-overlay-empty">No cards here</p>
+          ) : null}
+          {renderedCards.map((card) => (
+            <button
+              type="button"
+              key={card.id}
+              className="ptcgsim-zone-card"
+              data-overlay-card-id={card.id}
+              aria-label={card.label}
+              aria-pressed={state.presentation.selectedCardId === card.id}
+              draggable={state.canSubmitCommands}
+              onDragStart={(event) => {
+                if (!state.canSubmitCommands) {
+                  event.preventDefault();
+                  return;
+                }
+                activeDragCardId.current = card.id;
+                if (event.dataTransfer) {
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData(
+                    'application/x-ptcgsim-opened-zone-card',
+                    'card'
+                  );
+                  // The browser fades out as soon as the drag starts (so the
+                  // drop can reach the table beneath), and the native drag
+                  // image is snapped after this handler returns -- from a
+                  // transparent element. Hand the browser its own copy of the
+                  // card to carry under the cursor, as v1's image drag does.
+                  installDragImage(event, card.imageUrl);
+                }
+                setDraggingCardId(card.id);
+                actions.dismiss('selection');
+              }}
+              onDragEnd={finishDrag}
+              onClick={() =>
+                actions.emitOpenedZoneCardIntent({
+                  kind: 'CardSelected',
+                  cardId: card.id,
+                })
+              }
+              onDoubleClick={() =>
+                actions.emitOpenedZoneCardIntent({
+                  kind: 'CardPreviewRequested',
+                  cardId: card.id,
+                })
+              }
+              onContextMenu={(event) => {
+                event.preventDefault();
+                const bounds = event.currentTarget.getBoundingClientRect();
+                captureContextAnchor(card.id, zone.id, {
+                  x: bounds.x,
+                  y: bounds.y,
+                  width: bounds.width,
+                  height: bounds.height,
+                });
+                actions.emitOpenedZoneCardIntent({
+                  kind: 'CardContextRequested',
+                  cardId: card.id,
+                });
+              }}
+            >
+              <OverlayCardImage card={card} variant="zone" />
+              {abilityMarkedCardIds.has(card.id) ? (
+                <span
+                  className="ptcgsim-legacy-zone-ability-marker"
+                  data-opened-zone-ability-marker="true"
+                  data-marker-card-id={card.id}
+                  aria-hidden="true"
+                />
+              ) : null}
+              {(copies.get(card.id) ?? 0) > 1 ? (
+                <span className="ptcgsim-zone-copy-badge" aria-hidden="true">
+                  ×{copies.get(card.id)}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      </section>
+    </>
   );
 };
 
@@ -1866,7 +1988,7 @@ const WorkAreaPanel = ({
             <button
               type="button"
               key={button.id}
-              className="ptcgsim-legacy-zone-button"
+              className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
               data-work-area-action={button.id}
               onClick={() => actions.invokeWorkAreaAction?.(source, button.id)}
             >
@@ -2188,11 +2310,6 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   const openedZoneCards = openedZone
     ? scene.cards.filter((card) => card.parentId === openedZone.id)
     : [];
-  const openedZoneFrame = openedZone?.playerId
-    ? scene.layout.players.find(
-        (player) => player.playerId === openedZone.playerId
-      )
-    : undefined;
   const previewFrame =
     preview?.kind === 'stack'
       ? scene.layout.players.find(
@@ -2236,7 +2353,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           state={state}
           zone={openedZone}
           cards={openedZoneCards}
-          frame={openedZoneFrame}
+          board={scene.viewport}
           obscured={preview !== null}
           captureContextAnchor={(cardId, zoneId, bounds) =>
             setContextAnchor({ cardId, zoneId, bounds })

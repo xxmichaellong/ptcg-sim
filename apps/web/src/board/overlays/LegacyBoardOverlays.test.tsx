@@ -20,12 +20,13 @@ import {
   LegacyBoardOverlays,
   legacyStackPreviewOrder,
   legacyStackPreviewFrameStyle,
-  legacyZoneBrowserFrameStyle,
   resolveOpenedZoneDropTarget,
   selectLegacyContextEntries,
   sortRecipientSafeZoneCards,
+  zoneCopyCounts,
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
+import { zoneBrowserLayout } from './overlayLayout.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -179,20 +180,6 @@ describe('legacy board overlays', () => {
     });
     expect(opponentStack.width).toBeCloseTo(883.2, 10);
     expect(opponentStack.height).toBeCloseTo(252, 10);
-    expect(legacyZoneBrowserFrameStyle(local, 'local')).toEqual({
-      left: 640,
-      top: 540,
-      width: 1088,
-      height: 270,
-      transform: 'translate(-50%, -50%)',
-    });
-    expect(legacyZoneBrowserFrameStyle(opponent, 'opponent')).toEqual({
-      left: 640,
-      top: 68,
-      width: 1088,
-      height: 270,
-      transform: 'translateX(-50%)',
-    });
   });
 
   it('selects the source-ordered player menu without granting authority', () => {
@@ -999,6 +986,131 @@ describe('legacy board overlays', () => {
       kind: 'CardContextRequested',
       cardId: discardCards[0]!.id,
     });
+  });
+
+  it('opens a pile large enough to read, with its count, copy badges and a Show board hold', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const discardCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const [first, second, third] = discardCards;
+    if (!first || !second || !third)
+      throw new Error('Fixture discard is small');
+    // Two copies of one card, and one other.
+    const twinned = scene.cards.map((card) =>
+      card.id === second.id
+        ? { ...card, label: first.label, imageUrl: first.imageUrl }
+        : card
+    );
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            scene: { ...scene, cards: twinned },
+            presentation: {
+              selectedCardId: null,
+              hoveredCardId: null,
+              targetableCardIds: [],
+              drag: null,
+              openedZoneId: discard.id,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const browser = host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser]'
+    )!;
+    // Sized from the board area, not from v1's player frame: a short pile
+    // draws its cards at a third of the board's height (at most 300px).
+    const layout = zoneBrowserLayout(scene.viewport, discardCards.length);
+    expect(layout.cardHeight).toBeCloseTo(Math.min(720 * 0.34, 300));
+    expect(Number.parseFloat(browser.style.left)).toBeCloseTo(layout.left);
+    expect(Number.parseFloat(browser.style.top)).toBeCloseTo(layout.top);
+    expect(Number.parseFloat(browser.style.width)).toBeCloseTo(layout.width);
+    expect(Number.parseFloat(browser.style.height)).toBeCloseTo(layout.height);
+    expect(browser.style.getPropertyValue('--ptcgsim-zone-card-height')).toBe(
+      `${layout.cardHeight.toFixed(2)}px`
+    );
+    expect(browser.querySelector('.ptcgsim-overlay-title')?.textContent).toBe(
+      'Discard pile'
+    );
+    expect(browser.querySelector('.ptcgsim-overlay-count')?.textContent).toBe(
+      `${discard.count} cards`
+    );
+
+    const badge = (id: CardSceneNode['id']) =>
+      host.querySelector(
+        `[data-overlay-card-id="${id}"] .ptcgsim-zone-copy-badge`
+      )?.textContent ?? null;
+    expect([badge(first.id), badge(second.id), badge(third.id)]).toEqual([
+      '×2',
+      '×2',
+      null,
+    ]);
+    // Face-down cards are never counted.
+    expect(
+      zoneCopyCounts([
+        { ...first, concealed: true },
+        { ...second, label: first.label, concealed: true },
+      ]).size
+    ).toBe(0);
+
+    const scrim = host.querySelector<HTMLElement>('.ptcgsim-overlay-scrim')!;
+    expect(scrim.getAttribute('aria-hidden')).toBe('true');
+    const peek = browser.querySelector<HTMLButtonElement>(
+      '.ptcgsim-peek-button'
+    )!;
+    await act(async () => {
+      peek.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+        })
+      );
+    });
+    expect(browser.classList).toContain('is-peeking');
+    expect(scrim.classList).toContain('is-hidden');
+    expect(peek.getAttribute('aria-pressed')).toBe('true');
+    await act(async () => {
+      peek.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, pointerId: 1 })
+      );
+    });
+    expect(browser.classList).not.toContain('is-peeking');
+    expect(scrim.classList).not.toContain('is-hidden');
+    // Holding it from the keyboard works the same way.
+    await act(async () => {
+      peek.dispatchEvent(
+        new KeyboardEvent('keydown', { key: ' ', bubbles: true })
+      );
+    });
+    expect(browser.classList).toContain('is-peeking');
+    await act(async () => {
+      peek.dispatchEvent(
+        new KeyboardEvent('keyup', { key: ' ', bubbles: true })
+      );
+    });
+    expect(browser.classList).not.toContain('is-peeking');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+
+    await act(async () => {
+      browser.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('zone');
   });
 
   it('traps card-preview focus and exposes only the topmost nested dialog as modal', async () => {
