@@ -1398,6 +1398,14 @@
               "kind": "value"
             },
             {
+              "name": "CardFlight",
+              "kind": "type"
+            },
+            {
+              "name": "CardGhost",
+              "kind": "type"
+            },
+            {
               "name": "CardSceneNode",
               "kind": "type"
             },
@@ -1694,12 +1702,28 @@
               "kind": "type"
             },
             {
+              "name": "MarkerPulse",
+              "kind": "type"
+            },
+            {
               "name": "MarkerSceneNode",
+              "kind": "type"
+            },
+            {
+              "name": "MOTION_STAGGER_SECONDS",
+              "kind": "value"
+            },
+            {
+              "name": "MotionPlan",
               "kind": "type"
             },
             {
               "name": "PerceptualSpring",
               "kind": "type"
+            },
+            {
+              "name": "planBoardMotion",
+              "kind": "value"
             },
             {
               "name": "PlayerZoneGeometryKind",

@@ -4,6 +4,7 @@ export * from './geometry.js';
 export * from './layout.js';
 export * from './marker-presentation.js';
 export * from './model.js';
+export * from './motion-plan.js';
 export * from './scene.js';
 export * from './spike-fixture.js';
 export * from './spring.js';
