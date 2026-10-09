@@ -1,3 +1,11 @@
+import { promptValue } from '../ui/dialog-requests.js';
+import type { BrowserTextPrompt } from './browser-card-back.js';
+import {
+  browserImageFactory,
+  preloadBrowserImage,
+  type BrowserImageLoader,
+} from './browser-image-preload.js';
+
 export const ROOM_BACKGROUND_PROMPT =
   "Paste your image URL, or type 'blank' or 'theme':";
 export const INVALID_ROOM_BACKGROUND_MESSAGE =
@@ -11,122 +19,72 @@ const THEME_BACKGROUND_URLS = Object.freeze([
 export type RoomBackground =
   { readonly kind: 'blank' } | { readonly kind: 'image'; readonly url: string };
 
-type BackgroundImageLoader = Pick<
-  HTMLImageElement,
-  'onload' | 'onerror' | 'src'
->;
-
 export interface BrowserRoomBackgroundRequestOptions {
   readonly signal?: AbortSignal;
-  readonly prompt?: (message: string) => string | null;
-  readonly alert?: (message: string) => void;
+  readonly prompt?: BrowserTextPrompt;
   readonly random?: () => number;
-  readonly createImage?: () => BackgroundImageLoader;
+  readonly createImage?: () => BrowserImageLoader;
 }
 
 export type BrowserRoomBackgroundRequest = (
   options?: BrowserRoomBackgroundRequestOptions
 ) => Promise<RoomBackground | undefined>;
 
-const reportInvalidBackground = (
-  alertUser: ((message: string) => void) | undefined
-): void => {
-  try {
-    alertUser?.(INVALID_ROOM_BACKGROUND_MESSAGE);
-  } catch {
-    // A blocked alert must not turn a local visual preference into a failure.
-  }
-};
-
 /**
- * Runs the source prompt in the foreground click boundary and preloads the
- * selected image before publishing it. The browser performs any third-party
- * request directly; no URL enters the room protocol or server.
+ * Asks for the source's background choice and preloads the selected image
+ * before publishing it. An image that does not load keeps the dialog open
+ * with the source's message. The browser performs any third-party request
+ * directly; no URL enters the room protocol or server.
  */
 export const requestBrowserRoomBackground: BrowserRoomBackgroundRequest =
   async (options = {}) => {
     if (options.signal?.aborted) return undefined;
-    const promptUser =
-      options.prompt ??
-      (typeof globalThis.prompt === 'function'
-        ? globalThis.prompt.bind(globalThis)
-        : undefined);
-    if (!promptUser) return undefined;
+    const ask = options.prompt ?? promptValue;
+    const random = options.random ?? Math.random;
+    const createImage = options.createImage ?? browserImageFactory();
+    // What the last successful check produced; the dialog accepts only then.
+    let accepted: RoomBackground | undefined;
 
-    let input: string | null;
+    let answer: string | null;
     try {
-      input = promptUser(ROOM_BACKGROUND_PROMPT);
+      answer = await ask({
+        title: 'Change background',
+        body: ROOM_BACKGROUND_PROMPT,
+        label: 'Image URL',
+        placeholder: 'https://…, blank or theme',
+        submitLabel: 'Use background',
+        validate: async (value, { signal }) => {
+          accepted = undefined;
+          const normalized = value.trim();
+          if (normalized === '') return null;
+          if (normalized.toLowerCase() === 'blank') {
+            accepted = { kind: 'blank' };
+            return null;
+          }
+          const requestedUrl =
+            normalized.toLowerCase() === 'theme'
+              ? (THEME_BACKGROUND_URLS[random() < 0.5 ? 0 : 1] ??
+                THEME_BACKGROUND_URLS[0])
+              : normalized;
+          if (!createImage) return INVALID_ROOM_BACKGROUND_MESSAGE;
+          const preload = await preloadBrowserImage(
+            createImage,
+            requestedUrl,
+            signal
+          );
+          if (preload.kind === 'failed') return INVALID_ROOM_BACKGROUND_MESSAGE;
+          if (preload.kind === 'loaded') {
+            accepted = { kind: 'image', url: preload.src || requestedUrl };
+          }
+          return null;
+        },
+        ...(options.signal ? { signal: options.signal } : {}),
+      });
     } catch {
       return undefined;
     }
-    if (input === null) return undefined;
-    const normalized = input.trim();
-    if (normalized === '') return undefined;
-    if (normalized.toLowerCase() === 'blank') return { kind: 'blank' };
-
-    const random = options.random ?? Math.random;
-    const requestedUrl =
-      normalized.toLowerCase() === 'theme'
-        ? (THEME_BACKGROUND_URLS[random() < 0.5 ? 0 : 1] ??
-          THEME_BACKGROUND_URLS[0])
-        : normalized;
-    const alertUser =
-      options.alert ??
-      (typeof globalThis.alert === 'function'
-        ? globalThis.alert.bind(globalThis)
-        : undefined);
-    const createImage =
-      options.createImage ??
-      (typeof globalThis.Image === 'function'
-        ? () => new globalThis.Image()
-        : undefined);
-    if (!createImage) {
-      reportInvalidBackground(alertUser);
-      return undefined;
-    }
-
-    return await new Promise<RoomBackground | undefined>((resolve) => {
-      let image: BackgroundImageLoader;
-      try {
-        image = createImage();
-      } catch {
-        reportInvalidBackground(alertUser);
-        resolve(undefined);
-        return;
-      }
-      let settled = false;
-      const cleanup = (): void => {
-        image.onload = null;
-        image.onerror = null;
-        options.signal?.removeEventListener('abort', handleAbort);
-      };
-      const finish = (result: RoomBackground | undefined): void => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        resolve(result);
-      };
-      const handleAbort = (): void => finish(undefined);
-      image.onload = () => {
-        const loadedUrl = image.src || requestedUrl;
-        finish({ kind: 'image', url: loadedUrl });
-      };
-      image.onerror = () => {
-        reportInvalidBackground(alertUser);
-        finish(undefined);
-      };
-      options.signal?.addEventListener('abort', handleAbort, { once: true });
-      if (options.signal?.aborted) {
-        handleAbort();
-        return;
-      }
-      try {
-        image.src = requestedUrl;
-      } catch {
-        reportInvalidBackground(alertUser);
-        finish(undefined);
-      }
-    });
+    if (answer === null || options.signal?.aborted) return undefined;
+    return accepted;
   };
 
 const escapeCssString = (value: string): string =>

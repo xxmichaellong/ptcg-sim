@@ -52,9 +52,28 @@ import type {
 } from './tcgdex-catalog-contract.js';
 
 import '../../design/panel-controls.css';
+import { confirmAction } from '../../ui/dialog-requests.js';
 import './LegacyDeckBuilderWorkspace.css';
 
 const CLEAR_CONFIRMATION = 'Are you sure you want to delete your deck?';
+
+/**
+ * Asks before Clear empties the deck being edited; aborting the signal
+ * withdraws the question.
+ */
+export type DeckClearConfirmation = (
+  message: string,
+  options: { readonly signal: AbortSignal }
+) => boolean | PromiseLike<boolean>;
+
+const confirmDeckClear: DeckClearConfirmation = (message, { signal }) =>
+  confirmAction({
+    title: 'Delete this deck?',
+    body: message,
+    confirmLabel: 'Delete deck',
+    tone: 'danger',
+    signal,
+  });
 const CUSTOM_CARD_QUANTITY_MAX = 99;
 const CUSTOM_CARD_NAME_MAX = 256;
 /** The hover zoom: a card about 360px tall, beside the card it reads. */
@@ -77,7 +96,7 @@ export interface LegacyDeckBuilderWorkspaceProps {
   readonly catalog: TcgdexCardCatalog;
   readonly open: boolean;
   readonly onPlay?: () => void;
-  readonly confirmClear?: (message: string) => boolean;
+  readonly confirmClear?: DeckClearConfirmation;
   readonly downloadDeck?: (deck: Deck) => boolean;
   readonly importDeckFile?: ImportDeckFile;
 }
@@ -588,7 +607,7 @@ export const LegacyDeckBuilderWorkspace = ({
   catalog,
   open,
   onPlay,
-  confirmClear = (message) => globalThis.confirm(message),
+  confirmClear = confirmDeckClear,
   downloadDeck = downloadDeckCsv,
   importDeckFile = importDeckCsvFile,
 }: LegacyDeckBuilderWorkspaceProps) => {
@@ -624,6 +643,7 @@ export const LegacyDeckBuilderWorkspace = ({
   const workspaceRef = useRef<HTMLDivElement>(null);
   const previewScrim = useRef<HTMLDivElement>(null);
   const previewReturnFocus = useRef<HTMLElement | null>(null);
+  const clearQuestion = useRef<AbortController | undefined>(undefined);
   const target = snapshot.target;
   const slot = snapshot.slots[target];
   const deck = slot.deck;
@@ -669,6 +689,7 @@ export const LegacyDeckBuilderWorkspace = ({
     () => () => {
       searchAbort.current?.abort();
       importAbort.current?.abort();
+      clearQuestion.current?.abort();
       if (flashTimer.current !== undefined) clearTimeout(flashTimer.current);
       if (zoomTimer.current !== undefined) clearTimeout(zoomTimer.current);
       if (zoomHideTimer.current !== undefined) {
@@ -686,6 +707,27 @@ export const LegacyDeckBuilderWorkspace = ({
       setFlash(false);
     }, 600);
   }, []);
+
+  const clearDeck = (): void => {
+    if (clearQuestion.current) return;
+    const question = new AbortController();
+    clearQuestion.current = question;
+    // Clear empties the deck that was on screen when it was pressed.
+    const clearedTarget = target;
+    const finish = (confirmed: boolean): void => {
+      if (clearQuestion.current === question) clearQuestion.current = undefined;
+      if (
+        confirmed &&
+        !question.signal.aborted &&
+        store.clearDeck(clearedTarget)
+      ) {
+        flashStatus();
+      }
+    };
+    void Promise.resolve(
+      confirmClear(CLEAR_CONFIRMATION, { signal: question.signal })
+    ).then(finish, () => finish(false));
+  };
 
   const addCard = useCallback(
     (card: DeckCard) => {
@@ -1164,11 +1206,7 @@ export const LegacyDeckBuilderWorkspace = ({
                   type="button"
                   className="ds-button ds-button--danger native-deck-builder-section-button"
                   style={{ display: hasCards ? undefined : 'none' }}
-                  onClick={() => {
-                    if (confirmClear(CLEAR_CONFIRMATION) && store.clearDeck()) {
-                      flashStatus();
-                    }
-                  }}
+                  onClick={clearDeck}
                 >
                   <TrashIcon {...decorative} weight="bold" />
                   Clear

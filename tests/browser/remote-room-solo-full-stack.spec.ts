@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { overlayToast } from './support/overlay-dialogs.js';
+import {
+  answerOverlayPrompt,
+  overlayToast,
+} from './support/overlay-dialogs.js';
 
 const SOLO_CARD_BACK_URL =
   'https://images.example.test/solo-player-two-card-back.png?exact=1';
@@ -104,11 +107,12 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   );
   await page.locator('#altImportHeaderButton').click();
   await expect(page.locator('#altDeckImportInput')).toBeVisible();
-  page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toBe("Paste your image URL or type 'default':");
-    await dialog.accept(SOLO_CARD_BACK_URL);
-  });
+  const cardBackPrompt = answerOverlayPrompt(page, SOLO_CARD_BACK_URL);
   await page.locator('#changeCardBackButton').click();
+  expect((await cardBackPrompt).message).toBe('Change card back');
+  await expect(
+    page.getByRole('dialog', { name: 'Change card back' })
+  ).toHaveCount(0);
   await expect.poll(() => cardBackRequests).toBe(1);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'solo-player-two.csv',

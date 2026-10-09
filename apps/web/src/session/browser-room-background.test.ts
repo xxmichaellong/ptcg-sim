@@ -2,6 +2,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import type { PromptOptions } from '../ui/dialog-requests.js';
 import {
   INVALID_ROOM_BACKGROUND_MESSAGE,
   requestBrowserRoomBackground,
@@ -25,20 +26,65 @@ const imageHarness = () => {
   return { images, createImage };
 };
 
+const load = (image: FakeImage | undefined): void => {
+  image?.onload?.call(
+    image as unknown as GlobalEventHandlers,
+    new Event('load')
+  );
+};
+
+/**
+ * Stands in for the prompt dialog: submits each answer in turn through the
+ * dialog's validator and records the messages that kept it open. Out of
+ * answers, the player cancels; aborting the request closes it.
+ */
+const promptAnswering = (...answers: (string | null)[]) => {
+  const errors: string[] = [];
+  const asked: PromptOptions[] = [];
+  const checks: AbortController[] = [];
+  const prompt = vi.fn(async (options: PromptOptions) => {
+    asked.push(options);
+    for (const answer of answers) {
+      if (answer === null || options.signal?.aborted) return null;
+      const check = new AbortController();
+      checks.push(check);
+      options.signal?.addEventListener('abort', () => check.abort(), {
+        once: true,
+      });
+      const message = await options.validate?.(answer, {
+        signal: check.signal,
+      });
+      if (options.signal?.aborted) return null;
+      if (!message) return answer;
+      errors.push(message);
+    }
+    return null;
+  });
+  return { prompt, errors, asked, checks };
+};
+
 describe('browser room background', () => {
-  it('preserves cancel and empty input as no-ops', async () => {
+  it('asks in the prompt dialog and treats cancel and empty input as no-ops', async () => {
     const images = imageHarness();
-    const prompt = vi.fn((): string | null => null);
+    const cancelled = promptAnswering(null);
 
     await expect(
-      requestBrowserRoomBackground({ prompt, createImage: images.createImage })
+      requestBrowserRoomBackground({
+        prompt: cancelled.prompt,
+        createImage: images.createImage,
+      })
     ).resolves.toBeUndefined();
-    expect(prompt).toHaveBeenCalledWith(ROOM_BACKGROUND_PROMPT);
-    expect(images.createImage).not.toHaveBeenCalled();
+    expect(cancelled.asked[0]).toMatchObject({
+      title: 'Change background',
+      body: ROOM_BACKGROUND_PROMPT,
+      label: 'Image URL',
+    });
 
-    prompt.mockReturnValue('   ');
     await expect(
-      requestBrowserRoomBackground({ prompt, createImage: images.createImage })
+      requestBrowserRoomBackground({
+        prompt: promptAnswering('   ').prompt,
+        createImage: images.createImage,
+      })
     ).resolves.toBeUndefined();
     expect(images.createImage).not.toHaveBeenCalled();
   });
@@ -47,7 +93,7 @@ describe('browser room background', () => {
     const images = imageHarness();
     await expect(
       requestBrowserRoomBackground({
-        prompt: () => '  BlAnK  ',
+        prompt: promptAnswering('  BlAnK  ').prompt,
         createImage: images.createImage,
       })
     ).resolves.toEqual({ kind: 'blank' });
@@ -63,15 +109,13 @@ describe('browser room background', () => {
     async (random, url) => {
       const harness = imageHarness();
       const pending = requestBrowserRoomBackground({
-        prompt: () => 'theme',
+        prompt: promptAnswering('theme').prompt,
         random: () => random,
         createImage: harness.createImage,
       });
+      await vi.waitFor(() => expect(harness.images).toHaveLength(1));
       expect(harness.images[0]?.src).toBe(url);
-      harness.images[0]?.onload?.call(
-        harness.images[0] as unknown as GlobalEventHandlers,
-        new Event('load')
-      );
+      load(harness.images[0]);
       await expect(pending).resolves.toEqual({ kind: 'image', url });
     }
   );
@@ -80,14 +124,12 @@ describe('browser room background', () => {
     const harness = imageHarness();
     const requested = 'https://images.example.test/a"b\\c.png';
     const pending = requestBrowserRoomBackground({
-      prompt: () => `  ${requested}  `,
+      prompt: promptAnswering(`  ${requested}  `).prompt,
       createImage: harness.createImage,
     });
+    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
     expect(harness.images[0]?.src).toBe(requested);
-    harness.images[0]?.onload?.call(
-      harness.images[0] as unknown as GlobalEventHandlers,
-      new Event('load')
-    );
+    load(harness.images[0]);
     const background = await pending;
     expect(background).toEqual({ kind: 'image', url: requested });
     expect(roomBackgroundCssImage(background)).toBe(
@@ -95,37 +137,37 @@ describe('browser room background', () => {
     );
   });
 
-  it('alerts on a failed image without replacing the current background', async () => {
+  it('keeps the dialog open on a failed image and never replaces the background', async () => {
     const harness = imageHarness();
-    const alert = vi.fn();
+    const dialog = promptAnswering('https://images.example.test/missing.png');
     const pending = requestBrowserRoomBackground({
-      prompt: () => 'https://images.example.test/missing.png',
-      alert,
+      prompt: dialog.prompt,
       createImage: harness.createImage,
     });
+    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
     harness.images[0]?.onerror?.call(
       harness.images[0] as unknown as GlobalEventHandlers,
       new Event('error')
     );
     await expect(pending).resolves.toBeUndefined();
-    expect(alert).toHaveBeenCalledOnce();
-    expect(alert).toHaveBeenCalledWith(INVALID_ROOM_BACKGROUND_MESSAGE);
+    expect(dialog.errors).toEqual([INVALID_ROOM_BACKGROUND_MESSAGE]);
   });
 
   it('drops a pending result after cancellation without showing an error', async () => {
     const harness = imageHarness();
-    const alert = vi.fn();
     const abort = new AbortController();
+    const dialog = promptAnswering('https://images.example.test/slow.png');
     const pending = requestBrowserRoomBackground({
       signal: abort.signal,
-      prompt: () => 'https://images.example.test/slow.png',
-      alert,
+      prompt: dialog.prompt,
       createImage: harness.createImage,
     });
+    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
     abort.abort();
     await expect(pending).resolves.toBeUndefined();
+    expect(dialog.checks[0]?.signal.aborted).toBe(true);
     expect(harness.images[0]?.onload).toBeNull();
     expect(harness.images[0]?.onerror).toBeNull();
-    expect(alert).not.toHaveBeenCalled();
+    expect(dialog.errors).toEqual([]);
   });
 });

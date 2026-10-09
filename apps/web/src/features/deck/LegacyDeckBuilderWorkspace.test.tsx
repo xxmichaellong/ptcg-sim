@@ -5,7 +5,12 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { LegacyDeckBuilderWorkspace } from './LegacyDeckBuilderWorkspace.js';
+import { cancelAllDialogRequests } from '../../ui/dialog-requests.js';
+import { OverlayHost } from '../../ui/OverlayHost.js';
+import {
+  LegacyDeckBuilderWorkspace,
+  type DeckClearConfirmation,
+} from './LegacyDeckBuilderWorkspace.js';
 import type { DeckCsvFileImportResult } from './deck-browser-io.js';
 import { DeckBuilderStore } from './deck-builder-store.js';
 import type {
@@ -77,7 +82,7 @@ const mount = async (
     readonly catalog?: FakeCatalog;
     readonly open?: boolean;
     readonly onPlay?: () => void;
-    readonly confirmClear?: (message: string) => boolean;
+    readonly confirmClear?: DeckClearConfirmation;
     readonly downloadDeck?: (deck: Deck) => boolean;
     readonly importDeckFile?: (
       file: { readonly size: number; text(): Promise<string> },
@@ -396,7 +401,8 @@ describe('LegacyDeckBuilderWorkspace', () => {
 
     await click(host.querySelector('#nativeDeckBuilderClear')!);
     expect(confirmClear).toHaveBeenCalledWith(
-      'Are you sure you want to delete your deck?'
+      'Are you sure you want to delete your deck?',
+      { signal: expect.any(AbortSignal) }
     );
     expect(store.getSnapshot().slots.main.deck).toEqual({});
     expect(
@@ -409,6 +415,54 @@ describe('LegacyDeckBuilderWorkspace', () => {
     });
     await click(host.querySelector('#nativeDeckBuilderPlayButton')!);
     expect(onPlay).toHaveBeenCalledOnce();
+  });
+
+  it('asks before Clear in a danger confirm dialog and keeps the deck on Cancel', async () => {
+    const main = card('Main', 'main-image');
+    const store = new DeckBuilderStore({ mainDeck: deckWith(main) });
+    const overlayElement = document.createElement('div');
+    document.body.append(overlayElement);
+    const overlayRoot = createRoot(overlayElement);
+    await act(async () => overlayRoot.render(<OverlayHost />));
+    const settle = async () => {
+      for (let round = 0; round < 4; round += 1) {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+    };
+    const dialogButton = (action: string) =>
+      document.querySelector<HTMLButtonElement>(
+        `[data-dialog-action="${action}"]`
+      )!;
+    try {
+      await mount({ store });
+
+      await click(host.querySelector('#nativeDeckBuilderClear')!);
+      await settle();
+      const question = document.querySelector('[role="alertdialog"]');
+      expect(question?.textContent).toContain(
+        'Are you sure you want to delete your deck?'
+      );
+      expect(dialogButton('confirm').dataset.variant).toBe('danger');
+      expect(document.activeElement).toBe(dialogButton('cancel'));
+      await click(dialogButton('cancel'));
+      await settle();
+      expect(store.getSnapshot().slots.main.deck.Main?.totalCount).toBe(1);
+      expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+
+      await click(host.querySelector('#nativeDeckBuilderClear')!);
+      await settle();
+      await click(dialogButton('confirm'));
+      await settle();
+      expect(store.getSnapshot().slots.main.deck).toEqual({});
+    } finally {
+      await act(async () => {
+        cancelAllDialogRequests();
+        overlayRoot.unmount();
+      });
+      overlayElement.remove();
+    }
   });
 
   it('keeps the solo-only target unavailable in multiplayer', async () => {

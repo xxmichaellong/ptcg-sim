@@ -1,116 +1,80 @@
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 
+import { promptValue, type PromptOptions } from '../ui/dialog-requests.js';
+import {
+  browserImageFactory,
+  preloadBrowserImage,
+  type BrowserImageLoader,
+} from './browser-image-preload.js';
+
 export const CARD_BACK_PROMPT = "Paste your image URL or type 'default':";
 export const INVALID_CARD_BACK_MESSAGE = 'Please enter a valid image URL.';
 export const DEFAULT_CARD_BACK_URL = '/v2/assets/cardback.png';
 
-type CardBackImageLoader = Pick<HTMLImageElement, 'onload' | 'onerror' | 'src'>;
+/** Asks for one line of text: the overlay prompt dialog by default. */
+export type BrowserTextPrompt = (
+  options: PromptOptions
+) => Promise<string | null>;
 
 export interface BrowserCardBackRequestOptions {
   readonly signal?: AbortSignal;
-  readonly prompt?: (message: string) => string | null;
-  readonly alert?: (message: string) => void;
-  readonly createImage?: () => CardBackImageLoader;
+  readonly prompt?: BrowserTextPrompt;
+  readonly createImage?: () => BrowserImageLoader;
 }
 
 export type BrowserCardBackRequest = (
   options?: BrowserCardBackRequestOptions
 ) => Promise<string | undefined>;
 
-const reportInvalidCardBack = (
-  alertUser: ((message: string) => void) | undefined
-): void => {
-  try {
-    alertUser?.(INVALID_CARD_BACK_MESSAGE);
-  } catch {
-    // A blocked alert must not turn a foreground visual choice into a failure.
-  }
-};
-
 /**
- * Preserves V1's foreground prompt and image-load check. The browser contacts
- * the selected host directly; this helper never proxies, rewrites, or fetches
- * the value through application code.
+ * Asks for a card-back image and checks it loads before anything changes,
+ * as v1 did. A URL that is too long or does not load keeps the dialog open
+ * with the source's message; Cancel, an empty answer or an aborted request
+ * changes nothing.
  */
 export const requestBrowserCardBack: BrowserCardBackRequest = async (
   options = {}
 ) => {
   if (options.signal?.aborted) return undefined;
-  const promptUser =
-    options.prompt ??
-    (typeof globalThis.prompt === 'function'
-      ? globalThis.prompt.bind(globalThis)
-      : undefined);
-  if (!promptUser) return undefined;
+  const ask = options.prompt ?? promptValue;
+  const createImage = options.createImage ?? browserImageFactory();
+  // The URL the last successful check loaded; the dialog accepts only then.
+  let accepted: string | undefined;
 
-  let input: string | null;
+  let answer: string | null;
   try {
-    input = promptUser(CARD_BACK_PROMPT);
+    answer = await ask({
+      title: 'Change card back',
+      body: CARD_BACK_PROMPT,
+      label: 'Image URL',
+      placeholder: 'https://… or default',
+      submitLabel: 'Use image',
+      validate: async (value, { signal }) => {
+        accepted = undefined;
+        const normalized = value.trim();
+        if (normalized === '') return null;
+        if (normalized.length > MAX_IMAGE_URL_CODE_UNITS) {
+          return INVALID_CARD_BACK_MESSAGE;
+        }
+        const requestedUrl =
+          normalized.toLowerCase() === 'default'
+            ? DEFAULT_CARD_BACK_URL
+            : normalized;
+        if (!createImage) return INVALID_CARD_BACK_MESSAGE;
+        const preload = await preloadBrowserImage(
+          createImage,
+          requestedUrl,
+          signal
+        );
+        if (preload.kind === 'failed') return INVALID_CARD_BACK_MESSAGE;
+        if (preload.kind === 'loaded') accepted = requestedUrl;
+        return null;
+      },
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
   } catch {
     return undefined;
   }
-  if (input === null) return undefined;
-  const normalized = input.trim();
-  if (normalized === '') return undefined;
-
-  const alertUser =
-    options.alert ??
-    (typeof globalThis.alert === 'function'
-      ? globalThis.alert.bind(globalThis)
-      : undefined);
-  if (normalized.length > MAX_IMAGE_URL_CODE_UNITS) {
-    reportInvalidCardBack(alertUser);
-    return undefined;
-  }
-  const requestedUrl =
-    normalized.toLowerCase() === 'default' ? DEFAULT_CARD_BACK_URL : normalized;
-  const createImage =
-    options.createImage ??
-    (typeof globalThis.Image === 'function'
-      ? () => new globalThis.Image()
-      : undefined);
-  if (!createImage) {
-    reportInvalidCardBack(alertUser);
-    return undefined;
-  }
-
-  return await new Promise<string | undefined>((resolve) => {
-    let image: CardBackImageLoader;
-    try {
-      image = createImage();
-    } catch {
-      reportInvalidCardBack(alertUser);
-      resolve(undefined);
-      return;
-    }
-    let settled = false;
-    const cleanup = (): void => {
-      image.onload = null;
-      image.onerror = null;
-      options.signal?.removeEventListener('abort', handleAbort);
-    };
-    const finish = (result: string | undefined): void => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      resolve(result);
-    };
-    const handleAbort = (): void => finish(undefined);
-    image.onload = () => finish(requestedUrl);
-    image.onerror = () => {
-      reportInvalidCardBack(alertUser);
-      finish(undefined);
-    };
-    options.signal?.addEventListener('abort', handleAbort, { once: true });
-    if (options.signal?.aborted) {
-      handleAbort();
-      return;
-    }
-    try {
-      image.src = requestedUrl;
-    } catch {
-      reportInvalidCardBack(alertUser);
-      finish(undefined);
-    }
-  });
+  if (answer === null || options.signal?.aborted) return undefined;
+  return accepted;
 };

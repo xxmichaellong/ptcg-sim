@@ -14,6 +14,7 @@ import { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { DeckInstallSession } from '../features/deck/deck-install-adapter.js';
 import type { PopularDecklistSource } from '../features/deck/popular-decklists.js';
 import type { TcgdexCardCatalog } from '../features/deck/tcgdex-catalog-contract.js';
+import { OverlayHost } from '../ui/OverlayHost.js';
 
 const HARNESS_KEY = '__PTCG_LEGACY_DECK_BUILDER_HARNESS__';
 
@@ -251,7 +252,10 @@ export const mountLegacyDeckBuilderBrowserHarness = (
 
   root.render(
     <StrictMode>
-      <Candidate />
+      {/* The Clear confirmation portals into this layer, above the page. */}
+      <OverlayHost container={host}>
+        <Candidate />
+      </OverlayHost>
     </StrictMode>
   );
 

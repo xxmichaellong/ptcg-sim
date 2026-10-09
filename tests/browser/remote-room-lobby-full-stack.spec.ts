@@ -1,6 +1,9 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
-import { answerOverlayConfirm } from './support/overlay-dialogs.js';
+import {
+  answerOverlayConfirm,
+  answerOverlayPrompt,
+} from './support/overlay-dialogs.js';
 
 const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 const EXPECTED_ROTATION_CONSOLE_ERROR =
@@ -219,11 +222,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
     ).toContainText('Total: 1');
-    playerTwo.page.once('dialog', async (dialog) => {
-      expect(dialog.message()).toBe("Paste your image URL or type 'default':");
-      await dialog.accept(CUSTOM_CARD_BACK_URL);
-    });
+    const cardBackPrompt = answerOverlayPrompt(
+      playerTwo.page,
+      CUSTOM_CARD_BACK_URL
+    );
     await playerTwo.page.locator('#changeCardBackButton').click();
+    expect((await cardBackPrompt).message).toBe('Change card back');
+    await expect(
+      playerTwo.page.getByRole('dialog', { name: 'Change card back' })
+    ).toHaveCount(0);
     await expect
       .poll(() => customCardBackRequests.get(playerTwo.page) ?? 0)
       .toBe(1);
@@ -461,13 +468,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         body: ONE_PIXEL_PNG,
       });
     });
-    playerTwo.page.once('dialog', async (dialog) => {
-      expect(dialog.message()).toBe(
-        "Paste your image URL, or type 'blank' or 'theme':"
-      );
-      await dialog.accept(CUSTOM_BACKGROUND_URL);
-    });
+    const backgroundPrompt = answerOverlayPrompt(
+      playerTwo.page,
+      CUSTOM_BACKGROUND_URL
+    );
     await playerTwo.page.locator('#changeBackgroundButton').click();
+    expect((await backgroundPrompt).message).toBe('Change background');
+    await expect(
+      playerTwo.page.getByRole('dialog', { name: 'Change background' })
+    ).toHaveCount(0);
     await expect(roomRoute).toHaveAttribute('data-room-background', 'image');
     await expect(roomRoute).toHaveCSS(
       'background-image',
