@@ -16,8 +16,16 @@ describe('server health boundary', () => {
       protocolVersion: 2,
       authoritySchemaVersion: 8,
       matchStateSchemaVersion: 3,
+      continuation: 'closed',
     });
     expect(response.headers.get('Cache-Control')).toContain('no-store');
+    expect(
+      await handleServerHealthRequest(
+        new Request('https://play.example/v2/health'),
+        'build-abc.123',
+        'enabled'
+      ).json()
+    ).toMatchObject({ continuation: 'enabled' });
   });
 
   it('rejects unsafe methods, queries, and build identifiers', async () => {

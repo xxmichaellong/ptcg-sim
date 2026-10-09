@@ -84,6 +84,11 @@ export interface RemoteRoomRouteProps {
     deliverOpponentInvitation: OpponentInvitationDelivery,
     signal: AbortSignal
   ) => Promise<void>;
+  /**
+   * Online save and resume are default-off on the Worker; their controls
+   * appear only once it reports them enabled, never as buttons that fail.
+   */
+  readonly continuationAvailable?: boolean;
   /** Parks a live solo authority while the source Multiplayer tab is open. */
   readonly onMultiplayerNavigate?: () => void;
   /**
@@ -137,6 +142,7 @@ export const RemoteRoomRoute = ({
   onSubmission,
   onLeave,
   onResumeSavedGame,
+  continuationAvailable = false,
   onMultiplayerNavigate,
   multiplayerPanel,
   onMultiplayerPanelOpen,
@@ -460,10 +466,13 @@ export const RemoteRoomRoute = ({
                     onImportReplayFile={(contents) =>
                       runtime.replay.importReplayFileBytes(contents)
                     }
-                    onSaveOnlineGame={(signal) =>
-                      runtime.saveOnlineGame(downloadTextFile, signal)
-                    }
-                    {...(onResumeSavedGame ? { onResumeSavedGame } : {})}
+                    {...(continuationAvailable
+                      ? {
+                          onSaveOnlineGame: (signal: AbortSignal) =>
+                            runtime.saveOnlineGame(downloadTextFile, signal),
+                          ...(onResumeSavedGame ? { onResumeSavedGame } : {}),
+                        }
+                      : {})}
                     downloadTextFile={downloadTextFile}
                     requestFullscreen={requestFullscreen}
                   />

@@ -439,6 +439,28 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2PassButton')).not.toBeNull();
     expect(host.querySelector('#p2SetupButton')).not.toBeNull();
     expect(host.querySelector('#p2ResetButton')).not.toBeNull();
+    // Online save and resume are default-off on the Worker; until it reports
+    // them enabled there is nothing to press.
+    expect(host.querySelector('#saveOnlineGame')).toBeNull();
+    expect(host.querySelector('#resumeSavedGame')).toBeNull();
+    await act(async () =>
+      root.render(
+        <RemoteRoomRoute
+          runtime={runtime}
+          rendererKind="dom"
+          onIntent={onIntent}
+          onSubmission={onSubmission}
+          onLeave={onLeave}
+          onCopyInvitation={onCopyInvitation}
+          onResumeSavedGame={onResumeSavedGame}
+          continuationAvailable
+          confirmHeaderLeave={confirmHeaderLeave}
+          downloadTextFile={downloadTextFile}
+          requestFullscreen={requestFullscreen}
+          requestBackground={requestBackground}
+        />
+      )
+    );
     expect(host.querySelector('#saveOnlineGame')?.textContent).toBe(
       'Save online game'
     );

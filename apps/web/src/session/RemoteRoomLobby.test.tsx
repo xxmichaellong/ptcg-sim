@@ -47,6 +47,7 @@ const roomRouteHarness = vi.hoisted(() => ({
   cardBackStore: undefined as CardBackCustodyStore | undefined,
   onCopyInvitation: undefined as
     ((role: 'player' | 'spectator') => Promise<boolean>) | undefined,
+  continuationAvailable: undefined as boolean | undefined,
   onResumeSavedGame: undefined as
     | ((
         contents: string,
@@ -94,6 +95,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     deckStore,
     cardBackStore,
     onCopyInvitation,
+    continuationAvailable,
     onResumeSavedGame,
   }: {
     readonly runtime: { readonly label?: string };
@@ -112,6 +114,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onCopyInvitation?: (
       role: 'player' | 'spectator'
     ) => Promise<boolean>;
+    readonly continuationAvailable?: boolean;
     readonly onResumeSavedGame?: (
       contents: string,
       deliverOpponentInvitation: (text: string) => Promise<void>,
@@ -129,6 +132,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
     roomRouteHarness.onCopyInvitation = onCopyInvitation;
+    roomRouteHarness.continuationAvailable = continuationAvailable;
     roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
     return (
       <main data-app-route="test-remote-room">
@@ -758,6 +762,33 @@ describe('remote room lobby wiring', () => {
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('offers online save and resume only once the Worker reports them enabled', async () => {
+    for (const reported of [false, true]) {
+      const created = creationResult();
+      const continuationAvailability = vi.fn(async () => reported);
+      const { host, root } = await mount({
+        ...lobbyDependencies(
+          custody(),
+          vi.fn(async () => created.value)
+        ),
+        continuationAvailability,
+      });
+      await act(async () => {
+        element<HTMLButtonElement>(host, '#generateIdButton').click();
+        await flush();
+      });
+      // The lobby itself makes no authority request.
+      expect(continuationAvailability).not.toHaveBeenCalled();
+      await act(async () => {
+        element<HTMLButtonElement>(host, '#joinRoomButton').click();
+        await flush();
+      });
+      expect(continuationAvailability).toHaveBeenCalledOnce();
+      expect(roomRouteHarness.continuationAvailable).toBe(reported);
+      await act(async () => root.unmount());
+    }
   });
 
   it('copies a spectator invitation from the room only once the player seat is taken', async () => {

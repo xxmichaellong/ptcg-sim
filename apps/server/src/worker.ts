@@ -1033,7 +1033,11 @@ const worker: ExportedHandler<Env> = {
     const telemetry = createTelemetry('edge', env.BUILD_ID);
     if (url.pathname === '/v2/health') {
       return observeHttp(telemetry, 'health', () =>
-        handleServerHealthRequest(request, env.BUILD_ID)
+        handleServerHealthRequest(
+          request,
+          env.BUILD_ID,
+          continuationHttpMode(env.CONTINUATION_HTTP_ACTIVATION)
+        )
       );
     }
     if (url.pathname === '/v2/rooms') {

@@ -35,6 +35,7 @@ import {
   type BrowserRoomBackgroundRequest,
 } from './browser-room-background.js';
 import type { BrowserCardBackRequest } from './browser-card-back.js';
+import { probeContinuationAvailability } from './browser-continuation-availability.js';
 import { useRoomBackground } from './useRoomBackground.js';
 
 const LegacyDeckBuilderSession = lazy(async () => ({
@@ -130,10 +131,13 @@ export interface RemoteRoomLobbyDependencies {
   readonly createRestorationCustody?: (
     contents: string
   ) => RoomRestorationCustody;
+  /** Whether the Worker answers online save and resume; absent reads as off. */
+  readonly continuationAvailability?: (signal: AbortSignal) => Promise<boolean>;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
   createRoom: createRemoteRoom,
+  continuationAvailability: probeContinuationAvailability,
   createInvitationJoinCustody: () => new RemoteRoomInvitationJoinCustody(),
   fallbackDisplayName: () => {
     const index = Math.floor(Math.random() * LEGACY_FALLBACK_NAMES.length);
@@ -284,6 +288,9 @@ export const RemoteRoomLobby = ({
     BoardPreferences | undefined
   >();
   const [hideOpponentHand, setHideOpponentHand] = useState(false);
+  const [continuationAvailable, setContinuationAvailable] = useState<
+    boolean | undefined
+  >();
   const backgroundSelection = useRoomBackground({
     ...(dependencies.requestBackground
       ? { requestBackground: dependencies.requestBackground }
@@ -302,6 +309,24 @@ export const RemoteRoomLobby = ({
       showZoneOutlines: visible,
     }));
   };
+
+  // Asked once, and only when a multiplayer room opens: Solo has no save or
+  // resume controls, and the lobby makes no authority request on its own.
+  const inMultiplayerRoom = connected?.mode === 'multiplayer';
+  useEffect(() => {
+    const probe = dependencies.continuationAvailability;
+    if (!probe || !inMultiplayerRoom || continuationAvailable !== undefined) {
+      return;
+    }
+    const abort = new AbortController();
+    void probe(abort.signal).then(
+      (available) => {
+        if (!abort.signal.aborted) setContinuationAvailable(available);
+      },
+      () => undefined
+    );
+    return () => abort.abort();
+  }, [dependencies, inMultiplayerRoom, continuationAvailable]);
 
   useEffect(() => {
     const owner: LobbyOwner = {
@@ -855,6 +880,7 @@ export const RemoteRoomLobby = ({
             preparedDeckSessions.current.add(connected.runtime.session)
           }
           onLeave={handleLeave}
+          continuationAvailable={continuationAvailable ?? false}
           onResumeSavedGame={handleResumeSavedGame}
           onMultiplayerNavigate={handleMultiplayerNavigate}
           {...(connected.mode === 'solo'

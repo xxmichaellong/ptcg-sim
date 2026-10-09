@@ -77,6 +77,7 @@ describe('Cloudflare Worker runtime', () => {
       protocolVersion: 2,
       authoritySchemaVersion: 8,
       matchStateSchemaVersion: 3,
+      continuation: 'closed',
     });
   });
 
