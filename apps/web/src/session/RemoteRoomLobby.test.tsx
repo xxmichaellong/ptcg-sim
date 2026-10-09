@@ -757,7 +757,9 @@ describe('remote room lobby wiring', () => {
     });
     expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
     // The button confirms the copy; the lobby narrates nothing, as in v1.
-    expect(element(host, '#copyButton').className).toBe('copied');
+    expect(element(host, '#copyButton').classList.contains('copied')).toBe(
+      true
+    );
     expect(host.querySelector('.lobby-status')).toBeNull();
     expect(host.innerHTML).not.toContain('secret-bearer');
 

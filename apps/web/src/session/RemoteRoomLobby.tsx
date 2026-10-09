@@ -1,3 +1,10 @@
+import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
+import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
+import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
+import { SignInIcon } from '@phosphor-icons/react/dist/csr/SignIn';
+import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import {
   createEmptyBoardView,
   type BoardPreferences,
@@ -37,6 +44,9 @@ import {
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import { probeContinuationAvailability } from './browser-continuation-availability.js';
 import { useRoomBackground } from './useRoomBackground.js';
+
+import '../design/panel-controls.css';
+import './lobby.css';
 
 const LegacyDeckBuilderSession = lazy(async () => ({
   default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
@@ -237,12 +247,7 @@ const InitialCoachingConsent = ({
   return null;
 };
 
-const CopyIcon = () => (
-  <svg viewBox="0 0 24 24" role="img" aria-label="Copy" focusable="false">
-    <rect x="8" y="8" width="11" height="12" rx="1.5" fill="none" />
-    <path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v10A1.5 1.5 0 0 0 5.5 17H8" />
-  </svg>
-);
+const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
 /**
  * Isolated v2 port of the existing multiplayer lobby chrome. Bearer invitation
@@ -309,6 +314,15 @@ export const RemoteRoomLobby = ({
       showZoneOutlines: visible,
     }));
   };
+
+  // The lobby page wears the table's theme (Night or Day) like the room
+  // route does; once a room is connected the route owns it.
+  useEffect(() => {
+    if (connected) return;
+    document.documentElement.dataset.theme = effectivePreferences.darkMode
+      ? 'night'
+      : 'day';
+  }, [connected, effectivePreferences.darkMode]);
 
   // Asked once, and only when a multiplayer room opens: Solo has no save or
   // resume controls, and the lobby makes no authority request on its own.
@@ -762,95 +776,193 @@ export const RemoteRoomLobby = ({
       className="legacy-room-sidebox legacy-lobby-sidebox"
       hidden={hidden}
     >
-      <div id="p2ExplanationBox">
-        <strong>Online Multiplayer Mode</strong>
-        <div className="legacy-explanation-gap" />
-        Generate a room, then copy a temporary invitation for one player or
-        spectator. They paste it into Room ID to join.
-      </div>
-      <div id="lobby" aria-busy={busy}>
-        <input
-          id="nameInput"
-          type="text"
-          placeholder="Name"
-          aria-label="Name"
-          value={name}
-          disabled={busy}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <div id="roomId">
-          <input
-            id="roomIdInput"
-            type="text"
-            placeholder="Room ID"
-            aria-label="Room ID"
-            value={roomCode}
-            disabled={busy}
-            onPaste={handlePaste}
-            onDrop={(event) => {
-              event.preventDefault();
-              setStatus('Paste a temporary invitation into Room ID.');
-            }}
-            onChange={(event) => handleRoomCodeChange(event.target.value)}
-          />
-          <button
-            id="copyButton"
-            type="button"
-            className={copyConfirmed ? 'copied' : undefined}
-            aria-label="Copy invitation"
-            disabled={busy}
-            onClick={() => void handleCopy()}
+      <div className="lobby-panel">
+        <div id="lobby" className="lobby-form" aria-busy={busy}>
+          <section className="lobby-intro" aria-labelledby="lobbyTitle">
+            <header id="p2ExplanationBox" className="lobby-intro-head">
+              <span className="lobby-intro-icon">
+                <UsersThreeIcon {...decorative} weight="duotone" />
+              </span>
+              <div className="lobby-intro-copy">
+                <h2 id="lobbyTitle" className="lobby-intro-title">
+                  Online Multiplayer Mode
+                </h2>
+                <p className="lobby-intro-text">
+                  Generate a room, then copy a temporary invitation for one
+                  player or spectator. They paste it into Room ID to join.
+                </p>
+              </div>
+            </header>
+            <div className="ds-field">
+              <label className="ds-label" htmlFor="nameInput">
+                Your name
+              </label>
+              <input
+                id="nameInput"
+                className="ds-input"
+                type="text"
+                placeholder="Name"
+                autoComplete="nickname"
+                value={name}
+                disabled={busy}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </div>
+          </section>
+          <section className="lobby-step" aria-labelledby="lobbyHostTitle">
+            <div className="lobby-step-head">
+              <span className="lobby-step-number" aria-hidden="true">
+                1
+              </span>
+              <div className="lobby-step-copy">
+                <h3 id="lobbyHostTitle" className="lobby-step-title">
+                  Host a room
+                </h3>
+                <p className="ds-hint">
+                  Generate a room, copy an invitation and send it to your
+                  opponent. Turn on <em>Join as spectator</em> to copy a
+                  spectator invitation instead.
+                </p>
+              </div>
+            </div>
+            <div className="lobby-step-actions">
+              <button
+                id="generateIdButton"
+                type="button"
+                className="ds-button ds-button--primary"
+                disabled={busy}
+                onClick={() => void handleGenerate()}
+              >
+                {operation === 'generate' ? (
+                  <CircleNotchIcon
+                    {...decorative}
+                    weight="bold"
+                    className="ds-spin"
+                  />
+                ) : (
+                  <PlusIcon {...decorative} weight="bold" />
+                )}
+                {operation === 'generate' ? 'Generating…' : 'Generate'}
+              </button>
+              <button
+                id="copyButton"
+                type="button"
+                className={`ds-button ds-button--secondary lobby-copy${
+                  copyConfirmed ? ' copied' : ''
+                }`}
+                aria-label="Copy invitation"
+                disabled={busy}
+                onClick={() => void handleCopy()}
+              >
+                <span className="lobby-copy-icon">
+                  {copyConfirmed ? (
+                    <CheckIcon key="copied" {...decorative} weight="bold" />
+                  ) : (
+                    <CopyIcon key="copy" {...decorative} weight="bold" />
+                  )}
+                </span>
+                <span aria-hidden="true">
+                  {copyConfirmed ? 'Copied' : 'Copy invitation'}
+                </span>
+              </button>
+            </div>
+          </section>
+          <section className="lobby-step" aria-labelledby="lobbyJoinTitle">
+            <div className="lobby-step-head">
+              <span className="lobby-step-number" aria-hidden="true">
+                2
+              </span>
+              <div className="lobby-step-copy">
+                <h3 id="lobbyJoinTitle" className="lobby-step-title">
+                  Join a room
+                </h3>
+                <p className="ds-hint">
+                  Paste the invitation you were sent, or join the room you
+                  generated.
+                </p>
+              </div>
+            </div>
+            <div id="roomId" className="ds-field">
+              <label className="ds-label" htmlFor="roomIdInput">
+                Room ID
+              </label>
+              <input
+                id="roomIdInput"
+                className="ds-input lobby-room-input"
+                type="text"
+                placeholder="Paste an invitation"
+                autoComplete="off"
+                spellCheck={false}
+                value={roomCode}
+                disabled={busy}
+                onPaste={handlePaste}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setStatus('Paste a temporary invitation into Room ID.');
+                }}
+                onChange={(event) => handleRoomCodeChange(event.target.value)}
+              />
+            </div>
+            <div className="lobby-switches">
+              <div id="spectatorModeLabel" className="ds-switch-row">
+                <input
+                  type="checkbox"
+                  id="spectatorModeCheckbox"
+                  className="ds-switch"
+                  checked={spectator}
+                  // A spectator invitation only ever watches; a player
+                  // invitation leaves the choice to its holder, as v1's room
+                  // key did.
+                  disabled={busy || receipt?.requestedRole === 'spectator'}
+                  onChange={(event) => setSpectator(event.target.checked)}
+                />{' '}
+                <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
+              </div>
+              <div id="coachingModeLabel" className="ds-switch-row">
+                <input
+                  type="checkbox"
+                  id="coachingModeCheckbox"
+                  className="ds-switch"
+                  checked={coachingConsent}
+                  disabled={busy}
+                  onChange={(event) => setCoachingConsent(event.target.checked)}
+                />{' '}
+                <label htmlFor="coachingModeCheckbox">
+                  Enable board flip <span>(both players must enable)</span>
+                </label>
+              </div>
+            </div>
+            <button
+              id="joinRoomButton"
+              type="button"
+              className="ds-button ds-button--primary ds-button--block"
+              disabled={busy}
+              onClick={() => void handleJoin()}
+            >
+              {operation === 'join' ? (
+                <CircleNotchIcon
+                  {...decorative}
+                  weight="bold"
+                  className="ds-spin"
+                />
+              ) : (
+                <SignInIcon {...decorative} weight="bold" />
+              )}
+              {operation === 'join' ? 'Joining…' : 'Join Room'}
+            </button>
+          </section>
+        </div>
+        {status && (
+          <p
+            className="lobby-status ds-notice ds-notice--danger"
+            role="status"
+            aria-live="polite"
           >
-            <CopyIcon />
-          </button>
-          <button
-            id="generateIdButton"
-            type="button"
-            disabled={busy}
-            onClick={() => void handleGenerate()}
-          >
-            Generate
-          </button>
-        </div>
-        <div id="coachingModeLabel">
-          <input
-            type="checkbox"
-            id="coachingModeCheckbox"
-            checked={coachingConsent}
-            disabled={busy}
-            onChange={(event) => setCoachingConsent(event.target.checked)}
-          />{' '}
-          <label htmlFor="coachingModeCheckbox">
-            Enable board flip <span>(both players must enable)</span>
-          </label>
-        </div>
-        <div id="spectatorModeLabel">
-          <input
-            type="checkbox"
-            id="spectatorModeCheckbox"
-            checked={spectator}
-            // A spectator invitation only ever watches; a player
-            // invitation leaves the choice to its holder, as v1's room
-            // key did.
-            disabled={busy || receipt?.requestedRole === 'spectator'}
-            onChange={(event) => setSpectator(event.target.checked)}
-          />{' '}
-          <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
-        </div>
-        <button
-          id="joinRoomButton"
-          type="button"
-          disabled={busy}
-          onClick={() => void handleJoin()}
-        >
-          Join Room
-        </button>
+            <WarningCircleIcon {...decorative} weight="bold" />
+            <span>{status}</span>
+          </p>
+        )}
       </div>
-      {status && (
-        <p className="lobby-status" role="status" aria-live="polite">
-          {status}
-        </p>
-      )}
     </section>
   );
 
