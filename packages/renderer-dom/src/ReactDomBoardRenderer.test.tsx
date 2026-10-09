@@ -434,6 +434,61 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('never names or reports for inspection a card it paints face down', async () => {
+    const hovers: unknown[] = [];
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+      reportCardHover: (hover) => hovers.push(hover),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const base = createScene();
+    // The owner's deck cover: its node carries the face (for the zone
+    // viewer) but the table paints the back.
+    const cover: BoardScene = {
+      ...base,
+      cards: base.cards.map((card) => ({
+        ...card,
+        tableImageUrl: '/blue-back.png',
+      })),
+    };
+    await mountInAct(renderer, host, cover);
+    const hover = async () => {
+      const button = host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+      await act(async () => {
+        button.querySelector('img')!.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            clientX: 40,
+            clientY: 480,
+            pointerType: 'mouse',
+          })
+        );
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      });
+      return button;
+    };
+    const button = await hover();
+    expect(button.getAttribute('aria-label')).toBe('Face-down card');
+    expect(button.querySelector('img')!.getAttribute('src')).toBe(
+      '/blue-back.png'
+    );
+    expect(hovers).toEqual([]);
+
+    // The same card painted face up is named and reported.
+    act(() => renderer.installScene({ ...base, revision: 2 }, []));
+    const faceUp = await hover();
+    expect(faceUp.getAttribute('aria-label')).toBe(base.cards[0]!.label);
+    expect(hovers).toEqual([expect.objectContaining({ cardId })]);
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('opens a cover zone without selecting or previewing its top card', async () => {
     const intents: BoardIntent[] = [];
     const renderer = new ReactDomBoardRenderer({

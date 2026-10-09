@@ -40,6 +40,16 @@ import {
   type QuarterTurn,
 } from './motion/HoverTilt.js';
 
+const FACE_DOWN_LABEL = 'Face-down card';
+
+/**
+ * The table shows this card's back: it is concealed, or (the deck cover) it
+ * paints a back over a face its owner may read elsewhere.
+ */
+const paintsBack = (card: CardSceneNode): boolean =>
+  card.concealed ||
+  (card.tableImageUrl !== undefined && card.tableImageUrl !== card.imageUrl);
+
 const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   position: 'absolute',
   left: bounds.x,
@@ -482,7 +492,7 @@ const CardNode = memo(function CardNode({
           ? 'true'
           : undefined
       }
-      aria-label={card.label}
+      aria-label={paintsBack(card) ? FACE_DOWN_LABEL : card.label}
       aria-haspopup={
         card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
       }
@@ -782,7 +792,9 @@ export const BoardSurface = ({
     } else {
       tilt.leave();
     }
-    if (card.concealed) {
+    // Only a card the table paints face up may be read large: the deck
+    // cover is a back even when its owner can read the deck in the viewer.
+    if (paintsBack(card)) {
       if (hoveredRef.current) {
         hoveredRef.current = null;
         scheduleHoverReport();

@@ -121,6 +121,22 @@ export const CardInspector = ({
     return () => clearTimeout(timer);
   }, [hoveredId]);
 
+  // The table changed under a resting pointer: a card turned face down or
+  // went into a hidden zone closes at once; a changed face is updated.
+  useEffect(() => {
+    const current = shownRef.current;
+    if (!current) return;
+    const fresh = inspectCard(view, current.inspection.cardId);
+    if (!fresh) {
+      setShown(null);
+    } else if (
+      fresh.imageUrl !== current.inspection.imageUrl ||
+      fresh.finish !== current.inspection.finish
+    ) {
+      setShown({ ...current, inspection: fresh });
+    }
+  }, [view]);
+
   // The card leans with the pointer over the small card on the board.
   useEffect(() => {
     if (reducedMotion) return undefined;

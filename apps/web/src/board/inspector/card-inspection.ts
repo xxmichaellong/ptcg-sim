@@ -33,7 +33,9 @@ export interface CardInspection {
 const findCard = (view: MatchViewState, cardId: string): ViewCard | null => {
   for (const zone of Object.values(view.zones)) {
     const found = zone.cards.find((card) => card.id === cardId);
-    if (found) return found;
+    // The deck is face down on the table even when its owner may read it in
+    // the zone viewer: its cards are never shown large from the board.
+    if (found) return zone.kind === 'deck' ? null : found;
   }
   for (const stack of Object.values(view.stacks)) {
     const found =
@@ -52,7 +54,7 @@ const findCard = (view: MatchViewState, cardId: string): ViewCard | null => {
 
 /**
  * What the inspector may show for a hovered card: only a card this viewer
- * can read, face up, from the recipient-safe view.
+ * can read, face up and outside the deck, from the recipient-safe view.
  */
 export const inspectCard = (
   view: MatchViewState | undefined,

@@ -60,6 +60,19 @@ describe('card inspection', () => {
     expect(inspectCard(faceDown, String(known.id))).toBeNull();
     expect(inspectCard(view, String(asViewCardId('missing')))).toBeNull();
     expect(inspectCard(undefined, String(known.id))).toBeNull();
+    // The owner may read their deck in the zone viewer (the projection gives
+    // them its faces), but the table shows it face down: never inspected.
+    const ownDeck = {
+      ...view,
+      zones: {
+        ...view.zones,
+        'zone:spike-blue:deck': {
+          ...view.zones['zone:spike-blue:deck']!,
+          cards: [{ ...known, id: asViewCardId('own-deck-top') }],
+        },
+      },
+    };
+    expect(inspectCard(ownDeck, 'own-deck-top')).toBeNull();
     // Cards in play stacks are found too.
     const stackCard = view.stacks['stack:blue:active']!.evolutionCards[0]!;
     expect(inspectCard(view, String(stackCard.id))?.cardId).toBe(

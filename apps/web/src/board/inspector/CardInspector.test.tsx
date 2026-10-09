@@ -92,6 +92,44 @@ describe('CardInspector', () => {
     await act(async () => root.unmount());
   });
 
+  it('closes at once when the inspected card turns face down under a resting pointer', async () => {
+    const { store, root, inspector } = await mount();
+    const first = handCards[0]!;
+    await act(async () => store.set({ cardId: first.id, x: 0, y: 0 }));
+    await act(async () => vi.advanceTimersByTime(150));
+    expect(inspector.dataset.open).toBe('true');
+    const hand = view.zones['zone:spike-blue:hand']!;
+    const turned = {
+      ...view,
+      revision: view.revision + 1,
+      zones: {
+        ...view.zones,
+        'zone:spike-blue:hand': {
+          ...hand,
+          cards: hand.cards.map((card) =>
+            card.id === first.id && card.kind === 'known'
+              ? { ...card, face: 'down' as const }
+              : card
+          ),
+        },
+      },
+    };
+    // The pointer has not moved: no new hover is reported.
+    await act(async () =>
+      root.render(
+        <CardInspector
+          store={store}
+          view={turned}
+          scene={scene}
+          reducedMotion={false}
+        />
+      )
+    );
+    expect(inspector.dataset.open).toBe('false');
+    expect(inspector.querySelector('.card-inspector__card')).toBeNull();
+    await act(async () => root.unmount());
+  });
+
   it('stays closed while a zone browser or card preview shows cards large', async () => {
     const { store, root, inspector } = await mount();
     await act(async () => store.set({ cardId: handCards[0]!.id, x: 0, y: 0 }));
