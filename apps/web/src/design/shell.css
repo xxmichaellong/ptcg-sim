@@ -1,0 +1,550 @@
+/*
+ * The room's shell on the redesigned table (ADR-027): the felt the board
+ * sits on, the rail beside it (tabs, log, chat, actions) and the shared
+ * button styles. Loaded after styles.css, whose v1 rules it supersedes.
+ */
+
+:root {
+  /* Mirrors tableRailWidth() in renderer-contract/src/layout-table.ts. */
+  --rail-width: clamp(300px, 23vw, 380px);
+  --rail-gap: var(--space-3);
+}
+
+html,
+body {
+  background: var(--color-room);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* The root keeps the browser's 16px, so rem tokens mean what they say. */
+body {
+  font-size: var(--text-md);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+}
+
+/* ---- The room ------------------------------------------------------ */
+.remote-room-route,
+.remote-room-route--dark {
+  background-color: var(--color-room);
+  background-image: none;
+  color: var(--color-text);
+}
+.remote-room-route::before,
+.remote-room-route--dark::before {
+  display: none;
+}
+
+/* The felt: a lamp-lit table with a soft vignette and a faint weave. */
+.remote-room-route .board-column {
+  width: calc(100% - var(--rail-width));
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 48% 52%,
+      var(--color-felt-glow),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 120% 95% at 50% 50%,
+      var(--color-felt) 40%,
+      var(--color-felt-deep) 100%
+    );
+  background-color: var(--color-felt);
+  box-shadow: inset 0 0 120px oklch(0 0 0 / 0.35);
+}
+.remote-room-route .board-column::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.remote-room-route .board-column--fullscreen {
+  width: 100%;
+}
+/* A chosen background becomes the play mat, dimmed so cards stay legible. */
+.remote-room-route[data-room-background='image'] .board-column,
+.remote-room-route[data-room-background='color'] .board-column {
+  background: linear-gradient(oklch(0 0 0 / 0.38), oklch(0 0 0 / 0.38));
+}
+
+/* ---- The rail ------------------------------------------------------ */
+.remote-room-route .legacy-room-sidebar {
+  /* Above the parked deck builder (900), as v1's sidebar was. */
+  z-index: 1300;
+  width: var(--rail-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-left: 1px solid var(--color-border);
+  /* Opaque: the closed deck builder parks underneath. */
+  background: var(--color-rail);
+  box-shadow: -12px 0 32px oklch(0 0 0 / 0.25);
+}
+
+.remote-room-route .legacy-room-tabs {
+  height: auto;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+  overflow: visible;
+}
+.remote-room-route .legacy-room-tabs button {
+  width: auto;
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  box-shadow: none;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.remote-room-route .legacy-room-tabs button:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+.remote-room-route .legacy-room-tabs .selected-page,
+.remote-room-route--dark .legacy-tabs .selected-page {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1), var(--highlight-top);
+}
+
+.remote-room-route .legacy-room-sidebox,
+.remote-room-route--dark .legacy-room-sidebox {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+/* ---- Log and chat -------------------------------------------------- */
+.remote-room-route .legacy-activity-feed,
+.remote-room-route--dark .legacy-activity-feed {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.remote-room-route .legacy-activity-feed .self-text,
+.remote-room-route .legacy-activity-feed .opp-text,
+.remote-room-route .legacy-activity-feed .announcement,
+.remote-room-route .legacy-activity-feed .self-message,
+.remote-room-route .legacy-activity-feed .opp-message,
+.remote-room-route .legacy-activity-feed .spectator-message {
+  margin: 2px 0 0;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  animation: rail-row-in calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+.remote-room-route .legacy-activity-feed .self-text,
+.remote-room-route .legacy-activity-feed .opp-text {
+  width: auto;
+  background: transparent;
+  border-left: 3px solid var(--color-you);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.remote-room-route .legacy-activity-feed .opp-text {
+  border-left-color: var(--color-opponent);
+}
+.remote-room-route .legacy-activity-feed .announcement {
+  background: transparent;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+.remote-room-route .legacy-activity-feed .self-message,
+.remote-room-route .legacy-activity-feed .opp-message,
+.remote-room-route .legacy-activity-feed .spectator-message {
+  max-width: 88%;
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-md);
+}
+.remote-room-route .legacy-activity-feed .self-message {
+  margin-left: auto;
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  border-bottom-right-radius: var(--radius-xs);
+}
+.remote-room-route .legacy-activity-feed .opp-message {
+  background: var(--color-surface-3);
+  border-bottom-left-radius: var(--radius-xs);
+}
+.remote-room-route .legacy-activity-feed .spectator-message {
+  background: oklch(0.6 0.12 var(--hue-gold) / 0.3);
+}
+@keyframes rail-row-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+:root[data-motion='reduced'] .remote-room-route .legacy-activity-feed * {
+  animation: none;
+}
+
+.remote-room-route #messageInput,
+.remote-room-route #p2MessageInput,
+.remote-room-route--dark #messageInput,
+.remote-room-route--dark #p2MessageInput {
+  height: 38px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  outline: none;
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+.remote-room-route #messageInput:focus-visible,
+.remote-room-route #p2MessageInput:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+.remote-room-route #messageInput::placeholder,
+.remote-room-route #p2MessageInput::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* ---- Buttons --------------------------------------------------------- */
+.remote-room-route .chat-button-container,
+.remote-room-route .sidebox-button-container {
+  gap: var(--space-1-5);
+  margin-block: 0;
+  overflow: visible;
+}
+.remote-room-route .chat-button-container button,
+.remote-room-route .sidebox-button-container button {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: 34px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: var(--shadow-1), var(--highlight-top);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.remote-room-route .chat-button-container button:active:not(:disabled),
+.remote-room-route .sidebox-button-container button:active:not(:disabled) {
+  scale: 0.96;
+}
+.remote-room-route .chat-button-container button:focus-visible,
+.remote-room-route .sidebox-button-container button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.remote-room-route #p2AttackButton,
+.remote-room-route #attackButton,
+.remote-room-route #p2FREEBUTTON,
+.remote-room-route #FREEBUTTON {
+  border-radius: var(--radius-md);
+}
+/* White labels on the side colours stay at 4.5:1 or better top to bottom. */
+.remote-room-route .self-color {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.56 0.16 var(--hue-you)),
+    oklch(0.5 0.16 var(--hue-you))
+  );
+  color: var(--color-text-on-accent);
+}
+.remote-room-route .opp-color {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.56 0.18 var(--hue-opponent)),
+    oklch(0.5 0.18 var(--hue-opponent))
+  );
+  color: var(--color-text-on-accent);
+}
+.remote-room-route .neutral-color {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+.remote-room-route .spectator-color {
+  background: oklch(0.7 0.13 var(--hue-gold));
+  color: oklch(0.2 0.02 256);
+}
+.remote-room-route
+  .chat-button-container
+  button.self-color:hover:not(:disabled),
+.remote-room-route .sidebox-button-container button.self-color:hover {
+  background: oklch(0.56 0.16 var(--hue-you));
+}
+.remote-room-route .chat-button-container button.opp-color:hover:not(:disabled),
+.remote-room-route .sidebox-button-container button.opp-color:hover {
+  background: oklch(0.58 0.18 var(--hue-opponent));
+}
+.remote-room-route .sidebox-button-container button.neutral-color:hover {
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-2), var(--highlight-top);
+  filter: brightness(1.12);
+}
+
+/* ---- Room header, options menu, popups -------------------------------- */
+.remote-room-route .legacy-room-sidebox #roomHeader {
+  height: auto;
+  margin-bottom: 0;
+  color: var(--color-text);
+}
+.remote-room-route .legacy-room-sidebox #roomHeaderText {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid oklch(0.78 0.12 var(--hue-mint) / 0.45);
+  border-radius: var(--radius-md);
+  background: oklch(0.78 0.12 var(--hue-mint) / 0.14);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.remote-room-route #roomHeaderCopyButton,
+.remote-room-route #roomHeaderCopySpectatorButton {
+  color: var(--color-text-muted);
+}
+.remote-room-route #roomHeaderCopyButton:hover,
+.remote-room-route #roomHeaderCopySpectatorButton:hover {
+  color: var(--color-text);
+}
+
+.remote-room-route .legacy-room-sidebox #optionsContextMenu {
+  min-width: 220px;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  backdrop-filter: blur(16px);
+  transform-origin: bottom right;
+  animation: rail-menu-in calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-snappy);
+}
+.remote-room-route .legacy-room-sidebox #optionsContextMenu button {
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-md);
+  color: var(--color-text);
+}
+.remote-room-route .legacy-room-sidebox #optionsContextMenu button:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+@keyframes rail-menu-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 6px;
+  }
+}
+:root[data-motion='reduced'] .remote-room-route #optionsContextMenu {
+  animation-duration: 1ms;
+}
+
+.custom-popup {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  backdrop-filter: blur(16px);
+}
+.custom-popup .popup-button {
+  height: 34px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+.custom-popup .popup-button:hover {
+  background: var(--color-accent-fill-hover);
+}
+
+/* ---- Settings panel ---------------------------------------------------- */
+.remote-room-route .legacy-room-settings #settingsToggles,
+.remote-room-route--dark .legacy-room-settings #settingsToggles,
+.remote-room-route .legacy-room-motion-settings {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+.remote-room-route .legacy-room-motion-settings > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.remote-room-route .legacy-room-motion-settings select {
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+.remote-room-route .legacy-room-settings input[type='checkbox'] {
+  accent-color: var(--color-accent);
+}
+.remote-room-route .legacy-room-settings #changeBackgroundButton {
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+.remote-room-route .legacy-room-settings #keybindReminder {
+  color: var(--color-text-faint);
+}
+
+/* The bottom action row wraps rather than cutting its labels short. */
+.remote-room-route .sidebox-button-container {
+  flex-wrap: wrap;
+  container-type: inline-size;
+}
+.remote-room-route .sidebox-button-container button {
+  flex: 1 1 calc(33% - var(--space-1-5));
+}
+/* At the narrowest rail a third is too tight for "Set Up Both" at 13px. */
+@container (max-width: 300px) {
+  .remote-room-route .sidebox-button-container button {
+    padding-inline: var(--space-1);
+    font-size: var(--text-xs);
+  }
+}
+.remote-room-route .chat-button-container button svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* The closed deck builder parks under the rail, whatever its width. */
+.remote-room-route .native-deck-builder-workspace,
+.native-deck-builder-workspace {
+  right: calc(var(--rail-width) - 8px);
+}
+
+/* Nothing a rule here shows may outrank the hidden attribute. */
+.remote-room-route [hidden],
+.remote-room-route[hidden] {
+  display: none !important;
+}
+
+/* ---- Board chrome on the play-mat table (geometry v2) ------------------
+ * Each player's chrome box is their half, turned with it, so these offsets
+ * are in that player's own frame: bottom is their screen edge. The corner
+ * is TABLE_CONTROL_CORNER_PX (96px) wide, beside the hand.
+ */
+.board-spike-host[data-geometry='2'] .legacy-once-per-game-controls {
+  top: auto;
+  right: auto;
+  left: 12px;
+  bottom: 10px;
+  width: 76px;
+  height: auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.board-spike-host[data-geometry='2'] .legacy-once-per-game-button {
+  height: 30px !important;
+  max-height: none;
+  font-size: var(--text-xs) !important;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort {
+  top: auto;
+  left: 14px;
+  bottom: 84px;
+  font-size: var(--text-xs) !important;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort span {
+  font-size: var(--text-xs) !important;
+}
+/* v1's translucent side colours vanish on the Day felt: the word reads in
+   the muted text colour on either felt, and the box carries the seat. */
+.board-spike-host[data-geometry='2'] .legacy-hand-sort,
+.board-spike-host[data-geometry='2'] .legacy-hand-sort span {
+  color: var(--color-text-muted) !important;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--local input {
+  accent-color: var(--color-you);
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--opponent input {
+  accent-color: var(--color-opponent);
+}
+/* The opponent's strip is slimmer: markers side by side, Sort above. */
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-player-layout-side='opponent']
+  .legacy-once-per-game-controls {
+  flex-direction: row;
+  width: 84px;
+  bottom: 8px;
+  gap: 4px;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-player-layout-side='opponent']
+  .legacy-once-per-game-button {
+  flex: 1 1 0;
+  height: 26px !important;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-player-layout-side='opponent']
+  .legacy-hand-sort {
+  bottom: 38px;
+}

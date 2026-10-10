@@ -1,0 +1,669 @@
+import {
+  serializeProjectedReplayFile,
+  type ProjectedReplayArtifact,
+} from '@ptcgsim/client-session';
+import {
+  type BoardIntent,
+  type BoardPreferences,
+} from '@ptcgsim/renderer-contract';
+import type { WireGameCommand } from '@ptcgsim/protocol';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
+
+import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
+import type { RendererKind } from '../RendererSpikeBoard.js';
+import { motionSettings } from '../motion/motion-settings.js';
+import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
+import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
+import { LegacyPresentationSurface } from '../presentation/LegacyPresentationSurface.js';
+import { LegacyWelcome } from './LegacyWelcome.js';
+import { ReplayModeShell } from '../replay/ReplayModeShell.js';
+import {
+  RemoteSessionBoard,
+  type RemoteBoardSubmissionResult,
+} from './RemoteSessionBoard.js';
+import {
+  RemoteRoomLiveControls,
+  type OpponentInvitationDelivery,
+} from './RemoteRoomLiveControls.js';
+import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import { RemoteRoomSettings } from './RemoteRoomSettings.js';
+import {
+  roomBackgroundCssImage,
+  type BrowserRoomBackgroundRequest,
+  type RoomBackground,
+} from './browser-room-background.js';
+import type { BrowserCardBackRequest } from './browser-card-back.js';
+import {
+  downloadBrowserTextFile,
+  requestBrowserFullscreen,
+  serializeBattleLog,
+} from './browser-room-options.js';
+import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
+import { useRoomBackground } from './useRoomBackground.js';
+import { confirmAction } from '../ui/dialog-requests.js';
+
+const LegacyDeckBuilderSession = lazy(async () => ({
+  default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
+    .LegacyDeckBuilderSession,
+}));
+
+const ignoreIntent = (_intent: BoardIntent): void => undefined;
+
+/**
+ * Asks before the header tab leaves a connected room. Aborting the signal
+ * withdraws the question (the route is going away anyway).
+ */
+export type RoomLeaveConfirmation = (options: {
+  readonly signal: AbortSignal;
+}) => boolean | PromiseLike<boolean>;
+
+const confirmConnectedRoomExit: RoomLeaveConfirmation = ({ signal }) =>
+  confirmAction({
+    title: 'Leave the room?',
+    body: 'Are you sure you want to leave the room? Battle log will be erased.',
+    confirmLabel: 'Leave room',
+    tone: 'danger',
+    signal,
+  });
+
+export interface RemoteRoomRouteProps {
+  readonly runtime: RemoteRoomRuntime;
+  readonly rendererKind: RendererKind;
+  readonly roomMode?: 'solo' | 'multiplayer';
+  /** Retained above the route when lobby/room transitions share Deck custody. */
+  readonly deckStore?: DeckBuilderStore;
+  readonly cardBackStore?: CardBackCustodyStore;
+  readonly requestCardBack?: BrowserCardBackRequest;
+  readonly deckSurfaceActivated?: boolean;
+  readonly onDeckSurfaceActivate?: () => void;
+  readonly onDeckCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
+  readonly deckSessionPrepared?: boolean;
+  readonly onDeckSessionAttach?: () => void;
+  readonly onIntent?: (intent: BoardIntent) => void;
+  readonly onSubmission?: (
+    command: WireGameCommand,
+    result: RemoteBoardSubmissionResult
+  ) => void;
+  readonly onLeave?: () => void;
+  /** Atomic owner-level replacement after a server-held save is restored. */
+  readonly onResumeSavedGame?: (
+    contents: string,
+    deliverOpponentInvitation: OpponentInvitationDelivery,
+    signal: AbortSignal
+  ) => Promise<void>;
+  /**
+   * Online save and resume are default-off on the Worker; their controls
+   * appear only once it reports them enabled, never as buttons that fail.
+   */
+  readonly continuationAvailable?: boolean;
+  /** Parks a live solo authority while the source Multiplayer tab is open. */
+  readonly onMultiplayerNavigate?: () => void;
+  /**
+   * v1's Multiplayer tab is a sidebar panel over the same table, not another
+   * page: the lobby hands its panel down so a live Solo board stays mounted
+   * while its owner reads it. Parking still happens, but only when they act
+   * on it. Without this the tab falls back to `onMultiplayerNavigate`.
+   */
+  readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
+  readonly onMultiplayerPanelOpen?: () => void;
+  /**
+   * Mints and copies a fresh invitation from inside the room, for the seat
+   * that holds creator custody. v1's room header has a copy button; here it
+   * copies an invitation rather than the bare room code, which cannot admit.
+   */
+  readonly onCopyInvitation?: (
+    role: 'player' | 'spectator'
+  ) => Promise<boolean>;
+  /** When supplied with onPreferencesChange, ownership remains above the route. */
+  readonly preferences?: BoardPreferences;
+  readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
+  /** Source-shaped local checkbox state; multiplayer projections stay unchanged. */
+  readonly hideOpponentHand?: boolean;
+  readonly onHideOpponentHandChange?: (hidden: boolean) => void;
+  /** Page-local visual only; no room, replay, renderer, or storage ownership. */
+  readonly background?: RoomBackground;
+  readonly onBackgroundChange?: (background: RoomBackground) => void;
+  readonly requestBackground?: BrowserRoomBackgroundRequest;
+  readonly confirmHeaderLeave?: RoomLeaveConfirmation;
+  readonly downloadTextFile?: (filename: string, contents: string) => boolean;
+  readonly requestFullscreen?: () => boolean;
+}
+
+/**
+ * First real room screen: effective live/replay board, exact replay tab chrome,
+ * recipient-safe activity, and route-owned transport/controller composition.
+ */
+export const RemoteRoomRoute = ({
+  runtime,
+  rendererKind,
+  roomMode = 'multiplayer',
+  deckStore,
+  cardBackStore,
+  requestCardBack,
+  deckSurfaceActivated = false,
+  onDeckSurfaceActivate,
+  onDeckCustodyChange,
+  deckSessionPrepared = false,
+  onDeckSessionAttach,
+  onIntent = ignoreIntent,
+  onSubmission,
+  onLeave,
+  onResumeSavedGame,
+  continuationAvailable = false,
+  onMultiplayerNavigate,
+  multiplayerPanel,
+  onMultiplayerPanelOpen,
+  onCopyInvitation,
+  preferences: ownedPreferences,
+  onPreferencesChange,
+  hideOpponentHand: ownedHideOpponentHand,
+  onHideOpponentHandChange,
+  background: ownedBackground,
+  onBackgroundChange,
+  requestBackground,
+  confirmHeaderLeave = confirmConnectedRoomExit,
+  downloadTextFile = downloadBrowserTextFile,
+  requestFullscreen = requestBrowserFullscreen,
+}: RemoteRoomRouteProps) => {
+  const options = useDismissibleRoomOptions();
+  // The header's "leave the room?" question while it is being asked. Only
+  // one at a time; unmounting the route withdraws it.
+  const headerLeaveQuestion = useRef<AbortController | undefined>(undefined);
+  const latestOnLeave = useRef(onLeave);
+  useEffect(() => {
+    latestOnLeave.current = onLeave;
+  }, [onLeave]);
+  useEffect(
+    () => () => {
+      headerLeaveQuestion.current?.abort();
+      headerLeaveQuestion.current = undefined;
+    },
+    []
+  );
+  const leaveFromHeader = (): void => {
+    if (!onLeave || headerLeaveQuestion.current) return;
+    const question = new AbortController();
+    headerLeaveQuestion.current = question;
+    const finish = (confirmed: boolean): void => {
+      if (headerLeaveQuestion.current === question) {
+        headerLeaveQuestion.current = undefined;
+      }
+      if (confirmed && !question.signal.aborted) latestOnLeave.current?.();
+    };
+    void Promise.resolve(confirmHeaderLeave({ signal: question.signal })).then(
+      finish,
+      () => finish(false)
+    );
+  };
+  const backgroundSelection = useRoomBackground({
+    ...(ownedBackground ? { background: ownedBackground } : {}),
+    ...(onBackgroundChange ? { onBackgroundChange } : {}),
+    ...(requestBackground ? { requestBackground } : {}),
+  });
+  const [activePanel, setActivePanel] = useState<
+    'room' | 'multiplayer' | 'deck' | 'settings'
+  >('room');
+  const [playmatExpanded, setPlaymatExpanded] = useState(false);
+  const [perspective, setPerspective] = useState<{
+    readonly flipped: boolean;
+    readonly actingPlayerId: string | undefined;
+  }>({ flipped: false, actingPlayerId: undefined });
+  const [locallyActivatedDeck, setLocallyActivatedDeck] = useState(false);
+  const deckActivated = deckSurfaceActivated || locallyActivatedDeck;
+  const openDeck = (): void => {
+    setLocallyActivatedDeck(true);
+    onDeckSurfaceActivate?.();
+    setActivePanel('deck');
+  };
+  const [localPreferences, setLocalPreferences] = useState<
+    BoardPreferences | undefined
+  >(ownedPreferences);
+  const [localHideOpponentHand, setLocalHideOpponentHand] = useState(
+    ownedHideOpponentHand ?? false
+  );
+  const preferences = onPreferencesChange ? ownedPreferences : localPreferences;
+  const hideOpponentHand = onHideOpponentHandChange
+    ? (ownedHideOpponentHand ?? false)
+    : localHideOpponentHand;
+  const motion = useSyncExternalStore(
+    motionSettings().subscribe,
+    motionSettings().getSnapshot
+  );
+  // Reduced motion is the player's (or the system's) choice, never stored in
+  // the board preferences the route publishes upward.
+  const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
+  const effectivePreferences = useMemo((): BoardPreferences => {
+    // Motion always comes from the player's motion settings, whatever an
+    // earlier publish may have carried along.
+    const { animationSpeed: _stored, ...rest } = storedPreferences;
+    return {
+      ...rest,
+      reducedMotion: motion.reduced,
+      // The renderer treats an absent speed as normal.
+      ...(motion.durationScale === 1
+        ? {}
+        : { animationSpeed: motion.durationScale }),
+    };
+  }, [storedPreferences, motion.reduced, motion.durationScale]);
+  // The whole page wears the table's theme (Night or Day). Its motion
+  // choice is published page-wide from main.tsx (installPageMotion).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = effectivePreferences.darkMode ? 'night' : 'day';
+  }, [effectivePreferences.darkMode]);
+  const publishPreferences = (next: BoardPreferences): void => {
+    if (onPreferencesChange) onPreferencesChange(next);
+    else setLocalPreferences(next);
+  };
+  const setDarkMode = (enabled: boolean): void => {
+    publishPreferences({
+      ...effectivePreferences,
+      darkMode: enabled,
+    });
+  };
+  const setZoneOutlines = (visible: boolean): void => {
+    publishPreferences({
+      ...effectivePreferences,
+      showZoneOutlines: visible,
+    });
+  };
+  const setHideOpponentHand = (hidden: boolean): void => {
+    if (onHideOpponentHandChange) onHideOpponentHandChange(hidden);
+    else setLocalHideOpponentHand(hidden);
+  };
+  const downloadPerspectiveReplay = (
+    artifact: ProjectedReplayArtifact
+  ): void => {
+    void serializeProjectedReplayFile(artifact)
+      .then((contents) =>
+        downloadTextFile('ptcgsim-perspective-replay.json', contents)
+      )
+      .catch(() => undefined);
+  };
+  const [copyNotice, setCopyNotice] = useState<string>();
+  const copyNoticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(
+    () => () => {
+      if (copyNoticeTimer.current !== undefined) {
+        clearTimeout(copyNoticeTimer.current);
+      }
+    },
+    []
+  );
+  const copyInvitation = async (
+    role: 'player' | 'spectator'
+  ): Promise<void> => {
+    if (!onCopyInvitation) return;
+    const copied = await onCopyInvitation(role).catch(() => false);
+    setCopyNotice(
+      copied ? 'Invitation copied' : 'Could not copy an invitation'
+    );
+    if (copyNoticeTimer.current !== undefined) {
+      clearTimeout(copyNoticeTimer.current);
+    }
+    copyNoticeTimer.current = setTimeout(() => setCopyNotice(undefined), 2500);
+  };
+  const exportLivePerspective = (): void => {
+    void runtime.replay.requestReplayArtifact().then((result) => {
+      if (result.ok) downloadPerspectiveReplay(result.artifact);
+    });
+  };
+
+  return (
+    <ReplayModeShell coordinator={runtime.replay}>
+      {({ state, chrome, controls, exitReplay }) => {
+        const soloLive = !chrome.active && roomMode === 'solo';
+        const multiplayerPanelSelected =
+          soloLive && multiplayerPanel !== undefined
+            ? activePanel === 'multiplayer'
+            : false;
+        const feedId = chrome.active || soloLive ? 'chatbox' : 'p2Chatbox';
+        // The header names the room once it is live ("id: CODE", as v1's
+        // joinGame handler writes it), or reports a failure. Connection phases
+        // in between are not narrated -- v1 shows nothing while it connects,
+        // and the tabs already tell where you are.
+        const status =
+          state.failure?.message ??
+          (state.sessionPhase === 'ready'
+            ? `id: ${runtime.roomCode}`
+            : undefined);
+        const leaveReplay = (): void => {
+          options.setOpen(false);
+          exitReplay();
+        };
+
+        return (
+          <main
+            className={`app-shell remote-room-route${
+              effectivePreferences.darkMode ? ' remote-room-route--dark' : ''
+            }`}
+            data-app-route="remote-room"
+            data-session-phase={soloLive ? state.sessionPhase : undefined}
+            data-dark-mode={String(effectivePreferences.darkMode)}
+            data-room-background={
+              backgroundSelection.background?.kind ?? 'default'
+            }
+            style={
+              backgroundSelection.background
+                ? {
+                    backgroundImage: roomBackgroundCssImage(
+                      backgroundSelection.background
+                    ),
+                    backgroundSize: '100% 100%',
+                    backgroundRepeat: 'no-repeat',
+                  }
+                : undefined
+            }
+          >
+            <section
+              className={`board-column${
+                playmatExpanded ? ' board-column--fullscreen' : ''
+              }`}
+              aria-label="Game board"
+              data-board-shell={playmatExpanded ? 'fullscreen' : 'sidebar'}
+            >
+              <RemoteSessionBoard
+                session={runtime.session}
+                replay={runtime.replay}
+                rendererKind={rendererKind}
+                onIntent={onIntent}
+                {...(onSubmission ? { onSubmission } : {})}
+                preferences={effectivePreferences}
+                roomMode={roomMode}
+                hideOpponentHand={hideOpponentHand}
+                playmatExpanded={playmatExpanded}
+                onPlaymatExpandedChange={setPlaymatExpanded}
+                onPerspectiveChange={setPerspective}
+                coinFlip={runtime.presentation.coinFlip}
+              />
+            </section>
+            <aside
+              className="legacy-sidebar legacy-room-sidebar"
+              hidden={playmatExpanded}
+            >
+              <nav
+                id="topButtonContainer"
+                className="legacy-tabs legacy-room-tabs"
+                aria-label="Application sections"
+              >
+                <button
+                  id="p1Button"
+                  type="button"
+                  className={
+                    (chrome.active || soloLive) && activePanel === 'room'
+                      ? 'selected-page'
+                      : 'not-selected-page'
+                  }
+                  style={{ width: chrome.primaryTabWidth }}
+                  aria-current={
+                    (chrome.active || soloLive) && activePanel === 'room'
+                      ? 'page'
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (chrome.active) {
+                      setActivePanel('room');
+                    } else if (soloLive) {
+                      setActivePanel('room');
+                    } else {
+                      leaveFromHeader();
+                    }
+                  }}
+                >
+                  {chrome.primaryTabLabel}
+                </button>
+                {chrome.visibility.multiplayerTab && (
+                  <button
+                    id="p2Button"
+                    type="button"
+                    className={
+                      multiplayerPanelSelected ||
+                      (!soloLive && activePanel === 'room')
+                        ? 'selected-page'
+                        : 'not-selected-page'
+                    }
+                    aria-current={
+                      multiplayerPanelSelected ||
+                      (!soloLive && activePanel === 'room')
+                        ? 'page'
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (!soloLive) {
+                        setActivePanel('room');
+                        return;
+                      }
+                      // The panel comes down from the lobby, so the table can
+                      // stay where it is while its owner reads it.
+                      if (multiplayerPanel) {
+                        setActivePanel('multiplayer');
+                        onMultiplayerPanelOpen?.();
+                        return;
+                      }
+                      onMultiplayerNavigate?.();
+                    }}
+                  >
+                    Multiplayer
+                  </button>
+                )}
+                {chrome.visibility.deckImport && (
+                  <button
+                    id="deckImportButton"
+                    type="button"
+                    className={
+                      activePanel === 'deck'
+                        ? 'selected-page'
+                        : 'not-selected-page'
+                    }
+                    aria-current={activePanel === 'deck' ? 'page' : undefined}
+                    onClick={openDeck}
+                  >
+                    Deck
+                  </button>
+                )}
+                <button
+                  id="settingsButton"
+                  type="button"
+                  className={
+                    activePanel === 'settings'
+                      ? 'selected-page'
+                      : 'not-selected-page'
+                  }
+                  style={{ width: chrome.settingsTabWidth }}
+                  aria-current={activePanel === 'settings' ? 'page' : undefined}
+                  onClick={() => setActivePanel('settings')}
+                >
+                  Settings
+                </button>
+              </nav>
+              <section
+                id={chrome.active || soloLive ? 'p1Box' : 'p2Box'}
+                className={`legacy-room-sidebox${
+                  chrome.active || soloLive ? '' : ' legacy-room-sidebox--live'
+                }`}
+                data-replay-active={String(chrome.active)}
+                hidden={activePanel !== 'room'}
+              >
+                {!chrome.active &&
+                  (!soloLive || state.failure !== undefined) &&
+                  (status !== undefined || copyNotice !== undefined) && (
+                    <div id="roomHeader">
+                      <div
+                        id="roomHeaderText"
+                        data-session-phase={state.sessionPhase}
+                      >
+                        {copyNotice ?? status}
+                      </div>
+                      {onCopyInvitation && state.sessionPhase === 'ready' && (
+                        <button
+                          id="roomHeaderCopyButton"
+                          type="button"
+                          title="Copy an invitation"
+                          aria-label="Copy an invitation"
+                          onClick={() => void copyInvitation('player')}
+                        >
+                          ⧉
+                        </button>
+                      )}
+                    </div>
+                  )}
+                <LegacyPresentationSurface
+                  key={feedId}
+                  runtime={runtime.presentation}
+                  perspective={state.view}
+                  feedId={feedId}
+                  {...(soloLive
+                    ? {
+                        intro: (
+                          <LegacyWelcome
+                            {...(chrome.visibility.deckImport
+                              ? { onLoadDeck: openDeck }
+                              : {})}
+                          />
+                        ),
+                      }
+                    : {})}
+                />
+                {!chrome.active && (
+                  <RemoteRoomLiveControls
+                    session={runtime.session}
+                    presentation={runtime.presentation}
+                    roomMode={roomMode}
+                    boardFlipped={perspective.flipped}
+                    {...(perspective.actingPlayerId
+                      ? { actingPlayerId: perspective.actingPlayerId }
+                      : {})}
+                    {...(onLeave ? { onLeave } : {})}
+                    onExportState={exportLivePerspective}
+                    onImportReplayFile={(contents) =>
+                      runtime.replay.importReplayFileBytes(contents)
+                    }
+                    {...(continuationAvailable
+                      ? {
+                          onSaveOnlineGame: (signal: AbortSignal) =>
+                            runtime.saveOnlineGame(downloadTextFile, signal),
+                          ...(onResumeSavedGame ? { onResumeSavedGame } : {}),
+                        }
+                      : {})}
+                    downloadTextFile={downloadTextFile}
+                    requestFullscreen={requestFullscreen}
+                  />
+                )}
+                {controls && (
+                  <div
+                    id="bottomP1ButtonContainer"
+                    className="sidebox-button-container"
+                  >
+                    {controls}
+                    <button
+                      id="optionsButton"
+                      ref={options.buttonRef}
+                      type="button"
+                      className="neutral-color"
+                      aria-expanded={options.open}
+                      aria-controls="optionsContextMenu"
+                      onClick={() => options.setOpen((open) => !open)}
+                    >
+                      Options
+                    </button>
+                  </div>
+                )}
+                {chrome.visibility.exitReplay && (
+                  <div
+                    id="optionsContextMenu"
+                    ref={options.menuRef}
+                    role="menu"
+                    hidden={!options.open}
+                  >
+                    <button
+                      id="exportState"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        const artifact = runtime.replay.getReplayArtifact();
+                        options.setOpen(false);
+                        if (artifact) downloadPerspectiveReplay(artifact);
+                      }}
+                    >
+                      Export game state
+                    </button>
+                    <button
+                      id="exportLog"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        downloadTextFile(
+                          'battle-log.txt',
+                          serializeBattleLog(
+                            runtime.presentation.activityFeed.getSnapshot()
+                              .items
+                          )
+                        );
+                        options.setOpen(false);
+                      }}
+                    >
+                      Export battle log
+                    </button>
+                    <button
+                      id="fullscreenButton"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        requestFullscreen();
+                        options.setOpen(false);
+                      }}
+                    >
+                      Full screen
+                    </button>
+                    <button id="exitReplay" type="button" onClick={leaveReplay}>
+                      Exit replay mode
+                    </button>
+                  </div>
+                )}
+              </section>
+              {multiplayerPanel?.(activePanel !== 'multiplayer')}
+              <RemoteRoomSettings
+                hidden={activePanel !== 'settings'}
+                preferences={effectivePreferences}
+                hideOpponentHand={hideOpponentHand}
+                onDarkModeChange={setDarkMode}
+                onZoneOutlinesChange={setZoneOutlines}
+                onHideOpponentHandChange={setHideOpponentHand}
+                onChangeBackground={backgroundSelection.chooseBackground}
+              />
+              {deckActivated && (
+                <Suspense fallback={null}>
+                  <LegacyDeckBuilderSession
+                    session={runtime.session}
+                    open={!chrome.active && activePanel === 'deck'}
+                    alternateEnabled={roomMode === 'solo'}
+                    installOnSessionAttach
+                    prepareForNewSessionOnAttach={!deckSessionPrepared}
+                    onSessionAttach={onDeckSessionAttach}
+                    onRequestClose={() => setActivePanel('room')}
+                    {...(onDeckCustodyChange
+                      ? { onCustodyChange: onDeckCustodyChange }
+                      : {})}
+                    {...(deckStore ? { store: deckStore } : {})}
+                    {...(cardBackStore ? { cardBackStore } : {})}
+                    {...(requestCardBack ? { requestCardBack } : {})}
+                  />
+                </Suspense>
+              )}
+            </aside>
+          </main>
+        );
+      }}
+    </ReplayModeShell>
+  );
+};

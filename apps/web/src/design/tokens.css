@@ -1,0 +1,364 @@
+/*
+ * PTCG Sim design tokens. Every visual constant in the app comes from here;
+ * the board renderer reads the `--ptcgsim-*` tokens through `var()` with
+ * fallbacks. Colours are oklch. Two tables: Night (default) and Day, chosen
+ * by `data-theme` on the root element.
+ *
+ * Layers: primitives (raw scales) -> semantic (what a colour is for) ->
+ * components read only semantic tokens.
+ */
+
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jost';
+
+:root {
+  /* ---- Primitives ------------------------------------------------- */
+  --hue-table: 222;
+  --hue-you: 252;
+  --hue-opponent: 18;
+  --hue-gold: 84;
+  --hue-mint: 158;
+
+  --neutral-0: oklch(0.99 0.004 250);
+  --neutral-50: oklch(0.965 0.006 250);
+  --neutral-100: oklch(0.93 0.008 250);
+  --neutral-200: oklch(0.86 0.01 250);
+  --neutral-300: oklch(0.76 0.012 250);
+  --neutral-400: oklch(0.64 0.014 250);
+  --neutral-500: oklch(0.52 0.016 250);
+  --neutral-600: oklch(0.42 0.018 250);
+  --neutral-700: oklch(0.33 0.02 252);
+  --neutral-800: oklch(0.255 0.022 254);
+  --neutral-850: oklch(0.215 0.022 255);
+  --neutral-900: oklch(0.18 0.02 256);
+  --neutral-950: oklch(0.14 0.018 258);
+
+  /* ---- Type ------------------------------------------------------- */
+  --font-ui:
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --font-display:
+    'Jost Variable', 'Jost', 'Futura', 'Century Gothic', ui-sans-serif,
+    sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-md: 0.875rem; /* 14px */
+  --text-lg: 1rem; /* 16px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 2rem; /* 32px */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.45;
+  --weight-regular: 430;
+  --weight-medium: 520;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-caps: 0.08em;
+
+  /* ---- Space, radii ----------------------------------------------- */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ---- Motion ----------------------------------------------------- */
+  /* Baked from SPRING_PRESETS (renderer-contract/src/spring.ts). */
+  --ease-snappy: linear(
+    0,
+    0.0318,
+    0.1095,
+    0.212,
+    0.3243,
+    0.4362,
+    0.5413,
+    0.6357,
+    0.7178,
+    0.7871,
+    0.844,
+    0.8897,
+    0.9255,
+    0.9529,
+    0.9732,
+    0.9878,
+    0.9978,
+    1.0044,
+    1.0084,
+    1.0104,
+    1.0111,
+    1.0109,
+    1.0101,
+    1.009,
+    1.0078,
+    1.0065,
+    1.0053,
+    1.0042,
+    1.0033,
+    1.0025,
+    1.0018,
+    1.0013,
+    1
+  );
+  --duration-snappy: 390ms;
+  --ease-gentle: linear(
+    0,
+    0.0322,
+    0.1101,
+    0.2119,
+    0.3224,
+    0.4318,
+    0.5339,
+    0.6255,
+    0.7049,
+    0.7721,
+    0.8276,
+    0.8725,
+    0.9081,
+    0.9358,
+    0.9569,
+    0.9726,
+    0.9841,
+    0.9922,
+    0.9977,
+    1.0013,
+    1.0034,
+    1.0045,
+    1.005,
+    1.005,
+    1.0046,
+    1.0042,
+    1.0036,
+    1.0031,
+    1.0025,
+    1.0021,
+    1.0016,
+    1.0013,
+    1
+  );
+  --duration-gentle: 590ms;
+  --ease-bouncy: linear(
+    0,
+    0.0449,
+    0.1554,
+    0.3008,
+    0.4573,
+    0.6082,
+    0.7425,
+    0.8544,
+    0.9418,
+    1.0055,
+    1.0478,
+    1.0722,
+    1.0825,
+    1.0825,
+    1.0755,
+    1.0645,
+    1.0516,
+    1.0387,
+    1.0267,
+    1.0164,
+    1.0081,
+    1.0019,
+    0.9975,
+    0.9948,
+    0.9934,
+    0.993,
+    0.9934,
+    0.9941,
+    0.9952,
+    0.9963,
+    0.9973,
+    0.9982,
+    1
+  );
+  --duration-bouncy: 620ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-instant: 90ms;
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  /* Set from the motion settings: 0 when motion is reduced. */
+  --motion-scale: 1;
+
+  /* ---- Layers ----------------------------------------------------- */
+  --z-board: 0;
+  --z-chrome: 100;
+  --z-rail: 200;
+  --z-popover: 1000;
+  --z-dialog: 2000;
+  --z-toast: 3000;
+  --z-tooltip: 4000;
+
+  color-scheme: dark;
+}
+
+/* ---- Night table (default) ---------------------------------------- */
+:root,
+:root[data-theme='night'] {
+  --color-room: oklch(0.155 0.02 252);
+  --color-felt: oklch(0.31 0.052 var(--hue-table));
+  --color-felt-deep: oklch(0.235 0.045 var(--hue-table));
+  --color-felt-line: oklch(0.82 0.04 var(--hue-table) / 0.16);
+  --color-felt-line-strong: oklch(0.86 0.05 var(--hue-table) / 0.3);
+  --color-felt-label: oklch(0.88 0.03 var(--hue-table) / 0.5);
+  --color-felt-glow: oklch(0.6 0.08 var(--hue-table) / 0.35);
+
+  --color-surface-1: oklch(0.2 0.02 255 / 0.9);
+  --color-rail: oklch(0.185 0.02 255);
+  --color-surface-2: oklch(0.245 0.022 255 / 0.94);
+  --color-surface-3: oklch(0.29 0.024 255);
+  --color-surface-sunken: oklch(0.16 0.018 256 / 0.85);
+  --color-surface-hover: oklch(1 0 0 / 0.06);
+  --color-surface-pressed: oklch(1 0 0 / 0.1);
+  --color-scrim: oklch(0.1 0.02 256 / 0.62);
+
+  --color-border: oklch(1 0 0 / 0.09);
+  --color-border-strong: oklch(1 0 0 / 0.18);
+
+  --color-text: oklch(0.96 0.006 250);
+  --color-text-muted: oklch(0.79 0.012 250);
+  --color-text-faint: oklch(0.64 0.014 250);
+  --color-text-on-accent: oklch(0.99 0.004 250);
+
+  --color-accent: oklch(0.62 0.17 var(--hue-you));
+  --color-accent-hover: oklch(0.67 0.17 var(--hue-you));
+  --color-accent-pressed: oklch(0.57 0.16 var(--hue-you));
+  --color-accent-soft: oklch(0.62 0.17 var(--hue-you) / 0.18);
+  /* Solid controls with --color-text-on-accent labels: at least 4.5:1. The
+     brighter --color-accent stays for icons, rings and borders on the
+     dark surfaces, where it needs 3:1 against them instead. */
+  --color-accent-fill: oklch(0.53 0.17 var(--hue-you));
+  --color-accent-fill-hover: oklch(0.56 0.17 var(--hue-you));
+  --color-accent-fill-pressed: oklch(0.49 0.16 var(--hue-you));
+
+  --color-you: oklch(0.7 0.15 var(--hue-you));
+  --color-you-soft: oklch(0.7 0.15 var(--hue-you) / 0.2);
+  --color-opponent: oklch(0.68 0.17 var(--hue-opponent));
+  --color-opponent-soft: oklch(0.68 0.17 var(--hue-opponent) / 0.2);
+  --color-gold: oklch(0.84 0.15 var(--hue-gold));
+  --color-mint: oklch(0.82 0.14 var(--hue-mint));
+  --color-danger: oklch(0.64 0.21 25);
+  --color-danger-soft: oklch(0.64 0.21 25 / 0.18);
+  --color-danger-fill: oklch(0.55 0.2 25);
+  --color-warning: oklch(0.8 0.16 75);
+  --color-success: oklch(0.76 0.15 155);
+
+  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.35);
+  --shadow-2: 0 2px 6px oklch(0 0 0 / 0.38), 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-3: 0 8px 20px oklch(0 0 0 / 0.42), 0 2px 6px oklch(0 0 0 / 0.3);
+  --shadow-4: 0 16px 40px oklch(0 0 0 / 0.5), 0 4px 12px oklch(0 0 0 / 0.32);
+  --shadow-5: 0 28px 64px oklch(0 0 0 / 0.55), 0 8px 20px oklch(0 0 0 / 0.35);
+  --highlight-top: inset 0 1px 0 oklch(1 0 0 / 0.07);
+
+  color-scheme: dark;
+}
+
+/* ---- Day table ------------------------------------------------------ */
+:root[data-theme='day'] {
+  --color-room: oklch(0.9 0.01 85);
+  --color-felt: oklch(0.83 0.045 175);
+  --color-felt-deep: oklch(0.74 0.05 178);
+  --color-felt-line: oklch(0.32 0.05 180 / 0.18);
+  --color-felt-line-strong: oklch(0.32 0.05 180 / 0.32);
+  --color-felt-label: oklch(0.3 0.05 180 / 0.55);
+  --color-felt-glow: oklch(0.98 0.03 175 / 0.45);
+
+  --color-surface-1: oklch(0.985 0.004 85 / 0.92);
+  --color-rail: oklch(0.965 0.006 85);
+  --color-surface-2: oklch(0.995 0.002 85 / 0.96);
+  --color-surface-3: oklch(0.95 0.006 85);
+  --color-surface-sunken: oklch(0.93 0.008 85 / 0.9);
+  --color-surface-hover: oklch(0 0 0 / 0.05);
+  --color-surface-pressed: oklch(0 0 0 / 0.09);
+  --color-scrim: oklch(0.2 0.02 256 / 0.4);
+
+  --color-border: oklch(0 0 0 / 0.1);
+  --color-border-strong: oklch(0 0 0 / 0.2);
+
+  --color-text: oklch(0.22 0.02 256);
+  --color-text-muted: oklch(0.4 0.02 256);
+  --color-text-faint: oklch(0.52 0.016 256);
+  --color-text-on-accent: oklch(0.99 0.004 250);
+
+  --color-accent: oklch(0.55 0.18 var(--hue-you));
+  --color-accent-hover: oklch(0.5 0.18 var(--hue-you));
+  --color-accent-pressed: oklch(0.46 0.17 var(--hue-you));
+  --color-accent-soft: oklch(0.55 0.18 var(--hue-you) / 0.14);
+  --color-accent-fill: var(--color-accent);
+  --color-accent-fill-hover: var(--color-accent-hover);
+  --color-accent-fill-pressed: var(--color-accent-pressed);
+
+  --color-you: oklch(0.52 0.17 var(--hue-you));
+  --color-you-soft: oklch(0.52 0.17 var(--hue-you) / 0.16);
+  --color-opponent: oklch(0.54 0.19 var(--hue-opponent));
+  --color-opponent-soft: oklch(0.54 0.19 var(--hue-opponent) / 0.16);
+  --color-gold: oklch(0.72 0.16 var(--hue-gold));
+  --color-mint: oklch(0.62 0.15 var(--hue-mint));
+  --color-danger: oklch(0.55 0.21 25);
+  --color-danger-soft: oklch(0.55 0.21 25 / 0.14);
+  --color-danger-fill: var(--color-danger);
+  --color-warning: oklch(0.66 0.16 70);
+  --color-success: oklch(0.58 0.15 155);
+
+  --shadow-1: 0 1px 2px oklch(0.2 0.02 256 / 0.18);
+  --shadow-2:
+    0 2px 6px oklch(0.2 0.02 256 / 0.18), 0 1px 2px oklch(0.2 0.02 256 / 0.14);
+  --shadow-3:
+    0 8px 20px oklch(0.2 0.02 256 / 0.2), 0 2px 6px oklch(0.2 0.02 256 / 0.14);
+  --shadow-4:
+    0 16px 40px oklch(0.2 0.02 256 / 0.24),
+    0 4px 12px oklch(0.2 0.02 256 / 0.16);
+  --shadow-5:
+    0 28px 64px oklch(0.2 0.02 256 / 0.28),
+    0 8px 20px oklch(0.2 0.02 256 / 0.18);
+  --highlight-top: inset 0 1px 0 oklch(1 0 0 / 0.6);
+
+  color-scheme: light;
+}
+
+/* ---- Board tokens the renderer reads ---------------------------------- */
+:root {
+  --ptcgsim-card-radius: 4.8% / 3.4%;
+  --ptcgsim-card-blank: var(--neutral-600);
+  --ptcgsim-card-shadow: oklch(0.05 0.02 256 / 0.42);
+  --ptcgsim-ring-width: 3px;
+  --ptcgsim-ring-selected: var(--color-gold);
+  --ptcgsim-ring-target: var(--color-mint);
+  --ptcgsim-focus-ring: var(--color-accent);
+  --ptcgsim-hover-scale: 1.04;
+  --ptcgsim-lift-scale: 1.07;
+  /* Scaled by the animation speed (0 at "instant" and under reduced motion). */
+  --ptcgsim-motion-hover-duration: calc(
+    var(--duration-normal) * var(--motion-scale, 1)
+  );
+  --ptcgsim-motion-hover-easing: var(--ease-snappy);
+  /* The physical damage counters: yellow 10, orange 50, red 100. */
+  --ptcgsim-counter-10: #ffe100;
+  --ptcgsim-counter-50: #ef7a00;
+  --ptcgsim-counter-100: #e70012;
+}
+
+/* The system's preference applies unless the player chose full motion. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) {
+    --ptcgsim-motion-hover-duration: 0ms;
+  }
+}

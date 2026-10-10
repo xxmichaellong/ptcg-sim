@@ -1,0 +1,3 @@
+export const MAX_PENDING_CLIENT_FRAMES = 64;
+export const MAX_CLIENT_FRAMES_PER_WINDOW = 240;
+export const CLIENT_FRAME_WINDOW_MS = 60_000;

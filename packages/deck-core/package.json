@@ -1,0 +1,16 @@
+{
+  "name": "@ptcgsim/deck-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run --root ../.. packages/deck-core",
+    "typecheck": "tsc --build"
+  }
+}

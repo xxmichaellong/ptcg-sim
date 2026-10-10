@@ -1,0 +1,553 @@
+/* The Deck tab's sidebar panel (paste a decklist, popular decks, language,
+   card back) and the review table it opens over the board. Controls come
+   from design/panel-controls.css. */
+
+.legacy-deck-import {
+  position: relative;
+  z-index: 1300;
+  align-items: stretch;
+  gap: 0;
+}
+
+.legacy-deck-import[hidden],
+.legacy-deck-import [hidden]:not(.ds-menu) {
+  display: none !important;
+}
+
+.legacy-deck-import .deck-import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--highlight-top), var(--shadow-3);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    translate var(--ds-enter-duration) var(--ease-snappy);
+}
+
+@starting-style {
+  .legacy-deck-import .deck-import-panel {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.legacy-deck-import .deck-import-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legacy-deck-import .deck-import-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+/* P1 / P2: a segmented control; the dot is the seat's colour. */
+.legacy-deck-import .deck-seat-toggle {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+.legacy-deck-import .deck-seat-toggle button {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out);
+}
+
+.legacy-deck-import .deck-seat-toggle button::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-you);
+  opacity: 0.45;
+}
+
+.legacy-deck-import .deck-seat-toggle button[data-seat='opponent']::before {
+  background: var(--color-opponent);
+}
+
+.legacy-deck-import .deck-seat-toggle button:hover:not([aria-disabled='true']) {
+  color: var(--color-text);
+}
+
+.legacy-deck-import
+  .deck-seat-toggle
+  button:active:not([aria-disabled='true']) {
+  scale: var(--ds-press-scale);
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-pressed='true'] {
+  background: var(--color-surface-3);
+  box-shadow: var(--highlight-top), var(--shadow-1);
+  color: var(--color-text);
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-pressed='true']::before {
+  opacity: 1;
+}
+
+.legacy-deck-import .deck-seat-toggle button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.legacy-deck-import .deck-seat-toggle button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.legacy-deck-import .deck-import-text {
+  flex: 1 1 auto;
+  min-height: 120px;
+  padding: var(--space-3);
+  font-size: var(--text-md);
+  line-height: 1.55;
+  box-shadow: inset 3px 0 0 var(--color-you);
+}
+
+.legacy-deck-import #altDeckImportInput {
+  box-shadow: inset 3px 0 0 var(--color-opponent);
+}
+
+.legacy-deck-import .deck-import-text:focus {
+  box-shadow:
+    inset 3px 0 0 var(--color-you),
+    0 0 0 3px var(--color-accent-soft);
+}
+
+.legacy-deck-import #altDeckImportInput:focus {
+  box-shadow:
+    inset 3px 0 0 var(--color-opponent),
+    0 0 0 3px var(--color-accent-soft);
+}
+
+/* Popular decks · Random, then Import across the row; in review, Confirm
+   across the row and Cancel · Save under it. */
+.legacy-deck-import .deck-import-actions {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.legacy-deck-import .deck-import-actions .ds-button {
+  width: 100%;
+}
+
+.legacy-deck-import .deck-import-primary {
+  grid-column: 1 / -1;
+  order: -1;
+}
+
+.legacy-deck-import #importButton {
+  order: 1;
+}
+
+.legacy-deck-import .legacy-deck-samples {
+  min-width: 0;
+}
+
+/* Two panes: seasons on the left, that season's decks on the right. */
+.legacy-deck-import .decklists-context-menu {
+  position: absolute;
+  z-index: var(--z-popover);
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  left: 0;
+  max-height: min(62vh, 560px);
+  overflow: hidden;
+}
+
+.legacy-deck-import .decklists-context-menu:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--space-1);
+}
+
+.legacy-deck-import .decklists-groups,
+.legacy-deck-import .decklists-decks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  max-height: calc(min(62vh, 560px) - 2 * var(--space-1) - 2px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.legacy-deck-import .decklists-decks {
+  padding-left: var(--space-1);
+  border-left: 1px solid var(--color-border);
+}
+
+.legacy-deck-import .decklists-group {
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+
+.legacy-deck-import .decklists-group span,
+.legacy-deck-import .decklists-decks .ds-menu-item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-import .decklists-group svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-faint);
+}
+
+.legacy-deck-import .decklists-group[data-active='true'] {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+}
+
+.legacy-deck-import .decklists-group[data-active='true'] svg {
+  color: var(--color-text);
+}
+
+.legacy-deck-import .decklists-decks .ds-menu-item {
+  display: block;
+  font-size: var(--text-sm);
+  line-height: 32px;
+}
+
+.legacy-deck-import .deck-import-notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.legacy-deck-import .deck-import-notices:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
+.legacy-deck-import .deck-import-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.legacy-deck-import .deck-import-extras .ds-button {
+  justify-content: flex-start;
+  width: 100%;
+  font-size: var(--text-sm);
+}
+
+/* Change Card Back keeps its whole label and takes the spare width; the
+   language picker moves to its own line when both no longer fit. */
+.legacy-deck-import .deck-import-extras > #changeCardBackButton {
+  flex: 1 0 auto;
+  width: auto;
+}
+
+.legacy-deck-import .deck-import-extras > .language-container {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+.legacy-deck-import .deck-import-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-import .language-container {
+  position: relative;
+}
+
+.legacy-deck-import .deck-import-caret {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  color: var(--color-text-faint);
+}
+
+.legacy-deck-import #languageDropdown {
+  position: absolute;
+  z-index: var(--z-popover);
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  min-width: 180px;
+}
+
+.legacy-deck-import .deck-language-check {
+  visibility: hidden;
+}
+
+.legacy-deck-import [aria-checked='true'] > .deck-language-check {
+  visibility: visible;
+}
+
+/* ---- Review table ------------------------------------------------------ */
+
+.deck-review {
+  position: fixed;
+  z-index: var(--z-popover);
+  inset: 0 auto 0 0;
+  display: flex;
+  box-sizing: border-box;
+  width: calc(100% - var(--rail-width, 24%));
+  padding: var(--space-4);
+  background: var(--color-scrim);
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    display var(--ds-enter-duration) allow-discrete;
+}
+
+.deck-review[hidden] {
+  display: none;
+  opacity: 0;
+  transition-duration: var(--ds-exit-duration);
+}
+
+@starting-style {
+  .deck-review:not([hidden]) {
+    opacity: 0;
+  }
+
+  .deck-review:not([hidden]) .deck-review-panel {
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.deck-review .deck-review-panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-4);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  transition: translate var(--ds-enter-duration) var(--ease-snappy);
+}
+
+.deck-review .deck-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.deck-review .deck-review-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.deck-review .deck-review-title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.deck-review .deck-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  align-items: baseline;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.deck-review .deck-review-count {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+}
+
+.deck-review .deck-review-issues,
+.deck-review .deck-review-ready {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin-left: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+
+.deck-review .deck-review-issues {
+  color: var(--ds-warning-text);
+}
+
+.deck-review .deck-review-ready {
+  color: var(--ds-success-text);
+}
+
+.deck-review .deck-review-summary svg,
+.deck-review .deck-review-flag svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.deck-review .deck-review-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.deck-review .deck-review-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.legacy-deck-review-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.legacy-deck-review-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.legacy-deck-review-table td {
+  padding: var(--space-1-5) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.legacy-deck-review-table tbody tr:hover td {
+  background: var(--color-surface-hover);
+}
+
+.legacy-deck-review-table th.deck-review-qty,
+.legacy-deck-review-table td.deck-review-qty {
+  width: 72px;
+  text-align: center;
+}
+
+.legacy-deck-review-table td.deck-review-qty {
+  font-size: var(--text-lg);
+}
+
+.legacy-deck-review-table th.deck-review-type {
+  width: 168px;
+}
+
+.legacy-deck-review-table th.deck-review-status {
+  width: 200px;
+}
+
+.legacy-deck-review-table .deck-review-type .ds-select {
+  height: 30px;
+  font-size: var(--text-sm);
+}
+
+.legacy-deck-review-table .deck-review-cell {
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: text;
+}
+
+.legacy-deck-review-table .deck-review-cell:focus {
+  background: var(--color-surface-sunken);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* Long image URLs stay on one line until edited. */
+.legacy-deck-review-table .deck-review-url {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-review-table .deck-review-url:focus {
+  color: var(--color-text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.legacy-deck-review-table td[data-invalid='true'] {
+  background: var(--color-danger-soft);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklch, var(--color-danger) 70%, transparent);
+}
+
+.legacy-deck-review-table .deck-review-cell[data-invalid='true']:focus {
+  box-shadow: inset 0 0 0 2px var(--color-danger);
+}
+
+.legacy-deck-review-table .deck-review-flag {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.legacy-deck-review-table .deck-review-flag.is-invalid {
+  color: var(--ds-danger-text);
+}
+
+.legacy-deck-review-table .deck-review-flag.is-ready {
+  color: var(--ds-success-text);
+}

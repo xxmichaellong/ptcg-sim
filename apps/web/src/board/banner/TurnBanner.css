@@ -1,0 +1,83 @@
+.turn-banner {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  z-index: 6000;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  translate: 0 -50%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--turn-banner-tint) 18%,
+    var(--turn-banner-tint) 82%,
+    transparent
+  );
+  color: var(--color-text-on-accent);
+  text-shadow: 0 2px 12px oklch(0 0 0 / 0.45);
+  /* A notice as much as a flourish: faster or slower with the animation
+     speed, but never gone before it can be read. */
+  animation: turn-banner max(900ms, calc(1350ms * var(--motion-scale, 1)))
+    var(--ease-in-out) both;
+}
+.turn-banner[data-side='local'] {
+  --turn-banner-tint: oklch(0.5 0.15 var(--hue-you) / 0.82);
+}
+.turn-banner[data-side='opponent'] {
+  --turn-banner-tint: oklch(0.48 0.16 var(--hue-opponent) / 0.82);
+}
+.turn-banner__title {
+  font: 800 var(--text-3xl) / 1 var(--font-display);
+  letter-spacing: 0.02em;
+}
+.turn-banner__turn {
+  font: 600 var(--text-md) / 1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+@keyframes turn-banner {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 50% 0 50%);
+    letter-spacing: 0.2em;
+  }
+  22% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    letter-spacing: 0.02em;
+  }
+  78% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+    translate: 0 -50%;
+  }
+}
+:root[data-motion='reduced'] .turn-banner,
+:root[data-motion-speed='instant'] .turn-banner {
+  animation-name: turn-banner-fade;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .turn-banner {
+    animation-name: turn-banner-fade;
+  }
+}
+@keyframes turn-banner-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+}
