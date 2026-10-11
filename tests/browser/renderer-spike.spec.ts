@@ -1125,3 +1125,61 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
     contentType: 'application/json',
   });
 });
+
+test('Pixi decodes extensionless card artwork instead of silently painting a placeholder', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  await page.route('**/review-art/portrait', (route) =>
+    route.fulfill({
+      path: 'apps/web/public/v2/assets/cardback.png',
+      contentType: 'image/png',
+    })
+  );
+  await page.goto('/?renderer-spike=1&renderer=pixi');
+  await waitForReady(page);
+  const key = await page.evaluate(() => {
+    const { renderer, rendererKind, scene } = window.__PTCG_RENDERER_SPIKE__!;
+    if (rendererKind !== 'pixi')
+      throw new Error('This test requires the Pixi GPU backend');
+    const source = scene.cards.find(
+      (card) =>
+        card.renderKey &&
+        !card.concealed &&
+        card.side === 'local' &&
+        card.parentId.endsWith(':hand')
+    )!;
+    renderer.installScene(
+      {
+        ...scene,
+        revision: scene.revision + 1,
+        cards: scene.cards.map((card) =>
+          card.id === source.id
+            ? { ...card, imageUrl: '/review-art/portrait' }
+            : card
+        ),
+      },
+      [],
+      'advance'
+    );
+    return source.renderKey!;
+  });
+  await expect
+    .poll(() =>
+      page.evaluate((key) => {
+        const { renderer } = window.__PTCG_RENDERER_SPIKE__!;
+        const views = Reflect.get(renderer, 'cardViews') as Map<
+          string,
+          { sprite: { texture: { width: number; height: number } } }
+        >;
+        const texture = views.get(key)!.sprite.texture;
+        return [texture.width, texture.height];
+      }, key)
+    )
+    .toEqual([736, 1024]);
+  const diagnostics = await page.evaluate(() =>
+    window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!()
+  );
+  expect(diagnostics.globalTextureLoadFailures).toBe(0);
+  expect(errors).toEqual([]);
+});

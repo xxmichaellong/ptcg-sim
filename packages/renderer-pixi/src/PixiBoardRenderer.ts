@@ -58,7 +58,15 @@ const MAX_CONTEXT_RECOVERY_ATTEMPTS = 3;
 
 const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
   placeholder: Texture.WHITE,
-  load: (url) => Assets.load<Texture>(url),
+  // Artwork is always an image, including CDN endpoints with no extension.
+  // Otherwise Assets can resolve successfully to undefined and paint WHITE.
+  load: (url) =>
+    Assets.load<Texture>({
+      src: url,
+      parser: /(?:\.svg(?:[?#]|$)|^data:image\/svg\+xml[,;])/i.test(url)
+        ? 'svg'
+        : 'texture',
+    }),
   unload: async (url) => {
     await Assets.unload(url);
   },

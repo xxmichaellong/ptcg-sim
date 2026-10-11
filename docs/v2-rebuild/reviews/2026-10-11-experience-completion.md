@@ -24,6 +24,7 @@ Pixi adds one reusable light graphic for the handled face, bounded face turns to
 - Restoring a saved game used to attach the retained deck editor as a fresh session, automatically sending `LoadDeck` and replacing the restored board. Restored sessions now retain drafts without automatic installation. The production-browser journey verifies exact saved revision and all four assembled faces for both restored participants.
 - Pixi's automatic renderer selection could silently choose Canvas when WebGL was unavailable, but Canvas has no perspective-mesh render pipe. Board mounting now selects the DOM renderer on those devices; Pixi itself requires WebGL. Diagnostics report the actual renderer, and performance observations assert that the requested backend really ran. This fallback preserves Tabletop mode and play controls.
 - Reading a selected pile card previously cleared its selection and disabled its action row. The selection now survives preview/menu round trips, allowing keyboard focus to return to the opener.
+- The real-artwork review also found that Pixi silently accepted extensionless image URLs without a texture parser. Card images now explicitly select the image parser (preserving SVG handling); a GPU browser regression verifies decoded texture dimensions rather than trusting a successful load promise.
 - Off-centre panel pickups now settle from the held face's centre while picking destinations under the pointer. Browser checks also collect caught renderer console errors, not only uncaught exceptions.
 
 ## Repeatable coverage
@@ -49,6 +50,7 @@ A headless diagnostic run at 1366×768/DPR 1 passed all six combinations with ze
 - `check:ci` passed: formatting, lint, dependency boundaries, public API, cycle checks, all TypeScript targets, 79 legacy tests, 49 tooling tests, 2,707 unit tests in 279 files, 32 worker-runtime tests, and production web/worker builds.
 - Firefox: 34 scenarios passed. This local Firefox environment has no usable WebGL, so requested Pixi journeys exercised the explicit DOM fallback; these results do not claim Firefox GPU coverage.
 - WebKit: 34 scenarios passed using the local Linux runtime with software Mesa. Its initially missing TLS module was installed before the successful complete run; console-error checks remain enabled. Each renderer-specific scenario records the requested and actual backend.
+- A final focused Chromium run passed all 44 scenarios covering the new journeys and the complete protected-input suite.
 - Production continuation journey passed with exact revision, four-piece artwork/material restoration for both participants, fresh credentials, and bearer revocation.
 - Dependency audit passed with the repository's existing `GHSA-vfj7-8cjw-p6xm` exception: one unpatched high-severity advisory in the legacy development watcher dependency tree. No dependency exception was added by this work.
 - Visual review used real Charizard ex and Iono artwork at 1440×900 to inspect board placement, pile density, and the full reading view. It caught unwanted native image selection and unclear disabled controls, both corrected in the overlay primitive styles.
