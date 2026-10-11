@@ -414,13 +414,11 @@ export const RemoteSessionBoard = ({
           runtime.dispose();
           return;
         }
-        if (rendererKind === 'dom') {
-          resizeInteraction = new ReactDomBoardResizeInteraction(
-            host,
-            () => runtime!.getCharacterizedLayoutSnapshot(),
-            (handleId, clientY) => runtime!.resizeBoard(handleId, clientY)
-          );
-        }
+        resizeInteraction = new ReactDomBoardResizeInteraction(
+          host,
+          () => runtime!.getCharacterizedLayoutSnapshot(),
+          (handleId, clientY) => runtime!.resizeBoard(handleId, clientY)
+        );
         unsubscribeBoard = runtime.subscribeBoard(publish);
         unsubscribeLayout = runtime.subscribeLayout(publishLayout);
         publish();
@@ -727,7 +725,7 @@ export const RemoteSessionBoard = ({
       <div className="renderer-surface-host" ref={hostRef} />
       {showBoardComposition && boardState?.scene ? (
         <>
-          {layout && rendererKind === 'dom' ? (
+          {layout ? (
             <LegacyBoardChrome
               {...(depthProjection ? { depth: depthProjection } : {})}
               layout={layout}

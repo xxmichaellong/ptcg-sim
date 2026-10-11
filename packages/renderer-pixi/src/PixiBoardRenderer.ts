@@ -66,6 +66,9 @@ const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
       parser: /(?:\.svg(?:[?#]|$)|^data:image\/svg\+xml[,;])/i.test(url)
         ? 'svg'
         : 'texture',
+      // Cards spend most of their time far smaller than their scan. Generate
+      // mip levels once per leased image to avoid sparkling/aliased fine print.
+      data: { autoGenerateMipmaps: true, scaleMode: 'linear' },
     }),
   unload: async (url) => {
     await Assets.unload(url);

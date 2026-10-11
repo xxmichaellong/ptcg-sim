@@ -24,7 +24,7 @@ const containsPoint = (
   y <= bounds.y + bounds.height;
 
 /**
- * DOM-only input bridge for the source-shaped resize handles. The renderer
+ * DOM input bridge for the shared board chrome resize handles. The renderer
  * keeps its geometry sentinels pointer-transparent; capture-phase hit testing
  * preserves v1's overlap priority without turning resize into a game command.
  */
@@ -131,7 +131,7 @@ export class ReactDomBoardResizeInteraction {
     playAreaHeight: number
   ): { readonly x: number; readonly y: number } | null {
     const surface = this.host.querySelector<HTMLElement>(
-      '.ptcgsim-board-surface'
+      '.ptcgsim-board-surface, canvas'
     );
     const bounds = surface?.getBoundingClientRect();
     if (!bounds || bounds.width <= 0 || bounds.height <= 0) return null;

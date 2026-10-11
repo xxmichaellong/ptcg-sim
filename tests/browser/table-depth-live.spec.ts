@@ -72,6 +72,12 @@ const start = async (page: Page, renderer = 'dom') => {
     )
     .toBe(7);
   await expect(page.locator('[data-table-view="table"]')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Start turn', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Flip coin', exact: true })
+  ).toBeVisible();
 };
 const cardIn = async (page: Page, kind: string) =>
   (await scene(page)).cards.find(

@@ -17,6 +17,8 @@ The single-pointer alternative follows [WCAG dragging movements](https://www.w3.
 
 DOM cards, previews, the inspector, panel drags, and Pixi consume the disclosed material. Concealed cards and deck covers use a neutral sleeve treatment. Reading mode removes preview reflections.
 
+Both renderers and the WebGL fallback use the same table controls and resize input. Pixi card textures generate mip levels once per leased image, improving fine-print minification without an animation-time filter. Mipmaps add roughly one third to the base texture allocation; physical-device texture-budget measurements remain required before promoting Pixi to the default.
+
 Pixi adds one reusable light graphic for the handled face, bounded face turns toward disclosed artwork, and counter pulses. Temporary face textures have their own leases and are released on completion, replacement, reduced motion, suspension, and destruction. The existing on-demand animation clock runs these effects; an idle board schedules no continuing work. The implementation uses ordinary Pixi geometry rather than a filter covering the entire canvas; [Pixi's scene object guidance](https://pixijs.com/8.x/guides/components/scene-objects) and [custom filter example](https://pixijs.com/8.x/examples/filters-advanced/custom) informed that choice.
 
 ## Regressions found by the expanded review
@@ -50,6 +52,7 @@ A headless diagnostic run at 1366×768/DPR 1 passed all six combinations with ze
 - `check:ci` passed: formatting, lint, dependency boundaries, public API, cycle checks, all TypeScript targets, 79 legacy tests, 49 tooling tests, 2,707 unit tests in 279 files, 32 worker-runtime tests, and production web/worker builds.
 - Firefox: 34 scenarios passed. This local Firefox environment has no usable WebGL, so requested Pixi journeys exercised the explicit DOM fallback; these results do not claim Firefox GPU coverage.
 - WebKit: 34 scenarios passed using the local Linux runtime with software Mesa. Its initially missing TLS module was installed before the successful complete run; console-error checks remain enabled. Each renderer-specific scenario records the requested and actual backend.
+- The local resource gate passed all 140 setup/reset cycles and 560 pile openings, plus its animated churn case.
 - A final focused Chromium run passed all 44 scenarios covering the new journeys and the complete protected-input suite.
 - Production continuation journey passed with exact revision, four-piece artwork/material restoration for both participants, fresh credentials, and bearer revocation.
 - Dependency audit passed with the repository's existing `GHSA-vfj7-8cjw-p6xm` exception: one unpatched high-severity advisory in the legacy development watcher dependency tree. No dependency exception was added by this work.

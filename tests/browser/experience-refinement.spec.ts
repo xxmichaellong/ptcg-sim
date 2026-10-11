@@ -332,6 +332,9 @@ test('a requested Pixi table stays playable when WebGL is unavailable', async ({
     );
   });
   await startTable(page, 'pixi');
+  await expect(
+    page.getByRole('button', { name: 'Start turn', exact: true })
+  ).toBeVisible();
   expect(
     await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
   ).toBe('dom');
