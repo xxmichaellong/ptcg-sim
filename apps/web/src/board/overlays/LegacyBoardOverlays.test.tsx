@@ -1687,31 +1687,33 @@ describe('legacy board overlays', () => {
     const source = host.querySelector<HTMLButtonElement>(
       `[data-overlay-card-id="${discardCards[0]!.id}"]`
     )!;
-    expect(source.getAttribute('draggable')).toBe('true');
-    const transfer = {
-      dropEffect: 'none',
-      effectAllowed: 'none',
-      setData: vi.fn(),
-    };
-    const event = (type: string, clientX = 0, clientY = 0): Event => {
-      const dispatched = new Event(type, {
-        bubbles: true,
-        cancelable: true,
-      });
+    expect(source.getAttribute('draggable')).toBe('false');
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
+      x: 20,
+      y: 20,
+      left: 20,
+      top: 20,
+      right: 146,
+      bottom: 196,
+      width: 126,
+      height: 176,
+      toJSON: () => ({}),
+    });
+    const event = (type: string, clientX = 40, clientY = 40): Event => {
+      const dispatched = new Event(type, { bubbles: true, cancelable: true });
       Object.defineProperties(dispatched, {
         clientX: { value: clientX },
         clientY: { value: clientY },
-        dataTransfer: { value: transfer },
+        pointerId: { value: 7 },
+        button: { value: 0 },
       });
       return dispatched;
     };
-
-    await act(async () => source.dispatchEvent(event('dragstart')));
-    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('selection');
-    expect(transfer.effectAllowed).toBe('move');
-    expect(transfer.setData).toHaveBeenCalledExactlyOnceWith(
-      'application/x-ptcgsim-opened-zone-card',
-      'card'
+    await act(async () => source.dispatchEvent(event('pointerdown')));
+    expect(callbacks.emitOpenedZoneCardIntent).not.toHaveBeenCalled();
+    await act(async () => document.dispatchEvent(event('pointermove', 80, 80)));
+    expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
+      1
     );
     expect(
       host
@@ -1722,14 +1724,14 @@ describe('legacy board overlays', () => {
     const targetX = hand.bounds.x + hand.bounds.width / 2;
     const targetY = hand.bounds.y + hand.bounds.height / 2;
     await act(async () =>
-      document.dispatchEvent(event('drop', targetX, targetY))
+      document.dispatchEvent(event('pointerup', targetX, targetY))
     );
     expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledExactlyOnceWith({
       kind: 'CardDropRequested',
       cardId: discardCards[0]!.id,
       targetId: hand.id,
-      x: targetX,
-      y: targetY,
+      x: targetX + 43,
+      y: targetY + 68,
     });
     expect(
       host
@@ -1737,6 +1739,24 @@ describe('legacy board overlays', () => {
         ?.hasAttribute('data-zone-dragging-card')
     ).toBe(false);
 
+    expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
+      0
+    );
+    await act(async () => source.dispatchEvent(event('pointerdown')));
+    await act(async () => document.dispatchEvent(event('pointermove', 80, 80)));
+    await act(async () =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      )
+    );
+    await act(async () =>
+      document.dispatchEvent(event('pointerup', targetX, targetY))
+    );
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
+      0
+    );
     expect(
       resolveOpenedZoneDropTarget(
         scene,
@@ -1769,8 +1789,11 @@ describe('legacy board overlays', () => {
       `[data-overlay-card-id="${discardCards[0]!.id}"]`
     )!;
     expect(readOnly.getAttribute('draggable')).toBe('false');
-    await act(async () => readOnly.dispatchEvent(event('dragstart')));
-    expect(callbacks.dismiss).toHaveBeenCalledTimes(1);
+    await act(async () => readOnly.dispatchEvent(event('pointerdown')));
+    await act(async () =>
+      document.dispatchEvent(event('pointerup', targetX, targetY))
+    );
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
     expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
   });
 
@@ -2235,6 +2258,7 @@ describe('legacy board overlays', () => {
       zone.bounds,
       inspectingScene.viewport,
       2,
+      true,
       true
     );
     const panelBox = {

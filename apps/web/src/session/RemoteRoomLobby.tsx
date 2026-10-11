@@ -272,6 +272,7 @@ export const RemoteRoomLobby = ({
   const emptyBoardView = useMemo(createEmptyBoardView, []);
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
   const preparedDeckSessions = useRef(new WeakSet<object>());
+  const restoredDeckSessions = useRef(new WeakSet<object>());
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [coachingConsent, setCoachingConsent] = useState(false);
@@ -686,6 +687,9 @@ export const RemoteRoomLobby = ({
         return;
       }
 
+      // A restored table already owns its deck. Retained editor drafts must
+      // wait for an explicit edit/play action instead of overwriting the save.
+      restoredDeckSessions.current.add(result.runtime.session);
       const previousCreator = active.owner.creator;
       const previousGuest = active.owner.guestRuntime;
       active.owner.guestRuntime = result.runtime;
@@ -988,6 +992,9 @@ export const RemoteRoomLobby = ({
           deckSurfaceActivated={deckSurfaceActivated}
           onDeckSurfaceActivate={() => setDeckSurfaceActivated(true)}
           onDeckCustodyChange={setDeckCustody}
+          installDeckOnSessionAttach={
+            !restoredDeckSessions.current.has(connected.runtime.session)
+          }
           deckSessionPrepared={preparedDeckSessions.current.has(
             connected.runtime.session
           )}

@@ -27,6 +27,7 @@ export const DEFAULT_BOARD_DEPTH: BoardDepthPreferences = Object.freeze({
   strength: 1,
   lift: true,
   animate: true,
+  parallax: false,
 });
 export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
   if (!value || typeof value !== 'object') return DEFAULT_BOARD_DEPTH;
@@ -43,6 +44,7 @@ export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
     strength: number('strength', 1, 2),
     lift: Reflect.get(value, 'lift') !== false,
     animate: Reflect.get(value, 'animate') !== false,
+    parallax: Reflect.get(value, 'parallax') === true,
   };
 };
 
@@ -228,6 +230,12 @@ export class BoardDepthProjection {
       tiltDegrees: this.settings.tilt,
       maximumElevation: Math.min(90, scene.viewport.height * 0.1),
       margin: this.enabled ? 8 : 0,
+      ...(this.settings.parallax &&
+      !preferences.reducedMotion &&
+      preferences.animationSpeed !== 0 &&
+      preferences.viewpoint
+        ? { viewpoint: preferences.viewpoint }
+        : {}),
     });
     this.lift =
       this.enabled &&

@@ -1,3 +1,4 @@
+import { OverlayCardActions } from './OverlayCardActions.js';
 import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
 import {
   isLegacyMarkerPresentation,
@@ -54,6 +55,7 @@ import {
   type RefObject,
 } from 'react';
 
+import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
 import { actingPlayerIdOf } from '../acting-seat.js';
 import { locateViewCardActionSource } from '../locateViewCardActionSource.js';
 import type {
@@ -108,6 +110,7 @@ import {
   type ClientRectLike,
 } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
+import { useOverlayCardDrag } from './useOverlayCardDrag.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
 
@@ -126,6 +129,8 @@ export interface LegacyBoardOverlayActions {
   readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
   /** Opens one card's full preview from inside the stack view. */
   readonly previewCard?: (cardId: ViewCardId) => void;
+  readonly beginCardAssembly?: (cardId: ViewCardId) => void;
+  readonly separateCard?: (cardId: ViewCardId) => void;
   /** One of the bulk buttons along the bottom of a work-area popup. */
   readonly invokeWorkAreaAction?: (
     source: LegacyBoardWorkAreaSource,
@@ -1014,6 +1019,24 @@ const ContextMenu = ({
       }}
     >
       <ul>
+        {state.canSubmitCommands &&
+        state.view &&
+        actions.beginCardAssembly &&
+        resolveAttachEvolveTargeting(state.view, card.id).ok ? (
+          <li role="none">
+            <button
+              type="button"
+              role="menuitem"
+              className="ptcgsim-menu-item"
+              onClick={() => actions.beginCardAssembly?.(card.id)}
+            >
+              <MenuItemContent
+                icon={CardsIcon}
+                label="Assemble / attach to a card…"
+              />
+            </button>
+          </li>
+        ) : null}
         {entries.length === 0 ? (
           <li className="ptcgsim-legacy-context-empty" role="none">
             No actions available
@@ -1334,6 +1357,7 @@ const previewSourceOf = (event: MouseEvent): PreviewSource | null => {
  */
 const Preview = ({
   cards,
+  canModify,
   kind,
   frame,
   board,
@@ -1344,6 +1368,7 @@ const Preview = ({
 }: {
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
+  readonly canModify: boolean;
   readonly frame?: BoardScenePlayerFrame;
   readonly board: OverlayBoardSize;
   readonly viewport: BoardScene['viewport'];
@@ -1521,6 +1546,21 @@ const Preview = ({
         >
           <XIcon aria-hidden="true" /> Close <kbd>Esc</kbd>
         </button>
+        {canModify &&
+        readingCard &&
+        actions.separateCard &&
+        (readingCard.role === 'stackEvolution' ||
+          readingCard.role === 'stackAttachment' ||
+          (readingCard.composition && cards.length > 1)) ? (
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={() => actions.separateCard?.(readingCard.id)}
+          >
+            Separate this card to hand
+          </button>
+        ) : null}
         {individualCardId ? (
           <button
             type="button"
@@ -1560,6 +1600,7 @@ const Preview = ({
             ref={tiltTarget}
             className="ptcgsim-card-preview-tilt card-material"
             data-finish={readingCard.finish ?? 'sheen'}
+            data-foil-region={readingCard.presentation?.foilRegion}
             data-reading={reading ? 'true' : undefined}
           >
             <OverlayCardImage card={readingCard} variant="preview" />
@@ -1675,49 +1716,6 @@ export const sortRecipientSafeZoneCards = (
     )
     .map(({ card }) => card);
 
-/**
- * Sets a native drag image that survives the source element turning
- * transparent: a detached copy of the card, sized like the button it was
- * picked up from and held at the same grab offset. The copy must be in the
- * document when `setDragImage` runs, so it is parked off-screen and removed
- * once the drag has started.
- */
-const installDragImage = (
-  event: {
-    readonly currentTarget: HTMLElement;
-    readonly clientX: number;
-    readonly clientY: number;
-    readonly dataTransfer: DataTransfer;
-  },
-  imageUrl: string
-): void => {
-  const source = event.currentTarget;
-  const bounds = source.getBoundingClientRect();
-  if (bounds.width <= 0 || bounds.height <= 0) return;
-  const document = source.ownerDocument;
-  const ghost = document.createElement('img');
-  ghost.src = imageUrl;
-  ghost.alt = '';
-  ghost.setAttribute('data-zone-drag-image', 'true');
-  Object.assign(ghost.style, {
-    position: 'fixed',
-    top: '-10000px',
-    left: '-10000px',
-    width: `${bounds.width}px`,
-    height: `${bounds.height}px`,
-    borderRadius: 'var(--ptcgsim-card-radius, 4.8% / 3.4%)',
-    pointerEvents: 'none',
-  });
-  document.body.append(ghost);
-  event.dataTransfer.setDragImage(
-    ghost,
-    event.clientX - bounds.left,
-    event.clientY - bounds.top
-  );
-  // The browser has captured the image by the next frame.
-  setTimeout(() => ghost.remove(), 0);
-};
-
 /** Maps a client-space pointer onto the scene's physical viewport. */
 export const openedZoneDropPoint = (
   scene: BoardScene,
@@ -1785,9 +1783,7 @@ const ZoneBrowser = ({
 }) => {
   const container = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
-  const activeDragCardId = useRef<ViewCardId | null>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
-  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
   const [query, setQuery] = useState('');
   const [cardSize, setCardSize] = useState<CardBrowserSize>('auto');
@@ -1872,66 +1868,14 @@ const ZoneBrowser = ({
       )
     );
   }, [state.view, zone.id, zone.kind]);
-  const finishDrag = useCallback(() => {
-    activeDragCardId.current = null;
-    setDraggingCardId(null);
-  }, []);
-  useEffect(() => {
-    const element = container.current;
-    const document = element?.ownerDocument;
-    const scene = state.scene;
-    if (!element || !document || !scene) return;
-    const onDragOver = (event: DragEvent): void => {
-      if (activeDragCardId.current === null) return;
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-    };
-    const onDrop = (event: DragEvent): void => {
-      const cardId = activeDragCardId.current;
-      if (cardId === null) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const stillOwned = cards.some(
-        (card) => card.id === cardId && card.parentId === zone.id
-      );
-      const overlay = element.closest<HTMLElement>(
-        '[data-legacy-board-overlays]'
-      );
-      const surfaceBounds = overlay?.getBoundingClientRect();
-      const screenPoint =
-        stillOwned && surfaceBounds
-          ? openedZoneDropPoint(
-              scene,
-              surfaceBounds,
-              event.clientX,
-              event.clientY
-            )
-          : null;
-      const hit = screenPoint && depth ? depth.drop(screenPoint, cardId) : null;
-      const point = hit?.point ?? screenPoint;
-      const targetId = hit
-        ? hit.targetId
-        : point
-          ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
-          : null;
-      finishDrag();
-      if (targetId && point) {
-        actions.emitOpenedZoneCardIntent({
-          kind: 'CardDropRequested',
-          cardId,
-          targetId,
-          x: point.x,
-          y: point.y,
-        });
-      }
-    };
-    document.addEventListener('dragover', onDragOver, true);
-    document.addEventListener('drop', onDrop, true);
-    return () => {
-      document.removeEventListener('dragover', onDragOver, true);
-      document.removeEventListener('drop', onDrop, true);
-    };
-  }, [actions, cards, finishDrag, state.scene, zone.id, depth]);
+  const drag = useOverlayCardDrag({
+    scene: state.scene,
+    ...(depth ? { depth } : {}),
+    cards,
+    enabled: state.canSubmitCommands && !obscured,
+    emit: actions.emitOpenedZoneCardIntent,
+  });
+  const draggingCardId = drag.draggingCardId;
 
   return (
     <>
@@ -2069,31 +2013,13 @@ const ZoneBrowser = ({
               data-overlay-card-id={card.id}
               aria-label={card.label}
               aria-pressed={state.presentation.selectedCardId === card.id}
-              draggable={state.canSubmitCommands}
-              onDragStart={(event) => {
-                if (!state.canSubmitCommands) {
-                  event.preventDefault();
+              draggable={false}
+              onPointerDown={(event) => drag.onPointerDown(event, card)}
+              onClick={(event) => {
+                if (drag.consumeClick(card.id) && event.detail > 0) {
+                  firstClickCard.current = null;
                   return;
                 }
-                activeDragCardId.current = card.id;
-                if (event.dataTransfer) {
-                  event.dataTransfer.effectAllowed = 'move';
-                  event.dataTransfer.setData(
-                    'application/x-ptcgsim-opened-zone-card',
-                    'card'
-                  );
-                  // The browser fades out as soon as the drag starts (so the
-                  // drop can reach the table beneath), and the native drag
-                  // image is snapped after this handler returns -- from a
-                  // transparent element. Hand the browser its own copy of the
-                  // card to carry under the cursor, as v1's image drag does.
-                  installDragImage(event, card.imageUrl);
-                }
-                setDraggingCardId(card.id);
-                actions.dismiss('selection');
-              }}
-              onDragEnd={finishDrag}
-              onClick={(event) => {
                 // A second click that opened this panel belongs to the pile,
                 // not to the card that just appeared under the pointer.
                 if (event.detail <= 1) firstClickCard.current = card.id;
@@ -2126,6 +2052,15 @@ const ZoneBrowser = ({
               }}
             >
               <OverlayCardImage card={card} variant="zone" />
+              {state.canSubmitCommands ? (
+                <span
+                  data-panel-drag-handle="true"
+                  className="ptcgsim-panel-drag-handle"
+                  aria-hidden="true"
+                >
+                  <ArrowsOutCardinalIcon />
+                </span>
+              ) : null}
               {abilityMarkedCardIds.has(card.id) ? (
                 <span
                   className="ptcgsim-legacy-zone-ability-marker"
@@ -2142,6 +2077,14 @@ const ZoneBrowser = ({
             </button>
           ))}
         </div>
+        <OverlayCardActions
+          card={cards.find(
+            (card) => card.id === state.presentation.selectedCardId
+          )}
+          scene={state.scene!}
+          enabled={state.canSubmitCommands && !obscured}
+          emit={actions.emitOpenedZoneCardIntent}
+        />
       </section>
     </>
   );
@@ -2193,9 +2136,7 @@ const WorkAreaPanel = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLElement>(null);
-  const activeDragCardId = useRef<ViewCardId | null>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
-  const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [peeking, setPeeking] = useState(false);
   useOverlayExit(container, 'panel');
   const source: LegacyBoardWorkAreaSource =
@@ -2210,67 +2151,15 @@ const WorkAreaPanel = ({
         ? 'Move attached cards'
         : 'Opponent moving cards...';
   const emit = actions.emitCardIntent;
-  const finishDrag = useCallback(() => {
-    activeDragCardId.current = null;
-    setDraggingCardId(null);
-  }, []);
-  useEffect(() => {
-    const element = container.current;
-    const document = element?.ownerDocument;
-    const scene = state.scene;
-    if (!element || !document || !scene || !emit) return;
-    const onDragOver = (event: DragEvent): void => {
-      if (activeDragCardId.current === null) return;
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-    };
-    const onDrop = (event: DragEvent): void => {
-      const cardId = activeDragCardId.current;
-      if (cardId === null) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const stillOwned = cards.some(
-        (card) => card.id === cardId && card.parentId === zone.id
-      );
-      const overlay = element.closest<HTMLElement>(
-        '[data-legacy-board-overlays]'
-      );
-      const surfaceBounds = overlay?.getBoundingClientRect();
-      const screenPoint =
-        stillOwned && surfaceBounds
-          ? openedZoneDropPoint(
-              scene,
-              surfaceBounds,
-              event.clientX,
-              event.clientY
-            )
-          : null;
-      const hit = screenPoint && depth ? depth.drop(screenPoint, cardId) : null;
-      const point = hit?.point ?? screenPoint;
-      const targetId = hit
-        ? hit.targetId
-        : point
-          ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
-          : null;
-      finishDrag();
-      if (targetId && point) {
-        emit({
-          kind: 'CardDropRequested',
-          cardId,
-          targetId,
-          x: point.x,
-          y: point.y,
-        });
-      }
-    };
-    document.addEventListener('dragover', onDragOver, true);
-    document.addEventListener('drop', onDrop, true);
-    return () => {
-      document.removeEventListener('dragover', onDragOver, true);
-      document.removeEventListener('drop', onDrop, true);
-    };
-  }, [cards, emit, finishDrag, state.scene, zone.id, depth]);
   const interactive = own && state.canSubmitCommands && emit !== undefined;
+  const drag = useOverlayCardDrag({
+    scene: state.scene,
+    ...(depth ? { depth } : {}),
+    cards,
+    enabled: interactive,
+    emit: (intent) => emit?.(intent),
+  });
+  const draggingCardId = drag.draggingCardId;
   const withActions =
     (own || allowOpponentResolution) &&
     state.canSubmitCommands &&
@@ -2279,7 +2168,8 @@ const WorkAreaPanel = ({
     zone.bounds,
     board,
     cards.length,
-    withActions
+    withActions,
+    own && emit !== undefined
   );
   const hint = withActions
     ? 'Drag a card out, or move them all with a button below'
@@ -2324,26 +2214,13 @@ const WorkAreaPanel = ({
             aria-label={card.label}
             aria-pressed={state.presentation.selectedCardId === card.id}
             disabled={!interactive}
-            draggable={interactive}
-            onDragStart={(event) => {
-              if (!interactive) {
-                event.preventDefault();
+            draggable={false}
+            onPointerDown={(event) => drag.onPointerDown(event, card)}
+            onClick={(event) => {
+              if (drag.consumeClick(card.id) && event.detail > 0) {
+                firstClickCard.current = null;
                 return;
               }
-              activeDragCardId.current = card.id;
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData(
-                  'application/x-ptcgsim-work-area-card',
-                  'card'
-                );
-                installDragImage(event, card.imageUrl);
-              }
-              setDraggingCardId(card.id);
-              actions.dismiss('selection');
-            }}
-            onDragEnd={finishDrag}
-            onClick={(event) => {
               if (event.detail <= 1) firstClickCard.current = card.id;
               emit?.({ kind: 'CardSelected', cardId: card.id });
             }}
@@ -2366,9 +2243,28 @@ const WorkAreaPanel = ({
             }}
           >
             <OverlayCardImage card={card} variant="zone" />
+            {interactive ? (
+              <span
+                data-panel-drag-handle="true"
+                className="ptcgsim-panel-drag-handle"
+                aria-hidden="true"
+              >
+                <ArrowsOutCardinalIcon />
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
+      {own && emit ? (
+        <OverlayCardActions
+          card={cards.find(
+            (card) => card.id === state.presentation.selectedCardId
+          )}
+          scene={state.scene!}
+          enabled={interactive}
+          emit={emit}
+        />
+      ) : null}
       {withActions ? (
         <div className="ptcgsim-legacy-work-area-buttons">
           {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
@@ -2876,6 +2772,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       {preview ? (
         <Preview
           cards={previewCards}
+          canModify={state.canSubmitCommands}
           kind={preview.kind}
           frame={previewFrame}
           board={scene.viewport}

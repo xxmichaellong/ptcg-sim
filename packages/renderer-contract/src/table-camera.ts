@@ -34,6 +34,7 @@ export const createTableCamera = (options: {
   readonly tiltDegrees?: number;
   readonly margin?: number;
   readonly maximumElevation?: number;
+  readonly viewpoint?: TablePoint;
 }): TableCamera => {
   const width = Math.max(1, finite(options.width, 1));
   const height = Math.max(1, finite(options.height, 1));
@@ -48,8 +49,16 @@ export const createTableCamera = (options: {
     cosine: Math.cos(radians),
     inverseDistance:
       options.mode === 'table' ? 1 / (Math.max(width, height) * 2) : 0,
-    skewX: options.mode === 'depth' ? -0.14 : 0,
-    skewY: options.mode === 'depth' ? -0.35 : 0,
+    skewX:
+      (options.mode === 'depth' ? -0.14 : 0) +
+      (options.mode === 'flat'
+        ? 0
+        : bounded(finite(options.viewpoint?.x ?? 0, 0), -1, 1) * 0.12),
+    skewY:
+      (options.mode === 'depth' ? -0.35 : 0) +
+      (options.mode === 'flat'
+        ? 0
+        : bounded(finite(options.viewpoint?.y ?? 0, 0), -1, 1) * 0.08),
     scale: 1,
     offsetX: 0,
     offsetY: 0,

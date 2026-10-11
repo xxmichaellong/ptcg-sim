@@ -565,8 +565,8 @@ const CardNode = memo(
           } as CSSProperties
         }
         disabled={!card.interactive}
-        onClick={() => {
-          if (!consumeSuppressedClick(card.id)) {
+        onClick={(event) => {
+          if (!consumeSuppressedClick(card.id) || event.detail === 0) {
             activate();
           }
         }}
@@ -584,6 +584,9 @@ const CardNode = memo(
           <span
             className="ptcgsim-card__face card-material"
             data-finish={paintsBack(card) ? 'sheen' : (card.finish ?? 'sheen')}
+            data-foil-region={
+              paintsBack(card) ? undefined : card.presentation?.foilRegion
+            }
           >
             <img
               ref={imageRef}
@@ -786,6 +789,7 @@ export const BoardSurface = ({
     [
       scene,
       preferences.depth,
+      preferences.viewpoint,
       preferences.reducedMotion,
       preferences.animationSpeed,
     ]

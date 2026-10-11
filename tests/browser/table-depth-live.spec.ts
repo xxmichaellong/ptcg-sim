@@ -5,6 +5,34 @@ import {
   DEFAULT_BOARD_PREFERENCES,
 } from '../../packages/renderer-contract/src/index.js';
 
+const browserErrors = new WeakMap<Page, Promise<string>[]>();
+test.beforeEach(({ page }) => {
+  const errors: Promise<string>[] = [];
+  browserErrors.set(page, errors);
+  page.on('console', (message) => {
+    if (message.type() !== 'error') return;
+    errors.push(
+      Promise.all(
+        message
+          .args()
+          .map((arg) =>
+            arg
+              .evaluate((value) =>
+                value instanceof Error
+                  ? `${value.name}: ${value.message}`
+                  : String(value)
+              )
+              .catch(() => message.text())
+          )
+      ).then((parts) => parts.join(' ') || message.text())
+    );
+  });
+  page.on('pageerror', (error) => errors.push(Promise.resolve(error.message)));
+});
+test.afterEach(async ({ page }) => {
+  expect(await Promise.all(browserErrors.get(page) ?? [])).toEqual([]);
+});
+
 const preferences = {
   ...DEFAULT_BOARD_PREFERENCES,
   depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, tilt: 12 },
@@ -195,11 +223,21 @@ test('reduced motion keeps physical piles but removes drag lift and animated tra
   await expect(page.locator('.ptcgsim-card-ghost')).toHaveCount(0);
 });
 
-for (const renderer of ['dom', 'pixi']) {
-  test(`${renderer}: lifting a deck card leaves the pile and releases continuously into the hand`, async ({
+for (const requestedRenderer of ['dom', 'pixi']) {
+  test(`${requestedRenderer}: lifting a deck card leaves the pile and releases continuously into the hand`, async ({
     page,
   }) => {
-    await start(page, renderer);
+    await start(page, requestedRenderer);
+    const renderer = await page.evaluate(
+      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
+    );
+    const testInfo = test.info();
+    testInfo.annotations.push({
+      type: 'renderer',
+      description: `Requested ${requestedRenderer}; ran ${renderer}`,
+    });
+    if (testInfo.project.name === 'chromium')
+      expect(renderer).toBe(requestedRenderer);
     await page.mouse.move(15, 15);
     await idle(page, renderer);
     const deck = await cardIn(page, 'deck');
@@ -280,11 +318,21 @@ for (const renderer of ['dom', 'pixi']) {
     ).toBe(46);
   });
 
-  test(`${renderer}: shuffling and repeated view changes release transient resources`, async ({
+  test(`${requestedRenderer}: shuffling and repeated view changes release transient resources`, async ({
     page,
   }) => {
     test.setTimeout(90000);
-    await start(page, renderer);
+    await start(page, requestedRenderer);
+    const renderer = await page.evaluate(
+      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
+    );
+    const testInfo = test.info();
+    testInfo.annotations.push({
+      type: 'renderer',
+      description: `Requested ${requestedRenderer}; ran ${renderer}`,
+    });
+    if (testInfo.project.name === 'chromium')
+      expect(renderer).toBe(requestedRenderer);
     await page.mouse.move(15, 15);
     await idle(page, renderer);
     const resources = () =>
@@ -307,6 +355,8 @@ for (const renderer of ['dom', 'pixi']) {
       await expect
         .poll(async () => (await resources()).bindings)
         .toBeGreaterThan(before.bindings);
+    // Undo interrupts the riffle while its temporary faces are still alive.
+    await page.keyboard.press('u');
     await page.waitForTimeout(1200);
     await idle(page, renderer);
     expect(await resources()).toEqual(before);
@@ -323,13 +373,23 @@ for (const renderer of ['dom', 'pixi']) {
     expect(await resources()).toEqual(before);
   });
 
-  test(`${renderer}: real-room depth preserves draw, play, drag and local settings`, async ({
+  test(`${requestedRenderer}: real-room depth preserves draw, play, drag and local settings`, async ({
     page,
   }) => {
     test.setTimeout(90000);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await start(page, renderer);
+    await start(page, requestedRenderer);
+    const renderer = await page.evaluate(
+      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
+    );
+    const testInfo = test.info();
+    testInfo.annotations.push({
+      type: 'renderer',
+      description: `Requested ${requestedRenderer}; ran ${renderer}`,
+    });
+    if (testInfo.project.name === 'chromium')
+      expect(renderer).toBe(requestedRenderer);
     await idle(page, renderer);
     const deck = await cardIn(page, 'deck');
     const before =
@@ -446,13 +506,14 @@ test('projected deck-browser drops and marker editing use the painted board', as
       y: active.bounds.y + active.bounds.height / 2,
     })
   );
-  const data = await page.evaluateHandle(() => new DataTransfer());
-  await source.dispatchEvent('dragstart', { dataTransfer: data });
-  await page.locator('.ptcgsim-board-surface').dispatchEvent('drop', {
-    dataTransfer: data,
-    clientX: to.x,
-    clientY: to.y,
-  });
+  const sourceBounds = (await source.boundingBox())!;
+  await page.mouse.move(
+    sourceBounds.x + sourceBounds.width / 2,
+    sourceBounds.y + sourceBounds.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 12 });
+  await page.mouse.up();
   await expect
     .poll(
       async () => (await scene(page)).cards.find((card) => card.id === id)?.role
@@ -479,4 +540,114 @@ test('projected deck-browser drops and marker editing use the painted board', as
   expect(markerRect.x).toBeLessThan(cardRect.x + cardRect.width + 50);
   await card.click({ button: 'right' });
   await expect(page.locator('[data-context-card-id]')).toBeVisible();
+});
+
+test('opened piles offer tap and keyboard movement, and cancel pen and touch gestures safely', async ({
+  page,
+}) => {
+  await start(page);
+  const deck = await cardIn(page, 'deck');
+  await page.locator(`[data-card-id="${deck.id}"]`).dblclick();
+  const browser = page.locator('[data-legacy-zone-browser]');
+  const source = browser.locator('[data-overlay-card-id]').first();
+  await source.focus();
+  await page.keyboard.press('Enter');
+  await browser.getByRole('button', { name: 'Read', exact: true }).click();
+  await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  for (const pointerType of ['pen', 'touch']) {
+    const box = (await source.boundingBox())!;
+    const position = {
+      clientX: box.x + box.width / 2,
+      clientY: box.y + box.height / 2,
+      pointerId: 31,
+      pointerType,
+      button: 0,
+      buttons: 1,
+      isPrimary: true,
+    };
+    await (
+      pointerType === 'touch'
+        ? source.locator('[data-panel-drag-handle]')
+        : source
+    ).dispatchEvent('pointerdown', position);
+    await source.dispatchEvent('pointermove', {
+      ...position,
+      clientX: position.clientX + 30,
+    });
+    await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(1);
+    await source.dispatchEvent('pointercancel', position);
+    await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(0);
+    await expect(browser).toBeVisible();
+  }
+  const hand = (await scene(page)).zones.find(
+    (zone) => zone.side === 'local' && zone.kind === 'hand'
+  )!;
+  await source.focus();
+  await page.keyboard.press('Enter');
+  await browser
+    .getByRole('combobox', { name: 'Move selected card to' })
+    .selectOption(hand.id);
+  await browser.getByRole('button', { name: 'Move', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect
+    .poll(
+      async () =>
+        (await scene(page)).zones.find((zone) => zone.id === hand.id)?.count
+    )
+    .toBe(hand.count + 1);
+  await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(0);
+});
+
+test('optional parallax settles without an idle clock and freezes the camera during a drag', async ({
+  page,
+}) => {
+  await start(page);
+  await page.locator('#settingsButton').click();
+  await page.locator('#tableParallaxCheckbox').check();
+  await page.locator('#p1Button').click();
+  await idle(page);
+  const deck = await cardIn(page, 'deck');
+  const node = page.locator(`[data-card-id="${deck.id}"]`);
+  const original = await node.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+  const box = (await page.locator('.renderer-surface-host').boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.5);
+  await expect
+    .poll(() => node.evaluate((element) => getComputedStyle(element).transform))
+    .not.toBe(original);
+  await expect(page.locator('.renderer-surface-host')).toHaveAttribute(
+    'data-parallax',
+    'idle'
+  );
+  const commits = await page.evaluate(
+    () =>
+      window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!().renderCommits
+  );
+  await page.waitForTimeout(200);
+  expect(
+    await page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!().renderCommits
+    )
+  ).toBe(commits);
+  const hand = await cardIn(page, 'hand');
+  const source = page.locator(`[data-card-id="${hand.id}"]`);
+  const from = await paintedPoint(source, 0.3, 0.4);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  const stable = await node.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+  await page.mouse.move(from.x + 50, from.y - 80, { steps: 10 });
+  expect(
+    await node.evaluate((element) => getComputedStyle(element).transform)
+  ).toBe(stable);
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-dragging',
+    'false'
+  );
 });

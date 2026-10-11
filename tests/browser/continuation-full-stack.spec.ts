@@ -1,4 +1,8 @@
 import {
+  assembleSavedPrint,
+  expectSavedPrint,
+} from './support/assembled-save.js';
+import {
   parseContinuationHandoffText,
   parseRoomInvitationHandoffText,
 } from '../../packages/protocol/src/index.js';
@@ -35,6 +39,9 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     browser.newContext(contextOptions),
   ]);
   const requestUrls: string[] = [];
+  const pendingCommands = new Map<string, string>();
+  let acceptedCardMoves = 0;
+  let acknowledgedRevision = 0;
 
   try {
     const [creator, sourceOpponent, restoredOpponent] = (await Promise.all(
@@ -47,6 +54,31 @@ test('online save downloads, restores, rotates both players, and revokes its bea
         if (url.pathname.startsWith('/v2/')) requestUrls.push(url.href);
       });
       page.on('websocket', (socket) => {
+        socket.on('framesent', ({ payload }) => {
+          if (typeof payload !== 'string') return;
+          const frame = JSON.parse(payload);
+          if (frame.type === 'Command') {
+            pendingCommands.set(frame.commandId, frame.command.type);
+          }
+        });
+        socket.on('framereceived', ({ payload }) => {
+          if (typeof payload !== 'string') return;
+          const frame = JSON.parse(payload);
+          if (frame.type === 'CommandResult') {
+            const command = pendingCommands.get(frame.commandId);
+            if (
+              frame.accepted &&
+              (command === 'MoveCardToPlay' ||
+                command === 'PlaceCardOnPlayStack')
+            )
+              acceptedCardMoves += 1;
+            pendingCommands.delete(frame.commandId);
+            acknowledgedRevision = Math.max(
+              acknowledgedRevision,
+              frame.revision
+            );
+          }
+        });
         const url = new URL(socket.url());
         if (url.pathname.startsWith('/v2/')) requestUrls.push(url.href);
       });
@@ -69,8 +101,17 @@ test('online save downloads, restores, rotates both players, and revokes its bea
         page.locator('#p2Chatbox').getByText('Red attacked', { exact: true })
       ).toBeVisible();
     }
+    await assembleSavedPrint(creator.page);
+    await expectSavedPrint(sourceOpponent.page);
+    await expect.poll(() => acceptedCardMoves).toBe(4);
+    await expect.poll(() => pendingCommands.size).toBe(0);
+    await expect
+      .poll(async () => Number((await boardIdentity(creator.page)).revision))
+      .toBe(acknowledgedRevision);
     const sourceCheckpoint = await boardIdentity(creator.page);
-    expect(await boardIdentity(sourceOpponent.page)).toEqual(sourceCheckpoint);
+    await expect
+      .poll(() => boardIdentity(sourceOpponent.page))
+      .toEqual(sourceCheckpoint);
 
     await creator.page.locator('#p2OptionsButton').click();
     const createResponsePromise = creator.page.waitForResponse((response) => {
@@ -145,6 +186,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(targetRoomCode).not.toBe(sourceRoomCode);
     expect(await boardIdentity(creator.page)).toEqual(sourceCheckpoint);
 
+    await expectSavedPrint(creator.page);
     const targetInvitation = await readClipboard(creator.page);
     const parsedInvitation = parseRoomInvitationHandoffText(targetInvitation);
     expect(parsedInvitation.ok).toBe(true);
@@ -160,6 +202,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       'Red Restored'
     );
     await joinReadyRoom(restoredOpponent.page);
+    await expectSavedPrint(restoredOpponent.page);
     expect(await roomCode(restoredOpponent.page)).toBe(targetRoomCode);
     expect(await boardIdentity(restoredOpponent.page)).toEqual(
       sourceCheckpoint

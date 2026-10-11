@@ -48,6 +48,7 @@ const roomRouteHarness = vi.hoisted(() => ({
   onCopyInvitation: undefined as
     ((role: 'player' | 'spectator') => Promise<boolean>) | undefined,
   continuationAvailable: undefined as boolean | undefined,
+  installDeckOnSessionAttach: undefined as boolean | undefined,
   onResumeSavedGame: undefined as
     | ((
         contents: string,
@@ -96,6 +97,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     cardBackStore,
     onCopyInvitation,
     continuationAvailable,
+    installDeckOnSessionAttach,
     onResumeSavedGame,
   }: {
     readonly runtime: { readonly label?: string };
@@ -115,6 +117,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
       role: 'player' | 'spectator'
     ) => Promise<boolean>;
     readonly continuationAvailable?: boolean;
+    readonly installDeckOnSessionAttach?: boolean;
     readonly onResumeSavedGame?: (
       contents: string,
       deliverOpponentInvitation: (text: string) => Promise<void>,
@@ -133,6 +136,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.cardBackStore = cardBackStore;
     roomRouteHarness.onCopyInvitation = onCopyInvitation;
     roomRouteHarness.continuationAvailable = continuationAvailable;
+    roomRouteHarness.installDeckOnSessionAttach = installDeckOnSessionAttach;
     roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
     return (
       <main data-app-route="test-remote-room">
@@ -1145,6 +1149,7 @@ describe('remote room lobby wiring', () => {
       'private opponent invitation'
     );
     expect(host.textContent).toContain('restored');
+    expect(roomRouteHarness.installDeckOnSessionAttach).toBe(false);
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(restored.dispose).not.toHaveBeenCalled();
 

@@ -626,10 +626,12 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   context,
   page,
 }, testInfo) => {
-  test.setTimeout(600_000);
+  test.setTimeout(1_200_000);
   // 140 cycles measure route resources; with the table animating every
   // Set Up, Reset and pile browser they would take ~15 minutes locally and
-  // over 20 in CI. Motion's own nodes are churned by the test after this.
+  // over 20 in CI. Even with instant motion, slow runners need more than
+  // ten minutes for 560 real dialogs and rate-limit pacing. Motion's own
+  // nodes are churned by the test after this.
   await useAnimationSpeed(page, 'instant');
   trackClientFrames(page);
   const errors = collectRuntimeErrors(page);

@@ -19,6 +19,7 @@ export interface CardInspection {
   /** The full-size face: the board paints the small one. */
   readonly imageUrl: string;
   readonly finish: CardFinish;
+  readonly foilRegion: 'artwork' | 'full' | 'none' | undefined;
   readonly readingQuarterTurns: number;
 }
 
@@ -62,6 +63,7 @@ export const inspectCard = (
     name: definition.name,
     imageUrl: definition.imageUrl,
     finish: finishForCard(definition),
+    foilRegion: definition.presentation?.foilRegion,
     readingQuarterTurns:
       resolveCardPresentation(definition)?.readingQuarterTurns ?? 0,
   };

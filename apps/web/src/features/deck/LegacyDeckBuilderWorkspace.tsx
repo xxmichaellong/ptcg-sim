@@ -395,6 +395,8 @@ const CustomCardDialog = ({
   const [supertype, setSupertype] = useState('Pokémon');
   const [imageUrl, setImageUrl] = useState('');
   const [cardLayout, setCardLayout] = useState('auto');
+  const [finish, setFinish] = useState('auto');
+  const [foilRegion, setFoilRegion] = useState('auto');
   const [artworkGroup, setArtworkGroup] = useState('');
   const [piece, setPiece] = useState('0');
   const [imageState, setImageState] = useState<CustomImageState>('empty');
@@ -409,6 +411,8 @@ const CustomCardDialog = ({
     setSupertype('Pokémon');
     setImageUrl('');
     setCardLayout('auto');
+    setFinish('auto');
+    setFoilRegion('auto');
     setArtworkGroup('');
     setPiece('0');
     setImageState('empty');
@@ -466,9 +470,12 @@ const CustomCardDialog = ({
             : cardLayout === 'trio'
               ? [3, 1]
               : undefined;
-    const presentation =
+    const layoutPresentation =
       cardLayout === 'auto'
-        ? undefined
+        ? resolveCardPresentation({
+            name: normalizedName,
+            imageUrl: normalizedImage,
+          })
         : {
             readingQuarterTurns:
               cardLayout === 'break' ||
@@ -487,6 +494,15 @@ const CustomCardDialog = ({
                   },
                 }
               : {}),
+          };
+    const presentation =
+      finish === 'auto' && foilRegion === 'auto'
+        ? layoutPresentation
+        : {
+            readingQuarterTurns: 0,
+            ...layoutPresentation,
+            ...(finish === 'auto' ? {} : { finish }),
+            ...(foilRegion === 'auto' ? {} : { foilRegion }),
           };
     onAdd(
       {
@@ -664,6 +680,42 @@ const CustomCardDialog = ({
                   </p>
                 </>
               ) : null}
+            </details>
+            <details className="native-custom-card-finish">
+              <summary>Card finish (optional)</summary>
+              <label className="native-deck-builder-modal-label">
+                Finish
+                <select
+                  id="nativeCustomCardFinish"
+                  className="ds-select"
+                  value={finish}
+                  onChange={(event) => setFinish(event.target.value)}
+                >
+                  <option value="auto">Automatic treatment</option>
+                  <option value="matte">Matte</option>
+                  <option value="sheen">Sleeve sheen</option>
+                  <option value="holo">Holographic</option>
+                  <option value="rainbow">Rainbow foil</option>
+                </select>
+              </label>
+              <label className="native-deck-builder-modal-label">
+                Foil coverage
+                <select
+                  id="nativeCustomCardFoilRegion"
+                  className="ds-select"
+                  value={foilRegion}
+                  onChange={(event) => setFoilRegion(event.target.value)}
+                >
+                  <option value="auto">Match finish</option>
+                  <option value="artwork">Artwork window</option>
+                  <option value="full">Full card</option>
+                  <option value="none">No foil</option>
+                </select>
+              </label>
+              <p>
+                Applies to this printing. Reading mode always removes
+                reflections.
+              </p>
             </details>
           </div>
           <div className="native-deck-builder-modal-preview">

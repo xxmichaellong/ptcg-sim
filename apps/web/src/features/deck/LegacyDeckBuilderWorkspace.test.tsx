@@ -540,6 +540,14 @@ describe('LegacyDeckBuilderWorkspace', () => {
     await select(layout.querySelector('select')!, 'trio');
     await input(layout.querySelector('input')!, 'illustration-one');
     await select(layout.querySelectorAll('select')[1]!, '2');
+    await select(
+      host.querySelector<HTMLSelectElement>('#nativeCustomCardFinish')!,
+      'rainbow'
+    );
+    await select(
+      host.querySelector<HTMLSelectElement>('#nativeCustomCardFoilRegion')!,
+      'full'
+    );
     await act(async () =>
       host
         .querySelector<HTMLImageElement>('#nativeCustomCardPreviewImage')!
@@ -551,6 +559,8 @@ describe('LegacyDeckBuilderWorkspace', () => {
         .presentation
     ).toEqual({
       readingQuarterTurns: 0,
+      finish: 'rainbow',
+      foilRegion: 'full',
       join: { key: 'illustration-one', columns: 3, rows: 1, part: 2 },
     });
   });

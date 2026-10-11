@@ -1902,3 +1902,80 @@ it('keeps joined pieces and their counter together through drag and settlement',
   renderer.destroy();
   vi.restoreAllMocks();
 });
+
+it.each(['flat', 'table'] as const)(
+  'finishes %s face turns and counter feedback without retaining textures or an idle clock',
+  async (mode) => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const frames = new Map<number, FrameRequestCallback>();
+    let serial = 0;
+    vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => {
+      frames.set(++serial, fn);
+      return serial;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+    const app = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => app }
+    );
+    const original = scene();
+    const source = original.cards.find(
+      (card) => card.renderKey && !card.concealed && !card.tableImageUrl
+    )!;
+    const before = { ...original, markers: [] };
+    await renderer.mount(
+      document.createElement('div'),
+      before,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      depth: { ...DEFAULT_BOARD_DEPTH, mode },
+    });
+    await Promise.resolve();
+    const baseline = renderer.getDiagnostics().localTextureBindings;
+    const changed = {
+      ...before,
+      revision: before.revision + 1,
+      cards: before.cards.map((card) =>
+        card.id === source.id
+          ? { ...card, imageUrl: `${card.imageUrl}#changed` }
+          : card
+      ),
+      markers: [marker({ parentCardId: source.id })],
+    };
+    renderer.installScene(changed, [], 'advance', { cause: 'advance' });
+    expect(app.canvas.dataset.motion).toBe('active');
+    expect(renderer.getDiagnostics().localTextureBindings).toBe(baseline + 1);
+    for (const at of [performance.now() + 100, performance.now() + 1000]) {
+      const pending = [...frames.values()];
+      frames.clear();
+      pending.forEach((fn) => fn(at));
+    }
+    expect(app.canvas.dataset.motion).toBe('idle');
+    expect(renderer.getDiagnostics().localTextureBindings).toBe(baseline);
+    expect(frames.size).toBe(0);
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      reducedMotion: true,
+    });
+    renderer.installScene(
+      { ...before, revision: changed.revision + 1 },
+      [],
+      'advance',
+      { cause: 'advance' }
+    );
+    expect(app.canvas.dataset.motion).toBe('idle');
+    expect(frames.size).toBe(0);
+    renderer.destroy();
+    expect(renderer.getDiagnostics().localTextureBindings).toBe(0);
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  }
+);

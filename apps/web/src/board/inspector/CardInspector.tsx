@@ -213,6 +213,7 @@ export const CardInspector = ({
           key={inspection.cardId}
           className="card-inspector__card card-material"
           data-finish={inspection.finish}
+          data-foil-region={inspection.foilRegion}
         >
           <img
             className="card-inspector__image"

@@ -1,3 +1,4 @@
+import { loadBoardRenderer } from './load-board-renderer.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -114,6 +115,7 @@ export const RendererSpikeBoard = ({
   allowRevisionRegressionRef.current = allowRevisionRegression;
   preferencesRef.current = preferences ?? DEFAULT_BOARD_PREFERENCES;
   hasExplicitPreferencesRef.current = preferences !== undefined;
+  const actualRendererKind = useRef(rendererKind);
   const [status, setStatus] = useState<BoardRendererStatus>({
     kind: 'mounting',
   });
@@ -190,10 +192,9 @@ export const RendererSpikeBoard = ({
           if (!disposed) setStatus(next);
         },
       };
-      const createRenderer =
-        rendererKind === 'pixi'
-          ? (await import('@ptcgsim/renderer-pixi')).createPixiBoardRenderer
-          : (await import('@ptcgsim/renderer-dom')).createReactDomBoardRenderer;
+      const loaded = await loadBoardRenderer(rendererKind);
+      const { createRenderer } = loaded;
+      actualRendererKind.current = loaded.kind;
       if (disposed) return;
       rendererFactoryRef.current = createRenderer;
       renderer = createRenderer(adapters);
@@ -230,7 +231,7 @@ export const RendererSpikeBoard = ({
           const published = installedRef.current;
           if (!published) return;
           window.__PTCG_RENDERER_SPIKE__ = {
-            rendererKind,
+            rendererKind: actualRendererKind.current,
             renderer,
             scene: published.scene,
             ...(import.meta.env.DEV ? { createRenderer } : {}),
@@ -289,7 +290,7 @@ export const RendererSpikeBoard = ({
     renderer.installScene(next.scene, [], mode);
     installedRef.current = { view, scene: next.scene };
     window.__PTCG_RENDERER_SPIKE__ = {
-      rendererKind,
+      rendererKind: actualRendererKind.current,
       renderer,
       scene: next.scene,
       ...(import.meta.env.DEV ? { createRenderer } : {}),

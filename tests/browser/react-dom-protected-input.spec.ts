@@ -200,44 +200,62 @@ const clearEvidence = (page: Page): Promise<void> =>
 const answerNextPrompt = (page: Page, value: string | null) =>
   answerOverlayPrompt(page, value);
 
-const exposedCardPoint = (card: Locator): Promise<Point> =>
-  card.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    const hits = (x: number, y: number) =>
-      document.elementFromPoint(x, y)?.closest('[data-card-id]') === element;
-    // Keep a real pointer click inside the exposed face while hover springs
-    // settle. A one-pixel edge can move between measurement and mouse-down.
-    for (const margin of [6, 3]) {
-      const xs = [
-        bounds.left + bounds.width / 2,
-        bounds.left + margin + 1,
-        bounds.right - margin - 1,
-      ];
-      const ys = [
-        bounds.top + bounds.height / 2,
-        bounds.top + margin + 1,
-        bounds.bottom - margin - 1,
-      ];
-      for (const y of ys)
-        for (const x of xs) {
-          if (
-            hits(x, y) &&
-            hits(x - margin, y) &&
-            hits(x + margin, y) &&
-            hits(x, y - margin) &&
-            hits(x, y + margin)
-          )
-            return { x, y };
+const exposedCardPoint = async (card: Locator): Promise<Point> => {
+  // Leave the previously hovered stack face before picking an exposed lower
+  // card. Its lift/scale can temporarily cover that narrow strip.
+  await card.page().mouse.move(0, 0);
+  let point: Point | null = null;
+  await expect
+    .poll(async () => {
+      point = await card.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const hits = (x: number, y: number) =>
+          document.elementFromPoint(x, y)?.closest('[data-card-id]') ===
+          element;
+        // Keep a real pointer click inside the exposed face while hover springs
+        // settle. A one-pixel edge can move between measurement and mouse-down.
+        for (const margin of [6, 3]) {
+          const xs = [
+            bounds.left + bounds.width / 2,
+            bounds.left + margin + 1,
+            bounds.right - margin - 1,
+          ];
+          const ys = [
+            bounds.top + bounds.height / 2,
+            bounds.top + margin + 1,
+            bounds.bottom - margin - 1,
+          ];
+          for (const y of ys)
+            for (const x of xs) {
+              if (
+                hits(x, y) &&
+                hits(x - margin, y) &&
+                hits(x + margin, y) &&
+                hits(x, y - margin) &&
+                hits(x, y + margin)
+              )
+                return { x, y };
+            }
         }
-    }
-    for (let y = Math.ceil(bounds.top) + 1; y < bounds.bottom - 1; y += 1) {
-      for (let x = Math.ceil(bounds.left) + 1; x < bounds.right - 1; x += 1) {
-        const hit = document.elementFromPoint(x, y)?.closest('[data-card-id]');
-        if (hit === element) return { x, y };
-      }
-    }
-    throw new Error(`Card ${element.getAttribute('data-card-id')} is occluded`);
-  });
+        for (let y = Math.ceil(bounds.top) + 1; y < bounds.bottom - 1; y += 1) {
+          for (
+            let x = Math.ceil(bounds.left) + 1;
+            x < bounds.right - 1;
+            x += 1
+          ) {
+            const hit = document
+              .elementFromPoint(x, y)
+              ?.closest('[data-card-id]');
+            if (hit === element) return { x, y };
+          }
+        }
+        return null;
+      });
+      return point !== null;
+    })
+    .toBe(true);
+  return point!;
+};
 
 const exposedZonePoint = (zone: Locator): Promise<Point> =>
   zone.evaluate((element) => {

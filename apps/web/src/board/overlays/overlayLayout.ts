@@ -130,6 +130,7 @@ export const zoneBrowserLayout = (
   const chromeHeight =
     OVERLAY_HEADER_HEIGHT +
     OVERLAY_BROWSER_TOOLS_HEIGHT +
+    OVERLAY_ACTIONS_HEIGHT +
     2 * OVERLAY_PANEL_PADDING +
     2 * OVERLAY_PANEL_BORDER;
   const width = clamp(
@@ -162,7 +163,8 @@ export const workAreaPanelLayout = (
   zoneBounds: Rect,
   board: OverlayBoardSize,
   cardCount: number,
-  withActions: boolean
+  withActions: boolean,
+  withCardActions = false
 ): OverlayPanelLayout => {
   const count = Math.max(1, finiteCount(cardCount));
   const margin = overlayBoardMargin(board);
@@ -173,7 +175,8 @@ export const workAreaPanelLayout = (
     2 * OVERLAY_PANEL_PADDING +
     2 * OVERLAY_PANEL_BORDER +
     OVERLAY_SCROLLBAR_ALLOWANCE +
-    (withActions ? OVERLAY_ACTIONS_HEIGHT : 0);
+    (withActions ? OVERLAY_ACTIONS_HEIGHT : 0) +
+    (withCardActions ? OVERLAY_ACTIONS_HEIGHT : 0);
   const cardHeight = Math.max(
     OVERLAY_CARD_MIN_HEIGHT,
     Math.min(overlayLargeCardHeight(board), maxHeight - chrome)

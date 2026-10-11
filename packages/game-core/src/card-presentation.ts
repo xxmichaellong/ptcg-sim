@@ -3,6 +3,10 @@ export interface CardPresentation {
   /** Turn a portrait scan into its upright reading orientation. */
   readonly readingQuarterTurns: 0 | 1 | 2 | 3;
   readonly overlay?: 'upper-half';
+  /** Explicit per-print treatment; omitted retains the cosmetic fallback. */
+  readonly finish?: 'matte' | 'sheen' | 'holo' | 'rainbow';
+  /** Foil coverage in the original portrait scan, before reading rotation. */
+  readonly foilRegion?: 'artwork' | 'full' | 'none';
   readonly join?: {
     /** Same illustration/printing, not merely the Pokémon's name. */
     readonly key: string;
@@ -23,10 +27,27 @@ export const isCardPresentation = (
     ![0, 1, 2, 3].includes(item.readingQuarterTurns as number)
   )
     return false;
+  if (
+    item.finish !== undefined &&
+    !['matte', 'sheen', 'holo', 'rainbow'].includes(item.finish as string)
+  )
+    return false;
+  if (
+    item.foilRegion !== undefined &&
+    !['artwork', 'full', 'none'].includes(item.foilRegion as string)
+  )
+    return false;
   if (item.overlay !== undefined && item.overlay !== 'upper-half') return false;
   if (
     Object.keys(item).some(
-      (key) => !['readingQuarterTurns', 'overlay', 'join'].includes(key)
+      (key) =>
+        ![
+          'readingQuarterTurns',
+          'overlay',
+          'join',
+          'finish',
+          'foilRegion',
+        ].includes(key)
     )
   )
     return false;
@@ -127,6 +148,8 @@ export const sameCardPresentation = (
 ): boolean =>
   left?.readingQuarterTurns === right?.readingQuarterTurns &&
   left?.overlay === right?.overlay &&
+  left?.finish === right?.finish &&
+  left?.foilRegion === right?.foilRegion &&
   left?.join?.key === right?.join?.key &&
   left?.join?.columns === right?.join?.columns &&
   left?.join?.rows === right?.join?.rows &&

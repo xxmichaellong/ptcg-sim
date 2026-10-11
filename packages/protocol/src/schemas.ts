@@ -170,6 +170,8 @@ const CardPresentationSchema = v.pipe(
   v.strictObject({
     readingQuarterTurns: v.picklist([0, 1, 2, 3] as const),
     overlay: v.optional(v.literal('upper-half')),
+    finish: v.optional(v.picklist(['matte', 'sheen', 'holo', 'rainbow'])),
+    foilRegion: v.optional(v.picklist(['artwork', 'full', 'none'])),
     join: v.optional(
       v.strictObject({
         key: v.pipe(

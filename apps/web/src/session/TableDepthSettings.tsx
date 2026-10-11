@@ -81,6 +81,20 @@ export const TableDepthSettings = () => {
               Animate stack height
             </label>
           </div>
+          <div className="ds-switch-row">
+            <input
+              className="ds-switch"
+              id="tableParallaxCheckbox"
+              type="checkbox"
+              checked={depth.parallax === true}
+              onChange={(event) =>
+                store.update({ parallax: event.target.checked })
+              }
+            />
+            <label htmlFor="tableParallaxCheckbox">
+              Subtle pointer parallax
+            </label>
+          </div>
           <p className="table-settings-note">
             Motion follows your settings below. These choices are saved on this
             device.

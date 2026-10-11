@@ -64,6 +64,18 @@
   display: none;
 }
 
+.card-material[data-foil-region='full']::before {
+  clip-path: none;
+}
+.card-material[data-foil-region='artwork']::before {
+  clip-path: inset(10.5% 8% 47.5%);
+}
+.card-material[data-finish='matte']::before,
+.card-material[data-finish='matte']::after,
+.card-material[data-foil-region='none']::before {
+  display: none;
+}
+
 .ptcgsim-card__face.card-material {
   --card-light: max(var(--ptcgsim-glare, 0), var(--ptcgsim-drag-light, 0));
   --card-pointer-x: var(--ptcgsim-glare-x, 50%);

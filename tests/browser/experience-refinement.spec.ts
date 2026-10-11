@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const startTable = async (page: Page): Promise<void> => {
-  await page.goto('/?room-lobby=1&renderer=dom');
+const startTable = async (page: Page, renderer = 'dom'): Promise<void> => {
+  await page.goto(`/?room-lobby=1&renderer=${renderer}`);
   await page.locator('#nameInput').fill('Table review');
   await page.locator('#p1Button').click();
   await expect(page.locator('#messageInput')).toBeEnabled();
@@ -260,4 +260,97 @@ test('room options and the custom-card form support keyboard navigation and focu
   await page.keyboard.press('Escape');
   await expect(page.locator('#nativeDeckBuilderCustomCardModal')).toBeHidden();
   await expect(custom).toBeFocused();
+});
+
+test('magnified desktop viewport keeps card reading and movement controls reachable', async ({
+  browser,
+  baseURL,
+}) => {
+  // CSS viewport/DPR equivalent to a 1440×900 screen at 200% zoom.
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: 720, height: 450 },
+    deviceScaleFactor: 2,
+    reducedMotion: 'reduce',
+  });
+  const page = await context.newPage();
+  try {
+    await startTable(page);
+    const deck = await cardIn(page, 'deck');
+    await page.locator(`[data-card-id="${deck.id}"]`).dblclick();
+    const browser = page.locator('[data-legacy-zone-browser]');
+    await expect(browser).toBeVisible();
+    const source = browser.locator('[data-overlay-card-id]').first();
+    await source.focus();
+    await page.keyboard.press('Enter');
+    const read = browser.getByRole('button', { name: 'Read', exact: true });
+    await read.click();
+    const preview = page.locator('[data-preview-kind="card"]');
+    await expect(preview).toBeVisible();
+    const box = (await preview
+      .locator('.ptcgsim-card-preview-stage')
+      .boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(721);
+    expect(box.y + box.height).toBeLessThanOrEqual(451);
+    await page.keyboard.press('Escape');
+    await expect(read).toBeFocused();
+    const move = browser.getByRole('button', { name: 'Move', exact: true });
+    await expect(move).toBeEnabled();
+    await move.scrollIntoViewIfNeeded();
+    const bounds = (await move.boundingBox())!;
+    expect(bounds.x).toBeGreaterThanOrEqual(0);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(721);
+    await browser.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(browser).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test('a requested Pixi table stays playable when WebGL is unavailable', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      ...args
+    ) {
+      if (String(args[0]).startsWith('webgl')) return null;
+      return Reflect.apply(original, this, args);
+    } as typeof original;
+    localStorage.setItem(
+      'ptcgsim.table-depth.v1',
+      JSON.stringify({ mode: 'table', tilt: 12 })
+    );
+  });
+  await startTable(page, 'pixi');
+  expect(
+    await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
+  ).toBe('dom');
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-table-view',
+    'table'
+  );
+  const hand = await cardIn(page, 'hand');
+  await page.locator(`[data-card-id="${hand.id}"]`).click();
+  await page.keyboard.press('a');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          window.__PTCG_RENDERER_SPIKE__!.scene.cards.filter(
+            (card) => card.role === 'stackEvolution'
+          ).length
+      )
+    )
+    .toBe(1);
+  expect(errors).toEqual([]);
 });

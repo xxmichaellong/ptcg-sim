@@ -1280,7 +1280,8 @@ const handleIntent = (
       const next = nextState(state, {
         presentation: {
           ...state.presentation,
-          selectedCardId: null,
+          // Keep the panel selection so its action row is usable on return.
+          selectedCardId: allowOpenedZoneCard ? intent.cardId : null,
           drag: null,
         },
         overlays: {
@@ -1318,7 +1319,8 @@ const handleIntent = (
       const next = nextState(state, {
         presentation: {
           ...state.presentation,
-          selectedCardId: null,
+          // Keep the panel selection so its action row is usable on return.
+          selectedCardId: allowOpenedZoneCard ? intent.cardId : null,
           drag: null,
         },
         overlays: { contextMenuCardId: null, preview, input: null },

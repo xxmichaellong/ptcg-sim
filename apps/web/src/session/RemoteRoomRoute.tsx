@@ -89,6 +89,8 @@ export interface RemoteRoomRouteProps {
   readonly onDeckSurfaceActivate?: () => void;
   readonly onDeckCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
   readonly deckSessionPrepared?: boolean;
+  /** Restored games retain the saved table rather than auto-installing editor state. */
+  readonly installDeckOnSessionAttach?: boolean;
   readonly onDeckSessionAttach?: () => void;
   readonly onIntent?: (intent: BoardIntent) => void;
   readonly onSubmission?: (
@@ -155,6 +157,7 @@ export const RemoteRoomRoute = ({
   onDeckSurfaceActivate,
   onDeckCustodyChange,
   deckSessionPrepared = false,
+  installDeckOnSessionAttach = true,
   onDeckSessionAttach,
   onIntent = ignoreIntent,
   onSubmission,
@@ -661,7 +664,7 @@ export const RemoteRoomRoute = ({
                     session={runtime.session}
                     open={!chrome.active && activePanel === 'deck'}
                     alternateEnabled={roomMode === 'solo'}
-                    installOnSessionAttach
+                    installOnSessionAttach={installDeckOnSessionAttach}
                     prepareForNewSessionOnAttach={!deckSessionPrepared}
                     onSessionAttach={onDeckSessionAttach}
                     onRequestClose={() => setActivePanel('room')}

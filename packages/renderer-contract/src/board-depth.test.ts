@@ -50,6 +50,7 @@ describe('live board depth', () => {
       strength: 0,
       lift: false,
       animate: true,
+      parallax: false,
     });
     expect(parseBoardDepth({ tilt: NaN, strength: Infinity }).strength).toBe(1);
   });

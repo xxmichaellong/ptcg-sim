@@ -870,206 +870,236 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
   });
   const errors = collectRuntimeErrors(page);
   const evidence: Record<string, unknown> = {};
-  for (const rendererKind of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
-    await waitForReady(page);
-    evidence[rendererKind] = await page.evaluate(async () => {
-      const spike = window.__PTCG_RENDERER_SPIKE__;
-      if (!spike) throw new Error('Missing renderer spike');
-      const renderer = spike.renderer;
-      const diagnostics = () => {
-        const current = renderer.getDiagnostics?.();
-        if (!current) throw new Error('Missing renderer diagnostics');
-        return current;
-      };
-      const installAndMeasure = async (
-        scene: typeof spike.scene,
-        replace = false
-      ) => {
-        const surfaceSelector =
-          spike.rendererKind === 'dom' ? '.ptcgsim-board-surface' : 'canvas';
-        const currentSurface = () =>
-          document.querySelector<HTMLElement>(surfaceSelector);
-        if (!currentSurface())
-          throw new Error('Missing rendered board surface');
-        const previous = diagnostics().renderCommits;
-        let finish!: () => void;
-        const committed = new Promise<void>((resolve) => {
-          finish = resolve;
-        });
-        const hasCommitted = () =>
-          diagnostics().renderCommits > previous &&
-          currentSurface()?.dataset.revision === String(scene.revision);
-        const observer = new MutationObserver(() => {
-          if (hasCommitted()) finish();
-        });
-        observer.observe(document.body, {
-          attributes: true,
-          childList: true,
-          subtree: true,
-          attributeFilter: ['data-revision'],
-        });
-        const timeout = window.setTimeout(() => finish(), 1_000);
-        const started = performance.now();
-        try {
-          renderer.installScene(scene, [], replace ? 'replace' : 'advance');
-        } catch (error) {
-          observer.disconnect();
-          window.clearTimeout(timeout);
-          throw error;
-        }
-        const submissionMs = performance.now() - started;
-        if (hasCommitted()) finish();
-        await committed;
-        observer.disconnect();
-        window.clearTimeout(timeout);
-        if (!hasCommitted()) {
-          throw new Error('Renderer did not commit an installed scene');
-        }
-        return {
-          submissionMs,
-          wallToCommitMs: performance.now() - started,
-        };
-      };
-      const percentile = (values: readonly number[], fraction: number) => {
-        const sorted = [...values].sort((left, right) => left - right);
-        return sorted[Math.max(0, Math.ceil(sorted.length * fraction) - 1)]!;
-      };
-      const original = spike.scene;
-      const cards = Array.from({ length: 120 }, (_, index) => {
-        const source = original.cards[index % original.cards.length]!;
-        return {
-          ...source,
-          id: `benchmark-card-${index}` as typeof source.id,
-          renderKey: `card:benchmark-card-${index}`,
-          interactive: false,
-          bounds: {
-            ...source.bounds,
-            x: source.bounds.x + (index % 3) * 0.01,
-          },
-        };
-      });
-      let revision = Math.max(original.revision + 1, 1_000);
-      let current = { ...original, revision, cards };
-      await installAndMeasure(current, true);
-      for (let attempt = 0; attempt < 250; attempt += 1) {
-        if (diagnostics().globalPendingTextureLoads === 0) break;
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      }
+  for (const mode of ['flat', 'depth', 'table'] as const)
+    for (const rendererKind of ['dom', 'pixi'] as const) {
+      await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
+      await waitForReady(page);
+      expect(
+        await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
+      ).toBe(rendererKind);
+      evidence[`${rendererKind}:${mode}`] = await page.evaluate(
+        async (mode) => {
+          const spike = window.__PTCG_RENDERER_SPIKE__;
+          if (!spike) throw new Error('Missing renderer spike');
+          const renderer = spike.renderer;
+          renderer.setPreferences({
+            reducedMotion: false,
+            highContrast: false,
+            darkMode: true,
+            showZoneOutlines: true,
+            depth: { mode, tilt: 12, strength: 1, lift: true, animate: true },
+          });
+          const diagnostics = () => {
+            const current = renderer.getDiagnostics?.();
+            if (!current) throw new Error('Missing renderer diagnostics');
+            return current;
+          };
+          const installAndMeasure = async (
+            scene: typeof spike.scene,
+            replace = false
+          ) => {
+            const surfaceSelector =
+              spike.rendererKind === 'dom'
+                ? '.ptcgsim-board-surface'
+                : 'canvas';
+            const currentSurface = () =>
+              document.querySelector<HTMLElement>(surfaceSelector);
+            if (!currentSurface())
+              throw new Error('Missing rendered board surface');
+            const previous = diagnostics().renderCommits;
+            let finish!: () => void;
+            const committed = new Promise<void>((resolve) => {
+              finish = resolve;
+            });
+            const hasCommitted = () =>
+              diagnostics().renderCommits > previous &&
+              currentSurface()?.dataset.revision === String(scene.revision);
+            const observer = new MutationObserver(() => {
+              if (hasCommitted()) finish();
+            });
+            observer.observe(document.body, {
+              attributes: true,
+              childList: true,
+              subtree: true,
+              attributeFilter: ['data-revision'],
+            });
+            const timeout = window.setTimeout(() => finish(), 1_000);
+            const started = performance.now();
+            try {
+              renderer.installScene(scene, [], replace ? 'replace' : 'advance');
+            } catch (error) {
+              observer.disconnect();
+              window.clearTimeout(timeout);
+              throw error;
+            }
+            const submissionMs = performance.now() - started;
+            if (hasCommitted()) finish();
+            await committed;
+            observer.disconnect();
+            window.clearTimeout(timeout);
+            if (!hasCommitted()) {
+              throw new Error('Renderer did not commit an installed scene');
+            }
+            return {
+              submissionMs,
+              wallToCommitMs: performance.now() - started,
+            };
+          };
+          const percentile = (values: readonly number[], fraction: number) => {
+            const sorted = [...values].sort((left, right) => left - right);
+            return sorted[
+              Math.max(0, Math.ceil(sorted.length * fraction) - 1)
+            ]!;
+          };
+          const original = spike.scene;
+          const cards = Array.from({ length: 120 }, (_, index) => {
+            const source = original.cards[index % original.cards.length]!;
+            return {
+              ...source,
+              id: `benchmark-card-${index}` as typeof source.id,
+              renderKey: `card:benchmark-card-${index}`,
+              interactive: false,
+              // Unique decoded art exercises GPU leases and memory as well as layout.
+              imageUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="315" height="440"><rect width="315" height="440" rx="12" fill="hsl(${(index * 47) % 360} 55% 40%)"/><circle cx="157" cy="165" r="110" fill="hsl(${(index * 71) % 360} 65% 70%)"/><text x="157" y="365" text-anchor="middle" font-family="sans-serif" font-size="40" fill="white">Print ${index + 1}</text></svg>`)}`,
+              tableImageUrl: undefined,
+              bounds: {
+                ...source.bounds,
+                x: source.bounds.x + (index % 3) * 0.01,
+              },
+            };
+          });
+          let revision = Math.max(original.revision + 1, 1_000);
+          let current = { ...original, revision, cards };
+          await installAndMeasure(current, true);
+          for (let attempt = 0; attempt < 250; attempt += 1) {
+            if (diagnostics().globalPendingTextureLoads === 0) break;
+            await new Promise((resolve) => setTimeout(resolve, 20));
+          }
 
-      const sample = async (mode: 'single' | 'full') => {
-        revision += 1;
-        const nextCards = current.cards.map((card, index) =>
-          mode === 'full' || index === 0
-            ? {
-                ...card,
-                bounds: { ...card.bounds, x: card.bounds.x + 0.01 },
-              }
-            : card
-        );
-        current = { ...current, revision, cards: nextCards };
-        return installAndMeasure(current);
-      };
+          const sample = async (mode: 'single' | 'full') => {
+            revision += 1;
+            const nextCards = current.cards.map((card, index) =>
+              mode === 'full' || index === 0
+                ? {
+                    ...card,
+                    bounds: { ...card.bounds, x: card.bounds.x + 0.01 },
+                  }
+                : card
+            );
+            current = { ...current, revision, cards: nextCards };
+            return installAndMeasure(current);
+          };
 
-      const warmupSampleCount = 10;
-      const measuredSampleCount = 100;
-      for (let warmup = 0; warmup < warmupSampleCount; warmup += 1) {
-        await sample('single');
-        await sample('full');
-      }
-      const single = [];
-      const full = [];
-      for (let index = 0; index < measuredSampleCount; index += 1) {
-        single.push(await sample('single'));
-        full.push(await sample('full'));
-      }
-      const settled = diagnostics();
-      const idleCommits = settled.renderCommits;
-      for (let frame = 0; frame < 5; frame += 1) {
-        await new Promise<void>((resolve) =>
-          requestAnimationFrame(() => resolve())
-        );
-      }
-      const afterIdle = diagnostics();
-      const summarize = (
-        values: readonly {
-          readonly submissionMs: number;
-          readonly wallToCommitMs: number;
-        }[]
-      ) => ({
-        submissionP50Ms: percentile(
-          values.map((value) => value.submissionMs),
-          0.5
-        ),
-        submissionP95Ms: percentile(
-          values.map((value) => value.submissionMs),
-          0.95
-        ),
-        wallToCommitP50Ms: percentile(
-          values.map((value) => value.wallToCommitMs),
-          0.5
-        ),
-        wallToCommitP95Ms: percentile(
-          values.map((value) => value.wallToCommitMs),
-          0.95
-        ),
-      });
-      const gpu = (() => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('webgl2');
-        if (!context) return null;
-        const extension = context.getExtension('WEBGL_debug_renderer_info');
-        return {
-          vendor: extension
-            ? String(context.getParameter(extension.UNMASKED_VENDOR_WEBGL))
-            : null,
-          renderer: extension
-            ? String(context.getParameter(extension.UNMASKED_RENDERER_WEBGL))
-            : null,
-          version: String(context.getParameter(context.VERSION)),
-        };
-      })();
-      const navigatorWithDeviceMemory = navigator as Navigator & {
-        readonly deviceMemory?: number;
-        readonly userAgentData?: { readonly platform?: string };
-      };
-      return {
-        userAgent: navigator.userAgent,
-        platform:
-          navigatorWithDeviceMemory.userAgentData?.platform ??
-          navigator.platform,
-        hardwareConcurrency: navigator.hardwareConcurrency,
-        deviceMemoryGiB: navigatorWithDeviceMemory.deviceMemory ?? null,
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
+          const warmupSampleCount = 10;
+          const measuredSampleCount = 100;
+          for (let warmup = 0; warmup < warmupSampleCount; warmup += 1) {
+            await sample('single');
+            await sample('full');
+          }
+          const single = [];
+          const full = [];
+          for (let index = 0; index < measuredSampleCount; index += 1) {
+            single.push(await sample('single'));
+            full.push(await sample('full'));
+          }
+          const settled = diagnostics();
+          const idleCommits = settled.renderCommits;
+          for (let frame = 0; frame < 5; frame += 1) {
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() => resolve())
+            );
+          }
+          const afterIdle = diagnostics();
+          const summarize = (
+            values: readonly {
+              readonly submissionMs: number;
+              readonly wallToCommitMs: number;
+            }[]
+          ) => ({
+            submissionP50Ms: percentile(
+              values.map((value) => value.submissionMs),
+              0.5
+            ),
+            submissionP95Ms: percentile(
+              values.map((value) => value.submissionMs),
+              0.95
+            ),
+            wallToCommitP50Ms: percentile(
+              values.map((value) => value.wallToCommitMs),
+              0.5
+            ),
+            wallToCommitP95Ms: percentile(
+              values.map((value) => value.wallToCommitMs),
+              0.95
+            ),
+          });
+          const gpu = (() => {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('webgl2');
+            if (!context) return null;
+            const extension = context.getExtension('WEBGL_debug_renderer_info');
+            return {
+              vendor: extension
+                ? String(context.getParameter(extension.UNMASKED_VENDOR_WEBGL))
+                : null,
+              renderer: extension
+                ? String(
+                    context.getParameter(extension.UNMASKED_RENDERER_WEBGL)
+                  )
+                : null,
+              version: String(context.getParameter(context.VERSION)),
+            };
+          })();
+          const navigatorWithDeviceMemory = navigator as Navigator & {
+            readonly deviceMemory?: number;
+            readonly userAgentData?: { readonly platform?: string };
+          };
+          return {
+            mode,
+            userAgent: navigator.userAgent,
+            platform:
+              navigatorWithDeviceMemory.userAgentData?.platform ??
+              navigator.platform,
+            hardwareConcurrency: navigator.hardwareConcurrency,
+            deviceMemoryGiB: navigatorWithDeviceMemory.deviceMemory ?? null,
+            viewport: {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            },
+            screen: {
+              width: window.screen.width,
+              height: window.screen.height,
+              colorDepth: window.screen.colorDepth,
+            },
+            devicePixelRatio: window.devicePixelRatio,
+            gpu,
+            warmupSampleCount,
+            measuredSampleCount,
+            cardCount: settled.renderedCardIds.length,
+            distinctArtworkCount: new Set(
+              current.cards.map((card) => card.imageUrl)
+            ).size,
+            localTextureBindings: settled.localTextureBindings,
+            globalTextureReferences: settled.globalTextureReferences,
+            zoneCount: settled.renderedZoneIds.length,
+            markerCount: settled.renderedMarkerIds.length,
+            pendingTextureLoads: settled.globalPendingTextureLoads,
+            textureLoadFailures: settled.globalTextureLoadFailures,
+            textureUnloadFailures: settled.globalTextureUnloadFailures,
+            idleCommitDelta: afterIdle.renderCommits - idleCommits,
+            single: summarize(single),
+            full: summarize(full),
+            rawSamples: { single, full },
+          };
         },
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height,
-          colorDepth: window.screen.colorDepth,
-        },
-        devicePixelRatio: window.devicePixelRatio,
-        gpu,
-        warmupSampleCount,
-        measuredSampleCount,
-        cardCount: settled.renderedCardIds.length,
-        zoneCount: settled.renderedZoneIds.length,
-        markerCount: settled.renderedMarkerIds.length,
-        pendingTextureLoads: settled.globalPendingTextureLoads,
-        textureLoadFailures: settled.globalTextureLoadFailures,
-        textureUnloadFailures: settled.globalTextureUnloadFailures,
-        idleCommitDelta: afterIdle.renderCommits - idleCommits,
-        single: summarize(single),
-        full: summarize(full),
-        rawSamples: { single, full },
-      };
-    });
-  }
+        mode
+      );
+    }
 
   for (const result of Object.values(evidence)) {
     expect(result).toMatchObject({
       cardCount: 120,
+      distinctArtworkCount: 120,
       pendingTextureLoads: 0,
       textureLoadFailures: 0,
       textureUnloadFailures: 0,

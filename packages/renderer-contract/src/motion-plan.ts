@@ -292,12 +292,16 @@ export const planBoardMotion = (
     if (sameNode && sameNode.id === card.id) {
       if (
         !sameRect(sameNode.bounds, card.bounds) ||
-        sameNode.rotationQuarterTurns !== card.rotationQuarterTurns
+        sameNode.rotationQuarterTurns !== card.rotationQuarterTurns ||
+        paintedImage(sameNode) !== paintedImage(card)
       ) {
         flights.push({
           renderKey: key,
           from: sameNode.bounds,
           fromRotationQuarterTurns: sameNode.rotationQuarterTurns,
+          ...(paintedImage(sameNode) !== paintedImage(card)
+            ? { fromImageUrl: paintedImage(sameNode) }
+            : {}),
           delay: 0,
           kind: 'move',
         });

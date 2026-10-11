@@ -1,3 +1,5 @@
+import { loadBoardRenderer } from '../load-board-renderer.js';
+import { useBoardParallax } from '../motion/useBoardParallax.js';
 import type {
   RemoteGameSession,
   SubmitCommandResult,
@@ -14,7 +16,14 @@ import {
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
@@ -36,10 +45,7 @@ import {
   LegacyBoardOverlays,
   type LegacyBoardOverlayActions,
 } from '../board/overlays/LegacyBoardOverlays.js';
-import type {
-  BoardRendererFactory,
-  RendererKind,
-} from '../renderer-spike-handle.js';
+import type { RendererKind } from '../renderer-spike-handle.js';
 import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
@@ -150,7 +156,7 @@ export const RemoteSessionBoard = ({
   rendererKind,
   onIntent,
   onSubmission,
-  preferences = ROOM_DEFAULT_PREFERENCES,
+  preferences: basePreferences = ROOM_DEFAULT_PREFERENCES,
   roomMode = 'multiplayer',
   hideOpponentHand = false,
   playmatExpanded = false,
@@ -185,6 +191,7 @@ export const RemoteSessionBoard = ({
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
+  const preferences = useBoardParallax(hostRef, basePreferences);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
   // The hovered card, for the inspector; never part of game state.
   const hoverStore = useMemo(() => new CardHoverStore(), []);
@@ -276,6 +283,7 @@ export const RemoteSessionBoard = ({
     setLayout(undefined);
     setRendererStatus({ kind: 'mounting' });
 
+    let actualRendererKind = rendererKind;
     let publishedRevision: number | undefined;
     const publish = (): void => {
       if (disposed || !runtime) return;
@@ -296,7 +304,7 @@ export const RemoteSessionBoard = ({
         return;
       }
       window.__PTCG_RENDERER_SPIKE__ = {
-        rendererKind,
+        rendererKind: actualRendererKind,
         renderer,
         scene: snapshot.scene,
       };
@@ -352,11 +360,9 @@ export const RemoteSessionBoard = ({
 
     const mount = async (): Promise<void> => {
       try {
-        const createRenderer: BoardRendererFactory =
-          rendererKind === 'pixi'
-            ? (await import('@ptcgsim/renderer-pixi')).createPixiBoardRenderer
-            : (await import('@ptcgsim/renderer-dom'))
-                .createReactDomBoardRenderer;
+        const loaded = await loadBoardRenderer(rendererKind);
+        const { createRenderer } = loaded;
+        actualRendererKind = loaded.kind;
         if (disposed) return;
         runtime = new BoardSessionRuntime({
           live: session,
@@ -460,7 +466,7 @@ export const RemoteSessionBoard = ({
     };
   }, [identity, rendererKind, replay, session]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const runtime = runtimeRef.current;
     if (!runtime) return;
     runtime.setPreferences(preferences);
@@ -493,6 +499,31 @@ export const RemoteSessionBoard = ({
           source,
           action,
         });
+      },
+      beginCardAssembly: (cardId) => {
+        const runtime = runtimeRef.current;
+        if (!runtime) return;
+        const opened = runtime.getBoardSnapshot()?.presentation.openedZoneId;
+        if (opened)
+          runtime.emitOpenedZoneCardIntent({ kind: 'CardSelected', cardId });
+        else runtime.emitIntent({ kind: 'CardSelected', cardId });
+        runtime.emitLegacyShortcutAction({
+          action: 'beginAttachOrEvolve',
+          cardId,
+        });
+      },
+      separateCard: (cardId) => {
+        const runtime = runtimeRef.current;
+        if (!runtime) return;
+        runtime.emitIntent({ kind: 'CardSelected', cardId });
+        if (
+          runtime.emitLegacyShortcutAction({
+            action: 'moveCardToZone',
+            destination: 'hand',
+            cardId,
+          })
+        )
+          runtime.dismissLocalPresentation('all');
       },
       previewCard: (cardId) => {
         runtimeRef.current?.emitIntent({

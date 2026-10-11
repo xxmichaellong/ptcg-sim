@@ -24,6 +24,8 @@ const csv = () => {
   for (let part = 0; part < 4; part++)
     add('Mewtwo V-UNION', 'Pokémon', `union-${part}`, {
       readingQuarterTurns: 0,
+      finish: 'rainbow',
+      foilRegion: 'full',
       join: { key: 'mewtwo', columns: 2, rows: 2, part },
     });
   for (let part = 0; part < 2; part++)
@@ -100,7 +102,15 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
   const revision = await page.evaluate(
     () => window.__PTCG_RENDERER_SPIKE__!.scene.revision
   );
-  await page.keyboard.press(key);
+  if (key === 'q') {
+    await page
+      .locator('[data-legacy-zone-browser]')
+      .getByRole('button', { name: 'Actions', exact: true })
+      .click();
+    await page
+      .getByRole('menuitem', { name: 'Assemble / attach to a card…' })
+      .click();
+  } else await page.keyboard.press(key);
   if (key !== 'q')
     await expect
       .poll(() =>
@@ -243,6 +253,42 @@ for (const mode of ['flat', 'table'] as const)
       await expect
         .poll(async () => (await sceneCard(page, 'union-0')).side)
         .toBe('opponent');
+      // The full composition and per-print metadata survive recipient replay.
+      await page.locator('#optionsButton').click();
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.locator('#exportState').click(),
+      ]);
+      const stream = await download.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+      await page.locator('#optionsButton').click();
+      await page.locator('#jsonReplay').setInputFiles({
+        name: 'assembled.json',
+        mimeType: 'application/json',
+        buffer: Buffer.concat(chunks),
+      });
+      await page.locator('#resetBothButton').click();
+      await expect(
+        page.locator('.ptcgsim-card[data-card-composition="joined"]')
+      ).toHaveCount(4);
+      await page.locator('#optionsButton').click();
+      await page.locator('#exitReplay').click();
+      const piece = await sceneCard(page, 'union-0');
+      await page.locator(`[data-card-id="${piece.id}"]`).dblclick();
+      await page.getByRole('button', { name: 'View individual cards' }).click();
+      await page.locator(`[data-stack-preview-card-id="${piece.id}"]`).click();
+      await page
+        .getByRole('button', { name: 'Separate this card to hand' })
+        .click();
+      await expect
+        .poll(async () =>
+          (await sceneCard(page, 'union-0')).parentId.endsWith(':hand')
+        )
+        .toBe(true);
+      await expect(
+        page.locator('.ptcgsim-card[data-card-composition="joined"]')
+      ).toHaveCount(3);
     });
 
     test('LEGEND and BREAK preserve their physical artwork and readable previews', async ({

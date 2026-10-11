@@ -2,7 +2,15 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/browser',
-  testMatch: 'remote-room-solo-full-stack.spec.ts',
+  testMatch: [
+    'remote-room-solo-full-stack.spec.ts',
+    'experience-refinement.spec.ts',
+    'special-card-formats.spec.ts',
+    'table-depth-live.spec.ts',
+    'table-depth-lab.spec.ts',
+    'optimistic-feedback.spec.ts',
+    'depth-recovery.spec.ts',
+  ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
   retries: 0,

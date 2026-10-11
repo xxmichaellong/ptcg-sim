@@ -822,20 +822,27 @@
     scale var(--duration-instant, 90ms) ease;
 }
 
+.ptcgsim-overlay-button:disabled,
+.ptcgsim-card-actions select:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
 .ptcgsim-overlay-button svg {
   flex: none;
   width: 18px;
   height: 18px;
 }
 
-.ptcgsim-overlay-button:hover {
+.ptcgsim-overlay-button:hover:not(:disabled) {
   background-image: linear-gradient(
     var(--color-surface-hover),
     var(--color-surface-hover)
   );
 }
 
-.ptcgsim-overlay-button:active {
+.ptcgsim-overlay-button:active:not(:disabled) {
   background-image: linear-gradient(
     var(--color-surface-pressed),
     var(--color-surface-pressed)
@@ -854,12 +861,12 @@
   color: var(--color-text-on-accent);
 }
 
-.ptcgsim-overlay-button.is-primary:hover {
+.ptcgsim-overlay-button.is-primary:hover:not(:disabled) {
   background-color: var(--color-accent-fill-hover);
   background-image: none;
 }
 
-.ptcgsim-overlay-button.is-primary:active {
+.ptcgsim-overlay-button.is-primary:active:not(:disabled) {
   background-color: var(--color-accent-fill-pressed);
   background-image: none;
 }
@@ -876,12 +883,13 @@
   color: var(--color-text);
 }
 
-:root[data-motion='reduced'] .ptcgsim-overlay-button:active {
+:root[data-motion='reduced'] .ptcgsim-overlay-button:active:not(:disabled) {
   scale: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) .ptcgsim-overlay-button:active {
+  :root:not([data-motion='full'])
+    .ptcgsim-overlay-button:active:not(:disabled) {
     scale: none;
   }
 }
@@ -968,6 +976,118 @@
 .ptcgsim-legacy-zone-browser[data-zone-dragging-card] {
   z-index: -2;
   opacity: 0;
+}
+
+.ptcgsim-zone-card,
+.ptcgsim-legacy-work-area-card {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ptcgsim-zone-card {
+  touch-action: pan-y;
+}
+.ptcgsim-legacy-work-area-card {
+  touch-action: pan-x;
+}
+.ptcgsim-panel-drag-handle {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #ffffff55;
+  background: #15202bdd;
+  color: white;
+  box-shadow: 0 2px 6px #0005;
+  touch-action: none;
+  cursor: grab;
+}
+.ptcgsim-panel-drag-handle svg {
+  width: 20px;
+  height: 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-panel-drag-handle {
+    opacity: 0;
+  }
+  .ptcgsim-zone-card:hover .ptcgsim-panel-drag-handle,
+  .ptcgsim-zone-card:focus-visible .ptcgsim-panel-drag-handle,
+  .ptcgsim-legacy-work-area-card:hover .ptcgsim-panel-drag-handle {
+    opacity: 1;
+  }
+}
+.ptcgsim-panel-drag-face {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 126px;
+  height: 176px;
+  z-index: 20000;
+  border-radius: 5px;
+  background: var(--color-surface-3);
+  box-shadow:
+    0 12px 25px #0006,
+    0 0 0 1px #ffffff50;
+  pointer-events: none;
+  overflow: hidden;
+  --card-light: 0.4;
+}
+.ptcgsim-panel-drag-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.ptcgsim-card-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
+}
+.ptcgsim-card-actions-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.ptcgsim-card-actions select {
+  max-width: 180px;
+  min-height: 36px;
+  color: var(--color-text);
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 600px) {
+  .ptcgsim-card-actions {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+  .ptcgsim-card-actions-label {
+    display: none;
+  }
+  .ptcgsim-card-actions select {
+    flex: 1;
+    width: 0;
+    min-width: 0;
+  }
+}
+.is-peeking .ptcgsim-card-actions {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ptcgsim-legacy-zone-browser .ptcgsim-overlay-header {

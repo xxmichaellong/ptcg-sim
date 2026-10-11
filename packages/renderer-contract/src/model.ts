@@ -19,11 +19,14 @@ export interface BoardDepthPreferences {
   readonly strength: number;
   readonly lift: boolean;
   readonly animate: boolean;
+  readonly parallax?: boolean;
 }
 
 export interface BoardPreferences {
   /** Browser-local visual depth; never enters game state or commands. */
   readonly depth?: BoardDepthPreferences;
+  /** Ephemeral, bounded camera eye position. Never persisted or sent to a room. */
+  readonly viewpoint?: { readonly x: number; readonly y: number };
   readonly reducedMotion: boolean;
   readonly highContrast: boolean;
   readonly darkMode: boolean;

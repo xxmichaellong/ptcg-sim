@@ -129,6 +129,25 @@ describe('table camera', () => {
 });
 
 describe('pile height', () => {
+  it('keeps elevated picking exact throughout bounded pointer parallax', () => {
+    for (const x of [-1, 0, 1])
+      for (const y of [-1, 0, 1]) {
+        const camera = createTableCamera({
+          width: 1440,
+          height: 900,
+          mode: 'table',
+          tiltDegrees: 18,
+          viewpoint: { x, y },
+        });
+        for (const z of [0, 2, 28, 80]) {
+          const original = { x: 865, y: 712, z };
+          const point = projectTablePoint(camera, original);
+          const restored = unprojectTablePoint(camera, point, z)!;
+          expect(restored.x).toBeCloseTo(original.x, 8);
+          expect(restored.y).toBeCloseTo(original.y, 8);
+        }
+      }
+  });
   it('changes on every draw, is empty at zero, and scales with card width', () => {
     expect(tablePileHeight(0, 100)).toBe(0);
     for (let count = 1; count <= 60; count++)

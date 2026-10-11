@@ -18,6 +18,8 @@ describe('card artwork wire contract', () => {
     );
     const presentation = {
       readingQuarterTurns: 1,
+      finish: 'rainbow',
+      foilRegion: 'full',
       join: { key: 'custom', columns: 1, rows: 2, part: 1 },
     };
     expect(
@@ -25,6 +27,8 @@ describe('card artwork wire contract', () => {
     ).toEqual({ ...definition, presentation });
   });
   it.each([
+    { readingQuarterTurns: 0, finish: 'glitter' },
+    { readingQuarterTurns: 0, foilRegion: 'unknown' },
     { readingQuarterTurns: 4 },
     {
       readingQuarterTurns: 0,
