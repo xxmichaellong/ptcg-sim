@@ -13,8 +13,8 @@
 
 :root {
   /* ---- Primitives ------------------------------------------------- */
-  --hue-table: 222;
-  --hue-you: 252;
+  --hue-table: 263;
+  --hue-you: 268;
   --hue-opponent: 18;
   --hue-gold: 84;
   --hue-mint: 158;
@@ -52,7 +52,7 @@
   --text-3xl: 2rem; /* 32px */
 
   --leading-tight: 1.2;
-  --leading-normal: 1.45;
+  --leading-normal: 1.5;
   --weight-regular: 430;
   --weight-medium: 520;
   --weight-semibold: 600;
@@ -73,10 +73,17 @@
 
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-pill: 999px;
+
+  /* Shared interaction geometry, used by dialogs, panels and board chrome. */
+  --control-height: 36px;
+  --control-height-compact: 32px;
+  --control-press-scale: 0.975;
+  --control-hover-rise: -1px;
+  --surface-blur: 20px;
 
   /* ---- Motion ----------------------------------------------------- */
   /* Baked from SPRING_PRESETS (renderer-contract/src/spring.ts). */
@@ -213,29 +220,29 @@
 /* ---- Night table (default) ---------------------------------------- */
 :root,
 :root[data-theme='night'] {
-  --color-room: oklch(0.155 0.02 252);
-  --color-felt: oklch(0.31 0.052 var(--hue-table));
-  --color-felt-deep: oklch(0.235 0.045 var(--hue-table));
-  --color-felt-line: oklch(0.82 0.04 var(--hue-table) / 0.16);
+  --color-room: oklch(0.145 0.015 270);
+  --color-felt: oklch(0.275 0.032 var(--hue-table));
+  --color-felt-deep: oklch(0.205 0.026 var(--hue-table));
+  --color-felt-line: oklch(0.82 0.025 var(--hue-table) / 0.13);
   --color-felt-line-strong: oklch(0.86 0.05 var(--hue-table) / 0.3);
-  --color-felt-label: oklch(0.88 0.03 var(--hue-table) / 0.5);
-  --color-felt-glow: oklch(0.6 0.08 var(--hue-table) / 0.35);
+  --color-felt-label: oklch(0.9 0.018 var(--hue-table) / 0.62);
+  --color-felt-glow: oklch(0.53 0.045 var(--hue-table) / 0.2);
 
-  --color-surface-1: oklch(0.2 0.02 255 / 0.9);
-  --color-rail: oklch(0.185 0.02 255);
-  --color-surface-2: oklch(0.245 0.022 255 / 0.94);
-  --color-surface-3: oklch(0.29 0.024 255);
-  --color-surface-sunken: oklch(0.16 0.018 256 / 0.85);
+  --color-surface-1: oklch(0.205 0.014 270 / 0.96);
+  --color-rail: oklch(0.175 0.012 270);
+  --color-surface-2: oklch(0.24 0.018 270 / 0.97);
+  --color-surface-3: oklch(0.29 0.02 270);
+  --color-surface-sunken: oklch(0.16 0.012 270 / 0.92);
   --color-surface-hover: oklch(1 0 0 / 0.06);
   --color-surface-pressed: oklch(1 0 0 / 0.1);
   --color-scrim: oklch(0.1 0.02 256 / 0.62);
 
-  --color-border: oklch(1 0 0 / 0.09);
-  --color-border-strong: oklch(1 0 0 / 0.18);
+  --color-border: oklch(0.9 0.015 270 / 0.1);
+  --color-border-strong: oklch(0.9 0.015 270 / 0.22);
 
-  --color-text: oklch(0.96 0.006 250);
-  --color-text-muted: oklch(0.79 0.012 250);
-  --color-text-faint: oklch(0.64 0.014 250);
+  --color-text: oklch(0.965 0.005 85);
+  --color-text-muted: oklch(0.8 0.012 270);
+  --color-text-faint: oklch(0.68 0.014 270);
   --color-text-on-accent: oklch(0.99 0.004 250);
 
   --color-accent: oklch(0.62 0.17 var(--hue-you));
@@ -274,12 +281,12 @@
 /* ---- Day table ------------------------------------------------------ */
 :root[data-theme='day'] {
   --color-room: oklch(0.9 0.01 85);
-  --color-felt: oklch(0.83 0.045 175);
-  --color-felt-deep: oklch(0.74 0.05 178);
-  --color-felt-line: oklch(0.32 0.05 180 / 0.18);
-  --color-felt-line-strong: oklch(0.32 0.05 180 / 0.32);
-  --color-felt-label: oklch(0.3 0.05 180 / 0.55);
-  --color-felt-glow: oklch(0.98 0.03 175 / 0.45);
+  --color-felt: oklch(0.885 0.018 85);
+  --color-felt-deep: oklch(0.805 0.022 85);
+  --color-felt-line: oklch(0.35 0.025 75 / 0.16);
+  --color-felt-line-strong: oklch(0.35 0.025 75 / 0.28);
+  --color-felt-label: oklch(0.3 0.02 75 / 0.7);
+  --color-felt-glow: oklch(0.99 0.01 85 / 0.4);
 
   --color-surface-1: oklch(0.985 0.004 85 / 0.92);
   --color-rail: oklch(0.965 0.006 85);
@@ -356,9 +363,17 @@
   --ptcgsim-counter-100: #e70012;
 }
 
+:root[data-motion='reduced'],
+:root[data-motion-speed='instant'] {
+  --control-press-scale: 1;
+  --control-hover-rise: 0px;
+}
+
 /* The system's preference applies unless the player chose full motion. */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='full']) {
     --ptcgsim-motion-hover-duration: 0ms;
+    --control-press-scale: 1;
+    --control-hover-rise: 0px;
   }
 }

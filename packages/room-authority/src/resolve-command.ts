@@ -333,7 +333,8 @@ export const resolveWireCommand = (
       const target = state.stacks[wire.targetStackId];
       if (
         !target ||
-        target.boardPlayerId !== sourcePlayerId ||
+        (wire.mode === 'evolution' &&
+          target.boardPlayerId !== sourcePlayerId) ||
         target.evolutionCardIds.at(-1) !== expectedTargetTop.cardId
       ) {
         return rejected('stale_reference');
@@ -553,8 +554,13 @@ export const resolveWireCommand = (
       };
     }
     case 'RestoreStagedStack': {
-      const resolution = state.workAreas[actorId]?.attachmentResolution;
-      const board = state.boards[actorId];
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
+        return rejected('unauthorized');
+      const resolution = state.workAreas[targetPlayerId]?.attachmentResolution;
+      const board = state.boards[targetPlayerId];
       if (!resolution || resolution.id !== wire.expectedWorkAreaId || !board) {
         return rejected('stale_reference');
       }
@@ -562,7 +568,7 @@ export const resolveWireCommand = (
         accepted: true,
         command: {
           type: 'RestoreStagedStack',
-          playerId: actorId,
+          playerId: targetPlayerId,
           expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           expectedActiveStackId: wire.expectedActiveStackId
             ? asStackId(wire.expectedActiveStackId)
@@ -576,7 +582,12 @@ export const resolveWireCommand = (
       };
     }
     case 'ResolveStagedCards': {
-      const resolution = state.workAreas[actorId]?.attachmentResolution;
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
+        return rejected('unauthorized');
+      const resolution = state.workAreas[targetPlayerId]?.attachmentResolution;
       if (!resolution || resolution.id !== wire.expectedWorkAreaId) {
         return rejected('stale_reference');
       }
@@ -584,14 +595,19 @@ export const resolveWireCommand = (
         accepted: true,
         command: {
           type: 'ResolveStagedCards',
-          playerId: actorId,
+          playerId: targetPlayerId,
           expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           destination: wire.destination,
         },
       };
     }
     case 'ResolveInspectionCards': {
-      const inspection = state.workAreas[actorId]?.inspection;
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
+        return rejected('unauthorized');
+      const inspection = state.workAreas[targetPlayerId]?.inspection;
       if (!inspection || inspection.id !== wire.expectedWorkAreaId) {
         return rejected('stale_reference');
       }
@@ -599,7 +615,7 @@ export const resolveWireCommand = (
         accepted: true,
         command: {
           type: 'ResolveInspectionCards',
-          playerId: actorId,
+          playerId: targetPlayerId,
           expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           destination: wire.destination,
         },
@@ -704,11 +720,18 @@ export const resolveWireCommand = (
         const expectedStadiumCard = wire.expectedStadiumCardId
           ? resolveCard(wire.expectedStadiumCardId)
           : null;
+        const expectedCards = wire.expectedStadiumCardIds?.map(
+          (id) => resolveCard(id)?.cardId
+        );
         if (
+          (expectedCards
+            ? expectedCards.length !== stadium.cardIds.length ||
+              expectedCards.some(
+                (id, index) => !id || id !== stadium.cardIds[index]
+              )
+            : stadium.cardIds.length > 1 || wire.placement === 'add') ||
           (wire.expectedStadiumCardId !== null && !expectedStadiumCard) ||
-          (stadium.cardIds[0] ?? null) !==
-            (expectedStadiumCard?.cardId ?? null) ||
-          stadium.cardIds.length > 1
+          (stadium.cardIds[0] ?? null) !== (expectedStadiumCard?.cardId ?? null)
         ) {
           return rejected('stale_reference');
         }
@@ -720,6 +743,14 @@ export const resolveWireCommand = (
             cardId: card.cardId,
             expectedSourceId,
             expectedStadiumCardId: expectedStadiumCard?.cardId ?? null,
+            ...(expectedCards
+              ? {
+                  expectedStadiumCardIds: expectedCards as NonNullable<
+                    typeof expectedStadiumCard
+                  >['cardId'][],
+                }
+              : {}),
+            ...(wire.placement ? { placement: wire.placement } : {}),
           },
         };
       }

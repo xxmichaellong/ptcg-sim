@@ -1023,7 +1023,7 @@ describe('legacy board keyboard shortcut bridge', () => {
       'Card actions',
       'General',
     ]);
-    expect(reference?.querySelectorAll('li')).toHaveLength(53);
+    expect(reference?.querySelectorAll('li')).toHaveLength(54);
     expect(reference?.textContent).toContain('Attach[q]');
     expect(reference?.textContent).toContain('Close popups[esc]');
     expect(reference?.textContent).toContain(

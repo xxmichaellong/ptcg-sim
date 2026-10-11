@@ -60,6 +60,9 @@ export type GameCommand =
       readonly cardId: CardInstanceId;
       readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
       readonly expectedStadiumCardId: CardInstanceId | null;
+      readonly expectedStadiumCardIds?: readonly CardInstanceId[];
+      /** Manual placement of another piece; no card-rule interpretation. */
+      readonly placement?: 'add';
     }
   | {
       readonly type: 'MoveCardToPlay';

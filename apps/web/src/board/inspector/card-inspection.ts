@@ -1,8 +1,11 @@
-import type {
-  MatchViewState,
-  ViewCard,
-  ViewCardDefinition,
+import {
+  resolveCardPresentation,
+  type MatchViewState,
+  type ViewCard,
 } from '@ptcgsim/game-core';
+import { finishForCard, type CardFinish } from '@ptcgsim/renderer-contract';
+
+export { finishForCard, type CardFinish };
 
 /**
  * How a card catches the light in the inspector. Real finishes vary by print;
@@ -10,24 +13,13 @@ import type {
  * rule-box Pokémon (ex, V, VSTAR, VMAX, GX, EX) get the full rainbow foil,
  * other Pokémon a holo on the art box, everything else a gentle sheen.
  */
-export type CardFinish = 'rainbow' | 'holo' | 'sheen';
-
-// Printed as "Charizard ex", "Lugia VSTAR", "Tapu Lele-GX", "Mewtwo-EX".
-const RULE_BOX = /(?:^|[\s-])(?:ex|EX|GX|V|VSTAR|VMAX|V-UNION|BREAK|LV\.X)$/u;
-
-export const finishForCard = (
-  definition: Pick<ViewCardDefinition, 'name' | 'category'>
-): CardFinish => {
-  if (definition.category !== 'Pokémon') return 'sheen';
-  return RULE_BOX.test(definition.name.trim()) ? 'rainbow' : 'holo';
-};
-
 export interface CardInspection {
   readonly cardId: string;
   readonly name: string;
   /** The full-size face: the board paints the small one. */
   readonly imageUrl: string;
   readonly finish: CardFinish;
+  readonly readingQuarterTurns: number;
 }
 
 const findCard = (view: MatchViewState, cardId: string): ViewCard | null => {
@@ -70,5 +62,7 @@ export const inspectCard = (
     name: definition.name,
     imageUrl: definition.imageUrl,
     finish: finishForCard(definition),
+    readingQuarterTurns:
+      resolveCardPresentation(definition)?.readingQuarterTurns ?? 0,
   };
 };

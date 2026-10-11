@@ -32,7 +32,7 @@ describe('attach/evolve target resolver', () => {
     });
   });
 
-  it('derives attachment mode for non-Pokémon and isolates the source side', () => {
+  it('offers both boards for manual attachment placement', () => {
     const view = createRendererSpikeView();
     const source = Object.values(view.zones)
       .flatMap((zone) => zone.cards.map((card) => ({ card, zone })))
@@ -52,11 +52,12 @@ describe('attach/evolve target resolver', () => {
     });
     if (!resolution.ok) return;
     expect(
-      resolution.targeting.targets.every(
-        (target) =>
-          view.stacks[target.stackId]?.boardPlayerId === view.viewer.playerId
+      new Set(
+        resolution.targeting.targets.map(
+          (target) => view.stacks[target.stackId]?.boardPlayerId
+        )
       )
-    ).toBe(true);
+    ).toEqual(new Set(view.playerOrder));
   });
 
   it('allows attachments and lower evolutions but rejects a stack top', () => {
@@ -84,7 +85,7 @@ describe('attach/evolve target resolver', () => {
     }
   });
 
-  it('derives opponent-public targets from the source placement, not the viewer', () => {
+  it('preserves the opponent-public source while offering both boards', () => {
     const view = createRendererSpikeView();
     const opponentId = view.playerOrder[1]!;
     const source = Object.values(view.zones)
@@ -96,15 +97,17 @@ describe('attach/evolve target resolver', () => {
     const resolution = resolveAttachEvolveTargeting(view, source.card.id);
     if (!resolution.ok) throw new Error(resolution.reason);
     expect(resolution.targeting.expectedSourceId).toBe(source.zone.id);
-    expect(resolution.targeting.targets).toEqual([
-      {
-        stackId: view.boards[opponentId]!.activeStackId,
-        topCardId:
-          view.stacks[
-            view.boards[opponentId]!.activeStackId!
-          ]!.evolutionCards.at(-1)!.id,
-      },
-    ]);
+    expect(resolution.targeting.targets).toEqual(
+      expect.arrayContaining([
+        {
+          stackId: view.boards[opponentId]!.activeStackId,
+          topCardId:
+            view.stacks[
+              view.boards[opponentId]!.activeStackId!
+            ]!.evolutionCards.at(-1)!.id,
+        },
+      ])
+    );
   });
 
   it('accepts recipient-visible inspection and staged work-area sources', () => {

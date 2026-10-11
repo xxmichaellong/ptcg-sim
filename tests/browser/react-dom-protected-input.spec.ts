@@ -203,6 +203,33 @@ const answerNextPrompt = (page: Page, value: string | null) =>
 const exposedCardPoint = (card: Locator): Promise<Point> =>
   card.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
+    const hits = (x: number, y: number) =>
+      document.elementFromPoint(x, y)?.closest('[data-card-id]') === element;
+    // Keep a real pointer click inside the exposed face while hover springs
+    // settle. A one-pixel edge can move between measurement and mouse-down.
+    for (const margin of [6, 3]) {
+      const xs = [
+        bounds.left + bounds.width / 2,
+        bounds.left + margin + 1,
+        bounds.right - margin - 1,
+      ];
+      const ys = [
+        bounds.top + bounds.height / 2,
+        bounds.top + margin + 1,
+        bounds.bottom - margin - 1,
+      ];
+      for (const y of ys)
+        for (const x of xs) {
+          if (
+            hits(x, y) &&
+            hits(x - margin, y) &&
+            hits(x + margin, y) &&
+            hits(x, y - margin) &&
+            hits(x, y + margin)
+          )
+            return { x, y };
+        }
+    }
     for (let y = Math.ceil(bounds.top) + 1; y < bounds.bottom - 1; y += 1) {
       for (let x = Math.ceil(bounds.left) + 1; x < bounds.right - 1; x += 1) {
         const hit = document.elementFromPoint(x, y)?.closest('[data-card-id]');
@@ -293,7 +320,10 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
       ],
       presentation: {
         selectedCardId: null,
-        targetableCardIds: [fixture.activeTopCardId],
+        targetableCardIds: [
+          fixture.activeTopCardId,
+          fixture.conditionlessActiveTopCardId,
+        ],
       },
     });
   // The target ring is drawn on the card's face, ahead of its shadow.
@@ -2848,6 +2878,11 @@ test('Alt-F flips only the local board perspective across selection and replay',
   await page.keyboard.press('Control+Alt+KeyF');
   await expect.poll(async () => (await evidence(page)).boardFlips).toBe(2);
   await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'lower');
+  // The table turns over for a moment (ADR-027): pick the point to click
+  // once it has come to rest, or it lands on whatever has turned under it.
+  await expect(
+    host.locator('.ptcgsim-board-surface[data-motion="idle"]')
+  ).toHaveCount(1);
 
   const selectedCard = host.locator(
     `[data-card-id="${fixture.activeTopCardId}"]`
@@ -3109,8 +3144,17 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
         shortcut: entry.querySelector('code')?.textContent?.trim() ?? null,
       }))
     )
-  ).toEqual(LEGACY_SHORTCUT_REFERENCE_ENTRIES);
-  await expect(reference.locator('code')).toHaveCount(52);
+  ).toEqual(
+    LEGACY_SHORTCUT_REFERENCE_ENTRIES.flatMap((entry) =>
+      entry.shortcut === '[g]'
+        ? [
+            { label: 'to Stadium (join matching pieces)', shortcut: '[g]' },
+            { label: 'add another Stadium piece', shortcut: '[Shift + g]' },
+          ]
+        : [entry]
+    )
+  );
+  await expect(reference.locator('code')).toHaveCount(53);
   expect(
     await reference.locator('.ptcgsim-legacy-shortcut-macos-note').textContent()
   ).toBeTruthy();

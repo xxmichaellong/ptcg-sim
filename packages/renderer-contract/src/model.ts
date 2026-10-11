@@ -13,7 +13,17 @@ export interface BoardViewport {
   readonly devicePixelRatio: number;
 }
 
+export interface BoardDepthPreferences {
+  readonly mode: 'flat' | 'depth' | 'table';
+  readonly tilt: number;
+  readonly strength: number;
+  readonly lift: boolean;
+  readonly animate: boolean;
+}
+
 export interface BoardPreferences {
+  /** Browser-local visual depth; never enters game state or commands. */
+  readonly depth?: BoardDepthPreferences;
   readonly reducedMotion: boolean;
   readonly highContrast: boolean;
   readonly darkMode: boolean;
@@ -130,6 +140,14 @@ export interface CardSceneNode {
   /** Effective physical rotation, including any opponent-frame half-turn. */
   readonly rotationQuarterTurns: QuarterTurns;
   readonly imageUrl: string;
+  /** Cosmetic finish for a disclosed face; hidden faces never carry one. */
+  readonly finish?: import('./card-material.js').CardFinish;
+  readonly presentation?: import('@ptcgsim/game-core').CardPresentation;
+  /** Joined artwork/overlay envelope, also used for drag and marker placement. */
+  readonly composition?: {
+    readonly kind: 'joined' | 'overlay';
+    readonly bounds: Rect;
+  };
   /**
    * What the table paints instead of `imageUrl`, when they differ. A deck's
    * cover is its owner's card back even though the owner can see the deck's

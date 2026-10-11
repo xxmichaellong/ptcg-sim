@@ -33,17 +33,34 @@ const escapeCsvCell = (value: string | number): string => {
 
 export const serializeDeckToSimCsv = (decklist: Deck = {}): string => {
   const rows: string[] = [];
+  const hasPresentation = Object.values(decklist).some((group) =>
+    group.cards.some((variant) => variant.data.presentation !== undefined)
+  );
   for (const [cardName, group] of Object.entries(decklist)) {
     for (const variant of group?.cards ?? []) {
       const type = formatCardType(variant.data);
       const url = formatImageUrl(variant.data);
       if (!cardName || !type || !url) continue;
       rows.push(
-        [variant.count, cardName, type, url].map(escapeCsvCell).join(',')
+        [
+          variant.count,
+          cardName,
+          type,
+          url,
+          ...(hasPresentation
+            ? [
+                variant.data.presentation === undefined
+                  ? ''
+                  : JSON.stringify(variant.data.presentation),
+              ]
+            : []),
+        ]
+          .map(escapeCsvCell)
+          .join(',')
       );
     }
   }
-  return `${SIM_CSV_HEADER}\n${rows.join('\n')}`;
+  return `${SIM_CSV_HEADER}${hasPresentation ? ',Presentation' : ''}\n${rows.join('\n')}`;
 };
 
 export type DeckCsvIssueCode =
@@ -53,6 +70,7 @@ export type DeckCsvIssueCode =
   | 'unexpected_quote'
   | 'invalid_header'
   | 'invalid_column_count'
+  | 'invalid_presentation'
   | 'invalid_quantity'
   | 'deck_too_large'
   | 'missing_name'
@@ -196,10 +214,9 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
         ...header.slice(1),
       ]
     : [];
-  if (
-    normalizedHeader.length !== 4 ||
-    normalizedHeader.join(',') !== SIM_CSV_HEADER
-  ) {
+  const hasPresentation =
+    normalizedHeader.join(',') === `${SIM_CSV_HEADER},Presentation`;
+  if (!hasPresentation && normalizedHeader.join(',') !== SIM_CSV_HEADER) {
     issues.push({
       code: 'invalid_header',
       row: 1,
@@ -217,15 +234,35 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
     const row = rows[index];
     if (!row) continue;
     const rowNumber = index + 1;
-    if (row.length !== 4) {
+    if (row.length !== (hasPresentation ? 5 : 4)) {
       issues.push({
         code: 'invalid_column_count',
         row: rowNumber,
-        message: `Row ${rowNumber} must contain exactly four columns.`,
+        message: `Row ${rowNumber} must contain exactly ${hasPresentation ? 'five' : 'four'} columns.`,
       });
       continue;
     }
 
+    let presentation: unknown;
+    if (hasPresentation && row[4]?.trim()) {
+      try {
+        if (row[4].length > 1024) throw new Error('too large');
+        presentation = JSON.parse(row[4]);
+        if (
+          !presentation ||
+          typeof presentation !== 'object' ||
+          Array.isArray(presentation)
+        )
+          throw new Error('not an object');
+      } catch {
+        issues.push({
+          code: 'invalid_presentation',
+          row: rowNumber,
+          message: `Row ${rowNumber} has invalid presentation JSON.`,
+        });
+        continue;
+      }
+    }
     const quantityText = (row[0] ?? '').trim();
     const name = (row[1] ?? '').trim();
     const supertype = (row[2] ?? '').trim();
@@ -311,12 +348,21 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       setOwnGroup(deck, name, group);
     }
     const existing = group.cards.find(
-      (variant) => variant.data.image === image
+      (variant) =>
+        variant.data.image === image &&
+        JSON.stringify(variant.data.presentation) ===
+          JSON.stringify(presentation)
     );
     if (existing) existing.count += quantity;
     else {
       group.cards.push({
-        data: { count: quantityText, name, supertype, image },
+        data: {
+          count: quantityText,
+          name,
+          supertype,
+          image,
+          ...(presentation ? { presentation } : {}),
+        },
         count: quantity,
       });
     }

@@ -234,13 +234,18 @@ describe('atomic staged-card bulk resolution', () => {
       if (!result.accepted) throw new Error(result.message);
       expect(result.state.zones[zoneId]?.cardIds).toEqual([
         ...before,
-        ...prepared.stagedCardIds,
+        ...prepared.stagedCardIds.filter(
+          (id) => id !== prepared.crossOwnerCardId
+        ),
       ]);
       expect(result.state.workAreas[p1]?.attachmentResolution).toBeNull();
       expect(result.state.cards[prepared.crossOwnerCardId]?.ownerId).toBe(p2);
       expect(
         result.state.zones[zoneId]?.cardIds.includes(prepared.crossOwnerCardId)
-      ).toBe(true);
+      ).toBe(false);
+      expect(result.state.zones[playerZoneId(p2, zoneKind)]!.cardIds).toContain(
+        prepared.crossOwnerCardId
+      );
       expect(result.state.cards[prepared.normalizedTrainerId]).toMatchObject({
         currentCategory: 'Trainer',
         face: 'up',
@@ -260,7 +265,12 @@ describe('atomic staged-card bulk resolution', () => {
     const result = resolve(prepared, 'hand');
     if (!result.accepted) throw new Error(result.message);
     const handId = playerZoneId(p1, 'hand');
-    expect(result.state.zones[handId]?.cardIds).toEqual(prepared.stagedCardIds);
+    expect(result.state.zones[handId]?.cardIds).toEqual(
+      prepared.stagedCardIds.filter((id) => id !== prepared.crossOwnerCardId)
+    );
+    expect(result.state.zones[playerZoneId(p2, 'hand')]!.cardIds).toEqual([
+      prepared.crossOwnerCardId,
+    ]);
     for (const cardId of prepared.stagedCardIds) {
       expect(result.state.cards[cardId]?.visibilityGeneration).toBe(
         generations.get(cardId)! + 1
@@ -300,7 +310,12 @@ describe('atomic staged-card bulk resolution', () => {
     const result = resolve(prepared, 'shuffleIntoDeck');
     if (!result.accepted) throw new Error(result.message);
     expect(result.state.zones[deckId]?.cardIds).toEqual(
-      [...oldDeck, ...prepared.stagedCardIds].reverse()
+      [
+        ...oldDeck,
+        ...prepared.stagedCardIds.filter(
+          (id) => id !== prepared.crossOwnerCardId
+        ),
+      ].reverse()
     );
     for (const cardId of [...oldDeck, ...prepared.stagedCardIds]) {
       expect(result.state.cards[cardId]?.visibilityGeneration).toBe(
@@ -321,7 +336,11 @@ describe('atomic staged-card bulk resolution', () => {
     if (!result.accepted) throw new Error(result.message);
     expect(result.state.zones[deckId]?.cardIds).toEqual([
       ...oldDeck,
-      ...[...prepared.stagedCardIds].reverse(),
+      ...[
+        ...prepared.stagedCardIds.filter(
+          (id) => id !== prepared.crossOwnerCardId
+        ),
+      ].reverse(),
     ]);
     expect(
       oldDeck.map((cardId) => result.state.cards[cardId]!.visibilityGeneration)
@@ -364,14 +383,14 @@ describe('atomic staged-card bulk resolution', () => {
     const prepared = prepareStagedCards(undefined, 200);
     const redDeckId = playerZoneId(p2, 'deck');
     const handId = playerZoneId(p1, 'hand');
-    const extraCards = prepared.state.zones[redDeckId]!.cardIds.slice(0, 196);
+    const extraCards = prepared.state.zones[redDeckId]!.cardIds.slice(0, 197);
     const state: MatchState = {
       ...prepared.state,
       zones: {
         ...prepared.state.zones,
         [redDeckId]: {
           ...prepared.state.zones[redDeckId]!,
-          cardIds: prepared.state.zones[redDeckId]!.cardIds.slice(196),
+          cardIds: prepared.state.zones[redDeckId]!.cardIds.slice(197),
         },
         [handId]: {
           ...prepared.state.zones[handId]!,

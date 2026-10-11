@@ -148,7 +148,11 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'beginAttachOrEvolve';
       readonly cardId: ViewCardId;
     }
-  | { readonly action: 'moveCardToStadium'; readonly cardId: ViewCardId };
+  | {
+      readonly action: 'moveCardToStadium';
+      readonly cardId: ViewCardId;
+      readonly placement?: 'add';
+    };
 
 export type LegacyBoardShortcutActionRejectionReason =
   | 'not_player'
@@ -553,7 +557,7 @@ export const resolveLegacyBoardShortcutAction = (
     }
     case 'moveCardToStadium':
       return retainResolution(
-        resolveCardStadiumMoveAction(view, request.cardId),
+        resolveCardStadiumMoveAction(view, request.cardId, request.placement),
         true
       );
   }
@@ -563,6 +567,7 @@ export interface LegacyBoardShortcutKey {
   readonly key: string;
   readonly code: string;
   readonly altKey: boolean;
+  readonly shiftKey?: boolean;
   readonly ctrlKey?: boolean;
   readonly getModifierState?: (keyArg: string) => boolean;
 }
@@ -668,7 +673,11 @@ export const resolveLegacyBoardShortcutKey = (
     return { action: 'moveCardToPlay', cardId, slot: 'bench' };
   }
   if (!altKey && matches(input, 'g', 'KeyG')) {
-    return { action: 'moveCardToStadium', cardId };
+    return {
+      action: 'moveCardToStadium',
+      cardId,
+      ...(input.shiftKey ? { placement: 'add' as const } : {}),
+    };
   }
   if (!altKey && (matches(input, 'q', 'KeyQ') || matches(input, 'e', 'KeyE'))) {
     return { action: 'beginAttachOrEvolve', cardId };

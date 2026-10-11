@@ -571,12 +571,12 @@ describe('RemoteRoomRoute', () => {
     expect(host.textContent).toContain('Dark mode');
     expect(host.textContent).toContain('Hide containers');
     expect(host.textContent).toContain("Hide opponent's hand (Solo mode)");
-    expect(host.textContent).toContain('Hold (shift) to view keybinds');
+    expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
     const contact = host.querySelector<HTMLAnchorElement>(
       '#twitterDescription a'
     )!;
     expect(contact.href).toBe('https://twitter.com/xxmichaellong');
-    expect(contact.target).toBe('blank');
+    expect(contact.target).toBe('_blank');
     expect(contact.rel).toBe('noopener noreferrer');
     expect(contact.querySelector('svg')).not.toBeNull();
 

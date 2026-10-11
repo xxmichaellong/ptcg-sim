@@ -470,6 +470,10 @@
               "kind": "type"
             },
             {
+              "name": "CardPresentation",
+              "kind": "type"
+            },
+            {
               "name": "cardSourceSnapshot",
               "kind": "value"
             },
@@ -575,6 +579,10 @@
             },
             {
               "name": "isCardKnownToViewer",
+              "kind": "value"
+            },
+            {
+              "name": "isCardPresentation",
               "kind": "value"
             },
             {
@@ -687,6 +695,14 @@
             },
             {
               "name": "resetReturnCapacityIsValid",
+              "kind": "value"
+            },
+            {
+              "name": "resolveCardPresentation",
+              "kind": "value"
+            },
+            {
+              "name": "sameCardPresentation",
               "kind": "value"
             },
             {
@@ -1222,6 +1238,14 @@
               "kind": "type"
             },
             {
+              "name": "BoardDepthPreferences",
+              "kind": "type"
+            },
+            {
+              "name": "BoardDepthProjection",
+              "kind": "type-value"
+            },
+            {
               "name": "BoardDragController",
               "kind": "type-value"
             },
@@ -1406,6 +1430,14 @@
               "kind": "value"
             },
             {
+              "name": "CardComposition",
+              "kind": "type"
+            },
+            {
+              "name": "CardFinish",
+              "kind": "type"
+            },
+            {
               "name": "CardFlight",
               "kind": "type"
             },
@@ -1420,6 +1452,22 @@
             {
               "name": "CardSceneRole",
               "kind": "type"
+            },
+            {
+              "name": "composeCardArtwork",
+              "kind": "value"
+            },
+            {
+              "name": "ComposedCardBox",
+              "kind": "type"
+            },
+            {
+              "name": "CompositionCard",
+              "kind": "type"
+            },
+            {
+              "name": "compositionHold",
+              "kind": "value"
             },
             {
               "name": "containsPoint",
@@ -1458,6 +1506,10 @@
               "kind": "value"
             },
             {
+              "name": "createTableCamera",
+              "kind": "value"
+            },
+            {
               "name": "createTableLayoutSnapshot",
               "kind": "value"
             },
@@ -1468,6 +1520,10 @@
             {
               "name": "DamageCounterBand",
               "kind": "type"
+            },
+            {
+              "name": "DEFAULT_BOARD_DEPTH",
+              "kind": "value"
             },
             {
               "name": "DEFAULT_BOARD_PREFERENCES",
@@ -1502,6 +1558,14 @@
               "kind": "value"
             },
             {
+              "name": "finishForCard",
+              "kind": "value"
+            },
+            {
+              "name": "fitCardComposition",
+              "kind": "value"
+            },
+            {
               "name": "flipBoardLayoutState",
               "kind": "value"
             },
@@ -1511,6 +1575,10 @@
             },
             {
               "name": "insetRect",
+              "kind": "value"
+            },
+            {
+              "name": "interpolateTablePose",
               "kind": "value"
             },
             {
@@ -1778,6 +1846,14 @@
               "kind": "type"
             },
             {
+              "name": "paintedCardBounds",
+              "kind": "value"
+            },
+            {
+              "name": "parseBoardDepth",
+              "kind": "value"
+            },
+            {
               "name": "PerceptualSpring",
               "kind": "type"
             },
@@ -1792,6 +1868,22 @@
             {
               "name": "PlayerZoneGeometryKind",
               "kind": "type"
+            },
+            {
+              "name": "presentHeldMarker",
+              "kind": "value"
+            },
+            {
+              "name": "projectTableCard",
+              "kind": "value"
+            },
+            {
+              "name": "projectTablePoint",
+              "kind": "value"
+            },
+            {
+              "name": "quadBounds",
+              "kind": "value"
             },
             {
               "name": "Rect",
@@ -1811,6 +1903,10 @@
             },
             {
               "name": "resolveBoardDropTarget",
+              "kind": "value"
+            },
+            {
+              "name": "sameTablePose",
               "kind": "value"
             },
             {
@@ -1878,7 +1974,67 @@
               "kind": "value"
             },
             {
+              "name": "TableCamera",
+              "kind": "type"
+            },
+            {
+              "name": "tableCardMatrix",
+              "kind": "value"
+            },
+            {
+              "name": "TableCardPose",
+              "kind": "type"
+            },
+            {
+              "name": "tablePileHeight",
+              "kind": "value"
+            },
+            {
+              "name": "TablePoint",
+              "kind": "type"
+            },
+            {
+              "name": "TablePoint3D",
+              "kind": "type"
+            },
+            {
+              "name": "tablePoseEdges",
+              "kind": "value"
+            },
+            {
+              "name": "tablePoseLocalPoint",
+              "kind": "value"
+            },
+            {
+              "name": "tablePoseMatrix",
+              "kind": "value"
+            },
+            {
+              "name": "TablePoseMotion",
+              "kind": "type-value"
+            },
+            {
+              "name": "tablePoseQuad",
+              "kind": "value"
+            },
+            {
               "name": "tableRailWidth",
+              "kind": "value"
+            },
+            {
+              "name": "TableViewMode",
+              "kind": "type"
+            },
+            {
+              "name": "turnCardComposition",
+              "kind": "value"
+            },
+            {
+              "name": "unionCardBounds",
+              "kind": "value"
+            },
+            {
+              "name": "unprojectTablePoint",
               "kind": "value"
             },
             {

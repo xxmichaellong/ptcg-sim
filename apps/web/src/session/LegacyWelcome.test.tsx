@@ -53,7 +53,9 @@ describe('LegacyWelcome', () => {
     expect(host.querySelector('#donationsPage')).toBeNull();
     expect(host.querySelector('#changelog')).not.toBeNull();
 
-    // Clicking the page closes it.
+    // Reading/selecting inside the sheet keeps it open; the backdrop closes.
+    await act(async () => changelog.querySelector<HTMLElement>('h2')!.click());
+    expect(host.querySelector('#changelog')).not.toBeNull();
     await act(async () =>
       host.querySelector<HTMLElement>('#changelog')!.click()
     );
@@ -91,6 +93,21 @@ describe('LegacyWelcome', () => {
     )!;
     await act(async () => load.click());
     expect(onLoadDeck).toHaveBeenCalledOnce();
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('keeps help tucked away during play and lets the player reopen it', async () => {
+    const { host, root } = await mount();
+    await act(async () => root.render(<LegacyWelcome compact />));
+    const help = host.querySelector<HTMLElement>('.welcome-help')!;
+    const toggle = host.querySelector<HTMLButtonElement>(
+      '.welcome-help-toggle'
+    )!;
+    expect(help.hidden).toBe(true);
+    await act(async () => toggle.click());
+    expect(help.hidden).toBe(false);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
     await act(async () => root.unmount());
     host.remove();
   });

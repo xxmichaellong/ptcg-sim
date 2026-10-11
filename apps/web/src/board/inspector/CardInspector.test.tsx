@@ -71,6 +71,9 @@ describe('CardInspector', () => {
     );
     const card = inspector.querySelector<HTMLElement>('.card-inspector__card')!;
     expect(card.style.getPropertyValue('--inspector-tilt-y')).toBe('2.20deg');
+    await act(async () => vi.advanceTimersByTime(600));
+    expect(card.style.getPropertyValue('--inspector-tilt-y')).toBe('0deg');
+    expect(card.style.getPropertyValue('--inspector-light')).toBe('0');
 
     // Already open: the next card shows at once.
     const second = handCards[1]!;

@@ -1,4 +1,6 @@
 export * from './defaults.js';
+export * from './card-material.js';
+export * from './card-composition.js';
 export * from './drag.js';
 export * from './geometry.js';
 export * from './layout.js';
@@ -9,3 +11,6 @@ export * from './motion-plan.js';
 export * from './scene.js';
 export * from './spike-fixture.js';
 export * from './spring.js';
+export * from './table-camera.js';
+export * from './board-depth.js';
+export * from './table-pose-motion.js';

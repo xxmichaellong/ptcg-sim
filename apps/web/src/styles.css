@@ -42,6 +42,12 @@ select {
   overflow: hidden;
 }
 
+/* A fixed table must not become a scroll container when focus returns to a
+   card during its travel animation. Piles own their separate scrolling. */
+.board-spike-host[data-geometry='2'] {
+  overflow: clip;
+}
+
 .renderer-surface-host {
   position: absolute;
   inset: 0;
@@ -202,20 +208,6 @@ select {
 .legacy-room-settings #hideHandCheckbox,
 .legacy-room-settings #keybindReminder {
   margin-top: 1vh;
-}
-
-.legacy-room-settings #changeBackgroundButton {
-  margin: 1vh;
-  padding: 3px 6px;
-  border: 0;
-  border-radius: 0.3rem;
-  color: #fff;
-  font-size: 2vh;
-  cursor: pointer;
-}
-
-.legacy-room-settings #changeBackgroundButton:hover {
-  background-color: rgb(150 144 144 / 86.4%);
 }
 
 .legacy-room-settings #keybindReminder {

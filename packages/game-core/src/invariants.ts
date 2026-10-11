@@ -1,4 +1,5 @@
 import type { CardInstanceId, StackId } from './ids.js';
+import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
 import {
@@ -142,6 +143,12 @@ export const collectInvariantProblems = (
   }
 
   for (const [definitionKey, definition] of Object.entries(state.definitions)) {
+    if (
+      definition.presentation !== undefined &&
+      !isCardPresentation(definition.presentation)
+    ) {
+      problems.push(`definition ${definition.id} has invalid presentation`);
+    }
     if (definition.id !== definitionKey) {
       problems.push(`definition key ${definitionKey} does not match its ID`);
     }
@@ -236,8 +243,8 @@ export const collectInvariantProblems = (
     }
     if (hasDuplicates(zone.cardIds))
       problems.push(`zone ${zone.id} contains duplicate cards`);
-    if (zone.kind === 'stadium' && zone.cardIds.length > 1) {
-      problems.push('stadium contains more than one card');
+    if (zone.kind === 'stadium' && zone.cardIds.length > 4) {
+      problems.push('stadium contains more than four pieces');
     }
     for (const cardId of zone.cardIds) {
       if (!state.cards[cardId])

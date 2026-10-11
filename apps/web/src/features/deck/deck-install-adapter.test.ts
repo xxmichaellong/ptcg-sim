@@ -575,3 +575,56 @@ describe('DeckInstallCoordinator', () => {
     expect(coordinator.flush()).toBe(false);
   });
 });
+
+describe('physical layout installation', () => {
+  it('preserves authored layouts and gives different piece positions different definition identities', async () => {
+    const entries = await Promise.all(
+      [0, 1].map((part) =>
+        deckToLoadDeckEntries(
+          deckWith(
+            card('Custom pair', '/same.png', {
+              presentation: {
+                readingQuarterTurns: 0,
+                join: { key: 'custom', columns: 2, rows: 1, part },
+              },
+            })
+          ),
+          { digest: deterministicDigest }
+        )
+      )
+    );
+    expect(entries[0]![0]!.definition.presentation?.join?.part).toBe(0);
+    expect(entries[1]![0]!.definition.presentation?.join?.part).toBe(1);
+    expect(entries[0]![0]!.definition.id).not.toBe(
+      entries[1]![0]!.definition.id
+    );
+  });
+  it('rejects invalid layouts before installation and recognizes catalog scans', async () => {
+    await expect(
+      deckToLoadDeckEntries(
+        deckWith(
+          card('Bad', '/bad', {
+            presentation: {
+              readingQuarterTurns: 0,
+              join: { key: 'x', columns: 2, rows: 2, part: 4 },
+            },
+          })
+        ),
+        { digest: deterministicDigest }
+      )
+    ).rejects.toBeInstanceOf(DeckInstallAdapterError);
+    const entries = await deckToLoadDeckEntries(
+      deckWith(
+        card(
+          'Lugia LEGEND',
+          'https://assets.tcgdex.net/en/hgss/hgss1/113/high.webp'
+        )
+      ),
+      { digest: deterministicDigest }
+    );
+    expect(entries[0]!.definition.presentation).toMatchObject({
+      readingQuarterTurns: 1,
+      join: { part: 0, columns: 1, rows: 2 },
+    });
+  });
+});

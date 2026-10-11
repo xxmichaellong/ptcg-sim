@@ -40,6 +40,7 @@ export const OVERLAY_CARD_MIN_HEIGHT = 72;
 export const OVERLAY_PANEL_PADDING = 16;
 export const OVERLAY_CARD_GAP = 12;
 export const OVERLAY_HEADER_HEIGHT = 56;
+export const OVERLAY_BROWSER_TOOLS_HEIGHT = 48;
 export const OVERLAY_ACTIONS_HEIGHT = 58;
 export const OVERLAY_PANEL_BORDER = 1;
 /** Room for a vertical scrollbar, so a scrolling grid keeps its columns. */
@@ -47,6 +48,8 @@ export const OVERLAY_SCROLLBAR_ALLOWANCE = 12;
 /** Room for a panel's title bar: its name, count, owner and four buttons. */
 export const OVERLAY_PANEL_MIN_WIDTH = 760;
 export const OVERLAY_PANEL_MAX_WIDTH = 1480;
+
+export type CardBrowserSize = 'auto' | 'compact' | 'large';
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
@@ -98,7 +101,8 @@ const runLength = (count: number, size: number): number =>
  */
 export const zoneBrowserLayout = (
   board: OverlayBoardSize,
-  cardCount: number
+  cardCount: number,
+  size: CardBrowserSize = 'auto'
 ): OverlayPanelLayout => {
   const count = finiteCount(cardCount);
   const margin = overlayBoardMargin(board);
@@ -111,9 +115,13 @@ export const zoneBrowserLayout = (
   const maxContentWidth = maxWidth - chromeWidth;
   const large = overlayLargeCardHeight(board);
   const cardHeight =
-    count <= columnsFor(maxContentWidth, large) * 2
-      ? large
-      : Math.min(large, overlayCompactCardHeight(board));
+    size === 'large'
+      ? Math.max(OVERLAY_CARD_MIN_HEIGHT, Math.min(420, board.height * 0.48))
+      : size === 'compact'
+        ? Math.min(large, overlayCompactCardHeight(board))
+        : count <= columnsFor(maxContentWidth, large) * 2
+          ? large
+          : Math.min(large, overlayCompactCardHeight(board));
   const columns = Math.min(
     Math.max(1, count),
     columnsFor(maxContentWidth, cardHeight)
@@ -121,6 +129,7 @@ export const zoneBrowserLayout = (
   const rows = Math.max(1, Math.ceil(count / columns));
   const chromeHeight =
     OVERLAY_HEADER_HEIGHT +
+    OVERLAY_BROWSER_TOOLS_HEIGHT +
     2 * OVERLAY_PANEL_PADDING +
     2 * OVERLAY_PANEL_BORDER;
   const width = clamp(

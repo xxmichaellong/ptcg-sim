@@ -3357,7 +3357,7 @@ describe('renderer-neutral board scene', () => {
     );
   });
 
-  it('rejects a malformed projection with multiple stadium cards', () => {
+  it('rejects a malformed projection exceeding the Stadium piece capacity', () => {
     const base = createRendererSpikeView();
     const stadium = base.zones['zone:shared:stadium']!;
     const first = stadium.cards[0]!;
@@ -3369,16 +3369,16 @@ describe('renderer-neutral board scene', () => {
             ...base.zones,
             [stadium.id]: {
               ...stadium,
-              cards: [
-                first,
-                { ...first, id: asViewCardId('second-stadium-card') },
-              ],
+              cards: Array.from({ length: 5 }, (_, index) => ({
+                ...first,
+                id: asViewCardId(`stadium-card-${index}`),
+              })),
             },
           },
         },
         { ...options, bottomPlayerId: base.playerOrder[0]! }
       )
-    ).toThrow('at most one card');
+    ).toThrow('at most four pieces');
   });
 
   it('rejects a projected card owner outside the two-player board', () => {

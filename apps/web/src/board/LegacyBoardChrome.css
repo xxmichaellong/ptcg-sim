@@ -370,3 +370,11 @@
 .ptcgsim-legacy-board-chrome .legacy-hand-sort span {
   display: inline-block;
 }
+
+/* The projected center gap narrows at steep angles. Keep controls upright
+   and comfortably above the card faces, with a 24px minimum target. */
+.ptcgsim-legacy-board-chrome
+  .legacy-board-controls[data-table-depth]
+  .legacy-board-control-button {
+  height: var(--table-control-height);
+}

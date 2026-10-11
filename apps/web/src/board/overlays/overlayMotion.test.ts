@@ -35,6 +35,7 @@ describe('overlay motion', () => {
     document.body.replaceChildren();
     delete document.documentElement.dataset.motion;
     document.documentElement.style.removeProperty('--motion-scale');
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -145,5 +146,44 @@ describe('overlay motion', () => {
     expect(style.getPropertyValue('--ptcgsim-tilt-x')).toBe('0deg');
     expect(style.getPropertyValue('--ptcgsim-tilt-y')).toBe('0deg');
     expect(style.getPropertyValue('--ptcgsim-glare-opacity')).toBe('0');
+  });
+
+  it('settles the reading plane when the pointer rests and disposes queued work', async () => {
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'clearTimeout',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+      ],
+    });
+    const stage = sized(rect(0, 0, 200, 280));
+    const target = { current: document.createElement('span') };
+    const handlers = createTiltHandlers(target);
+    const move = () =>
+      handlers.onPointerMove({
+        currentTarget: stage,
+        clientX: 0,
+        clientY: 0,
+      } as never);
+    move();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(
+      target.current.style.getPropertyValue('--ptcgsim-glare-opacity')
+    ).toBe('1');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(target.current.style.getPropertyValue('--ptcgsim-tilt-y')).toBe(
+      '0deg'
+    );
+    expect(
+      target.current.style.getPropertyValue('--ptcgsim-glare-opacity')
+    ).toBe('0');
+    move();
+    handlers.dispose();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(
+      target.current.style.getPropertyValue('--ptcgsim-glare-opacity')
+    ).toBe('0');
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

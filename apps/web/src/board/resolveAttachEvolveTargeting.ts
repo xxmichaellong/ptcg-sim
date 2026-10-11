@@ -82,18 +82,21 @@ export const resolveAttachEvolveTargeting = (
     mode = source.card.category === 'Pokémon' ? 'evolution' : 'attachment';
   }
 
-  const board = view.boards[source.sourcePlayerId];
-  if (!board) return rejectedTargeting('unsupported_target');
-  const stackIds = [
-    ...(board.activeStackId ? [board.activeStackId] : []),
-    ...board.benchStackIds,
-  ];
-  const targets = stackIds.flatMap((stackId) => {
-    const stack = view.stacks[stackId];
-    const topCardId = stack?.evolutionCards.at(-1)?.id;
-    return stack && stack.boardPlayerId === source.sourcePlayerId && topCardId
-      ? [{ stackId, topCardId }]
-      : [];
+  const boardIds =
+    mode === 'attachment' ? view.playerOrder : [source.sourcePlayerId];
+  const targets = boardIds.flatMap((playerId) => {
+    const board = view.boards[playerId];
+    if (!board) return [];
+    return [
+      ...(board.activeStackId ? [board.activeStackId] : []),
+      ...board.benchStackIds,
+    ].flatMap((stackId) => {
+      const stack = view.stacks[stackId];
+      const topCardId = stack?.evolutionCards.at(-1)?.id;
+      return stack && stack.boardPlayerId === playerId && topCardId
+        ? [{ stackId, topCardId }]
+        : [];
+    });
   });
   if (targets.length === 0) return rejectedTargeting('unsupported_target');
 

@@ -19,7 +19,7 @@ describe('shortcut catalogue', () => {
     ]);
     expect(
       SHORTCUT_REFERENCE_GROUPS.flatMap((group) => group.entries)
-    ).toHaveLength(53);
+    ).toHaveLength(54);
   });
 
   it('looks entries up by heading and label', () => {

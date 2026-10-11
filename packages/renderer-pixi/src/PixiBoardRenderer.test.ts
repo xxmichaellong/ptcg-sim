@@ -8,6 +8,8 @@ import {
   createBoardSceneForViewport,
   createRendererSpikeView,
   DEFAULT_BOARD_PREFERENCES,
+  DEFAULT_BOARD_DEPTH,
+  BoardDepthProjection,
   DEFAULT_BOARD_PRESENTATION,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   markerLabelFontSizePx,
@@ -15,6 +17,7 @@ import {
   type MarkerSceneNode,
   type BoardRendererStatus,
   type BoardScene,
+  type TableCardPose,
 } from '@ptcgsim/renderer-contract';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -217,6 +220,7 @@ interface RendererInternals {
       readonly sprite: Sprite;
       readonly outline: Graphics;
       descriptor: BoardScene['cards'][number];
+      paintedPose?: TableCardPose;
     }
   >;
   readonly markerViews: Map<
@@ -307,7 +311,112 @@ const startDrag = (
 };
 
 describe('Pixi board interaction cancellation', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it.each(['move', 'remove'] as const)(
+    'interrupts a prize shuffle safely when a newer command must %s its card',
+    async (action) => {
+      vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+      vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+      const frames = new Map<number, FrameRequestCallback>();
+      let serial = 0;
+      let now = 0;
+      vi.spyOn(performance, 'now').mockImplementation(() => now);
+      vi.stubGlobal(
+        'requestAnimationFrame',
+        (callback: FrameRequestCallback) => {
+          frames.set(++serial, callback);
+          return serial;
+        }
+      );
+      vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+      const advance = (at: number) => {
+        now = at;
+        for (const [id, frame] of [...frames]) {
+          frames.delete(id);
+          frame(now);
+        }
+      };
+      const application = fakeApplication();
+      const reportError = vi.fn();
+      const renderer = new PixiBoardRenderer(
+        {
+          emitIntent: vi.fn(),
+          emitPresentationUpdate: vi.fn(),
+          reportError,
+        },
+        { createApplication: () => application }
+      );
+      const initial = scene();
+      const preferences = {
+        ...DEFAULT_BOARD_PREFERENCES,
+        depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const },
+      };
+      await renderer.mount(
+        document.createElement('div'),
+        initial,
+        DEFAULT_BOARD_PRESENTATION
+      );
+      renderer.setPreferences(preferences);
+      const prizeZone = initial.zones.find(
+        (zone) => zone.kind === 'prizes' && zone.side === 'local'
+      )!;
+      const shuffled = {
+        ...initial,
+        revision: initial.revision + 1,
+        cards: initial.cards.map((card) =>
+          card.parentId === prizeZone.id
+            ? {
+                ...card,
+                id: `${card.id}:shuffled` as typeof card.id,
+                renderKey: `${card.renderKey}:shuffled`,
+              }
+            : card
+        ),
+      };
+      renderer.installScene(shuffled, [], 'advance', { cause: 'advance' });
+      advance(200);
+      const internals = renderer as unknown as RendererInternals;
+      const card = shuffled.cards.find(
+        (card) => card.parentId === prizeZone.id
+      )!;
+      const cardView = internals.cardViews.get(card.renderKey!)!;
+      expect(cardView.paintedPose?.bounds).not.toEqual(card.bounds);
+      const releasedPose = cardView.paintedPose;
+      const moved = {
+        ...card,
+        bounds: { ...card.bounds, x: card.bounds.x + 100 },
+      };
+      const next = {
+        ...shuffled,
+        revision: shuffled.revision + 1,
+        cards: shuffled.cards.flatMap((node) =>
+          node.id === card.id ? (action === 'remove' ? [] : [moved]) : [node]
+        ),
+      };
+      try {
+        renderer.installScene(next, [], 'advance', { cause: 'advance' });
+        if (action === 'move')
+          expect(cardView.paintedPose).toEqual(releasedPose);
+        advance(1000);
+        if (action === 'remove') {
+          expect(internals.cardViews.has(card.renderKey!)).toBe(false);
+          expect(cardView.sprite.destroyed).toBe(true);
+        } else {
+          expect(cardView.paintedPose).toEqual(
+            new BoardDepthProjection(next, preferences).pose(moved)
+          );
+        }
+        expect(reportError).not.toHaveBeenCalled();
+        expect(frames.size).toBe(0);
+      } finally {
+        renderer.destroy();
+      }
+    }
+  );
 
   it('rejects an invalid initial scene before allocating a Pixi application', async () => {
     const application = fakeApplication();
@@ -1730,4 +1839,66 @@ describe('Pixi board interaction cancellation', () => {
     renderer.destroy();
     renderer.destroy();
   });
+});
+
+it('keeps joined pieces and their counter together through drag and settlement', async () => {
+  vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+  vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+  const base = scene();
+  const cards = base.cards
+    .filter((card) => card.renderKey !== null && card.role === 'stackEvolution')
+    .slice(0, 4)
+    .map((card, index) => ({
+      ...card,
+      parentId: 'joined-stack',
+      role: 'stackEvolution' as const,
+      bounds: {
+        x: 100 + (index % 2) * 63,
+        y: 100 + Math.floor(index / 2) * 88,
+        width: 63,
+        height: 88,
+      },
+      zIndex: 300 + index,
+      composition: {
+        kind: 'joined' as const,
+        bounds: { x: 100, y: 100, width: 126, height: 176 },
+      },
+    }));
+  const counter = marker({
+    parentCardId: cards[3]!.id,
+    bounds: { x: 220, y: 240, width: 20, height: 20 },
+  });
+  const current: BoardScene = { ...base, cards, markers: [counter] };
+  const renderer = new PixiBoardRenderer(
+    {
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    },
+    { createApplication: fakeApplication }
+  );
+  await renderer.mount(
+    document.createElement('div'),
+    current,
+    DEFAULT_BOARD_PRESENTATION
+  );
+  const internals = renderer as unknown as RendererInternals;
+  const anchor = cards[0]!;
+  renderer.installPresentation({
+    ...DEFAULT_BOARD_PRESENTATION,
+    drag: { cardId: anchor.id, x: 400, y: 300, targetId: null },
+  });
+  for (const card of cards) {
+    const sprite = internals.cardViews.get(card.renderKey!)!.sprite;
+    expect(sprite.x).toBeCloseTo(400 + card.bounds.x - anchor.bounds.x);
+    expect(sprite.y).toBeCloseTo(300 + card.bounds.y - anchor.bounds.y);
+    expect(sprite.zIndex).toBe(10_000 + card.zIndex);
+  }
+  expect(internals.markerViews.get(counter.id)!.root.x).toBeCloseTo(
+    counter.bounds.x + 400 - 131.5
+  );
+  renderer.installPresentation(DEFAULT_BOARD_PRESENTATION);
+  expect(internals.markerViews.get(counter.id)!.root.x).toBe(counter.bounds.x);
+  renderer.destroy();
+  vi.restoreAllMocks();
 });

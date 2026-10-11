@@ -13,6 +13,10 @@ export interface BoardPointerInput {
   readonly x: number;
   readonly y: number;
   readonly button: number;
+  /** Optional projected picking results. x/y still describe the grab plane. */
+  readonly screenPoint?: { readonly x: number; readonly y: number };
+  readonly dropPoint?: { readonly x: number; readonly y: number };
+  readonly targetId?: string | null;
 }
 
 interface ActiveGesture {
@@ -22,6 +26,7 @@ interface ActiveGesture {
   readonly startY: number;
   readonly centerOffsetX: number;
   readonly centerOffsetY: number;
+  readonly screenStart: { readonly x: number; readonly y: number } | undefined;
   dragging: boolean;
 }
 
@@ -96,6 +101,7 @@ export class BoardDragController {
       startY: input.y,
       centerOffsetX: card.bounds.x + card.bounds.width / 2 - input.x,
       centerOffsetY: card.bounds.y + card.bounds.height / 2 - input.y,
+      screenStart: input.screenPoint,
       dragging: false,
     };
     return true;
@@ -116,8 +122,14 @@ export class BoardDragController {
       return false;
     }
     if (!gesture.dragging) {
-      const xDistance = input.x - gesture.startX;
-      const yDistance = input.y - gesture.startY;
+      const xDistance =
+        input.screenPoint && gesture.screenStart
+          ? input.screenPoint.x - gesture.screenStart.x
+          : input.x - gesture.startX;
+      const yDistance =
+        input.screenPoint && gesture.screenStart
+          ? input.screenPoint.y - gesture.screenStart.y
+          : input.y - gesture.startY;
       if (
         xDistance * xDistance + yDistance * yDistance <
         this.thresholdPixels * this.thresholdPixels
@@ -132,12 +144,10 @@ export class BoardDragController {
         cardId: gesture.cardId,
         x: input.x + gesture.centerOffsetX,
         y: input.y + gesture.centerOffsetY,
-        targetId: resolveBoardDropTarget(
-          scene,
-          gesture.cardId,
-          input.x,
-          input.y
-        ),
+        targetId:
+          input.targetId !== undefined
+            ? input.targetId
+            : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y),
       },
     });
     return true;
@@ -153,12 +163,10 @@ export class BoardDragController {
     if (this.active !== gesture) return false;
     this.active = null;
     if (!gesture.dragging) return false;
-    const targetId = resolveBoardDropTarget(
-      scene,
-      gesture.cardId,
-      input.x,
-      input.y
-    );
+    const targetId =
+      input.targetId !== undefined
+        ? input.targetId
+        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
     this.suppressedClickCardId = gesture.cardId;
     this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     if (targetId) {
@@ -166,8 +174,8 @@ export class BoardDragController {
         kind: 'CardDropRequested',
         cardId: gesture.cardId,
         targetId,
-        x: input.x,
-        y: input.y,
+        x: input.dropPoint?.x ?? input.x,
+        y: input.dropPoint?.y ?? input.y,
       });
     }
     return true;
@@ -236,7 +244,13 @@ export class BoardDragController {
     return (
       Number.isSafeInteger(input.pointerId) &&
       Number.isFinite(input.x) &&
-      Number.isFinite(input.y)
+      Number.isFinite(input.y) &&
+      (!input.screenPoint ||
+        (Number.isFinite(input.screenPoint.x) &&
+          Number.isFinite(input.screenPoint.y))) &&
+      (!input.dropPoint ||
+        (Number.isFinite(input.dropPoint.x) &&
+          Number.isFinite(input.dropPoint.y)))
     );
   }
 }

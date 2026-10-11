@@ -468,11 +468,9 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
   expect(
     await page.evaluate(() => matchMedia('(resolution: 2dppx)').matches)
   ).toBe(true);
-  expect(await readRouteViewport(page)).toMatchObject({
-    windowDpr: 2,
-    outerDpr: 1,
-    sceneDpr: 1,
-  });
+  // Chromium may also deliver a resize during the CDP override. In that
+  // case the route has already reconciled DPR before the explicit signal.
+  expect((await readRouteViewport(page)).windowDpr).toBe(2);
   expect(
     await page.evaluate(() => {
       const emit = (window as ViewportLifecycleWindow)

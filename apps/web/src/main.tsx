@@ -9,6 +9,7 @@ import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
 import './styles.css';
 import './design/shell.css';
+import './design/card-material.css';
 
 // Developer-only escape hatch: `?dev-room=1` boots the real remote-room stack
 // (durable room creation, ADR-018 ticket exchange, socket session, projection,
@@ -21,6 +22,12 @@ import './design/shell.css';
 const DevRoomHost = import.meta.env.DEV
   ? lazy(async () => ({
       default: (await import('./dev/DevRoomHost.js')).DevRoomHost,
+    }))
+  : null;
+
+const TableDepthLab = import.meta.env.DEV
+  ? lazy(async () => ({
+      default: (await import('./dev/TableDepthLab.js')).TableDepthLab,
     }))
   : null;
 
@@ -62,7 +69,11 @@ if (!root) throw new Error('Missing application root');
 createRoot(root).render(
   <StrictMode>
     <OverlayHost>
-      {devRoomRequested && DevRoomHost ? (
+      {TableDepthLab && parameters.get('depth-lab') === '1' ? (
+        <Suspense fallback={<main className="app-shell" />}>
+          <TableDepthLab />
+        </Suspense>
+      ) : devRoomRequested && DevRoomHost ? (
         <Suspense
           fallback={
             <main className="app-shell" data-app-route="dev-room-loading" />

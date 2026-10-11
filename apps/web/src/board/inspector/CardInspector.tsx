@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { inspectCard, type CardInspection } from './card-inspection.js';
 import './CardInspector.css';
+import { readingImageStyle } from '../../ui/card-artwork.js';
 
 /**
  * The hovered card, published by the renderer at most once per frame. Which
@@ -131,7 +132,8 @@ export const CardInspector = ({
       setShown(null);
     } else if (
       fresh.imageUrl !== current.inspection.imageUrl ||
-      fresh.finish !== current.inspection.finish
+      fresh.finish !== current.inspection.finish ||
+      fresh.readingQuarterTurns !== current.inspection.readingQuarterTurns
     ) {
       setShown({ ...current, inspection: fresh });
     }
@@ -140,7 +142,15 @@ export const CardInspector = ({
   // The card leans with the pointer over the small card on the board.
   useEffect(() => {
     if (reducedMotion) return undefined;
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    const rest = () => {
+      const card = cardRef.current;
+      card?.style.setProperty('--inspector-tilt-x', '0deg');
+      card?.style.setProperty('--inspector-tilt-y', '0deg');
+      card?.style.setProperty('--inspector-light', '0');
+    };
     const apply = () => {
+      clearTimeout(idle);
       const card = cardRef.current;
       const pointer = store.getPointer();
       if (!card) return;
@@ -171,9 +181,15 @@ export const CardInspector = ({
         Math.min(1, Math.hypot(pointer.x, pointer.y) * 2).toFixed(3)
       );
       card.style.setProperty('--inspector-light', '1');
+      idle = setTimeout(rest, 480);
     };
     apply();
-    return store.subscribePointer(apply);
+    const unsubscribe = store.subscribePointer(apply);
+    return () => {
+      unsubscribe();
+      clearTimeout(idle);
+      rest();
+    };
   }, [store, reducedMotion, shown?.inspection.cardId]);
 
   const inspection = shown?.inspection;
@@ -183,6 +199,9 @@ export const CardInspector = ({
     <aside
       className="card-inspector"
       data-card-inspector=""
+      data-landscape={
+        inspection && inspection.readingQuarterTurns % 2 ? 'true' : undefined
+      }
       data-open={open ? 'true' : 'false'}
       data-side={shown?.side ?? 'right'}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
@@ -192,17 +211,16 @@ export const CardInspector = ({
         <div
           ref={cardRef}
           key={inspection.cardId}
-          className="card-inspector__card"
+          className="card-inspector__card card-material"
           data-finish={inspection.finish}
         >
           <img
             className="card-inspector__image"
             src={inspection.imageUrl}
+            style={readingImageStyle(inspection.readingQuarterTurns)}
             alt=""
             draggable={false}
           />
-          <span className="card-inspector__shine" />
-          <span className="card-inspector__glare" />
         </div>
       ) : null}
     </aside>

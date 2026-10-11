@@ -449,12 +449,11 @@ const alignMemorySnapshotPhase = async (
   readonly liveRegionChildren: number;
   readonly images: number;
 }> => {
-  // Compare memory with the announcement queue drained: each announcement
-  // dwells for a second, so whether one is still showing at a fixed point
-  // depends on how long the cycle took, not on what it leaked.
+  // Each cycle queues a few announcements that dwell a second each, faster
+  // than they drain at instant speed, so one is always showing: both
+  // snapshots are taken in that same phase.
   await expect(page.locator('.presentation-live-region > *')).toHaveCount(
-    expectedLiveRegionChildren ?? 0,
-    { timeout: 30_000 }
+    expectedLiveRegionChildren ?? 1
   );
   await page.waitForFunction(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
@@ -558,15 +557,80 @@ const readSocketLifecycleSummary = (page: Page) =>
     };
   });
 
+/** The page's motion settings, written before the app first reads them. */
+const useAnimationSpeed = async (
+  page: Page,
+  animationSpeed: 'normal' | 'instant'
+): Promise<void> => {
+  await page.addInitScript((speed) => {
+    localStorage.setItem(
+      'ptcgsim.motion.v1',
+      JSON.stringify({ reduceMotion: 'full', animationSpeed: speed })
+    );
+  }, animationSpeed);
+};
+
+/** A Solo room on the DOM renderer with both 60-card churn decks installed. */
+const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
+  await page.goto('/?room-lobby=1&renderer=dom');
+  await expect(
+    page.locator('[data-app-route="remote-room-lobby"]')
+  ).toBeVisible();
+  await page.locator('#nameInput').fill('Churn');
+  await page.locator('#p1Button').click();
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await expect(page.locator('#setupBothButton')).toBeEnabled();
+  await expect(page.locator('#resetBothButton')).toBeEnabled();
+
+  const renderer = await page.evaluateHandle(
+    () => window.__PTCG_RENDERER_SPIKE__?.renderer
+  );
+  const beforeDeckInstall = await readRevision(page);
+  await page.locator('#deckImportButton').click();
+  await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
+  await page.locator('#nativeDeckBuilderTargetMain').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'solo-churn-main.csv',
+    mimeType: 'text/csv',
+    buffer: deckCsv('Main Energy', MAIN_FACE_URL),
+  });
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
+    'Total: 60'
+  );
+  await page.locator('#nativeDeckBuilderTargetAlt').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'solo-churn-alternate.csv',
+    mimeType: 'text/csv',
+    buffer: deckCsv('Alternate Energy', ALTERNATE_FACE_URL),
+  });
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
+    'Total: 60'
+  );
+  await page.locator('#nativeDeckBuilderPlayButton').click();
+  await expect(page.locator('#p1Box')).toBeVisible();
+  await expect(
+    page.locator('#chatbox [data-event-type="DeckLoaded"]')
+  ).toHaveCount(2);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    String(beforeDeckInstall + 2)
+  );
+  return renderer;
+};
+
 test('selected DOM Solo setup/reset and full-deck zone churn converges route resources', async ({
   context,
   page,
 }, testInfo) => {
-  // The table animates every Set Up and Reset (cards fly, the deck riffles
-  // once they land) and every pile browser opens and closes with motion:
-  // about 5s a cycle, 140 cycles. Motion stays on so its nodes are churned
-  // too.
-  test.setTimeout(1_200_000);
+  test.setTimeout(600_000);
+  // 140 cycles measure route resources; with the table animating every
+  // Set Up, Reset and pile browser they would take ~15 minutes locally and
+  // over 20 in CI. Motion's own nodes are churned by the test after this.
+  await useAnimationSpeed(page, 'instant');
   trackClientFrames(page);
   const errors = collectRuntimeErrors(page);
   let roomCreations = 0;
@@ -650,53 +714,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
       recoveredSocketErrors.push(error);
     });
   });
-  await page.goto('/?room-lobby=1&renderer=dom');
-  await expect(
-    page.locator('[data-app-route="remote-room-lobby"]')
-  ).toBeVisible();
-  await page.locator('#nameInput').fill('Churn');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
-    'data-renderer-status',
-    'ready'
-  );
-  await expect(page.locator('#setupBothButton')).toBeEnabled();
-  await expect(page.locator('#resetBothButton')).toBeEnabled();
-
-  const renderer = await page.evaluateHandle(
-    () => window.__PTCG_RENDERER_SPIKE__?.renderer
-  );
-  const beforeDeckInstall = await readRevision(page);
-  await page.locator('#deckImportButton').click();
-  await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
-  await page.locator('#nativeDeckBuilderTargetMain').click();
-  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
-    name: 'solo-churn-main.csv',
-    mimeType: 'text/csv',
-    buffer: deckCsv('Main Energy', MAIN_FACE_URL),
-  });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
-  );
-  await page.locator('#nativeDeckBuilderTargetAlt').click();
-  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
-    name: 'solo-churn-alternate.csv',
-    mimeType: 'text/csv',
-    buffer: deckCsv('Alternate Energy', ALTERNATE_FACE_URL),
-  });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
-  );
-  await page.locator('#nativeDeckBuilderPlayButton').click();
-  await expect(page.locator('#p1Box')).toBeVisible();
-  await expect(
-    page.locator('#chatbox [data-event-type="DeckLoaded"]')
-  ).toHaveCount(2);
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-revision',
-    String(beforeDeckInstall + 2)
-  );
+  const renderer = await openChurnRoom(page);
   const initial = await readResourceEvidence(page, renderer);
   expect(initial.activityRows).toBeLessThan(100);
 
@@ -720,7 +738,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
 
   const baselinePresentationPhase = await alignMemorySnapshotPhase(page);
   expect(baselinePresentationPhase).toEqual({
-    liveRegionChildren: 0,
+    liveRegionChildren: 1,
     images: 2,
   });
   const baseline = await readResourceEvidence(page, renderer);
@@ -850,4 +868,53 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
     ),
     contentType: 'application/json',
   });
+});
+
+test('animated Solo setup/reset and pile browsing leave nothing moving or behind', async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await useAnimationSpeed(page, 'normal');
+  trackClientFrames(page);
+  const errors = collectRuntimeErrors(page);
+  const renderer = await openChurnRoom(page);
+  const residue = () =>
+    page.evaluate(() => ({
+      cardGhosts: document.querySelectorAll('.ptcgsim-card-ghost').length,
+      overlayGhosts: document.querySelectorAll('.ptcgsim-overlay-ghost').length,
+      flying: document.querySelectorAll('[data-flying]').length,
+      animations: document
+        .getAnimations()
+        .filter((animation) => animation.playState === 'running').length,
+    }));
+  const settledResidue = async () => {
+    // Exit copies of closed overlays live at most 450ms.
+    await page.waitForTimeout(600);
+    return residue();
+  };
+  const NONE = { cardGhosts: 0, overlayGhosts: 0, flying: 0, animations: 0 };
+  let previousCardIds: readonly string[] = [];
+  let first: Awaited<ReturnType<typeof runCycle>> | undefined;
+  for (let cycle = 0; cycle < 6; cycle += 1) {
+    const evidence = await runCycle(page, renderer, undefined, previousCardIds);
+    expect(evidence.zoneBrowserOpenings).toBe(4);
+    expect(await settledResidue(), `cycle ${cycle} residue`).toEqual(NONE);
+    first ??= evidence;
+    // Motion adds no node that outlives it: each phase ends as the first did
+    // (the battle log is the one thing meant to grow).
+    const withoutLog = (signature: string): string => {
+      const { activityRows: _rows, ...rest } = JSON.parse(signature) as {
+        readonly activityRows: number;
+      };
+      return JSON.stringify(rest);
+    };
+    expect(withoutLog(resourceSignature(evidence.setup))).toBe(
+      withoutLog(resourceSignature(first.setup))
+    );
+    expect(withoutLog(resourceSignature(evidence.reset))).toBe(
+      withoutLog(resourceSignature(first.reset))
+    );
+    previousCardIds = evidence.reset.sceneCardIds;
+  }
+  expect(errors).toEqual([]);
 });

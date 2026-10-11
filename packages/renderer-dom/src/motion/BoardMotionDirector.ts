@@ -11,7 +11,10 @@ import {
   type PileShuffle,
   type Rect,
   type SpringConfig,
+  type BoardDepthProjection,
+  type BoardPresentation,
 } from '@ptcgsim/renderer-contract';
+import { TableDepthDirector } from './TableDepthDirector.js';
 
 /** Where a painted card was last drawn, including a drag or settle hold. */
 export interface PaintedCard {
@@ -88,6 +91,8 @@ const canAnimate = (element: Element): element is HTMLElement =>
  */
 export class BoardMotionDirector {
   private readonly elements = new Map<string, HTMLElement>();
+  readonly depth = new TableDepthDirector(this.elements);
+  private depthEnabled = false;
   private readonly flights = new Map<string, Flight>();
   private readonly painted = new Map<string, PaintedCard>();
   private readonly releases = new Map<
@@ -96,6 +101,8 @@ export class BoardMotionDirector {
   >();
   private readonly ghosts = new Set<HTMLElement>();
   private readonly extras = new Set<Animation>();
+  private readonly cardExtras = new Map<string, Set<Animation>>();
+  private tableTurn: Animation | null = null;
   private ghostLayer: HTMLElement | null = null;
   private surface: HTMLElement | null = null;
   private settings: BoardMotionSettings = { reduced: false, durationScale: 1 };
@@ -120,6 +127,8 @@ export class BoardMotionDirector {
   attach(surface: HTMLElement | null, ghostLayer: HTMLElement | null): void {
     this.surface = surface;
     this.ghostLayer = ghostLayer;
+    this.depth.attach(surface, ghostLayer);
+    this.depth.onActivity = () => this.notify();
   }
 
   setSettings(settings: BoardMotionSettings): void {
@@ -132,10 +141,23 @@ export class BoardMotionDirector {
     this.releases.set(renderKey, { vx, vy, at: now() });
   }
 
+  /** Picking up the table immediately ends its decorative perspective turn. */
+  interruptTableTurn(): void {
+    const animation = this.tableTurn;
+    if (!animation) return;
+    this.tableTurn = null;
+    this.extras.delete(animation);
+    animation.cancel();
+    this.notify();
+  }
+
   /** True while any card is travelling, turning, popping or ghosting. */
   get active(): boolean {
     return (
-      this.flights.size > 0 || this.ghosts.size > 0 || this.extras.size > 0
+      this.flights.size > 0 ||
+      this.ghosts.size > 0 ||
+      this.extras.size > 0 ||
+      this.depth.active
     );
   }
 
@@ -155,8 +177,39 @@ export class BoardMotionDirector {
     next: BoardScene,
     motion: BoardSceneMotion | undefined,
     painted: ReadonlyMap<string, PaintedCard>,
-    held: ReadonlySet<string>
+    held: ReadonlySet<string>,
+    depth?: {
+      projection: BoardDepthProjection;
+      presentation: BoardPresentation;
+    }
   ): void {
+    if (Boolean(depth?.projection.enabled) !== this.depthEnabled) {
+      this.cancelAll();
+      this.depth.destroy();
+      this.depthEnabled = Boolean(depth?.projection.enabled);
+    }
+    if (depth?.projection.enabled) {
+      this.depth.commit(
+        previous,
+        depth.projection,
+        depth.presentation,
+        motion,
+        this.settings.reduced,
+        this.settings.durationScale
+      );
+      if (previous !== next && motion?.cause === 'flip') this.turnTable();
+      if (
+        previous &&
+        previous !== next &&
+        motion &&
+        !['replace', 'layout', 'flip'].includes(motion.cause)
+      ) {
+        for (const pulse of planBoardMotion(previous, next, motion.cause)
+          .pulses)
+          this.pulse(pulse);
+      }
+      return;
+    }
     const lastPainted = new Map(this.painted);
     this.painted.clear();
     for (const [key, card] of painted) this.painted.set(key, card);
@@ -164,6 +217,7 @@ export class BoardMotionDirector {
     // pointer, even mid-flight and even when only the presentation changed.
     for (const key of held) {
       if (this.flights.has(key)) this.stopFlight(key);
+      this.stopCardExtras(key);
     }
     if (!motion || !previous || previous === next) return;
     const cause = motion.cause;
@@ -179,22 +233,34 @@ export class BoardMotionDirector {
     }
     const plan = planBoardMotion(previous, next, cause);
     const at = now();
+    const gathering = new Set(
+      plan.shuffles.flatMap(
+        (shuffle) => shuffle.spread?.map((card) => card.renderKey) ?? []
+      )
+    );
     for (const flight of plan.flights) {
       if (held.has(flight.renderKey)) {
         this.stopFlight(flight.renderKey);
         continue;
       }
+      if (gathering.has(flight.renderKey)) continue;
       this.startFlight(flight, cause, lastPainted, next, at);
     }
     for (const ghost of plan.ghosts) this.startGhost(ghost, cause);
     for (const pulse of plan.pulses) this.pulse(pulse);
-    for (const shuffle of plan.shuffles) this.riffle(shuffle);
+    for (const shuffle of plan.shuffles) {
+      if (shuffle.spread) this.gatherSpread(shuffle, held);
+      else this.riffle(shuffle);
+    }
   }
 
   cancelAll(): void {
+    this.depth.cancel();
     for (const key of [...this.flights.keys()]) this.stopFlight(key);
     for (const animation of this.extras) animation.cancel();
     this.extras.clear();
+    this.cardExtras.clear();
+    this.tableTurn = null;
     for (const ghost of this.ghosts) ghost.remove();
     this.ghosts.clear();
     this.releases.clear();
@@ -209,6 +275,7 @@ export class BoardMotionDirector {
   destroy(): void {
     this.cancelAll();
     this.painted.clear();
+    this.depth.destroy();
     this.surface = null;
     this.ghostLayer = null;
   }
@@ -219,6 +286,17 @@ export class BoardMotionDirector {
     this.flights.delete(renderKey);
     flight.animation.cancel();
     delete flight.element.dataset.flying;
+    this.notify();
+  }
+
+  private stopCardExtras(renderKey: string): void {
+    const animations = this.cardExtras.get(renderKey);
+    if (!animations) return;
+    this.cardExtras.delete(renderKey);
+    for (const animation of animations) {
+      this.extras.delete(animation);
+      animation.cancel();
+    }
     this.notify();
   }
 
@@ -249,6 +327,7 @@ export class BoardMotionDirector {
       (card) => card.renderKey === planned.renderKey
     );
     if (!element || !target || !canAnimate(element)) return;
+    this.stopCardExtras(planned.renderKey);
     const reduced = this.settings.reduced;
     if (reduced) {
       this.stopFlight(planned.renderKey);
@@ -257,7 +336,8 @@ export class BoardMotionDirector {
           element.animate([{ opacity: 0 }, { opacity: 1 }], {
             duration: 150,
             easing: 'ease-out',
-          })
+          }),
+          planned.renderKey
         );
       }
       return;
@@ -377,7 +457,8 @@ export class BoardMotionDirector {
         element,
         planned.fromImageUrl,
         settle * durationScale,
-        delaySeconds * durationScale
+        delaySeconds * durationScale,
+        planned.renderKey
       );
     }
   }
@@ -390,7 +471,8 @@ export class BoardMotionDirector {
     element: HTMLElement,
     fromImageUrl: string,
     flightSeconds: number,
-    delaySeconds: number
+    delaySeconds: number,
+    renderKey?: string
   ): void {
     const face = element.querySelector<HTMLElement>('.ptcgsim-card__face');
     if (!face || !canAnimate(face)) return;
@@ -420,8 +502,8 @@ export class BoardMotionDirector {
       ],
       { duration, delay, fill: 'both' }
     );
-    this.track(squash);
-    this.track(swap);
+    this.track(squash, renderKey);
+    this.track(swap, renderKey);
     void swap.finished.then(
       () => overlay.remove(),
       () => overlay.remove()
@@ -483,6 +565,7 @@ export class BoardMotionDirector {
         ],
         { duration: 180 * scale, easing: 'ease-in' }
       );
+      this.track(fade);
       void fade.finished.then(remove, remove);
       return;
     }
@@ -523,6 +606,7 @@ export class BoardMotionDirector {
       easing: 'linear',
       fill: 'both',
     });
+    this.track(animation);
     if (planned.toImageUrl) {
       this.turnOver(
         ghost,
@@ -540,6 +624,7 @@ export class BoardMotionDirector {
       `[data-marker-id="${CSS.escape(pulse.markerId)}"]`
     );
     if (!marker || !canAnimate(marker)) return;
+    this.damageChange(marker, pulse);
     if (this.settings.reduced) {
       this.track(
         marker.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 200 })
@@ -562,6 +647,111 @@ export class BoardMotionDirector {
         easing: 'linear',
       })
     );
+  }
+
+  /** A brief amount next to the counter, distinct from its persistent total. */
+  private damageChange(marker: HTMLElement, pulse: MarkerPulse): void {
+    const layer = this.ghostLayer;
+    if (!layer || pulse.kind !== 'damage') return;
+    const delta = Number(pulse.value) - Number(pulse.previousValue ?? 0);
+    if (!Number.isFinite(delta) || delta === 0) return;
+    for (const previous of Array.from(
+      layer.querySelectorAll<HTMLElement>('.ptcgsim-damage-change')
+    )) {
+      if (previous.dataset.feedbackFor !== pulse.markerId) continue;
+      for (const animation of previous.getAnimations?.() ?? [])
+        animation.cancel();
+      previous.remove();
+      this.ghosts.delete(previous);
+    }
+    const label = document.createElement('span');
+    label.className = 'ptcgsim-damage-change';
+    label.dataset.feedbackFor = pulse.markerId;
+    label.dataset.direction = delta > 0 ? 'damage' : 'heal';
+    label.setAttribute('aria-hidden', 'true');
+    label.textContent = `${delta > 0 ? '+' : '−'}${Math.abs(delta)}`;
+    Object.assign(label.style, {
+      left: `${Number.parseFloat(marker.style.left) + Number.parseFloat(marker.style.width) / 2}px`,
+      top: `${Math.max(12, Number.parseFloat(marker.style.top) - 8)}px`,
+    });
+    layer.append(label);
+    this.ghosts.add(label);
+    const remove = () => {
+      label.remove();
+      this.ghosts.delete(label);
+      this.notify();
+    };
+    if (!canAnimate(label)) {
+      remove();
+      return;
+    }
+    const animation = label.animate(
+      [
+        { opacity: 0, translate: '-50% 0px', offset: 0 },
+        {
+          opacity: 1,
+          translate: this.settings.reduced ? '-50% 0px' : '-50% -8px',
+          offset: 0.2,
+        },
+        { opacity: 1, offset: 0.65 },
+        {
+          opacity: 0,
+          translate: this.settings.reduced ? '-50% 0px' : '-50% -20px',
+          offset: 1,
+        },
+      ],
+      {
+        duration: this.settings.reduced
+          ? 300
+          : 560 * this.settings.durationScale,
+        easing: 'ease-out',
+      }
+    );
+    this.track(animation);
+    void animation.finished.then(remove, remove);
+  }
+
+  /** Shuffle the visible backs as a group; the final slots remain authoritative. */
+  private gatherSpread(shuffle: PileShuffle, held: ReadonlySet<string>): void {
+    if (this.settings.reduced || !shuffle.spread?.length) return;
+    const members = shuffle.spread;
+    const centre = members.reduce(
+      (point, card) => ({
+        x: point.x + (card.rect.x + card.rect.width / 2) / members.length,
+        y: point.y + (card.rect.y + card.rect.height / 2) / members.length,
+      }),
+      { x: 0, y: 0 }
+    );
+    members.forEach((card, index) => {
+      if (held.has(card.renderKey)) return;
+      const element = this.elements.get(card.renderKey);
+      if (!element || !canAnimate(element)) return;
+      this.stopFlight(card.renderKey);
+      this.stopCardExtras(card.renderKey);
+      const x = centre.x - card.rect.x - card.rect.width / 2;
+      const y = centre.y - card.rect.y - card.rect.height / 2;
+      const fan = (index % 2 === 0 ? -1 : 1) * card.rect.width * 0.22;
+      this.track(
+        element.animate(
+          [
+            { translate: '0px 0px', rotate: '0deg', offset: 0 },
+            { translate: `${x}px ${y}px`, rotate: '0deg', offset: 0.3 },
+            {
+              translate: `${x + fan}px ${y - 6}px`,
+              rotate: `${index % 2 === 0 ? -5 : 5}deg`,
+              offset: 0.48,
+            },
+            { translate: `${x}px ${y}px`, rotate: '0deg', offset: 0.64 },
+            { translate: '0px 0px', rotate: '0deg', offset: 1 },
+          ],
+          {
+            duration: (520 + index * 24) * this.settings.durationScale,
+            easing: 'cubic-bezier(0.2, 0.75, 0.25, 1)',
+          }
+        ),
+        card.renderKey
+      );
+    });
   }
 
   /**
@@ -644,6 +834,7 @@ export class BoardMotionDirector {
             fill: 'backwards',
           }
         );
+        this.track(animation);
         void animation.finished.then(remove, remove);
       }
     });
@@ -653,26 +844,42 @@ export class BoardMotionDirector {
   private turnTable(): void {
     const surface = this.surface;
     if (!surface || !canAnimate(surface) || this.settings.reduced) return;
-    this.track(
-      surface.animate(
-        [
-          { rotate: '-180deg', scale: '1' },
-          { rotate: '-90deg', scale: '0.62', offset: 0.5 },
-          { rotate: '0deg', scale: '1' },
-        ],
-        {
-          duration: 620 * this.settings.durationScale,
-          easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
-        }
-      )
+    const animation = surface.animate(
+      this.depthEnabled
+        ? [{ opacity: 0.4 }, { opacity: 1 }]
+        : [
+            { rotate: '-180deg', scale: '1' },
+            { rotate: '-90deg', scale: '0.62', offset: 0.5 },
+            { rotate: '0deg', scale: '1' },
+          ],
+      {
+        duration: (this.depthEnabled ? 240 : 620) * this.settings.durationScale,
+        easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      }
     );
+    this.tableTurn = animation;
+    this.track(animation);
+    const done = () => {
+      if (this.tableTurn === animation) this.tableTurn = null;
+    };
+    void animation.finished.then(done, done);
   }
 
-  private track(animation: Animation): void {
+  private track(animation: Animation, renderKey?: string): void {
     this.extras.add(animation);
+    if (renderKey !== undefined) {
+      const animations = this.cardExtras.get(renderKey) ?? new Set<Animation>();
+      animations.add(animation);
+      this.cardExtras.set(renderKey, animations);
+    }
     this.notify();
     const done = () => {
       this.extras.delete(animation);
+      if (renderKey !== undefined) {
+        const animations = this.cardExtras.get(renderKey);
+        animations?.delete(animation);
+        if (animations?.size === 0) this.cardExtras.delete(renderKey);
+      }
       this.notify();
     };
     void animation.finished.then(done, done);

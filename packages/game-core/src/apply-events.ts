@@ -958,7 +958,7 @@ const applyEventInternal = (
         ) ||
         (destination.kind === 'stadium' &&
           source.id !== destination.id &&
-          destination.cardIds.length > 0)
+          destination.cardIds.length >= 4)
       ) {
         throw new Error('Card move event has invalid destination semantics');
       }
@@ -1586,7 +1586,8 @@ const applyEventInternal = (
         source.id !== event.expectedSourceId ||
         source.playerId !== event.playerId ||
         !target ||
-        target.boardPlayerId !== event.playerId ||
+        (event.mode === 'evolution' &&
+          target.boardPlayerId !== event.playerId) ||
         target.evolutionCardIds.at(-1) !== event.expectedTargetTopCardId ||
         !sameCardOrder(
           target.evolutionCardIds,
@@ -1815,7 +1816,7 @@ const applyEventInternal = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
-        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        (destination.kind === 'stadium' && destination.cardIds.length >= 4) ||
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||
@@ -1932,7 +1933,7 @@ const applyEventInternal = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
-        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        (destination.kind === 'stadium' && destination.cardIds.length >= 4) ||
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||
@@ -2089,7 +2090,7 @@ const applyEventInternal = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
-        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        (destination.kind === 'stadium' && destination.cardIds.length >= 4) ||
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||
@@ -2462,7 +2463,7 @@ const applyEventInternal = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
-        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        (destination.kind === 'stadium' && destination.cardIds.length >= 4) ||
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||

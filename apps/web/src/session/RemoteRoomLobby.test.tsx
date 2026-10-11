@@ -453,7 +453,7 @@ describe('remote room lobby wiring', () => {
       true
     );
     expect(lobbyBoardHarness.preferences).toBe(preferencesBeforeHideHand);
-    expect(host.textContent).toContain('Hold (shift) to view keybinds');
+    expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
     expect(element(host, '#changeBackgroundButton').textContent).toBe(
       'Change background'
     );

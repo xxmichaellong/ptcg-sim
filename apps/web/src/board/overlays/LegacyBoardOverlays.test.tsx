@@ -957,6 +957,86 @@ describe('legacy board overlays', () => {
     expect(callbacks.submitCountInput).not.toHaveBeenCalled();
   });
 
+  it('reads the selected assembled-card piece and returns to the composition', async () => {
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const stages = view.stacks[stackId]!.evolutionCards;
+    const selectedId = stages[0]!.id;
+    const composedScene = {
+      ...scene,
+      cards: scene.cards.map((card): CardSceneNode => {
+        const part = stages.findIndex((stage) => stage.id === card.id);
+        return part < 0
+          ? card
+          : {
+              ...card,
+              finish: part === 0 ? 'holo' : 'rainbow',
+              presentation: {
+                readingQuarterTurns: 1,
+                join: { key: 'test-legend', columns: 1, rows: 2, part },
+              },
+            };
+      }),
+    };
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            scene: composedScene,
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'stack', stackId, focusCardId: selectedId },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: actions(),
+        })
+      );
+    });
+    expect(
+      host.querySelector('[data-preview-kind="composition"]')
+    ).not.toBeNull();
+    const control = (label: string) =>
+      [...host.querySelectorAll<HTMLButtonElement>('button')].find((button) =>
+        button.textContent?.includes(label)
+      )!;
+    await act(async () => control('View individual cards').click());
+    // The previous stage is not the first card in the top-first piece list.
+    expect(
+      host
+        .querySelector('[data-stack-preview-card-id]')
+        ?.getAttribute('data-stack-preview-card-id')
+    ).not.toBe(selectedId);
+    await act(async () => {
+      host
+        .querySelector<HTMLButtonElement>(
+          `[data-stack-preview-card-id="${selectedId}"]`
+        )!
+        .click();
+    });
+    const selected = composedScene.cards.find(
+      (card) => card.id === selectedId
+    )!;
+    const preview = host.querySelector('[data-preview-kind="card"]')!;
+    expect(preview.getAttribute('aria-label')).toBe(selected.label);
+    expect(preview.getAttribute('data-landscape')).toBe('true');
+    expect(
+      preview.querySelector('img')?.getAttribute('data-overlay-card-id')
+    ).toBe(selectedId);
+    expect(preview.querySelector('img')?.getAttribute('src')).toBe(
+      selected.imageUrl
+    );
+    expect(
+      preview.querySelector('.card-material')?.getAttribute('data-finish')
+    ).toBe('holo');
+    await act(async () => control('View assembled card').click());
+    expect(
+      host.querySelectorAll(
+        '[data-preview-kind="composition"] .ptcgsim-composition-piece'
+      )
+    ).toHaveLength(stages.length);
+  });
+
   it('projects recipient-safe card, stack, and zone images into source-shaped dialogs', async () => {
     const callbacks = actions();
     const card = cardIn(`:${firstPlayer}:hand`);
@@ -1238,19 +1318,43 @@ describe('legacy board overlays', () => {
       bubbles: true,
       cancelable: true,
     });
-    expect(preview.dispatchEvent(tab)).toBe(false);
+    const controls = [
+      ...preview.querySelectorAll<HTMLButtonElement>('[data-preview-tabbable]'),
+    ];
+    expect(controls).toHaveLength(2);
+    controls[1]!.focus();
+    expect(controls[1]!.dispatchEvent(tab)).toBe(false);
     expect(tab.defaultPrevented).toBe(true);
-    expect(document.activeElement).toBe(preview);
+    expect(document.activeElement).toBe(controls[0]);
+    await act(async () => controls[1]!.click());
+    expect(
+      preview.querySelector('.card-material')?.getAttribute('data-reading')
+    ).toBe('true');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
   it('keeps stable overlay-card geometry through arbitrary image failure and recovery', async () => {
     const callbacks = actions();
     const card = cardIn(`:${firstPlayer}:hand`);
+    const projected = view.zones[card.parentId]!.cards.find(
+      (entry) => entry.id === card.id
+    )!;
+    if (projected.kind !== 'known') throw new Error('known card required');
     const renderPreview = async (imageUrl: string) => {
       await act(async () => {
         root.render(
           createElement(LegacyBoardOverlays, {
             state: state({
+              view: {
+                ...view,
+                definitions: {
+                  ...view.definitions,
+                  [projected.definitionId]: {
+                    ...view.definitions[projected.definitionId]!,
+                    imageUrl,
+                  },
+                },
+              },
               scene: {
                 ...scene,
                 cards: scene.cards.map((candidate) =>
@@ -1283,7 +1387,7 @@ describe('legacy board overlays', () => {
     await act(async () => image.dispatchEvent(new Event('error')));
     expect(wrapper.getAttribute('data-overlay-image-state')).toBe('failed');
     expect(host.querySelector('[role="dialog"]')).not.toBeNull();
-    expect(getComputedStyle(wrapper).aspectRatio).toBe('5 / 7');
+    expect(getComputedStyle(wrapper).aspectRatio).toBe('63 / 88');
     expect(getComputedStyle(image).opacity).toBe('0');
 
     await renderPreview('https://images.example.invalid/recovered.png');

@@ -191,6 +191,16 @@ export const projectRecipient = (
                     name: definition.name,
                     category: definition.category,
                     imageUrl: definition.imageUrl,
+                    ...(definition.presentation
+                      ? {
+                          presentation: {
+                            ...definition.presentation,
+                            ...(definition.presentation.join
+                              ? { join: { ...definition.presentation.join } }
+                              : {}),
+                          },
+                        }
+                      : {}),
                     ...(definition.imageUrlSmall
                       ? { imageUrlSmall: definition.imageUrlSmall }
                       : {}),

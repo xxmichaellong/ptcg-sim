@@ -398,13 +398,14 @@
 }
 
 /* ---- Card preview ----------------------------------------------------- */
-/* The card as large as the board allows (92% of its height, a little above
-   v1's 90%), on a scrim. It zooms out of the card it was opened from
+/* The card as large as the board allows, with a separate control row so its
+   name and HP stay visible on narrow tables. It zooms out of its source
    (overlayMotion.ts) and tilts toward the pointer under a glare that follows
    it; under reduced motion it only fades, and holds still. */
 .ptcgsim-legacy-card-preview {
   --ptcgsim-preview-height: min(
     calc(var(--ptcgsim-overlay-board-height, 100vh) * 0.92),
+    calc(var(--ptcgsim-overlay-board-height, 100vh) - 80px),
     calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 88 / 63)
   );
 
@@ -412,6 +413,8 @@
   inset: 0;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
+  padding: 64px 32px 16px;
   background: var(--color-scrim);
   backdrop-filter: blur(6px) saturate(0.9);
   cursor: zoom-out;
@@ -441,7 +444,80 @@
   transform: perspective(900px) rotateX(var(--ptcgsim-tilt-x, 0deg))
     rotateY(var(--ptcgsim-tilt-y, 0deg));
   transition: transform var(--duration-slow, 320ms) var(--ease-out);
-  will-change: transform;
+}
+
+.ptcgsim-card-preview-tilt[data-reading='true'] {
+  transform: none;
+}
+
+.ptcgsim-legacy-card-preview[data-landscape='true'] {
+  --ptcgsim-preview-height: min(
+    calc(var(--ptcgsim-overlay-board-height, 100vh) - 96px),
+    calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 63 / 88)
+  );
+}
+.ptcgsim-legacy-card-preview[data-landscape='true'] .ptcgsim-card-preview-tilt {
+  width: calc(var(--ptcgsim-preview-height) * 88 / 63);
+}
+.ptcgsim-composition-artwork {
+  position: relative;
+  align-self: center;
+  filter: drop-shadow(0 14px 28px rgb(0 0 0 / 0.3));
+}
+.ptcgsim-composition-piece .ptcgsim-legacy-overlay-card-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+.ptcgsim-composition-piece img {
+  object-fit: fill;
+}
+.ptcgsim-composition-caption {
+  position: absolute;
+  bottom: 16px;
+  inset-inline: 24px;
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.ptcgsim-composition-piece-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.ptcgsim-legacy-stack-preview.is-piece-list {
+  inset: 64px 24px 24px !important;
+  width: auto !important;
+  height: auto !important;
+  max-height: none;
+  overflow: auto;
+  transform-origin: center;
+}
+.ptcgsim-legacy-stack-preview.is-piece-list .ptcgsim-legacy-stack-preview-card {
+  height: min(42vh, 340px);
+}
+
+.ptcgsim-preview-controls {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptcgsim-preview-controls .ptcgsim-overlay-button {
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+}
+
+.ptcgsim-preview-controls kbd {
+  color: var(--color-text-faint);
+  font: 11px var(--font-ui);
 }
 
 .ptcgsim-legacy-overlay-card-image.is-preview {
@@ -456,40 +532,16 @@
   transition: opacity var(--duration-fast, 140ms) ease;
 }
 
-/* A soft highlight that follows the pointer across the card. */
-.ptcgsim-card-preview-glare {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: radial-gradient(
-    circle at var(--ptcgsim-glare-x, 50%) var(--ptcgsim-glare-y, 30%),
-    color-mix(in oklch, var(--neutral-0) 55%, transparent),
-    color-mix(in oklch, var(--neutral-0) 12%, transparent) 30%,
-    transparent 60%
-  );
-  mix-blend-mode: overlay;
-  opacity: var(--ptcgsim-glare-opacity, 0);
-  pointer-events: none;
-  transition: opacity var(--duration-slow, 320ms) var(--ease-out);
-}
-
-:root[data-motion='reduced'] .ptcgsim-card-preview-tilt {
+:root[data-motion='reduced'] .ptcgsim-card-preview-tilt,
+:root[data-motion-speed='instant'] .ptcgsim-card-preview-tilt {
   transform: none;
   transition: none;
-}
-
-:root[data-motion='reduced'] .ptcgsim-card-preview-glare {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='full']) .ptcgsim-card-preview-tilt {
     transform: none;
     transition: none;
-  }
-
-  :root:not([data-motion='full']) .ptcgsim-card-preview-glare {
-    display: none;
   }
 }
 
@@ -740,12 +792,12 @@
   text-align: center;
 }
 
-/* Buttons: 34px, secondary by default; `is-primary` is the accent fill and
+/* Buttons share the control tokens; `is-primary` is the accent fill and
    `is-quiet` has no fill until hovered. Pressing sinks them a little. */
 .ptcgsim-overlay-button {
   display: inline-flex;
   box-sizing: border-box;
-  height: 34px;
+  height: var(--control-height);
   flex: none;
   align-items: center;
   justify-content: center;
@@ -788,7 +840,7 @@
     var(--color-surface-pressed),
     var(--color-surface-pressed)
   );
-  scale: 0.97;
+  scale: var(--control-press-scale);
 }
 
 .ptcgsim-overlay-button:focus-visible {
@@ -940,6 +992,7 @@
 }
 
 .ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-legacy-zone-cards,
+.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-browser-tools,
 .ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-overlay-heading,
 .ptcgsim-legacy-zone-browser.is-peeking
   .ptcgsim-overlay-actions
@@ -949,6 +1002,94 @@
 
 .ptcgsim-peek-button {
   pointer-events: auto;
+}
+
+.ptcgsim-browser-tools {
+  position: sticky;
+  top: 56px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-browser-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 100px;
+  height: var(--control-height-compact);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+}
+
+.ptcgsim-browser-search:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.ptcgsim-browser-search > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.ptcgsim-browser-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  outline: none;
+}
+
+.ptcgsim-browser-search input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.ptcgsim-browser-size {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.ptcgsim-browser-size select {
+  height: var(--control-height-compact);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.ptcgsim-browser-size select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ptcgsim-browser-results {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .ptcgsim-browser-results {
+    display: none;
+  }
 }
 
 .ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-peek-button {

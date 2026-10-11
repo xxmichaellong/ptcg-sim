@@ -11,6 +11,7 @@ import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { UploadSimpleIcon } from '@phosphor-icons/react/dist/csr/UploadSimple';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
+import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import {
   applyLocalControls,
   DECK_FORMATS,
@@ -24,6 +25,7 @@ import {
   type DeckCard,
   type SortDirection,
 } from '@ptcgsim/deck-core';
+import { resolveCardPresentation } from '@ptcgsim/game-core';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 import {
   useCallback,
@@ -53,7 +55,9 @@ import type {
 
 import '../../design/panel-controls.css';
 import { confirmAction } from '../../ui/dialog-requests.js';
+import { trapFocus } from '../../ui/focus.js';
 import './LegacyDeckBuilderWorkspace.css';
+import { readingImageStyle } from '../../ui/card-artwork.js';
 
 const CLEAR_CONFIRMATION = 'Are you sure you want to delete your deck?';
 
@@ -76,9 +80,8 @@ const confirmDeckClear: DeckClearConfirmation = (message, { signal }) =>
   });
 const CUSTOM_CARD_QUANTITY_MAX = 99;
 const CUSTOM_CARD_NAME_MAX = 256;
-/** The hover zoom: a card about 360px tall, beside the card it reads. */
-const ZOOM_HEIGHT = 360;
-const ZOOM_WIDTH = Math.round((ZOOM_HEIGHT * 63) / 88);
+/** Large enough to read rules text; limited to its workspace on smaller screens. */
+const ZOOM_MAX_HEIGHT = 560;
 const ZOOM_GAP = 14;
 const ZOOM_MARGIN = 8;
 const ZOOM_DELAY_MS = 140;
@@ -110,10 +113,13 @@ type SearchState =
 type CustomImageState = 'empty' | 'loading' | 'loaded' | 'failed' | 'too_long';
 
 interface HoverZoom {
+  readonly readingQuarterTurns: number;
   readonly small: string;
   readonly large: string;
   readonly left: number;
   readonly top: number;
+  readonly width: number;
+  readonly height: number;
 }
 
 type SupertypeGroup = 'pokemon' | 'trainer' | 'energy' | 'other';
@@ -231,7 +237,7 @@ const SearchResultCard = ({
   readonly index: number;
   readonly inDeck: number;
   readonly onAdd: (card: DeckCard) => void;
-  readonly onPreview: (url: string) => void;
+  readonly onPreview: (url: string, card: DeckCard) => void;
   readonly onZoom: (card: DeckCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
 }) => {
@@ -251,7 +257,7 @@ const SearchResultCard = ({
         if (!previewImage) return;
         event.preventDefault();
         onZoomEnd();
-        onPreview(previewImage);
+        onPreview(previewImage, card);
       }}
       onPointerEnter={(event: PointerEvent<HTMLButtonElement>) => {
         if (event.pointerType === 'mouse') onZoom(card, event.currentTarget);
@@ -302,7 +308,7 @@ const DeckCardRow = ({
   readonly index: number;
   readonly onAdd: (card: DeckCard) => void;
   readonly onRemove: (card: DeckCard) => void;
-  readonly onPreview: (url: string) => void;
+  readonly onPreview: (url: string, card: DeckCard) => void;
 }) => {
   const image = preferredDeckImage(card);
   const name = card.name || 'Unknown Card';
@@ -320,7 +326,7 @@ const DeckCardRow = ({
       data-deck-index={index}
       {...(image ? { 'data-preview-image': image } : {})}
       onClick={() => {
-        if (image) onPreview(image);
+        if (image) onPreview(image, card);
       }}
     >
       {/* The card itself opens the preview, by mouse or keyboard; the row
@@ -388,6 +394,9 @@ const CustomCardDialog = ({
   const [name, setName] = useState('');
   const [supertype, setSupertype] = useState('Pokémon');
   const [imageUrl, setImageUrl] = useState('');
+  const [cardLayout, setCardLayout] = useState('auto');
+  const [artworkGroup, setArtworkGroup] = useState('');
+  const [piece, setPiece] = useState('0');
   const [imageState, setImageState] = useState<CustomImageState>('empty');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
@@ -399,6 +408,9 @@ const CustomCardDialog = ({
     setName('');
     setSupertype('Pokémon');
     setImageUrl('');
+    setCardLayout('auto');
+    setArtworkGroup('');
+    setPiece('0');
     setImageState('empty');
     setError('');
     nameRef.current?.focus();
@@ -444,9 +456,41 @@ const CustomCardDialog = ({
       setError('Image URL must point to a loadable image.');
       return;
     }
+    const grid =
+      cardLayout === 'union'
+        ? [2, 2]
+        : cardLayout === 'legend'
+          ? [1, 2]
+          : cardLayout === 'pair'
+            ? [2, 1]
+            : cardLayout === 'trio'
+              ? [3, 1]
+              : undefined;
+    const presentation =
+      cardLayout === 'auto'
+        ? undefined
+        : {
+            readingQuarterTurns:
+              cardLayout === 'break' ||
+              cardLayout === 'legend' ||
+              cardLayout === 'landscape'
+                ? 1
+                : 0,
+            ...(cardLayout === 'break' ? { overlay: 'upper-half' } : {}),
+            ...(grid
+              ? {
+                  join: {
+                    key: artworkGroup.trim() || normalizedName.slice(0, 128),
+                    columns: grid[0],
+                    rows: grid[1],
+                    part: Number(piece),
+                  },
+                }
+              : {}),
+          };
     onAdd(
       {
-        id: `custom:${normalizedName}:${supertype}:${normalizedImage}`,
+        id: `custom:${normalizedName}:${supertype}:${normalizedImage}${presentation ? `:${JSON.stringify(presentation)}` : ''}`,
         name: normalizedName,
         supertype,
         image: normalizedImage,
@@ -454,6 +498,7 @@ const CustomCardDialog = ({
         set: { id: '', name: '', releaseDate: '' },
         number: '',
         _provider: 'custom',
+        ...(presentation ? { presentation } : {}),
       },
       parsedQuantity
     );
@@ -483,6 +528,7 @@ const CustomCardDialog = ({
         if (event.target === event.currentTarget) onClose();
       }}
       onKeyDown={(event) => {
+        trapFocus(event, event.currentTarget);
         if (event.key === 'Escape') {
           event.preventDefault();
           onClose();
@@ -547,6 +593,78 @@ const CustomCardDialog = ({
                 onChange={(event) => setImageUrl(event.target.value)}
               />
             </label>
+            <details className="native-custom-card-layout">
+              <summary>Card layout (optional)</summary>
+              <label className="native-deck-builder-modal-label">
+                Layout
+                <select
+                  className="ds-select"
+                  value={cardLayout}
+                  onChange={(event) => {
+                    setCardLayout(event.target.value);
+                    setPiece('0');
+                  }}
+                >
+                  <option value="auto">Recognize known card formats</option>
+                  <option value="portrait">Ordinary portrait card</option>
+                  <option value="landscape">
+                    Sideways scan · rotate to read
+                  </option>
+                  <option value="break">Upper-half overlay · BREAK</option>
+                  <option value="legend">Two landscape halves · LEGEND</option>
+                  <option value="pair">
+                    Two side-by-side pieces · Stadium
+                  </option>
+                  <option value="trio">Three side-by-side pieces</option>
+                  <option value="union">Four-piece grid · V-UNION</option>
+                </select>
+              </label>
+              {['legend', 'pair', 'trio', 'union'].includes(cardLayout) ? (
+                <>
+                  <label className="native-deck-builder-modal-label">
+                    Artwork group
+                    <input
+                      className="ds-input"
+                      maxLength={128}
+                      placeholder="Same group for each piece"
+                      value={artworkGroup}
+                      onChange={(event) => setArtworkGroup(event.target.value)}
+                    />
+                  </label>
+                  <label className="native-deck-builder-modal-label">
+                    Piece position
+                    <select
+                      className="ds-select"
+                      value={piece}
+                      onChange={(event) => setPiece(event.target.value)}
+                    >
+                      {(cardLayout === 'union'
+                        ? [
+                            'Top left',
+                            'Top right',
+                            'Bottom left',
+                            'Bottom right',
+                          ]
+                        : cardLayout === 'legend'
+                          ? ['Top', 'Bottom']
+                          : cardLayout === 'trio'
+                            ? ['Left', 'Middle', 'Right']
+                            : ['Left', 'Right']
+                      ).map((label, index) => (
+                        <option key={label} value={index}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p>
+                    Use the same group for pieces from one illustration. Place
+                    Pokémon pieces in one stack, or Stadium pieces in the
+                    Stadium area.
+                  </p>
+                </>
+              ) : null}
+            </details>
           </div>
           <div className="native-deck-builder-modal-preview">
             <img
@@ -623,6 +741,7 @@ export const LegacyDeckBuilderWorkspace = ({
   const [searchState, setSearchState] = useState<SearchState>({ kind: 'idle' });
   const [notice, setNotice] = useState('');
   const [previewImage, setPreviewImage] = useState('');
+  const [previewTurns, setPreviewTurns] = useState(0);
   const [customOpen, setCustomOpen] = useState(false);
   const [flash, setFlash] = useState(false);
   const [zoom, setZoom] = useState<HoverZoom | undefined>(undefined);
@@ -771,23 +890,33 @@ export const LegacyDeckBuilderWorkspace = ({
     const large = preferredPreviewImage(card);
     const small = preferredSearchThumbnailImage(card) || large;
     if (!large) return;
+    const readingQuarterTurns =
+      resolveCardPresentation({ ...card, imageUrl: large })
+        ?.readingQuarterTurns ?? 0;
+    const aspect = readingQuarterTurns % 2 ? 88 / 63 : 63 / 88;
     const place = (): void => {
       zoomTimer.current = undefined;
       const rect = element.getBoundingClientRect();
       const bounds = workspaceRef.current?.getBoundingClientRect();
       const right = bounds?.right ?? globalThis.innerWidth;
       const bottom = bounds?.bottom ?? globalThis.innerHeight;
+      const height = Math.min(
+        ZOOM_MAX_HEIGHT,
+        bottom * 0.66,
+        (right - 2 * ZOOM_MARGIN) / aspect
+      );
+      const width = height * aspect;
       let left = rect.right + ZOOM_GAP;
-      if (left + ZOOM_WIDTH > right - ZOOM_MARGIN) {
-        left = rect.left - ZOOM_GAP - ZOOM_WIDTH;
+      if (left + width > right - ZOOM_MARGIN) {
+        left = rect.left - ZOOM_GAP - width;
       }
       left = Math.max(ZOOM_MARGIN, left);
       const top = Math.min(
-        Math.max(ZOOM_MARGIN, rect.top + rect.height / 2 - ZOOM_HEIGHT / 2),
-        Math.max(ZOOM_MARGIN, bottom - ZOOM_HEIGHT - ZOOM_MARGIN)
+        Math.max(ZOOM_MARGIN, rect.top + rect.height / 2 - height / 2),
+        Math.max(ZOOM_MARGIN, bottom - height - ZOOM_MARGIN)
       );
       zoomShown.current = true;
-      setZoom({ small, large, left, top });
+      setZoom({ small, large, left, top, width, height, readingQuarterTurns });
     };
     clearZoomTimers();
     // A fresh hover waits a beat so sweeping across the grid does not flash.
@@ -795,7 +924,11 @@ export const LegacyDeckBuilderWorkspace = ({
     else zoomTimer.current = setTimeout(place, ZOOM_DELAY_MS);
   }, []);
 
-  const showPreview = useCallback((url: string) => {
+  const showPreview = useCallback((url: string, card: DeckCard) => {
+    setPreviewTurns(
+      resolveCardPresentation({ ...card, imageUrl: url })
+        ?.readingQuarterTurns ?? 0
+    );
     previewReturnFocus.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -1332,10 +1465,24 @@ export const LegacyDeckBuilderWorkspace = ({
           <div
             className="native-deck-builder-zoom"
             aria-hidden="true"
-            style={{ left: zoom.left, top: zoom.top }}
+            style={{
+              left: zoom.left,
+              top: zoom.top,
+              width: zoom.width,
+              height: zoom.height,
+            }}
           >
-            <img src={zoom.small} alt="" className="is-placeholder" />
-            <img src={zoom.large} alt="" />
+            <img
+              src={zoom.small}
+              alt=""
+              className="is-placeholder"
+              style={readingImageStyle(zoom.readingQuarterTurns)}
+            />
+            <img
+              src={zoom.large}
+              alt=""
+              style={readingImageStyle(zoom.readingQuarterTurns)}
+            />
           </div>
         )}
       </div>
@@ -1349,13 +1496,28 @@ export const LegacyDeckBuilderWorkspace = ({
         tabIndex={-1}
         hidden={!previewImage}
         onClick={closePreview}
+        onKeyDown={(event) => trapFocus(event, event.currentTarget)}
       >
-        <img
-          id="nativeDeckBuilderCardPreviewImage"
-          className="native-deck-builder-card-preview-image"
-          {...(previewImage ? { src: previewImage } : {})}
-          alt="Card preview"
-        />
+        <button
+          type="button"
+          className="ds-button ds-button--secondary native-deck-builder-preview-close"
+          aria-label="Close card preview"
+          onClick={closePreview}
+        >
+          <XIcon {...decorative} /> Close <kbd className="ds-kbd">Esc</kbd>
+        </button>
+        <div
+          className="native-deck-builder-reading-card"
+          data-landscape={previewTurns % 2 === 1 ? 'true' : undefined}
+        >
+          <img
+            id="nativeDeckBuilderCardPreviewImage"
+            style={readingImageStyle(previewTurns)}
+            className="native-deck-builder-card-preview-image"
+            {...(previewImage ? { src: previewImage } : {})}
+            alt="Card preview"
+          />
+        </div>
       </div>
     </>
   );

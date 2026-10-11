@@ -83,6 +83,11 @@ export interface PileShuffle {
   readonly imageUrl: string;
   /** Seconds to wait so the cards flying into the pile land first. */
   readonly delay: number;
+  /** A spread of face-down cards gathers and deals back to these slots. */
+  readonly spread?: readonly {
+    readonly renderKey: string;
+    readonly rect: Rect;
+  }[];
 }
 
 export interface MotionPlan {
@@ -102,7 +107,7 @@ const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
 });
 
 /** Piles a shuffle can apply to and that paint a cover worth riffling. */
-const SHUFFLED_PILE_KINDS = new Set(['deck']);
+const SHUFFLED_PILE_KINDS = new Set(['deck', 'prizes']);
 
 /** Roughly when a card flying into a pile has landed, after it sets off. */
 const PILE_ARRIVAL_SECONDS = 0.3;
@@ -139,6 +144,22 @@ const detectShuffles = (
     const face =
       nextMembers.find((card) => card.renderKey !== null) ?? nextMembers[0];
     if (!face) continue;
+    // Prize taking/replacement is not a shuffle. Only animate an unchanged,
+    // entirely face-down spread whose old aliases all disappeared. The
+    // animation never pairs a concealed old identity with a new identity.
+    const spread =
+      zone.kind === 'prizes'
+        ? nextMembers.filter((card) => card.renderKey !== null)
+        : null;
+    if (
+      spread &&
+      (before.count !== zone.count ||
+        spread.some((card) => !card.concealed) ||
+        previous.cards.some(
+          (card) => card.parentId === zone.id && !card.concealed
+        ))
+    )
+      continue;
     const memberRects = new Map(
       nextMembers.flatMap((card) =>
         card.renderKey === null ? [] : [[card.renderKey, card.bounds] as const]
@@ -166,6 +187,14 @@ const detectShuffles = (
         arrivals.length === 0
           ? 0
           : Math.max(...arrivals) + PILE_ARRIVAL_SECONDS,
+      ...(spread
+        ? {
+            spread: spread.map((card) => ({
+              renderKey: card.renderKey!,
+              rect: card.bounds,
+            })),
+          }
+        : {}),
     });
   }
   return shuffles;

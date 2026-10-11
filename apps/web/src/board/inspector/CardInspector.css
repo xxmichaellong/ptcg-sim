@@ -74,68 +74,12 @@
   object-fit: cover;
 }
 
-.card-inspector__glare,
-.card-inspector__shine {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: var(--inspector-light, 0);
-  transition: opacity calc(240ms * var(--motion-scale, 1)) var(--ease-out);
+.card-inspector[data-landscape='true'] {
+  width: min(55%, 760px);
 }
-.card-inspector__glare {
-  background: radial-gradient(
-    farthest-corner circle at var(--inspector-pointer-x, 50%)
-      var(--inspector-pointer-y, 35%),
-    oklch(1 0 0 / 0.55) 4%,
-    oklch(1 0 0 / 0.18) 22%,
-    oklch(0 0 0 / 0.36) 92%
-  );
-  mix-blend-mode: overlay;
-}
-
-/* Rainbow foil: a stack of spectral bands that slides with the pointer at a
-   reduced rate (parallax), brightened through colour-dodge. */
-.card-inspector__shine {
-  --bands: repeating-linear-gradient(
-    115deg,
-    oklch(0.78 0.2 20) 0%,
-    oklch(0.85 0.18 85) 5%,
-    oklch(0.84 0.17 150) 10%,
-    oklch(0.78 0.16 230) 15%,
-    oklch(0.74 0.2 300) 20%,
-    oklch(0.78 0.2 20) 25%
-  );
-  background-image:
-    var(--bands),
-    repeating-linear-gradient(
-      55deg,
-      oklch(0.2 0 0 / 0.5) 0% 1.4%,
-      oklch(0.7 0 0 / 0.4) 2.2% 3%
-    );
-  background-size:
-    260% 260%,
-    140% 140%;
-  background-position:
-    calc(var(--inspector-pointer-x, 50%) * 0.6 + 20%)
-      calc(var(--inspector-pointer-y, 50%) * 0.6 + 20%),
-    center;
-  background-blend-mode: hard-light;
-  mix-blend-mode: color-dodge;
-  filter: brightness(0.62) contrast(1.6) saturate(1.25);
-}
-.card-inspector__card[data-finish='rainbow'] .card-inspector__shine {
-  opacity: calc(
-    var(--inspector-light, 0) * (0.42 + var(--inspector-from-centre, 0) * 0.28)
-  );
-}
-/* Ordinary holo: the foil sits in the art window only. */
-.card-inspector__card[data-finish='holo'] .card-inspector__shine {
-  clip-path: inset(10.5% 8% 47.5% 8% round 1.5%);
-  opacity: calc(var(--inspector-light, 0) * 0.5);
-}
-.card-inspector__card[data-finish='sheen'] .card-inspector__shine {
-  display: none;
+.card-inspector[data-landscape='true'] .card-inspector__card {
+  width: calc(100% - 2 * var(--space-6));
+  aspect-ratio: 88 / 63;
 }
 
 .card-inspector[data-reduced-motion='true'],
@@ -148,10 +92,6 @@
 :root[data-motion='reduced'] .card-inspector__card {
   transform: none;
   animation: none;
-}
-.card-inspector[data-reduced-motion='true'] .card-inspector__shine,
-.card-inspector[data-reduced-motion='true'] .card-inspector__glare {
-  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='full']) .card-inspector__card {

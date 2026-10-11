@@ -14,6 +14,7 @@ import {
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
+import { sameCardPresentation } from './card-presentation.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
 import {
@@ -173,7 +174,8 @@ const sameDefinition = (left: CardDefinition, right: CardDefinition): boolean =>
   left.name === right.name &&
   left.category === right.category &&
   left.imageUrl === right.imageUrl &&
-  left.imageUrlSmall === right.imageUrlSmall;
+  left.imageUrlSmall === right.imageUrlSmall &&
+  sameCardPresentation(left.presentation, right.presentation);
 
 type DeckRelativeCommand = Extract<
   GameCommand,
@@ -629,7 +631,9 @@ const decideMoveCardToStadium = (
   }
   const incumbentCardId = stadium.cardIds[0] ?? null;
   if (
-    stadium.cardIds.length > 1 ||
+    (command.expectedStadiumCardIds
+      ? !sameOrder(stadium.cardIds, command.expectedStadiumCardIds)
+      : stadium.cardIds.length > 1 || command.placement === 'add') ||
     incumbentCardId !== command.expectedStadiumCardId
   ) {
     return reject('stale_reference', 'Stadium occupant changed');
@@ -641,9 +645,14 @@ const decideMoveCardToStadium = (
     return reject('invalid_command', 'Card is already in the stadium');
   }
 
-  let displacement: DomainEvent | null = null;
-  if (incumbentCardId) {
-    const incumbent = state.cards[incumbentCardId];
+  if (command.placement === 'add' && stadium.cardIds.length >= 4)
+    return reject('precondition_failed', 'Stadium has room for four pieces');
+  const displacements: DomainEvent[] = [];
+  const discardOffsets = new Map<string, number>();
+  for (const incumbentId of command.placement === 'add'
+    ? []
+    : stadium.cardIds) {
+    const incumbent = state.cards[incumbentId];
     if (!incumbent) {
       return reject('precondition_failed', 'Stadium card is missing');
     }
@@ -651,30 +660,32 @@ const decideMoveCardToStadium = (
     if (!discard || discard.kind !== 'discard') {
       return reject('not_found', 'Stadium owner discard does not exist');
     }
-    displacement = {
+    const offset = discardOffsets.get(discard.id) ?? 0;
+    discardOffsets.set(discard.id, offset + 1);
+    displacements.push({
       type: 'CardMoved',
       cardId: incumbent.id,
       expectedSourceZoneId: stadium.id,
       destinationZoneId: discard.id,
-      destinationIndex: discard.cardIds.length,
+      destinationIndex: discard.cardIds.length + offset,
       concealIdentity: false,
-    };
+    });
   }
 
   const departure = decideCardDepartureToZone(
     state,
     source,
     stadium,
-    0,
+    command.placement === 'add' ? stadium.cardIds.length : 0,
     context,
     false
   );
   if (!departure.accepted) return departure;
-  if (!displacement) return departure;
+  if (displacements.length === 0) return departure;
 
   return {
     accepted: true,
-    events: [displacement, ...departure.events],
+    events: [...displacements, ...departure.events],
   };
 };
 
@@ -685,7 +696,10 @@ const decidePlaceCardOnPlayStack = (
   const source = resolveCardActionSource(state, command);
   if (!source.accepted) return source;
   const target = state.stacks[command.targetStackId];
-  if (!target || target.boardPlayerId !== command.playerId) {
+  if (
+    !target ||
+    (command.mode === 'evolution' && target.boardPlayerId !== command.playerId)
+  ) {
     return reject(
       'stale_reference',
       'Target play stack is no longer on the source board'
@@ -1230,21 +1244,27 @@ export const decideCommand = (
       const events: DomainEvent[] = [];
       if (
         destination.id === stadiumZoneId() &&
+        source.id !== destination.id &&
         destination.cardIds.length > 0
       ) {
-        const displacedId = destination.cardIds[0]!;
-        const displaced = state.cards[displacedId];
-        if (!displaced)
-          return reject('precondition_failed', 'Stadium card is missing');
-        const discardId = playerZoneId(displaced.ownerId, 'discard');
-        events.push({
-          type: 'CardMoved',
-          cardId: displaced.id,
-          expectedSourceZoneId: destination.id,
-          destinationZoneId: discardId,
-          destinationIndex: state.zones[discardId]?.cardIds.length ?? 0,
-          concealIdentity: false,
-        });
+        const offsets = new Map<string, number>();
+        for (const displacedId of destination.cardIds) {
+          const displaced = state.cards[displacedId];
+          if (!displaced)
+            return reject('precondition_failed', 'Stadium card is missing');
+          const discardId = playerZoneId(displaced.ownerId, 'discard');
+          const offset = offsets.get(discardId) ?? 0;
+          offsets.set(discardId, offset + 1);
+          events.push({
+            type: 'CardMoved',
+            cardId: displaced.id,
+            expectedSourceZoneId: destination.id,
+            destinationZoneId: discardId,
+            destinationIndex:
+              (state.zones[discardId]?.cardIds.length ?? 0) + offset,
+            concealIdentity: false,
+          });
+        }
       }
       events.push({
         type: 'CardMoved',
@@ -1689,20 +1709,71 @@ export const decideCommand = (
         ...resolution.evolutionCardIds,
         ...resolution.attachmentCardIds,
       ];
+      const owned = (cardId: CardInstanceId) =>
+        state.cards[cardId]?.ownerId === command.playerId;
+      const events: DomainEvent[] = [];
+      // A foreign Tool keeps its owner when the whole Pokémon leaves play.
+      // Use existing departure/shuffle events so old logs remain replayable.
+      for (const ownerId of state.playerOrder.filter(
+        (id) => id !== command.playerId
+      )) {
+        const foreign = stagedCardIds.filter(
+          (id) => state.cards[id]?.ownerId === ownerId
+        );
+        if (!foreign.length) continue;
+        const target = decideWorkAreaDestination(
+          state,
+          ownerId,
+          foreign,
+          command.destination,
+          context
+        );
+        if (!target.accepted) return target;
+        const zone = state.zones[target.destinationZoneId]!;
+        const orderedForeign = target.destinationCardIds.filter((id) =>
+          foreign.includes(id)
+        );
+        const shuffleDeck = command.destination === 'shuffleIntoDeck';
+        orderedForeign.forEach((cardId, index) =>
+          events.push({
+            type: 'StagedCardMoved',
+            playerId: command.playerId,
+            expectedWorkAreaId: resolution.id,
+            source: resolution.evolutionCardIds.includes(cardId)
+              ? 'evolution'
+              : 'attachment',
+            cardId,
+            destinationZoneId: zone.id,
+            destinationIndex: zone.cardIds.length + index,
+            concealIdentity:
+              isConcealedZone(zone) &&
+              !(shuffleDeck && index === orderedForeign.length - 1),
+          })
+        );
+        if (shuffleDeck)
+          events.push({
+            type: 'ZoneShuffled',
+            zoneId: zone.id,
+            cardOrder: target.destinationCardIds,
+            concealedCardIds: target.destinationCardIds,
+          });
+      }
+      const ownedIds = stagedCardIds.filter(owned);
+      if (!ownedIds.length && events.length) return accept(...events);
       const destination = decideWorkAreaDestination(
         state,
         command.playerId,
-        stagedCardIds,
+        ownedIds,
         command.destination,
         context
       );
       if (!destination.accepted) return destination;
-      return accept({
+      return accept(...events, {
         type: 'StagedCardsResolved',
         playerId: command.playerId,
         expectedWorkAreaId: resolution.id,
-        expectedEvolutionCardIds: [...resolution.evolutionCardIds],
-        expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+        expectedEvolutionCardIds: resolution.evolutionCardIds.filter(owned),
+        expectedAttachmentCardIds: resolution.attachmentCardIds.filter(owned),
         destination: command.destination,
         destinationZoneId: destination.destinationZoneId,
         expectedDestinationCardIds: destination.expectedDestinationCardIds,

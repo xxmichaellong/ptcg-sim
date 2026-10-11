@@ -53,7 +53,11 @@ export const resolveCardZoneMoveAction = (
   }
   const destinationZone = Object.values(view.zones).find(
     (zone) =>
-      zone.kind === destination && zone.ownerId === located.sourcePlayerId
+      zone.kind === destination &&
+      zone.ownerId ===
+        (destination === 'board'
+          ? located.sourcePlayerId
+          : located.card.ownerId)
   );
   if (!destinationZone) return rejected('unsupported_target');
   if (located.sourceId === destinationZone.id) return rejected('no_op');

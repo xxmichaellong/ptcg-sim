@@ -21,6 +21,7 @@ import {
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import { motionSettings } from '../motion/motion-settings.js';
+import { depthSettings } from '../motion/depth-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
@@ -242,19 +243,28 @@ export const RemoteRoomRoute = ({
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
+  const depth = useSyncExternalStore(
+    depthSettings().subscribe,
+    depthSettings().getSnapshot
+  );
   const effectivePreferences = useMemo((): BoardPreferences => {
     // Motion always comes from the player's motion settings, whatever an
     // earlier publish may have carried along.
-    const { animationSpeed: _stored, ...rest } = storedPreferences;
+    const {
+      animationSpeed: _stored,
+      depth: _depth,
+      ...rest
+    } = storedPreferences;
     return {
       ...rest,
+      ...(depth.mode === 'flat' ? {} : { depth }),
       reducedMotion: motion.reduced,
       // The renderer treats an absent speed as normal.
       ...(motion.durationScale === 1
         ? {}
         : { animationSpeed: motion.durationScale }),
     };
-  }, [storedPreferences, motion.reduced, motion.durationScale]);
+  }, [storedPreferences, motion.reduced, motion.durationScale, depth]);
   // The whole page wears the table's theme (Night or Day). Its motion
   // choice is published page-wide from main.tsx (installPageMotion).
   useEffect(() => {
@@ -526,6 +536,10 @@ export const RemoteRoomRoute = ({
                     ? {
                         intro: (
                           <LegacyWelcome
+                            compact={
+                              Object.keys(state.view?.definitions ?? {})
+                                .length > 0
+                            }
                             {...(chrome.visibility.deckImport
                               ? { onLoadDeck: openDeck }
                               : {})}

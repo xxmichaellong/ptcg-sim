@@ -322,6 +322,15 @@ export class BoardSessionRuntime {
   /** Updates renderer-local preferences without replacing authority or renderer. */
   setPreferences(preferences: BoardPreferences): void {
     this.assertUsable();
+    if (
+      JSON.stringify(this.preferences?.depth) !==
+        JSON.stringify(preferences.depth) ||
+      this.preferences?.reducedMotion !== preferences.reducedMotion ||
+      this.preferences?.animationSpeed !== preferences.animationSpeed
+    ) {
+      this.renderer?.cancelInteraction();
+      this.adapter?.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
+    }
     this.preferences = preferences;
     if (!this.rendererReady) return;
     const renderer = this.renderer;

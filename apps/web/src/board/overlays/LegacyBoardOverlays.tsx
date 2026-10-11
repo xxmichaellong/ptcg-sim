@@ -1,10 +1,13 @@
-import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
 import {
   isLegacyMarkerPresentation,
+  composeCardArtwork,
+  fitCardComposition,
   layoutLegacyActiveQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
   resolveBoardDropTarget,
+  type BoardDepthProjection,
   type BoardScene,
   type BoardScenePlayerFrame,
   type CardSceneNode,
@@ -28,6 +31,7 @@ import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
 import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
 import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/csr/PawPrint';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
@@ -51,6 +55,7 @@ import {
 } from 'react';
 
 import { actingPlayerIdOf } from '../acting-seat.js';
+import { locateViewCardActionSource } from '../locateViewCardActionSource.js';
 import type {
   BoardPresentationDismissScope,
   BoardSessionControllerState,
@@ -93,6 +98,7 @@ import {
   zoneBrowserLayout,
   type OverlayBoardSize,
   type OverlayPanelLayout,
+  type CardBrowserSize,
 } from './overlayLayout.js';
 import {
   createTiltHandlers,
@@ -102,6 +108,8 @@ import {
   type ClientRectLike,
 } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
+import { readingImageStyle } from '../../ui/card-artwork.js';
+import { trapFocus as trapModalTab } from '../../ui/focus.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -121,7 +129,8 @@ export interface LegacyBoardOverlayActions {
   /** One of the bulk buttons along the bottom of a work-area popup. */
   readonly invokeWorkAreaAction?: (
     source: LegacyBoardWorkAreaSource,
-    action: LegacyBoardWorkAreaActionId
+    action: LegacyBoardWorkAreaActionId,
+    targetPlayerId?: PlayerId
   ) => void;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
@@ -417,28 +426,6 @@ const useOutsideDismiss = (
     return () =>
       document.removeEventListener('pointerdown', onPointerDown, true);
   }, [container, dismiss, ignoreClosest]);
-};
-
-const trapModalTab = (
-  event: ReactKeyboardEvent<HTMLElement>,
-  container: HTMLElement,
-  selector: string
-): void => {
-  if (event.key !== 'Tab') return;
-  const items = [...container.querySelectorAll<HTMLElement>(selector)];
-  if (items.length === 0) {
-    event.preventDefault();
-    container.focus();
-    return;
-  }
-  const active = container.ownerDocument.activeElement;
-  if (event.shiftKey && (active === items[0] || active === container)) {
-    event.preventDefault();
-    items.at(-1)?.focus();
-  } else if (!event.shiftKey && active === items.at(-1)) {
-    event.preventDefault();
-    items[0]?.focus();
-  }
 };
 
 const moveMenuFocus = (
@@ -811,7 +798,11 @@ const ContextSubmenu = <Value extends string>({
   );
 };
 
-const visualCardBounds = (card: CardSceneNode) => {
+const visualCardBounds = (
+  card: CardSceneNode,
+  depth?: BoardDepthProjection
+) => {
+  if (depth) return depth.bounds(card);
   if (card.rotationQuarterTurns % 2 === 0) return card.bounds;
   const centerX = card.bounds.x + card.bounds.width / 2;
   const centerY = card.bounds.y + card.bounds.height / 2;
@@ -884,6 +875,7 @@ const isOwnLocation = (
 
 const ContextMenu = ({
   state,
+  depth,
   card,
   anchorBounds,
   pointer,
@@ -891,6 +883,7 @@ const ContextMenu = ({
   actions,
 }: {
   readonly state: BoardSessionControllerState;
+  readonly depth?: BoardDepthProjection;
   readonly card: CardSceneNode;
   readonly anchorBounds?: Rect;
   readonly pointer: RefObject<ContextPointer | null>;
@@ -911,7 +904,7 @@ const ContextMenu = ({
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'menu');
   useEffect(() => setOpenSubmenu(null), [card.id]);
-  const bounds = anchorBounds ?? visualCardBounds(card);
+  const bounds = anchorBounds ?? visualCardBounds(card, depth);
   const scene = state.scene!;
   // A card opened in a zone popup is no longer the table's cover or hand
   // card -- in v1 its parent is the popup, not `deckCover` or `hand` -- so
@@ -1209,7 +1202,7 @@ const OverlayCardImage = ({
   variant,
 }: {
   readonly card: CardSceneNode;
-  readonly variant: 'preview' | 'stack' | 'zone';
+  readonly variant: 'preview' | 'stack' | 'zone' | 'piece';
 }) => {
   const [loadedImage, setLoadedImage] = useState<{
     readonly imageUrl: string;
@@ -1217,10 +1210,13 @@ const OverlayCardImage = ({
   } | null>(null);
   const state =
     loadedImage?.imageUrl === card.imageUrl ? loadedImage.state : 'loading';
+  const rotation =
+    variant === 'preview' ? (card.presentation?.readingQuarterTurns ?? 0) : 0;
+  const landscape = rotation % 2 === 1;
   return (
     <span
       className={`ptcgsim-legacy-overlay-card-image is-${variant}`}
-      style={{ aspectRatio: '5 / 7' }}
+      style={{ aspectRatio: landscape ? '88 / 63' : '63 / 88' }}
       data-overlay-image-state={state}
       data-overlay-image-card-id={card.id}
       aria-hidden={variant === 'zone' ? 'true' : undefined}
@@ -1228,7 +1224,10 @@ const OverlayCardImage = ({
       <img
         src={card.imageUrl}
         alt={variant === 'zone' ? '' : card.label}
-        style={{ opacity: state === 'ready' ? 1 : 0 }}
+        style={{
+          opacity: state === 'ready' ? 1 : 0,
+          ...(rotation ? readingImageStyle(rotation) : {}),
+        }}
         data-overlay-card-id={variant === 'zone' ? undefined : card.id}
         draggable={false}
         onLoad={() =>
@@ -1357,12 +1356,27 @@ const Preview = ({
   const stage = useRef<HTMLSpanElement>(null);
   const tiltTarget = useRef<HTMLSpanElement>(null);
   const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
+  const [reading, setReading] = useState(false);
+  const [showPieces, setShowPieces] = useState(false);
+  const [individualCardId, setIndividualCardId] = useState<string | null>(null);
+  const readingCard =
+    cards.find((card) => card.id === individualCardId) ?? cards[0];
+  const artworkCards = cards
+    .filter((card) => card.role !== 'stackAttachment')
+    .sort((left, right) => left.zIndex - right.zIndex);
+  const composition = composeCardArtwork(artworkCards);
+  useEffect(() => () => tilt.dispose(), [tilt]);
   const dismiss = useCallback(() => actions.dismiss('preview'), [actions]);
   const identity = cards.map((card) => card.id).join(':');
-  useFocusBoundary(container, '[data-preview-focus]', identity);
+  useFocusBoundary(
+    container,
+    '[data-preview-focus]',
+    `${identity}:${showPieces}:${individualCardId ?? ''}`
+  );
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'preview');
-  const previewedCardId = kind === 'card' ? cards[0]?.id : undefined;
+  const previewedCardId =
+    individualCardId ?? (kind === 'card' ? cards[0]?.id : undefined);
   // The card zooms out of where it was clicked -- a card on the table, in a
   // pile or in the stack view -- or, opened from the keyboard, out of where
   // the table shows it.
@@ -1397,7 +1411,84 @@ const Preview = ({
     }
   };
 
-  return kind === 'card' ? (
+  if (composition && cards.length > 1 && !showPieces && !individualCardId) {
+    const fitted = fitCardComposition(composition, {
+      x: 0,
+      y: 0,
+      width: Math.max(0, board.width - 64),
+      height: Math.max(0, board.height - 160),
+    });
+    return (
+      <div
+        ref={container}
+        className="ptcgsim-legacy-card-preview ptcgsim-composition-preview"
+        data-legacy-card-preview="true"
+        data-preview-kind="composition"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${cards[0]?.label ?? 'Card'} assembled preview`}
+        tabIndex={-1}
+        data-preview-focus="true"
+        onKeyDown={onKeyDown}
+        onClick={dismiss}
+      >
+        <div
+          className="ptcgsim-preview-controls"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={dismiss}
+          >
+            <XIcon aria-hidden="true" /> Close <kbd>Esc</kbd>
+          </button>
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={() => setShowPieces(true)}
+          >
+            <SquaresFourIcon aria-hidden="true" /> View individual cards
+          </button>
+        </div>
+        <div
+          className="ptcgsim-composition-artwork"
+          data-card-composition={composition.kind}
+          style={{ width: fitted.bounds.width, height: fitted.bounds.height }}
+        >
+          {fitted.cards.map((part) => {
+            const card = cards.find((entry) => entry.id === part.id)!;
+            return (
+              <span
+                key={part.id}
+                className="ptcgsim-composition-piece"
+                style={{
+                  position: 'absolute',
+                  left: part.bounds.x - fitted.bounds.x,
+                  top: part.bounds.y - fitted.bounds.y,
+                  width: part.bounds.width,
+                  height: part.bounds.height,
+                  transform: `rotate(${part.rotationQuarterTurns * 90}deg)`,
+                  zIndex: part.layer,
+                }}
+              >
+                <OverlayCardImage card={card} variant="piece" />
+              </span>
+            );
+          })}
+        </div>
+        <p className="ptcgsim-composition-caption">
+          {composition.kind === 'joined'
+            ? `${artworkCards.length} of ${artworkCards[0]!.presentation!.join!.columns * artworkCards[0]!.presentation!.join!.rows} pieces`
+            : 'Evolution and previous stage'}{' '}
+          · Use View individual cards to inspect each piece and its attachments.
+        </p>
+      </div>
+    );
+  }
+  return individualCardId || (kind === 'card' && !showPieces) ? (
     <div
       ref={container}
       className="ptcgsim-legacy-card-preview"
@@ -1405,22 +1496,73 @@ const Preview = ({
       data-preview-kind="card"
       role="dialog"
       aria-modal="true"
-      aria-label={cards[0]?.label ?? 'Card preview'}
+      aria-label={readingCard?.label ?? 'Card preview'}
       tabIndex={-1}
       data-preview-focus="true"
+      data-landscape={
+        readingCard?.presentation?.readingQuarterTurns &&
+        readingCard.presentation.readingQuarterTurns % 2 === 1
+          ? 'true'
+          : undefined
+      }
       onClick={dismiss}
       onKeyDown={onKeyDown}
     >
-      {cards[0] ? (
+      <div
+        className="ptcgsim-preview-controls"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="ptcgsim-overlay-button"
+          data-preview-tabbable="true"
+          aria-label="Close card preview"
+          onClick={dismiss}
+        >
+          <XIcon aria-hidden="true" /> Close <kbd>Esc</kbd>
+        </button>
+        {individualCardId ? (
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={() => {
+              setIndividualCardId(null);
+              setShowPieces(false);
+            }}
+          >
+            View assembled card
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="ptcgsim-overlay-button"
+          data-preview-tabbable="true"
+          aria-pressed={reading}
+          onClick={() => setReading((value) => !value)}
+        >
+          {reading ? (
+            <SparkleIcon aria-hidden="true" />
+          ) : (
+            <EyeIcon aria-hidden="true" />
+          )}
+          {reading ? 'Explore finish' : 'Read card'}
+        </button>
+      </div>
+      {readingCard ? (
         <span
           ref={stage}
           className="ptcgsim-card-preview-stage"
           onPointerMove={tilt.onPointerMove}
           onPointerLeave={tilt.onPointerLeave}
         >
-          <span ref={tiltTarget} className="ptcgsim-card-preview-tilt">
-            <OverlayCardImage card={cards[0]} variant="preview" />
-            <span className="ptcgsim-card-preview-glare" aria-hidden="true" />
+          <span
+            ref={tiltTarget}
+            className="ptcgsim-card-preview-tilt card-material"
+            data-finish={readingCard.finish ?? 'sheen'}
+            data-reading={reading ? 'true' : undefined}
+          >
+            <OverlayCardImage card={readingCard} variant="preview" />
           </span>
         </span>
       ) : null}
@@ -1428,7 +1570,7 @@ const Preview = ({
   ) : (
     <div
       ref={container}
-      className={`ptcgsim-legacy-stack-preview is-${cards[0]?.side ?? 'local'}`}
+      className={`ptcgsim-legacy-stack-preview is-${cards[0]?.side ?? 'local'}${showPieces ? ' is-piece-list' : ''}`}
       data-legacy-card-preview="true"
       data-preview-kind="stack"
       role="dialog"
@@ -1451,6 +1593,26 @@ const Preview = ({
       }
       onKeyDown={onKeyDown}
     >
+      {composition ? (
+        <div className="ptcgsim-composition-piece-controls">
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={() => setShowPieces(false)}
+          >
+            View assembled card
+          </button>
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={dismiss}
+          >
+            Close
+          </button>
+        </div>
+      ) : null}
       {cards.map((card) => (
         <button
           key={card.id}
@@ -1461,11 +1623,13 @@ const Preview = ({
           // Keep focus on the stack view itself (its keyboard boundary and
           // Escape handling live there, and v1's stack view has no tab stops);
           // a click still opens the card.
-          tabIndex={-1}
+          tabIndex={composition ? 0 : -1}
+          data-preview-tabbable={composition ? 'true' : undefined}
           onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.stopPropagation();
-            actions.previewCard?.(card.id);
+            if (composition) setIndividualCardId(card.id);
+            else actions.previewCard?.(card.id);
           }}
         >
           <OverlayCardImage card={card} variant="stack" />
@@ -1598,6 +1762,7 @@ export const resolveOpenedZoneDropTarget = (
  */
 const ZoneBrowser = ({
   state,
+  depth,
   zone,
   cards,
   board,
@@ -1606,6 +1771,7 @@ const ZoneBrowser = ({
   actions,
 }: {
   readonly state: BoardSessionControllerState;
+  readonly depth?: BoardDepthProjection;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
   readonly board: OverlayBoardSize;
@@ -1620,8 +1786,11 @@ const ZoneBrowser = ({
   const container = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const activeDragCardId = useRef<ViewCardId | null>(null);
+  const firstClickCard = useRef<ViewCardId | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
+  const [query, setQuery] = useState('');
+  const [cardSize, setCardSize] = useState<CardBrowserSize>('auto');
   const [peeking, setPeeking] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
@@ -1676,12 +1845,18 @@ const ZoneBrowser = ({
   useOverlayExit(container, 'panel');
   useOverlayExit(scrim, 'scrim');
   const primary = zoneAction(zone);
-  const renderedCards = useMemo(
-    () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
-    [cards, sortEnabled]
-  );
+  const renderedCards = useMemo(() => {
+    const ordered = sortEnabled ? sortRecipientSafeZoneCards(cards) : cards;
+    const search = query.trim().toLocaleLowerCase();
+    return search
+      ? ordered.filter(
+          (card) =>
+            !card.concealed && card.label.toLocaleLowerCase().includes(search)
+        )
+      : ordered;
+  }, [cards, sortEnabled, query]);
   const copies = useMemo(() => zoneCopyCounts(cards), [cards]);
-  const layout = zoneBrowserLayout(board, cards.length);
+  const layout = zoneBrowserLayout(board, cards.length, cardSize);
   const title = ZONE_BROWSER_TITLES[zone.kind] ?? zone.label;
   const owner =
     zone.playerId !== null
@@ -1723,7 +1898,7 @@ const ZoneBrowser = ({
         '[data-legacy-board-overlays]'
       );
       const surfaceBounds = overlay?.getBoundingClientRect();
-      const point =
+      const screenPoint =
         stillOwned && surfaceBounds
           ? openedZoneDropPoint(
               scene,
@@ -1732,9 +1907,13 @@ const ZoneBrowser = ({
               event.clientY
             )
           : null;
-      const targetId = point
-        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
-        : null;
+      const hit = screenPoint && depth ? depth.drop(screenPoint, cardId) : null;
+      const point = hit?.point ?? screenPoint;
+      const targetId = hit
+        ? hit.targetId
+        : point
+          ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+          : null;
       finishDrag();
       if (targetId && point) {
         actions.emitOpenedZoneCardIntent({
@@ -1752,7 +1931,7 @@ const ZoneBrowser = ({
       document.removeEventListener('dragover', onDragOver, true);
       document.removeEventListener('drop', onDrop, true);
     };
-  }, [actions, cards, finishDrag, state.scene, zone.id]);
+  }, [actions, cards, finishDrag, state.scene, zone.id, depth]);
 
   return (
     <>
@@ -1781,7 +1960,7 @@ const ZoneBrowser = ({
             trapModalTab(
               event,
               container.current,
-              'button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
+              'button:not(:disabled), input:not(:disabled), select:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
             );
           }
           if (event.key === 'Escape') {
@@ -1838,9 +2017,49 @@ const ZoneBrowser = ({
             </button>
           </div>
         </header>
+        <div className="ptcgsim-browser-tools">
+          <label className="ptcgsim-browser-search">
+            <MagnifyingGlassIcon aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Search cards"
+              placeholder="Find a card…"
+              value={query}
+              onChange={(event) => setQuery(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && query) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setQuery('');
+                }
+              }}
+            />
+          </label>
+          <span className="ptcgsim-browser-results" role="status">
+            {query.trim()
+              ? `${renderedCards.length} of ${cards.length}`
+              : 'Double-click to read'}
+          </span>
+          <label className="ptcgsim-browser-size">
+            Card size
+            <select
+              aria-label="Card size"
+              value={cardSize}
+              onChange={(event) =>
+                setCardSize(event.currentTarget.value as CardBrowserSize)
+              }
+            >
+              <option value="auto">Auto</option>
+              <option value="compact">Compact</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+        </div>
         <div className="ptcgsim-legacy-zone-cards">
           {renderedCards.length === 0 ? (
-            <p className="ptcgsim-overlay-empty">No cards here</p>
+            <p className="ptcgsim-overlay-empty">
+              {cards.length > 0 ? 'No matching cards' : 'No cards here'}
+            </p>
           ) : null}
           {renderedCards.map((card) => (
             <button
@@ -1874,18 +2093,23 @@ const ZoneBrowser = ({
                 actions.dismiss('selection');
               }}
               onDragEnd={finishDrag}
-              onClick={() =>
+              onClick={(event) => {
+                // A second click that opened this panel belongs to the pile,
+                // not to the card that just appeared under the pointer.
+                if (event.detail <= 1) firstClickCard.current = card.id;
                 actions.emitOpenedZoneCardIntent({
                   kind: 'CardSelected',
                   cardId: card.id,
-                })
-              }
-              onDoubleClick={() =>
-                actions.emitOpenedZoneCardIntent({
-                  kind: 'CardPreviewRequested',
-                  cardId: card.id,
-                })
-              }
+                });
+              }}
+              onDoubleClick={(event) => {
+                if (event.detail === 0 || firstClickCard.current === card.id)
+                  actions.emitOpenedZoneCardIntent({
+                    kind: 'CardPreviewRequested',
+                    cardId: card.id,
+                  });
+                firstClickCard.current = null;
+              }}
               onContextMenu={(event) => {
                 event.preventDefault();
                 const bounds = event.currentTarget.getBoundingClientRect();
@@ -1947,13 +2171,17 @@ const WORK_AREA_ACTION_ICONS: Readonly<
  */
 const WorkAreaPanel = ({
   state,
+  depth,
   zone,
   cards,
   board,
   captureContextAnchor,
   actions,
+  allowOpponentResolution = false,
 }: {
+  readonly allowOpponentResolution?: boolean;
   readonly state: BoardSessionControllerState;
+  readonly depth?: BoardDepthProjection;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
   readonly board: OverlayBoardSize;
@@ -1966,6 +2194,7 @@ const WorkAreaPanel = ({
 }) => {
   const container = useRef<HTMLElement>(null);
   const activeDragCardId = useRef<ViewCardId | null>(null);
+  const firstClickCard = useRef<ViewCardId | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [peeking, setPeeking] = useState(false);
   useOverlayExit(container, 'panel');
@@ -2007,7 +2236,7 @@ const WorkAreaPanel = ({
         '[data-legacy-board-overlays]'
       );
       const surfaceBounds = overlay?.getBoundingClientRect();
-      const point =
+      const screenPoint =
         stillOwned && surfaceBounds
           ? openedZoneDropPoint(
               scene,
@@ -2016,9 +2245,13 @@ const WorkAreaPanel = ({
               event.clientY
             )
           : null;
-      const targetId = point
-        ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
-        : null;
+      const hit = screenPoint && depth ? depth.drop(screenPoint, cardId) : null;
+      const point = hit?.point ?? screenPoint;
+      const targetId = hit
+        ? hit.targetId
+        : point
+          ? resolveBoardDropTarget(scene, cardId, point.x, point.y)
+          : null;
       finishDrag();
       if (targetId && point) {
         emit({
@@ -2036,9 +2269,12 @@ const WorkAreaPanel = ({
       document.removeEventListener('dragover', onDragOver, true);
       document.removeEventListener('drop', onDrop, true);
     };
-  }, [cards, emit, finishDrag, state.scene, zone.id]);
+  }, [cards, emit, finishDrag, state.scene, zone.id, depth]);
   const interactive = own && state.canSubmitCommands && emit !== undefined;
-  const withActions = interactive && actions.invokeWorkAreaAction !== undefined;
+  const withActions =
+    (own || allowOpponentResolution) &&
+    state.canSubmitCommands &&
+    actions.invokeWorkAreaAction !== undefined;
   const layout = workAreaPanelLayout(
     zone.bounds,
     board,
@@ -2107,10 +2343,15 @@ const WorkAreaPanel = ({
               actions.dismiss('selection');
             }}
             onDragEnd={finishDrag}
-            onClick={() => emit?.({ kind: 'CardSelected', cardId: card.id })}
-            onDoubleClick={() =>
-              emit?.({ kind: 'CardPreviewRequested', cardId: card.id })
-            }
+            onClick={(event) => {
+              if (event.detail <= 1) firstClickCard.current = card.id;
+              emit?.({ kind: 'CardSelected', cardId: card.id });
+            }}
+            onDoubleClick={(event) => {
+              if (event.detail === 0 || firstClickCard.current === card.id)
+                emit?.({ kind: 'CardPreviewRequested', cardId: card.id });
+              firstClickCard.current = null;
+            }}
             onContextMenu={(event) => {
               event.preventDefault();
               if (!emit) return;
@@ -2139,7 +2380,13 @@ const WorkAreaPanel = ({
                 className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
                 data-work-area-action={button.id}
                 onClick={() =>
-                  actions.invokeWorkAreaAction?.(source, button.id)
+                  own
+                    ? actions.invokeWorkAreaAction?.(source, button.id)
+                    : actions.invokeWorkAreaAction?.(
+                        source,
+                        button.id,
+                        zone.playerId ?? undefined
+                      )
                 }
               >
                 <ActionIcon aria-hidden="true" />
@@ -2217,13 +2464,17 @@ const MARKER_HINT_HALF_WIDTH_PX = 96;
 
 const MarkerEditor = ({
   state,
+  depth,
   actions,
 }: {
   readonly state: BoardSessionControllerState;
+  readonly depth?: BoardDepthProjection;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const input = state.overlays.input;
-  const marker = markerEditorMarker(state);
+  const logicalMarker = markerEditorMarker(state);
+  const marker =
+    logicalMarker && depth ? depth.marker(logicalMarker) : logicalMarker;
   const editor = useRef<HTMLDivElement>(null);
   const cancelled = useRef(false);
   const [invalid, setInvalid] = useState(false);
@@ -2444,10 +2695,14 @@ const CountPrompt = ({
  */
 export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   state,
+  depth,
   darkMode,
   actions,
+  allowOpponentResolution = false,
 }: {
+  readonly allowOpponentResolution?: boolean;
   readonly state: BoardSessionControllerState;
+  readonly depth?: BoardDepthProjection;
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
 }) {
@@ -2491,14 +2746,35 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       ) ?? null)
     : null;
   const preview = state.overlays.preview;
-  const previewCards = preview
-    ? preview.kind === 'card'
-      ? scene.cards.filter((card) => card.id === preview.cardId)
-      : legacyStackPreviewOrder(
-          state.view?.stacks[preview.stackId],
-          scene.cards.filter((card) => card.parentId === preview.stackId)
-        )
-    : [];
+  const previewCard =
+    preview?.kind === 'card'
+      ? scene.cards.find((card) => card.id === preview.cardId)
+      : undefined;
+  const previewCards = (
+    preview
+      ? preview.kind === 'card'
+        ? scene.cards.filter(
+            (card) =>
+              card.id === preview.cardId ||
+              (previewCard?.role === 'zone' &&
+                previewCard.composition &&
+                card.parentId === previewCard.parentId)
+          )
+        : legacyStackPreviewOrder(
+            state.view?.stacks[preview.stackId],
+            scene.cards.filter((card) => card.parentId === preview.stackId)
+          )
+      : []
+  ).map((card) => {
+    const known = state.view
+      ? locateViewCardActionSource(state.view, card.id)?.card
+      : undefined;
+    const imageUrl =
+      known?.kind === 'known' && known.face === 'up'
+        ? state.view?.definitions[known.definitionId]?.imageUrl
+        : undefined;
+    return imageUrl && !card.concealed ? { ...card, imageUrl } : card;
+  });
   const openedZone = state.presentation.openedZoneId
     ? (scene.zones.find(
         (zone) => zone.id === state.presentation.openedZoneId
@@ -2537,7 +2813,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
     >
       {workAreaZones.map((zone) => (
         <WorkAreaPanel
+          {...(depth ? { depth } : {})}
           key={zone.id}
+          allowOpponentResolution={allowOpponentResolution}
           state={state}
           zone={zone}
           cards={scene.cards.filter((card) => card.parentId === zone.id)}
@@ -2550,6 +2828,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       ))}
       {openedZone ? (
         <ZoneBrowser
+          {...(depth ? { depth } : {})}
           key={openedZone.id}
           state={state}
           zone={openedZone}
@@ -2571,6 +2850,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         />
       ) : state.overlays.input ? (
         <MarkerEditor
+          {...(depth ? { depth } : {})}
           key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
           state={state}
           actions={actions}
@@ -2578,6 +2858,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       ) : null}
       {contextCard ? (
         <ContextMenu
+          {...(depth ? { depth } : {})}
           state={state}
           card={contextCard}
           anchorBounds={
@@ -2600,7 +2881,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           board={scene.viewport}
           viewport={scene.viewport}
           sourceBounds={
-            previewSourceCard ? visualCardBounds(previewSourceCard) : undefined
+            previewSourceCard
+              ? visualCardBounds(previewSourceCard, depth)
+              : undefined
           }
           source={previewSource}
           actions={actions}

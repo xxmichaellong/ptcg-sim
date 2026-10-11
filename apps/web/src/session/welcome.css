@@ -34,6 +34,35 @@
   align-items: center;
 }
 
+.welcome-help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.welcome-help[hidden] {
+  display: none;
+}
+
+.welcome-card[data-compact='true'] {
+  background: var(--color-surface-1);
+  box-shadow: var(--highlight-top);
+}
+
+.welcome-card[data-compact='true'] .welcome-logo {
+  width: 32px;
+  height: 32px;
+}
+
+.welcome-card[data-compact='true'] .welcome-title {
+  font-size: var(--text-md);
+}
+
+.welcome-help-toggle {
+  flex: none;
+  margin-left: auto;
+}
+
 .welcome-card .welcome-logo {
   flex: none;
   width: 52px;

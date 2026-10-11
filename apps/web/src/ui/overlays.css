@@ -21,7 +21,7 @@
   --ui-overlay-enter-scale: 0.96;
   --ui-overlay-enter-shift: 6px;
   --ui-overlay-exit-scale: 0.98;
-  --ui-overlay-press-scale: 0.97;
+  --ui-overlay-press-scale: var(--control-press-scale);
   --ui-toast-enter-shift: 12px;
   /* Toasts stack above the hand along the bottom of the table. */
   --ui-toast-inset-bottom: clamp(96px, 22vh, 220px);
@@ -60,12 +60,13 @@
   justify-content: center;
   gap: var(--space-1-5);
   min-width: 76px;
-  height: 34px;
+  height: var(--control-height);
   margin: 0;
   padding: 0 var(--space-4);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-3);
+  box-shadow: var(--highlight-top), var(--shadow-1);
   color: var(--color-text);
   font-family: var(--font-ui);
   font-size: var(--text-md);

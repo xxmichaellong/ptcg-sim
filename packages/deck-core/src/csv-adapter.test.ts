@@ -209,3 +209,47 @@ describe('transactional bounded simulator CSV parsing', () => {
     expect(Object.getPrototypeOf(deck)).toBe(Object.prototype);
   });
 });
+
+describe('optional physical artwork metadata', () => {
+  it('round trips custom pieces, including variants sharing a name and URL', () => {
+    const deck: Deck = {
+      Composite: {
+        totalCount: 2,
+        cards: [0, 1].map((part) => ({
+          count: 1,
+          data: {
+            name: 'Composite',
+            supertype: 'Pokémon',
+            image: '/same.png',
+            presentation: {
+              readingQuarterTurns: 0,
+              join: { key: 'custom,art', columns: 2, rows: 1, part },
+            },
+          },
+        })),
+      },
+    };
+    const csv = serializeDeckToSimCsv(deck);
+    expect(csv.startsWith('QTY,Name,Type,URL,Presentation\n')).toBe(true);
+    const restored = parseSimCsv(csv);
+    expect(
+      restored.Composite?.cards.map((variant) => variant.data.presentation)
+    ).toEqual(
+      deck.Composite!.cards.map((variant) => variant.data.presentation)
+    );
+    expect(restored.Composite?.cards).toHaveLength(2);
+    expect(serializeDeckToSimCsv(restored)).toBe(csv);
+  });
+  it.each(['not-json', '[]', 'null', '123', '{'.repeat(1025)])(
+    'rejects malformed or oversized JSON: %s',
+    (metadata) => {
+      const result = parseSimCsvResult(
+        `QTY,Name,Type,URL,Presentation\n1,Piece,Pokémon,/piece.png,${metadata}`
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        issues: [expect.objectContaining({ code: 'invalid_presentation' })],
+      });
+    }
+  );
+});

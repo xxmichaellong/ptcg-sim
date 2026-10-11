@@ -1,4 +1,5 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
+import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import type {
   BoardIntent,
@@ -87,7 +88,11 @@ export const resolveBoardDrop = (
   const sourceRepresentsStagedStack =
     sourceStaged?.evolutionCards.at(-1)?.id === intent.cardId;
   const sourceMovesWholeStack =
-    sourceStack?.evolutionCards.at(-1)?.id === intent.cardId;
+    sourceStack?.evolutionCards.at(-1)?.id === intent.cardId ||
+    Boolean(
+      sourceStack?.evolutionCards.some((card) => card.id === intent.cardId) &&
+      scene.cards.find((card) => card.id === intent.cardId)?.composition
+    );
   if (!sourceZone && !sourceStack && !sourceInspection && !sourceStaged) {
     return rejected('stale_card');
   }
@@ -103,6 +108,8 @@ export const resolveBoardDrop = (
     if (!scene.zones.some((zone) => zone.id === destinationZone.id)) {
       return rejected('stale_target');
     }
+    if (destinationZone.kind === 'stadium')
+      return resolveCardStadiumMoveAction(view, intent.cardId);
     if (sourceZone) {
       if (destinationZone.id === sourceZone.id) return rejected('no_op');
       return {

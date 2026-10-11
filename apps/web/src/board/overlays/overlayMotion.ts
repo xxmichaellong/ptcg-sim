@@ -296,6 +296,8 @@ const MAX_TILT_DEG = 8;
  */
 export const createTiltHandlers = (target: RefObject<HTMLElement | null>) => {
   let frame: number | null = null;
+  let idle: number | null = null;
+  let owner: Window | null = null;
   let pending: { readonly x: number; readonly y: number } | null = null;
   const apply = (): void => {
     frame = null;
@@ -324,12 +326,20 @@ export const createTiltHandlers = (target: RefObject<HTMLElement | null>) => {
     if (frame !== null) return;
     const view = element.ownerDocument.defaultView;
     if (!view) return;
+    owner = view;
     frame = view.requestAnimationFrame(apply);
   };
   return {
     onPointerMove: (event: ReactPointerEvent<HTMLElement>): void => {
       const element = target.current;
       if (!element) return;
+      const motion = readOverlayMotion(element);
+      if (
+        motion.reduced ||
+        motion.scale === 0 ||
+        element.dataset.reading === 'true'
+      )
+        return;
       const bounds = event.currentTarget.getBoundingClientRect();
       if (bounds.width <= 0 || bounds.height <= 0) return;
       pending = {
@@ -343,11 +353,29 @@ export const createTiltHandlers = (target: RefObject<HTMLElement | null>) => {
         ),
       };
       schedule(element);
+      if (idle !== null) owner?.clearTimeout(idle);
+      // Stop moving the reading plane and clear the light once the hand rests.
+      idle =
+        owner?.setTimeout(() => {
+          idle = null;
+          pending = null;
+          schedule(element);
+        }, 480) ?? null;
     },
     onPointerLeave: (): void => {
       const element = target.current;
       pending = null;
+      if (idle !== null) owner?.clearTimeout(idle);
+      idle = null;
       if (element) schedule(element);
+    },
+    dispose: (): void => {
+      if (frame !== null) owner?.cancelAnimationFrame(frame);
+      if (idle !== null) owner?.clearTimeout(idle);
+      frame = null;
+      idle = null;
+      pending = null;
+      owner = null;
     },
   };
 };

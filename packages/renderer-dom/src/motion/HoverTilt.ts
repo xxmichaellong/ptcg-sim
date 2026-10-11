@@ -70,7 +70,8 @@ export class HoverTilt {
     card: HTMLElement,
     clientX: number,
     clientY: number,
-    rotationQuarterTurns: QuarterTurn
+    rotationQuarterTurns: QuarterTurn,
+    projectedPoint?: { readonly x: number; readonly y: number }
   ): void {
     if (!this.enabled) return;
     const body = card.querySelector<HTMLElement>(
@@ -88,12 +89,14 @@ export class HoverTilt {
       this.relaxing.delete(body);
     }
     body.dataset.tilt = '';
-    this.pending = localPointer(
-      card.getBoundingClientRect(),
-      clientX,
-      clientY,
-      rotationQuarterTurns
-    );
+    this.pending =
+      projectedPoint ??
+      localPointer(
+        card.getBoundingClientRect(),
+        clientX,
+        clientY,
+        rotationQuarterTurns
+      );
     this.schedule();
   }
 

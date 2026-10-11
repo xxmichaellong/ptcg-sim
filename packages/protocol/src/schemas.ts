@@ -166,12 +166,39 @@ export const ContinuationRestoreResponseSchema = v.pipe(
   )
 );
 
+const CardPresentationSchema = v.pipe(
+  v.strictObject({
+    readingQuarterTurns: v.picklist([0, 1, 2, 3] as const),
+    overlay: v.optional(v.literal('upper-half')),
+    join: v.optional(
+      v.strictObject({
+        key: v.pipe(
+          boundedString(128),
+          v.check((key) => key.trim().length > 0)
+        ),
+        columns: v.picklist([1, 2, 3, 4] as const),
+        rows: v.picklist([1, 2, 3, 4] as const),
+        part: v.picklist([0, 1, 2, 3] as const),
+      })
+    ),
+  }),
+  v.check(
+    (value) =>
+      !value.join ||
+      (!value.overlay &&
+        value.join.columns * value.join.rows > 1 &&
+        value.join.columns * value.join.rows <= 4 &&
+        value.join.part < value.join.columns * value.join.rows)
+  )
+);
+
 export const SerializedCardDefinitionSchema = v.object({
   id: IdentifierSchema,
   name: boundedString(256),
   category: CardCategorySchema,
   imageUrl: UrlSchema,
   imageUrlSmall: v.optional(UrlSchema),
+  presentation: v.optional(CardPresentationSchema),
 });
 
 const WireDeckEntrySchema = v.object({
@@ -222,6 +249,10 @@ export const WireGameCommandSchema = v.variant('type', [
     cardId: IdentifierSchema,
     expectedSourceId: IdentifierSchema,
     expectedStadiumCardId: v.nullable(IdentifierSchema),
+    expectedStadiumCardIds: v.optional(
+      v.pipe(v.array(IdentifierSchema), v.maxLength(4))
+    ),
+    placement: v.optional(v.literal('add')),
   }),
   v.object({
     type: v.literal('MoveCardToPlay'),
@@ -279,6 +310,7 @@ export const WireGameCommandSchema = v.variant('type', [
   }),
   v.object({
     type: v.literal('RestoreStagedStack'),
+    targetPlayerId: v.optional(IdentifierSchema),
     expectedWorkAreaId: IdentifierSchema,
     expectedActiveStackId: v.nullable(IdentifierSchema),
     expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
@@ -287,6 +319,7 @@ export const WireGameCommandSchema = v.variant('type', [
   }),
   v.object({
     type: v.literal('ResolveStagedCards'),
+    targetPlayerId: v.optional(IdentifierSchema),
     expectedWorkAreaId: IdentifierSchema,
     destination: v.picklist([
       'discard',
@@ -298,6 +331,7 @@ export const WireGameCommandSchema = v.variant('type', [
   }),
   v.object({
     type: v.literal('ResolveInspectionCards'),
+    targetPlayerId: v.optional(IdentifierSchema),
     expectedWorkAreaId: IdentifierSchema,
     destination: v.picklist([
       'discard',
@@ -619,6 +653,7 @@ const ViewDefinitionSchema = v.object({
   category: CardCategorySchema,
   imageUrl: UrlSchema,
   imageUrlSmall: v.optional(UrlSchema),
+  presentation: v.optional(CardPresentationSchema),
 });
 
 const PlayerViewSchema = v.object({

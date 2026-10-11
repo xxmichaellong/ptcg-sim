@@ -6,6 +6,8 @@ import {
   type AnimationSpeed,
   type ReduceMotionChoice,
 } from '../motion/motion-settings.js';
+import { UiButton } from '../ui/Button.js';
+import { TableDepthSettings } from './TableDepthSettings.js';
 
 export interface RemoteRoomSettingsProps {
   readonly hidden: boolean;
@@ -92,8 +94,8 @@ const MotionSettingsControls = () => {
 /**
  * Source-shaped, route-local Settings surface. Only controls with a closed
  * client-only parity contract are mounted here; authority and browser storage
- * are intentionally outside this component. The Solo-only hand checkbox is an
- * explicit local no-op while this route remains multiplayer-only.
+ * are intentionally outside this component. The Solo-only hand preference
+ * remains local to this browser.
  */
 export const RemoteRoomSettings = ({
   hidden,
@@ -110,19 +112,26 @@ export const RemoteRoomSettings = ({
     aria-label="Settings"
     hidden={hidden}
   >
+    <header className="table-settings-heading">
+      <h2>Your table</h2>
+      <p>Make the table comfortable to play.</p>
+    </header>
+    <h3 className="table-settings-section">Appearance</h3>
     <div id="settingsToggles">
-      <div>
+      <div className="ds-switch-row">
         <input
           type="checkbox"
+          className="ds-switch"
           id="darkModeCheckbox"
           checked={preferences.darkMode}
           onChange={(event) => onDarkModeChange(event.currentTarget.checked)}
         />
         <label htmlFor="darkModeCheckbox">Dark mode</label>
       </div>
-      <div>
+      <div className="ds-switch-row">
         <input
           type="checkbox"
+          className="ds-switch"
           id="showZonesCheckbox"
           checked={!preferences.showZoneOutlines}
           onChange={(event) =>
@@ -131,9 +140,10 @@ export const RemoteRoomSettings = ({
         />
         <label htmlFor="showZonesCheckbox">Hide containers</label>
       </div>
-      <div>
+      <div className="ds-switch-row">
         <input
           type="checkbox"
+          className="ds-switch"
           id="hideHandCheckbox"
           checked={hideOpponentHand}
           onChange={(event) =>
@@ -145,26 +155,27 @@ export const RemoteRoomSettings = ({
         </label>
       </div>
     </div>
+    <TableDepthSettings />
+    <h3 className="table-settings-section">Motion</h3>
     <MotionSettingsControls />
-    <button
+    <p className="table-settings-note">
+      Instant keeps every action immediate, with no movement.
+    </p>
+    <UiButton
       id="changeBackgroundButton"
       type="button"
-      className="neutral-color"
       onClick={onChangeBackground}
     >
       Change background
-    </button>
-    <br />
+    </UiButton>
     <div id="keybindReminder">
-      Hold (<span className="shift-font">shift</span>) to view keybinds
+      Hold <kbd>Shift</kbd> to see keyboard shortcuts
     </div>
     <div id="twitterDescription">
-      <div>
-        Please reach out if you have any questions, suggestions, bugs etc.!
-      </div>
+      <div>Ideas for a better table? Get in touch.</div>
       <a
         href="https://twitter.com/xxmichaellong"
-        target="blank"
+        target="_blank"
         rel="noopener noreferrer"
       >
         <div id="twitterHandle">

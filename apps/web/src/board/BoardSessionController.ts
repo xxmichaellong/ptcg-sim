@@ -1207,7 +1207,11 @@ const handleIntent = (
       if (state.playTargeting) {
         const targeting = state.playTargeting;
         const target = targeting.targets.find(
-          (candidate) => candidate.topCardId === intent.cardId
+          (candidate) =>
+            candidate.topCardId === intent.cardId ||
+            (card.composition &&
+              card.role === 'stackEvolution' &&
+              card.parentId === candidate.stackId)
         );
         if (target) {
           const presentation: BoardPresentation = {
@@ -1223,7 +1227,7 @@ const handleIntent = (
           });
           const resolution = (
             dependencies.resolveAttachEvolveTarget ?? resolveAttachEvolveTarget
-          )(view, targeting, intent.cardId);
+          )(view, targeting, target.topCardId);
           const effects: BoardSessionControllerEffect[] = [
             { kind: 'InstallPresentation', presentation },
           ];
@@ -1648,9 +1652,17 @@ const handleShortcutAction = (
     const presentation: BoardPresentation = {
       ...state.presentation,
       selectedCardId: null,
-      targetableCardIds: resolution.targeting.targets.map(
-        (target) => target.topCardId
-      ),
+      targetableCardIds: resolution.targeting.targets.flatMap((target) => {
+        const pieces = scene.cards.filter(
+          (card) =>
+            card.parentId === target.stackId &&
+            card.role === 'stackEvolution' &&
+            card.composition
+        );
+        return pieces.length
+          ? pieces.map((card) => card.id)
+          : [target.topCardId];
+      }),
       drag: null,
       openedZoneId: null,
     };

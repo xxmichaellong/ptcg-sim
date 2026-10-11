@@ -555,6 +555,7 @@ export const RemoteRoomLiveControls = ({
           type="button"
           className="neutral-color"
           aria-expanded={options.open}
+          aria-haspopup="menu"
           aria-controls="optionsContextMenu"
           onClick={() => options.setOpen((open) => !open)}
         >
@@ -565,6 +566,7 @@ export const RemoteRoomLiveControls = ({
         id="optionsContextMenu"
         ref={options.menuRef}
         role="menu"
+        aria-label="Table options"
         hidden={!options.open}
       >
         {/* v1 lists replay first, then the game-state items, then the log. */}

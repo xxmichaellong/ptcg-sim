@@ -523,6 +523,38 @@ describe('LegacyDeckBuilderWorkspace', () => {
     });
   });
 
+  it('authors a specific piece of a custom three-card illustration', async () => {
+    const { store } = await mount();
+    await click(host.querySelector('#nativeDeckBuilderAddCustomCard')!);
+    await input(
+      host.querySelector<HTMLInputElement>('#nativeCustomCardName')!,
+      'Custom illustration'
+    );
+    await input(
+      host.querySelector<HTMLInputElement>('#nativeCustomCardImageUrl')!,
+      '/custom.png'
+    );
+    const layout = host.querySelector<HTMLDetailsElement>(
+      '.native-custom-card-layout'
+    )!;
+    await select(layout.querySelector('select')!, 'trio');
+    await input(layout.querySelector('input')!, 'illustration-one');
+    await select(layout.querySelectorAll('select')[1]!, '2');
+    await act(async () =>
+      host
+        .querySelector<HTMLImageElement>('#nativeCustomCardPreviewImage')!
+        .dispatchEvent(new Event('load'))
+    );
+    await click(host.querySelector('#nativeCustomCardSubmit')!);
+    expect(
+      store.getSnapshot().slots.main.deck['Custom illustration']!.cards[0]!.data
+        .presentation
+    ).toEqual({
+      readingQuarterTurns: 0,
+      join: { key: 'illustration-one', columns: 3, rows: 1, part: 2 },
+    });
+  });
+
   it('closes the custom dialog with Escape and returns focus to its trigger', async () => {
     await mount();
     const trigger = host.querySelector<HTMLButtonElement>(
@@ -534,6 +566,17 @@ describe('LegacyDeckBuilderWorkspace', () => {
     )!;
 
     expect(document.activeElement?.id).toBe('nativeCustomCardName');
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('#nativeCustomCardSubmit')!.focus();
+      modal.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement?.id).toBe('nativeCustomCardQty');
     await act(async () => {
       modal.dispatchEvent(
         new KeyboardEvent('keydown', {
@@ -613,6 +656,25 @@ describe('LegacyDeckBuilderWorkspace', () => {
     expect(scrim.hidden).toBe(false);
     expect(scrim.getAttribute('role')).toBe('dialog');
     expect(document.activeElement).toBe(scrim);
+
+    const close = scrim.querySelector<HTMLButtonElement>(
+      '[aria-label="Close card preview"]'
+    )!;
+    const tab = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(scrim.dispatchEvent(tab)).toBe(false);
+    expect(document.activeElement).toBe(close);
+    close.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    expect(document.activeElement).toBe(close);
 
     await act(async () => {
       document.dispatchEvent(

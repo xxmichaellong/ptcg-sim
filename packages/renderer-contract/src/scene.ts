@@ -6,6 +6,15 @@ import type {
   ViewCardId,
 } from '@ptcgsim/game-core';
 import {
+  resolveCardPresentation,
+  sameCardPresentation,
+} from '@ptcgsim/game-core';
+import {
+  composeCardArtwork,
+  fitCardComposition,
+  turnCardComposition,
+} from './card-composition.js';
+import {
   CARD_ASPECT_RATIO,
   assertLayoutOptions,
   containsPoint,
@@ -46,6 +55,8 @@ import type {
   ZoneSceneNode,
 } from './model.js';
 import { topmostFirst } from './paint-order.js';
+import { finishForCard } from './card-material.js';
+import { layoutComposedPlayRow } from './composed-play-row.js';
 
 const isCountedZoneKind = (
   kind: MatchViewState['zones'][string]['kind']
@@ -445,10 +456,20 @@ const makeCardNode = (
   const rotationQuarterTurns = ((baseRotation +
     (input.side === 'opponent' ? 2 : 0)) %
     4) as QuarterTurns;
+  const definition =
+    card.kind === 'known' && !isConcealedForRendering(card)
+      ? view.definitions[card.definitionId]
+      : undefined;
   return {
     id: card.id,
     ownerId: card.ownerId,
     imageUrl: cardImageUrl(view, card),
+    ...(definition
+      ? {
+          finish: finishForCard(definition),
+          presentation: resolveCardPresentation(definition),
+        }
+      : {}),
     concealed: isConcealedForRendering(card),
     label: cardLabel(view, card),
     ...(card.kind === 'known' && card.decklistRank !== undefined
@@ -467,7 +488,7 @@ const addMarkers = (
   markers: MarkerSceneNode[],
   topCard: CardSceneNode,
   stack: MatchViewState['stacks'][string],
-  presentation: 'legacyActiveQ0' | 'legacyBenchQ0'
+  presentation: MarkerSceneNode['presentation']
 ): void => {
   // v1 places every counter from the host image's painted rectangle, which is
   // the rotated bounding box when the stack is quarter-turned.
@@ -637,6 +658,8 @@ export const createBoardScene = (
   };
 
   for (const zone of Object.values(view.zones)) {
+    if (zone.kind === 'stadium' && zone.cards.length > 4)
+      throw new Error('Stadium supports at most four pieces');
     let region = null;
     if (zone.ownerId) {
       if (zone.kind === 'stadium') {
@@ -651,9 +674,76 @@ export const createBoardScene = (
       throw new Error(`${zone.kind} zone must belong to a player`);
     }
     const side = region?.side ?? 'shared';
-    const bounds = region
+    let bounds = region
       ? copyRect(region.physicalBorderBoxBounds)
       : copyRect(layout.shared.stadium.physicalDeclaredBounds);
+    const stadiumArtwork =
+      zone.kind === 'stadium'
+        ? composeCardArtwork(
+            zone.cards.map((card) => ({
+              id: card.id,
+              presentation:
+                card.kind === 'known' && card.face === 'up'
+                  ? resolveCardPresentation(
+                      view.definitions[card.definitionId] ?? {}
+                    )
+                  : undefined,
+            }))
+          )
+        : null;
+    if (stadiumArtwork) {
+      bounds = {
+        ...bounds,
+        width: Math.min(
+          bounds.width * 2,
+          layout.playAreaBounds.width - bounds.x - 12
+        ),
+      };
+      if (layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION) {
+        // Keep wider artwork in the corridor between the Actives and both
+        // players' side piles, including the wider opponent prize container.
+        const regions = layout.players.flatMap((player) => player.regions);
+        const activeRight = Math.max(
+          ...regions
+            .filter((candidate) => candidate.kind === 'active')
+            .map((candidate) => {
+              const box = candidate.physicalDeclaredBounds;
+              return box.x + box.width;
+            })
+        );
+        const left = activeRight + 8;
+        const right =
+          Math.min(
+            layout.playAreaBounds.x + layout.playAreaBounds.width,
+            ...regions
+              .filter(
+                (candidate) =>
+                  ['deck', 'discard', 'lostZone', 'prizes'].includes(
+                    candidate.kind
+                  ) && candidate.physicalDeclaredBounds.x >= activeRight
+              )
+              .map((candidate) => candidate.physicalDeclaredBounds.x)
+          ) - 8;
+        const width = Math.max(1, Math.min(bounds.width, right - left));
+        bounds = {
+          ...bounds,
+          x: left + Math.max(0, right - left - width) / 2,
+          width,
+        };
+      }
+    }
+    const stadiumComposition = stadiumArtwork
+      ? fitCardComposition(
+          turnCardComposition(
+            stadiumArtwork,
+            zone.cards[0]?.ownerId === layout.bottomPlayerId ? 0 : 2
+          ),
+          bounds
+        )
+      : null;
+    const multiStadium = zone.kind === 'stadium' && zone.cards.length > 1;
+    const pile =
+      isLegacyPileKind(zone.kind) && !stadiumComposition && !multiStadium;
     const contentBounds = region
       ? copyRect(region.physicalContentBoxBounds)
       : copyRect(bounds);
@@ -716,8 +806,8 @@ export const createBoardScene = (
         label: `${zone.cards.length} cards`,
       });
     }
-    const pileTopIndex = isLegacyPileKind(zone.kind)
-      ? legacyPileTopIndex(zone.kind, zone.cards.length)
+    const pileTopIndex = pile
+      ? legacyPileTopIndex(zone.kind as LegacyPileKind, zone.cards.length)
       : null;
     const containedBlockAlignment: LegacyContainedCardBlockAlignment =
       zone.kind === 'stadium'
@@ -727,30 +817,35 @@ export const createBoardScene = (
         : side === 'opponent'
           ? 'end'
           : 'start';
-    const cardBounds = scrollingRow
-      ? [...scrollingRow.cards]
-      : table
-        ? zone.kind === 'prizes'
-          ? layoutTablePrizes(
+    const cardBounds = multiStadium
+      ? layoutTableRow(contentBounds, 'local', zone.cards.length)
+      : scrollingRow
+        ? [...scrollingRow.cards]
+        : table
+          ? zone.kind === 'prizes'
+            ? layoutTablePrizes(
+                contentBounds,
+                side === 'opponent' ? 'opponent' : 'local',
+                zone.cards.length
+              )
+            : layoutTablePile(contentBounds, zone.cards.length)
+          : layoutZoneCards(
+              zone.kind as Exclude<typeof zone.kind, 'hand' | 'board'>,
               contentBounds,
-              side === 'opponent' ? 'opponent' : 'local',
-              zone.cards.length
-            )
-          : layoutTablePile(contentBounds, zone.cards.length)
-        : layoutZoneCards(
-            zone.kind as Exclude<typeof zone.kind, 'hand' | 'board'>,
-            contentBounds,
-            zone.cards.length,
-            containedBlockAlignment,
-            zone.ownerId
-              ? {
-                  frame: playerLayout(zone.ownerId).frameBounds,
-                  side: playerLayout(zone.ownerId).side,
-                }
-              : null
-          );
+              zone.cards.length,
+              containedBlockAlignment,
+              zone.ownerId
+                ? {
+                    frame: playerLayout(zone.ownerId).frameBounds,
+                    side: playerLayout(zone.ownerId).side,
+                  }
+                : null
+            );
     zone.cards.forEach((card, index) => {
-      const cardRect = cardBounds[index];
+      const assembled = stadiumComposition?.cards.find(
+        (part) => part.id === card.id
+      );
+      const cardRect = assembled?.bounds ?? cardBounds[index];
       if (!cardRect) return;
       const isPileTop = pileTopIndex === index;
       const pileZIndex =
@@ -767,14 +862,20 @@ export const createBoardScene = (
           side,
           role: 'zone',
           bounds: cardRect,
-          zIndex: isLegacyPileKind(zone.kind) ? pileZIndex : 100 + index,
-          interactive: isLegacyPileKind(zone.kind) ? isPileTop : true,
+          zIndex: pile ? pileZIndex : 100 + index,
+          interactive: pile ? isPileTop : true,
+          ...(stadiumComposition
+            ? {
+                composition: {
+                  kind: stadiumComposition.kind,
+                  bounds: stadiumComposition.bounds,
+                },
+              }
+            : {}),
           // A scrolling zone clips what has scrolled out of it, as v1's
           // `overflow` does, instead of painting it over the board.
           ...(scrollingRow?.scroll ? { clipBounds: copyRect(bounds) } : {}),
-          ...(isLegacyPileKind(zone.kind) && !isPileTop
-            ? { renderKey: null }
-            : {}),
+          ...(pile && !isPileTop ? { renderKey: null } : {}),
           ...(zone.kind === 'deck' && isPileTop
             ? {
                 // The deck cover is always a card back on the table (v1's
@@ -796,7 +897,13 @@ export const createBoardScene = (
           ...(stadiumRotation === undefined
             ? {}
             : {
-                rotationQuarterTurns: stadiumRotation as QuarterTurns,
+                rotationQuarterTurns: (assembled
+                  ? (assembled.rotationQuarterTurns +
+                      (card.kind === 'known'
+                        ? card.orientationQuarterTurns
+                        : 0)) %
+                    4
+                  : stadiumRotation) as QuarterTurns,
               }),
         }),
         card,
@@ -851,43 +958,73 @@ export const createBoardScene = (
     } as const;
     for (const slot of ['active', 'bench'] as const) {
       const rowStackIds = rowStacks[slot];
+      const stackInputs = rowStackIds.map((stackId) => {
+        const stack = view.stacks[stackId];
+        if (!stack) {
+          throw new Error(`Board references missing stack ${stackId}`);
+        }
+        if (stack.slot !== slot || stack.boardPlayerId !== playerId) {
+          throw new Error(`Board slot disagrees with stack ${stackId}`);
+        }
+        return {
+          evolutionCount: stack.evolutionCards.length,
+          evolution: stack.evolutionCards.map((card) => ({
+            id: card.id,
+            presentation:
+              card.kind === 'known' && card.face === 'up'
+                ? resolveCardPresentation(
+                    view.definitions[card.definitionId] ?? {}
+                  )
+                : undefined,
+            rotation: card.kind === 'known' ? card.orientationQuarterTurns : 0,
+          })),
+          attachmentIds: stack.attachmentCards.map((card) => card.id),
+          attachmentRotations: stack.attachmentCards.map((card) =>
+            card.kind === 'known' ? card.orientationQuarterTurns : 0
+          ),
+          attachments: stack.attachmentCards.map((card) =>
+            card.kind === 'known' && card.category === 'Trainer'
+              ? ('tool' as const)
+              : ('energy' as const)
+          ),
+          rotationQuarterTurns: stack.rotationQuarterTurns,
+        };
+      });
       const rowLayout = layoutLegacyPlayRow(
         slotRegions[slot],
         CARD_ASPECT_RATIO,
-        rowStackIds.map((stackId) => {
-          const stack = view.stacks[stackId];
-          if (!stack) {
-            throw new Error(`Board references missing stack ${stackId}`);
-          }
-          if (stack.slot !== slot || stack.boardPlayerId !== playerId) {
-            throw new Error(`Board slot disagrees with stack ${stackId}`);
-          }
-          return {
-            evolutionCount: stack.evolutionCards.length,
-            attachments: stack.attachmentCards.map((card) =>
-              card.kind === 'known' && card.category === 'Trainer'
-                ? 'tool'
-                : 'energy'
-            ),
-            rotationQuarterTurns: stack.rotationQuarterTurns,
-          };
-        })
+        stackInputs
       );
+      const composedRow = layoutComposedPlayRow(slotRegions[slot], stackInputs);
       rowStackIds.forEach((stackId, rowIndex) => {
         const stack = view.stacks[stackId]!;
         const stackLayout = rowLayout[rowIndex]!;
+        const composed = composedRow?.[rowIndex];
+        const artwork = composeCardArtwork(stackInputs[rowIndex]!.evolution);
+        const composition =
+          artwork && composed
+            ? { kind: artwork.kind, bounds: composed.mainBounds }
+            : undefined;
+        const composedCard = (id: string) =>
+          composed?.cards.find((card) => card.id === id);
         const evolutionNodes: CardSceneNode[] = [];
         stack.evolutionCards.forEach((card, index) => {
           const cardLayout = stackLayout.evolutionCards[index]!;
+          const placed = composedCard(card.id);
           const node = makeCardNode(view, card, {
             parentId: stack.id,
             side,
             role: 'stackEvolution',
-            bounds: copyRect(cardLayout.bounds),
-            zIndex: 300 + cardLayout.sourceZIndex,
-            rotationQuarterTurns: ((stack.rotationQuarterTurns +
-              (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
-              4) as QuarterTurns,
+            bounds: copyRect(placed?.bounds ?? cardLayout.bounds),
+            zIndex: placed ? 300 + placed.layer : 300 + cardLayout.sourceZIndex,
+            ...(composition ? { composition } : {}),
+            rotationQuarterTurns: placed
+              ? (((placed.rotationQuarterTurns +
+                  (side === 'opponent' ? 2 : 0)) %
+                  4) as QuarterTurns)
+              : (((stack.rotationQuarterTurns +
+                  (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
+                  4) as QuarterTurns),
             interactive: true,
           });
           // Canonical evolution cards cannot carry their own ability marker;
@@ -900,6 +1037,7 @@ export const createBoardScene = (
         });
         stack.attachmentCards.forEach((card, index) => {
           const cardLayout = stackLayout.attachmentCards[index]!;
+          const placed = composedCard(card.id);
           // v1 never rotates Energy/Tool images with their host; a Tool keeps
           // the quarter turn syncRotation gave it when it was attached.
           registerCard(
@@ -907,13 +1045,20 @@ export const createBoardScene = (
               parentId: stack.id,
               side,
               role: 'stackAttachment',
-              bounds: copyRect(cardLayout.bounds),
-              zIndex: 300 + cardLayout.sourceZIndex,
-              rotationQuarterTurns: (((card.kind === 'known'
-                ? card.orientationQuarterTurns
-                : 0) +
-                cardLayout.rotationQuarterTurns) %
-                4) as QuarterTurns,
+              bounds: copyRect(placed?.bounds ?? cardLayout.bounds),
+              zIndex: placed
+                ? 299 + placed.layer
+                : 300 + cardLayout.sourceZIndex,
+              ...(composition ? { composition } : {}),
+              rotationQuarterTurns: placed
+                ? (((placed.rotationQuarterTurns +
+                    (side === 'opponent' ? 2 : 0)) %
+                    4) as QuarterTurns)
+                : ((((card.kind === 'known'
+                    ? card.orientationQuarterTurns
+                    : 0) +
+                    cardLayout.rotationQuarterTurns) %
+                    4) as QuarterTurns),
               interactive: true,
             }),
             card
@@ -923,9 +1068,19 @@ export const createBoardScene = (
         if (topCard) {
           addMarkers(
             markers,
-            topCard,
+            composition
+              ? {
+                  ...topCard,
+                  bounds: composition.bounds,
+                  rotationQuarterTurns: 0,
+                }
+              : topCard,
             stack,
-            slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0'
+            composition
+              ? 'generic'
+              : slot === 'active'
+                ? 'legacyActiveQ0'
+                : 'legacyBenchQ0'
           );
         }
       });
@@ -1034,6 +1189,10 @@ const sameCard = (left: CardSceneNode, right: CardSceneNode): boolean =>
   left.zIndex === right.zIndex &&
   left.rotationQuarterTurns === right.rotationQuarterTurns &&
   left.imageUrl === right.imageUrl &&
+  left.tableImageUrl === right.tableImageUrl &&
+  left.finish === right.finish &&
+  sameCardPresentation(left.presentation, right.presentation) &&
+  JSON.stringify(left.composition) === JSON.stringify(right.composition) &&
   left.concealed === right.concealed &&
   left.label === right.label &&
   left.interactive === right.interactive &&

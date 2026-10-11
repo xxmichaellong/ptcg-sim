@@ -4,17 +4,13 @@ import { FloppyDiskIcon } from '@phosphor-icons/react/dist/csr/FloppyDisk';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
+import { QuestionIcon } from '@phosphor-icons/react/dist/csr/Question';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
+import { trapFocus } from '../ui/focus.js';
 import changelogMarkup from './legacy-changelog.html?raw';
 
 import '../design/panel-controls.css';
@@ -35,8 +31,8 @@ const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
 /**
  * One of the welcome pages (tutorial, release notes, sponsors) as a modal
- * sheet. As in v1, a click anywhere on it -- or Escape -- closes it; the
- * close button makes that visible and takes focus while it is open.
+ * sheet. The backdrop, Close and Escape dismiss it. Reading, selecting text
+ * and following links inside the sheet do not dismiss the content.
  */
 const WelcomeSheet = ({
   id,
@@ -67,8 +63,10 @@ const WelcomeSheet = ({
       {...(labelledBy
         ? { 'aria-labelledby': labelledBy }
         : { 'aria-label': label })}
-      onClick={onClose}
-      onKeyDown={keepTabInside}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => trapFocus(event, event.currentTarget)}
     >
       <div className="welcome-sheet">
         <button
@@ -86,28 +84,6 @@ const WelcomeSheet = ({
   );
 };
 
-const TABBABLE =
-  'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), iframe, [tabindex]:not([tabindex="-1"])';
-
-/** A modal sheet keeps Tab and Shift+Tab among its own controls. */
-const keepTabInside = (event: ReactKeyboardEvent<HTMLElement>): void => {
-  if (event.key !== 'Tab') return;
-  const tabbable = [
-    ...event.currentTarget.querySelectorAll<HTMLElement>(TABBABLE),
-  ];
-  const first = tabbable[0];
-  const last = tabbable.at(-1);
-  if (!first || !last) return;
-  const active = document.activeElement;
-  const inside = active instanceof Node && event.currentTarget.contains(active);
-  if (
-    event.shiftKey ? active === first || !inside : active === last || !inside
-  ) {
-    event.preventDefault();
-    (event.shiftKey ? last : first).focus();
-  }
-};
-
 /**
  * The opening card of the Solo panel (`#chatbox` in v1's index.ejs): what the
  * sim is, how to start, the tutorial video, the Discord, and the Sponsors &
@@ -117,12 +93,18 @@ const keepTabInside = (event: ReactKeyboardEvent<HTMLElement>): void => {
 export const LegacyWelcome = ({
   buildId = import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2',
   onLoadDeck,
+  compact = false,
 }: {
   readonly buildId?: string;
   /** Opens the Deck tab; the primary action is shown only when given. */
   readonly onLoadDeck?: () => void;
+  /** Once play starts, keep help available without filling the activity rail. */
+  readonly compact?: boolean;
 }) => {
   const [page, setPage] = useState<WelcomePage | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const helpId = useId();
+  const showHelp = !compact || expanded;
   const opener = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (page === null) return;
@@ -152,7 +134,7 @@ export const LegacyWelcome = ({
   const close = (): void => setPage(null);
 
   return (
-    <div className="welcome-card">
+    <div className="welcome-card" data-compact={compact ? 'true' : undefined}>
       <header className="welcome-hero">
         <img
           className="welcome-logo"
@@ -177,88 +159,100 @@ export const LegacyWelcome = ({
             <span className="welcome-version-label">What&apos;s new</span>
           </button>
         </div>
-      </header>
-      <p className="welcome-lead">
-        PTCG-sim is an{' '}
-        <a
-          className="ds-link"
-          href={REPOSITORY_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          open-source
-        </a>{' '}
-        Pokémon Trading Card Game (Pokémon TCG) tabletop simulator. It supports
-        single player and online multiplayer.
-      </p>
-      <ul className="welcome-steps">
-        <li>
-          <CardsIcon {...decorative} />
-          <span>
-            Use the <strong>Deck</strong> tab above to import your deck, then
-            press <strong>Set Up</strong> to start a game.
-          </span>
-        </li>
-        <li>
-          <KeyboardIcon {...decorative} />
-          <span>
-            Drag or use keybinds (hold{' '}
-            <kbd className="ds-kbd shift-font">Shift</kbd>) to move cards.
-          </span>
-        </li>
-        <li>
-          <FloppyDiskIcon {...decorative} />
-          <span>
-            See the <strong>Options</strong> button below to import, export, and
-            replay games.
-          </span>
-        </li>
-      </ul>
-      <div className="welcome-actions">
-        {onLoadDeck && (
+        {compact && (
           <button
             type="button"
-            className="ds-button ds-button--primary welcome-action-primary"
-            onClick={onLoadDeck}
+            className="ds-icon-button welcome-help-toggle"
+            aria-label={expanded ? 'Hide table help' : 'Show table help'}
+            aria-expanded={expanded}
+            aria-controls={helpId}
+            onClick={() => setExpanded((value) => !value)}
           >
-            <CardsIcon {...decorative} weight="bold" />
-            Load a deck
+            <QuestionIcon {...decorative} />
           </button>
         )}
-        <button
-          id="tutorialButton"
-          type="button"
-          className="ds-button ds-button--secondary"
-          aria-haspopup="dialog"
-          onClick={() => open('tutorial')}
-        >
-          <PlayCircleIcon {...decorative} weight="bold" />
-          Watch Tutorial
-        </button>
-        <a
-          id="discordLink"
-          className="ds-button ds-button--secondary"
-          href={DISCORD_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <DiscordLogoIcon {...decorative} weight="fill" />
-          Join our Discord
-        </a>
+      </header>
+      <div id={helpId} className="welcome-help" hidden={!showHelp}>
+        <p className="welcome-lead">
+          PTCG-sim is an{' '}
+          <a
+            className="ds-link"
+            href={REPOSITORY_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            open-source
+          </a>{' '}
+          Pokémon TCG sandbox. Practice both sides or play with a friend.
+        </p>
+        <ul className="welcome-steps">
+          <li>
+            <CardsIcon {...decorative} />
+            <span>
+              Import a <strong>Deck</strong>, then press <strong>Set Up</strong>
+              .
+            </span>
+          </li>
+          <li>
+            <KeyboardIcon {...decorative} />
+            <span>
+              Drag to play. Double-click to read. Hold{' '}
+              <kbd className="ds-kbd shift-font">Shift</kbd> for shortcuts.
+            </span>
+          </li>
+          <li>
+            <FloppyDiskIcon {...decorative} />
+            <span>
+              Save, import and replay games in <strong>Options</strong>.
+            </span>
+          </li>
+        </ul>
+        <div className="welcome-actions">
+          {onLoadDeck && (
+            <button
+              type="button"
+              className="ds-button ds-button--primary welcome-action-primary"
+              onClick={onLoadDeck}
+            >
+              <CardsIcon {...decorative} weight="bold" />
+              Load a deck
+            </button>
+          )}
+          <button
+            id="tutorialButton"
+            type="button"
+            className="ds-button ds-button--secondary"
+            aria-haspopup="dialog"
+            onClick={() => open('tutorial')}
+          >
+            <PlayCircleIcon {...decorative} weight="bold" />
+            Watch Tutorial
+          </button>
+          <a
+            id="discordLink"
+            className="ds-button ds-button--secondary"
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <DiscordLogoIcon {...decorative} weight="fill" />
+            Join our Discord
+          </a>
+        </div>
+        <footer id="links" className="welcome-footer">
+          <button
+            id="donationsLink"
+            type="button"
+            className="ds-link welcome-footer-link"
+            aria-haspopup="dialog"
+            onClick={() => open('donations')}
+          >
+            <HeartIcon {...decorative} weight="fill" />
+            Sponsors &amp; Donations
+          </button>
+          <span className="welcome-footer-note">Happy testing!</span>
+        </footer>
       </div>
-      <footer id="links" className="welcome-footer">
-        <button
-          id="donationsLink"
-          type="button"
-          className="ds-link welcome-footer-link"
-          aria-haspopup="dialog"
-          onClick={() => open('donations')}
-        >
-          <HeartIcon {...decorative} weight="fill" />
-          Sponsors &amp; Donations
-        </button>
-        <span className="welcome-footer-note">Happy testing!</span>
-      </footer>
       {page === 'tutorial' && (
         <WelcomeSheet
           id="videoContainer"

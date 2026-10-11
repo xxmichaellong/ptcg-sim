@@ -215,3 +215,114 @@ describe('stadium movement authority resolution', () => {
     ).toEqual({ accepted: false, code: 'unauthorized' });
   });
 });
+
+it('resolves an exact multi-piece snapshot and rejects foreign/stale aliases', () => {
+  const prepared = fixture();
+  const command = {
+    type: 'MoveCardToStadium',
+    cardId: prepared.ownerSelectedAlias,
+    expectedSourceId: prepared.selectedZoneId,
+    expectedStadiumCardId: prepared.ownerIncumbentAlias,
+    expectedStadiumCardIds: [prepared.ownerIncumbentAlias],
+    placement: 'add',
+  } as const;
+  const resolve = (snapshot: readonly string[]) =>
+    resolveWireCommand(
+      prepared.state,
+      prepared.identities,
+      session(p1),
+      { ...command, expectedStadiumCardIds: snapshot },
+      DEFAULT_AUTHORITY_POLICY
+    );
+  const resolved = resolve(command.expectedStadiumCardIds);
+  if (!resolved.accepted) throw new Error(resolved.code);
+  expect(resolved.command).toMatchObject({
+    expectedStadiumCardIds: [prepared.incumbentCardId],
+    placement: 'add',
+  });
+  const result = executeCommand(prepared.state, resolved.command, context);
+  if (!result.accepted) throw new Error(result.message);
+  expect(result.state.zones[stadiumZoneId()]!.cardIds).toEqual([
+    prepared.incumbentCardId,
+    prepared.selectedCardId,
+  ]);
+  for (const stale of [
+    [],
+    ['missing'],
+    [prepared.opponentIncumbentAlias],
+    [prepared.ownerIncumbentAlias, prepared.ownerIncumbentAlias],
+  ])
+    expect(resolve(stale)).toMatchObject({
+      accepted: false,
+      code: 'stale_reference',
+    });
+});
+
+it('allows resolving the other seat’s attached cards only in Solo', () => {
+  const prepared = fixture();
+  let state = prepared.state;
+  const play = (command: Parameters<typeof executeCommand>[1]) => {
+    const result = executeCommand(state, command, context);
+    if (!result.accepted) throw new Error(result.message);
+    state = result.state;
+  };
+  play({
+    type: 'SetCardCategory',
+    cardId: prepared.incumbentCardId,
+    category: 'Pokémon',
+  });
+  play({
+    type: 'MoveCardToPlay',
+    cardId: prepared.incumbentCardId,
+    expectedSourceZoneId: stadiumZoneId(),
+    boardPlayerId: p2,
+    slot: 'active',
+  });
+  const stackId = state.boards[p2]!.activeStackId!;
+  play({
+    type: 'PlaceCardOnPlayStack',
+    playerId: p1,
+    cardId: prepared.selectedCardId,
+    expectedSourceId: prepared.selectedZoneId,
+    targetStackId: stackId,
+    expectedTargetTopCardId: prepared.incumbentCardId,
+    mode: 'attachment',
+  });
+  play({
+    type: 'MoveCardFromStack',
+    cardId: prepared.incumbentCardId,
+    expectedStackId: stackId,
+    destinationZoneId: playerZoneId(p2, 'discard'),
+  });
+  const expectedWorkAreaId = state.workAreas[p2]!.attachmentResolution!.id;
+  const wire = {
+    type: 'ResolveStagedCards',
+    targetPlayerId: p2,
+    expectedWorkAreaId,
+    destination: 'discard',
+  } as const;
+  expect(
+    resolveWireCommand(
+      state,
+      prepared.identities,
+      session(p1),
+      wire,
+      DEFAULT_AUTHORITY_POLICY
+    )
+  ).toEqual({ accepted: false, code: 'unauthorized' });
+  const resolved = resolveWireCommand(
+    state,
+    prepared.identities,
+    session(p1),
+    wire,
+    DEFAULT_AUTHORITY_POLICY,
+    state.revision,
+    { mode: 'solo' }
+  );
+  if (!resolved.accepted) throw new Error(resolved.code);
+  play(resolved.command);
+  expect(state.zones[playerZoneId(p1, 'discard')]!.cardIds).toContain(
+    prepared.selectedCardId
+  );
+  expect(state.workAreas[p2]!.attachmentResolution).toBeNull();
+});

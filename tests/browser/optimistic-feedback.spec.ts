@@ -91,121 +91,138 @@ const firstHandCard = (page: Page) =>
     );
   });
 
-test('the table answers actions while the room is silent, and keeps them when it replies', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await installServerHold(page);
-  await page.goto('/?room-lobby=1&renderer=dom');
-  await page.locator('#nameInput').fill('Blue');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
-    'data-renderer-status',
-    'ready'
-  );
-  await expect(page.locator('#setupBothButton')).toBeEnabled();
-  await page.locator('#deckImportButton').click();
-  await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
-  await page.locator('#nativeDeckBuilderTargetMain').click();
-  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
-    name: 'optimistic.csv',
-    mimeType: 'text/csv',
-    buffer: deckCsv(),
-  });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
-  );
-  await page.locator('#nativeDeckBuilderPlayButton').click();
-  await expect(page.locator('#p1Box')).toBeVisible();
-  await page.locator('#setupButton').click();
-  await expect.poll(() => zoneCount(page, 'hand', 'local')).toBe(7);
+for (const mode of ['flat', 'table'] as const)
+  test.describe(`${mode} table`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(
+        (mode) =>
+          localStorage.setItem(
+            'ptcgsim.table-depth.v1',
+            JSON.stringify({ mode })
+          ),
+        mode
+      );
+    });
+    test('the table answers actions while the room is silent, and keeps them when it replies', async ({
+      page,
+    }) => {
+      test.setTimeout(90_000);
+      await installServerHold(page);
+      await page.goto('/?room-lobby=1&renderer=dom');
+      await page.locator('#nameInput').fill('Blue');
+      await page.locator('#p1Button').click();
+      await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+        'data-renderer-status',
+        'ready'
+      );
+      await expect(page.locator('#setupBothButton')).toBeEnabled();
+      await page.locator('#deckImportButton').click();
+      await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
+      await page.locator('#nativeDeckBuilderTargetMain').click();
+      await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+        name: 'optimistic.csv',
+        mimeType: 'text/csv',
+        buffer: deckCsv(),
+      });
+      await expect(
+        page.locator('#nativeDeckBuilderSummaryPanel')
+      ).toContainText('Total: 60');
+      await page.locator('#nativeDeckBuilderPlayButton').click();
+      await expect(page.locator('#p1Box')).toBeVisible();
+      await page.locator('#setupButton').click();
+      await expect.poll(() => zoneCount(page, 'hand', 'local')).toBe(7);
 
-  const revision = await page
-    .locator('.ptcgsim-board-surface')
-    .getAttribute('data-revision');
-  await page.evaluate(() => {
-    (
-      globalThis as unknown as { __serverHold: { holding: boolean } }
-    ).__serverHold.holding = true;
-  });
-  // Quick enough that only a prediction can satisfy it.
-  const instant = { timeout: 250 };
-
-  const gx = page.locator(
-    '[data-player-side="local"][data-once-per-game-marker="gx"]'
-  );
-  await gx.click();
-  await expect(gx).toHaveAttribute('aria-pressed', 'true', instant);
-
-  const stadiumCard = await firstHandCard(page);
-  await page.locator(`[data-card-id="${stadiumCard}"]`).click();
-  await page.keyboard.press('g');
-  await expect
-    .poll(() => zoneCount(page, 'stadium', 'shared'), instant)
-    .toBe(1);
-
-  const boardCard = await firstHandCard(page);
-  await page.locator(`[data-card-id="${boardCard}"]`).click();
-  await page.keyboard.press(' ');
-  await expect.poll(() => zoneCount(page, 'board', 'local'), instant).toBe(1);
-
-  // The sidebar's Attack button submits outside the board; it clears the
-  // loose board into the discard all the same.
-  const discardBefore = await zoneCount(page, 'discard', 'local');
-  await page.locator('#attackButton').click();
-  await expect.poll(() => zoneCount(page, 'board', 'local'), instant).toBe(0);
-  expect(await zoneCount(page, 'discard', 'local')).toBe(discardBefore + 1);
-
-  await page
-    .locator('.ptcgsim-board-surface')
-    .click({ position: { x: 5, y: 5 } });
-  await page.keyboard.press('Alt+3');
-  await expect(
-    page.locator('[data-legacy-work-area="inspection"]')
-  ).toBeVisible(instant);
-
-  // Nothing above came from the room.
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-revision',
-    revision!
-  );
-  expect(
-    await page.evaluate(
-      () =>
+      const revision = await page
+        .locator('.ptcgsim-board-surface')
+        .getAttribute('data-revision');
+      await page.evaluate(() => {
         (
-          globalThis as unknown as { __serverHold: { heldCount(): number } }
-        ).__serverHold.heldCount() > 0
-    )
-  ).toBe(true);
+          globalThis as unknown as { __serverHold: { holding: boolean } }
+        ).__serverHold.holding = true;
+      });
+      // Quick enough that only a prediction can satisfy it.
+      const instant = { timeout: 250 };
 
-  const predicted = {
-    hand: await zoneCount(page, 'hand', 'local'),
-    stadium: await zoneCount(page, 'stadium', 'shared'),
-    board: await zoneCount(page, 'board', 'local'),
-    discard: await zoneCount(page, 'discard', 'local'),
-  };
-  await page.evaluate(() =>
-    (
-      globalThis as unknown as { __serverHold: { release(): void } }
-    ).__serverHold.release()
-  );
-  await expect
-    .poll(async () =>
-      Number(
-        await page
-          .locator('.ptcgsim-board-surface')
-          .getAttribute('data-revision')
-      )
-    )
-    .toBe(Number(revision) + 5);
-  expect({
-    hand: await zoneCount(page, 'hand', 'local'),
-    stadium: await zoneCount(page, 'stadium', 'shared'),
-    board: await zoneCount(page, 'board', 'local'),
-    discard: await zoneCount(page, 'discard', 'local'),
-  }).toEqual(predicted);
-  await expect(gx).toHaveAttribute('aria-pressed', 'true');
-  await expect(
-    page.locator('[data-legacy-work-area="inspection"]')
-  ).toBeVisible();
-});
+      const gx = page.locator(
+        '[data-player-side="local"][data-once-per-game-marker="gx"]'
+      );
+      await gx.click();
+      await expect(gx).toHaveAttribute('aria-pressed', 'true', instant);
+
+      const stadiumCard = await firstHandCard(page);
+      await page.locator(`[data-card-id="${stadiumCard}"]`).click();
+      await page.keyboard.press('g');
+      await expect
+        .poll(() => zoneCount(page, 'stadium', 'shared'), instant)
+        .toBe(1);
+
+      const boardCard = await firstHandCard(page);
+      await page.locator(`[data-card-id="${boardCard}"]`).click();
+      await page.keyboard.press(' ');
+      await expect
+        .poll(() => zoneCount(page, 'board', 'local'), instant)
+        .toBe(1);
+
+      // The sidebar's Attack button submits outside the board; it clears the
+      // loose board into the discard all the same.
+      const discardBefore = await zoneCount(page, 'discard', 'local');
+      await page.locator('#attackButton').click();
+      await expect
+        .poll(() => zoneCount(page, 'board', 'local'), instant)
+        .toBe(0);
+      expect(await zoneCount(page, 'discard', 'local')).toBe(discardBefore + 1);
+
+      await page
+        .locator('.ptcgsim-board-surface')
+        .click({ position: { x: 5, y: 5 } });
+      await page.keyboard.press('Alt+3');
+      await expect(
+        page.locator('[data-legacy-work-area="inspection"]')
+      ).toBeVisible(instant);
+
+      // Nothing above came from the room.
+      await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+        'data-revision',
+        revision!
+      );
+      expect(
+        await page.evaluate(
+          () =>
+            (
+              globalThis as unknown as { __serverHold: { heldCount(): number } }
+            ).__serverHold.heldCount() > 0
+        )
+      ).toBe(true);
+
+      const predicted = {
+        hand: await zoneCount(page, 'hand', 'local'),
+        stadium: await zoneCount(page, 'stadium', 'shared'),
+        board: await zoneCount(page, 'board', 'local'),
+        discard: await zoneCount(page, 'discard', 'local'),
+      };
+      await page.evaluate(() =>
+        (
+          globalThis as unknown as { __serverHold: { release(): void } }
+        ).__serverHold.release()
+      );
+      await expect
+        .poll(async () =>
+          Number(
+            await page
+              .locator('.ptcgsim-board-surface')
+              .getAttribute('data-revision')
+          )
+        )
+        .toBe(Number(revision) + 5);
+      expect({
+        hand: await zoneCount(page, 'hand', 'local'),
+        stadium: await zoneCount(page, 'stadium', 'shared'),
+        board: await zoneCount(page, 'board', 'local'),
+        discard: await zoneCount(page, 'discard', 'local'),
+      }).toEqual(predicted);
+      await expect(gx).toHaveAttribute('aria-pressed', 'true');
+      await expect(
+        page.locator('[data-legacy-work-area="inspection"]')
+      ).toBeVisible();
+    });
+  });

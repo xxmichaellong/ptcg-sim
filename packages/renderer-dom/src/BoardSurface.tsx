@@ -1,6 +1,17 @@
 import {
   BoardDragController,
+  compositionHold,
+  presentHeldMarker,
   VelocityTracker,
+  BoardDepthProjection,
+  tableCardMatrix,
+  tablePoseMatrix,
+  tablePoseLocalPoint,
+  tablePoseEdges,
+  tablePileHeight,
+  sameTablePose,
+  type TableCardPose,
+  type TableCamera,
 } from '@ptcgsim/renderer-contract';
 import type {
   BoardPointerInput,
@@ -34,6 +45,7 @@ import {
   type PaintedCard,
 } from './motion/BoardMotionDirector.js';
 import { DragSwing } from './motion/DragSwing.js';
+import { depthPaintKey } from './motion/depth-paint-key.js';
 import {
   HoverTilt,
   localPointer,
@@ -227,6 +239,7 @@ const ZoneNode = memo(function ZoneNode({
   emitIntent,
   scrollZone,
   table,
+  depth,
 }: {
   readonly zone: ZoneSceneNode;
   readonly showOutline: boolean;
@@ -238,6 +251,7 @@ const ZoneNode = memo(function ZoneNode({
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly scrollZone: BoardRendererAdapters['scrollZone'];
   readonly table: boolean;
+  readonly depth?: BoardDepthProjection;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const grownRef = useRef<number | null>(null);
@@ -289,6 +303,17 @@ const ZoneNode = memo(function ZoneNode({
       tabIndex={zone.interactive ? 0 : undefined}
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
+        ...(depth &&
+        zone.kind !== 'hand' &&
+        zone.kind !== 'inspection' &&
+        zone.kind !== 'attachmentResolution'
+          ? {
+              left: 0,
+              top: 0,
+              transformOrigin: '0 0',
+              transform: `matrix3d(${tableCardMatrix(depth.camera, zone.bounds, 0).join(',')})`,
+            }
+          : {}),
         // The table's zones are painted by the stylesheet from tokens.
         ...(table
           ? {}
@@ -383,170 +408,253 @@ const SHADOW_DIRECTION: Readonly<
   3: [-1, 0],
 };
 
-const CardNode = memo(function CardNode({
-  card,
-  selected,
-  targetable,
-  dropTarget,
-  drag,
-  settle,
-  emitIntent,
-  consumeSuppressedClick,
-  registerElement,
-}: {
-  readonly card: CardSceneNode;
-  readonly selected: boolean;
-  readonly targetable: boolean;
-  /** The stack card under a dragged card: v1 rings it like a selection. */
-  readonly dropTarget: boolean;
-  readonly drag: BoardPresentation['drag'];
-  readonly settle: SettlingCard | null;
-  readonly emitIntent: BoardRendererAdapters['emitIntent'];
-  readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
-  readonly registerElement: (
-    renderKey: string,
-    element: HTMLElement | null
-  ) => void;
-}) {
-  const imageRef = useRef<HTMLImageElement>(null);
-  const renderKey = card.renderKey ?? '';
-  const ref = useCallback(
-    (element: HTMLButtonElement | null) => registerElement(renderKey, element),
-    [registerElement, renderKey]
-  );
-  // A card that was just dropped stays centred on its drop point until the
-  // authoritative move lands, exactly as it was painted while dragging.
-  const held = drag ?? settle;
-  const bounds = held
-    ? {
-        ...card.bounds,
-        x: held.x - card.bounds.width / 2,
-        y: held.y - card.bounds.height / 2,
-      }
-    : card.bounds;
-  // v1's scrolling zones clip what has scrolled out of them. `clip-path` is
-  // applied before the element's own transform, so the physical insets are
-  // rotated into the card's local frame: its local top edge points physically
-  // right after one quarter turn, down after two, and so on. Cards in a
-  // scrolling row only ever carry the opponent frame's half turn.
-  const clip = ((): string | undefined => {
-    const region = card.clipBounds;
-    if (!region || held) return undefined;
-    const physical = [
-      region.y - bounds.y,
-      bounds.x + bounds.width - (region.x + region.width),
-      bounds.y + bounds.height - (region.y + region.height),
-      region.x - bounds.x,
-    ].map((inset) => Math.max(0, inset));
-    if (physical.every((inset) => inset === 0)) return undefined;
-    const local = physical.map(
-      (_, index) => physical[(index + card.rotationQuarterTurns) % 4] ?? 0
+const CardNode = memo(
+  function CardNode({
+    card,
+    selected,
+    targetable,
+    dropTarget,
+    drag,
+    settle,
+    emitIntent,
+    consumeSuppressedClick,
+    registerElement,
+    camera,
+    bands = 1,
+    pose,
+  }: {
+    readonly card: CardSceneNode;
+    readonly selected: boolean;
+    readonly targetable: boolean;
+    /** The stack card under a dragged card: v1 rings it like a selection. */
+    readonly dropTarget: boolean;
+    readonly drag: BoardPresentation['drag'];
+    readonly settle: SettlingCard | null;
+    readonly emitIntent: BoardRendererAdapters['emitIntent'];
+    readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
+    readonly registerElement: (
+      renderKey: string,
+      element: HTMLElement | null
+    ) => void;
+    readonly camera?: TableCamera;
+    readonly bands?: number;
+    readonly pose?: TableCardPose;
+  }) {
+    const imageRef = useRef<HTMLImageElement>(null);
+    const renderKey = card.renderKey ?? '';
+    const ref = useCallback(
+      (element: HTMLButtonElement | null) =>
+        registerElement(renderKey, element),
+      [registerElement, renderKey]
     );
-    return `inset(${local.map((inset) => `${String(inset)}px`).join(' ')})`;
-  })();
-  // Selection, targets and drop targets are rings drawn with box-shadow on
-  // the face, never with a border, so the art keeps its full size.
-  const ring = targetable
-    ? 'target'
-    : selected
-      ? 'selected'
-      : dropTarget
-        ? 'drop'
-        : undefined;
-  const [shadowX, shadowY] = SHADOW_DIRECTION[card.rotationQuarterTurns];
-  const context = (event: ReactMouseEvent) => {
-    event.preventDefault();
-    emitIntent({ kind: 'CardContextRequested', cardId: card.id });
-  };
-  const activate = () => {
-    if (card.primaryAction?.kind === 'openZone') {
-      emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
-      return;
-    }
-    emitIntent({ kind: 'CardSelected', cardId: card.id });
-  };
-  useLayoutEffect(() => {
-    const image = imageRef.current;
-    if (!image) return;
-    if (image.complete) {
-      const ready = image.naturalWidth > 0;
-      image.dataset.cardImageState = ready ? 'ready' : 'failed';
-      image.style.visibility = ready ? 'visible' : 'hidden';
-      return;
-    }
-    image.dataset.cardImageState = 'loading';
-    image.style.visibility = 'hidden';
-  }, [card.tableImageUrl, card.imageUrl]);
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className="ptcgsim-card"
-      data-card-id={card.id}
-      data-card-role={card.role}
-      data-card-primary-action={card.primaryAction?.kind}
-      data-ring={ring}
-      data-held={drag ? 'drag' : settle ? 'settle' : undefined}
-      data-in-hand={
-        card.role === 'zone' && card.parentId.endsWith(':hand')
-          ? 'true'
-          : undefined
-      }
-      aria-label={paintsBack(card) ? FACE_DOWN_LABEL : card.label}
-      aria-haspopup={
-        card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
-      }
-      aria-pressed={card.primaryAction ? undefined : selected}
-      style={
-        {
-          ...absoluteRect(bounds, drag ? 10_000 : settle ? 9_000 : card.zIndex),
-          display: 'block',
-          margin: 0,
-          padding: 0,
-          border: 0,
-          background: 'transparent',
-          cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
-          ...(clip ? { clipPath: clip } : {}),
-          transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
-          transformOrigin: 'center',
-          '--ptcgsim-shadow-x': String(shadowX),
-          '--ptcgsim-shadow-y': String(shadowY),
-        } as CSSProperties
-      }
-      disabled={!card.interactive}
-      onClick={() => {
-        if (!consumeSuppressedClick(card.id)) {
-          activate();
+    // A card that was just dropped stays centred on its drop point until the
+    // authoritative move lands, exactly as it was painted while dragging.
+    const held = drag ?? settle;
+    const bounds = held
+      ? {
+          ...card.bounds,
+          x: held.x - card.bounds.width / 2,
+          y: held.y - card.bounds.height / 2,
         }
-      }}
-      onDoubleClick={() => {
-        if (!card.primaryAction) {
-          emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
+      : card.bounds;
+    // v1's scrolling zones clip what has scrolled out of them. `clip-path` is
+    // applied before the element's own transform, so the physical insets are
+    // rotated into the card's local frame: its local top edge points physically
+    // right after one quarter turn, down after two, and so on. Cards in a
+    // scrolling row only ever carry the opponent frame's half turn.
+    const clip = ((): string | undefined => {
+      const region = card.clipBounds;
+      if (!region || held) return undefined;
+      const physical = [
+        region.y - bounds.y,
+        bounds.x + bounds.width - (region.x + region.width),
+        bounds.y + bounds.height - (region.y + region.height),
+        region.x - bounds.x,
+      ].map((inset) => Math.max(0, inset));
+      if (physical.every((inset) => inset === 0)) return undefined;
+      const local = physical.map(
+        (_, index) => physical[(index + card.rotationQuarterTurns) % 4] ?? 0
+      );
+      return `inset(${local.map((inset) => `${String(inset)}px`).join(' ')})`;
+    })();
+    // Selection, targets and drop targets are rings drawn with box-shadow on
+    // the face, never with a border, so the art keeps its full size.
+    const ring = targetable
+      ? 'target'
+      : selected
+        ? 'selected'
+        : dropTarget
+          ? 'drop'
+          : undefined;
+    const [shadowX, shadowY] = SHADOW_DIRECTION[card.rotationQuarterTurns];
+    const context = (event: ReactMouseEvent) => {
+      event.preventDefault();
+      emitIntent({ kind: 'CardContextRequested', cardId: card.id });
+    };
+    const activate = () => {
+      if (card.primaryAction?.kind === 'openZone') {
+        emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
+        return;
+      }
+      emitIntent({ kind: 'CardSelected', cardId: card.id });
+    };
+    useLayoutEffect(() => {
+      const image = imageRef.current;
+      if (!image) return;
+      if (image.complete) {
+        const ready = image.naturalWidth > 0;
+        image.dataset.cardImageState = ready ? 'ready' : 'failed';
+        image.style.visibility = ready ? 'visible' : 'hidden';
+        return;
+      }
+      image.dataset.cardImageState = 'loading';
+      image.style.visibility = 'hidden';
+    }, [card.tableImageUrl, card.imageUrl]);
+    return (
+      <button
+        ref={ref}
+        type="button"
+        className="ptcgsim-card"
+        data-card-id={card.id}
+        data-depth-card={camera ? 'true' : undefined}
+        data-elevation={pose?.elevation.toFixed(3)}
+        data-card-role={card.role}
+        data-card-composition={card.composition?.kind}
+        data-card-primary-action={card.primaryAction?.kind}
+        data-ring={ring}
+        data-held={drag ? 'drag' : settle ? 'settle' : undefined}
+        data-in-hand={
+          card.role === 'zone' && card.parentId.endsWith(':hand')
+            ? 'true'
+            : undefined
         }
-      }}
-      onContextMenu={context}
-    >
-      <span className="ptcgsim-card__body" data-card-body="">
-        <span className="ptcgsim-card__face">
-          <img
-            ref={imageRef}
-            src={card.tableImageUrl ?? card.imageUrl}
-            alt=""
-            draggable={false}
-            onLoad={(event) => {
-              event.currentTarget.dataset.cardImageState = 'ready';
-              event.currentTarget.style.visibility = 'visible';
-            }}
-            onError={(event) => {
-              event.currentTarget.dataset.cardImageState = 'failed';
-              event.currentTarget.style.visibility = 'hidden';
-            }}
-          />
+        aria-label={paintsBack(card) ? FACE_DOWN_LABEL : card.label}
+        aria-haspopup={
+          card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
+        }
+        aria-pressed={card.primaryAction ? undefined : selected}
+        style={
+          {
+            ...absoluteRect(
+              bounds,
+              drag
+                ? 10_000 + (card.composition ? card.zIndex : 0)
+                : settle
+                  ? 9_000 + (card.composition ? card.zIndex : 0)
+                  : card.zIndex
+            ),
+            display: 'block',
+            margin: 0,
+            padding: 0,
+            border: 0,
+            background: 'transparent',
+            cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
+            ...(clip ? { clipPath: clip } : {}),
+            transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
+            transformOrigin: 'center',
+            ...(camera && pose
+              ? {
+                  left: 0,
+                  top: 0,
+                  transformOrigin: '0 0',
+                  transform: `matrix3d(${tablePoseMatrix(camera, pose).join(',')})`,
+                }
+              : {}),
+            '--ptcgsim-shadow-x': String(shadowX),
+            '--ptcgsim-shadow-y': String(shadowY),
+          } as CSSProperties
+        }
+        disabled={!card.interactive}
+        onClick={() => {
+          if (!consumeSuppressedClick(card.id)) {
+            activate();
+          }
+        }}
+        onDoubleClick={() => {
+          if (!card.primaryAction) {
+            emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
+          }
+        }}
+        onContextMenu={context}
+      >
+        {camera && pose ? (
+          <CardDepthGeometry camera={camera} pose={pose} bands={bands} />
+        ) : null}
+        <span className="ptcgsim-card__body" data-card-body="">
+          <span
+            className="ptcgsim-card__face card-material"
+            data-finish={paintsBack(card) ? 'sheen' : (card.finish ?? 'sheen')}
+          >
+            <img
+              ref={imageRef}
+              src={card.tableImageUrl ?? card.imageUrl}
+              alt=""
+              draggable={false}
+              onLoad={(event) => {
+                event.currentTarget.dataset.cardImageState = 'ready';
+                event.currentTarget.style.visibility = 'visible';
+              }}
+              onError={(event) => {
+                event.currentTarget.dataset.cardImageState = 'failed';
+                event.currentTarget.style.visibility = 'hidden';
+              }}
+            />
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    );
+  },
+  (before, after) => {
+    // The flat renderer retains React's ordinary shallow comparison. Depth
+    // scenes recreate projections on each acknowledgement, even for still cards.
+    if (!before.camera || !after.camera)
+      return (
+        Object.keys(before).length === Object.keys(after).length &&
+        (Object.keys(before) as (keyof typeof before)[]).every((key) =>
+          Object.is(before[key], after[key])
+        )
+      );
+    return (
+      depthPaintKey(before.card) === depthPaintKey(after.card) &&
+      depthPaintKey(before.camera) === depthPaintKey(after.camera) &&
+      before.bands === after.bands &&
+      before.pose !== undefined &&
+      after.pose !== undefined &&
+      sameTablePose(before.pose, after.pose) &&
+      before.selected === after.selected &&
+      before.targetable === after.targetable &&
+      before.dropTarget === after.dropTarget &&
+      before.drag === after.drag &&
+      before.settle === after.settle &&
+      before.emitIntent === after.emitIntent &&
+      before.consumeSuppressedClick === after.consumeSuppressedClick &&
+      before.registerElement === after.registerElement
+    );
+  }
+);
+
+const CardDepthGeometry = ({
+  camera,
+  pose,
+  bands,
+}: {
+  camera: TableCamera;
+  pose: TableCardPose;
+  bands: number;
+}) => {
+  const paths = tablePoseEdges(camera, pose, bands);
+  return (
+    <svg
+      className="ptcgsim-card__depth"
+      viewBox={`0 0 ${pose.bounds.width} ${pose.bounds.height}`}
+      aria-hidden="true"
+    >
+      <path data-depth-shadow="" d={paths.shadow} />
+      <path data-depth-side="" d={paths.sides} />
+      <path data-depth-lines="" d={paths.lines} />
+    </svg>
   );
-});
+};
 
 const ZoneCountNode = memo(function ZoneCountNode({
   node,
@@ -629,9 +737,10 @@ const paintedCards = (
   for (const card of scene.cards) {
     if (card.renderKey === null) continue;
     const hold =
-      presentation.drag?.cardId === card.id
-        ? presentation.drag
-        : presentation.settling.find((entry) => entry.cardId === card.id);
+      compositionHold(scene, card, presentation.drag) ??
+      presentation.settling
+        .map((entry) => compositionHold(scene, card, entry))
+        .find(Boolean);
     if (hold) held.add(card.renderKey);
     painted.set(card.renderKey, {
       rect: hold
@@ -672,7 +781,19 @@ export const BoardSurface = ({
   const tableRef = useRef<HTMLDivElement>(null);
   const ghostLayerRef = useRef<HTMLDivElement>(null);
   const director = useMemo(() => new BoardMotionDirector(), []);
+  const projection = useMemo(
+    () => new BoardDepthProjection(scene, preferences),
+    [
+      scene,
+      preferences.depth,
+      preferences.reducedMotion,
+      preferences.animationSpeed,
+    ]
+  );
+  const depth = projection.enabled ? projection : undefined;
+  const grabbed = useRef<CardSceneNode | null>(null);
   const swing = useMemo(() => new DragSwing(), []);
+  const gripRef = useRef({ x: 0.5, y: 0.55 });
   const tilt = useMemo(() => new HoverTilt(), []);
   const hoveredRef = useRef<{
     readonly cardId: CardSceneNode['id'];
@@ -711,16 +832,19 @@ export const BoardSurface = ({
       reduced: preferences.reducedMotion,
       durationScale: animationSpeed,
     });
-    swing.setEnabled(!preferences.reducedMotion);
-    tilt.setEnabled(!preferences.reducedMotion);
+    swing.setEnabled(!preferences.reducedMotion && animationSpeed > 0);
+    tilt.setEnabled(!preferences.reducedMotion && animationSpeed > 0);
   }, [director, swing, tilt, preferences.reducedMotion, animationSpeed]);
   // Every commit tells the director where cards are now drawn; a new scene
   // also gets a motion plan from the last one.
   useLayoutEffect(() => {
     const { painted, held } = paintedCards(scene, presentation);
-    director.commit(previousSceneRef.current, scene, motion, painted, held);
+    director.commit(previousSceneRef.current, scene, motion, painted, held, {
+      projection,
+      presentation,
+    });
     previousSceneRef.current = scene;
-  }, [director, scene, presentation, motion]);
+  }, [director, scene, presentation, motion, projection]);
   const capturedPointerRef = useRef<{
     readonly element: HTMLElement;
     readonly pointerId: number;
@@ -787,8 +911,31 @@ export const BoardSurface = ({
       return;
     }
     const turn = card.rotationQuarterTurns as QuarterTurn;
+    const surface = surfaceRef.current?.getBoundingClientRect();
+    const paintedPose =
+      depth && card.renderKey
+        ? (director.depth.current(card.renderKey) ?? depth.pose(card))
+        : null;
+    const projectedLocal =
+      depth && surface && paintedPose
+        ? tablePoseLocalPoint(depth.camera, paintedPose, {
+            x:
+              ((event.clientX - surface.left) * scene.viewport.width) /
+              surface.width,
+            y:
+              ((event.clientY - surface.top) * scene.viewport.height) /
+              surface.height,
+          })
+        : null;
+    const normalized =
+      projectedLocal && paintedPose
+        ? {
+            x: projectedLocal.x / paintedPose.bounds.width - 0.5,
+            y: projectedLocal.y / paintedPose.bounds.height - 0.5,
+          }
+        : undefined;
     if (card.interactive) {
-      tilt.track(element, event.clientX, event.clientY, turn);
+      tilt.track(element, event.clientX, event.clientY, turn, normalized);
     } else {
       tilt.leave();
     }
@@ -801,12 +948,14 @@ export const BoardSurface = ({
       }
       return;
     }
-    const point = localPointer(
-      element.getBoundingClientRect(),
-      event.clientX,
-      event.clientY,
-      turn
-    );
+    const point =
+      normalized ??
+      localPointer(
+        element.getBoundingClientRect(),
+        event.clientX,
+        event.clientY,
+        turn
+      );
     hoveredRef.current = { cardId: card.id, x: point.x, y: point.y };
     scheduleHoverReport();
   };
@@ -818,8 +967,16 @@ export const BoardSurface = ({
     const body = surfaceRef.current?.querySelector<HTMLElement>(
       `[data-card-id="${CSS.escape(String(draggedCard.id))}"] > .ptcgsim-card__body`
     );
-    swing.attach(body ?? null);
-  }, [swing, draggedCard?.id, draggedCard?.renderKey]);
+    swing.attach(
+      draggedCard.composition ? null : (body ?? null),
+      gripRef.current
+    );
+  }, [
+    swing,
+    draggedCard?.id,
+    draggedCard?.renderKey,
+    draggedCard?.composition,
+  ]);
   useLayoutEffect(() => {
     onCommit?.();
   }, [onCommit]);
@@ -834,6 +991,7 @@ export const BoardSurface = ({
   );
   useLayoutEffect(() => {
     const cancel = () => {
+      grabbed.current = null;
       const pointerId = dragController.cancelInteraction();
       const captured = capturedPointerRef.current;
       capturedPointerRef.current = null;
@@ -850,18 +1008,97 @@ export const BoardSurface = ({
         }
       }
     };
+    const suspend = () => {
+      dragController.cancel();
+      cancel();
+      director.cancelAll();
+      swing.stop();
+      tilt.leave(true);
+    };
+    const visibility = () => suspend();
+    window.addEventListener('blur', suspend);
+    document.addEventListener('visibilitychange', visibility);
     setInteractionCancellation?.(cancel);
     return () => {
+      window.removeEventListener('blur', suspend);
+      document.removeEventListener('visibilitychange', visibility);
       setInteractionCancellation?.(null);
       cancel();
     };
-  }, [dragController, setInteractionCancellation]);
+  }, [dragController, director, swing, tilt, setInteractionCancellation]);
 
   const pointerInput = (
-    event: ReactPointerEvent<HTMLDivElement>
+    event: ReactPointerEvent<HTMLDivElement>,
+    starting?: CardSceneNode
   ): BoardPointerInput | null => {
     const bounds = surfaceRef.current?.getBoundingClientRect();
     if (!bounds || bounds.width <= 0 || bounds.height <= 0) return null;
+    const point = {
+      x: ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width,
+      y: ((event.clientY - bounds.top) * scene.viewport.height) / bounds.height,
+    };
+    const source = starting ?? grabbed.current;
+    if (depth && source) {
+      const base = depth.pose(source);
+      let grabPoint;
+      if (starting) {
+        const painted = source.renderKey
+          ? (director.depth.current(source.renderKey) ?? base)
+          : base;
+        const local = tablePoseLocalPoint(depth.camera, painted, point);
+        if (!local) return null;
+        let u = local.x / painted.bounds.width - 0.5;
+        let v = local.y / painted.bounds.height - 0.5;
+        // The flat hand may already be raised by its reading hover treatment.
+        const body = (
+          event.target instanceof Element
+            ? event.target.closest('[data-card-id]')
+            : null
+        )?.querySelector<HTMLElement>('.ptcgsim-card__body');
+        if (base.plane === 0 && body) {
+          const grip = localPointer(
+            body.getBoundingClientRect(),
+            event.clientX,
+            event.clientY,
+            source.rotationQuarterTurns
+          );
+          u = grip.x;
+          v = grip.y;
+        }
+        gripRef.current = { x: u + 0.5, y: v + 0.5 };
+        const angle = (source.rotationQuarterTurns * Math.PI) / 2;
+        grabPoint = {
+          x:
+            source.bounds.x +
+            source.bounds.width / 2 +
+            u * source.bounds.width * Math.cos(angle) -
+            v * source.bounds.height * Math.sin(angle),
+          y:
+            source.bounds.y +
+            source.bounds.height / 2 +
+            u * source.bounds.width * Math.sin(angle) +
+            v * source.bounds.height * Math.cos(angle),
+        };
+      } else {
+        grabPoint = depth.cardPoint(source, point, {
+          ...base,
+          plane: 1,
+          elevation: base.elevation + depth.lift,
+        });
+      }
+      const hit = depth.drop(point, source.id, (card) =>
+        card.renderKey ? director.depth.current(card.renderKey) : undefined
+      );
+      return {
+        pointerId: event.pointerId,
+        button: event.button,
+        x: grabPoint.x,
+        y: grabPoint.y,
+        screenPoint: point,
+        dropPoint: hit.point,
+        targetId: hit.targetId,
+      };
+    }
     return {
       pointerId: event.pointerId,
       x: ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width,
@@ -919,17 +1156,19 @@ export const BoardSurface = ({
       data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
       data-geometry={scene.layout.geometryVersion}
+      data-table-view={projection.settings.mode}
       data-motion="idle"
       onWheel={(event) => {
         // The cards paint above the scroll container, so a wheel over them
         // scrolls the region the way it would over v1's `#hand` or `#board`.
         const bounds = surfaceRef.current?.getBoundingClientRect();
         if (!bounds || bounds.width <= 0 || bounds.height <= 0) return;
-        const x =
+        const screenX =
           ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width;
-        const y =
+        const screenY =
           ((event.clientY - bounds.top) * scene.viewport.height) /
           bounds.height;
+        const { x, y } = projection.boardPoint({ x: screenX, y: screenY });
         const zone = scene.zones.find(
           (candidate) =>
             candidate.scroll !== undefined &&
@@ -958,14 +1197,26 @@ export const BoardSurface = ({
         );
       }}
       onPointerDown={(event) => {
+        director.interruptTableTurn();
         const target = pointerCard(event);
         if (!target) {
           adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
           return;
         }
-        const input = pointerInput(event);
+        const input = pointerInput(event, target.card);
         if (!input) return;
         if (dragController.pointerDown(scene, target.card.id, input)) {
+          grabbed.current = target.card;
+          const body = target.element.querySelector<HTMLElement>(
+            '.ptcgsim-card__body'
+          );
+          const grip = localPointer(
+            (body ?? target.element).getBoundingClientRect(),
+            event.clientX,
+            event.clientY,
+            target.card.rotationQuarterTurns as QuarterTurn
+          );
+          if (!depth) gripRef.current = { x: grip.x + 0.5, y: grip.y + 0.5 };
           try {
             target.element.setPointerCapture?.(event.pointerId);
             capturedPointerRef.current = {
@@ -984,7 +1235,14 @@ export const BoardSurface = ({
           event.preventDefault();
           velocity.add(input.x, input.y, event.timeStamp);
           if (draggedCard) {
-            swing.lean(velocity.velocity().x, draggedCard.bounds.width);
+            const speed = velocity.velocity();
+            const turn = (draggedCard.rotationQuarterTurns * Math.PI) / 2;
+            swing.lean(
+              Math.cos(turn) * speed.x + Math.sin(turn) * speed.y,
+              draggedCard.bounds.width,
+              -Math.sin(turn) * speed.x + Math.cos(turn) * speed.y,
+              draggedCard.bounds.height
+            );
           }
         } else {
           trackHover(event);
@@ -992,6 +1250,8 @@ export const BoardSurface = ({
       }}
       onPointerLeave={() => clearHover()}
       onPointerUp={(event) => {
+        const ownsGrab =
+          capturedPointerRef.current?.pointerId === event.pointerId;
         const input = pointerInput(event);
         const released = draggedCard;
         if (input && released?.renderKey) {
@@ -1005,15 +1265,20 @@ export const BoardSurface = ({
           event.preventDefault();
         }
         releaseCapture(event);
+        if (ownsGrab) grabbed.current = null;
       }}
       onPointerCancel={(event) => {
         dragController.cancel(event.pointerId);
+        if (capturedPointerRef.current?.pointerId === event.pointerId)
+          grabbed.current = null;
         velocity.reset();
         swing.release();
         releaseCapture(event);
       }}
       onLostPointerCapture={(event) => {
         dragController.cancel(event.pointerId);
+        if (capturedPointerRef.current?.pointerId === event.pointerId)
+          grabbed.current = null;
         if (capturedPointerRef.current?.pointerId === event.pointerId) {
           capturedPointerRef.current = null;
         }
@@ -1022,7 +1287,8 @@ export const BoardSurface = ({
         position: 'relative',
         width: scene.viewport.width,
         height: scene.viewport.height,
-        overflow: 'hidden',
+        // A projected child must never make focus scroll the camera surface.
+        overflow: depth ? 'clip' : 'hidden',
         background: 'transparent',
         touchAction: 'none',
         userSelect: 'none',
@@ -1036,6 +1302,17 @@ export const BoardSurface = ({
         className="ptcgsim-board-table"
         style={{ position: 'absolute', inset: 0 }}
       >
+        {depth ? (
+          <div
+            className="ptcgsim-depth-mat"
+            aria-hidden="true"
+            style={{
+              width: scene.viewport.width,
+              height: scene.viewport.height,
+              transform: `matrix3d(${tableCardMatrix(depth.camera, { x: 0, y: 0, width: scene.viewport.width, height: scene.viewport.height }, 0).join(',')})`,
+            }}
+          />
+        ) : null}
         {scene.layout.players.map((frame) => (
           <PlayerFrameNode
             key={frame.playerId}
@@ -1066,6 +1343,7 @@ export const BoardSurface = ({
               emitIntent={adapters.emitIntent}
               scrollZone={adapters.scrollZone}
               table={table}
+              {...(depth ? { depth } : {})}
             />
           );
         })}
@@ -1078,19 +1356,68 @@ export const BoardSurface = ({
               selected={presentation.selectedCardId === card.id}
               targetable={presentation.targetableCardIds.includes(card.id)}
               dropTarget={dropTargetCardId === card.id}
-              drag={
-                presentation.drag?.cardId === card.id ? presentation.drag : null
-              }
+              drag={compositionHold(scene, card, presentation.drag)}
               settle={
-                presentation.settling.find(
-                  (entry) => entry.cardId === card.id
-                ) ?? null
+                presentation.settling
+                  .map((entry) => compositionHold(scene, card, entry))
+                  .find(Boolean) ?? null
               }
               emitIntent={adapters.emitIntent}
               consumeSuppressedClick={consumeSuppressedClick}
               registerElement={registerElement}
+              {...(depth
+                ? {
+                    camera: depth.camera,
+                    bands: depth.pileCounts.get(card.id) ?? 1,
+                    pose: depth.pose(card, presentation),
+                  }
+                : {})}
             />
           ))}
+        {depth && draggedCard && (depth.pileCounts.get(draggedCard.id) ?? 0) > 1
+          ? (() => {
+              const base = depth.pose(draggedCard);
+              const height = tablePileHeight(
+                (depth.pileCounts.get(draggedCard.id) ?? 1) - 1,
+                base.bounds.width,
+                depth.settings.strength
+              );
+              const pose = { ...base, elevation: height, thickness: height };
+              return (
+                <div
+                  data-pile-underlay=""
+                  className="ptcgsim-card"
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: pose.bounds.width,
+                    height: pose.bounds.height,
+                    transformOrigin: '0 0',
+                    transform: `matrix3d(${tablePoseMatrix(depth.camera, pose).join(',')})`,
+                    zIndex: draggedCard.zIndex,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <CardDepthGeometry
+                    camera={depth.camera}
+                    pose={pose}
+                    bands={depth.pileCounts.get(draggedCard.id) ?? 1}
+                  />
+                  <span className="ptcgsim-card__face">
+                    {paintsBack(draggedCard) ? (
+                      <img
+                        src={draggedCard.tableImageUrl ?? draggedCard.imageUrl}
+                        alt=""
+                        draggable={false}
+                      />
+                    ) : null}
+                  </span>
+                </div>
+              );
+            })()
+          : null}
         <div
           ref={ghostLayerRef}
           className="ptcgsim-ghost-layer"
@@ -1105,12 +1432,36 @@ export const BoardSurface = ({
           }}
         />
         {scene.markers.map((marker) => (
-          <MarkerNode key={marker.id} marker={marker} />
+          <MarkerNode
+            key={marker.id}
+            marker={
+              depth
+                ? depth.marker(
+                    marker,
+                    (() => {
+                      const parent = scene.cards.find(
+                        (card) => card.id === marker.parentCardId
+                      );
+                      return parent
+                        ? depth.pose(parent, presentation)
+                        : undefined;
+                    })()
+                  )
+                : presentHeldMarker(scene, marker, presentation)
+            }
+          />
         ))}
         {scene.counts.map((node) => (
           <ZoneCountNode
             key={node.id}
-            node={node}
+            node={
+              depth
+                ? {
+                    ...node,
+                    anchor: depth.point(node.anchor, 0, node.kind === 'hand'),
+                  }
+                : node
+            }
             darkMode={preferences.darkMode}
             table={table}
           />

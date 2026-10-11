@@ -31,6 +31,7 @@ export interface CardDefinition {
   readonly category: CardCategory;
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
+  readonly presentation?: import('./card-presentation.js').CardPresentation;
 }
 
 export interface CardInstance {

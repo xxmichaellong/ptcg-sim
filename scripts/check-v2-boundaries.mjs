@@ -19,6 +19,9 @@ const CARD_BACK = Object.freeze({
 const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   'packages/game-core/src/ids.ts',
   'packages/game-core/src/stable-hash.ts',
+  // Bounded physical-artwork metadata and print recognition only. This module
+  // has no runtime dependencies on canonical state, reducers, or authority.
+  'packages/game-core/src/card-presentation.ts',
 ]);
 
 const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([

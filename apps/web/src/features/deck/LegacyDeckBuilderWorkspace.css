@@ -540,8 +540,6 @@
 .native-deck-builder-zoom {
   position: fixed;
   z-index: 20;
-  width: 258px;
-  height: 360px;
   border-radius: 4.8% / 3.4%;
   background: var(--color-surface-3);
   box-shadow: var(--shadow-5);
@@ -908,6 +906,34 @@
     opacity var(--ds-enter-duration) var(--ease-out);
 }
 
+.native-deck-builder-reading-card {
+  position: relative;
+  width: min(90vw, calc((100dvh - 100px) * 63 / 88));
+  aspect-ratio: 63 / 88;
+}
+.native-deck-builder-reading-card[data-landscape='true'] {
+  width: min(90vw, calc((100dvh - 100px) * 88 / 63));
+  aspect-ratio: 88 / 63;
+}
+.native-custom-card-layout {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+.native-custom-card-layout summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+}
+.native-custom-card-layout .native-deck-builder-modal-label {
+  margin-top: var(--space-2);
+}
+
+.native-deck-builder-preview-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1;
+}
+
 @starting-style {
   .native-deck-builder-card-preview-scrim:not([hidden]) {
     opacity: 0;
@@ -942,6 +968,8 @@
 }
 
 .native-deck-builder-modal-box {
+  max-height: calc(100% - 2 * var(--space-4));
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -963,6 +991,8 @@
   }
 
   .native-deck-builder-modal:not([hidden]) .native-deck-builder-modal-box {
+    max-height: calc(100% - 2 * var(--space-4));
+    overflow-y: auto;
     opacity: 0;
     translate: 0 var(--ds-enter-rise);
   }

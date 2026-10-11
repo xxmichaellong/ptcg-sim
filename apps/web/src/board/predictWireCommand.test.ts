@@ -443,3 +443,80 @@ describe('predictWireCommand', () => {
     ).toBeNull();
   });
 });
+
+it('predicts a paired Stadium add/replacement without losing either old piece', () => {
+  const stadium = Object.values(view.zones).find(
+    (zone) => zone.kind === 'stadium'
+  )!;
+  const first = hand.cards[0]!;
+  const second = hand.cards[1]!;
+  const third = hand.cards[2]!;
+  const occupants = stadium.cards.map((card) => card.id);
+  const one = predictWireCommand(view, {
+    type: 'MoveCardToStadium',
+    cardId: first.id,
+    expectedSourceId: hand.id,
+    expectedStadiumCardId: occupants[0] ?? null,
+    expectedStadiumCardIds: occupants,
+  })!;
+  const two = predictWireCommand(one, {
+    type: 'MoveCardToStadium',
+    cardId: second.id,
+    expectedSourceId: hand.id,
+    expectedStadiumCardId: first.id,
+    expectedStadiumCardIds: [first.id],
+    placement: 'add',
+  })!;
+  expect(two.zones[stadium.id]!.cards.map((card) => card.id)).toEqual([
+    first.id,
+    second.id,
+  ]);
+  expect(
+    predictWireCommand(two, {
+      type: 'MoveCardToStadium',
+      cardId: third.id,
+      expectedSourceId: hand.id,
+      expectedStadiumCardId: first.id,
+      expectedStadiumCardIds: [first.id],
+    })
+  ).toBeNull();
+  const replaced = predictWireCommand(two, {
+    type: 'MoveCardToStadium',
+    cardId: third.id,
+    expectedSourceId: hand.id,
+    expectedStadiumCardId: first.id,
+    expectedStadiumCardIds: [first.id, second.id],
+  })!;
+  expect(replaced.zones[stadium.id]!.cards.map((card) => card.id)).toEqual([
+    third.id,
+  ]);
+  expect(cardIn(replaced, first.id)).toBe(discard.id);
+  expect(cardIn(replaced, second.id)).toBe(discard.id);
+});
+
+it('predicts bulk removal into each card owner’s pile', () => {
+  const foreign = { ...active.attachmentCards[0]!, ownerId: red };
+  const source: MatchViewState = {
+    ...view,
+    stacks: {
+      ...view.stacks,
+      [active.id]: { ...active, attachmentCards: [foreign] },
+    },
+  };
+  const departed = predictWireCommand(source, {
+    type: 'MoveCardFromStack',
+    cardId: active.evolutionCards.at(-1)!.id,
+    expectedStackId: active.id,
+    destinationZoneId: discard.id,
+  })!;
+  const area = departed.workAreas[blue]!.attachmentResolution!;
+  const resolved = predictWireCommand(departed, {
+    type: 'ResolveStagedCards',
+    expectedWorkAreaId: area.id,
+    destination: 'discard',
+  })!;
+  expect(resolved.workAreas[blue]!.attachmentResolution).toBeNull();
+  expect(cardIn(resolved, foreign.id)).toBe(`zone:${red}:discard`);
+  for (const card of area.evolutionCards)
+    expect(cardIn(resolved, card.id)).toBe(discard.id);
+});

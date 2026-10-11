@@ -8,6 +8,35 @@
  * down-screen whatever the card's quarter turn.
  */
 export const BOARD_SURFACE_CSS = `
+.ptcgsim-depth-mat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -15;
+  transform-origin: 0 0;
+  pointer-events: none;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 50% 42%, var(--color-felt-glow, #365b6544), transparent 65%), linear-gradient(145deg, var(--color-felt, #1c3e47), var(--color-felt-deep, #122a33));
+  box-shadow: inset 0 0 0 1px var(--color-felt-line-strong, #bde4de33), 0 5px 0 #07131b55, 0 14px 28px #0004;
+}
+.ptcgsim-card__depth {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ptcgsim-card__depth [data-depth-shadow] { fill: #071018; opacity: 0.32; }
+.ptcgsim-card__depth [data-depth-side] { fill: #526070; stroke: #152536; stroke-width: 0.45; }
+.ptcgsim-card__depth [data-depth-lines] { fill: none; stroke: #d0d7dd; stroke-width: 0.4; opacity: 0.5; }
+.ptcgsim-card[data-depth-card] .ptcgsim-card__face { box-shadow: var(--ptcgsim-ring, 0 0 #0000), 0 0 0 0.55px #e6eff54d; }
+.ptcgsim-card[data-depth-card]:not([data-in-hand]) > .ptcgsim-card__body,
+.ptcgsim-card[data-depth-card][data-held] > .ptcgsim-card__body {
+  scale: 1 !important;
+  translate: none !important;
+  transform: none !important;
+}
 .ptcgsim-board-surface .ptcgsim-card {
   background: transparent;
   -webkit-tap-highlight-color: transparent;
@@ -53,6 +82,10 @@ export const BOARD_SURFACE_CSS = `
     translate var(--ptcgsim-motion-hover-duration, 170ms)
       var(--ptcgsim-motion-hover-easing, cubic-bezier(0.2, 0.8, 0.2, 1)),
     transform 120ms ease-out;
+}
+.ptcgsim-card__body[data-swing] {
+  transform: perspective(900px) rotateX(var(--ptcgsim-drag-pitch, 0deg))
+    rotateY(var(--ptcgsim-drag-yaw, 0deg));
 }
 /* ...and catches the light where the pointer is. */
 .ptcgsim-card__face::after {
@@ -122,6 +155,23 @@ export const BOARD_SURFACE_CSS = `
 }
 .ptcgsim-card-ghost .ptcgsim-card__face {
   --ptcgsim-lift: 3;
+}
+.ptcgsim-damage-change {
+  position: absolute;
+  z-index: 9500;
+  padding: 3px 7px;
+  border: 1px solid var(--color-border-strong, #ffffff30);
+  border-radius: 8px;
+  background: var(--color-surface-2, #20232f);
+  box-shadow: var(--shadow-2, 0 3px 8px #0005);
+  color: var(--color-gold, #eed59c);
+  font: 700 15px/1.2 var(--font-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ptcgsim-damage-change[data-direction='heal'] {
+  color: var(--color-mint, #9fd6bb);
 }
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__body,
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__face {

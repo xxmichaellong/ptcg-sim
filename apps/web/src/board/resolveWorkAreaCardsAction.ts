@@ -1,6 +1,7 @@
 import type {
   MatchViewState,
   WorkAreaCardsDestination,
+  PlayerId,
 } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
@@ -11,12 +12,13 @@ export type WorkAreaCardsActionResolution =
 export const resolveWorkAreaCardsAction = (
   view: MatchViewState,
   source: 'inspection' | 'staged',
-  destination: WorkAreaCardsDestination
+  destination: WorkAreaCardsDestination,
+  targetPlayerId?: PlayerId
 ): WorkAreaCardsActionResolution => {
   if (view.viewer.kind !== 'player') {
     return { ok: false, reason: 'not_player' };
   }
-  const areas = view.workAreas[view.viewer.playerId];
+  const areas = view.workAreas[targetPlayerId ?? view.viewer.playerId];
   const workArea =
     source === 'inspection' ? areas?.inspection : areas?.attachmentResolution;
   if (!workArea) return { ok: false, reason: 'no_work_area' };
@@ -27,6 +29,7 @@ export const resolveWorkAreaCardsAction = (
         source === 'inspection'
           ? 'ResolveInspectionCards'
           : 'ResolveStagedCards',
+      ...(targetPlayerId ? { targetPlayerId } : {}),
       expectedWorkAreaId: workArea.id,
       destination,
     },

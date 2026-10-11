@@ -4,7 +4,12 @@ import type {
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import type { Deck, DeckCard } from '@ptcgsim/deck-core';
-import type { MatchViewState } from '@ptcgsim/game-core';
+import {
+  isCardPresentation,
+  resolveCardPresentation,
+  type CardPresentation,
+  type MatchViewState,
+} from '@ptcgsim/game-core';
 import {
   MAX_DECK_CARDS,
   MAX_DECK_ENTRIES,
@@ -90,6 +95,7 @@ interface DefinitionCandidate {
   readonly category: CardCategory;
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
+  readonly presentation?: CardPresentation;
   count: number;
 }
 
@@ -152,6 +158,16 @@ export const deckToLoadDeckEntries = async (
         fail('url_too_long');
       }
       const category = canonicalCategory(card.supertype);
+      if (
+        card.presentation !== undefined &&
+        !isCardPresentation(card.presentation)
+      )
+        fail('invalid_deck');
+      const presentation = resolveCardPresentation({
+        name,
+        imageUrl,
+        presentation: card.presentation,
+      });
       const imageUrlSmall =
         typeof small === 'string' && small !== '' ? small : undefined;
       const identity = JSON.stringify([
@@ -159,6 +175,7 @@ export const deckToLoadDeckEntries = async (
         category,
         imageUrl,
         imageUrlSmall ?? null,
+        ...(presentation ? [presentation] : []),
       ]);
       const existing = candidates.get(identity);
       if (existing) existing.count += count;
@@ -168,6 +185,7 @@ export const deckToLoadDeckEntries = async (
           name,
           category,
           imageUrl,
+          ...(presentation ? { presentation } : {}),
           ...(imageUrlSmall === undefined ? {} : { imageUrlSmall }),
           count,
         });
@@ -198,6 +216,9 @@ export const deckToLoadDeckEntries = async (
         name: candidate.name,
         category: candidate.category,
         imageUrl: candidate.imageUrl,
+        ...(candidate.presentation
+          ? { presentation: candidate.presentation }
+          : {}),
         ...(candidate.imageUrlSmall === undefined
           ? {}
           : { imageUrlSmall: candidate.imageUrlSmall }),

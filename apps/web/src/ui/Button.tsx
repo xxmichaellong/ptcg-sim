@@ -8,7 +8,7 @@ export interface UiButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly variant?: UiButtonVariant;
 }
 
-/** The one button shape every overlay uses: 34 px tall, pressable. */
+/** Shared overlay button; geometry and press feedback come from the tokens. */
 export const UiButton = forwardRef<HTMLButtonElement, UiButtonProps>(
   function UiButton(
     { variant = 'secondary', className, type = 'button', ...props },

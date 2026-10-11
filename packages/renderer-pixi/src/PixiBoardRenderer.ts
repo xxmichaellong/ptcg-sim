@@ -2,6 +2,19 @@ import 'pixi.js/accessibility';
 
 import {
   BoardDragController,
+  BoardDepthProjection,
+  TablePoseMotion,
+  tablePoseQuad,
+  tablePoseLocalPoint,
+  tablePileHeight,
+  sameTablePose,
+  planBoardMotion,
+  type TableCardPose,
+  type CardFlight,
+  type MotionPlan,
+  type BoardSceneMotion,
+  compositionHold,
+  presentHeldMarker,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   assertViewport,
@@ -29,6 +42,8 @@ import {
   Graphics,
   Rectangle,
   Sprite,
+  PerspectiveMesh,
+  Polygon,
   Text,
   Texture,
 } from 'pixi.js';
@@ -52,9 +67,11 @@ const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
 const PIXI_TEXTURE_LEASES = new TextureAssetLeaseBroker(PIXI_TEXTURE_ASSETS);
 
 interface CardView {
-  readonly sprite: Sprite;
+  readonly sprite: Sprite | PerspectiveMesh;
   readonly outline: Graphics;
+  readonly edge?: Graphics;
   descriptor: CardSceneNode;
+  paintedPose?: TableCardPose;
 }
 
 interface MarkerView {
@@ -96,6 +113,29 @@ export class PixiBoardRenderer implements BoardRenderer {
   private scene: BoardScene | null = null;
   private presentation: BoardPresentation | null = null;
   private preferences: BoardPreferences = DEFAULT_BOARD_PREFERENCES;
+  private depth: BoardDepthProjection | null = null;
+  private readonly depthMotion = new TablePoseMotion();
+  private depthFrame: number | null = null;
+  private depthFlights = new Map<string, CardFlight>();
+  private previousDepth: BoardDepthProjection | null = null;
+  private previousPainted = new Map<string, TableCardPose>();
+  private readonly depthShuffles = new Map<
+    string,
+    {
+      view: CardView;
+      base: TableCardPose;
+      start: number;
+      duration: number;
+      side: number;
+      temporary: boolean;
+      zoneId: string;
+    }
+  >();
+  private effectSerial = 0;
+  private pileUnderlay: CardView | null = null;
+  private animateDepth = false;
+  private grabbed: CardSceneNode | null = null;
+  private grabbedPointerId: number | null = null;
   private generation = 0;
   private destroyed = false;
   private mounted = false;
@@ -130,6 +170,8 @@ export class PixiBoardRenderer implements BoardRenderer {
       throw new Error('Board renderer is already mounted');
     assertViewport(scene.viewport);
     this.mounted = true;
+    window.addEventListener('blur', this.suspend);
+    document.addEventListener('visibilitychange', this.handleVisibility);
     this.host = host;
     this.scene = scene;
     this.presentation = presentation;
@@ -154,7 +196,8 @@ export class PixiBoardRenderer implements BoardRenderer {
   installScene(
     scene: BoardScene,
     events: readonly BoardPresentationEvent[],
-    mode: BoardSceneInstallMode = 'advance'
+    mode: BoardSceneInstallMode = 'advance',
+    motion?: BoardSceneMotion
   ): void {
     this.requireMounted();
     assertViewport(scene.viewport);
@@ -167,6 +210,23 @@ export class PixiBoardRenderer implements BoardRenderer {
         throw new Error('Presentation event revision does not match the scene');
       }
     }
+    this.previousDepth = this.depth;
+    this.previousPainted = new Map(
+      [...this.cardViews].flatMap(([key, view]) =>
+        view.paintedPose ? [[key, view.paintedPose] as const] : []
+      )
+    );
+    this.animateDepth = Boolean(
+      current && motion && !['replace', 'layout', 'flip'].includes(motion.cause)
+    );
+    const plan =
+      current && this.animateDepth && motion
+        ? planBoardMotion(current, scene, motion.cause)
+        : null;
+    this.depthFlights = new Map(
+      plan?.flights.map((flight) => [flight.renderKey, flight]) ?? []
+    );
+    if (!this.animateDepth) this.stopDepthMotion();
     this.scene = scene;
     this.dragController.reconcile(scene);
     if (this.recoveryPendingForScene && !this.recoveryTask) {
@@ -176,6 +236,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
     if (this.app && this.layers) {
       this.syncScene();
+      if (plan) this.startDepthShuffles(plan);
       this.renderOnce();
     }
   }
@@ -187,11 +248,15 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.canvas.dataset.dragging = presentation.drag ? 'true' : 'false';
       this.app.canvas.dataset.dragTarget = presentation.drag?.targetId ?? '';
       for (const view of this.cardViews.values()) this.applyCardView(view);
+      for (const view of this.markerViews.values()) this.positionMarker(view);
+      this.syncPileUnderlay();
       this.renderOnce();
     }
   }
 
   cancelInteraction(): void {
+    this.grabbed = null;
+    this.grabbedPointerId = null;
     const pointerId = this.dragController.cancelInteraction();
     if (pointerId !== null) {
       try {
@@ -230,7 +295,12 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   setPreferences(preferences: BoardPreferences): void {
     this.requireMounted();
+    const depthChanged =
+      JSON.stringify(this.preferences.depth) !==
+      JSON.stringify(preferences.depth);
     this.preferences = preferences;
+    this.stopDepthMotion();
+    this.animateDepth = false;
     if (this.app) {
       this.app.canvas.dataset.reducedMotion = String(preferences.reducedMotion);
       this.app.canvas.dataset.highContrast = String(preferences.highContrast);
@@ -241,6 +311,8 @@ export class PixiBoardRenderer implements BoardRenderer {
       for (const zone of this.layers?.playmat.children ?? []) {
         zone.alpha = preferences.showZoneOutlines ? 1 : 0;
       }
+      if (this.scene && this.layers && (depthChanged || this.depth?.enabled))
+        this.syncScene();
       this.renderOnce();
     }
   }
@@ -288,6 +360,8 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.generation += 1;
     this.recoveryPendingForScene = false;
     this.detachContextLossListener();
+    window.removeEventListener('blur', this.suspend);
+    document.removeEventListener('visibilitychange', this.handleVisibility);
     this.dragController.destroy();
     this.destroyApplication();
     this.textures.destroy();
@@ -366,24 +440,45 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private syncScene(): void {
+    this.clearPileUnderlay();
     const scene = this.requireScene();
     const layers = this.layers;
     if (!layers) return;
+    this.depth = new BoardDepthProjection(scene, this.preferences);
+    if (this.app) this.app.canvas.dataset.tableView = this.depth.settings.mode;
 
     for (const child of layers.playmat.removeChildren())
       child.destroy({ children: true });
     for (const zone of scene.zones) {
       const graphic = new Graphics({ label: zone.id });
-      graphic
-        .roundRect(
-          zone.bounds.x,
-          zone.bounds.y,
-          zone.bounds.width,
-          zone.bounds.height,
-          15
-        )
-        .fill({ color: 0xffffff, alpha: 0.1 })
-        .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
+      if (
+        this.depth.enabled &&
+        zone.kind !== 'hand' &&
+        zone.kind !== 'inspection' &&
+        zone.kind !== 'attachmentResolution'
+      ) {
+        const quad = tablePoseQuad(this.depth.camera, {
+          bounds: zone.bounds,
+          turns: 0,
+          elevation: 0,
+          thickness: 0,
+          plane: 1,
+        });
+        graphic
+          .poly(quad.flatMap((point) => [point.x, point.y]))
+          .fill({ color: 0xffffff, alpha: 0.035 })
+          .stroke({ color: 0xa7c7c6, alpha: 0.25, width: 1.5 });
+      } else
+        graphic
+          .roundRect(
+            zone.bounds.x,
+            zone.bounds.y,
+            zone.bounds.width,
+            zone.bounds.height,
+            15
+          )
+          .fill({ color: 0xffffff, alpha: 0.1 })
+          .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
       graphic.zIndex = zone.zIndex;
       graphic.alpha = this.preferences.showZoneOutlines ? 1 : 0;
       graphic.eventMode = zone.interactive ? 'static' : 'none';
@@ -410,22 +505,40 @@ export class PixiBoardRenderer implements BoardRenderer {
       if (nextKeys.has(renderKey)) continue;
       this.cardViews.delete(renderKey);
       this.textures.release(renderKey);
+      this.removeDepthShuffle(renderKey);
       view.sprite.removeFromParent();
       view.outline.removeFromParent();
       view.sprite.destroy({ texture: false, textureSource: false });
       view.outline.destroy();
+      view.edge?.destroy();
+      this.depthMotion.delete(renderKey);
     }
     for (const descriptor of renderedCards) {
       const renderKey = descriptor.renderKey;
       let view = this.cardViews.get(renderKey);
+      let retainedTexture: Texture | undefined;
+      if (
+        view &&
+        view.sprite instanceof PerspectiveMesh !== this.depth.enabled
+      ) {
+        retainedTexture = view.sprite.texture;
+        view.sprite.destroy({ texture: false, textureSource: false });
+        view.outline.destroy();
+        view.edge?.destroy();
+        this.cardViews.delete(renderKey);
+        view = undefined;
+      }
       if (!view) {
         const outline = new Graphics({ label: `target:${renderKey}` });
         outline.eventMode = 'none';
-        const sprite = new Sprite({
-          texture: this.textures.placeholder,
+        const options = {
+          texture: retainedTexture ?? this.textures.placeholder,
           label: renderKey,
-        });
-        sprite.anchor.set(0.5);
+        };
+        const sprite = this.depth.enabled
+          ? new PerspectiveMesh({ ...options, verticesX: 4, verticesY: 4 })
+          : new Sprite(options);
+        if (sprite instanceof Sprite) sprite.anchor.set(0.5);
         sprite.eventMode = 'static';
         sprite.cursor = 'grab';
         sprite.accessible = true;
@@ -464,9 +577,11 @@ export class PixiBoardRenderer implements BoardRenderer {
             this.dragController.pointerDown(
               this.requireScene(),
               view!.descriptor.id,
-              this.pointerInput(event)
+              this.pointerInput(event, view!.descriptor)
             )
           ) {
+            this.grabbed = view!.descriptor;
+            this.grabbedPointerId = event.pointerId;
             try {
               this.app?.canvas.setPointerCapture(event.pointerId);
             } catch {
@@ -474,9 +589,13 @@ export class PixiBoardRenderer implements BoardRenderer {
             }
           }
         });
-        view = { sprite, outline, descriptor };
+        const edge = this.depth.enabled
+          ? new Graphics({ label: `depth:${renderKey}`, eventMode: 'none' })
+          : undefined;
+        view = { sprite, outline, descriptor, ...(edge ? { edge } : {}) };
         this.cardViews.set(renderKey, view);
         layers.cards.addChild(sprite);
+        if (edge) layers.cards.addChild(edge);
         layers.interaction.addChild(outline);
       } else {
         view.descriptor = descriptor;
@@ -553,6 +672,7 @@ export class PixiBoardRenderer implements BoardRenderer {
       }
       this.applyZoneCountView(view);
     }
+    this.syncPileUnderlay();
     if (this.app) {
       this.app.canvas.dataset.cardViews = String(this.cardViews.size);
       this.app.canvas.dataset.zoneViews = String(scene.zones.length);
@@ -568,16 +688,103 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   private applyCardView(view: CardView): void {
     const { sprite, outline, descriptor } = view;
-    const drag = this.presentation?.drag;
-    const dragging = drag?.cardId === descriptor.id;
+    const drag = this.scene
+      ? compositionHold(this.scene, descriptor, this.presentation?.drag)
+      : null;
+    const dragging = drag !== null;
     // A just-dropped card is held on its drop point, like a drag, until the
     // authoritative move lands.
     const settle = dragging
       ? undefined
-      : this.presentation?.settling.find(
-          (entry) => entry.cardId === descriptor.id
-        );
+      : this.presentation?.settling
+          .map((entry) =>
+            this.scene ? compositionHold(this.scene, descriptor, entry) : null
+          )
+          .find(Boolean);
     const held = dragging ? drag : settle;
+    if (this.depth?.enabled && sprite instanceof PerspectiveMesh) {
+      const target = this.depth.pose(
+        descriptor,
+        this.presentation ?? undefined
+      );
+      const shuffle = this.depthShuffles.get(descriptor.renderKey!);
+      if (shuffle && (held || !sameTablePose(shuffle.base, target))) {
+        // Preserve the visible grip when a move interrupts decorative motion.
+        const painted = view.paintedPose ?? shuffle.base;
+        this.removeDepthShuffle(descriptor.renderKey!);
+        this.depthMotion.set(descriptor.renderKey!, painted, performance.now());
+      }
+      const flight = descriptor.renderKey
+        ? this.depthFlights.get(descriptor.renderKey)
+        : undefined;
+      const fromCard = flight
+        ? this.previousDepth?.scene.cards.find(
+            (card) =>
+              card.renderKey !== null &&
+              card.bounds.x === flight.from.x &&
+              card.bounds.y === flight.from.y
+          )
+        : undefined;
+      const source = fromCard
+        ? (this.previousPainted.get(fromCard.renderKey!) ??
+          this.previousDepth?.pose(fromCard))
+        : undefined;
+      const from = source
+        ? {
+            ...source,
+            thickness: Math.min(
+              source.thickness,
+              source.bounds.width * 0.0055 * this.depth.settings.strength
+            ),
+          }
+        : undefined;
+      const oldCard = this.previousDepth?.scene.cards.find(
+        (card) => card.renderKey === descriptor.renderKey
+      );
+      const oldPose = this.previousPainted.get(descriptor.renderKey!);
+      const replacedHeldPile =
+        descriptor.primaryAction &&
+        oldCard &&
+        oldCard.id !== descriptor.id &&
+        oldPose &&
+        (oldPose.bounds.x !== oldCard.bounds.x ||
+          oldPose.bounds.y !== oldCard.bounds.y);
+      const duration =
+        !replacedHeldPile &&
+        !held &&
+        this.animateDepth &&
+        !this.preferences.reducedMotion &&
+        this.preferences.animationSpeed !== 0
+          ? 320 * (this.preferences.animationSpeed ?? 1)
+          : 0;
+      this.depthMotion.set(
+        descriptor.renderKey!,
+        target,
+        performance.now(),
+        this.depth.settings.animate || flight ? duration : 0,
+        from
+      );
+      this.paintDepthCard(
+        view,
+        this.depthMotion.poses.get(descriptor.renderKey!) ?? target
+      );
+      sprite.zIndex = held
+        ? 10_000 + (descriptor.composition ? descriptor.zIndex : 0)
+        : descriptor.zIndex;
+      if (view.edge) view.edge.zIndex = sprite.zIndex - 0.1;
+      sprite.eventMode = descriptor.interactive ? 'static' : 'none';
+      sprite.cursor = dragging ? 'grabbing' : 'grab';
+      sprite.accessible = descriptor.interactive;
+      sprite.accessibleTitle =
+        descriptor.concealed || descriptor.tableImageUrl
+          ? 'Face-down card'
+          : descriptor.label;
+      sprite.accessibleHint = descriptor.primaryAction
+        ? 'Open zone'
+        : 'Select card';
+      this.scheduleDepth();
+      return;
+    }
     sprite.position.set(
       held ? held.x : descriptor.bounds.x + descriptor.bounds.width / 2,
       held ? held.y : descriptor.bounds.y + descriptor.bounds.height / 2
@@ -585,7 +792,11 @@ export class PixiBoardRenderer implements BoardRenderer {
     sprite.width = descriptor.bounds.width;
     sprite.height = descriptor.bounds.height;
     sprite.rotation = descriptor.rotationQuarterTurns * (Math.PI / 2);
-    sprite.zIndex = dragging ? 10_000 : settle ? 9_000 : descriptor.zIndex;
+    sprite.zIndex = dragging
+      ? 10_000 + (descriptor.composition ? descriptor.zIndex : 0)
+      : settle
+        ? 9_000 + (descriptor.composition ? descriptor.zIndex : 0)
+        : descriptor.zIndex;
     // Sprite hit testing already inverse-transforms through scale and rotation.
     // A CSS-pixel Rectangle here would be scaled a second time and shrink input.
     sprite.hitArea = null;
@@ -618,6 +829,64 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.presentation?.targetableCardIds.includes(descriptor.id) === true;
   }
 
+  private syncPileUnderlay(): void {
+    if (!this.depth?.enabled || !this.layers || !this.presentation?.drag) {
+      this.clearPileUnderlay();
+      return;
+    }
+    const source = [...this.cardViews.values()].find(
+      (view) => view.descriptor.id === this.presentation!.drag!.cardId
+    );
+    if (!source) {
+      this.clearPileUnderlay();
+      return;
+    }
+    const card = source.descriptor;
+    const count = this.depth.pileCounts.get(card.id) ?? 0;
+    if (count <= 1) {
+      this.clearPileUnderlay();
+      return;
+    }
+    const base = this.depth.pose(card);
+    const height = tablePileHeight(
+      count - 1,
+      base.bounds.width,
+      this.depth.settings.strength
+    );
+    const pose = { ...base, elevation: height, thickness: height };
+    if (
+      this.pileUnderlay?.descriptor.id === card.id &&
+      this.pileUnderlay.paintedPose &&
+      sameTablePose(this.pileUnderlay.paintedPose, pose)
+    )
+      return;
+    this.clearPileUnderlay();
+    const sprite = new PerspectiveMesh({
+      texture:
+        card.concealed || card.tableImageUrl
+          ? source.sprite.texture
+          : Texture.WHITE,
+      verticesX: 4,
+      verticesY: 4,
+      eventMode: 'none',
+    });
+    if (!card.concealed && !card.tableImageUrl) sprite.tint = 0x61717f;
+    sprite.zIndex = card.zIndex;
+    const edge = new Graphics({ eventMode: 'none' });
+    edge.zIndex = sprite.zIndex - 0.1;
+    const outline = new Graphics({ eventMode: 'none' });
+    this.pileUnderlay = { sprite, edge, outline, descriptor: card };
+    this.layers.cards.addChild(edge, sprite);
+    this.paintDepthCard(this.pileUnderlay, pose);
+  }
+
+  private clearPileUnderlay(): void {
+    this.pileUnderlay?.sprite.destroy({ texture: false, textureSource: false });
+    this.pileUnderlay?.edge?.destroy();
+    this.pileUnderlay?.outline.destroy();
+    this.pileUnderlay = null;
+  }
+
   private readonly handleStagePointerTap = (
     event: FederatedPointerEvent
   ): void => {
@@ -645,7 +914,10 @@ export class PixiBoardRenderer implements BoardRenderer {
       descriptor.horizontalAlign === 'left' ? 0 : 1,
       descriptor.verticalAlign === 'top' ? 0 : 1
     );
-    text.position.set(descriptor.anchor.x, descriptor.anchor.y);
+    const anchor = this.depth?.enabled
+      ? this.depth.point(descriptor.anchor, 0, descriptor.kind === 'hand')
+      : descriptor.anchor;
+    text.position.set(anchor.x, anchor.y);
     text.zIndex = descriptor.zIndex;
   }
 
@@ -700,19 +972,291 @@ export class PixiBoardRenderer implements BoardRenderer {
       descriptor.bounds.width / 2,
       descriptor.bounds.height / 2
     );
-    root.position.set(descriptor.bounds.x, descriptor.bounds.y);
-    root.zIndex = descriptor.zIndex;
+    this.positionMarker(view);
     root.eventMode = 'none';
+  }
+
+  private positionMarker(view: MarkerView): void {
+    const descriptor = this.scene
+      ? presentHeldMarker(this.scene, view.descriptor, this.presentation)
+      : view.descriptor;
+    const parent = this.scene?.cards.find(
+      (card) => card.id === descriptor.parentCardId
+    );
+    const pose = parent?.renderKey
+      ? this.depthMotion.poses.get(parent.renderKey)
+      : undefined;
+    const painted = this.depth?.enabled
+      ? this.depth.marker(view.descriptor, pose)
+      : descriptor;
+    view.root.position.set(painted.bounds.x, painted.bounds.y);
+    view.root.zIndex = descriptor.zIndex;
   }
 
   private renderOnce(): void {
     if (this.destroyed || !this.app) return;
+    this.app.canvas.dataset.motion =
+      this.depthMotion.active || this.depthShuffles.size > 0
+        ? 'active'
+        : 'idle';
     try {
       this.app.render();
       this.renderCommits += 1;
     } catch (error) {
       this.adapters.reportError(error);
     }
+  }
+
+  private paintDepthCard(view: CardView, pose: TableCardPose): void {
+    if (!this.depth || !(view.sprite instanceof PerspectiveMesh)) return;
+    const { sprite, edge, outline, descriptor } = view;
+    view.paintedPose = pose;
+    const quad = tablePoseQuad(this.depth.camera, pose);
+    sprite.position.set(0, 0);
+    sprite.scale.set(1);
+    sprite.rotation = 0;
+    sprite.setCorners(
+      quad[0]!.x,
+      quad[0]!.y,
+      quad[1]!.x,
+      quad[1]!.y,
+      quad[2]!.x,
+      quad[2]!.y,
+      quad[3]!.x,
+      quad[3]!.y
+    );
+    const vertices = quad.flatMap((point) => [point.x, point.y]);
+    sprite.hitArea = new Polygon(vertices);
+    outline.clear();
+    outline.position.set(0, 0);
+    outline.rotation = 0;
+    const selected = this.presentation?.selectedCardId === descriptor.id;
+    const targetable = this.presentation?.targetableCardIds.includes(
+      descriptor.id
+    );
+    outline.poly(vertices).stroke({
+      color: targetable ? 0x8fd799 : 0x748fe8,
+      width: 3,
+      alpha: 0.9,
+    });
+    outline.visible = Boolean(selected || targetable);
+    outline.zIndex = sprite.zIndex;
+    if (!edge) return;
+    edge.clear();
+    if (pose.plane === 0 || pose.thickness <= 0) return;
+    const bottom = tablePoseQuad(this.depth.camera, {
+      ...pose,
+      elevation: pose.elevation - pose.thickness,
+    });
+    const shadow = tablePoseQuad(this.depth.camera, {
+      ...pose,
+      elevation: 0,
+      bounds: {
+        ...pose.bounds,
+        x: pose.bounds.x + pose.elevation * 0.05,
+        y: pose.bounds.y + 1.4 + pose.elevation * 0.09,
+      },
+    });
+    edge
+      .poly(shadow.flatMap((point) => [point.x, point.y]))
+      .fill({ color: 0x071018, alpha: 0.3 });
+    for (let index = 0; index < 4; index++)
+      edge
+        .poly(
+          [
+            quad[index]!,
+            bottom[index]!,
+            bottom[(index + 1) % 4]!,
+            quad[(index + 1) % 4]!,
+          ].flatMap((point) => [point.x, point.y])
+        )
+        .fill({ color: index % 2 ? 0x405163 : 0x61717f })
+        .stroke({ color: 0x142232, width: 0.4 });
+    const bands = Math.min(
+      8,
+      (this.depth.pileCounts.get(descriptor.id) ?? 1) - 1
+    );
+    for (let index = 1; index <= bands; index++)
+      edge
+        .poly(
+          quad.flatMap((point, i) => [
+            point.x + ((bottom[i]!.x - point.x) * index) / (bands + 1),
+            point.y + ((bottom[i]!.y - point.y) * index) / (bands + 1),
+          ])
+        )
+        .stroke({ color: 0xc5cfd5, alpha: 0.45, width: 0.45 });
+  }
+
+  private scheduleDepth(): void {
+    if (
+      this.depthFrame !== null ||
+      (!this.depthMotion.active && this.depthShuffles.size === 0) ||
+      typeof requestAnimationFrame !== 'function'
+    )
+      return;
+    this.depthFrame = requestAnimationFrame((at) => {
+      this.depthFrame = null;
+      if (this.destroyed || !this.depth?.enabled) return;
+      for (const [key, pose] of this.depthMotion.sampleAll(at)) {
+        const view = this.cardViews.get(key);
+        if (view) this.paintDepthCard(view, pose);
+      }
+      for (const [key, shuffle] of this.depthShuffles) {
+        const t = Math.max(
+          0,
+          Math.min(1, (at - shuffle.start) / shuffle.duration)
+        );
+        if (t === 1) {
+          this.removeDepthShuffle(key);
+          continue;
+        }
+        const fan = Math.sin(t * Math.PI) ** 2;
+        const pose = {
+          ...shuffle.base,
+          bounds: {
+            ...shuffle.base.bounds,
+            x:
+              shuffle.base.bounds.x +
+              shuffle.side * shuffle.base.bounds.width * 0.48 * fan,
+            y: shuffle.base.bounds.y - 3 * fan,
+          },
+          elevation: shuffle.base.elevation + 9 * fan,
+          turns: shuffle.base.turns + shuffle.side * 0.055 * fan,
+        };
+        this.paintDepthCard(shuffle.view, pose);
+      }
+      for (const view of this.markerViews.values()) this.positionMarker(view);
+      this.renderOnce();
+      this.scheduleDepth();
+    });
+  }
+
+  private startDepthShuffles(plan: MotionPlan): void {
+    if (
+      !this.depth?.enabled ||
+      !this.layers ||
+      this.preferences.reducedMotion ||
+      this.preferences.animationSpeed === 0
+    )
+      return;
+    const scale = this.preferences.animationSpeed ?? 1;
+    for (const shuffle of plan.shuffles) {
+      for (const [key, old] of this.depthShuffles)
+        if (old.zoneId === shuffle.zoneId) this.removeDepthShuffle(key);
+      const cover = [...this.cardViews.values()].find(
+        (view) => view.descriptor.parentId === shuffle.zoneId
+      );
+      if (!cover) continue;
+      const parts = shuffle.spread ?? Array.from({ length: 4 }, () => null);
+      for (const [index, part] of parts.entries()) {
+        // Bound transient geometry even after rapid repeated sandbox commands.
+        if (this.depthShuffles.size >= 32) break;
+        const original = part ? this.cardViews.get(part.renderKey) : cover;
+        if (
+          !original ||
+          compositionHold(
+            this.scene!,
+            original.descriptor,
+            this.presentation?.drag
+          )
+        )
+          continue;
+        const base = this.depth.pose(original.descriptor);
+        const key = part?.renderKey ?? `depth-shuffle:${this.effectSerial++}`;
+        let view = original;
+        if (!part) {
+          const sprite = new PerspectiveMesh({
+            texture: original.sprite.texture,
+            verticesX: 4,
+            verticesY: 4,
+            eventMode: 'none',
+          });
+          sprite.zIndex = 8900 + index;
+          const edge = new Graphics({ eventMode: 'none' });
+          edge.zIndex = sprite.zIndex - 0.1;
+          const outline = new Graphics({ eventMode: 'none' });
+          view = {
+            sprite,
+            edge,
+            outline,
+            descriptor: {
+              ...original.descriptor,
+              id: key as CardSceneNode['id'],
+              renderKey: key,
+            },
+          };
+          this.layers.cards.addChild(edge, sprite);
+          this.textures.bind(
+            key,
+            shuffle.imageUrl,
+            (texture) => {
+              const effect = this.depthShuffles.get(key);
+              if (effect) {
+                effect.view.sprite.texture = texture;
+                this.scheduleRender();
+              }
+            },
+            this.adapters.reportError
+          );
+        }
+        this.depthShuffles.set(key, {
+          view,
+          base: {
+            ...base,
+            thickness: Math.min(
+              base.thickness,
+              base.bounds.width * 0.0055 * this.depth.settings.strength
+            ),
+          },
+          start:
+            performance.now() + (shuffle.delay * 1000 + index * 22) * scale,
+          duration: 660 * scale,
+          side: index % 2 ? 1 : -1,
+          temporary: !part,
+          zoneId: shuffle.zoneId,
+        });
+        this.paintDepthCard(view, base);
+      }
+    }
+    this.scheduleDepth();
+  }
+
+  private removeDepthShuffle(key: string): void {
+    const effect = this.depthShuffles.get(key);
+    if (!effect) return;
+    this.depthShuffles.delete(key);
+    if (effect.temporary) {
+      this.textures.release(key);
+      effect.view.sprite.destroy({ texture: false, textureSource: false });
+      effect.view.edge?.destroy();
+      effect.view.outline.destroy();
+    } else {
+      const pose = this.depthMotion.poses.get(key) ?? effect.base;
+      this.paintDepthCard(effect.view, pose);
+    }
+  }
+
+  private readonly handleVisibility = () => this.suspend();
+  private readonly suspend = () => {
+    this.dragController.cancel();
+    this.cancelInteraction();
+    this.depthMotion.finish();
+    for (const [key, pose] of this.depthMotion.poses) {
+      const view = this.cardViews.get(key);
+      if (view) this.paintDepthCard(view, pose);
+    }
+    this.stopDepthMotion();
+    this.animateDepth = false;
+    this.renderOnce();
+  };
+
+  private stopDepthMotion(): void {
+    if (this.depthFrame !== null) cancelAnimationFrame(this.depthFrame);
+    this.depthFrame = null;
+    for (const key of this.depthShuffles.keys()) this.removeDepthShuffle(key);
+    this.depthMotion.clear();
+    this.depthFlights.clear();
+    this.previousPainted.clear();
   }
 
   private scheduleRender(): void {
@@ -732,7 +1276,56 @@ export class PixiBoardRenderer implements BoardRenderer {
     return event.detail === 2;
   }
 
-  private pointerInput(event: FederatedPointerEvent) {
+  private pointerInput(event: FederatedPointerEvent, starting?: CardSceneNode) {
+    const card = starting ?? this.grabbed;
+    if (card && this.depth?.enabled) {
+      const point = { x: event.global.x, y: event.global.y };
+      const base = this.depth.pose(card);
+      let grabPoint;
+      if (starting) {
+        const pose = card.renderKey
+          ? (this.cardViews.get(card.renderKey)?.paintedPose ?? base)
+          : base;
+        const local = tablePoseLocalPoint(this.depth.camera, pose, point) ?? {
+          x: pose.bounds.width / 2,
+          y: pose.bounds.height / 2,
+        };
+        const x = (local.x / pose.bounds.width - 0.5) * card.bounds.width;
+        const y = (local.y / pose.bounds.height - 0.5) * card.bounds.height;
+        const angle = (card.rotationQuarterTurns * Math.PI) / 2;
+        grabPoint = {
+          x:
+            card.bounds.x +
+            card.bounds.width / 2 +
+            x * Math.cos(angle) -
+            y * Math.sin(angle),
+          y:
+            card.bounds.y +
+            card.bounds.height / 2 +
+            x * Math.sin(angle) +
+            y * Math.cos(angle),
+        };
+      } else
+        grabPoint = this.depth.cardPoint(card, point, {
+          ...base,
+          plane: 1,
+          elevation: base.elevation + this.depth.lift,
+        });
+      const hit = this.depth.drop(point, card.id, (target) =>
+        target.renderKey
+          ? this.cardViews.get(target.renderKey)?.paintedPose
+          : undefined
+      );
+      return {
+        pointerId: event.pointerId,
+        button: event.button,
+        x: grabPoint.x,
+        y: grabPoint.y,
+        screenPoint: point,
+        dropPoint: hit.point,
+        targetId: hit.targetId,
+      };
+    }
     return {
       pointerId: event.pointerId,
       x: event.global.x,
@@ -756,12 +1349,20 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.pointerInput(event)
     );
     this.releasePointerCapture(event.pointerId);
+    if (event.pointerId === this.grabbedPointerId) {
+      this.grabbed = null;
+      this.grabbedPointerId = null;
+    }
   };
 
   private readonly handlePointerCancel = (
     event: FederatedPointerEvent
   ): void => {
     this.dragController.cancel(event.pointerId);
+    if (event.pointerId === this.grabbedPointerId) {
+      this.grabbed = null;
+      this.grabbedPointerId = null;
+    }
     this.releasePointerCapture(event.pointerId);
   };
 
@@ -890,10 +1491,13 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private clearRenderedScene(): void {
+    this.clearPileUnderlay();
+    this.stopDepthMotion();
     for (const [id, view] of this.cardViews) {
       this.textures.release(id);
       view.sprite.removeFromParent();
       view.sprite.destroy({ texture: false, textureSource: false });
+      view.edge?.destroy();
     }
     this.cardViews.clear();
     for (const view of this.markerViews.values()) {

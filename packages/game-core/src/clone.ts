@@ -13,7 +13,19 @@ export const cloneMatchState = (state: MatchState): MatchState => ({
   definitions: Object.fromEntries(
     Object.entries(state.definitions).map(([id, definition]) => [
       id,
-      { ...definition },
+      {
+        ...definition,
+        ...(definition.presentation
+          ? {
+              presentation: {
+                ...definition.presentation,
+                ...(definition.presentation.join
+                  ? { join: { ...definition.presentation.join } }
+                  : {}),
+              },
+            }
+          : {}),
+      },
     ])
   ),
   cards: Object.fromEntries(

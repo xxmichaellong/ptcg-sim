@@ -364,6 +364,51 @@ describe('planBoardMotion', () => {
     );
   });
 
+  it('gathers shuffled face-down prizes without pairing concealed identities', () => {
+    const id = zoneId(blue, 'prizes');
+    const prizes = cardsOf(base, id);
+    const before = sceneOf(
+      withZones(base, {
+        [id]: prizes.map((_, index) =>
+          freshConcealed(blue, `before-prize-${index}`)
+        ),
+      })
+    );
+    const next = withZones(base, {
+      [id]: prizes.map((_, index) =>
+        freshConcealed(blue, `after-prize-${index}`)
+      ),
+    });
+    const after = sceneOf(next);
+    const plan = planBoardMotion(before, after, 'advance');
+    expect(plan.shuffles).toHaveLength(1);
+    expect(plan.shuffles[0]?.spread).toEqual(
+      after.cards
+        .filter((card) => card.parentId === id && card.renderKey !== null)
+        .map((card) => ({ renderKey: card.renderKey, rect: card.bounds }))
+    );
+    expect(plan.ghosts).toEqual([]);
+    // Taking a prize and covering a face-up prize do not imitate shuffling.
+    expect(
+      planBoardMotion(
+        before,
+        sceneOf(
+          withZones(next, {
+            [id]: cardsOf(next, id).slice(1),
+          })
+        ),
+        'advance'
+      ).shuffles
+    ).toEqual([]);
+    const shown = {
+      ...before,
+      cards: before.cards.map((card) =>
+        card.parentId === id ? { ...card, concealed: false } : card
+      ),
+    };
+    expect(planBoardMotion(shown, after, 'advance').shuffles).toEqual([]);
+  });
+
   it('pulses a counter whose value changed, even across an evolution', () => {
     const stackId = 'stack:blue:active';
     const damaged = (damage: number): MatchViewState => ({

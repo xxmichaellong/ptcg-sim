@@ -256,7 +256,7 @@ textarea {
   flex: 1 1 0;
   width: auto;
   min-width: 0;
-  height: 34px;
+  height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -275,7 +275,7 @@ textarea {
 }
 .remote-room-route .chat-button-container button:active:not(:disabled),
 .remote-room-route .sidebox-button-container button:active:not(:disabled) {
-  scale: 0.96;
+  scale: var(--control-press-scale);
 }
 .remote-room-route .chat-button-container button:focus-visible,
 .remote-room-route .sidebox-button-container button:focus-visible {
@@ -288,22 +288,22 @@ textarea {
 .remote-room-route #FREEBUTTON {
   border-radius: var(--radius-md);
 }
-/* White labels on the side colours stay at 4.5:1 or better top to bottom. */
+/* Seat identity is a subtle tint. The cards carry the colour on the table. */
 .remote-room-route .self-color {
   background: linear-gradient(
     to bottom,
-    oklch(0.56 0.16 var(--hue-you)),
-    oklch(0.5 0.16 var(--hue-you))
+    color-mix(in oklch, var(--color-surface-3), var(--color-you) 10%),
+    var(--color-surface-2)
   );
-  color: var(--color-text-on-accent);
+  color: var(--color-text);
 }
 .remote-room-route .opp-color {
   background: linear-gradient(
     to bottom,
-    oklch(0.56 0.18 var(--hue-opponent)),
-    oklch(0.5 0.18 var(--hue-opponent))
+    color-mix(in oklch, var(--color-surface-3), var(--color-opponent) 10%),
+    var(--color-surface-2)
   );
-  color: var(--color-text-on-accent);
+  color: var(--color-text);
 }
 .remote-room-route .neutral-color {
   background: var(--color-surface-3);
@@ -317,11 +317,15 @@ textarea {
   .chat-button-container
   button.self-color:hover:not(:disabled),
 .remote-room-route .sidebox-button-container button.self-color:hover {
-  background: oklch(0.56 0.16 var(--hue-you));
+  background: color-mix(in oklch, var(--color-surface-3), var(--color-you) 18%);
 }
 .remote-room-route .chat-button-container button.opp-color:hover:not(:disabled),
 .remote-room-route .sidebox-button-container button.opp-color:hover {
-  background: oklch(0.58 0.18 var(--hue-opponent));
+  background: color-mix(
+    in oklch,
+    var(--color-surface-3),
+    var(--color-opponent) 18%
+  );
 }
 .remote-room-route .sidebox-button-container button.neutral-color:hover {
   background: var(--color-surface-3);
@@ -411,6 +415,31 @@ textarea {
 }
 
 /* ---- Settings panel ---------------------------------------------------- */
+.remote-room-route .legacy-room-settings {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.legacy-room-settings > * {
+  flex-shrink: 0;
+}
+.table-settings-heading h2 {
+  margin: 0;
+  font: var(--weight-semibold) 23px / 1.2 var(--font-display);
+}
+.table-settings-heading p,
+.table-settings-note {
+  margin: var(--space-2) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.table-settings-section {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .remote-room-route .legacy-room-settings #settingsToggles,
 .remote-room-route--dark .legacy-room-settings #settingsToggles,
 .remote-room-route .legacy-room-motion-settings {
@@ -430,27 +459,48 @@ textarea {
   gap: var(--space-2);
 }
 .remote-room-route .legacy-room-motion-settings select {
-  height: 30px;
+  min-height: var(--control-height);
+  max-width: 55%;
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
   color: var(--color-text);
 }
-.remote-room-route .legacy-room-settings input[type='checkbox'] {
-  accent-color: var(--color-accent);
+.remote-room-route .legacy-room-settings input.ds-switch {
+  margin: 0;
+}
+.remote-room-route .legacy-room-settings .ds-switch-row {
+  min-height: var(--control-height);
+  gap: var(--space-3);
+}
+.remote-room-route .legacy-room-settings .ds-switch-row label {
+  flex: 1;
+  padding-block: var(--space-2);
 }
 .remote-room-route .legacy-room-settings #changeBackgroundButton {
-  height: 32px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-3);
-  color: var(--color-text);
-  font-size: var(--text-sm);
+  width: 100%;
+  margin: var(--space-4) 0 var(--space-2);
 }
 .remote-room-route .legacy-room-settings #keybindReminder {
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.remote-room-route .legacy-room-settings #keybindReminder kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  font: inherit;
+}
+.remote-room-route .legacy-room-settings #twitterDescription {
+  position: static;
+  max-width: none;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
 }
 
 /* The bottom action row wraps rather than cutting its labels short. */
@@ -496,9 +546,10 @@ textarea {
   left: 12px;
   bottom: 10px;
   width: 76px;
+  min-width: 0;
   height: auto;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   justify-content: flex-end;
   gap: 6px;
 }
@@ -528,23 +579,10 @@ textarea {
 .board-spike-host[data-geometry='2'] .legacy-hand-sort--opponent input {
   accent-color: var(--color-opponent);
 }
-/* The opponent's strip is slimmer: markers side by side, Sort above. */
-.board-spike-host[data-geometry='2']
-  .legacy-player-frame-chrome[data-player-layout-side='opponent']
-  .legacy-once-per-game-controls {
-  flex-direction: row;
-  width: 84px;
-  bottom: 8px;
-  gap: 4px;
-}
+/* Keep the markers readable on the rotated half, including after a flip.
+   Rotate the button so the tile's independent face-down animation still works. */
 .board-spike-host[data-geometry='2']
   .legacy-player-frame-chrome[data-player-layout-side='opponent']
   .legacy-once-per-game-button {
-  flex: 1 1 0;
-  height: 26px !important;
-}
-.board-spike-host[data-geometry='2']
-  .legacy-player-frame-chrome[data-player-layout-side='opponent']
-  .legacy-hand-sort {
-  bottom: 38px;
+  transform: rotate(180deg);
 }

@@ -21,8 +21,7 @@ import type { BoardSide, BoardViewport, Rect } from './model.js';
  * the outer left, the Active at the centre line with a staging area beside
  * it, five bench slots below, deck, discard and Lost Zone down the right --
  * and the hand runs along the screen edge, its cards partly off-screen until
- * hovered. The opponent's half is the same mat turned around, with a slimmer
- * hand strip.
+ * hovered. The opponent's half is the same mat turned around.
  *
  * It produces the same snapshot shape as v1, so scenes, hit-testing and
  * renderers are unchanged; only the numbers differ.
@@ -50,8 +49,8 @@ export const tableRailWidth = (viewportWidth: number): number =>
     )
   );
 
-/** The viewer's half is the larger: it is where they act. */
-const DEFAULT_LOWER_SHARE = 0.54;
+/** Both players start with equal halves of the table. */
+const DEFAULT_LOWER_SHARE = 0.5;
 const MINIMUM_HALF_SHARE = 0.34;
 const HANDLE_HEIGHT_RATIO = 0.025 as const;
 
@@ -82,14 +81,8 @@ interface HalfProportions {
   readonly activeShare: number;
 }
 
-const LOCAL_HALF: HalfProportions = {
+const HALF_PROPORTIONS: HalfProportions = {
   handStrip: 0.27,
-  margin: 0.045,
-  rowGap: 0.025,
-  activeShare: 0.54,
-};
-const OPPONENT_HALF: HalfProportions = {
-  handStrip: 0.17,
   margin: 0.045,
   rowGap: 0.025,
   activeShare: 0.54,
@@ -128,11 +121,8 @@ interface HalfGeometry {
 }
 
 /** Lay out one half in its own frame, centre line at the top. */
-const layoutHalf = (
-  width: number,
-  height: number,
-  proportions: HalfProportions
-): HalfGeometry => {
+const layoutHalf = (width: number, height: number): HalfGeometry => {
+  const proportions = HALF_PROPORTIONS;
   // The margin at the centre line doubles as the seam band the table
   // controls sit in, so it is generous.
   const margin = Math.max(10, Math.min(24, height * proportions.margin));
@@ -179,10 +169,12 @@ const layoutHalf = (
   const discard = pileAt(1);
   const lostZone = pileAt(2);
 
-  const middleLeft = prizes.x + prizes.width + gap * 1.5;
-  const middleRight = pileLeft - gap * 1.5;
+  // Reserve equal space for the outer columns so both Actives and benches
+  // share the table's centre, even though prizes are wider than a pile.
+  const middleLeft = margin + Math.max(prizes.width, pileWidth) + gap * 1.5;
+  const middleRight = width - middleLeft;
   const middleWidth = Math.max(0, middleRight - middleLeft);
-  const centre = middleLeft + middleWidth / 2;
+  const centre = width / 2;
   // The Active slot is wide enough for a stack with attachments peeking out.
   const activeWidth = Math.min(middleWidth, active * CARD_ASPECT_RATIO * 2.2);
   const activeRect: Rect = {
@@ -204,8 +196,13 @@ const layoutHalf = (
     width: middleWidth,
     height: bench,
   };
-  const handLeft = margin + TABLE_CONTROL_CORNER_PX;
-  const handRight = pileLeft - gap * 1.5 - HAND_COUNT_SLOT_PX;
+  const handLeft =
+    margin +
+    Math.max(
+      TABLE_CONTROL_CORNER_PX,
+      pileWidth + gap * 1.5 + HAND_COUNT_SLOT_PX
+    );
+  const handRight = width - handLeft;
   const handRect: Rect = {
     x: handLeft,
     y: handTop,
@@ -334,11 +331,7 @@ export const createTableLayoutSnapshot = (
     readonly geometry: HalfGeometry;
   } => {
     const frameBounds = frameFor(state.viewport, playAreaWidth, frame);
-    const geometry = layoutHalf(
-      frameBounds.width,
-      frameBounds.height,
-      template.side === 'local' ? LOCAL_HALF : OPPONENT_HALF
-    );
+    const geometry = layoutHalf(frameBounds.width, frameBounds.height);
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
         (region) => region.kind === local.kind

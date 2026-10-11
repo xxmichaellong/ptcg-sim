@@ -184,9 +184,11 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(Number(targetAfterAction.revision)).toBeGreaterThan(
       Number(sourceCheckpoint.revision)
     );
-    expect(await boardIdentity(restoredOpponent.page)).toEqual(
-      targetAfterAction
-    );
+    // Each socket receives publication independently. Seeing the action on
+    // one client does not mean the sender has received its revision yet.
+    await expect
+      .poll(() => boardIdentity(restoredOpponent.page))
+      .toEqual(targetAfterAction);
     expect(await boardIdentity(sourceOpponent.page)).toEqual(sourceCheckpoint);
 
     const revokedRetry = await creator.page.evaluate(

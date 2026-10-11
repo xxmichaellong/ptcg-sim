@@ -608,6 +608,35 @@ describe('RemoteRoomLiveControls', () => {
     await act(async () => root.unmount());
   });
 
+  it('navigates room options with the keyboard and returns focus without game commands', async () => {
+    const session = new FakeLiveSession();
+    const { host, root } = await mount(session, { onExportState: vi.fn() });
+    const trigger = element<HTMLButtonElement>(host, '#p2OptionsButton');
+    const menu = element<HTMLElement>(host, '#optionsContextMenu');
+    const key = async (key: string) =>
+      act(async () => {
+        document.activeElement?.dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+        );
+      });
+    await act(async () => trigger.click());
+    const items = [
+      ...menu.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]:not(:disabled)'
+      ),
+    ];
+    expect(document.activeElement).toBe(items[0]);
+    await key('End');
+    expect(document.activeElement).toBe(items.at(-1));
+    await key('ArrowDown');
+    expect(document.activeElement).toBe(items[0]);
+    await key('Escape');
+    expect(menu.hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
+    expect(session.submit).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
   it('runs online save as one abortable player-only menu operation', async () => {
     const pending = Promise.withResolvers<void>();
     const onSaveOnlineGame = vi.fn(() => pending.promise);

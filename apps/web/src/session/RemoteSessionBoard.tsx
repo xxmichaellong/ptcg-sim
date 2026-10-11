@@ -5,6 +5,7 @@ import type {
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
+  BoardDepthProjection,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   type BoardIntent,
   type BoardLayoutSnapshot,
@@ -485,9 +486,10 @@ export const RemoteSessionBoard = ({
       emitCardIntent: (intent) => {
         runtimeRef.current?.emitIntent(intent);
       },
-      invokeWorkAreaAction: (source, action) => {
+      invokeWorkAreaAction: (source, action, targetPlayerId) => {
         runtimeRef.current?.emitLegacyOverlayAction({
           kind: 'workArea',
+          ...(targetPlayerId ? { targetPlayerId } : {}),
           source,
           action,
         });
@@ -675,6 +677,15 @@ export const RemoteSessionBoard = ({
     identity && replayState.sessionPhase === 'ready'
       ? rendererStatus.kind
       : replayState.sessionPhase;
+  const depthProjection = useMemo(
+    () =>
+      boardState?.scene &&
+      preferences.depth?.mode &&
+      preferences.depth.mode !== 'flat'
+        ? new BoardDepthProjection(boardState.scene, preferences)
+        : undefined,
+    [boardState?.scene, preferences]
+  );
   const showBoardComposition =
     boardState?.scene !== undefined &&
     rendererStatus.kind !== 'failed' &&
@@ -687,6 +698,7 @@ export const RemoteSessionBoard = ({
         <>
           {layout && rendererKind === 'dom' ? (
             <LegacyBoardChrome
+              {...(depthProjection ? { depth: depthProjection } : {})}
               layout={layout}
               localPlayerId={
                 boardState.view?.viewer.kind === 'player'
@@ -735,6 +747,8 @@ export const RemoteSessionBoard = ({
             />
           ) : null}
           <LegacyBoardOverlays
+            {...(depthProjection ? { depth: depthProjection } : {})}
+            allowOpponentResolution={roomMode === 'solo'}
             state={boardState}
             darkMode={preferences.darkMode}
             actions={overlayActions}

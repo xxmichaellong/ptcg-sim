@@ -494,6 +494,7 @@ describe('BoardMotionDirector', () => {
     )!;
     const node = document.createElement('div');
     node.dataset.markerId = marker.id;
+    Object.assign(node.style, { left: '100px', top: '120px', width: '32px' });
     test.surface.append(node);
     test.director.commit(null, before, undefined, paintedOf(before), new Set());
     test.director.commit(
@@ -508,5 +509,89 @@ describe('BoardMotionDirector', () => {
     const scales = pop!.keyframes.map((frame) => Number(frame.scale));
     expect(Math.max(...scales)).toBeGreaterThan(1.2);
     expect(scales.at(-1)).toBe(1);
+    const feedback = test.ghostLayer.querySelector<HTMLElement>(
+      '.ptcgsim-damage-change'
+    )!;
+    expect(feedback.textContent).toBe('+30');
+    expect(feedback.style.left).toBe('116px');
+    expect(feedback.getAttribute('aria-hidden')).toBe('true');
+    test.director.setSettings({ reduced: true, durationScale: 1 });
+    expect(feedback.isConnected).toBe(false);
+    expect(test.director.active).toBe(false);
+  });
+
+  it('hands a prize back to the pointer during a gather, and cancels the rest on relayout', () => {
+    const id = 'zone:spike-blue:prizes';
+    const rekey = (prefix: string): MatchViewState => ({
+      ...base,
+      zones: {
+        ...base.zones,
+        [id]: {
+          ...base.zones[id]!,
+          cards: base.zones[id]!.cards.map((card, index) => ({
+            kind: 'concealed',
+            id: `${prefix}-${index}` as CardSceneNode['id'],
+            ownerId: card.ownerId,
+            publiclyRevealed: false,
+            cardBackUrl: base.players[card.ownerId]!.cardBackUrl,
+          })),
+        },
+      },
+    });
+    const before = sceneOf(rekey('old-prize'));
+    const after = sceneOf(rekey('new-prize'));
+    const test = setup();
+    test.register(before);
+    test.register(after);
+    test.director.commit(null, before, undefined, paintedOf(before), new Set());
+    test.director.commit(
+      before,
+      after,
+      { cause: 'advance' },
+      paintedOf(after),
+      new Set()
+    );
+    const key = after.cards.find((card) => card.parentId === id)!.renderKey!;
+    const animation = recorded.find(
+      (entry) => entry.element === test.elements.get(key)
+    )!;
+    expect(animation).toBeDefined();
+    expect(animation.keyframes.at(-1)?.translate).toBe('0px 0px');
+    test.director.commit(
+      after,
+      after,
+      undefined,
+      paintedOf(after),
+      new Set([key])
+    );
+    expect(animation.cancel).toHaveBeenCalledOnce();
+    test.director.commit(
+      after,
+      after,
+      { cause: 'layout' },
+      paintedOf(after),
+      new Set()
+    );
+    test.director.cancelAll();
+    for (const entry of recorded) expect(entry.cancel).toHaveBeenCalled();
+    expect(test.director.active).toBe(false);
+  });
+
+  it('interrupts a perspective turn on the next input without blocking the table', () => {
+    const test = setup();
+    const before = sceneOf(base);
+    const after = sceneOf(moved());
+    test.director.commit(
+      before,
+      after,
+      { cause: 'flip' },
+      paintedOf(after),
+      new Set()
+    );
+    const turn = recorded.find((entry) => entry.element === test.surface)!;
+    expect(turn).toBeDefined();
+    test.director.interruptTableTurn();
+    expect(turn.cancel).toHaveBeenCalledOnce();
+    expect(test.director.active).toBe(false);
   });
 });

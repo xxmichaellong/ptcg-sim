@@ -10,7 +10,7 @@
  */
 
 :root {
-  --ds-control-height: 34px;
+  --ds-control-height: var(--control-height);
   --ds-primary-bg: var(--color-accent-fill);
   --ds-primary-bg-hover: var(--color-accent-fill-hover);
   --ds-primary-bg-pressed: var(--color-accent-fill-pressed);
@@ -40,7 +40,7 @@
   --ds-enter-scale: 0.96;
   --ds-pop-scale: 1.3;
   --ds-pop-dim: 1;
-  --ds-press-scale: 0.97;
+  --ds-press-scale: var(--control-press-scale);
   --ds-hover-lift: -3px;
 }
 

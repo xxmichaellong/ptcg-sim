@@ -154,6 +154,7 @@ export type LegacyBoardOverlayActionRequest =
     }
   | {
       readonly kind: 'workArea';
+      readonly targetPlayerId?: PlayerId;
       readonly source: LegacyBoardWorkAreaSource;
       readonly action: LegacyBoardWorkAreaActionId;
     };
@@ -673,15 +674,19 @@ const resolveWorkAreaAction = (
   >
 ): LegacyBoardOverlayActionResolution => {
   if (view.viewer.kind !== 'player') return rejected('not_player');
-  const areas = view.workAreas[view.viewer.playerId];
+  const playerId = request.targetPlayerId ?? view.viewer.playerId;
+  const areas = view.workAreas[playerId];
   if (request.action === 'leaveInPlay') {
     const staged =
       request.source === 'staged' ? areas?.attachmentResolution : null;
     if (!staged) return rejected('unsupported_source');
-    const board = view.boards[view.viewer.playerId];
+    const board = view.boards[playerId];
     if (!board) return rejected('stale_player');
     return command({
       type: 'RestoreStagedStack',
+      ...(request.targetPlayerId
+        ? { targetPlayerId: request.targetPlayerId }
+        : {}),
       expectedWorkAreaId: staged.id,
       expectedActiveStackId: board.activeStackId,
       expectedBenchStackIds: [...board.benchStackIds],
@@ -691,7 +696,8 @@ const resolveWorkAreaAction = (
   const resolution = resolveWorkAreaCardsAction(
     view,
     request.source,
-    WORK_AREA_DESTINATIONS[request.action]
+    WORK_AREA_DESTINATIONS[request.action],
+    request.targetPlayerId
   );
   return resolution.ok
     ? command(resolution.command)

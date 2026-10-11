@@ -88,6 +88,15 @@ describe('role-projected replay', () => {
               name: 'Extremely Secret Card',
               category: 'Pokémon',
               imageUrl: 'https://cards.invalid/extremely-secret.png',
+              presentation: {
+                readingQuarterTurns: 0,
+                join: {
+                  key: 'secret-artwork-key',
+                  columns: 2,
+                  rows: 2,
+                  part: 3,
+                },
+              },
             },
             count: 14,
           },
@@ -113,6 +122,7 @@ describe('role-projected replay', () => {
     expect(serialized).not.toContain('canonical-secret-definition');
     expect(serialized).not.toContain('Extremely Secret Card');
     expect(serialized).not.toContain('extremely-secret.png');
+    expect(serialized).not.toContain('secret-artwork-key');
     expect(spectator.frames.map((frame) => frame.snapshot.revision)).toEqual([
       0, 1, 2,
     ]);
@@ -161,6 +171,10 @@ describe('role-projected replay', () => {
               name: 'Solo Replay Prize',
               category: 'Pokémon',
               imageUrl: 'https://cards.invalid/solo-replay-prize.png',
+              presentation: {
+                readingQuarterTurns: 1,
+                join: { key: 'replay-legend', columns: 1, rows: 2, part: 1 },
+              },
             },
             count: 14,
           },
@@ -192,6 +206,10 @@ describe('role-projected replay', () => {
       expect.objectContaining({
         name: 'Solo Replay Prize',
         imageUrl: 'https://cards.invalid/solo-replay-prize.png',
+        presentation: {
+          readingQuarterTurns: 1,
+          join: { key: 'replay-legend', columns: 1, rows: 2, part: 1 },
+        },
       }),
     ]);
     expect(final.localDisclosure?.zoneIds).toEqual(

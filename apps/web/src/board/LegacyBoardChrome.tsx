@@ -1,6 +1,7 @@
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import type {
   BoardLayoutSnapshot,
+  BoardDepthProjection,
   BoardPlayerLayout,
 } from '@ptcgsim/renderer-contract';
 // One module per icon: the barrel pulls every icon into the dev server.
@@ -241,8 +242,10 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   coinPending = false,
   sortedHandPlayerIds,
   coveredByPopup = false,
+  depth,
 }: {
   readonly layout: BoardLayoutSnapshot;
+  readonly depth?: BoardDepthProjection;
   readonly localPlayerId: PlayerId;
   readonly players: MatchViewState['players'];
   readonly darkMode: boolean;
@@ -274,7 +277,28 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   const lower = layout.resizeHandles.find((handle) => handle.id === 'lower');
   const upper = layout.resizeHandles.find((handle) => handle.id === 'upper');
   if (!lower || !upper) throw new Error('Board chrome requires both handles');
-  const anchor = layout.shared.boardControlsAnchor;
+  const logicalAnchor = layout.shared.boardControlsAnchor;
+  const activeZones = depth?.scene.zones
+    .filter((zone) => zone.kind === 'active')
+    .sort((a, b) => a.bounds.y - b.bounds.y);
+  let anchor = logicalAnchor;
+  if (depth && activeZones?.length === 2) {
+    const upper = activeZones[0]!.bounds;
+    const lower = activeZones[1]!.bounds;
+    const gapTop = depth.point({
+      x: upper.x + upper.width / 2,
+      y: upper.y + upper.height,
+    }).y;
+    const gapBottom = depth.point({
+      x: lower.x + lower.width / 2,
+      y: lower.y,
+    }).y;
+    const height = Math.max(
+      24,
+      Math.min(logicalAnchor.height, gapBottom - gapTop - 4)
+    );
+    anchor = { ...logicalAnchor, height, y: (gapTop + gapBottom - height) / 2 };
+  }
 
   return (
     <div
@@ -324,10 +348,16 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
         id="boardButtonContainer"
         className="legacy-board-controls"
         data-board-controls="true"
+        data-table-depth={depth ? 'true' : undefined}
         style={{
           left: anchor.x,
           top: anchor.y,
           height: anchor.height,
+          ...(depth
+            ? ({
+                '--table-control-height': `${anchor.height}px`,
+              } as CSSProperties)
+            : {}),
           ...(coveredByPopup
             ? {
                 // What is left of the controls through v1's cover: 85% white,

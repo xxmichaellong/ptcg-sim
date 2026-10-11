@@ -449,14 +449,14 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       playerTwo.page.locator('label[for="hideHandCheckbox"]')
     ).toHaveText("Hide opponent's hand (Solo mode)");
     await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
-      'Hold (shift) to view keybinds'
+      'Hold Shift to see keyboard shortcuts'
     );
     const contact = playerTwo.page.locator('#twitterDescription a');
     await expect(contact).toHaveAttribute(
       'href',
       'https://twitter.com/xxmichaellong'
     );
-    await expect(contact).toHaveAttribute('target', 'blank');
+    await expect(contact).toHaveAttribute('target', '_blank');
     await expect(contact.locator('svg')).toHaveCount(1);
     const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
     let customBackgroundRequests = 0;

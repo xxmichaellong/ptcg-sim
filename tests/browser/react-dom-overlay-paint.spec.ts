@@ -823,11 +823,12 @@ test('route-owned context and card-preview keep real-v1 structure in the ADR-027
   ).toBeLessThanOrEqual(8);
   expect(
     Math.abs(
-      candidatePreviewMetrics.image.centerY - (scrim.y + scrim.height / 2)
+      // The reading area reserves 64px above for controls and 16px below.
+      candidatePreviewMetrics.image.centerY - (scrim.y + scrim.height / 2 + 24)
     )
   ).toBeLessThanOrEqual(8);
   expect(candidatePreviewMetrics.image.height).toBeGreaterThanOrEqual(
-    source.previewMetrics.image.height - 1
+    Math.min(source.previewMetrics.image.height, scrim.height - 80) - 1
   );
   expect(
     parseFloat(candidatePreviewMetrics.image.borderRadius)

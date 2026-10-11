@@ -1001,7 +1001,13 @@ const predict = (
       if (!stadium) return null;
       const incumbent = stadium.cards[0] ?? null;
       if (
-        stadium.cards.length > 1 ||
+        (command.expectedStadiumCardIds
+          ? stadium.cards.length !== command.expectedStadiumCardIds.length ||
+            stadium.cards.some(
+              (card, index) =>
+                card.id !== command.expectedStadiumCardIds![index]
+            )
+          : stadium.cards.length > 1 || command.placement === 'add') ||
         (incumbent?.id ?? null) !== command.expectedStadiumCardId
       ) {
         return null;
@@ -1013,7 +1019,10 @@ const predict = (
       );
       if (!taken) return null;
       let next = taken.view;
-      if (incumbent) {
+      if (command.placement === 'add' && stadium.cards.length >= 4) return null;
+      for (const incumbent of command.placement === 'add'
+        ? []
+        : stadium.cards) {
         // The room sends the stadium it replaces to its owner's discard.
         const cleared = takeFromZone(next, stadium.id, incumbent.id);
         const discard = ownZone(next, incumbent.ownerId, 'discard');
@@ -1027,7 +1036,13 @@ const predict = (
         if (!placed) return null;
         next = placed;
       }
-      return placeInZone(next, viewerId, stadium.id, taken.card, 0);
+      return placeInZone(
+        next,
+        viewerId,
+        stadium.id,
+        taken.card,
+        command.placement === 'add' ? stadium.cards.length : 0
+      );
     }
     case 'SwapCardWithDeckTop': {
       // The zone case only: the card goes on top of its owner's deck and the
@@ -1151,16 +1166,23 @@ const predict = (
       for (const [playerId, areas] of Object.entries(view.workAreas)) {
         const staged = areas.attachmentResolution;
         if (staged?.id !== command.expectedWorkAreaId) continue;
-        return resolveWorkAreaCards(
-          withWorkAreas(view, playerId as PlayerId, {
-            ...areas,
-            attachmentResolution: null,
-          }),
-          viewerId,
+        let next: MatchViewState | null = withWorkAreas(
+          view,
           playerId as PlayerId,
-          staged.cards,
-          command.destination
+          { ...areas, attachmentResolution: null }
         );
+        for (const owner of view.playerOrder) {
+          const cards = staged.cards.filter((card) => card.ownerId === owner);
+          if (cards.length && next)
+            next = resolveWorkAreaCards(
+              next,
+              viewerId,
+              owner,
+              cards,
+              command.destination
+            );
+        }
+        return next;
       }
       return null;
     }
