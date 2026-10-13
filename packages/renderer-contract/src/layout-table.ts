@@ -54,22 +54,40 @@ const DEFAULT_LOWER_SHARE = 0.5;
 const MINIMUM_HALF_SHARE = 0.34;
 const HANDLE_HEIGHT_RATIO = 0.025 as const;
 
-export const DEFAULT_TABLE_VERTICAL_LAYOUT: BoardVerticalLayoutState = {
-  lowerFrame: { bottomRatio: 0, heightRatio: DEFAULT_LOWER_SHARE },
-  upperFrame: {
-    bottomRatio: DEFAULT_LOWER_SHARE,
-    heightRatio: 1 - DEFAULT_LOWER_SHARE,
-  },
-  lowerHandle: {
-    bottomRatio: DEFAULT_LOWER_SHARE,
-    heightRatio: HANDLE_HEIGHT_RATIO,
-  },
-  upperHandle: {
-    bottomRatio: DEFAULT_LOWER_SHARE + 0.03,
-    heightRatio: HANDLE_HEIGHT_RATIO,
-  },
-  sharedPlacement: 'handleMidpoint',
+/**
+ * How the table may be split between the halves: the lower half's share of
+ * the height. Neither half may shrink below a third of the table.
+ */
+export const TABLE_SPLIT = {
+  minimumLowerShare: MINIMUM_HALF_SHARE,
+  maximumLowerShare: 1 - MINIMUM_HALF_SHARE,
+  defaultLowerShare: DEFAULT_LOWER_SHARE,
+} as const;
+
+/** The vertical state for a table whose lower half takes `lowerShare`. */
+export const tableVerticalLayout = (
+  lowerShare: number
+): BoardVerticalLayoutState => {
+  const lower = Number.isFinite(lowerShare)
+    ? Math.min(
+        TABLE_SPLIT.maximumLowerShare,
+        Math.max(TABLE_SPLIT.minimumLowerShare, lowerShare)
+      )
+    : DEFAULT_LOWER_SHARE;
+  return {
+    lowerFrame: { bottomRatio: 0, heightRatio: lower },
+    upperFrame: { bottomRatio: lower, heightRatio: 1 - lower },
+    lowerHandle: { bottomRatio: lower, heightRatio: HANDLE_HEIGHT_RATIO },
+    upperHandle: {
+      bottomRatio: Math.min(1, lower + 0.03),
+      heightRatio: HANDLE_HEIGHT_RATIO,
+    },
+    sharedPlacement: 'handleMidpoint',
+  };
 };
+
+export const DEFAULT_TABLE_VERTICAL_LAYOUT: BoardVerticalLayoutState =
+  tableVerticalLayout(DEFAULT_LOWER_SHARE);
 
 /** Proportions of one half, as fractions of its height (own frame). */
 interface HalfProportions {
@@ -119,6 +137,16 @@ interface HalfGeometry {
   /** The clear band between this half's cards and the centre line. */
   readonly seamMargin: number;
 }
+
+/**
+ * A half that fills the whole table (the other one hidden) keeps this much
+ * clear at the centre line for the table controls.
+ */
+const SOLO_SEAM_BAND_PX = 44;
+/** The gap between those controls and the Active row beside them. */
+const SOLO_CONTROLS_GAP_PX = 6;
+/** The bench row must hold this many bench cards side by side. */
+const BENCH_FIT_CARDS = 5.5;
 
 /** Lay out one half in its own frame, centre line at the top. */
 const layoutHalf = (width: number, height: number): HalfGeometry => {
@@ -226,6 +254,47 @@ const layoutHalf = (width: number, height: number): HalfGeometry => {
   };
 };
 
+/**
+ * A half given the whole table. Laid out at full height its cards would
+ * outgrow the width (the bench no longer fits across), so it takes the
+ * tallest layout whose bench still fits -- never smaller than at an even
+ * split -- sits at the player's edge, and leaves the rest as a clear band
+ * at the centre line.
+ */
+const layoutSoloHalf = (width: number, height: number): HalfGeometry => {
+  const fits = (candidate: number): boolean => {
+    const geometry = layoutHalf(width, candidate);
+    return (
+      BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
+      geometry.middle.right - geometry.middle.left
+    );
+  };
+  const available = Math.max(0, height - SOLO_SEAM_BAND_PX);
+  let fitted = available;
+  if (!fits(available)) {
+    // Taller only ever means bigger cards and a narrower middle.
+    let low = 0;
+    let high = available;
+    for (let step = 0; step < 24; step += 1) {
+      const middle = (low + high) / 2;
+      if (fits(middle)) low = middle;
+      else high = middle;
+    }
+    fitted = Math.max(low, height * DEFAULT_LOWER_SHARE);
+  }
+  const geometry = layoutHalf(width, fitted);
+  const band = height - fitted;
+  return {
+    regions: geometry.regions.map((region) => ({
+      ...region,
+      rect: { ...region.rect, y: region.rect.y + band },
+    })),
+    cardHeights: geometry.cardHeights,
+    middle: geometry.middle,
+    seamMargin: geometry.seamMargin + band,
+  };
+};
+
 /** A rect in a half's own frame placed in the window. */
 const toPhysical = (rect: Rect, frame: Rect, side: BoardSide): Rect =>
   side === 'local'
@@ -297,6 +366,35 @@ const frameFor = (
 });
 
 /**
+ * Where each half sits. With one hidden, the other fills the table and the
+ * hidden one lies just past the table's edge on its own side.
+ */
+const framesFor = (
+  state: BoardLayoutState,
+  playAreaWidth: number
+): {
+  readonly lower: Rect;
+  readonly upper: Rect;
+} => {
+  const { viewport, vertical, hiddenPhysicalSide } = state;
+  const lower = frameFor(viewport, playAreaWidth, vertical.lowerFrame);
+  const upper = frameFor(viewport, playAreaWidth, vertical.upperFrame);
+  const whole: Rect = {
+    x: 0,
+    y: 0,
+    width: playAreaWidth,
+    height: viewport.height,
+  };
+  if (hiddenPhysicalSide === 'upper') {
+    return { lower: whole, upper: { ...upper, y: -upper.height } };
+  }
+  if (hiddenPhysicalSide === 'lower') {
+    return { lower: { ...lower, y: viewport.height }, upper: whole };
+  }
+  return { lower, upper };
+};
+
+/**
  * The v2 snapshot. Region semantics (surface, input affordances, paint
  * order) are taken from v1's regions so behaviour cannot drift; only the
  * geometry is new.
@@ -307,10 +405,15 @@ export const createTableLayoutSnapshot = (
   if (state.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION) {
     throw new Error('Table layout requires geometry version 2');
   }
+  const hidden = state.hiddenPhysicalSide;
+  if (hidden !== undefined && hidden !== 'lower' && hidden !== 'upper') {
+    throw new Error('Unsupported hidden board side');
+  }
   // v1's validated snapshot supplies the region semantics, the player
   // pairing and every input check.
+  const { hiddenPhysicalSide: _hidden, ...semanticState } = state;
   const semantics = createBoardLayoutSnapshot({
-    ...state,
+    ...semanticState,
     geometryVersion: 1,
   });
   const fullScreen = state.shellMode === 'fullscreen';
@@ -323,15 +426,19 @@ export const createTableLayoutSnapshot = (
     height: state.viewport.height,
   };
 
+  const frames = framesFor(state, playAreaWidth);
   const buildPlayer = (
     template: BoardPlayerLayout,
-    frame: BoardVerticalLayoutState['lowerFrame']
+    frameBounds: Rect
   ): {
     readonly player: BoardPlayerLayout;
     readonly geometry: HalfGeometry;
   } => {
-    const frameBounds = frameFor(state.viewport, playAreaWidth, frame);
-    const geometry = layoutHalf(frameBounds.width, frameBounds.height);
+    const solo = hidden !== undefined && hidden !== template.physicalSide;
+    const geometry = (solo ? layoutSoloHalf : layoutHalf)(
+      frameBounds.width,
+      frameBounds.height
+    );
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
         (region) => region.kind === local.kind
@@ -378,39 +485,88 @@ export const createTableLayoutSnapshot = (
         rotationQuarterTurns: template.rotationQuarterTurns,
         frameBounds,
         regions,
+        ...(hidden === template.physicalSide ? { hidden: true as const } : {}),
       },
       geometry,
     };
   };
 
-  const lower = buildPlayer(semantics.players[0], state.vertical.lowerFrame);
-  const upper = buildPlayer(semantics.players[1], state.vertical.upperFrame);
+  const lower = buildPlayer(semantics.players[0], frames.lower);
+  const upper = buildPlayer(semantics.players[1], frames.upper);
+  const activeOf = (player: BoardPlayerLayout): Rect =>
+    player.regions.find((region) => region.kind === 'active')!
+      .physicalDeclaredBounds;
 
-  // The seam between the halves: the stadium straddles it to the right of
-  // the Actives, the board controls sit at its left.
-  const seamY = lower.player.frameBounds.y;
-  const stadiumHeight = Math.min(
-    lower.geometry.cardHeights.bench,
-    upper.geometry.cardHeights.bench
-  );
-  const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
-  const lowerActive = lower.player.regions.find(
-    (region) => region.kind === 'active'
-  )!;
-  const stadiumX = Math.min(
-    playAreaWidth - stadiumWidth - 8,
-    lowerActive.physicalDeclaredBounds.x +
-      lowerActive.physicalDeclaredBounds.width +
-      stadiumWidth * 0.35
-  );
-  // The controls straddle the seam inside the clear band on both sides.
-  const controlsHeight = Math.max(
-    20,
-    Math.min(
-      32,
-      2 * Math.min(lower.geometry.seamMargin, upper.geometry.seamMargin) - 2
-    )
-  );
+  let stadium: Rect;
+  let controls: { readonly y: number; readonly height: number };
+  let controlsLeft: number;
+  if (hidden === undefined) {
+    // The seam between the halves: the stadium straddles it to the right of
+    // the Actives, the board controls sit at its left.
+    const seamY = lower.player.frameBounds.y;
+    const stadiumHeight = Math.min(
+      lower.geometry.cardHeights.bench,
+      upper.geometry.cardHeights.bench
+    );
+    const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
+    const lowerActive = activeOf(lower.player);
+    stadium = {
+      x: Math.min(
+        playAreaWidth - stadiumWidth - 8,
+        lowerActive.x + lowerActive.width + stadiumWidth * 0.35
+      ),
+      y: seamY - stadiumHeight / 2,
+      width: stadiumWidth,
+      height: stadiumHeight,
+    };
+    // The controls straddle the seam inside the clear band on both sides.
+    const controlsHeight = Math.max(
+      20,
+      Math.min(
+        32,
+        2 * Math.min(lower.geometry.seamMargin, upper.geometry.seamMargin) - 2
+      )
+    );
+    controls = { y: seamY - controlsHeight / 2, height: controlsHeight };
+    controlsLeft = lower.geometry.middle.left;
+  } else {
+    // One half fills the table. The stadium sits beside its Active on the
+    // player's own right (the staging area is on their left), level with
+    // the centre-line edge of the row, and the controls just past that edge
+    // of the row, as they sit at the seam; the rest of the clear band is
+    // where the hidden half would be.
+    const shown = hidden === 'upper' ? lower : upper;
+    const active = activeOf(shown.player);
+    const stadiumHeight = shown.geometry.cardHeights.bench;
+    const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
+    const atTop = hidden === 'upper';
+    stadium = {
+      x: atTop
+        ? Math.min(
+            playAreaWidth - stadiumWidth - 8,
+            active.x + active.width + stadiumWidth * 0.35
+          )
+        : Math.max(8, active.x - stadiumWidth * 1.35),
+      y: atTop ? active.y : active.y + active.height - stadiumHeight,
+      width: stadiumWidth,
+      height: stadiumHeight,
+    };
+    const band = shown.geometry.seamMargin;
+    const controlsHeight = Math.max(
+      20,
+      Math.min(32, band - 2 * SOLO_CONTROLS_GAP_PX)
+    );
+    controls = {
+      y: atTop
+        ? Math.max(0, active.y - SOLO_CONTROLS_GAP_PX - controlsHeight)
+        : Math.min(
+            state.viewport.height - controlsHeight,
+            active.y + active.height + SOLO_CONTROLS_GAP_PX
+          ),
+      height: controlsHeight,
+    };
+    controlsLeft = shown.geometry.middle.left;
+  }
 
   const handle = (
     id: BoardResizeHandleId,
@@ -448,17 +604,12 @@ export const createTableLayoutSnapshot = (
     shared: {
       stadium: {
         ...semantics.shared.stadium,
-        physicalDeclaredBounds: {
-          x: stadiumX,
-          y: seamY - stadiumHeight / 2,
-          width: stadiumWidth,
-          height: stadiumHeight,
-        },
+        physicalDeclaredBounds: stadium,
       },
       boardControlsAnchor: {
-        x: lower.geometry.middle.left,
-        y: seamY - controlsHeight / 2,
-        height: controlsHeight,
+        x: controlsLeft,
+        y: controls.y,
+        height: controls.height,
       },
     },
     zoneScrollPx: {},
@@ -477,26 +628,9 @@ export const resizeTableLayoutState = (
   if (!Number.isFinite(clientY)) {
     throw new Error('Board resize pointer clientY must be finite');
   }
-  const seam = Math.min(
-    1 - MINIMUM_HALF_SHARE,
-    Math.max(MINIMUM_HALF_SHARE, clientY / state.viewport.height)
-  );
-  const lowerShare = 1 - seam;
   return {
     ...state,
-    vertical: {
-      lowerFrame: { bottomRatio: 0, heightRatio: lowerShare },
-      upperFrame: { bottomRatio: lowerShare, heightRatio: seam },
-      lowerHandle: {
-        bottomRatio: lowerShare,
-        heightRatio: HANDLE_HEIGHT_RATIO,
-      },
-      upperHandle: {
-        bottomRatio: Math.min(1, lowerShare + 0.03),
-        heightRatio: HANDLE_HEIGHT_RATIO,
-      },
-      sharedPlacement: 'handleMidpoint',
-    },
+    vertical: tableVerticalLayout(1 - clientY / state.viewport.height),
   };
 };
 

@@ -28,6 +28,7 @@ import type { LegacyAnnouncementScheduler } from '../presentation/LegacyGamePres
 import { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
 import { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -41,6 +42,9 @@ const boardHarness = vi.hoisted(() => ({
         readonly onIntent: (intent: BoardIntent) => void;
         readonly playmatExpanded: boolean;
         readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
+        readonly hideOpponentHand: boolean;
+        readonly boardViewOpen: boolean;
+        readonly onBoardViewOpenChange?: (open: boolean) => void;
       }
     | undefined,
 }));
@@ -60,6 +64,9 @@ vi.mock('./RemoteSessionBoard.js', async () => {
       readonly onIntent: (intent: BoardIntent) => void;
       readonly playmatExpanded?: boolean;
       readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
+      readonly hideOpponentHand?: boolean;
+      readonly boardViewOpen?: boolean;
+      readonly onBoardViewOpenChange?: (open: boolean) => void;
     }) => {
       const state = React.useSyncExternalStore(
         props.replay.subscribe,
@@ -77,6 +84,11 @@ vi.mock('./RemoteSessionBoard.js', async () => {
               ? {
                   onPlaymatExpandedChange: props.onPlaymatExpandedChange,
                 }
+              : {}),
+            hideOpponentHand: props.hideOpponentHand ?? false,
+            boardViewOpen: props.boardViewOpen ?? false,
+            ...(props.onBoardViewOpenChange
+              ? { onBoardViewOpenChange: props.onBoardViewOpenChange }
               : {}),
           }
         : undefined;
@@ -176,6 +188,7 @@ describe('RemoteRoomRoute', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     boardHarness.props = undefined;
+    boardViewSettings().reset();
   });
 
   it('renders a live solo room through the source p1 shell and navigation seam', async () => {
@@ -563,14 +576,16 @@ describe('RemoteRoomRoute', () => {
     expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(false);
     expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(true);
     expect(host.querySelector('#darkModeCheckbox')).not.toBeNull();
-    expect(host.querySelector('#showZonesCheckbox')).not.toBeNull();
-    expect(host.querySelector('#hideHandCheckbox')).not.toBeNull();
+    // How the table is shown moved to the Board view panel over the table.
+    expect(host.querySelector('#showZonesCheckbox')).toBeNull();
+    expect(host.querySelector('#hideHandCheckbox')).toBeNull();
+    expect(host.querySelector('#openBoardViewButton')?.textContent).toBe(
+      'Open board view'
+    );
     expect(host.querySelector('#changeBackgroundButton')?.textContent).toBe(
       'Change background'
     );
     expect(host.textContent).toContain('Dark mode');
-    expect(host.textContent).toContain('Hide containers');
-    expect(host.textContent).toContain("Hide opponent's hand (Solo mode)");
     expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
     const contact = host.querySelector<HTMLAnchorElement>(
       '#twitterDescription a'
@@ -623,9 +638,16 @@ describe('RemoteRoomRoute', () => {
     );
     expect(document.documentElement.dataset.theme).toBe('day');
 
+    // Settings opens the Board view panel; the board owns the panel.
+    expect(boardHarness.props?.boardViewOpen).toBe(false);
     await act(async () =>
-      (host.querySelector('#showZonesCheckbox') as HTMLInputElement).click()
+      (host.querySelector('#openBoardViewButton') as HTMLButtonElement).click()
     );
+    expect(boardHarness.props?.boardViewOpen).toBe(true);
+    await act(async () => boardHarness.props?.onBoardViewOpenChange?.(false));
+    expect(boardHarness.props?.boardViewOpen).toBe(false);
+    // The panel's choices reach the board without a command.
+    await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(boardHarness.props?.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
@@ -634,11 +656,9 @@ describe('RemoteRoomRoute', () => {
     });
     const preferencesBeforeHideHand = boardHarness.props?.preferences;
     await act(async () =>
-      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).click()
+      boardViewSettings().update({ hideOpponentHand: true })
     );
-    expect(
-      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).checked
-    ).toBe(true);
+    expect(boardHarness.props?.hideOpponentHand).toBe(true);
     expect(host.querySelector('main')?.dataset.roomBackground).toBe('image');
     expect(boardHarness.props?.preferences).toBe(preferencesBeforeHideHand);
     expect(socket.sent).toHaveLength(sentBeforeSettings);
@@ -749,12 +769,8 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#darkModeCheckbox') as HTMLInputElement).checked
     ).toBe(false);
-    expect(
-      (host.querySelector('#showZonesCheckbox') as HTMLInputElement).checked
-    ).toBe(true);
-    expect(
-      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).checked
-    ).toBe(true);
+    expect(boardHarness.props?.preferences?.showZoneOutlines).toBe(false);
+    expect(boardHarness.props?.hideOpponentHand).toBe(true);
     await act(async () =>
       (host.querySelector('#p1Button') as HTMLButtonElement).click()
     );

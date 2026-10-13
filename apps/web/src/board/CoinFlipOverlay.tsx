@@ -42,9 +42,13 @@ export const coinAnchor = (
   layout: BoardLayoutSnapshot,
   playerId: string | undefined
 ): CoinAnchor => {
+  // A half the viewer has hidden cannot show its coin: it lands on the
+  // half that is showing.
+  const shown = layout.players.filter((candidate) => !candidate.hidden);
   const frame =
-    layout.players.find((candidate) => candidate.playerId === playerId) ??
-    layout.players.find((candidate) => candidate.physicalSide === 'lower') ??
+    shown.find((candidate) => candidate.playerId === playerId) ??
+    shown.find((candidate) => candidate.physicalSide === 'lower') ??
+    shown[0] ??
     layout.players[0];
   const size = Math.min(96, Math.max(44, frame.frameBounds.height * 0.2));
   const active = frame.regions.find((region) => region.kind === 'active');

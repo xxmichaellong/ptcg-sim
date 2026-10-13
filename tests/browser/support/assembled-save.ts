@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { chooseTableView, closeBoardView } from './board-view.js';
 
 /** Install and assemble a custom print through production UI only. */
 export const assembleSavedPrint = async (page: Page) => {
@@ -19,8 +20,8 @@ export const assembleSavedPrint = async (page: Page) => {
       .map(quote)
       .join(',')
   );
-  await page.locator('#settingsButton').click();
-  await page.locator('#tableViewSelect').selectOption('table');
+  await chooseTableView(page, 'table');
+  await closeBoardView(page);
   await page.locator('#deckImportButton').click();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'assembled-save.csv',

@@ -22,6 +22,7 @@ import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import { depthSettings } from '../motion/depth-settings.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
@@ -130,9 +131,6 @@ export interface RemoteRoomRouteProps {
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
-  /** Source-shaped local checkbox state; multiplayer projections stay unchanged. */
-  readonly hideOpponentHand?: boolean;
-  readonly onHideOpponentHandChange?: (hidden: boolean) => void;
   /** Page-local visual only; no room, replay, renderer, or storage ownership. */
   readonly background?: RoomBackground;
   readonly onBackgroundChange?: (background: RoomBackground) => void;
@@ -170,8 +168,6 @@ export const RemoteRoomRoute = ({
   onCopyInvitation,
   preferences: ownedPreferences,
   onPreferencesChange,
-  hideOpponentHand: ownedHideOpponentHand,
-  onHideOpponentHandChange,
   background: ownedBackground,
   onBackgroundChange,
   requestBackground,
@@ -232,13 +228,15 @@ export const RemoteRoomRoute = ({
   const [localPreferences, setLocalPreferences] = useState<
     BoardPreferences | undefined
   >(ownedPreferences);
-  const [localHideOpponentHand, setLocalHideOpponentHand] = useState(
-    ownedHideOpponentHand ?? false
-  );
   const preferences = onPreferencesChange ? ownedPreferences : localPreferences;
-  const hideOpponentHand = onHideOpponentHandChange
-    ? (ownedHideOpponentHand ?? false)
-    : localHideOpponentHand;
+  // How the table is shown is the player's own, kept on this device and
+  // edited from the Board view panel.
+  const boardView = useSyncExternalStore(
+    boardViewSettings().subscribe,
+    boardViewSettings().getSnapshot
+  );
+  const hideOpponentHand = boardView.hideOpponentHand;
+  const [boardViewOpen, setBoardViewOpen] = useState(false);
   const motion = useSyncExternalStore(
     motionSettings().subscribe,
     motionSettings().getSnapshot
@@ -260,6 +258,7 @@ export const RemoteRoomRoute = ({
     } = storedPreferences;
     return {
       ...rest,
+      showZoneOutlines: boardView.zoneOutlines,
       ...(depth.mode === 'flat' ? {} : { depth }),
       reducedMotion: motion.reduced,
       // The renderer treats an absent speed as normal.
@@ -267,7 +266,13 @@ export const RemoteRoomRoute = ({
         ? {}
         : { animationSpeed: motion.durationScale }),
     };
-  }, [storedPreferences, motion.reduced, motion.durationScale, depth]);
+  }, [
+    storedPreferences,
+    motion.reduced,
+    motion.durationScale,
+    depth,
+    boardView.zoneOutlines,
+  ]);
   // The whole page wears the table's theme (Night or Day). Its motion
   // choice is published page-wide from main.tsx (installPageMotion).
   useEffect(() => {
@@ -283,16 +288,6 @@ export const RemoteRoomRoute = ({
       ...effectivePreferences,
       darkMode: enabled,
     });
-  };
-  const setZoneOutlines = (visible: boolean): void => {
-    publishPreferences({
-      ...effectivePreferences,
-      showZoneOutlines: visible,
-    });
-  };
-  const setHideOpponentHand = (hidden: boolean): void => {
-    if (onHideOpponentHandChange) onHideOpponentHandChange(hidden);
-    else setLocalHideOpponentHand(hidden);
   };
   const downloadPerspectiveReplay = (
     artifact: ProjectedReplayArtifact
@@ -398,6 +393,8 @@ export const RemoteRoomRoute = ({
                 onPlaymatExpandedChange={setPlaymatExpanded}
                 onPerspectiveChange={setPerspective}
                 coinFlip={runtime.presentation.coinFlip}
+                boardViewOpen={boardViewOpen}
+                onBoardViewOpenChange={setBoardViewOpen}
               />
             </section>
             <aside
@@ -652,10 +649,8 @@ export const RemoteRoomRoute = ({
               <RemoteRoomSettings
                 hidden={activePanel !== 'settings'}
                 preferences={effectivePreferences}
-                hideOpponentHand={hideOpponentHand}
                 onDarkModeChange={setDarkMode}
-                onZoneOutlinesChange={setZoneOutlines}
-                onHideOpponentHandChange={setHideOpponentHand}
+                onOpenBoardView={() => setBoardViewOpen(true)}
                 onChangeBackground={backgroundSelection.chooseBackground}
               />
               {deckActivated && (

@@ -6,16 +6,18 @@ import {
   type AnimationSpeed,
   type ReduceMotionChoice,
 } from '../motion/motion-settings.js';
+import { BOARD_VIEW_TRIGGER_ATTRIBUTE } from '../board/view/BoardViewPanel.js';
 import { UiButton } from '../ui/Button.js';
-import { TableDepthSettings } from './TableDepthSettings.js';
 
 export interface RemoteRoomSettingsProps {
   readonly hidden: boolean;
   readonly preferences: BoardPreferences;
-  readonly hideOpponentHand: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
-  readonly onZoneOutlinesChange: (visible: boolean) => void;
-  readonly onHideOpponentHandChange: (hidden: boolean) => void;
+  /**
+   * Opens the Board view panel over the table, where every choice about how
+   * the table looks lives. Absent while there is no table to show it on.
+   */
+  readonly onOpenBoardView?: () => void;
   readonly onChangeBackground: () => void;
 }
 
@@ -94,16 +96,14 @@ const MotionSettingsControls = () => {
 /**
  * Source-shaped, route-local Settings surface. Only controls with a closed
  * client-only parity contract are mounted here; authority and browser storage
- * are intentionally outside this component. The Solo-only hand preference
- * remains local to this browser.
+ * are intentionally outside this component. How the table itself is shown
+ * (halves, split, depth, outlines) lives in the Board view panel.
  */
 export const RemoteRoomSettings = ({
   hidden,
   preferences,
-  hideOpponentHand,
   onDarkModeChange,
-  onZoneOutlinesChange,
-  onHideOpponentHandChange,
+  onOpenBoardView,
   onChangeBackground,
 }: RemoteRoomSettingsProps) => (
   <section
@@ -128,34 +128,24 @@ export const RemoteRoomSettings = ({
         />
         <label htmlFor="darkModeCheckbox">Dark mode</label>
       </div>
-      <div className="ds-switch-row">
-        <input
-          type="checkbox"
-          className="ds-switch"
-          id="showZonesCheckbox"
-          checked={!preferences.showZoneOutlines}
-          onChange={(event) =>
-            onZoneOutlinesChange(!event.currentTarget.checked)
-          }
-        />
-        <label htmlFor="showZonesCheckbox">Hide containers</label>
-      </div>
-      <div className="ds-switch-row">
-        <input
-          type="checkbox"
-          className="ds-switch"
-          id="hideHandCheckbox"
-          checked={hideOpponentHand}
-          onChange={(event) =>
-            onHideOpponentHandChange(event.currentTarget.checked)
-          }
-        />
-        <label htmlFor="hideHandCheckbox">
-          Hide opponent&apos;s hand (Solo mode)
-        </label>
-      </div>
     </div>
-    <TableDepthSettings />
+    {onOpenBoardView && (
+      <>
+        <h3 className="table-settings-section">Board view</h3>
+        <p className="table-settings-note">
+          Show one half or both, change the split and the depth, and choose
+          outlines and previews.
+        </p>
+        <UiButton
+          id="openBoardViewButton"
+          type="button"
+          {...{ [BOARD_VIEW_TRIGGER_ATTRIBUTE]: 'true' }}
+          onClick={onOpenBoardView}
+        >
+          Open board view
+        </UiButton>
+      </>
+    )}
     <h3 className="table-settings-section">Motion</h3>
     <MotionSettingsControls />
     <p className="table-settings-note">

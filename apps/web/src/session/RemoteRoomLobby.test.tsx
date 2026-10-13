@@ -22,6 +22,7 @@ import {
 } from './RemoteRoomLobby.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type { RoomBackground } from './browser-room-background.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -35,9 +36,6 @@ const roomRouteHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
   onPreferencesChange: undefined as
     ((preferences: BoardPreferences) => void) | undefined,
-  hideOpponentHand: false,
-  onHideOpponentHandChange: undefined as
-    ((hidden: boolean) => void) | undefined,
   background: undefined as RoomBackground | undefined,
   onBackgroundChange: undefined as
     ((background: RoomBackground) => void) | undefined,
@@ -86,8 +84,6 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onLeave,
     preferences,
     onPreferencesChange,
-    hideOpponentHand,
-    onHideOpponentHandChange,
     background,
     onBackgroundChange,
     roomMode,
@@ -104,8 +100,6 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onLeave?: () => void;
     readonly preferences?: BoardPreferences;
     readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
-    readonly hideOpponentHand?: boolean;
-    readonly onHideOpponentHandChange?: (hidden: boolean) => void;
     readonly background?: RoomBackground;
     readonly onBackgroundChange?: (background: RoomBackground) => void;
     readonly roomMode?: 'solo' | 'multiplayer';
@@ -126,8 +120,6 @@ vi.mock('./RemoteRoomRoute.js', () => ({
   }) => {
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
-    roomRouteHarness.hideOpponentHand = hideOpponentHand ?? false;
-    roomRouteHarness.onHideOpponentHandChange = onHideOpponentHandChange;
     roomRouteHarness.background = background;
     roomRouteHarness.onBackgroundChange = onBackgroundChange;
     roomRouteHarness.roomMode = roomMode;
@@ -364,8 +356,7 @@ describe('remote room lobby wiring', () => {
     lobbyBoardHarness.preferences = undefined;
     roomRouteHarness.preferences = undefined;
     roomRouteHarness.onPreferencesChange = undefined;
-    roomRouteHarness.hideOpponentHand = false;
-    roomRouteHarness.onHideOpponentHandChange = undefined;
+    boardViewSettings().reset();
     roomRouteHarness.background = undefined;
     roomRouteHarness.onBackgroundChange = undefined;
     roomRouteHarness.roomMode = undefined;
@@ -439,24 +430,20 @@ describe('remote room lobby wiring', () => {
     await act(async () =>
       element<HTMLInputElement>(host, '#darkModeCheckbox').click()
     );
-    await act(async () =>
-      element<HTMLInputElement>(host, '#showZonesCheckbox').click()
-    );
     // The room starts on the Night table; the checkbox turns it to Day.
     expect(lobbyBoardHarness.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
       darkMode: false,
-      showZoneOutlines: false,
+      showZoneOutlines: true,
     });
-    const preferencesBeforeHideHand = lobbyBoardHarness.preferences;
-    await act(async () =>
-      element<HTMLInputElement>(host, '#hideHandCheckbox').click()
-    );
-    expect(element<HTMLInputElement>(host, '#hideHandCheckbox').checked).toBe(
-      true
-    );
-    expect(lobbyBoardHarness.preferences).toBe(preferencesBeforeHideHand);
+    // The table's own view (outlines, halves, depth) lives in the Board view
+    // panel, which needs a table to open over.
+    expect(host.querySelector('#showZonesCheckbox')).toBeNull();
+    expect(host.querySelector('#hideHandCheckbox')).toBeNull();
+    expect(host.querySelector('#openBoardViewButton')).toBeNull();
+    await act(async () => boardViewSettings().update({ zoneOutlines: false }));
+    expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
     expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
     expect(element(host, '#changeBackgroundButton').textContent).toBe(
       'Change background'
@@ -1185,9 +1172,6 @@ describe('remote room lobby wiring', () => {
     await act(async () =>
       element<HTMLButtonElement>(host, '#settingsButton').click()
     );
-    await act(async () =>
-      element<HTMLInputElement>(host, '#hideHandCheckbox').click()
-    );
     await act(async () => {
       element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
       await flush();
@@ -1209,13 +1193,12 @@ describe('remote room lobby wiring', () => {
       reducedMotion: false,
       highContrast: false,
       darkMode: true,
-      showZoneOutlines: false,
+      showZoneOutlines: true,
     };
     await act(async () =>
       roomRouteHarness.onPreferencesChange?.(retainedPreferences)
     );
     expect(roomRouteHarness.preferences).toEqual(retainedPreferences);
-    expect(roomRouteHarness.hideOpponentHand).toBe(true);
     expect(roomRouteHarness.background).toEqual({
       kind: 'image',
       url: 'https://images.example.test/retained.png',
@@ -1238,12 +1221,6 @@ describe('remote room lobby wiring', () => {
     expect(host.querySelector('.lobby-status')).toBeNull();
     expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
     expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
-      true
-    );
-    expect(element<HTMLInputElement>(host, '#showZonesCheckbox').checked).toBe(
-      true
-    );
-    expect(element<HTMLInputElement>(host, '#hideHandCheckbox').checked).toBe(
       true
     );
     expect(

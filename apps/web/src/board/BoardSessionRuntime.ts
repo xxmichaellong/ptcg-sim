@@ -5,10 +5,12 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   flipBoardLayoutState,
   resizeLayoutStateFor,
+  tableVerticalLayout,
   type BoardCardHover,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type BoardIntent,
+  type BoardPhysicalSide,
   type BoardPreferences,
   type BoardPresentation,
   type BoardRenderer,
@@ -111,6 +113,7 @@ const sameLayoutState = (
   left.vertical.upperHandle.heightRatio ===
     right.vertical.upperHandle.heightRatio &&
   left.vertical.sharedPlacement === right.vertical.sharedPlacement &&
+  left.hiddenPhysicalSide === right.hiddenPhysicalSide &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -459,6 +462,24 @@ export class BoardSessionRuntime {
     this.replaceLayoutState(
       resizeLayoutStateFor(this.layoutState, handleId, clientY)
     );
+  }
+
+  /**
+   * The viewer's board view on the play-mat table: how the height is split
+   * between the halves, and a half they would rather not see.
+   */
+  setTableView(view: {
+    readonly lowerShare: number;
+    readonly hiddenPhysicalSide?: BoardPhysicalSide;
+  }): void {
+    const { hiddenPhysicalSide: _previous, ...rest } = this.layoutState;
+    this.replaceLayoutState({
+      ...rest,
+      vertical: tableVerticalLayout(view.lowerShare),
+      ...(view.hiddenPhysicalSide
+        ? { hiddenPhysicalSide: view.hiddenPhysicalSide }
+        : {}),
+    });
   }
 
   dispose(): void {

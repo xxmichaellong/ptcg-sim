@@ -478,9 +478,13 @@ textarea {
   flex: 1;
   padding-block: var(--space-2);
 }
-.remote-room-route .legacy-room-settings #changeBackgroundButton {
+.remote-room-route .legacy-room-settings #changeBackgroundButton,
+.remote-room-route .legacy-room-settings #openBoardViewButton {
   width: 100%;
   margin: var(--space-4) 0 var(--space-2);
+}
+.remote-room-route .legacy-room-settings #openBoardViewButton {
+  margin-top: var(--space-2);
 }
 .remote-room-route .legacy-room-settings #keybindReminder {
   color: var(--color-text-muted);

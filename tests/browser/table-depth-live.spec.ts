@@ -4,6 +4,12 @@ import {
   DEFAULT_BOARD_DEPTH,
   DEFAULT_BOARD_PREFERENCES,
 } from '../../packages/renderer-contract/src/index.js';
+import {
+  chooseTableView,
+  closeBoardView,
+  openBoardView,
+  tableViewChoice,
+} from './support/board-view.js';
 
 const browserErrors = new WeakMap<Page, Promise<string>[]>();
 test.beforeEach(({ page }) => {
@@ -209,16 +215,19 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
   expect(initial.counts).toContain('47');
   expect(initial.countsAboveCards).toBe(true);
   expect(initial.extraBoxes).toBe(0);
-  await page.locator('#settingsButton').click();
-  for (const mode of ['flat', 'depth', 'table']) {
-    await page.locator('#tableViewSelect').selectOption(mode);
+  for (const mode of ['flat', 'depth', 'table'] as const) {
+    await chooseTableView(page, mode);
     await expect.poll(async () => (await paint()).countsAboveCards).toBe(true);
     expect((await paint()).labels.sort()).toEqual(expectedLabels);
   }
+  await closeBoardView(page);
+  await page.locator('#settingsButton').click();
   await page.locator('#darkModeCheckbox').uncheck();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
   await expect.poll(async () => (await paint()).color).not.toBe(initial.color);
-  await page.locator('#showZonesCheckbox').check();
+  await openBoardView(page);
+  await page.locator('#zoneOutlinesCheckbox').uncheck();
+  await closeBoardView(page);
   await expect.poll(async () => (await paint()).labels).toEqual([]);
   expect((await paint()).counts).toContain('47');
   const current = await scene(page);
@@ -237,7 +246,9 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
   await page.mouse.dblclick(point.x, point.y);
   await expect(page.locator('[data-legacy-zone-browser]')).toBeVisible();
   await page.keyboard.press('Escape');
-  await page.locator('#showZonesCheckbox').uncheck();
+  await openBoardView(page);
+  await page.locator('#zoneOutlinesCheckbox').check();
+  await closeBoardView(page);
   await page.locator('#darkModeCheckbox').check();
   await expect.poll(async () => (await paint()).color).toBe(initial.color);
   expect((await paint()).labels.sort()).toEqual(expectedLabels);
@@ -264,9 +275,10 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   test.setTimeout(90000);
   await start(page);
   await idle(page);
-  await page.locator('#settingsButton').click();
+  await openBoardView(page);
   await page.locator('#tableTiltRange').fill('18');
   await page.keyboard.press('Escape');
+  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
   const hand = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${hand.id}"]`).click();
   await page.keyboard.press('a');
@@ -492,13 +504,13 @@ for (const requestedRenderer of ['dom', 'pixi']) {
     await page.waitForTimeout(1200);
     await idle(page, renderer);
     expect(await resources()).toEqual(before);
-    await page.locator('#settingsButton').click();
     for (let cycle = 0; cycle < 8; cycle++) {
-      for (const mode of ['flat', 'depth', 'table']) {
-        await page.locator('#tableViewSelect').selectOption(mode);
+      for (const mode of ['flat', 'depth', 'table'] as const) {
+        await chooseTableView(page, mode);
         await expect(page.locator(`[data-table-view="${mode}"]`)).toBeVisible();
       }
     }
+    await closeBoardView(page);
     await page.keyboard.press('Escape');
     await page.mouse.move(15, 15);
     await idle(page, renderer);
@@ -599,11 +611,11 @@ for (const requestedRenderer of ['dom', 'pixi']) {
           )?.count
       )
       .toBe(0);
-    await page.locator('#settingsButton').click();
-    await expect(page.locator('#tableViewSelect')).toHaveValue('table');
-    await page.locator('#tableViewSelect').selectOption('depth');
+    await openBoardView(page);
+    await expect(tableViewChoice(page, 'table')).toBeChecked();
+    await chooseTableView(page, 'depth');
     await expect(page.locator('[data-table-view="depth"]')).toBeVisible();
-    await page.locator('#tableViewSelect').selectOption('flat');
+    await chooseTableView(page, 'flat');
     await expect(page.locator('[data-table-view="flat"]')).toBeVisible();
     expect(
       await page.evaluate(
@@ -735,9 +747,9 @@ test('optional parallax settles without an idle clock and freezes the camera dur
   page,
 }) => {
   await start(page);
-  await page.locator('#settingsButton').click();
+  await openBoardView(page);
   await page.locator('#tableParallaxCheckbox').check();
-  await page.locator('#p1Button').click();
+  await closeBoardView(page);
   await idle(page);
   const deck = await cardIn(page, 'deck');
   const node = page.locator(`[data-card-id="${deck.id}"]`);

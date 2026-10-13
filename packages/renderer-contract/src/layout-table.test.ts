@@ -7,12 +7,14 @@ import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   TABLE_CONTROL_CORNER_PX,
   TABLE_LAYOUT_GEOMETRY_VERSION,
+  TABLE_SPLIT,
   createLayoutSnapshotFor,
   createTableLayoutSnapshot,
   layoutTableHand,
   layoutTablePrizes,
   resizeLayoutStateFor,
   tableRailWidth,
+  tableVerticalLayout,
 } from './layout-table.js';
 import type { Rect } from './model.js';
 import { createBoardScene } from './scene.js';
@@ -365,5 +367,149 @@ describe('table layout (geometry v2)', () => {
       resizeLayoutStateFor(state, 'lower', 900).vertical.lowerFrame.heightRatio
     ).toBeCloseTo(0.34, 5);
     expect(() => createLayoutSnapshotFor(dragged)).not.toThrow();
+  });
+
+  it('sets the split from a share of the table, clamped so both halves stay usable', () => {
+    expect(DEFAULT_TABLE_VERTICAL_LAYOUT).toEqual(
+      tableVerticalLayout(TABLE_SPLIT.defaultLowerShare)
+    );
+    const tall = tableVerticalLayout(0.6);
+    expect(tall.lowerFrame).toEqual({ bottomRatio: 0, heightRatio: 0.6 });
+    expect(tall.upperFrame.bottomRatio).toBeCloseTo(0.6, 5);
+    expect(tall.upperFrame.heightRatio).toBeCloseTo(0.4, 5);
+    expect(tableVerticalLayout(0.9).lowerFrame.heightRatio).toBe(
+      TABLE_SPLIT.maximumLowerShare
+    );
+    expect(tableVerticalLayout(0).lowerFrame.heightRatio).toBe(
+      TABLE_SPLIT.minimumLowerShare
+    );
+    expect(tableVerticalLayout(Number.NaN)).toEqual(
+      DEFAULT_TABLE_VERTICAL_LAYOUT
+    );
+  });
+
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 720],
+    [1024, 768],
+    [1920, 1080],
+  ] as const) {
+    for (const hidden of ['upper', 'lower'] as const) {
+      it(`gives one half the whole table when the ${hidden} half is hidden (${width}x${height})`, () => {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, { hiddenPhysicalSide: hidden })
+        );
+        const table = snapshot.playAreaBounds;
+        const shown = snapshot.players.find(
+          (player) => player.physicalSide !== hidden
+        )!;
+        const gone = snapshot.players.find(
+          (player) => player.physicalSide === hidden
+        )!;
+        expect(shown.hidden).toBeUndefined();
+        expect(gone.hidden).toBe(true);
+        expect(shown.frameBounds).toEqual(table);
+        // The hidden half lies wholly past the table's edge on its own side.
+        if (hidden === 'upper') {
+          expect(gone.frameBounds.y + gone.frameBounds.height).toBe(0);
+        } else {
+          expect(gone.frameBounds.y).toBe(table.height);
+        }
+
+        const regions = shown.regions.map(
+          (candidate) => candidate.physicalDeclaredBounds
+        );
+        for (const candidate of shown.regions) {
+          expect(
+            inside(candidate.physicalDeclaredBounds, table),
+            candidate.kind
+          ).toBe(true);
+        }
+        for (const left of regions) {
+          for (const right of regions) {
+            if (left !== right) expect(overlaps(left, right)).toBe(false);
+          }
+        }
+        // The hand still runs along the player's own edge of the screen.
+        const hand = shown.regions.find(
+          (candidate) => candidate.kind === 'hand'
+        )!.physicalDeclaredBounds;
+        if (hidden === 'upper') {
+          expect(hand.y + hand.height).toBeCloseTo(table.height, 5);
+        } else {
+          expect(hand.y).toBeCloseTo(0, 5);
+        }
+        // Cards grow no further than lets five fit across the bench.
+        const bench = shown.regions.find(
+          (candidate) => candidate.kind === 'bench'
+        )!.physicalDeclaredBounds;
+        expect(5 * bench.height * CARD_ASPECT_RATIO).toBeLessThanOrEqual(
+          bench.width
+        );
+        const split = createTableLayoutSnapshot(stateAt(width, height));
+        const splitBench = split.players
+          .find((player) => player.physicalSide !== hidden)!
+          .regions.find(
+            (candidate) => candidate.kind === 'bench'
+          )!.physicalDeclaredBounds;
+        expect(bench.height).toBeGreaterThanOrEqual(splitBench.height);
+
+        // The Stadium stays on the table beside the Active, clear of every
+        // zone, and the controls sit in the clear band at the table's edge.
+        const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+        expect(inside(stadium, table)).toBe(true);
+        for (const candidate of regions) {
+          expect(overlaps(stadium, candidate)).toBe(false);
+        }
+        const anchor = snapshot.shared.boardControlsAnchor;
+        expect(anchor.height).toBeGreaterThanOrEqual(20);
+        const controls: Rect = {
+          x: anchor.x,
+          y: anchor.y,
+          width: 200,
+          height: anchor.height,
+        };
+        expect(inside(controls, table)).toBe(true);
+        for (const candidate of regions) {
+          expect(overlaps(controls, candidate)).toBe(false);
+        }
+      });
+    }
+  }
+
+  it('leaves a hidden half out of the scene but keeps the shared Stadium', () => {
+    const view: MatchViewState = createRendererSpikeView();
+    const both = createBoardScene(
+      view,
+      createTableLayoutSnapshot(stateAt(1440, 900))
+    );
+    const scene = createBoardScene(
+      view,
+      createTableLayoutSnapshot(
+        stateAt(1440, 900, { hiddenPhysicalSide: 'upper' })
+      )
+    );
+    expect(both.cards.some((card) => card.side === 'opponent')).toBe(true);
+    expect(scene.cards.some((card) => card.side === 'opponent')).toBe(false);
+    expect(scene.zones.some((zone) => zone.side === 'opponent')).toBe(false);
+    expect(scene.counts.some((count) => count.side === 'opponent')).toBe(false);
+    const shownCards = new Set(scene.cards.map((card) => card.id));
+    expect(
+      scene.markers.every((marker) => shownCards.has(marker.parentCardId))
+    ).toBe(true);
+    expect(scene.zones.some((zone) => zone.side === 'shared')).toBe(true);
+    expect(scene.cards.filter((card) => card.side === 'local').length).toBe(
+      both.cards.filter((card) => card.side === 'local').length
+    );
+    expect(
+      scene.layout.players.find((frame) => frame.side === 'opponent')!.hidden
+    ).toBe(true);
+    expect(() =>
+      createTableLayoutSnapshot(
+        stateAt(1440, 900, {
+          hiddenPhysicalSide: 'left' as unknown as 'upper',
+        })
+      )
+    ).toThrow('Unsupported hidden board side');
   });
 });

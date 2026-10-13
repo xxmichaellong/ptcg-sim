@@ -1330,17 +1330,22 @@ export const BoardSurface = ({
             }}
           />
         ) : null}
-        {scene.layout.players.map((frame) => (
-          <PlayerFrameNode
-            key={frame.playerId}
-            frame={frame}
-            darkMode={preferences.darkMode}
-            table={table}
-          />
-        ))}
-        {scene.layout.resizeHandles.map((handle) => (
-          <ResizeHandleNode key={handle.id} handle={handle} />
-        ))}
+        {scene.layout.players
+          .filter((frame) => !frame.hidden)
+          .map((frame) => (
+            <PlayerFrameNode
+              key={frame.playerId}
+              frame={frame}
+              darkMode={preferences.darkMode}
+              table={table}
+            />
+          ))}
+        {/* The table's split is set from the board view, not dragged. */}
+        {table
+          ? null
+          : scene.layout.resizeHandles.map((handle) => (
+              <ResizeHandleNode key={handle.id} handle={handle} />
+            ))}
         <BoardControlsAnchorNode
           anchor={scene.layout.shared.boardControlsAnchor}
         />

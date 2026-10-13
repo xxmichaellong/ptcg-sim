@@ -217,6 +217,8 @@ export interface BoardScenePlayerFrame {
   readonly physicalSide: 'lower' | 'upper';
   readonly rotationQuarterTurns: 0 | 2;
   readonly bounds: Rect;
+  /** Hidden by the viewer: none of this half's zones or cards are in the scene. */
+  readonly hidden?: true;
 }
 
 export interface BoardSceneResizeHandle {

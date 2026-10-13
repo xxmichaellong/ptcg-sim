@@ -256,24 +256,22 @@ test('development route reaches and resumes a real durable room through the same
   await expect(page.locator('#turnButton')).toBeVisible();
   await expect(page.locator('#flipCoinButton')).toBeVisible();
   await expect(page.locator('#flipBoardButton')).toHaveCount(0);
-  await expect(page.locator('#selfResizer')).toBeVisible();
-  await expect(page.locator('#oppResizer')).toBeVisible();
-
-  const lowerHandleBefore = await page.locator('#selfResizer').boundingBox();
-  if (!lowerHandleBefore) throw new Error('Missing lower resize handle bounds');
-  await page.mouse.move(
-    lowerHandleBefore.x + lowerHandleBefore.width / 2,
-    lowerHandleBefore.y + lowerHandleBefore.height / 2
-  );
-  await page.mouse.down();
-  await page.mouse.move(
-    lowerHandleBefore.x + lowerHandleBefore.width / 2,
-    lowerHandleBefore.y + lowerHandleBefore.height / 2 + 40
-  );
-  await page.mouse.up();
+  // The split is set from the Board view panel; there are no drag handles.
+  await expect(page.locator('#selfResizer')).toHaveCount(0);
+  await expect(page.locator('#oppResizer')).toHaveCount(0);
+  const seam = page.locator('#boardButtonContainer');
+  const seamBefore = await seam.boundingBox();
+  if (!seamBefore) throw new Error('Missing board controls');
+  await page.locator('#boardViewButton').click();
+  await expect(page.locator('#boardViewPanel')).toBeVisible();
+  await page.locator('#boardSplitRange').fill('60');
+  // A bigger bottom half moves the seam up.
   await expect
-    .poll(async () => (await page.locator('#selfResizer').boundingBox())?.y)
-    .not.toBe(lowerHandleBefore.y);
+    .poll(async () => (await seam.boundingBox())?.y ?? 0)
+    .toBeLessThan(seamBefore.y - 20);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
+  await expect(page.locator('#boardViewButton')).toBeFocused();
 
   const routeRenderer = await page.evaluateHandle(
     () => window.__PTCG_RENDERER_SPIKE__?.renderer

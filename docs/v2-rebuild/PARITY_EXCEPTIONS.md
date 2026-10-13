@@ -58,6 +58,21 @@ is a single toggle; restoring v1 means reverting the named resolver.
 | PX-020 | A card dropped from play or a work area onto an occupied Stadium is refused.                       | It replaces the Stadium, as G does; the displaced pieces go to their owners' discards in the same revision.                                                     | `PRODUCT_REQUEST` | `resolveBoardDrop.test.ts` (PX-020 case), `stadium-movement-command.test.ts`   |
 | PX-021 | An overflowing hand keeps full-size cards and scrolls (`#hand { overflow-x: auto }`).              | On the redesigned table (geometry v2) the hand fans its cards, overlapping them evenly so all stay on screen; a hovered card rises. Owner informed 2026-10-09.  | `PRODUCT_REQUEST` | `layout-table.test.ts` ("overlaps it when crowded")                            |
 
+### The Board view panel (2026-10-13)
+
+The owner asked to replace the split's drag handles with one place that sets
+how the table is shown. It applies to the redesigned table (geometry v2);
+v1's geometry and its handles are unchanged.
+
+| ID     | V1 behavior                                                                                                            | V2 disposition                                                                                                                                                                                                                       | Reason            | Evidence                                                                                                     |
+| ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| PX-022 | The split between the halves is dragged by `#selfResizer` / `#oppResizer`.                                             | No handles. A Board view button among the table controls opens a panel with the split as a slider (a third to two thirds, as before), and Settings links to it.                                                                      | `PRODUCT_REQUEST` | `LegacyBoardChrome.test.tsx`, `BoardViewPanel.test.tsx`, `board-view.spec.ts`, `dev-room-full-stack.spec.ts` |
+| PX-023 | Both halves always show.                                                                                               | Either half can be hidden ("Mine" is the bottom half, "Theirs" the top). The other half fills the table, as large as its width allows; the hidden half's zones and cards leave the scene, and its coin lands on the half that shows. | `PRODUCT_REQUEST` | `layout-table.test.ts`, `CoinFlipOverlay.test.tsx`, `board-view.spec.ts`                                     |
+| PX-024 | Hide containers and Hide opponent's hand (Solo mode) are Settings checkboxes, forgotten on reload, and shown in rooms. | They move to the Board view panel as Zone outlines and Hide opponent's hand, kept on this device with the split, the halves and the depth. Hide opponent's hand is offered only in Solo, the only place it ever applied.             | `PRODUCT_REQUEST` | `board-view-settings.test.ts`, `RemoteRoomRoute.test.tsx`, `remote-room-lobby-full-stack.spec.ts`            |
+
+The redesign's large hover preview beside the table (not in v1) is off by
+default and can be turned on in the same panel.
+
 ## Open differences awaiting a product decision
 
 The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) records

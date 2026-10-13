@@ -444,10 +444,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#settingsButton')).toHaveClass(
       'selected-page'
     );
-    await expect(playerTwo.page.locator('#hideHandCheckbox')).not.toBeChecked();
-    await expect(
-      playerTwo.page.locator('label[for="hideHandCheckbox"]')
-    ).toHaveText("Hide opponent's hand (Solo mode)");
+    // How the table is shown lives in the Board view panel; covering the
+    // opponent's hand is a Solo choice, so a multiplayer room never offers it.
+    await expect(playerTwo.page.locator('#showZonesCheckbox')).toHaveCount(0);
+    await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
+    await expect(playerTwo.page.locator('#openBoardViewButton')).toHaveText(
+      'Open board view'
+    );
     await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
       'Hold Shift to see keyboard shortcuts'
     );
@@ -486,7 +489,6 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       creator.page.locator('[data-app-route="remote-room"]')
     ).toHaveAttribute('data-room-background', 'default');
-    await playerTwo.page.locator('#hideHandCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
@@ -505,11 +507,18 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
     await expect.poll(pageTheme).toBe('night');
-    await playerTwo.page.locator('#showZonesCheckbox').check();
+    await playerTwo.page.locator('#openBoardViewButton').click();
+    await expect(playerTwo.page.locator('#boardViewPanel')).toBeVisible();
+    await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
+    await playerTwo.page.locator('#zoneOutlinesCheckbox').uncheck();
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
       'false'
     );
+    await playerTwo.page.keyboard.press('Escape');
+    await expect(playerTwo.page.locator('#boardViewPanel')).toHaveCount(0);
+    // Focus goes back to the control that opened the panel.
+    await expect(playerTwo.page.locator('#openBoardViewButton')).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(hiddenZone).toHaveCSS('box-shadow', 'none');
@@ -640,8 +649,12 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     ).toBeVisible();
     await playerTwo.page.locator('#settingsButton').click();
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
-    await expect(playerTwo.page.locator('#showZonesCheckbox')).toBeChecked();
-    await expect(playerTwo.page.locator('#hideHandCheckbox')).toBeChecked();
+    // The Board view is kept on this device across rooms.
+    expect(
+      await playerTwo.page.evaluate(() =>
+        JSON.parse(localStorage.getItem('ptcgsim.board-view.v1') ?? '{}')
+      )
+    ).toMatchObject({ zoneOutlines: false });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);

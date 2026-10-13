@@ -210,6 +210,7 @@ export class PixiTablePaint {
     }
     // Screen-plane seat tint and centre seam match the unprojected controls.
     for (const frame of scene.layout.players) {
+      if (frame.hidden) continue;
       const { bounds, physicalSide, side } = frame;
       const color =
         side === 'local' ? palette.you.color : palette.opponent.color;

@@ -3,8 +3,11 @@
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
+  createTableLayoutSnapshot,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
   flipBoardLayoutState,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
   type BoardLayoutState,
 } from '@ptcgsim/renderer-contract';
 import { asPlayerId } from '@ptcgsim/game-core';
@@ -518,6 +521,65 @@ describe('LegacyBoardChrome', () => {
       host.querySelector<HTMLElement>('#loadingCircle')?.style.display
     ).toBe('block');
 
+    await act(async () => root.unmount());
+  });
+  it('sets the play-mat table from a Board view button instead of resize handles', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const toggleBoardView = vi.fn();
+    const actions = {
+      takeTurn: vi.fn(),
+      flipCoin: vi.fn(),
+      flipBoard: vi.fn(),
+      refreshImages: vi.fn(),
+      toggleFullscreen: vi.fn(),
+      toggleOncePerGame: vi.fn(),
+      toggleBoardView,
+    };
+    const table = (hidden?: 'upper') =>
+      createTableLayoutSnapshot({
+        ...layoutState(),
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        ...(hidden ? { hiddenPhysicalSide: hidden } : {}),
+      });
+    const render = (open: boolean, hidden?: 'upper') =>
+      act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={table(hidden)}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={actions}
+            boardViewOpen={open}
+          />
+        )
+      );
+    await render(false);
+    expect(host.querySelector('#selfResizer')).toBeNull();
+    expect(host.querySelector('#oppResizer')).toBeNull();
+    const button = host.querySelector<HTMLButtonElement>('#boardViewButton')!;
+    expect(button.getAttribute('aria-label')).toBe('Board view');
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(button.hasAttribute('aria-controls')).toBe(false);
+    expect(button.closest('[data-board-view-trigger]')?.id).toBe(
+      'boardViewControl'
+    );
+    await act(async () => button.click());
+    expect(toggleBoardView).toHaveBeenCalledOnce();
+    await render(true);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(button.getAttribute('aria-controls')).toBe('boardViewPanel');
+    expect(host.querySelectorAll('[data-player-frame-chrome]')).toHaveLength(2);
+    // A hidden half takes its markers and Sort box with it.
+    await render(true, 'upper');
+    expect(
+      [...host.querySelectorAll<HTMLElement>('[data-player-frame-chrome]')].map(
+        (frame) => frame.dataset.playerFrameChrome
+      )
+    ).toEqual(['spike-blue']);
     await act(async () => root.unmount());
   });
 });

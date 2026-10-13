@@ -1974,6 +1974,10 @@
               "kind": "value"
             },
             {
+              "name": "TABLE_SPLIT",
+              "kind": "value"
+            },
+            {
               "name": "TableCamera",
               "kind": "type"
             },
@@ -2019,6 +2023,10 @@
             },
             {
               "name": "tableRailWidth",
+              "kind": "value"
+            },
+            {
+              "name": "tableVerticalLayout",
               "kind": "value"
             },
             {

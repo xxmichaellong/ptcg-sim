@@ -136,6 +136,11 @@ export interface BoardLayoutState {
   readonly shellMode: BoardShellMode;
   readonly vertical: BoardVerticalLayoutState;
   /**
+   * Geometry v2 only: a half the viewer has chosen not to see. The other
+   * half then fills the table, and the hidden half's cards leave the scene.
+   */
+  readonly hiddenPhysicalSide?: BoardPhysicalSide;
+  /**
    * How far each scrolling zone is scrolled, in physical pixels, keyed by
    * zone id: v1's `#hand` scrollLeft and `#board` scrollTop. Absent means 0.
    */
@@ -229,6 +234,8 @@ export interface BoardPlayerLayout {
   readonly rotationQuarterTurns: 0 | 2;
   readonly frameBounds: Rect;
   readonly regions: readonly BoardLayoutRegion[];
+  /** The viewer has hidden this half; it lies off the table and is not painted. */
+  readonly hidden?: true;
 }
 
 export interface BoardResizeHandleLayout {

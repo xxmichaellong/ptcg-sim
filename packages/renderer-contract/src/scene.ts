@@ -117,6 +117,7 @@ const projectPlayerFrame = (
   physicalSide: player.physicalSide,
   rotationQuarterTurns: player.rotationQuarterTurns,
   bounds: copyRect(player.frameBounds),
+  ...(player.hidden ? { hidden: true as const } : {}),
 });
 
 const projectResizeHandle = (
@@ -1144,22 +1145,39 @@ export const createBoardScene = (
     }
   }
 
+  // A half the viewer has hidden is not painted at all: its zones, cards,
+  // markers and counts leave the scene, so no renderer, drop target or
+  // motion plan ever sees them. The shared Stadium stays.
+  const hiddenSides = new Set<BoardSide | 'shared'>(
+    layout.players
+      .filter((player) => player.hidden)
+      .map((player) => player.side)
+  );
+  const shownCards = cards.filter((card) => !hiddenSides.has(card.side));
+  const shownCardIds = new Set<ViewCardId>(shownCards.map((card) => card.id));
+
   return {
     matchId: view.matchId,
     revision: view.revision,
     viewport,
     bottomPlayerId: layout.bottomPlayerId,
     layout: createBoardSceneLayout(layout),
-    zones: zones.sort(
+    zones: zones
+      .filter((zone) => !hiddenSides.has(zone.side))
+      .sort(
+        (left, right) =>
+          left.zIndex - right.zIndex || left.id.localeCompare(right.id)
+      ),
+    cards: shownCards.sort(
       (left, right) =>
         left.zIndex - right.zIndex || left.id.localeCompare(right.id)
     ),
-    cards: cards.sort(
-      (left, right) =>
-        left.zIndex - right.zIndex || left.id.localeCompare(right.id)
-    ),
-    markers: markers.sort(compareMarkerPaintOrder),
-    counts: counts.sort((left, right) => left.id.localeCompare(right.id)),
+    markers: markers
+      .filter((marker) => shownCardIds.has(marker.parentCardId))
+      .sort(compareMarkerPaintOrder),
+    counts: counts
+      .filter((count) => !hiddenSides.has(count.side))
+      .sort((left, right) => left.id.localeCompare(right.id)),
   };
 };
 

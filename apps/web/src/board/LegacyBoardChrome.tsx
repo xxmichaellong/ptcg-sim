@@ -11,9 +11,11 @@ import { Coin } from '@phosphor-icons/react/dist/csr/Coin';
 import { CornersIn } from '@phosphor-icons/react/dist/csr/CornersIn';
 import { CornersOut } from '@phosphor-icons/react/dist/csr/CornersOut';
 import { Plus } from '@phosphor-icons/react/dist/csr/Plus';
+import { SlidersHorizontal } from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';
+import { BOARD_VIEW_TRIGGER_ATTRIBUTE } from './view/BoardViewPanel.js';
 import {
   ONCE_PER_GAME_TILE_ASPECT,
   OncePerGameTile,
@@ -35,6 +37,8 @@ export interface LegacyBoardChromeActions {
   ) => void;
   /** v1's per-hand Sort checkbox; paint-only, never a command. */
   readonly toggleHandSort?: (playerId: PlayerId, sorted: boolean) => void;
+  /** Opens or closes the Board view panel (the play-mat table only). */
+  readonly toggleBoardView?: () => void;
 }
 
 export interface LegacyBoardChromeVisibility {
@@ -73,6 +77,9 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
   children,
   darkMode,
   pending = false,
+  expanded,
+  controls,
+  buttonId,
 }: {
   readonly id: string;
   readonly label: string;
@@ -81,15 +88,29 @@ const LegacyTooltipButton = memo(function LegacyTooltipButton({
   readonly darkMode: boolean;
   /** Marks a control that is waiting on the room rather than predicting it. */
   readonly pending?: boolean;
+  /** For a control that opens a panel: whether it is open, and its id. */
+  readonly expanded?: boolean;
+  readonly controls?: string;
+  readonly buttonId?: string;
 }) {
   return (
-    <div id={id} className="tooltip" onClick={onClick}>
+    <div
+      id={id}
+      className="tooltip"
+      onClick={onClick}
+      {...(expanded === undefined
+        ? {}
+        : { [BOARD_VIEW_TRIGGER_ATTRIBUTE]: 'true' })}
+    >
       <button
+        id={buttonId}
         type="button"
         className={`legacy-board-control-button${darkMode ? ' dark-mode-2' : ''}`}
         data-control-pending={pending ? 'true' : undefined}
         aria-busy={pending || undefined}
         aria-label={label}
+        aria-expanded={expanded}
+        aria-controls={expanded ? controls : undefined}
       >
         {children}
       </button>
@@ -243,6 +264,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   sortedHandPlayerIds,
   coveredByPopup = false,
   depth,
+  boardViewOpen = false,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly depth?: BoardDepthProjection;
@@ -262,6 +284,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * and take no clicks until it closes.
    */
   readonly coveredByPopup?: boolean;
+  /** The Board view panel is open (its button shows as pressed). */
+  readonly boardViewOpen?: boolean;
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -277,6 +301,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   const lower = layout.resizeHandles.find((handle) => handle.id === 'lower');
   const upper = layout.resizeHandles.find((handle) => handle.id === 'upper');
   if (!lower || !upper) throw new Error('Board chrome requires both handles');
+  // The play-mat table is split from the Board view panel, not dragged.
+  const showResizers = layout.geometryVersion !== 2;
   const logicalAnchor = layout.shared.boardControlsAnchor;
   const activeZones = depth?.scene.zones
     .filter((zone) => zone.kind === 'active')
@@ -315,7 +341,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     >
       {layout.players.map((frame) => {
         const player = players[frame.playerId];
-        return player ? (
+        return player && !frame.hidden ? (
           <LegacyOncePerGameControls
             key={frame.playerId}
             frame={frame}
@@ -328,22 +354,26 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           />
         ) : null;
       })}
-      <div
-        id="selfResizer"
-        className="legacy-board-resizer"
-        data-visible-resize-handle-id="lower"
-        data-player-side={playerSideAt(lower.controlsPhysicalSide)}
-        aria-hidden="true"
-        style={handleStyle(lower, layout.viewport.height)}
-      />
-      <div
-        id="oppResizer"
-        className="legacy-board-resizer"
-        data-visible-resize-handle-id="upper"
-        data-player-side={playerSideAt(upper.controlsPhysicalSide)}
-        aria-hidden="true"
-        style={handleStyle(upper, layout.viewport.height)}
-      />
+      {showResizers && (
+        <>
+          <div
+            id="selfResizer"
+            className="legacy-board-resizer"
+            data-visible-resize-handle-id="lower"
+            data-player-side={playerSideAt(lower.controlsPhysicalSide)}
+            aria-hidden="true"
+            style={handleStyle(lower, layout.viewport.height)}
+          />
+          <div
+            id="oppResizer"
+            className="legacy-board-resizer"
+            data-visible-resize-handle-id="upper"
+            data-player-side={playerSideAt(upper.controlsPhysicalSide)}
+            aria-hidden="true"
+            style={handleStyle(upper, layout.viewport.height)}
+          />
+        </>
+      )}
       <div
         id="boardButtonContainer"
         className="legacy-board-controls"
@@ -432,6 +462,19 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             )}
           </div>
         </LegacyTooltipButton>
+        {actions.toggleBoardView && (
+          <LegacyTooltipButton
+            id="boardViewControl"
+            buttonId="boardViewButton"
+            label="Board view"
+            onClick={actions.toggleBoardView}
+            darkMode={darkMode}
+            expanded={boardViewOpen}
+            controls="boardViewPanel"
+          >
+            <SlidersHorizontal {...ICON_PROPS} />
+          </LegacyTooltipButton>
+        )}
       </div>
     </div>
   );

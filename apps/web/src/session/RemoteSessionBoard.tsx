@@ -6,9 +6,9 @@ import type {
 } from '@ptcgsim/client-session';
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
-  DEFAULT_TABLE_VERTICAL_LAYOUT,
   BoardDepthProjection,
   TABLE_LAYOUT_GEOMETRY_VERSION,
+  tableVerticalLayout,
   type BoardIntent,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -23,6 +23,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
@@ -36,11 +37,16 @@ import {
 import { TurnBanner } from '../board/banner/TurnBanner.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
-import { ReactDomBoardResizeInteraction } from '../board/ReactDomBoardResizeInteraction.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import { refreshLegacyBoardImages } from '../board/refreshLegacyBoardImages.js';
 import { refusalNotice } from '../board/refusal-notice.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
+import { BoardViewPanel } from '../board/view/BoardViewPanel.js';
+import {
+  boardViewSettings,
+  hiddenPhysicalSideFor,
+  type BoardViewSettings,
+} from '../board/view/board-view-settings.js';
 import {
   LegacyBoardOverlays,
   type LegacyBoardOverlayActions,
@@ -72,14 +78,17 @@ const layoutFor = (
   view: NonNullable<
     ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
   >,
-  playmatExpanded: boolean
+  playmatExpanded: boolean,
+  boardView: BoardViewSettings
 ): BoardLayoutState => {
   const firstPlayerId = view.playerOrder[0];
   const secondPlayerId = view.playerOrder[1];
   if (!firstPlayerId || !secondPlayerId || view.playerOrder.length !== 2) {
     throw new Error('Projected match must have exactly two board players');
   }
-  // The room plays on the play-mat table (geometry v2, ADR-027).
+  const hiddenPhysicalSide = hiddenPhysicalSideFor(boardView.show);
+  // The room plays on the play-mat table (geometry v2, ADR-027), split and
+  // shown as the player's Board view asks.
   return {
     geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
     viewport: currentViewport(),
@@ -87,13 +96,8 @@ const layoutFor = (
     bottomPlayerId:
       view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId,
     shellMode: playmatExpanded ? 'fullscreen' : 'sidebar',
-    vertical: {
-      lowerFrame: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.lowerFrame },
-      upperFrame: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.upperFrame },
-      lowerHandle: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.lowerHandle },
-      upperHandle: { ...DEFAULT_TABLE_VERTICAL_LAYOUT.upperHandle },
-      sharedPlacement: DEFAULT_TABLE_VERTICAL_LAYOUT.sharedPlacement,
-    },
+    vertical: tableVerticalLayout(boardView.split),
+    ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
   };
 };
 
@@ -163,6 +167,8 @@ export const RemoteSessionBoard = ({
   onPlaymatExpandedChange,
   onPerspectiveChange,
   coinFlip,
+  boardViewOpen: ownedBoardViewOpen,
+  onBoardViewOpenChange,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -187,10 +193,38 @@ export const RemoteSessionBoard = ({
   }) => void;
   /** The presentation runtime's coin, tossed over the table. */
   readonly coinFlip?: PresentationStateSource<CoinFlipSnapshot>;
+  /**
+   * The Board view panel's open state, when a route also opens it (from its
+   * Settings). Without these the board keeps the state itself.
+   */
+  readonly boardViewOpen?: boolean;
+  readonly onBoardViewOpenChange?: (open: boolean) => void;
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
+  const boardViewStore = boardViewSettings();
+  const boardView = useSyncExternalStore(
+    boardViewStore.subscribe,
+    boardViewStore.getSnapshot
+  );
+  const boardViewRef = useRef(boardView);
+  boardViewRef.current = boardView;
+  const [localBoardViewOpen, setLocalBoardViewOpen] = useState(false);
+  const boardViewOpen = onBoardViewOpenChange
+    ? (ownedBoardViewOpen ?? false)
+    : localBoardViewOpen;
+  const boardViewOpenRef = useRef(boardViewOpen);
+  boardViewOpenRef.current = boardViewOpen;
+  const onBoardViewOpenChangeRef = useRef(onBoardViewOpenChange);
+  onBoardViewOpenChangeRef.current = onBoardViewOpenChange;
+  const setBoardViewOpen = useCallback((open: boolean): void => {
+    if (onBoardViewOpenChangeRef.current) {
+      onBoardViewOpenChangeRef.current(open);
+    } else {
+      setLocalBoardViewOpen(open);
+    }
+  }, []);
   const preferences = useBoardParallax(hostRef, basePreferences);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
   // The hovered card, for the inspector; never part of game state.
@@ -271,7 +305,6 @@ export const RemoteSessionBoard = ({
     let runtime: BoardSessionRuntime | undefined;
     let unsubscribeBoard: (() => void) | undefined;
     let unsubscribeLayout: (() => void) | undefined;
-    let resizeInteraction: ReactDomBoardResizeInteraction | undefined;
     let resizeObserver: ResizeObserver | undefined;
     let resizeFrame: number | undefined;
     let resolutionQuery: MediaQueryList | undefined;
@@ -367,7 +400,11 @@ export const RemoteSessionBoard = ({
         runtime = new BoardSessionRuntime({
           live: session,
           replay,
-          layout: layoutFor(view, playmatExpandedRef.current),
+          layout: layoutFor(
+            view,
+            playmatExpandedRef.current,
+            boardViewRef.current
+          ),
           createRenderer,
           preferences: preferencesRef.current,
           transformView: (sourceView, source) => {
@@ -414,11 +451,6 @@ export const RemoteSessionBoard = ({
           runtime.dispose();
           return;
         }
-        resizeInteraction = new ReactDomBoardResizeInteraction(
-          host,
-          () => runtime!.getCharacterizedLayoutSnapshot(),
-          (handleId, clientY) => runtime!.resizeBoard(handleId, clientY)
-        );
         unsubscribeBoard = runtime.subscribeBoard(publish);
         unsubscribeLayout = runtime.subscribeLayout(publishLayout);
         publish();
@@ -431,7 +463,6 @@ export const RemoteSessionBoard = ({
       } catch (error) {
         unsubscribeBoard?.();
         unsubscribeLayout?.();
-        resizeInteraction?.dispose();
         if (runtimeRef.current === runtime) runtimeRef.current = null;
         runtime?.dispose();
         if (!disposed) {
@@ -446,7 +477,6 @@ export const RemoteSessionBoard = ({
       disposed = true;
       unsubscribeBoard?.();
       unsubscribeLayout?.();
-      resizeInteraction?.dispose();
       resizeObserver?.disconnect();
       if (resizeFrame !== undefined) cancelAnimationFrame(resizeFrame);
       window.removeEventListener('resize', scheduleViewportSynchronization);
@@ -481,6 +511,14 @@ export const RemoteSessionBoard = ({
       playmatExpanded ? 'fullscreen' : 'sidebar'
     );
   }, [playmatExpanded]);
+
+  useEffect(() => {
+    const hiddenPhysicalSide = hiddenPhysicalSideFor(boardView.show);
+    runtimeRef.current?.setTableView({
+      lowerShare: boardView.split,
+      ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+    });
+  }, [boardView.split, boardView.show]);
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
@@ -683,6 +721,9 @@ export const RemoteSessionBoard = ({
         runtimeRef.current?.flipBoard();
       },
       refreshImages,
+      toggleBoardView: (): void => {
+        setBoardViewOpen(!boardViewOpenRef.current);
+      },
       toggleFullscreen: (): void => {
         const runtime = runtimeRef.current;
         if (!runtime) return;
@@ -700,7 +741,11 @@ export const RemoteSessionBoard = ({
         });
       },
     }),
-    [refreshImages]
+    [refreshImages, setBoardViewOpen]
+  );
+  const closeBoardView = useCallback(
+    () => setBoardViewOpen(false),
+    [setBoardViewOpen]
   );
   const visibleStatus =
     identity && replayState.sessionPhase === 'ready'
@@ -740,6 +785,7 @@ export const RemoteSessionBoard = ({
               refreshingImages={refreshingImages}
               coinPending={coinPending}
               sortedHandPlayerIds={sortedHandPlayerIds}
+              boardViewOpen={boardViewOpen}
               coveredByPopup={
                 boardState.presentation.openedZoneId !== null ||
                 boardState.scene.zones.some(
@@ -786,15 +832,22 @@ export const RemoteSessionBoard = ({
             view={boardState.view}
             bottomPlayerId={boardState.scene.bottomPlayerId}
           />
-          <CardInspector
-            store={hoverStore}
-            view={boardState.view}
-            scene={boardState.scene}
-            reducedMotion={preferences.reducedMotion}
-            suppressed={
-              boardState.presentation.openedZoneId !== null ||
-              boardState.overlays.preview !== null
-            }
+          {boardView.hoverPreview ? (
+            <CardInspector
+              store={hoverStore}
+              view={boardState.view}
+              scene={boardState.scene}
+              reducedMotion={preferences.reducedMotion}
+              suppressed={
+                boardState.presentation.openedZoneId !== null ||
+                boardState.overlays.preview !== null
+              }
+            />
+          ) : null}
+          <BoardViewPanel
+            open={boardViewOpen}
+            onClose={closeBoardView}
+            solo={roomMode === 'solo'}
           />
           <LegacyBoardKeyboardShortcuts
             state={boardState}

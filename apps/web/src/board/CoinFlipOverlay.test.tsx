@@ -4,7 +4,10 @@ import { asPlayerId } from '@ptcgsim/game-core';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
+  createTableLayoutSnapshot,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
 } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -144,6 +147,23 @@ describe('CoinFlipOverlay', () => {
     }
     // An unknown seat falls back to the lower half.
     expect(coinAnchor(layout, 'nobody')).toEqual(coinAnchor(layout, blue));
+  });
+
+  it('lands a coin on the half that shows when its seat’s half is hidden', () => {
+    const solo = createTableLayoutSnapshot({
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+      playerIds: [blue, red],
+      bottomPlayerId: blue,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+      hiddenPhysicalSide: 'upper',
+    });
+    // Red sits in the hidden top half; the coin lands by Blue's Active.
+    expect(coinAnchor(solo, red)).toEqual(coinAnchor(solo, blue));
+    const anchor = coinAnchor(solo, red);
+    expect(anchor.y).toBeGreaterThan(0);
+    expect(anchor.y).toBeLessThan(900);
   });
 
   it('turns at least three times and stops on the rolled face', () => {

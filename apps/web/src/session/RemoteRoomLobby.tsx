@@ -7,9 +7,18 @@ import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import {
   createEmptyBoardView,
+  DEFAULT_BOARD_PREFERENCES,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import type { ClipboardEvent as ReactClipboardEvent, ReactNode } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
@@ -18,6 +27,7 @@ import {
   type RendererKind,
 } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import {
   createRemoteRoom,
@@ -293,7 +303,12 @@ export const RemoteRoomLobby = ({
   const [preferences, setPreferences] = useState<
     BoardPreferences | undefined
   >();
-  const [hideOpponentHand, setHideOpponentHand] = useState(false);
+  // How the table is shown is kept on this device (the Board view panel).
+  const boardView = useSyncExternalStore(
+    boardViewSettings().subscribe,
+    boardViewSettings().getSnapshot
+  );
+  const [boardViewOpen, setBoardViewOpen] = useState(false);
   const [continuationAvailable, setContinuationAvailable] = useState<
     boolean | undefined
   >();
@@ -309,12 +324,25 @@ export const RemoteRoomLobby = ({
       darkMode: enabled,
     }));
   };
-  const setZoneOutlines = (visible: boolean): void => {
-    setPreferences((current) => ({
-      ...(current ?? ROOM_DEFAULT_PREFERENCES),
-      showZoneOutlines: visible,
-    }));
-  };
+  // Both lobby boards wear the Board view's outlines; each keeps its own
+  // default look otherwise.
+  const boardPreferences = useMemo(
+    () => ({
+      ...(preferences ?? ROOM_DEFAULT_PREFERENCES),
+      showZoneOutlines: boardView.zoneOutlines,
+    }),
+    [preferences, boardView.zoneOutlines]
+  );
+  const emptyBoardPreferences = useMemo(
+    () =>
+      preferences || !boardView.zoneOutlines
+        ? {
+            ...(preferences ?? DEFAULT_BOARD_PREFERENCES),
+            showZoneOutlines: boardView.zoneOutlines,
+          }
+        : undefined,
+    [preferences, boardView.zoneOutlines]
+  );
 
   // The lobby page wears the table's theme (Night or Day) like the room
   // route does; once a room is connected the route owns it.
@@ -1016,8 +1044,6 @@ export const RemoteRoomLobby = ({
             : {})}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
-          hideOpponentHand={hideOpponentHand}
-          onHideOpponentHandChange={setHideOpponentHand}
           {...(backgroundSelection.background
             ? { background: backgroundSelection.background }
             : {})}
@@ -1062,10 +1088,12 @@ export const RemoteRoomLobby = ({
             rendererKind={parkedSolo.rendererKind}
             onIntent={() => undefined}
             roomMode="solo"
-            hideOpponentHand={hideOpponentHand}
+            hideOpponentHand={boardView.hideOpponentHand}
             // Test doubles may stand in for the runtime without a presentation.
             coinFlip={parkedSolo.runtime.presentation?.coinFlip}
-            {...(preferences ? { preferences } : {})}
+            preferences={boardPreferences}
+            boardViewOpen={boardViewOpen}
+            onBoardViewOpenChange={setBoardViewOpen}
           />
         ) : (
           <RendererSpikeBoard
@@ -1074,7 +1102,9 @@ export const RemoteRoomLobby = ({
             onIntent={() => undefined}
             submitCommand={() => undefined}
             sessionReady={false}
-            {...(preferences ? { preferences } : {})}
+            {...(emptyBoardPreferences
+              ? { preferences: emptyBoardPreferences }
+              : {})}
           />
         )}
       </section>
@@ -1251,10 +1281,10 @@ export const RemoteRoomLobby = ({
         <RemoteRoomSettings
           hidden={activePanel !== 'settings'}
           preferences={effectivePreferences}
-          hideOpponentHand={hideOpponentHand}
           onDarkModeChange={setDarkMode}
-          onZoneOutlinesChange={setZoneOutlines}
-          onHideOpponentHandChange={setHideOpponentHand}
+          {...(parkedSolo
+            ? { onOpenBoardView: () => setBoardViewOpen(true) }
+            : {})}
           onChangeBackground={backgroundSelection.chooseBackground}
         />
         {deckSurfaceActivated && (

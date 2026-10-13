@@ -4,6 +4,7 @@ import {
   answerOverlayPrompt,
   overlayToast,
 } from './support/overlay-dialogs.js';
+import { openBoardView } from './support/board-view.js';
 
 const SOLO_CARD_BACK_URL =
   'https://images.example.test/solo-player-two-card-back.png?exact=1';
@@ -161,7 +162,7 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
   );
 
-  await page.locator('#settingsButton').click();
+  await openBoardView(page);
   await page.locator('#hideHandCheckbox').check();
   await expect
     .poll(() =>

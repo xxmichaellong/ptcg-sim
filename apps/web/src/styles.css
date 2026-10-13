@@ -204,8 +204,6 @@ select {
 }
 
 .legacy-room-settings #darkModeCheckbox,
-.legacy-room-settings #showZonesCheckbox,
-.legacy-room-settings #hideHandCheckbox,
 .legacy-room-settings #keybindReminder {
   margin-top: 1vh;
 }
