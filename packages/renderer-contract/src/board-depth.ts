@@ -1,6 +1,7 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 import { containsPoint } from './geometry.js';
 import { compositionHold } from './card-composition.js';
+import { looseBoardTargetAt } from './drag.js';
 import type {
   BoardPreferences,
   BoardDepthPreferences,
@@ -410,7 +411,10 @@ export class BoardDepthProjection {
         (zone) =>
           zone.interactive && containsPoint(zone.bounds, local.x, local.y)
       );
-    return { point: local, targetId: zone?.id ?? null };
+    return {
+      point: local,
+      targetId: zone?.id ?? looseBoardTargetAt(this.scene, local.x, local.y),
+    };
   }
 
   marker(marker: MarkerSceneNode, pose?: TableCardPose): MarkerSceneNode {

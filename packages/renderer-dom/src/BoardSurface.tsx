@@ -190,6 +190,9 @@ const BoardControlsAnchorNode = memo(function BoardControlsAnchorNode({
  * `showOutlines`): the hand and the loose board never get one.
  */
 const OUTLINED_ZONE_KINDS: ReadonlySet<ZoneSceneNode['kind']> = new Set([
+  // The loose board, where a card is shown before it is resolved (a
+  // Supporter being played). Any empty felt in the half drops here too.
+  'board',
   'active',
   'bench',
   'prizes',
@@ -230,6 +233,7 @@ const handDividerFor = (
 
 /** What the play mat prints in each zone (geometry v2). */
 const TABLE_ZONE_LABELS: Partial<Record<ZoneSceneNode['kind'], string>> = {
+  board: 'Board',
   active: 'Active',
   bench: 'Bench',
   prizes: 'Prizes',

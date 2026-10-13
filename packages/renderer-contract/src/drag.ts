@@ -1,6 +1,7 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { containsPoint, containsPointInRotatedRect } from './geometry.js';
+import { TABLE_LAYOUT_GEOMETRY_VERSION } from './layout-table.js';
 import type {
   BoardRendererAdapters,
   BoardScene,
@@ -41,6 +42,34 @@ const cardAt = (
 ): CardSceneNode | undefined =>
   scene.cards.find((candidate) => candidate.id === cardId);
 
+/**
+ * On the redesigned table, empty felt is the board. A card dropped where no
+ * zone or card claims the point lands on the loose board (v1's board zone)
+ * of the half it was dropped in, where both players can see it -- a
+ * Supporter being played, say. v1's own geometry keeps v1's behaviour.
+ */
+export const looseBoardTargetAt = (
+  scene: BoardScene,
+  x: number,
+  y: number
+): string | null => {
+  if (scene.layout.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION) {
+    return null;
+  }
+  const half = scene.layout.players.find(
+    (player) => !player.hidden && containsPoint(player.bounds, x, y)
+  );
+  if (!half) return null;
+  return (
+    scene.zones.find(
+      (zone) =>
+        zone.kind === 'board' &&
+        zone.playerId === half.playerId &&
+        zone.interactive
+    )?.id ?? null
+  );
+};
+
 export const resolveBoardDropTarget = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
@@ -63,7 +92,7 @@ export const resolveBoardDropTarget = (
     (candidate) =>
       candidate.interactive && containsPoint(candidate.bounds, x, y)
   );
-  return zone?.id ?? null;
+  return zone?.id ?? looseBoardTargetAt(scene, x, y);
 };
 
 /** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */

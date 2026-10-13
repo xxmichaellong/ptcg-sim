@@ -190,12 +190,14 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
           }),
         extraBoxes: zones.filter(
           ({ descriptor, view }) =>
-            ['hand', 'board'].includes(descriptor.kind) &&
+            descriptor.kind === 'hand' &&
             view.graphic.context.instructions.length > 0
         ).length,
       };
     });
   const expectedLabels = [
+    'BOARD',
+    'BOARD',
     'ACTIVE',
     'ACTIVE',
     'BENCH',

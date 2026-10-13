@@ -74,6 +74,8 @@ export const readTablePalette = (host: HTMLElement): TablePalette => {
 };
 
 const LABELS: Partial<Record<ZoneSceneNode['kind'], string>> = {
+  // The loose board: a card shown before it resolves, as a Supporter is.
+  board: 'BOARD',
   active: 'ACTIVE',
   bench: 'BENCH',
   prizes: 'PRIZES',
