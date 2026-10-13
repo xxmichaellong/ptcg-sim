@@ -31,6 +31,7 @@ import {
   cardSourceSnapshot,
   publicVisibilityFace,
 } from './public-visibility.js';
+import { sameCardPresentation } from './card-presentation.js';
 import { isConcealedZone } from './concealed-zone.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
@@ -109,7 +110,10 @@ const sameDefinition = (
   left.name === right.name &&
   left.category === right.category &&
   left.imageUrl === right.imageUrl &&
-  left.imageUrlSmall === right.imageUrlSmall;
+  left.imageUrlSmall === right.imageUrlSmall &&
+  // The command side compares presentation too; an applied event must not
+  // quietly re-present a definition the other seat still uses.
+  sameCardPresentation(left.presentation, right.presentation);
 
 const removeStackFromBoards = (
   state: MatchState,

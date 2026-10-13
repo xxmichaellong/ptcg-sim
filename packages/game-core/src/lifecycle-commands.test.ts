@@ -477,6 +477,55 @@ describe('atomic lifecycle commands', () => {
       )
     ).toMatchObject({ accepted: false, code: 'conflict' });
     expect(stableSerialize(state)).toBe(before);
+
+    // A different presentation alone (a BREAK turned sideways, say) is a
+    // conflict too, when commanded and when an event is applied.
+    const shared = {
+      id: asCardDefinitionId('shared-definition'),
+      name: 'Shared original',
+      category: 'Pokémon' as const,
+      imageUrl: '/shared-original.png',
+    };
+    const represented = {
+      ...shared,
+      presentation: {
+        readingQuarterTurns: 1 as const,
+        overlay: 'upper-half' as const,
+      },
+    };
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'LoadDeck',
+          playerId: p1,
+          entries: [{ definition: represented, count: 1 }],
+        },
+        context
+      )
+    ).toMatchObject({ accepted: false, code: 'conflict' });
+    const loaded = executeCommand(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [{ definition: shared, count: 1 }],
+      },
+      context
+    );
+    if (!loaded.accepted || loaded.batch.events[0]?.type !== 'DeckLoaded') {
+      throw new Error('Missing deck event');
+    }
+    const event = loaded.batch.events[0];
+    expect(() =>
+      applyEvent(state, {
+        ...event,
+        definitions: event.definitions.map((definition) =>
+          definition.id === shared.id ? represented : definition
+        ),
+      })
+    ).toThrow('malformed');
+    expect(stableSerialize(state)).toBe(before);
   });
 
   it('rejects malformed lifecycle history instead of partially replaying it', () => {
