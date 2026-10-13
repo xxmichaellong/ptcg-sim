@@ -856,7 +856,11 @@ test('native and shared input follow center-rotated card paint in both candidate
 test('records controlled 120-card reconciliation and idle evidence for both candidates', async ({
   page,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  // A minute per run, as when this recorded two: it now records six (three
+  // depth modes for each renderer), each of about 220 scene installs, and a
+  // CI runner's software GPU draws Pixi's tilted table far slower than a
+  // desktop. Timing is recorded as evidence, never asserted.
+  test.setTimeout(6 * 60_000);
   await page.addInitScript(() => {
     class StableBenchmarkResizeObserver {
       observe(): void {}
