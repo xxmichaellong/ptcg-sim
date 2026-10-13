@@ -181,6 +181,31 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('replaces an occupied Stadium with a card dropped from play (PX-020)', () => {
+    const input = fixture();
+    const stadium = input.view.zones['zone:shared:stadium']!;
+    const incumbent = stadium.cards[0]!;
+    const stack = input.view.stacks['stack:blue:active']!;
+    const top = stack.evolutionCards.at(-1)!;
+    // v1 refused this drop; it now replaces the Stadium as G does, the
+    // incumbent named so a stale table cannot displace the wrong card.
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: top.id,
+        targetId: stadium.id,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardToStadium',
+        cardId: top.id,
+        expectedSourceId: stack.id,
+        expectedStadiumCardId: incumbent.id,
+      },
+    });
+  });
+
   it('moves a card out of an explicit inspection work area', () => {
     const input = fixture();
     const sceneCard = localHandCard(input);

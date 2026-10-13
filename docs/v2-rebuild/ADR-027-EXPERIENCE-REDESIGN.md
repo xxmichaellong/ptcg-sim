@@ -35,6 +35,12 @@ summarised in `EXPERIENCE_DESIGN.md`.
 1. **Behaviour stays; the look changes.** Every command, keybind, privacy
    rule, multiplayer and replay behaviour keeps v1 parity. Colours, type,
    iconography, card sizes, layout, overlays and motion are redesigned.
+   _Amended 2026-10-13:_ the owner accepted five deliberate departures that
+   follow the physical game -- Tools onto the opponent's Pokémon, cards
+   returning to their owner's piles, multi-piece Legendary Stadiums, drops
+   that replace the Stadium, and a fanned hand -- recorded as PX-017 to
+   PX-021 in `PARITY_EXCEPTIONS.md`. Anything further needs the same
+   explicit decision.
 2. **The React DOM renderer stays the board renderer** (ADR-004's choice
    still holds). The effects asked for -- pointer-tracked tilt, holographic
    glare, 3D lift, springs -- are native CSS on the compositor; the card art

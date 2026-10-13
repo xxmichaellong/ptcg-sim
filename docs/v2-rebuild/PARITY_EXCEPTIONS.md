@@ -44,6 +44,20 @@ restoring v1 exactly is a one-line change.
 | PX-015 | `.full-view img { height: 24% }` paints every card of a stack expansion at one size, leaving a short stack adrift in an otherwise empty popup. | `legacyStackPreviewCardHeightRatio` picks the largest size that still fits the set, capped so one card cannot fill the panel and floored at v1's 24%, past which rows spill exactly as v1's do.             | `PRODUCT_REQUEST` | `layout.test.ts` covers the fit, the monotonic shrink and the v1 floor                                      |
 | PX-016 | Undo exists only in Solo; v1 removed `p2UndoButton` and the two-player `u` keybind.                                                            | A multiplayer player has `#p2UndoButton` and `u`, and instantly takes back their own move while it is still the newest one standing. Restoring v1 is one guard in `resolveWireCommand`.                     | `PRODUCT_REQUEST` | ADR-026; `process-command.test.ts`; `client-server-session.test.ts`; `remote-room-lobby-full-stack.spec.ts` |
 
+### Departures for real card mechanics (2026-10-13)
+
+The owner accepted these after an independent review flagged them against
+ADR-027's behaviour rule. They follow how the physical game works, and none
+is a single toggle; restoring v1 means reverting the named resolver.
+
+| ID     | V1 behavior                                                                                        | V2 disposition                                                                                                                                                  | Reason            | Evidence                                                                       |
+| ------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------ |
+| PX-017 | Q/E attach targeting highlights only the source player's Active and Bench.                         | Attachment targets include both boards, for Tools played onto the opponent's Pokémon (Head Ringer, Jamming Net). Evolution still targets only the source board. | `PRODUCT_REQUEST` | `resolveAttachEvolveTargeting.test.ts`                                         |
+| PX-018 | A card owned by the other player enters the zone of the player moving it (work-area bulk buttons). | It keeps its owner and goes to its owner's matching zone, as a foreign Tool returns to its owner in the TCG; bulk staged moves split by owner.                  | `PRODUCT_REQUEST` | `staged-bulk-commands.test.ts`, `resolveCardZoneMoveAction.test.ts`            |
+| PX-019 | G (with or without Shift) replaces the Stadium.                                                    | G replaces it, or joins a matching missing piece of a two-card Legendary Stadium; Shift+G adds another piece for manual layouts, up to four.                    | `PRODUCT_REQUEST` | `resolveLegacyBoardShortcutAction.test.ts`, `stadium-movement-command.test.ts` |
+| PX-020 | A card dropped from play or a work area onto an occupied Stadium is refused.                       | It replaces the Stadium, as G does; the displaced pieces go to their owners' discards in the same revision.                                                     | `PRODUCT_REQUEST` | `resolveBoardDrop.test.ts` (PX-020 case), `stadium-movement-command.test.ts`   |
+| PX-021 | An overflowing hand keeps full-size cards and scrolls (`#hand { overflow-x: auto }`).              | On the redesigned table (geometry v2) the hand fans its cards, overlapping them evenly so all stay on screen; a hovered card rises. Owner informed 2026-10-09.  | `PRODUCT_REQUEST` | `layout-table.test.ts` ("overlaps it when crowded")                            |
+
 ## Open differences awaiting a product decision
 
 The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) records
@@ -88,7 +102,8 @@ The two behaviours the file-by-file audit left open were carried on the
 owner's decision the same day: a flipped board now acts for the seat at the
 bottom (Solo, or a room where both players enabled board flip), with the
 actor-bound wire commands naming that seat; and an overflowing hand keeps its
-cards full size and scrolls, as v1's `#hand { overflow-x: auto }` does.
+cards full size and scrolls, as v1's `#hand { overflow-x: auto }` does. (The
+redesigned table later fans the hand instead: PX-021.)
 
 ## Approved compatibility deferral
 

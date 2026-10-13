@@ -772,8 +772,9 @@ bench. `ResolveStagedCards` now covers the staged-work-area forms of
 atomic revision. It preserves canonical evolution-then-attachment work-area
 order for visible/hand moves, shuffles the full combined deck for `shuffleAll`,
 and shuffles only staged cards before appending them for `shuffleBottom`.
-Cross-owner cards retain immutable ownership while entering the work-area
-player's destination zone. The legacy importer does not mislabel that canonical
+Cross-owner cards retain immutable ownership and enter their owner's matching
+destination zone, as a foreign Tool returns to its owner in the TCG (PX-018);
+the bulk forms split the staged cards by owner. The legacy importer does not mislabel that canonical
 sequence as V1's reversed-evolution popup order: its non-shuffle bridge drains
 stable IDs explicitly, while its shuffle bridge translates each permutation by
 stable identity before invoking the atomic command.
