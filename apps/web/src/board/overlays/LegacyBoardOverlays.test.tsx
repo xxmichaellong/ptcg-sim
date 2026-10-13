@@ -1318,18 +1318,15 @@ describe('legacy board overlays', () => {
       bubbles: true,
       cancelable: true,
     });
+    // One control (Close): Tab stays inside the preview, on it.
     const controls = [
       ...preview.querySelectorAll<HTMLButtonElement>('[data-preview-tabbable]'),
     ];
-    expect(controls).toHaveLength(2);
-    controls[1]!.focus();
-    expect(controls[1]!.dispatchEvent(tab)).toBe(false);
+    expect(controls).toHaveLength(1);
+    controls[0]!.focus();
+    expect(controls[0]!.dispatchEvent(tab)).toBe(false);
     expect(tab.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(controls[0]);
-    await act(async () => controls[1]!.click());
-    expect(
-      preview.querySelector('.card-material')?.getAttribute('data-reading')
-    ).toBe('true');
     expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 

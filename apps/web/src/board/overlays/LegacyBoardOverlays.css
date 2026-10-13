@@ -446,10 +446,6 @@
   transition: transform var(--duration-slow, 320ms) var(--ease-out);
 }
 
-.ptcgsim-card-preview-tilt[data-reading='true'] {
-  transform: none;
-}
-
 .ptcgsim-legacy-card-preview[data-landscape='true'] {
   --ptcgsim-preview-height: min(
     calc(var(--ptcgsim-overlay-board-height, 100vh) - 96px),

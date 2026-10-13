@@ -113,14 +113,18 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     .toBeGreaterThan(0.05);
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
+  // Close is the preview's only control, so focus stays on it both ways.
   await page.keyboard.press('Shift+Tab');
-  await expect(
-    preview.getByRole('button', { name: 'Read card' })
-  ).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(material).toHaveAttribute('data-reading', 'true');
+  await expect(close).toBeFocused();
+  // A resting pointer lets the card settle flat for reading.
   await material.hover({ position: { x: 40, y: 60 } });
-  await expect(material).toHaveCSS('transform', 'none');
+  await expect
+    .poll(() =>
+      preview
+        .locator('.ptcgsim-card-preview-tilt')
+        .evaluate((e) => e.style.getPropertyValue('--ptcgsim-tilt-x'))
+    )
+    .toBe('0deg');
   await close.click();
   await expect(preview).toHaveCount(0);
   await expect(cards.first()).toBeFocused();
@@ -144,7 +148,7 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     })
     .toBe(true);
   await cards.first().dblclick();
-  await preview.getByRole('button', { name: 'Read card', exact: true }).click();
+  await expect(preview).toBeVisible();
   await expect
     .poll(() =>
       preview.evaluate((element) => {

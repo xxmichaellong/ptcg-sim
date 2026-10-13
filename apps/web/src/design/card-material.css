@@ -96,9 +96,7 @@
   --card-foil-strength: 0.32;
 }
 
-/* Reading is always available without moving light or perspective. */
-.card-material[data-reading='true']::before,
-.card-material[data-reading='true']::after,
+/* No moving light where motion is off. */
 :root[data-motion='reduced'] .card-material::before,
 :root[data-motion='reduced'] .card-material::after,
 :root[data-motion-speed='instant'] .card-material::before,

@@ -1381,7 +1381,6 @@ const Preview = ({
   const stage = useRef<HTMLSpanElement>(null);
   const tiltTarget = useRef<HTMLSpanElement>(null);
   const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
-  const [reading, setReading] = useState(false);
   const [showPieces, setShowPieces] = useState(false);
   const [individualCardId, setIndividualCardId] = useState<string | null>(null);
   const readingCard =
@@ -1574,20 +1573,6 @@ const Preview = ({
             View assembled card
           </button>
         ) : null}
-        <button
-          type="button"
-          className="ptcgsim-overlay-button"
-          data-preview-tabbable="true"
-          aria-pressed={reading}
-          onClick={() => setReading((value) => !value)}
-        >
-          {reading ? (
-            <SparkleIcon aria-hidden="true" />
-          ) : (
-            <EyeIcon aria-hidden="true" />
-          )}
-          {reading ? 'Explore finish' : 'Read card'}
-        </button>
       </div>
       {readingCard ? (
         <span
@@ -1601,7 +1586,6 @@ const Preview = ({
             className="ptcgsim-card-preview-tilt card-material"
             data-finish={readingCard.finish ?? 'sheen'}
             data-foil-region={readingCard.presentation?.foilRegion}
-            data-reading={reading ? 'true' : undefined}
           >
             <OverlayCardImage card={readingCard} variant="preview" />
           </span>

@@ -334,12 +334,7 @@ export const createTiltHandlers = (target: RefObject<HTMLElement | null>) => {
       const element = target.current;
       if (!element) return;
       const motion = readOverlayMotion(element);
-      if (
-        motion.reduced ||
-        motion.scale === 0 ||
-        element.dataset.reading === 'true'
-      )
-        return;
+      if (motion.reduced || motion.scale === 0) return;
       const bounds = event.currentTarget.getBoundingClientRect();
       if (bounds.width <= 0 || bounds.height <= 0) return;
       pending = {
