@@ -268,6 +268,9 @@ for (const mode of ['flat', 'table'] as const)
         mimeType: 'application/json',
         buffer: Buffer.concat(chunks),
       });
+      // File input completion precedes the asynchronous replay installation.
+      // Reset belongs to the replay only after its controls have taken over.
+      await expect(page.locator('#p1Button')).toHaveText('Replay');
       await page.locator('#resetBothButton').click();
       await expect(
         page.locator('.ptcgsim-card[data-card-composition="joined"]')

@@ -4,6 +4,7 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   BoardDragController,
   createBoardLayoutSnapshot,
+  createTableLayoutSnapshot,
   createBoardScene,
   createBoardSceneForViewport,
   createRendererSpikeView,
@@ -31,6 +32,7 @@ import {
 } from 'pixi.js';
 
 import { PixiBoardRenderer } from './PixiBoardRenderer.js';
+import type { PixiTablePaint } from './table-paint.js';
 
 const scene = (): BoardScene => {
   const view = createRendererSpikeView();
@@ -234,8 +236,14 @@ interface RendererInternals {
   >;
   readonly countViews: Map<
     string,
-    { readonly text: Text; descriptor: BoardScene['counts'][number] }
+    {
+      readonly root: Container;
+      readonly graphic: Graphics;
+      readonly text: Text;
+      descriptor: BoardScene['counts'][number];
+    }
   >;
+  readonly tablePaint: PixiTablePaint | null;
   layers: {
     readonly playmat: Container;
     readonly cards: Container;
@@ -314,6 +322,107 @@ describe('Pixi board interaction cancellation', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('retains table labels and badges across updates, keeps hidden zones interactive, and retires table decoration', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const application = fakeApplication();
+    const emitIntent = vi.fn();
+    const renderer = new PixiBoardRenderer(
+      { emitIntent, emitPresentationUpdate: vi.fn(), reportError: vi.fn() },
+      { createApplication: () => application }
+    );
+    const view = createRendererSpikeView();
+    const table = createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+        bottomPlayerId: view.playerOrder[0]!,
+        geometryVersion: 2,
+        shellMode: 'sidebar',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+      })
+    );
+    await renderer.mount(
+      document.createElement('div'),
+      table,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    const internals = renderer as unknown as RendererInternals;
+    const deck = table.zones.find(
+      (zone) => zone.kind === 'deck' && zone.side === 'local'
+    )!;
+    const paint = internals.tablePaint!;
+    const zone = paint.zones.get(deck.id)!;
+    const style = zone.title.style;
+    const objects = renderer.getDiagnostics().displayObjects;
+    expect(zone.title.text).toBe('DECK');
+    expect(zone.title.visible).toBe(true);
+    for (const item of paint.zones.values()) {
+      if (['hand', 'board'].includes(item.descriptor.kind)) {
+        expect(item.title.visible).toBe(false);
+        expect(item.graphic.context.instructions).toHaveLength(0);
+      }
+    }
+    expect(internals.layers!.counts.zIndex).toBeGreaterThan(
+      internals.layers!.cards.zIndex
+    );
+    for (const count of internals.countViews.values())
+      expect(count.text.text).toBe(String(count.descriptor.count));
+    for (let revision = 1; revision <= 20; revision++)
+      renderer.installScene(
+        { ...table, revision: table.revision + revision },
+        []
+      );
+    expect(internals.tablePaint).toBe(paint);
+    expect(paint.zones.get(deck.id)).toBe(zone);
+    expect(zone.title.style).toBe(style);
+    expect(renderer.getDiagnostics().displayObjects).toBe(objects);
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      showZoneOutlines: false,
+    });
+    expect(zone.title.visible).toBe(false);
+    expect(zone.graphic.context.instructions).toHaveLength(0);
+    expect(zone.graphic.eventMode).toBe('static');
+    expect(
+      zone.graphic.hitArea?.contains(
+        deck.bounds.x + deck.bounds.width / 2,
+        deck.bounds.y + deck.bounds.height / 2
+      )
+    ).toBe(true);
+    zone.graphic.emit('pointertap', { button: 0, detail: 2 });
+    expect(emitIntent).toHaveBeenCalledWith({
+      kind: 'ZoneOpened',
+      zoneId: deck.id,
+    });
+    const source = table.cards.find((card) => card.interactive)!;
+    renderer.installPresentation({
+      ...DEFAULT_BOARD_PRESENTATION,
+      drag: {
+        cardId: source.id,
+        x: deck.bounds.x,
+        y: deck.bounds.y,
+        targetId: deck.id,
+      },
+    });
+    expect(zone.graphic.context.instructions.length).toBeGreaterThan(0);
+    renderer.installPresentation(DEFAULT_BOARD_PRESENTATION);
+    expect(zone.graphic.context.instructions).toHaveLength(0);
+    const badge = [...internals.countViews.values()][0]!.graphic;
+    renderer.installScene(scene(), [], 'replace');
+    expect(zone.graphic.destroyed).toBe(true);
+    expect(zone.title.destroyed).toBe(true);
+    expect(internals.tablePaint).toBe(null);
+    expect(internals.layers!.counts.zIndex).toBeLessThan(
+      internals.layers!.cards.zIndex
+    );
+    for (const count of internals.countViews.values())
+      expect(count.text.text).toBe(`(${count.descriptor.count})`);
+    renderer.destroy();
+    expect(badge.destroyed).toBe(true);
   });
 
   it.each(['move', 'remove'] as const)(

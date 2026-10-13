@@ -117,6 +117,132 @@ const idle = async (page: Page, renderer = 'dom') => {
     await expect(page.locator('canvas')).toHaveAttribute('data-motion', 'idle');
 };
 
+test('the Pixi table keeps zone labels and count badges readable across themes, depth and hidden containers', async ({
+  page,
+  browserName,
+}, testInfo) => {
+  await start(page, 'pixi');
+  const actual = await page.evaluate(
+    () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
+  );
+  testInfo.annotations.push({
+    type: 'renderer',
+    description: `Requested pixi; ran ${actual}`,
+  });
+  if (browserName === 'chromium') expect(actual).toBe('pixi');
+  await idle(page, actual);
+  const paint = () =>
+    page.evaluate(() => {
+      const { renderer, rendererKind, scene } = window.__PTCG_RENDERER_SPIKE__!;
+      if (rendererKind === 'dom') {
+        const labels = [
+          ...document.querySelectorAll<HTMLElement>(
+            '[data-zone-label][data-zone-outline="true"]'
+          ),
+        ].map((node) => node.dataset.zoneLabel!.toUpperCase());
+        const badges = [
+          ...document.querySelectorAll<HTMLElement>(
+            '.ptcgsim-zone-count--badge'
+          ),
+        ];
+        return {
+          labels,
+          counts: badges.map((node) => node.textContent),
+          color: getComputedStyle(badges[0]!).color,
+          countsAboveCards: true,
+          extraBoxes: 0,
+        };
+      }
+      // Read the retained display objects, not an extra DOM copy of the labels.
+      const table = Reflect.get(renderer, 'tablePaint');
+      const layers = Reflect.get(renderer, 'layers');
+      const counts = Reflect.get(renderer, 'countViews');
+      const zones = scene.zones.map((zone) => ({
+        descriptor: zone,
+        view: table.zones.get(zone.id),
+      }));
+      return {
+        labels: zones
+          .filter(({ view }) => view.title.visible)
+          .map(({ view }) => view.title.text),
+        counts: scene.counts.map((node) => counts.get(node.id).text.text),
+        color: String(Reflect.get(renderer, 'tablePalette').text.color),
+        countsAboveCards:
+          layers.counts.zIndex > layers.cards.zIndex &&
+          scene.counts.every((node) => {
+            const view = counts.get(node.id);
+            const box = view.root.getBounds();
+            return (
+              view.text.visible &&
+              box.width >= 26 &&
+              box.height >= 22 &&
+              box.x >= 0 &&
+              box.y >= 0 &&
+              box.x + box.width <= scene.viewport.width &&
+              box.y + box.height <= scene.viewport.height
+            );
+          }),
+        extraBoxes: zones.filter(
+          ({ descriptor, view }) =>
+            ['hand', 'board'].includes(descriptor.kind) &&
+            view.graphic.context.instructions.length > 0
+        ).length,
+      };
+    });
+  const expectedLabels = [
+    'ACTIVE',
+    'ACTIVE',
+    'BENCH',
+    'BENCH',
+    'PRIZES',
+    'PRIZES',
+    'DECK',
+    'DECK',
+    'DISCARD',
+    'DISCARD',
+    'LOST ZONE',
+    'LOST ZONE',
+    'STADIUM',
+  ].sort();
+  const initial = await paint();
+  expect(initial.labels.sort()).toEqual(expectedLabels);
+  expect(initial.counts).toContain('47');
+  expect(initial.countsAboveCards).toBe(true);
+  expect(initial.extraBoxes).toBe(0);
+  await page.locator('#settingsButton').click();
+  for (const mode of ['flat', 'depth', 'table']) {
+    await page.locator('#tableViewSelect').selectOption(mode);
+    await expect.poll(async () => (await paint()).countsAboveCards).toBe(true);
+    expect((await paint()).labels.sort()).toEqual(expectedLabels);
+  }
+  await page.locator('#darkModeCheckbox').uncheck();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
+  await expect.poll(async () => (await paint()).color).not.toBe(initial.color);
+  await page.locator('#showZonesCheckbox').check();
+  await expect.poll(async () => (await paint()).labels).toEqual([]);
+  expect((await paint()).counts).toContain('47');
+  const current = await scene(page);
+  const prizes = current.zones.find(
+    (zone) => zone.side === 'local' && zone.kind === 'prizes'
+  )!;
+  const point = await screen(
+    page,
+    new BoardDepthProjection(current, preferences).point({
+      // The gutter between the two columns exercises the zone hit area,
+      // rather than opening a card. Empty deck/discard piles do not open.
+      x: prizes.bounds.x + prizes.bounds.width / 2,
+      y: prizes.bounds.y + 3,
+    })
+  );
+  await page.mouse.dblclick(point.x, point.y);
+  await expect(page.locator('[data-legacy-zone-browser]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.locator('#showZonesCheckbox').uncheck();
+  await page.locator('#darkModeCheckbox').check();
+  await expect.poll(async () => (await paint()).color).toBe(initial.color);
+  expect((await paint()).labels.sort()).toEqual(expectedLabels);
+});
+
 const paintedPoint = (element: Locator, u = 0.5, v = 0.5) =>
   element.evaluate(
     (node, { u, v }) => {

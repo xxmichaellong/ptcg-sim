@@ -1,5 +1,10 @@
 import 'pixi.js/accessibility';
 import { paintCardLight } from './card-light.js';
+import {
+  PixiTablePaint,
+  readTablePalette,
+  type TablePalette,
+} from './table-paint.js';
 
 import {
   BoardDragController,
@@ -96,6 +101,8 @@ interface MarkerView {
 }
 
 interface ZoneCountView {
+  readonly root: Container;
+  readonly graphic: Graphics;
   readonly text: Text;
   descriptor: ZoneCountSceneNode;
 }
@@ -171,6 +178,9 @@ export class PixiBoardRenderer implements BoardRenderer {
   private contextLostCanvas: HTMLCanvasElement | null = null;
   private renderCommits = 0;
   private renderScheduled = false;
+  private tablePaint: PixiTablePaint | null = null;
+  private tablePalette: TablePalette | null = null;
+  private themeObserver: MutationObserver | null = null;
 
   constructor(
     adapters: BoardRendererAdapters,
@@ -196,6 +206,25 @@ export class PixiBoardRenderer implements BoardRenderer {
       throw new Error('Board renderer is already mounted');
     assertViewport(scene.viewport);
     this.mounted = true;
+    this.tablePalette = readTablePalette(host);
+    this.themeObserver = new MutationObserver(() => {
+      if (this.destroyed || !this.host) return;
+      const palette = readTablePalette(this.host);
+      if (JSON.stringify(palette) === JSON.stringify(this.tablePalette)) return;
+      this.tablePalette = palette;
+      this.tablePaint?.destroy();
+      this.tablePaint = null;
+      if (this.scene?.layout.geometryVersion === 2 && this.layers) {
+        this.syncTablePaint();
+        for (const view of this.countViews.values())
+          this.applyZoneCountView(view);
+        this.scheduleRender();
+      }
+    });
+    this.themeObserver.observe(host.ownerDocument.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-contrast', 'class', 'style'],
+    });
     window.addEventListener('blur', this.suspend);
     document.addEventListener('visibilitychange', this.handleVisibility);
     this.host = host;
@@ -211,6 +240,10 @@ export class PixiBoardRenderer implements BoardRenderer {
     } catch (error) {
       if (!this.destroyed) {
         this.mounted = false;
+        this.themeObserver?.disconnect();
+        this.themeObserver = null;
+        window.removeEventListener('blur', this.suspend);
+        document.removeEventListener('visibilitychange', this.handleVisibility);
         this.destroyApplication();
         this.adapters.reportStatus?.({ kind: 'failed', error });
         this.adapters.reportError(error);
@@ -277,6 +310,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (this.scene && this.app && this.layers) {
       this.app.canvas.dataset.dragging = presentation.drag ? 'true' : 'false';
       this.app.canvas.dataset.dragTarget = presentation.drag?.targetId ?? '';
+      this.tablePaint?.setTarget(presentation.drag?.targetId ?? null);
       for (const view of this.cardViews.values()) this.applyCardView(view);
       for (const view of this.markerViews.values()) this.positionMarker(view);
       this.syncPileUnderlay();
@@ -340,10 +374,17 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.canvas.dataset.showZoneOutlines = String(
         preferences.showZoneOutlines
       );
-      for (const zone of this.layers?.playmat.children ?? []) {
-        zone.alpha = preferences.showZoneOutlines ? 1 : 0;
-      }
-      if (this.scene && this.layers && (depthChanged || this.depth?.enabled))
+      if (this.scene?.layout.geometryVersion !== 2)
+        for (const zone of this.layers?.playmat.children ?? []) {
+          zone.alpha = preferences.showZoneOutlines ? 1 : 0;
+        }
+      if (
+        this.scene &&
+        this.layers &&
+        (depthChanged ||
+          this.depth?.enabled ||
+          this.scene.layout.geometryVersion === 2)
+      )
         this.syncScene();
       this.lightKey = hoveredLight;
       if (hoveredLight) this.paintLight();
@@ -365,10 +406,11 @@ export class PixiBoardRenderer implements BoardRenderer {
         this.cardViews.values(),
         (view) => view.descriptor.id
       ).sort(),
-      renderedZoneIds:
-        layers?.playmat.children
-          .map((child) => child.label)
-          .filter((id): id is string => Boolean(id)) ?? [],
+      renderedZoneIds: this.tablePaint
+        ? [...this.tablePaint.zones.keys()]
+        : (layers?.playmat.children
+            .map((child) => child.label)
+            .filter((id): id is string => Boolean(id)) ?? []),
       renderedMarkerIds:
         layers?.markers.children
           .map((child) => child.label)
@@ -390,6 +432,8 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (this.destroyed) return;
     this.cancelInteraction();
     this.destroyed = true;
+    this.themeObserver?.disconnect();
+    this.themeObserver = null;
     this.mounted = false;
     this.generation += 1;
     this.recoveryPendingForScene = false;
@@ -418,7 +462,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         autoDensity: true,
         autoStart: false,
         sharedTicker: false,
-        antialias: false,
+        antialias: true,
         backgroundAlpha: 0,
         // Canvas has no mesh pipe; never silently accept an unusable backend.
         preference: ['webgl'],
@@ -482,53 +526,60 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.depth = new BoardDepthProjection(scene, this.preferences);
     if (this.app) this.app.canvas.dataset.tableView = this.depth.settings.mode;
 
-    for (const child of layers.playmat.removeChildren())
-      child.destroy({ children: true });
-    for (const zone of scene.zones) {
-      const graphic = new Graphics({ label: zone.id });
-      if (
-        this.depth.enabled &&
-        zone.kind !== 'hand' &&
-        zone.kind !== 'inspection' &&
-        zone.kind !== 'attachmentResolution'
-      ) {
-        const quad = tablePoseQuad(this.depth.camera, {
-          bounds: zone.bounds,
-          turns: 0,
-          elevation: 0,
-          thickness: 0,
-          plane: 1,
-        });
-        graphic
-          .poly(quad.flatMap((point) => [point.x, point.y]))
-          .fill({ color: 0xffffff, alpha: 0.035 })
-          .stroke({ color: 0xa7c7c6, alpha: 0.25, width: 1.5 });
-      } else
-        graphic
-          .roundRect(
-            zone.bounds.x,
-            zone.bounds.y,
-            zone.bounds.width,
-            zone.bounds.height,
-            15
-          )
-          .fill({ color: 0xffffff, alpha: 0.1 })
-          .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
-      graphic.zIndex = zone.zIndex;
-      graphic.alpha = this.preferences.showZoneOutlines ? 1 : 0;
-      graphic.eventMode = zone.interactive ? 'static' : 'none';
-      graphic.cursor = zone.interactive ? 'pointer' : 'default';
-      graphic.accessible = zone.interactive;
-      graphic.accessibleTitle = `${zone.label}, ${zone.count} cards`;
-      graphic.on('pointertap', (event: FederatedPointerEvent) => {
+    const table = scene.layout.geometryVersion === 2;
+    layers.counts.zIndex = table ? 9_200 : 50;
+    if (table) this.syncTablePaint();
+    else {
+      this.tablePaint?.destroy();
+      this.tablePaint = null;
+      for (const child of layers.playmat.removeChildren())
+        child.destroy({ children: true });
+      for (const zone of scene.zones) {
+        const graphic = new Graphics({ label: zone.id });
         if (
-          this.isPrimaryActivation(event) &&
-          this.completesDoubleActivation(event)
+          this.depth.enabled &&
+          zone.kind !== 'hand' &&
+          zone.kind !== 'inspection' &&
+          zone.kind !== 'attachmentResolution'
         ) {
-          this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId: zone.id });
-        }
-      });
-      layers.playmat.addChild(graphic);
+          const quad = tablePoseQuad(this.depth.camera, {
+            bounds: zone.bounds,
+            turns: 0,
+            elevation: 0,
+            thickness: 0,
+            plane: 1,
+          });
+          graphic
+            .poly(quad.flatMap((point) => [point.x, point.y]))
+            .fill({ color: 0xffffff, alpha: 0.035 })
+            .stroke({ color: 0xa7c7c6, alpha: 0.25, width: 1.5 });
+        } else
+          graphic
+            .roundRect(
+              zone.bounds.x,
+              zone.bounds.y,
+              zone.bounds.width,
+              zone.bounds.height,
+              15
+            )
+            .fill({ color: 0xffffff, alpha: 0.1 })
+            .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
+        graphic.zIndex = zone.zIndex;
+        graphic.alpha = this.preferences.showZoneOutlines ? 1 : 0;
+        graphic.eventMode = zone.interactive ? 'static' : 'none';
+        graphic.cursor = zone.interactive ? 'pointer' : 'default';
+        graphic.accessible = zone.interactive;
+        graphic.accessibleTitle = `${zone.label}, ${zone.count} cards`;
+        graphic.on('pointertap', (event: FederatedPointerEvent) => {
+          if (
+            this.isPrimaryActivation(event) &&
+            this.completesDoubleActivation(event)
+          ) {
+            this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId: zone.id });
+          }
+        });
+        layers.playmat.addChild(graphic);
+      }
     }
 
     const renderedCards = scene.cards.filter(
@@ -716,17 +767,19 @@ export class PixiBoardRenderer implements BoardRenderer {
     for (const [id, view] of this.countViews) {
       if (nextCountIds.has(id)) continue;
       this.countViews.delete(id);
-      view.text.removeFromParent();
-      view.text.destroy();
+      view.root.destroy({ children: true });
     }
     for (const descriptor of scene.counts) {
       let view = this.countViews.get(descriptor.id);
       if (!view) {
         const countText = new Text({ label: descriptor.id });
+        const root = new Container({ label: descriptor.id, eventMode: 'none' });
+        const graphic = new Graphics({ eventMode: 'none' });
         countText.eventMode = 'none';
-        view = { text: countText, descriptor };
+        root.addChild(graphic, countText);
+        view = { root, graphic, text: countText, descriptor };
         this.countViews.set(descriptor.id, view);
-        layers.counts.addChild(countText);
+        layers.counts.addChild(root);
       } else {
         view.descriptor = descriptor;
       }
@@ -964,10 +1017,66 @@ export class PixiBoardRenderer implements BoardRenderer {
   };
 
   private applyZoneCountView(view: ZoneCountView): void {
-    const { text, descriptor } = view;
+    const { root, graphic, text, descriptor } = view;
+    const palette = this.tablePalette;
+    graphic.clear();
+    root.position.set(0, 0);
+    root.zIndex = descriptor.zIndex;
+    if (this.scene?.layout.geometryVersion === 2 && palette) {
+      const hand = descriptor.kind === 'hand';
+      const value = String(descriptor.count);
+      const width = Math.max(26, value.length * 8 + (hand ? 32 : 14));
+      const height = 22;
+      const margin = hand ? 0 : 9;
+      const anchor =
+        this.depth?.point(descriptor.anchor, 0, hand) ?? descriptor.anchor;
+      const x =
+        descriptor.horizontalAlign === 'left'
+          ? anchor.x - margin
+          : anchor.x - width + margin;
+      const y =
+        descriptor.verticalAlign === 'top'
+          ? anchor.y - margin
+          : anchor.y - height + margin;
+      const tint = descriptor.side === 'local' ? palette.you : palette.opponent;
+      root.position.set(x, y);
+      graphic
+        .roundRect(0, 2, width, height, 11)
+        .fill({ color: 0x000000, alpha: 0.25 });
+      graphic
+        .roundRect(0, 0, width, height, 11)
+        .fill(palette.surface)
+        .stroke({
+          ...(hand ? { color: tint.color, alpha: 0.7 } : palette.border),
+          width: 1,
+        });
+      if (hand) {
+        // The same two-card silhouette used by the DOM hand badge.
+        graphic.poly([6, 7, 12, 5, 14, 16, 8, 17]).fill(tint);
+        graphic
+          .poly([13, 4, 20, 5, 18, 15, 11, 14])
+          .fill(tint)
+          .stroke({ color: palette.surface.color, width: 1.2 });
+      }
+      text.text = value;
+      Object.assign(text.style, {
+        fill: palette.text.color,
+        fontFamily: palette.displayFont,
+        fontWeight: '700',
+        fontSize: 13,
+      });
+      text.alpha = palette.text.alpha;
+      text.anchor.set(0.5);
+      text.position.set(hand ? (width + 18) / 2 : width / 2, height / 2);
+      text.resolution = this.scene.viewport.devicePixelRatio;
+      return;
+    }
     text.text = `(${descriptor.count})`;
     text.style.fill = descriptor.color;
     text.style.fontSize = descriptor.fontSizePx;
+    text.style.fontWeight = 'normal';
+    text.style.fontFamily = 'Arial';
+    text.alpha = 1;
     // The anchor is the text-box corner named by the two alignments, so the
     // text's own anchor point moves to that corner.
     text.anchor.set(
@@ -979,6 +1088,26 @@ export class PixiBoardRenderer implements BoardRenderer {
       : descriptor.anchor;
     text.position.set(anchor.x, anchor.y);
     text.zIndex = descriptor.zIndex;
+  }
+
+  private syncTablePaint(): void {
+    if (!this.scene || !this.depth || !this.layers || !this.tablePalette)
+      return;
+    if (!this.tablePaint) {
+      for (const child of this.layers.playmat.removeChildren())
+        child.destroy({ children: true });
+      this.tablePaint = new PixiTablePaint(
+        this.layers.playmat,
+        this.tablePalette,
+        (zoneId) => this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId })
+      );
+    }
+    this.tablePaint.sync(
+      this.scene,
+      this.depth,
+      this.preferences,
+      this.presentation?.drag?.targetId ?? null
+    );
   }
 
   private applyMarkerView(view: MarkerView): void {
@@ -1705,6 +1834,8 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private clearRenderedScene(): void {
+    this.tablePaint?.destroy();
+    this.tablePaint = null;
     this.clearFeedback();
     this.light?.destroy();
     this.light = null;
@@ -1723,8 +1854,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
     this.markerViews.clear();
     for (const view of this.countViews.values()) {
-      view.text.removeFromParent();
-      view.text.destroy();
+      view.root.destroy({ children: true });
     }
     this.countViews.clear();
     const layers = this.layers;

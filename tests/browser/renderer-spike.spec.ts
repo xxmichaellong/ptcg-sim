@@ -1,4 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
+import {
+  createBoardScene,
+  createRendererSpikeView,
+  createTableLayoutSnapshot,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
@@ -881,8 +887,25 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
       expect(
         await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
       ).toBe(rendererKind);
+      // The default spike keeps v1's geometry for characterization. Measure
+      // the current table, including its retained labels and count badges.
+      const viewport = await page.evaluate(
+        () => window.__PTCG_RENDERER_SPIKE__!.scene.viewport
+      );
+      const view = createRendererSpikeView();
+      const tableScene = createBoardScene(
+        view,
+        createTableLayoutSnapshot({
+          geometryVersion: 2,
+          viewport,
+          playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+          bottomPlayerId: view.playerOrder[0]!,
+          shellMode: 'fullscreen',
+          vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+        })
+      );
       evidence[`${rendererKind}:${mode}`] = await page.evaluate(
-        async (mode) => {
+        async ({ mode, tableScene }) => {
           const spike = window.__PTCG_RENDERER_SPIKE__;
           if (!spike) throw new Error('Missing renderer spike');
           const renderer = spike.renderer;
@@ -955,7 +978,7 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
               Math.max(0, Math.ceil(sorted.length * fraction) - 1)
             ]!;
           };
-          const original = spike.scene;
+          const original = tableScene;
           const cards = Array.from({ length: 120 }, (_, index) => {
             const source = original.cards[index % original.cards.length]!;
             return {
@@ -1060,6 +1083,7 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
           };
           return {
             mode,
+            geometryVersion: current.layout.geometryVersion,
             userAgent: navigator.userAgent,
             platform:
               navigatorWithDeviceMemory.userAgentData?.platform ??
@@ -1096,12 +1120,13 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
             rawSamples: { single, full },
           };
         },
-        mode
+        { mode, tableScene }
       );
     }
 
   for (const result of Object.values(evidence)) {
     expect(result).toMatchObject({
+      geometryVersion: 2,
       cardCount: 120,
       distinctArtworkCount: 120,
       pendingTextureLoads: 0,

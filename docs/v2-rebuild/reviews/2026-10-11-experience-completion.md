@@ -61,6 +61,42 @@ A headless diagnostic run at 1366×768/DPR 1 passed all six combinations with ze
 
 Hosted release validation is dispatched on the pushed branch through `.github/workflows/ci.yml`; its run result is reported with the final delivery.
 
+## October 13 visual follow-up
+
+The optional Pixi renderer still painted prototype containers even though it used
+the shared table geometry. Its current table now uses the app's Day/Night color
+and font tokens, projected rounded outlines, upright zone names, seat tints, and
+count badges above the cards. Hand and loose-board hit areas remain available
+without drawing extra boxes. Hiding containers preserves pile counts and zone
+input; the current drop target remains visible. WebGL antialiasing smooths the
+projected edges.
+
+Zone graphics, labels, and text styles survive scene updates and camera movement.
+Only theme changes rebuild this decoration, and disposal releases its observer
+and display objects. The decoration adds no animation clock. The original
+geometry remains available for characterization; DOM remains the default.
+
+The 120-image benchmark now explicitly installs geometry version 2 for all six
+renderer/view combinations. The earlier diagnostic timings above used geometry
+version 1 and are not a baseline for this table. The updated headless check passed
+with 120 distinct images, no pending or failed texture loads, and no idle commits
+in every combination; it remains diagnostic evidence, not physical GPU acceptance.
+
+The non-browser quality gate passed with 2,711 unit tests, 32 worker-runtime tests,
+and all existing static checks and production builds. Focused Chromium checks
+covered table presentation, depth gestures, special formats, resize/DPR signals,
+and both resource-churn cases, including 140 setup/reset cycles. The first run
+found a replay-test race: the test reset the live game before the uploaded replay
+finished loading. It now waits for Replay mode; both flat and tilted composition
+journeys passed on rerun. Real-artwork screenshots were reviewed in Day and Night,
+including the board, pile browser, and reading view.
+
+Six focused journeys also passed in each of Firefox and WebKit. WebKit ran the
+actual Pixi backend with software Mesa; Firefox exercised the documented DOM
+fallback. The local WebKit runtime initially failed before creating a page because
+its previously installed Mesa/TLS libraries had been garbage-collected; restoring
+those environment dependencies resolved the startup failure without app changes.
+
 ## Physical and human acceptance still required
 
 Automation cannot establish the feel of an actual device or certify accessibility. Before treating this as a release-quality physical-device sign-off:
