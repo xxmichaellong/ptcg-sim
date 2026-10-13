@@ -1221,52 +1221,38 @@ describe('legacy board overlays', () => {
 
     const scrim = host.querySelector<HTMLElement>('.ptcgsim-overlay-scrim')!;
     expect(scrim.getAttribute('aria-hidden')).toBe('true');
-    const peek = browser.querySelector<HTMLButtonElement>(
-      '.ptcgsim-peek-button'
+    const showBoard = browser.querySelector<HTMLButtonElement>(
+      '.ptcgsim-show-board-button'
     )!;
-    await act(async () => {
-      peek.dispatchEvent(
-        new PointerEvent('pointerdown', {
-          bubbles: true,
-          button: 0,
-          pointerId: 1,
-        })
-      );
-    });
-    expect(browser.classList).toContain('is-peeking');
+    expect(showBoard.textContent).toBe('Show board');
+    // One click puts the panel aside; no holding.
+    await act(async () => showBoard.click());
+    expect(browser.classList).toContain('is-showing-board');
     expect(scrim.classList).toContain('is-hidden');
-    expect(peek.getAttribute('aria-pressed')).toBe('true');
-    await act(async () => {
-      peek.dispatchEvent(
-        new PointerEvent('pointerup', { bubbles: true, pointerId: 1 })
-      );
-    });
-    expect(browser.classList).not.toContain('is-peeking');
+    expect(showBoard.getAttribute('aria-pressed')).toBe('true');
+    // The same button, where it was, is the way back.
+    expect(showBoard.textContent).toBe('Back to Discard pile');
+    await act(async () => showBoard.click());
+    expect(browser.classList).not.toContain('is-showing-board');
     expect(scrim.classList).not.toContain('is-hidden');
-    // Holding it from the keyboard works the same way.
-    await act(async () => {
-      peek.dispatchEvent(
-        new KeyboardEvent('keydown', { key: ' ', bubbles: true })
-      );
-    });
-    expect(browser.classList).toContain('is-peeking');
-    await act(async () => {
-      peek.dispatchEvent(
-        new KeyboardEvent('keyup', { key: ' ', bubbles: true })
-      );
-    });
-    expect(browser.classList).not.toContain('is-peeking');
-    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    expect(showBoard.textContent).toBe('Show board');
 
-    await act(async () => {
-      browser.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'Escape',
-          bubbles: true,
-          cancelable: true,
-        })
-      );
-    });
+    // From the board, Esc steps back to the panel; a second Esc closes it.
+    await act(async () => showBoard.click());
+    const escape = () =>
+      act(async () => {
+        browser.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+    await escape();
+    expect(browser.classList).not.toContain('is-showing-board');
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    await escape();
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('zone');
   });
 
@@ -2368,7 +2354,7 @@ describe('legacy board overlays', () => {
     expect(readOnly.querySelector('.ptcgsim-overlay-hint')?.textContent).toBe(
       'Your opponent is looking at these cards'
     );
-    expect(readOnly.querySelector('.ptcgsim-peek-button')).not.toBeNull();
+    expect(readOnly.querySelector('.ptcgsim-show-board-button')).not.toBeNull();
   });
   it('lists a stack preview top card first and then its attachments newest-first, as v1 does', () => {
     const stackId = view.boards[firstPlayer]!.activeStackId!;

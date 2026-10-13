@@ -27,6 +27,7 @@ import { BinocularsIcon } from '@phosphor-icons/react/dist/csr/Binoculars';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { DiceFiveIcon } from '@phosphor-icons/react/dist/csr/DiceFive';
+import { ArrowUUpLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowUUpLeft';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
 import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
@@ -1183,48 +1184,37 @@ export const zoneCopyCounts = (
 };
 
 /**
- * "Show board": hides a big panel for as long as it is held down (by pointer,
- * or Space/Enter), as PTCG Live's peek does, so the table can be read without
- * closing the panel.
+ * "Show board": one click puts a big panel aside so the table can be read
+ * (and played) without closing it. The button stays where it was and turns
+ * into the way back, named for the panel; Esc goes back too.
  */
 const ShowBoardButton = ({
-  peeking,
-  onPeekChange,
+  showingBoard,
+  panelName,
+  onShowingBoardChange,
 }: {
-  readonly peeking: boolean;
-  readonly onPeekChange: (peeking: boolean) => void;
+  readonly showingBoard: boolean;
+  /** What the way back returns to: "Deck", "Looking at cards". */
+  readonly panelName: string;
+  readonly onShowingBoardChange: (showingBoard: boolean) => void;
 }) => (
   <button
     type="button"
-    className="ptcgsim-overlay-button is-quiet ptcgsim-peek-button"
-    aria-pressed={peeking}
-    title="Hold to see the board"
-    onPointerDown={(event) => {
-      if (event.button !== 0) return;
-      try {
-        // Keep the release even if the pointer wanders off the button.
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        // The pointer is no longer active; the release still arrives.
-      }
-      onPeekChange(true);
-    }}
-    onPointerUp={() => onPeekChange(false)}
-    onPointerCancel={() => onPeekChange(false)}
-    onLostPointerCapture={() => onPeekChange(false)}
-    onKeyDown={(event) => {
-      if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) {
-        event.preventDefault();
-        onPeekChange(true);
-      }
-    }}
-    onKeyUp={(event) => {
-      if (event.key === ' ' || event.key === 'Enter') onPeekChange(false);
-    }}
-    onBlur={() => onPeekChange(false)}
+    className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
+    aria-pressed={showingBoard}
+    onClick={() => onShowingBoardChange(!showingBoard)}
   >
-    <EyeIcon aria-hidden="true" />
-    Show board
+    {showingBoard ? (
+      <>
+        <ArrowUUpLeftIcon aria-hidden="true" />
+        Back to {panelName}
+      </>
+    ) : (
+      <>
+        <EyeIcon aria-hidden="true" />
+        Show board
+      </>
+    )}
   </button>
 );
 
@@ -1779,7 +1769,7 @@ const ZoneBrowser = ({
   const [sortEnabled, setSortEnabled] = useState(false);
   const [query, setQuery] = useState('');
   const [cardSize, setCardSize] = useState<CardBrowserSize>('auto');
-  const [peeking, setPeeking] = useState(false);
+  const [showingBoard, setShowingBoard] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
   // The "Shuffle all to Deck" confirmation still being asked, if any. It
@@ -1873,12 +1863,12 @@ const ZoneBrowser = ({
     <>
       <div
         ref={scrim}
-        className={`ptcgsim-overlay-scrim${draggingCardId !== null || peeking ? ' is-hidden' : ''}`}
+        className={`ptcgsim-overlay-scrim${draggingCardId !== null || showingBoard ? ' is-hidden' : ''}`}
         aria-hidden="true"
       />
       <section
         ref={container}
-        className={`ptcgsim-legacy-zone-browser is-${zone.side}${peeking ? ' is-peeking' : ''}`}
+        className={`ptcgsim-legacy-zone-browser is-${zone.side}${showingBoard ? ' is-showing-board' : ''}`}
         data-legacy-zone-browser="true"
         data-zone-browser-id={zone.id}
         data-zone-browser-kind={zone.kind}
@@ -1901,7 +1891,9 @@ const ZoneBrowser = ({
           }
           if (event.key === 'Escape') {
             event.preventDefault();
-            dismiss();
+            // From the board, Esc steps back to the panel first.
+            if (showingBoard) setShowingBoard(false);
+            else dismiss();
           }
         }}
       >
@@ -1941,7 +1933,12 @@ const ZoneBrowser = ({
               />
               Sort
             </label>
-            <ShowBoardButton peeking={peeking} onPeekChange={setPeeking} />
+            <ShowBoardButton
+              showingBoard={showingBoard}
+              // "Back to Board" would read as the table itself.
+              panelName={zone.kind === 'board' ? 'board cards' : title}
+              onShowingBoardChange={setShowingBoard}
+            />
             <button
               type="button"
               className="ptcgsim-overlay-button is-primary ptcgsim-legacy-zone-button"
@@ -2129,7 +2126,7 @@ const WorkAreaPanel = ({
 }) => {
   const container = useRef<HTMLElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
-  const [peeking, setPeeking] = useState(false);
+  const [showingBoard, setShowingBoard] = useState(false);
   useOverlayExit(container, 'panel');
   const source: LegacyBoardWorkAreaSource =
     zone.kind === 'inspection' ? 'inspection' : 'staged';
@@ -2174,7 +2171,7 @@ const WorkAreaPanel = ({
   return (
     <section
       ref={container}
-      className={`ptcgsim-legacy-work-area is-${zone.side}${peeking ? ' is-peeking' : ''}`}
+      className={`ptcgsim-legacy-work-area is-${zone.side}${showingBoard ? ' is-showing-board' : ''}`}
       data-legacy-work-area={source}
       data-work-area-id={zone.id}
       data-overlay-side={zone.side}
@@ -2193,7 +2190,11 @@ const WorkAreaPanel = ({
           {hint ? <span className="ptcgsim-overlay-hint">{hint}</span> : null}
         </div>
         <div className="ptcgsim-overlay-actions">
-          <ShowBoardButton peeking={peeking} onPeekChange={setPeeking} />
+          <ShowBoardButton
+            showingBoard={showingBoard}
+            panelName={heading.replace(/\.+$/u, '')}
+            onShowingBoardChange={setShowingBoard}
+          />
         </div>
       </header>
       <div className="ptcgsim-legacy-work-area-cards">

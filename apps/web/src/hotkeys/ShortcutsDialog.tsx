@@ -692,7 +692,6 @@ export const ShortcutsDialog = ({
   const [mode, setMode] = useState<HotkeyMode>(initialMode);
   const [query, setQuery] = useState('');
   const [layer, setLayer] = useState<Layer>('plain');
-  const [heldLayer, setHeldLayer] = useState<Layer | null>(null);
   const [hovered, setHovered] = useState<HotkeyActionId | null>(null);
   const [recording, setRecording] = useState<HotkeyActionId | null>(null);
   const [conflict, setConflict] = useState<PendingConflict | null>(null);
@@ -714,7 +713,6 @@ export const ShortcutsDialog = ({
       setMode(initialMode);
       setQuery('');
       setLayer('plain');
-      setHeldLayer(null);
       setHovered(null);
       setRecording(null);
       setConflict(null);
@@ -777,40 +775,9 @@ export const ShortcutsDialog = ({
     setConflict(null);
   };
 
-  const shownLayer =
-    heldLayer ??
-    (() => {
-      const chord = hovered ? keymap.chord(hovered) : null;
-      return chord ? (layerOf(chord) ?? layer) : layer;
-    })();
-
-  // Holding Shift, Alt or Ctrl shows that layer while the list is read.
-  useEffect(() => {
-    if (!open) return;
-    const layerFor = (event: KeyboardEvent): Layer | null =>
-      event.ctrlKey
-        ? 'ctrl'
-        : event.altKey
-          ? 'alt'
-          : event.shiftKey
-            ? 'shift'
-            : null;
-    const onKey = (event: KeyboardEvent): void => {
-      if (recordingRef.current) return;
-      if (isModifierKey(event.key) || event.type === 'keyup') {
-        setHeldLayer(layerFor(event));
-      }
-    };
-    const release = (): void => setHeldLayer(null);
-    window.addEventListener('keydown', onKey, true);
-    window.addEventListener('keyup', onKey, true);
-    window.addEventListener('blur', release);
-    return () => {
-      window.removeEventListener('keydown', onKey, true);
-      window.removeEventListener('keyup', onKey, true);
-      window.removeEventListener('blur', release);
-    };
-  }, [open]);
+  // Hovering a shortcut shows the layer its key sits on.
+  const hoveredChord = hovered ? keymap.chord(hovered) : null;
+  const shownLayer = hoveredChord ? (layerOf(hoveredChord) ?? layer) : layer;
 
   const searching = query.trim().length > 0;
   const groups = useMemo(

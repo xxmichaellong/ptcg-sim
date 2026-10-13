@@ -1081,7 +1081,7 @@
     min-width: 0;
   }
 }
-.is-peeking .ptcgsim-card-actions {
+.is-showing-board .ptcgsim-card-actions {
   opacity: 0;
   pointer-events: none;
 }
@@ -1093,8 +1093,8 @@
   background: var(--color-surface-2);
 }
 
-/* "Show board" held: only the button stays. */
-.ptcgsim-legacy-zone-browser.is-peeking {
+/* "Show board": the panel steps aside; only its way back stays. */
+.ptcgsim-legacy-zone-browser.is-showing-board {
   border-color: transparent;
   background-color: transparent;
   box-shadow: none;
@@ -1102,22 +1102,36 @@
   pointer-events: none;
 }
 
-.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-overlay-header {
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-header {
   border-color: transparent;
   background: transparent;
 }
 
-.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-legacy-zone-cards,
-.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-browser-tools,
-.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-overlay-heading,
-.ptcgsim-legacy-zone-browser.is-peeking
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-legacy-zone-cards,
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-browser-tools,
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-heading,
+.ptcgsim-legacy-zone-browser.is-showing-board
   .ptcgsim-overlay-actions
-  > :not(.ptcgsim-peek-button) {
+  > :not(.ptcgsim-show-board-button) {
   opacity: 0;
 }
 
-.ptcgsim-peek-button {
+.ptcgsim-show-board-button {
   pointer-events: auto;
+}
+
+/* The way back: lifted off the table so it reads as the panel's handle. */
+.is-showing-board .ptcgsim-show-board-button {
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  animation: ptcgsim-show-board-return
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-snappy);
+}
+
+@keyframes ptcgsim-show-board-return {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
 }
 
 .ptcgsim-browser-tools {
@@ -1206,12 +1220,6 @@
   .ptcgsim-browser-results {
     display: none;
   }
-}
-
-.ptcgsim-legacy-zone-browser.is-peeking .ptcgsim-peek-button {
-  background-color: var(--color-surface-2);
-  box-shadow: var(--shadow-3);
-  color: var(--color-text);
 }
 
 .ptcgsim-legacy-zone-cards {
@@ -1455,8 +1463,8 @@
   flex: 1 1 0;
 }
 
-/* "Show board" held: only the button stays. */
-.ptcgsim-legacy-work-area.is-peeking {
+/* "Show board": the panel steps aside; only its way back stays. */
+.ptcgsim-legacy-work-area.is-showing-board {
   border-color: transparent;
   background-color: transparent;
   box-shadow: none;
@@ -1464,19 +1472,13 @@
   pointer-events: none;
 }
 
-.ptcgsim-legacy-work-area.is-peeking .ptcgsim-overlay-header {
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-overlay-header {
   border-color: transparent;
   box-shadow: none;
 }
 
-.ptcgsim-legacy-work-area.is-peeking .ptcgsim-legacy-work-area-cards,
-.ptcgsim-legacy-work-area.is-peeking .ptcgsim-legacy-work-area-buttons,
-.ptcgsim-legacy-work-area.is-peeking .ptcgsim-overlay-heading {
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-legacy-work-area-cards,
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-legacy-work-area-buttons,
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-overlay-heading {
   opacity: 0;
-}
-
-.ptcgsim-legacy-work-area.is-peeking .ptcgsim-peek-button {
-  background-color: var(--color-surface-2);
-  box-shadow: var(--shadow-3);
-  color: var(--color-text);
 }
