@@ -6,6 +6,7 @@ import {
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import type { MatchViewState } from '@ptcgsim/game-core';
+import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -291,6 +292,59 @@ describe('BoardMotionDirector', () => {
     );
     expect(flight!.cancel).toHaveBeenCalled();
     expect(element.dataset.flying).toBeUndefined();
+  });
+
+  it('keeps cards landing on the same place lifted until the last one lands', async () => {
+    const test = setup();
+    const hand = base.zones[handId]!.cards;
+    const [first, second] = [hand[0]!, hand[1]!];
+    const before = sceneOf(base);
+    const after = sceneOf({
+      ...base,
+      revision: base.revision + 1,
+      zones: {
+        ...base.zones,
+        [handId]: {
+          ...base.zones[handId]!,
+          cards: hand.filter((card) => card !== first && card !== second),
+        },
+        [boardId]: {
+          ...base.zones[boardId]!,
+          cards: [...base.zones[boardId]!.cards, first, second],
+        },
+      },
+    });
+    test.register(before);
+    test.register(after);
+    test.director.commit(null, before, undefined, paintedOf(before), new Set());
+    test.director.commit(
+      before,
+      after,
+      { cause: 'advance' },
+      paintedOf(after),
+      new Set()
+    );
+    const firstElement = test.elements.get(cardKey(first))!;
+    const secondElement = test.elements.get(cardKey(second))!;
+    const [firstFlight] = flightsOn(firstElement);
+    const [secondFlight] = flightsOn(secondElement);
+    expect(firstElement.dataset.flying).toBe('');
+    expect(secondElement.dataset.flying).toBe('');
+
+    // The first lands while the second is still in the air: it keeps its
+    // lift, so it cannot drop below a card that belongs above it.
+    await act(async () => {
+      firstFlight!.finish();
+      await Promise.resolve();
+    });
+    expect(firstElement.dataset.flying).toBe('');
+    // The last one lands: both settle into the table's own order.
+    await act(async () => {
+      secondFlight!.finish();
+      await Promise.resolve();
+    });
+    expect(firstElement.dataset.flying).toBeUndefined();
+    expect(secondElement.dataset.flying).toBeUndefined();
   });
 
   it('says when the table starts and stops moving on its own', async () => {

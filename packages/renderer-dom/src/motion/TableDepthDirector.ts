@@ -195,7 +195,7 @@ export class TableDepthDirector {
           projection.pileCounts.get(card.id) ||
         !sameTablePose(oldPose, pose) ||
         (this.elements.get(key)?.dataset.flying !== undefined) !==
-          this.motion.has(key)
+          this.lifted(key)
       )
         this.paint(key, pose);
     }
@@ -385,7 +385,7 @@ export class TableDepthDirector {
     element.style.height = `${pose.bounds.height}px`;
     element.style.transform = `matrix3d(${tablePoseMatrix(projection.camera, pose).join(',')})`;
     element.dataset.elevation = pose.elevation.toFixed(3);
-    if (this.motion.has(key)) element.dataset.flying = '';
+    if (this.lifted(key)) element.dataset.flying = '';
     else delete element.dataset.flying;
     const geometry = element.querySelector<SVGSVGElement>(
       '.ptcgsim-card__depth'
@@ -439,9 +439,30 @@ export class TableDepthDirector {
       return;
     this.frame = requestAnimationFrame(this.tick);
   }
+  /**
+   * Lifted while it, or any card landing with it on the same parent, still
+   * travels: a Pokémon that arrives first never drops below its Energy that
+   * is still in the air.
+   */
+  private lifted(key: string): boolean {
+    if (this.motion.has(key)) return true;
+    const group = this.cards.get(key)?.parentId;
+    if (group === undefined) return false;
+    for (const [other, card] of this.cards) {
+      if (card.parentId === group && this.motion.has(other)) return true;
+    }
+    return false;
+  }
+
   private readonly tick = (at: number) => {
     this.frame = null;
     for (const [key, pose] of this.motion.sampleAll(at)) this.paint(key, pose);
+    // Cards that landed earlier keep their lift until their group has landed.
+    for (const [key, element] of this.elements) {
+      if (element.dataset.flying !== undefined && !this.lifted(key)) {
+        delete element.dataset.flying;
+      }
+    }
     for (const [key, flip] of this.flips) {
       const progress = Math.max(
         0,

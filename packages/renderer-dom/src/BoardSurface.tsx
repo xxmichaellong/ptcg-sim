@@ -55,6 +55,15 @@ import {
 const FACE_DOWN_LABEL = 'Face-down card';
 
 /**
+ * Bases for lifted cards, each added to the card's own scene z-index so the
+ * table's order survives the lift. Scene z-indexes stay below ~1,100 (work
+ * areas), so a flying or settling card (9,000 + z) passes over the table and
+ * its badges, and the card in the hand (20,000 + z) over everything moving.
+ */
+const LIFTED_Z_INDEX = 9_000;
+const DRAG_Z_INDEX = 20_000;
+
+/**
  * The table shows this card's back: it is concealed, or (the deck cover) it
  * paints a back over a face its owner may read elsewhere.
  */
@@ -535,14 +544,18 @@ const CardNode = memo(
         aria-pressed={card.primaryAction ? undefined : selected}
         style={
           {
+            // Lifted cards keep the table's order among themselves: an
+            // attached Energy stays behind its Pokémon while the stack is
+            // held, settling or (see [data-flying]) in flight.
             ...absoluteRect(
               bounds,
               drag
-                ? 10_000 + (card.composition ? card.zIndex : 0)
+                ? DRAG_Z_INDEX + card.zIndex
                 : settle
-                  ? 9_000 + (card.composition ? card.zIndex : 0)
+                  ? LIFTED_Z_INDEX + card.zIndex
                   : card.zIndex
             ),
+            '--ptcgsim-z': card.zIndex,
             display: 'block',
             margin: 0,
             padding: 0,

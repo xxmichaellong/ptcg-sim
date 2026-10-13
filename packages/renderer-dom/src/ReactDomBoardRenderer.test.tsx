@@ -1531,10 +1531,13 @@ describe('React DOM board renderer', () => {
         settling: [{ cardId, x: 300, y: 200 }],
       })
     );
-    // Centred on the drop point, like a drag, but below an active drag.
+    // Centred on the drop point, like a drag, but below an active drag, and
+    // keeping its table order (its scene z-index) above the lifted base.
     expect(Number.parseFloat(card.style.left)).toBeCloseTo(300 - width / 2);
     expect(Number.parseFloat(card.style.top)).toBeCloseTo(200 - height / 2);
-    expect(card.style.zIndex).toBe('9000');
+    const sceneZ = createScene().cards[0]!.zIndex;
+    expect(card.style.zIndex).toBe(String(9_000 + sceneZ));
+    expect(card.style.getPropertyValue('--ptcgsim-z')).toBe(String(sceneZ));
     expect(card.style.width).toBe(`${width}px`);
 
     act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));

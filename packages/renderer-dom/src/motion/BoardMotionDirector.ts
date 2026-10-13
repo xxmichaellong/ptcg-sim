@@ -44,6 +44,12 @@ interface Flight {
   readonly startedAt: number;
   readonly durationScale: number;
   readonly finished: Promise<void>;
+  /**
+   * Where it lands (its parent in the next scene). Cards landing together
+   * stay lifted until the last of them lands, so a Pokémon that arrives
+   * first never drops below its Energy still in the air.
+   */
+  readonly group: string;
 }
 
 const centerOf = (rect: Rect) => ({
@@ -94,6 +100,8 @@ export class BoardMotionDirector {
   readonly depth = new TableDepthDirector(this.elements);
   private depthEnabled = false;
   private readonly flights = new Map<string, Flight>();
+  /** Landed cards kept lifted until the rest of their group lands. */
+  private readonly landedAwaitingGroup = new Map<string, Set<HTMLElement>>();
   private readonly painted = new Map<string, PaintedCard>();
   private readonly releases = new Map<
     string,
@@ -257,6 +265,10 @@ export class BoardMotionDirector {
   cancelAll(): void {
     this.depth.cancel();
     for (const key of [...this.flights.keys()]) this.stopFlight(key);
+    for (const waiting of this.landedAwaitingGroup.values()) {
+      for (const element of waiting) delete element.dataset.flying;
+    }
+    this.landedAwaitingGroup.clear();
     for (const animation of this.extras) animation.cancel();
     this.extras.clear();
     this.cardExtras.clear();
@@ -286,7 +298,34 @@ export class BoardMotionDirector {
     this.flights.delete(renderKey);
     flight.animation.cancel();
     delete flight.element.dataset.flying;
+    this.releaseGroupIfLanded(flight.group);
     this.notify();
+  }
+
+  /** A flight finished: drop its lift, unless its group is still landing. */
+  private land(flight: Flight): void {
+    const stillLanding = [...this.flights.values()].some(
+      (other) => other.group === flight.group
+    );
+    if (stillLanding) {
+      const waiting =
+        this.landedAwaitingGroup.get(flight.group) ?? new Set<HTMLElement>();
+      waiting.add(flight.element);
+      this.landedAwaitingGroup.set(flight.group, waiting);
+      return;
+    }
+    delete flight.element.dataset.flying;
+    this.releaseGroupIfLanded(flight.group);
+  }
+
+  private releaseGroupIfLanded(group: string): void {
+    if ([...this.flights.values()].some((other) => other.group === group)) {
+      return;
+    }
+    const waiting = this.landedAwaitingGroup.get(group);
+    if (!waiting) return;
+    this.landedAwaitingGroup.delete(group);
+    for (const element of waiting) delete element.dataset.flying;
   }
 
   private stopCardExtras(renderKey: string): void {
@@ -425,6 +464,10 @@ export class BoardMotionDirector {
       fill: 'backwards',
     });
     element.dataset.flying = '';
+    // Flying again: no longer waiting on an earlier group.
+    for (const waiting of this.landedAwaitingGroup.values()) {
+      waiting.delete(element);
+    }
     const flight: Flight = {
       element,
       animation,
@@ -443,13 +486,14 @@ export class BoardMotionDirector {
         () => undefined,
         () => undefined
       ),
+      group: target.parentId,
     };
     this.flights.set(planned.renderKey, flight);
     this.notify();
     void flight.finished.then(() => {
       if (this.flights.get(planned.renderKey) !== flight) return;
       this.flights.delete(planned.renderKey);
-      delete element.dataset.flying;
+      this.land(flight);
       this.notify();
     });
     if (planned.fromImageUrl) {

@@ -149,9 +149,12 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-card[data-held] .ptcgsim-card__face {
   --ptcgsim-lift: 6;
 }
+/* In flight a card rises over the table but keeps the table's order among
+   the other moving cards (--ptcgsim-z is its scene z-index), so an attached
+   Energy never crosses in front of its Pokémon mid-move. */
 .ptcgsim-card[data-flying] {
   clip-path: none !important;
-  z-index: 9000 !important;
+  z-index: calc(9000 + var(--ptcgsim-z, 0)) !important;
 }
 .ptcgsim-card-ghost .ptcgsim-card__face {
   --ptcgsim-lift: 3;

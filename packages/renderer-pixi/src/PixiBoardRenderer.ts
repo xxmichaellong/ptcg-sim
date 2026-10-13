@@ -881,9 +881,8 @@ export class PixiBoardRenderer implements BoardRenderer {
         view,
         this.depthMotion.poses.get(descriptor.renderKey!) ?? target
       );
-      sprite.zIndex = held
-        ? 10_000 + (descriptor.composition ? descriptor.zIndex : 0)
-        : descriptor.zIndex;
+      // A held card keeps the table's order among the cards lifted with it.
+      sprite.zIndex = held ? 10_000 + descriptor.zIndex : descriptor.zIndex;
       if (view.edge) view.edge.zIndex = sprite.zIndex - 0.1;
       sprite.eventMode = descriptor.interactive ? 'static' : 'none';
       sprite.cursor = dragging ? 'grabbing' : 'grab';
