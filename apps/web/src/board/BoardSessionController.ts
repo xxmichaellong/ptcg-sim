@@ -1308,8 +1308,13 @@ const handleIntent = (
             : hasPresentableCard(candidate.id))
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
+      // A stack of one card has nothing more to show: open the card itself.
+      const stack = view.stacks[card.parentId];
+      const stackCardCount = stack
+        ? stack.evolutionCards.length + stack.attachmentCards.length
+        : 0;
       const preview: BoardPreviewState =
-        view.stacks[card.parentId] && !intent.single
+        stack && !intent.single && stackCardCount > 1
           ? {
               kind: 'stack',
               stackId: card.parentId,

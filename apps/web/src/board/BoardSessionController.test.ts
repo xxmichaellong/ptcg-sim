@@ -2549,6 +2549,25 @@ describe('headless board session controller', () => {
     );
   });
 
+  it('opens a lone Pokémon straight into the card preview, not the stack view', () => {
+    const base = createRendererSpikeView();
+    const stack = base.stacks['stack:blue:active']!;
+    const top = stack.evolutionCards.at(-1)!;
+    const lone: MatchViewState = {
+      ...base,
+      stacks: {
+        ...base.stacks,
+        [stack.id]: { ...stack, evolutionCards: [top], attachmentCards: [] },
+      },
+    };
+    let state = install(initialFrame(lone));
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardPreviewRequested', cardId: top.id },
+    }).state;
+    expect(state.overlays.preview).toEqual({ kind: 'card', cardId: top.id });
+  });
+
   it('closes stack preview when its focus card moves out of that stack', () => {
     const base = createRendererSpikeView();
     let state = install(initialFrame(base));
