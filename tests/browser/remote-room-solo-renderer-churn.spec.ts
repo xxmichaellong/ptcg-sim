@@ -10,6 +10,7 @@ import {
   CLIENT_FRAME_WINDOW_MS,
   MAX_CLIENT_FRAMES_PER_WINDOW,
 } from '../../apps/server/src/session-hub-limits.js';
+import { DEFAULT_PRESENTATION_RUNTIME_POLICY } from '../../apps/web/src/presentation/PresentationRuntime.js';
 
 // Playwright trace snapshots retain a full copy of every 47/60-card dialog at
 // every locator action. Besides producing a >100 MB artifact, that observer
@@ -442,19 +443,28 @@ const runCycle = async (
   };
 };
 
+/**
+ * The announcement queue keeps at most this many announcements, each shown
+ * for a second (LIVE_REGION_DWELL_MS), so a backlog empties within this
+ * long, plus headroom for a slow runner.
+ */
+const LIVE_REGION_DRAIN_MS =
+  (DEFAULT_PRESENTATION_RUNTIME_POLICY.maximumAccessibilityAnnouncements + 1) *
+    1_000 +
+  15_000;
+
 const alignMemorySnapshotPhase = async (
-  page: Page,
-  expectedLiveRegionChildren?: number
+  page: Page
 ): Promise<{
   readonly liveRegionChildren: number;
   readonly images: number;
 }> => {
-  // Each cycle queues a few announcements that dwell a second each, faster
-  // than they drain at instant speed, so one is always showing: both
-  // snapshots are taken in that same phase.
-  await expect(page.locator('.presentation-live-region > *')).toHaveCount(
-    expectedLiveRegionChildren ?? 1
-  );
+  // Both snapshots are taken with the announcement queue drained. Whether a
+  // backlog is still showing at a fixed point depends on how fast the
+  // runner cycled; an empty queue does not, and it empties in bounded time.
+  await expect(page.locator('.presentation-live-region > *')).toHaveCount(0, {
+    timeout: LIVE_REGION_DRAIN_MS,
+  });
   await page.waitForFunction(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     if (!scene) return false;
@@ -740,7 +750,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
 
   const baselinePresentationPhase = await alignMemorySnapshotPhase(page);
   expect(baselinePresentationPhase).toEqual({
-    liveRegionChildren: 1,
+    liveRegionChildren: 0,
     images: 2,
   });
   const baseline = await readResourceEvidence(page, renderer);
@@ -766,10 +776,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   }
   expect(measuredZoneBrowserOpenings).toBe(MEASURED_CYCLES * 4);
 
-  const finalPresentationPhase = await alignMemorySnapshotPhase(
-    page,
-    baselinePresentationPhase.liveRegionChildren
-  );
+  const finalPresentationPhase = await alignMemorySnapshotPhase(page);
   const final = await readResourceEvidence(page, renderer);
   const finalMemory = await collectGarbageCollectedMemory(cdp);
   const finalCounters = finalMemory.counters;
