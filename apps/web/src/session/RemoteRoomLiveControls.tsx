@@ -1,4 +1,5 @@
 import { Flower } from '@phosphor-icons/react/dist/csr/Flower';
+import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import type {
   ClientSessionState,
   RemoteGameSession,
@@ -15,6 +16,9 @@ import {
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
 import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
 import { resolveTableAction } from '../board/resolveTableAction.js';
+import { chordHint, detectKeyboardPlatform } from '../hotkeys/chords.js';
+import { useKeymap } from '../hotkeys/hotkey-preferences.js';
+import { openShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
   downloadBrowserTextFile,
@@ -114,6 +118,31 @@ export type BrowserContinuationFileReader = (
 ) => Promise<BrowserContinuationFileReadResult>;
 
 export type OpponentInvitationDelivery = (text: string) => Promise<void>;
+
+/** Opens the keyboard shortcuts list; its tooltip names the key for it. */
+const ShortcutsButton = ({
+  id,
+  className,
+}: {
+  readonly id: string;
+  readonly className: string;
+}) => {
+  const opener = useKeymap().chord('table.shortcuts');
+  const hint = opener ? chordHint(opener, detectKeyboardPlatform()) : null;
+  return (
+    <button
+      id={id}
+      type="button"
+      className={className}
+      aria-label="Keyboard shortcuts"
+      aria-keyshortcuts={opener ? chordHint(opener, 'other') : undefined}
+      title={hint ? `Keyboard shortcuts (${hint})` : 'Keyboard shortcuts'}
+      onClick={() => openShortcutsDialog()}
+    >
+      <KeyboardIcon size={18} weight="duotone" aria-hidden="true" />
+    </button>
+  );
+};
 
 /** Existing connected-room controls backed only by authenticated session APIs. */
 export const RemoteRoomLiveControls = ({
@@ -483,6 +512,10 @@ export const RemoteRoomLiveControls = ({
         >
           <Flower size={18} weight="fill" aria-hidden="true" />
         </button>
+        <ShortcutsButton
+          id={solo ? 'shortcutsButton' : 'p2ShortcutsButton'}
+          className={playerControls ? seatColor : 'spectator-color'}
+        />
       </div>
       <input
         id={solo ? 'messageInput' : 'p2MessageInput'}

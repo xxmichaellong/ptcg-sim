@@ -73,6 +73,15 @@ v1's geometry and its handles are unchanged.
 The redesign's large hover preview beside the table (not in v1) is off by
 default and can be turned on in the same panel.
 
+### Keyboard shortcuts (2026-10-13)
+
+The owner asked for a button and a clearer dialog in place of the hold-Shift
+sheet, and for players to choose their own keys (ADR-028).
+
+| ID     | V1 behavior                                                                                              | V2 disposition                                                                                                                                                                                                     | Class             | Evidence                                                                                                            |
+| ------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| PX-025 | Holding Shift shows the keybind reference (`#keybindModal`) until Shift is released; the keys are fixed. | `?` (or the sidebar's keyboard button, Settings or the welcome card) opens a shortcuts dialog with a keyboard map and search. Players may move any shortcut but the number keys and Esc, and reset them (ADR-028). | `PRODUCT_REQUEST` | `ShortcutsDialog.test.tsx`; `keymap.test.ts`; `LegacyBoardKeyboardShortcuts.test.tsx`; `keyboard-shortcuts.spec.ts` |
+
 ## Open differences awaiting a product decision
 
 The [2026-09-23 file review](reviews/2026-09-23-v1-transfer-review.md) records

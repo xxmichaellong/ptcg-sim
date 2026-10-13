@@ -617,11 +617,17 @@ for (const requestedRenderer of ['dom', 'pixi']) {
     await expect(page.locator('[data-table-view="depth"]')).toBeVisible();
     await chooseTableView(page, 'flat');
     await expect(page.locator('[data-table-view="flat"]')).toBeVisible();
-    expect(
-      await page.evaluate(
-        () => JSON.parse(localStorage.getItem('ptcgsim.table-depth.v1')!).mode
+    // Only choices that differ from the defaults are kept, and writes are
+    // batched: the stored mode goes away once it is back at flat.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem('ptcgsim.table-depth.v1') ?? '{}')
+              .mode ?? 'flat'
+        )
       )
-    ).toBe('flat');
+      .toBe('flat');
     expect(errors).toEqual([]);
   });
 }

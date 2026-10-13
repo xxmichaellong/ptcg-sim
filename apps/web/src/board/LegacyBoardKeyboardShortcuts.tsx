@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 
+import { useKeymap } from '../hotkeys/hotkey-preferences.js';
+import type { HotkeyMode, Keymap } from '../hotkeys/keymap.js';
+import { toggleShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
 import { actingPlayerIdOf } from './acting-seat.js';
 import type { BoardSessionControllerState } from './BoardSessionController.js';
-import { LegacyBoardShortcutReference } from './LegacyBoardShortcutReference.js';
 import {
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
   resolveLegacyBoardUnselectedShortcutKey,
   type LegacyBoardShortcutActionRequest,
+  type LegacyBoardShortcutKey,
 } from './resolveLegacyBoardShortcutAction.js';
 
 export interface LegacyBoardKeyboardShortcutsProps {
@@ -40,8 +43,10 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly undoSeat?: 'acting' | 'own';
   /** Supplied for a solo player or an explicitly authorized coaching view. */
   readonly boardFlipEnabled?: boolean;
-  /** Mirrors the route-owned legacy theme without changing shortcut policy. */
-  readonly darkMode?: boolean;
+  /** The player's shortcuts; the page's own by default. */
+  readonly keymap?: Keymap;
+  /** Opens or closes the keyboard shortcuts list (`?` by default). */
+  readonly onToggleShortcuts?: (mode: HotkeyMode) => void;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -85,7 +90,15 @@ const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
   event.target instanceof Element &&
   event.target.closest('[data-card-id], [data-zone-id]') !== null;
 
-/** Route-owned document bridge for the characterized board shortcuts. */
+/**
+ * Route-owned document bridge for the characterized board shortcuts.
+ *
+ * Every key press is read through the player's keymap first. With v1's
+ * keys (most players) it passes through untouched, so v1's handling below
+ * stays exactly as characterized. A shortcut the player moved arrives here
+ * as the default key it stands for, and a default key they moved away from
+ * does nothing.
+ */
 export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
@@ -97,10 +110,11 @@ export const LegacyBoardKeyboardShortcuts = ({
   onDeclareDeckView,
   undoSeat,
   boardFlipEnabled = false,
-  darkMode = false,
+  keymap: suppliedKeymap,
+  onToggleShortcuts = toggleShortcutsDialog,
 }: LegacyBoardKeyboardShortcutsProps) => {
-  const [shortcutReferenceVisible, setShortcutReferenceVisible] =
-    useState(false);
+  const pageKeymap = useKeymap();
+  const keymap = suppliedKeymap ?? pageKeymap;
   const selectedCardId = state.presentation.selectedCardId;
   const isSpectator = state.view?.viewer.kind === 'spectator';
   // V opens the deck of the seat at the bottom of the board (v1's
@@ -137,36 +151,39 @@ export const LegacyBoardKeyboardShortcuts = ({
       ) {
         return;
       }
-      const showsShortcutReference =
-        event.key === 'Shift' ||
-        event.code === 'ShiftLeft' ||
-        event.code === 'ShiftRight';
-      if (showsShortcutReference) {
-        setShortcutReferenceVisible(true);
-        if (selectedCardId !== null && !isSpectator && event.cancelable) {
-          event.preventDefault();
-        }
+      const mode: HotkeyMode = selectedCardId === null ? 'table' : 'card';
+      if (keymap.resolve(event, mode) === 'table.shortcuts') {
+        if (event.cancelable) event.preventDefault();
+        onToggleShortcuts(mode);
         return;
       }
       if (event.key === 'Escape' || event.code === 'Escape') {
         // V1 closes every transient board surface without consuming Escape.
         // Overlay-focused Escape remains owned by the scoped overlay handlers.
-        setShortcutReferenceVisible(false);
         onDismissPresentation?.();
         return;
       }
+      const translation = keymap.translate(event, mode);
+      if (translation.kind === 'freed') return;
+      // The player's own key: handled as the default key it stands for, and
+      // kept from the browser, which may have its own use for it.
+      if (translation.kind === 'moved' && event.cancelable) {
+        event.preventDefault();
+      }
+      const input: LegacyBoardShortcutKey =
+        translation.kind === 'moved' ? translation.input : event;
       const flipsBoard =
-        (event.key.toLowerCase() === 'f' || event.code === 'KeyF') &&
-        (event.altKey || event.getModifierState('Alt'));
+        (input.key.toLowerCase() === 'f' || input.code === 'KeyF') &&
+        (input.altKey || input.getModifierState?.('Alt') === true);
       if (flipsBoard) {
         if (event.cancelable) event.preventDefault();
         if (boardFlipEnabled || isSpectator) onFlipBoard?.();
         return;
       }
       const refreshesScene =
-        event.key.toLowerCase() === 'r' || event.code === 'KeyR';
+        input.key.toLowerCase() === 'r' || input.code === 'KeyR';
       const viewsDeckOrCard =
-        event.key.toLowerCase() === 'v' || event.code === 'KeyV';
+        input.key.toLowerCase() === 'v' || input.code === 'KeyV';
       // V1 keeps selectingCard true for a full view and consumes subsequent
       // player keys without reopening the deck or mutating the selected card.
       if (
@@ -200,10 +217,10 @@ export const LegacyBoardKeyboardShortcuts = ({
       const selectedRequest =
         selectedCardId === null
           ? null
-          : resolveLegacyBoardShortcutKey(event, selectedCardId);
-      const unselectedRequest = resolveLegacyBoardUnselectedShortcutKey(event);
+          : resolveLegacyBoardShortcutKey(input, selectedCardId);
+      const unselectedRequest = resolveLegacyBoardUnselectedShortcutKey(input);
       const declaresMulligan =
-        event.key.toLowerCase() === 'm' || event.code === 'KeyM';
+        input.key.toLowerCase() === 'm' || input.code === 'KeyM';
       const enabledUnselectedRequest =
         unselectedRequest?.action === 'undoOwnLastMove'
           ? undoSeat === undefined
@@ -216,7 +233,7 @@ export const LegacyBoardKeyboardShortcuts = ({
         selectedRequest ??
         (isNativeEnterActivationTarget(event)
           ? null
-          : resolveLegacyBoardGlobalShortcutKey(event)) ??
+          : resolveLegacyBoardGlobalShortcutKey(input)) ??
         (selectedCardId === null ? enabledUnselectedRequest : null);
       if (selectedCardId === null && refreshesScene) {
         onRefreshScene?.();
@@ -245,24 +262,9 @@ export const LegacyBoardKeyboardShortcuts = ({
       }
       onRequest(request);
     };
-    const handleKeyUp = (event: KeyboardEvent): void => {
-      if (
-        event.key === 'Shift' ||
-        event.code === 'ShiftLeft' ||
-        event.code === 'ShiftRight'
-      ) {
-        setShortcutReferenceVisible(false);
-      }
-    };
-    const hideShortcutReference = (): void =>
-      setShortcutReferenceVisible(false);
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', hideShortcutReference);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', hideShortcutReference);
     };
   }, [
     onDeclareMulligan,
@@ -278,14 +280,11 @@ export const LegacyBoardKeyboardShortcuts = ({
     boardFlipEnabled,
     undoSeat,
     countPromptOpen,
+    keymap,
+    onToggleShortcuts,
     state.overlays.preview,
     state.presentation.openedZoneId,
     state.view?.viewer.kind,
   ]);
-  return (
-    <LegacyBoardShortcutReference
-      visible={shortcutReferenceVisible}
-      darkMode={darkMode}
-    />
-  );
+  return null;
 };

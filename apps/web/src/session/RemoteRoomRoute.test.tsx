@@ -586,7 +586,9 @@ describe('RemoteRoomRoute', () => {
       'Change background'
     );
     expect(host.textContent).toContain('Dark mode');
-    expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
+    expect(host.textContent).toContain(
+      'Press ? anywhere to see keyboard shortcuts'
+    );
     const contact = host.querySelector<HTMLAnchorElement>(
       '#twitterDescription a'
     )!;

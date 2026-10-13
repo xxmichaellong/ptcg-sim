@@ -21,6 +21,7 @@ import type {
 } from '../board/BoardSessionAdapter.js';
 import type { BoardOverlayState } from '../board/BoardSessionController.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
+import { ShortcutsDialogHost } from '../hotkeys/ShortcutsDialog.js';
 import { OverlayHost } from '../ui/OverlayHost.js';
 import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntime.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
@@ -693,7 +694,6 @@ export const mountReactDomProtectedInputHarness = async (
               }),
               createElement(LegacyBoardKeyboardShortcuts, {
                 state: current,
-                darkMode,
                 undoSeat: 'acting',
                 onRequest: (request) => {
                   shortcutActions.push(request);
@@ -721,7 +721,8 @@ export const mountReactDomProtectedInputHarness = async (
                   sceneRefreshes += 1;
                   runtime.refreshScene();
                 },
-              })
+              }),
+              createElement(ShortcutsDialogHost)
             )
           : null
       )

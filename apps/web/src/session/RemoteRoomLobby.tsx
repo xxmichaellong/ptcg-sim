@@ -21,7 +21,14 @@ import {
 } from 'react';
 import type { ClipboardEvent as ReactClipboardEvent, ReactNode } from 'react';
 
+import {
+  preferences as pagePreferences,
+  type PreferenceStore,
+} from '../preferences/preference-store.js';
+import { usePreference } from '../preferences/usePreference.js';
+import { PLAYER_PREFERENCES } from './player-preferences.js';
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
+import { TABLE_PREFERENCES } from './table-preferences.js';
 import {
   RendererSpikeBoard,
   type RendererKind,
@@ -153,6 +160,8 @@ export interface RemoteRoomLobbyDependencies {
   ) => RoomRestorationCustody;
   /** Whether the Worker answers online save and resume; absent reads as off. */
   readonly continuationAvailability?: (signal: AbortSignal) => Promise<boolean>;
+  /** Where the table settings and name are remembered: the page's. */
+  readonly preferences?: PreferenceStore;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
@@ -283,7 +292,16 @@ export const RemoteRoomLobby = ({
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
   const preparedDeckSessions = useRef(new WeakSet<object>());
   const restoredDeckSessions = useRef(new WeakSet<object>());
-  const [name, setName] = useState('');
+  const store = dependencies.preferences ?? pagePreferences();
+  // The name last hosted or joined with, so a returning player need not
+  // type it again.
+  const [name, setName] = useState(
+    () => store.get(PLAYER_PREFERENCES).displayName
+  );
+  const rememberName = (): void => {
+    const typed = name.trim();
+    if (typed !== '') store.set(PLAYER_PREFERENCES, { displayName: typed });
+  };
   const [roomCode, setRoomCode] = useState('');
   const [coachingConsent, setCoachingConsent] = useState(false);
   const [spectator, setSpectator] = useState(false);
@@ -300,9 +318,18 @@ export const RemoteRoomLobby = ({
   >(landing === 'solo' ? 'solo' : 'lobby');
   const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
   const [deckCustody, setDeckCustody] = useState<LegacyDeckBuilderCustody>();
-  const [preferences, setPreferences] = useState<
-    BoardPreferences | undefined
-  >();
+  // Dark mode is remembered on this device (the page's preferences); the
+  // board still receives v1's shape, and nothing while it is the default.
+  const table = usePreference(TABLE_PREFERENCES, store);
+  const preferences = useMemo(
+    (): BoardPreferences | undefined =>
+      table.darkMode === ROOM_DEFAULT_PREFERENCES.darkMode
+        ? undefined
+        : { ...ROOM_DEFAULT_PREFERENCES, darkMode: table.darkMode },
+    [table.darkMode]
+  );
+  const setPreferences = (next: BoardPreferences): void =>
+    store.patch(TABLE_PREFERENCES, { darkMode: next.darkMode });
   // How the table is shown is kept on this device (the Board view panel).
   const boardView = useSyncExternalStore(
     boardViewSettings().subscribe,
@@ -313,17 +340,18 @@ export const RemoteRoomLobby = ({
     boolean | undefined
   >();
   const backgroundSelection = useRoomBackground({
+    ...(table.background ? { background: table.background } : {}),
+    onBackgroundChange: (background) =>
+      store.patch(TABLE_PREFERENCES, { background }),
     ...(dependencies.requestBackground
       ? { requestBackground: dependencies.requestBackground }
       : {}),
   });
+  const restoreDefaultBackground = (): void =>
+    store.patch(TABLE_PREFERENCES, { background: null });
   const effectivePreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
-  const setDarkMode = (enabled: boolean): void => {
-    setPreferences((current) => ({
-      ...(current ?? ROOM_DEFAULT_PREFERENCES),
-      darkMode: enabled,
-    }));
-  };
+  const setDarkMode = (enabled: boolean): void =>
+    store.patch(TABLE_PREFERENCES, { darkMode: enabled });
   // Both lobby boards wear the Board view's outlines; each keeps its own
   // default look otherwise.
   const boardPreferences = useMemo(
@@ -448,6 +476,7 @@ export const RemoteRoomLobby = ({
       setParkedSolo(undefined);
       active.owner.invitation.clear();
       setName(displayName);
+      rememberName();
       setRoomCode(result.invitations.roomCode);
       setReceipt(undefined);
       setCopyConfirmed(false);
@@ -636,6 +665,7 @@ export const RemoteRoomLobby = ({
       active.owner.creator = undefined;
       setParkedSolo(undefined);
       setName(displayName);
+      rememberName();
       setConnected({
         runtime: result.runtime,
         rendererKind,
@@ -725,6 +755,7 @@ export const RemoteRoomLobby = ({
       delete active.owner.restoration;
       setParkedSolo(undefined);
       setName(displayName);
+      rememberName();
       setReceipt(undefined);
       setRoomCode(result.runtime.roomCode);
       setCoachingConsent(false);
@@ -1048,6 +1079,7 @@ export const RemoteRoomLobby = ({
             ? { background: backgroundSelection.background }
             : {})}
           onBackgroundChange={backgroundSelection.setBackground}
+          onBackgroundReset={restoreDefaultBackground}
           {...(dependencies.requestBackground
             ? { requestBackground: dependencies.requestBackground }
             : {})}
@@ -1286,6 +1318,9 @@ export const RemoteRoomLobby = ({
             ? { onOpenBoardView: () => setBoardViewOpen(true) }
             : {})}
           onChangeBackground={backgroundSelection.chooseBackground}
+          {...(table.background
+            ? { onUseDefaultBackground: restoreDefaultBackground }
+            : {})}
         />
         {deckSurfaceActivated && (
           <Suspense fallback={null}>

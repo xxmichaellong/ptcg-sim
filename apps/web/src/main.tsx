@@ -1,10 +1,12 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
+import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { announceMobileNotice } from './mobile-notice.js';
 import { installPageMotion } from './motion/page-motion.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
+import { applySavedPageTheme } from './session/page-theme.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
 import './styles.css';
@@ -56,6 +58,8 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
 // Reduced motion and animation speed apply to the whole page from the
 // first paint, not only once a room is open.
 installPageMotion();
+// ...and so does the saved theme, so a Day table never flashes Night.
+applySavedPageTheme();
 // v1 tells a phone or tablet, once on load, that the sim expects a desktop.
 announceMobileNotice();
 // ...and asks before a reload or a closed tab discards the table.
@@ -88,6 +92,7 @@ createRoot(root).render(
       ) : (
         <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
       )}
+      <ShortcutsDialogHost />
     </OverlayHost>
   </StrictMode>
 );

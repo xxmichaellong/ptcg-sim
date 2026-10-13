@@ -851,7 +851,6 @@ export const RemoteSessionBoard = ({
           />
           <LegacyBoardKeyboardShortcuts
             state={boardState}
-            darkMode={preferences.darkMode}
             {...(roomMode === 'solo'
               ? { undoSeat: 'acting' as const }
               : roomMode === 'multiplayer'

@@ -9,6 +9,9 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
+import { chordKeycaps, detectKeyboardPlatform } from '../hotkeys/chords.js';
+import { useKeymap } from '../hotkeys/hotkey-preferences.js';
+import { openShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
 import { trapFocus } from '../ui/focus.js';
 import changelogMarkup from './legacy-changelog.html?raw';
@@ -28,6 +31,32 @@ const LOGO_URL = '/v2/assets/blank-logo.png';
 type WelcomePage = 'tutorial' | 'donations' | 'changelog';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
+
+/** "Press ? for shortcuts", where the key itself opens the list too. */
+const ShortcutsHint = () => {
+  const opener = useKeymap().chord('table.shortcuts');
+  const open = (
+    <button
+      type="button"
+      className="welcome-shortcuts-link"
+      onClick={() => openShortcutsDialog()}
+    >
+      shortcuts
+    </button>
+  );
+  if (!opener) return <>See all {open}.</>;
+  return (
+    <>
+      Press{' '}
+      {chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
+        <kbd className="ds-kbd" key={cap}>
+          {cap}
+        </kbd>
+      ))}{' '}
+      for {open}.
+    </>
+  );
+};
 
 /**
  * One of the welcome pages (tutorial, release notes, sponsors) as a modal
@@ -196,8 +225,7 @@ export const LegacyWelcome = ({
           <li>
             <KeyboardIcon {...decorative} />
             <span>
-              Drag to play. Double-click to read. Hold{' '}
-              <kbd className="ds-kbd shift-font">Shift</kbd> for shortcuts.
+              Drag to play. Double-click to read. <ShortcutsHint />
             </span>
           </li>
           <li>

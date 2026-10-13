@@ -87,11 +87,10 @@ import type {
   LegacyBoardShortcutCountPrompt,
   LegacyOwnHandShortcutAction,
 } from '../resolveLegacyBoardShortcutAction.js';
-import {
-  catalogueShortcut,
-  shortcutHint,
-  type ShortcutCatalogueKey,
-} from '../shortcutCatalogue.js';
+import { shortcutHint } from '../shortcutCatalogue.js';
+import type { HotkeyActionId } from '../../hotkeys/hotkey-catalogue.js';
+import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
+import type { Keymap } from '../../hotkeys/keymap.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
@@ -458,14 +457,16 @@ const moveMenuFocus = (
 
 /**
  * How each menu row looks: its icon, whether it is destructive, and the
- * shortcut-catalogue entry its keyboard hint is read from. `own` hints name
- * a key that acts on the acting seat's own zones, so they are shown only on
- * that seat's cards; `card` hints act on whichever card is selected.
+ * keyboard shortcut its hint shows (the player's own key for it). `own`
+ * hints name a key that acts on the acting seat's own zones, so they are
+ * shown only on that seat's cards; `card` hints act on whichever card is
+ * selected.
  */
 interface ContextActionDecor {
   readonly icon: Icon;
   readonly danger?: boolean;
-  readonly shortcut?: ShortcutCatalogueKey & {
+  readonly shortcut?: {
+    readonly action: HotkeyActionId;
     readonly scope: 'card' | 'own';
   };
 }
@@ -475,11 +476,7 @@ const CONTEXT_ACTION_DECOR: Readonly<
 > = {
   toggleAbility: {
     icon: SparkleIcon,
-    shortcut: {
-      heading: 'Card actions',
-      label: 'Toggle ability/effect',
-      scope: 'card',
-    },
+    shortcut: { action: 'card.toggleAbility', scope: 'card' },
   },
   setDamage: { icon: HeartBreakIcon },
   setSpecialCondition: { icon: FlaskIcon },
@@ -490,54 +487,46 @@ const CONTEXT_ACTION_DECOR: Readonly<
   discardHand: {
     icon: TrashIcon,
     danger: true,
-    shortcut: { heading: 'Hand', label: 'Discard hand', scope: 'own' },
+    shortcut: { action: 'hand.discardAndDraw', scope: 'own' },
   },
   shuffleHandToDeck: {
     icon: ShuffleIcon,
-    shortcut: { heading: 'Hand', label: 'Shuffle hand to deck', scope: 'own' },
+    shortcut: { action: 'hand.shuffleAndDraw', scope: 'own' },
   },
   shuffleHandToDeckBottom: {
     icon: ArrowFatLinesDownIcon,
-    shortcut: {
-      heading: 'Hand',
-      label: 'Shuffle hand to bottom',
-      scope: 'own',
-    },
+    shortcut: { action: 'hand.shuffleToBottomAndDraw', scope: 'own' },
   },
   toggleOpponentHand: { icon: BinocularsIcon },
   randomOpponentHandCard: { icon: DiceFiveIcon },
   shuffleDeck: {
     icon: ShuffleIcon,
-    shortcut: { heading: 'Deck', label: 'Shuffle deck', scope: 'own' },
+    shortcut: { action: 'deck.shuffle', scope: 'own' },
   },
   drawCards: {
     icon: CardsIcon,
-    shortcut: { heading: 'Deck', label: 'Draw card(s)', scope: 'own' },
+    shortcut: { action: 'deck.draw', scope: 'own' },
   },
   viewDeckTop: {
     icon: ArrowLineUpIcon,
-    shortcut: { heading: 'Deck', label: 'View top card(s)', scope: 'own' },
+    shortcut: { action: 'deck.viewTop', scope: 'own' },
   },
   viewDeckBottom: {
     icon: ArrowLineDownIcon,
-    shortcut: { heading: 'Deck', label: 'View bottom card(s)', scope: 'own' },
+    shortcut: { action: 'deck.viewBottom', scope: 'own' },
   },
   discardBoard: {
     icon: TrashIcon,
     danger: true,
-    shortcut: { heading: 'Playboard', label: 'Discard all', scope: 'own' },
+    shortcut: { action: 'board.discardAll', scope: 'own' },
   },
   moveBoardToHand: {
     icon: HandGrabbingIcon,
-    shortcut: { heading: 'Playboard', label: 'Move all to hand', scope: 'own' },
+    shortcut: { action: 'board.moveAllToHand', scope: 'own' },
   },
   shuffleBoardToDeck: {
     icon: ShuffleIcon,
-    shortcut: {
-      heading: 'Playboard',
-      label: 'Shuffle all into deck',
-      scope: 'own',
-    },
+    shortcut: { action: 'board.shuffleAllIntoDeck', scope: 'own' },
   },
   moveBoardToLostZone: { icon: SpiralIcon, danger: true },
   moveCard: { icon: ArrowsOutCardinalIcon },
@@ -545,29 +534,42 @@ const CONTEXT_ACTION_DECOR: Readonly<
   changeCardType: { icon: SwapIcon },
 };
 
-/** The catalogue's key for one entry, as a compact hint such as `Alt+D`. */
-const catalogueHint = (
-  key: ShortcutCatalogueKey | undefined
-): string | undefined => {
-  const shortcut = key ? catalogueShortcut(key) : undefined;
-  return shortcut ? shortcutHint(shortcut) : undefined;
-};
-
 const contextActionHint = (
+  keymap: Keymap,
   action: LegacyBoardContextActionId,
   own: boolean
 ): string | undefined => {
   const shortcut = CONTEXT_ACTION_DECOR[action].shortcut;
   if (!shortcut || (shortcut.scope === 'own' && !own)) return undefined;
-  return catalogueHint(shortcut);
+  return shortcutHint(keymap, shortcut.action);
 };
 
 interface ContextSubmenuChoice<Value extends string> {
   readonly value: Value;
   readonly label: string;
   readonly icon: Icon;
+  /** The shortcut its keyboard hint shows. */
+  readonly shortcut: HotkeyActionId;
   readonly hint?: string;
 }
+
+/** The submenu's rows with the player's current keys as hints. */
+const withHints = <Value extends string>(
+  choices: readonly ContextSubmenuChoice<Value>[],
+  keymap: Keymap
+): readonly ContextSubmenuChoice<Value>[] =>
+  choices.map((choice) => {
+    const hint = shortcutHint(keymap, choice.shortcut);
+    return hint ? { ...choice, hint } : choice;
+  });
+
+const CATEGORY_CHOICE_SHORTCUTS = {
+  Energy: 'card.toEnergy',
+  Trainer: 'card.toTool',
+  Pokémon: 'card.toPokemon',
+} as const satisfies Readonly<
+  Record<LegacyBoardCategoryChoice, HotkeyActionId>
+>;
 
 const CATEGORY_CHOICE_ICONS = {
   Energy: LightningIcon,
@@ -578,12 +580,11 @@ const CATEGORY_CHOICE_ICONS = {
 const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategoryChoice>[] =
   LEGACY_BOARD_CATEGORY_CHOICES.map((category) => {
     const label = category === 'Trainer' ? 'to Tool' : `to ${category}`;
-    const hint = catalogueHint({ heading: 'Card actions', label });
     return {
       value: category,
       label,
       icon: CATEGORY_CHOICE_ICONS[category],
-      ...(hint ? { hint } : {}),
+      shortcut: CATEGORY_CHOICE_SHORTCUTS[category],
     };
   });
 
@@ -595,6 +596,14 @@ const MOVE_CHOICE_LABELS = {
   deckShuffle: 'to Deck (shuffle)',
 } as const satisfies Readonly<Record<LegacyBoardMoveChoice, string>>;
 
+const MOVE_CHOICE_SHORTCUTS = {
+  board: 'card.toBoard',
+  deckTop: 'card.toDeckTop',
+  deckBottom: 'card.toDeckBottom',
+  deckSwitch: 'card.swapWithDeckTop',
+  deckShuffle: 'card.shuffleIntoDeck',
+} as const satisfies Readonly<Record<LegacyBoardMoveChoice, HotkeyActionId>>;
+
 const MOVE_CHOICE_ICONS = {
   board: SquaresFourIcon,
   deckTop: ArrowLineUpIcon,
@@ -605,13 +614,11 @@ const MOVE_CHOICE_ICONS = {
 
 const MOVE_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardMoveChoice>[] =
   LEGACY_BOARD_MOVE_CHOICES.map((destination) => {
-    const label = MOVE_CHOICE_LABELS[destination];
-    const hint = catalogueHint({ heading: 'Move card...', label });
     return {
       value: destination,
-      label,
+      label: MOVE_CHOICE_LABELS[destination],
       icon: MOVE_CHOICE_ICONS[destination],
-      ...(hint ? { hint } : {}),
+      shortcut: MOVE_CHOICE_SHORTCUTS[destination],
     };
   });
 
@@ -896,6 +903,7 @@ const ContextMenu = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLDivElement>(null);
+  const keymap = useKeymap();
   const [openSubmenu, setOpenSubmenu] = useState<
     'changeCardType' | 'moveCard' | null
   >(null);
@@ -1058,7 +1066,7 @@ const ContextMenu = ({
                 open={openSubmenu === 'moveCard'}
                 ariaLabel="Move card"
                 choiceKind="move"
-                choices={MOVE_SUBMENU_CHOICES}
+                choices={withHints(MOVE_SUBMENU_CHOICES, keymap)}
                 onOpenChange={(open) =>
                   setOpenSubmenu(open ? 'moveCard' : null)
                 }
@@ -1073,7 +1081,7 @@ const ContextMenu = ({
                 open={openSubmenu === 'changeCardType'}
                 ariaLabel="Change card type"
                 choiceKind="category"
-                choices={CATEGORY_SUBMENU_CHOICES}
+                choices={withHints(CATEGORY_SUBMENU_CHOICES, keymap)}
                 onOpenChange={(open) =>
                   setOpenSubmenu(open ? 'changeCardType' : null)
                 }
@@ -1092,7 +1100,7 @@ const ContextMenu = ({
                   role="menuitem"
                   className={`ptcgsim-menu-item${CONTEXT_ACTION_DECOR[entry.action].danger ? ' is-danger' : ''}`}
                   data-context-action={entry.action}
-                  data-menu-hint={contextActionHint(entry.action, own)}
+                  data-menu-hint={contextActionHint(keymap, entry.action, own)}
                   onClick={() => {
                     actions.invokeContextAction(entry.action, card.id);
                   }}

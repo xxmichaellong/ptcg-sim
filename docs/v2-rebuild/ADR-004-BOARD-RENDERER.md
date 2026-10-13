@@ -160,7 +160,8 @@ no command or authority state exists for this gesture. Focused semantic overlays
 keep their narrower Escape behavior and focus return. Six source pages plus the
 candidate pin modifiers, replay/spectator use, full-stack closure, protected
 input, and zero game traffic without introducing a visible UI change.
-The existing hold-to-show Shift reference is also DOM presentation outside the
+_Superseded 2026-10-13 by ADR-028 (PX-025): `?` opens a keyboard shortcuts
+dialog instead._ The existing hold-to-show Shift reference is also DOM presentation outside the
 renderer contract. The route-owned shortcut bridge toggles a source-shaped
 React surface for either physical Shift key, preserves the selected-player and
 spectator default boundaries, and closes it on document keyup, Escape, or blur.

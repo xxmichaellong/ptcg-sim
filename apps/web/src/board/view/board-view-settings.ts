@@ -4,10 +4,16 @@ import {
   type BoardPhysicalSide,
 } from '@ptcgsim/renderer-contract';
 
+import {
+  definePreference,
+  preferences,
+  type PreferenceStore,
+} from '../../preferences/preference-store.js';
+
 /**
  * How the player likes to see the table, kept in one place (the Board view
- * panel) and on this device. The table depth lives in its own store
- * (`depth-settings.ts`); the panel edits both.
+ * panel) and on this device (the page's preferences). The table depth is its
+ * own preference (`depth-settings.ts`); the panel edits both.
  */
 export type BoardShowChoice = 'both' | 'mine' | 'theirs';
 
@@ -30,8 +36,6 @@ export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   hideOpponentHand: false,
   hoverPreview: false,
 };
-
-const STORAGE_KEY = 'ptcgsim.board-view.v1';
 
 const isShow = (value: unknown): value is BoardShowChoice =>
   value === 'both' || value === 'mine' || value === 'theirs';
@@ -72,57 +76,37 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
   };
 };
 
-const sameView = (left: BoardViewSettings, right: BoardViewSettings) =>
-  left.show === right.show &&
-  left.split === right.split &&
-  left.zoneOutlines === right.zoneOutlines &&
-  left.hideOpponentHand === right.hideOpponentHand &&
-  left.hoverPreview === right.hoverPreview;
-
 /** The half the table leaves out for a show choice. */
 export const hiddenPhysicalSideFor = (
   show: BoardShowChoice
 ): BoardPhysicalSide | undefined =>
   show === 'mine' ? 'upper' : show === 'theirs' ? 'lower' : undefined;
 
+export const BOARD_VIEW_PREFERENCES = definePreference<BoardViewSettings>({
+  key: 'ptcgsim.board-view.v1',
+  defaults: DEFAULT_BOARD_VIEW,
+  parse: parseBoardView,
+});
+
+/** The Board view, kept in the page's preferences. */
 export class BoardViewSettingsStore {
-  private value: BoardViewSettings = DEFAULT_BOARD_VIEW;
-  private readonly listeners = new Set<() => void>();
+  constructor(private readonly store: PreferenceStore = preferences()) {}
 
-  constructor(
-    private readonly storage: Pick<Storage, 'getItem' | 'setItem'> | null = null
-  ) {
-    try {
-      const raw = storage?.getItem(STORAGE_KEY);
-      if (raw) this.value = parseBoardView(JSON.parse(raw));
-    } catch {
-      // Blocked or damaged site data: the defaults stand.
-    }
-  }
+  getSnapshot = (): BoardViewSettings => this.store.get(BOARD_VIEW_PREFERENCES);
 
-  getSnapshot = (): BoardViewSettings => this.value;
+  subscribe = (listener: () => void): (() => void) =>
+    this.store.subscribe(BOARD_VIEW_PREFERENCES, listener);
 
-  subscribe = (listener: () => void): (() => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
-
+  /** Out-of-range values are clamped, as a stored value would be. */
   update(patch: Partial<BoardViewSettings>): void {
-    const next = parseBoardView({ ...this.value, ...patch });
-    if (sameView(next, this.value)) return;
-    this.value = next;
-    try {
-      this.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Storage can be full or blocked; the choice still applies this visit.
-    }
-    for (const listener of this.listeners) listener();
+    this.store.set(
+      BOARD_VIEW_PREFERENCES,
+      parseBoardView({ ...this.getSnapshot(), ...patch })
+    );
   }
 
   reset(): void {
-    this.update(DEFAULT_BOARD_VIEW);
+    this.store.reset(BOARD_VIEW_PREFERENCES);
   }
 }
 
@@ -130,14 +114,6 @@ let pageStore: BoardViewSettingsStore | undefined;
 
 /** The page's shared board view. */
 export const boardViewSettings = (): BoardViewSettingsStore => {
-  if (!pageStore) {
-    let storage: Storage | null = null;
-    try {
-      storage = globalThis.localStorage ?? null;
-    } catch {
-      // Reading localStorage throws where site data is blocked.
-    }
-    pageStore = new BoardViewSettingsStore(storage);
-  }
+  pageStore ??= new BoardViewSettingsStore();
   return pageStore;
 };

@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { PreferenceStore } from '../preferences/preference-store.js';
 import { MotionSettingsStore } from './motion-settings.js';
 import { installPageMotion } from './page-motion.js';
 
@@ -10,12 +11,17 @@ const store = (prefersReduced: boolean, stored?: string) => {
   if (stored !== undefined) values.set('ptcgsim.motion.v1', stored);
   return new MotionSettingsStore({
     matchMedia: () => ({ matches: prefersReduced }),
-    storage: {
-      getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        values.set(key, value);
+    preferences: new PreferenceStore({
+      storage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          values.set(key, value);
+        },
+        removeItem: (key: string) => {
+          values.delete(key);
+        },
       },
-    },
+    }),
   });
 };
 

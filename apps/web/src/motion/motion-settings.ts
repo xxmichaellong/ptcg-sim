@@ -1,3 +1,9 @@
+import {
+  definePreference,
+  preferences,
+  type PreferenceStore,
+} from '../preferences/preference-store.js';
+
 /**
  * How much the table moves. Two settings, kept apart because they answer
  * different needs: "reduce motion" is an accessibility choice that defaults to
@@ -32,8 +38,6 @@ const DURATION_SCALE: Readonly<Record<AnimationSpeed, number>> = {
   fast: 0.6,
   instant: 0,
 };
-
-const STORAGE_KEY = 'ptcgsim.motion.v1';
 
 const isChoice = (value: unknown): value is ReduceMotionChoice =>
   value === 'system' || value === 'reduce' || value === 'full';
@@ -74,45 +78,43 @@ export const resolveMotion = (
   };
 };
 
+export const MOTION_PREFERENCES = definePreference<MotionSettings>({
+  key: 'ptcgsim.motion.v1',
+  defaults: DEFAULT_MOTION_SETTINGS,
+  parse: parseMotionSettings,
+});
+
 export interface MotionSettingsEnvironment {
   readonly matchMedia?: (query: string) => {
     readonly matches: boolean;
     addEventListener?(type: 'change', listener: () => void): void;
     removeEventListener?(type: 'change', listener: () => void): void;
   };
-  readonly storage?: Pick<Storage, 'getItem' | 'setItem'> | null;
+  /** Where the player's choices are kept: the page's preferences. */
+  readonly preferences?: PreferenceStore;
 }
 
-const browserEnvironment = (): MotionSettingsEnvironment => {
-  let storage: MotionSettingsEnvironment['storage'];
-  try {
-    storage = globalThis.localStorage ?? null;
-  } catch {
-    // Reading localStorage throws where site data is blocked.
-    storage = null;
-  }
-  return {
-    ...(typeof globalThis.matchMedia === 'function'
-      ? { matchMedia: (query: string) => globalThis.matchMedia(query) }
-      : {}),
-    storage,
-  };
-};
+const browserEnvironment = (): MotionSettingsEnvironment =>
+  typeof globalThis.matchMedia === 'function'
+    ? { matchMedia: (query: string) => globalThis.matchMedia(query) }
+    : {};
 
 /**
- * One store per page. It follows the operating system setting live and keeps
- * the player's own choices in local storage (best effort: a private window
- * simply forgets them).
+ * One store per page. It follows the operating system setting live and
+ * reads the player's own choices from the page's preferences (so a choice
+ * made in another tab arrives here too).
  */
 export class MotionSettingsStore {
+  private readonly preferences: PreferenceStore;
   private settings: MotionSettings;
   private systemPrefersReduced: boolean;
   private snapshot: MotionSnapshot;
   private readonly listeners = new Set<() => void>();
   private readonly detach: () => void;
 
-  constructor(private readonly environment = browserEnvironment()) {
-    this.settings = this.load();
+  constructor(environment: MotionSettingsEnvironment = browserEnvironment()) {
+    this.preferences = environment.preferences ?? preferences();
+    this.settings = this.preferences.get(MOTION_PREFERENCES);
     const query = environment.matchMedia?.('(prefers-reduced-motion: reduce)');
     this.systemPrefersReduced = query?.matches ?? false;
     this.snapshot = resolveMotion(this.settings, this.systemPrefersReduced);
@@ -123,7 +125,16 @@ export class MotionSettingsStore {
       this.publish();
     };
     query?.addEventListener?.('change', onChange);
-    this.detach = () => query?.removeEventListener?.('change', onChange);
+    const stopFollowing = this.preferences.subscribe(MOTION_PREFERENCES, () => {
+      const next = this.preferences.get(MOTION_PREFERENCES);
+      if (next === this.settings) return;
+      this.settings = next;
+      this.publish();
+    });
+    this.detach = () => {
+      query?.removeEventListener?.('change', onChange);
+      stopFollowing();
+    };
   }
 
   getSnapshot = (): MotionSnapshot => this.snapshot;
@@ -140,36 +151,15 @@ export class MotionSettingsStore {
   };
 
   update(patch: Partial<MotionSettings>): void {
-    const next = parseMotionSettings({ ...this.settings, ...patch });
-    if (
-      next.reduceMotion === this.settings.reduceMotion &&
-      next.animationSpeed === this.settings.animationSpeed
-    ) {
-      return;
-    }
-    this.settings = next;
-    try {
-      this.environment.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Storage can be full or blocked; the choice still applies this visit.
-    }
-    this.publish();
+    this.preferences.set(
+      MOTION_PREFERENCES,
+      parseMotionSettings({ ...this.settings, ...patch })
+    );
   }
 
   dispose(): void {
     this.detach();
     this.listeners.clear();
-  }
-
-  private load(): MotionSettings {
-    try {
-      const raw = this.environment.storage?.getItem(STORAGE_KEY);
-      return raw
-        ? parseMotionSettings(JSON.parse(raw))
-        : DEFAULT_MOTION_SETTINGS;
-    } catch {
-      return DEFAULT_MOTION_SETTINGS;
-    }
   }
 
   private publish(): void {

@@ -9,6 +9,11 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  DEFAULT_KEYMAP,
+  keymapFor,
+  parseHotkeyOverrides,
+} from '../hotkeys/keymap.js';
 import { createInitialBoardSessionControllerState } from './BoardSessionController.js';
 import {
   isLegacyBoardShortcutEditableTarget,
@@ -999,154 +1004,134 @@ describe('legacy board keyboard shortcut bridge', () => {
     zone.remove();
   });
 
-  it('shows the complete shortcut reference only while Shift is held', async () => {
+  it('toggles the shortcuts list with ? for what the keys do now, and leaves Shift alone', async () => {
     const onRequest = vi.fn();
+    const onToggleShortcuts = vi.fn();
     const state = createInitialBoardSessionControllerState();
-    await act(async () => {
-      root.render(
-        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
-      );
-    });
-    const reference = host.querySelector<HTMLElement>(
-      '[data-legacy-shortcut-reference]'
-    );
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
-    expect(
-      [...(reference?.querySelectorAll('h1') ?? [])].map(
-        (heading) => heading.textContent
-      )
-    ).toEqual([
-      'Move card...',
-      'Deck',
-      'Hand',
-      'Playboard',
-      'Card actions',
-      'General',
-    ]);
-    expect(reference?.querySelectorAll('li')).toHaveLength(54);
-    expect(reference?.textContent).toContain('Attach[q]');
-    expect(reference?.textContent).toContain('Close popups[esc]');
-    expect(reference?.textContent).toContain(
-      'For macOS: Use option instead of alt'
-    );
-
-    const target = document.createElement('button');
-    const input = document.createElement('input');
-    document.body.append(target, input);
-    let accepted = false;
-    await act(async () => {
-      accepted = target.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'Shift',
-          code: 'ShiftLeft',
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        })
-      );
-    });
-    expect(accepted).toBe(true);
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
-    expect(reference?.getAttribute('aria-hidden')).toBe('false');
-
-    await act(async () => {
-      input.dispatchEvent(
-        new KeyboardEvent('keyup', {
-          key: 'Shift',
-          code: 'ShiftLeft',
-          bubbles: true,
-          cancelable: true,
-        })
-      );
-    });
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
-
-    await act(async () => {
-      root.render(
-        createElement(LegacyBoardKeyboardShortcuts, {
-          state: {
-            ...state,
-            presentation: {
-              ...state.presentation,
-              selectedCardId: 'selected-card',
+    const render = (selectedCardId: string | null) =>
+      act(async () => {
+        root.render(
+          createElement(LegacyBoardKeyboardShortcuts, {
+            state: {
+              ...state,
+              presentation: { ...state.presentation, selectedCardId },
             },
-          },
-          onRequest,
-        })
-      );
-    });
-    await act(async () => {
-      accepted = target.dispatchEvent(
+            onRequest,
+            onToggleShortcuts,
+            keymap: DEFAULT_KEYMAP,
+          })
+        );
+      });
+    const press = (target: EventTarget, init: KeyboardEventInit) =>
+      target.dispatchEvent(
         new KeyboardEvent('keydown', {
-          key: 'Shift',
-          code: 'ShiftRight',
-          shiftKey: true,
           bubbles: true,
           cancelable: true,
+          ...init,
         })
       );
-    });
-    expect(accepted).toBe(false);
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
+    const questionMark = {
+      key: '?',
+      code: 'Slash',
+      shiftKey: true,
+    } as const;
+    await render(null);
+    // Holding Shift no longer pops a sheet over the table: Shift+G and the
+    // player's own Shift chords need it.
+    expect(
+      press(document, { key: 'Shift', code: 'ShiftLeft', shiftKey: true })
+    ).toBe(true);
+    expect(onToggleShortcuts).not.toHaveBeenCalled();
+    // `?` is Shift+/; it must never shuffle the board into the deck.
+    expect(press(document, questionMark)).toBe(false);
+    expect(onToggleShortcuts).toHaveBeenCalledExactlyOnceWith('table');
     expect(onRequest).not.toHaveBeenCalled();
 
-    const spectatorView = {
-      ...createRendererSpikeView(),
-      viewer: { kind: 'spectator' } as const,
-    };
-    await act(async () => {
-      input.dispatchEvent(
-        new KeyboardEvent('keyup', {
-          key: 'Shift',
-          code: 'ShiftRight',
-          bubbles: true,
-        })
-      );
-      root.render(
-        createElement(LegacyBoardKeyboardShortcuts, {
-          state: {
-            ...state,
-            view: spectatorView,
-            presentation: {
-              ...state.presentation,
-              selectedCardId: 'selected-card',
-            },
-          },
-          onRequest,
-        })
-      );
-    });
-    await act(async () => {
-      accepted = target.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'Shift',
-          code: 'ShiftLeft',
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        })
-      );
-    });
-    expect(accepted).toBe(true);
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
+    await render('selected-card');
+    expect(press(document, questionMark)).toBe(false);
+    expect(onToggleShortcuts).toHaveBeenLastCalledWith('card');
 
-    await act(async () => window.dispatchEvent(new Event('blur')));
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
-    await act(async () => {
-      input.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'Shift',
-          code: 'ShiftLeft',
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        })
-      );
-    });
-    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
-
-    target.remove();
+    // Typing a question keeps its question mark.
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(press(input, questionMark)).toBe(true);
+    expect(onToggleShortcuts).toHaveBeenCalledTimes(2);
     input.remove();
+    expect(onRequest).not.toHaveBeenCalled();
+  });
+
+  it("reads the player's own keys: a moved shortcut answers to its new key only", async () => {
+    const onRequest = vi.fn();
+    const onToggleShortcuts = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const keymap = keymapFor(
+      parseHotkeyOverrides({
+        'card.toDiscard': 'k',
+        'table.undo': 'shift+j',
+        'table.shortcuts': 'ctrl+k',
+      })
+    );
+    const render = (selectedCardId: string | null) =>
+      act(async () => {
+        root.render(
+          createElement(LegacyBoardKeyboardShortcuts, {
+            state: {
+              ...state,
+              presentation: { ...state.presentation, selectedCardId },
+            },
+            onRequest,
+            onToggleShortcuts,
+            keymap,
+            undoSeat: 'acting',
+          })
+        );
+      });
+    const press = (init: KeyboardEventInit) =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+    await render('selected-card');
+    // v1's D (with or without Ctrl or Shift) no longer discards.
+    expect(press({ key: 'd', code: 'KeyD' })).toBe(true);
+    expect(press({ key: 'd', code: 'KeyD', ctrlKey: true })).toBe(true);
+    expect(press({ key: 'D', code: 'KeyD', shiftKey: true })).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    // K does, and the browser keeps out of it.
+    expect(press({ key: 'k', code: 'KeyK' })).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'moveCardToZone',
+      cardId: 'selected-card',
+      destination: 'discard',
+    });
+    // Untouched keys keep v1's handling exactly.
+    onRequest.mockClear();
+    expect(press({ key: 'h', code: 'KeyH' })).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'moveCardToZone',
+      cardId: 'selected-card',
+      destination: 'hand',
+    });
+
+    onRequest.mockClear();
+    await render(null);
+    expect(press({ key: 'u', code: 'KeyU' })).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(press({ key: 'J', code: 'KeyJ', shiftKey: true })).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'undoOwnLastMove',
+    });
+    // With the list moved to Ctrl+K, `?` does nothing at all -- in
+    // particular it does not fall back to / and shuffle the board away.
+    onRequest.mockClear();
+    expect(press({ key: '?', code: 'Slash', shiftKey: true })).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(onToggleShortcuts).not.toHaveBeenCalled();
+    expect(press({ key: 'k', code: 'KeyK', ctrlKey: true })).toBe(false);
+    expect(onToggleShortcuts).toHaveBeenCalledExactlyOnceWith('table');
   });
 
   it('dismisses local presentation with native Escape semantics outside protected targets', async () => {

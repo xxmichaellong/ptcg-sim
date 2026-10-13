@@ -134,6 +134,8 @@ export interface RemoteRoomRouteProps {
   /** Page-local visual only; no room, replay, renderer, or storage ownership. */
   readonly background?: RoomBackground;
   readonly onBackgroundChange?: (background: RoomBackground) => void;
+  /** Back to the default wallpaper; offered in Settings when supplied. */
+  readonly onBackgroundReset?: () => void;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
   readonly confirmHeaderLeave?: RoomLeaveConfirmation;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
@@ -170,6 +172,7 @@ export const RemoteRoomRoute = ({
   onPreferencesChange,
   background: ownedBackground,
   onBackgroundChange,
+  onBackgroundReset,
   requestBackground,
   confirmHeaderLeave = confirmConnectedRoomExit,
   downloadTextFile = downloadBrowserTextFile,
@@ -652,6 +655,9 @@ export const RemoteRoomRoute = ({
                 onDarkModeChange={setDarkMode}
                 onOpenBoardView={() => setBoardViewOpen(true)}
                 onChangeBackground={backgroundSelection.chooseBackground}
+                {...(onBackgroundReset && backgroundSelection.background
+                  ? { onUseDefaultBackground: onBackgroundReset }
+                  : {})}
               />
               {deckActivated && (
                 <Suspense fallback={null}>

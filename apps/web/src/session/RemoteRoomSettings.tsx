@@ -1,6 +1,11 @@
+import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
+import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import type { BoardPreferences } from '@ptcgsim/renderer-contract';
 import { useSyncExternalStore } from 'react';
 
+import { chordKeycaps, detectKeyboardPlatform } from '../hotkeys/chords.js';
+import { useKeymap } from '../hotkeys/hotkey-preferences.js';
+import { openShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import {
   motionSettings,
   type AnimationSpeed,
@@ -19,6 +24,11 @@ export interface RemoteRoomSettingsProps {
    */
   readonly onOpenBoardView?: () => void;
   readonly onChangeBackground: () => void;
+  /**
+   * Goes back to the default wallpaper. Offered while a chosen background is
+   * showing, since the choice is remembered on this device.
+   */
+  readonly onUseDefaultBackground?: () => void;
 }
 
 /** The source page's exact mark, inlined to avoid its third-party image request. */
@@ -93,11 +103,52 @@ const MotionSettingsControls = () => {
   );
 };
 
+/** Opens the shortcuts list, and says how many keys the player changed. */
+const KeyboardSettings = () => {
+  const keymap = useKeymap();
+  const changed = Object.keys(keymap.overrides).length;
+  const opener = keymap.chord('table.shortcuts');
+  return (
+    <>
+      <h3 className="table-settings-section">Keyboard</h3>
+      <button
+        id="keyboardShortcutsButton"
+        type="button"
+        className="table-settings-link"
+        onClick={() => openShortcutsDialog()}
+      >
+        <span className="table-settings-link__icon">
+          <KeyboardIcon aria-hidden="true" weight="duotone" />
+        </span>
+        <span className="table-settings-link__text">
+          <strong>Keyboard shortcuts</strong>
+          <span>
+            {changed > 0
+              ? `${changed} changed · view or change your keys`
+              : 'View or change your keys'}
+          </span>
+        </span>
+        <CaretRightIcon aria-hidden="true" />
+      </button>
+      {opener ? (
+        <div id="keybindReminder">
+          Press{' '}
+          {chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
+            <kbd key={cap}>{cap}</kbd>
+          ))}{' '}
+          anywhere to see keyboard shortcuts
+        </div>
+      ) : null}
+    </>
+  );
+};
+
 /**
  * Source-shaped, route-local Settings surface. Only controls with a closed
- * client-only parity contract are mounted here; authority and browser storage
- * are intentionally outside this component. How the table itself is shown
- * (halves, split, depth, outlines) lives in the Board view panel.
+ * client-only parity contract are mounted here; authority stays outside this
+ * component. Every choice here is remembered on this device (the page's
+ * preferences), never sent to a room. How the table itself is shown (halves,
+ * split, depth, outlines) lives in the Board view panel.
  */
 export const RemoteRoomSettings = ({
   hidden,
@@ -105,6 +156,7 @@ export const RemoteRoomSettings = ({
   onDarkModeChange,
   onOpenBoardView,
   onChangeBackground,
+  onUseDefaultBackground,
 }: RemoteRoomSettingsProps) => (
   <section
     id="settings"
@@ -151,16 +203,26 @@ export const RemoteRoomSettings = ({
     <p className="table-settings-note">
       Instant keeps every action immediate, with no movement.
     </p>
-    <UiButton
-      id="changeBackgroundButton"
-      type="button"
-      onClick={onChangeBackground}
-    >
-      Change background
-    </UiButton>
-    <div id="keybindReminder">
-      Hold <kbd>Shift</kbd> to see keyboard shortcuts
+    <div className="table-settings-background">
+      <UiButton
+        id="changeBackgroundButton"
+        type="button"
+        onClick={onChangeBackground}
+      >
+        Change background
+      </UiButton>
+      {onUseDefaultBackground ? (
+        <UiButton
+          id="defaultBackgroundButton"
+          type="button"
+          variant="secondary"
+          onClick={onUseDefaultBackground}
+        >
+          Use default
+        </UiButton>
+      ) : null}
     </div>
+    <KeyboardSettings />
     <div id="twitterDescription">
       <div>Ideas for a better table? Get in touch.</div>
       <a

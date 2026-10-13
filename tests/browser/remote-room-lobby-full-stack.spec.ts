@@ -452,8 +452,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Open board view'
     );
     await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
-      'Hold Shift to see keyboard shortcuts'
+      'Press ? anywhere to see keyboard shortcuts'
     );
+    await expect(
+      playerTwo.page.locator('#keyboardShortcutsButton')
+    ).toContainText('Keyboard shortcuts');
     const contact = playerTwo.page.locator('#twitterDescription a');
     await expect(contact).toHaveAttribute(
       'href',
@@ -649,12 +652,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     ).toBeVisible();
     await playerTwo.page.locator('#settingsButton').click();
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
-    // The Board view is kept on this device across rooms.
-    expect(
-      await playerTwo.page.evaluate(() =>
-        JSON.parse(localStorage.getItem('ptcgsim.board-view.v1') ?? '{}')
+    // The Board view is kept on this device across rooms (writes are
+    // batched, so poll).
+    await expect
+      .poll(() =>
+        playerTwo.page.evaluate(() =>
+          JSON.parse(localStorage.getItem('ptcgsim.board-view.v1') ?? '{}')
+        )
       )
-    ).toMatchObject({ zoneOutlines: false });
+      .toMatchObject({ zoneOutlines: false });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);

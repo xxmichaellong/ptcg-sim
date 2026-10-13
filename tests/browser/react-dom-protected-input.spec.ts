@@ -8,11 +8,6 @@ import {
 
 import { alphaOf } from './support/computed-color.js';
 import {
-  LEGACY_SHORTCUT_REFERENCE_ENTRIES,
-  LEGACY_SHORTCUT_REFERENCE_HEADINGS,
-  LEGACY_SHORTCUT_REFERENCE_MACOS_NOTE,
-} from './support/legacy-shortcut-reference-contract.js';
-import {
   answerOverlayPrompt,
   openOverlayDialogs,
   openOverlayPrompt,
@@ -3114,77 +3109,44 @@ test('Escape globally dismisses local board presentation without command traffic
   expect(errors).toEqual([]);
 });
 
-test('Shift holds the source-shaped shortcut reference without game traffic', async ({
+test('? opens the keyboard shortcuts list without game traffic', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   const errors = collectRuntimeErrors(page);
   const fixture = await mountHarness(page);
   const host = page.locator('[data-react-dom-protected-input-harness]');
-  const reference = host.locator('[data-legacy-shortcut-reference]');
-  await expect(reference).toHaveAttribute(
-    'data-shortcut-reference-visible',
-    'false'
-  );
-  await expect(reference).toHaveCSS('display', 'none');
+  const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const cardSelected = shortcuts.getByRole('radio', { name: 'Card selected' });
+  await expect(shortcuts).toHaveCount(0);
 
   await clearEvidence(page);
+  // Holding Shift alone shows nothing: Shift+G and the player's own Shift
+  // chords need it.
   await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveAttribute(
-    'data-shortcut-reference-visible',
-    'true'
-  );
-  await expect(reference).toHaveCSS('display', 'block');
-  // ADR-027 draws it as a solid keycap sheet over the board, on screen.
-  const sheetPaint = await reference.evaluate((element) => {
+  await page.waitForTimeout(150);
+  await expect(shortcuts).toHaveCount(0);
+  await page.keyboard.press('Slash');
+  await page.keyboard.up('ShiftLeft');
+  await expect(shortcuts).toBeVisible();
+  await expect(cardSelected).toHaveAttribute('aria-checked', 'false');
+  // A solid sheet on screen, readable over the board.
+  const sheetPaint = await shortcuts.evaluate((element) => {
     const style = getComputedStyle(element);
     return { background: style.backgroundColor, color: style.color };
   });
   expect(alphaOf(sheetPaint.background)).toBeGreaterThan(0.9);
   expect(sheetPaint.color).not.toBe(sheetPaint.background);
-  const sheetBounds = (await reference.boundingBox())!;
+  const sheetBounds = (await shortcuts.boundingBox())!;
   expect(sheetBounds.x).toBeGreaterThanOrEqual(0);
   expect(sheetBounds.y).toBeGreaterThanOrEqual(0);
   expect(sheetBounds.x + sheetBounds.width).toBeLessThanOrEqual(1600);
   expect(sheetBounds.y + sheetBounds.height).toBeLessThanOrEqual(900);
   expect(sheetBounds.width).toBeGreaterThan(900);
-  expect(
-    await reference
-      .locator('h1')
-      .evaluateAll((headings) =>
-        headings.map((heading) => heading.textContent?.trim())
-      )
-  ).toEqual(LEGACY_SHORTCUT_REFERENCE_HEADINGS);
-  expect(
-    await reference.locator('li').evaluateAll((entries) =>
-      entries.map((entry) => ({
-        label: entry.querySelector('span')?.textContent?.trim() ?? '',
-        shortcut: entry.querySelector('code')?.textContent?.trim() ?? null,
-      }))
-    )
-  ).toEqual(
-    LEGACY_SHORTCUT_REFERENCE_ENTRIES.flatMap((entry) =>
-      entry.shortcut === '[g]'
-        ? [
-            { label: 'to Stadium (join matching pieces)', shortcut: '[g]' },
-            { label: 'add another Stadium piece', shortcut: '[Shift + g]' },
-          ]
-        : [entry]
-    )
+  await expect(shortcuts.locator('[data-action="deck.shuffle"]')).toContainText(
+    'Shuffle deck'
   );
-  await expect(reference.locator('code')).toHaveCount(53);
-  expect(
-    await reference.locator('.ptcgsim-legacy-shortcut-macos-note').textContent()
-  ).toBeTruthy();
-  expect(
-    (
-      await reference
-        .locator('.ptcgsim-legacy-shortcut-macos-note')
-        .textContent()
-    )
-      ?.replace(/\s+/g, ' ')
-      .trim()
-  ).toBe(LEGACY_SHORTCUT_REFERENCE_MACOS_NOTE);
+  // ? is Shift+/, and / shuffles the board into the deck: it must not.
   let current = await evidence(page);
   expect(current).toMatchObject({
     submissions: [],
@@ -3195,9 +3157,12 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
     presentationDismissals: 0,
     reportedErrors: [],
   });
-  await page.keyboard.up('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'none');
+  // The same key closes it again.
+  await page.keyboard.press('Shift+Slash');
+  await expect(shortcuts).toHaveCount(0);
 
+  // With a card selected it opens on that card's keys, and Esc closes it
+  // without dropping the selection.
   const selectedCard = host.locator(
     `[data-card-id="${fixture.activeTopCardId}"]`
   );
@@ -3206,88 +3171,31 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
   await expect
     .poll(async () => (await evidence(page)).presentation.selectedCardId)
     .toBe(fixture.activeTopCardId);
-  expect(
-    await page.evaluate(() =>
-      document.body.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'Shift',
-          code: 'ShiftRight',
-          shiftKey: true,
-          bubbles: true,
-          cancelable: true,
-        })
-      )
-    )
-  ).toBe(false);
-  await expect(reference).toHaveCSS('display', 'block');
+  await page.keyboard.press('Shift+Slash');
+  await expect(cardSelected).toHaveAttribute('aria-checked', 'true');
+  await expect(shortcuts.locator('[data-action="card.toHand"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(shortcuts).toHaveCount(0);
   expect((await evidence(page)).presentation.selectedCardId).toBe(
     fixture.activeTopCardId
   );
-  await page.evaluate(() =>
-    document.body.dispatchEvent(
-      new KeyboardEvent('keyup', {
-        key: 'Shift',
-        code: 'ShiftRight',
-        bubbles: true,
-        cancelable: true,
-      })
-    )
-  );
-  await expect(reference).toHaveCSS('display', 'none');
+  expect((await evidence(page)).presentationDismissals).toBe(0);
 
-  await page.evaluate(() => {
-    const harness = (window as ProtectedInputHarnessWindow)
-      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
-    if (!harness) throw new Error('Missing protected-input harness');
-    harness.setDarkMode(true);
-  });
-  await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'block');
-  expect(
-    alphaOf(
-      await reference.evaluate(
-        (element) => getComputedStyle(element).backgroundColor
-      )
-    )
-  ).toBeGreaterThan(0.9);
-  await page.keyboard.up('ShiftLeft');
-
+  // A question typed in a field stays a question.
   await page.evaluate(() => {
     const input = document.createElement('input');
     input.dataset.shortcutReferenceEditor = 'true';
     document.body.append(input);
     input.focus();
   });
-  await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'none');
-  await page.keyboard.up('ShiftLeft');
-
-  await page.evaluate(() => {
-    document.body.tabIndex = -1;
-    document.body.focus();
-  });
-  await page.keyboard.down('ShiftRight');
-  await expect(reference).toHaveCSS('display', 'block');
-  await page.locator('[data-shortcut-reference-editor]').focus();
-  await page.keyboard.up('ShiftRight');
-  await expect(reference).toHaveCSS('display', 'none');
-
+  await page.keyboard.press('Shift+Slash');
+  await expect(page.locator('[data-shortcut-reference-editor]')).toHaveValue(
+    '?'
+  );
+  await expect(shortcuts).toHaveCount(0);
   await page
     .locator('[data-shortcut-reference-editor]')
     .evaluate((element) => element.remove());
-  await page.evaluate(() => document.body.focus());
-  await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'block');
-  await page.keyboard.press('Escape');
-  await expect(reference).toHaveCSS('display', 'none');
-  await page.keyboard.up('ShiftLeft');
-  expect((await evidence(page)).presentationDismissals).toBe(1);
-
-  await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'block');
-  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
-  await expect(reference).toHaveCSS('display', 'none');
-  await page.keyboard.up('ShiftLeft');
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)
@@ -3298,9 +3206,14 @@ test('Shift holds the source-shaped shortcut reference without game traffic', as
   await expect
     .poll(async () => (await evidence(page)).sourceKind)
     .toBe('replay');
-  await page.keyboard.down('ShiftLeft');
-  await expect(reference).toHaveCSS('display', 'block');
-  await page.keyboard.up('ShiftLeft');
+  await page.evaluate(() => {
+    document.body.tabIndex = -1;
+    document.body.focus();
+  });
+  await page.keyboard.press('Shift+Slash');
+  await expect(shortcuts).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(shortcuts).toHaveCount(0);
 
   current = await evidence(page);
   expect(current).toMatchObject({

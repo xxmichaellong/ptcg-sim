@@ -11,6 +11,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import { PreferenceStore } from '../preferences/preference-store.js';
 import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import {
   RemoteRoomInvitationError,
@@ -322,7 +323,11 @@ const mount = async (
       buildId="test-build"
       rendererKind="dom"
       landing={landing}
-      dependencies={dependencies}
+      dependencies={{
+        // Each lobby remembers into its own store, never the next test's.
+        preferences: new PreferenceStore(),
+        ...dependencies,
+      }}
     />
   );
   await act(async () => {
@@ -444,7 +449,9 @@ describe('remote room lobby wiring', () => {
     expect(host.querySelector('#openBoardViewButton')).toBeNull();
     await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
-    expect(host.textContent).toContain('Hold Shift to see keyboard shortcuts');
+    expect(host.textContent).toContain(
+      'Press ? anywhere to see keyboard shortcuts'
+    );
     expect(element(host, '#changeBackgroundButton').textContent).toBe(
       'Change background'
     );
@@ -700,6 +707,61 @@ describe('remote room lobby wiring', () => {
     expect(invitation.bootstrap.mock.calls[0]?.[0]).toMatchObject({
       asSpectator: true,
     });
+    await act(async () => root.unmount());
+  });
+
+  it('remembers the table settings and the name a room was hosted with', async () => {
+    const store = new PreferenceStore();
+    const requestBackground = vi.fn(async () => ({
+      kind: 'image' as const,
+      url: 'https://images.example.test/remembered.png',
+    }));
+    const dependencies = {
+      ...lobbyDependencies(
+        custody(),
+        vi.fn(async () => creationResult().value),
+        requestBackground
+      ),
+      preferences: store,
+    };
+    const first = await mount(dependencies);
+    await act(async () =>
+      element<HTMLButtonElement>(first.host, '#settingsButton').click()
+    );
+    expect(first.host.querySelector('#defaultBackgroundButton')).toBeNull();
+    await act(async () => {
+      element<HTMLInputElement>(first.host, '#darkModeCheckbox').click();
+      element<HTMLButtonElement>(first.host, '#changeBackgroundButton').click();
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>(first.host, '#p2Button').click();
+      inputValue(element(first.host, '#nameInput'), '  Misty ');
+      element<HTMLButtonElement>(first.host, '#generateIdButton').click();
+      await flush();
+    });
+    await act(async () => first.root.unmount());
+    first.host.remove();
+
+    // A later visit on this device starts where the player left off.
+    const { host, root } = await mount(dependencies);
+    expect(element<HTMLInputElement>(host, '#nameInput').value).toBe('Misty');
+    expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
+      false
+    );
+    const lobby = element<HTMLElement>(
+      host,
+      '[data-app-route="remote-room-lobby"]'
+    );
+    expect(lobby.dataset.darkMode).toBe('false');
+    expect(lobby.style.backgroundImage).toBe(
+      'url("https://images.example.test/remembered.png")'
+    );
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#defaultBackgroundButton').click()
+    );
+    expect(lobby.style.backgroundImage).toBe('');
+    expect(host.querySelector('#defaultBackgroundButton')).toBeNull();
     await act(async () => root.unmount());
   });
 
@@ -1189,10 +1251,12 @@ describe('remote room lobby wiring', () => {
     });
     expect(host.querySelector('#testLeaveRoom')).not.toBeNull();
 
+    // A real change (the Day table): preferences back at the defaults are
+    // simply not set.
     const retainedPreferences: BoardPreferences = {
       reducedMotion: false,
       highContrast: false,
-      darkMode: true,
+      darkMode: false,
       showZoneOutlines: true,
     };
     await act(async () =>
@@ -1221,7 +1285,7 @@ describe('remote room lobby wiring', () => {
     expect(host.querySelector('.lobby-status')).toBeNull();
     expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
     expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
-      true
+      false
     );
     expect(
       element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style

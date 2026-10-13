@@ -4,48 +4,36 @@ import {
   type BoardDepthPreferences,
 } from '@ptcgsim/renderer-contract';
 
-const KEY = 'ptcgsim.table-depth.v1';
+import {
+  definePreference,
+  preferences,
+  type PreferenceStore,
+} from '../preferences/preference-store.js';
+
+export const TABLE_DEPTH_PREFERENCES = definePreference<BoardDepthPreferences>({
+  key: 'ptcgsim.table-depth.v1',
+  defaults: DEFAULT_BOARD_DEPTH,
+  parse: parseBoardDepth,
+});
+
+/** The table's depth view, kept in the page's preferences. */
 export class DepthSettingsStore {
-  private value: BoardDepthPreferences = DEFAULT_BOARD_DEPTH;
-  private readonly listeners = new Set<() => void>();
-  constructor(
-    private readonly storage: Pick<Storage, 'getItem' | 'setItem'> | null = null
-  ) {
-    try {
-      this.value = parseBoardDepth(JSON.parse(storage?.getItem(KEY) ?? 'null'));
-    } catch {
-      /* Blocked or old site data. */
-    }
-  }
-  getSnapshot = () => this.value;
-  subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
-  update(patch: Partial<BoardDepthPreferences>) {
-    const next = parseBoardDepth({ ...this.value, ...patch });
-    if (JSON.stringify(next) === JSON.stringify(this.value)) return;
-    this.value = next;
-    try {
-      this.storage?.setItem(KEY, JSON.stringify(next));
-    } catch {
-      /* The choice still applies this visit. */
-    }
-    for (const listener of this.listeners) listener();
+  constructor(private readonly store: PreferenceStore = preferences()) {}
+  getSnapshot = (): BoardDepthPreferences =>
+    this.store.get(TABLE_DEPTH_PREFERENCES);
+  subscribe = (listener: () => void): (() => void) =>
+    this.store.subscribe(TABLE_DEPTH_PREFERENCES, listener);
+  /** Out-of-range values are clamped, as a stored value would be. */
+  update(patch: Partial<BoardDepthPreferences>): void {
+    this.store.set(
+      TABLE_DEPTH_PREFERENCES,
+      parseBoardDepth({ ...this.getSnapshot(), ...patch })
+    );
   }
 }
+
 let store: DepthSettingsStore | undefined;
 export const depthSettings = (): DepthSettingsStore => {
-  if (!store) {
-    let storage: Storage | null = null;
-    try {
-      storage = globalThis.localStorage ?? null;
-    } catch {
-      /* Site data is optional. */
-    }
-    store = new DepthSettingsStore(storage);
-  }
+  store ??= new DepthSettingsStore();
   return store;
 };

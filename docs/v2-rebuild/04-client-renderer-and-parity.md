@@ -1411,7 +1411,8 @@ proves the same global local-only cleanup across selection, context, zone,
 preview, editor, and replay states. Focused v2 overlays retain their existing
 scoped Escape/focus-return handlers. No visible surface, key reference, layout,
 styling, UI, or UX changed.
-The adjacent Shift reference remains a route-owned presentation surface rather
+_Superseded 2026-10-13 by ADR-028 (PX-025): `?` opens a keyboard shortcuts
+dialog instead._ The adjacent Shift reference remains a route-owned presentation surface rather
 than renderer or game state. Either physical Shift key opens the complete
 source text only for the duration of the hold; document keyup closes it even if
 focus moved into an editor, and window blur additionally prevents a stranded
