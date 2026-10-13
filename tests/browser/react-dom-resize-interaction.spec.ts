@@ -456,6 +456,15 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
     surfaceCount: 1,
   });
 
+  // Chromium may deliver its own resize during the CDP override. Keep it
+  // from the route (a capturing listener on the target runs first) so the
+  // explicit resolution signal is shown to be what reconciles DPR.
+  await page.evaluate(() => {
+    const hold = (event: Event): void => event.stopImmediatePropagation();
+    window.addEventListener('resize', hold, { capture: true });
+    (window as { __releaseResize?: () => void }).__releaseResize = () =>
+      window.removeEventListener('resize', hold, { capture: true });
+  });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 1280,
@@ -468,9 +477,11 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
   expect(
     await page.evaluate(() => matchMedia('(resolution: 2dppx)').matches)
   ).toBe(true);
-  // Chromium may also deliver a resize during the CDP override. In that
-  // case the route has already reconciled DPR before the explicit signal.
-  expect((await readRouteViewport(page)).windowDpr).toBe(2);
+  expect(await readRouteViewport(page)).toMatchObject({
+    windowDpr: 2,
+    outerDpr: 1,
+    sceneDpr: 1,
+  });
   expect(
     await page.evaluate(() => {
       const emit = (window as ViewportLifecycleWindow)
@@ -482,6 +493,9 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
   await expect
     .poll(() => readRouteViewport(page))
     .toMatchObject({ windowDpr: 2, outerDpr: 2, sceneDpr: 2 });
+  await page.evaluate(() =>
+    (window as { __releaseResize?: () => void }).__releaseResize?.()
+  );
   await waitForReactPaint(page);
 
   const beforeBurst = await readRouteViewport(page);
