@@ -188,7 +188,33 @@ export const fitCardComposition = (
   };
 };
 
-/** Follow the grabbed piece without collapsing the other pieces onto its centre. */
+/**
+ * Whether a drop on this target takes the whole stack with the grabbed
+ * piece: another stack or a play slot does (the stack moves), nothing yet
+ * is the player still deciding, and a pile takes only the piece.
+ */
+const carriesWholeStack = (
+  scene: BoardScene,
+  targetId: string | null
+): boolean =>
+  targetId === null ||
+  scene.zones.some(
+    (zone) =>
+      zone.id === targetId && (zone.kind === 'active' || zone.kind === 'bench')
+  ) ||
+  scene.cards.some(
+    (card) =>
+      card.parentId === targetId &&
+      (card.role === 'stackEvolution' || card.role === 'stackAttachment')
+  );
+
+/**
+ * Follow the grabbed piece without collapsing the other pieces onto its
+ * centre. The other pieces of a joined Pokémon come along only while the
+ * drag would carry them (see carriesWholeStack); over a pile, and once
+ * dropped, only the grabbed piece is held, so the table shows what the drop
+ * does.
+ */
 export const compositionHold = <
   T extends {
     readonly cardId: CardSceneNode['id'];
@@ -209,6 +235,10 @@ export const compositionHold = <
     anchor.parentId !== card.parentId
   )
     return null;
+  const { targetId } = hold as { readonly targetId?: string | null };
+  if (targetId === undefined || !carriesWholeStack(scene, targetId)) {
+    return null;
+  }
   return {
     ...hold,
     x:

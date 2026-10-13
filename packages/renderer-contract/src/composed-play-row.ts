@@ -24,6 +24,22 @@ export interface ComposedPlayRowInput extends LegacyPlayRowStackInput {
   readonly attachmentRotations: readonly QuarterTurns[];
 }
 
+/**
+ * A piece's own turn on top of its arrangement. v1 had no arrangements, so
+ * players laid BREAK and LEGEND cards sideways themselves: Alt+R toggles a
+ * card between upright and one quarter-turn. For a piece whose arrangement
+ * already turns it that way, no turn and that same turn both mean "as it
+ * reads"; any other turn still adds, so a deliberate one shows.
+ */
+const pieceTurn = (
+  arranged: QuarterTurns,
+  reading: QuarterTurns,
+  own: QuarterTurns
+): QuarterTurns =>
+  reading !== 0 && (own === 0 || own === reading)
+    ? arranged
+    : (((arranged + own) % 4) as QuarterTurns);
+
 /** A row is packed by whole silhouettes when one of its stacks is nonstandard. */
 export const layoutComposedPlayRow = (
   region: BoardLayoutRegion,
@@ -34,9 +50,11 @@ export const layoutComposedPlayRow = (
     if (!artwork) return null;
     const cards = artwork.cards.map((card, index) => ({
       ...card,
-      rotationQuarterTurns: ((card.rotationQuarterTurns +
-        input.evolution[index]!.rotation) %
-        4) as QuarterTurns,
+      rotationQuarterTurns: pieceTurn(
+        card.rotationQuarterTurns,
+        input.evolution[index]!.presentation?.readingQuarterTurns ?? 0,
+        input.evolution[index]!.rotation
+      ),
     }));
     return {
       ...artwork,

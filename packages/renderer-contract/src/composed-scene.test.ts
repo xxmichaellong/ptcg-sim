@@ -62,6 +62,67 @@ const fixture = () => {
 };
 
 describe('composed board scenes', () => {
+  it("shows a BREAK sideways once, whether or not v1's Alt+R also turned it", () => {
+    const base = createRendererSpikeView();
+    const playerId = base.playerOrder[0]!;
+    const stack = base.stacks[base.boards[playerId]!.activeStackId!]!;
+    const top = stack.evolutionCards.at(-1)!;
+    if (top.kind !== 'known') throw new Error('known top card required');
+    const breakId = asViewDefinitionId('break-definition');
+    const breakCard = (orientationQuarterTurns: 0 | 1 | 2 | 3) => ({
+      ...top,
+      id: asViewCardId('break-card'),
+      definitionId: breakId,
+      orientationQuarterTurns,
+    });
+    const turnOf = (orientationQuarterTurns: 0 | 1 | 2 | 3) => {
+      const view: MatchViewState = {
+        ...base,
+        definitions: {
+          ...base.definitions,
+          [breakId]: {
+            id: breakId,
+            name: 'Greninja BREAK',
+            category: 'Pokémon',
+            imageUrl: '/greninja-break.png',
+          },
+        },
+        stacks: {
+          ...base.stacks,
+          [stack.id]: {
+            ...stack,
+            evolutionCards: [
+              ...stack.evolutionCards,
+              breakCard(orientationQuarterTurns),
+            ],
+            attachmentCards: [],
+            rotationQuarterTurns: 0,
+          },
+        },
+      };
+      const scene = createBoardScene(
+        view,
+        createTableLayoutSnapshot({
+          viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+          bottomPlayerId: playerId,
+          playerIds: base.playerOrder as [PlayerId, PlayerId],
+          shellMode: 'fullscreen',
+          vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+          geometryVersion: 2,
+        })
+      );
+      return scene.cards.find((card) => card.id === 'break-card')!
+        .rotationQuarterTurns;
+    };
+    // The arrangement lays it across the card below; Alt+R (which toggles
+    // a card between upright and one quarter-turn) must not stand it on its
+    // head, and neither may a v1 game where it was already turned.
+    expect(turnOf(0)).toBe(1);
+    expect(turnOf(1)).toBe(1);
+    // A deliberate further turn still shows.
+    expect(turnOf(2)).toBe(3);
+  });
+
   it.each([724, 1024, 1109, 1600])(
     'keeps a paired Stadium clear of both Active slots and side piles at width %s',
     (width) => {
@@ -174,7 +235,12 @@ describe('composed board scenes', () => {
         }
         const anchor = pieces[0]!;
         const held = pieces.map((card) =>
-          compositionHold(scene, card, { cardId: anchor.id, x: 400, y: 300 })!
+          compositionHold(scene, card, {
+            cardId: anchor.id,
+            x: 400,
+            y: 300,
+            targetId: null,
+          })!
         );
         expect(held[1]!.x - held[0]!.x).toBeCloseTo(
           pieces[1]!.bounds.x - anchor.bounds.x
@@ -189,6 +255,48 @@ describe('composed board scenes', () => {
       }
     }
   );
+  it('carries a joined Pokémon whole only toward a drop that moves it whole', () => {
+    const { view, cards, stack, playerId } = fixture();
+    const scene = createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        bottomPlayerId: playerId,
+        playerIds: view.playerOrder as [PlayerId, PlayerId],
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        geometryVersion: 2,
+      })
+    );
+    const pieces = scene.cards.filter((card) => card.parentId === stack.id);
+    expect(pieces.length).toBe(cards.length);
+    const grabbed = pieces[0]!;
+    const other = pieces[1]!;
+    const drag = (targetId: string | null) => ({
+      cardId: grabbed.id,
+      x: 400,
+      y: 300,
+      targetId,
+    });
+    const zoneOf = (kind: string) =>
+      scene.zones.find(
+        (zone) => zone.kind === kind && zone.playerId === playerId
+      )!.id;
+    // Picked up, or over a play slot: the whole Pokémon comes along.
+    expect(compositionHold(scene, other, drag(null))).not.toBeNull();
+    expect(compositionHold(scene, other, drag(zoneOf('bench')))).not.toBeNull();
+    // Over a pile only the grabbed piece moves (the drop sends only it), and
+    // once dropped only the grabbed piece is held where it landed.
+    expect(compositionHold(scene, other, drag(zoneOf('discard')))).toBeNull();
+    expect(
+      compositionHold(scene, other, { cardId: grabbed.id, x: 400, y: 300 })
+    ).toBeNull();
+    // The grabbed piece itself always follows.
+    expect(compositionHold(scene, grabbed, drag(zoneOf('discard')))).toEqual(
+      drag(zoneOf('discard'))
+    );
+  });
+
   it('does not attach artwork metadata or composite geometry to concealed faces', () => {
     const { view, cards, stack, playerId } = fixture();
     const hidden: MatchViewState = {
