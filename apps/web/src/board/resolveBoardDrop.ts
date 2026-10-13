@@ -1,4 +1,5 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import { resolveAttachEvolveTargeting } from './resolveAttachEvolveTargeting.js';
 import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import type {
@@ -27,6 +28,44 @@ export type BoardDropResolution =
 const rejected = (
   reason: Exclude<BoardDropResolution, { ok: true }>['reason']
 ): BoardDropResolution => ({ ok: false, reason });
+
+/**
+ * A card that is not a whole Pokémon (an attached Energy or Tool, a card
+ * under the top, or one in a Looking-at-cards or attached-card window)
+ * dropped on a Pokémon joins it, exactly as the Q/E keys place it: v1's
+ * drop does the same. Sharing the keys' rules keeps the two from drifting
+ * on who may target which board and whether a card attaches or evolves.
+ */
+const placeOnPokemon = (
+  view: BoardDropView,
+  cardId: ViewCardId,
+  targetStackId: string
+): BoardDropResolution => {
+  const targeting = resolveAttachEvolveTargeting(view, cardId);
+  if (!targeting.ok) {
+    return rejected(
+      targeting.reason === 'stale_source' ? 'stale_card' : targeting.reason
+    );
+  }
+  if (targeting.targeting.expectedSourceId === targetStackId) {
+    return rejected('no_op');
+  }
+  const target = targeting.targeting.targets.find(
+    (candidate) => candidate.stackId === targetStackId
+  );
+  if (!target) return rejected('unsupported_target');
+  return {
+    ok: true,
+    command: {
+      type: 'PlaceCardOnPlayStack',
+      cardId,
+      expectedSourceId: targeting.targeting.expectedSourceId,
+      targetStackId: target.stackId,
+      expectedTargetTopCardId: target.topCardId,
+      mode: targeting.targeting.mode,
+    },
+  };
+};
 
 const playSlotTarget = (
   scene: BoardScene,
@@ -164,7 +203,9 @@ export const resolveBoardDrop = (
       return rejected('stale_target');
     }
     if (sourceStack) {
-      if (!sourceMovesWholeStack) return rejected('unsupported_source');
+      if (!sourceMovesWholeStack) {
+        return placeOnPokemon(view, intent.cardId, targetStack.id);
+      }
       if (sourceStack.id === targetStack.id) return rejected('no_op');
       if (sourceStack.boardPlayerId !== targetStack.boardPlayerId) {
         return rejected('unsupported_target');
@@ -184,6 +225,9 @@ export const resolveBoardDrop = (
           targetStackId: targetStack.id,
         },
       };
+    }
+    if (sourceInspection || sourceStaged) {
+      return placeOnPokemon(view, intent.cardId, targetStack.id);
     }
     if (!sourceZone) return rejected('unsupported_target');
     return {

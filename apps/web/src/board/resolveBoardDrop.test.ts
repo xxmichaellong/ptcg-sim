@@ -206,6 +206,173 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('moves an attached card, or one under the top, onto another Pokémon as v1 does', () => {
+    const input = fixture();
+    const playerId = input.view.playerOrder[0]!;
+    const blue = input.view.stacks['stack:blue:active']!;
+    const red = input.view.stacks['stack:red:active']!;
+    const energy = blue.attachmentCards[0]!;
+    const lower = blue.evolutionCards[0]!;
+    // A second Pokémon on Blue's bench, so a card can change Pokémon on
+    // its own side.
+    const hand = input.view.zones[`zone:${playerId}:hand`]!;
+    const benched = hand.cards.find(
+      (card) => card.kind === 'known' && card.category === 'Pokémon'
+    )!;
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter((card) => card.id !== benched.id),
+        },
+      },
+      boards: {
+        ...input.view.boards,
+        [playerId]: {
+          ...input.view.boards[playerId]!,
+          benchStackIds: ['stack:blue:bench-1'],
+        },
+      },
+      stacks: {
+        ...input.view.stacks,
+        'stack:blue:bench-1': {
+          ...blue,
+          id: 'stack:blue:bench-1',
+          slot: 'bench',
+          evolutionCards: [benched],
+          attachmentCards: [],
+          damage: 0,
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const drop = (cardId: string, targetId: string) =>
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: cardId as typeof energy.id,
+        targetId,
+      });
+    const placement = (
+      cardId: string,
+      targetStackId: string,
+      expectedTargetTopCardId: string
+    ) => ({
+      ok: true,
+      command: {
+        type: 'PlaceCardOnPlayStack',
+        cardId,
+        expectedSourceId: blue.id,
+        targetStackId,
+        expectedTargetTopCardId,
+        mode: 'attachment',
+      },
+    });
+
+    // Energy from the Active to a Benched Pokémon.
+    expect(drop(energy.id, 'stack:blue:bench-1')).toEqual(
+      placement(energy.id, 'stack:blue:bench-1', benched.id)
+    );
+    // The card under the top attaches too, as v1 attaches any non-top card.
+    expect(drop(lower.id, 'stack:blue:bench-1')).toEqual(
+      placement(lower.id, 'stack:blue:bench-1', benched.id)
+    );
+    // Onto the opponent's Pokémon (Tools like Head Ringer, PX-017).
+    expect(drop(energy.id, red.id)).toEqual(
+      placement(energy.id, red.id, red.evolutionCards.at(-1)!.id)
+    );
+    // Back onto its own Pokémon is nothing to do.
+    expect(drop(energy.id, blue.id)).toEqual({ ok: false, reason: 'no_op' });
+    // The top card still moves the whole Pokémon.
+    expect(drop(blue.evolutionCards.at(-1)!.id, 'stack:blue:bench-1')).toEqual(
+      expect.objectContaining({
+        ok: true,
+        command: expect.objectContaining({ type: 'MovePlayStack' }),
+      })
+    );
+  });
+
+  it('places a card from a Looking-at-cards window onto a Pokémon', () => {
+    const input = fixture();
+    const playerId = input.view.playerOrder[0]!;
+    const hand = input.view.zones[`zone:${playerId}:hand`]!;
+    const pokemon = hand.cards.find(
+      (card) => card.kind === 'known' && card.category === 'Pokémon'
+    )!;
+    const other = hand.cards.find(
+      (card) => card.kind === 'known' && card.category !== 'Pokémon'
+    )!;
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter(
+            (card) => card.id !== pokemon.id && card.id !== other.id
+          ),
+        },
+      },
+      workAreas: {
+        ...input.view.workAreas,
+        [playerId]: {
+          ...input.view.workAreas[playerId]!,
+          inspection: {
+            id: 'inspection-work-area',
+            sourceZoneId: hand.id,
+            cards: [pokemon, other],
+          },
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const blue = view.stacks['stack:blue:active']!;
+    const red = view.stacks['stack:red:active']!;
+    const drop = (cardId: string, targetId: string) =>
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: cardId as typeof pokemon.id,
+        targetId,
+      });
+    // A Pokémon evolves the Pokémon it is dropped on; anything else attaches.
+    expect(drop(pokemon.id, blue.id)).toEqual({
+      ok: true,
+      command: {
+        type: 'PlaceCardOnPlayStack',
+        cardId: pokemon.id,
+        expectedSourceId: 'inspection-work-area',
+        targetStackId: blue.id,
+        expectedTargetTopCardId: blue.evolutionCards.at(-1)!.id,
+        mode: 'evolution',
+      },
+    });
+    expect(drop(other.id, red.id)).toEqual({
+      ok: true,
+      command: expect.objectContaining({
+        type: 'PlaceCardOnPlayStack',
+        cardId: other.id,
+        targetStackId: red.id,
+        mode: 'attachment',
+      }),
+    });
+    // Evolving the opponent's Pokémon is not offered.
+    expect(drop(pokemon.id, red.id)).toEqual({
+      ok: false,
+      reason: 'unsupported_target',
+    });
+  });
+
   it('moves a card out of an explicit inspection work area', () => {
     const input = fixture();
     const sceneCard = localHandCard(input);
