@@ -1507,26 +1507,27 @@ export const BoardSurface = ({
             zIndex: 8_900,
           }}
         />
-        {scene.markers.map((marker) => (
-          <MarkerNode
-            key={marker.id}
-            marker={
-              depth
-                ? depth.marker(
-                    marker,
-                    (() => {
-                      const parent = scene.cards.find(
-                        (card) => card.id === marker.parentCardId
-                      );
-                      return parent
-                        ? depth.pose(parent, presentation)
-                        : undefined;
-                    })()
-                  )
-                : presentHeldMarker(scene, marker, presentation)
-            }
-          />
-        ))}
+        {scene.markers.map((marker) => {
+          if (!depth)
+            return (
+              <MarkerNode
+                key={marker.id}
+                marker={presentHeldMarker(scene, marker, presentation)}
+              />
+            );
+          const parent = scene.cards.find(
+            (card) => card.id === marker.parentCardId
+          );
+          const pose = parent ? depth.pose(parent, presentation) : undefined;
+          const projected = depth.markerMatrix(marker, pose);
+          return (
+            <MarkerNode
+              key={marker.id}
+              marker={projected ? marker : depth.marker(marker, pose)}
+              projected={projected}
+            />
+          );
+        })}
         {scene.counts.map((node) => (
           <ZoneCountNode
             key={node.id}

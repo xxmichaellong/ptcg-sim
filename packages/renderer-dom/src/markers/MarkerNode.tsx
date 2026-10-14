@@ -187,8 +187,11 @@ const AbilityTab = ({
  */
 export const MarkerNode = memo(function MarkerNode({
   marker,
+  projected,
 }: {
   readonly marker: MarkerSceneNode;
+  /** On a tilted table: the marker lying on its card (a matrix3d). */
+  readonly projected?: readonly number[] | null;
 }) {
   const face = markerFace(marker);
   return (
@@ -200,8 +203,14 @@ export const MarkerNode = memo(function MarkerNode({
       aria-hidden="true"
       style={{
         position: 'absolute',
-        left: marker.bounds.x,
-        top: marker.bounds.y,
+        ...(projected
+          ? {
+              left: 0,
+              top: 0,
+              transformOrigin: '0 0',
+              transform: `matrix3d(${projected.join(',')})`,
+            }
+          : { left: marker.bounds.x, top: marker.bounds.y }),
         width: marker.bounds.width,
         height: marker.bounds.height,
         zIndex: marker.zIndex,

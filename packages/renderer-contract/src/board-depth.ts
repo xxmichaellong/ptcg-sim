@@ -529,6 +529,33 @@ export class BoardDepthProjection {
     };
   }
 
+  /**
+   * A marker lying on its card: the projection of its own box a hair above
+   * the card, wherever the card is painted (held, in flight). Null where
+   * the card is flat (the hand), whose markers stay upright on screen.
+   */
+  markerMatrix(
+    marker: MarkerSceneNode,
+    pose?: TableCardPose
+  ): readonly number[] | null {
+    if (!this.enabled) return null;
+    const parent = this.scene.cards.find(
+      (card) => card.id === marker.parentCardId
+    );
+    const base = parent ? this.pose(parent) : undefined;
+    const current = pose ?? base;
+    if (!current || current.plane !== 1) return null;
+    return tableCardMatrix(
+      this.camera,
+      {
+        ...marker.bounds,
+        x: marker.bounds.x + (pose && base ? pose.bounds.x - base.bounds.x : 0),
+        y: marker.bounds.y + (pose && base ? pose.bounds.y - base.bounds.y : 0),
+      },
+      current.elevation + 1
+    );
+  }
+
   marker(marker: MarkerSceneNode, pose?: TableCardPose): MarkerSceneNode {
     const parent = this.scene.cards.find(
       (card) => card.id === marker.parentCardId

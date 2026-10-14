@@ -91,6 +91,30 @@ describe('live board depth', () => {
     expect(moved).toBeGreaterThan(0);
   });
 
+  it('lays a marker on its card, a hair above it, and carries it with the card', () => {
+    const scene = fixture();
+    const marker = scene.markers[0];
+    if (!marker) return;
+    const parent = scene.cards.find((card) => card.id === marker.parentCardId)!;
+    const table = new BoardDepthProjection(scene, preferences);
+    const flat = new BoardDepthProjection(scene, DEFAULT_BOARD_PREFERENCES);
+    expect(flat.markerMatrix(marker)).toBeNull();
+    const resting = table.markerMatrix(marker);
+    if (table.pose(parent).plane !== 1) {
+      expect(resting).toBeNull();
+      return;
+    }
+    expect(resting).not.toBeNull();
+    // Moved 40px with its card, the marker moves with it.
+    const pose = table.pose(parent);
+    const moved = table.markerMatrix(marker, {
+      ...pose,
+      bounds: { ...pose.bounds, x: pose.bounds.x + 40 },
+    })!;
+    const origin = (matrix: readonly number[]) => matrix[12]! / matrix[15]!;
+    expect(origin(moved)).toBeGreaterThan(origin(resting!) + 30);
+  });
+
   it('keeps hand images flat and picks the same projected card at every quarter turn', () => {
     const scene = fixture();
     const original = scene.cards.find(

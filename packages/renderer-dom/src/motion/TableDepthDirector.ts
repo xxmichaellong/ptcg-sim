@@ -23,12 +23,16 @@ const LIFT_DURATION_MS = 120;
 /** A card under the pointer rises this share of its width, over this long. */
 const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
+/** A riffle shuffle, from split to squared pile. */
+const RIFFLE_MS = 900;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
 const easeInOut = (t: number): number =>
   t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
 interface Ghost {
   element: HTMLElement;
   expires: number;
+  /** Edge lines a stand-in pile shows. */
+  bands?: number;
   holdFor?: string;
   fromImage?: string;
   toImage?: string;
@@ -44,6 +48,21 @@ interface Shuffle {
   index: number;
 }
 
+/**
+ * A pile being riffled: split in two halves that lift apart and tip in,
+ * riffle back together while the cards pass into one pile in the middle,
+ * and square up. Stand-ins play it while the real pile is hidden.
+ */
+interface Riffle {
+  readonly left: string;
+  readonly right: string;
+  readonly middle: string;
+  readonly pile: string | null;
+  readonly base: TableCardPose;
+  readonly start: number;
+  readonly duration: number;
+}
+
 /** One on-demand clock for physical poses, thickness and their shadows. */
 export class TableDepthDirector {
   private readonly motion = new TablePoseMotion();
@@ -51,6 +70,7 @@ export class TableDepthDirector {
   private sourcePainted = new Map<string, TableCardPose>();
   private readonly ghosts = new Map<string, Ghost>();
   private readonly shuffles = new Map<string, Shuffle>();
+  private readonly riffles = new Map<string, Riffle>();
   private readonly flips = new Map<
     string,
     { image: HTMLElement; face: HTMLElement; start: number; duration: number }
@@ -84,6 +104,7 @@ export class TableDepthDirector {
       this.motion.active ||
       this.ghosts.size > 0 ||
       this.shuffles.size > 0 ||
+      this.riffles.size > 0 ||
       this.flips.size > 0 ||
       this.lifts.size > 0 ||
       this.raising()
@@ -211,6 +232,12 @@ export class TableDepthDirector {
       if (held) {
         this.held.add(key);
         this.raises.delete(key);
+        // Picked up mid-shuffle, the pile is the player's again at once.
+        for (const [riffleKey, riffle] of this.riffles)
+          if (riffle.pile === key) {
+            this.paintRiffle({ ...riffle, start: -Infinity }, at);
+            this.riffles.delete(riffleKey);
+          }
       } else {
         this.held.delete(key);
         this.lifts.delete(key);
@@ -366,25 +393,13 @@ export class TableDepthDirector {
               });
           }
         } else {
-          const base = this.sourcePose(
+          this.riffle(
             shuffle.rect,
             shuffle.rotationQuarterTurns,
+            shuffle.imageUrl,
+            at + shuffle.delay * 1000 * this.durationScale,
             projection
           );
-          for (let index = 0; index < 4; index++) {
-            const start =
-              at + (shuffle.delay * 1000 + index * 22) * this.durationScale;
-            const key = this.addGhost(shuffle.imageUrl, base, base, start, 0);
-            if (key)
-              this.shuffles.set(key, {
-                key,
-                base,
-                start,
-                duration: 660 * this.durationScale,
-                side: index % 2 ? 1 : -1,
-                index,
-              });
-          }
         }
       }
     }
@@ -422,6 +437,136 @@ export class TableDepthDirector {
     };
   }
 
+  /** A pile shuffled where it lies: see Riffle. */
+  private riffle(
+    rect: Rect,
+    turns: number,
+    image: string,
+    start: number,
+    projection: BoardDepthProjection
+  ) {
+    const cover = projection.scene.cards.find(
+      (card) =>
+        card.renderKey !== null &&
+        card.primaryAction !== undefined &&
+        Math.abs(card.bounds.x - rect.x) < 0.1 &&
+        Math.abs(card.bounds.y - rect.y) < 0.1
+    );
+    const base = cover
+      ? projection.pose(cover)
+      : this.sourcePose(rect, turns, projection);
+    if (base.thickness <= 0) return;
+    const duration = RIFFLE_MS * this.durationScale;
+    const lasts = start - timestamp() + duration;
+    const half = {
+      ...base,
+      thickness: base.thickness / 2,
+      elevation: base.thickness / 2,
+    };
+    const left = this.addGhost(
+      image,
+      half,
+      half,
+      start,
+      0,
+      undefined,
+      undefined,
+      { bands: 4, lasts }
+    );
+    const right = this.addGhost(
+      image,
+      half,
+      half,
+      start,
+      0,
+      undefined,
+      undefined,
+      { bands: 4, lasts }
+    );
+    const middle = this.addGhost(
+      image,
+      base,
+      base,
+      start,
+      0,
+      undefined,
+      undefined,
+      { bands: 8, lasts }
+    );
+    if (!left || !right || !middle) return;
+    for (const key of [left, right, middle])
+      this.ghosts.get(key)!.element.style.opacity = '0';
+    this.riffles.set(left, {
+      left,
+      right,
+      middle,
+      pile: cover?.renderKey ?? null,
+      base,
+      start,
+      duration,
+    });
+  }
+
+  private paintRiffle(riffle: Riffle, at: number): boolean {
+    const t = (at - riffle.start) / riffle.duration;
+    if (t < 0) return false;
+    const pile = riffle.pile ? this.elements.get(riffle.pile) : undefined;
+    const ghost = (key: string) => this.ghosts.get(key)?.element;
+    if (t >= 1) {
+      if (pile) pile.style.removeProperty('opacity');
+      for (const key of [riffle.left, riffle.right, riffle.middle])
+        this.removeGhost(key);
+      return true;
+    }
+    if (pile) pile.style.opacity = '0';
+    const { base } = riffle;
+    const width = base.bounds.width;
+    const full = base.thickness;
+    const half = full / 2;
+    // Split (0-0.3), riffle (0.3-0.82), square up (0.82-1).
+    const split = easeInOut(Math.min(1, t / 0.3));
+    const pass = Math.max(0, Math.min(1, (t - 0.3) / 0.52));
+    const square = Math.max(0, (t - 0.82) / 0.18);
+    const apart = 0.55 * width * split * (1 - 0.8 * easeInOut(pass));
+    const raise = 0.12 * width * split * (1 - pass);
+    const tip = 0.14 * split * (1 - pass);
+    const flutter =
+      pass > 0 && pass < 1 ? Math.sin(pass * Math.PI * 14) * 0.012 * width : 0;
+    const halfThickness = half * (1 - pass);
+    const halfPose = (side: number): TableCardPose => ({
+      ...base,
+      bounds: { ...base.bounds, x: base.bounds.x + side * apart },
+      thickness: halfThickness,
+      elevation: halfThickness + raise + (side > 0 ? flutter : -flutter * 0.5),
+      flip: -side * tip,
+    });
+    const middleThickness = full * pass;
+    const settle =
+      square > 0
+        ? Math.sin(square * Math.PI * 2) * 0.02 * width * (1 - square)
+        : 0;
+    for (const [key, side] of [
+      [riffle.left, -1],
+      [riffle.right, 1],
+    ] as const) {
+      const element = ghost(key);
+      if (!element) continue;
+      element.style.opacity = halfThickness > 0.3 ? '1' : '0';
+      this.paint(key, halfPose(side));
+    }
+    const middle = ghost(riffle.middle);
+    if (middle) {
+      middle.style.opacity = middleThickness > 0.3 ? '1' : '0';
+      this.paint(riffle.middle, {
+        ...base,
+        bounds: { ...base.bounds, x: base.bounds.x + settle },
+        thickness: middleThickness,
+        elevation: middleThickness,
+      });
+    }
+    return false;
+  }
+
   private addGhost(
     image: string,
     from: TableCardPose,
@@ -429,13 +574,29 @@ export class TableDepthDirector {
     at: number,
     delay: number,
     holdFor?: string,
-    toImage?: string
+    toImage?: string,
+    options?: { readonly bands?: number; readonly lasts?: number }
   ): string | null {
     if (!this.layer) return null;
     const key = `depth-ghost-${this.serial++}`;
     const element = document.createElement('div');
     element.className = 'ptcgsim-card-ghost';
     element.dataset.depthCard = 'true';
+    if (options?.bands !== undefined) {
+      // A stand-in pile shows its edges and shadows like the real one.
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'ptcgsim-card__depth');
+      svg.setAttribute('aria-hidden', 'true');
+      for (const part of ['contact', 'shadow', 'side', 'lines']) {
+        const path = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'path'
+        );
+        path.setAttribute(`data-depth-${part}`, '');
+        svg.append(path);
+      }
+      element.append(svg);
+    }
     const face = document.createElement('div');
     face.className = 'ptcgsim-card__face';
     const img = document.createElement('img');
@@ -455,9 +616,13 @@ export class TableDepthDirector {
     const duration = 420 * this.durationScale;
     this.ghosts.set(key, {
       element,
-      expires: at + delay + Math.max(duration, 720 * this.durationScale),
+      expires:
+        at +
+        delay +
+        Math.max(duration, 720 * this.durationScale, options?.lasts ?? 0),
       start: at + delay,
       duration,
+      ...(options?.bands !== undefined ? { bands: options.bands } : {}),
       ...(holdFor ? { holdFor } : {}),
       ...(toImage ? { fromImage: image, toImage } : {}),
     });
@@ -543,7 +708,9 @@ export class TableDepthDirector {
       const edges = tablePoseEdges(
         projection.camera,
         pose,
-        card ? (projection.pileCounts.get(card.id) ?? 1) : 1
+        card
+          ? (projection.pileCounts.get(card.id) ?? 1)
+          : (this.ghosts.get(key)?.bands ?? 1)
       );
       geometry
         .querySelector('[data-depth-side]')
@@ -572,11 +739,19 @@ export class TableDepthDirector {
     if (card)
       for (const marker of projection.scene.markers) {
         if (marker.parentCardId !== card.id) continue;
-        const painted = projection.marker(marker, pose);
         const node = this.markers.get(marker.id);
-        if (node) {
+        if (!node) continue;
+        const projected = projection.markerMatrix(marker, pose);
+        if (projected) {
+          node.style.left = '0px';
+          node.style.top = '0px';
+          node.style.transformOrigin = '0 0';
+          node.style.transform = `matrix3d(${projected.join(',')})`;
+        } else {
+          const painted = projection.marker(marker, pose);
           node.style.left = `${painted.bounds.x}px`;
           node.style.top = `${painted.bounds.y}px`;
+          node.style.removeProperty('transform');
         }
       }
   }
@@ -665,6 +840,8 @@ export class TableDepthDirector {
         turns: shuffle.base.turns + shuffle.side * 0.055 * fan,
       });
     }
+    for (const [key, riffle] of this.riffles)
+      if (this.paintRiffle(riffle, at)) this.riffles.delete(key);
     for (const [key, ghost] of this.ghosts) {
       if (ghost.toImage && at >= ghost.start + ghost.duration * 0.5) {
         const img = ghost.element.querySelector('img');
@@ -675,7 +852,11 @@ export class TableDepthDirector {
         (ghost.holdFor && !this.motion.has(ghost.holdFor) && at > ghost.start)
       )
         this.removeGhost(key);
-      else if (!ghost.holdFor && !this.shuffles.has(key))
+      else if (
+        !ghost.holdFor &&
+        !this.shuffles.has(key) &&
+        ghost.bands === undefined
+      )
         ghost.element.style.opacity = String(
           Math.max(0, Math.min(1, (ghost.expires - at) / 120))
         );
@@ -704,6 +885,10 @@ export class TableDepthDirector {
         this.paint(key, pose);
     }
     for (const key of this.flips.keys()) this.clearFlip(key);
+    for (const riffle of this.riffles.values())
+      if (riffle.pile)
+        this.elements.get(riffle.pile)?.style.removeProperty('opacity');
+    this.riffles.clear();
     for (const key of this.ghosts.keys()) this.removeGhost(key);
     this.shuffles.clear();
     this.lifts.clear();

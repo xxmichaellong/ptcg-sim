@@ -57,6 +57,15 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    0.6°, Prizes under 1.2°, and a hair off true), the same way every time.
    Piles, the hand and joined panels stay square. Settings → Table →
    Natural card placement turns it off.
+10. **A shuffled pile is riffled**: it splits into two halves that lift
+    apart and tip in, riffles back together while the cards pass into one
+    pile between them, and squares up (900ms). Stand-ins with their own
+    edges and shadows play it while the real pile is hidden; picking the
+    pile up ends it at once.
+11. **Markers lie on their cards**: damage counters, conditions and the
+    other tokens are the projection of their own box a hair above the card,
+    so they foreshorten with the table and travel with the card. In the
+    hand they stay upright on screen.
 
 Picking stays exact throughout: every painted face is one homography (a
 flip included), and hit-testing inverts the painted pose.
@@ -66,6 +75,6 @@ flip included), and hit-testing inverts the painted pose.
 - Browser specs at desktop sizes play on the tabletop unless they ask for
   the flat table (`useFlatTable` in `tests/browser/support/table-shell.ts`);
   specs that aim drags at zones' logical centres do.
-- Still to come from the brief: a riffle shuffle, damage counters and the
-  coin lying on the table plane, the discard's top cards fanned, and a 2D
-  fast path for the Raised view on phones.
+- Still to come from the brief: the coin tossed on the table plane, the
+  discard's top cards fanned, and a 2D fast path for the Raised view on
+  phones.

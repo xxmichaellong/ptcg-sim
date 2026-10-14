@@ -432,3 +432,93 @@ it('carries a card across the table in an arc and turns it over on the way', () 
   expect(director.active).toBe(false);
   director.destroy();
 });
+
+it('riffles a shuffled deck with stand-ins, hides the pile meanwhile, and gives it back squared', () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let serial = 0;
+  let now = 0;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frames.set(++serial, callback);
+    return serial;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+  const advance = (at: number) => {
+    now = at;
+    for (const [id, frame] of [...frames]) {
+      frames.delete(id);
+      frame(now);
+    }
+  };
+  const view = createRendererSpikeView();
+  const scene = createBoardSceneForViewport(view, {
+    viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+    bottomPlayerId: view.playerOrder[0]!,
+    splitRatio: 0.5,
+    geometryVersion: 1,
+  });
+  const deckZone = scene.zones.find(
+    (zone) => zone.kind === 'deck' && zone.side === 'local'
+  )!;
+  // Shuffled: every card in the deck has a new identity.
+  const shuffled = {
+    ...scene,
+    revision: scene.revision + 1,
+    cards: scene.cards.map((card) =>
+      card.parentId === deckZone.id
+        ? {
+            ...card,
+            id: `${card.id}:shuffled` as typeof card.id,
+            renderKey: card.renderKey,
+          }
+        : card
+    ),
+  };
+  const cover = shuffled.cards.find(
+    (card) => card.parentId === deckZone.id && card.renderKey !== null
+  )!;
+  const elements = new Map(
+    shuffled.cards
+      .filter((card) => card.renderKey)
+      .map((card) => [card.renderKey!, document.createElement('button')])
+  );
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  const preferences = {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const },
+  };
+  director.commit(
+    null,
+    new BoardDepthProjection(scene, preferences),
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  director.commit(
+    scene,
+    new BoardDepthProjection(shuffled, preferences),
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  const pile = elements.get(cover.renderKey!)!;
+  // Two halves and the pile they riffle into stand in for the deck.
+  expect(layer.childElementCount).toBe(3);
+  advance(300);
+  expect(pile.style.opacity).toBe('0');
+  const visible = [...layer.children].filter(
+    (child) => (child as HTMLElement).style.opacity === '1'
+  );
+  expect(visible.length).toBeGreaterThanOrEqual(2);
+  // Each stand-in has its edges, so the halves read as thick piles.
+  expect(layer.querySelectorAll('[data-depth-side]').length).toBe(3);
+  for (let at = 316; at <= 1400; at += 16) advance(at);
+  expect(layer.childElementCount).toBe(0);
+  expect(pile.style.opacity).toBe('');
+  expect(director.active).toBe(false);
+  director.destroy();
+});
