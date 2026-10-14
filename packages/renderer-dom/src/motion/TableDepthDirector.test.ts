@@ -5,8 +5,11 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_DEPTH,
   DEFAULT_BOARD_PRESENTATION,
+  createBoardScene,
   createBoardSceneForViewport,
   createRendererSpikeView,
+  createTableLayoutSnapshot,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
   tablePoseMatrix,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
@@ -653,5 +656,151 @@ it("raises and lifts a joined card's pieces together, and keeps the grip under t
     expect(grip().y).toBeCloseTo(point.y, 6);
   }
   expect(height(first)).toBeGreaterThan(pickedUp);
+  director.destroy();
+});
+
+it('lifts only what is carried through the air; a hand making room or taking a new order keeps its stacking', () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let serial = 0;
+  let now = 0;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frames.set(++serial, callback);
+    return serial;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+  const advance = (at: number) => {
+    now = at;
+    for (const [id, frame] of [...frames]) {
+      frames.delete(id);
+      frame(now);
+    }
+  };
+  const view = createRendererSpikeView();
+  const scene = createBoardScene(
+    view,
+    createTableLayoutSnapshot({
+      viewport: { width: 1280, height: 900, devicePixelRatio: 1 },
+      playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+      bottomPlayerId: view.playerOrder[0]!,
+      shellMode: 'fullscreen',
+      geometryVersion: 2,
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    })
+  );
+  const preferences = {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
+  };
+  const elements = new Map(
+    scene.cards
+      .filter((card) => card.renderKey !== null)
+      .map((card) => [card.renderKey!, document.createElement('button')])
+  );
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), document.createElement('div'));
+  const projection = new BoardDepthProjection(scene, preferences);
+  director.commit(
+    null,
+    projection,
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  const lifted = () =>
+    [...elements]
+      .filter(([, element]) => element.hasAttribute('data-flying'))
+      .map(([key]) => key)
+      .sort();
+  const handZone = scene.zones.find(
+    (zone) => zone.kind === 'hand' && zone.side === 'local'
+  )!;
+  const hand = scene.cards
+    .filter((card) => card.parentId === handZone.id)
+    .sort((left, right) => left.bounds.x - right.bounds.x);
+  expect(hand.length).toBeGreaterThan(3);
+
+  // A card held over the hand's left end: the row slides over to make room,
+  // and none of it rises above the rest, whatever order it is looked at in.
+  const held = hand.at(-1)!;
+  elements.get(held.renderKey!)!.dataset.held = 'drag';
+  const holding = {
+    ...DEFAULT_BOARD_PRESENTATION,
+    drag: {
+      cardId: held.id,
+      x: hand[0]!.bounds.x,
+      y: hand[0]!.bounds.y + 20,
+      targetId: handZone.id,
+      index: 0,
+    },
+  };
+  director.commit(scene, projection, holding, undefined, false, 1);
+  expect(director.active).toBe(true);
+  expect(lifted()).toEqual([]);
+  advance(60);
+  expect(lifted()).toEqual([]);
+  advance(400);
+  expect(lifted()).toEqual([]);
+
+  // Let go: the hand takes its new order (every other card slides along),
+  // and the card coming down into it is the only one above the row.
+  delete elements.get(held.renderKey!)!.dataset.held;
+  const ordered = {
+    ...scene,
+    revision: scene.revision + 1,
+    cards: scene.cards.map((card) => {
+      const at = hand.findIndex((entry) => entry.id === card.id);
+      if (at < 0) return card;
+      const slot = hand[(at + 1) % hand.length]!;
+      return { ...card, bounds: slot.bounds, zIndex: slot.zIndex };
+    }),
+  };
+  director.commit(
+    scene,
+    new BoardDepthProjection(ordered, preferences),
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  expect(lifted()).toEqual([held.renderKey]);
+  advance(460);
+  advance(1200);
+  expect(lifted()).toEqual([]);
+
+  // A Pokémon's pieces still rise together: its Energy waits in the air
+  // until the Pokémon carried with it has landed.
+  const stack = ordered.cards.filter(
+    (card) => card.renderKey !== null && card.parentId.startsWith('stack:')
+  );
+  const stackId = stack[0]!.parentId;
+  const pokemon = stack.find(
+    (card) => card.parentId === stackId && card.role === 'stackEvolution'
+  )!;
+  const energy = stack.find(
+    (card) => card.parentId === stackId && card.role === 'stackAttachment'
+  )!;
+  const carried = {
+    ...ordered,
+    revision: ordered.revision + 1,
+    cards: ordered.cards.map((card) =>
+      card.id === pokemon.id
+        ? { ...card, bounds: { ...card.bounds, x: card.bounds.x + 200 } }
+        : card
+    ),
+  };
+  director.commit(
+    ordered,
+    new BoardDepthProjection(carried, preferences),
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  expect(lifted()).toEqual(
+    expect.arrayContaining([pokemon.renderKey, energy.renderKey])
+  );
+  expect(lifted()).not.toContain(hand[0]!.renderKey);
   director.destroy();
 });

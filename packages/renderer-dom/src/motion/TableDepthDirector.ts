@@ -28,6 +28,11 @@ const LANDING_DESCENT_MS = 160;
 const LANDING_WINDOW_MS = 2500;
 /** A row opening (or closing) a gap for the card held over it. */
 const MAKE_ROOM_MS = 200;
+/** The pieces of one Pokémon in play, which rise and land together. */
+const STACK_PIECE_ROLES: ReadonlySet<string> = new Set([
+  'stackEvolution',
+  'stackAttachment',
+]);
 /** A card under the pointer rises this share of its width, over this long. */
 const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
@@ -96,6 +101,14 @@ export class TableDepthDirector {
    * arc of a card carried across the table.
    */
   private readonly released = new Map<string, number>();
+  /**
+   * Cards whose current travel carries them through the air -- a flight from
+   * elsewhere, a landing, a set-down -- and so rise over the table while it
+   * lasts. A card that only slides along its row (making room for a held
+   * card, or settling into a hand's new order) stays in the row's order:
+   * lifting it would put it over neighbours it must stay under.
+   */
+  private readonly airborne = new Set<string>();
   /**
    * Where the pointer holds the held cards: a point on one card's face, as
    * fractions of it, and the pointer over it.
@@ -269,6 +282,7 @@ export class TableDepthDirector {
         this.motion.delete(key);
         this.painted.delete(key);
         this.released.delete(key);
+        this.airborne.delete(key);
       }
     this.markers.clear();
     for (const element of Array.from(
@@ -415,6 +429,21 @@ export class TableDepthDirector {
         arc,
         landing
       );
+      // A travel that carries on to the same place keeps its kind. A card
+      // that stays in its zone only slides along the row (a hand taking a
+      // new order, a row spreading out); a Pokémon's pieces are carried.
+      const continues =
+        duration > 0 && before !== undefined && sameTablePose(before, target);
+      const slides =
+        card.role === 'zone' && oldCard?.parentId === card.parentId;
+      if (!continues) {
+        if (
+          duration > 0 &&
+          (landing || onlyHeight || (source !== undefined && !slides))
+        )
+          this.airborne.add(key);
+        else this.airborne.delete(key);
+      }
       if (flight?.fromImageUrl && duration > 0)
         this.flipFace(key, flight, at, duration);
       if (held) {
@@ -436,6 +465,15 @@ export class TableDepthDirector {
           this.lifted(key)
       )
         this.paint(key, pose, at);
+    }
+    // Who is lifted is settled once every travel of this commit is known: a
+    // card looked at before its stack-mate's flight was set would otherwise
+    // sit at the wrong height in the order for a frame or two.
+    for (const [key, element] of this.elements) {
+      const lifted = this.lifted(key);
+      if (lifted === (element.dataset.flying !== undefined)) continue;
+      if (lifted) element.dataset.flying = '';
+      else delete element.dataset.flying;
     }
     if (plan && this.durationScale > 0) {
       for (const ghost of plan.ghosts) {
@@ -718,6 +756,7 @@ export class TableDepthDirector {
       ...(toImage ? { fromImage: image, toImage } : {}),
     });
     this.motion.set(key, holdFor ? from : to, at, duration, from, delay);
+    this.airborne.add(key);
     this.paint(key, from, at);
     return key;
   }
@@ -931,17 +970,22 @@ export class TableDepthDirector {
       return;
     this.frame = requestAnimationFrame(this.tick);
   }
+  /** Carried through the air right now, not just sliding along its row. */
+  private inFlight(key: string): boolean {
+    return this.motion.has(key) && this.airborne.has(key);
+  }
   /**
-   * Lifted while it, or any card landing with it on the same parent, still
-   * travels: a Pokémon that arrives first never drops below its Energy that
-   * is still in the air.
+   * Lifted while it, or a piece of the same Pokémon landing with it, is in
+   * the air: a Pokémon that arrives first never drops below its Energy that
+   * is still in the air. A hand or another row is not one piece: a card
+   * landing in it leaves the rest of the row in its order beneath.
    */
   private lifted(key: string): boolean {
-    if (this.motion.has(key)) return true;
-    const group = this.cards.get(key)?.parentId;
-    if (group === undefined) return false;
-    for (const [other, card] of this.cards) {
-      if (card.parentId === group && this.motion.has(other)) return true;
+    if (this.inFlight(key)) return true;
+    const card = this.cards.get(key);
+    if (!card || !STACK_PIECE_ROLES.has(card.role)) return false;
+    for (const [other, mate] of this.cards) {
+      if (mate.parentId === card.parentId && this.inFlight(other)) return true;
     }
     return false;
   }
@@ -1044,6 +1088,7 @@ export class TableDepthDirector {
     this.shuffles.delete(key);
     this.motion.delete(key);
     this.painted.delete(key);
+    this.airborne.delete(key);
   }
   cancel() {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
@@ -1067,6 +1112,7 @@ export class TableDepthDirector {
     this.shuffles.clear();
     this.lifts.clear();
     this.released.clear();
+    this.airborne.clear();
     this.raises.clear();
     this.hovered = null;
     this.onActivity?.();

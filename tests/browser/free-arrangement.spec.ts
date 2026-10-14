@@ -130,6 +130,55 @@ const paintedPoint = async (page: Page, id: string, fx = 0.5, fy = 0.4) => {
   };
 };
 
+/**
+ * Samples the viewer's hand every frame: each card's image, stacking and
+ * whether it is lifted (in the air) or held.
+ */
+const watchHand = (page: Page) =>
+  page.evaluate(() => {
+    const frames: {
+      readonly src: string;
+      readonly z: number;
+      readonly x: number;
+      readonly right: number;
+      readonly held: boolean;
+      readonly lifted: boolean;
+    }[][] = [];
+    let watching = true;
+    const sample = () => {
+      if (!watching) return;
+      frames.push(
+        [
+          ...document.querySelectorAll<HTMLElement>(
+            '.ptcgsim-card[data-in-hand]'
+          ),
+        ]
+          .map((card) => {
+            const box = card
+              .querySelector('.ptcgsim-card__body')!
+              .getBoundingClientRect();
+            return {
+              src: card.querySelector('img')?.getAttribute('src') ?? '',
+              z: Number(getComputedStyle(card).zIndex) || 0,
+              x: box.x,
+              right: box.right,
+              y: box.y,
+              held: card.dataset.held !== undefined,
+              lifted: card.hasAttribute('data-flying'),
+            };
+          })
+          .filter((card) => card.y > 600)
+      );
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    (window as unknown as { __handFrames: () => typeof frames }).__handFrames =
+      () => {
+        watching = false;
+        return frames;
+      };
+  });
+
 const drag = async (
   page: Page,
   id: string,
@@ -195,7 +244,42 @@ test('a benched Pokémon goes to the far left, and a hand card to its new place'
   const moving = hand.at(-1)!;
   const a = await paintedPoint(page, hand[0]!.id, 0.5, 0.3);
   const b = await paintedPoint(page, hand[1]!.id, 0.5, 0.3);
+  await watchHand(page);
   await drag(page, moving.id, { x: (a.x + b.x) / 2, y: a.y });
+  // While the row made room and took its new order, nothing but the moved
+  // card left the row's stacking: no other card rose over a neighbour, and
+  // overlapping cards stayed stacked left under right.
+  const frames = await page.evaluate(() =>
+    (
+      window as unknown as {
+        __handFrames: () => {
+          readonly src: string;
+          readonly z: number;
+          readonly x: number;
+          readonly right: number;
+          readonly held: boolean;
+          readonly lifted: boolean;
+        }[][];
+      }
+    ).__handFrames()
+  );
+  expect(frames.length).toBeGreaterThan(20);
+  for (const [index, frame] of frames.entries()) {
+    const others = frame.filter(
+      (card) => !card.held && card.src !== moving.imageUrl
+    );
+    expect(
+      others.filter((card) => card.lifted),
+      `frame ${String(index)}`
+    ).toEqual([]);
+    const byX = [...others].sort((left, right) => left.x - right.x);
+    for (let at = 0; at + 1 < byX.length; at += 1) {
+      const left = byX[at]!;
+      const right = byX[at + 1]!;
+      if (left.right > right.x)
+        expect(left.z, `frame ${String(index)}`).toBeLessThan(right.z);
+    }
+  }
   const rearranged = await handCards(page);
   expect(rearranged.map((card) => card.imageUrl)).toEqual([
     hand[0]!.imageUrl,
