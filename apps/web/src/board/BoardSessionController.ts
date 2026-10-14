@@ -1383,6 +1383,9 @@ const handleIntent = (
               x: intent.x,
               y: intent.y,
               commandId: null,
+              ...(movesWholeStack(resolution.command)
+                ? { wholeStack: true }
+                : {}),
               ...(intent.index === undefined
                 ? {}
                 : {
@@ -1436,12 +1439,16 @@ const handleIntent = (
  * target is always where the card goes. Its own place (a no-op) counts, as
  * the card goes back there.
  */
-const dropWouldLand = (
+/**
+ * What a drag held over `targetId` would do if dropped now: null when the
+ * drop would not land there.
+ */
+const dropOutcome = (
   state: BoardSessionControllerState,
   drag: NonNullable<BoardPresentation['drag']>,
   targetId: string,
   dependencies: BoardSessionControllerDependencies
-): boolean => {
+): { readonly command: WireGameCommand | null } | null => {
   const view = state.view;
   const scene = state.scene;
   if (
@@ -1451,7 +1458,7 @@ const dropWouldLand = (
     !state.canSubmitCommands ||
     !hasDropTarget(view, scene, targetId)
   ) {
-    return false;
+    return null;
   }
   const resolution = (dependencies.resolveDrop ?? resolveBoardDrop)(
     view,
@@ -1463,10 +1470,37 @@ const dropWouldLand = (
       x: drag.x,
       y: drag.y,
       ...(drag.index === undefined ? {} : { index: drag.index }),
+      ...(drag.detached ? { detached: true } : {}),
     }
   );
-  return resolution.ok || resolution.reason === 'no_op';
+  if (resolution.ok) return { command: resolution.command };
+  return resolution.reason === 'no_op' ? { command: null } : null;
 };
+
+/**
+ * A drop that trades two Pokémon's places (onto another of the player's
+ * Pokémon, or a Benched one onto the occupied Active): the table marks the
+ * one it would swap with.
+ */
+const swapAction = (
+  command: WireGameCommand | null
+): NonNullable<BoardPresentation['drag']>['action'] => {
+  if (command?.type !== 'MovePlayStack') return undefined;
+  if (command.targetStackId)
+    return { kind: 'swap', stackId: command.targetStackId };
+  if (
+    command.destinationSlot === 'active' &&
+    command.expectedActiveStackId !== null &&
+    command.expectedActiveStackId !== command.stackId
+  ) {
+    return { kind: 'swap', stackId: command.expectedActiveStackId };
+  }
+  return undefined;
+};
+
+/** The drop moved a whole Pokémon: its stack settles with the grabbed card. */
+const movesWholeStack = (command: WireGameCommand): boolean =>
+  command.type === 'MovePlayStack' || command.type === 'MovePlayStackToZone';
 
 const handlePresentationUpdate = (
   state: BoardSessionControllerState,
@@ -1478,13 +1512,16 @@ const handlePresentationUpdate = (
     const drag = update.drag;
     if (drag && !hasCard(state.scene, drag.cardId)) return ignored(state);
     // The card keeps following the pointer whatever is under it; only a
-    // target the drop would take is lit.
-    const shown =
-      drag && drag.targetId !== null
-        ? dropWouldLand(state, drag, drag.targetId, dependencies)
-          ? drag
-          : { ...drag, targetId: null }
-        : drag;
+    // target the drop would take is lit, and a swap is marked as one.
+    const shown = ((): BoardPresentation['drag'] => {
+      if (!drag) return drag;
+      const { action: _stale, ...held } = drag;
+      if (held.targetId === null) return held;
+      const outcome = dropOutcome(state, held, held.targetId, dependencies);
+      if (!outcome) return { ...held, targetId: null };
+      const action = swapAction(outcome.command);
+      return action ? { ...held, action } : held;
+    })();
     return installPresentation(state, {
       ...state.presentation,
       drag: shown,

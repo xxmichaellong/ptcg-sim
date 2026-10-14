@@ -216,6 +216,8 @@ export type DomainEvent =
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+      /** Carried along by its whole Pokémon moving (MovePlayStackToZone). */
+      readonly withStack?: true;
     }
   | {
       readonly type: 'PlayStackDeparted';

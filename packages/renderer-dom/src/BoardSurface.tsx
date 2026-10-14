@@ -3,6 +3,7 @@ import {
   arrangementIndexAt,
   arrangementOffsets,
   BoardDragController,
+  canDetachFromStack,
   compositionHold,
   presentHeldMarker,
   VelocityTracker,
@@ -74,6 +75,12 @@ const LIFTED_Z_INDEX = 9_000;
 const DRAG_Z_INDEX = 20_000;
 /** How far the pointer moves after a drop before hover answers it again. */
 const HOVER_REST_SLOP_PX = 4;
+/**
+ * Held this long without moving, a Pokémon's card lifts off the rest of its
+ * stack and moves alone (to devolve it, say). A mouse or pen only: a long
+ * touch is the browser's.
+ */
+const DETACH_PRESS_MS = 450;
 const NO_ASIDES: ReadonlyMap<
   CardSceneNode['id'],
   { readonly x: number; readonly y: number }
@@ -462,6 +469,7 @@ const CardNode = memo(
     selected,
     targetable,
     dropTarget,
+    dropAction,
     drag,
     settle,
     emitIntent,
@@ -478,6 +486,8 @@ const CardNode = memo(
     readonly targetable: boolean;
     /** The stack card under a dragged card: v1 rings it like a selection. */
     readonly dropTarget: boolean;
+    /** Held, it would swap places with the Pokémon under it: it shows ⇄. */
+    readonly dropAction?: 'swap';
     readonly drag: BoardPresentation['drag'];
     readonly settle: SettlingCard | null;
     readonly emitIntent: BoardRendererAdapters['emitIntent'];
@@ -665,6 +675,25 @@ const CardNode = memo(
               }}
             />
           </span>
+          {dropAction === 'swap' ? (
+            <span
+              className="ptcgsim-card__drop-action"
+              data-drop-action="swap"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 8h15M15 4l4 4-4 4" />
+                <path d="M20 16H5M9 12l-4 4 4 4" />
+              </svg>
+            </span>
+          ) : null}
         </span>
       </button>
     );
@@ -689,6 +718,7 @@ const CardNode = memo(
       before.selected === after.selected &&
       before.targetable === after.targetable &&
       before.dropTarget === after.dropTarget &&
+      before.dropAction === after.dropAction &&
       before.drag === after.drag &&
       before.settle === after.settle &&
       before.emitIntent === after.emitIntent &&
@@ -913,6 +943,21 @@ export const BoardSurface = ({
   };
   const velocity = useMemo(() => new VelocityTracker(100), []);
   const previousSceneRef = useRef<BoardScene | null>(null);
+  // The scene a timer started at pointer-down should act on: the latest.
+  const latestSceneRef = useRef(scene);
+  latestSceneRef.current = scene;
+  const detachTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelDetachTimer = () => {
+    if (detachTimerRef.current === null) return;
+    clearTimeout(detachTimerRef.current);
+    detachTimerRef.current = null;
+  };
+  useEffect(
+    () => () => {
+      if (detachTimerRef.current !== null) clearTimeout(detachTimerRef.current);
+    },
+    []
+  );
   useLayoutEffect(
     () => () => {
       director.destroy();
@@ -1301,6 +1346,12 @@ export const BoardSurface = ({
               card.parentId === dragTargetId && card.role === 'stackEvolution'
           )
           .sort((left, right) => right.zIndex - left.zIndex)[0]?.id ?? null);
+  // A drop that would swap two Pokémon says so on the card being held, where
+  // it is always in view (the Pokémon it would trade with is under it).
+  const swapCardId =
+    presentation.drag?.action?.kind === 'swap'
+      ? presentation.drag.cardId
+      : null;
 
   const stadium = scene.zones.find((zone) => zone.kind === 'stadium')?.bounds;
   const lower = scene.layout.players.find(
@@ -1390,6 +1441,18 @@ export const BoardSurface = ({
         if (!input) return;
         if (dragController.pointerDown(scene, target.card.id, input)) {
           grabbed.current = target.card;
+          cancelDetachTimer();
+          if (
+            event.pointerType !== 'touch' &&
+            canDetachFromStack(scene, target.card.id)
+          ) {
+            const pointerId = event.pointerId;
+            detachTimerRef.current = setTimeout(() => {
+              detachTimerRef.current = null;
+              if (dragController.detach(latestSceneRef.current, pointerId))
+                clearHover();
+            }, DETACH_PRESS_MS);
+          }
           const body = target.element.querySelector<HTMLElement>(
             '.ptcgsim-card__body'
           );
@@ -1414,6 +1477,7 @@ export const BoardSurface = ({
       onPointerMove={(event) => {
         const input = pointerInput(event);
         if (input && dragController.pointerMove(scene, input)) {
+          cancelDetachTimer();
           clearHover();
           event.preventDefault();
           velocity.add(input.x, input.y, event.timeStamp);
@@ -1446,6 +1510,7 @@ export const BoardSurface = ({
         clearHover();
       }}
       onPointerUp={(event) => {
+        cancelDetachTimer();
         const ownsGrab =
           capturedPointerRef.current?.pointerId === event.pointerId;
         const input = pointerInput(event);
@@ -1468,6 +1533,7 @@ export const BoardSurface = ({
         if (ownsGrab) grabbed.current = null;
       }}
       onPointerCancel={(event) => {
+        cancelDetachTimer();
         dragController.cancel(event.pointerId);
         if (capturedPointerRef.current?.pointerId === event.pointerId)
           grabbed.current = null;
@@ -1557,6 +1623,9 @@ export const BoardSurface = ({
               selected={presentation.selectedCardId === card.id}
               targetable={presentation.targetableCardIds.includes(card.id)}
               dropTarget={dropTargetCardId === card.id}
+              {...(swapCardId === card.id
+                ? { dropAction: 'swap' as const }
+                : {})}
               drag={compositionHold(scene, card, presentation.drag)}
               settle={
                 presentation.settling

@@ -5,6 +5,7 @@ import type {
   BoardLayoutSnapshot,
   BoardDepthProjection,
   BoardPlayerLayout,
+  ZoneCountSceneNode,
 } from '@ptcgsim/renderer-contract';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
@@ -69,6 +70,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   onToggleHandSort,
   table,
   markers,
+  sortInPill = false,
 }: {
   readonly frame: BoardPlayerLayout;
   readonly player: MatchViewState['players'][string];
@@ -81,6 +83,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   readonly table: boolean;
   /** The markers this corner holds, VSTAR above GX. */
   readonly markers: readonly OncePerGameMarker[];
+  /** Sort lives in the hand's count pill (TableHandPill), not here. */
+  readonly sortInPill?: boolean;
 }) {
   // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
   // the text flipped back upright on the rotated opponent frame. The label
@@ -158,7 +162,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
       <div
         className={`legacy-once-per-game-controls legacy-once-per-game-controls--${frame.side}`}
       >
-        {onToggleHandSort && table ? (
+        {onToggleHandSort && table && !sortInPill ? (
           <Tooltip
             content={handSorted ? 'Stop sorting hand' : 'Sort hand'}
             side={playerSide === 'local' ? 'top' : 'bottom'}
@@ -233,6 +237,83 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   );
 });
 
+/** A hand's count, where the table shows it, and whose hand it is. */
+export interface TableHandCount {
+  readonly node: ZoneCountSceneNode;
+  readonly playerId: PlayerId;
+}
+
+/**
+ * The hand's count and its Sort as one pill where the table counts the
+ * hand: [cards 7 | ⇅]. Sort is the checkbox it always was (its id, role and
+ * keys), drawn as the pill's latched-in end.
+ */
+const TableHandPill = memo(function TableHandPill({
+  count,
+  playerSide,
+  sorted,
+  onToggleHandSort,
+}: {
+  readonly count: TableHandCount;
+  readonly playerSide: 'local' | 'opponent';
+  readonly sorted: boolean;
+  readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
+}) {
+  const { node, playerId } = count;
+  // Anchored exactly as the board anchors its count badges.
+  const horizontal =
+    node.horizontalAlign === 'left'
+      ? { left: node.anchor.x }
+      : { right: `calc(100% - ${node.anchor.x}px)` };
+  const vertical =
+    node.verticalAlign === 'top'
+      ? { top: node.anchor.y }
+      : { bottom: `calc(100% - ${node.anchor.y}px)` };
+  const sortId =
+    playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
+  return (
+    <div
+      className={`table-hand-pill table-hand-pill--${playerSide}`}
+      data-hand-pill-player={playerId}
+      data-sorted={sorted ? 'true' : undefined}
+      style={{
+        position: 'absolute',
+        ...horizontal,
+        ...vertical,
+        ...({ '--table-hand-tint': node.color } as CSSProperties),
+      }}
+    >
+      <span className="table-hand-pill__count" aria-hidden="true">
+        {node.count}
+      </span>
+      {onToggleHandSort ? (
+        <Tooltip
+          content={sorted ? 'Stop sorting hand' : 'Sort hand'}
+          side={playerSide === 'local' ? 'top' : 'bottom'}
+        >
+          <label
+            className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide} table-hand-pill__sort`}
+            htmlFor={sortId}
+            data-hand-sort-player={playerId}
+            data-player-side={playerSide}
+          >
+            <input
+              id={sortId}
+              type="checkbox"
+              checked={sorted}
+              onChange={(event) =>
+                onToggleHandSort(playerId, event.currentTarget.checked)
+              }
+            />
+            <SortAscendingIcon aria-hidden="true" weight="bold" />
+            <span className="ds-visually-hidden">Sort</span>
+          </label>
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+});
+
 /**
  * Route-owned source-shaped paint. Board geometry and resize input remain in
  * the renderer-neutral runtime; this layer paints each seat's GX/VSTAR and
@@ -250,6 +331,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   coveredByPopup = false,
   depth,
   oncePerGameMarkers = BOTH_MARKERS,
+  handCounts,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly depth?: BoardDepthProjection;
@@ -274,7 +356,14 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * keep the corner by the hand.
    */
   readonly oncePerGameMarkers?: readonly OncePerGameMarker[];
+  /**
+   * The table's hand counts: on the play mat each becomes a pill with that
+   * hand's Sort at its end.
+   */
+  readonly handCounts?: readonly TableHandCount[];
 }) {
+  const pills =
+    layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
       (candidate) => candidate.physicalSide === physicalSide
@@ -347,9 +436,25 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             handSorted={sortedHandPlayerIds?.has(frame.playerId) ?? false}
             table={layout.geometryVersion === 2}
             onToggleHandSort={actions.toggleHandSort}
+            sortInPill={Boolean(
+              pills?.some((count) => count.playerId === frame.playerId)
+            )}
           />
         ) : null;
       })}
+      {pills?.map((count) =>
+        layout.players.some(
+          (frame) => frame.playerId === count.playerId && !frame.hidden
+        ) ? (
+          <TableHandPill
+            key={count.playerId}
+            count={count}
+            playerSide={count.playerId === localPlayerId ? 'local' : 'opponent'}
+            sorted={sortedHandPlayerIds?.has(count.playerId) ?? false}
+            onToggleHandSort={actions.toggleHandSort}
+          />
+        ) : null
+      )}
       {showResizers && (
         <>
           <div

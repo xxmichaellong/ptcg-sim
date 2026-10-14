@@ -1418,6 +1418,73 @@ export const decideCommand = (
         context
       );
     }
+    case 'MovePlayStackToZone': {
+      const stack = state.stacks[command.stackId];
+      const destination = state.zones[command.destinationZoneId];
+      if (!stack || !destination) {
+        return reject('not_found', 'Stack or destination zone does not exist');
+      }
+      if (
+        !sameOrder(stack.evolutionCardIds, command.expectedEvolutionCardIds) ||
+        !sameOrder(stack.attachmentCardIds, command.expectedAttachmentCardIds)
+      ) {
+        return reject('stale_reference', 'The Pokémon changed before it moved');
+      }
+      if (destination.kind === 'stadium') {
+        return reject(
+          'precondition_failed',
+          'A whole Pokémon cannot be put in the Stadium'
+        );
+      }
+      const top = stack.evolutionCardIds.at(-1);
+      if (top === undefined) {
+        return reject('precondition_failed', 'The play stack has no Pokémon');
+      }
+      const base = Math.max(
+        0,
+        Math.min(
+          command.destinationIndex ?? destination.cardIds.length,
+          destination.cardIds.length
+        )
+      );
+      const concealIdentity = isConcealedZone(destination);
+      // Attached cards first, then the Pokémon from its bottom card up, so it
+      // lies in the pile as it lay in play, its top card on top.
+      const carried = [
+        ...stack.attachmentCardIds.map((cardId) => ({
+          cardId,
+          source: 'attachment' as const,
+        })),
+        ...stack.evolutionCardIds.slice(0, -1).map((cardId) => ({
+          cardId,
+          source: 'lowerEvolution' as const,
+        })),
+      ];
+      return accept(
+        ...carried.map(({ cardId, source }, index): DomainEvent => ({
+          type: 'CardMovedFromStack',
+          cardId,
+          expectedStackId: stack.id,
+          source,
+          destinationZoneId: destination.id,
+          destinationIndex: base + index,
+          concealIdentity,
+          withStack: true,
+        })),
+        {
+          type: 'PlayStackDeparted',
+          cardId: top,
+          expectedStackId: stack.id,
+          boardPlayerId: stack.boardPlayerId,
+          expectedEvolutionCardIds: [top],
+          expectedAttachmentCardIds: [],
+          destinationZoneId: destination.id,
+          destinationIndex: base + carried.length,
+          concealIdentity,
+          attachmentResolution: null,
+        }
+      );
+    }
     case 'MovePlayStack': {
       const stack = state.stacks[command.stackId];
       if (!stack) {

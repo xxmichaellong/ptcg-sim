@@ -209,36 +209,44 @@ describe('board drop command resolution', () => {
         targetId: 'slot:spike-blue:bench',
       })
     ).toEqual({ ok: false, reason: 'unsupported_source' });
-    expect(
-      resolveBoardDrop(input.view, input.scene, {
-        kind: 'CardDropRequested',
-        cardId: stackCard.id,
-        targetId: 'zone:spike-blue:discard',
-      })
-    ).toEqual({
+    // A Pokémon goes into a pile whole, from whichever of its own cards it
+    // was grabbed by (PX-042)...
+    const whole = {
       ok: true,
       command: {
-        type: 'MoveCardFromStack',
-        cardId: stackCard.id,
-        expectedStackId: stack.id,
+        type: 'MovePlayStackToZone',
+        stackId: stack.id,
+        expectedEvolutionCardIds: stack.evolutionCards.map((card) => card.id),
+        expectedAttachmentCardIds: stack.attachmentCards.map((card) => card.id),
         destinationZoneId: 'zone:spike-blue:discard',
       },
-    });
-    expect(
-      resolveBoardDrop(input.view, input.scene, {
-        kind: 'CardDropRequested',
-        cardId: lowerEvolution.id,
-        targetId: 'zone:spike-blue:discard',
-      })
-    ).toEqual({
-      ok: true,
-      command: {
-        type: 'MoveCardFromStack',
-        cardId: lowerEvolution.id,
-        expectedStackId: stack.id,
-        destinationZoneId: 'zone:spike-blue:discard',
-      },
-    });
+    };
+    for (const cardId of [stackCard.id, lowerEvolution.id])
+      expect(
+        resolveBoardDrop(input.view, input.scene, {
+          kind: 'CardDropRequested',
+          cardId,
+          targetId: 'zone:spike-blue:discard',
+        })
+      ).toEqual(whole);
+    // ...and a card lifted off by a long press goes alone.
+    for (const cardId of [stackCard.id, lowerEvolution.id])
+      expect(
+        resolveBoardDrop(input.view, input.scene, {
+          kind: 'CardDropRequested',
+          cardId,
+          targetId: 'zone:spike-blue:discard',
+          detached: true,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'MoveCardFromStack',
+          cardId,
+          expectedStackId: stack.id,
+          destinationZoneId: 'zone:spike-blue:discard',
+        },
+      });
   });
 
   it('replaces an occupied Stadium with a card dropped from play (PX-020)', () => {
@@ -339,10 +347,23 @@ describe('board drop command resolution', () => {
     expect(drop(energy.id, 'stack:blue:bench-1')).toEqual(
       placement(energy.id, 'stack:blue:bench-1', benched.id)
     );
-    // The card under the top attaches too, as v1 attaches any non-top card.
+    // The card under the top is the Pokémon too: grabbed, it swaps the
+    // whole Pokémon; lifted off by a long press, it goes onto the other
+    // Pokémon alone, as v1 attaches any non-top card.
     expect(drop(lower.id, 'stack:blue:bench-1')).toEqual(
-      placement(lower.id, 'stack:blue:bench-1', benched.id)
+      expect.objectContaining({
+        ok: true,
+        command: expect.objectContaining({ type: 'MovePlayStack' }),
+      })
     );
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: lower.id,
+        targetId: 'stack:blue:bench-1',
+        detached: true,
+      })
+    ).toEqual(placement(lower.id, 'stack:blue:bench-1', benched.id));
     // Onto the opponent's Pokémon (Tools like Head Ringer, PX-017).
     expect(drop(energy.id, red.id)).toEqual(
       placement(energy.id, red.id, red.evolutionCards.at(-1)!.id)

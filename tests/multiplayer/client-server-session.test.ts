@@ -423,11 +423,12 @@ describe('client/server multiplayer contract', () => {
         submitted = player.session.submit(command).queued;
       }
     );
+    // Grabbed by its Pokémon, the whole stack goes (PX-042).
     expect(departure).toMatchObject({
       ok: true,
       command: {
-        type: 'MoveCardFromStack',
-        expectedStackId: stackId,
+        type: 'MovePlayStackToZone',
+        stackId,
       },
     });
     expect(submitted).toBe(true);

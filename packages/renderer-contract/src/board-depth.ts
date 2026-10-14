@@ -530,10 +530,12 @@ export class BoardDepthProjection {
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
     for (const card of this.painted) {
+      // A Pokémon's own cards travel with it under the pointer: they are
+      // never where it is dropped.
       if (
         !card.interactive ||
         card.id === sourceId ||
-        (source?.composition && source.parentId === card.parentId)
+        (source?.role === 'stackEvolution' && source.parentId === card.parentId)
       )
         continue;
       const pose = paintedPose?.(card) ?? this.pose(card);

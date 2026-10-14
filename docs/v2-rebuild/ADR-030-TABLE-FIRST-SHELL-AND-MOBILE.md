@@ -107,6 +107,15 @@ the viewer's staging area adds or removes them; Settings has the same
 switches; an empty Lost Zone can be put away from its corner. A Lost Zone
 holding cards always shows.
 
+### 4b. A Pokémon moves whole
+
+Grabbing a Pokémon (any card of the Pokémon itself) carries everything under
+and attached to it: the cards follow the pointer together and the drop takes
+all of them, into play or into a pile (`MovePlayStackToZone`, one log line,
+the Pokémon on top). A long press with a mouse or pen lifts the pressed card
+off alone, to devolve it; an attached Energy or Tool always moves alone. A
+drop that would swap two Pokémon shows ⇄ on the card being held (PX-042).
+
 ### 5. Sheets and the deck screen
 
 Settings, Play online and the help pages open in **sheets** (`ui/Sheet.tsx`,

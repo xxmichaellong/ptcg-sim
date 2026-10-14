@@ -1002,6 +1002,20 @@ export const RemoteSessionBoard = ({
     };
   }, [rail, playerActions, flipAllowed, coinPending, hint, tableActions]);
 
+  // Each hand's count, where the table shows it: the chrome draws it as a
+  // pill with that hand's Sort.
+  const handCounts = useMemo(() => {
+    const scene = boardState?.scene;
+    if (!scene) return undefined;
+    return scene.counts.flatMap((node) => {
+      if (node.kind !== 'hand') return [];
+      const playerId = scene.zones.find(
+        (zone) => zone.id === node.zoneId
+      )?.playerId;
+      return playerId ? [{ node, playerId }] : [];
+    });
+  }, [boardState?.scene]);
+
   return (
     <div className="board-spike-host" data-geometry={layout?.geometryVersion}>
       <div className="renderer-surface-host" ref={hostRef} />
@@ -1023,6 +1037,7 @@ export const RemoteSessionBoard = ({
               sortedHandPlayerIds={sortedHandPlayerIds}
               coveredByPopup={coveredByPopup}
               oncePerGameMarkers={shownMarkers}
+              handCounts={handCounts}
             />
           ) : null}
           {layout ? (

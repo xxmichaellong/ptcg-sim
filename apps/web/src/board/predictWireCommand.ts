@@ -665,6 +665,37 @@ const predict = (
         command.destinationIndex
       );
     }
+    case 'MovePlayStackToZone': {
+      const stack = view.stacks[command.stackId];
+      if (
+        !stack ||
+        zoneKindOf(view, command.destinationZoneId) === 'stadium' ||
+        stack.evolutionCards.map((card) => card.id).join('\u0000') !==
+          command.expectedEvolutionCardIds.join('\u0000') ||
+        stack.attachmentCards.map((card) => card.id).join('\u0000') !==
+          command.expectedAttachmentCardIds.join('\u0000')
+      ) {
+        return null;
+      }
+      // As the room does it: attached cards, then the Pokémon from its
+      // bottom card up, the last taking the emptied stack off the board.
+      let next: MatchViewState | null = view;
+      let index = command.destinationIndex;
+      for (const card of [...stack.attachmentCards, ...stack.evolutionCards]) {
+        const taken = takeFromStack(next, stack.id, card.id);
+        if (!taken) return null;
+        next = placeInZone(
+          taken.view,
+          viewerId,
+          command.destinationZoneId,
+          taken.card,
+          index
+        );
+        if (!next) return null;
+        if (index !== undefined) index += 1;
+      }
+      return next;
+    }
     case 'MovePlayStack': {
       const stack = view.stacks[command.stackId];
       if (!stack || stack.slot !== command.expectedSourceSlot) return null;

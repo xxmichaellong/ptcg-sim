@@ -281,6 +281,21 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationIndex: v.optional(NonNegativeIntegerSchema),
   }),
   v.object({
+    type: v.literal('MovePlayStackToZone'),
+    stackId: IdentifierSchema,
+    expectedEvolutionCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(60)
+    ),
+    expectedAttachmentCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.maxLength(60)
+    ),
+    destinationZoneId: IdentifierSchema,
+    destinationIndex: v.optional(NonNegativeIntegerSchema),
+  }),
+  v.object({
     type: v.literal('MovePlayStack'),
     stackId: IdentifierSchema,
     expectedSourceSlot: v.picklist(['active', 'bench'] as const),

@@ -90,6 +90,19 @@ export type GameCommand =
       readonly destinationIndex?: number;
     }
   | {
+      /**
+       * A whole Pokémon into a pile: everything under and attached to it
+       * goes with it, as a Knocked Out Pokémon goes to the discard or a
+       * scooped-up one to the hand. The Pokémon itself ends on top.
+       */
+      readonly type: 'MovePlayStackToZone';
+      readonly stackId: StackId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex?: number;
+    }
+  | {
       readonly type: 'MovePlayStack';
       readonly stackId: StackId;
       readonly expectedSourceSlot: PlaySlot;

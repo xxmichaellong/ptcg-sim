@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   BoardDragController,
+  canDetachFromStack,
   dropReachFor,
   resolveBoardDropTarget,
   zoneDropTargetAt,
@@ -113,6 +114,72 @@ const input = (x: number, y: number, pointerId = 7) => ({
 });
 
 describe('renderer-neutral drag controller', () => {
+  it('lifts a Pokémon card off its stack on a long press, then moves it alone', () => {
+    const energyId = asViewCardId('energy');
+    const withEnergy = (): BoardScene => {
+      const base = scene();
+      const target = base.cards.find((card) => card.id === targetCardId)!;
+      return {
+        ...base,
+        cards: [
+          ...base.cards,
+          {
+            ...target,
+            id: energyId,
+            role: 'stackAttachment',
+            bounds: { ...target.bounds, x: target.bounds.x + 16 },
+            zIndex: 150,
+            renderKey: `card:${String(energyId)}`,
+          },
+        ],
+      };
+    };
+    // Only a card of a Pokémon that has a stack to leave.
+    expect(canDetachFromStack(scene(), targetCardId)).toBe(false);
+    expect(canDetachFromStack(withEnergy(), targetCardId)).toBe(true);
+    expect(canDetachFromStack(withEnergy(), energyId)).toBe(false);
+    expect(canDetachFromStack(withEnergy(), sourceId)).toBe(false);
+
+    const updates: BoardPresentationUpdate[] = [];
+    const intents: BoardIntent[] = [];
+    const controller = new BoardDragController({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: (update) => updates.push(update),
+    });
+    expect(
+      controller.pointerDown(withEnergy(), targetCardId, input(540, 196))
+    ).toBe(true);
+    expect(controller.detach(withEnergy(), 99)).toBe(false);
+    expect(controller.detach(withEnergy(), 7)).toBe(true);
+    // It rises where it is, alone, before the pointer moves.
+    expect(updates.at(-1)).toMatchObject({
+      kind: 'DragChanged',
+      drag: { cardId: targetCardId, x: 540, y: 196, detached: true },
+    });
+    expect(controller.detach(withEnergy(), 7)).toBe(false);
+    controller.pointerMove(withEnergy(), input(150, 470));
+    expect(updates.at(-1)).toMatchObject({ drag: { detached: true } });
+    controller.pointerUp(withEnergy(), input(150, 470));
+    expect(intents).toEqual([
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: targetCardId,
+        targetId: 'source-zone',
+        detached: true,
+      }),
+    ]);
+  });
+
+  it('does not lift a card off once its drag has started', () => {
+    const controller = new BoardDragController({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+    });
+    controller.pointerDown(scene(), targetCardId, input(540, 196));
+    controller.pointerMove(scene(), input(600, 260));
+    expect(controller.detach(scene(), 7)).toBe(false);
+  });
+
   it('does not convert a click-sized gesture into a drag', () => {
     const updates: BoardPresentationUpdate[] = [];
     const intents: BoardIntent[] = [];

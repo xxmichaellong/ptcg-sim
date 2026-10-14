@@ -141,11 +141,14 @@ export const resolveBoardDrop = (
   const sourceStagedPlayerId = sourceStagedEntry?.[0];
   const sourceRepresentsStagedStack =
     sourceStaged?.evolutionCards.at(-1)?.id === intent.cardId;
+  // A Pokémon moves whole: grabbing any card of the Pokémon itself takes
+  // everything under and attached to it, into play or into a pile. A card
+  // lifted off by a long press (`detached`) moves alone, as an attached
+  // Energy or Tool always does.
   const sourceMovesWholeStack =
-    sourceStack?.evolutionCards.at(-1)?.id === intent.cardId ||
+    intent.detached !== true &&
     Boolean(
-      sourceStack?.evolutionCards.some((card) => card.id === intent.cardId) &&
-      scene.cards.find((card) => card.id === intent.cardId)?.composition
+      sourceStack?.evolutionCards.some((card) => card.id === intent.cardId)
     );
   if (!sourceZone && !sourceStack && !sourceInspection && !sourceStaged) {
     return rejected('stale_card');
@@ -185,6 +188,23 @@ export const resolveBoardDrop = (
           type: 'MoveCard',
           cardId: intent.cardId,
           expectedSourceZoneId: sourceZone.id,
+          destinationZoneId: destinationZone.id,
+          ...place,
+        },
+      };
+    }
+    if (sourceStack && sourceMovesWholeStack) {
+      return {
+        ok: true,
+        command: {
+          type: 'MovePlayStackToZone',
+          stackId: sourceStack.id,
+          expectedEvolutionCardIds: sourceStack.evolutionCards.map(
+            (card) => card.id
+          ),
+          expectedAttachmentCardIds: sourceStack.attachmentCards.map(
+            (card) => card.id
+          ),
           destinationZoneId: destinationZone.id,
           ...place,
         },

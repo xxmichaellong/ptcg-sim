@@ -9,6 +9,7 @@ import {
   findCardLocation,
   playerZoneId,
   stadiumZoneId,
+  type CardInstanceId,
   type GameCommand,
   type MatchState,
   type PlayerId,
@@ -403,6 +404,38 @@ export const resolveWireCommand = (
           type: 'MoveCardFromStack',
           cardId: card.cardId,
           expectedStackId: asStackId(wire.expectedStackId),
+          destinationZoneId: asZoneId(wire.destinationZoneId),
+          ...(wire.destinationIndex === undefined
+            ? {}
+            : { destinationIndex: wire.destinationIndex }),
+        },
+      };
+    }
+    case 'MovePlayStackToZone': {
+      const stack = state.stacks[wire.stackId];
+      if (!stack || !state.zones[wire.destinationZoneId]) {
+        return rejected('stale_reference');
+      }
+      if (
+        !ownsStack(state, actorId, wire.stackId) &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      const canonical = (aliases: readonly string[]) =>
+        aliases.map((alias) => resolveCard(alias)?.cardId ?? null);
+      const evolutionCardIds = canonical(wire.expectedEvolutionCardIds);
+      const attachmentCardIds = canonical(wire.expectedAttachmentCardIds);
+      if (evolutionCardIds.includes(null) || attachmentCardIds.includes(null)) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MovePlayStackToZone',
+          stackId: asStackId(wire.stackId),
+          expectedEvolutionCardIds: evolutionCardIds as CardInstanceId[],
+          expectedAttachmentCardIds: attachmentCardIds as CardInstanceId[],
           destinationZoneId: asZoneId(wire.destinationZoneId),
           ...(wire.destinationIndex === undefined
             ? {}

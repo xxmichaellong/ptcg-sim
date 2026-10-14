@@ -46,6 +46,12 @@ export const MODEL_COMMAND_REGISTRY = {
   },
   MoveCardFromStack: { coverage: 'generated', family: 'stack-work-area' },
   MovePlayStack: { coverage: 'generated', family: 'movement' },
+  MovePlayStackToZone: {
+    coverage: 'scenario',
+    family: 'movement',
+    rationale:
+      'moves every card of a play stack; covered by game-core and drop tests',
+  },
   MoveInspectedCard: {
     coverage: 'scenario',
     family: 'stack-work-area',

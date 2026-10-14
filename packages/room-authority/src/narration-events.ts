@@ -380,6 +380,9 @@ const narrate = (
     }
     case 'CardMovedFromStack':
     case 'PlayStackDeparted': {
+      // A Pokémon moved whole is one line, its own; what went with it is
+      // understood, as at a table.
+      if (event.type === 'CardMovedFromStack' && event.withStack) return [];
       const playerId = ownerOf(state, previousState, event.cardId);
       const source = stackSource(state, previousState, event.expectedStackId);
       const destination = zoneSource(

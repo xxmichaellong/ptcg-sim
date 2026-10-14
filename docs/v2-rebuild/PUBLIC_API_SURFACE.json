@@ -1454,6 +1454,10 @@
               "kind": "type"
             },
             {
+              "name": "canDetachFromStack",
+              "kind": "value"
+            },
+            {
               "name": "CARD_ASPECT_RATIO",
               "kind": "value"
             },

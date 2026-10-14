@@ -35,6 +35,39 @@ export const BOARD_SURFACE_CSS = `
     0 3px 0 var(--color-felt-rim, #0d1410),
     0 14px 34px rgb(10 6 2 / 0.4);
 }
+/* A held Pokémon that would swap places with the one under it: ⇄ on its face. */
+.ptcgsim-card__drop-action {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 999px;
+  background: rgb(22 15 10 / 0.74);
+  color: #f3ebdc;
+  box-shadow:
+    0 0 0 2px rgb(243 235 220 / 0.9),
+    0 6px 16px rgb(0 0 0 / 0.38);
+  pointer-events: none;
+  animation: ptcgsim-drop-action-in 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.ptcgsim-card__drop-action svg {
+  width: 58%;
+  height: 58%;
+}
+@keyframes ptcgsim-drop-action-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__drop-action {
+  animation: none;
+}
 .ptcgsim-card__depth {
   position: absolute;
   inset: 0;
