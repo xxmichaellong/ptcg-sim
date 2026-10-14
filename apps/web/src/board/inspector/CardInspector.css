@@ -14,7 +14,7 @@
   display: grid;
   place-items: center;
   pointer-events: none;
-  z-index: 5000;
+  z-index: var(--table-layer-inspector);
   perspective: 1100px;
   opacity: 0;
   translate: var(--inspector-enter-x, 24px) 0;

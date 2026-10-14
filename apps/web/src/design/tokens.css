@@ -208,13 +208,71 @@
   --motion-scale: 1;
 
   /* ---- Layers ----------------------------------------------------- */
-  --z-board: 0;
-  --z-chrome: 100;
-  --z-rail: 200;
-  --z-popover: 1000;
-  --z-dialog: 2000;
-  --z-toast: 3000;
-  --z-tooltip: 4000;
+  /* One order for everything that stacks, lowest first. Use these, never a
+     bare number, so a new layer has to find its place in the list.
+
+     The window:
+       table        the board column. It is its own stacking context, so
+                    nothing painted on the table (cards, viewers, previews,
+                    the card menu) can rise over a layer below this list.
+       chrome       the table's banners
+       panel        the activity log docked beside the table
+       deck-screen  the full-window deck screen
+       sheet        sheets and drawers: Settings, Play online, the log on a
+                    phone; above the deck screen, which can open them
+       dialog       dialogs, which a sheet or the deck screen can open
+       popover      menus, selects and popovers: always above whatever opened
+                    them, a sheet or a dialog included
+       toast        notices, above everything they could be about; they never
+                    take input outside their own box
+       tooltip      tooltips, over the menus and toasts they describe
+       drag         a card carried out of a viewer (on <body>), over all
+
+     On the table (inside the board column's context), lowest first:
+       affordances  what the table offers on its felt (+, markers)
+       rail         the seam rail: the toolbar and the turn's actions
+       touch-bar    the Read / Actions bar beside a tapped card
+       inspector    the hover read view docked beside the table
+       banner       the turn banner
+       viewers      the board overlays: pile viewers, the "Looking at cards"
+                    and attached-cards windows, the card menu and the
+                    preview (ordered among themselves by --viewer-layer-*,
+                    each in its own context so its insides stay inside). */
+  --layer-table: 0;
+  --layer-chrome: 100;
+  --layer-panel: 200;
+  --layer-deck-screen: 1500;
+  --layer-sheet: 2000;
+  --layer-dialog: 2100;
+  --layer-popover: 2200;
+  --layer-toast: 3000;
+  --layer-tooltip: 4000;
+  --layer-drag: 5000;
+
+  --table-layer-affordances: 2;
+  --table-layer-rail: 3;
+  --table-layer-touch-bar: 4;
+  --table-layer-inspector: 5;
+  --table-layer-banner: 6;
+  --table-layer-viewers: 7;
+
+  /* Within the viewers: a window, then the pile viewer (modal, over its
+     scrim), the card preview opened from either, the card menu (which can
+     open over a preview), and the marker editor typing into a counter. */
+  --viewer-layer-window: 1;
+  --viewer-layer-browser: 2;
+  --viewer-layer-preview: 3;
+  --viewer-layer-menu: 4;
+  --viewer-layer-editor: 5;
+
+  /* The earlier names, for code that still reads them. */
+  --z-board: var(--layer-table);
+  --z-chrome: var(--layer-chrome);
+  --z-rail: var(--layer-panel);
+  --z-popover: var(--layer-popover);
+  --z-dialog: var(--layer-dialog);
+  --z-toast: var(--layer-toast);
+  --z-tooltip: var(--layer-tooltip);
 
   color-scheme: dark;
 }

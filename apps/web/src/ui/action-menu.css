@@ -1,7 +1,7 @@
 /* Action menus (ActionMenu.tsx): the rail's More and the app menu. */
 
 .ptcgsim-action-menu-positioner {
-  z-index: var(--z-popover);
+  z-index: var(--layer-popover);
   outline: none;
 }
 

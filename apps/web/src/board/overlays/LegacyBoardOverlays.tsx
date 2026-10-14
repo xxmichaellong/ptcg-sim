@@ -2457,11 +2457,13 @@ const MarkerEditor = ({
       }}
       style={{
         position: 'absolute',
+        // Over the other viewers, not at the marker's place on the table:
+        // its board z-index means nothing among them (tokens.css, Layers).
+        zIndex: 'var(--viewer-layer-editor)',
         left: marker.bounds.x,
         top: marker.bounds.y,
         width: marker.bounds.width,
         height: marker.bounds.height,
-        zIndex: marker.zIndex,
         display: legacy ? 'block' : 'grid',
         placeItems: legacy ? undefined : 'center',
         overflow: 'hidden',

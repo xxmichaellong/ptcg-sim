@@ -15,7 +15,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: var(--z-rail);
+  z-index: var(--layer-panel);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

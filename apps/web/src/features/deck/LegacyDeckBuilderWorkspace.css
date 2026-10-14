@@ -876,7 +876,8 @@
 
 .native-deck-builder-card-preview-scrim {
   position: fixed;
-  z-index: var(--z-dialog);
+  /* Within the deck builder, over all of its own layers. */
+  z-index: 2000;
   inset: 0;
   display: flex;
   align-items: center;

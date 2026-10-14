@@ -2,7 +2,7 @@
   position: absolute;
   inset-inline: 0;
   top: 50%;
-  z-index: 6000;
+  z-index: var(--table-layer-banner);
   display: flex;
   align-items: baseline;
   justify-content: center;

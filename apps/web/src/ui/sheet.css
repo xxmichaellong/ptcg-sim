@@ -9,7 +9,7 @@
 .ptcgsim-sheet-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--z-dialog);
+  z-index: var(--layer-sheet);
   min-height: 100dvh;
   background: var(--color-scrim);
   opacity: calc(1 - var(--drawer-swipe-progress, 0));
@@ -28,7 +28,7 @@
 .ptcgsim-sheet-viewport {
   position: fixed;
   inset: 0;
-  z-index: var(--z-dialog);
+  z-index: var(--layer-sheet);
   display: flex;
   box-sizing: border-box;
   pointer-events: none;

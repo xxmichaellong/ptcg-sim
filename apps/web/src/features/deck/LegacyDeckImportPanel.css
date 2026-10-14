@@ -189,7 +189,8 @@
    (the deck builder), so season and deck names read in full. */
 .legacy-deck-import .decklists-context-menu {
   position: absolute;
-  z-index: var(--z-popover);
+  /* Within the import panel, over its own rows. */
+  z-index: 1000;
   right: 0;
   bottom: calc(100% + var(--space-2));
   width: max(100%, min(34rem, calc(100vw - 2 * var(--space-4))));
@@ -358,7 +359,8 @@
 
 .legacy-deck-import #languageDropdown {
   position: absolute;
-  z-index: var(--z-popover);
+  /* Within the import panel, over its own rows. */
+  z-index: 1000;
   right: 0;
   bottom: calc(100% + var(--space-2));
   min-width: 180px;
@@ -376,7 +378,9 @@
 
 .deck-review {
   position: fixed;
-  z-index: var(--z-popover);
+  /* Inside the deck screen: over its workspace (900), under the import
+     panel (1300) whose Confirm sits beside or over it on a narrow screen. */
+  z-index: 1000;
   inset: 0 auto 0 0;
   display: flex;
   box-sizing: border-box;

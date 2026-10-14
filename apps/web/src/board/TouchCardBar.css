@@ -2,7 +2,7 @@
 
 .touch-card-bar {
   position: absolute;
-  z-index: 4;
+  z-index: var(--table-layer-touch-bar);
   display: flex;
   align-items: stretch;
   gap: 2px;

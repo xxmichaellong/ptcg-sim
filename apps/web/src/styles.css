@@ -244,7 +244,7 @@ select {
   position: fixed;
   top: 50%;
   left: 37.75%;
-  z-index: 9999;
+  z-index: var(--layer-dialog);
   padding: 20px;
   border: 2px solid #424242;
   border-radius: 5px;

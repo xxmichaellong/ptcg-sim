@@ -151,7 +151,7 @@
 .ptcgsim-ui-scrim {
   position: fixed;
   inset: 0;
-  z-index: var(--z-dialog);
+  z-index: var(--layer-dialog);
   background: var(--color-scrim);
   transition: opacity var(--ui-overlay-enter-duration) var(--ease-out);
 }
@@ -176,7 +176,7 @@
 .ptcgsim-ui-viewport {
   position: fixed;
   inset: 0;
-  z-index: var(--z-dialog);
+  z-index: var(--layer-dialog);
   display: grid;
   place-items: center;
   padding: var(--space-6) var(--space-4);
@@ -312,7 +312,7 @@
 
 .ptcgsim-ui-toast-viewport {
   position: fixed;
-  z-index: var(--z-toast);
+  z-index: var(--layer-toast);
   bottom: var(--ui-toast-inset-bottom);
   left: 50%;
   width: min(380px, calc(100vw - 2 * var(--space-4)));
@@ -517,7 +517,7 @@
 /* ---- Tooltips --------------------------------------------------------- */
 
 .ptcgsim-ui-tooltip-positioner {
-  z-index: var(--z-tooltip);
+  z-index: var(--layer-tooltip);
 }
 
 .ptcgsim-ui-tooltip {

@@ -22,7 +22,7 @@
 
   position: absolute;
   inset: 0;
-  z-index: 100000;
+  z-index: var(--table-layer-viewers);
   overflow: hidden;
   color: var(--color-text);
   font-family: var(--font-ui);
@@ -152,6 +152,9 @@
 
 .ptcgsim-legacy-card-context-menu {
   position: absolute;
+  /* Over any viewer or preview it opens from (tokens.css, Layers). */
+  z-index: var(--viewer-layer-menu);
+  isolation: isolate;
   pointer-events: auto;
   animation: ptcgsim-overlay-menu-in var(--overlay-enter-duration)
     var(--ease-snappy) backwards;
@@ -457,6 +460,9 @@
 
   position: absolute;
   inset: 0;
+  /* Over the viewers it is read from; their own layers stay inside them. */
+  z-index: var(--viewer-layer-preview);
+  isolation: isolate;
   display: grid;
   place-items: center;
   box-sizing: border-box;
@@ -599,6 +605,8 @@
    allows (overlayLayout.ts); it grows out of the stack on the table. */
 .ptcgsim-legacy-stack-preview {
   position: absolute;
+  z-index: var(--viewer-layer-preview);
+  isolation: isolate;
   display: flex;
   box-sizing: border-box;
   flex-wrap: wrap;
@@ -733,6 +741,8 @@
 .ptcgsim-overlay-scrim {
   position: absolute;
   inset: 0;
+  /* The pile viewer's, under it (it comes first) and over any window. */
+  z-index: var(--viewer-layer-browser);
   background: var(--color-scrim);
   pointer-events: none;
   animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
@@ -1002,6 +1012,10 @@
   );
 
   position: absolute;
+  /* Its header, tools and badges are layered inside it, never over a
+     preview or menu opened on top. */
+  z-index: var(--viewer-layer-browser);
+  isolation: isolate;
   box-sizing: border-box;
   overflow: hidden auto;
   overscroll-behavior: contain;
@@ -1080,7 +1094,7 @@
   left: 0;
   width: 126px;
   height: 176px;
-  z-index: 20000;
+  z-index: var(--layer-drag);
   border-radius: 5px;
   background: var(--color-surface-3);
   box-shadow:
@@ -1099,7 +1113,8 @@
 .ptcgsim-card-actions {
   position: sticky;
   bottom: 0;
-  z-index: 3;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1147,7 +1162,8 @@
 .ptcgsim-legacy-zone-browser .ptcgsim-overlay-header {
   position: sticky;
   top: 0;
-  z-index: 3;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
   background: var(--color-surface-2);
 }
 
@@ -1194,7 +1210,8 @@
 .ptcgsim-browser-tools {
   position: sticky;
   top: 56px;
-  z-index: 3;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -1389,6 +1406,10 @@
   );
 
   position: absolute;
+  /* Its sticky action bar and card handles are layered inside it, never
+     over a preview or menu opened on top. */
+  z-index: var(--viewer-layer-window);
+  isolation: isolate;
   display: flex;
   box-sizing: border-box;
   flex-direction: column;

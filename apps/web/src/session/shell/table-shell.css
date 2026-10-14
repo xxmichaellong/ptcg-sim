@@ -10,7 +10,7 @@
   position: fixed;
   top: max(var(--space-3), env(safe-area-inset-top));
   left: 50%;
-  z-index: var(--z-rail);
+  z-index: var(--layer-chrome);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -44,7 +44,7 @@
   inset: 0;
   /* Clear of a docked log, as far as it has slid in (TableShell.tsx). */
   right: calc(var(--rail-width) * var(--activity-reveal, 0));
-  z-index: var(--z-chrome);
+  z-index: var(--layer-chrome);
   display: grid;
   place-items: center;
   padding: var(--space-4);
