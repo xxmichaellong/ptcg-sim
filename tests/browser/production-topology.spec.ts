@@ -111,13 +111,18 @@ test('built SPA and room authority share one production-like Worker origin', asy
         .filter((url) => url.includes('LegacyDeckBuilderSession-'))
     );
   expect(await loadedDeckResources()).toEqual([]);
-  await page.locator('#deckImportButton').click();
+  // The lobby opens on Play online, a sheet over the table (ADR-030), with
+  // the Deck in its header: the builder's chunk loads only when it opens,
+  // and it asks the authority for nothing.
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
+  expect(await loadedDeckResources()).toEqual([]);
+  await page.locator('#onlineDeckButton').click();
   await expect(page.locator('#deckImport')).toBeVisible();
   await expect
     .poll(async () => (await loadedDeckResources()).length)
     .toBeGreaterThan(0);
-  await page.locator('#p2Button').click();
-  await expect(page.locator('#p2Box')).toBeVisible();
+  await page.locator('#deckBackButton').click();
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   expect(authorityRequests).toEqual([]);
 
   const entryModuleUrl = await page

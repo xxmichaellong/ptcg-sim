@@ -1,13 +1,22 @@
 import { expect, test } from '@playwright/test';
 
+import {
+  closeDeck,
+  closeSheet,
+  openDeck,
+  openPlayOnline,
+  openSettings,
+} from './support/table-shell.js';
+
 /**
- * v1's Multiplayer tab is a panel in the sidebar over the same table: reading
- * it never disturbs the game. v2 used to swap routes, which tore the board
- * down and built it again -- visible as a flash on every click. This pins the
- * table in place while the panel is read, and pins the park to the moment the
- * panel is acted on.
+ * Play online opens over a live Solo table (ADR-030; v1's Multiplayer tab
+ * was a sidebar panel over the same table): reading it never disturbs the
+ * game. v2 used to swap routes, which tore the board down and built it
+ * again -- visible as a flash on every click. This pins the table in place
+ * while the panel is read, and pins the park to the moment the panel is
+ * acted on.
  */
-test('reading the Multiplayer panel leaves a live Solo table mounted', async ({
+test('reading Play online leaves a live Solo table mounted', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -21,10 +30,13 @@ test('reading the Multiplayer panel leaves a live Solo table mounted', async ({
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
+  await expect(page.locator('#playOnlineSheet')).toBeVisible();
   await page.locator('#nameInput').fill('Blue');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#messageInput')).toBeEnabled();
+  // Putting Play online away goes to the Solo table, as v1's Solo tab did.
+  await closeSheet(page);
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible();
 
   // Mark the live board. A remount replaces the element and loses the mark.
   const mark = async (): Promise<void> => {
@@ -37,38 +49,36 @@ test('reading the Multiplayer panel leaves a live Solo table mounted', async ({
   await mark();
   expect(await marked()).toBe(1);
 
-  await page.locator('#p2Button').click();
+  await openPlayOnline(page);
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#p2Box')).toBeVisible();
-  await expect(page.locator('#p1Box')).toBeHidden();
-  await expect(page.locator('#p2Button')).toHaveClass('selected-page');
-  await expect(page.locator('#p1Button')).toHaveClass('not-selected-page');
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   // The table is untouched: same element, same renderer, no flash.
   expect(await marked()).toBe(1);
   await expect(page.locator('#roomIdInput')).toBeEnabled();
+  // The lobby's state is kept while the panel is read.
+  await expect(page.locator('#nameInput')).toHaveValue('Blue');
 
   // Back to the table, and still the same one.
-  await page.locator('#p1Button').click();
-  await expect(page.locator('#p1Box')).toBeVisible();
-  await expect(page.locator('#p2Box')).toBeHidden();
-  await expect(page.locator('#p1Button')).toHaveClass('selected-page');
+  await closeSheet(page);
+  await expect(page.locator('#playOnlineSheet')).toHaveCount(0);
   expect(await marked()).toBe(1);
 
   // Deck and Settings keep it mounted too, as they always have.
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   await expect(page.locator('#deckImport')).toBeVisible();
-  await page.locator('#settingsButton').click();
-  await expect(page.locator('#settings')).toBeVisible();
+  await closeDeck(page);
+  await openSettings(page);
   expect(await marked()).toBe(1);
+  await closeSheet(page);
 
   // Acting on the panel is the real transition: generating a room parks the
   // Solo table and hands the screen to the lobby, as v1's tab did.
-  await page.locator('#p2Button').click();
+  await openPlayOnline(page);
   await page.locator('#generateIdButton').click();
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
-  await expect(page.locator('#p2Box')).toBeVisible();
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   await expect(page.locator('#roomIdInput')).not.toHaveValue('');
 
   expect(errors).toEqual([]);

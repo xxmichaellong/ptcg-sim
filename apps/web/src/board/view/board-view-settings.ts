@@ -27,6 +27,11 @@ export interface BoardViewSettings {
   readonly hideOpponentHand: boolean;
   /** A large copy of the hovered card beside the table. */
   readonly hoverPreview: boolean;
+  /**
+   * Show the Lost Zone pile even while it is empty. Few formats use it, so
+   * it is off by default; a Lost Zone holding cards always shows.
+   */
+  readonly lostZone: boolean;
 }
 
 export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
@@ -35,6 +40,7 @@ export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   zoneOutlines: DEFAULT_BOARD_PREFERENCES.showZoneOutlines,
   hideOpponentHand: false,
   hoverPreview: false,
+  lostZone: false,
 };
 
 const isShow = (value: unknown): value is BoardShowChoice =>
@@ -73,6 +79,7 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
       Reflect.get(value, 'hoverPreview'),
       DEFAULT_BOARD_VIEW.hoverPreview
     ),
+    lostZone: flag(Reflect.get(value, 'lostZone'), DEFAULT_BOARD_VIEW.lostZone),
   };
 };
 

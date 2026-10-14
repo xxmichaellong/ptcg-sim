@@ -5,6 +5,8 @@ import {
   type Page,
 } from '@playwright/test';
 
+import { openActivity } from './support/table-shell.js';
+
 export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Saved game resumed';
 export const CONTINUATION_RESTORE_SUCCESS_MESSAGE =
@@ -67,18 +69,33 @@ export const pasteInvitation = async (
   await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
 
+/** The room is open and its board painted (the room has answered). */
+export const expectReadyRoom = async (page: Page): Promise<void> => {
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await expect(
+    page.locator(
+      '[data-app-route="remote-room"] [data-renderer-status="ready"]'
+    )
+  ).toBeAttached();
+};
+
 export const joinReadyRoom = async (page: Page): Promise<void> => {
   await page.locator('#joinRoomButton').click();
-  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#roomHeaderText')).toHaveAttribute(
-    'data-session-phase',
-    'ready'
-  );
+  await expectReadyRoom(page);
+};
+
+/**
+ * The room's code, as the activity log's header names it once the room is
+ * ready ("Room ABC…", ADR-030; v1's sidebar header said "id: ABC…").
+ */
+export const roomStatus = async (page: Page) => {
+  await openActivity(page);
+  return page.locator('#activitySheet .ptcgsim-sheet__description');
 };
 
 export const roomCode = async (page: Page): Promise<string> => {
-  const status = await page.locator('#roomHeaderText').innerText();
-  const match = /^id: ([A-HJ-NP-Z2-9]{12})$/u.exec(status);
+  const status = await (await roomStatus(page)).innerText();
+  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(status.trim());
   if (!match?.[1]) throw new Error(`Unexpected room status: ${status}`);
   return match[1];
 };

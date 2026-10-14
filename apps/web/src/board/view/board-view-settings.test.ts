@@ -30,6 +30,7 @@ it('starts with both halves, an even split and no hover preview', () => {
     zoneOutlines: true,
     hideOpponentHand: false,
     hoverPreview: false,
+    lostZone: false,
   });
   expect(new BoardViewSettingsStore(new PreferenceStore()).getSnapshot()).toBe(
     DEFAULT_BOARD_VIEW

@@ -10,6 +10,7 @@ import {
   openBoardView,
   tableViewChoice,
 } from './support/board-view.js';
+import { closeSheet, openDeck } from './support/table-shell.js';
 
 const browserErrors = new WeakMap<Page, Promise<string>[]>();
 test.beforeEach(({ page }) => {
@@ -47,16 +48,23 @@ const scene = (page: Page) =>
   page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.scene);
 const start = async (page: Page, renderer = 'dom') => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.addInitScript(
-    (depth) =>
-      localStorage.setItem('ptcgsim.table-depth.v1', JSON.stringify(depth)),
-    preferences.depth
-  );
+  await page.addInitScript((depth) => {
+    localStorage.setItem('ptcgsim.table-depth.v1', JSON.stringify(depth));
+    // The Lost Zone is optional and off by default (ADR-030); on here, so
+    // its pile is painted with the rest.
+    localStorage.setItem(
+      'ptcgsim.board-view.v1',
+      JSON.stringify({ lostZone: true })
+    );
+  }, preferences.depth);
   await page.goto(`/?room-lobby=1&renderer=${renderer}`);
   await page.locator('#nameInput').fill('Depth review');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('#messageInput')).toBeEnabled();
-  await page.locator('#deckImportButton').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible();
+  await openDeck(page);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'depth.csv',
     mimeType: 'text/csv',
@@ -82,7 +90,7 @@ const start = async (page: Page, renderer = 'dom') => {
     page.getByRole('button', { name: 'Start turn', exact: true })
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Flip coin', exact: true })
+    page.getByRole('button', { name: 'Flip a coin', exact: true })
   ).toBeVisible();
 };
 const cardIn = async (page: Page, kind: string) =>
@@ -222,12 +230,10 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
     await expect.poll(async () => (await paint()).countsAboveCards).toBe(true);
     expect((await paint()).labels.sort()).toEqual(expectedLabels);
   }
-  await closeBoardView(page);
-  await page.locator('#settingsButton').click();
+  // Theme and table view are both in Settings.
   await page.locator('#darkModeCheckbox').uncheck();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
   await expect.poll(async () => (await paint()).color).not.toBe(initial.color);
-  await openBoardView(page);
   await page.locator('#zoneOutlinesCheckbox').uncheck();
   await closeBoardView(page);
   await expect.poll(async () => (await paint()).labels).toEqual([]);
@@ -250,8 +256,8 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
   await page.keyboard.press('Escape');
   await openBoardView(page);
   await page.locator('#zoneOutlinesCheckbox').check();
-  await closeBoardView(page);
   await page.locator('#darkModeCheckbox').check();
+  await closeBoardView(page);
   await expect.poll(async () => (await paint()).color).toBe(initial.color);
   expect((await paint()).labels.sort()).toEqual(expectedLabels);
 });
@@ -280,7 +286,7 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   await openBoardView(page);
   await page.locator('#tableTiltRange').fill('18');
   await page.keyboard.press('Escape');
-  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
+  await expect(page.locator('#settings')).toHaveCount(0);
   const hand = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${hand.id}"]`).click();
   await page.keyboard.press('a');

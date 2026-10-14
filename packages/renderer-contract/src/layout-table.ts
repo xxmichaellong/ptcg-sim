@@ -116,6 +116,15 @@ export const TABLE_HAND_VISIBLE_SHARE = 0.8;
  */
 export const TABLE_CONTROL_CORNER_PX = 96;
 
+/**
+ * How far up from the player's edge the corner's controls reach: the
+ * VSTAR/GX markers stacked under the hand-sort control. A hand strip
+ * shorter than this lays them side by side instead (the web app's chrome),
+ * which needs only TABLE_COMPACT_CORNER_HEIGHT_PX.
+ */
+export const TABLE_CONTROL_CORNER_HEIGHT_PX = 104;
+export const TABLE_COMPACT_CORNER_HEIGHT_PX = 56;
+
 /** Room at the far end of each hand strip for its card-count badge. */
 const HAND_COUNT_SLOT_PX = 44;
 /** The least clear space between a pile and the screen edge. */
@@ -138,6 +147,24 @@ interface HalfGeometry {
   readonly seamMargin: number;
 }
 
+/** What a half's layout takes from the layout state beyond its size. */
+interface HalfOptions {
+  /** The least height of the clear band at the centre line (both halves). */
+  readonly seamBandPx?: number;
+}
+
+/**
+ * The clear band between a half's cards and the centre line. It doubles as
+ * the seam band the table controls sit in, so it is generous, and a touch
+ * device can ask for more (`seamBandPx`) to give the controls finger-sized
+ * targets.
+ */
+const seamMarginFor = (height: number, options: HalfOptions): number =>
+  Math.max(
+    Math.max(10, Math.min(24, height * HALF_PROPORTIONS.margin)),
+    (options.seamBandPx ?? 0) / 2
+  );
+
 /**
  * A half that fills the whole table (the other one hidden) keeps this much
  * clear at the centre line for the table controls.
@@ -145,15 +172,22 @@ interface HalfGeometry {
 const SOLO_SEAM_BAND_PX = 44;
 /** The gap between those controls and the Active row beside them. */
 const SOLO_CONTROLS_GAP_PX = 6;
+/**
+ * The table's controls start past this: the rail keeps its left end for the
+ * app menu (a 44px button 8px in, and a gap).
+ */
+const RAIL_START_RESERVE_PX = 8 + 44 + 8;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
 /** Lay out one half in its own frame, centre line at the top. */
-const layoutHalf = (width: number, height: number): HalfGeometry => {
+const layoutHalf = (
+  width: number,
+  height: number,
+  options: HalfOptions = {}
+): HalfGeometry => {
   const proportions = HALF_PROPORTIONS;
-  // The margin at the centre line doubles as the seam band the table
-  // controls sit in, so it is generous.
-  const margin = Math.max(10, Math.min(24, height * proportions.margin));
+  const margin = seamMarginFor(height, options);
   const gap = Math.max(6, height * proportions.rowGap);
   const handStrip = height * proportions.handStrip;
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
@@ -255,21 +289,216 @@ const layoutHalf = (width: number, height: number): HalfGeometry => {
 };
 
 /**
+ * A portrait half's rows, as multiples of a bench card's height: the Active
+ * a little larger, the piles a little smaller, and the visible strip of the
+ * hand.
+ */
+const PORTRAIT_PROPORTIONS = {
+  active: 1.15,
+  pile: 0.9,
+  handStrip: 0.85,
+} as const;
+
+/** Piles side by side keep this much between them for their count badges. */
+const PORTRAIT_PILE_GAP_PX = 12;
+
+/**
+ * One half of a table that is tall for its width -- a phone held upright, a
+ * tablet in portrait -- in its own frame, centre line at the top. The mat's
+ * columns become rows: the Active (with the staging area beside it), the
+ * bench across the full width, then a row of prizes (three by two) and the
+ * deck, discard and Lost Zone side by side, and the hand at the edge. Every
+ * card is sized from the bench card, the largest that lets five and a half
+ * fit across and every row fit down. The rows sit at the player's edge; any
+ * height left over widens the clear band at the centre line.
+ */
+const layoutHalfPortrait = (
+  width: number,
+  height: number,
+  options: HalfOptions = {}
+): HalfGeometry => {
+  const proportions = PORTRAIT_PROPORTIONS;
+  const margin = seamMarginFor(height, options);
+  const edge = Math.max(8, Math.min(16, width * 0.02));
+  const pileEdge = Math.max(edge, PILE_EDGE_MARGIN_PX);
+  const gap = Math.max(6, Math.min(12, height * 0.02));
+  const rowsShare = proportions.active + 1 + proportions.pile;
+  const free = Math.max(0, height - margin - 3 * gap);
+  // A portrait hand strip is at least tall enough for the corner's
+  // controls side by side, so the pile row above stays clear of them.
+  let bench = free / (rowsShare + proportions.handStrip);
+  if (bench * proportions.handStrip < TABLE_COMPACT_CORNER_HEIGHT_PX) {
+    bench = Math.max(0, free - TABLE_COMPACT_CORNER_HEIGHT_PX) / rowsShare;
+  }
+  bench = Math.min(
+    bench,
+    (width - 2 * edge) / (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
+  );
+  const active = bench * proportions.active;
+  const handStrip = Math.min(
+    height,
+    Math.max(bench * proportions.handStrip, TABLE_COMPACT_CORNER_HEIGHT_PX)
+  );
+
+  // The pile row: prizes three across and two down at the outer left, the
+  // three piles side by side at the right. Narrower than both, the row's
+  // cards shrink until they fit.
+  const pileGap = Math.max(gap, PORTRAIT_PILE_GAP_PX);
+  const prizeGapFor = (pile: number): number => Math.max(3, pile * 0.025);
+  const rowWidthFor = (pile: number): number => {
+    const prizeGap = prizeGapFor(pile);
+    const prizeWidth = ((pile - prizeGap) / 2) * CARD_ASPECT_RATIO;
+    return (
+      3 * prizeWidth +
+      2 * prizeGap +
+      gap +
+      3 * pile * CARD_ASPECT_RATIO +
+      2 * pileGap
+    );
+  };
+  const rowRoom = Math.max(0, width - edge - pileEdge);
+  let pile = bench * proportions.pile;
+  if (rowWidthFor(pile) > rowRoom) {
+    let low = 0;
+    let high = pile;
+    for (let step = 0; step < 24; step += 1) {
+      const middle = (low + high) / 2;
+      if (rowWidthFor(middle) <= rowRoom) low = middle;
+      else high = middle;
+    }
+    pile = low;
+  }
+  const pileWidth = pile * CARD_ASPECT_RATIO;
+  const prizeGap = prizeGapFor(pile);
+
+  const handTop = height - handStrip;
+  const pileTop = handTop - gap - pile;
+  const benchTop = pileTop - gap - bench;
+  const activeTop = Math.max(0, benchTop - gap - active);
+
+  const centre = width / 2;
+  const activeWidth = Math.min(
+    width - 2 * edge,
+    active * CARD_ASPECT_RATIO * 2.2
+  );
+  const activeRect: Rect = {
+    x: centre - activeWidth / 2,
+    y: activeTop,
+    width: activeWidth,
+    height: active,
+  };
+  // The staging area (v1's loose board) beside the Active, toward the prizes.
+  const boardRect: Rect = {
+    x: edge,
+    y: activeTop,
+    width: Math.max(0, activeRect.x - gap - edge),
+    height: active,
+  };
+  const benchRect: Rect = {
+    x: edge,
+    y: benchTop,
+    width: Math.max(0, width - 2 * edge),
+    height: bench,
+  };
+  const prizes: Rect = {
+    x: edge,
+    y: pileTop,
+    width: 3 * ((pile - prizeGap) / 2) * CARD_ASPECT_RATIO + 2 * prizeGap,
+    height: pile,
+  };
+  const pileAt = (fromRight: number): Rect => ({
+    x: width - pileEdge - pileWidth - fromRight * (pileWidth + pileGap),
+    y: pileTop,
+    width: pileWidth,
+    height: pile,
+  });
+  const handRect: Rect = {
+    x: TABLE_CONTROL_CORNER_PX,
+    y: handTop,
+    width: Math.max(
+      0,
+      width - edge - HAND_COUNT_SLOT_PX - TABLE_CONTROL_CORNER_PX
+    ),
+    height: handStrip,
+  };
+  return {
+    regions: [
+      { kind: 'hand', rect: handRect, countAnchor: 'hand' },
+      { kind: 'board', rect: boardRect },
+      { kind: 'active', rect: activeRect },
+      { kind: 'bench', rect: benchRect },
+      { kind: 'prizes', rect: prizes },
+      { kind: 'deck', rect: pileAt(2), countAnchor: 'pile' },
+      { kind: 'discard', rect: pileAt(1), countAnchor: 'pile' },
+      { kind: 'lostZone', rect: pileAt(0), countAnchor: 'pile' },
+    ],
+    cardHeights: { active, bench },
+    middle: { left: edge, right: width - edge },
+    seamMargin: activeTop,
+  };
+};
+
+/** The bench card a half actually shows: five and a half must fit across. */
+const benchCardHeightOf = (geometry: HalfGeometry): number =>
+  Math.min(
+    geometry.cardHeights.bench,
+    (geometry.middle.right - geometry.middle.left) /
+      (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
+  );
+
+/**
+ * Whichever of the mat (columns down the sides) and the portrait mat (rows
+ * down the middle) shows this half's cards larger. Wide halves -- desktops,
+ * a tablet or phone held sideways -- get the mat; tall ones, the portrait.
+ */
+const bestOf = (
+  landscape: HalfGeometry,
+  portrait: HalfGeometry
+): HalfGeometry =>
+  benchCardHeightOf(portrait) > benchCardHeightOf(landscape)
+    ? portrait
+    : landscape;
+
+const layoutTableHalf = (
+  width: number,
+  height: number,
+  options: HalfOptions
+): HalfGeometry =>
+  bestOf(
+    layoutHalf(width, height, options),
+    layoutHalfPortrait(width, height, options)
+  );
+
+/**
  * A half given the whole table. Laid out at full height its cards would
  * outgrow the width (the bench no longer fits across), so it takes the
  * tallest layout whose bench still fits -- never smaller than at an even
  * split -- sits at the player's edge, and leaves the rest as a clear band
  * at the centre line.
  */
-const layoutSoloHalf = (width: number, height: number): HalfGeometry => {
+const layoutSoloHalf = (
+  width: number,
+  height: number,
+  options: HalfOptions = {}
+): HalfGeometry => {
+  // The band must hold the table controls and their gaps either side.
+  const soloBand = Math.max(
+    SOLO_SEAM_BAND_PX,
+    (options.seamBandPx ?? 0) + 2 * SOLO_CONTROLS_GAP_PX
+  );
+  // Tall, the portrait mat takes the whole height: its rows sit at the
+  // player's edge and the rest of the height is the band already.
+  const portrait = layoutHalfPortrait(width, height, {
+    seamBandPx: 2 * soloBand,
+  });
   const fits = (candidate: number): boolean => {
-    const geometry = layoutHalf(width, candidate);
+    const geometry = layoutHalf(width, candidate, options);
     return (
       BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
       geometry.middle.right - geometry.middle.left
     );
   };
-  const available = Math.max(0, height - SOLO_SEAM_BAND_PX);
+  const available = Math.max(0, height - soloBand);
   let fitted = available;
   if (!fits(available)) {
     // Taller only ever means bigger cards and a narrower middle.
@@ -282,17 +511,20 @@ const layoutSoloHalf = (width: number, height: number): HalfGeometry => {
     }
     fitted = Math.max(low, height * DEFAULT_LOWER_SHARE);
   }
-  const geometry = layoutHalf(width, fitted);
+  const geometry = layoutHalf(width, fitted, options);
   const band = height - fitted;
-  return {
-    regions: geometry.regions.map((region) => ({
-      ...region,
-      rect: { ...region.rect, y: region.rect.y + band },
-    })),
-    cardHeights: geometry.cardHeights,
-    middle: geometry.middle,
-    seamMargin: geometry.seamMargin + band,
-  };
+  return bestOf(
+    {
+      regions: geometry.regions.map((region) => ({
+        ...region,
+        rect: { ...region.rect, y: region.rect.y + band },
+      })),
+      cardHeights: geometry.cardHeights,
+      middle: geometry.middle,
+      seamMargin: geometry.seamMargin + band,
+    },
+    portrait
+  );
 };
 
 /** A rect in a half's own frame placed in the window. */
@@ -411,7 +643,24 @@ export const createTableLayoutSnapshot = (
   }
   // v1's validated snapshot supplies the region semantics, the player
   // pairing and every input check.
-  const { hiddenPhysicalSide: _hidden, ...semanticState } = state;
+  const {
+    hiddenPhysicalSide: _hidden,
+    hideEmptyLostZone: _lostZone,
+    seamBandPx,
+    ...semanticState
+  } = state;
+  if (
+    seamBandPx !== undefined &&
+    (!Number.isFinite(seamBandPx) || seamBandPx < 0)
+  ) {
+    throw new Error('Table seam band must be a non-negative number');
+  }
+  const halfOptions: HalfOptions =
+    seamBandPx === undefined ? {} : { seamBandPx };
+  // The controls fill the seam band: 32px on a desktop, taller where a
+  // finger asked for a wider band.
+  const controlsCap =
+    seamBandPx === undefined ? 32 : Math.max(32, seamBandPx - 2);
   const semantics = createBoardLayoutSnapshot({
     ...semanticState,
     geometryVersion: 1,
@@ -435,9 +684,10 @@ export const createTableLayoutSnapshot = (
     readonly geometry: HalfGeometry;
   } => {
     const solo = hidden !== undefined && hidden !== template.physicalSide;
-    const geometry = (solo ? layoutSoloHalf : layoutHalf)(
+    const geometry = (solo ? layoutSoloHalf : layoutTableHalf)(
       frameBounds.width,
-      frameBounds.height
+      frameBounds.height,
+      halfOptions
     );
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
@@ -523,12 +773,12 @@ export const createTableLayoutSnapshot = (
     const controlsHeight = Math.max(
       20,
       Math.min(
-        32,
+        controlsCap,
         2 * Math.min(lower.geometry.seamMargin, upper.geometry.seamMargin) - 2
       )
     );
     controls = { y: seamY - controlsHeight / 2, height: controlsHeight };
-    controlsLeft = lower.geometry.middle.left;
+    controlsLeft = Math.max(lower.geometry.middle.left, RAIL_START_RESERVE_PX);
   } else {
     // One half fills the table. The stadium sits beside its Active on the
     // player's own right (the staging area is on their left), level with
@@ -554,7 +804,7 @@ export const createTableLayoutSnapshot = (
     const band = shown.geometry.seamMargin;
     const controlsHeight = Math.max(
       20,
-      Math.min(32, band - 2 * SOLO_CONTROLS_GAP_PX)
+      Math.min(controlsCap, band - 2 * SOLO_CONTROLS_GAP_PX)
     );
     controls = {
       y: atTop
@@ -565,7 +815,7 @@ export const createTableLayoutSnapshot = (
           ),
       height: controlsHeight,
     };
-    controlsLeft = shown.geometry.middle.left;
+    controlsLeft = Math.max(shown.geometry.middle.left, RAIL_START_RESERVE_PX);
   }
 
   const handle = (
@@ -613,6 +863,7 @@ export const createTableLayoutSnapshot = (
       },
     },
     zoneScrollPx: {},
+    ...(state.hideEmptyLostZone ? { hideEmptyLostZone: true as const } : {}),
   };
 };
 
@@ -719,7 +970,9 @@ export const layoutTableRow = (
 
 /**
  * Prizes as on the mat: two columns, three rows (more rows if more prizes),
- * the first prize at the top left of its owner's view.
+ * the first prize at the top left of its owner's view. A portrait table's
+ * prizes lie in a row wider than tall, so there they go three across and two
+ * down instead.
  */
 export const layoutTablePrizes = (
   content: Rect,
@@ -727,25 +980,26 @@ export const layoutTablePrizes = (
   count: number
 ): Rect[] => {
   if (count <= 0) return [];
-  const rows = Math.max(3, Math.ceil(count / 2));
+  const columns = content.width > content.height ? 3 : 2;
+  const rows = Math.max(6 / columns, Math.ceil(count / columns));
   const gap = Math.max(3, content.height * 0.025);
   const cardHeight = Math.max(
     0,
     Math.min(
       (content.height - (rows - 1) * gap) / rows,
-      (content.width - gap) / 2 / CARD_ASPECT_RATIO
+      (content.width - (columns - 1) * gap) / columns / CARD_ASPECT_RATIO
     )
   );
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
-  const gridWidth = 2 * cardWidth + gap;
+  const gridWidth = columns * cardWidth + (columns - 1) * gap;
   const gridHeight = rows * cardHeight + (rows - 1) * gap;
   const left = content.x + (content.width - gridWidth) / 2;
   const top = content.y + (content.height - gridHeight) / 2;
   return Array.from({ length: count }, (_, index) => {
-    const ownColumn = index % 2;
-    const ownRow = Math.floor(index / 2);
+    const ownColumn = index % columns;
+    const ownRow = Math.floor(index / columns);
     // The opponent's view of their grid is turned half way round.
-    const column = side === 'local' ? ownColumn : 1 - ownColumn;
+    const column = side === 'local' ? ownColumn : columns - 1 - ownColumn;
     const row = side === 'local' ? ownRow : rows - 1 - ownRow;
     return {
       x: left + column * (cardWidth + gap),

@@ -141,6 +141,17 @@ export interface BoardLayoutState {
    */
   readonly hiddenPhysicalSide?: BoardPhysicalSide;
   /**
+   * Geometry v2 only: the Lost Zone is optional (few formats use it), so an
+   * empty one leaves the table. One holding cards always shows.
+   */
+  readonly hideEmptyLostZone?: boolean;
+  /**
+   * Geometry v2 only: the least height of the clear band at the centre line,
+   * where the table controls sit. A touch device asks for room for 44px
+   * targets; without it the band follows the table's size.
+   */
+  readonly seamBandPx?: number;
+  /**
    * How far each scrolling zone is scrolled, in physical pixels, keyed by
    * zone id: v1's `#hand` scrollLeft and `#board` scrollTop. Absent means 0.
    */
@@ -282,6 +293,8 @@ export interface BoardLayoutSnapshot {
   readonly shared: BoardSharedLayout;
   /** Per-zone scroll offsets carried from the layout state. */
   readonly zoneScrollPx: Readonly<Record<string, number>>;
+  /** Carried from the layout state: an empty Lost Zone is not shown. */
+  readonly hideEmptyLostZone?: boolean;
 }
 
 export interface BoardPlayStackCardHitRegion {

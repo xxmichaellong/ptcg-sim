@@ -31,6 +31,19 @@ export {
 } from './dialog-requests.js';
 export { OverlayHost, type OverlayHostProps } from './OverlayHost.js';
 export {
+  Sheet,
+  type SheetPlacement,
+  type SheetProps,
+  type SheetSize,
+} from './Sheet.js';
+export {
+  COARSE_POINTER_QUERY,
+  COMPACT_QUERY,
+  MEDIUM_QUERY,
+  useCompactLayout,
+  useMediaQuery,
+} from './breakpoints.js';
+export {
   isOverlayKeyTarget,
   isOverlaySurfaceTarget,
   OVERLAY_SURFACE_ATTRIBUTE,

@@ -1,0 +1,127 @@
+/* Action menus (ActionMenu.tsx): the rail's More and the app menu. */
+
+.ptcgsim-action-menu-positioner {
+  z-index: var(--z-popover);
+  outline: none;
+}
+
+.ptcgsim-action-menu {
+  box-sizing: border-box;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: var(--available-height, 70dvh);
+  padding: var(--space-1-5);
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  outline: none;
+  transform-origin: var(--transform-origin);
+  transition-property: opacity, scale;
+  transition-duration: var(--ui-overlay-enter-duration);
+  transition-timing-function: var(--ui-overlay-enter-easing);
+}
+
+.ptcgsim-action-menu[data-starting-style],
+.ptcgsim-action-menu[data-ending-style] {
+  opacity: 0;
+  scale: var(--ui-overlay-enter-scale);
+}
+
+.ptcgsim-action-menu[data-ending-style] {
+  transition-duration: var(--ui-overlay-exit-duration);
+}
+
+.ptcgsim-action-menu__header {
+  padding: var(--space-2) var(--space-2-5, 10px) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-1);
+}
+
+.ptcgsim-action-menu__label {
+  padding: var(--space-2) var(--space-2-5, 10px) var(--space-1);
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.ptcgsim-action-menu__separator {
+  height: 1px;
+  margin: var(--space-1) var(--space-1-5);
+  background: var(--color-border);
+}
+
+.ptcgsim-action-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5, 10px);
+  min-height: 34px;
+  padding: 0 var(--space-2-5, 10px);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.ptcgsim-action-menu__item[data-highlighted] {
+  background: var(--color-surface-hover);
+}
+
+.ptcgsim-action-menu__item[data-disabled] {
+  color: var(--color-text-faint);
+  cursor: default;
+}
+
+.ptcgsim-action-menu__item.is-danger {
+  color: color-mix(in oklab, var(--color-danger), var(--color-text) 20%);
+}
+
+.ptcgsim-action-menu__icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  color: var(--color-text-muted);
+  font-size: 17px;
+}
+
+.ptcgsim-action-menu__item.is-danger .ptcgsim-action-menu__icon {
+  color: inherit;
+}
+
+.ptcgsim-action-menu__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ptcgsim-action-menu__hint {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-action-menu__item {
+    min-height: 44px;
+    font-size: var(--text-md);
+  }
+  /* A finger has no keyboard to read hints for. */
+  .ptcgsim-action-menu__hint {
+    display: none;
+  }
+}

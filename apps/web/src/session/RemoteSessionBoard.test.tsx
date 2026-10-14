@@ -5,22 +5,29 @@ import type {
   ProjectedReplayArtifact,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { MatchViewState } from '@ptcgsim/game-core';
+import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
+  CARD_IMAGE_RETRY_EVENT,
+  createEmptyBoardView,
   createRendererSpikeView,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
-import { act } from 'react';
+import { act, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { RailAction } from '../board/rail/TableRail.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
 import {
   ReplaySessionCoordinator,
   type ReplaySessionSource,
 } from '../replay/ReplaySessionCoordinator.js';
 import {
   RemoteSessionBoard,
+  type BoardCommands,
+  type BoardOwnRailActions,
+  type BoardRailModel,
   type RemoteBoardSession,
 } from './RemoteSessionBoard.js';
 
@@ -61,6 +68,39 @@ const withDisclosedOpponentHand = (): MatchViewState => {
     },
   };
 };
+
+/** The fixture with the viewer's own Lost Zone emptied. */
+const withEmptyOwnLostZone = (): MatchViewState => {
+  if (baseView.viewer.kind !== 'player')
+    throw new Error('player view required');
+  const viewerId = baseView.viewer.playerId;
+  const lostZone = Object.values(baseView.zones).find(
+    (zone) => zone.kind === 'lostZone' && zone.ownerId === viewerId
+  );
+  if (!lostZone) throw new Error('own Lost Zone fixture required');
+  return {
+    ...baseView,
+    revision: 10,
+    zones: { ...baseView.zones, [lostZone.id]: { ...lostZone, cards: [] } },
+  };
+};
+
+/**
+ * A route's rail: its menu at the left end and the board's own actions in
+ * the order a route puts them, recording what the board offered each time.
+ */
+const railOf = (owned?: BoardOwnRailActions[]): BoardRailModel => ({
+  start: <button id="menuStub" type="button" />,
+  compose: (own) => {
+    owned?.push(own);
+    return {
+      actions: [own.turn, own.coin, own.switchSide].filter(
+        (action): action is RailAction => action !== undefined
+      ),
+      ...(own.mulligan ? { more: [own.mulligan] } : {}),
+    };
+  },
+});
 
 const initialState = (): ClientSessionState => ({
   phase: 'ready',
@@ -157,6 +197,7 @@ class FakeRemoteBoardSession
 {
   private state: ClientSessionState;
   private readonly listeners = new Set<() => void>();
+  readonly declareMulligan = vi.fn((_actingPlayerId?: string) => true);
   readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult =>
     this.state.phase === 'ready'
       ? {
@@ -202,6 +243,11 @@ describe('RemoteSessionBoard replay binding', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     delete window.__PTCG_RENDERER_SPIKE__;
+    boardViewSettings().reset();
+  });
+
+  afterEach(() => {
+    boardViewSettings().reset();
   });
 
   it('keeps one renderer across live/replay and lets the controller block replay submissions', async () => {
@@ -227,6 +273,7 @@ describe('RemoteSessionBoard replay binding', () => {
           onIntent={onIntent}
           onSubmission={onSubmission}
           preferences={preferences}
+          rail={railOf()}
         />
       )
     );
@@ -284,10 +331,10 @@ describe('RemoteSessionBoard replay binding', () => {
       })
     );
     await waitForRevision(host, 10);
+    // Reconnecting, there is no seat to act for: the rail keeps its menu.
     expect(host.querySelector('#turnButton')).toBeNull();
     expect(host.querySelector('#flipCoinButton')).toBeNull();
-    expect(host.querySelector('#refreshButton')).not.toBeNull();
-    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+    expect(host.querySelector('#menuStub')).not.toBeNull();
     await invokeDeckShuffle(host);
     expect(session.submit).toHaveBeenCalledTimes(2);
     expect(onSubmission).toHaveBeenCalledTimes(2);
@@ -463,16 +510,19 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
-  it('wires source-shaped chrome through protected commands and local layout actions', async () => {
+  it('puts the board-owned actions on the rail the route composes, and reaches the table from its menu', async () => {
     const session = new FakeRemoteBoardSession();
     const replay = new ReplaySessionCoordinator(session);
-    const onPlaymatExpandedChange = vi.fn();
+    const commands = createRef<BoardCommands>();
+    const owned: BoardOwnRailActions[] = [];
+    const retries = vi.fn();
+    document.addEventListener(CARD_IMAGE_RETRY_EVENT, retries);
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
     const render = async (
       roomMode: 'solo' | 'multiplayer',
-      playmatExpanded = false
+      options: { sidePanel?: boolean; keysSuspended?: boolean } = {}
     ) =>
       act(async () =>
         root.render(
@@ -481,8 +531,9 @@ describe('RemoteSessionBoard replay binding', () => {
             replay={replay}
             rendererKind="dom"
             roomMode={roomMode}
-            playmatExpanded={playmatExpanded}
-            onPlaymatExpandedChange={onPlaymatExpandedChange}
+            rail={railOf(owned)}
+            commandsRef={commands}
+            {...options}
             onIntent={vi.fn()}
           />
         )
@@ -491,26 +542,29 @@ describe('RemoteSessionBoard replay binding', () => {
     await render('multiplayer');
     await waitForRevision(host, 10);
     expect(host.querySelector('[data-legacy-board-chrome]')).not.toBeNull();
-    expect(host.querySelector('#turnButton')).not.toBeNull();
-    expect(host.querySelector('#flipCoinButton')).not.toBeNull();
+    // The route's menu sits at the rail's left end.
+    expect(
+      host.querySelector('.ptcgsim-table-rail__end-group #menuStub')
+    ).not.toBeNull();
+    const own = owned.at(-1)!;
+    expect(own.turn).toMatchObject({
+      id: 'turnButton',
+      label: 'Turn',
+      title: 'Start turn',
+    });
+    expect(own.coin).toMatchObject({ id: 'flipCoinButton', label: 'Coin' });
+    expect(own.mulligan).toMatchObject({ id: 'mulliganButton' });
+    // Turning the table around is for Solo, spectators and coaching.
+    expect(own.switchSide).toBeUndefined();
     expect(host.querySelector('#flipBoardButton')).toBeNull();
-    expect(host.querySelector('#refreshButton')).not.toBeNull();
-    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
+    expect(commands.current?.canFlipBoard()).toBe(false);
     expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
       4
     );
-    const localGx = host.querySelector<HTMLButtonElement>(
-      '[data-player-side="local"][data-once-per-game-marker="gx"]'
-    );
-    const opponentVstar = host.querySelector<HTMLButtonElement>(
-      '[data-player-side="opponent"][data-once-per-game-marker="vstar"]'
-    );
-    expect(localGx?.getAttribute('aria-pressed')).toBe('false');
-    expect(opponentVstar?.getAttribute('aria-pressed')).toBe('false');
 
     await act(async () => {
-      host.querySelector<HTMLButtonElement>('#turnButton button')?.click();
-      host.querySelector<HTMLButtonElement>('#flipCoinButton button')?.click();
+      host.querySelector<HTMLButtonElement>('#turnButton')?.click();
+      host.querySelector<HTMLButtonElement>('#flipCoinButton')?.click();
     });
     expect(session.submit).toHaveBeenNthCalledWith(1, {
       type: 'StartTurn',
@@ -518,8 +572,16 @@ describe('RemoteSessionBoard replay binding', () => {
     });
     expect(session.submit).toHaveBeenNthCalledWith(2, { type: 'FlipCoin' });
     await act(async () => {
-      localGx?.click();
-      opponentVstar?.click();
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-player-side="local"][data-once-per-game-marker="gx"]'
+        )
+        ?.click();
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-player-side="opponent"][data-once-per-game-marker="vstar"]'
+        )
+        ?.click();
     });
     expect(session.submit).toHaveBeenNthCalledWith(3, {
       type: 'SetOncePerGameMarker',
@@ -534,100 +596,89 @@ describe('RemoteSessionBoard replay binding', () => {
       used: true,
     });
 
+    // A mulligan is announced for the seat at the bottom, from More.
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#moreActionsButton')?.click()
+    );
+    const mulligan = await vi.waitFor(() => {
+      const entry = document.querySelector<HTMLElement>('#mulliganButton');
+      expect(entry).not.toBeNull();
+      return entry!;
+    });
+    await act(async () => mulligan.click());
+    expect(session.declareMulligan).toHaveBeenCalledExactlyOnceWith(
+      'spike-blue'
+    );
+
+    // Reload card images (menu or R) asks the renderer to retry what
+    // failed; it neither commands the room nor remounts the renderer.
     const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
-    let finishDecode: (() => void) | undefined;
-    const decodePending = new Promise<void>((resolve) => {
-      finishDecode = resolve;
-    });
-    const decode = vi
-      .spyOn(HTMLImageElement.prototype, 'decode')
-      .mockReturnValue(decodePending);
-    await act(async () =>
-      host.querySelector<HTMLButtonElement>('#refreshButton button')?.click()
-    );
-    expect(decode).toHaveBeenCalled();
-    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
-      'none'
-    );
-    expect(
-      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
-    ).toBe('block');
-    await act(async () => {
-      finishDecode?.();
-      await decodePending;
-      await Promise.resolve();
-    });
-    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
-      ''
-    );
-    expect(
-      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
-    ).toBe('');
-    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
-    expect(session.submit).toHaveBeenCalledTimes(4);
-
-    decode.mockClear();
-    let finishShortcutDecode: (() => void) | undefined;
-    const shortcutDecodePending = new Promise<void>((resolve) => {
-      finishShortcutDecode = resolve;
-    });
-    decode.mockReturnValue(shortcutDecodePending);
-    await act(async () =>
-      document.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'r',
-          code: 'KeyR',
-          bubbles: true,
-          cancelable: true,
-        })
-      )
-    );
-    expect(decode).toHaveBeenCalled();
-    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
-      'none'
-    );
-    await act(async () => {
-      finishShortcutDecode?.();
-      await shortcutDecodePending;
-      await Promise.resolve();
-    });
-    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
-      ''
-    );
-    decode.mockRestore();
-
-    await act(async () =>
-      host
-        .querySelector<HTMLButtonElement>('#fullscreenPlaymatButton button')
-        ?.click()
-    );
-    expect(onPlaymatExpandedChange).toHaveBeenCalledWith(true);
-    await act(async () => {
-      await vi.waitFor(() =>
-        expect(
-          host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
-            .shellMode
-        ).toBe('fullscreen')
+    await act(async () => commands.current?.refreshImages());
+    expect(retries).toHaveBeenCalledTimes(1);
+    const pressR = () =>
+      act(async () =>
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'r',
+            code: 'KeyR',
+            bubbles: true,
+            cancelable: true,
+          })
+        )
       );
+    await pressR();
+    expect(retries).toHaveBeenCalledTimes(2);
+    // While the deck screen owns the keyboard, the table takes no keys.
+    await render('multiplayer', { keysSuspended: true });
+    await pressR();
+    expect(retries).toHaveBeenCalledTimes(2);
+    await render('multiplayer');
+    await pressR();
+    expect(retries).toHaveBeenCalledTimes(3);
+    expect(session.submit).toHaveBeenCalledTimes(4);
+    expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
+
+    // The table fills the window, and makes room for a docked log.
+    const shellMode = () =>
+      host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.dataset
+        .shellMode;
+    expect(shellMode()).toBe('fullscreen');
+    await render('multiplayer', { sidePanel: true });
+    await act(async () => {
+      await vi.waitFor(() => expect(shellMode()).toBe('sidebar'));
+    });
+    await render('multiplayer');
+    await act(async () => {
+      await vi.waitFor(() => expect(shellMode()).toBe('fullscreen'));
     });
 
-    await render('solo', true);
+    // Solo turns the table around from the rail or the menu.
+    await render('solo');
     const bottomBeforeFlip = selectedScene().bottomPlayerId;
-    expect(host.querySelector('#flipBoardButton')).not.toBeNull();
+    expect(owned.at(-1)?.switchSide).toMatchObject({
+      id: 'flipBoardButton',
+      label: 'Switch side',
+    });
+    expect(commands.current?.canFlipBoard()).toBe(true);
     await act(async () =>
-      host.querySelector<HTMLButtonElement>('#flipBoardButton button')?.click()
+      host.querySelector<HTMLButtonElement>('#flipBoardButton')?.click()
     );
     expect(selectedScene().bottomPlayerId).not.toBe(bottomBeforeFlip);
+    await act(async () => commands.current?.flipBoard());
+    expect(selectedScene().bottomPlayerId).toBe(bottomBeforeFlip);
     expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
 
+    // A replay has no seat to act for: only the perspective control stays.
     await act(async () => replay.requestReplay());
     await act(async () => session.completeReplay());
     await waitForRevision(host, 0);
+    expect(owned.at(-1)?.turn).toBeUndefined();
+    expect(owned.at(-1)?.coin).toBeUndefined();
+    expect(owned.at(-1)?.mulligan).toBeUndefined();
     expect(host.querySelector('#turnButton')).toBeNull();
     expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#moreActionsButton')).toBeNull();
     expect(host.querySelector('#flipBoardButton')).not.toBeNull();
-    expect(host.querySelector('#refreshButton')).not.toBeNull();
-    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
     expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
       4
     );
@@ -640,6 +691,7 @@ describe('RemoteSessionBoard replay binding', () => {
     });
     expect(session.submit).toHaveBeenCalledTimes(4);
 
+    document.removeEventListener(CARD_IMAGE_RETRY_EVENT, retries);
     await act(async () => root.unmount());
     replay.dispose();
   });
@@ -656,6 +708,7 @@ describe('RemoteSessionBoard replay binding', () => {
       view: spectatorView,
     });
     const replay = new ReplaySessionCoordinator(session);
+    const owned: BoardOwnRailActions[] = [];
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -667,16 +720,19 @@ describe('RemoteSessionBoard replay binding', () => {
           replay={replay}
           rendererKind="dom"
           roomMode="multiplayer"
+          rail={railOf(owned)}
           onIntent={vi.fn()}
         />
       )
     );
     await waitForRevision(host, 10);
+    expect(owned.at(-1)).toEqual({
+      switchSide: expect.objectContaining({ id: 'flipBoardButton' }),
+    });
     expect(host.querySelector('#turnButton')).toBeNull();
     expect(host.querySelector('#flipCoinButton')).toBeNull();
+    expect(host.querySelector('#moreActionsButton')).toBeNull();
     expect(host.querySelector('#flipBoardButton')).not.toBeNull();
-    expect(host.querySelector('#refreshButton')).not.toBeNull();
-    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
 
     await act(async () => root.unmount());
     replay.dispose();
@@ -695,36 +751,295 @@ describe('RemoteSessionBoard replay binding', () => {
           replay={replay}
           rendererKind="dom"
           roomMode="multiplayer"
+          rail={railOf()}
           onIntent={vi.fn()}
         />
       )
     );
     await waitForRevision(host, 10);
-    const coinPending = () =>
-      host
-        .querySelector('#flipCoinButton [data-control-pending]')
-        ?.getAttribute('data-control-pending') ?? null;
+    const coin = () =>
+      host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
-      await act(async () =>
-        host.querySelector<HTMLButtonElement>('#flipCoinButton button')?.click()
-      );
+      await act(async () => coin().click());
       expect(session.submit).toHaveBeenCalledWith({ type: 'FlipCoin' });
-      expect(coinPending()).toBe('true');
+      expect(coin().dataset.controlPending).toBe('true');
+      expect(coin().getAttribute('aria-busy')).toBe('true');
 
       // A local publication -- opening the deck -- is not the room's answer.
       await openLocalDeck(host);
-      expect(coinPending()).toBe('true');
+      expect(coin().dataset.controlPending).toBe('true');
 
       // The answer is an ordinary board publication, well inside the ceiling.
       await act(async () =>
         session.publish({ ...session.getSnapshot(), view: atRevision(11) })
       );
-      expect(coinPending()).toBeNull();
+      expect(coin().dataset.controlPending).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('gives up waiting on a coin the room never answers after four seconds', async () => {
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          roomMode="multiplayer"
+          rail={railOf()}
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    const coin = () =>
+      host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await act(async () => coin().click());
+      expect(coin().dataset.controlPending).toBe('true');
+      await act(async () => vi.advanceTimersByTime(3_999));
+      expect(coin().dataset.controlPending).toBe('true');
+      await act(async () => vi.advanceTimersByTime(1));
+      expect(coin().dataset.controlPending).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('keeps an empty Lost Zone off the table until the player adds it', async () => {
+    const view = withEmptyOwnLostZone();
+    const session = new FakeRemoteBoardSession({ ...initialState(), view });
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, view.revision);
+    const lostZones = () =>
+      selectedScene()
+        .zones.filter((zone) => zone.kind === 'lostZone')
+        .map((zone) => zone.side);
+    // Off by default: the empty one leaves; the one holding a card stays.
+    expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
+    expect(lostZones()).toEqual(['opponent']);
+    expect(host.querySelector('#hideLostZoneButton')).toBeNull();
+
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#addLostZoneButton')?.click()
+    );
+    expect(boardViewSettings().getSnapshot().lostZone).toBe(true);
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(lostZones().sort()).toEqual(['local', 'opponent'])
+      );
+    });
+    expect(host.querySelector('#addLostZoneButton')).toBeNull();
+
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#hideLostZoneButton')?.click()
+    );
+    expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
+    await act(async () => {
+      await vi.waitFor(() => expect(lostZones()).toEqual(['opponent']));
+    });
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it("offers a seat with no cards a + on its deck that opens the route's deck screen", async () => {
+    const empty = { ...createEmptyBoardView(), revision: 3 };
+    const session = new FakeRemoteBoardSession({
+      ...initialState(),
+      playerId: asPlayerId('lobby-blue'),
+      view: empty,
+    });
+    const replay = new ReplaySessionCoordinator(session);
+    const onLoad = vi.fn();
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const render = (offered: boolean) =>
+      act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            rendererKind="dom"
+            roomMode="solo"
+            onIntent={vi.fn()}
+            {...(offered
+              ? { loadDeck: { playerIds: [asPlayerId('lobby-blue')], onLoad } }
+              : {})}
+          />
+        )
+      );
+    await render(false);
+    await waitForRevision(host, 3);
+    expect(host.querySelector('[data-load-deck-player]')).toBeNull();
+
+    await render(true);
+    const plus = host.querySelector<HTMLButtonElement>(
+      '[data-load-deck-player="lobby-blue"]'
+    )!;
+    expect(plus.getAttribute('aria-label')).toBe('Load a deck');
+    expect(
+      host.querySelector('[data-load-deck-player="lobby-red"]')
+    ).toBeNull();
+    await act(async () => plus.click());
+    expect(onLoad).toHaveBeenCalledExactlyOnceWith('lobby-blue');
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('gives a finger the card bar a mouse does without, and reads a card tapped again', async () => {
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          roomMode="solo"
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const viewerId = baseView.viewer.playerId;
+    const hand = Object.values(baseView.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === viewerId
+    )!;
+    const cardId = hand.cards[0]!.id;
+    const card = () =>
+      host.querySelector<HTMLElement>(`[data-card-id="${cardId}"]`)!;
+    const bar = () => host.querySelector<HTMLElement>('[data-touch-card-bar]');
+    const press = async (pointerType: 'touch' | 'mouse') => {
+      await act(async () => {
+        for (const type of ['pointerdown', 'pointerup'] as const) {
+          card().dispatchEvent(
+            new PointerEvent(type, {
+              pointerType,
+              pointerId: 3,
+              clientX: 10,
+              clientY: 10,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }
+      });
+      await act(async () => card().click());
+    };
+    const escape = () =>
+      act(async () =>
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      );
+
+    // A mouse selects as before, with no bar: it has its right-click.
+    await press('mouse');
+    expect(card().getAttribute('aria-pressed')).toBe('true');
+    expect(bar()).toBeNull();
+    await escape();
+
+    // A finger's tap selects the card and brings the bar beside it.
+    await press('touch');
+    expect(card().getAttribute('aria-pressed')).toBe('true');
+    expect(bar()).not.toBeNull();
+    expect(
+      host.querySelector('[data-legacy-card-preview]'),
+      'the first tap only selects'
+    ).toBeNull();
+
+    // Read opens the card large; the bar steps aside while it is open.
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#touchReadCardButton')?.click()
+    );
+    expect(host.querySelector('[data-legacy-card-preview]')).not.toBeNull();
+    expect(bar()).toBeNull();
+    await escape();
+    expect(host.querySelector('[data-legacy-card-preview]')).toBeNull();
+
+    // Actions opens the same menu a right-click does.
+    await press('touch');
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#touchCardActionsButton')?.click()
+    );
+    expect(
+      host.querySelector('[data-legacy-card-context-menu]')
+    ).not.toBeNull();
+    expect(bar()).toBeNull();
+    await escape();
+
+    // Deselect lets the card go.
+    await press('touch');
+    expect(bar()).not.toBeNull();
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Deselect"]')
+        ?.click()
+    );
+    expect(bar()).toBeNull();
+    expect(card().getAttribute('aria-pressed')).toBe('false');
+
+    // Tapping a card that is already selected reads it, as a double-click
+    // does with a mouse.
+    await press('touch');
+    expect(host.querySelector('[data-legacy-card-preview]')).toBeNull();
+    await act(async () => {
+      for (const type of ['pointerdown', 'pointerup'] as const) {
+        card().dispatchEvent(
+          new PointerEvent(type, {
+            pointerType: 'touch',
+            pointerId: 4,
+            clientX: 12,
+            clientY: 12,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[data-legacy-card-preview]')).not.toBeNull();
+    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
     replay.dispose();

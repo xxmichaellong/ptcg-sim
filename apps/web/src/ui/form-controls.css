@@ -1,0 +1,265 @@
+/*
+ * The settings vocabulary (FormControls.tsx). Rows grow to 44px under a
+ * finger; everything reads the design tokens.
+ */
+
+.ptcgsim-settings-section {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+}
+
+.ptcgsim-settings-section__title {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.ptcgsim-settings-section__description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-settings-section__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+}
+
+.ptcgsim-form-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ptcgsim-form-label {
+  padding: 0;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ptcgsim-form-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+}
+
+/* ---- Segmented choice -------------------------------------------- */
+
+.ptcgsim-segmented-control {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.ptcgsim-segmented-control__option {
+  position: relative;
+  display: flex;
+}
+
+.ptcgsim-segmented-control__option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ptcgsim-segmented-control__option label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  pointer-events: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-segmented-control__option input:hover + label {
+  color: var(--color-text);
+}
+
+.ptcgsim-segmented-control__option input:checked + label {
+  background: var(--color-surface-3);
+  box-shadow: var(--highlight-top), var(--shadow-1);
+  color: var(--color-text);
+}
+
+.ptcgsim-segmented-control__option input:focus-visible + label {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ---- Switch row ---------------------------------------------------- */
+
+.ptcgsim-switch-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 30px;
+}
+
+.ptcgsim-switch-row .ds-switch {
+  flex: none;
+  margin: 2px 0 0;
+}
+
+.ptcgsim-switch-row label {
+  flex: 1;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ptcgsim-switch-row:has(input:disabled) label {
+  color: var(--color-text-faint);
+  cursor: not-allowed;
+}
+
+/* ---- Range row ----------------------------------------------------- */
+
+.ptcgsim-range-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.ptcgsim-range-row__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ptcgsim-range-row output {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ptcgsim-range-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.ptcgsim-range-row input:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ptcgsim-range-row__ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--space-1));
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+}
+
+/* ---- Link row ------------------------------------------------------ */
+
+.ptcgsim-link-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ptcgsim-link-row:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ptcgsim-link-row__icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 18px;
+}
+
+.ptcgsim-link-row__text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ptcgsim-link-row__text strong {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.ptcgsim-link-row__text span {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-link-row__trailing {
+  flex: none;
+  color: var(--color-text-faint);
+}
+
+@media (hover: hover) {
+  .ptcgsim-link-row:hover .ptcgsim-link-row__text strong {
+    color: var(--color-accent);
+  }
+}
+
+/* ---- Touch --------------------------------------------------------- */
+
+@media (pointer: coarse) {
+  .ptcgsim-segmented-control__option label {
+    height: 40px;
+  }
+  .ptcgsim-switch-row {
+    min-height: 44px;
+    align-items: center;
+  }
+  .ptcgsim-switch-row .ds-switch {
+    margin-top: 0;
+  }
+}

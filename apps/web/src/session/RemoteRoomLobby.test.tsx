@@ -2,6 +2,7 @@
 
 import {
   createRendererSpikeView,
+  type BoardLayoutSnapshot,
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import type { DeckCard } from '@ptcgsim/deck-core';
@@ -22,6 +23,7 @@ import {
   type RemoteRoomLobbyDependencies,
 } from './RemoteRoomLobby.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import type { BoardRailModel } from './RemoteSessionBoard.js';
 import type { RoomBackground } from './browser-room-background.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 
@@ -30,8 +32,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const lobbyBoardHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
   viewMatchId: undefined as string | undefined,
+  table: undefined as { readonly lowerShare: number } | undefined,
   parkedSession: undefined as unknown,
   parkedRoomMode: undefined as string | undefined,
+  parkedRail: undefined as BoardRailModel | undefined,
+  parkedKeysSuspended: undefined as boolean | undefined,
 }));
 const roomRouteHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
@@ -42,6 +47,7 @@ const roomRouteHarness = vi.hoisted(() => ({
     ((background: RoomBackground) => void) | undefined,
   roomMode: undefined as 'solo' | 'multiplayer' | undefined,
   onMultiplayerNavigate: undefined as (() => void) | undefined,
+  onMultiplayerPanelOpen: undefined as (() => void) | undefined,
   deckStore: undefined as DeckBuilderStore | undefined,
   cardBackStore: undefined as CardBackCustodyStore | undefined,
   onCopyInvitation: undefined as
@@ -57,14 +63,25 @@ const roomRouteHarness = vi.hoisted(() => ({
     | undefined,
 }));
 
+/** Enough of a table layout for the empty table's rail to place itself. */
+const EMPTY_TABLE_LAYOUT = {
+  playAreaBounds: { x: 0, y: 0, width: 1200, height: 800 },
+  shared: { boardControlsAnchor: { x: 120, y: 384, height: 32 } },
+} as unknown as BoardLayoutSnapshot;
+
 vi.mock('../RendererSpikeBoard.js', () => ({
   RendererSpikeBoard: (props: {
     readonly preferences?: BoardPreferences;
     readonly view: { readonly matchId: string };
+    readonly table?: { readonly lowerShare: number };
+    readonly chrome?: (layout: BoardLayoutSnapshot) => ReactNode;
   }) => {
     lobbyBoardHarness.preferences = props.preferences;
     lobbyBoardHarness.viewMatchId = props.view.matchId;
-    return <div data-testid="lobby-board" />;
+    lobbyBoardHarness.table = props.table;
+    return (
+      <div data-testid="lobby-board">{props.chrome?.(EMPTY_TABLE_LAYOUT)}</div>
+    );
   },
 }));
 
@@ -72,10 +89,14 @@ vi.mock('./RemoteSessionBoard.js', () => ({
   RemoteSessionBoard: (props: {
     readonly session: unknown;
     readonly roomMode?: string;
+    readonly rail?: BoardRailModel;
+    readonly keysSuspended?: boolean;
   }) => {
     lobbyBoardHarness.parkedSession = props.session;
     lobbyBoardHarness.parkedRoomMode = props.roomMode;
-    return <div data-testid="parked-solo-board" />;
+    lobbyBoardHarness.parkedRail = props.rail;
+    lobbyBoardHarness.parkedKeysSuspended = props.keysSuspended;
+    return <div data-testid="parked-solo-board">{props.rail?.start}</div>;
   },
 }));
 
@@ -90,6 +111,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomMode,
     onMultiplayerNavigate,
     multiplayerPanel,
+    onMultiplayerPanelOpen,
     deckStore,
     cardBackStore,
     onCopyInvitation,
@@ -106,6 +128,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly roomMode?: 'solo' | 'multiplayer';
     readonly onMultiplayerNavigate?: () => void;
     readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
+    readonly onMultiplayerPanelOpen?: () => void;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
     readonly onCopyInvitation?: (
@@ -125,6 +148,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onBackgroundChange = onBackgroundChange;
     roomRouteHarness.roomMode = roomMode;
     roomRouteHarness.onMultiplayerNavigate = onMultiplayerNavigate;
+    roomRouteHarness.onMultiplayerPanelOpen = onMultiplayerPanelOpen;
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
     roomRouteHarness.onCopyInvitation = onCopyInvitation;
@@ -337,28 +361,98 @@ const mount = async (
   return { host, root };
 };
 
+/** Sheets and menus portal into the page, so the whole document is searched. */
 const element = <ElementType extends Element>(
-  host: ParentNode,
   selector: string
 ): ElementType => {
-  const found = host.querySelector<ElementType>(selector);
+  const found = document.querySelector<ElementType>(selector);
   if (!found) throw new Error(`Missing test element: ${selector}`);
   return found;
 };
 
-const openDeck = async (host: ParentNode): Promise<void> => {
+const present = (selector: string): boolean =>
+  document.querySelector(selector) !== null;
+
+/** Lets Base UI's menus and drawers open, close and move focus. */
+const settle = async (rounds = 3): Promise<void> => {
+  for (let index = 0; index < rounds; index += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+};
+
+const click = async (selector: string): Promise<void> => {
   await act(async () => {
-    element<HTMLButtonElement>(host, '#deckImportButton').click();
+    element<HTMLElement>(selector).click();
+    await flush();
+  });
+  await settle();
+};
+
+/** Opens the app menu at the rail's left end. */
+const openMenu = async (): Promise<void> => {
+  await click('#appMenuButton');
+  expect(present('[role="menu"][aria-label="Menu"]')).toBe(true);
+};
+
+/** Chooses an app-menu entry by its id. */
+const chooseMenuItem = async (id: string): Promise<void> => {
+  await openMenu();
+  await click(`#${id}`);
+};
+
+/** The ids the app menu offers right now; the menu is closed again after. */
+const menuEntryIds = async (): Promise<string[]> => {
+  await openMenu();
+  const ids = [
+    ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
+  ].map((entry) => entry.id);
+  // Closed from its own button: an Escape would also reach the sheet below.
+  await click('#appMenuButton');
+  expect(present('[role="menu"][aria-label="Menu"]')).toBe(false);
+  return ids;
+};
+
+const openDeck = async (): Promise<void> => {
+  await chooseMenuItem('deckImportButton');
+  await act(async () => {
     await import('../features/deck/LegacyDeckBuilderSession.js');
     await flush();
   });
+  await settle();
+  expect(element<HTMLElement>('.ptcgsim-deck-layer').dataset.open).toBe('true');
 };
+
+const closeDeck = async (): Promise<void> => {
+  await click('#deckBackButton');
+  expect(element<HTMLElement>('.ptcgsim-deck-layer').dataset.open).toBe(
+    'false'
+  );
+};
+
+const openSettings = async (): Promise<void> => {
+  await chooseMenuItem('settingsButton');
+  expect(present('#settings')).toBe(true);
+};
+
+/** Closes a sheet from its own close button. */
+const closeSheet = async (sheetId: string): Promise<void> => {
+  await click(`#${sheetId} .ptcgsim-sheet__close`);
+};
+
+const playOnlineOpen = (): boolean => present('#playOnlineSheet');
+
+const lobbyRoute = (): HTMLElement =>
+  element<HTMLElement>('[data-app-route="remote-room-lobby"]');
 
 describe('remote room lobby wiring', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     vi.clearAllMocks();
     lobbyBoardHarness.preferences = undefined;
+    lobbyBoardHarness.table = undefined;
+    lobbyBoardHarness.parkedRail = undefined;
     roomRouteHarness.preferences = undefined;
     roomRouteHarness.onPreferencesChange = undefined;
     boardViewSettings().reset();
@@ -366,34 +460,32 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.onBackgroundChange = undefined;
     roomRouteHarness.roomMode = undefined;
     roomRouteHarness.onMultiplayerNavigate = undefined;
+    roomRouteHarness.onMultiplayerPanelOpen = undefined;
     roomRouteHarness.deckStore = undefined;
     roomRouteHarness.cardBackStore = undefined;
     roomRouteHarness.onResumeSavedGame = undefined;
   });
 
-  it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
+  it('opens Play online over an empty table without creating a room', async () => {
     const invitation = custody();
     const createRoom = vi.fn();
     const requestBackground = vi.fn(async () => ({
       kind: 'image' as const,
       url: 'https://images.example.test/lobby.png',
     }));
-    const { host, root } = await mount(
+    const { root } = await mount(
       lobbyDependencies(invitation, createRoom, requestBackground)
     );
+    await settle();
 
-    expect(
-      host.querySelector('[data-app-route="remote-room-lobby"]')
-    ).not.toBeNull();
-    expect(host.querySelector('[data-testid="lobby-board"]')).not.toBeNull();
-    // A visitor with no game sees an empty table, not the parity fixture.
+    expect(lobbyRoute().classList.contains('table-shell')).toBe(true);
+    expect(present('[data-testid="lobby-board"]')).toBe(true);
+    // A visitor with no game sees an empty table, laid out like the room's.
     expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
-    expect(host.querySelector('[data-testid="parked-solo-board"]')).toBeNull();
-    expect(element(host, '#p2Button').getAttribute('aria-current')).toBe(
-      'page'
-    );
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
-    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
+    expect(lobbyBoardHarness.table).toEqual({ lowerShare: 0.5 });
+    expect(present('[data-testid="parked-solo-board"]')).toBe(false);
+    expect(playOnlineOpen()).toBe(true);
+    expect(present('#settings')).toBe(false);
     expect(lobbyBoardHarness.preferences).toBeUndefined();
     for (const id of [
       'nameInput',
@@ -404,73 +496,73 @@ describe('remote room lobby wiring', () => {
       'spectatorModeCheckbox',
       'joinRoomButton',
     ]) {
-      expect(host.querySelector(`#${id}`), id).not.toBeNull();
+      expect(present(`#playOnlineSheet #${id}`), id).toBe(true);
     }
-    expect(element(host, '#joinRoomButton').tagName).toBe('BUTTON');
+    expect(element('#joinRoomButton').tagName).toBe('BUTTON');
     expect(createRoom).not.toHaveBeenCalled();
-    expect(host.innerHTML).not.toContain('PTCGSIM2-INVITE:');
+    expect(document.body.innerHTML).not.toContain('PTCGSIM2-INVITE:');
 
-    await openDeck(host);
-    expect(element(host, '#deckImportButton').className).toBe('selected-page');
-    expect(element<HTMLElement>(host, '#deckImport').hidden).toBe(false);
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
-    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
+    // The menu sits on the empty table's rail. From Play online it offers
+    // the Solo table; it never offers Play online itself.
+    expect(present('[data-testid="lobby-board"] #appMenuButton')).toBe(true);
+    const entries = await menuEntryIds();
+    expect(entries).toEqual(
+      expect.arrayContaining([
+        'p1Button',
+        'deckImportButton',
+        'settingsButton',
+        'shortcutsButton',
+        'fullscreenButton',
+      ])
+    );
+    expect(entries).not.toContain('p2Button');
+    expect(entries).not.toContain('leaveRoomButton');
+
+    await openDeck();
+    expect(element<HTMLElement>('#deckImport').hidden).toBe(false);
+    // Play online gives way to the deck screen and comes back after it.
+    expect(playOnlineOpen()).toBe(false);
     expect(
-      element(host, '#altImportHeaderButton').getAttribute('aria-disabled')
+      element('#altImportHeaderButton').getAttribute('aria-disabled')
     ).toBe('true');
+    await closeDeck();
+    expect(element<HTMLElement>('#deckImport').hidden).toBe(true);
+    expect(playOnlineOpen()).toBe(true);
 
+    await openSettings();
+    expect(playOnlineOpen()).toBe(false);
     await act(async () =>
-      element<HTMLButtonElement>(host, '#p2Button').click()
+      element<HTMLInputElement>('#darkModeCheckbox').click()
     );
-    expect(element<HTMLElement>(host, '#deckImport').hidden).toBe(true);
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
-
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#settingsButton').click()
-    );
-    expect(element(host, '#settingsButton').className).toBe('selected-page');
-    expect(element(host, '#p2Button').className).toBe('not-selected-page');
-    expect(element<HTMLElement>(host, '#settings').hidden).toBe(false);
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
-    await act(async () =>
-      element<HTMLInputElement>(host, '#darkModeCheckbox').click()
-    );
-    // The room starts on the Night table; the checkbox turns it to Day.
+    // The room starts on the Night table; the switch turns it to Day.
     expect(lobbyBoardHarness.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
       darkMode: false,
       showZoneOutlines: true,
     });
-    // The table's own view (outlines, halves, depth) lives in the Board view
-    // panel, which needs a table to open over.
-    expect(host.querySelector('#showZonesCheckbox')).toBeNull();
-    expect(host.querySelector('#hideHandCheckbox')).toBeNull();
-    expect(host.querySelector('#openBoardViewButton')).toBeNull();
+    // How the table shows is in Settings too; covering the opponent's hand
+    // is a Solo choice, offered only with a Solo table.
+    expect(present('#zoneOutlinesCheckbox')).toBe(true);
+    expect(present('#lostZoneCheckbox')).toBe(true);
+    expect(present('#hideHandCheckbox')).toBe(false);
     await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
-    expect(host.textContent).toContain(
+    expect(document.body.textContent).toContain(
       'Press ? anywhere to see keyboard shortcuts'
     );
-    expect(element(host, '#changeBackgroundButton').textContent).toBe(
+    expect(element('#changeBackgroundButton').textContent).toBe(
       'Change background'
     );
-    expect(element<HTMLAnchorElement>(host, '#twitterDescription a').href).toBe(
+    expect(element<HTMLAnchorElement>('#twitterDescription').href).toBe(
       'https://twitter.com/xxmichaellong'
     );
-    expect(
-      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').dataset
-        .darkMode
-    ).toBe('false');
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
-      await flush();
-    });
+    expect(lobbyRoute().dataset.darkMode).toBe('false');
+    await click('#changeBackgroundButton');
     expect(requestBackground).toHaveBeenCalledOnce();
-    expect(
-      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style
-        .backgroundImage
-    ).toBe('url("https://images.example.test/lobby.png")');
+    expect(lobbyRoute().style.backgroundImage).toBe(
+      'url("https://images.example.test/lobby.png")'
+    );
     expect(lobbyBoardHarness.preferences).toEqual({
       reducedMotion: false,
       highContrast: false,
@@ -478,11 +570,9 @@ describe('remote room lobby wiring', () => {
       showZoneOutlines: false,
     });
     expect(createRoom).not.toHaveBeenCalled();
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2Button').click()
-    );
-    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
+    await closeSheet('settings');
+    expect(present('#settings')).toBe(false);
+    expect(playOnlineOpen()).toBe(true);
 
     await act(async () => root.unmount());
     expect(invitation.dispose).toHaveBeenCalledOnce();
@@ -502,32 +592,28 @@ describe('remote room lobby wiring', () => {
           }
         })
     );
-    const { host, root } = await mount(
+    const { root } = await mount(
       lobbyDependencies(invitation, createRoom),
       true,
       'solo'
     );
+    await settle();
     // While the room is still being created the page already shows the
-    // Solo panel -- welcome text, Solo tab selected -- never Multiplayer.
-    expect(element<HTMLButtonElement>(host, '#p1Button').className).toBe(
-      'selected-page'
-    );
-    expect(element<HTMLElement>(host, '#p1Box').hidden).toBe(false);
-    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
-    expect(host.querySelector('#p1Box #chatbox')?.textContent).toContain(
-      'Welcome to PTCG-sim!'
-    );
-    expect(element<HTMLButtonElement>(host, '#setupButton').disabled).toBe(
-      true
-    );
+    // Solo table -- never Play online, and no failure.
+    expect(present('[data-testid="lobby-board"]')).toBe(true);
+    expect(playOnlineOpen()).toBe(false);
+    expect(present('#roomHeader')).toBe(false);
+    const entries = await menuEntryIds();
+    expect(entries).toContain('p2Button');
+    expect(entries).not.toContain('p1Button');
     await act(async () => {
       releaseCreation?.();
       await flush();
     });
 
-    // v1 opens on Solo; nobody has to press a tab to get a table. StrictMode
-    // replays the mount with a fresh owner: the first owner's creation is
-    // aborted with it and the live owner's creation is the one mounted.
+    // v1 opens on Solo; nobody has to press anything to get a table.
+    // StrictMode replays the mount with a fresh owner: the first owner's
+    // creation is aborted with it and the live owner's creation is mounted.
     expect(createRoom).toHaveBeenCalledTimes(2);
     // Solo is always v1's Blue, never the Multiplayer fallback name.
     for (const call of createRoom.mock.calls) {
@@ -535,32 +621,58 @@ describe('remote room lobby wiring', () => {
     }
     expect(createRoom.mock.calls[0]?.[0].signal.aborted).toBe(true);
     expect(createRoom.mock.calls[1]?.[0].signal.aborted).toBe(false);
-    expect(
-      host.querySelector('[data-app-route="test-remote-room"]')
-    ).not.toBeNull();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
     expect(roomRouteHarness.roomMode).toBe('solo');
     // The generated stand-in name stays out of the Multiplayer Name box.
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#testOpenMultiplayer').click()
-    );
-    expect(element<HTMLInputElement>(host, '#nameInput').value).toBe('');
+    await click('#testOpenMultiplayer');
+    expect(element<HTMLInputElement>('#nameInput').value).toBe('');
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
-  it('starts one-player authority from Solo and parks it across source tab navigation', async () => {
+  it('says when the Solo table could not be made, and tries again on request', async () => {
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error('internal detail'), { code: 'offline' })
+      )
+      .mockResolvedValueOnce(created.value);
+    const { root } = await mount(
+      lobbyDependencies(custody(), createRoom),
+      false,
+      'solo'
+    );
+    await settle();
+
+    expect(element('#roomHeaderText').textContent).toBe(
+      'Could not start Solo mode. Please try again.'
+    );
+    expect(document.body.textContent).not.toContain('internal detail');
+    await act(async () => {
+      [...document.querySelectorAll<HTMLButtonElement>('#roomHeader button')]
+        .find((button) => button.textContent === 'Try again')!
+        .click();
+      await flush();
+    });
+    expect(createRoom).toHaveBeenCalledTimes(2);
+    expect(createRoom.mock.calls[1]?.[0]).toMatchObject({ mode: 'solo' });
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(present('#roomHeader')).toBe(false);
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('starts one-player authority from Solo and parks it while Play online is open', async () => {
     const invitation = custody();
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
     const createRoom = vi.fn(async () => created.value);
-    const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
-    );
+    const { root } = await mount(lobbyDependencies(invitation, createRoom));
+    await settle();
 
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#p1Button').click();
-      await flush();
-    });
+    await chooseMenuItem('p1Button');
 
     expect(createRoom).toHaveBeenCalledOnce();
     expect(createRoom.mock.calls[0]?.[0]).toMatchObject({
@@ -570,45 +682,53 @@ describe('remote room lobby wiring', () => {
       rendererKind: 'dom',
     });
     expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
-    expect(
-      host.querySelector('[data-app-route="test-remote-room"]')
-    ).not.toBeNull();
-    expect(host.textContent).toContain('solo');
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(document.body.textContent).toContain('solo');
     expect(roomRouteHarness.roomMode).toBe('solo');
     expect(roomRouteHarness.onMultiplayerNavigate).toBeTypeOf('function');
+    expect(roomRouteHarness.onMultiplayerPanelOpen).toBeTypeOf('function');
     expect(created.roomRuntime.submit).not.toHaveBeenCalled();
     expect(invitation.clear).toHaveBeenCalledOnce();
 
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#testOpenMultiplayer').click()
-    );
-    expect(
-      host.querySelector('[data-app-route="remote-room-lobby"]')
-    ).not.toBeNull();
-    expect(host.querySelector('.lobby-status')).toBeNull();
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
+    await click('#testOpenMultiplayer');
+    expect(present('[data-app-route="remote-room-lobby"]')).toBe(true);
+    expect(playOnlineOpen()).toBe(true);
+    expect(present('.lobby-status')).toBe(false);
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe('');
     expect(created.dispose).not.toHaveBeenCalled();
-    // The parked game keeps its table on screen behind the Multiplayer panel
-    // instead of the lobby's empty board.
-    expect(
-      host.querySelector('[data-testid="parked-solo-board"]')
-    ).not.toBeNull();
-    expect(host.querySelector('[data-testid="lobby-board"]')).toBeNull();
+    // The parked game keeps its table on screen behind Play online instead
+    // of the lobby's empty table, with the menu on its rail and only the
+    // table's own actions.
+    expect(present('[data-testid="parked-solo-board"]')).toBe(true);
+    expect(present('[data-testid="lobby-board"]')).toBe(false);
     expect(lobbyBoardHarness.parkedSession).toBe(
       created.roomRuntime.value.session
     );
     expect(lobbyBoardHarness.parkedRoomMode).toBe('solo');
-
-    await openDeck(host);
+    expect(present('[data-testid="parked-solo-board"] #appMenuButton')).toBe(
+      true
+    );
+    const turn = { id: 'turnButton' } as never;
+    const switchSide = { id: 'flipBoardButton' } as never;
     expect(
-      element(host, '#altImportHeaderButton').getAttribute('aria-disabled')
-    ).toBe('false');
+      lobbyBoardHarness.parkedRail?.compose({ turn, switchSide }).actions
+    ).toEqual([turn, switchSide]);
+    expect(lobbyBoardHarness.parkedKeysSuspended).toBe(false);
 
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#p1Button').click();
-      await flush();
-    });
+    await openDeck();
+    // Keys pressed on the deck screen never reach the parked table.
+    expect(lobbyBoardHarness.parkedKeysSuspended).toBe(true);
+    expect(
+      element('#altImportHeaderButton').getAttribute('aria-disabled')
+    ).toBe('false');
+    await closeDeck();
+    expect(playOnlineOpen()).toBe(true);
+
+    // Putting Play online away is going back to the Solo table: the parked
+    // game, not a new one.
+    await closeSheet('playOnlineSheet');
     expect(createRoom).toHaveBeenCalledOnce();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
     expect(roomRouteHarness.roomMode).toBe('solo');
     expect(roomRouteHarness.deckStore).toBeDefined();
     expect(created.dispose).not.toHaveBeenCalled();
@@ -624,42 +744,34 @@ describe('remote room lobby wiring', () => {
       Object.assign(new Error('internal detail'), { code: 'room_not_found' })
     );
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
-    const { host, root } = await mount(
+    const { root } = await mount(
       lobbyDependencies(
         invitation,
         vi.fn(async () => created.value)
       )
     );
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#p1Button').click();
-      await flush();
-    });
+    await settle();
+    await chooseMenuItem('p1Button');
     expect(invitation.clear).toHaveBeenCalledOnce();
 
-    // The Multiplayer panel is read over the live table; pasting into it and
-    // pressing Join is the first thing that could move the table.
+    // Play online is read over the live table; pasting into it and pressing
+    // Join is the first thing that could move the table.
     await act(async () => {
-      paste(element(host, '#roomIdInput'), RAW_HANDOFF);
+      paste(element('#roomIdInput'), RAW_HANDOFF);
     });
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe(
-      ROOM_CODE
-    );
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe(ROOM_CODE);
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
 
     expect(invitation.bootstrap).toHaveBeenCalledOnce();
-    expect(
-      host.querySelector('[data-app-route="test-remote-room"]')
-    ).not.toBeNull();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
     expect(roomRouteHarness.roomMode).toBe('solo');
     expect(created.dispose).not.toHaveBeenCalled();
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe(
-      ROOM_CODE
-    );
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe(ROOM_CODE);
     expect(invitation.clear).toHaveBeenCalledOnce();
-    expect(element(host, '.lobby-status').textContent).not.toContain(
+    expect(element('.lobby-status').textContent).not.toContain(
       'internal detail'
     );
 
@@ -683,15 +795,14 @@ describe('remote room lobby wiring', () => {
       requestedRole: 'spectator',
     });
     const createRoom = vi.fn();
-    const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
-    );
-    const roomInput = element<HTMLInputElement>(host, '#roomIdInput');
+    const { root } = await mount(lobbyDependencies(invitation, createRoom));
+    await settle();
+    const roomInput = element<HTMLInputElement>('#roomIdInput');
     await act(async () => {
       paste(roomInput, RAW_HANDOFF);
       await flush();
     });
-    const spectator = element<HTMLInputElement>(host, '#spectatorModeCheckbox');
+    const spectator = element<HTMLInputElement>('#spectatorModeCheckbox');
     // A player invitation neither forces nor forbids watching.
     expect(spectator.checked).toBe(false);
     expect(spectator.disabled).toBe(false);
@@ -701,7 +812,7 @@ describe('remote room lobby wiring', () => {
     });
     expect(spectator.checked).toBe(true);
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
     expect(invitation.bootstrap.mock.calls[0]?.[0]).toMatchObject({
@@ -725,43 +836,37 @@ describe('remote room lobby wiring', () => {
       preferences: store,
     };
     const first = await mount(dependencies);
-    await act(async () =>
-      element<HTMLButtonElement>(first.host, '#settingsButton').click()
-    );
-    expect(first.host.querySelector('#defaultBackgroundButton')).toBeNull();
+    await settle();
+    await openSettings();
+    expect(present('#defaultBackgroundButton')).toBe(false);
     await act(async () => {
-      element<HTMLInputElement>(first.host, '#darkModeCheckbox').click();
-      element<HTMLButtonElement>(first.host, '#changeBackgroundButton').click();
+      element<HTMLInputElement>('#darkModeCheckbox').click();
+      element<HTMLButtonElement>('#changeBackgroundButton').click();
       await flush();
     });
+    await settle();
+    await closeSheet('settings');
     await act(async () => {
-      element<HTMLButtonElement>(first.host, '#p2Button').click();
-      inputValue(element(first.host, '#nameInput'), '  Misty ');
-      element<HTMLButtonElement>(first.host, '#generateIdButton').click();
+      inputValue(element('#nameInput'), '  Misty ');
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     await act(async () => first.root.unmount());
-    first.host.remove();
+    document.body.replaceChildren();
 
     // A later visit on this device starts where the player left off.
-    const { host, root } = await mount(dependencies);
-    expect(element<HTMLInputElement>(host, '#nameInput').value).toBe('Misty');
-    expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
-      false
-    );
-    const lobby = element<HTMLElement>(
-      host,
-      '[data-app-route="remote-room-lobby"]'
-    );
-    expect(lobby.dataset.darkMode).toBe('false');
-    expect(lobby.style.backgroundImage).toBe(
+    const { root } = await mount(dependencies);
+    await settle();
+    expect(element<HTMLInputElement>('#nameInput').value).toBe('Misty');
+    expect(lobbyRoute().dataset.darkMode).toBe('false');
+    expect(lobbyRoute().style.backgroundImage).toBe(
       'url("https://images.example.test/remembered.png")'
     );
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#defaultBackgroundButton').click()
-    );
-    expect(lobby.style.backgroundImage).toBe('');
-    expect(host.querySelector('#defaultBackgroundButton')).toBeNull();
+    await openSettings();
+    expect(element<HTMLInputElement>('#darkModeCheckbox').checked).toBe(false);
+    await click('#defaultBackgroundButton');
+    expect(lobbyRoute().style.backgroundImage).toBe('');
+    expect(present('#defaultBackgroundButton')).toBe(false);
     await act(async () => root.unmount());
   });
 
@@ -769,14 +874,13 @@ describe('remote room lobby wiring', () => {
     const invitation = custody();
     const created = creationResult();
     const createRoom = vi.fn(async () => created.value);
-    const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
-    );
-    const name = element<HTMLInputElement>(host, '#nameInput');
+    const { root } = await mount(lobbyDependencies(invitation, createRoom));
+    await settle();
+    const name = element<HTMLInputElement>('#nameInput');
 
     await act(async () => {
       inputValue(name, '  Blue  ');
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
 
@@ -788,13 +892,11 @@ describe('remote room lobby wiring', () => {
       rendererKind: 'dom',
     });
     expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
-    expect(element<HTMLInputElement>(host, '#nameInput').value).toBe('Blue');
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe(
-      ROOM_CODE
-    );
+    expect(element<HTMLInputElement>('#nameInput').value).toBe('Blue');
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe(ROOM_CODE);
 
     await act(async () => {
-      element<HTMLButtonElement>(host, '#copyButton').click();
+      element<HTMLButtonElement>('#copyButton').click();
       await flush();
     });
     expect(created.copyPlayerInvitation).toHaveBeenCalledOnce();
@@ -804,17 +906,47 @@ describe('remote room lobby wiring', () => {
     );
 
     await act(async () => {
-      element<HTMLInputElement>(host, '#spectatorModeCheckbox').click();
-      element<HTMLButtonElement>(host, '#copyButton').click();
+      element<HTMLInputElement>('#spectatorModeCheckbox').click();
+      element<HTMLButtonElement>('#copyButton').click();
       await flush();
     });
     expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
     // The button confirms the copy; the lobby narrates nothing, as in v1.
-    expect(element(host, '#copyButton').classList.contains('copied')).toBe(
-      true
-    );
-    expect(host.querySelector('.lobby-status')).toBeNull();
-    expect(host.innerHTML).not.toContain('secret-bearer');
+    expect(element('#copyButton').classList.contains('copied')).toBe(true);
+    expect(present('.lobby-status')).toBe(false);
+    expect(document.body.innerHTML).not.toContain('secret-bearer');
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps Play online and its menu steady while a room is being made', async () => {
+    const pending = deferred<RemoteRoomCreationResult>();
+    const created = creationResult();
+    const createRoom = vi.fn(() => pending.promise);
+    const { root } = await mount(lobbyDependencies(custody(), createRoom));
+    await settle();
+    await act(async () => {
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+
+    // Neither the sheet's close button nor the menu can leave for Solo
+    // in the middle of making a room.
+    await closeSheet('playOnlineSheet');
+    expect(createRoom).toHaveBeenCalledOnce();
+    expect(createRoom.mock.calls[0]?.[0]).toMatchObject({
+      mode: 'multiplayer',
+    });
+    expect(await menuEntryIds()).not.toContain('p1Button');
+
+    await act(async () => {
+      pending.resolve(created.value);
+      await flush();
+    });
+    await settle();
+    expect(playOnlineOpen()).toBe(true);
+    expect(await menuEntryIds()).toContain('p1Button');
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
@@ -826,30 +958,29 @@ describe('remote room lobby wiring', () => {
       .fn()
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValue(created.value);
-    const { host, root } = await mount(
-      lobbyDependencies(custody(), createRoom)
-    );
+    const { root } = await mount(lobbyDependencies(custody(), createRoom));
+    await settle();
     const generate = async () =>
       act(async () => {
-        element<HTMLButtonElement>(host, '#generateIdButton').click();
+        element<HTMLButtonElement>('#generateIdButton').click();
         await flush();
       });
 
     await generate();
-    expect(host.querySelector('.lobby-status')).not.toBeNull();
+    expect(present('.lobby-status')).toBe(true);
     await generate();
-    expect(host.querySelector('.lobby-status')).toBeNull();
+    expect(present('.lobby-status')).toBe(false);
 
     created.copyPlayerInvitation.mockRejectedValueOnce(new Error('denied'));
     const copy = async () =>
       act(async () => {
-        element<HTMLButtonElement>(host, '#copyButton').click();
+        element<HTMLButtonElement>('#copyButton').click();
         await flush();
       });
     await copy();
-    expect(host.querySelector('.lobby-status')).not.toBeNull();
+    expect(present('.lobby-status')).toBe(true);
     await copy();
-    expect(host.querySelector('.lobby-status')).toBeNull();
+    expect(present('.lobby-status')).toBe(false);
 
     await act(async () => root.unmount());
   });
@@ -858,26 +989,28 @@ describe('remote room lobby wiring', () => {
     for (const reported of [false, true]) {
       const created = creationResult();
       const continuationAvailability = vi.fn(async () => reported);
-      const { host, root } = await mount({
+      const { root } = await mount({
         ...lobbyDependencies(
           custody(),
           vi.fn(async () => created.value)
         ),
         continuationAvailability,
       });
+      await settle();
       await act(async () => {
-        element<HTMLButtonElement>(host, '#generateIdButton').click();
+        element<HTMLButtonElement>('#generateIdButton').click();
         await flush();
       });
       // The lobby itself makes no authority request.
       expect(continuationAvailability).not.toHaveBeenCalled();
       await act(async () => {
-        element<HTMLButtonElement>(host, '#joinRoomButton').click();
+        element<HTMLButtonElement>('#joinRoomButton').click();
         await flush();
       });
       expect(continuationAvailability).toHaveBeenCalledOnce();
       expect(roomRouteHarness.continuationAvailable).toBe(reported);
       await act(async () => root.unmount());
+      document.body.replaceChildren();
     }
   });
 
@@ -885,15 +1018,14 @@ describe('remote room lobby wiring', () => {
     const invitation = custody();
     const created = creationResult();
     const createRoom = vi.fn(async () => created.value);
-    const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
-    );
+    const { root } = await mount(lobbyDependencies(invitation, createRoom));
+    await settle();
     await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
 
@@ -928,8 +1060,9 @@ describe('remote room lobby wiring', () => {
         rendererKind: 'dom',
       },
     });
-    const { host, root } = await mount(lobbyDependencies(invitation, vi.fn()));
-    const roomInput = element<HTMLInputElement>(host, '#roomIdInput');
+    const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    await settle();
+    const roomInput = element<HTMLInputElement>('#roomIdInput');
 
     let pasteEvent!: Event;
     await act(async () => {
@@ -939,17 +1072,19 @@ describe('remote room lobby wiring', () => {
     expect(pasteEvent.defaultPrevented).toBe(true);
     expect(invitation.acceptPaste).toHaveBeenCalledOnce();
     expect(roomInput.value).toBe(ROOM_CODE);
-    const spectator = element<HTMLInputElement>(host, '#spectatorModeCheckbox');
+    const spectator = element<HTMLInputElement>('#spectatorModeCheckbox');
     expect(spectator.checked).toBe(true);
     expect(spectator.disabled).toBe(true);
-    expect(host.innerHTML).not.toContain(RAW_HANDOFF);
-    expect(host.innerHTML).not.toContain('secret-bearer-never-rendered');
+    expect(document.body.innerHTML).not.toContain(RAW_HANDOFF);
+    expect(document.body.innerHTML).not.toContain(
+      'secret-bearer-never-rendered'
+    );
 
     await act(async () => {
       paste(roomInput, 'malformed replacement');
       await flush();
     });
-    expect(host.textContent).toContain(
+    expect(document.body.textContent).toContain(
       'Paste a valid invitation into Room ID before joining.'
     );
     expect(spectator.disabled).toBe(false);
@@ -960,7 +1095,7 @@ describe('remote room lobby wiring', () => {
     });
 
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
     expect(invitation.bootstrap).toHaveBeenCalledOnce();
@@ -977,10 +1112,10 @@ describe('remote room lobby wiring', () => {
     expect(invitation.bootstrap.mock.calls[0]?.[0]).not.toHaveProperty(
       'roomCode'
     );
-    expect(
-      host.querySelector('[data-app-route="test-remote-room"]')
-    ).not.toBeNull();
-    expect(host.innerHTML).not.toContain('secret-bearer-never-rendered');
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(document.body.innerHTML).not.toContain(
+      'secret-bearer-never-rendered'
+    );
 
     await act(async () => root.unmount());
     expect(invitation.dispose).toHaveBeenCalledOnce();
@@ -994,22 +1129,23 @@ describe('remote room lobby wiring', () => {
         code: 'missing_invitation',
       })
     );
-    const { host, root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    await settle();
     await act(async () => {
-      inputValue(element(host, '#roomIdInput'), RAW_HANDOFF);
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      inputValue(element('#roomIdInput'), RAW_HANDOFF);
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
 
     expect(invitation.bootstrap).toHaveBeenCalledOnce();
-    expect(host.textContent).toContain(
+    expect(document.body.textContent).toContain(
       'Paste a valid invitation into Room ID before joining.'
     );
-    const safeInput = element<HTMLInputElement>(host, '#roomIdInput').value;
+    const safeInput = element<HTMLInputElement>('#roomIdInput').value;
     expect(safeInput).toMatch(/^[A-HJ-NP-Z2-9]{0,12}$/u);
     expect(safeInput).not.toContain('secret-bearer-never-rendered');
-    expect(host.innerHTML).not.toContain(RAW_HANDOFF);
-    expect(element(host, '.lobby-status').textContent).not.toContain(
+    expect(document.body.innerHTML).not.toContain(RAW_HANDOFF);
+    expect(element('.lobby-status').textContent).not.toContain(
       'internal detail'
     );
 
@@ -1029,13 +1165,14 @@ describe('remote room lobby wiring', () => {
       createInvitationJoinCustody: () => invitations.shift()!,
       fallbackDisplayName: () => 'Froakie',
     };
-    const { host, root } = await mount(dependencies, true);
+    const { root } = await mount(dependencies, true);
+    await settle();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();
 
     await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     expect(createRoom).toHaveBeenCalledOnce();
@@ -1061,17 +1198,16 @@ describe('remote room lobby wiring', () => {
       .fn()
       .mockResolvedValueOnce(first.value)
       .mockResolvedValueOnce(second.value);
-    const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
-    );
+    const { root } = await mount(lobbyDependencies(invitation, createRoom));
+    await settle();
 
     await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     expect(first.dispose).not.toHaveBeenCalled();
     await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     expect(first.dispose).toHaveBeenCalledOnce();
@@ -1088,33 +1224,27 @@ describe('remote room lobby wiring', () => {
     const createRoom = vi.fn(async () => created.value);
     const exactCardBack = 'custom+unsafe://pre-room/player-back?exact=yes';
     const requestCardBack = vi.fn(async () => exactCardBack);
-    const { host, root } = await mount(
+    const { root } = await mount(
       lobbyDependencies(invitation, createRoom, undefined, requestCardBack)
     );
+    await settle();
 
-    await openDeck(host);
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#changeCardBackButton').click();
-      await flush();
-    });
+    await openDeck();
+    await click('#changeCardBackButton');
     expect(requestCardBack).toHaveBeenCalledOnce();
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2Button').click()
-    );
+    await closeDeck();
     await act(async () => {
-      inputValue(element(host, '#nameInput'), 'Blue');
-      element<HTMLInputElement>(host, '#coachingModeCheckbox').click();
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      inputValue(element('#nameInput'), 'Blue');
+      element<HTMLInputElement>('#coachingModeCheckbox').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
 
-    expect(
-      host.querySelector('[data-app-route="test-remote-room"]')
-    ).not.toBeNull();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
     expect(created.roomRuntime.submit).toHaveBeenCalledOnce();
     expect(created.roomRuntime.submit).toHaveBeenCalledWith({
       type: 'SetCoachingConsent',
@@ -1156,16 +1286,17 @@ describe('remote room lobby wiring', () => {
       ),
       createRestorationCustody,
     };
-    const { host, root } = await mount(dependencies);
+    const { root } = await mount(dependencies);
+    await settle();
     await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
-    expect(host.textContent).toContain('source');
+    expect(document.body.textContent).toContain('source');
     const resume = roomRouteHarness.onResumeSavedGame!;
     const deliverOpponentInvitation = vi.fn(async () => undefined);
 
@@ -1178,7 +1309,7 @@ describe('remote room lobby wiring', () => {
         )
       )
     ).rejects.toThrow('redacted restore failure');
-    expect(host.textContent).toContain('source');
+    expect(document.body.textContent).toContain('source');
     expect(created.dispose).not.toHaveBeenCalled();
     expect(restored.dispose).not.toHaveBeenCalled();
 
@@ -1197,7 +1328,7 @@ describe('remote room lobby wiring', () => {
     expect(deliverOpponentInvitation).toHaveBeenCalledWith(
       'private opponent invitation'
     );
-    expect(host.textContent).toContain('restored');
+    expect(document.body.textContent).toContain('restored');
     expect(roomRouteHarness.installDeckOnSessionAttach).toBe(false);
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(restored.dispose).not.toHaveBeenCalled();
@@ -1212,44 +1343,39 @@ describe('remote room lobby wiring', () => {
     const secondInvitation = custody();
     const invitations = [firstInvitation, secondInvitation];
     const created = creationResult();
+    const solo = creationResult(runtime({ label: 'solo' }), 'solo');
     const requestBackground = vi.fn(async () => ({
       kind: 'image' as const,
       url: 'https://images.example.test/retained.png',
     }));
+    const createRoom = vi
+      .fn()
+      .mockResolvedValueOnce(created.value)
+      .mockResolvedValueOnce(solo.value);
     const dependencies: RemoteRoomLobbyDependencies = {
-      createRoom: vi.fn(
-        async () => created.value
-      ) as unknown as RemoteRoomLobbyDependencies['createRoom'],
+      createRoom:
+        createRoom as unknown as RemoteRoomLobbyDependencies['createRoom'],
       createInvitationJoinCustody: () => invitations.shift()!,
       fallbackDisplayName: () => 'Froakie',
       requestBackground,
     };
-    const { host, root } = await mount(dependencies);
+    const { root } = await mount(dependencies);
+    await settle();
 
-    await openDeck(host);
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2Button').click()
-    );
-
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#settingsButton').click()
-    );
+    await openDeck();
+    await closeDeck();
+    await openSettings();
+    await click('#changeBackgroundButton');
+    await closeSheet('settings');
     await act(async () => {
-      element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
-      await flush();
-    });
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2Button').click()
-    );
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
-    expect(host.querySelector('#testLeaveRoom')).not.toBeNull();
+    expect(present('#testLeaveRoom')).toBe(true);
 
     // A real change (the Day table): preferences back at the defaults are
     // simply not set.
@@ -1275,32 +1401,37 @@ describe('remote room lobby wiring', () => {
     };
     act(() => retainedDeckStore.addCard(retainedCard));
 
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#testLeaveRoom').click()
-    );
-    expect(
-      host.querySelector('[data-app-route="remote-room-lobby"]')
-    ).not.toBeNull();
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
-    expect(host.querySelector('.lobby-status')).toBeNull();
+    await click('#testLeaveRoom');
+    expect(present('[data-app-route="remote-room-lobby"]')).toBe(true);
+    expect(playOnlineOpen()).toBe(true);
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe('');
+    expect(present('.lobby-status')).toBe(false);
     expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
-    expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
-      false
+    expect(lobbyRoute().style.backgroundImage).toBe(
+      'url("https://images.example.test/retained.png")'
     );
-    expect(
-      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style
-        .backgroundImage
-    ).toBe('url("https://images.example.test/retained.png")');
-    await openDeck(host);
-    expect(
-      element(host, '#nativeDeckBuilderSummaryPanel').textContent
-    ).toContain('Total: 1');
+    await openSettings();
+    expect(element<HTMLInputElement>('#darkModeCheckbox').checked).toBe(false);
+    await closeSheet('settings');
+    await openDeck();
+    expect(element('#nativeDeckBuilderSummaryPanel').textContent).toContain(
+      'Total: 1'
+    );
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();
 
+    // The builder's Play puts the deck screen away and sits down at a
+    // Solo table with it.
+    await click('#nativeDeckBuilderPlayButton');
+    expect(createRoom).toHaveBeenCalledTimes(2);
+    expect(createRoom.mock.calls[1]?.[0]).toMatchObject({ mode: 'solo' });
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(roomRouteHarness.roomMode).toBe('solo');
+
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
+    expect(solo.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).toHaveBeenCalledOnce();
   });
@@ -1324,26 +1455,25 @@ describe('remote room lobby wiring', () => {
       createInvitationJoinCustody: () => invitations.shift()!,
       fallbackDisplayName: () => 'Froakie',
     };
-    const { host, root } = await mount(dependencies);
+    const { root } = await mount(dependencies);
+    await settle();
 
     await act(async () => {
-      paste(element(host, '#roomIdInput'), RAW_HANDOFF);
+      paste(element('#roomIdInput'), RAW_HANDOFF);
       await flush();
     });
     await act(async () => {
-      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#testLeaveRoom').click()
-    );
+    await click('#testLeaveRoom');
 
     expect(guest.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
-    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
-    expect(
-      element<HTMLInputElement>(host, '#spectatorModeCheckbox').disabled
-    ).toBe(false);
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe('');
+    expect(element<HTMLInputElement>('#spectatorModeCheckbox').disabled).toBe(
+      false
+    );
 
     await act(async () => root.unmount());
     expect(guest.dispose).toHaveBeenCalledOnce();

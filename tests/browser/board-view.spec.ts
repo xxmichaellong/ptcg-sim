@@ -1,10 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { closeBoardView, openBoardView } from './support/board-view.js';
+import {
+  chooseMoreAction,
+  openDeck,
+  openSettings,
+} from './support/table-shell.js';
 
 /**
- * The Board view panel: one place, opened from the table's controls, for how
- * the table is shown. A hidden half leaves the table entirely, the other
+ * How the table is shown: the Table section of Settings (ADR-030; first a
+ * Board view panel). A hidden half leaves the table entirely, the other
  * half grows to fill it, and the choices stay on this device.
  */
 
@@ -23,7 +28,7 @@ const openSoloTable = async (page: Page): Promise<void> => {
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
   });
-  await page.click('#deckImportButton');
+  await openDeck(page);
   await page.locator('#nativeDeckBuilderTargetMain').click();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'main.csv',
@@ -37,11 +42,18 @@ const openSoloTable = async (page: Page): Promise<void> => {
     buffer: deckCsv('Alt'),
   });
   await page.locator('#nativeDeckBuilderPlayButton').click();
-  await page.click('#p1Button');
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+  // Both decks are installed (one revision each) before Set up both.
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    '2'
+  );
   const before = Number(
     await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
   );
-  await page.click('#setupBothButton');
+  await chooseMoreAction(page, 'setupBothButton');
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     String(before + 2)
@@ -125,14 +137,13 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
   const both = await painted(page);
   expect(both.sides.local).toBeGreaterThan(0);
   expect(both.sides.opponent).toBeGreaterThan(0);
-  // No drag handles: the split lives in the panel.
+  // No drag handles, and no view controls on the table: the split lives
+  // in Settings.
   await expect(page.locator('#selfResizer, #oppResizer')).toHaveCount(0);
+  await expect(page.locator('#boardViewButton')).toHaveCount(0);
 
-  const button = page.locator('#boardViewButton');
-  await expect(button).toHaveAttribute('aria-expanded', 'false');
   await openBoardView(page);
-  await expect(button).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#boardShowBoth')).toBeFocused();
+  await expect(page.locator('#settingsTable')).toBeVisible();
   await testInfo.attach('board-view-panel.png', {
     body: await page.screenshot({ animations: 'disabled' }),
     contentType: 'image/png',
@@ -232,17 +243,16 @@ test('the large hover preview is off until it is chosen', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('Settings opens the Board view and gets focus back when it closes', async ({
+test('Settings holds the table view, keeps its keys, and gives focus back', async ({
   page,
 }) => {
   test.setTimeout(120_000);
   await openSoloTable(page);
-  await page.locator('#settingsButton').click();
-  const link = page.locator('#openBoardViewButton');
-  await link.click();
-  await expect(page.locator('#boardViewPanel')).toBeVisible();
-  await expect(page.locator('#boardShowBoth')).toBeFocused();
-  // Keys typed in the panel stay there: '2' would otherwise draw two cards.
+  const menuButton = page.locator('#appMenuButton');
+  await openSettings(page);
+  await expect(page.locator('#settingsTable #boardShowBoth')).toBeAttached();
+  await page.locator('#boardShowMine').focus();
+  // Keys typed in Settings stay there: '2' would otherwise draw two cards.
   const revision = await page
     .locator('.ptcgsim-board-surface')
     .getAttribute('data-revision');
@@ -252,11 +262,11 @@ test('Settings opens the Board view and gets focus back when it closes', async (
     revision!
   );
   await page.keyboard.press('Escape');
-  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
-  await expect(link).toBeFocused();
-  // A press on the table puts the panel away too.
-  await link.click();
-  await expect(page.locator('#boardViewPanel')).toBeVisible();
+  await expect(page.locator('#settings')).toHaveCount(0);
+  // Focus goes back to the menu's own button, not lost on the page.
+  await expect(menuButton).toBeFocused();
+  // A press outside puts Settings away too.
+  await openSettings(page);
   await page.mouse.click(400, 450);
-  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
+  await expect(page.locator('#settings')).toHaveCount(0);
 });

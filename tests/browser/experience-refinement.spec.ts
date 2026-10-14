@@ -1,11 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import {
+  closeSheet,
+  openAppMenu,
+  openDeck,
+  openSettings,
+} from './support/table-shell.js';
+
 const startTable = async (page: Page, renderer = 'dom'): Promise<void> => {
   await page.goto(`/?room-lobby=1&renderer=${renderer}`);
   await page.locator('#nameInput').fill('Table review');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('#messageInput')).toBeEnabled();
-  await page.locator('#deckImportButton').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible();
+  await openDeck(page);
+  // A short window shows the decklist and the builder one at a time.
+  const builderView = page.getByRole('radio', { name: 'Builder' });
+  if (await builderView.isVisible()) await builderView.click();
   await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'experience.csv',
@@ -53,10 +66,14 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await startTable(page);
-  await expect(page.locator('.welcome-help')).toBeHidden();
-  await page.getByRole('button', { name: 'Show table help' }).click();
-  await expect(page.locator('.welcome-help')).toBeVisible();
-  await page.getByRole('button', { name: 'Hide table help' }).click();
+  // With a deck on the table the welcome card has gone (ADR-030); its help
+  // stays a menu away.
+  await expect(page.locator('[data-table-welcome]')).toHaveCount(0);
+  await openAppMenu(page);
+  await expect(
+    page.getByRole('menuitem', { name: 'Tutorial', exact: true })
+  ).toBeVisible();
+  await page.keyboard.press('Escape');
 
   const deck = await cardIn(page, 'deck');
   const order = await page.evaluate(() =>
@@ -208,9 +225,9 @@ test('prize shuffle and a card grip remain interruptible, including instant moti
     .poll(() => card.locator('.ptcgsim-card__body').getAttribute('data-swing'))
     .toBeNull();
 
-  await page.locator('#settingsButton').click();
-  await page.locator('#animationSpeedSelect').selectOption('instant');
-  await page.locator('#p1Button').click();
+  await openSettings(page);
+  await page.locator('#animationSpeedInstant').check();
+  await closeSheet(page);
   const next = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${next.id}"]`).hover();
   await expect(page.locator('.ptcgsim-card__body[data-tilt]')).toHaveCount(0);
@@ -224,13 +241,15 @@ test('prize shuffle and a card grip remain interruptible, including instant moti
     .toBe('idle');
 });
 
-test('room options and the custom-card form support keyboard navigation and focus return', async ({
+test('the app menu and the custom-card form support keyboard navigation and focus return', async ({
   page,
 }) => {
   await startTable(page);
-  const options = page.locator('#optionsButton');
-  await options.click();
-  const menu = page.locator('#optionsContextMenu');
+  // The room's options are the app menu now (ADR-030).
+  const options = page.locator('#appMenuButton');
+  await options.focus();
+  await page.keyboard.press('Enter');
+  const menu = page.getByRole('menu', { name: 'Menu' });
   const items = menu.getByRole('menuitem');
   await expect(items.first()).toBeFocused();
   await page.keyboard.press('End');
@@ -240,7 +259,7 @@ test('room options and the custom-card form support keyboard navigation and focu
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
   await expect(options).toBeFocused();
-  await options.click();
+  await openAppMenu(page);
   await page.keyboard.press('Tab');
   await expect(menu).toBeHidden();
   expect(
@@ -254,7 +273,7 @@ test('room options and the custom-card form support keyboard navigation and focu
     })
   ).toBe(true);
 
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   const custom = page.locator('#nativeDeckBuilderAddCustomCard');
   await custom.click();
   await expect(page.locator('#nativeCustomCardName')).toBeFocused();

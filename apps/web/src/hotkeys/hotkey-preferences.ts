@@ -4,6 +4,10 @@ import {
   type PreferenceStore,
 } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
+import { useMemo } from 'react';
+
+import type { HotkeyActionId } from './hotkey-catalogue.js';
+import { chordHint, detectKeyboardPlatform } from './chords.js';
 import {
   keymapFor,
   NO_HOTKEY_OVERRIDES,
@@ -40,3 +44,20 @@ export const SHORTCUTS_DIALOG_PREFERENCES =
 /** The page's keymap now; re-renders when the player changes a shortcut. */
 export const useKeymap = (store: PreferenceStore = preferences()): Keymap =>
   keymapFor(usePreference(HOTKEY_PREFERENCES, store));
+
+/**
+ * The key that does an action, as a short hint for a button's tooltip or a
+ * menu row (`M`, `Alt+T`, `⌥T`); undefined when the player freed it.
+ */
+export const useHotkeyHints = (
+  store: PreferenceStore = preferences()
+): ((id: HotkeyActionId) => string | undefined) => {
+  const keymap = useKeymap(store);
+  return useMemo(() => {
+    const platform = detectKeyboardPlatform();
+    return (id) => {
+      const chord = keymap.chord(id);
+      return chord ? chordHint(chord, platform) : undefined;
+    };
+  }, [keymap]);
+};

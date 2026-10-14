@@ -7,6 +7,7 @@ import type {
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
+  CARD_IMAGE_RETRY_EVENT,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   tableVerticalLayout,
   type BoardIntent,
@@ -16,32 +17,46 @@ import {
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
+import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
+import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
+import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import {
   useCallback,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
+  type Ref,
 } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
 import { CoinFlipOverlay } from '../board/CoinFlipOverlay.js';
-import { LegacyBoardChrome } from '../board/LegacyBoardChrome.js';
+import {
+  LegacyBoardChrome,
+  type LegacyBoardChromeRail,
+} from '../board/LegacyBoardChrome.js';
+import type { RailAction } from '../board/rail/TableRail.js';
 import {
   CardHoverStore,
   CardInspector,
 } from '../board/inspector/CardInspector.js';
 import { TurnBanner } from '../board/banner/TurnBanner.js';
+import { TouchCardBar } from '../board/TouchCardBar.js';
+import {
+  TableZoneAffordances,
+  type TableZoneAffordancesProps,
+} from '../board/TableZoneAffordances.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
-import { refreshLegacyBoardImages } from '../board/refreshLegacyBoardImages.js';
 import { refusalNotice } from '../board/refusal-notice.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
-import { BoardViewPanel } from '../board/view/BoardViewPanel.js';
 import {
   boardViewSettings,
   hiddenPhysicalSideFor,
@@ -58,6 +73,9 @@ import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinato
 import { useReplaySession } from '../replay/useReplaySession.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
 import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
+import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
+import type { ActionMenuEntry } from '../ui/ActionMenu.js';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import { toast } from '../ui/toast.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
@@ -78,8 +96,9 @@ const layoutFor = (
   view: NonNullable<
     ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
   >,
-  playmatExpanded: boolean,
-  boardView: BoardViewSettings
+  boardView: BoardViewSettings,
+  sidePanel: boolean,
+  seamBandPx: number | undefined
 ): BoardLayoutState => {
   const firstPlayerId = view.playerOrder[0];
   const secondPlayerId = view.playerOrder[1];
@@ -88,18 +107,75 @@ const layoutFor = (
   }
   const hiddenPhysicalSide = hiddenPhysicalSideFor(boardView.show);
   // The room plays on the play-mat table (geometry v2, ADR-027), split and
-  // shown as the player's Board view asks.
+  // shown as the player's table settings ask. It fills the window, less a
+  // docked activity log (ADR-030).
   return {
     geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
     viewport: currentViewport(),
     playerIds: [firstPlayerId, secondPlayerId],
     bottomPlayerId:
       view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId,
-    shellMode: playmatExpanded ? 'fullscreen' : 'sidebar',
+    shellMode: sidePanel ? 'sidebar' : 'fullscreen',
     vertical: tableVerticalLayout(boardView.split),
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+    ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
+    ...(seamBandPx ? { seamBandPx } : {}),
   };
 };
+
+/**
+ * Which rail actions keep their place on a short rail (a phone): what the
+ * table is waiting for, then the turn, the coin and undo; the
+ * announcements and Switch side go into More first.
+ */
+export const RAIL_PRIORITY = {
+  lead: 0,
+  turn: 1,
+  coin: 2,
+  undo: 3,
+  attack: 4,
+  pass: 5,
+  switchSide: 6,
+} as const;
+
+/** The table actions the board itself owns, for a route to place. */
+export interface BoardOwnRailActions {
+  /** Start turn, for a live seat at the table. */
+  readonly turn?: RailAction;
+  /** Flip a coin; it waits on the room's answer. */
+  readonly coin?: RailAction;
+  /** Turn the table around: Solo, spectators, and coaching. */
+  readonly switchSide?: RailAction;
+  /** Announce a mulligan. */
+  readonly mulligan?: ActionMenuEntry;
+}
+
+/** What a route puts on the table rail (ADR-030). */
+export interface BoardRailModel {
+  /** At the left end: the app menu. */
+  readonly start?: ReactNode;
+  /** At the right end: the activity log. */
+  readonly end?: ReactNode;
+  /** Whose seat the actions act for (the other one, turned around). */
+  readonly seat?: 'you' | 'opponent';
+  /** Orders the board's own actions among the route's. */
+  readonly compose: (own: BoardOwnRailActions) => {
+    readonly actions: readonly RailAction[];
+    readonly more?: readonly ActionMenuEntry[];
+  };
+}
+
+/** What a route's menu can ask of the table. */
+export interface BoardCommands {
+  /** Retry every card image that has not loaded. */
+  readonly refreshImages: () => void;
+  readonly flipBoard: () => void;
+  /** Whether turning the table around is allowed here. */
+  readonly canFlipBoard: () => boolean;
+}
+
+/** The seam's height under a finger: a rail of 44px targets. */
+export const TOUCH_SEAM_BAND_PX = 46;
 
 /** How long the Coin control may say it is waiting if no answer arrives. */
 const COIN_PENDING_CEILING_MS = 4_000;
@@ -163,12 +239,13 @@ export const RemoteSessionBoard = ({
   preferences: basePreferences = ROOM_DEFAULT_PREFERENCES,
   roomMode = 'multiplayer',
   hideOpponentHand = false,
-  playmatExpanded = false,
-  onPlaymatExpandedChange,
   onPerspectiveChange,
   coinFlip,
-  boardViewOpen: ownedBoardViewOpen,
-  onBoardViewOpenChange,
+  rail,
+  commandsRef,
+  sidePanel = false,
+  keysSuspended = false,
+  loadDeck,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -181,8 +258,6 @@ export const RemoteSessionBoard = ({
   readonly preferences?: BoardPreferences;
   readonly roomMode?: 'solo' | 'multiplayer';
   readonly hideOpponentHand?: boolean;
-  readonly playmatExpanded?: boolean;
-  readonly onPlaymatExpandedChange?: (expanded: boolean) => void;
   /**
    * Reports the table's perspective: whether it is flipped and which seat
    * now sits at the bottom and takes the sidebar's actions (v1's initiator).
@@ -193,12 +268,16 @@ export const RemoteSessionBoard = ({
   }) => void;
   /** The presentation runtime's coin, tossed over the table. */
   readonly coinFlip?: PresentationStateSource<CoinFlipSnapshot>;
-  /**
-   * The Board view panel's open state, when a route also opens it (from its
-   * Settings). Without these the board keeps the state itself.
-   */
-  readonly boardViewOpen?: boolean;
-  readonly onBoardViewOpenChange?: (open: boolean) => void;
+  /** The table rail's ends and the route's actions on it. */
+  readonly rail?: BoardRailModel;
+  /** Lets the route's menu reach the table. */
+  readonly commandsRef?: Ref<BoardCommands>;
+  /** The activity log is docked at the right; the table keeps clear of it. */
+  readonly sidePanel?: boolean;
+  /** Something over the whole table (the deck screen) owns the keyboard. */
+  readonly keysSuspended?: boolean;
+  /** The seats whose empty deck shows a `+`, and what it opens. */
+  readonly loadDeck?: TableZoneAffordancesProps['loadDeck'];
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
@@ -210,21 +289,6 @@ export const RemoteSessionBoard = ({
   );
   const boardViewRef = useRef(boardView);
   boardViewRef.current = boardView;
-  const [localBoardViewOpen, setLocalBoardViewOpen] = useState(false);
-  const boardViewOpen = onBoardViewOpenChange
-    ? (ownedBoardViewOpen ?? false)
-    : localBoardViewOpen;
-  const boardViewOpenRef = useRef(boardViewOpen);
-  boardViewOpenRef.current = boardViewOpen;
-  const onBoardViewOpenChangeRef = useRef(onBoardViewOpenChange);
-  onBoardViewOpenChangeRef.current = onBoardViewOpenChange;
-  const setBoardViewOpen = useCallback((open: boolean): void => {
-    if (onBoardViewOpenChangeRef.current) {
-      onBoardViewOpenChangeRef.current(open);
-    } else {
-      setLocalBoardViewOpen(open);
-    }
-  }, []);
   const preferences = useBoardParallax(hostRef, basePreferences);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
   // The hovered card, for the inspector; never part of game state.
@@ -244,11 +308,16 @@ export const RemoteSessionBoard = ({
     sortedHandPlayerIds,
     actingPlayerId: undefined,
   });
+  const sidePanelRef = useRef(sidePanel);
+  sidePanelRef.current = sidePanel;
+  // Under a finger the rail's targets are 44px, so the seam opens to fit.
+  const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
+  const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : undefined;
+  const seamBandRef = useRef(seamBandPx);
+  seamBandRef.current = seamBandPx;
   const preferencesRef = useRef(preferences);
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
-  const playmatExpandedRef = useRef(playmatExpanded);
-  const onPlaymatExpandedChangeRef = useRef(onPlaymatExpandedChange);
   const onPerspectiveChangeRef = useRef(onPerspectiveChange);
   displayPolicyRef.current = {
     ...displayPolicyRef.current,
@@ -259,8 +328,6 @@ export const RemoteSessionBoard = ({
   preferencesRef.current = preferences;
   onIntentRef.current = onIntent;
   onSubmissionRef.current = onSubmission;
-  playmatExpandedRef.current = playmatExpanded;
-  onPlaymatExpandedChangeRef.current = onPlaymatExpandedChange;
   onPerspectiveChangeRef.current = onPerspectiveChange;
   const [boardState, setBoardState] = useState<
     BoardSessionControllerState | undefined
@@ -269,33 +336,88 @@ export const RemoteSessionBoard = ({
     kind: 'mounting',
   });
   const [layout, setLayout] = useState<BoardLayoutSnapshot>();
-  const [refreshingImages, setRefreshingImages] = useState(false);
   // Only the room rolls the coin, so the face cannot be predicted the way
   // every other command is. The control says it is waiting instead, which is
   // what the delay actually is.
   const [coinPending, setCoinPending] = useState(false);
   const coinPendingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Whether the last press on the table was a finger's: a tapped card then
+  // gets the touch bar, since a finger has no right-click or double-click.
+  const [touchInput, setTouchInput] = useState(false);
   // v1 reveal-and-hide.js: revealing a card from your own hand in a room
   // opens a modal that ends the reveal when it is acknowledged.
   const [revealNotice, setRevealNotice] = useState<ViewCardId | null>(null);
-  const imageRefreshGenerationRef = useRef(0);
-
-  useEffect(
-    () => () => {
-      imageRefreshGenerationRef.current += 1;
-    },
-    []
-  );
-
   useEffect(() => () => clearTimeout(coinPendingTimerRef.current), []);
+
+  // Touch (ADR-030): tapping a card that is already selected reads it, the
+  // way a double-click does with a mouse.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let tap:
+      | {
+          readonly pointerId: number;
+          readonly cardId: string;
+          readonly wasSelected: boolean;
+          readonly x: number;
+          readonly y: number;
+        }
+      | undefined;
+    const cardIdAt = (target: EventTarget | null): string | undefined =>
+      target instanceof Element
+        ? (target.closest<HTMLElement>('[data-card-id]')?.dataset.cardId ??
+          undefined)
+        : undefined;
+    const handleDown = (event: PointerEvent): void => {
+      const touch = event.pointerType === 'touch';
+      setTouchInput(touch);
+      tap = undefined;
+      if (!touch) return;
+      const cardId = cardIdAt(event.target);
+      if (!cardId) return;
+      tap = {
+        pointerId: event.pointerId,
+        cardId,
+        wasSelected:
+          runtimeRef.current?.getBoardSnapshot()?.presentation
+            .selectedCardId === cardId,
+        x: event.clientX,
+        y: event.clientY,
+      };
+    };
+    const handleUp = (event: PointerEvent): void => {
+      const pressed = tap;
+      tap = undefined;
+      if (
+        !pressed ||
+        !pressed.wasSelected ||
+        pressed.pointerId !== event.pointerId ||
+        Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 10 ||
+        cardIdAt(event.target) !== pressed.cardId
+      ) {
+        return;
+      }
+      // After the renderer's own click has been handled.
+      setTimeout(() => {
+        runtimeRef.current?.emitIntent({
+          kind: 'CardPreviewRequested',
+          cardId: pressed.cardId as ViewCardId,
+        });
+      }, 0);
+    };
+    host.addEventListener('pointerdown', handleDown, { capture: true });
+    host.addEventListener('pointerup', handleUp, { capture: true });
+    return () => {
+      host.removeEventListener('pointerdown', handleDown, { capture: true });
+      host.removeEventListener('pointerup', handleUp, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
     const view = replayState.view;
     if (!host) return;
     if (!view || !identity) {
-      imageRefreshGenerationRef.current += 1;
-      setRefreshingImages(false);
       setBoardState(undefined);
       setLayout(undefined);
       setRendererStatus({ kind: 'mounting' });
@@ -310,8 +432,6 @@ export const RemoteSessionBoard = ({
     let resolutionQuery: MediaQueryList | undefined;
     let resolutionMedia: string | undefined;
 
-    imageRefreshGenerationRef.current += 1;
-    setRefreshingImages(false);
     setBoardState(undefined);
     setLayout(undefined);
     setRendererStatus({ kind: 'mounting' });
@@ -402,8 +522,9 @@ export const RemoteSessionBoard = ({
           replay,
           layout: layoutFor(
             view,
-            playmatExpandedRef.current,
-            boardViewRef.current
+            boardViewRef.current,
+            sidePanelRef.current,
+            seamBandRef.current
           ),
           createRenderer,
           preferences: preferencesRef.current,
@@ -507,18 +628,18 @@ export const RemoteSessionBoard = ({
   }, [hideOpponentHand, roomMode, sortedHandPlayerIds]);
 
   useEffect(() => {
-    runtimeRef.current?.setShellMode(
-      playmatExpanded ? 'fullscreen' : 'sidebar'
-    );
-  }, [playmatExpanded]);
+    runtimeRef.current?.setShellMode(sidePanel ? 'sidebar' : 'fullscreen');
+  }, [sidePanel]);
 
   useEffect(() => {
     const hiddenPhysicalSide = hiddenPhysicalSideFor(boardView.show);
     runtimeRef.current?.setTableView({
       lowerShare: boardView.split,
       ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+      hideEmptyLostZone: !boardView.lostZone,
+      ...(seamBandPx ? { seamBandPx } : {}),
     });
-  }, [boardView.split, boardView.show]);
+  }, [boardView.split, boardView.show, boardView.lostZone, seamBandPx]);
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
@@ -632,29 +753,10 @@ export const RemoteSessionBoard = ({
     }),
     []
   );
+  // Card art retries by itself when it fails (the renderer's own retry);
+  // this asks every failed image to try again now.
   const refreshImages = useCallback((): void => {
-    const runtime = runtimeRef.current;
-    const host = hostRef.current;
-    const scene = runtime?.getBoardSnapshot()?.scene;
-    if (!runtime || !host || !scene) return;
-    const generation = imageRefreshGenerationRef.current + 1;
-    imageRefreshGenerationRef.current = generation;
-    setRefreshingImages(true);
-    void refreshLegacyBoardImages(host, scene).then(() => {
-      if (
-        imageRefreshGenerationRef.current !== generation ||
-        runtimeRef.current !== runtime
-      ) {
-        return;
-      }
-      try {
-        runtime.refreshScene();
-      } catch (error) {
-        console.error('[board-session] image refresh failed', error);
-      } finally {
-        setRefreshingImages(false);
-      }
-    });
+    document.dispatchEvent(new Event(CARD_IMAGE_RETRY_EVENT));
   }, []);
   const keyboardActions = useMemo(
     () => ({
@@ -698,6 +800,20 @@ export const RemoteSessionBoard = ({
           return next;
         });
       },
+      toggleOncePerGame: (
+        playerId: Parameters<BoardSessionRuntime['emitOncePerGameAction']>[0],
+        marker: 'gx' | 'vstar'
+      ): void => {
+        runtimeRef.current?.emitOncePerGameAction(playerId, {
+          type: 'toggle',
+          marker,
+        });
+      },
+    }),
+    []
+  );
+  const tableActions = useMemo(
+    () => ({
       takeTurn: (): void => {
         runtimeRef.current?.emitLegacyShortcutAction({
           action: 'startOwnTurn',
@@ -720,32 +836,18 @@ export const RemoteSessionBoard = ({
       flipBoard: (): void => {
         runtimeRef.current?.flipBoard();
       },
-      refreshImages,
-      toggleBoardView: (): void => {
-        setBoardViewOpen(!boardViewOpenRef.current);
-      },
-      toggleFullscreen: (): void => {
-        const runtime = runtimeRef.current;
-        if (!runtime) return;
-        const expanded = runtime.getLayoutState().shellMode !== 'fullscreen';
-        runtime.setShellMode(expanded ? 'fullscreen' : 'sidebar');
-        onPlaymatExpandedChangeRef.current?.(expanded);
-      },
-      toggleOncePerGame: (
-        playerId: Parameters<BoardSessionRuntime['emitOncePerGameAction']>[0],
-        marker: 'gx' | 'vstar'
-      ): void => {
-        runtimeRef.current?.emitOncePerGameAction(playerId, {
-          type: 'toggle',
-          marker,
-        });
-      },
     }),
-    [refreshImages, setBoardViewOpen]
+    []
   );
-  const closeBoardView = useCallback(
-    () => setBoardViewOpen(false),
-    [setBoardViewOpen]
+  const flipAllowedRef = useRef(false);
+  useImperativeHandle(
+    commandsRef,
+    (): BoardCommands => ({
+      refreshImages,
+      flipBoard: tableActions.flipBoard,
+      canFlipBoard: () => flipAllowedRef.current,
+    }),
+    [refreshImages, tableActions]
   );
   const visibleStatus =
     identity && replayState.sessionPhase === 'ready'
@@ -764,6 +866,89 @@ export const RemoteSessionBoard = ({
     boardState?.scene !== undefined &&
     rendererStatus.kind !== 'failed' &&
     rendererStatus.kind !== 'destroyed';
+  const coveredByPopup =
+    boardState !== undefined &&
+    (boardState.presentation.openedZoneId !== null ||
+      (boardState.scene?.zones.some(
+        (zone) =>
+          (zone.kind === 'inspection' ||
+            zone.kind === 'attachmentResolution') &&
+          zone.count > 0
+      ) ??
+        false));
+  const lostZoneControl = useMemo(
+    () => ({
+      shown: boardView.lostZone,
+      onShownChange: (lostZone: boolean) => boardViewStore.update({ lostZone }),
+    }),
+    [boardView.lostZone, boardViewStore]
+  );
+  const playerActions =
+    boardState?.source?.kind === 'live' &&
+    boardState.canSubmitCommands &&
+    boardState.view?.viewer.kind === 'player';
+  const flipAllowed = boardFlipAllowed(roomMode, boardState?.view);
+  flipAllowedRef.current = flipAllowed;
+  const hint = useHotkeyHints();
+  const chromeRail = useMemo((): LegacyBoardChromeRail | undefined => {
+    if (!rail) return undefined;
+    const own: BoardOwnRailActions = {
+      ...(playerActions
+        ? {
+            turn: {
+              id: 'turnButton',
+              label: 'Turn',
+              title: 'Start turn',
+              icon: PlayIcon,
+              priority: RAIL_PRIORITY.turn,
+              hint: hint('table.startTurn'),
+              onSelect: tableActions.takeTurn,
+            },
+            coin: {
+              id: 'flipCoinButton',
+              label: 'Coin',
+              title: 'Flip a coin',
+              icon: CoinIcon,
+              priority: RAIL_PRIORITY.coin,
+              pending: coinPending,
+              hint: hint('table.flipCoin'),
+              onSelect: tableActions.flipCoin,
+            },
+            mulligan: {
+              id: 'mulliganButton',
+              label: 'Announce mulligan',
+              icon: ShuffleIcon,
+              hint: hint('table.mulligan'),
+              onSelect: () => {
+                runtimeRef.current?.declareMulligan(
+                  displayPolicyRef.current.actingPlayerId
+                );
+              },
+            },
+          }
+        : {}),
+      ...(flipAllowed
+        ? {
+            switchSide: {
+              id: 'flipBoardButton',
+              label: 'Switch side',
+              icon: ArrowsDownUpIcon,
+              priority: RAIL_PRIORITY.switchSide,
+              hint: hint('table.flipBoard'),
+              onSelect: tableActions.flipBoard,
+            },
+          }
+        : {}),
+    };
+    const composed = rail.compose(own);
+    return {
+      ...(rail.start ? { start: rail.start } : {}),
+      ...(rail.end ? { end: rail.end } : {}),
+      ...(rail.seat ? { seat: rail.seat } : {}),
+      actions: composed.actions,
+      ...(composed.more ? { more: composed.more } : {}),
+    };
+  }, [rail, playerActions, flipAllowed, coinPending, hint, tableActions]);
 
   return (
     <div className="board-spike-host" data-geometry={layout?.geometryVersion}>
@@ -782,26 +967,22 @@ export const RemoteSessionBoard = ({
               players={boardState.view?.players ?? {}}
               darkMode={preferences.darkMode}
               actions={chromeActions}
-              refreshingImages={refreshingImages}
-              coinPending={coinPending}
+              {...(chromeRail ? { rail: chromeRail } : {})}
               sortedHandPlayerIds={sortedHandPlayerIds}
-              boardViewOpen={boardViewOpen}
-              coveredByPopup={
-                boardState.presentation.openedZoneId !== null ||
-                boardState.scene.zones.some(
-                  (zone) =>
-                    (zone.kind === 'inspection' ||
-                      zone.kind === 'attachmentResolution') &&
-                    zone.count > 0
-                )
-              }
-              visibility={{
-                playerActions:
-                  boardState.source?.kind === 'live' &&
-                  boardState.canSubmitCommands &&
-                  boardState.view?.viewer.kind === 'player',
-                flipBoard: boardFlipAllowed(roomMode, boardState.view),
-              }}
+              coveredByPopup={coveredByPopup}
+            />
+          ) : null}
+          {layout ? (
+            <TableZoneAffordances
+              layout={layout}
+              scene={boardState.scene}
+              view={boardState.view}
+              {...(depthProjection ? { depth: depthProjection } : {})}
+              {...(loadDeck && boardState.source?.kind === 'live'
+                ? { loadDeck }
+                : {})}
+              lostZone={lostZoneControl}
+              covered={coveredByPopup}
             />
           ) : null}
           {layout ? (
@@ -818,6 +999,46 @@ export const RemoteSessionBoard = ({
               // At "instant" the coin shows its result without a toss.
               reducedMotion={
                 preferences.reducedMotion || preferences.animationSpeed === 0
+              }
+            />
+          ) : null}
+          {layout &&
+          touchInput &&
+          boardState.presentation.selectedCardId !== null &&
+          boardState.presentation.drag === null &&
+          boardState.presentation.openedZoneId === null &&
+          boardState.overlays.contextMenuCardId === null &&
+          boardState.overlays.preview === null &&
+          boardState.overlays.input === null ? (
+            <TouchCardBar
+              scene={boardState.scene}
+              cardId={boardState.presentation.selectedCardId}
+              {...(depthProjection ? { depth: depthProjection } : {})}
+              viewport={layout.viewport}
+              onRead={() => {
+                const cardId =
+                  runtimeRef.current?.getBoardSnapshot()?.presentation
+                    .selectedCardId;
+                if (cardId) {
+                  runtimeRef.current?.emitIntent({
+                    kind: 'CardPreviewRequested',
+                    cardId,
+                  });
+                }
+              }}
+              onActions={() => {
+                const cardId =
+                  runtimeRef.current?.getBoardSnapshot()?.presentation
+                    .selectedCardId;
+                if (cardId) {
+                  runtimeRef.current?.emitIntent({
+                    kind: 'CardContextRequested',
+                    cardId,
+                  });
+                }
+              }}
+              onDismiss={() =>
+                runtimeRef.current?.dismissLocalPresentation('selection')
               }
             />
           ) : null}
@@ -844,11 +1065,6 @@ export const RemoteSessionBoard = ({
               }
             />
           ) : null}
-          <BoardViewPanel
-            open={boardViewOpen}
-            onClose={closeBoardView}
-            solo={roomMode === 'solo'}
-          />
           <LegacyBoardKeyboardShortcuts
             state={boardState}
             {...(roomMode === 'solo'
@@ -856,7 +1072,8 @@ export const RemoteSessionBoard = ({
               : roomMode === 'multiplayer'
                 ? { undoSeat: 'own' as const }
                 : {})}
-            boardFlipEnabled={boardFlipAllowed(roomMode, boardState.view)}
+            boardFlipEnabled={flipAllowed}
+            suspended={keysSuspended}
             {...keyboardActions}
           />
         </>

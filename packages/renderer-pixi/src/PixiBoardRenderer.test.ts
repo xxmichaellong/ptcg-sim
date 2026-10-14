@@ -360,10 +360,16 @@ describe('Pixi board interaction cancellation', () => {
     const objects = renderer.getDiagnostics().displayObjects;
     expect(zone.title.text).toBe('DECK');
     expect(zone.title.visible).toBe(true);
+    // The hand runs along the screen edge, unmarked; the Board (where a
+    // card shows before it resolves) is outlined and named like the rest.
     for (const item of paint.zones.values()) {
-      if (['hand', 'board'].includes(item.descriptor.kind)) {
+      if (item.descriptor.kind === 'hand') {
         expect(item.title.visible).toBe(false);
         expect(item.graphic.context.instructions).toHaveLength(0);
+      }
+      if (item.descriptor.kind === 'board') {
+        expect(item.title.text).toBe('BOARD');
+        expect(item.title.visible).toBe(true);
       }
     }
     expect(internals.layers!.counts.zIndex).toBeGreaterThan(

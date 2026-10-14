@@ -10,6 +10,9 @@ import {
   type BoardLayoutState,
   type BoardShellMode,
 } from '@ptcgsim/renderer-contract';
+import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
+import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
+import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -232,12 +235,10 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
     throw error;
   }
 
-  type CountedChromeAction =
-    'takeTurn' | 'flipCoin' | 'refreshImages' | 'toggleOncePerGame';
+  type CountedChromeAction = 'takeTurn' | 'flipCoin' | 'toggleOncePerGame';
   const actionCounts: Record<CountedChromeAction, number> = {
     takeTurn: 0,
     flipCoin: 0,
-    refreshImages: 0,
     toggleOncePerGame: 0,
   };
   const count = (action: CountedChromeAction): void => {
@@ -245,6 +246,30 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
   };
   const chromeRoot = createRoot(chromeHost);
   let darkMode = false;
+  const rail = {
+    actions: [
+      {
+        id: 'turnButton',
+        label: 'Turn',
+        title: 'Start turn',
+        icon: PlayIcon,
+        onSelect: () => count('takeTurn'),
+      },
+      {
+        id: 'flipCoinButton',
+        label: 'Coin',
+        title: 'Flip a coin',
+        icon: CoinIcon,
+        onSelect: () => count('flipCoin'),
+      },
+      {
+        id: 'flipBoardButton',
+        label: 'Switch side',
+        icon: ArrowsDownUpIcon,
+        onSelect: () => runtime.flipBoard(),
+      },
+    ],
+  };
   const renderChrome = (): void => {
     chromeRoot.render(
       createElement(LegacyBoardChrome, {
@@ -253,18 +278,9 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
         players: view.players,
         darkMode,
         actions: {
-          takeTurn: () => count('takeTurn'),
-          flipCoin: () => count('flipCoin'),
-          flipBoard: () => runtime.flipBoard(),
-          refreshImages: () => count('refreshImages'),
-          toggleFullscreen: () =>
-            runtime.setShellMode(
-              runtime.getLayoutState().shellMode === 'sidebar'
-                ? 'fullscreen'
-                : 'sidebar'
-            ),
           toggleOncePerGame: () => count('toggleOncePerGame'),
         },
+        rail,
       })
     );
   };

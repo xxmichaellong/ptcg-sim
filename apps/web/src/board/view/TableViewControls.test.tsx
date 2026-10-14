@@ -3,11 +3,10 @@
 import { DEFAULT_BOARD_DEPTH } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { depthSettings } from '../../motion/depth-settings.js';
-import { isOverlayKeyTarget } from '../../ui/overlay-surface.js';
-import { BoardViewPanel } from './BoardViewPanel.js';
+import { TableViewControls } from './TableViewControls.js';
 import {
   boardViewSettings,
   DEFAULT_BOARD_VIEW,
@@ -17,16 +16,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 let host: HTMLDivElement;
 let root: Root;
-let trigger: HTMLButtonElement;
 
-const render = async (
-  open: boolean,
-  onClose: () => void = vi.fn(),
-  solo = true
-): Promise<void> => {
-  await act(async () =>
-    root.render(<BoardViewPanel open={open} onClose={onClose} solo={solo} />)
-  );
+const render = async (solo = true): Promise<void> => {
+  await act(async () => root.render(<TableViewControls solo={solo} />));
 };
 
 const input = (id: string) => host.querySelector<HTMLInputElement>(`#${id}`)!;
@@ -50,9 +42,6 @@ const slide = async (id: string, value: string): Promise<void> => {
 beforeEach(() => {
   boardViewSettings().reset();
   depthSettings().update(DEFAULT_BOARD_DEPTH);
-  trigger = document.createElement('button');
-  trigger.dataset.boardViewTrigger = 'true';
-  document.body.append(trigger);
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -65,29 +54,9 @@ afterEach(async () => {
   depthSettings().update(DEFAULT_BOARD_DEPTH);
 });
 
-describe('BoardViewPanel', () => {
-  it('renders nothing while closed', async () => {
-    await render(false);
-    expect(host.querySelector('#boardViewPanel')).toBeNull();
-  });
-
-  it('opens as a labelled, non-modal panel focused on what it shows', async () => {
-    trigger.focus();
-    await render(true);
-    const panel = host.querySelector<HTMLElement>('#boardViewPanel')!;
-    expect(panel.getAttribute('role')).toBe('dialog');
-    expect(panel.getAttribute('aria-modal')).toBe('false');
-    expect(
-      document.getElementById(panel.getAttribute('aria-labelledby')!)
-        ?.textContent
-    ).toBe('Board view');
-    expect(document.activeElement).toBe(input('boardShowBoth'));
-    // Keys pressed in it belong to it, not to the table's shortcuts.
-    expect(isOverlayKeyTarget(input('boardShowBoth'))).toBe(true);
-  });
-
+describe('TableViewControls', () => {
   it('applies each choice as it is made', async () => {
-    await render(true);
+    await render();
     await choose('boardShowMine');
     expect(boardViewSettings().getSnapshot().show).toBe('mine');
     // With one half showing there is nothing to split.
@@ -109,10 +78,12 @@ describe('BoardViewPanel', () => {
     await act(async () => input('zoneOutlinesCheckbox').click());
     await act(async () => input('hideHandCheckbox').click());
     await act(async () => input('hoverPreviewCheckbox').click());
+    await act(async () => input('lostZoneCheckbox').click());
     expect(boardViewSettings().getSnapshot()).toMatchObject({
       zoneOutlines: false,
       hideOpponentHand: true,
       hoverPreview: true,
+      lostZone: true,
     });
 
     await act(async () =>
@@ -123,51 +94,8 @@ describe('BoardViewPanel', () => {
   });
 
   it("offers to cover the opponent's hand only in Solo", async () => {
-    await render(true, vi.fn(), false);
+    await render(false);
     expect(host.querySelector('#hideHandCheckbox')).toBeNull();
     expect(host.querySelector('#zoneOutlinesCheckbox')).not.toBeNull();
-  });
-
-  it('closes on Escape without the key reaching the table, and gives focus back', async () => {
-    const onClose = vi.fn();
-    const tableKeys = vi.fn();
-    document.addEventListener('keydown', tableKeys);
-    trigger.focus();
-    await render(true, onClose);
-    input('boardShowBoth').dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-    );
-    document.removeEventListener('keydown', tableKeys);
-    expect(onClose).toHaveBeenCalledOnce();
-    expect(tableKeys).not.toHaveBeenCalled();
-    await render(false, onClose);
-    expect(document.activeElement).toBe(trigger);
-  });
-
-  it('closes on a press outside it, but not on its own controls or its button', async () => {
-    const onClose = vi.fn();
-    await render(true, onClose);
-    input('boardShowMine').dispatchEvent(
-      new PointerEvent('pointerdown', { bubbles: true })
-    );
-    trigger.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    expect(onClose).not.toHaveBeenCalled();
-    document.body.dispatchEvent(
-      new PointerEvent('pointerdown', { bubbles: true })
-    );
-    expect(onClose).toHaveBeenCalledOnce();
-  });
-
-  it('closes from its close button', async () => {
-    const onClose = vi.fn();
-    await render(true, onClose);
-    await act(async () =>
-      host
-        .querySelector<HTMLButtonElement>(
-          'button[aria-label="Close board view"]'
-        )!
-        .click()
-    );
-    expect(onClose).toHaveBeenCalledOnce();
   });
 });

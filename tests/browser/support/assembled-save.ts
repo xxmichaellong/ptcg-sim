@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { chooseTableView, closeBoardView } from './board-view.js';
+import { openDeck } from './table-shell.js';
 
 /** Install and assemble a custom print through production UI only. */
 export const assembleSavedPrint = async (page: Page) => {
@@ -22,7 +23,7 @@ export const assembleSavedPrint = async (page: Page) => {
   );
   await chooseTableView(page, 'table');
   await closeBoardView(page);
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'assembled-save.csv',
     mimeType: 'text/csv',

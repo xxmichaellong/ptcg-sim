@@ -1430,6 +1430,10 @@
               "kind": "value"
             },
             {
+              "name": "CARD_IMAGE_RETRY_EVENT",
+              "kind": "value"
+            },
+            {
               "name": "CardComposition",
               "kind": "type"
             },
@@ -1814,6 +1818,10 @@
               "kind": "type"
             },
             {
+              "name": "looseBoardTargetAt",
+              "kind": "value"
+            },
+            {
               "name": "markerFace",
               "kind": "value"
             },
@@ -1955,6 +1963,14 @@
             },
             {
               "name": "springStateAt",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_COMPACT_CORNER_HEIGHT_PX",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_CONTROL_CORNER_HEIGHT_PX",
               "kind": "value"
             },
             {

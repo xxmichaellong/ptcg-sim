@@ -1,0 +1,250 @@
+/*
+ * Sheets (ADR-030): everything that is not the table opens in one. Where
+ * there is room a sheet is a centred panel (or, for the activity log, a
+ * drawer on the right); on a phone it rises from the bottom, swipes away,
+ * and keeps clear of the home indicator. Motion follows the overlay tokens,
+ * so the animation-speed and reduced-motion choices apply.
+ */
+
+.ptcgsim-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  min-height: 100dvh;
+  background: var(--color-scrim);
+  opacity: calc(1 - var(--drawer-swipe-progress, 0));
+  transition: opacity var(--ui-overlay-enter-duration) var(--ease-out);
+}
+
+.ptcgsim-sheet-backdrop[data-starting-style],
+.ptcgsim-sheet-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.ptcgsim-sheet-backdrop[data-swiping] {
+  transition-duration: 0ms;
+}
+
+.ptcgsim-sheet-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.ptcgsim-sheet-viewport[data-variant='center'] {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.ptcgsim-sheet-viewport[data-variant='side'] {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: var(--space-3);
+}
+
+.ptcgsim-sheet-viewport[data-variant='bottom'] {
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.ptcgsim-sheet {
+  --sheet-pad: var(--space-6);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  outline: none;
+  pointer-events: auto;
+}
+
+/* ---- Centred ------------------------------------------------------- */
+
+.ptcgsim-sheet[data-variant='center'] {
+  width: min(var(--sheet-width), 100%);
+  max-height: 100%;
+  border-radius: var(--radius-xl);
+  transition-property: opacity, scale, translate;
+  transition-duration: var(--ui-overlay-enter-duration);
+  transition-timing-function: var(--ui-overlay-enter-easing);
+}
+
+.ptcgsim-sheet[data-size='sm'] {
+  --sheet-width: 440px;
+}
+.ptcgsim-sheet[data-size='md'] {
+  --sheet-width: 640px;
+}
+.ptcgsim-sheet[data-size='lg'] {
+  --sheet-width: 900px;
+}
+.ptcgsim-sheet[data-size='xl'] {
+  --sheet-width: 1240px;
+}
+
+.ptcgsim-sheet[data-variant='center'][data-size='xl'] {
+  height: 100%;
+}
+
+.ptcgsim-sheet[data-variant='center'][data-starting-style],
+.ptcgsim-sheet[data-variant='center'][data-ending-style] {
+  opacity: 0;
+  scale: var(--ui-overlay-enter-scale);
+  translate: 0 var(--ui-overlay-enter-shift);
+}
+
+.ptcgsim-sheet[data-variant='center'][data-ending-style] {
+  transition-duration: var(--ui-overlay-exit-duration);
+  transition-timing-function: var(--ease-in);
+}
+
+/* ---- Side (the activity drawer) ------------------------------------ */
+
+.ptcgsim-sheet[data-variant='side'] {
+  --sheet-pad: var(--space-4);
+
+  width: min(380px, 100%);
+  border-radius: var(--radius-xl);
+  transform: translateX(var(--drawer-swipe-movement-x, 0px));
+  transition: transform calc(var(--duration-slow) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+.ptcgsim-sheet[data-variant='side'][data-starting-style],
+.ptcgsim-sheet[data-variant='side'][data-ending-style] {
+  transform: translateX(calc(100% + var(--space-4)));
+}
+
+/* ---- Bottom (phones) ------------------------------------------------ */
+
+.ptcgsim-sheet[data-variant='bottom'] {
+  --sheet-pad: var(--space-4);
+
+  width: 100%;
+  max-height: calc(100dvh - max(env(safe-area-inset-top), var(--space-6)));
+  padding-bottom: env(safe-area-inset-bottom);
+  border-bottom: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  transform: translateY(var(--drawer-swipe-movement-y, 0px));
+  transition: transform calc(var(--duration-slow) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+.ptcgsim-sheet[data-variant='bottom'][data-size='xl'],
+.ptcgsim-sheet[data-variant='bottom'][data-size='lg'] {
+  height: calc(100dvh - max(env(safe-area-inset-top), var(--space-6)));
+}
+
+.ptcgsim-sheet[data-variant='bottom'][data-starting-style],
+.ptcgsim-sheet[data-variant='bottom'][data-ending-style] {
+  transform: translateY(100%);
+}
+
+.ptcgsim-sheet[data-swiping] {
+  transition-duration: 0ms;
+  user-select: none;
+}
+
+.ptcgsim-sheet__handle {
+  flex: none;
+  width: 40px;
+  height: 5px;
+  margin: var(--space-2) auto 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+}
+
+/* ---- Parts ---------------------------------------------------------- */
+
+.ptcgsim-sheet__header {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--sheet-pad) var(--sheet-pad) var(--space-3);
+}
+
+.ptcgsim-sheet__heading {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ptcgsim-sheet__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.ptcgsim-sheet__description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-sheet__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptcgsim-sheet__close {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -4px -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.ptcgsim-sheet__close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .ptcgsim-sheet__close:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+.ptcgsim-sheet__body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--sheet-pad) var(--sheet-pad);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-sheet__close {
+    width: 44px;
+    height: 44px;
+  }
+}

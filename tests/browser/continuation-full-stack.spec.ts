@@ -16,13 +16,16 @@ import {
   copyInvitation,
   downloadText,
   exposedBrowserState,
+  expectReadyRoom,
   joinReadyRoom,
   openLobby,
   pasteInvitation,
   readClipboard,
   roomCode,
+  roomStatus,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
+import { chooseMenuItem, openActivity } from './support/table-shell.js';
 
 test('online save downloads, restores, rotates both players, and revokes its bearer', async ({
   browser,
@@ -95,10 +98,14 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     const sourceRoomCode = await roomCode(creator.page);
     expect(await roomCode(sourceOpponent.page)).toBe(sourceRoomCode);
 
-    await sourceOpponent.page.locator('#p2AttackButton').click();
+    // Red has no deck yet, so the rail offers Coin (and no Attack) before
+    // a game (ADR-030): the coin is Red's action that reaches both tables.
+    await expect(sourceOpponent.page.locator('#p2AttackButton')).toHaveCount(0);
+    await sourceOpponent.page.locator('#flipCoinButton').click();
     for (const page of [creator.page, sourceOpponent.page]) {
+      await openActivity(page);
       await expect(
-        page.locator('#p2Chatbox').getByText('Red attacked', { exact: true })
+        page.locator('#p2Chatbox').getByText(/^Red flipped (heads|tails)$/u)
       ).toBeVisible();
     }
     await assembleSavedPrint(creator.page);
@@ -113,7 +120,6 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       .poll(() => boardIdentity(sourceOpponent.page))
       .toEqual(sourceCheckpoint);
 
-    await creator.page.locator('#p2OptionsButton').click();
     const createResponsePromise = creator.page.waitForResponse((response) => {
       const url = new URL(response.url());
       return (
@@ -124,7 +130,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     const [download, createResponse] = await Promise.all([
       creator.page.waitForEvent('download'),
       createResponsePromise,
-      creator.page.locator('#saveOnlineGame').click(),
+      chooseMenuItem(creator.page, 'saveOnlineGame'),
     ]);
     expect(createResponse.status()).toBe(201);
     expect(createResponse.headers()['cache-control']).toContain('no-store');
@@ -144,9 +150,8 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(saveText).not.toContain('canonicalState');
     expect(saveText).not.toContain('resumeToken');
 
-    await creator.page.locator('#p2OptionsButton').click();
     const fileChooserPromise = creator.page.waitForEvent('filechooser');
-    await creator.page.locator('#resumeSavedGame').click();
+    await chooseMenuItem(creator.page, 'resumeSavedGame');
     const fileChooser = await fileChooserPromise;
     const restorePath = `/v2/continuations/${parsedSave.value.saveId}/restore`;
     const revokePath = `/v2/continuations/${parsedSave.value.saveId}`;
@@ -178,10 +183,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(revokeResponse.headers()['cache-control']).toContain('no-store');
     await expectContinuationRestoreSuccess(creator.page);
 
-    await expect(creator.page.locator('#roomHeaderText')).toHaveAttribute(
-      'data-session-phase',
-      'ready'
-    );
+    await expectReadyRoom(creator.page);
     const targetRoomCode = await roomCode(creator.page);
     expect(targetRoomCode).not.toBe(sourceRoomCode);
     expect(await boardIdentity(creator.page)).toEqual(sourceCheckpoint);
@@ -208,19 +210,18 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       sourceCheckpoint
     );
 
-    await expect(sourceOpponent.page.locator('#roomHeaderText')).toHaveText(
-      `id: ${sourceRoomCode}`
+    await expect(await roomStatus(sourceOpponent.page)).toHaveText(
+      `Room ${sourceRoomCode}`
     );
-    await expect(
-      sourceOpponent.page.locator('#roomHeaderText')
-    ).toHaveAttribute('data-session-phase', 'ready');
+    await expectReadyRoom(sourceOpponent.page);
     expect(await boardIdentity(sourceOpponent.page)).toEqual(sourceCheckpoint);
 
-    await restoredOpponent.page.locator('#p2AttackButton').click();
+    await restoredOpponent.page.locator('#flipCoinButton').click();
+    await openActivity(creator.page);
     await expect(
       creator.page
         .locator('#p2Chatbox')
-        .getByText('Red Restored attacked', { exact: true })
+        .getByText(/^Red Restored flipped (heads|tails)$/u)
     ).toBeVisible();
     const targetAfterAction = await boardIdentity(creator.page);
     expect(targetAfterAction.matchId).toBe(sourceCheckpoint.matchId);

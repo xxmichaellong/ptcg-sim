@@ -703,7 +703,11 @@ export const createBoardScene = (
       if (layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION) {
         // Keep wider artwork in the corridor between the Actives and both
         // players' side piles, including the wider opponent prize container.
+        // Only what sits level with the Stadium narrows it: a portrait
+        // table's piles lie in a row further from the centre line.
         const regions = layout.players.flatMap((player) => player.regions);
+        const level = (box: Rect): boolean =>
+          box.y < bounds.y + bounds.height && box.y + box.height > bounds.y;
         const activeRight = Math.max(
           ...regions
             .filter((candidate) => candidate.kind === 'active')
@@ -721,7 +725,9 @@ export const createBoardScene = (
                 (candidate) =>
                   ['deck', 'discard', 'lostZone', 'prizes'].includes(
                     candidate.kind
-                  ) && candidate.physicalDeclaredBounds.x >= activeRight
+                  ) &&
+                  candidate.physicalDeclaredBounds.x >= activeRight &&
+                  level(candidate.physicalDeclaredBounds)
               )
               .map((candidate) => candidate.physicalDeclaredBounds.x)
           ) - 8;
@@ -1154,6 +1160,15 @@ export const createBoardScene = (
       .map((player) => player.side)
   );
   const shownCards = cards.filter((card) => !hiddenSides.has(card.side));
+  // An optional Lost Zone with nothing in it is not on the table at all;
+  // the moment a card goes there it is.
+  const absentZoneIds = new Set(
+    layout.hideEmptyLostZone
+      ? zones
+          .filter((zone) => zone.kind === 'lostZone' && zone.count === 0)
+          .map((zone) => zone.id)
+      : []
+  );
   const shownCardIds = new Set<ViewCardId>(shownCards.map((card) => card.id));
 
   return {
@@ -1163,7 +1178,9 @@ export const createBoardScene = (
     bottomPlayerId: layout.bottomPlayerId,
     layout: createBoardSceneLayout(layout),
     zones: zones
-      .filter((zone) => !hiddenSides.has(zone.side))
+      .filter(
+        (zone) => !hiddenSides.has(zone.side) && !absentZoneIds.has(zone.id)
+      )
       .sort(
         (left, right) =>
           left.zIndex - right.zIndex || left.id.localeCompare(right.id)
@@ -1176,7 +1193,10 @@ export const createBoardScene = (
       .filter((marker) => shownCardIds.has(marker.parentCardId))
       .sort(compareMarkerPaintOrder),
     counts: counts
-      .filter((count) => !hiddenSides.has(count.side))
+      .filter(
+        (count) =>
+          !hiddenSides.has(count.side) && !absentZoneIds.has(count.zoneId)
+      )
       .sort((left, right) => left.id.localeCompare(right.id)),
   };
 };

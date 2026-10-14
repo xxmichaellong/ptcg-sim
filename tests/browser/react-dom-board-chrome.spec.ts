@@ -10,13 +10,7 @@ import type { BoardLayoutState } from '../../packages/renderer-contract/src/layo
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
 type ChromeState =
-  | 'normal'
-  | 'hover'
-  | 'dark'
-  | 'dark-hover'
-  | 'resized'
-  | 'flipped'
-  | 'fullscreen';
+  'normal' | 'hover' | 'dark' | 'dark-hover' | 'resized' | 'flipped';
 
 type OncePerGameControlGeometry = Readonly<
   Record<
@@ -117,8 +111,6 @@ const configureLegacyState = async (
     if (state === 'dark-hover') {
       await page.locator('#flipBoardButton').hover();
     }
-  } else if (state === 'fullscreen') {
-    await page.locator('#fullscreenPlaymatButton').dispatchEvent('click');
   } else if (state === 'hover') {
     await page.locator('#flipBoardButton').hover();
   } else if (state === 'resized') {
@@ -374,8 +366,6 @@ const configureCandidateState = async (
     if (state === 'dark-hover') {
       await page.locator('#flipBoardButton').hover();
     }
-  } else if (state === 'fullscreen') {
-    await page.locator('#fullscreenPlaymatButton').dispatchEvent('click');
   } else if (state === 'hover') {
     await page.locator('#flipBoardButton').hover();
   } else if (state === 'resized') {
@@ -410,8 +400,11 @@ const attachComparison = async (
 /**
  * ADR-027 restyles the controls (token pills with Phosphor icons) and the
  * resize pills, so their paint is no longer compared with v1. Their geometry
- * is: the handles keep v1's rectangles, the controls keep v1's anchor, ids
- * and order, and each control stays centred on v1's row.
+ * is: the handles keep v1's rectangles and the controls keep v1's anchor,
+ * each centred on v1's row. ADR-030 (PX-027) turns v1's toolbar into the
+ * table rail, which holds only the game's actions: Refresh images and Full
+ * screen left the table for the app menu, so the rail's controls are v1's
+ * first three, in v1's order.
  */
 const expectBoardControlsGeometry = (
   actual: BoardControlsGeometry,
@@ -439,7 +432,13 @@ const expectBoardControlsGeometry = (
       actual.controls.map((control) => control.id),
       `${state} control ids`
     )
-    .toEqual(expected.controls.map((control) => control.id));
+    .toEqual(
+      expected.controls
+        .map((control) => control.id)
+        .filter(
+          (id) => id !== 'refreshButton' && id !== 'fullscreenPlaymatButton'
+        )
+    );
   const centerY = (rect: ChromeRect) => rect.y + rect.height / 2;
   actual.controls.forEach((control, index) => {
     const source = expected.controls[index];
@@ -453,6 +452,18 @@ const expectBoardControlsGeometry = (
     expect
       .soft(control.rect.height, `${state} ${control.id}.height`)
       .toBeGreaterThanOrEqual(24);
+    // Inside the seam band the rail sits in.
+    expect
+      .soft(control.rect.y, `${state} ${control.id} top`)
+      .toBeGreaterThanOrEqual(actual.container.y - GEOMETRY_TOLERANCE_PX);
+    expect
+      .soft(
+        control.rect.y + control.rect.height,
+        `${state} ${control.id} bottom`
+      )
+      .toBeLessThanOrEqual(
+        actual.container.y + actual.container.height + GEOMETRY_TOLERANCE_PX
+      );
     const previous = actual.controls[index - 1];
     if (previous) {
       expect
@@ -468,7 +479,7 @@ const expectBoardControlsGeometry = (
   if (first && sourceFirst) near(first.rect.x, sourceFirst.rect.x, 'first.x');
 };
 
-test('route-owned candidate chrome keeps v1 geometry through theme, hover, resize, flip and fullscreen', async ({
+test('route-owned candidate chrome keeps v1 geometry through theme, hover, resize and flip', async ({
   browser,
   page,
 }, testInfo) => {
@@ -483,7 +494,6 @@ test('route-owned candidate chrome keeps v1 geometry through theme, hover, resiz
     'dark-hover',
     'resized',
     'flipped',
-    'fullscreen',
   ] as const) {
     const source = await captureLegacyChrome(browser, state);
     await configureCandidateState(page, state);
@@ -527,7 +537,7 @@ test('route-owned candidate chrome keeps v1 geometry through theme, hover, resiz
   }
 
   await callCandidateHarness(page);
-  for (const id of ['turnButton', 'flipCoinButton', 'refreshButton']) {
+  for (const id of ['turnButton', 'flipCoinButton']) {
     await page.locator(`#${id}`).dispatchEvent('click');
   }
   await page
@@ -546,7 +556,6 @@ test('route-owned candidate chrome keeps v1 geometry through theme, hover, resiz
   ).toEqual({
     takeTurn: 1,
     flipCoin: 1,
-    refreshImages: 1,
     toggleOncePerGame: 2,
   });
 

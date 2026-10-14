@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseMenuItem, closeSheet, openDeck } from './support/table-shell.js';
+
 /**
- * The keyboard shortcuts list, end to end: opened from the sidebar, a
+ * The keyboard shortcuts list, end to end: opened from the app menu, a
  * shortcut moved to a key of the player's choosing, kept across a reload,
  * obeyed by the table (and the old key ignored), then put back.
  */
@@ -9,9 +11,12 @@ import { expect, test, type Page } from '@playwright/test';
 const startTable = async (page: Page): Promise<void> => {
   await page.goto('/?room-lobby=1&renderer=dom');
   await page.locator('#nameInput').fill('Shortcut review');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('#messageInput')).toBeEnabled();
-  await page.locator('#deckImportButton').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 30_000 });
+  await openDeck(page);
   await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'shortcuts.csv',
@@ -66,7 +71,7 @@ test('a player moves a shortcut to their own key, keeps it, and puts it back', a
   const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
   const discardRow = shortcuts.locator('[data-action="card.toDiscard"]');
 
-  await page.locator('#shortcutsButton').click();
+  await chooseMenuItem(page, 'shortcutsButton');
   await expect(shortcuts).toBeVisible();
   await shortcuts.getByRole('radio', { name: 'Card selected' }).click();
   await discardRow.locator('button.ptcgsim-shortcut-key').click();

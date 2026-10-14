@@ -5,6 +5,13 @@ import {
   parseBoardDepth,
 } from '../../packages/renderer-contract/src/index.js';
 
+import {
+  chooseMenuItem,
+  closeSheet,
+  dismissWelcome,
+  openDeck,
+} from './support/table-shell.js';
+
 const escape = (value: unknown) => `"${String(value).replaceAll('"', '""')}"`;
 const csv = () => {
   const rows: unknown[][] = [];
@@ -54,9 +61,13 @@ const csv = () => {
 const start = async (page: Page) => {
   await page.goto('/?room-lobby=1&renderer=dom');
   await page.locator('#nameInput').fill('Special card review');
-  await page.locator('#p1Button').click();
-  await expect(page.locator('#messageInput')).toBeEnabled();
-  await page.locator('#deckImportButton').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible();
+  await dismissWelcome(page);
+  await openDeck(page);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'formats.csv',
     mimeType: 'text/csv',
@@ -92,8 +103,13 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
           card.renderKey !== null
       )!.id
   );
-  if (!(await page.locator('[data-legacy-zone-browser]').isVisible()))
+  if (!(await page.locator('[data-legacy-zone-browser]').isVisible())) {
+    // A pile in flight (after Switch side) takes no double-click.
+    await expect(
+      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    ).toHaveCount(1);
     await page.locator(`[data-card-id="${cover}"]`).dblclick();
+  }
   await page
     .locator(
       `[data-legacy-zone-browser] button[data-overlay-card-id="${card.id}"]`
@@ -249,20 +265,19 @@ for (const mode of ['flat', 'table'] as const)
           async () => (await sceneCard(page, 'union-0')).rotationQuarterTurns
         )
         .toBe(1);
-      await page.getByRole('button', { name: /flip board/i }).click();
+      await page.locator('#flipBoardButton').click();
       await expect
         .poll(async () => (await sceneCard(page, 'union-0')).side)
         .toBe('opponent');
       // The full composition and per-print metadata survive recipient replay.
-      await page.locator('#optionsButton').click();
       const [download] = await Promise.all([
         page.waitForEvent('download'),
-        page.locator('#exportState').click(),
+        chooseMenuItem(page, 'exportState'),
       ]);
       const stream = await download.createReadStream();
       const chunks: Buffer[] = [];
       for await (const chunk of stream) chunks.push(Buffer.from(chunk));
-      await page.locator('#optionsButton').click();
+      // Watch a replay… opens this picker.
       await page.locator('#jsonReplay').setInputFiles({
         name: 'assembled.json',
         mimeType: 'application/json',
@@ -270,13 +285,14 @@ for (const mode of ['flat', 'table'] as const)
       });
       // File input completion precedes the asynchronous replay installation.
       // Reset belongs to the replay only after its controls have taken over.
-      await expect(page.locator('#p1Button')).toHaveText('Replay');
-      await page.locator('#resetBothButton').click();
+      const exitReplay = page.locator('#boardButtonContainer #exitReplay');
+      await expect(exitReplay).toBeVisible();
+      // The transport's fast-forward.
+      await page.locator('#boardButtonContainer #resetBothButton').click();
       await expect(
         page.locator('.ptcgsim-card[data-card-composition="joined"]')
       ).toHaveCount(4);
-      await page.locator('#optionsButton').click();
-      await page.locator('#exitReplay').click();
+      await exitReplay.click();
       const piece = await sceneCard(page, 'union-0');
       await page.locator(`[data-card-id="${piece.id}"]`).dblclick();
       await page.getByRole('button', { name: 'View individual cards' }).click();
@@ -389,7 +405,7 @@ for (const mode of ['flat', 'table'] as const)
     }) => {
       test.setTimeout(90_000);
       await start(page);
-      await page.locator('#deckImportButton').click();
+      await openDeck(page);
       await page.locator('#nativeDeckBuilderTargetAlt').click();
       await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
         name: 'opponent.csv',
@@ -417,12 +433,10 @@ for (const mode of ['flat', 'table'] as const)
           )!.side
       );
       if (opponentSide !== 'local')
-        await page
-          .getByRole('button', { name: 'Flip board', exact: true })
-          .click();
-      await page
-        .getByRole('button', { name: 'Start turn', exact: true })
-        .click();
+        await page.locator('#flipBoardButton').click();
+      // The deck is loaded but not set up, so the rail offers Set up rather
+      // than Turn (ADR-030); Start turn's key draws the card.
+      await page.keyboard.press('Alt+t');
       await expect
         .poll(async () => (await sceneCard(page, 'opponent'))?.parentId)
         .toMatch(/:hand$/);
@@ -434,9 +448,7 @@ for (const mode of ['flat', 'table'] as const)
         .toBe('stackEvolution');
       const opponent = await sceneCard(page, 'opponent');
       if (opponent.side === 'local') {
-        await page
-          .getByRole('button', { name: 'Flip board', exact: true })
-          .click();
+        await page.locator('#flipBoardButton').click();
         await expect
           .poll(async () => (await sceneCard(page, 'opponent')).side)
           .toBe('opponent');

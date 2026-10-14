@@ -1,13 +1,15 @@
 /*
- * The room's shell on the redesigned table (ADR-027): the felt the board
- * sits on, the rail beside it (tabs, log, chat, actions) and the shared
- * button styles. Loaded after styles.css, whose v1 rules it supersedes.
+ * The room on the redesigned table (ADR-027, ADR-030): the felt the board
+ * sits on, the page's base type, the reveal notice and the board chrome's
+ * geometry-v2 placement. The shell around the table (rail, menu, sheets,
+ * activity log, deck screen) styles itself beside its components. Loaded
+ * after styles.css, whose v1 rules it supersedes.
  */
 
 :root {
-  /* Mirrors tableRailWidth() in renderer-contract/src/layout-table.ts. */
+  /* The docked activity log and the deck screen's decklist column. Mirrors
+     tableRailWidth() in renderer-contract/src/layout-table.ts. */
   --rail-width: clamp(300px, 23vw, 380px);
-  --rail-gap: var(--space-3);
 }
 
 html,
@@ -46,9 +48,12 @@ textarea {
   display: none;
 }
 
-/* The felt: a lamp-lit table with a soft vignette and a faint weave. */
+/* The felt: a lamp-lit table with a soft vignette and a faint weave. It
+   fills the window (ADR-030); a docked log sits over its right edge while
+   the table lays itself out beside it. */
 .remote-room-route .board-column {
-  width: calc(100% - var(--rail-width));
+  inset: 0;
+  width: 100%;
   background:
     radial-gradient(
       ellipse 70% 60% at 48% 52%,
@@ -72,335 +77,18 @@ textarea {
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.remote-room-route .board-column--fullscreen {
-  width: 100%;
-}
 /* A chosen background becomes the play mat, dimmed so cards stay legible. */
 .remote-room-route[data-room-background='image'] .board-column,
 .remote-room-route[data-room-background='color'] .board-column {
   background: linear-gradient(oklch(0 0 0 / 0.38), oklch(0 0 0 / 0.38));
 }
 
-/* ---- The rail ------------------------------------------------------ */
-.remote-room-route .legacy-room-sidebar {
-  /* Above the parked deck builder (900), as v1's sidebar was. */
-  z-index: 1300;
-  width: var(--rail-width);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-left: 1px solid var(--color-border);
-  /* Opaque: the closed deck builder parks underneath. */
-  background: var(--color-rail);
-  box-shadow: -12px 0 32px oklch(0 0 0 / 0.25);
-}
-
-.remote-room-route .legacy-room-tabs {
-  height: auto;
-  flex: none;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-sunken);
-  overflow: visible;
-}
-.remote-room-route .legacy-room-tabs button {
-  width: auto;
-  height: 30px;
-  padding: 0 var(--space-2);
-  border: 0;
-  border-radius: calc(var(--radius-md) - 3px);
-  background: transparent;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  box-shadow: none;
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.remote-room-route .legacy-room-tabs button:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
-}
-.remote-room-route .legacy-room-tabs .selected-page,
-.remote-room-route--dark .legacy-tabs .selected-page {
-  background: var(--color-surface-3);
-  color: var(--color-text);
-  box-shadow: var(--shadow-1), var(--highlight-top);
-}
-
-.remote-room-route .legacy-room-sidebox,
-.remote-room-route--dark .legacy-room-sidebox {
-  flex: 1 1 auto;
-  height: auto;
-  min-height: 0;
-  gap: var(--space-2);
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--color-text);
-}
-
-/* ---- Log and chat -------------------------------------------------- */
-.remote-room-route .legacy-activity-feed,
-.remote-room-route--dark .legacy-activity-feed {
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) transparent;
-}
-.remote-room-route .legacy-activity-feed .self-text,
-.remote-room-route .legacy-activity-feed .opp-text,
-.remote-room-route .legacy-activity-feed .announcement,
-.remote-room-route .legacy-activity-feed .self-message,
-.remote-room-route .legacy-activity-feed .opp-message,
-.remote-room-route .legacy-activity-feed .spectator-message {
-  margin: 2px 0 0;
-  padding: 3px var(--space-2);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  font-size: var(--text-sm);
-  line-height: var(--leading-tight);
-  animation: rail-row-in calc(var(--duration-normal) * var(--motion-scale, 1))
-    var(--ease-out);
-}
-.remote-room-route .legacy-activity-feed .self-text,
-.remote-room-route .legacy-activity-feed .opp-text {
-  width: auto;
-  background: transparent;
-  border-left: 3px solid var(--color-you);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-.remote-room-route .legacy-activity-feed .opp-text {
-  border-left-color: var(--color-opponent);
-}
-.remote-room-route .legacy-activity-feed .announcement {
-  background: transparent;
-  color: var(--color-text-faint);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-caps);
-}
-.remote-room-route .legacy-activity-feed .self-message,
-.remote-room-route .legacy-activity-feed .opp-message,
-.remote-room-route .legacy-activity-feed .spectator-message {
-  max-width: 88%;
-  padding: 6px var(--space-3);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-md);
-}
-.remote-room-route .legacy-activity-feed .self-message {
-  margin-left: auto;
-  background: var(--color-accent-fill);
-  color: var(--color-text-on-accent);
-  border-bottom-right-radius: var(--radius-xs);
-}
-.remote-room-route .legacy-activity-feed .opp-message {
-  background: var(--color-surface-3);
-  border-bottom-left-radius: var(--radius-xs);
-}
-.remote-room-route .legacy-activity-feed .spectator-message {
-  background: oklch(0.6 0.12 var(--hue-gold) / 0.3);
-}
-@keyframes rail-row-in {
-  from {
-    opacity: 0;
-    translate: 0 4px;
-  }
-}
-:root[data-motion='reduced'] .remote-room-route .legacy-activity-feed * {
-  animation: none;
-}
-
-.remote-room-route #messageInput,
-.remote-room-route #p2MessageInput,
-.remote-room-route--dark #messageInput,
-.remote-room-route--dark #p2MessageInput {
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
-  color: var(--color-text);
-  font-size: var(--text-md);
-  outline: none;
-  transition: box-shadow var(--duration-fast) var(--ease-out);
-}
-.remote-room-route #messageInput:focus-visible,
-.remote-room-route #p2MessageInput:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--color-accent);
-}
-.remote-room-route #messageInput::placeholder,
-.remote-room-route #p2MessageInput::placeholder {
-  color: var(--color-text-faint);
-}
-
-/* ---- Buttons --------------------------------------------------------- */
-.remote-room-route .chat-button-container,
-.remote-room-route .sidebox-button-container {
-  gap: var(--space-1-5);
-  margin-block: 0;
-  overflow: visible;
-}
-.remote-room-route .chat-button-container button,
-.remote-room-route .sidebox-button-container button {
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-  height: var(--control-height);
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: var(--shadow-1), var(--highlight-top);
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    scale var(--duration-instant) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
-}
-.remote-room-route .chat-button-container button:active:not(:disabled),
-.remote-room-route .sidebox-button-container button:active:not(:disabled) {
-  scale: var(--control-press-scale);
-}
-.remote-room-route .chat-button-container button:focus-visible,
-.remote-room-route .sidebox-button-container button:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-.remote-room-route #p2AttackButton,
-.remote-room-route #attackButton,
-.remote-room-route #p2FREEBUTTON,
-.remote-room-route #FREEBUTTON {
-  border-radius: var(--radius-md);
-}
-/* The icon buttons stay square; the words get the rest of the row. */
-.remote-room-route #FREEBUTTON,
-.remote-room-route #p2FREEBUTTON,
-.remote-room-route #shortcutsButton,
-.remote-room-route #p2ShortcutsButton {
-  flex: 0 0 calc(var(--control-height) + var(--space-2));
-  padding: 0;
-}
-/* Seat identity is a subtle tint. The cards carry the colour on the table. */
-.remote-room-route .self-color {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklch, var(--color-surface-3), var(--color-you) 10%),
-    var(--color-surface-2)
-  );
-  color: var(--color-text);
-}
-.remote-room-route .opp-color {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklch, var(--color-surface-3), var(--color-opponent) 10%),
-    var(--color-surface-2)
-  );
-  color: var(--color-text);
-}
-.remote-room-route .neutral-color {
-  background: var(--color-surface-3);
-  color: var(--color-text);
-}
-.remote-room-route .spectator-color {
-  background: oklch(0.7 0.13 var(--hue-gold));
-  color: oklch(0.2 0.02 256);
-}
-.remote-room-route
-  .chat-button-container
-  button.self-color:hover:not(:disabled),
-.remote-room-route .sidebox-button-container button.self-color:hover {
-  background: color-mix(in oklch, var(--color-surface-3), var(--color-you) 18%);
-}
-.remote-room-route .chat-button-container button.opp-color:hover:not(:disabled),
-.remote-room-route .sidebox-button-container button.opp-color:hover {
-  background: color-mix(
-    in oklch,
-    var(--color-surface-3),
-    var(--color-opponent) 18%
-  );
-}
-.remote-room-route .sidebox-button-container button.neutral-color:hover {
-  background: var(--color-surface-3);
-  box-shadow: var(--shadow-2), var(--highlight-top);
-  filter: brightness(1.12);
-}
-
-/* ---- Room header, options menu, popups -------------------------------- */
-.remote-room-route .legacy-room-sidebox #roomHeader {
-  height: auto;
-  margin-bottom: 0;
-  color: var(--color-text);
-}
-.remote-room-route .legacy-room-sidebox #roomHeaderText {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid oklch(0.78 0.12 var(--hue-mint) / 0.45);
-  border-radius: var(--radius-md);
-  background: oklch(0.78 0.12 var(--hue-mint) / 0.14);
-  color: var(--color-text);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-}
-.remote-room-route #roomHeaderCopyButton,
-.remote-room-route #roomHeaderCopySpectatorButton {
-  color: var(--color-text-muted);
-}
-.remote-room-route #roomHeaderCopyButton:hover,
-.remote-room-route #roomHeaderCopySpectatorButton:hover {
-  color: var(--color-text);
-}
-
-.remote-room-route .legacy-room-sidebox #optionsContextMenu {
-  min-width: 220px;
-  padding: var(--space-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-2);
-  color: var(--color-text);
-  box-shadow: var(--shadow-4), var(--highlight-top);
-  backdrop-filter: blur(16px);
-  transform-origin: bottom right;
-  animation: rail-menu-in calc(var(--duration-normal) * var(--motion-scale, 1))
-    var(--ease-snappy);
-}
-.remote-room-route .legacy-room-sidebox #optionsContextMenu button {
-  min-height: 32px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-md);
-  color: var(--color-text);
-}
-.remote-room-route .legacy-room-sidebox #optionsContextMenu button:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
-}
-@keyframes rail-menu-in {
-  from {
-    opacity: 0;
-    scale: 0.96;
-    translate: 0 6px;
-  }
-}
-:root[data-motion='reduced'] .remote-room-route #optionsContextMenu {
-  animation-duration: 1ms;
-}
-
+/* ---- The reveal notice --------------------------------------------- */
+/* Centred over the table, which now has the whole window. */
 .custom-popup {
+  left: 50%;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--space-4));
   padding: var(--space-5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -420,189 +108,6 @@ textarea {
 }
 .custom-popup .popup-button:hover {
   background: var(--color-accent-fill-hover);
-}
-
-/* ---- Settings panel ---------------------------------------------------- */
-.remote-room-route .legacy-room-settings {
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-.legacy-room-settings > * {
-  flex-shrink: 0;
-}
-.table-settings-heading h2 {
-  margin: 0;
-  font: var(--weight-semibold) 23px / 1.2 var(--font-display);
-}
-.table-settings-heading p,
-.table-settings-note {
-  margin: var(--space-2) 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-.table-settings-section {
-  margin: var(--space-5) 0 var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.remote-room-route .legacy-room-settings #settingsToggles,
-.remote-room-route--dark .legacy-room-settings #settingsToggles,
-.remote-room-route .legacy-room-motion-settings {
-  display: grid;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
-}
-.remote-room-route .legacy-room-motion-settings > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-.remote-room-route .legacy-room-motion-settings select {
-  min-height: var(--control-height);
-  max-width: 55%;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-2);
-  color: var(--color-text);
-}
-.remote-room-route .legacy-room-settings input.ds-switch {
-  margin: 0;
-}
-.remote-room-route .legacy-room-settings .ds-switch-row {
-  min-height: var(--control-height);
-  gap: var(--space-3);
-}
-.remote-room-route .legacy-room-settings .ds-switch-row label {
-  flex: 1;
-  padding-block: var(--space-2);
-}
-.remote-room-route .legacy-room-settings #openBoardViewButton {
-  width: 100%;
-  margin: var(--space-2) 0 var(--space-2);
-}
-.remote-room-route .legacy-room-settings .table-settings-background {
-  display: flex;
-  gap: var(--space-2);
-  width: 100%;
-  margin: var(--space-4) 0 var(--space-2);
-}
-.remote-room-route .legacy-room-settings #changeBackgroundButton {
-  flex: 1;
-}
-/* The keyboard shortcuts list, as a row that opens it. */
-.remote-room-route .legacy-room-settings .table-settings-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
-}
-.remote-room-route .legacy-room-settings .table-settings-link:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-@media (hover: hover) {
-  .remote-room-route .legacy-room-settings .table-settings-link:hover {
-    border-color: var(--color-border-strong);
-    background-image: linear-gradient(
-      var(--color-surface-hover),
-      var(--color-surface-hover)
-    );
-  }
-}
-.remote-room-route .legacy-room-settings .table-settings-link > svg {
-  flex: none;
-  color: var(--color-text-faint);
-}
-.remote-room-route .legacy-room-settings .table-settings-link__icon {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  font-size: 22px;
-}
-.remote-room-route .legacy-room-settings .table-settings-link__text {
-  display: grid;
-  flex: 1;
-  gap: 2px;
-}
-.remote-room-route .legacy-room-settings .table-settings-link__text strong {
-  font-weight: var(--weight-semibold);
-}
-.remote-room-route .legacy-room-settings .table-settings-link__text span {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-.remote-room-route .legacy-room-settings #keybindReminder {
-  margin-top: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-.remote-room-route .legacy-room-settings #keybindReminder kbd {
-  padding: 2px 5px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-xs);
-  font: inherit;
-}
-.remote-room-route .legacy-room-settings #twitterDescription {
-  position: static;
-  max-width: none;
-  margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-regular);
-}
-
-/* The bottom action row wraps rather than cutting its labels short. */
-.remote-room-route .sidebox-button-container {
-  flex-wrap: wrap;
-  container-type: inline-size;
-}
-.remote-room-route .sidebox-button-container button {
-  flex: 1 1 calc(33% - var(--space-1-5));
-}
-/* At the narrowest rail a third is too tight for "Set Up Both" at 13px. */
-@container (max-width: 300px) {
-  .remote-room-route .sidebox-button-container button {
-    padding-inline: var(--space-1);
-    font-size: var(--text-xs);
-  }
-}
-.remote-room-route .chat-button-container button svg {
-  display: block;
-  margin: 0 auto;
-}
-
-/* The closed deck builder parks under the rail, whatever its width. */
-.remote-room-route .native-deck-builder-workspace,
-.native-deck-builder-workspace {
-  right: calc(var(--rail-width) - 8px);
 }
 
 /* Nothing a rule here shows may outrank the hidden attribute. */
@@ -642,6 +147,29 @@ textarea {
 }
 .board-spike-host[data-geometry='2'] .legacy-hand-sort span {
   font-size: var(--text-xs) !important;
+}
+/* A half too short to stack them (a phone held sideways): the markers
+   side by side at the bottom of the corner, Sort just above. */
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-once-per-game-controls {
+  left: 6px;
+  bottom: 6px;
+  width: 88px;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-once-per-game-button {
+  height: 24px !important;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-hand-sort {
+  left: 8px;
+  bottom: 34px;
 }
 /* v1's translucent side colours vanish on the Day felt: the word reads in
    the muted text colour on either felt, and the box carries the seat. */

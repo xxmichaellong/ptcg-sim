@@ -56,7 +56,36 @@ export interface LegacyPresentationSurfaceProps {
    * after holding entries the intro stays gone.
    */
   readonly intro?: ReactNode;
+  /**
+   * Whether this mount also speaks the polite announcements. A feed shown
+   * in a sheet that can close leaves that to a `PresentationAnnouncer`
+   * mounted for the page, so a closed log never silences the table.
+   */
+  readonly announcer?: boolean;
 }
+
+/** The polite live region alone: what the table says to assistive tech. */
+export const PresentationAnnouncer = ({
+  runtime,
+}: {
+  readonly runtime: Pick<LegacyGamePresentationRuntime, 'liveRegion'>;
+}) => {
+  const liveRegion = usePresentationState(runtime.liveRegion);
+  return (
+    <div
+      className="presentation-live-region"
+      role="status"
+      aria-live={liveRegion.announcement?.politeness ?? 'polite'}
+      aria-atomic="true"
+    >
+      {liveRegion.announcement && (
+        <span key={liveRegion.announcement.id}>
+          {liveRegion.announcement.message}
+        </span>
+      )}
+    </div>
+  );
+};
 
 /** Concrete React mount for the existing activity panel and polite live region. */
 export const LegacyPresentationSurface = ({
@@ -64,9 +93,9 @@ export const LegacyPresentationSurface = ({
   perspective,
   feedId = 'chatbox',
   intro,
+  announcer = true,
 }: LegacyPresentationSurfaceProps) => {
   const feed = usePresentationState(runtime.activityFeed);
-  const liveRegion = usePresentationState(runtime.liveRegion);
   const feedElement = useRef<HTMLDivElement>(null);
   const heldEntries = useRef(false);
   const [introCleared, setIntroCleared] = useState(false);
@@ -109,18 +138,7 @@ export const LegacyPresentationSurface = ({
           </p>
         ))}
       </div>
-      <div
-        className="presentation-live-region"
-        role="status"
-        aria-live={liveRegion.announcement?.politeness ?? 'polite'}
-        aria-atomic="true"
-      >
-        {liveRegion.announcement && (
-          <span key={liveRegion.announcement.id}>
-            {liveRegion.announcement.message}
-          </span>
-        )}
-      </div>
+      {announcer ? <PresentationAnnouncer runtime={runtime} /> : null}
     </div>
   );
 };

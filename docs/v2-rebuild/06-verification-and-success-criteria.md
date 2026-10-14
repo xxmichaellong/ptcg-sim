@@ -106,8 +106,10 @@ and Safari on vendor-supported desktop/laptop operating systems at a minimum
 CI. Firefox and WebKit provide a focused automated functional gate. Each release
 candidate still requires a recorded foreground smoke in the four actual stable
 browser products because Chromium is only a Chrome/Edge engine proxy and Linux
-WebKit is only a Safari engine proxy. Phones, tablets, touch-only interaction,
-and smaller viewports are best effort for the first v2 release.
+WebKit is only a Safari engine proxy. ADR-030 (2026-10-14) supersedes the
+desktop-only boundary: phones and tablets in either orientation and touch-only
+interaction are supported, with the browser specs' phone and tablet viewports
+as their automated evidence, and there is no minimum viewport.
 
 ### Accessibility release contract
 

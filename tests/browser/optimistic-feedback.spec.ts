@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { closeSheet, openDeck } from './support/table-shell.js';
+
 /**
  * The table answers a player's action before the room does. Every message
  * from the room is held back while the actions below are taken, as if the
@@ -110,13 +112,14 @@ for (const mode of ['flat', 'table'] as const)
       await installServerHold(page);
       await page.goto('/?room-lobby=1&renderer=dom');
       await page.locator('#nameInput').fill('Blue');
-      await page.locator('#p1Button').click();
+      // Putting Play online away goes to the Solo table.
+      await closeSheet(page);
       await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
         'data-renderer-status',
         'ready'
       );
-      await expect(page.locator('#setupBothButton')).toBeEnabled();
-      await page.locator('#deckImportButton').click();
+      await expect(page.locator('#loadDeckButton')).toBeEnabled();
+      await openDeck(page);
       await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
       await page.locator('#nativeDeckBuilderTargetMain').click();
       await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
@@ -128,7 +131,9 @@ for (const mode of ['flat', 'table'] as const)
         page.locator('#nativeDeckBuilderSummaryPanel')
       ).toContainText('Total: 60');
       await page.locator('#nativeDeckBuilderPlayButton').click();
-      await expect(page.locator('#p1Box')).toBeVisible();
+      await expect(
+        page.locator('.ptcgsim-deck-layer[data-open="false"]')
+      ).toBeAttached();
       await page.locator('#setupButton').click();
       await expect.poll(() => zoneCount(page, 'hand', 'local')).toBe(7);
 
@@ -163,7 +168,7 @@ for (const mode of ['flat', 'table'] as const)
         .poll(() => zoneCount(page, 'board', 'local'), instant)
         .toBe(1);
 
-      // The sidebar's Attack button submits outside the board; it clears the
+      // The rail's Attack button submits outside the board; it clears the
       // loose board into the discard all the same.
       const discardBefore = await zoneCount(page, 'discard', 'local');
       await page.locator('#attackButton').click();

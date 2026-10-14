@@ -47,6 +47,8 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly keymap?: Keymap;
   /** Opens or closes the keyboard shortcuts list (`?` by default). */
   readonly onToggleShortcuts?: (mode: HotkeyMode) => void;
+  /** Something over the whole table owns the keyboard for now. */
+  readonly suspended?: boolean;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -112,6 +114,7 @@ export const LegacyBoardKeyboardShortcuts = ({
   boardFlipEnabled = false,
   keymap: suppliedKeymap,
   onToggleShortcuts = toggleShortcutsDialog,
+  suspended = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const pageKeymap = useKeymap();
   const keymap = suppliedKeymap ?? pageKeymap;
@@ -138,6 +141,7 @@ export const LegacyBoardKeyboardShortcuts = ({
       if (
         event.defaultPrevented ||
         event.isComposing ||
+        suspended ||
         countPromptOpen ||
         // Keys pressed in a dialog, toast or tooltip belong to it.
         isOverlayKeyTarget(event.target) ||
@@ -280,6 +284,7 @@ export const LegacyBoardKeyboardShortcuts = ({
     boardFlipEnabled,
     undoSeat,
     countPromptOpen,
+    suspended,
     keymap,
     onToggleShortcuts,
     state.overlays.preview,

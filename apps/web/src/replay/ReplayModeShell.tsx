@@ -1,6 +1,5 @@
-import { useCallback, useMemo, type ReactElement, type ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 
-import { LegacyReplayControls } from './LegacyReplayControls.js';
 import type {
   ReplaySessionCoordinator,
   ReplaySessionCoordinatorState,
@@ -41,10 +40,6 @@ export interface ReplayModeChromeVisibility {
 
 export interface ReplayModeChromeState {
   readonly active: boolean;
-  readonly primaryTabLabel: 'Solo' | 'Replay';
-  /** Empty string represents the legacy/default stylesheet width. */
-  readonly primaryTabWidth: '' | '50%';
-  readonly settingsTabWidth: '' | '50%';
   readonly replayControls: boolean;
   readonly visibility: ReplayModeChromeVisibility;
   readonly hiddenPrivateMutationActionIds: readonly string[];
@@ -52,9 +47,6 @@ export interface ReplayModeChromeState {
 
 const LIVE_CHROME: ReplayModeChromeState = {
   active: false,
-  primaryTabLabel: 'Solo',
-  primaryTabWidth: '',
-  settingsTabWidth: '',
   replayControls: false,
   visibility: {
     multiplayerTab: true,
@@ -77,9 +69,6 @@ const LIVE_CHROME: ReplayModeChromeState = {
 
 const REPLAY_CHROME: ReplayModeChromeState = {
   active: true,
-  primaryTabLabel: 'Replay',
-  primaryTabWidth: '50%',
-  settingsTabWidth: '50%',
   replayControls: true,
   visibility: {
     multiplayerTab: false,
@@ -117,10 +106,19 @@ export type ReplayModeShellCoordinator = Pick<
   | 'exitReplay'
 >;
 
+/** Replay's transport: back to the start, one step either way, the end. */
+export interface ReplayTransportHandlers {
+  readonly restart: () => void;
+  readonly previous: () => void;
+  readonly next: () => void;
+  readonly fastForward: () => void;
+}
+
 export interface ReplayModeShellContext {
   readonly state: ReplaySessionCoordinatorState;
   readonly chrome: ReplayModeChromeState;
-  readonly controls: ReactElement | null;
+  /** Bound to the coordinator; shown only while `chrome.replayControls`. */
+  readonly handlers: ReplayTransportHandlers;
   readonly exitReplay: () => boolean;
 }
 
@@ -130,8 +128,8 @@ export interface ReplayModeShellProps {
 }
 
 /**
- * Headless bridge for the eventual parity sidebar. It adds no DOM/layout of its
- * own and keeps coordinator methods correctly bound for React consumers.
+ * Headless bridge between the replay coordinator and the room's chrome. It
+ * adds no DOM of its own and keeps coordinator methods bound for React.
  */
 export const ReplayModeShell = ({
   coordinator,
@@ -140,7 +138,7 @@ export const ReplayModeShell = ({
   const state = useReplaySession(coordinator);
   const chrome = selectReplayModeChrome(state);
   const handlers = useMemo(
-    () => ({
+    (): ReplayTransportHandlers => ({
       restart: () => coordinator.restart(),
       previous: () => coordinator.stepPrevious(),
       next: () => coordinator.stepNext(),
@@ -149,9 +147,6 @@ export const ReplayModeShell = ({
     [coordinator]
   );
   const exitReplay = useCallback(() => coordinator.exitReplay(), [coordinator]);
-  const controls = chrome.replayControls ? (
-    <LegacyReplayControls visible handlers={handlers} />
-  ) : null;
 
-  return <>{children({ state, chrome, controls, exitReplay })}</>;
+  return <>{children({ state, chrome, handlers, exitReplay })}</>;
 };

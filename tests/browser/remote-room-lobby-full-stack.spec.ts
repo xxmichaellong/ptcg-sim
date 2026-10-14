@@ -4,6 +4,16 @@ import {
   answerOverlayConfirm,
   answerOverlayPrompt,
 } from './support/overlay-dialogs.js';
+import {
+  chooseLogAction,
+  chooseMenuItem,
+  closeDeck,
+  closeSheet,
+  openActivity,
+  openDeck,
+  openPlayOnline,
+  openSettings,
+} from './support/table-shell.js';
 
 const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 const EXPECTED_ROTATION_CONSOLE_ERROR =
@@ -82,10 +92,12 @@ const pasteInvitation = async (
 const joinReadyRoom = async (page: Page): Promise<void> => {
   await page.locator('#joinRoomButton').click();
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#roomHeaderText')).toHaveAttribute(
-    'data-session-phase',
-    'ready'
-  );
+  // The board paints once the room has answered.
+  await expect(
+    page.locator(
+      '[data-app-route="remote-room"] [data-renderer-status="ready"]'
+    )
+  ).toBeAttached();
 };
 
 test('visible v2 lobby creates, copies, pastes, and joins through private invitation custody', async ({
@@ -158,40 +170,36 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       };
       return {
         board: bounds('.board-column'),
-        sidebar: bounds('.legacy-sidebar'),
-        tabs: bounds('#topButtonContainer'),
-        sidebox: bounds('#p2Box'),
-        selectedTab: globalThis.document.querySelector(
-          '#topButtonContainer .selected-page'
-        )?.textContent,
+        sheet: bounds('#playOnlineSheet'),
+        panel: bounds('#playOnlineSheet #p2Box'),
+        sidebars:
+          globalThis.document.querySelectorAll('.legacy-sidebar').length,
         hasRemoteCopyImage: Boolean(
           globalThis.document.querySelector('#copyButton img')
         ),
       };
     });
-    // The table takes the window except the rail (ADR-027): at 1280px the
-    // rail is its 300px minimum, with the tabs on top and the panel below.
+    // The table has the whole window (ADR-030), and Play online opens over
+    // it in a sheet that fits the window.
     expect(initialChrome.board).toEqual({
       x: 0,
       y: 0,
-      width: expect.closeTo(980, 1),
+      width: 1280,
       height: 720,
     });
-    expect(initialChrome.sidebar).toEqual({
-      x: expect.closeTo(980, 1),
-      y: 0,
-      width: expect.closeTo(300, 1),
-      height: 720,
-    });
-    expect(initialChrome.tabs.x).toBeGreaterThan(initialChrome.sidebar.x);
-    expect(initialChrome.tabs.y).toBeLessThan(initialChrome.sidebox.y);
-    expect(initialChrome.sidebox.y).toBeGreaterThanOrEqual(
-      initialChrome.tabs.y + initialChrome.tabs.height
+    expect(initialChrome.sidebars).toBe(0);
+    expect(initialChrome.sheet.x).toBeGreaterThan(0);
+    expect(initialChrome.sheet.x + initialChrome.sheet.width).toBeLessThan(
+      1280
     );
+    expect(initialChrome.sheet.y).toBeGreaterThanOrEqual(0);
     expect(
-      initialChrome.sidebox.y + initialChrome.sidebox.height
+      initialChrome.sheet.y + initialChrome.sheet.height
     ).toBeLessThanOrEqual(720);
-    expect(initialChrome.selectedTab?.trim()).toBe('Multiplayer');
+    expect(initialChrome.panel.y).toBeGreaterThan(initialChrome.sheet.y);
+    await expect(creator.page.locator('#playOnlineSheet')).toContainText(
+      'Play online'
+    );
     expect(initialChrome.hasRemoteCopyImage).toBe(false);
     await expect(creator.page.locator('#coachingModeLabel')).toContainText(
       'Enable board flip (both players must enable)'
@@ -200,15 +208,16 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Join as spectator'
     );
 
-    await playerTwo.page.locator('#deckImportButton').click();
-    await expect(playerTwo.page.locator('#deckImportButton')).toHaveClass(
-      'selected-page'
-    );
-    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
-    await expect(playerTwo.page.locator('#p2Box')).toBeHidden();
+    // Play online is a sheet over the table; the deck is reached from the
+    // Solo table's menu, and the deck is kept when a room opens.
+    await closeSheet(playerTwo.page);
     await expect(
-      playerTwo.page.locator('#altImportHeaderButton')
-    ).toHaveAttribute('aria-disabled', 'true');
+      playerTwo.page.locator(
+        '[data-app-route="remote-room"][data-session-phase="ready"]'
+      )
+    ).toBeVisible();
+    await openDeck(playerTwo.page);
+    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
     await playerTwo.page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
       name: 'retained-before-room.csv',
       mimeType: 'text/csv',
@@ -234,9 +243,12 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect
       .poll(() => customCardBackRequests.get(playerTwo.page) ?? 0)
       .toBe(1);
-    await playerTwo.page.locator('#p2Button').click();
+    await closeDeck(playerTwo.page);
+    await openPlayOnline(playerTwo.page);
     await expect(playerTwo.page.locator('#deckImport')).toBeHidden();
-    await expect(playerTwo.page.locator('#p2Box')).toBeVisible();
+    await expect(
+      playerTwo.page.locator('#playOnlineSheet #p2Box')
+    ).toBeVisible();
 
     await creator.page.locator('#nameInput').fill('Blue');
     await creator.page.locator('#generateIdButton').click();
@@ -300,6 +312,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     expect(privateFaceRequests.get(creator.page)).toBe(0);
     expect(privateFaceRequests.get(spectator.page)).toBe(0);
 
+    for (const { page } of [creator, playerTwo, spectator]) {
+      await openActivity(page);
+    }
+    // The log docks beside the table at this width: the feed above the chat
+    // field, both inside the panel, the table laid out to its left.
     const connectedChrome = await creator.page.evaluate(() => {
       const bounds = (selector: string) => {
         const node = globalThis.document.querySelector(selector);
@@ -307,30 +324,29 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
           throw new Error(`Missing connected chrome: ${selector}`);
         }
         const rect = node.getBoundingClientRect();
-        return { top: rect.top, bottom: rect.bottom };
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        };
       };
       return {
-        sidebox: bounds('#p2Box'),
+        panel: bounds('#activitySheet'),
         chat: bounds('#p2Chatbox'),
-        chatButtons: bounds('#p2ChatboxButtonContainer'),
         message: bounds('#p2MessageInput'),
-        bottomButtons: bounds('#p2BottomButtonContainer'),
+        rail: bounds('#boardButtonContainer'),
       };
     });
+    expect(connectedChrome.panel.right).toBeCloseTo(1280, 0);
     expect(connectedChrome.chat.bottom).toBeLessThanOrEqual(
-      connectedChrome.chatButtons.top
-    );
-    expect(
-      connectedChrome.chatButtons.top - connectedChrome.chat.bottom
-    ).toBeLessThan(10);
-    expect(connectedChrome.chatButtons.bottom).toBeLessThanOrEqual(
       connectedChrome.message.top
     );
     expect(connectedChrome.message.bottom).toBeLessThanOrEqual(
-      connectedChrome.bottomButtons.top
+      connectedChrome.panel.bottom
     );
-    expect(connectedChrome.bottomButtons.bottom).toBeLessThanOrEqual(
-      connectedChrome.sidebox.bottom
+    expect(connectedChrome.rail.right).toBeLessThanOrEqual(
+      connectedChrome.panel.left
     );
 
     const handoffs = [rotatedPlayer, activePlayer, spectatorInvitation];
@@ -382,6 +398,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       creator.page.locator('#p2Chatbox').getByText('🌺', { exact: true })
     ).toBeVisible();
 
+    // Red's deck is loaded, so the rail asks for Set up first; then the
+    // turn's actions are there.
+    await expect(playerTwo.page.locator('#p2AttackButton')).toHaveCount(0);
+    await playerTwo.page.locator('#p2SetupButton').click();
     await playerTwo.page.locator('#p2AttackButton').click();
     for (const page of [creator.page, playerTwo.page, spectator.page]) {
       await expect(
@@ -390,8 +410,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     }
 
     // A multiplayer player takes back only their own newest move: the
-    // creator has nothing of theirs to undo, Red can take the attack back.
-    await creator.page.locator('#p2UndoButton').click();
+    // creator has nothing of theirs to undo (no deck, so no Undo on the
+    // rail; the U key still asks), Red can take the attack back.
+    await expect(creator.page.locator('#p2UndoButton')).toHaveCount(0);
+    await creator.page.locator('body').press('u');
     await playerTwo.page.locator('#p2UndoButton').click();
     for (const page of [creator.page, playerTwo.page, spectator.page]) {
       await expect(
@@ -409,9 +431,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(spectator.page.locator('#p2UndoButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2SetupButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2ResetButton')).toHaveCount(0);
-    await expect(spectator.page.locator('#p2FREEBUTTON')).toHaveClass(
-      'spectator-color'
-    );
+    await expect(spectator.page.locator('#p2FREEBUTTON')).toBeEnabled();
     await spectator.page.locator('#p2MessageInput').fill('still watching');
     await spectator.page.locator('#p2MessageInput').press('Enter');
     await expect(
@@ -438,26 +458,21 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'data-show-zone-outlines',
       'true'
     );
-    await playerTwo.page.locator('#settingsButton').click();
-    await expect(playerTwo.page.locator('#settings')).toBeVisible();
-    await expect(playerTwo.page.locator('#p2Box')).toBeHidden();
-    await expect(playerTwo.page.locator('#settingsButton')).toHaveClass(
-      'selected-page'
-    );
-    // How the table is shown lives in the Board view panel; covering the
+    await openSettings(playerTwo.page);
+    // How the table is shown is Settings' Table section; covering the
     // opponent's hand is a Solo choice, so a multiplayer room never offers it.
     await expect(playerTwo.page.locator('#showZonesCheckbox')).toHaveCount(0);
     await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
-    await expect(playerTwo.page.locator('#openBoardViewButton')).toHaveText(
-      'Open board view'
-    );
+    await expect(
+      playerTwo.page.locator('#settingsTable #zoneOutlinesCheckbox')
+    ).toBeAttached();
     await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
       'Press ? anywhere to see keyboard shortcuts'
     );
     await expect(
       playerTwo.page.locator('#keyboardShortcutsButton')
     ).toContainText('Keyboard shortcuts');
-    const contact = playerTwo.page.locator('#twitterDescription a');
+    const contact = playerTwo.page.locator('#twitterDescription');
     await expect(contact).toHaveAttribute(
       'href',
       'https://twitter.com/xxmichaellong'
@@ -510,8 +525,6 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
     await expect.poll(pageTheme).toBe('night');
-    await playerTwo.page.locator('#openBoardViewButton').click();
-    await expect(playerTwo.page.locator('#boardViewPanel')).toBeVisible();
     await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
     await playerTwo.page.locator('#zoneOutlinesCheckbox').uncheck();
     await expect(boardSurface).toHaveAttribute(
@@ -519,23 +532,20 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'false'
     );
     await playerTwo.page.keyboard.press('Escape');
-    await expect(playerTwo.page.locator('#boardViewPanel')).toHaveCount(0);
-    // Focus goes back to the control that opened the panel.
-    await expect(playerTwo.page.locator('#openBoardViewButton')).toBeFocused();
+    await expect(playerTwo.page.locator('#settings')).toHaveCount(0);
+    // Focus goes back to the menu that opened Settings.
+    await expect(playerTwo.page.locator('#appMenuButton')).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(hiddenZone).toHaveCSS('box-shadow', 'none');
     await expect(hiddenZone).toHaveAttribute('role', 'button');
-    await playerTwo.page.locator('#p2Button').click();
-    await expect(playerTwo.page.locator('#p2Box')).toBeVisible();
-    await expect(playerTwo.page.locator('#settings')).toBeHidden();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
       'false'
     );
-    // The rail still wears the Night theme after the tab change: its log and
-    // message input paint opaque surfaces from the design tokens.
+    // The log still wears the Night theme after Settings closes: its feed
+    // and message input paint opaque surfaces from the design tokens.
     await expect.poll(pageTheme).toBe('night');
     for (const selector of ['.legacy-activity-feed', '#p2MessageInput']) {
       await expect(playerTwo.page.locator(selector)).not.toHaveCSS(
@@ -544,10 +554,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       );
     }
 
-    await playerTwo.page.locator('#p2OptionsButton').click();
     const [perspectiveReplay] = await Promise.all([
       playerTwo.page.waitForEvent('download'),
-      playerTwo.page.locator('#exportState').click(),
+      chooseMenuItem(playerTwo.page, 'exportState'),
     ]);
     expect(perspectiveReplay.suggestedFilename()).toBe(
       'ptcgsim-perspective-replay.json'
@@ -579,10 +588,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     expect(perspectiveReplayText).not.toContain('resumeToken');
     await expect(playerTwo.page.locator('#p2MessageInput')).toBeVisible();
 
-    await playerTwo.page.locator('#p2OptionsButton').click();
     const [battleLog] = await Promise.all([
       playerTwo.page.waitForEvent('download'),
-      playerTwo.page.locator('#exportLog').click(),
+      chooseLogAction(playerTwo.page, 'exportLog'),
     ]);
     expect(battleLog.suggestedFilename()).toBe('battle-log.txt');
     const battleLogStream = await battleLog.createReadStream();
@@ -607,30 +615,30 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         }
       );
     });
-    await playerTwo.page.locator('#p2OptionsButton').click();
-    await playerTwo.page.locator('#fullscreenButton').click();
+    await chooseMenuItem(playerTwo.page, 'fullscreenButton');
     await expect(playerTwo.page.locator('html')).toHaveAttribute(
       'data-test-fullscreen',
       'requested'
     );
 
-    await playerTwo.page.locator('#p2OptionsButton').click();
-    await playerTwo.page.locator('#clearLog').click();
+    await chooseLogAction(playerTwo.page, 'clearLog');
     await expect(playerTwo.page.locator('#p2Chatbox')).toBeEmpty();
 
-    const headerLeave = answerOverlayConfirm(playerTwo.page, false);
-    await playerTwo.page.locator('#p1Button').click();
-    expect(await headerLeave).toEqual({
+    // The sidebar's Solo tab is gone (PX-026): the menu's Leave room is the
+    // way out, and it asks first. Declined, the room stays.
+    const declinedLeave = answerOverlayConfirm(playerTwo.page, false);
+    await chooseMenuItem(playerTwo.page, 'leaveRoomButton');
+    expect(await declinedLeave).toEqual({
       type: 'confirm',
       message:
-        'Are you sure you want to leave the room? Battle log will be erased.',
+        'Are you sure you want to leave the room? Current game state will be lost.',
     });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room"]')
     ).toBeVisible();
 
     const sidebarLeave = answerOverlayConfirm(playerTwo.page, true);
-    await playerTwo.page.locator('#leaveRoomButton').click();
+    await chooseMenuItem(playerTwo.page, 'leaveRoomButton');
     expect(await sidebarLeave).toEqual({
       type: 'confirm',
       message:
@@ -650,9 +658,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         .locator('#p2Chatbox')
         .getByText('Red left the room', { exact: true })
     ).toBeVisible();
-    await playerTwo.page.locator('#settingsButton').click();
-    await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
-    // The Board view is kept on this device across rooms (writes are
+    // The table's settings are kept on this device across rooms (writes are
     // batched, so poll).
     await expect
       .poll(() =>
@@ -664,7 +670,18 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);
-    await playerTwo.page.locator('#deckImportButton').click();
+    // Back at the Solo table, the deck is still the one built before the
+    // room, and the theme is still Night.
+    await closeSheet(playerTwo.page);
+    await expect(
+      playerTwo.page.locator(
+        '[data-app-route="remote-room"][data-session-phase="ready"]'
+      )
+    ).toBeVisible();
+    await openSettings(playerTwo.page);
+    await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
+    await closeSheet(playerTwo.page);
+    await openDeck(playerTwo.page);
     await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
     await expect(
       playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')

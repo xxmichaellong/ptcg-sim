@@ -392,8 +392,8 @@ export const HOTKEY_ACTIONS = [
   }),
   action('table.flipBoard', {
     group: 'table',
-    label: 'Flip board',
-    short: 'Flip board',
+    label: 'Switch side',
+    short: 'Switch side',
     scope: 'any',
     defaultChord: 'alt+f',
   }),
@@ -413,8 +413,8 @@ export const HOTKEY_ACTIONS = [
   }),
   action('table.refreshImages', {
     group: 'table',
-    label: 'Refresh images',
-    short: 'Refresh',
+    label: 'Reload card images',
+    short: 'Reload images',
     scope: 'table',
     defaultChord: 'r',
   }),

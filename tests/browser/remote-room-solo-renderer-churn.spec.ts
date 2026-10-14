@@ -11,6 +11,12 @@ import {
   MAX_CLIENT_FRAMES_PER_WINDOW,
 } from '../../apps/server/src/session-hub-limits.js';
 import { DEFAULT_PRESENTATION_RUNTIME_POLICY } from '../../apps/web/src/presentation/PresentationRuntime.js';
+import {
+  chooseMoreAction,
+  closeSheet,
+  openActivity,
+  openDeck,
+} from './support/table-shell.js';
 
 // Playwright trace snapshots retain a full copy of every 47/60-card dialog at
 // every locator action. Besides producing a >100 MB artifact, that observer
@@ -130,20 +136,30 @@ const stayUnderClientFrameLimit = async (page: Page): Promise<void> => {
   }
 };
 
+/** Solo's both-sides actions, behind the rail's More (ADR-030). */
+const expectBothActionsEnabled = async (page: Page): Promise<void> => {
+  await page.locator('#moreActionsButton').click();
+  await expect(page.locator('#setupBothButton')).toBeEnabled();
+  await expect(page.locator('#resetBothButton')).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#setupBothButton')).toHaveCount(0);
+};
+
 const submitBoth = async (
   page: Page,
   action: 'setup' | 'reset'
 ): Promise<void> => {
-  const button = page.locator(
-    action === 'setup' ? '#setupBothButton' : '#resetBothButton'
-  );
   const before = await readRevision(page);
-  await button.click();
+  await chooseMoreAction(
+    page,
+    action === 'setup' ? 'setupBothButton' : 'resetBothButton'
+  );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     String(before + 2)
   );
-  await expect(button).toBeEnabled();
+  // The menu has closed behind the choice, so nothing of it is counted.
+  await expect(page.locator('#setupBothButton')).toHaveCount(0);
 };
 
 const churnDeckZoneBrowsers = async (
@@ -587,20 +603,22 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
   await page.locator('#nameInput').fill('Churn');
-  await page.locator('#p1Button').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
   );
-  await expect(page.locator('#setupBothButton')).toBeEnabled();
-  await expect(page.locator('#resetBothButton')).toBeEnabled();
+  // The log stays open (docked) so its rows are part of what is measured.
+  await openActivity(page);
+  await expectBothActionsEnabled(page);
 
   const renderer = await page.evaluateHandle(
     () => window.__PTCG_RENDERER_SPIKE__?.renderer
   );
   const beforeDeckInstall = await readRevision(page);
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
   await page.locator('#nativeDeckBuilderTargetMain').click();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
@@ -621,7 +639,9 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
     'Total: 60'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
-  await expect(page.locator('#p1Box')).toBeVisible();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
   await expect(
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
   ).toHaveCount(2);
@@ -811,8 +831,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
     retainedHeapRatio,
     `post-GC V8 heap ${finalHeap.usedSize} exceeded ${MAXIMUM_RETAINED_HEAP_RATIO}x warmed baseline ${baselineHeap.usedSize}`
   ).toBeLessThanOrEqual(MAXIMUM_RETAINED_HEAP_RATIO);
-  await expect(page.locator('#setupBothButton')).toBeEnabled();
-  await expect(page.locator('#resetBothButton')).toBeEnabled();
+  await expectBothActionsEnabled(page);
   expect(roomCreations).toBe(1);
   expect(socketLifecycle.lifecycleViolations).toEqual([]);
   expect(socketLifecycle.socketPaths).toHaveLength(1);

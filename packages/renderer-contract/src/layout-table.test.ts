@@ -512,4 +512,215 @@ describe('table layout (geometry v2)', () => {
       )
     ).toThrow('Unsupported hidden board side');
   });
+
+  describe('portrait (a table tall for its width)', () => {
+    const PORTRAIT_VIEWPORTS = [
+      [390, 844],
+      [430, 932],
+      [360, 740],
+      [810, 1080],
+    ] as const;
+    const portraitAt = (
+      width: number,
+      height: number,
+      overrides: Partial<BoardLayoutState> = {}
+    ) =>
+      createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode: 'fullscreen', ...overrides })
+      );
+    const benchCardWidth = (rect: Rect) =>
+      Math.min(rect.height, rect.width / 5.5 / CARD_ASPECT_RATIO) *
+      CARD_ASPECT_RATIO;
+
+    it('turns the mat into rows: Active, bench, then prizes and piles side by side above the hand', () => {
+      for (const [width, height] of PORTRAIT_VIEWPORTS) {
+        const snapshot = portraitAt(width, height);
+        for (const player of snapshot.players) {
+          const frame = player.frameBounds;
+          const regions = player.regions.map(
+            (candidate) => candidate.physicalDeclaredBounds
+          );
+          for (const rect of regions) expect(inside(rect, frame)).toBe(true);
+          for (const [index, rect] of regions.entries()) {
+            for (const other of regions.slice(index + 1)) {
+              expect(overlaps(rect, other), `${width}x${height}`).toBe(false);
+            }
+          }
+        }
+        const bench = region(snapshot, 'local', 'bench').physicalDeclaredBounds;
+        const active = region(
+          snapshot,
+          'local',
+          'active'
+        ).physicalDeclaredBounds;
+        const prizes = region(
+          snapshot,
+          'local',
+          'prizes'
+        ).physicalDeclaredBounds;
+        const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
+        const piles = (['deck', 'discard', 'lostZone'] as const).map(
+          (kind) => region(snapshot, 'local', kind).physicalDeclaredBounds
+        );
+        // From the centre line out: Active, bench, the pile row, the hand.
+        expect(active.y).toBeLessThan(bench.y);
+        expect(bench.y).toBeLessThan(prizes.y);
+        expect(prizes.y + prizes.height).toBeLessThanOrEqual(hand.y);
+        // The bench runs the width of the table and holds five and a half.
+        expect(bench.width).toBeGreaterThan(width * 0.9);
+        expect(5.5 * bench.height * CARD_ASPECT_RATIO).toBeLessThanOrEqual(
+          bench.width + 0.01
+        );
+        // Prizes at the outer left, the piles side by side on the right.
+        expect(prizes.width).toBeGreaterThan(prizes.height);
+        for (const pile of piles) {
+          expect(pile.y).toBeCloseTo(prizes.y, 5);
+          expect(pile.x).toBeGreaterThan(prizes.x + prizes.width);
+        }
+        expect(piles[0]!.x).toBeLessThan(piles[1]!.x);
+        expect(piles[1]!.x).toBeLessThan(piles[2]!.x);
+        // Every pile keeps its count badge clear of the screen's edge.
+        expect(piles[2]!.x + piles[2]!.width).toBeLessThanOrEqual(width - 12);
+        // The rail keeps its left end for the app menu.
+        expect(snapshot.shared.boardControlsAnchor.x).toBeGreaterThanOrEqual(
+          60
+        );
+      }
+    });
+
+    it('makes the cards on a phone held upright big enough to read', () => {
+      const phone = portraitAt(390, 844);
+      expect(
+        benchCardWidth(region(phone, 'local', 'bench').physicalDeclaredBounds)
+      ).toBeGreaterThanOrEqual(60);
+      expect(
+        benchCardWidth(
+          region(phone, 'opponent', 'bench').physicalDeclaredBounds
+        )
+      ).toBeGreaterThanOrEqual(60);
+      // A tablet in portrait gains too.
+      const tablet = portraitAt(810, 1080);
+      expect(
+        benchCardWidth(region(tablet, 'local', 'bench').physicalDeclaredBounds)
+      ).toBeGreaterThanOrEqual(85);
+    });
+
+    it('keeps the mat wherever the table is wide', () => {
+      for (const [width, height] of [
+        [1440, 900],
+        [1280, 720],
+        [1080, 810],
+        [844, 390],
+      ] as const) {
+        const snapshot = portraitAt(width, height);
+        const deck = region(snapshot, 'local', 'deck').physicalDeclaredBounds;
+        const discard = region(
+          snapshot,
+          'local',
+          'discard'
+        ).physicalDeclaredBounds;
+        // Piles stacked down the outer column.
+        expect(discard.x).toBeCloseTo(deck.x, 5);
+        expect(discard.y).toBeGreaterThan(deck.y);
+      }
+    });
+
+    it('builds a scene whose prizes lie three across and two down', () => {
+      const view: MatchViewState = createRendererSpikeView();
+      const scene = createBoardScene(view, portraitAt(390, 844));
+      const table = { x: 0, y: 0, width: 390, height: 844 };
+      for (const card of scene.cards) {
+        if (card.parentId.endsWith(':hand')) continue;
+        expect(inside(card.bounds, table), card.parentId).toBe(true);
+      }
+      const prizeZone = scene.zones.find(
+        (zone) => zone.kind === 'prizes' && zone.side === 'local'
+      )!;
+      const prizes = scene.cards.filter(
+        (card) => card.parentId === prizeZone.id
+      );
+      expect(prizes.length).toBe(6);
+      expect(
+        new Set(prizes.map((card) => Math.round(card.bounds.x))).size
+      ).toBe(3);
+      expect(
+        new Set(prizes.map((card) => Math.round(card.bounds.y))).size
+      ).toBe(2);
+      for (const card of prizes)
+        expect(inside(card.bounds, prizeZone.bounds)).toBe(true);
+    });
+
+    it('fills the table with one half and keeps the controls in its band', () => {
+      const snapshot = portraitAt(390, 844, { hiddenPhysicalSide: 'upper' });
+      const active = region(snapshot, 'local', 'active').physicalDeclaredBounds;
+      const controls = snapshot.shared.boardControlsAnchor;
+      expect(controls.y).toBeGreaterThanOrEqual(0);
+      expect(controls.y + controls.height).toBeLessThanOrEqual(active.y);
+      // Rows, not the mat's columns, and larger for the room.
+      const prizes = region(snapshot, 'local', 'prizes').physicalDeclaredBounds;
+      expect(prizes.width).toBeGreaterThan(prizes.height);
+      expect(
+        benchCardWidth(
+          region(snapshot, 'local', 'bench').physicalDeclaredBounds
+        )
+      ).toBeGreaterThanOrEqual(60);
+    });
+  });
+
+  it('widens the seam band for finger-sized controls when asked', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [844, 390],
+      [390, 844],
+    ] as const) {
+      const plain = createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode: 'fullscreen' })
+      );
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode: 'fullscreen', seamBandPx: 48 })
+      );
+      expect(plain.shared.boardControlsAnchor.height).toBeLessThanOrEqual(32);
+      const seamY = snapshot.players.find(
+        (player) => player.physicalSide === 'lower'
+      )!.frameBounds.y;
+      for (const player of snapshot.players) {
+        for (const candidate of player.regions) {
+          const rect = candidate.physicalDeclaredBounds;
+          if (player.physicalSide === 'lower')
+            expect(rect.y - seamY).toBeGreaterThanOrEqual(24 - 0.01);
+          else
+            expect(seamY - (rect.y + rect.height)).toBeGreaterThanOrEqual(
+              24 - 0.01
+            );
+        }
+      }
+      const controls = snapshot.shared.boardControlsAnchor;
+      expect(controls.height).toBeGreaterThanOrEqual(44);
+      expect(controls.y).toBeGreaterThanOrEqual(seamY - 24 - 0.01);
+      expect(controls.y + controls.height).toBeLessThanOrEqual(
+        seamY + 24 + 0.01
+      );
+    }
+    // The band is a size, not a switch: nonsense is refused.
+    expect(() =>
+      createTableLayoutSnapshot(stateAt(1440, 900, { seamBandPx: -1 }))
+    ).toThrow('Table seam band must be a non-negative number');
+  });
+
+  it('lays prizes three across and two down in a row wider than tall', () => {
+    const content = { x: 0, y: 0, width: 120, height: 80 };
+    const mine = layoutTablePrizes(content, 'local', 6);
+    expect(new Set(mine.map((rect) => Math.round(rect.x))).size).toBe(3);
+    expect(new Set(mine.map((rect) => Math.round(rect.y))).size).toBe(2);
+    expect(mine[0]!.x).toBeLessThan(mine[1]!.x);
+    expect(mine[0]!.y).toBeLessThan(mine[3]!.y);
+    const theirs = layoutTablePrizes(content, 'opponent', 6);
+    expect(theirs[0]!.x).toBeGreaterThan(theirs[1]!.x);
+    expect(theirs[0]!.y).toBeGreaterThan(theirs[3]!.y);
+    // More than six shrink to fit rather than spill.
+    const many = layoutTablePrizes(content, 'local', 8);
+    for (const rect of [...mine, ...theirs, ...many])
+      expect(inside(rect, content)).toBe(true);
+  });
 });

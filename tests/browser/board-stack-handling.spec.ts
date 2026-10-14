@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import {
+  chooseMoreAction,
+  openActivity,
+  openDeck,
+} from './support/table-shell.js';
+
 /**
  * Handling the cards of a Pokémon in a real Solo room: an attached card moves
  * to another Pokémon by drag, as in v1, and a Pokémon's attached cards never
@@ -22,7 +28,7 @@ const openSoloTable = async (page: Page): Promise<void> => {
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
   });
-  await page.click('#deckImportButton');
+  await openDeck(page);
   await page.locator('#nativeDeckBuilderTargetMain').click();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'main.csv',
@@ -36,11 +42,18 @@ const openSoloTable = async (page: Page): Promise<void> => {
     buffer: deckCsv('Alt'),
   });
   await page.locator('#nativeDeckBuilderPlayButton').click();
-  await page.click('#p1Button');
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+  // Both decks are installed (one revision each) before Set up both.
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-revision',
+    '2'
+  );
   const before = Number(
     await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
   );
-  await page.click('#setupBothButton');
+  await chooseMoreAction(page, 'setupBothButton');
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     String(before + 2)
@@ -189,6 +202,7 @@ test('an attached Energy moves to another Pokémon by drag, as in v1', async ({
   expect(await parentOf(page, energy.id)).toBe(
     await parentOf(page, benched.id)
   );
+  await openActivity(page);
   await expect(page.locator('#chatbox')).toContainText(
     'attached Main Energy from active to Main Mon'
   );

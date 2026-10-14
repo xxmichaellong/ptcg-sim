@@ -1,55 +1,46 @@
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
+import { TABLE_CONTROL_CORNER_HEIGHT_PX } from '@ptcgsim/renderer-contract';
 import type {
   BoardLayoutSnapshot,
   BoardDepthProjection,
   BoardPlayerLayout,
 } from '@ptcgsim/renderer-contract';
-// One module per icon: the barrel pulls every icon into the dev server.
-import { ArrowClockwise } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
-import { ArrowsDownUp } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
-import { Coin } from '@phosphor-icons/react/dist/csr/Coin';
-import { CornersIn } from '@phosphor-icons/react/dist/csr/CornersIn';
-import { CornersOut } from '@phosphor-icons/react/dist/csr/CornersOut';
-import { Plus } from '@phosphor-icons/react/dist/csr/Plus';
-import { SlidersHorizontal } from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import './LegacyBoardChrome.css';
-import { BOARD_VIEW_TRIGGER_ATTRIBUTE } from './view/BoardViewPanel.js';
 import {
   ONCE_PER_GAME_TILE_ASPECT,
   OncePerGameTile,
 } from './OncePerGameTile.js';
+import { TableRail, type RailAction } from './rail/TableRail.js';
+import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
 const ONCE_PER_GAME_TILE_PADDING = 4;
 
 export interface LegacyBoardChromeActions {
-  readonly takeTurn: () => void;
-  readonly flipCoin: () => void;
-  readonly flipBoard: () => void;
-  readonly refreshImages: () => void;
-  readonly toggleFullscreen: () => void;
   readonly toggleOncePerGame: (
     playerId: PlayerId,
     marker: 'gx' | 'vstar'
   ) => void;
   /** v1's per-hand Sort checkbox; paint-only, never a command. */
   readonly toggleHandSort?: (playerId: PlayerId, sorted: boolean) => void;
-  /** Opens or closes the Board view panel (the play-mat table only). */
-  readonly toggleBoardView?: () => void;
 }
 
-export interface LegacyBoardChromeVisibility {
-  readonly playerActions: boolean;
-  readonly flipBoard: boolean;
+/** What the table rail along the seam holds (ADR-030). */
+export interface LegacyBoardChromeRail {
+  /** At the left end: the app menu. */
+  readonly start?: ReactNode;
+  /** At the right end: the activity log. */
+  readonly end?: ReactNode;
+  /** The turn's actions, in order. */
+  readonly actions: readonly RailAction[];
+  /** The rarer actions, behind More. */
+  readonly more?: readonly ActionMenuEntry[];
+  /** Whose seat the actions act for. */
+  readonly seat?: 'you' | 'opponent';
 }
-
-const DEFAULT_VISIBILITY: LegacyBoardChromeVisibility = {
-  playerActions: true,
-  flipBoard: true,
-};
 
 /** The resize pill's box; its seat colour comes from `data-player-side`. */
 const handleStyle = (
@@ -61,65 +52,6 @@ const handleStyle = (
   bottom: viewportHeight * handle.authoredBottomRatio,
   width: handle.bounds.width,
   height: handle.bounds.height,
-});
-
-const ICON_PROPS = {
-  'aria-hidden': true,
-  focusable: false,
-  weight: 'bold',
-  className: 'legacy-board-control-icon',
-} as const;
-
-const LegacyTooltipButton = memo(function LegacyTooltipButton({
-  id,
-  label,
-  onClick,
-  children,
-  darkMode,
-  pending = false,
-  expanded,
-  controls,
-  buttonId,
-}: {
-  readonly id: string;
-  readonly label: string;
-  readonly onClick: () => void;
-  readonly children: ReactNode;
-  readonly darkMode: boolean;
-  /** Marks a control that is waiting on the room rather than predicting it. */
-  readonly pending?: boolean;
-  /** For a control that opens a panel: whether it is open, and its id. */
-  readonly expanded?: boolean;
-  readonly controls?: string;
-  readonly buttonId?: string;
-}) {
-  return (
-    <div
-      id={id}
-      className="tooltip"
-      onClick={onClick}
-      {...(expanded === undefined
-        ? {}
-        : { [BOARD_VIEW_TRIGGER_ATTRIBUTE]: 'true' })}
-    >
-      <button
-        id={buttonId}
-        type="button"
-        className={`legacy-board-control-button${darkMode ? ' dark-mode-2' : ''}`}
-        data-control-pending={pending ? 'true' : undefined}
-        aria-busy={pending || undefined}
-        aria-label={label}
-        aria-expanded={expanded}
-        aria-controls={expanded ? controls : undefined}
-      >
-        {children}
-      </button>
-      {/* The button carries the same words as its name. */}
-      <span className="tooltiptext" aria-hidden="true">
-        {label}
-      </span>
-    </div>
-  );
 });
 
 const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
@@ -191,6 +123,15 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
     <div
       className="legacy-player-frame-chrome"
       data-player-frame-chrome={frame.playerId}
+      // A hand strip too short to stack the markers (a phone) lays them side
+      // by side in the corner beside the hand.
+      data-corner={
+        (frame.regions.find((region) => region.kind === 'hand')
+          ?.physicalDeclaredBounds.height ?? frame.frameBounds.height) <
+        TABLE_CONTROL_CORNER_HEIGHT_PX
+          ? 'compact'
+          : undefined
+      }
       data-player-side={playerSide}
       data-player-layout-side={frame.side}
       data-player-physical-side={frame.physicalSide}
@@ -249,8 +190,9 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
 
 /**
  * Route-owned source-shaped paint. Board geometry and resize input remain in
- * the renderer-neutral runtime; this layer only preserves the existing chrome
- * and control callbacks while a route decides where those callbacks lead.
+ * the renderer-neutral runtime; this layer paints each seat's GX/VSTAR and
+ * hand-sort controls and the table rail, while a route decides where their
+ * callbacks lead.
  */
 export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   layout,
@@ -258,13 +200,10 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   players,
   darkMode,
   actions,
-  visibility = DEFAULT_VISIBILITY,
-  refreshingImages = false,
-  coinPending = false,
+  rail,
   sortedHandPlayerIds,
   coveredByPopup = false,
   depth,
-  boardViewOpen = false,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly depth?: BoardDepthProjection;
@@ -272,10 +211,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   readonly players: MatchViewState['players'];
   readonly darkMode: boolean;
   readonly actions: LegacyBoardChromeActions;
-  readonly visibility?: LegacyBoardChromeVisibility;
-  readonly refreshingImages?: boolean;
-  /** The room has been asked for a coin and has not answered yet. */
-  readonly coinPending?: boolean;
+  /** The table rail; absent, the seam stays empty. */
+  readonly rail?: LegacyBoardChromeRail;
   /** Players whose hand is painted sorted (the v1 Sort checkbox state). */
   readonly sortedHandPlayerIds?: ReadonlySet<PlayerId>;
   /**
@@ -284,8 +221,6 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * and take no clicks until it closes.
    */
   readonly coveredByPopup?: boolean;
-  /** The Board view panel is open (its button shows as pressed). */
-  readonly boardViewOpen?: boolean;
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -301,7 +236,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   const lower = layout.resizeHandles.find((handle) => handle.id === 'lower');
   const upper = layout.resizeHandles.find((handle) => handle.id === 'upper');
   if (!lower || !upper) throw new Error('Board chrome requires both handles');
-  // The play-mat table is split from the Board view panel, not dragged.
+  // The play-mat table is split from Settings, not dragged.
   const showResizers = layout.geometryVersion !== 2;
   const logicalAnchor = layout.shared.boardControlsAnchor;
   const activeZones = depth?.scene.zones
@@ -309,6 +244,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     .sort((a, b) => a.bounds.y - b.bounds.y);
   let anchor = logicalAnchor;
   if (depth && activeZones?.length === 2) {
+    // Tilted, the seam narrows; the rail follows it on screen.
     const upper = activeZones[0]!.bounds;
     const lower = activeZones[1]!.bounds;
     const gapTop = depth.point({
@@ -325,6 +261,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     );
     anchor = { ...logicalAnchor, height, y: (gapTop + gapBottom - height) / 2 };
   }
+  const stadium = layout.shared.stadium.physicalDeclaredBounds;
 
   return (
     <div
@@ -374,108 +311,19 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           />
         </>
       )}
-      <div
-        id="boardButtonContainer"
-        className="legacy-board-controls"
-        data-board-controls="true"
-        data-table-depth={depth ? 'true' : undefined}
-        style={{
-          left: anchor.x,
-          top: anchor.y,
-          height: anchor.height,
-          ...(depth
-            ? ({
-                '--table-control-height': `${anchor.height}px`,
-              } as CSSProperties)
-            : {}),
-          ...(coveredByPopup
-            ? {
-                // What is left of the controls through v1's cover: 85% white,
-                // or the 90% dark sheet in dark mode.
-                opacity: darkMode ? 0.1 : 0.15,
-                pointerEvents: 'none' as const,
-              }
-            : {}),
-        }}
-      >
-        {visibility.playerActions && (
-          <>
-            <LegacyTooltipButton
-              id="turnButton"
-              label="Start turn"
-              onClick={actions.takeTurn}
-              darkMode={darkMode}
-            >
-              <Plus {...ICON_PROPS} />
-              <span className="legacy-board-control-text">Turn</span>
-            </LegacyTooltipButton>
-            <LegacyTooltipButton
-              id="flipCoinButton"
-              label="Flip coin"
-              onClick={actions.flipCoin}
-              darkMode={darkMode}
-              pending={coinPending}
-            >
-              <Coin {...ICON_PROPS} />
-              <span className="legacy-board-control-text">Coin</span>
-            </LegacyTooltipButton>
-          </>
-        )}
-        {visibility.flipBoard && (
-          <LegacyTooltipButton
-            id="flipBoardButton"
-            label="Flip board"
-            onClick={actions.flipBoard}
-            darkMode={darkMode}
-          >
-            <ArrowsDownUp {...ICON_PROPS} />
-          </LegacyTooltipButton>
-        )}
-        <LegacyTooltipButton
-          id="refreshButton"
-          label="Refresh images"
-          onClick={actions.refreshImages}
-          darkMode={darkMode}
-        >
-          <div
-            id="refreshIcon"
-            style={{ display: refreshingImages ? 'none' : undefined }}
-          >
-            <ArrowClockwise {...ICON_PROPS} />
-          </div>
-          <div
-            id="loadingCircle"
-            style={{ display: refreshingImages ? 'block' : undefined }}
-          />
-        </LegacyTooltipButton>
-        <LegacyTooltipButton
-          id="fullscreenPlaymatButton"
-          label="Full screen"
-          onClick={actions.toggleFullscreen}
-          darkMode={darkMode}
-        >
-          <div id="fullscreenIcon">
-            {layout.shellMode === 'fullscreen' ? (
-              <CornersIn {...ICON_PROPS} />
-            ) : (
-              <CornersOut {...ICON_PROPS} />
-            )}
-          </div>
-        </LegacyTooltipButton>
-        {actions.toggleBoardView && (
-          <LegacyTooltipButton
-            id="boardViewControl"
-            buttonId="boardViewButton"
-            label="Board view"
-            onClick={actions.toggleBoardView}
-            darkMode={darkMode}
-            expanded={boardViewOpen}
-            controls="boardViewPanel"
-          >
-            <SlidersHorizontal {...ICON_PROPS} />
-          </LegacyTooltipButton>
-        )}
-      </div>
+      {rail ? (
+        <TableRail
+          anchor={anchor}
+          width={layout.playAreaBounds.width}
+          avoid={stadium}
+          {...(rail.start ? { start: rail.start } : {})}
+          {...(rail.end ? { end: rail.end } : {})}
+          actions={rail.actions}
+          {...(rail.more ? { more: rail.more } : {})}
+          covered={coveredByPopup}
+          {...(rail.seat ? { seat: rail.seat } : {})}
+        />
+      ) : null}
     </div>
   );
 });

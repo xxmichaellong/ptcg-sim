@@ -1,0 +1,96 @@
+import { expect, type Page } from '@playwright/test';
+
+/**
+ * The room's shell (ADR-030): the table fills the window; the app menu sits
+ * at the rail's left end and the activity log at its right; Settings, Play
+ * online and the deck screen open over the table. Specs reach every one of
+ * them through these helpers, so a change to the shell changes one file.
+ */
+
+/** Opens the app menu and waits for it. */
+export const openAppMenu = async (page: Page): Promise<void> => {
+  await page.locator('#appMenuButton').click();
+  await expect(page.getByRole('menu', { name: 'Menu' })).toBeVisible();
+};
+
+/** Chooses an app-menu entry by its id (`settingsButton`, `exportState`). */
+export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
+  await openAppMenu(page);
+  await page.locator(`#${id}`).click();
+};
+
+export const openSettings = async (page: Page): Promise<void> => {
+  await chooseMenuItem(page, 'settingsButton');
+  await expect(page.locator('#settings')).toBeVisible();
+};
+
+/** Puts away whichever sheet is open (Settings, Play online, a help page). */
+export const closeSheet = async (page: Page): Promise<void> => {
+  await page.keyboard.press('Escape');
+};
+
+/** The deck screen, from the menu. */
+export const openDeck = async (page: Page): Promise<void> => {
+  await chooseMenuItem(page, 'deckImportButton');
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="true"]')
+  ).toBeVisible();
+};
+
+export const closeDeck = async (page: Page): Promise<void> => {
+  await page.locator('#deckBackButton').click();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+};
+
+/** Opens the activity log (battle log and chat) if it is not open. */
+export const openActivity = async (page: Page): Promise<void> => {
+  const button = page.locator('#activityButton');
+  if ((await button.getAttribute('aria-expanded')) !== 'true') {
+    await button.click();
+  }
+  await expect(page.locator('#activitySheet')).toBeVisible();
+};
+
+/** One of the battle log's own actions: `exportLog`, `clearLog`. */
+export const chooseLogAction = async (
+  page: Page,
+  id: string
+): Promise<void> => {
+  await openActivity(page);
+  await page.locator('#activityLogMenuButton').click();
+  await page.locator(`#${id}`).click();
+};
+
+/** Play online, from a Solo table's menu. */
+export const openPlayOnline = async (page: Page): Promise<void> => {
+  await chooseMenuItem(page, 'p2Button');
+  await expect(page.locator('#playOnlineSheet')).toBeVisible();
+};
+
+/** A rarer game action behind the rail's More: `resetButton`, `setupBothButton`. */
+export const chooseMoreAction = async (
+  page: Page,
+  id: string
+): Promise<void> => {
+  await page.locator('#moreActionsButton').click();
+  await page.locator(`#${id}`).click();
+};
+
+/** Puts away the empty table's welcome card, if it is showing. */
+export const dismissWelcome = async (page: Page): Promise<void> => {
+  const dismiss = page.locator('.table-welcome__dismiss');
+  if (await dismiss.isVisible()) await dismiss.click();
+};
+
+/**
+ * Closes the activity log: the docked panel from its own close button (it
+ * sits over the rail's end while docked), a sheet the same way.
+ */
+export const closeActivity = async (page: Page): Promise<void> => {
+  const panel = page.locator('#activitySheet');
+  if ((await panel.count()) === 0) return;
+  await panel.getByRole('button', { name: /^Close/u }).click();
+  await expect(panel).toHaveCount(0);
+};

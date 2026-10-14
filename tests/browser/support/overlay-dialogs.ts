@@ -6,18 +6,23 @@ import type { Locator, Page } from '@playwright/test';
  * legacy runtime still uses native dialogs; its specs keep `page.on('dialog')`.
  */
 
+/*
+ * Only the dialog primitive (`.ptcgsim-ui-dialog`): the shell's sheets and
+ * deck screen are overlay surfaces too (ADR-030), but they are not questions.
+ */
+
 /** The prompt dialog that is open now (not one animating out). */
 export const openOverlayPrompt = (page: Page): Locator =>
-  page.locator('[data-ptcgsim-overlay="dialog"][data-open]');
+  page.locator('.ptcgsim-ui-dialog[data-ptcgsim-overlay="dialog"][data-open]');
 
 /** The confirmation (role=alertdialog) that is open now. */
 export const openOverlayConfirm = (page: Page): Locator =>
-  page.locator('[data-ptcgsim-overlay="alert"][data-open]');
+  page.locator('.ptcgsim-ui-dialog[data-ptcgsim-overlay="alert"][data-open]');
 
 /** Any overlay dialog that is open now. */
 export const openOverlayDialogs = (page: Page): Locator =>
   page.locator(
-    '[data-ptcgsim-overlay="dialog"][data-open], [data-ptcgsim-overlay="alert"][data-open]'
+    '.ptcgsim-ui-dialog[data-ptcgsim-overlay="dialog"][data-open], .ptcgsim-ui-dialog[data-ptcgsim-overlay="alert"][data-open]'
   );
 
 /** A notice in the toast stack whose text includes `text`. */

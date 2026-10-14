@@ -51,6 +51,8 @@ export interface LegacyDeckBuilderSessionProps {
   readonly prepareForNewSessionOnAttach?: boolean;
   readonly onSessionAttach?: (session: DeckInstallSession) => void;
   readonly onRequestClose: () => void;
+  /** The seat to show on opening (the table's `+` on that seat's deck). */
+  readonly openTarget?: DeckBuilderTarget;
   readonly store?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
   readonly onCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
@@ -83,6 +85,7 @@ export const LegacyDeckBuilderSession = ({
   prepareForNewSessionOnAttach = installOnSessionAttach,
   onSessionAttach,
   onRequestClose,
+  openTarget,
   store: suppliedStore,
   cardBackStore: suppliedCardBackStore,
   onCustodyChange,
@@ -235,6 +238,10 @@ export const LegacyDeckBuilderSession = ({
     if (wasOpen.current && !open) flush();
     wasOpen.current = open;
   }, [flush, open]);
+
+  useEffect(() => {
+    if (open && openTarget) store.selectTarget(openTarget);
+  }, [open, openTarget, store]);
 
   const closeAndFlush = useCallback(() => {
     flush();

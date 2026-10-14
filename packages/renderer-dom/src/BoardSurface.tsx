@@ -29,6 +29,7 @@ import type {
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -38,6 +39,11 @@ import {
 } from 'react';
 
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
+import {
+  scheduleCardImageRetry,
+  settleCardImage,
+  watchCardImageRetries,
+} from './card-image-retry.js';
 import { BOARD_MARKER_CSS } from './markers/marker-css.js';
 import { MarkerNode } from './markers/MarkerNode.js';
 import {
@@ -613,10 +619,12 @@ const CardNode = memo(
               onLoad={(event) => {
                 event.currentTarget.dataset.cardImageState = 'ready';
                 event.currentTarget.style.visibility = 'visible';
+                settleCardImage(event.currentTarget);
               }}
               onError={(event) => {
                 event.currentTarget.dataset.cardImageState = 'failed';
                 event.currentTarget.style.visibility = 'hidden';
+                scheduleCardImageRetry(event.currentTarget);
               }}
             />
           </span>
@@ -795,6 +803,11 @@ export const BoardSurface = ({
   readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  // Card art that failed to load tries again by itself (card-image-retry).
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    return surface ? watchCardImageRetries(surface) : undefined;
+  }, []);
   // Everything painted sits on this table. Motion that moves the whole table
   // (the board flip) animates it, never the surface: the surface is what
   // pointer input and the resize handles measure.

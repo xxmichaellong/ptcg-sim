@@ -6,6 +6,14 @@ import {
   type Response,
 } from '@playwright/test';
 
+import { openBoardView } from './support/board-view.js';
+import {
+  chooseMenuItem,
+  closeActivity,
+  openActivity,
+  openAppMenu,
+} from './support/table-shell.js';
+
 interface BrowserDevRoomHandle {
   readonly mode: string;
   readonly route: {
@@ -211,13 +219,14 @@ test('development route reaches and resumes a real durable room through the same
 
   await page.goto('/?dev-room=1&renderer=dom&name=Transport%20Smoke');
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
   );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   await expect(page.locator('canvas')).toHaveCount(0);
+  // The log docks beside the table at this width (ADR-030).
+  await openActivity(page);
   const initialPresenceRow = page.locator('#p2Chatbox p.announcement').last();
   await expect(initialPresenceRow).toHaveText('Transport Smoke joined');
   await expect(initialPresenceRow).toHaveAttribute(
@@ -253,30 +262,32 @@ test('development route reaches and resumes a real durable room through the same
   });
   expect(connected.roomCode).toMatch(/^[A-HJ-NP-Z2-9]{12}$/u);
   await expect(page.locator('[data-legacy-board-chrome]')).toBeVisible();
-  await expect(page.locator('#turnButton')).toBeVisible();
+  // No deck yet: the rail asks for one, and Turn waits for a game.
+  await expect(page.locator('#loadDeckButton')).toBeVisible();
+  await expect(page.locator('#turnButton')).toHaveCount(0);
   await expect(page.locator('#flipCoinButton')).toBeVisible();
   await expect(page.locator('#flipBoardButton')).toHaveCount(0);
-  // The split is set from the Board view panel; there are no drag handles.
+  // The split is set from Settings; there are no drag handles.
   await expect(page.locator('#selfResizer')).toHaveCount(0);
   await expect(page.locator('#oppResizer')).toHaveCount(0);
   const seam = page.locator('#boardButtonContainer');
   const seamBefore = await seam.boundingBox();
   if (!seamBefore) throw new Error('Missing board controls');
-  await page.locator('#boardViewButton').click();
-  await expect(page.locator('#boardViewPanel')).toBeVisible();
+  await openBoardView(page);
   await page.locator('#boardSplitRange').fill('60');
   // A bigger bottom half moves the seam up.
   await expect
     .poll(async () => (await seam.boundingBox())?.y ?? 0)
     .toBeLessThan(seamBefore.y - 20);
   await page.keyboard.press('Escape');
-  await expect(page.locator('#boardViewPanel')).toHaveCount(0);
-  await expect(page.locator('#boardViewButton')).toBeFocused();
+  await expect(page.locator('#settings')).toHaveCount(0);
+  await expect(page.locator('#appMenuButton')).toBeFocused();
 
+  // Reload card images retries what failed, in place: same renderer.
   const routeRenderer = await page.evaluateHandle(
     () => window.__PTCG_RENDERER_SPIKE__?.renderer
   );
-  await page.locator('#refreshButton button').click();
+  await chooseMenuItem(page, 'reloadImagesButton');
   expect(
     await page.evaluate(
       (renderer) => window.__PTCG_RENDERER_SPIKE__?.renderer === renderer,
@@ -284,26 +295,26 @@ test('development route reaches and resumes a real durable room through the same
     )
   ).toBe(true);
   await routeRenderer.dispose();
-  await page.locator('#fullscreenPlaymatButton button').click();
+  // The table has the window (ADR-030); the docked log takes the right
+  // column while it is open, and gives it back when it closes.
   await expect(page.locator('.board-column')).toHaveAttribute(
     'data-board-shell',
-    'fullscreen'
-  );
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-shell-mode',
-    'fullscreen'
-  );
-  await expect(page.locator('.legacy-room-sidebar')).toBeHidden();
-  await page.locator('#fullscreenPlaymatButton button').click();
-  await expect(page.locator('.board-column')).toHaveAttribute(
-    'data-board-shell',
-    'sidebar'
+    'table'
   );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-shell-mode',
     'sidebar'
   );
-  await expect(page.locator('.legacy-room-sidebar')).toBeVisible();
+  await closeActivity(page);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-shell-mode',
+    'fullscreen'
+  );
+  await openActivity(page);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-shell-mode',
+    'sidebar'
+  );
   await expect(page.locator('#p2Chatbox')).toBeVisible();
 
   const postResponses = authorityResponses
@@ -531,7 +542,7 @@ test('development route reaches and resumes a real durable room through the same
     expect(resumedUrl.password).toBe('');
   }
 
-  await page.locator('#flipCoinButton button').click();
+  await page.locator('#flipCoinButton').click();
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -618,7 +629,9 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   expect(creationResponse.request().postDataJSON()).toEqual({ mode: 'solo' });
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
-  await expect(page.locator('#turnButton')).toBeVisible();
+  // No deck yet: the rail asks for one; Turn waits for a game.
+  await expect(page.locator('#loadDeckButton')).toBeVisible();
+  await expect(page.locator('#turnButton')).toHaveCount(0);
   await expect(page.locator('#flipCoinButton')).toBeVisible();
   await expect(page.locator('#flipBoardButton')).toBeVisible();
   const creationBody = await page.evaluate(
@@ -731,13 +744,17 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   await expect(page.locator('#turnButton')).toHaveCount(0);
   await expect(page.locator('#flipCoinButton')).toHaveCount(0);
   await expect(page.locator('#flipBoardButton')).toBeVisible();
-  await expect(page.locator('#refreshButton')).toBeVisible();
-  await expect(page.locator('#fullscreenPlaymatButton')).toBeVisible();
+  // Replay's transport takes the rail; view controls stay in the menu.
+  await expect(page.locator('#boardButtonContainer #exitReplay')).toBeVisible();
+  await openAppMenu(page);
+  await expect(page.locator('#reloadImagesButton')).toBeVisible();
+  await expect(page.locator('#fullscreenButton')).toBeVisible();
+  await page.keyboard.press('Escape');
 
   const replayBottomBeforeFlip = await page.evaluate(
     () => window.__PTCG_RENDERER_SPIKE__?.scene.bottomPlayerId
   );
-  await page.locator('#flipBoardButton button').click();
+  await page.locator('#flipBoardButton').click();
   await expect
     .poll(() =>
       page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.scene.bottomPlayerId)
@@ -854,7 +871,7 @@ test('document navigation churn releases each creator room before the next mount
       `/?dev-room=1&renderer=dom&name=Navigation%20Cycle%20${cycle + 1}`
     );
     await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+    await expect(page.locator('[data-renderer-status="ready"]')).toBeAttached();
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
     await expect(page.locator('canvas')).toHaveCount(0);
 

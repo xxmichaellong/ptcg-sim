@@ -34,6 +34,7 @@ import {
   type RendererKind,
 } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
+import { TableRail } from '../board/rail/TableRail.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import {
@@ -45,22 +46,27 @@ import {
   RemoteRoomInvitationJoinCustody,
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
-import { LegacyWelcome } from './LegacyWelcome.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
-import { RemoteSessionBoard } from './RemoteSessionBoard.js';
+import {
+  RemoteSessionBoard,
+  TOUCH_SEAM_BAND_PX,
+} from './RemoteSessionBoard.js';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import {
   RemoteRoomRestorationCustody,
   type RemoteRoomRestorationInput,
 } from './RemoteRoomRestoration.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
-import { RemoteRoomSettings } from './RemoteRoomSettings.js';
-import {
-  roomBackgroundCssImage,
-  type BrowserRoomBackgroundRequest,
-} from './browser-room-background.js';
+import type { BrowserRoomBackgroundRequest } from './browser-room-background.js';
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import { probeContinuationAvailability } from './browser-continuation-availability.js';
+import { requestBrowserFullscreen } from './browser-room-options.js';
 import { useRoomBackground } from './useRoomBackground.js';
+import { AppMenu, type AppMenuModel } from './shell/AppMenu.js';
+import { DeckLayer } from './shell/DeckLayer.js';
+import { OnlineSheet } from './shell/OnlineSheet.js';
+import { SettingsSheet } from './shell/SettingsSheet.js';
+import { TableBanner, TableShell } from './shell/TableShell.js';
 
 import '../design/panel-controls.css';
 import './lobby.css';
@@ -311,11 +317,13 @@ export const RemoteRoomLobby = ({
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
-  // 'solo' is the Solo panel while its room is still being created (or has
-  // failed): v1 opens on Solo, so the page must not flash Multiplayer first.
-  const [activePanel, setActivePanel] = useState<
-    'lobby' | 'deck' | 'settings' | 'solo'
-  >(landing === 'solo' ? 'solo' : 'lobby');
+  // 'solo' is the Solo table while its room is still being created (or has
+  // failed): v1 opens on Solo, so the page must not flash Play online first.
+  const [activePanel, setActivePanel] = useState<'lobby' | 'solo'>(
+    landing === 'solo' ? 'solo' : 'lobby'
+  );
+  // The deck screen or Settings, over whichever of those is showing.
+  const [overlay, setOverlay] = useState<'deck' | 'settings'>();
   const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
   const [deckCustody, setDeckCustody] = useState<LegacyDeckBuilderCustody>();
   // Dark mode is remembered on this device (the page's preferences); the
@@ -335,7 +343,6 @@ export const RemoteRoomLobby = ({
     boardViewSettings().subscribe,
     boardViewSettings().getSnapshot
   );
-  const [boardViewOpen, setBoardViewOpen] = useState(false);
   const [continuationAvailable, setContinuationAvailable] = useState<
     boolean | undefined
   >();
@@ -360,6 +367,14 @@ export const RemoteRoomLobby = ({
       showZoneOutlines: boardView.zoneOutlines,
     }),
     [preferences, boardView.zoneOutlines]
+  );
+  const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
+  const emptyTable = useMemo(
+    () => ({
+      lowerShare: boardView.split,
+      ...(coarsePointer ? { seamBandPx: TOUCH_SEAM_BAND_PX } : {}),
+    }),
+    [boardView.split, coarsePointer]
   );
   const emptyBoardPreferences = useMemo(
     () =>
@@ -1090,30 +1105,36 @@ export const RemoteRoomLobby = ({
       </>
     );
   }
+  const openDeck = (): void => {
+    setDeckSurfaceActivated(true);
+    setOverlay('deck');
+  };
+  const menu: AppMenuModel = {
+    heading: activePanel === 'lobby' ? 'Play online' : 'Solo table',
+    ...(activePanel === 'lobby' && !busy
+      ? { onPlaySolo: () => void handleSolo() }
+      : {}),
+    ...(activePanel === 'lobby'
+      ? {}
+      : { onPlayOnline: () => setActivePanel('lobby') }),
+    onDeck: openDeck,
+    onSettings: () => setOverlay('settings'),
+    onFullscreen: () => {
+      requestBrowserFullscreen();
+    },
+  };
+  const railStart = <AppMenu model={menu} />;
   return (
-    <main
-      className={`app-shell remote-room-route${
-        effectivePreferences.darkMode ? ' remote-room-route--dark' : ''
-      }`}
-      data-app-route="remote-room-lobby"
-      data-dark-mode={String(effectivePreferences.darkMode)}
-      data-room-background={backgroundSelection.background?.kind ?? 'default'}
-      style={
-        backgroundSelection.background
-          ? {
-              backgroundImage: roomBackgroundCssImage(
-                backgroundSelection.background
-              ),
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat',
-            }
-          : undefined
-      }
-    >
-      <section className="board-column" aria-label="Game board">
-        {parkedSolo ? (
-          // v1 keeps the table on screen while the Multiplayer panel is
-          // open; the parked solo game stays live and playable here too.
+    <TableShell
+      route="remote-room-lobby"
+      darkMode={effectivePreferences.darkMode}
+      {...(backgroundSelection.background
+        ? { background: backgroundSelection.background }
+        : {})}
+      board={
+        parkedSolo ? (
+          // The parked Solo game stays on the table, live and playable,
+          // while Play online is open.
           <RemoteSessionBoard
             session={parkedSolo.runtime.session}
             replay={parkedSolo.runtime.replay}
@@ -1124,8 +1145,15 @@ export const RemoteRoomLobby = ({
             // Test doubles may stand in for the runtime without a presentation.
             coinFlip={parkedSolo.runtime.presentation?.coinFlip}
             preferences={boardPreferences}
-            boardViewOpen={boardViewOpen}
-            onBoardViewOpenChange={setBoardViewOpen}
+            rail={{
+              start: railStart,
+              compose: (own) => ({
+                actions: [own.turn, own.coin, own.switchSide].filter(
+                  (action) => action !== undefined
+                ),
+              }),
+            }}
+            keysSuspended={overlay === 'deck'}
           />
         ) : (
           <RendererSpikeBoard
@@ -1134,201 +1162,75 @@ export const RemoteRoomLobby = ({
             onIntent={() => undefined}
             submitCommand={() => undefined}
             sessionReady={false}
+            table={emptyTable}
+            chrome={(layout) => (
+              <TableRail
+                anchor={layout.shared.boardControlsAnchor}
+                width={layout.playAreaBounds.width}
+                start={railStart}
+                actions={[]}
+              />
+            )}
             {...(emptyBoardPreferences
               ? { preferences: emptyBoardPreferences }
               : {})}
           />
-        )}
-      </section>
-      <aside className="legacy-sidebar legacy-room-sidebar">
-        <nav
-          id="topButtonContainer"
-          className="legacy-tabs legacy-room-tabs"
-          aria-label="Application sections"
+        )
+      }
+    >
+      {activePanel === 'solo' && status ? (
+        <TableBanner
+          action={
+            <button
+              type="button"
+              className="ds-button ds-button--secondary"
+              disabled={busy}
+              onClick={() => void handleSolo()}
+            >
+              Try again
+            </button>
+          }
         >
-          <button
-            id="p1Button"
-            type="button"
-            className={
-              activePanel === 'solo' ? 'selected-page' : 'not-selected-page'
-            }
-            aria-current={activePanel === 'solo' ? 'page' : undefined}
-            disabled={busy}
-            onClick={() => void handleSolo()}
-          >
-            Solo
-          </button>
-          <button
-            id="p2Button"
-            type="button"
-            className={
-              activePanel === 'lobby' ? 'selected-page' : 'not-selected-page'
-            }
-            aria-current={activePanel === 'lobby' ? 'page' : undefined}
-            onClick={() => setActivePanel('lobby')}
-          >
-            Multiplayer
-          </button>
-          <button
-            id="deckImportButton"
-            type="button"
-            className={
-              activePanel === 'deck' ? 'selected-page' : 'not-selected-page'
-            }
-            aria-current={activePanel === 'deck' ? 'page' : undefined}
-            onClick={() => {
-              setDeckSurfaceActivated(true);
-              setActivePanel('deck');
-            }}
-          >
-            Deck
-          </button>
-          <button
-            id="settingsButton"
-            type="button"
-            className={
-              activePanel === 'settings' ? 'selected-page' : 'not-selected-page'
-            }
-            aria-current={activePanel === 'settings' ? 'page' : undefined}
-            onClick={() => setActivePanel('settings')}
-          >
-            Settings
-          </button>
-        </nav>
-        <section
-          id="p1Box"
-          className="legacy-room-sidebox"
-          hidden={activePanel !== 'solo'}
-          aria-busy={operation === 'solo'}
+          {status}
+        </TableBanner>
+      ) : null}
+      <OnlineSheet
+        open={activePanel === 'lobby' && overlay === undefined}
+        onDeck={openDeck}
+        onSettings={() => setOverlay('settings')}
+        onOpenChange={(open) => {
+          // Put away, Play online gives way to the Solo table, as v1's Solo
+          // tab did; never while a room is being made or joined.
+          if (!open && !busy) void handleSolo();
+        }}
+      >
+        {renderMultiplayerPanel(false)}
+      </OnlineSheet>
+      <SettingsSheet
+        open={overlay === 'settings'}
+        onOpenChange={(open) => setOverlay(open ? 'settings' : undefined)}
+        solo={parkedSolo !== undefined}
+        darkMode={effectivePreferences.darkMode}
+        onDarkModeChange={setDarkMode}
+        onChangeBackground={backgroundSelection.chooseBackground}
+        {...(table.background
+          ? { onUseDefaultBackground: restoreDefaultBackground }
+          : {})}
+      />
+      {deckSurfaceActivated ? (
+        <DeckLayer
+          open={overlay === 'deck'}
+          onClose={() => setOverlay(undefined)}
         >
-          <div className="legacy-presentation-surface">
-            <div
-              id="chatbox"
-              className="legacy-activity-feed"
-              role="log"
-              aria-label="Game activity"
-            >
-              <div className="legacy-activity-intro" data-activity-intro="true">
-                <LegacyWelcome
-                  onLoadDeck={() => {
-                    setDeckSurfaceActivated(true);
-                    setActivePanel('deck');
-                  }}
-                />
-              </div>
-              {status && activePanel === 'solo' && (
-                <p className="announcement solo-status" role="status">
-                  {status}
-                </p>
-              )}
-            </div>
-          </div>
-          <div id="chatboxButtonContainer" className="chat-button-container">
-            <button
-              id="attackButton"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              Attack
-            </button>
-            <button
-              id="passButton"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              Pass
-            </button>
-            <button
-              id="undoButton"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              Undo
-            </button>
-            <button
-              id="FREEBUTTON"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              🌺
-            </button>
-          </div>
-          <input
-            id="messageInput"
-            type="text"
-            placeholder="Type your message here..."
-            disabled
-          />
-          <div
-            id="bottomP1ButtonContainer"
-            className="sidebox-button-container"
-          >
-            <button
-              id="setupButton"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              Set Up
-            </button>
-            <button
-              id="resetButton"
-              type="button"
-              className="self-color"
-              disabled
-            >
-              Reset
-            </button>
-            <button
-              id="setupBothButton"
-              type="button"
-              className="neutral-color"
-              disabled
-            >
-              Set Up Both
-            </button>
-            <button
-              id="resetBothButton"
-              type="button"
-              className="neutral-color"
-              disabled
-            >
-              Reset Both
-            </button>
-            <button
-              id="optionsButton"
-              type="button"
-              className="neutral-color"
-              disabled
-            >
-              Options
-            </button>
-          </div>
-        </section>
-        {renderMultiplayerPanel(activePanel !== 'lobby')}
-        <RemoteRoomSettings
-          hidden={activePanel !== 'settings'}
-          preferences={effectivePreferences}
-          onDarkModeChange={setDarkMode}
-          {...(parkedSolo
-            ? { onOpenBoardView: () => setBoardViewOpen(true) }
-            : {})}
-          onChangeBackground={backgroundSelection.chooseBackground}
-          {...(table.background
-            ? { onUseDefaultBackground: restoreDefaultBackground }
-            : {})}
-        />
-        {deckSurfaceActivated && (
           <Suspense fallback={null}>
             <LegacyDeckBuilderSession
-              open={activePanel === 'deck'}
+              open={overlay === 'deck'}
               alternateEnabled={parkedSolo?.mode === 'solo'}
               installOnSessionAttach
-              onRequestClose={() => void handleSolo()}
+              onRequestClose={() => {
+                setOverlay(undefined);
+                void handleSolo();
+              }}
               onCustodyChange={setDeckCustody}
               {...(deckCustody
                 ? {
@@ -1341,8 +1243,8 @@ export const RemoteRoomLobby = ({
                 : {})}
             />
           </Suspense>
-        )}
-      </aside>
-    </main>
+        </DeckLayer>
+      ) : null}
+    </TableShell>
   );
 };

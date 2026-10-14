@@ -4,7 +4,17 @@ import {
   answerOverlayPrompt,
   overlayToast,
 } from './support/overlay-dialogs.js';
-import { openBoardView } from './support/board-view.js';
+import { closeBoardView, openBoardView } from './support/board-view.js';
+import {
+  chooseMenuItem,
+  chooseMoreAction,
+  closeDeck,
+  closeSheet,
+  openActivity,
+  openAppMenu,
+  openDeck,
+  openPlayOnline,
+} from './support/table-shell.js';
 
 const SOLO_CARD_BACK_URL =
   'https://images.example.test/solo-player-two-card-back.png?exact=1';
@@ -15,7 +25,7 @@ const ONE_PIXEL_PNG = Buffer.from(
   'base64'
 );
 
-test('the visible Solo tab owns one authority and preserves it across tab navigation', async ({
+test('the Solo table owns one authority and keeps it across the menu and sheets', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -53,54 +63,44 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
   await page.locator('#nameInput').fill('Blue');
-  await page.locator('#p1Button').click();
+  // Putting Play online away goes to the Solo table.
+  await closeSheet(page);
 
-  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#messageInput')).toBeEnabled();
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible();
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
-  await expect(page.locator('#p1Button')).toHaveClass('selected-page');
-  await expect(page.locator('#p1Button')).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
-  await expect(page.locator('#p2Button')).toHaveClass('not-selected-page');
-  await expect(page.locator('#p1Box')).toBeVisible();
-  // The Multiplayer panel is a sidebar panel over this table now, so it is
-  // present and hidden rather than absent.
-  await expect(page.locator('#p2Box')).toBeHidden();
+  // The table has the window: no sidebar, the menu and the log on the rail.
+  await expect(page.locator('.legacy-room-sidebar')).toHaveCount(0);
+  await expect(page.locator('#appMenuButton')).toBeVisible();
+  await openActivity(page);
+  await expect(page.locator('#messageInput')).toBeEnabled();
+  await expect(page.locator('#FREEBUTTON')).toBeVisible();
   await expect(page.locator('#chatbox')).toBeVisible();
   await expect(page.locator('#roomHeader')).toHaveCount(0);
-  for (const id of [
-    'attackButton',
-    'passButton',
-    'undoButton',
-    'FREEBUTTON',
-    'setupButton',
-    'resetButton',
-    'setupBothButton',
-    'resetBothButton',
-    'optionsButton',
-  ]) {
-    await expect(page.locator(`#${id}`), id).toBeVisible();
+  // Before a deck, the rail asks for one; Solo's both-sides actions wait in
+  // More, and there is no room to leave.
+  for (const id of ['loadDeckButton', 'flipCoinButton', 'flipBoardButton']) {
+    await expect(
+      page.locator(`#boardButtonContainer #${id}`),
+      id
+    ).toBeVisible();
   }
+  await expect(page.locator('#attackButton')).toHaveCount(0);
+  await page.locator('#moreActionsButton').click();
+  await expect(page.locator('#setupBothButton')).toBeEnabled();
+  await expect(page.locator('#resetBothButton')).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await openAppMenu(page);
   await expect(page.locator('#leaveRoomButton')).toHaveCount(0);
+  await page.keyboard.press('Escape');
 
-  await page.locator('#attackButton').click();
-  await expect(
-    page.locator('#chatbox [data-event-type="AttackDeclared"]')
-  ).toHaveText('Blue attacked');
-  await page.locator('#undoButton').click();
-  await expect(
-    page.locator('#chatbox [data-event-type="UndoApplied"]')
-  ).toHaveText('Blue took back their last move!');
-
-  await page.locator('#resetBothButton').click();
+  await chooseMoreAction(page, 'resetBothButton');
   await expect(
     page.locator('#chatbox [data-event-type="PlayerReset"]')
   ).toHaveCount(2);
-  await expect(page.locator('#resetBothButton')).toBeEnabled();
 
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   await expect(page.locator('#deckImport')).toBeVisible();
   await expect(page.locator('#altImportHeaderButton')).toHaveAttribute(
     'aria-disabled',
@@ -127,17 +127,35 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
     'Total: 1'
   );
+  // Blue gets a card too, so a game is under way for the rail's turn
+  // actions at the end.
+  await page.locator('#nativeDeckBuilderTargetMain').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'solo-player-one.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      [
+        'QTY,Name,Type,URL',
+        '1,Blue Card,Pokémon,/v2/assets/cardback.png?blue',
+      ].join('\n')
+    ),
+  });
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
+    'Total: 1'
+  );
   await page.locator('#nativeDeckBuilderPlayButton').click();
-  await expect(page.locator('#p1Box')).toBeVisible();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
   await expect(
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
-  ).toHaveCount(1);
+  ).toHaveCount(2);
   await expect(
     page.locator(`img[src="${SOLO_CARD_BACK_URL}"]`).first()
   ).toBeVisible();
   expect(cardBackRequests).toBeGreaterThanOrEqual(1);
 
-  await page.locator('#setupBothButton').click();
+  await chooseMoreAction(page, 'setupBothButton');
   await expect(
     page.locator('#chatbox [data-event-type="PlayerSetup"]')
   ).toHaveCount(2);
@@ -211,7 +229,7 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     )
     .toBe(true);
 
-  await page.locator('#p1Button').click();
+  await closeBoardView(page);
   const opponentMove = await page.evaluate((cardId) => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     const source = scene?.cards.find((candidate) => candidate.id === cardId);
@@ -262,24 +280,26 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     )
     .toBe(true);
 
-  await page.locator('#p2Button').click();
-  // The Multiplayer tab opens its panel over this table rather than replacing
-  // the route, so the game is still on screen behind it.
+  await openPlayOnline(page);
+  // Play online opens over this table rather than replacing the route, so
+  // the game is still on screen behind it.
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
-  await expect(page.locator('#p2Box')).toBeVisible();
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
   await expect(page.locator('#roomIdInput')).toHaveValue('');
-  await page.locator('#deckImportButton').click();
+  await closeSheet(page);
+  await openDeck(page);
   await expect(page.locator('#altImportHeaderButton')).toHaveAttribute(
     'aria-disabled',
     'false'
   );
-  await page.locator('#p1Button').click();
+  await closeDeck(page);
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await openActivity(page);
   await expect(page.locator('#messageInput')).toBeEnabled();
   await expect(
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
-  ).toHaveCount(1);
+  ).toHaveCount(2);
   await expect(
     page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`).first()
   ).toBeVisible();
@@ -325,11 +345,12 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   const liveRevisionBeforeReplayImport = await page
     .locator('.ptcgsim-board-surface')
     .getAttribute('data-revision');
-  await page.locator('#optionsButton').click();
-  await expect(page.locator('#importReplay')).toHaveText('Enter replay mode');
+  await openAppMenu(page);
+  await expect(page.locator('#importReplay')).toHaveText('Watch a replay…');
+  await page.keyboard.press('Escape');
   const [perspectiveReplay] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('#exportState').click(),
+    chooseMenuItem(page, 'exportState'),
   ]);
   expect(perspectiveReplay.suggestedFilename()).toBe(
     'ptcgsim-perspective-replay.json'
@@ -351,31 +372,35 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
     },
   });
 
-  await page.locator('#optionsButton').click();
+  // Watch a replay… opens this picker.
   await page.locator('#jsonReplay').setInputFiles({
     name: 'solo-perspective-replay.json',
     mimeType: 'application/json',
     buffer: perspectiveReplayBytes,
   });
-  await expect(page.locator('#p1Button')).toHaveText('Replay');
-  await expect(page.locator('#importReplay')).toHaveCount(0);
+  const exitReplayAction = page.locator('#boardButtonContainer #exitReplay');
+  await expect(exitReplayAction).toBeVisible();
+  await expect(page.locator('#activitySheet')).toContainText('Replay');
   await expect(page.locator('#turnButton')).toHaveCount(0);
-  await page.locator('#resetBothButton').click();
+  await openAppMenu(page);
+  await expect(page.locator('#importReplay')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  // Replay's transport takes the rail: this one is fast-forward.
+  await page.locator('#boardButtonContainer #resetBothButton').click();
   await expect(localGx).toHaveAttribute('aria-pressed', 'true');
   await expect(localVstar).toHaveAttribute('aria-pressed', 'false');
   await expect(opponentGx).toHaveAttribute('aria-pressed', 'false');
   await expect(opponentVstar).toHaveAttribute('aria-pressed', 'true');
   await localGx.click();
   await expect(localGx).toHaveAttribute('aria-pressed', 'true');
-  await page.locator('#optionsButton').click();
-  await page.locator('#exitReplay').click();
-  await expect(page.locator('#p1Button')).toHaveText('Solo');
+  await exitReplayAction.click();
+  await expect(exitReplayAction).toHaveCount(0);
+  await expect(page.locator('#turnButton')).toBeVisible();
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     liveRevisionBeforeReplayImport ?? ''
   );
 
-  await page.locator('#optionsButton').click();
   await page.locator('#jsonReplay').setInputFiles({
     name: 'invalid-replay.json',
     mimeType: 'application/json',
@@ -388,11 +413,23 @@ test('the visible Solo tab owns one authority and preserves it across tab naviga
   await expect(replayFailure).toContainText(
     'Error reading file. Please make sure the file is valid.'
   );
-  await expect(page.locator('#p1Button')).toHaveText('Solo');
+  await expect(page.locator('#boardButtonContainer #exitReplay')).toHaveCount(
+    0
+  );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     liveRevisionBeforeReplayImport ?? ''
   );
+
+  // With a game under way the rail carries the turn's announcements.
+  await page.locator('#attackButton').click();
+  await expect(
+    page.locator('#chatbox [data-event-type="AttackDeclared"]')
+  ).toHaveText('Blue attacked');
+  await page.locator('#undoButton').click();
+  await expect(
+    page.locator('#chatbox [data-event-type="UndoApplied"]')
+  ).toHaveText('Blue took back their last move!');
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
   expect(errors).toEqual([]);
 });

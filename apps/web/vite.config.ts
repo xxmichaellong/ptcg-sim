@@ -197,6 +197,8 @@ export default defineConfig({
     include: [
       '@base-ui/react/alert-dialog',
       '@base-ui/react/dialog',
+      '@base-ui/react/drawer',
+      '@base-ui/react/menu',
       '@base-ui/react/toast',
       '@base-ui/react/tooltip',
       '@phosphor-icons/react/dist/csr/*',

@@ -1,6 +1,7 @@
 # ADR-023: support current desktop browsers at a 1280×720 minimum viewport
 
-- Status: **ACCEPTED**
+- Status: **SUPERSEDED** by ADR-030 (2026-10-14): phones and touch screens
+  are supported, with no minimum viewport.
 - Decision date: 2026-09-14
 - Scope: first v2 release browser, device, and viewport support
 

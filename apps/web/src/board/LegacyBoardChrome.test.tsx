@@ -11,13 +11,19 @@ import {
   type BoardLayoutState,
 } from '@ptcgsim/renderer-contract';
 import { asPlayerId } from '@ptcgsim/game-core';
+import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
+import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
+import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { LegacyBoardChrome } from './LegacyBoardChrome.js';
+import {
+  LegacyBoardChrome,
+  type LegacyBoardChromeRail,
+} from './LegacyBoardChrome.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -29,6 +35,8 @@ const layoutState = (): BoardLayoutState => ({
   shellMode: 'sidebar',
   vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
 });
+
+const px = (value: string): number => Number.parseFloat(value);
 
 const players = {
   'spike-blue': {
@@ -55,15 +63,7 @@ describe('LegacyBoardChrome', () => {
     document.body.append(host);
     const root = createRoot(host);
     const toggleHandSort = vi.fn();
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame: vi.fn(),
-      toggleHandSort,
-    };
+    const actions = { toggleOncePerGame: vi.fn(), toggleHandSort };
     await act(async () =>
       root.render(
         <LegacyBoardChrome
@@ -109,14 +109,7 @@ describe('LegacyBoardChrome', () => {
     document.body.append(host);
     const root = createRoot(host);
     const toggleOncePerGame = vi.fn();
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame,
-    };
+    const actions = { toggleOncePerGame };
     const layout = createBoardLayoutSnapshot(layoutState());
     const render = async (gxUsed: boolean): Promise<void> => {
       await act(async () =>
@@ -213,160 +206,262 @@ describe('LegacyBoardChrome', () => {
     );
   });
 
-  it('paints the board controls as icon pills that keep their names and anchors', async () => {
+  it('lays the table rail along the seam: menu, game actions, More, the log', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame: vi.fn(),
-    };
-    const render = async (shellMode: 'sidebar' | 'fullscreen') =>
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      shellMode: 'fullscreen',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    });
+    const takeTurn = vi.fn();
+    const flipCoin = vi.fn();
+    const mulligan = vi.fn();
+    const rail = (coinPending: boolean): LegacyBoardChromeRail => ({
+      start: <button id="menuStub" type="button" />,
+      end: <button id="logStub" type="button" />,
+      actions: [
+        {
+          id: 'turnButton',
+          label: 'Turn',
+          title: 'Start turn',
+          icon: PlayIcon,
+          hint: 'Alt+T',
+          onSelect: takeTurn,
+        },
+        {
+          id: 'flipCoinButton',
+          label: 'Coin',
+          title: 'Flip a coin',
+          icon: CoinIcon,
+          pending: coinPending,
+          onSelect: flipCoin,
+        },
+      ],
+      more: [
+        {
+          id: 'mulliganButton',
+          label: 'Announce mulligan',
+          icon: ShuffleIcon,
+          onSelect: mulligan,
+        },
+      ],
+    });
+    const render = (coinPending: boolean, covered = false) =>
       act(async () =>
         root.render(
           <LegacyBoardChrome
-            layout={createBoardLayoutSnapshot({ ...layoutState(), shellMode })}
+            layout={layout}
             localPlayerId={asPlayerId('spike-blue')}
             players={players}
-            darkMode={false}
-            actions={actions}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn() }}
+            rail={rail(coinPending)}
+            coveredByPopup={covered}
           />
         )
       );
-    await render('sidebar');
-    const controls = [
-      ['turnButton', 'Start turn', 'Turn'],
-      ['flipCoinButton', 'Flip coin', 'Coin'],
-      ['flipBoardButton', 'Flip board', ''],
-      ['refreshButton', 'Refresh images', ''],
-      ['fullscreenPlaymatButton', 'Full screen', ''],
-    ] as const;
-    for (const [id, name, text] of controls) {
-      const wrapper = host.querySelector<HTMLElement>(`#${id}`)!;
-      const button = wrapper.querySelector<HTMLButtonElement>('button')!;
-      expect(button.className, id).toBe('legacy-board-control-button');
-      expect(button.getAttribute('aria-label'), id).toBe(name);
-      // A Phosphor icon replaces v1's glyphs; it is decoration only.
-      const icon = button.querySelector('svg.legacy-board-control-icon');
-      expect(icon?.getAttribute('aria-hidden'), id).toBe('true');
-      expect(button.textContent, id).toBe(text);
-      const tooltip = wrapper.querySelector<HTMLElement>('.tooltiptext')!;
-      expect(tooltip.textContent).toBe(name);
-      expect(tooltip.getAttribute('aria-hidden')).toBe('true');
-    }
-    expect(host.textContent).not.toMatch(/[⇅↻⌞⌝]|\+Turn/u);
-    const sidebarIcon = host.querySelector('#fullscreenIcon')!.innerHTML;
-    await render('fullscreen');
-    // The full-screen control shows which way it will go.
-    expect(host.querySelector('#fullscreenIcon')!.innerHTML).not.toBe(
-      sidebarIcon
-    );
-    expect(
-      host
-        .querySelector('#fullscreenPlaymatButton button')
-        ?.getAttribute('aria-label')
-    ).toBe('Full screen');
+    await render(false);
 
+    // The rail spans the seam; the actions start at the layout's anchor and
+    // stop short of the Stadium that straddles it.
+    const anchor = layout.shared.boardControlsAnchor;
+    const stadium = layout.shared.stadium.physicalDeclaredBounds;
+    const strip = host.querySelector<HTMLElement>('[data-table-rail]')!;
+    expect(px(strip.style.top)).toBeCloseTo(anchor.y, 3);
+    expect(px(strip.style.height)).toBeCloseTo(anchor.height, 3);
+    expect(strip.style.getPropertyValue('--rail-height')).toBe(
+      `${anchor.height}px`
+    );
+    const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
+    expect(actions.getAttribute('role')).toBe('toolbar');
+    expect(actions.getAttribute('aria-label')).toBe('Game actions');
+    expect(px(actions.style.left)).toBeCloseTo(anchor.x, 3);
+    expect(px(actions.style.left) + px(actions.style.width)).toBeCloseTo(
+      stadium.x - 8,
+      3
+    );
+
+    // The menu at the left end, the log at the right, outside the actions.
+    const [startGroup, endGroup] = [
+      ...host.querySelectorAll<HTMLElement>('.ptcgsim-table-rail__end-group'),
+    ];
+    expect(startGroup?.querySelector('#menuStub')).not.toBeNull();
+    expect(startGroup?.style.left).toBe('8px');
+    expect(endGroup?.querySelector('#logStub')).not.toBeNull();
+    expect(endGroup?.style.right).toBe('8px');
+    expect(actions.querySelector('#menuStub, #logStub')).toBeNull();
+
+    // A toolbar: the arrow keys move between its buttons and wrap, and the
+    // table never sees them.
+    const railButtons = [
+      ...actions.querySelectorAll<HTMLButtonElement>(
+        'button.ptcgsim-rail-button'
+      ),
+    ];
+    railButtons[0]!.focus();
+    const arrow = (key: string) => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      act(() => {
+        document.activeElement!.dispatchEvent(event);
+      });
+      return event;
+    };
+    expect(arrow('ArrowRight').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(railButtons[1]);
+    arrow('ArrowLeft');
+    arrow('ArrowLeft');
+    expect(document.activeElement).toBe(railButtons.at(-1));
+
+    // Short words on the pills, the full name for assistive tech.
+    const turn = host.querySelector<HTMLButtonElement>('#turnButton')!;
+    expect(turn.className).toBe('ptcgsim-rail-button');
+    expect(turn.getAttribute('aria-label')).toBe('Start turn');
+    expect(turn.textContent).toBe('Turn');
+    expect(
+      turn
+        .querySelector('svg.ptcgsim-rail-button__icon')
+        ?.getAttribute('aria-hidden')
+    ).toBe('true');
+    await act(async () => turn.click());
+    expect(takeTurn).toHaveBeenCalledOnce();
+
+    // The coin is the one action that waits on the room, and says so; it
+    // stays pressable, as v1 lets you flip again while one is in flight.
+    const coin = () =>
+      host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
+    expect(coin().getAttribute('aria-busy')).toBeNull();
+    expect(coin().dataset.controlPending).toBeUndefined();
+    await render(true);
+    expect(coin().getAttribute('aria-busy')).toBe('true');
+    expect(coin().dataset.controlPending).toBe('true');
+    expect(turn.getAttribute('aria-busy')).toBeNull();
+    expect(coin().disabled).toBe(false);
+    await act(async () => coin().click());
+    expect(flipCoin).toHaveBeenCalledOnce();
+
+    // The rarer actions wait behind More.
+    const more = host.querySelector<HTMLButtonElement>('#moreActionsButton')!;
+    expect(more.getAttribute('aria-label')).toBe('More');
+    expect(host.querySelector('#mulliganButton')).toBeNull();
+    await act(async () => more.click());
+    const entry = await vi.waitFor(() => {
+      const found = document.querySelector<HTMLElement>('#mulliganButton');
+      expect(found).not.toBeNull();
+      return found!;
+    });
+    await act(async () => entry.click());
+    expect(mulligan).toHaveBeenCalledOnce();
+
+    // A pile browser over the table dims the actions and takes their
+    // presses, but leaves the menu and the log in reach.
+    await render(false, true);
+    expect(actions.dataset.covered).toBe('true');
+    expect(startGroup?.closest('[data-covered]')).toBeNull();
+    expect(endGroup?.closest('[data-covered]')).toBeNull();
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('runs the actions to the end reserve when nothing straddles the seam', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    // With the opponent's half hidden, the Stadium sits beside the Active
+    // rather than across the seam.
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      shellMode: 'fullscreen',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+      hiddenPhysicalSide: 'upper',
+    });
+    const anchor = layout.shared.boardControlsAnchor;
+    const stadium = layout.shared.stadium.physicalDeclaredBounds;
+    const straddles =
+      stadium.y < anchor.y + anchor.height &&
+      stadium.y + stadium.height > anchor.y &&
+      stadium.x > anchor.x;
+    await act(async () =>
+      root.render(
+        <LegacyBoardChrome
+          layout={layout}
+          localPlayerId={asPlayerId('spike-blue')}
+          players={players}
+          darkMode={false}
+          actions={{ toggleOncePerGame: vi.fn() }}
+          rail={{ actions: [] }}
+        />
+      )
+    );
+    const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
+    const end = px(actions.style.left) + px(actions.style.width);
+    if (straddles) expect(end).toBeCloseTo(stadium.x - 8, 3);
+    else expect(end).toBeCloseTo(layout.playAreaBounds.width - 64 - 8, 3);
+    // No More without rarer actions, and no ends unless a route gives them.
+    expect(host.querySelector('#moreActionsButton')).toBeNull();
+    expect(
+      host.querySelectorAll('.ptcgsim-table-rail__end-group')
+    ).toHaveLength(0);
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('styles the rail as glassy pills from the design tokens', () => {
     const css = readFileSync(
-      join(import.meta.dirname, 'LegacyBoardChrome.css'),
+      join(import.meta.dirname, 'rail', 'TableRail.css'),
       'utf8'
     );
-    const buttonRule = css.slice(
-      css.indexOf('.ptcgsim-legacy-board-chrome .legacy-board-control-button {')
-    );
+    const buttonRule = css.slice(css.indexOf('.ptcgsim-rail-button {'));
     for (const token of [
-      'var(--color-surface-2',
-      'var(--color-border',
-      'var(--shadow-2',
-      'var(--radius-pill',
-      'var(--duration-instant',
+      'var(--color-surface-2)',
+      'var(--color-border)',
+      'var(--shadow-2)',
+      'var(--radius-pill)',
+      'var(--duration-instant)',
+      'var(--rail-height, 32px)',
     ]) {
       expect(buttonRule.slice(0, buttonRule.indexOf('}')), token).toContain(
         token
       );
     }
     expect(css).toMatch(
-      /\.legacy-board-control-button:active \{\s*scale: 0\.96;/
+      /\.ptcgsim-rail-button:active \{\s*scale: var\(--control-press-scale\);/
     );
-    expect(css).toContain('.legacy-board-control-button:focus-visible {');
+    expect(css).toContain('.ptcgsim-rail-button:focus-visible {');
     expect(css).toMatch(
+      /\.ptcgsim-table-rail__actions\[data-covered='true'\] \{\s*opacity: 0\.15;/
+    );
+    // Short of room (the rail decides), the labels give way to the icons.
+    expect(css).toMatch(
+      /\[data-labels='none'\] \.ptcgsim-rail-button__label \{\s*display: none;/
+    );
+
+    const chrome = readFileSync(
+      join(import.meta.dirname, 'LegacyBoardChrome.css'),
+      'utf8'
+    );
+    expect(chrome).toMatch(
       /\.legacy-board-resizer\[data-player-side='local'\] \{\s*--ptcgsim-resizer-seat: var\(--color-you/
     );
-
-    await act(async () => root.unmount());
-    host.remove();
+    // The old toolbar's own rules are gone with it.
+    expect(chrome).not.toContain('legacy-board-control-button');
+    expect(chrome).not.toContain('tooltiptext');
   });
 
-  it('marks the coin control as waiting on the room, and only that one', async () => {
+  it('paints source-shaped physical handles and the seats GX/VSTAR controls', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame: vi.fn(),
-    };
-    const layout = createBoardLayoutSnapshot(layoutState());
-    const render = async (coinPending: boolean): Promise<void> => {
-      await act(async () =>
-        root.render(
-          <LegacyBoardChrome
-            layout={layout}
-            localPlayerId={asPlayerId('spike-blue')}
-            players={players}
-            darkMode={false}
-            actions={actions}
-            coinPending={coinPending}
-          />
-        )
-      );
-    };
-    const coin = () =>
-      host.querySelector<HTMLButtonElement>('#flipCoinButton button');
-    const turn = () =>
-      host.querySelector<HTMLButtonElement>('#turnButton button');
-
-    await render(false);
-    expect(coin()?.getAttribute('aria-busy')).toBeNull();
-    expect(coin()?.dataset.controlPending).toBeUndefined();
-
-    // The coin is the one control that cannot be predicted, so it is the one
-    // control that says it is waiting.
-    await render(true);
-    expect(coin()?.getAttribute('aria-busy')).toBe('true');
-    expect(coin()?.dataset.controlPending).toBe('true');
-    expect(turn()?.getAttribute('aria-busy')).toBeNull();
-    // It stays pressable: v1 lets you flip again while one is in flight.
-    expect(coin()?.disabled).toBe(false);
-    coin()?.click();
-    expect(actions.flipCoin).toHaveBeenCalled();
-
-    await render(false);
-    expect(coin()?.getAttribute('aria-busy')).toBeNull();
-
-    await act(async () => root.unmount());
-    host.remove();
-  });
-
-  it('paints source-shaped physical handles and delegates every legacy control', async () => {
-    const host = document.createElement('div');
-    document.body.append(host);
-    const root = createRoot(host);
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame: vi.fn(),
-    };
+    const actions = { toggleOncePerGame: vi.fn() };
     const initial = createBoardLayoutSnapshot(layoutState());
 
     await act(async () =>
@@ -386,7 +481,6 @@ describe('LegacyBoardChrome', () => {
     );
     const lower = host.querySelector<HTMLElement>('#selfResizer');
     const upper = host.querySelector<HTMLElement>('#oppResizer');
-    const controls = host.querySelector<HTMLElement>('#boardButtonContainer');
     expect(chrome?.style).toMatchObject({
       width: '1280px',
       height: '720px',
@@ -406,18 +500,9 @@ describe('LegacyBoardChrome', () => {
       initial.viewport.height * initial.resizeHandles[0].authoredBottomRatio,
       10
     );
-    expect(controls?.className).toBe('legacy-board-controls');
-    expect(Number.parseFloat(controls?.style.left ?? '')).toBeCloseTo(
-      initial.shared.boardControlsAnchor.x,
-      10
-    );
-    expect(Number.parseFloat(controls?.style.top ?? '')).toBeCloseTo(
-      initial.shared.boardControlsAnchor.y,
-      10
-    );
-    expect(
-      host.querySelector<HTMLButtonElement>('#turnButton button')?.className
-    ).toBe('legacy-board-control-button');
+    // Without a rail, the seam stays empty.
+    expect(host.querySelector('#boardButtonContainer')).toBeNull();
+    expect(host.querySelector('[data-table-rail]')).toBeNull();
     expect(
       host
         .querySelector<HTMLButtonElement>(
@@ -430,21 +515,6 @@ describe('LegacyBoardChrome', () => {
         '[data-player-id="spike-red"][data-once-per-game-marker="gx"]'
       )?.classList
     ).toContain('used-special-move');
-
-    for (const id of [
-      'turnButton',
-      'flipCoinButton',
-      'flipBoardButton',
-      'refreshButton',
-      'fullscreenPlaymatButton',
-    ]) {
-      host.querySelector<HTMLButtonElement>(`#${id} button`)?.click();
-    }
-    expect(actions.takeTurn).toHaveBeenCalledOnce();
-    expect(actions.flipCoin).toHaveBeenCalledOnce();
-    expect(actions.flipBoard).toHaveBeenCalledOnce();
-    expect(actions.refreshImages).toHaveBeenCalledOnce();
-    expect(actions.toggleFullscreen).toHaveBeenCalledOnce();
     host
       .querySelector<HTMLButtonElement>(
         '[data-player-id="spike-blue"][data-once-per-game-marker="gx"]'
@@ -473,9 +543,6 @@ describe('LegacyBoardChrome', () => {
     );
     expect(lower?.dataset.playerSide).toBe('opponent');
     expect(upper?.dataset.playerSide).toBe('local');
-    expect(
-      host.querySelector<HTMLButtonElement>('#turnButton button')?.className
-    ).toBe('legacy-board-control-button dark-mode-2');
     const flippedLocalFrame = host.querySelector<HTMLElement>(
       '[data-player-frame-chrome="spike-blue"]'
     );
@@ -495,56 +562,27 @@ describe('LegacyBoardChrome', () => {
         )
         ?.getAttribute('aria-pressed')
     ).toBe('true');
-
-    await act(async () =>
-      root.render(
-        <LegacyBoardChrome
-          layout={flipped}
-          localPlayerId={asPlayerId('spike-blue')}
-          players={players}
-          darkMode={true}
-          actions={actions}
-          visibility={{ playerActions: false, flipBoard: false }}
-          refreshingImages
-        />
-      )
-    );
-    expect(host.querySelector('#turnButton')).toBeNull();
-    expect(host.querySelector('#flipCoinButton')).toBeNull();
-    expect(host.querySelector('#flipBoardButton')).toBeNull();
-    expect(host.querySelector('#refreshButton')).not.toBeNull();
-    expect(host.querySelector('#fullscreenPlaymatButton')).not.toBeNull();
-    expect(host.querySelector<HTMLElement>('#refreshIcon')?.style.display).toBe(
-      'none'
-    );
     expect(
-      host.querySelector<HTMLElement>('#loadingCircle')?.style.display
-    ).toBe('block');
+      flippedLocalFrame?.querySelector('[data-once-per-game-marker="gx"]')
+        ?.classList
+    ).toContain('dark-mode-2');
 
     await act(async () => root.unmount());
   });
-  it('sets the play-mat table from a Board view button instead of resize handles', async () => {
+
+  it('drops the resize handles on the play-mat table, and a hidden half with its markers', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
-    const toggleBoardView = vi.fn();
-    const actions = {
-      takeTurn: vi.fn(),
-      flipCoin: vi.fn(),
-      flipBoard: vi.fn(),
-      refreshImages: vi.fn(),
-      toggleFullscreen: vi.fn(),
-      toggleOncePerGame: vi.fn(),
-      toggleBoardView,
-    };
     const table = (hidden?: 'upper') =>
       createTableLayoutSnapshot({
         ...layoutState(),
         geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        shellMode: 'fullscreen',
         vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
         ...(hidden ? { hiddenPhysicalSide: hidden } : {}),
       });
-    const render = (open: boolean, hidden?: 'upper') =>
+    const render = (hidden?: 'upper') =>
       act(async () =>
         root.render(
           <LegacyBoardChrome
@@ -552,29 +590,17 @@ describe('LegacyBoardChrome', () => {
             localPlayerId={asPlayerId('spike-blue')}
             players={players}
             darkMode
-            actions={actions}
-            boardViewOpen={open}
+            actions={{ toggleOncePerGame: vi.fn() }}
           />
         )
       );
-    await render(false);
+    await render();
+    // The table is split from Settings, not dragged.
     expect(host.querySelector('#selfResizer')).toBeNull();
     expect(host.querySelector('#oppResizer')).toBeNull();
-    const button = host.querySelector<HTMLButtonElement>('#boardViewButton')!;
-    expect(button.getAttribute('aria-label')).toBe('Board view');
-    expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(button.hasAttribute('aria-controls')).toBe(false);
-    expect(button.closest('[data-board-view-trigger]')?.id).toBe(
-      'boardViewControl'
-    );
-    await act(async () => button.click());
-    expect(toggleBoardView).toHaveBeenCalledOnce();
-    await render(true);
-    expect(button.getAttribute('aria-expanded')).toBe('true');
-    expect(button.getAttribute('aria-controls')).toBe('boardViewPanel');
     expect(host.querySelectorAll('[data-player-frame-chrome]')).toHaveLength(2);
     // A hidden half takes its markers and Sort box with it.
-    await render(true, 'upper');
+    await render('upper');
     expect(
       [...host.querySelectorAll<HTMLElement>('[data-player-frame-chrome]')].map(
         (frame) => frame.dataset.playerFrameChrome

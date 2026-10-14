@@ -1,0 +1,179 @@
+/*
+ * The deck screen (DeckLayer.tsx). The builder's workspace and review
+ * table position themselves against the window, beside a column
+ * `--rail-width` wide; this layer puts the decklist column there and lays
+ * the room's colour behind both. Nothing here may transform or filter: the
+ * builder's fixed parts must stay fixed to the window.
+ */
+
+.ptcgsim-deck-layer {
+  --deck-bar-height: 52px;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: var(--color-room);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  outline: none;
+  opacity: 1;
+  transition:
+    opacity var(--ds-enter-duration, 180ms) var(--ease-out),
+    visibility 0s;
+}
+
+.ptcgsim-deck-layer[data-open='false'] {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--ds-exit-duration, 120ms) var(--ease-in),
+    visibility 0s linear var(--ds-exit-duration, 120ms);
+}
+
+.ptcgsim-deck-layer__column {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: var(--rail-width);
+  padding: max(var(--space-3), env(safe-area-inset-top)) var(--space-3)
+    max(var(--space-3), env(safe-area-inset-bottom));
+  border-left: 1px solid var(--color-border);
+  background: var(--color-rail);
+}
+
+.ptcgsim-deck-layer__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+.ptcgsim-deck-layer__back {
+  gap: var(--space-1-5);
+}
+
+/* The decklist panel fills the rest of the column. */
+.ptcgsim-deck-layer__column > .legacy-deck-import {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Small screens: one at a time --------------------------------------- */
+
+.ptcgsim-deck-layer__views {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+}
+
+.ptcgsim-deck-layer__view {
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.ptcgsim-deck-layer__view[aria-checked='true'] {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1), var(--highlight-top);
+}
+
+.ptcgsim-deck-layer[data-deck-view] {
+  --rail-width: 0px;
+}
+
+.ptcgsim-deck-layer[data-deck-view] .ptcgsim-deck-layer__column {
+  left: 0;
+  width: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 0;
+}
+
+/* On a short screen the decklist takes its own height and the column
+   scrolls, so Import is never cut off. */
+.ptcgsim-deck-layer[data-deck-view='list']
+  .ptcgsim-deck-layer__column
+  > .legacy-deck-import {
+  flex: none;
+  min-height: min-content;
+}
+
+.ptcgsim-deck-layer[data-deck-view='list']
+  .legacy-deck-import
+  .deck-import-text {
+  min-height: 140px;
+}
+
+.ptcgsim-deck-layer[data-deck-view='list'] .native-deck-builder-workspace {
+  visibility: hidden !important;
+}
+
+.ptcgsim-deck-layer[data-deck-view='build'] .ptcgsim-deck-layer__column {
+  bottom: auto;
+  background: transparent;
+}
+
+.ptcgsim-deck-layer[data-deck-view='build']
+  .ptcgsim-deck-layer__column
+  > .legacy-deck-import {
+  display: none;
+}
+
+.ptcgsim-deck-layer[data-deck-view='build'] .native-deck-builder-workspace {
+  top: calc(var(--deck-bar-height) + env(safe-area-inset-top));
+  height: auto;
+  bottom: 0;
+}
+
+.ptcgsim-deck-layer[data-deck-view] .native-deck-builder-inner {
+  padding: var(--space-2) var(--space-3)
+    max(var(--space-3), env(safe-area-inset-bottom));
+}
+
+/* The search and the deck stack, the deck second; each scrolls. */
+.ptcgsim-deck-layer[data-deck-view] .native-deck-builder-body {
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ptcgsim-deck-layer[data-deck-view] .native-deck-builder-pane {
+  flex: none;
+  min-height: 60dvh;
+}
+
+.ptcgsim-deck-layer[data-deck-view] .native-deck-builder-header,
+.ptcgsim-deck-layer[data-deck-view] .native-deck-builder-targetbar {
+  flex-wrap: wrap;
+}
+
+.ptcgsim-deck-layer[data-deck-view] .deck-review {
+  width: 100%;
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-deck-layer__view,
+  .ptcgsim-deck-layer__back {
+    min-height: 44px;
+  }
+}

@@ -25,3 +25,9 @@ export const DEFAULT_BOARD_PREFERENCES: BoardPreferences = {
   darkMode: false,
   showZoneOutlines: true,
 };
+
+/**
+ * Dispatched on the document to ask every board renderer to retry, now,
+ * each card image that failed to load.
+ */
+export const CARD_IMAGE_RETRY_EVENT = 'ptcgsim:retry-card-images';

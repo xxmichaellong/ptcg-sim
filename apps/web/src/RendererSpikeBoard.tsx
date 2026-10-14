@@ -4,11 +4,15 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardScene,
   createBoardLayoutSnapshot,
+  createLayoutSnapshotFor,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
+  tableVerticalLayout,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_BOARD_PRESENTATION,
   LEGACY_BOARD_SHELL_V1,
   type BoardIntent,
+  type BoardLayoutSnapshot,
   type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationUpdate,
@@ -17,7 +21,7 @@ import {
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { submitBoardDrop } from './board/resolveBoardDrop.js';
 import type {
   BoardRendererFactory,
@@ -34,7 +38,18 @@ export type { RendererKind } from './renderer-spike-handle.js';
 export const readRendererKind = (requested: string | null): RendererKind =>
   requested === 'pixi' ? 'pixi' : 'dom';
 
-const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
+/** The play-mat table (geometry v2) filling the window, split as given. */
+export interface SpikeTableLayout {
+  readonly lowerShare: number;
+  /** The least height of the clear band at the centre line. */
+  readonly seamBandPx?: number;
+}
+
+const sceneForHost = (
+  host: HTMLElement,
+  view: MatchViewState,
+  table?: SpikeTableLayout
+) => {
   const outerViewport = {
     width: Math.max(
       1,
@@ -52,18 +67,32 @@ const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
   }
   const bottomPlayerId =
     view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId;
-  const layout = createBoardLayoutSnapshot({
-    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
-    viewport: outerViewport,
-    playerIds: [firstPlayerId, secondPlayerId],
-    bottomPlayerId,
-    shellMode: 'sidebar',
-    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
-  });
+  const layout = table
+    ? createLayoutSnapshotFor({
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        viewport: {
+          ...outerViewport,
+          width: Math.max(1, window.innerWidth || host.clientWidth || 1600),
+        },
+        playerIds: [firstPlayerId, secondPlayerId],
+        bottomPlayerId,
+        shellMode: 'fullscreen',
+        vertical: tableVerticalLayout(table.lowerShare),
+        ...(table.seamBandPx ? { seamBandPx: table.seamBandPx } : {}),
+      })
+    : createBoardLayoutSnapshot({
+        geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+        viewport: outerViewport,
+        playerIds: [firstPlayerId, secondPlayerId],
+        bottomPlayerId,
+        shellMode: 'sidebar',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+      });
   const scene = createBoardScene(view, layout);
   return {
     viewport: scene.viewport,
     scene,
+    layout,
   };
 };
 
@@ -83,6 +112,8 @@ export const RendererSpikeBoard = ({
   allowRevisionRegression = false,
   sessionReady = true,
   preferences,
+  table,
+  chrome,
 }: {
   readonly view: MatchViewState;
   readonly rendererKind: RendererKind;
@@ -94,11 +125,18 @@ export const RendererSpikeBoard = ({
   readonly sessionReady?: boolean;
   /** Optional route-owned local preferences; omitted callers retain defaults. */
   readonly preferences?: BoardPreferences;
+  /** Lay out the play-mat table rather than v1's board beside a sidebar. */
+  readonly table?: SpikeTableLayout;
+  /** Paint over the board, placed by its layout (the table rail). */
+  readonly chrome?: (layout: BoardLayoutSnapshot) => ReactNode;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
   const rendererFactoryRef = useRef<BoardRendererFactory | null>(null);
   const viewRef = useRef(view);
+  const tableRef = useRef(table);
+  tableRef.current = table;
+  const [layout, setLayout] = useState<BoardLayoutSnapshot>();
   const onIntentRef = useRef(onIntent);
   const submitCommandRef = useRef(submitCommand);
   const allowRevisionRegressionRef = useRef(allowRevisionRegression);
@@ -155,7 +193,7 @@ export const RendererSpikeBoard = ({
     };
     setStatus({ kind: 'mounting' });
     const mount = async () => {
-      const initial = sceneForHost(host, viewRef.current);
+      const initial = sceneForHost(host, viewRef.current, tableRef.current);
       installedRef.current = { view: viewRef.current, scene: initial.scene };
       const adapters = {
         emitIntent: (intent: BoardIntent) => {
@@ -208,7 +246,8 @@ export const RendererSpikeBoard = ({
         installSize = () => {
           if (!renderer || disposed) return;
           const latestView = viewRef.current;
-          const next = sceneForHost(host, latestView);
+          const next = sceneForHost(host, latestView, tableRef.current);
+          setLayout(next.layout);
           const installed = installedRef.current;
           if (
             !installed ||
@@ -279,7 +318,8 @@ export const RendererSpikeBoard = ({
     const createRenderer = rendererFactoryRef.current;
     const host = hostRef.current;
     if (!renderer || !createRenderer || !host) return;
-    const next = sceneForHost(host, view);
+    const next = sceneForHost(host, view, table);
+    setLayout(next.layout);
     const installed = installedRef.current;
     const mode =
       allowRevisionRegression &&
@@ -295,7 +335,13 @@ export const RendererSpikeBoard = ({
       scene: next.scene,
       ...(import.meta.env.DEV ? { createRenderer } : {}),
     };
-  }, [allowRevisionRegression, rendererKind, view]);
+  }, [
+    allowRevisionRegression,
+    rendererKind,
+    view,
+    table?.lowerShare,
+    table?.seamBandPx,
+  ]);
 
   useEffect(() => {
     rendererRef.current?.installPresentation(presentation);
@@ -317,6 +363,7 @@ export const RendererSpikeBoard = ({
   return (
     <div className="board-spike-host">
       <div className="renderer-surface-host" ref={hostRef} />
+      {chrome && layout ? chrome(layout) : null}
       <span
         className="renderer-status"
         role="status"

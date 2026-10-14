@@ -114,6 +114,8 @@ const sameLayoutState = (
     right.vertical.upperHandle.heightRatio &&
   left.vertical.sharedPlacement === right.vertical.sharedPlacement &&
   left.hiddenPhysicalSide === right.hiddenPhysicalSide &&
+  (left.hideEmptyLostZone ?? false) === (right.hideEmptyLostZone ?? false) &&
+  (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -471,14 +473,23 @@ export class BoardSessionRuntime {
   setTableView(view: {
     readonly lowerShare: number;
     readonly hiddenPhysicalSide?: BoardPhysicalSide;
+    readonly hideEmptyLostZone?: boolean;
+    readonly seamBandPx?: number;
   }): void {
-    const { hiddenPhysicalSide: _previous, ...rest } = this.layoutState;
+    const {
+      hiddenPhysicalSide: _previous,
+      hideEmptyLostZone: _lostZone,
+      seamBandPx: _seam,
+      ...rest
+    } = this.layoutState;
     this.replaceLayoutState({
       ...rest,
       vertical: tableVerticalLayout(view.lowerShare),
       ...(view.hiddenPhysicalSide
         ? { hiddenPhysicalSide: view.hiddenPhysicalSide }
         : {}),
+      ...(view.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
+      ...(view.seamBandPx ? { seamBandPx: view.seamBandPx } : {}),
     });
   }
 

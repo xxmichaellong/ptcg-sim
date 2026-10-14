@@ -95,9 +95,6 @@ describe('ReplayModeShell', () => {
   it('maps the exact legacy chrome states', () => {
     expect(selectReplayModeChrome(coordinatorState(0))).toEqual({
       active: false,
-      primaryTabLabel: 'Solo',
-      primaryTabWidth: '',
-      settingsTabWidth: '',
       replayControls: false,
       visibility: {
         multiplayerTab: true,
@@ -121,9 +118,6 @@ describe('ReplayModeShell', () => {
     const replayChrome = selectReplayModeChrome(coordinatorState(1, 'replay'));
     expect(replayChrome).toEqual({
       active: true,
-      primaryTabLabel: 'Replay',
-      primaryTabWidth: '50%',
-      settingsTabWidth: '50%',
       replayControls: true,
       visibility: {
         multiplayerTab: false,
@@ -160,20 +154,13 @@ describe('ReplayModeShell', () => {
     await act(async () =>
       root.render(
         <ReplayModeShell coordinator={coordinator}>
-          {({ chrome, controls, exitReplay }) => (
+          {({ chrome, handlers, exitReplay }) => (
             <section
               data-active={String(chrome.active)}
               data-private-actions={String(
                 chrome.visibility.privateMutationActions
               )}
             >
-              <span id="primary-tab" style={{ width: chrome.primaryTabWidth }}>
-                {chrome.primaryTabLabel}
-              </span>
-              <span
-                id="settings-tab"
-                style={{ width: chrome.settingsTabWidth }}
-              />
               {chrome.visibility.multiplayerTab && <span id="multiplayer" />}
               {chrome.visibility.deckImport && <span id="deck-import" />}
               {chrome.visibility.chatActions && <span id="chat-actions" />}
@@ -189,7 +176,26 @@ describe('ReplayModeShell', () => {
               {chrome.visibility.exitReplay && (
                 <button id="exit-replay" type="button" onClick={exitReplay} />
               )}
-              {controls}
+              {chrome.replayControls && (
+                <>
+                  <button
+                    id="restart"
+                    type="button"
+                    onClick={handlers.restart}
+                  />
+                  <button
+                    id="previous"
+                    type="button"
+                    onClick={handlers.previous}
+                  />
+                  <button id="next" type="button" onClick={handlers.next} />
+                  <button
+                    id="fast-forward"
+                    type="button"
+                    onClick={handlers.fastForward}
+                  />
+                </>
+              )}
             </section>
           )}
         </ReplayModeShell>
@@ -199,26 +205,17 @@ describe('ReplayModeShell', () => {
     expect(coordinator.listenerCount()).toBe(1);
     expect(host.childElementCount).toBe(1);
     expect(host.querySelector('section')?.dataset.active).toBe('false');
-    expect(host.querySelector('#primary-tab')?.textContent).toBe('Solo');
-    expect(host.querySelector('#setupButton')).toBeNull();
+    expect(host.querySelector('#restart')).toBeNull();
     expect(host.querySelector('#exit-replay')).toBeNull();
 
     await act(async () =>
       coordinator.publish(coordinatorState(1, 'live', 'loading'))
     );
-    expect(host.querySelector('#primary-tab')?.textContent).toBe('Solo');
-    expect(host.querySelector('#setupButton')).toBeNull();
+    expect(host.querySelector('#restart')).toBeNull();
 
     await act(async () => coordinator.publish(coordinatorState(2, 'replay')));
     expect(host.querySelector('section')?.dataset.active).toBe('true');
     expect(host.querySelector('section')?.dataset.privateActions).toBe('false');
-    expect(host.querySelector('#primary-tab')?.textContent).toBe('Replay');
-    expect(
-      (host.querySelector('#primary-tab') as HTMLElement).style.width
-    ).toBe('50%');
-    expect(
-      (host.querySelector('#settings-tab') as HTMLElement).style.width
-    ).toBe('50%');
     expect(host.querySelector('#multiplayer')).toBeNull();
     expect(host.querySelector('#deck-import')).toBeNull();
     expect(host.querySelector('#chat-actions')).toBeNull();
@@ -233,10 +230,10 @@ describe('ReplayModeShell', () => {
     expect(host.querySelector('#options-action')).not.toBeNull();
 
     for (const id of [
-      'setupButton',
-      'resetButton',
-      'setupBothButton',
-      'resetBothButton',
+      'restart',
+      'previous',
+      'next',
+      'fast-forward',
       'exit-replay',
     ]) {
       await act(async () =>

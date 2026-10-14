@@ -246,6 +246,21 @@ export const BOARD_SURFACE_CSS = `
   top: 8px;
   bottom: auto;
 }
+/* A pile as small as a phone's keeps its name inside it: smaller type,
+   edge to edge, under the card spot on either side. */
+.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium) {
+  container-type: inline-size;
+}
+@container (max-width: 71px) {
+  .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label][data-zone-side]::after {
+    left: 2px;
+    right: 2px;
+    top: auto;
+    bottom: 6px;
+    font-size: 7.5px;
+    letter-spacing: 0.02em;
+  }
+}
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-hand {
   border-radius: 0;
 }

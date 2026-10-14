@@ -280,6 +280,16 @@
   letter-spacing: 0.02em;
 }
 
+/* A finger: rows big enough to hit, and no keys to hint at. */
+@media (pointer: coarse) {
+  .ptcgsim-menu-item {
+    min-height: 44px;
+  }
+  .ptcgsim-menu-item[data-menu-hint]::after {
+    content: none;
+  }
+}
+
 .ptcgsim-menu-chevron {
   flex: none;
   width: 14px;
@@ -357,6 +367,43 @@
   li.has-submenu.opens-left[data-submenu-open='true']::after {
   right: 100%;
   left: auto;
+}
+
+/* A phone has no room beside the menu: a submenu opens in place, under
+   its row, and the menu scrolls if it must. */
+@media (max-width: 599px) {
+  .ptcgsim-legacy-card-context-menu {
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+  }
+  .ptcgsim-legacy-card-context-menu .ptcgsim-legacy-card-sub-menu,
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu.opens-left
+    > .ptcgsim-legacy-card-sub-menu {
+    position: static;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    margin: 2px 0 4px var(--space-4);
+    border-color: transparent;
+    background: var(--color-surface-sunken);
+    box-shadow: none;
+    translate: none;
+  }
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu:hover:not([data-submenu-open='true'])
+    > .ptcgsim-legacy-card-sub-menu {
+    display: none;
+  }
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu[data-submenu-open='true']
+    > .ptcgsim-legacy-card-sub-menu {
+    display: block;
+  }
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu[data-submenu-open='true']::after {
+    content: none;
+  }
 }
 
 /* ---- Overlay card images ---------------------------------------------- */

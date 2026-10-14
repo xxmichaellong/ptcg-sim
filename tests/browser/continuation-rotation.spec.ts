@@ -25,6 +25,7 @@ import {
   copyInvitation,
   downloadText,
   exposedBrowserState,
+  expectReadyRoom,
   joinReadyRoom,
   openLobby,
   pasteInvitation,
@@ -32,6 +33,7 @@ import {
   roomCode,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
+import { chooseMenuItem, openActivity } from './support/table-shell.js';
 
 const repositoryRoot = resolve('.');
 const inputDirectory =
@@ -95,7 +97,6 @@ const createReadyPair = async (
 };
 
 const createSave = async (pair: ReadyPair): Promise<CreatedSave> => {
-  await pair.owner.page.locator('#p2OptionsButton').click();
   const responsePromise = pair.owner.page.waitForResponse((response) => {
     const url = new URL(response.url());
     return (
@@ -106,7 +107,7 @@ const createSave = async (pair: ReadyPair): Promise<CreatedSave> => {
   const [download, response] = await Promise.all([
     pair.owner.page.waitForEvent('download'),
     responsePromise,
-    pair.owner.page.locator('#saveOnlineGame').click(),
+    chooseMenuItem(pair.owner.page, 'saveOnlineGame'),
   ]);
   expect(response.status()).toBe(201);
   expect(response.headers()['cache-control']).toContain('no-store');
@@ -125,9 +126,8 @@ const restoreSave = async (
   page: Page,
   artifact: ContinuationRotationArtifact
 ): Promise<string> => {
-  await page.locator('#p2OptionsButton').click();
   const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.locator('#resumeSavedGame').click();
+  await chooseMenuItem(page, 'resumeSavedGame');
   const fileChooser = await fileChooserPromise;
   const restorePath = `/v2/continuations/${artifact.manifest.saveId}/restore`;
   const revokePath = `/v2/continuations/${artifact.manifest.saveId}`;
@@ -205,11 +205,14 @@ const capture = async (
       'Rotation Owner',
       'Rotation Opponent'
     );
-    await opponent.page.locator('#p2AttackButton').click();
+    // No deck yet: the opponent's action before a game is the coin
+    // (ADR-030 offers no Attack until a seat is playing).
+    await opponent.page.locator('#flipCoinButton').click();
+    await openActivity(owner.page);
     await expect(
       owner.page
         .locator('#p2Chatbox')
-        .getByText('Rotation Opponent attacked', { exact: true })
+        .getByText(/^Rotation Opponent flipped (heads|tails)$/u)
     ).toBeVisible();
     const checkpoint = await boardIdentity(owner.page);
     expect(await boardIdentity(opponent.page)).toEqual(checkpoint);
@@ -255,10 +258,7 @@ const transition = async (
     );
     const stagingCheckpoint = await boardIdentity(stagingOpponent.page);
     const restoredInvitation = await restoreSave(owner.page, input);
-    await expect(owner.page.locator('#roomHeaderText')).toHaveAttribute(
-      'data-session-phase',
-      'ready'
-    );
+    await expectReadyRoom(owner.page);
     const restoredRoomCode = await roomCode(owner.page);
     expect(restoredRoomCode).not.toBe(stagingPair.roomCode);
     expect(await boardIdentity(owner.page)).toEqual(input.manifest.checkpoint);
@@ -283,11 +283,12 @@ const transition = async (
       stagingCheckpoint
     );
 
-    await restoredOpponent.page.locator('#p2AttackButton').click();
+    await restoredOpponent.page.locator('#flipCoinButton').click();
+    await openActivity(owner.page);
     await expect(
       owner.page
         .locator('#p2Chatbox')
-        .getByText('Restored Opponent attacked', { exact: true })
+        .getByText(/^Restored Opponent flipped (heads|tails)$/u)
     ).toBeVisible();
     const advancedCheckpoint = await boardIdentity(owner.page);
     expect(advancedCheckpoint.matchId).toBe(input.manifest.checkpoint.matchId);

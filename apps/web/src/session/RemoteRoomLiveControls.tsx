@@ -1,5 +1,5 @@
 import { Flower } from '@phosphor-icons/react/dist/csr/Flower';
-import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
+import { PaperPlaneRight } from '@phosphor-icons/react/dist/csr/PaperPlaneRight';
 import type {
   ClientSessionState,
   RemoteGameSession,
@@ -16,9 +16,6 @@ import {
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
 import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
 import { resolveTableAction } from '../board/resolveTableAction.js';
-import { chordHint, detectKeyboardPlatform } from '../hotkeys/chords.js';
-import { useKeymap } from '../hotkeys/hotkey-preferences.js';
-import { openShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
   downloadBrowserTextFile,
@@ -39,7 +36,6 @@ import {
   type BrowserReplayFileLike,
   type BrowserReplayFileReadResult,
 } from './browser-replay-file.js';
-import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
 import { useGameSession } from './useGameSession.js';
 import { confirmAction } from '../ui/dialog-requests.js';
 import { toast } from '../ui/toast.js';
@@ -119,33 +115,13 @@ export type BrowserContinuationFileReader = (
 
 export type OpponentInvitationDelivery = (text: string) => Promise<void>;
 
-/** Opens the keyboard shortcuts list; its tooltip names the key for it. */
-const ShortcutsButton = ({
-  id,
-  className,
-}: {
-  readonly id: string;
-  readonly className: string;
-}) => {
-  const opener = useKeymap().chord('table.shortcuts');
-  const hint = opener ? chordHint(opener, detectKeyboardPlatform()) : null;
-  return (
-    <button
-      id={id}
-      type="button"
-      className={className}
-      aria-label="Keyboard shortcuts"
-      aria-keyshortcuts={opener ? chordHint(opener, 'other') : undefined}
-      title={hint ? `Keyboard shortcuts (${hint})` : 'Keyboard shortcuts'}
-      onClick={() => openShortcutsDialog()}
-    >
-      <KeyboardIcon size={18} weight="duotone" aria-hidden="true" />
-    </button>
-  );
-};
-
-/** Existing connected-room controls backed only by authenticated session APIs. */
-export const RemoteRoomLiveControls = ({
+/**
+ * The connected room's controls, without a place on screen (ADR-030): the
+ * table rail shows the turn's actions, the activity sheet the chat field,
+ * and the app menu the room's options. One hook owns them so the pending
+ * saves, imports and the leave question stay single.
+ */
+export const useLiveRoomControls = ({
   session,
   presentation,
   roomMode = 'multiplayer',
@@ -209,7 +185,6 @@ export const RemoteRoomLiveControls = ({
   const continuationFileInputRef = useRef<HTMLInputElement>(null);
   const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
   const continuationAbortRef = useRef<AbortController | undefined>(undefined);
-  const options = useDismissibleRoomOptions();
   // The "leave the room?" question while it is being asked: one at a time,
   // withdrawn if these controls unmount.
   const leaveQuestion = useRef<AbortController | undefined>(undefined);
@@ -292,7 +267,7 @@ export const RemoteRoomLiveControls = ({
     const controller = new AbortController();
     continuationAbortRef.current = controller;
     setContinuationPending('save');
-    options.setOpen(false);
+
     try {
       await onSaveOnlineGame(controller.signal);
     } catch {
@@ -322,14 +297,12 @@ export const RemoteRoomLiveControls = ({
 
     const clipboard = getInvitationClipboard();
     if (!clipboard) {
-      options.setOpen(false);
       reportSavedGameResumeFailure();
       return;
     }
     const controller = new AbortController();
     continuationAbortRef.current = controller;
     setContinuationPending('resume');
-    options.setOpen(false);
 
     let resolveInvitation!: (text: string) => void;
     let rejectInvitation!: () => void;
@@ -447,7 +420,7 @@ export const RemoteRoomLiveControls = ({
     }
     replayImportAbortRef.current = undefined;
     setReplayImportPending(false);
-    options.setOpen(false);
+
     if (!read.ok || !imported) reportReplayImportFailure();
   };
   const sendMessage = (): void => {
@@ -467,246 +440,125 @@ export const RemoteRoomLiveControls = ({
     sendMessage();
   };
 
-  return (
+  const exportLog = (): void => {
+    downloadTextFile(
+      'battle-log.txt',
+      serializeBattleLog(presentation.activityFeed.getSnapshot().items)
+    );
+  };
+  const clearLog = (): void => {
+    presentation.clearActivity();
+  };
+  const fullscreen = (): void => {
+    requestFullscreen();
+  };
+  const sendFlower = (): void => {
+    session.sendChat('🌺', playerId);
+  };
+
+  /** The hidden file pickers behind "Enter replay mode" and "Resume". */
+  const fileInputs = (
     <>
-      <div
-        id={solo ? 'chatboxButtonContainer' : 'p2ChatboxButtonContainer'}
-        className="chat-button-container"
-      >
-        {playerControls && (
-          <>
-            <button
-              id={solo ? 'attackButton' : 'p2AttackButton'}
-              type="button"
-              className={seatColor}
-              onClick={() => submitTable('attack')}
-            >
-              Attack
-            </button>
-            <button
-              id={solo ? 'passButton' : 'p2PassButton'}
-              type="button"
-              className={seatColor}
-              onClick={() => submitTable('pass')}
-            >
-              Pass
-            </button>
-            <button
-              id={solo ? 'undoButton' : 'p2UndoButton'}
-              type="button"
-              className={seatColor}
-              onClick={submitUndo}
-            >
-              Undo
-            </button>
-          </>
-        )}
-        <button
-          id={solo ? 'FREEBUTTON' : 'p2FREEBUTTON'}
-          type="button"
-          className={playerControls ? seatColor : 'spectator-color'}
-          disabled={!ready}
-          aria-label="Send flower"
-          title="Send a flower"
-          onClick={() => session.sendChat('🌺', playerId)}
-        >
-          <Flower size={18} weight="fill" aria-hidden="true" />
-        </button>
-        <ShortcutsButton
-          id={solo ? 'shortcutsButton' : 'p2ShortcutsButton'}
-          className={playerControls ? seatColor : 'spectator-color'}
+      {solo && onImportReplayFile ? (
+        <input
+          id="jsonReplay"
+          ref={replayFileInputRef}
+          type="file"
+          accept=".json"
+          hidden
+          onChange={(event) => void importReplayFile(event)}
         />
-      </div>
+      ) : null}
+      {!solo && playerControls && onResumeSavedGame ? (
+        <input
+          id="continuationSaveFile"
+          ref={continuationFileInputRef}
+          type="file"
+          accept=".ptcgsave"
+          hidden
+          onChange={(event) => void resumeSavedGame(event)}
+        />
+      ) : null}
+    </>
+  );
+
+  return {
+    state,
+    ready,
+    solo,
+    playerId,
+    ownSeat,
+    playerControls,
+    seatColor,
+    continuationPending,
+    replayImportPending,
+    message,
+    setMessage,
+    sendMessage,
+    handleMessageKeyDown,
+    sendFlower,
+    submitTable,
+    submitLifecycle,
+    submitBothLifecycle,
+    submitUndo,
+    leaveRoom: onLeave && !solo ? leaveRoom : undefined,
+    canImportReplay: solo && onImportReplayFile !== undefined,
+    importReplay: () => replayFileInputRef.current?.click(),
+    exportState: onExportState,
+    canSaveOnline: !solo && playerControls && onSaveOnlineGame !== undefined,
+    saveOnlineGame: () => void saveOnlineGame(),
+    canResumeSaved: !solo && playerControls && onResumeSavedGame !== undefined,
+    resumeSavedGame: () => continuationFileInputRef.current?.click(),
+    exportLog,
+    clearLog,
+    fullscreen,
+    fileInputs,
+  };
+};
+
+export type LiveRoomControls = ReturnType<typeof useLiveRoomControls>;
+
+/** The chat field and the flower, for the activity sheet. */
+export const ChatComposer = ({
+  controls,
+}: {
+  readonly controls: LiveRoomControls;
+}) => {
+  const id = controls.solo ? 'messageInput' : 'p2MessageInput';
+  return (
+    <div className="ptcgsim-chat-composer">
       <input
-        id={solo ? 'messageInput' : 'p2MessageInput'}
+        id={id}
         type="text"
-        placeholder="Type your message here..."
+        className="ds-input"
+        placeholder="Message"
         aria-label="Chat message"
         maxLength={MAX_CHAT_CODE_UNITS}
-        disabled={!ready}
-        value={message}
-        onChange={(event) => setMessage(event.target.value)}
-        onKeyDown={handleMessageKeyDown}
+        disabled={!controls.ready}
+        value={controls.message}
+        onChange={(event) => controls.setMessage(event.target.value)}
+        onKeyDown={controls.handleMessageKeyDown}
       />
-      <div
-        id={solo ? 'bottomP1ButtonContainer' : 'p2BottomButtonContainer'}
-        className="sidebox-button-container"
+      <button
+        id={controls.solo ? 'FREEBUTTON' : 'p2FREEBUTTON'}
+        type="button"
+        className="ds-icon-button ptcgsim-chat-composer__flower"
+        disabled={!controls.ready}
+        aria-label="Send a flower"
+        title="Send a flower"
+        onClick={controls.sendFlower}
       >
-        {playerControls && (
-          <>
-            <button
-              id={solo ? 'setupButton' : 'p2SetupButton'}
-              type="button"
-              className={seatColor}
-              onClick={() => submitLifecycle('setup')}
-            >
-              Set Up
-            </button>
-            <button
-              id={solo ? 'resetButton' : 'p2ResetButton'}
-              type="button"
-              className={seatColor}
-              onClick={() => submitLifecycle('reset')}
-            >
-              Reset
-            </button>
-            {solo && (
-              <>
-                <button
-                  id="setupBothButton"
-                  type="button"
-                  className="neutral-color"
-                  onClick={() => submitBothLifecycle('setup')}
-                >
-                  Set Up Both
-                </button>
-                <button
-                  id="resetBothButton"
-                  type="button"
-                  className="neutral-color"
-                  onClick={() => submitBothLifecycle('reset')}
-                >
-                  Reset Both
-                </button>
-              </>
-            )}
-          </>
-        )}
-        {onLeave && !solo && (
-          <button
-            id="leaveRoomButton"
-            type="button"
-            className="neutral-color"
-            onClick={leaveRoom}
-          >
-            Leave Room
-          </button>
-        )}
-        <button
-          id={solo ? 'optionsButton' : 'p2OptionsButton'}
-          ref={options.buttonRef}
-          type="button"
-          className="neutral-color"
-          aria-expanded={options.open}
-          aria-haspopup="menu"
-          aria-controls="optionsContextMenu"
-          onClick={() => options.setOpen((open) => !open)}
-        >
-          Options
-        </button>
-      </div>
-      <div
-        id="optionsContextMenu"
-        ref={options.menuRef}
-        role="menu"
-        aria-label="Table options"
-        hidden={!options.open}
+        <Flower size={20} weight="fill" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="ds-icon-button ptcgsim-chat-composer__send"
+        disabled={!controls.ready || controls.message.trim().length === 0}
+        aria-label="Send message"
+        onClick={controls.sendMessage}
       >
-        {/* v1 lists replay first, then the game-state items, then the log. */}
-        {solo && onImportReplayFile && (
-          <div id="jsonReplayDiv" role="none">
-            <button
-              id="importReplay"
-              type="button"
-              role="menuitem"
-              disabled={!ready || state.replayLoading || replayImportPending}
-              onClick={() => replayFileInputRef.current?.click()}
-            >
-              Enter replay mode
-            </button>
-            <input
-              id="jsonReplay"
-              ref={replayFileInputRef}
-              type="file"
-              accept=".json"
-              hidden
-              onChange={(event) => void importReplayFile(event)}
-            />
-          </div>
-        )}
-        {onExportState && (
-          <button
-            id="exportState"
-            type="button"
-            role="menuitem"
-            disabled={!ready}
-            onClick={() => {
-              options.setOpen(false);
-              onExportState();
-            }}
-          >
-            Export game state
-          </button>
-        )}
-        {!solo && playerControls && onSaveOnlineGame && (
-          <button
-            id="saveOnlineGame"
-            type="button"
-            role="menuitem"
-            disabled={!ready || continuationPending !== undefined}
-            onClick={() => void saveOnlineGame()}
-          >
-            Save online game
-          </button>
-        )}
-        {!solo && playerControls && onResumeSavedGame && (
-          <div id="continuationSaveDiv" role="none">
-            <button
-              id="resumeSavedGame"
-              type="button"
-              role="menuitem"
-              disabled={!ready || continuationPending !== undefined}
-              onClick={() => continuationFileInputRef.current?.click()}
-            >
-              Resume saved game
-            </button>
-            <input
-              id="continuationSaveFile"
-              ref={continuationFileInputRef}
-              type="file"
-              accept=".ptcgsave"
-              hidden
-              onChange={(event) => void resumeSavedGame(event)}
-            />
-          </div>
-        )}
-        <button
-          id="exportLog"
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            downloadTextFile(
-              'battle-log.txt',
-              serializeBattleLog(presentation.activityFeed.getSnapshot().items)
-            );
-            options.setOpen(false);
-          }}
-        >
-          Export battle log
-        </button>
-        <button
-          id="clearLog"
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            presentation.clearActivity();
-            options.setOpen(false);
-          }}
-        >
-          Clear battle log
-        </button>
-        <button
-          id="fullscreenButton"
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            requestFullscreen();
-            options.setOpen(false);
-          }}
-        >
-          Full screen
-        </button>
-      </div>
-    </>
+        <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
+      </button>
+    </div>
   );
 };

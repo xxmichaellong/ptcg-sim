@@ -4,7 +4,7 @@ import type {
   ClientSessionState,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { WireGameCommand } from '@ptcgsim/protocol';
+import { MAX_CHAT_CODE_UNITS, type WireGameCommand } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -14,9 +14,11 @@ import { cancelAllDialogRequests } from '../ui/dialog-requests.js';
 import { OverlayHost } from '../ui/OverlayHost.js';
 import { dismissToast } from '../ui/toast.js';
 import {
-  RemoteRoomLiveControls,
+  ChatComposer,
+  useLiveRoomControls,
   type BrowserContinuationFileReader,
   type BrowserReplayFileReader,
+  type LiveRoomControls,
   type LiveRoomLeaveConfirmation,
   type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
@@ -28,6 +30,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const playerView = createRendererSpikeView();
 const playerId =
   playerView.viewer.kind === 'player' ? playerView.viewer.playerId : '';
+const otherPlayerId = playerView.playerOrder.find(
+  (candidate) => candidate !== playerId
+)!;
 
 const baseState = (): ClientSessionState => ({
   phase: 'ready',
@@ -45,11 +50,20 @@ const baseState = (): ClientSessionState => ({
   reconnectAttempt: 0,
 });
 
+const spectatorState = (): ClientSessionState => ({
+  ...baseState(),
+  role: 'spectator',
+  playerId: undefined,
+  view: { ...playerView, viewer: { kind: 'spectator' } },
+});
+
 class FakeLiveSession implements RemoteRoomLiveSession {
   private state: ClientSessionState;
   private readonly listeners = new Set<() => void>();
   private nextCommand = 1;
-  readonly sendChat = vi.fn((_message: string) => true);
+  readonly sendChat = vi.fn(
+    (_message: string, _playerId?: string): boolean => true
+  );
   readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult => {
     const ordinal = this.nextCommand++;
     return {
@@ -74,9 +88,8 @@ class FakeLiveSession implements RemoteRoomLiveSession {
     return this.listeners.size;
   }
 
-  setState(state: ClientSessionState): void {
-    this.state = state;
-    for (const listener of this.listeners) listener();
+  commands(): readonly WireGameCommand[] {
+    return this.submit.mock.calls.map(([command]) => command);
   }
 }
 
@@ -102,95 +115,52 @@ const livePresentation = (messages: readonly string[] = []) => {
   return { value, clearActivity };
 };
 
+type ControlsProps = Parameters<typeof useLiveRoomControls>[0];
+type MountOptions = Partial<Omit<ControlsProps, 'session'>>;
+
+let latest: LiveRoomControls | undefined;
+
+/** The controls as the room last rendered them. */
+const controls = (): LiveRoomControls => {
+  if (!latest) throw new Error('The controls are not mounted');
+  return latest;
+};
+
+/**
+ * What the room does with the hook: the chat field in the activity log and
+ * the hidden file pickers on the page. Everything else is a function the
+ * rail and the menu call, so the tests call it the same way.
+ */
+const Harness = (props: ControlsProps) => {
+  const live = useLiveRoomControls(props);
+  latest = live;
+  return (
+    <>
+      <ChatComposer controls={live} />
+      {live.fileInputs}
+    </>
+  );
+};
+
 const mount = async (
   session: FakeLiveSession,
-  options: {
-    readonly presentation?: RemoteRoomLivePresentation;
-    readonly roomMode?: 'solo' | 'multiplayer';
-    readonly onLeave?: () => void;
-    readonly onExportState?: () => void;
-    readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
-    readonly onSaveOnlineGame?: (signal: AbortSignal) => Promise<void>;
-    readonly onResumeSavedGame?: (
-      contents: string,
-      deliverOpponentInvitation: (text: string) => Promise<void>,
-      signal: AbortSignal
-    ) => Promise<void>;
-    readonly confirmLeave?: LiveRoomLeaveConfirmation;
-    readonly downloadTextFile?: (filename: string, contents: string) => boolean;
-    readonly requestFullscreen?: () => boolean;
-    readonly readReplayFile?: BrowserReplayFileReader;
-    readonly readContinuationFile?: BrowserContinuationFileReader;
-    readonly getInvitationClipboard?: () =>
-      DeferredTextClipboardWriter | undefined;
-    readonly reportReplayImportFailure?: () => void;
-    readonly reportOnlineSaveFailure?: () => void;
-    readonly reportSavedGameResumeFailure?: () => void;
-    readonly reportSavedGameResumeSuccess?: () => void;
-  } = {}
+  options: MountOptions = {}
 ): Promise<{ readonly host: HTMLDivElement; readonly root: Root }> => {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
-  await act(async () =>
-    root.render(
-      <RemoteRoomLiveControls
-        session={session}
-        presentation={options.presentation ?? livePresentation().value}
-        {...(options.roomMode ? { roomMode: options.roomMode } : {})}
-        {...(options.onLeave ? { onLeave: options.onLeave } : {})}
-        {...(options.onExportState
-          ? { onExportState: options.onExportState }
-          : {})}
-        {...(options.onImportReplayFile
-          ? { onImportReplayFile: options.onImportReplayFile }
-          : {})}
-        {...(options.onSaveOnlineGame
-          ? { onSaveOnlineGame: options.onSaveOnlineGame }
-          : {})}
-        {...(options.onResumeSavedGame
-          ? { onResumeSavedGame: options.onResumeSavedGame }
-          : {})}
-        {...(options.confirmLeave
-          ? { confirmLeave: options.confirmLeave }
-          : {})}
-        {...(options.downloadTextFile
-          ? { downloadTextFile: options.downloadTextFile }
-          : {})}
-        {...(options.requestFullscreen
-          ? { requestFullscreen: options.requestFullscreen }
-          : {})}
-        {...(options.readReplayFile
-          ? { readReplayFile: options.readReplayFile }
-          : {})}
-        {...(options.readContinuationFile
-          ? { readContinuationFile: options.readContinuationFile }
-          : {})}
-        {...(options.getInvitationClipboard
-          ? { getInvitationClipboard: options.getInvitationClipboard }
-          : {})}
-        {...(options.reportReplayImportFailure
-          ? { reportReplayImportFailure: options.reportReplayImportFailure }
-          : {})}
-        {...(options.reportOnlineSaveFailure
-          ? { reportOnlineSaveFailure: options.reportOnlineSaveFailure }
-          : {})}
-        {...(options.reportSavedGameResumeFailure
-          ? {
-              reportSavedGameResumeFailure:
-                options.reportSavedGameResumeFailure,
-            }
-          : {})}
-        {...(options.reportSavedGameResumeSuccess
-          ? {
-              reportSavedGameResumeSuccess:
-                options.reportSavedGameResumeSuccess,
-            }
-          : {})}
-      />
-    )
-  );
+  const props: ControlsProps = {
+    presentation: livePresentation().value,
+    ...options,
+    session,
+  };
+  await act(async () => root.render(<Harness {...props} />));
   return { host, root };
+};
+
+/** Calls a control inside act, as a button press would. */
+const press = async (call: (live: LiveRoomControls) => void): Promise<void> => {
+  await act(async () => call(controls()));
 };
 
 const element = <ElementType extends Element>(
@@ -227,6 +197,17 @@ const pressEnter = (
   return event;
 };
 
+const chooseFile = async (input: HTMLInputElement, file: File) => {
+  Object.defineProperty(input, 'files', {
+    configurable: true,
+    value: [file],
+  });
+  await act(async () => {
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await Promise.resolve();
+  });
+};
+
 /** The application's overlay host, as main.tsx mounts it. */
 const mountOverlayHost = async (): Promise<() => Promise<void>> => {
   const element = document.createElement('div');
@@ -252,29 +233,30 @@ const settleOverlays = async (): Promise<void> => {
   }
 };
 
-describe('RemoteRoomLiveControls', () => {
+describe('useLiveRoomControls', () => {
   beforeEach(() => {
     document.body.replaceChildren();
+    latest = undefined;
     vi.clearAllMocks();
   });
 
-  it('asks before Leave Room in a danger confirm dialog, once at a time', async () => {
+  it('asks before leaving a room in a danger confirm dialog, once at a time', async () => {
     const unmountOverlays = await mountOverlayHost();
     const confirm = vi.fn();
     vi.stubGlobal('confirm', confirm);
     try {
       const onLeave = vi.fn();
-      const { host, root } = await mount(new FakeLiveSession(), { onLeave });
-      const leave = element<HTMLButtonElement>(host, '#leaveRoomButton');
+      const { root } = await mount(new FakeLiveSession(), { onLeave });
       const button = (action: string) =>
         element<HTMLButtonElement>(
           document,
           `[data-dialog-action="${action}"]`
         );
+      expect(controls().leaveRoom).toBeTypeOf('function');
 
-      await act(async () => {
-        leave.click();
-        leave.click();
+      await press((live) => {
+        live.leaveRoom?.();
+        live.leaveRoom?.();
       });
       await settleOverlays();
       expect(document.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);
@@ -288,7 +270,7 @@ describe('RemoteRoomLiveControls', () => {
       await settleOverlays();
       expect(onLeave).not.toHaveBeenCalled();
 
-      await act(async () => leave.click());
+      await press((live) => live.leaveRoom?.());
       await settleOverlays();
       await act(async () => button('confirm').click());
       await settleOverlays();
@@ -301,17 +283,24 @@ describe('RemoteRoomLiveControls', () => {
     }
   });
 
+  it('offers no Leave at a Solo table, whose way out is the table itself', async () => {
+    const { root } = await mount(new FakeLiveSession(), {
+      roomMode: 'solo',
+      onLeave: vi.fn(),
+    });
+    expect(controls().leaveRoom).toBeUndefined();
+    await act(async () => root.unmount());
+  });
+
   it('withdraws an unanswered leave question when the controls unmount', async () => {
     const onLeave = vi.fn();
     const answer = Promise.withResolvers<boolean>();
     const confirmLeave = vi.fn<LiveRoomLeaveConfirmation>(() => answer.promise);
-    const { host, root } = await mount(new FakeLiveSession(), {
+    const { root } = await mount(new FakeLiveSession(), {
       onLeave,
       confirmLeave,
     });
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#leaveRoomButton').click()
-    );
+    await press((live) => live.leaveRoom?.());
     const signal = confirmLeave.mock.calls[0]?.[0].signal;
     expect(signal?.aborted).toBe(false);
 
@@ -338,15 +327,10 @@ describe('RemoteRoomLiveControls', () => {
         onImportReplayFile: vi.fn(async () => true),
         readReplayFile,
       });
-      const input = element<HTMLInputElement>(host, '#jsonReplay');
-      Object.defineProperty(input, 'files', {
-        configurable: true,
-        value: [new File(['ignored'], 'replay.json')],
-      });
-      await act(async () => {
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        await Promise.resolve();
-      });
+      await chooseFile(
+        element<HTMLInputElement>(host, '#jsonReplay'),
+        new File(['ignored'], 'replay.json')
+      );
       await settleOverlays();
       const notice = document.querySelector<HTMLElement>(
         '[data-ptcgsim-overlay="toast"]'
@@ -363,37 +347,31 @@ describe('RemoteRoomLiveControls', () => {
     }
   });
 
-  it('maps the legacy player controls to authenticated chat and atomic commands', async () => {
+  it('sends chat for the seat at the bottom, and keeps a line still being typed', async () => {
     const session = new FakeLiveSession();
     const { host, root } = await mount(session);
-
-    for (const id of [
-      'p2AttackButton',
-      'p2PassButton',
-      'p2FREEBUTTON',
-      'p2MessageInput',
-      'p2SetupButton',
-      'p2ResetButton',
-    ]) {
-      expect(host.querySelector(`#${id}`), id).not.toBeNull();
-    }
-
     const message = element<HTMLInputElement>(host, '#p2MessageInput');
+    expect(message.maxLength).toBe(MAX_CHAT_CODE_UNITS);
+    expect(host.querySelector('#messageInput')).toBeNull();
+
     let enter!: KeyboardEvent;
     await act(async () => {
       inputValue(message, '  hello room  ');
       enter = pressEnter(message);
     });
     expect(enter.defaultPrevented).toBe(true);
-    // The line is attributed to the seat the sidebar is acting for.
-    expect(session.sendChat).toHaveBeenCalledWith('hello room', 'spike-blue');
+    // The line is attributed to the seat the controls act for.
+    expect(session.sendChat).toHaveBeenCalledWith('hello room', playerId);
     expect(message.value).toBe('');
 
     await act(async () => {
       inputValue(message, 'still composing');
       pressEnter(message, true);
     });
-    expect(session.sendChat).not.toHaveBeenCalledWith('still composing');
+    expect(session.sendChat).not.toHaveBeenCalledWith(
+      'still composing',
+      playerId
+    );
     expect(message.value).toBe('still composing');
 
     session.sendChat.mockReturnValueOnce(false);
@@ -403,204 +381,205 @@ describe('RemoteRoomLiveControls', () => {
     });
     expect(message.value).toBe('retry me');
 
+    // Blank lines and lines over the limit never leave the field.
+    session.sendChat.mockClear();
     await act(async () => {
-      element<HTMLButtonElement>(host, '#p2FREEBUTTON').click();
-      element<HTMLButtonElement>(host, '#p2AttackButton').click();
-      element<HTMLButtonElement>(host, '#p2PassButton').click();
-      element<HTMLButtonElement>(host, '#p2SetupButton').click();
-      element<HTMLButtonElement>(host, '#p2ResetButton').click();
+      inputValue(message, '   ');
+      pressEnter(message);
+      inputValue(message, 'x'.repeat(MAX_CHAT_CODE_UNITS + 1));
+      pressEnter(message);
     });
-    expect(session.sendChat).toHaveBeenCalledWith('🌺', 'spike-blue');
-    expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
-      { type: 'DeclareAttack', targetPlayerId: playerId },
-      { type: 'PassTurn', targetPlayerId: playerId },
-      { type: 'SetupPlayer', targetPlayerId: playerId },
-      { type: 'ResetPlayer', targetPlayerId: playerId },
-    ]);
+    expect(session.sendChat).not.toHaveBeenCalled();
+
+    await act(async () => inputValue(message, 'by the button'));
+    await act(async () =>
+      element<HTMLButtonElement>(host, '[aria-label="Send message"]').click()
+    );
+    expect(session.sendChat).toHaveBeenCalledWith('by the button', playerId);
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2FREEBUTTON').click()
+    );
+    expect(session.sendChat).toHaveBeenCalledWith('🌺', playerId);
+    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
     expect(session.listenerCount()).toBe(0);
   });
 
-  it('preserves the solo control IDs and targets both authority players explicitly', async () => {
-    const session = new FakeLiveSession();
-    const onLeave = vi.fn();
-    const { host, root } = await mount(session, {
+  it('keeps v1’s Solo chat ids', async () => {
+    const { host, root } = await mount(new FakeLiveSession(), {
       roomMode: 'solo',
-      onLeave,
     });
-    const otherPlayerId = playerView.playerOrder.find(
-      (candidate) => candidate !== playerId
-    )!;
-
-    for (const id of [
-      'chatboxButtonContainer',
-      'attackButton',
-      'passButton',
-      'undoButton',
-      'FREEBUTTON',
-      'messageInput',
-      'bottomP1ButtonContainer',
-      'setupButton',
-      'resetButton',
-      'setupBothButton',
-      'resetBothButton',
-      'optionsButton',
-    ]) {
-      expect(host.querySelector(`#${id}`), id).not.toBeNull();
-    }
-    for (const id of [
-      'p2ChatboxButtonContainer',
-      'p2AttackButton',
-      'p2MessageInput',
-      'p2BottomButtonContainer',
-      'leaveRoomButton',
-    ]) {
-      expect(host.querySelector(`#${id}`), id).toBeNull();
-    }
-
-    await act(async () => {
-      element<HTMLButtonElement>(host, '#attackButton').click();
-      element<HTMLButtonElement>(host, '#passButton').click();
-      element<HTMLButtonElement>(host, '#undoButton').click();
-      element<HTMLButtonElement>(host, '#setupButton').click();
-      element<HTMLButtonElement>(host, '#resetButton').click();
-      element<HTMLButtonElement>(host, '#setupBothButton').click();
-    });
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#resetBothButton').click()
-    );
-
-    expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
-      { type: 'DeclareAttack', targetPlayerId: playerId },
-      { type: 'PassTurn', targetPlayerId: playerId },
-      { type: 'ApplySoloUndo', targetPlayerId: playerId },
-      { type: 'SetupPlayer', targetPlayerId: playerId },
-      { type: 'ResetPlayer', targetPlayerId: playerId },
-      { type: 'SetupPlayer', targetPlayerId: playerId },
-      { type: 'SetupPlayer', targetPlayerId: otherPlayerId },
-      { type: 'ResetPlayer', targetPlayerId: playerId },
-      { type: 'ResetPlayer', targetPlayerId: otherPlayerId },
-    ]);
-    expect(onLeave).not.toHaveBeenCalled();
-
+    expect(host.querySelector('#messageInput')).not.toBeNull();
+    expect(host.querySelector('#FREEBUTTON')).not.toBeNull();
+    expect(host.querySelector('#p2MessageInput')).toBeNull();
+    expect(host.querySelector('#p2FREEBUTTON')).toBeNull();
     await act(async () => root.unmount());
-    expect(session.listenerCount()).toBe(0);
   });
 
-  it('queues both solo seats at once instead of waiting a round trip between them', async () => {
+  it('maps table actions to atomic commands for the acting seat', async () => {
     const session = new FakeLiveSession();
-    const { host, root } = await mount(session, { roomMode: 'solo' });
-    const otherPlayerId = playerView.playerOrder.find(
-      (candidate) => candidate !== playerId
-    )!;
+    const { root } = await mount(session);
+    expect(controls()).toMatchObject({
+      ready: true,
+      solo: false,
+      playerId,
+      ownSeat: playerId,
+      playerControls: true,
+      seatColor: 'self-color',
+    });
 
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#setupBothButton').click()
-    );
+    await press((live) => {
+      live.submitTable('attack');
+      live.submitTable('pass');
+      live.submitLifecycle('setup');
+      live.submitLifecycle('reset');
+      live.submitUndo();
+      // Both seats are Solo's alone.
+      live.submitBothLifecycle('setup');
+    });
+    expect(session.commands()).toEqual([
+      { type: 'DeclareAttack', targetPlayerId: playerId },
+      { type: 'PassTurn', targetPlayerId: playerId },
+      { type: 'SetupPlayer', targetPlayerId: playerId },
+      { type: 'ResetPlayer', targetPlayerId: playerId },
+      { type: 'ApplySoloUndo', targetPlayerId: playerId },
+    ]);
+    await act(async () => root.unmount());
+  });
+
+  it('acts for the seat a coaching flip puts at the bottom, but undoes only its own', async () => {
+    const session = new FakeLiveSession();
+    const { root } = await mount(session, {
+      boardFlipped: true,
+      actingPlayerId: otherPlayerId,
+    });
+    expect(controls()).toMatchObject({
+      playerId: otherPlayerId,
+      ownSeat: playerId,
+      seatColor: 'opp-color',
+    });
+    await press((live) => {
+      live.submitTable('attack');
+      live.submitUndo();
+      live.sendFlower();
+    });
+    expect(session.commands()).toEqual([
+      { type: 'DeclareAttack', targetPlayerId: otherPlayerId },
+      // A multiplayer player only ever takes back their own move.
+      { type: 'ApplySoloUndo', targetPlayerId: playerId },
+    ]);
+    expect(session.sendChat).toHaveBeenCalledWith('🌺', otherPlayerId);
+    await act(async () => root.unmount());
+  });
+
+  it('queues both Solo seats at once, and undoes the acting seat', async () => {
+    const session = new FakeLiveSession();
+    const { root } = await mount(session, {
+      roomMode: 'solo',
+      actingPlayerId: otherPlayerId,
+      boardFlipped: true,
+    });
+    await press((live) => live.submitBothLifecycle('setup'));
     // The second seat goes into the queue straight behind the first; the
     // session brings it up to the first one's revision before sending it.
-    expect(session.submit.mock.calls.map(([command]) => command)).toEqual([
-      { type: 'SetupPlayer', targetPlayerId: playerId },
+    expect(session.commands()).toEqual([
       { type: 'SetupPlayer', targetPlayerId: otherPlayerId },
+      { type: 'SetupPlayer', targetPlayerId: playerId },
     ]);
-    expect(element<HTMLButtonElement>(host, '#setupBothButton').disabled).toBe(
-      false
-    );
+    session.submit.mockClear();
+
+    await press((live) => {
+      live.submitBothLifecycle('reset');
+      live.submitUndo();
+    });
+    expect(session.commands()).toEqual([
+      { type: 'ResetPlayer', targetPlayerId: otherPlayerId },
+      { type: 'ResetPlayer', targetPlayerId: playerId },
+      { type: 'ApplySoloUndo', targetPlayerId: otherPlayerId },
+    ]);
     await act(async () => root.unmount());
   });
-  it('retains chat for spectators while withholding player-only mutations', async () => {
-    const session = new FakeLiveSession({
-      ...baseState(),
-      role: 'spectator',
-      playerId: undefined,
-      view: { ...playerView, viewer: { kind: 'spectator' } },
-    });
+
+  it('stops queueing both seats when the first is refused', async () => {
+    const session = new FakeLiveSession();
+    session.submit.mockReturnValueOnce({ queued: false, reason: 'queue_full' });
+    const { root } = await mount(session, { roomMode: 'solo' });
+    await press((live) => live.submitBothLifecycle('setup'));
+    expect(session.commands()).toEqual([
+      { type: 'SetupPlayer', targetPlayerId: playerId },
+    ]);
+    await act(async () => root.unmount());
+  });
+
+  it('keeps chat for spectators while withholding player-only mutations', async () => {
+    const session = new FakeLiveSession(spectatorState());
     const onLeave = vi.fn();
     const confirmLeave = vi
-      .fn()
+      .fn<LiveRoomLeaveConfirmation>()
       .mockReturnValueOnce(false)
       .mockReturnValue(true);
     const { host, root } = await mount(session, { onLeave, confirmLeave });
+    expect(controls()).toMatchObject({
+      playerControls: false,
+      playerId: undefined,
+      ownSeat: undefined,
+    });
 
-    for (const id of [
-      'p2AttackButton',
-      'p2PassButton',
-      'p2SetupButton',
-      'p2ResetButton',
-    ]) {
-      expect(host.querySelector(`#${id}`), id).toBeNull();
-    }
-    expect(element(host, '#p2FREEBUTTON').className).toBe('spectator-color');
+    await press((live) => {
+      live.submitTable('attack');
+      live.submitLifecycle('setup');
+      live.submitUndo();
+    });
+    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => {
       const message = element<HTMLInputElement>(host, '#p2MessageInput');
       inputValue(message, 'spectator message');
       pressEnter(message);
-      element<HTMLButtonElement>(host, '#leaveRoomButton').click();
     });
     // A spectator has no seat to act for, so attribution stays theirs.
     expect(session.sendChat).toHaveBeenCalledWith(
       'spectator message',
       undefined
     );
-    expect(onLeave).not.toHaveBeenCalled();
 
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#leaveRoomButton').click()
-    );
+    await press((live) => live.leaveRoom?.());
+    expect(onLeave).not.toHaveBeenCalled();
+    await press((live) => live.leaveRoom?.());
     expect(confirmLeave).toHaveBeenCalledTimes(2);
     expect(onLeave).toHaveBeenCalledOnce();
-    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
   });
 
-  it('provides local battle-log and fullscreen options without canonical commands', async () => {
+  it('downloads and clears the battle log and asks for full screen without commands', async () => {
     const session = new FakeLiveSession();
     const presentation = livePresentation(['  Blue attacked  ', 'Red: hi']);
     const downloadTextFile = vi.fn(() => true);
     const requestFullscreen = vi.fn(() => true);
     const onExportState = vi.fn();
-    const { host, root } = await mount(session, {
+    const { root } = await mount(session, {
       presentation: presentation.value,
       onExportState,
       downloadTextFile,
       requestFullscreen,
     });
-    const options = element<HTMLButtonElement>(host, '#p2OptionsButton');
-    const menu = element<HTMLElement>(host, '#optionsContextMenu');
+    expect(controls().exportState).toBe(onExportState);
 
-    await act(async () => options.click());
-    expect(menu.hidden).toBe(false);
-    expect(options.getAttribute('aria-expanded')).toBe('true');
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#exportState').click()
-    );
+    await press((live) => {
+      live.exportState?.();
+      live.exportLog();
+      live.clearLog();
+      live.fullscreen();
+    });
     expect(onExportState).toHaveBeenCalledOnce();
-    expect(menu.hidden).toBe(true);
-
-    await act(async () => options.click());
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#exportLog').click()
-    );
     expect(downloadTextFile).toHaveBeenCalledWith(
       'battle-log.txt',
       '1: Blue attacked\n\n2: Red: hi\n\n'
     );
-    expect(menu.hidden).toBe(true);
-
-    await act(async () => {
-      options.click();
-      element<HTMLButtonElement>(host, '#clearLog').click();
-    });
     expect(presentation.clearActivity).toHaveBeenCalledOnce();
-    expect(menu.hidden).toBe(true);
-
-    await act(async () => {
-      options.click();
-      element<HTMLButtonElement>(host, '#fullscreenButton').click();
-    });
     expect(requestFullscreen).toHaveBeenCalledOnce();
     expect(session.submit).not.toHaveBeenCalled();
     expect(session.sendChat).not.toHaveBeenCalled();
@@ -608,68 +587,47 @@ describe('RemoteRoomLiveControls', () => {
     await act(async () => root.unmount());
   });
 
-  it('navigates room options with the keyboard and returns focus without game commands', async () => {
-    const session = new FakeLiveSession();
-    const { host, root } = await mount(session, { onExportState: vi.fn() });
-    const trigger = element<HTMLButtonElement>(host, '#p2OptionsButton');
-    const menu = element<HTMLElement>(host, '#optionsContextMenu');
-    const key = async (key: string) =>
-      act(async () => {
-        document.activeElement?.dispatchEvent(
-          new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
-        );
-      });
-    await act(async () => trigger.click());
-    const items = [
-      ...menu.querySelectorAll<HTMLButtonElement>(
-        '[role="menuitem"]:not(:disabled)'
-      ),
-    ];
-    expect(document.activeElement).toBe(items[0]);
-    await key('End');
-    expect(document.activeElement).toBe(items.at(-1));
-    await key('ArrowDown');
-    expect(document.activeElement).toBe(items[0]);
-    await key('Escape');
-    expect(menu.hidden).toBe(true);
-    expect(document.activeElement).toBe(trigger);
-    expect(session.submit).not.toHaveBeenCalled();
-    await act(async () => root.unmount());
-  });
-
-  it('runs online save as one abortable player-only menu operation', async () => {
+  it('runs online save as one abortable player-only operation', async () => {
     const pending = Promise.withResolvers<void>();
-    const onSaveOnlineGame = vi.fn(() => pending.promise);
+    const onSaveOnlineGame = vi.fn((_signal: AbortSignal) => pending.promise);
     const reportOnlineSaveFailure = vi.fn();
-    const { host, root } = await mount(new FakeLiveSession(), {
+    const { root } = await mount(new FakeLiveSession(), {
       onSaveOnlineGame,
       reportOnlineSaveFailure,
     });
-    const options = element<HTMLButtonElement>(host, '#p2OptionsButton');
-    await act(async () => options.click());
-    const save = element<HTMLButtonElement>(host, '#saveOnlineGame');
-    expect(save.textContent).toBe('Save online game');
+    expect(controls().canSaveOnline).toBe(true);
 
-    await act(async () => save.click());
+    await press((live) => live.saveOnlineGame());
     expect(onSaveOnlineGame).toHaveBeenCalledOnce();
     expect(onSaveOnlineGame.mock.calls[0]?.[0].aborted).toBe(false);
-    expect(save.disabled).toBe(true);
-    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(true);
+    expect(controls().continuationPending).toBe('save');
+    // A second press while one is in flight starts nothing.
+    await press((live) => live.saveOnlineGame());
+    expect(onSaveOnlineGame).toHaveBeenCalledOnce();
     await act(async () => {
       pending.resolve();
       await pending.promise;
     });
+    expect(controls().continuationPending).toBeUndefined();
     expect(reportOnlineSaveFailure).not.toHaveBeenCalled();
 
-    await act(async () => options.click());
     onSaveOnlineGame.mockRejectedValueOnce(new Error('private failure'));
     await act(async () => {
-      save.click();
+      controls().saveOnlineGame();
+      await Promise.resolve();
       await Promise.resolve();
     });
     expect(reportOnlineSaveFailure).toHaveBeenCalledOnce();
 
+    const hanging = Promise.withResolvers<void>();
+    onSaveOnlineGame.mockReturnValueOnce(hanging.promise);
+    await press((live) => live.saveOnlineGame());
+    const signal = onSaveOnlineGame.mock.calls.at(-1)?.[0];
     await act(async () => root.unmount());
+    expect(signal?.aborted).toBe(true);
+    hanging.reject(new Error('aborted'));
+    await Promise.resolve();
+    expect(reportOnlineSaveFailure).toHaveBeenCalledOnce();
   });
 
   it('reads a saved-game file and starts opponent clipboard custody synchronously', async () => {
@@ -701,16 +659,19 @@ describe('RemoteRoomLiveControls', () => {
       reportSavedGameResumeFailure,
       reportSavedGameResumeSuccess,
     });
+    expect(controls().canResumeSaved).toBe(true);
     const input = element<HTMLInputElement>(host, '#continuationSaveFile');
-    expect(element(host, '#resumeSavedGame').textContent).toBe(
-      'Resume saved game'
-    );
     expect(input.accept).toBe('.ptcgsave');
+    expect(input.hidden).toBe(true);
+    // The menu's Resume opens the hidden picker.
+    const pick = vi.spyOn(input, 'click');
+    await press((live) => live.resumeSavedGame());
+    expect(pick).toHaveBeenCalledOnce();
+
     Object.defineProperty(input, 'files', {
       configurable: true,
       value: [new File(['ignored'], 'game.ptcgsave')],
     });
-
     await act(async () => {
       input.dispatchEvent(new Event('change', { bubbles: true }));
       await vi.waitFor(() =>
@@ -727,36 +688,77 @@ describe('RemoteRoomLiveControls', () => {
     await expect(clipboardText).resolves.toBe('opaque-opponent-invitation');
     expect(reportSavedGameResumeFailure).not.toHaveBeenCalled();
     expect(input.value).toBe('');
+    expect(controls().continuationPending).toBeUndefined();
 
     await act(async () => root.unmount());
   });
 
-  it('withholds continuation actions from solo players and spectators', async () => {
+  it('reports a resume without a clipboard and never reads the file', async () => {
+    const readContinuationFile = vi.fn<BrowserContinuationFileReader>();
+    const reportSavedGameResumeFailure = vi.fn();
+    const { host, root } = await mount(new FakeLiveSession(), {
+      onResumeSavedGame: vi.fn(async () => undefined),
+      readContinuationFile,
+      getInvitationClipboard: () => undefined,
+      reportSavedGameResumeFailure,
+    });
+    await chooseFile(
+      element<HTMLInputElement>(host, '#continuationSaveFile'),
+      new File(['ignored'], 'game.ptcgsave')
+    );
+    expect(readContinuationFile).not.toHaveBeenCalled();
+    expect(reportSavedGameResumeFailure).toHaveBeenCalledOnce();
+    await act(async () => root.unmount());
+  });
+
+  it('offers saves, resumes and replay imports only where they apply', async () => {
     const callbacks = {
       onSaveOnlineGame: vi.fn(async () => undefined),
       onResumeSavedGame: vi.fn(async () => undefined),
+      onImportReplayFile: vi.fn(async () => true),
     };
     const solo = await mount(new FakeLiveSession(), {
       roomMode: 'solo',
       ...callbacks,
     });
-    expect(solo.host.querySelector('#saveOnlineGame')).toBeNull();
-    expect(solo.host.querySelector('#resumeSavedGame')).toBeNull();
+    expect(controls()).toMatchObject({
+      canSaveOnline: false,
+      canResumeSaved: false,
+      canImportReplay: true,
+    });
+    expect(solo.host.querySelector('#continuationSaveFile')).toBeNull();
+    expect(solo.host.querySelector('#jsonReplay')).not.toBeNull();
     await act(async () => solo.root.unmount());
 
-    const spectatorState: ClientSessionState = {
-      ...baseState(),
-      role: 'spectator',
-      playerId: undefined,
-      view: { ...playerView, viewer: { kind: 'spectator' } },
-    };
     const spectator = await mount(
-      new FakeLiveSession(spectatorState),
+      new FakeLiveSession(spectatorState()),
       callbacks
     );
-    expect(spectator.host.querySelector('#saveOnlineGame')).toBeNull();
-    expect(spectator.host.querySelector('#resumeSavedGame')).toBeNull();
+    expect(controls()).toMatchObject({
+      canSaveOnline: false,
+      canResumeSaved: false,
+      canImportReplay: false,
+    });
+    expect(spectator.host.querySelector('#continuationSaveFile')).toBeNull();
+    expect(spectator.host.querySelector('#jsonReplay')).toBeNull();
     await act(async () => spectator.root.unmount());
+
+    const player = await mount(new FakeLiveSession(), callbacks);
+    expect(controls()).toMatchObject({
+      canSaveOnline: true,
+      canResumeSaved: true,
+      canImportReplay: false,
+    });
+    expect(player.host.querySelector('#jsonReplay')).toBeNull();
+    await act(async () => player.root.unmount());
+
+    const bare = await mount(new FakeLiveSession());
+    expect(controls()).toMatchObject({
+      canSaveOnline: false,
+      canResumeSaved: false,
+      exportState: undefined,
+    });
+    await act(async () => bare.root.unmount());
   });
 
   it('aborts a pending continuation read without restoring or reporting after teardown', async () => {
@@ -778,16 +780,13 @@ describe('RemoteRoomLiveControls', () => {
       getInvitationClipboard: () => clipboard,
       reportSavedGameResumeFailure,
     });
-    const input = element<HTMLInputElement>(host, '#continuationSaveFile');
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['ignored'], 'game.ptcgsave')],
-    });
-    await act(async () =>
-      input.dispatchEvent(new Event('change', { bubbles: true }))
+    await chooseFile(
+      element<HTMLInputElement>(host, '#continuationSaveFile'),
+      new File(['ignored'], 'game.ptcgsave')
     );
     const signal = readContinuationFile.mock.calls[0]?.[1]?.signal;
     expect(signal?.aborted).toBe(false);
+    expect(controls().continuationPending).toBe('resume');
 
     await act(async () => root.unmount());
     expect(signal?.aborted).toBe(true);
@@ -798,7 +797,7 @@ describe('RemoteRoomLiveControls', () => {
     expect(reportSavedGameResumeFailure).not.toHaveBeenCalled();
   });
 
-  it('imports a bounded replay file only from the live Solo options row', async () => {
+  it('imports a bounded replay file from a Solo table, one at a time', async () => {
     const session = new FakeLiveSession();
     const bytes = Uint8Array.from([1, 2, 3]);
     const readPending = Promise.withResolvers<{
@@ -815,27 +814,22 @@ describe('RemoteRoomLiveControls', () => {
       readReplayFile,
       reportReplayImportFailure,
     });
-    const options = element<HTMLButtonElement>(host, '#optionsButton');
-    const menu = element<HTMLElement>(host, '#optionsContextMenu');
     const input = element<HTMLInputElement>(host, '#jsonReplay');
-    const importButton = element<HTMLButtonElement>(host, '#importReplay');
-    expect(importButton.textContent).toBe('Enter replay mode');
     expect(input.accept).toBe('.json');
     expect(input.hidden).toBe(true);
+    // The menu's Watch a replay opens the hidden picker.
+    const pick = vi.spyOn(input, 'click');
+    await press((live) => live.importReplay());
+    expect(pick).toHaveBeenCalledOnce();
 
-    await act(async () => options.click());
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['ignored'], 'replay.json')],
-    });
-    await act(async () =>
-      input.dispatchEvent(new Event('change', { bubbles: true }))
-    );
+    await chooseFile(input, new File(['ignored'], 'replay.json'));
     expect(readReplayFile).toHaveBeenCalledOnce();
     expect(readReplayFile.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
-    expect(importButton.disabled).toBe(true);
-    expect(menu.hidden).toBe(false);
+    expect(controls().replayImportPending).toBe(true);
     expect(input.value).toBe('');
+    // Another file while one is being read is ignored.
+    await chooseFile(input, new File(['ignored'], 'second.json'));
+    expect(readReplayFile).toHaveBeenCalledOnce();
 
     await act(async () => {
       readPending.resolve({ ok: true, bytes });
@@ -843,37 +837,23 @@ describe('RemoteRoomLiveControls', () => {
       await Promise.resolve();
     });
     expect(onImportReplayFile).toHaveBeenCalledWith(bytes);
-    expect(importButton.disabled).toBe(true);
+    expect(controls().replayImportPending).toBe(true);
     await act(async () => {
       importPending.resolve(true);
       await importPending.promise;
       await Promise.resolve();
     });
-    expect(menu.hidden).toBe(true);
+    expect(controls().replayImportPending).toBe(false);
     expect(reportReplayImportFailure).not.toHaveBeenCalled();
 
-    await act(async () => options.click());
     readReplayFile.mockRejectedValueOnce(new Error('browser read failed'));
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['ignored'], 'replay.json')],
-    });
-    await act(async () => {
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      await Promise.resolve();
-    });
+    await chooseFile(input, new File(['ignored'], 'replay.json'));
+    await act(async () => Promise.resolve());
     expect(onImportReplayFile).toHaveBeenCalledOnce();
     expect(reportReplayImportFailure).toHaveBeenCalledOnce();
-    expect(menu.hidden).toBe(true);
+    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
-
-    const multiplayer = await mount(new FakeLiveSession(), {
-      onImportReplayFile,
-    });
-    expect(multiplayer.host.querySelector('#importReplay')).toBeNull();
-    expect(multiplayer.host.querySelector('#jsonReplay')).toBeNull();
-    await act(async () => multiplayer.root.unmount());
   });
 
   it('aborts a pending replay-file read on teardown', async () => {
@@ -890,13 +870,9 @@ describe('RemoteRoomLiveControls', () => {
       readReplayFile,
       reportReplayImportFailure,
     });
-    const input = element<HTMLInputElement>(host, '#jsonReplay');
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['ignored'], 'replay.json')],
-    });
-    await act(async () =>
-      input.dispatchEvent(new Event('change', { bubbles: true }))
+    await chooseFile(
+      element<HTMLInputElement>(host, '#jsonReplay'),
+      new File(['ignored'], 'replay.json')
     );
     const signal = readReplayFile.mock.calls[0]?.[1]?.signal;
     expect(signal?.aborted).toBe(false);
@@ -910,33 +886,7 @@ describe('RemoteRoomLiveControls', () => {
     expect(reportReplayImportFailure).not.toHaveBeenCalled();
   });
 
-  it('dismisses an open options menu outside and releases its document listener', async () => {
-    const session = new FakeLiveSession();
-    const add = vi.spyOn(document, 'addEventListener');
-    const remove = vi.spyOn(document, 'removeEventListener');
-    const { host, root } = await mount(session);
-
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2OptionsButton').click()
-    );
-    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(
-      false
-    );
-    await act(async () =>
-      document.body.dispatchEvent(
-        new MouseEvent('mousedown', { bubbles: true })
-      )
-    );
-    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(true);
-    expect(add.mock.calls.some(([type]) => type === 'mousedown')).toBe(true);
-    expect(remove.mock.calls.some(([type]) => type === 'mousedown')).toBe(true);
-
-    await act(async () => root.unmount());
-    add.mockRestore();
-    remove.mockRestore();
-  });
-
-  it('disables all shared send controls until the session is ready', async () => {
+  it('disables the chat field and flower until the session is ready', async () => {
     const session = new FakeLiveSession({
       ...baseState(),
       phase: 'connecting',
@@ -954,11 +904,15 @@ describe('RemoteRoomLiveControls', () => {
     expect(element<HTMLInputElement>(host, '#p2MessageInput').disabled).toBe(
       true
     );
-    expect(element<HTMLButtonElement>(host, '#exportState').disabled).toBe(
-      true
-    );
-    expect(host.querySelector('#p2AttackButton')).toBeNull();
-    expect(host.querySelector('#p2SetupButton')).toBeNull();
+    expect(
+      element<HTMLButtonElement>(host, '[aria-label="Send message"]').disabled
+    ).toBe(true);
+    expect(controls()).toMatchObject({
+      ready: false,
+      playerControls: false,
+    });
+    await press((live) => live.submitTable('attack'));
+    expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
   });
