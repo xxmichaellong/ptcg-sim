@@ -43,6 +43,10 @@ export interface SpikeTableLayout {
   readonly lowerShare: number;
   /** The least height of the clear band at the centre line. */
   readonly seamBandPx?: number;
+  /** The optional Lost Zone is off: an empty one is not on the table. */
+  readonly hideEmptyLostZone?: boolean;
+  /** How many once-per-game markers lie beside each player's prizes. */
+  readonly oncePerGameMarkers?: number;
 }
 
 const sceneForHost = (
@@ -79,6 +83,10 @@ const sceneForHost = (
         shellMode: 'fullscreen',
         vertical: tableVerticalLayout(table.lowerShare),
         ...(table.seamBandPx ? { seamBandPx: table.seamBandPx } : {}),
+        ...(table.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
+        ...(table.oncePerGameMarkers
+          ? { oncePerGameMarkers: table.oncePerGameMarkers }
+          : {}),
       })
     : createBoardLayoutSnapshot({
         geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -345,6 +353,8 @@ export const RendererSpikeBoard = ({
     view,
     table?.lowerShare,
     table?.seamBandPx,
+    table?.hideEmptyLostZone,
+    table?.oncePerGameMarkers,
   ]);
 
   useEffect(() => {

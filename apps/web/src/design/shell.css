@@ -187,12 +187,15 @@ textarea {
   height: 16px;
 }
 .board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle input {
+  /* Unseen, over the whole button: a press anywhere on it is the
+     checkbox's. */
   position: absolute;
-  width: 1px;
-  height: 1px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 .board-spike-host[data-geometry='2']
   .legacy-hand-sort--toggle:has(input:focus-visible) {

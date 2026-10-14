@@ -35,7 +35,10 @@ import {
 } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
 import { TableRail } from '../board/rail/TableRail.js';
-import { boardViewSettings } from '../board/view/board-view-settings.js';
+import {
+  boardViewSettings,
+  oncePerGameMarkerCount,
+} from '../board/view/board-view-settings.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
 import {
   createRemoteRoom,
@@ -372,8 +375,13 @@ export const RemoteRoomLobby = ({
     () => ({
       lowerShare: boardView.split,
       seamBandPx: coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX,
+      // The optional pieces as the room will show them.
+      ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
+      ...(oncePerGameMarkerCount(boardView) > 0
+        ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
+        : {}),
     }),
-    [boardView.split, coarsePointer]
+    [boardView, coarsePointer]
   );
   const emptyBoardPreferences = useBoardLook(
     preferences ?? DEFAULT_BOARD_PREFERENCES

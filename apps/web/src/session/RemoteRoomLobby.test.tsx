@@ -494,9 +494,11 @@ describe('remote room lobby wiring', () => {
     expect(present('[data-testid="lobby-board"]')).toBe(true);
     // A visitor with no game sees an empty table, laid out like the room's.
     expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
+    // Laid out like the room's, the optional pieces off as there by default.
     expect(lobbyBoardHarness.table).toEqual({
       lowerShare: 0.5,
       seamBandPx: 42,
+      hideEmptyLostZone: true,
     });
     expect(present('[data-testid="parked-solo-board"]')).toBe(false);
     expect(playOnlineOpen()).toBe(true);

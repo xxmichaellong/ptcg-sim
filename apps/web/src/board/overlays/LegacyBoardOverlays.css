@@ -982,12 +982,14 @@
 }
 
 .ptcgsim-overlay-toggle input {
+  /* Unseen, over the whole chip: a press anywhere on it is the checkbox's. */
   position: absolute;
-  width: 1px;
-  height: 1px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .ptcgsim-overlay-toggle input:focus-visible {
