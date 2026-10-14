@@ -196,7 +196,8 @@
 
 .legacy-deck-import .decklists-context-menu:not([hidden]) {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  /* Deck names (archetypes) run longer than season names. */
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: var(--space-1);
 }
 
@@ -247,6 +248,55 @@
   display: block;
   font-size: var(--text-sm);
   line-height: 32px;
+}
+
+/* A current tournament list: the archetype, and its finish under it. */
+.legacy-deck-import .decklists-decks .ds-menu-item[data-finish='true'] {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding-block: var(--space-1-5);
+  line-height: var(--leading-tight);
+}
+
+.legacy-deck-import .decklists-deck-name,
+.legacy-deck-import .decklists-deck-finish {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.legacy-deck-import .decklists-deck-finish {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Current groups lead with a small accent dot, clear of any ellipsis. */
+.legacy-deck-import .decklists-group[data-current='true'] span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-1-5);
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.legacy-deck-import .decklists-source {
+  flex: none;
+  margin: var(--space-2) var(--space-2) var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.legacy-deck-import .decklists-source a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 .legacy-deck-import .deck-import-notices {

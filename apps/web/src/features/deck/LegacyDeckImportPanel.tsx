@@ -173,6 +173,18 @@ const moveWithinColumn = (
   return true;
 };
 
+/** "Dragapult — 1st of 285" -> ["Dragapult", "1st of 285"]. */
+const splitFinish = (name: string): readonly [string, string | undefined] => {
+  const at = name.lastIndexOf(' — ');
+  return at > 0 ? [name.slice(0, at), name.slice(at + 3)] : [name, undefined];
+};
+
+const formatFetchedAt = (fetchedAt: string): string => {
+  const date = new Date(fetchedAt);
+  return Number.isFinite(date.getTime())
+    ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : 'recently';
+};
 /**
  * Source-shaped right-side Deck panel and transient review table. This remains
  * route-neutral: session composition owns open/close and card-back submission.
@@ -577,6 +589,7 @@ export const LegacyDeckImportPanel = ({
                       className="ds-menu-item decklists-group"
                       key={group.name}
                       data-active={index === activeGroup}
+                      data-current={group.source ? 'true' : undefined}
                       aria-pressed={index === activeGroup}
                       onPointerEnter={() => setActiveGroup(index)}
                       onFocus={() => setActiveGroup(index)}
@@ -592,19 +605,50 @@ export const LegacyDeckImportPanel = ({
                   role="group"
                   aria-label={shownGroup ? `${shownGroup.name} decks` : 'Decks'}
                 >
-                  {shownGroup?.decks.map((deck) => (
-                    <button
-                      type="button"
-                      className="ds-menu-item decklists-context-menu-item"
-                      key={deck.name}
-                      onClick={() => {
-                        replaceCurrentSource(deck.decklist);
-                        closeSamples();
-                      }}
-                    >
-                      {deck.name}
-                    </button>
-                  ))}
+                  {shownGroup?.decks.map((deck) => {
+                    // A current list is named "Archetype — 1st of 285".
+                    const [title, finish] = shownGroup.source
+                      ? splitFinish(deck.name)
+                      : [deck.name, undefined];
+                    return (
+                      <button
+                        type="button"
+                        className="ds-menu-item decklists-context-menu-item"
+                        key={deck.name}
+                        data-finish={finish ? 'true' : undefined}
+                        title={deck.name}
+                        onClick={() => {
+                          replaceCurrentSource(deck.decklist);
+                          closeSamples();
+                        }}
+                      >
+                        {finish ? (
+                          <>
+                            <span className="decklists-deck-name">{title}</span>
+                            <span className="decklists-deck-finish">
+                              {finish}
+                            </span>
+                          </>
+                        ) : (
+                          deck.name
+                        )}
+                      </button>
+                    );
+                  })}
+                  {shownGroup?.source && (
+                    <p className="decklists-source">
+                      Top-8 lists from the last two weeks of{' '}
+                      <a
+                        href={shownGroup.source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {shownGroup.source.name}
+                      </a>{' '}
+                      online tournaments, updated{' '}
+                      {formatFetchedAt(shownGroup.source.fetchedAt)}.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

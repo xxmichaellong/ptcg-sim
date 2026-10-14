@@ -49,6 +49,9 @@ const EXPECTED_SOURCE_CONFIG_KEYS = Object.freeze([
   'name',
   'observability',
   'ratelimits',
+  // The daily current-decks refresh (ADR-029). Not copied: a short-lived
+  // continuation preview has no use for a scheduled Limitless fetch.
+  'triggers',
   'vars',
 ]);
 const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([

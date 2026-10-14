@@ -240,6 +240,66 @@ describe('LegacyDeckImportPanel', () => {
     expect(document.activeElement).toBe(language);
   });
 
+  it('shows current tournament lists with their finish and credits their source', async () => {
+    const current: PopularDecklistCollection = Object.freeze({
+      groups: Object.freeze([
+        Object.freeze({
+          name: 'Current Standard',
+          source: Object.freeze({
+            name: 'Limitless',
+            url: 'https://play.limitlesstcg.com/tournaments/completed',
+            fetchedAt: '2026-10-14T06:17:00.000Z',
+          }),
+          decks: Object.freeze([
+            Object.freeze({
+              name: 'Dragapult — 1st of 285',
+              decklist: '4 Dreepy TWM 128',
+            }),
+          ]),
+        }),
+        ...collection.groups,
+      ]),
+      deckCount: 2,
+      totalDecklistCodeUnits: 29,
+    });
+    await mount({
+      samples: { ...fakeSamples(), load: vi.fn(async () => current) },
+    });
+    await click(host.querySelector('#decklistsButton')!);
+    await vi.waitFor(() =>
+      expect(
+        host.querySelector<HTMLElement>('#decklistsContextMenu')?.hidden
+      ).toBe(false)
+    );
+    const group = buttonWithText('Current Standard');
+    expect(group.dataset.current).toBe('true');
+    const deck = host.querySelector<HTMLButtonElement>(
+      '.decklists-context-menu-item[data-finish="true"]'
+    )!;
+    expect(deck.querySelector('.decklists-deck-name')?.textContent).toBe(
+      'Dragapult'
+    );
+    expect(deck.querySelector('.decklists-deck-finish')?.textContent).toBe(
+      '1st of 285'
+    );
+    expect(deck.title).toBe('Dragapult — 1st of 285');
+    const credit = host.querySelector<HTMLAnchorElement>(
+      '.decklists-source a'
+    )!;
+    expect(credit.textContent).toBe('Limitless');
+    expect(credit.target).toBe('_blank');
+    expect(credit.rel).toBe('noopener noreferrer');
+    await click(deck);
+    expect(
+      host.querySelector<HTMLTextAreaElement>('#mainDeckImportInput')?.value
+    ).toBe('4 Dreepy TWM 128');
+
+    // A built-in season shows plain names and no credit.
+    await click(buttonWithText('Era One'));
+    expect(host.querySelector('.decklists-source')).toBeNull();
+    expect(buttonWithText('Alpha Deck').dataset.finish).toBeUndefined();
+  });
+
   it('loads the book lazily and preserves separate target text for book and random choices', async () => {
     const samples = fakeSamples();
     await mount({ samples });

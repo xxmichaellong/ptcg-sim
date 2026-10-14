@@ -18,6 +18,13 @@ export interface PopularDecklist {
 export interface PopularDecklistGroup {
   readonly name: string;
   readonly decks: readonly PopularDecklist[];
+  /** Set on groups fetched from outside the app, for a credit line. */
+  readonly source?: {
+    readonly name: string;
+    readonly url: string;
+    /** When the lists were fetched (ISO 8601). */
+    readonly fetchedAt: string;
+  };
 }
 
 export interface PopularDecklistCollection {
@@ -62,8 +69,32 @@ export interface PopularDecklistSource {
 
 export type PopularDecklistModuleLoader = () => Promise<unknown>;
 
+/** Recent groups to show ahead of the built-in ones; may reject. */
+export type CurrentDecklistLoader = () => Promise<
+  readonly PopularDecklistGroup[]
+>;
+
 const defaultModuleLoader: PopularDecklistModuleLoader = async () =>
   await import('./popular-decklists-data.json');
+
+/** Loaded on first use, so the picker's fetch stays out of the page. */
+const defaultCurrentLoader: CurrentDecklistLoader = async () => {
+  const { fetchCurrentDecklists, CURRENT_DECKLISTS_SOURCE } =
+    await import('./current-decklists.js');
+  const current = await fetchCurrentDecklists();
+  return decodePopularDecklists(current.groups).groups.map((group) =>
+    Object.freeze({
+      ...group,
+      source: Object.freeze({
+        ...CURRENT_DECKLISTS_SOURCE,
+        fetchedAt: current.fetchedAt,
+      }),
+    })
+  );
+};
+
+/** After a failed fetch of the current lists, wait before trying again. */
+const CURRENT_RETRY_AFTER_MS = 60_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -168,15 +199,88 @@ const randomIndex = (length: number, random: () => number): number => {
  * Owns the lazy popular-deck corpus boundary. Concurrent callers share one
  * decode, failures remain retryable, and an aborted caller cannot cancel or
  * poison the local module cache for another caller.
+ *
+ * Current groups (recent tournament lists) come first when they load; when
+ * they cannot, the built-in corpus stands alone and the fetch is retried a
+ * minute later.
  */
 export const createPopularDecklistSource = (
-  loadModule: PopularDecklistModuleLoader = defaultModuleLoader
+  loadModule: PopularDecklistModuleLoader = defaultModuleLoader,
+  loadCurrent: CurrentDecklistLoader | null = defaultCurrentLoader
 ): PopularDecklistSource => {
   let cached: PopularDecklistCollection | undefined;
   let pending: Promise<PopularDecklistCollection> | undefined;
+  let current: readonly PopularDecklistGroup[] | undefined;
+  let currentPending: Promise<readonly PopularDecklistGroup[]> | undefined;
+  let currentFailedAt = Number.NEGATIVE_INFINITY;
+  let merged:
+    | {
+        readonly builtIn: PopularDecklistCollection;
+        readonly current: readonly PopularDecklistGroup[];
+        readonly collection: PopularDecklistCollection;
+      }
+    | undefined;
+
+  const loadCurrentGroups = (): Promise<readonly PopularDecklistGroup[]> => {
+    if (!loadCurrent) return Promise.resolve([]);
+    if (current) return Promise.resolve(current);
+    if (Date.now() - currentFailedAt < CURRENT_RETRY_AFTER_MS) {
+      return Promise.resolve([]);
+    }
+    currentPending ??= Promise.resolve()
+      .then(loadCurrent)
+      .then((groups) => {
+        current = groups;
+        return groups;
+      })
+      .catch(() => {
+        currentFailedAt = Date.now();
+        return [];
+      })
+      .finally(() => {
+        currentPending = undefined;
+      });
+    return currentPending;
+  };
+
+  const withCurrent = (
+    builtIn: PopularDecklistCollection,
+    groups: readonly PopularDecklistGroup[]
+  ): PopularDecklistCollection => {
+    if (groups.length === 0) return builtIn;
+    if (merged?.builtIn === builtIn && merged.current === groups) {
+      return merged.collection;
+    }
+    const names = new Set(builtIn.groups.map((group) => group.name));
+    const fresh = groups.filter((group) => !names.has(group.name));
+    const collection = Object.freeze({
+      groups: Object.freeze([...fresh, ...builtIn.groups]),
+      deckCount:
+        builtIn.deckCount +
+        fresh.reduce((total, group) => total + group.decks.length, 0),
+      totalDecklistCodeUnits:
+        builtIn.totalDecklistCodeUnits +
+        fresh.reduce(
+          (total, group) =>
+            total +
+            group.decks.reduce((sum, deck) => sum + deck.decklist.length, 0),
+          0
+        ),
+    });
+    merged = { builtIn, current: groups, collection };
+    return collection;
+  };
 
   const load = async (options: LoadPopularDecklistsOptions = {}) => {
     throwIfAborted(options.signal);
+    const currentGroups = loadCurrentGroups();
+    const builtIn = await loadBuiltIn();
+    const collection = withCurrent(builtIn, await currentGroups);
+    throwIfAborted(options.signal);
+    return collection;
+  };
+
+  const loadBuiltIn = async (): Promise<PopularDecklistCollection> => {
     if (cached) return cached;
     pending ??= Promise.resolve()
       .then(loadModule)
@@ -192,9 +296,7 @@ export const createPopularDecklistSource = (
       .finally(() => {
         pending = undefined;
       });
-    const collection = await pending;
-    throwIfAborted(options.signal);
-    return collection;
+    return pending;
   };
 
   return Object.freeze({

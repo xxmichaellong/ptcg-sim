@@ -19,6 +19,23 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
+## Current decks feed (ADR-029)
+
+`GET /v2/decks/current` serves the deck picker's current Standard lists, taken
+from Limitless TCG's public tournament API. It is cacheable for 15 minutes and
+returns 503 until a first fetch has succeeded. A daily cron trigger
+(`17 6 * * *`, UTC) refreshes the one `PtcgDeckFeed` Durable Object
+(`limitless-standard`), using about 13 requests. A request that finds no
+lists, or lists over 30 hours old, starts a refresh too. Attempts are at
+least ten minutes apart, and a failed one keeps the stored lists. Each failure
+emits `server_failure` with subsystem `deck_feed_refresh` (source `deck_feed`).
+
+Nothing needs provisioning. An optional `LIMITLESS_API_KEY` Worker secret
+raises Limitless's rate limit; the daily refresh fits without one. Locally,
+workerd on NixOS needs `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to
+reach Limitless over TLS. Without it the refresh fails and the endpoint
+answers 503, which the picker treats as "built-in lists only".
+
 ## Pre-admission WebSocket edge boundary
 
 The room's durable `socket_upgrade` budget of 120 attempts per minute is an

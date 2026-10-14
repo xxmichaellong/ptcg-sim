@@ -10,9 +10,11 @@ import type { RoomRateLimitedOperation } from './room-rate-limit.js';
 export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v2';
 
 export type ServerTelemetryLevel = 'info' | 'warn' | 'error';
-export type ServerTelemetrySource = 'edge' | 'room' | 'continuation';
+export type ServerTelemetrySource =
+  'edge' | 'room' | 'continuation' | 'deck_feed';
 export type ServerHttpRoute =
   | 'health'
+  | 'current_decks'
   | 'room_creation'
   | 'continuation_creation'
   | 'continuation_restore'
@@ -68,7 +70,8 @@ export type ServerFailureSubsystem =
   | 'command_processing'
   | 'replay_projection'
   | 'socket_send'
-  | 'socket_upgrade';
+  | 'socket_upgrade'
+  | 'deck_feed_refresh';
 
 export type TelemetryReason =
   | AuthorityRejectionCode

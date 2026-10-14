@@ -147,4 +147,65 @@ describe('popular deck-list source', () => {
     );
     await expect(current).resolves.toMatchObject({ deckCount: 3 });
   });
+  it('puts current tournament groups first, credited, and lets Random pick them', async () => {
+    const source = createPopularDecklistSource(
+      async () => smallCorpus(),
+      async () =>
+        decodePopularDecklists({
+          'Current Standard': {
+            'Dragapult — 1st of 300': '\n4 Dreepy TWM 128',
+          },
+          // A name the built-in corpus already uses is left out.
+          First: { Zeta: '\n1 Zeta BRS 9' },
+        }).groups.map((group) => ({
+          ...group,
+          source: { name: 'Limitless', url: 'https://x', fetchedAt: 'today' },
+        }))
+    );
+    const collection = await source.load();
+    expect(collection.groups.map((group) => group.name)).toEqual([
+      'Current Standard',
+      'First',
+      'Second',
+    ]);
+    expect(collection.groups[0]!.source?.name).toBe('Limitless');
+    expect(collection.groups[1]!.source).toBeUndefined();
+    expect(collection.deckCount).toBe(4);
+    expect(await source.load()).toBe(collection);
+    await expect(
+      source.selectRandom({ random: () => 0 })
+    ).resolves.toMatchObject({ name: 'Dragapult — 1st of 300' });
+  });
+
+  it('falls back to the built-in groups when current ones cannot load, and retries later', async () => {
+    let now = 1_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const current = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(
+        decodePopularDecklists({ Current: { Deck: '\n1 Deck BRS 1' } }).groups
+      );
+    const source = createPopularDecklistSource(
+      async () => smallCorpus(),
+      current
+    );
+    expect((await source.load()).groups).toHaveLength(2);
+    // Within a minute the failure stands; after it, one more try.
+    now += 30_000;
+    expect((await source.load()).groups).toHaveLength(2);
+    expect(current).toHaveBeenCalledOnce();
+    now += 31_000;
+    expect((await source.load()).groups.map((group) => group.name)).toEqual([
+      'Current',
+      'First',
+      'Second',
+    ]);
+    expect(current).toHaveBeenCalledTimes(2);
+  });
+
+  it('can run without current groups at all', async () => {
+    const source = createPopularDecklistSource(async () => smallCorpus(), null);
+    expect((await source.load()).groups).toHaveLength(2);
+  });
 });

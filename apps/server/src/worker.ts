@@ -61,6 +61,15 @@ import {
 } from './continuation-target.js';
 import { initializeNewRoom } from './create-room.js';
 import {
+  CURRENT_DECKS_PATH,
+  handleCurrentDecksRequest,
+} from './current-decks-http.js';
+import {
+  fetchCurrentDeckFeed,
+  readStoredCurrentDeckFeed,
+  type CurrentDeckFeed,
+} from './current-decks.js';
+import {
   DurableRoomSnapshotStore,
   RoomAlreadyInitializedError,
 } from './durable-storage.js';
@@ -105,6 +114,9 @@ interface Env {
   readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
   readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
+  readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
+  /** Optional secret: a Limitless API key raises its rate limit. */
+  readonly LIMITLESS_API_KEY?: string;
   readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
@@ -1030,10 +1042,97 @@ export class PtcgRoom extends DurableObject<Env> {
   }
 }
 
+const DECK_FEED_STORAGE_KEY = 'current-decks:feed';
+/** One feed for everyone. */
+const DECK_FEED_NAME = 'limitless-standard';
+/** The daily refresh missed (or failed) for longer than this: try again. */
+const DECK_FEED_STALE_AFTER_MS = 30 * 60 * 60 * 1000;
+/** After a failed attempt, wait before asking Limitless again. */
+const DECK_FEED_RETRY_AFTER_MS = 10 * 60 * 1000;
+
+/**
+ * The deck picker's current lists from Limitless (current-decks.ts). The
+ * daily cron refreshes them; a request finding none, or a day-old set,
+ * refreshes them too. Attempts are serialized and spaced out, and a failed
+ * one keeps the lists already stored.
+ */
+export class PtcgDeckFeed extends DurableObject<Env> {
+  private refreshing: Promise<CurrentDeckFeed | null> | undefined;
+  private lastAttemptAt = Number.NEGATIVE_INFINITY;
+  private readonly telemetry = createTelemetry('deck_feed', this.env.BUILD_ID);
+
+  async current(): Promise<CurrentDeckFeed | null> {
+    const stored = await this.stored();
+    if (!stored) return this.refreshFeed();
+    if (Date.now() - Date.parse(stored.fetchedAt) > DECK_FEED_STALE_AFTER_MS) {
+      this.ctx.waitUntil(this.refreshFeed());
+    }
+    return stored;
+  }
+
+  /** The cron's entry point: how many decks the feed now holds. */
+  async refresh(): Promise<number> {
+    const feed = await this.refreshFeed();
+    return feed
+      ? Object.values(feed.groups).reduce(
+          (total, decks) => total + Object.keys(decks).length,
+          0
+        )
+      : 0;
+  }
+
+  private async stored(): Promise<CurrentDeckFeed | null> {
+    return readStoredCurrentDeckFeed(
+      await this.ctx.storage.get(DECK_FEED_STORAGE_KEY)
+    );
+  }
+
+  private refreshFeed(): Promise<CurrentDeckFeed | null> {
+    if (this.refreshing) return this.refreshing;
+    if (Date.now() - this.lastAttemptAt < DECK_FEED_RETRY_AFTER_MS) {
+      return this.stored();
+    }
+    this.lastAttemptAt = Date.now();
+    this.refreshing = fetchCurrentDeckFeed({
+      fetch: (input, init) => fetch(input, init),
+      now: Date.now,
+      ...(this.env.LIMITLESS_API_KEY
+        ? { apiKey: this.env.LIMITLESS_API_KEY }
+        : {}),
+    })
+      .then(async (feed) => {
+        await this.ctx.storage.put(DECK_FEED_STORAGE_KEY, feed);
+        return feed;
+      })
+      .catch(async () => {
+        this.telemetry.failure({
+          subsystem: 'deck_feed_refresh',
+          retryable: true,
+        });
+        return this.stored();
+      })
+      .finally(() => {
+        this.refreshing = undefined;
+      });
+    return this.refreshing;
+  }
+}
+
 const worker: ExportedHandler<Env> = {
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).refresh());
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     const telemetry = createTelemetry('edge', env.BUILD_ID);
+    if (url.pathname === CURRENT_DECKS_PATH) {
+      return observeHttp(telemetry, 'current_decks', () =>
+        handleCurrentDecksRequest(request, () =>
+          env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).current()
+        )
+      );
+    }
     if (url.pathname === '/v2/health') {
       return observeHttp(telemetry, 'health', () =>
         handleServerHealthRequest(

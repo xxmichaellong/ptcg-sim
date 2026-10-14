@@ -33,6 +33,10 @@
         "name": "PTCG_CONTINUATION_QUOTA",
         "class_name": "PtcgContinuationQuota",
       },
+      {
+        "name": "PTCG_DECK_FEED",
+        "class_name": "PtcgDeckFeed",
+      },
     ],
   },
   "ratelimits": [
@@ -86,10 +90,18 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "PtcgDeckFeed": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
     "PtcgRoom": {
       "type": "durable-object",
       "storage": "sqlite",
     },
+  },
+  // Refreshes the deck picker's current lists from Limitless once a day.
+  "triggers": {
+    "crons": ["17 6 * * *"],
   },
   "observability": {
     "enabled": true,
@@ -119,6 +131,10 @@
           {
             "name": "PTCG_CONTINUATION_QUOTA",
             "class_name": "PtcgContinuationQuota",
+          },
+          {
+            "name": "PTCG_DECK_FEED",
+            "class_name": "PtcgDeckFeed",
           },
         ],
       },
@@ -173,10 +189,17 @@
           "type": "durable-object",
           "storage": "sqlite",
         },
+        "PtcgDeckFeed": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
         "PtcgRoom": {
           "type": "durable-object",
           "storage": "sqlite",
         },
+      },
+      "triggers": {
+        "crons": ["17 6 * * *"],
       },
     },
   },
