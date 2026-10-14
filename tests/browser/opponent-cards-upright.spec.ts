@@ -9,7 +9,7 @@ import {
 } from './support/table-shell.js';
 
 /**
- * Settings → Table → "Opponent's cards face me" (PX-045): the far player's
+ * Settings → Table → "Opponent's cards face me" (PX-043): the far player's
  * cards turn to read the right way up for this viewer, where they lie, and
  * stay as easy to pick up as before.
  */
