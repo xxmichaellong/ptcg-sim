@@ -217,7 +217,7 @@ textarea {
   color: var(--color-text);
   box-shadow: var(--shadow-2);
   pointer-events: auto;
-  z-index: 9200;
+  z-index: var(--table-layer-rail);
 }
 .board-spike-host[data-geometry='2'] .table-hand-pill__count {
   display: flex;

@@ -537,13 +537,17 @@ test('native DOM input reaches protected controller state, lower-stack departure
       },
     ]);
   const lowerDepartureEvidence = await evidence(page);
+  // Grabbed by a card of the Pokémon itself, the whole Pokémon goes
+  // (PX-042); only a long press would lift that card off alone.
   expect(lowerDepartureEvidence.submissions).toEqual([
-    {
-      type: 'MoveCardFromStack',
-      cardId: fixture.unsupportedCardId,
-      expectedStackId: fixture.activeStackId,
+    expect.objectContaining({
+      type: 'MovePlayStackToZone',
+      stackId: fixture.activeStackId,
+      expectedEvolutionCardIds: expect.arrayContaining([
+        fixture.unsupportedCardId,
+      ]),
       destinationZoneId: fixture.destinationZoneId,
-    },
+    }),
   ]);
   expect(lowerDepartureEvidence.rejections).toEqual([]);
   expect(lowerDepartureEvidence.presentation).toMatchObject({

@@ -2140,9 +2140,11 @@ const ZoneBrowser = ({
                   aria-hidden="true"
                 />
               ) : null}
-              {count > 1 || (copies.get(card.id) ?? 0) > 1 ? (
+              {/* Copies shown one by one carry no count: a ×N on each would
+                  read as a stack. Stacked, the tile counts its copies. */}
+              {count > 1 ? (
                 <span className="ptcgsim-zone-copy-badge" aria-hidden="true">
-                  ×{count > 1 ? count : copies.get(card.id)}
+                  ×{count}
                 </span>
               ) : null}
             </button>

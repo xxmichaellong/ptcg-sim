@@ -1210,9 +1210,11 @@ describe('legacy board overlays', () => {
       host.querySelector(
         `[data-overlay-card-id="${id}"] .ptcgsim-zone-copy-badge`
       )?.textContent ?? null;
+    // Each copy on its own: no ×N, which would read as a stack (the
+    // stacked view counts its tiles instead).
     expect([badge(first.id), badge(second.id), badge(third.id)]).toEqual([
-      '×2',
-      '×2',
+      null,
+      null,
       null,
     ]);
     // Face-down cards are never counted.
