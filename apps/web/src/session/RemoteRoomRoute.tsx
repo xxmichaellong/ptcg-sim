@@ -23,7 +23,6 @@ import {
   lazy,
   Suspense,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -33,12 +32,7 @@ import {
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import type { RailAction } from '../board/rail/TableRail.js';
-import { motionSettings } from '../motion/motion-settings.js';
-import {
-  AUTO_TABLETOP_QUERY,
-  depthSettings,
-  resolveTableDepth,
-} from '../motion/depth-settings.js';
+import { useBoardLook } from './useBoardLook.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type {
@@ -86,7 +80,6 @@ import { TableWelcome } from './shell/TableWelcome.js';
 import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
-import { useMediaQuery } from '../ui/breakpoints.js';
 import { toast } from '../ui/toast.js';
 
 const LegacyDeckBuilderSession = lazy(async () => ({
@@ -230,48 +223,10 @@ export const RemoteRoomRoute = ({
     boardViewSettings().getSnapshot
   );
   const hideOpponentHand = boardView.hideOpponentHand;
-  const motion = useSyncExternalStore(
-    motionSettings().subscribe,
-    motionSettings().getSnapshot
-  );
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
-  const depthChoice = useSyncExternalStore(
-    depthSettings().subscribe,
-    depthSettings().getSnapshot
-  );
-  // Auto decides for this window: the tabletop where it is wide enough.
-  const wideLandscape = useMediaQuery(AUTO_TABLETOP_QUERY);
-  const depth = useMemo(
-    () => resolveTableDepth(depthChoice, wideLandscape),
-    [depthChoice, wideLandscape]
-  );
-  const effectivePreferences = useMemo((): BoardPreferences => {
-    // Motion always comes from the player's motion settings, whatever an
-    // earlier publish may have carried along.
-    const {
-      animationSpeed: _stored,
-      depth: _depth,
-      ...rest
-    } = storedPreferences;
-    return {
-      ...rest,
-      showZoneOutlines: boardView.zoneOutlines,
-      ...(depth.mode === 'flat' ? {} : { depth }),
-      reducedMotion: motion.reduced,
-      // The renderer treats an absent speed as normal.
-      ...(motion.durationScale === 1
-        ? {}
-        : { animationSpeed: motion.durationScale }),
-    };
-  }, [
-    storedPreferences,
-    motion.reduced,
-    motion.durationScale,
-    depth,
-    boardView.zoneOutlines,
-  ]);
+  const effectivePreferences = useBoardLook(storedPreferences);
   // The whole page wears the table's theme (Night or Day). Its motion
   // choice is published page-wide from main.tsx (installPageMotion).
   useEffect(() => {
@@ -535,24 +490,17 @@ export const RemoteRoomRoute = ({
               }
             );
           }
-          if (stage !== 'empty' && chrome.visibility.deckImport) {
-            more.push(
-              { kind: 'separator' },
-              {
-                id: 'changeDeckButton',
-                label: 'Change deck…',
-                icon: CardsIcon,
-                onSelect: () => openDeck(actingTarget),
-              }
-            );
-          }
           return { actions, ...(more.length > 0 ? { more } : {}) };
         };
 
         const menu: AppMenuModel = {
           heading: roomName,
           ...(openPlayOnline ? { onPlayOnline: openPlayOnline } : {}),
-          ...(chrome.visibility.deckImport ? { onDeck: () => openDeck() } : {}),
+          // The toolbar's Deck is the acting seat's: P2's at a Solo table
+          // turned around.
+          ...(chrome.visibility.deckImport
+            ? { onDeck: () => openDeck(actingTarget) }
+            : {}),
           onSettings: () => setSheet('settings'),
           onFullscreen: () => {
             requestFullscreen();

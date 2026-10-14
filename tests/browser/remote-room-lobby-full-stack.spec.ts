@@ -471,19 +471,14 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('#settingsTable #zoneOutlinesCheckbox')
     ).toBeAttached();
-    await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
-      'Press ? anywhere to see keyboard shortcuts'
+    // Settings holds settings only: the keys are on the toolbar, the help
+    // and community links in its menu.
+    await expect(playerTwo.page.locator('#settings')).not.toContainText(
+      'Keyboard shortcuts'
     );
     await expect(
-      playerTwo.page.locator('#keyboardShortcutsButton')
-    ).toContainText('Keyboard shortcuts');
-    const contact = playerTwo.page.locator('#twitterDescription');
-    await expect(contact).toHaveAttribute(
-      'href',
-      'https://twitter.com/xxmichaellong'
-    );
-    await expect(contact).toHaveAttribute('target', '_blank');
-    await expect(contact.locator('svg')).toHaveCount(1);
+      playerTwo.page.locator('.ptcgsim-app-toolbar #shortcutsButton')
+    ).toBeVisible();
     const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
     let customBackgroundRequests = 0;
     await playerTwo.page.route(CUSTOM_BACKGROUND_URL, async (route) => {
@@ -538,8 +533,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await playerTwo.page.keyboard.press('Escape');
     await expect(playerTwo.page.locator('#settings')).toHaveCount(0);
-    // Focus goes back to the menu that opened Settings.
-    await expect(playerTwo.page.locator('#appMenuButton')).toBeFocused();
+    // Focus goes back to the toolbar's Settings, which opened it.
+    await expect(
+      playerTwo.page.locator('.ptcgsim-app-toolbar #settingsButton')
+    ).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(hiddenZone).toHaveCSS('box-shadow', 'none');

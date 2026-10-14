@@ -418,6 +418,10 @@ export interface BoardRenderer {
    */
   clearScene(): void;
   resize(viewport: BoardViewport): void;
+  /**
+   * Also before `mount`: the table's first paint then already wears them
+   * (its tilt, its theme) instead of the defaults for a frame.
+   */
   setPreferences(preferences: BoardPreferences): void;
   getDiagnostics?(): BoardRendererDiagnostics;
   destroy(): void;

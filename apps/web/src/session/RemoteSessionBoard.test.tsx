@@ -558,6 +558,13 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(own.switchSide).toBeUndefined();
     expect(host.querySelector('#flipBoardButton')).toBeNull();
     expect(commands.current?.canFlipBoard()).toBe(false);
+    // The once-per-game markers are off until the player puts them out.
+    expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
+      0
+    );
+    await act(async () =>
+      boardViewSettings().update({ vstarMarker: true, gxMarker: true })
+    );
     expect(host.querySelectorAll('[data-once-per-game-marker]')).toHaveLength(
       4
     );
@@ -657,7 +664,7 @@ describe('RemoteSessionBoard replay binding', () => {
     const bottomBeforeFlip = selectedScene().bottomPlayerId;
     expect(owned.at(-1)?.switchSide).toMatchObject({
       id: 'flipBoardButton',
-      label: 'Switch side',
+      label: 'Flip',
     });
     expect(commands.current?.canFlipBoard()).toBe(true);
     await act(async () =>
@@ -849,8 +856,17 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(lostZones()).toEqual(['opponent']);
     expect(host.querySelector('#hideLostZoneButton')).toBeNull();
 
+    // Added from the + in the staging area.
     await act(async () =>
-      host.querySelector<HTMLButtonElement>('#addLostZoneButton')?.click()
+      host.querySelector<HTMLButtonElement>('#tableExtrasButton')?.click()
+    );
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(document.querySelector('#lostZoneToggle')).not.toBeNull()
+      );
+    });
+    await act(async () =>
+      document.querySelector<HTMLElement>('#lostZoneToggle')?.click()
     );
     expect(boardViewSettings().getSnapshot().lostZone).toBe(true);
     await act(async () => {
@@ -858,7 +874,11 @@ describe('RemoteSessionBoard replay binding', () => {
         expect(lostZones().sort()).toEqual(['local', 'opponent'])
       );
     });
-    expect(host.querySelector('#addLostZoneButton')).toBeNull();
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(host.querySelector('#hideLostZoneButton')).not.toBeNull()
+      );
+    });
 
     await act(async () =>
       host.querySelector<HTMLButtonElement>('#hideLostZoneButton')?.click()

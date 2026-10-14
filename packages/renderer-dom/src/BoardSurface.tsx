@@ -89,17 +89,30 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
 });
 
 /** Geometry sentinels only; visible chrome and resize input remain route-owned. */
+/** The clear space the centre line keeps on either side of the Stadium. */
+const SEAM_GAP_PX = 10;
+
 const PlayerFrameNode = memo(function PlayerFrameNode({
   frame,
   darkMode,
   table,
+  stadiumSpan,
 }: {
   readonly frame: BoardScene['layout']['players'][number];
   readonly darkMode: boolean;
   /** Geometry v2: the play mat paints itself through the stylesheet. */
   readonly table: boolean;
+  /** Where the Stadium crosses the centre line, which the line stops for. */
+  readonly stadiumSpan?: { readonly left: number; readonly right: number };
 }) {
   if (table) {
+    const gap =
+      stadiumSpan && frame.physicalSide === 'lower'
+        ? {
+            '--ptcgsim-seam-gap-start': `${String(stadiumSpan.left - SEAM_GAP_PX - frame.bounds.x)}px`,
+            '--ptcgsim-seam-gap-end': `${String(stadiumSpan.right + SEAM_GAP_PX - frame.bounds.x)}px`,
+          }
+        : {};
     return (
       <div
         className="ptcgsim-player-frame"
@@ -108,7 +121,13 @@ const PlayerFrameNode = memo(function PlayerFrameNode({
         data-player-physical-side={frame.physicalSide}
         data-player-rotation={frame.rotationQuarterTurns}
         aria-hidden="true"
-        style={{ ...absoluteRect(frame.bounds, -10), pointerEvents: 'none' }}
+        style={
+          {
+            ...absoluteRect(frame.bounds, -10),
+            pointerEvents: 'none',
+            ...gap,
+          } as CSSProperties
+        }
       />
     );
   }
@@ -1213,6 +1232,18 @@ export const BoardSurface = ({
           )
           .sort((left, right) => right.zIndex - left.zIndex)[0]?.id ?? null);
 
+  const stadium = scene.zones.find((zone) => zone.kind === 'stadium')?.bounds;
+  const lower = scene.layout.players.find(
+    (frame) => frame.physicalSide === 'lower'
+  );
+  // The Stadium straddles the centre line; the line stops either side of it.
+  const stadiumSpan =
+    stadium &&
+    lower &&
+    stadium.y < lower.bounds.y &&
+    stadium.y + stadium.height > lower.bounds.y
+      ? { left: stadium.x, right: stadium.x + stadium.width }
+      : undefined;
   const frames = scene.layout.players
     .filter((frame) => !frame.hidden)
     .map((frame) => (
@@ -1221,6 +1252,7 @@ export const BoardSurface = ({
         frame={frame}
         darkMode={preferences.darkMode}
         table={table}
+        {...(stadiumSpan ? { stadiumSpan } : {})}
       />
     ));
 

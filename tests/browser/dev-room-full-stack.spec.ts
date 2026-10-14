@@ -281,7 +281,10 @@ test('development route reaches and resumes a real durable room through the same
     .toBeLessThan(seamBefore.y - 20);
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
-  await expect(page.locator('#appMenuButton')).toBeFocused();
+  // Focus goes back to the toolbar's Settings, which opened it.
+  await expect(
+    page.locator('.ptcgsim-app-toolbar #settingsButton')
+  ).toBeFocused();
 
   // Reload card images retries what failed, in place: same renderer.
   const routeRenderer = await page.evaluateHandle(

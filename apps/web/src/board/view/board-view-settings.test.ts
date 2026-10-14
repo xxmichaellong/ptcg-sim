@@ -23,7 +23,7 @@ const memoryStorage = () => {
   };
 };
 
-it('starts with both halves, an even split and no hover preview', () => {
+it('starts with both halves, an even split, no hover preview and no optional pieces', () => {
   expect(DEFAULT_BOARD_VIEW).toEqual({
     show: 'both',
     split: TABLE_SPLIT.defaultLowerShare,
@@ -31,6 +31,8 @@ it('starts with both halves, an even split and no hover preview', () => {
     hideOpponentHand: false,
     hoverPreview: false,
     lostZone: false,
+    vstarMarker: false,
+    gxMarker: false,
   });
   expect(new BoardViewSettingsStore(new PreferenceStore()).getSnapshot()).toBe(
     DEFAULT_BOARD_VIEW

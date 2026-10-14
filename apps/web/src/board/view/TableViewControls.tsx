@@ -140,6 +140,20 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
         onChange={(lostZone) => viewStore.update({ lostZone })}
       />
       <SwitchRow
+        id="vstarMarkerCheckbox"
+        label="VSTAR marker"
+        hint="Beside each player's prizes, for formats with VSTAR Powers."
+        checked={view.vstarMarker}
+        onChange={(vstarMarker) => viewStore.update({ vstarMarker })}
+      />
+      <SwitchRow
+        id="gxMarkerCheckbox"
+        label="GX marker"
+        hint="Beside each player's prizes, for formats with GX attacks."
+        checked={view.gxMarker}
+        onChange={(gxMarker) => viewStore.update({ gxMarker })}
+      />
+      <SwitchRow
         id="zoneOutlinesCheckbox"
         label="Zone outlines"
         checked={view.zoneOutlines}

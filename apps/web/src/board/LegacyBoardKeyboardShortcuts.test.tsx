@@ -317,6 +317,56 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('keeps working after a toggle was clicked, which keeps only its own keys', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+    // The hand's Sort: a checkbox the player just clicked holds the focus.
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    document.body.append(toggle);
+    toggle.focus();
+    const press = (key: string, code: string, altKey = false) => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        code,
+        altKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      toggle.dispatchEvent(event);
+      return event;
+    };
+    press('n', 'KeyN', true);
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'setupOwnPlayer' },
+    ]);
+    // Space and Enter are the toggle's own.
+    expect(press(' ', 'Space').defaultPrevented).toBe(false);
+    press('Enter', 'Enter');
+    expect(onRequest).toHaveBeenCalledOnce();
+    // A text field keeps every key.
+    const field = document.createElement('input');
+    document.body.append(field);
+    field.focus();
+    field.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'n',
+        code: 'KeyN',
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    expect(onRequest).toHaveBeenCalledOnce();
+    toggle.remove();
+    field.remove();
+  });
+
   it('acts once for a held key, and keeps its repeats from the browser', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

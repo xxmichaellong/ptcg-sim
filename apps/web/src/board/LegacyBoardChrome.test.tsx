@@ -440,7 +440,7 @@ describe('LegacyBoardChrome', () => {
     expect(css).toMatch(
       /\.ptcgsim-table-rail__actions\[data-covered='true'\] \{\s*opacity: 0\.15;/
     );
-    // Short of room (the rail decides), the labels give way to the icons.
+    // The game actions are icons; the tooltips carry the words.
     expect(css).toMatch(
       /\[data-labels='none'\] \.ptcgsim-rail-button__label \{\s*display: none;/
     );

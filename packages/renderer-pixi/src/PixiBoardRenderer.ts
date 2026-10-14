@@ -359,6 +359,11 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   setPreferences(preferences: BoardPreferences): void {
+    // Before mount they wait for it: mount applies them.
+    if (!this.destroyed && !this.mounted) {
+      this.preferences = preferences;
+      return;
+    }
     this.requireMounted();
     const depthChanged =
       JSON.stringify(this.preferences.depth) !==

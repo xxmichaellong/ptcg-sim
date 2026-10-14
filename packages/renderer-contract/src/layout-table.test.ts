@@ -185,6 +185,111 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it('keeps the Stadium clear of both halves on a split table', () => {
+    for (const [width, height, shellMode] of [
+      [1440, 900, 'sidebar'],
+      [1440, 900, 'fullscreen'],
+      [1280, 720, 'fullscreen'],
+      [1920, 1080, 'sidebar'],
+      [1024, 768, 'fullscreen'],
+    ] as const) {
+      for (const seamBandPx of [undefined, 42, 46]) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, {
+            shellMode,
+            ...(seamBandPx ? { seamBandPx } : {}),
+          })
+        );
+        const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+        for (const player of snapshot.players) {
+          for (const candidate of player.regions) {
+            expect(
+              overlaps(stadium, candidate.physicalDeclaredBounds),
+              `${width}x${height} ${player.side} ${candidate.kind}`
+            ).toBe(false);
+          }
+        }
+        // The far staging area is shortened, not gone.
+        expect(
+          region(snapshot, 'opponent', 'board').physicalDeclaredBounds.width
+        ).toBeGreaterThanOrEqual(stadium.width);
+      }
+    }
+    // Too narrow to shorten it by a Stadium and keep a card's width, the
+    // far staging area keeps its width, under the Stadium's edge.
+    const narrow = createTableLayoutSnapshot(stateAt(1024, 768));
+    expect(
+      region(narrow, 'opponent', 'board').physicalDeclaredBounds.width
+    ).toBeGreaterThan(0);
+  });
+
+  it('keeps the Lost Zone and the markers beside the prizes, toward the centre line', () => {
+    for (const [width, height] of [
+      [1280, 720],
+      [1440, 900],
+      [1920, 1080],
+    ] as const) {
+      for (const markers of [0, 1, 2]) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, {
+            shellMode: 'fullscreen',
+            oncePerGameMarkers: markers,
+          })
+        );
+        for (const player of snapshot.players) {
+          const label = `${width}x${height} ${player.side} ${markers}`;
+          const rect = (kind: string) =>
+            region(snapshot, player.side, kind).physicalDeclaredBounds;
+          const prizes = rect('prizes');
+          const lost = rect('lostZone');
+          const active = rect('active');
+          const board = rect('board');
+          // Level with the Active row, between the prizes and the staging
+          // area; nothing overlaps.
+          if (player.side === 'local') {
+            expect(lost.y, label).toBeCloseTo(active.y, 5);
+          } else {
+            expect(lost.y + lost.height, label).toBeCloseTo(
+              active.y + active.height,
+              5
+            );
+          }
+          const between = (value: number, a: number, b: number) =>
+            value >= Math.min(a, b) - 0.01 && value <= Math.max(a, b) + 0.01;
+          expect(
+            between(
+              lost.x + lost.width / 2,
+              prizes.x + prizes.width / 2,
+              board.x + board.width / 2
+            ),
+            label
+          ).toBe(true);
+          const markerRect = player.extras?.markers;
+          if (markers === 0) expect(markerRect, label).toBeUndefined();
+          else {
+            expect(markerRect, label).toBeDefined();
+            expect(overlaps(markerRect!, lost), label).toBe(false);
+            for (const candidate of player.regions) {
+              expect(
+                overlaps(markerRect!, candidate.physicalDeclaredBounds),
+                `${label} ${candidate.kind}`
+              ).toBe(false);
+            }
+          }
+          // The control that adds them sits inside the staging area.
+          expect(inside(player.extras!.control, board), label).toBe(true);
+          // The staging area keeps room for a card or two.
+          expect(board.width, label).toBeGreaterThan(lost.width);
+        }
+      }
+    }
+    // Too narrow for them, they keep their old places.
+    const narrow = createTableLayoutSnapshot(
+      stateAt(1024, 768, { oncePerGameMarkers: 2 })
+    );
+    expect(narrow.players[0].extras?.markers).toBeUndefined();
+  });
+
   it('makes the cards readable at common desktop sizes', () => {
     for (const [width, height, minimum] of [
       [1440, 900, { active: 150, bench: 130, hand: 150 }],
@@ -213,14 +318,18 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it('stacks deck, discard and a readable Lost Zone down the outer column', () => {
+  it('stacks deck, discard and an optional Lost Zone down the outer column', () => {
     for (const [width, height] of [
       [1024, 768],
       [1280, 720],
       [1440, 900],
       [1920, 1080],
     ] as const) {
-      const snapshot = createTableLayoutSnapshot(stateAt(width, height));
+      // Optional and off, an empty Lost Zone is not shown; one with cards
+      // shows at the end of the outer column.
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, { hideEmptyLostZone: true })
+      );
       for (const side of ['local', 'opponent'] as const) {
         const deck = region(snapshot, side, 'deck').physicalDeclaredBounds;
         const discard = region(

@@ -53,12 +53,24 @@ export interface LegacyBoardKeyboardShortcutsProps {
 
 const EDITABLE_SHORTCUT_TARGET =
   'input, textarea, select, td, [contenteditable]:not([contenteditable="false"]), [role="textbox"], .self-circle, .opp-circle, .self-tab, .opp-tab';
+/** On/off controls: they take no typing, only Space and Enter. */
+const TOGGLE_INPUT = 'input[type="checkbox"], input[type="radio"]';
 
+/**
+ * Whether a key pressed on `target` is typing (or a control's own key) that
+ * the table must leave alone. A toggle the player just clicked (the hand's
+ * Sort) keeps only Space and Enter: the table's shortcuts still work.
+ */
 export const isLegacyBoardShortcutEditableTarget = (
-  target: EventTarget | null
-): boolean =>
-  target instanceof Element &&
-  target.closest(EDITABLE_SHORTCUT_TARGET) !== null;
+  target: EventTarget | null,
+  key?: string
+): boolean => {
+  if (!(target instanceof Element)) return false;
+  if (target.matches(TOGGLE_INPUT)) {
+    return key === undefined || key === ' ' || key === 'Enter';
+  }
+  return target.closest(EDITABLE_SHORTCUT_TARGET) !== null;
+};
 
 const isLegacyBoardOverlayTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
@@ -145,7 +157,7 @@ export const LegacyBoardKeyboardShortcuts = ({
         countPromptOpen ||
         // Keys pressed in a dialog, toast or tooltip belong to it.
         isOverlayKeyTarget(event.target) ||
-        isLegacyBoardShortcutEditableTarget(event.target) ||
+        isLegacyBoardShortcutEditableTarget(event.target, event.key) ||
         (isLegacyBoardOverlayTarget(event.target) &&
           !isSelectedOpenedZoneCardTarget(
             event.target,

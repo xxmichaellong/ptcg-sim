@@ -188,9 +188,11 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   }
 
   setPreferences(preferences: BoardPreferences): void {
-    const root = this.requireRoot();
+    if (this.destroyed) throw new Error('Board renderer is destroyed');
     this.preferences = preferences;
-    if (this.scene && this.presentation) this.renderNow(root);
+    // Before mount they wait for its first render.
+    if (!this.root) return;
+    if (this.scene && this.presentation) this.renderNow(this.root);
   }
 
   getDiagnostics(): BoardRendererDiagnostics {

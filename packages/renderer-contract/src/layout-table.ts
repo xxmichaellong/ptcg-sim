@@ -141,6 +141,8 @@ interface LocalRegion {
 
 interface HalfGeometry {
   readonly regions: readonly LocalRegion[];
+  /** The optional pieces beside the prizes, in the half's own frame. */
+  readonly extras?: { readonly markers?: Rect; readonly control: Rect };
   readonly cardHeights: { readonly active: number; readonly bench: number };
   readonly middle: { readonly left: number; readonly right: number };
   /** The clear band between this half's cards and the centre line. */
@@ -151,6 +153,20 @@ interface HalfGeometry {
 interface HalfOptions {
   /** The least height of the clear band at the centre line (both halves). */
   readonly seamBandPx?: number;
+  /**
+   * Room kept clear at the staging area's Active end: on the far half that
+   * is where the Stadium straddles the centre line, and the two must not
+   * overlap.
+   */
+  readonly boardEndReservePx?: number;
+  /**
+   * The Lost Zone is on the table (not optional-and-hidden): it sits beside
+   * the prizes toward the centre line rather than at the end of the outer
+   * column.
+   */
+  readonly lostZoneBeside?: boolean;
+  /** How many once-per-game markers sit beside the prizes, 0 to 2. */
+  readonly markerCount?: number;
 }
 
 /**
@@ -177,6 +193,15 @@ const SOLO_CONTROLS_GAP_PX = 6;
  * app menu (a 44px button 8px in, and a gap).
  */
 const RAIL_START_RESERVE_PX = 8 + 44 + 8;
+/**
+ * The VSTAR/GX markers' column beside the prizes, as a share of a pile's
+ * width; each marker is half as tall as the column is wide.
+ */
+const MARKER_COLUMN_SHARE = 0.62;
+/** The add-or-remove control for the optional pieces: a small round button. */
+const EXTRAS_CONTROL_PX = 26;
+/** The clear space between the Stadium and the far staging area. */
+const STADIUM_CLEARANCE_PX = 8;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
@@ -229,7 +254,6 @@ const layoutHalf = (
   });
   const deck = pileAt(0);
   const discard = pileAt(1);
-  const lostZone = pileAt(2);
 
   // Reserve equal space for the outer columns so both Actives and benches
   // share the table's centre, even though prizes are wider than a pile.
@@ -245,12 +269,61 @@ const layoutHalf = (
     width: activeWidth,
     height: active,
   };
-  // The staging area (v1's loose board) beside the Active, toward the prizes.
+  // Beside the prizes, toward the centre line, the optional pieces the
+  // viewer keeps on the table: the Lost Zone pile (the Tournament Handbook
+  // keeps it directly above the prizes) and the VSTAR/GX markers, which
+  // players keep by their prizes. The staging area (v1's loose board) takes
+  // the rest of the row up to the Active. Where that would leave it less
+  // than a card wide, the pieces keep their old places instead: the Lost
+  // Zone at the end of the outer column, the markers by the hand.
+  // Kept clear of the Stadium where that leaves the staging area at least a
+  // card wide; a narrow table keeps it whole, under the Stadium's edge.
+  const reserve = options.boardEndReservePx ?? 0;
+  const boardEnd =
+    activeRect.x - gap - reserve - middleLeft >= pileWidth
+      ? activeRect.x - gap - reserve
+      : activeRect.x - gap;
+  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
+  const markerWidth = pileWidth * MARKER_COLUMN_SHARE;
+  const piecesWidth =
+    (options.lostZoneBeside ? pileWidth + gap : 0) +
+    (markerCount > 0 ? markerWidth + gap : 0);
+  const besidePrizes =
+    piecesWidth > 0 && boardEnd - middleLeft - piecesWidth >= pileWidth;
+  let boardLeft = middleLeft;
+  let lostZone = pileAt(2);
+  let markers: Rect | undefined;
+  if (besidePrizes && options.lostZoneBeside) {
+    lostZone = {
+      x: boardLeft,
+      y: activeTop,
+      width: pileWidth,
+      height: Math.min(pileHeight, active),
+    };
+    boardLeft += pileWidth + gap;
+  }
+  if (besidePrizes && markerCount > 0) {
+    markers = {
+      x: boardLeft,
+      y: activeTop,
+      width: markerWidth,
+      height: markerCount * (markerWidth / 2) + (markerCount - 1) * (gap / 2),
+    };
+    boardLeft += markerWidth + gap;
+  }
   const boardRect: Rect = {
-    x: middleLeft,
+    x: boardLeft,
     y: activeTop,
-    width: Math.max(0, activeRect.x - gap - middleLeft),
+    width: Math.max(0, boardEnd - boardLeft),
     height: active,
+  };
+  // The control that adds or removes them sits in the staging area's
+  // corner by the prizes, toward the player's edge, clear of its label.
+  const control: Rect = {
+    x: boardRect.x + 6,
+    y: activeTop + active - 6 - EXTRAS_CONTROL_PX,
+    width: EXTRAS_CONTROL_PX,
+    height: EXTRAS_CONTROL_PX,
   };
   const benchRect: Rect = {
     x: middleLeft,
@@ -285,6 +358,7 @@ const layoutHalf = (
     cardHeights: { active, bench },
     middle: { left: middleLeft, right: middleRight },
     seamMargin: margin,
+    extras: { ...(markers ? { markers } : {}), control },
   };
 };
 
@@ -435,6 +509,17 @@ const layoutHalfPortrait = (
     cardHeights: { active, bench },
     middle: { left: edge, right: width - edge },
     seamMargin: activeTop,
+    // On an upright phone the optional pieces keep their places (the Lost
+    // Zone in the pile row, the markers by the hand); the control that adds
+    // them sits in the staging area's corner.
+    extras: {
+      control: {
+        x: boardRect.x + 6,
+        y: activeTop + active - 6 - EXTRAS_CONTROL_PX,
+        width: EXTRAS_CONTROL_PX,
+        height: EXTRAS_CONTROL_PX,
+      },
+    },
   };
 };
 
@@ -513,15 +598,26 @@ const layoutSoloHalf = (
   }
   const geometry = layoutHalf(width, fitted, options);
   const band = height - fitted;
+  const lowered = (rect: Rect): Rect => ({ ...rect, y: rect.y + band });
   return bestOf(
     {
       regions: geometry.regions.map((region) => ({
         ...region,
-        rect: { ...region.rect, y: region.rect.y + band },
+        rect: lowered(region.rect),
       })),
       cardHeights: geometry.cardHeights,
       middle: geometry.middle,
       seamMargin: geometry.seamMargin + band,
+      ...(geometry.extras
+        ? {
+            extras: {
+              ...(geometry.extras.markers
+                ? { markers: lowered(geometry.extras.markers) }
+                : {}),
+              control: lowered(geometry.extras.control),
+            },
+          }
+        : {}),
     },
     portrait
   );
@@ -645,9 +741,10 @@ export const createTableLayoutSnapshot = (
   // pairing and every input check.
   const {
     hiddenPhysicalSide: _hidden,
-    hideEmptyLostZone: _lostZone,
+    hideEmptyLostZone,
     seamBandPx,
     sidePanelReveal,
+    oncePerGameMarkers,
     ...semanticState
   } = state;
   if (
@@ -656,8 +753,21 @@ export const createTableLayoutSnapshot = (
   ) {
     throw new Error('Table seam band must be a non-negative number');
   }
-  const halfOptions: HalfOptions =
-    seamBandPx === undefined ? {} : { seamBandPx };
+  if (
+    oncePerGameMarkers !== undefined &&
+    !(
+      Number.isInteger(oncePerGameMarkers) &&
+      oncePerGameMarkers >= 0 &&
+      oncePerGameMarkers <= 2
+    )
+  ) {
+    throw new Error('Once-per-game markers must number 0, 1 or 2');
+  }
+  const halfOptions: HalfOptions = {
+    ...(seamBandPx === undefined ? {} : { seamBandPx }),
+    ...(hideEmptyLostZone ? {} : { lostZoneBeside: true }),
+    ...(oncePerGameMarkers ? { markerCount: oncePerGameMarkers } : {}),
+  };
   // The controls fill the seam band: 32px on a desktop, taller where a
   // finger asked for a wider band.
   const controlsCap =
@@ -687,7 +797,8 @@ export const createTableLayoutSnapshot = (
   const frames = framesFor(state, playAreaWidth);
   const buildPlayer = (
     template: BoardPlayerLayout,
-    frameBounds: Rect
+    frameBounds: Rect,
+    options: HalfOptions = halfOptions
   ): {
     readonly player: BoardPlayerLayout;
     readonly geometry: HalfGeometry;
@@ -696,7 +807,7 @@ export const createTableLayoutSnapshot = (
     const geometry = (solo ? layoutSoloHalf : layoutTableHalf)(
       frameBounds.width,
       frameBounds.height,
-      halfOptions
+      options
     );
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
@@ -745,13 +856,33 @@ export const createTableLayoutSnapshot = (
         frameBounds,
         regions,
         ...(hidden === template.physicalSide ? { hidden: true as const } : {}),
+        ...(geometry.extras
+          ? {
+              extras: {
+                ...(geometry.extras.markers
+                  ? {
+                      markers: toPhysical(
+                        geometry.extras.markers,
+                        frameBounds,
+                        template.side
+                      ),
+                    }
+                  : {}),
+                control: toPhysical(
+                  geometry.extras.control,
+                  frameBounds,
+                  template.side
+                ),
+              },
+            }
+          : {}),
       },
       geometry,
     };
   };
 
   const lower = buildPlayer(semantics.players[0], frames.lower);
-  const upper = buildPlayer(semantics.players[1], frames.upper);
+  let upper = buildPlayer(semantics.players[1], frames.upper);
   const activeOf = (player: BoardPlayerLayout): Rect =>
     player.regions.find((region) => region.kind === 'active')!
       .physicalDeclaredBounds;
@@ -778,6 +909,28 @@ export const createTableLayoutSnapshot = (
       width: stadiumWidth,
       height: stadiumHeight,
     };
+    // The far half's staging area lies beside its Active on the Stadium's
+    // side of the table; it stops short of the Stadium instead of running
+    // under it (layoutHalf keeps it whole where that would leave it less
+    // than a card wide).
+    const farBoard = upper.player.regions.find(
+      (region) => region.kind === 'board'
+    )?.physicalDeclaredBounds;
+    const reserve = farBoard
+      ? stadium.x + stadium.width + STADIUM_CLEARANCE_PX - farBoard.x
+      : 0;
+    if (
+      farBoard &&
+      reserve > 0 &&
+      farBoard.y < stadium.y + stadium.height &&
+      farBoard.y + farBoard.height > stadium.y &&
+      farBoard.x < stadium.x + stadium.width
+    ) {
+      upper = buildPlayer(semantics.players[1], frames.upper, {
+        ...halfOptions,
+        boardEndReservePx: reserve,
+      });
+    }
     // The controls straddle the seam inside the clear band on both sides.
     const controlsHeight = Math.max(
       20,

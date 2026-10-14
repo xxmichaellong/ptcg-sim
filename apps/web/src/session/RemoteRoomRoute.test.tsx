@@ -401,8 +401,12 @@ const closeMenu = async (): Promise<void> => {
   if (menu) await pressEscape(menu);
 };
 
+/**
+ * Chooses an app entry by its id: a toolbar button directly, anything else
+ * from the menu behind the toolbar's last button.
+ */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  await openMenu();
+  if (!find(`.ptcgsim-app-toolbar #${id}`)) await openMenu();
   await click(`#${id}`);
   await settle();
 };
@@ -520,14 +524,23 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
+    // The toolbar shows the deck, where to play, the keys and Settings;
+    // the rest is behind its last button.
+    expect(
+      [...document.querySelectorAll('.ptcgsim-app-toolbar > [id]')].map(
+        (button) => button.id
+      )
+    ).toEqual([
+      'deckImportButton',
+      'p2Button',
+      'shortcutsButton',
+      'settingsButton',
+      'appMenuButton',
+    ]);
     await openMenu();
     expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');
     expect(menuIds()).toEqual(
       expect.arrayContaining([
-        'p2Button',
-        'deckImportButton',
-        'settingsButton',
-        'shortcutsButton',
         'importReplay',
         'exportState',
         'fullscreenButton',
@@ -544,9 +557,9 @@ describe('RemoteRoomRoute', () => {
     ]) {
       expect(menuIds(), id).not.toContain(id);
     }
+    await closeMenu();
     await click('#p2Button');
     expect(onMultiplayerNavigate).toHaveBeenCalledOnce();
-    await closeMenu();
 
     // The menu reaches the table's own commands.
     await chooseMenuItem('reloadImagesButton');
@@ -580,7 +593,7 @@ describe('RemoteRoomRoute', () => {
         snapshot: loadedSeatView(),
         rail: ['p2SetupButton', 'flipCoinButton', 'p2UndoButton'],
         primary: 'p2SetupButton',
-        more: ['p2ResetButton', 'changeDeckButton'],
+        more: ['p2ResetButton'],
       },
       {
         name: 'multiplayer, playing',
@@ -594,12 +607,7 @@ describe('RemoteRoomRoute', () => {
           'p2UndoButton',
         ],
         primary: undefined,
-        more: [
-          'p2SetupButton',
-          'mulliganButton',
-          'p2ResetButton',
-          'changeDeckButton',
-        ],
+        more: ['p2SetupButton', 'mulliganButton', 'p2ResetButton'],
       },
       {
         name: 'Solo, playing',
@@ -621,7 +629,6 @@ describe('RemoteRoomRoute', () => {
           'resetButton',
           'setupBothButton',
           'resetBothButton',
-          'changeDeckButton',
         ],
       },
       {
@@ -703,8 +710,8 @@ describe('RemoteRoomRoute', () => {
       { type: 'SetupPlayer', targetPlayerId: otherPlayer },
     ]);
 
-    // Load a deck and Change deck open the deck screen, which owns the keys.
-    await click('#changeDeckButton');
+    // The toolbar's Deck opens the deck screen, which owns the keys.
+    await click('#deckImportButton');
     await act(async () => {
       await import('../features/deck/LegacyDeckBuilderSession.js');
       await flushConsumers();
@@ -923,13 +930,9 @@ describe('RemoteRoomRoute', () => {
       expect(get('#changeBackgroundButton').textContent).toBe(
         'Change background'
       );
-      expect(get('#settings').textContent).toContain(
-        'Press ? anywhere to see keyboard shortcuts'
-      );
-      const contact = get<HTMLAnchorElement>('#twitterDescription');
-      expect(contact.href).toBe('https://twitter.com/xxmichaellong');
-      expect(contact.target).toBe('_blank');
-      expect(contact.rel).toBe('noopener noreferrer');
+      // Settings holds settings only: the keys are on the toolbar, the help
+      // and community links in its menu.
+      expect(get('#settings').textContent).not.toContain('Keyboard shortcuts');
 
       await click('#changeBackgroundButton');
       await act(async () => flushConsumers());

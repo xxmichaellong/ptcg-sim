@@ -306,6 +306,12 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     page.locator(`img[src="${SOLO_CARD_FACE_URL}"]`).first()
   ).toBeVisible();
 
+  // The markers are off until put out, from the + in the staging area.
+  await expect(page.locator('[data-once-per-game-marker]')).toHaveCount(0);
+  for (const id of ['vstarMarkerToggle', 'gxMarkerToggle']) {
+    await page.locator('#tableExtrasButton').click();
+    await page.locator(`#${id}`).click();
+  }
   const localGx = page.locator(
     '[data-player-side="local"][data-once-per-game-marker="gx"]'
   );

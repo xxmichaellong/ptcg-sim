@@ -298,8 +298,22 @@ export const BOARD_SURFACE_CSS = `
     transparent 18%
   );
 }
-.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-physical-side='lower'] {
-  border-top: 1px solid var(--color-felt-line-strong, rgb(255 255 255 / 0.25));
+/* The centre line, printed on the mat. It stops either side of the Stadium
+   that straddles it, as a real mat's print would sit under the card. */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-physical-side='lower']::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    var(--color-felt-line-strong, rgb(255 255 255 / 0.25)) 0 var(--ptcgsim-seam-gap-start, 100%),
+    transparent var(--ptcgsim-seam-gap-start, 100%) var(--ptcgsim-seam-gap-end, 100%),
+    var(--color-felt-line-strong, rgb(255 255 255 / 0.25)) var(--ptcgsim-seam-gap-end, 100%)
+  );
 }
 .ptcgsim-zone-count--badge {
   min-width: 26px;

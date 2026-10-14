@@ -396,18 +396,30 @@ const openMenu = async (): Promise<void> => {
   expect(present('[role="menu"][aria-label="Menu"]')).toBe(true);
 };
 
-/** Chooses an app-menu entry by its id. */
+/**
+ * Chooses an app entry by its id: a toolbar button directly, anything else
+ * from the menu behind the toolbar's last button.
+ */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  await openMenu();
+  if (!present(`.ptcgsim-app-toolbar #${id}`)) await openMenu();
   await click(`#${id}`);
 };
 
-/** The ids the app menu offers right now; the menu is closed again after. */
+/**
+ * The ids the app toolbar and its menu offer right now; the menu is closed
+ * again after.
+ */
 const menuEntryIds = async (): Promise<string[]> => {
+  const toolbar = [
+    ...document.querySelectorAll('.ptcgsim-app-toolbar > [id]'),
+  ].map((entry) => entry.id);
   await openMenu();
   const ids = [
-    ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
-  ].map((entry) => entry.id);
+    ...toolbar.filter((id) => id !== 'appMenuButton'),
+    ...[
+      ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
+    ].map((entry) => entry.id),
+  ];
   // Closed from its own button: an Escape would also reach the sheet below.
   await click('#appMenuButton');
   expect(present('[role="menu"][aria-label="Menu"]')).toBe(false);
@@ -482,11 +494,19 @@ describe('remote room lobby wiring', () => {
     expect(present('[data-testid="lobby-board"]')).toBe(true);
     // A visitor with no game sees an empty table, laid out like the room's.
     expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
-    expect(lobbyBoardHarness.table).toEqual({ lowerShare: 0.5 });
+    expect(lobbyBoardHarness.table).toEqual({
+      lowerShare: 0.5,
+      seamBandPx: 42,
+    });
     expect(present('[data-testid="parked-solo-board"]')).toBe(false);
     expect(playOnlineOpen()).toBe(true);
     expect(present('#settings')).toBe(false);
-    expect(lobbyBoardHarness.preferences).toBeUndefined();
+    // The empty table wears the room's look from the first frame (the tilted
+    // table where Auto picks it), so nothing changes when the room takes over.
+    expect(lobbyBoardHarness.preferences).toMatchObject({
+      showZoneOutlines: true,
+      depth: { mode: 'table' },
+    });
     for (const id of [
       'nameInput',
       'roomIdInput',
@@ -540,6 +560,7 @@ describe('remote room lobby wiring', () => {
       highContrast: false,
       darkMode: false,
       showZoneOutlines: true,
+      depth: expect.objectContaining({ mode: 'table' }),
     });
     // How the table shows is in Settings too; covering the opponent's hand
     // is a Solo choice, offered only with a Solo table.
@@ -548,14 +569,11 @@ describe('remote room lobby wiring', () => {
     expect(present('#hideHandCheckbox')).toBe(false);
     await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
-    expect(document.body.textContent).toContain(
-      'Press ? anywhere to see keyboard shortcuts'
-    );
+    // Settings holds settings only: the keys and the help pages live on
+    // the toolbar and in its menu.
+    expect(present('#settings #keyboardShortcutsButton')).toBe(false);
     expect(element('#changeBackgroundButton').textContent).toBe(
       'Change background'
-    );
-    expect(element<HTMLAnchorElement>('#twitterDescription').href).toBe(
-      'https://twitter.com/xxmichaellong'
     );
     expect(lobbyRoute().dataset.darkMode).toBe('false');
     await click('#changeBackgroundButton');
@@ -568,6 +586,7 @@ describe('remote room lobby wiring', () => {
       highContrast: false,
       darkMode: false,
       showZoneOutlines: false,
+      depth: expect.objectContaining({ mode: 'table' }),
     });
     expect(createRoom).not.toHaveBeenCalled();
     await closeSheet('settings');
@@ -1406,7 +1425,10 @@ describe('remote room lobby wiring', () => {
     expect(playOnlineOpen()).toBe(true);
     expect(element<HTMLInputElement>('#roomIdInput').value).toBe('');
     expect(present('.lobby-status')).toBe(false);
-    expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
+    expect(lobbyBoardHarness.preferences).toEqual({
+      ...retainedPreferences,
+      depth: expect.objectContaining({ mode: 'table' }),
+    });
     expect(lobbyRoute().style.backgroundImage).toBe(
       'url("https://images.example.test/retained.png")'
     );

@@ -96,14 +96,17 @@ const firstHandCard = (page: Page) =>
 for (const mode of ['flat', 'table'] as const)
   test.describe(`${mode} table`, () => {
     test.beforeEach(async ({ page }) => {
-      await page.addInitScript(
-        (mode) =>
-          localStorage.setItem(
-            'ptcgsim.table-depth.v1',
-            JSON.stringify({ mode })
-          ),
-        mode
-      );
+      await page.addInitScript((mode) => {
+        localStorage.setItem(
+          'ptcgsim.table-depth.v1',
+          JSON.stringify({ mode })
+        );
+        // The once-per-game markers are off by default; this table has them.
+        localStorage.setItem(
+          'ptcgsim.board-view.v1',
+          JSON.stringify({ vstarMarker: true, gxMarker: true })
+        );
+      }, mode);
     });
     test('the table answers actions while the room is silent, and keeps them when it replies', async ({
       page,

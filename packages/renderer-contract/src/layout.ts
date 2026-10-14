@@ -152,6 +152,12 @@ export interface BoardLayoutState {
    */
   readonly seamBandPx?: number;
   /**
+   * Geometry v2 only: how many once-per-game markers (VSTAR, GX) the viewer
+   * keeps on the table, 0 to 2. They are off by default (few formats use
+   * them); each half then keeps a spot for them beside its prizes.
+   */
+  readonly oncePerGameMarkers?: number;
+  /**
    * Geometry v2 only: how far a docked side panel (`shellMode: 'sidebar'`)
    * has slid in, 0 to 1, while it moves; the table gives up that share of
    * the panel's column. Absent means all the way.
@@ -253,6 +259,18 @@ export interface BoardPlayerLayout {
   readonly regions: readonly BoardLayoutRegion[];
   /** The viewer has hidden this half; it lies off the table and is not painted. */
   readonly hidden?: true;
+  /**
+   * Geometry v2 only: the optional pieces beside this half's prizes, in
+   * physical pixels -- where its VSTAR/GX markers sit when the viewer shows
+   * them, and the small control that adds or removes the optional pieces
+   * (the Lost Zone and the markers).
+   */
+  readonly extras?: BoardPlayerExtrasLayout;
+}
+
+export interface BoardPlayerExtrasLayout {
+  readonly markers?: Rect;
+  readonly control: Rect;
 }
 
 export interface BoardResizeHandleLayout {

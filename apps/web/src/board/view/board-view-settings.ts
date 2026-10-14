@@ -32,6 +32,12 @@ export interface BoardViewSettings {
    * it is off by default; a Lost Zone holding cards always shows.
    */
   readonly lostZone: boolean;
+  /**
+   * The once-per-game markers on the table, beside each player's prizes.
+   * Off by default: only some formats have VSTAR Powers or GX attacks.
+   */
+  readonly vstarMarker: boolean;
+  readonly gxMarker: boolean;
 }
 
 export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
@@ -41,6 +47,8 @@ export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   hideOpponentHand: false,
   hoverPreview: false,
   lostZone: false,
+  vstarMarker: false,
+  gxMarker: false,
 };
 
 const isShow = (value: unknown): value is BoardShowChoice =>
@@ -80,6 +88,11 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
       DEFAULT_BOARD_VIEW.hoverPreview
     ),
     lostZone: flag(Reflect.get(value, 'lostZone'), DEFAULT_BOARD_VIEW.lostZone),
+    vstarMarker: flag(
+      Reflect.get(value, 'vstarMarker'),
+      DEFAULT_BOARD_VIEW.vstarMarker
+    ),
+    gxMarker: flag(Reflect.get(value, 'gxMarker'), DEFAULT_BOARD_VIEW.gxMarker),
   };
 };
 
@@ -124,3 +137,7 @@ export const boardViewSettings = (): BoardViewSettingsStore => {
   pageStore ??= new BoardViewSettingsStore();
   return pageStore;
 };
+
+/** How many once-per-game markers the table keeps beside each player's prizes. */
+export const oncePerGameMarkerCount = (view: BoardViewSettings): number =>
+  (view.vstarMarker ? 1 : 0) + (view.gxMarker ? 1 : 0);

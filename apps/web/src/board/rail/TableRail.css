@@ -174,17 +174,11 @@
   font-size: var(--text-2xs);
 }
 
-/* Short of room (TableRail decides): icons only, the tooltips carry the
-   words; the action the table is waiting for keeps its label longest. */
-.ptcgsim-table-rail__actions[data-labels='primary']
-  .ptcgsim-rail-button:not([data-tone='primary'])
-  .ptcgsim-rail-button__label,
+/* The game actions are icons; the tooltips carry the words and keys. */
 .ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button__label {
   display: none;
 }
 
-.ptcgsim-table-rail__actions[data-labels='primary']
-  .ptcgsim-rail-button:not([data-tone='primary']),
 .ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button {
   width: var(--rail-height, 32px);
   padding: 0;

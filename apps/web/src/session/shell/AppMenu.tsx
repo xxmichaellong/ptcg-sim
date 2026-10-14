@@ -1,16 +1,21 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
+import { ChatCircleDotsIcon } from '@phosphor-icons/react/dist/csr/ChatCircleDots';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
+import type { Icon } from '@phosphor-icons/react';
 import { CornersInIcon } from '@phosphor-icons/react/dist/csr/CornersIn';
 import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
 import { FolderOpenIcon } from '@phosphor-icons/react/dist/csr/FolderOpen';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
+import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
 import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
+import { SidebarSimpleIcon } from '@phosphor-icons/react/dist/csr/SidebarSimple';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
@@ -18,7 +23,7 @@ import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
 import type { ReactNode } from 'react';
 
-import { RailButton } from '../../board/rail/TableRail.js';
+import { RailButton, useRailWidth } from '../../board/rail/TableRail.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
@@ -27,7 +32,16 @@ import {
   exitBrowserFullscreen,
   useBrowserFullscreen,
 } from '../browser-room-options.js';
-import { openHelpPage, RELEASE_NAME } from './help-pages.js';
+import { preferences } from '../../preferences/preference-store.js';
+import { usePreference } from '../../preferences/usePreference.js';
+import { Tooltip } from '../../ui/Tooltip.js';
+import {
+  CONTACT_URL,
+  DISCORD_URL,
+  openHelpPage,
+  RELEASE_NAME,
+} from './help-pages.js';
+import { SHELL_PREFERENCES } from './shell-preferences.js';
 
 /** What the app menu can do in the current room and mode. */
 export interface AppMenuModel {
@@ -54,14 +68,30 @@ export interface AppMenuModel {
   readonly onLeave?: () => void;
 }
 
-const entriesFor = (
+/** A toolbar button, and the same row in the folded menu. */
+interface ToolbarEntry {
+  readonly id: string;
+  readonly label: string;
+  readonly icon: Icon;
+  readonly hint?: string;
+  readonly onSelect: () => void;
+}
+
+/** Opens an outside page in a new tab, keeping this one. */
+const openOutside = (url: string): void => {
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+/**
+ * What the toolbar shows as buttons while it is open: where to play, the
+ * deck, the keys (not on a touch screen, which has none) and Settings.
+ */
+const primaryEntries = (
   model: AppMenuModel,
   shortcutsHint: string | undefined,
-  reloadHint: string | undefined,
-  touchOnly: boolean,
-  fullscreen: boolean
-): ActionMenuEntry[] => {
-  const entries: ActionMenuEntry[] = [];
+  touchOnly: boolean
+): ToolbarEntry[] => {
+  const entries: ToolbarEntry[] = [];
   if (model.onPlaySolo) {
     entries.push({
       id: 'p1Button',
@@ -70,30 +100,22 @@ const entriesFor = (
       onSelect: model.onPlaySolo,
     });
   }
-  if (model.onPlayOnline) {
-    entries.push({
-      id: 'p2Button',
-      label: 'Play online…',
-      icon: UsersThreeIcon,
-      onSelect: model.onPlayOnline,
-    });
-  }
   if (model.onDeck) {
     entries.push({
       id: 'deckImportButton',
-      label: 'Deck…',
+      label: 'Deck',
       icon: CardsIcon,
       onSelect: model.onDeck,
     });
   }
-  entries.push({
-    id: 'settingsButton',
-    label: 'Settings…',
-    icon: GearSixIcon,
-    onSelect: model.onSettings,
-  });
-  // A phone or a tablet without a pointer has no keys to list; Settings
-  // still reaches them for one with a keyboard attached.
+  if (model.onPlayOnline) {
+    entries.push({
+      id: 'p2Button',
+      label: 'Play online',
+      icon: UsersThreeIcon,
+      onSelect: model.onPlayOnline,
+    });
+  }
   if (!touchOnly) {
     entries.push({
       id: 'shortcutsButton',
@@ -103,7 +125,22 @@ const entriesFor = (
       onSelect: () => openShortcutsDialog(),
     });
   }
+  entries.push({
+    id: 'settingsButton',
+    label: 'Settings',
+    icon: GearSixIcon,
+    onSelect: model.onSettings,
+  });
+  return entries;
+};
 
+/** Everything else, behind the toolbar's last button. */
+const restEntries = (
+  model: AppMenuModel,
+  reloadHint: string | undefined,
+  fullscreen: boolean
+): ActionMenuEntry[] => {
+  const entries: ActionMenuEntry[] = [];
   const game = model.game;
   const gameEntries: ActionMenuEntry[] = [];
   if (game?.onExitReplay) {
@@ -151,8 +188,7 @@ const entriesFor = (
     });
   }
   if (gameEntries.length > 0) {
-    entries.push({ kind: 'separator' }, { kind: 'label', label: 'Game' });
-    entries.push(...gameEntries);
+    entries.push({ kind: 'label', label: 'Game' }, ...gameEntries);
   }
 
   const viewEntries: ActionMenuEntry[] = [];
@@ -184,20 +220,42 @@ const entriesFor = (
     });
   }
   if (viewEntries.length > 0) {
-    entries.push({ kind: 'separator' }, ...viewEntries);
+    if (entries.length > 0) entries.push({ kind: 'separator' });
+    entries.push(...viewEntries);
   }
 
+  if (entries.length > 0) entries.push({ kind: 'separator' });
   entries.push(
-    { kind: 'separator' },
+    { kind: 'label', label: 'Help' },
     {
+      id: 'tutorialButton',
       label: 'Tutorial',
       icon: PlayCircleIcon,
       onSelect: () => openHelpPage('tutorial'),
     },
     {
+      id: 'changelogButton',
       label: RELEASE_NAME,
       icon: SparkleIcon,
       onSelect: () => openHelpPage('changelog'),
+    },
+    {
+      id: 'donationsButton',
+      label: 'Sponsors & Donations',
+      icon: HeartIcon,
+      onSelect: () => openHelpPage('donations'),
+    },
+    {
+      id: 'discordButton',
+      label: 'Join our Discord',
+      icon: DiscordLogoIcon,
+      onSelect: () => openOutside(DISCORD_URL),
+    },
+    {
+      id: 'contactButton',
+      label: 'Ideas for a better table?',
+      icon: ChatCircleDotsIcon,
+      onSelect: () => openOutside(CONTACT_URL),
     }
   );
 
@@ -224,39 +282,118 @@ const entriesFor = (
   return entries;
 };
 
+/** A rail at least this wide shows the toolbar open beside the actions. */
+const TOOLBAR_MIN_RAIL_PX = 820;
+
+const tooltipFor = (label: string, hint?: string): ReactNode =>
+  hint ? (
+    <>
+      {label} <kbd className="ptcgsim-rail-tooltip-hint">{hint}</kbd>
+    </>
+  ) : (
+    label
+  );
+
 /**
- * The app menu (ADR-030), at the rail's left end: where to play, the deck,
- * settings, saves and replays, view and help. Everything that is not a game
- * action and not the log lives here; the log's own actions live with it.
+ * The app toolbar (ADR-030), at the rail's left end. Open, it shows the
+ * deck, where to play, the keys and Settings as buttons, with everything
+ * else -- saves and replays, view, help, leaving -- behind its last button.
+ * Folded (the player's choice, kept; or a rail too narrow for it), one
+ * menu button holds it all. Everything that is not a game action and not
+ * the log lives here; the log's own actions live with it.
  */
 export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
   const hint = useHotkeyHints();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const fullscreen = useBrowserFullscreen();
+  const shell = usePreference(SHELL_PREFERENCES);
+  const railWidth = useRailWidth();
+  const roomy = railWidth === undefined || railWidth >= TOOLBAR_MIN_RAIL_PX;
+  const open = roomy && !shell.toolbarCollapsed;
+  const primary = primaryEntries(model, hint('table.shortcuts'), touchOnly);
+  const rest = restEntries(model, hint('table.refreshImages'), fullscreen);
+  const fold = (collapsed: boolean): void =>
+    preferences().patch(SHELL_PREFERENCES, { toolbarCollapsed: collapsed });
+  const header = model.heading ? (
+    <div className="ptcgsim-app-menu-heading">{model.heading}</div>
+  ) : undefined;
+  if (!open) {
+    return (
+      <ActionMenu
+        label="Menu"
+        // Beside the button, centred on the seam, it has the window's whole
+        // height to use.
+        side="right"
+        align="center"
+        entries={[
+          ...primary,
+          { kind: 'separator' },
+          ...rest,
+          ...(roomy
+            ? ([
+                { kind: 'separator' },
+                {
+                  id: 'showToolbarButton',
+                  label: 'Show toolbar',
+                  icon: SidebarSimpleIcon,
+                  onSelect: () => fold(false),
+                },
+              ] satisfies ActionMenuEntry[])
+            : []),
+        ]}
+        {...(header ? { header } : {})}
+        trigger={
+          <RailButton
+            id="appMenuButton"
+            icon={ListIcon}
+            label="Menu"
+            iconOnly
+          />
+        }
+      />
+    );
+  }
   return (
-    <ActionMenu
-      label="Menu"
-      // Beside the button, centred on the seam, it has the window's whole
-      // height to use.
-      side="right"
-      align="center"
-      entries={entriesFor(
-        model,
-        hint('table.shortcuts'),
-        hint('table.refreshImages'),
-        touchOnly,
-        fullscreen
-      )}
-      {...(model.heading
-        ? {
-            header: (
-              <div className="ptcgsim-app-menu-heading">{model.heading}</div>
-            ),
-          }
-        : {})}
-      trigger={
-        <RailButton id="appMenuButton" icon={ListIcon} label="Menu" iconOnly />
-      }
-    />
+    <div className="ptcgsim-app-toolbar" role="toolbar" aria-label="App">
+      {primary.map((entry) => (
+        <Tooltip
+          key={entry.id}
+          content={tooltipFor(entry.label, entry.hint)}
+          side="top"
+        >
+          <RailButton
+            id={entry.id}
+            icon={entry.icon}
+            label={entry.label}
+            iconOnly
+            onClick={() => entry.onSelect()}
+          />
+        </Tooltip>
+      ))}
+      <ActionMenu
+        label="Menu"
+        side="right"
+        align="center"
+        entries={[
+          ...rest,
+          { kind: 'separator' },
+          {
+            id: 'hideToolbarButton',
+            label: 'Fold the toolbar',
+            icon: SidebarSimpleIcon,
+            onSelect: () => fold(true),
+          },
+        ]}
+        {...(header ? { header } : {})}
+        trigger={
+          <RailButton
+            id="appMenuButton"
+            icon={ListIcon}
+            label="Menu"
+            iconOnly
+          />
+        }
+      />
+    </div>
   );
 };

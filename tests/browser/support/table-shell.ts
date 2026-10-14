@@ -7,14 +7,26 @@ import { expect, type Page } from '@playwright/test';
  * them through these helpers, so a change to the shell changes one file.
  */
 
-/** Opens the app menu and waits for it. */
+/**
+ * Opens the app menu and waits for it: the toolbar's last button, or the
+ * one menu button of a folded toolbar.
+ */
 export const openAppMenu = async (page: Page): Promise<void> => {
   await page.locator('#appMenuButton').click();
   await expect(page.getByRole('menu', { name: 'Menu' })).toBeVisible();
 };
 
-/** Chooses an app-menu entry by its id (`settingsButton`, `exportState`). */
+/**
+ * Chooses an app entry by its id (`settingsButton`, `exportState`): a
+ * toolbar button directly, anything else from the menu.
+ */
 export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
+  await expect(page.locator('#appMenuButton')).toBeVisible();
+  const onToolbar = page.locator(`.ptcgsim-app-toolbar #${id}`);
+  if (await onToolbar.isVisible()) {
+    await onToolbar.click();
+    return;
+  }
   await openAppMenu(page);
   await page.locator(`#${id}`).click();
 };

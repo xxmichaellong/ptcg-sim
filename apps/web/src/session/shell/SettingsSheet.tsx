@@ -1,30 +1,18 @@
-import { ArrowSquareOutIcon } from '@phosphor-icons/react/dist/csr/ArrowSquareOut';
-import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
-import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
-import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
-import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
-import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
-import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { useSyncExternalStore } from 'react';
 
 import { TableViewControls } from '../../board/view/TableViewControls.js';
-import { chordKeycaps, detectKeyboardPlatform } from '../../hotkeys/chords.js';
-import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
-import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import {
   motionSettings,
   type AnimationSpeed,
   type ReduceMotionChoice,
 } from '../../motion/motion-settings.js';
 import {
-  LinkRow,
   SegmentedControl,
   SettingsSection,
   SwitchRow,
   type SegmentedChoice,
 } from '../../ui/FormControls.js';
 import { Sheet } from '../../ui/Sheet.js';
-import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 
 const REDUCE_MOTION_CHOICES: readonly SegmentedChoice<ReduceMotionChoice>[] = [
   { value: 'system', id: 'reduceMotionSystem', label: 'System' },
@@ -62,39 +50,6 @@ const MotionControls = () => {
           Instant keeps every action immediate, with no movement.
         </span>
       </SegmentedControl>
-    </>
-  );
-};
-
-const KeyboardRow = () => {
-  const keymap = useKeymap();
-  const changed = Object.keys(keymap.overrides).length;
-  const opener = keymap.chord('table.shortcuts');
-  return (
-    <>
-      <LinkRow
-        id="keyboardShortcutsButton"
-        icon={<KeyboardIcon aria-hidden="true" weight="duotone" />}
-        title="Keyboard shortcuts"
-        description={
-          changed > 0
-            ? `${String(changed)} changed · view or change your keys`
-            : 'View or change your keys'
-        }
-        trailing={<CaretRightIcon aria-hidden="true" />}
-        onClick={() => openShortcutsDialog()}
-      />
-      {opener ? (
-        <p id="keybindReminder" className="ptcgsim-form-hint">
-          Press{' '}
-          {chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
-            <kbd className="ds-kbd" key={cap}>
-              {cap}
-            </kbd>
-          ))}{' '}
-          anywhere to see keyboard shortcuts
-        </p>
-      ) : null}
     </>
   );
 };
@@ -169,57 +124,6 @@ export const SettingsSheet = ({
     </SettingsSection>
     <SettingsSection title="Motion" id="motionSettings">
       <MotionControls />
-    </SettingsSection>
-    <SettingsSection title="Controls">
-      <KeyboardRow />
-    </SettingsSection>
-    <SettingsSection title="About">
-      <LinkRow
-        icon={<SparkleIcon aria-hidden="true" weight="fill" />}
-        title={RELEASE_NAME}
-        onClick={() => openHelpPage('changelog')}
-      />
-      <LinkRow
-        icon={<PlayCircleIcon aria-hidden="true" weight="bold" />}
-        title="Tutorial"
-        onClick={() => openHelpPage('tutorial')}
-      />
-      <LinkRow
-        icon={<HeartIcon aria-hidden="true" weight="fill" />}
-        title="Sponsors & Donations"
-        onClick={() => openHelpPage('donations')}
-      />
-      <a
-        className="ptcgsim-link-row"
-        href={DISCORD_URL}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <span className="ptcgsim-link-row__icon">
-          <DiscordLogoIcon aria-hidden="true" weight="fill" />
-        </span>
-        <span className="ptcgsim-link-row__text">
-          <strong>Join our Discord</strong>
-        </span>
-        <span className="ptcgsim-link-row__trailing">
-          <ArrowSquareOutIcon aria-hidden="true" />
-        </span>
-      </a>
-      <a
-        id="twitterDescription"
-        className="ptcgsim-link-row"
-        href="https://twitter.com/xxmichaellong"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="ptcgsim-link-row__text">
-          <strong>Ideas for a better table?</strong>
-          <span>Get in touch: @xxmichaellong</span>
-        </span>
-        <span className="ptcgsim-link-row__trailing">
-          <ArrowSquareOutIcon aria-hidden="true" />
-        </span>
-      </a>
     </SettingsSection>
   </Sheet>
 );

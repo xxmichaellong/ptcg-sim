@@ -15,6 +15,7 @@ const TUTORIAL_EMBED_URL =
   'https://www.youtube.com/embed/t3qAhO_p3mk?si=jxysgkLxaAoaSw1I';
 export const REPOSITORY_URL = 'https://github.com/xxmichaellong/ptcg-sim';
 export const DISCORD_URL = 'https://discord.gg/jMfhQa38mh';
+export const CONTACT_URL = 'https://twitter.com/xxmichaellong';
 const GITHUB_SPONSORS_URL = 'https://github.com/sponsors/xxmichaellong?o=esc';
 const PAYPAL_URL =
   'https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4';

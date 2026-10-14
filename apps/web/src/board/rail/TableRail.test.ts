@@ -2,7 +2,7 @@ import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ActionMenuEntry } from '../../ui/ActionMenu.js';
-import { fitRailActions, railLabels, type RailAction } from './TableRail.js';
+import { fitRailActions, type RailAction } from './TableRail.js';
 
 const action = (
   id: string,
@@ -74,19 +74,5 @@ describe('fitting the rail', () => {
     const fitted = fitRailActions(actions, undefined, 2 * 46 + 6, 46);
     expect(fitted.shown.map((shown) => shown.id)).toEqual(['a']);
     expect(ids(fitted.more)).toEqual(['b', 'c']);
-  });
-
-  it('shows every label, the primary one, or none, by the room there is', () => {
-    const actions = [
-      action('Set up', 0, { primary: true }),
-      action('Coin'),
-      action('Undo'),
-    ];
-    expect(railLabels(actions, true, 800, 32)).toBe('all');
-    expect(railLabels(actions, true, 220, 32)).toBe('primary');
-    expect(railLabels(actions, true, 150, 32)).toBe('none');
-    expect(railLabels([action('Coin'), action('Undo')], false, 90, 32)).toBe(
-      'none'
-    );
   });
 });

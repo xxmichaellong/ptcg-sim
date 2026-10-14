@@ -5,15 +5,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { boardViewSettings } from '../../board/view/board-view-settings.js';
-import {
-  closeShortcutsDialog,
-  useShortcutsDialogState,
-} from '../../hotkeys/shortcuts-dialog-state.js';
+import { closeShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import {
   DEFAULT_MOTION_SETTINGS,
   motionSettings,
 } from '../../motion/motion-settings.js';
-import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
+import { closeHelpPage, HelpSheetHost } from './help-pages.js';
 import { SettingsSheet, type SettingsSheetProps } from './SettingsSheet.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -25,12 +22,6 @@ const settle = async (rounds = 3): Promise<void> => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
   }
-};
-
-let shortcutsOpen = false;
-const ShortcutsProbe = () => {
-  shortcutsOpen = useShortcutsDialogState().open;
-  return null;
 };
 
 let host: HTMLDivElement;
@@ -51,7 +42,6 @@ const render = async (props: Partial<SettingsSheetProps> = {}) => {
       <>
         <SettingsSheet {...full} />
         <HelpSheetHost />
-        <ShortcutsProbe />
       </>
     )
   );
@@ -89,7 +79,7 @@ afterEach(async () => {
 });
 
 describe('SettingsSheet', () => {
-  it('orders its sections by use: the table, the page, motion, keys, about', async () => {
+  it('holds settings only, by use: the table, the page, motion', async () => {
     await render();
     const sheet = document.querySelector<HTMLElement>('#settings')!;
     expect(sheet.dataset.variant).toBe('side');
@@ -98,7 +88,7 @@ describe('SettingsSheet', () => {
       [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
         (title) => title.textContent
       )
-    ).toEqual(['Table', 'Appearance', 'Motion', 'Controls', 'About']);
+    ).toEqual(['Table', 'Appearance', 'Motion']);
   });
 
   it('is not on the page while closed', async () => {
@@ -157,33 +147,5 @@ describe('SettingsSheet', () => {
     expect(motionSettings().getSnapshot().animationSpeed).toBe('fast');
     await act(async () => input('reduceMotionOn').click());
     expect(motionSettings().getSnapshot().reduceMotion).toBe('reduce');
-  });
-
-  it('opens the keyboard shortcuts and the help pages', async () => {
-    await render();
-    expect(document.querySelector('#keybindReminder')?.textContent).toBe(
-      'Press ? anywhere to see keyboard shortcuts'
-    );
-    expect(shortcutsOpen).toBe(false);
-    await act(async () =>
-      document
-        .querySelector<HTMLButtonElement>('#keyboardShortcutsButton')!
-        .click()
-    );
-    expect(shortcutsOpen).toBe(true);
-
-    const about = [
-      ...document.querySelectorAll<HTMLElement>('.ptcgsim-settings-section'),
-    ].at(-1)!;
-    const row = (title: string) =>
-      [...about.querySelectorAll<HTMLButtonElement>('button')].find(
-        (candidate) => candidate.textContent?.includes(title)
-      )!;
-    await act(async () => row(RELEASE_NAME).click());
-    await settle();
-    expect(document.querySelector('#changelog')).not.toBeNull();
-    expect(
-      document.querySelector<HTMLAnchorElement>('#twitterDescription')!.href
-    ).toBe('https://twitter.com/xxmichaellong');
   });
 });

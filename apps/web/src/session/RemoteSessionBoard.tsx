@@ -60,6 +60,7 @@ import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibil
 import {
   boardViewSettings,
   hiddenPhysicalSideFor,
+  oncePerGameMarkerCount,
   type BoardViewSettings,
 } from '../board/view/board-view-settings.js';
 import {
@@ -74,6 +75,10 @@ import { useReplaySession } from '../replay/useReplaySession.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
 import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
+import {
+  POINTER_SEAM_BAND_PX,
+  TOUCH_SEAM_BAND_PX,
+} from '../board/table-seam.js';
 import type { DockSlide } from './shell/dock-slide.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
@@ -122,13 +127,16 @@ const layoutFor = (
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
     ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
     ...(seamBandPx ? { seamBandPx } : {}),
+    ...(oncePerGameMarkerCount(boardView) > 0
+      ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
+      : {}),
   };
 };
 
 /**
  * Which rail actions keep their place on a short rail (a phone): what the
  * table is waiting for, then the turn, the coin and undo; the
- * announcements and Switch side go into More first.
+ * announcements and Flip go into More first.
  */
 export const RAIL_PRIORITY = {
   lead: 0,
@@ -175,9 +183,6 @@ export interface BoardCommands {
   /** Whether turning the table around is allowed here. */
   readonly canFlipBoard: () => boolean;
 }
-
-/** The seam's height under a finger: a rail of 44px targets. */
-export const TOUCH_SEAM_BAND_PX = 46;
 
 /** How long the Coin control may say it is waiting if no answer arrives. */
 const COIN_PENDING_CEILING_MS = 4_000;
@@ -297,6 +302,7 @@ export const RemoteSessionBoard = ({
   );
   const boardViewRef = useRef(boardView);
   boardViewRef.current = boardView;
+  const markerCount = oncePerGameMarkerCount(boardView);
   const preferences = useBoardParallax(hostRef, basePreferences);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
   // The hovered card, for the inspector; never part of game state.
@@ -320,9 +326,9 @@ export const RemoteSessionBoard = ({
     sidePanelSlide ? sidePanelSlide.value() : sidePanel ? 1 : 0;
   const sidePanelRef = useRef(sidePanelReveal);
   sidePanelRef.current = sidePanelReveal;
-  // Under a finger the rail's targets are 44px, so the seam opens to fit.
+  // The seam opens to fit the rail's buttons: 40px, 44px under a finger.
   const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
-  const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : undefined;
+  const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX;
   const seamBandRef = useRef(seamBandPx);
   seamBandRef.current = seamBandPx;
   const preferencesRef = useRef(preferences);
@@ -656,8 +662,15 @@ export const RemoteSessionBoard = ({
       ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
       hideEmptyLostZone: !boardView.lostZone,
       ...(seamBandPx ? { seamBandPx } : {}),
+      oncePerGameMarkers: markerCount,
     });
-  }, [boardView.split, boardView.show, boardView.lostZone, seamBandPx]);
+  }, [
+    boardView.split,
+    boardView.show,
+    boardView.lostZone,
+    markerCount,
+    seamBandPx,
+  ]);
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
@@ -901,6 +914,26 @@ export const RemoteSessionBoard = ({
     }),
     [boardView.lostZone, boardViewStore]
   );
+  // The once-per-game markers, off by default and kept on this device.
+  const markerControl = useMemo(
+    () => ({
+      vstar: boardView.vstarMarker,
+      gx: boardView.gxMarker,
+      onShownChange: (marker: 'vstar' | 'gx', shown: boolean) =>
+        boardViewStore.update(
+          marker === 'vstar' ? { vstarMarker: shown } : { gxMarker: shown }
+        ),
+      onToggle: chromeActions.toggleOncePerGame,
+    }),
+    [boardView.vstarMarker, boardView.gxMarker, boardViewStore, chromeActions]
+  );
+  const shownMarkers = useMemo(
+    () =>
+      (['vstar', 'gx'] as const).filter((marker) =>
+        marker === 'vstar' ? boardView.vstarMarker : boardView.gxMarker
+      ),
+    [boardView.vstarMarker, boardView.gxMarker]
+  );
   const playerActions =
     boardState?.source?.kind === 'live' &&
     boardState.canSubmitCommands &&
@@ -949,7 +982,8 @@ export const RemoteSessionBoard = ({
         ? {
             switchSide: {
               id: 'flipBoardButton',
-              label: 'Switch side',
+              label: 'Flip',
+              title: 'Flip the table',
               icon: ArrowsDownUpIcon,
               priority: RAIL_PRIORITY.switchSide,
               hint: hint('table.flipBoard'),
@@ -988,6 +1022,7 @@ export const RemoteSessionBoard = ({
               {...(chromeRail ? { rail: chromeRail } : {})}
               sortedHandPlayerIds={sortedHandPlayerIds}
               coveredByPopup={coveredByPopup}
+              oncePerGameMarkers={shownMarkers}
             />
           ) : null}
           {layout ? (
@@ -1000,6 +1035,7 @@ export const RemoteSessionBoard = ({
                 ? { loadDeck }
                 : {})}
               lostZone={lostZoneControl}
+              markers={markerControl}
               covered={coveredByPopup}
             />
           ) : null}

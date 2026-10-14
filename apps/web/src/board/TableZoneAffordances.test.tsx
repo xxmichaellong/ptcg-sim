@@ -89,6 +89,15 @@ const render = async (
   return layout;
 };
 
+/** Lets Base UI's menus open, close and move focus. */
+const settle = async (rounds = 3): Promise<void> => {
+  for (let index = 0; index < rounds; index += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+};
+
 const deckButton = (playerId: string) =>
   host.querySelector<HTMLButtonElement>(
     `[data-load-deck-player="${playerId}"]`
@@ -166,39 +175,67 @@ describe('TableZoneAffordances', () => {
     expect(deckButton(red)).toBeNull();
   });
 
-  it('adds the optional Lost Zone from beneath the discard pile', async () => {
-    const onShownChange = vi.fn();
+  it("adds the optional pieces from a small + in the viewer's staging area", async () => {
+    const lostZone = { shown: false, onShownChange: vi.fn() };
+    const markers = {
+      vstar: false,
+      gx: false,
+      onShownChange: vi.fn(),
+      onToggle: vi.fn(),
+    };
     const layout = await render(
       createEmptyBoardView(),
-      { lostZone: { shown: false, onShownChange } },
+      { lostZone, markers },
       layoutState({ hideEmptyLostZone: true })
     );
-    const add = host.querySelector<HTMLButtonElement>('#addLostZoneButton')!;
-    expect(add.getAttribute('aria-label')).toBe('Add the Lost Zone');
-    expect(add.textContent).toBe('Lost Zone');
-    expect(host.querySelector('#hideLostZoneButton')).toBeNull();
-    // Only on the viewer's own half, in the Lost Zone's slot.
-    expect(host.querySelectorAll('.table-zone-affordance')).toHaveLength(1);
-    const lostZone = layout.players
-      .find((frame) => frame.playerId === blue)!
-      .regions.find(
-        (region) => region.kind === 'lostZone'
-      )!.physicalDeclaredBounds;
-    const slot = add.closest<HTMLElement>('.table-zone-affordance')!;
-    expect(slot.classList).toContain('table-zone-affordance--lost-zone-add');
-    expect(Number.parseFloat(slot.style.top)).toBeCloseTo(lostZone.y, 6);
-    await act(async () => add.click());
-    expect(onShownChange).toHaveBeenCalledExactlyOnceWith(true);
+    // Only on the viewer's own half, inside its staging area.
+    const add = host.querySelectorAll<HTMLButtonElement>('#tableExtrasButton');
+    expect(add).toHaveLength(1);
+    expect(add[0]!.getAttribute('aria-label')).toBe('Add to the table');
+    const own = layout.players.find((frame) => frame.playerId === blue)!;
+    const board = own.regions.find(
+      (region) => region.kind === 'board'
+    )!.physicalDeclaredBounds;
+    const slot = add[0]!.closest<HTMLElement>('.table-zone-affordance')!;
+    const left = Number.parseFloat(slot.style.left);
+    const top = Number.parseFloat(slot.style.top);
+    expect(left).toBeGreaterThanOrEqual(board.x);
+    expect(top + Number.parseFloat(slot.style.height)).toBeLessThanOrEqual(
+      board.y + board.height
+    );
+
+    await act(async () => add[0]!.click());
+    await settle();
+    const items = [
+      ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
+    ].map((item) => item.id);
+    expect(items).toEqual([
+      'lostZoneToggle',
+      'vstarMarkerToggle',
+      'gxMarkerToggle',
+    ]);
+    await act(async () =>
+      document.querySelector<HTMLElement>('#lostZoneToggle')!.click()
+    );
+    expect(lostZone.onShownChange).toHaveBeenCalledExactlyOnceWith(true);
+    await act(async () => add[0]!.click());
+    await settle();
+    await act(async () =>
+      document.querySelector<HTMLElement>('#vstarMarkerToggle')!.click()
+    );
+    expect(markers.onShownChange).toHaveBeenCalledExactlyOnceWith(
+      'vstar',
+      true
+    );
   });
 
-  it('hides an empty Lost Zone again, and never one holding cards', async () => {
+  it('puts an empty Lost Zone away again, and never one holding cards', async () => {
     const onShownChange = vi.fn();
     await render(createEmptyBoardView(), {
       lostZone: { shown: true, onShownChange },
     });
     const hide = host.querySelector<HTMLButtonElement>('#hideLostZoneButton')!;
-    expect(hide.getAttribute('aria-label')).toBe('Hide the Lost Zone');
-    expect(host.querySelector('#addLostZoneButton')).toBeNull();
+    expect(hide.getAttribute('aria-label')).toBe('Put the Lost Zone away');
     await act(async () => hide.click());
     expect(onShownChange).toHaveBeenCalledExactlyOnceWith(false);
 
@@ -212,18 +249,80 @@ describe('TableZoneAffordances', () => {
         host.querySelector('#hideLostZoneButton'),
         String(shown)
       ).toBeNull();
-      expect(
-        host.querySelector('#addLostZoneButton'),
-        String(shown)
-      ).toBeNull();
+      // Holding cards, it stays: its entry in the + is on and cannot change.
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#tableExtrasButton')!.click()
+      );
+      await settle();
+      const entry = document.querySelector<HTMLElement>('#lostZoneToggle')!;
+      expect(entry.textContent, String(shown)).toContain('In use');
+      expect(entry.getAttribute('aria-disabled'), String(shown)).toBe('true');
+      await act(async () => root.render(<></>));
+      await settle();
     }
-    // The other seat's Lost Zone is theirs: only the viewer's own decides.
-    await render(
-      withCards(createEmptyBoardView(), red, 'lostZone', 2),
-      { lostZone: { shown: false, onShownChange } },
-      layoutState({ hideEmptyLostZone: true })
+  });
+
+  it("lays each player's markers on the mat beside their prizes", async () => {
+    const onToggle = vi.fn();
+    const view = createEmptyBoardView();
+    const used: MatchViewState = {
+      ...view,
+      players: {
+        ...view.players,
+        [red]: {
+          ...view.players[red]!,
+          oncePerGame: { ...view.players[red]!.oncePerGame, gxUsed: true },
+        },
+      },
+    };
+    const layout = await render(
+      used,
+      {
+        markers: {
+          vstar: true,
+          gx: true,
+          onShownChange: vi.fn(),
+          onToggle,
+        },
+      },
+      layoutState({ oncePerGameMarkers: 2 })
     );
-    expect(host.querySelector('#addLostZoneButton')).not.toBeNull();
+    const groups = [...host.querySelectorAll<HTMLElement>('.table-markers')];
+    expect(groups.map((group) => group.dataset.playerSide)).toEqual([
+      'local',
+      'opponent',
+    ]);
+    for (const frame of layout.players) {
+      const group = groups.find(
+        (candidate) =>
+          candidate.dataset.playerSide ===
+          (frame.playerId === blue ? 'local' : 'opponent')
+      )!;
+      expect(Number.parseFloat(group.style.left)).toBeCloseTo(
+        frame.extras!.markers!.x,
+        6
+      );
+    }
+    const redGx = host.querySelector<HTMLButtonElement>(
+      `[data-once-per-game-marker="gx"][data-player-id="${red}"]`
+    )!;
+    expect(redGx.getAttribute('aria-pressed')).toBe('true');
+    const blueVstar = host.querySelector<HTMLButtonElement>(
+      `[data-once-per-game-marker="vstar"][data-player-id="${blue}"]`
+    )!;
+    expect(blueVstar.getAttribute('aria-pressed')).toBe('false');
+    await act(async () => blueVstar.click());
+    expect(onToggle).toHaveBeenCalledExactlyOnceWith(blue, 'vstar');
+
+    // Off, as by default, there are none.
+    await render(
+      used,
+      {
+        markers: { vstar: false, gx: false, onShownChange: vi.fn(), onToggle },
+      },
+      layoutState()
+    );
+    expect(host.querySelector('.table-markers')).toBeNull();
   });
 
   it('offers nothing while a pile browser or work area covers the table', async () => {
@@ -234,5 +333,26 @@ describe('TableZoneAffordances', () => {
     });
     expect(host.querySelector('[data-table-zone-affordances]')).toBeNull();
     expect(host.childElementCount).toBe(0);
+
+    // The markers stay in view beneath it, faded and out of reach.
+    await render(
+      createEmptyBoardView(),
+      {
+        markers: {
+          vstar: true,
+          gx: false,
+          onShownChange: vi.fn(),
+          onToggle: vi.fn(),
+        },
+        covered: true,
+      },
+      layoutState({ oncePerGameMarkers: 1 })
+    );
+    expect(host.querySelector('#tableExtrasButton')).toBeNull();
+    const covered = [...host.querySelectorAll<HTMLElement>('.table-markers')];
+    expect(covered).toHaveLength(2);
+    expect(covered.every((group) => group.dataset.covered === 'true')).toBe(
+      true
+    );
   });
 });

@@ -17,6 +17,9 @@ import { TableRail, type RailAction } from './rail/TableRail.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { Tooltip } from '../ui/Tooltip.js';
 
+type OncePerGameMarker = 'vstar' | 'gx';
+const BOTH_MARKERS: readonly OncePerGameMarker[] = ['vstar', 'gx'];
+
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
 const ONCE_PER_GAME_TILE_PADDING = 4;
@@ -65,6 +68,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   handSorted,
   onToggleHandSort,
   table,
+  markers,
 }: {
   readonly frame: BoardPlayerLayout;
   readonly player: MatchViewState['players'][string];
@@ -75,6 +79,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
   /** The play-mat table: Sort is an icon toggle among the markers. */
   readonly table: boolean;
+  /** The markers this corner holds, VSTAR above GX. */
+  readonly markers: readonly OncePerGameMarker[];
 }) {
   // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
   // the text flipped back upright on the rotated opponent frame. The label
@@ -185,8 +191,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
             </label>
           </Tooltip>
         ) : null}
-        {button('vstar')}
-        {button('gx')}
+        {markers.includes('vstar') ? button('vstar') : null}
+        {markers.includes('gx') ? button('gx') : null}
       </div>
       {onToggleHandSort && !table && (
         <label
@@ -243,6 +249,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   sortedHandPlayerIds,
   coveredByPopup = false,
   depth,
+  oncePerGameMarkers = BOTH_MARKERS,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly depth?: BoardDepthProjection;
@@ -260,6 +267,13 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * and take no clicks until it closes.
    */
   readonly coveredByPopup?: boolean;
+  /**
+   * Which once-per-game markers the table shows (both, as v1 did, unless
+   * the viewer chose). On the play mat they lie beside the prizes where the
+   * layout has room (TableZoneAffordances); only where it has not do they
+   * keep the corner by the hand.
+   */
+  readonly oncePerGameMarkers?: readonly OncePerGameMarker[];
 }) {
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
@@ -325,6 +339,11 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             playerSide={frame.playerId === localPlayerId ? 'local' : 'opponent'}
             darkMode={darkMode}
             onToggle={actions.toggleOncePerGame}
+            markers={
+              layout.geometryVersion === 2 && frame.extras?.markers
+                ? []
+                : oncePerGameMarkers
+            }
             handSorted={sortedHandPlayerIds?.has(frame.playerId) ?? false}
             table={layout.geometryVersion === 2}
             onToggleHandSort={actions.toggleHandSort}

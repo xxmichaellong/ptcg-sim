@@ -237,6 +237,10 @@ export const RendererSpikeBoard = ({
       rendererFactoryRef.current = createRenderer;
       renderer = createRenderer(adapters);
       try {
+        // The first paint already wears the route's preferences (the tilt).
+        if (hasExplicitPreferencesRef.current) {
+          renderer.setPreferences(preferencesRef.current);
+        }
         await renderer.mount(host, initial.scene, presentationRef.current);
         if (disposed) return;
         if (hasExplicitPreferencesRef.current) {

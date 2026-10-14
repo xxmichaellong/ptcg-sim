@@ -47,10 +47,7 @@ import {
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
-import {
-  RemoteSessionBoard,
-  TOUCH_SEAM_BAND_PX,
-} from './RemoteSessionBoard.js';
+import { RemoteSessionBoard } from './RemoteSessionBoard.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import {
   RemoteRoomRestorationCustody,
@@ -61,6 +58,11 @@ import type { BrowserRoomBackgroundRequest } from './browser-room-background.js'
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import { probeContinuationAvailability } from './browser-continuation-availability.js';
 import { requestBrowserFullscreen } from './browser-room-options.js';
+import { useBoardLook } from './useBoardLook.js';
+import {
+  POINTER_SEAM_BAND_PX,
+  TOUCH_SEAM_BAND_PX,
+} from '../board/table-seam.js';
 import { useRoomBackground } from './useRoomBackground.js';
 import { AppMenu, type AppMenuModel } from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
@@ -359,32 +361,22 @@ export const RemoteRoomLobby = ({
   const effectivePreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
   const setDarkMode = (enabled: boolean): void =>
     store.patch(TABLE_PREFERENCES, { darkMode: enabled });
-  // Both lobby boards wear the Board view's outlines; each keeps its own
-  // default look otherwise.
-  const boardPreferences = useMemo(
-    () => ({
-      ...(preferences ?? ROOM_DEFAULT_PREFERENCES),
-      showZoneOutlines: boardView.zoneOutlines,
-    }),
-    [preferences, boardView.zoneOutlines]
+  // Both lobby boards wear the table's look as the room will (its view,
+  // outlines and motion), each over its own default preferences, so the
+  // table keeps its tilt when the room takes over.
+  const boardPreferences = useBoardLook(
+    preferences ?? ROOM_DEFAULT_PREFERENCES
   );
   const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
   const emptyTable = useMemo(
     () => ({
       lowerShare: boardView.split,
-      ...(coarsePointer ? { seamBandPx: TOUCH_SEAM_BAND_PX } : {}),
+      seamBandPx: coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX,
     }),
     [boardView.split, coarsePointer]
   );
-  const emptyBoardPreferences = useMemo(
-    () =>
-      preferences || !boardView.zoneOutlines
-        ? {
-            ...(preferences ?? DEFAULT_BOARD_PREFERENCES),
-            showZoneOutlines: boardView.zoneOutlines,
-          }
-        : undefined,
-    [preferences, boardView.zoneOutlines]
+  const emptyBoardPreferences = useBoardLook(
+    preferences ?? DEFAULT_BOARD_PREFERENCES
   );
 
   // The lobby page wears the table's theme (Night or Day) like the room
@@ -1171,9 +1163,7 @@ export const RemoteRoomLobby = ({
                 actions={[]}
               />
             )}
-            {...(emptyBoardPreferences
-              ? { preferences: emptyBoardPreferences }
-              : {})}
+            preferences={emptyBoardPreferences}
           />
         )
       }

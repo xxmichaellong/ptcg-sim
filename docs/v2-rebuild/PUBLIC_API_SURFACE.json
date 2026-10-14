@@ -1306,6 +1306,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardPlayerExtrasLayout",
+              "kind": "type"
+            },
+            {
               "name": "BoardPlayerLayout",
               "kind": "type"
             },

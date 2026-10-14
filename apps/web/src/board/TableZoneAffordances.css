@@ -82,62 +82,159 @@
   outline-offset: 2px;
 }
 
-/* ---- The optional Lost Zone ------------------------------------------- */
+/* ---- The optional pieces: the Lost Zone and the markers ---------------- */
 
-/* Added from just beneath the discard pile: a ghost of the pile, in the
-   spot where the Lost Zone would sit. */
-.table-zone-affordance--lost-zone-add {
+/* Their `+`: a small round button in the viewer's staging area, by the
+   prizes, that opens what can be added or taken away. */
+.table-zone-affordance--extras {
   place-items: stretch;
 }
 
-.table-zone-ghost {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+.table-zone-extras {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 2px;
-  border: 1.5px dashed var(--color-felt-line-strong, var(--color-border-strong));
-  border-radius: var(--ptcgsim-card-radius, var(--radius-md));
-  background: transparent;
+  padding: 0;
+  border: 1px solid var(--color-felt-line-strong, var(--color-border-strong));
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--color-surface-2) 55%, transparent);
   color: var(--color-felt-label, var(--color-text-muted));
-  font-family: var(--font-ui);
-  font-size: clamp(8px, 1.1vmin, 11px);
-  font-weight: var(--weight-semibold);
-  line-height: 1.1;
-  text-align: center;
+  font-size: 14px;
   cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.75;
   -webkit-tap-highlight-color: transparent;
   transition:
     opacity var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out);
 }
 
-.table-zone-ghost svg {
-  width: 1.8em;
-  height: 1.8em;
+/* A finger's worth of target around the small button. */
+.table-zone-extras::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+.table-zone-extras[aria-expanded='true'] {
+  opacity: 1;
+  color: var(--color-text);
+  background-color: var(--color-surface-3);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .table-zone-ghost:hover {
-    background: color-mix(in oklab, var(--color-surface-2) 60%, transparent);
-    color: var(--color-text);
+  .table-zone-extras:hover {
     opacity: 1;
+    color: var(--color-text);
+    background-color: var(--color-surface-3);
   }
 }
 
-.table-zone-ghost:active {
+.table-zone-extras:active {
   scale: var(--control-press-scale);
 }
 
-.table-zone-ghost:focus-visible {
+.table-zone-extras:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* The markers lie on the mat beside the prizes, VSTAR nearest the centre
+   line: the real tiles, face down once used. */
+.table-markers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.table-markers[data-order='up'] {
+  flex-direction: column-reverse;
+}
+
+.table-markers[data-covered='true'] {
+  opacity: 0.35;
+}
+
+.table-markers[data-covered='true'] > * {
+  pointer-events: none;
+}
+
+.table-marker {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: 100%;
+  aspect-ratio: var(--table-marker-aspect, 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  perspective: 240px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out);
+}
+
+.table-marker:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.table-marker .once-per-game-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--duration-slow) var(--ease-snappy);
+}
+
+.table-marker[aria-pressed='true'] .once-per-game-tile {
+  transform: rotateY(180deg);
+}
+
+.table-marker .once-per-game-tile__face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.table-marker .once-per-game-tile__face--back {
+  transform: rotateY(180deg);
+}
+
+.table-marker .once-per-game-tile__face > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.45));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-marker:hover {
+    translate: 0 -1px;
+  }
+}
+
+.table-marker:active {
+  scale: 0.96;
+}
+
+:root[data-motion='reduced'] .table-marker,
+:root[data-motion='reduced'] .table-marker .once-per-game-tile {
+  transition: none;
 }
 
 /* Hidden again from its corner while it is empty. */

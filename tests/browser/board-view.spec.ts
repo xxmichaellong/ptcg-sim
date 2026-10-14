@@ -255,7 +255,8 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
 }) => {
   test.setTimeout(120_000);
   await openSoloTable(page);
-  const menuButton = page.locator('#appMenuButton');
+  // Settings is on the open toolbar.
+  const settingsButton = page.locator('.ptcgsim-app-toolbar #settingsButton');
   await openSettings(page);
   await expect(page.locator('#settingsTable #boardShowBoth')).toBeAttached();
   await page.locator('#boardShowMine').focus();
@@ -270,8 +271,8 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
   );
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
-  // Focus goes back to the menu's own button, not lost on the page.
-  await expect(menuButton).toBeFocused();
+  // Focus goes back to the button that opened it, not lost on the page.
+  await expect(settingsButton).toBeFocused();
   // A press outside puts Settings away too.
   await openSettings(page);
   await page.mouse.click(400, 450);

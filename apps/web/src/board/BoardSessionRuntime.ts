@@ -117,6 +117,7 @@ const sameLayoutState = (
   (left.hideEmptyLostZone ?? false) === (right.hideEmptyLostZone ?? false) &&
   (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
   (left.sidePanelReveal ?? 1) === (right.sidePanelReveal ?? 1) &&
+  (left.oncePerGameMarkers ?? 0) === (right.oncePerGameMarkers ?? 0) &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -487,11 +488,13 @@ export class BoardSessionRuntime {
     readonly hiddenPhysicalSide?: BoardPhysicalSide;
     readonly hideEmptyLostZone?: boolean;
     readonly seamBandPx?: number;
+    readonly oncePerGameMarkers?: number;
   }): void {
     const {
       hiddenPhysicalSide: _previous,
       hideEmptyLostZone: _lostZone,
       seamBandPx: _seam,
+      oncePerGameMarkers: _markers,
       ...rest
     } = this.layoutState;
     this.replaceLayoutState({
@@ -502,6 +505,9 @@ export class BoardSessionRuntime {
         : {}),
       ...(view.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
       ...(view.seamBandPx ? { seamBandPx: view.seamBandPx } : {}),
+      ...(view.oncePerGameMarkers
+        ? { oncePerGameMarkers: view.oncePerGameMarkers }
+        : {}),
     });
   }
 
@@ -646,6 +652,8 @@ export class BoardSessionRuntime {
     const initialPresentation = this.desiredPresentation;
     if (!renderer || !host || !initialScene) return;
     this.rendererMountError = undefined;
+    // The first paint already wears the player's preferences (the tilt).
+    if (this.preferences) renderer.setPreferences(this.preferences);
     this.rendererMountTask = renderer
       .mount(host, initialScene, initialPresentation)
       .then(() => {
