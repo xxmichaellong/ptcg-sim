@@ -21,6 +21,19 @@ export interface TableCamera {
   readonly offsetY: number;
 }
 
+/** The steepest a player may tilt the table, in degrees. */
+export const TABLE_TILT_MAXIMUM = 35;
+/**
+ * How far the eye sits from the table, as a multiple of the window's
+ * diagonal: about a 37° lens, like looking down at a mat on a desk.
+ */
+export const TABLE_LENS = 1.5;
+/**
+ * A card's thickness as a share of its width: a sleeved card, so a
+ * sixty-card deck stands about half a card wide.
+ */
+export const TABLE_CARD_THICKNESS = 0.008;
+
 const finite = (value: number, fallback: number): number =>
   Number.isFinite(value) ? value : fallback;
 const bounded = (value: number, minimum: number, maximum: number): number =>
@@ -35,12 +48,22 @@ export const createTableCamera = (options: {
   readonly margin?: number;
   readonly maximumElevation?: number;
   readonly viewpoint?: TablePoint;
+  /**
+   * What must fit in the window once tilted: the table's zones. The hands
+   * stay flat along the edges, so the mat may reach under them. The whole
+   * window when absent.
+   */
+  readonly fitBounds?: Rect;
+  /** The eye's distance as a multiple of the window's diagonal. */
+  readonly lens?: number;
 }): TableCamera => {
   const width = Math.max(1, finite(options.width, 1));
   const height = Math.max(1, finite(options.height, 1));
   const radians =
     options.mode === 'table'
-      ? (bounded(finite(options.tiltDegrees ?? 10, 10), 0, 18) * Math.PI) / 180
+      ? (bounded(finite(options.tiltDegrees ?? 10, 10), 0, TABLE_TILT_MAXIMUM) *
+          Math.PI) /
+        180
       : 0;
   const camera: TableCamera = {
     width,
@@ -48,7 +71,11 @@ export const createTableCamera = (options: {
     sine: Math.sin(radians),
     cosine: Math.cos(radians),
     inverseDistance:
-      options.mode === 'table' ? 1 / (Math.max(width, height) * 2) : 0,
+      options.mode === 'table'
+        ? 1 /
+          (bounded(finite(options.lens ?? TABLE_LENS, TABLE_LENS), 0.8, 4) *
+            Math.hypot(width, height))
+        : 0,
     skewX:
       (options.mode === 'depth' ? -0.14 : 0) +
       (options.mode === 'flat'
@@ -69,12 +96,24 @@ export const createTableCamera = (options: {
     0,
     Math.min(width, height) * 0.25
   );
+  const fit =
+    options.fitBounds &&
+    [
+      options.fitBounds.x,
+      options.fitBounds.y,
+      options.fitBounds.width,
+      options.fitBounds.height,
+    ].every(Number.isFinite) &&
+    options.fitBounds.width > 0 &&
+    options.fitBounds.height > 0
+      ? options.fitBounds
+      : { x: 0, y: 0, width, height };
   const points = [0, maximumElevation].flatMap((z) =>
     [
-      { x: 0, y: 0, z },
-      { x: width, y: 0, z },
-      { x: width, y: height, z },
-      { x: 0, y: height, z },
+      { x: fit.x, y: fit.y, z },
+      { x: fit.x + fit.width, y: fit.y, z },
+      { x: fit.x + fit.width, y: fit.y + fit.height, z },
+      { x: fit.x, y: fit.y + fit.height, z },
     ].map((point) => projectTablePoint(camera, point))
   );
   const minX = Math.min(...points.map((point) => point.x));
@@ -151,15 +190,22 @@ export const unprojectTablePoint = (
   };
 };
 
+/**
+ * A point on a card's face in the table's space. `flip` turns the card
+ * about its long axis (radians; 0 lies flat, ±π/2 stands on its edge), as
+ * a card is turned over by hand. The face stays a plane, so its projection
+ * is still one homography and picking inverts it exactly.
+ */
 const cardPoint = (
   bounds: Rect,
   quarterTurns: number,
   x: number,
   y: number,
-  z: number
+  z: number,
+  flip = 0
 ): TablePoint3D => {
   const radians = (quarterTurns * Math.PI) / 2;
-  const dx = x - bounds.width / 2;
+  const dx = (x - bounds.width / 2) * Math.cos(flip);
   const dy = y - bounds.height / 2;
   return {
     x:
@@ -172,7 +218,7 @@ const cardPoint = (
       bounds.height / 2 +
       dx * Math.sin(radians) +
       dy * Math.cos(radians),
-    z,
+    z: z + (x - bounds.width / 2) * Math.sin(flip),
   };
 };
 
@@ -199,19 +245,20 @@ export const tableCardMatrix = (
   camera: TableCamera,
   bounds: Rect,
   elevation: number,
-  quarterTurns = 0
+  quarterTurns = 0,
+  flip = 0
 ): readonly number[] => {
   const origin = homogeneous(
     camera,
-    cardPoint(bounds, quarterTurns, 0, 0, elevation)
+    cardPoint(bounds, quarterTurns, 0, 0, elevation, flip)
   );
   const across = homogeneous(
     camera,
-    cardPoint(bounds, quarterTurns, 1, 0, elevation)
+    cardPoint(bounds, quarterTurns, 1, 0, elevation, flip)
   ).map((value, index) => value - origin[index]!);
   const down = homogeneous(
     camera,
-    cardPoint(bounds, quarterTurns, 0, 1, elevation)
+    cardPoint(bounds, quarterTurns, 0, 1, elevation, flip)
   ).map((value, index) => value - origin[index]!);
   return [
     across[0]!,
@@ -246,7 +293,7 @@ export const tablePileHeight = (
   return (
     layers *
     Math.max(0, finite(cardWidth, 0)) *
-    0.0055 *
+    TABLE_CARD_THICKNESS *
     bounded(finite(strength, 1), 0, 2)
   );
 };

@@ -13,6 +13,7 @@ import type {
 } from './model.js';
 import {
   createTableCamera,
+  TABLE_TILT_MAXIMUM,
   projectTablePoint,
   tableCardMatrix,
   unprojectTablePoint,
@@ -24,11 +25,12 @@ import {
 export type { BoardDepthPreferences } from './model.js';
 export const DEFAULT_BOARD_DEPTH: BoardDepthPreferences = Object.freeze({
   mode: 'flat',
-  tilt: 9,
+  tilt: 22,
   strength: 1,
   lift: true,
   animate: true,
   parallax: false,
+  scatter: true,
 });
 export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
   if (!value || typeof value !== 'object') return DEFAULT_BOARD_DEPTH;
@@ -41,12 +43,22 @@ export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
   const mode = Reflect.get(value, 'mode');
   return {
     mode: mode === 'depth' || mode === 'table' ? mode : 'flat',
-    tilt: number('tilt', 9, 18),
+    tilt: number('tilt', DEFAULT_BOARD_DEPTH.tilt, TABLE_TILT_MAXIMUM),
     strength: number('strength', 1, 2),
     lift: Reflect.get(value, 'lift') !== false,
     animate: Reflect.get(value, 'animate') !== false,
     parallax: Reflect.get(value, 'parallax') === true,
+    scatter: Reflect.get(value, 'scatter') !== false,
   };
+};
+
+/** A number in [0, 1) that a key always gives, for a card's resting lie. */
+const keyedUnit = (key: string, salt: number): number => {
+  let hash = 2166136261 ^ salt;
+  for (let index = 0; index < key.length; index += 1) {
+    hash = Math.imul(hash ^ key.charCodeAt(index), 16777619);
+  }
+  return ((hash >>> 0) % 10007) / 10007;
 };
 
 /** A physical face. Plane blends from the flat hand (0) to the table (1). */
@@ -56,6 +68,8 @@ export interface TableCardPose {
   readonly elevation: number;
   readonly thickness: number;
   readonly plane: number;
+  /** Turned about its long axis while being turned over (radians). */
+  readonly flip?: number;
 }
 export const tablePoseMatrix = (
   camera: TableCamera,
@@ -65,7 +79,8 @@ export const tablePoseMatrix = (
     camera,
     pose.bounds,
     pose.elevation,
-    pose.turns
+    pose.turns,
+    pose.flip ?? 0
   );
   if (pose.plane === 1) return projected;
   const flat = tableCardMatrix(
@@ -194,18 +209,55 @@ export const tablePoseEdges = (
       );
     }
   ).join('');
+  // Two shadows, as a card under a lamp has: a dark contact shadow right
+  // beneath it that is gone once it lifts, and a soft cast shadow that
+  // slides away, spreads and fades as it rises. The light is to the upper
+  // left, as the markers and the card glare assume.
+  const above = Math.max(0, pose.elevation - pose.thickness);
   const shadow = path(
     localQuad({
       ...pose,
       elevation: 0,
+      flip: 0,
       bounds: {
         ...pose.bounds,
-        x: pose.bounds.x + pose.elevation * 0.05,
-        y: pose.bounds.y + 1.4 + pose.elevation * 0.09,
+        x: pose.bounds.x + 0.1 * above,
+        y: pose.bounds.y + 1.2 + 0.22 * above,
       },
     })
   );
-  return { sides, lines, shadow };
+  const contact = path(
+    localQuad({
+      ...pose,
+      elevation: 0,
+      flip: 0,
+      bounds: { ...pose.bounds, y: pose.bounds.y + 0.6 },
+    })
+  );
+  return { sides, lines, shadow, contact, above };
+};
+
+/**
+ * How a card's two shadows look at a height above the table: the cast
+ * shadow's blur and strength, and the contact shadow's strength.
+ */
+export const tableShadowStyle = (
+  above: number,
+  cardWidth: number
+): {
+  readonly castBlur: number;
+  readonly castOpacity: number;
+  readonly contactOpacity: number;
+} => {
+  const width = Math.max(1, cardWidth);
+  const rise = Math.max(0, above);
+  return {
+    // Resting cards keep a crisp shadow: a blur on every card on the table
+    // would cost more than it shows.
+    castBlur: rise < 1 ? 0 : Math.min(18, 0.02 * width + 0.25 * rise),
+    castOpacity: 0.32 - 0.18 * Math.min(1, rise / width),
+    contactOpacity: 0.45 * Math.max(0, 1 - rise / (0.15 * width)),
+  };
 };
 
 /** Shared between renderers and overlays; it only reads recipient-safe scenes. */
@@ -215,7 +267,8 @@ export class BoardDepthProjection {
   readonly enabled: boolean;
   readonly poses = new Map<ViewCardId, TableCardPose>();
   readonly pileCounts = new Map<ViewCardId, number>();
-  readonly lift: number;
+  /** How high a held card rises, as a share of its width (0 when off). */
+  readonly liftRatio: number;
   private readonly hands: readonly Rect[];
   private readonly painted: readonly CardSceneNode[];
 
@@ -225,11 +278,46 @@ export class BoardDepthProjection {
   ) {
     this.settings = parseBoardDepth(preferences.depth);
     this.enabled = this.settings.mode !== 'flat';
+    // The tilted table must fit the window between the hands, which stay
+    // flat along its edges, with a full deck standing on it. Both come from
+    // the layout alone: a camera that moved with every draw would shift the
+    // whole table and stop every card in flight.
+    const centre = scene.viewport.height / 2;
+    const handStrips = scene.zones.filter((zone) => zone.kind === 'hand');
+    const fitTop = Math.max(
+      0,
+      ...handStrips
+        .filter((zone) => zone.bounds.y + zone.bounds.height / 2 < centre)
+        .map((zone) => zone.bounds.y + zone.bounds.height)
+    );
+    const fitBottom = Math.min(
+      scene.viewport.height,
+      ...handStrips
+        .filter((zone) => zone.bounds.y + zone.bounds.height / 2 >= centre)
+        .map((zone) => zone.bounds.y)
+    );
+    const fitBounds =
+      fitBottom > fitTop
+        ? {
+            x: 0,
+            y: fitTop,
+            width: scene.viewport.width,
+            height: fitBottom - fitTop,
+          }
+        : undefined;
+    const deckWidth = Math.max(
+      0,
+      ...scene.zones
+        .filter((zone) => zone.kind === 'deck')
+        .map((zone) => zone.bounds.width)
+    );
+    const fullDeck = tablePileHeight(60, deckWidth, this.settings.strength);
     this.camera = createTableCamera({
       ...scene.viewport,
       mode: this.settings.mode,
       tiltDegrees: this.settings.tilt,
-      maximumElevation: Math.min(90, scene.viewport.height * 0.1),
+      maximumElevation: fullDeck,
+      ...(fitBounds ? { fitBounds } : {}),
       margin: this.enabled ? 8 : 0,
       ...(this.settings.parallax &&
       !preferences.reducedMotion &&
@@ -238,13 +326,10 @@ export class BoardDepthProjection {
         ? { viewpoint: preferences.viewpoint }
         : {}),
     });
-    this.lift =
-      this.enabled &&
-      this.settings.lift &&
-      !preferences.reducedMotion &&
-      preferences.animationSpeed !== 0
-        ? 28 * this.settings.strength
-        : 0;
+    // A held card rises about half its width, enough to read as picked up.
+    // With reduced motion it is still raised, only without moving there.
+    this.liftRatio =
+      this.enabled && this.settings.lift ? 0.45 * this.settings.strength : 0;
     this.hands = scene.zones
       .filter((zone) => zone.kind === 'hand')
       .map((zone) => zone.bounds);
@@ -290,9 +375,31 @@ export class BoardDepthProjection {
           ? level * unit
           : unit;
       if (pile) this.pileCounts.set(card.id, zone.count);
+      // A card put down by hand lies a touch askew: a fraction of a degree
+      // (more for Prizes, dealt face down in a hurry) and a hair off true.
+      // The same card always lies the same way; piles, the hand and joined
+      // panels stay square.
+      const scattered =
+        this.enabled &&
+        this.settings.scatter !== false &&
+        !flat &&
+        !pile &&
+        card.renderKey !== null &&
+        card.composition?.kind !== 'joined';
+      const key = card.renderKey ?? '';
+      const degrees = zone?.kind === 'prizes' ? 1.2 : 0.6;
+      const spread = card.bounds.width * 0.005;
       this.poses.set(card.id, {
-        bounds: card.bounds,
-        turns: card.rotationQuarterTurns,
+        bounds: scattered
+          ? {
+              ...card.bounds,
+              x: card.bounds.x + (keyedUnit(key, 1) - 0.5) * 2 * spread,
+              y: card.bounds.y + (keyedUnit(key, 2) - 0.5) * 2 * spread,
+            }
+          : card.bounds,
+        turns:
+          card.rotationQuarterTurns +
+          (scattered ? ((keyedUnit(key, 3) - 0.5) * 2 * degrees) / 90 : 0),
         elevation,
         thickness,
         plane: flat ? 0 : 1,
@@ -323,12 +430,17 @@ export class BoardDepthProjection {
         y: hold.y - base.bounds.height / 2,
       },
       plane: this.enabled ? 1 : base.plane,
-      elevation: base.elevation + (drag ? this.lift : 0),
+      elevation: base.elevation + (drag ? this.liftFor(base.bounds.width) : 0),
       thickness: Math.min(
         base.thickness,
         tablePileHeight(1, base.bounds.width, this.settings.strength)
       ),
     };
+  }
+
+  /** How high a held card of this width rises. */
+  liftFor(cardWidth: number): number {
+    return this.liftRatio * cardWidth;
   }
 
   point(point: TablePoint, elevation = 0, flat = false): TablePoint {

@@ -9,6 +9,7 @@ import {
   tablePoseLocalPoint,
   tablePoseEdges,
   tablePileHeight,
+  tableShadowStyle,
   sameTablePose,
   type TableCardPose,
   type TableCamera,
@@ -671,13 +672,29 @@ const CardDepthGeometry = ({
   bands: number;
 }) => {
   const paths = tablePoseEdges(camera, pose, bands);
+  const shadow = tableShadowStyle(paths.above, pose.bounds.width);
   return (
     <svg
       className="ptcgsim-card__depth"
       viewBox={`0 0 ${pose.bounds.width} ${pose.bounds.height}`}
       aria-hidden="true"
     >
-      <path data-depth-shadow="" d={paths.shadow} />
+      <path
+        data-depth-contact=""
+        d={paths.contact}
+        style={{ opacity: shadow.contactOpacity }}
+      />
+      <path
+        data-depth-shadow=""
+        d={paths.shadow}
+        style={{
+          opacity: shadow.castOpacity,
+          filter:
+            shadow.castBlur > 0
+              ? `blur(${shadow.castBlur.toFixed(2)}px)`
+              : 'none',
+        }}
+      />
       <path data-depth-side="" d={paths.sides} />
       <path data-depth-lines="" d={paths.lines} />
     </svg>
@@ -921,6 +938,7 @@ export const BoardSurface = ({
   };
   const clearHover = () => {
     tilt.leave();
+    director.depth.hover(null);
     if (hoveredRef.current) {
       hoveredRef.current = null;
       scheduleHoverReport();
@@ -973,6 +991,10 @@ export const BoardSurface = ({
     } else {
       tilt.leave();
     }
+    if (depth)
+      director.depth.hover(
+        card.interactive && card.renderKey ? card.renderKey : null
+      );
     // Only a card the table paints face up may be read large: the deck
     // cover is a back even when its owner can read the deck in the viewer.
     if (paintsBack(card)) {
@@ -1114,10 +1136,18 @@ export const BoardSurface = ({
             v * source.bounds.height * Math.cos(angle),
         };
       } else {
+        // Solve at the height the card is painted at, so it stays under the
+        // pointer while it rises.
+        const painted = source.renderKey
+          ? director.depth.current(source.renderKey)
+          : undefined;
         grabPoint = depth.cardPoint(source, point, {
           ...base,
           plane: 1,
-          elevation: base.elevation + depth.lift,
+          elevation:
+            painted && painted.plane === 1
+              ? painted.elevation
+              : base.elevation + depth.liftFor(base.bounds.width),
         });
       }
       const hit = depth.drop(point, source.id, (card) =>
@@ -1176,6 +1206,17 @@ export const BoardSurface = ({
               card.parentId === dragTargetId && card.role === 'stackEvolution'
           )
           .sort((left, right) => right.zIndex - left.zIndex)[0]?.id ?? null);
+
+  const frames = scene.layout.players
+    .filter((frame) => !frame.hidden)
+    .map((frame) => (
+      <PlayerFrameNode
+        key={frame.playerId}
+        frame={frame}
+        darkMode={preferences.darkMode}
+        table={table}
+      />
+    ));
 
   return (
     <div
@@ -1345,18 +1386,14 @@ export const BoardSurface = ({
               height: scene.viewport.height,
               transform: `matrix3d(${tableCardMatrix(depth.camera, { x: 0, y: 0, width: scene.viewport.width, height: scene.viewport.height }, 0).join(',')})`,
             }}
-          />
-        ) : null}
-        {scene.layout.players
-          .filter((frame) => !frame.hidden)
-          .map((frame) => (
-            <PlayerFrameNode
-              key={frame.playerId}
-              frame={frame}
-              darkMode={preferences.darkMode}
-              table={table}
-            />
-          ))}
+          >
+            {/* The halves' tints and the seam are printed on the mat, so
+                they lie on it however it is tilted. */}
+            {frames}
+          </div>
+        ) : (
+          frames
+        )}
         {/* The table's split is set from the board view, not dragged. */}
         {table
           ? null

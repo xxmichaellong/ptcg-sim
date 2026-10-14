@@ -34,6 +34,7 @@ import { OverlayHost } from '../ui/OverlayHost.js';
 import { dismissToast, toast } from '../ui/toast.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import type { RemoteSessionBoard as RealRemoteSessionBoard } from './RemoteSessionBoard.js';
+import { DEFAULT_TABLE_DEPTH } from '../motion/depth-settings.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { SHELL_PREFERENCES } from './shell/shell-preferences.js';
@@ -793,7 +794,8 @@ describe('RemoteRoomRoute', () => {
       const { root } = await mountRoute(route(false));
       const main = get('main');
       expect(main.dataset.appRoute).toBe('remote-room');
-      expect(main.dataset.sessionPhase).toBeUndefined();
+      // Every room says where its session stands, for specs to wait on.
+      expect(main.dataset.sessionPhase).toBe('connecting');
       expect(document.body.textContent).not.toContain(admissionTicket);
       // Nothing to press before the room seats us.
       expect(railIds()).toEqual([]);
@@ -820,7 +822,7 @@ describe('RemoteRoomRoute', () => {
       const socket = await connect(socketFactory);
       expect(socket.sent).toHaveLength(1);
       expect(get('#room-board').textContent).toBe('1');
-      expect(main.dataset.sessionPhase).toBeUndefined();
+      expect(main.dataset.sessionPhase).toBe('ready');
       await openActivity();
       expect(get('#activitySheet').textContent).toContain('Room ABCDEFGH2345');
       expect(get<HTMLInputElement>('#p2MessageInput').disabled).toBe(false);
@@ -854,12 +856,14 @@ describe('RemoteRoomRoute', () => {
       await closeMenu();
 
       // The board always gets preferences: reduced motion follows the
-      // player's motion settings, and the room starts on the Night table.
+      // player's motion settings, the room starts on the Night table, and
+      // Auto gives this wide landscape window the tabletop.
       expect(boardHarness.props?.preferences).toEqual({
         reducedMotion: false,
         highContrast: false,
         darkMode: true,
         showZoneOutlines: true,
+        depth: { ...DEFAULT_TABLE_DEPTH, mode: 'table' },
       });
 
       await chooseMenuItem('exportState');
@@ -945,6 +949,7 @@ describe('RemoteRoomRoute', () => {
         highContrast: false,
         darkMode: false,
         showZoneOutlines: true,
+        depth: { ...DEFAULT_TABLE_DEPTH, mode: 'table' },
       });
       expect(main.dataset.darkMode).toBe('false');
       expect(main.classList).not.toContain('remote-room-route--dark');

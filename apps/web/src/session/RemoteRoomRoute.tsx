@@ -34,7 +34,11 @@ import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { motionSettings } from '../motion/motion-settings.js';
-import { depthSettings } from '../motion/depth-settings.js';
+import {
+  AUTO_TABLETOP_QUERY,
+  depthSettings,
+  resolveTableDepth,
+} from '../motion/depth-settings.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import type {
@@ -82,6 +86,7 @@ import { TableWelcome } from './shell/TableWelcome.js';
 import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
+import { useMediaQuery } from '../ui/breakpoints.js';
 import { toast } from '../ui/toast.js';
 
 const LegacyDeckBuilderSession = lazy(async () => ({
@@ -232,9 +237,15 @@ export const RemoteRoomRoute = ({
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
-  const depth = useSyncExternalStore(
+  const depthChoice = useSyncExternalStore(
     depthSettings().subscribe,
     depthSettings().getSnapshot
+  );
+  // Auto decides for this window: the tabletop where it is wide enough.
+  const wideLandscape = useMediaQuery(AUTO_TABLETOP_QUERY);
+  const depth = useMemo(
+    () => resolveTableDepth(depthChoice, wideLandscape),
+    [depthChoice, wideLandscape]
   );
   const effectivePreferences = useMemo((): BoardPreferences => {
     // Motion always comes from the player's motion settings, whatever an
@@ -628,7 +639,7 @@ export const RemoteRoomRoute = ({
             {...(backgroundSelection.background
               ? { background: backgroundSelection.background }
               : {})}
-            {...(soloLive ? { sessionPhase: state.sessionPhase } : {})}
+            sessionPhase={state.sessionPhase}
             docked={activity.docked && activity.open}
             board={
               <RemoteSessionBoard

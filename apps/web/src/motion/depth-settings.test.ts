@@ -1,7 +1,12 @@
 import { expect, it, vi } from 'vitest';
 
 import { PreferenceStore } from '../preferences/preference-store.js';
-import { DepthSettingsStore } from './depth-settings.js';
+import {
+  DEFAULT_TABLE_DEPTH,
+  DepthSettingsStore,
+  parseTableDepth,
+  resolveTableDepth,
+} from './depth-settings.js';
 
 const storageOver = (data: Map<string, string>) => ({
   getItem: (key: string) => data.get(key) ?? null,
@@ -25,8 +30,8 @@ it('persists validated local choices without notifying for unchanged settings', 
     new DepthSettingsStore(
       new PreferenceStore({ storage: storageOver(data) })
     ).getSnapshot()
-  ).toMatchObject({ mode: 'table', tilt: 18 });
-  store.update({ tilt: 18 });
+  ).toMatchObject({ mode: 'table', tilt: 35 });
+  store.update({ tilt: 35 });
   expect(listener).toHaveBeenCalledTimes(1);
   unsubscribe();
   store.update({ mode: 'flat' });
@@ -50,7 +55,7 @@ it('keeps usable defaults and in-memory choices when storage is corrupt or block
       },
     });
     const store = new DepthSettingsStore(preferences);
-    expect(store.getSnapshot().mode).toBe('flat');
+    expect(store.getSnapshot().mode).toBe('auto');
     store.update({ mode: 'depth' });
     expect(store.getSnapshot().mode).toBe('depth');
     expect(() => preferences.flush()).not.toThrow();
@@ -60,5 +65,26 @@ it('keeps usable defaults and in-memory choices when storage is corrupt or block
       storage: { getItem: blocked, setItem: () => {}, removeItem: () => {} },
     })
   );
-  expect(store.getSnapshot().mode).toBe('flat');
+  expect(store.getSnapshot().mode).toBe('auto');
+});
+
+it('decides Auto for the window: the tabletop where it is wide, flat on an upright phone', () => {
+  const auto = { ...DEFAULT_TABLE_DEPTH };
+  expect(auto.mode).toBe('auto');
+  expect(resolveTableDepth(auto, true)).toMatchObject({
+    mode: 'table',
+    tilt: 22,
+  });
+  expect(resolveTableDepth(auto, false).mode).toBe('flat');
+  // A choice the player made stands, whatever the window.
+  expect(resolveTableDepth({ ...auto, mode: 'depth' }, true).mode).toBe(
+    'depth'
+  );
+  expect(resolveTableDepth({ ...auto, mode: 'flat' }, true).mode).toBe('flat');
+  // Stored before Auto existed: no mode stored means the default, now Auto.
+  expect(parseTableDepth({ tilt: 12 })).toMatchObject({
+    mode: 'auto',
+    tilt: 12,
+  });
+  expect(parseTableDepth({ mode: 'table' }).mode).toBe('table');
 });

@@ -160,7 +160,10 @@ describe('pile height', () => {
 
   it('compresses unusually large sandbox piles without unbounded geometry', () => {
     expect(tablePileHeight(120, 100)).toBeGreaterThan(tablePileHeight(60, 100));
-    expect(tablePileHeight(1e9, 100)).toBeLessThanOrEqual(66);
+    // Sleeved cards: a sixty-card deck stands about half a card wide, and
+    // nothing grows past a pile of about twice that.
+    expect(tablePileHeight(60, 100)).toBeCloseTo(48, 7);
+    expect(tablePileHeight(1e9, 100)).toBeLessThanOrEqual(96);
     expect(tablePileHeight(-1, 100)).toBe(0);
     expect(tablePileHeight(NaN, 100)).toBe(0);
   });

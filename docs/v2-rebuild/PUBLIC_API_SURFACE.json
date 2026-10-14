@@ -1966,6 +1966,10 @@
               "kind": "value"
             },
             {
+              "name": "TABLE_CARD_THICKNESS",
+              "kind": "value"
+            },
+            {
               "name": "TABLE_COMPACT_CORNER_HEIGHT_PX",
               "kind": "value"
             },
@@ -1986,11 +1990,19 @@
               "kind": "value"
             },
             {
+              "name": "TABLE_LENS",
+              "kind": "value"
+            },
+            {
               "name": "TABLE_SHELL",
               "kind": "value"
             },
             {
               "name": "TABLE_SPLIT",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_TILT_MAXIMUM",
               "kind": "value"
             },
             {
@@ -2039,6 +2051,10 @@
             },
             {
               "name": "tableRailWidth",
+              "kind": "value"
+            },
+            {
+              "name": "tableShadowStyle",
               "kind": "value"
             },
             {

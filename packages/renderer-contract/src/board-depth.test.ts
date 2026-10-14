@@ -46,14 +46,51 @@ describe('live board depth', () => {
       parseBoardDepth({ mode: 'bogus', tilt: 99, strength: -2, lift: false })
     ).toEqual({
       mode: 'flat',
-      tilt: 18,
+      tilt: 35,
       strength: 0,
       lift: false,
       animate: true,
       parallax: false,
+      scatter: true,
     });
     expect(parseBoardDepth({ tilt: NaN, strength: Infinity }).strength).toBe(1);
+    expect(parseBoardDepth({ scatter: false }).scatter).toBe(false);
   });
+  it('lays resting table cards a touch askew, the same every time, and keeps piles, hands and the tidy table square', () => {
+    const scene = fixture();
+    const askew = new BoardDepthProjection(scene, preferences);
+    const again = new BoardDepthProjection(scene, preferences);
+    const tidy = new BoardDepthProjection(scene, {
+      ...preferences,
+      depth: { ...preferences.depth, scatter: false },
+    });
+    const zones = new Map(scene.zones.map((zone) => [zone.id, zone]));
+    let moved = 0;
+    for (const card of scene.cards) {
+      if (card.renderKey === null) continue;
+      const pose = askew.pose(card);
+      expect(again.pose(card)).toEqual(pose);
+      expect(tidy.pose(card).turns).toBe(card.rotationQuarterTurns);
+      expect(tidy.pose(card).bounds).toEqual(card.bounds);
+      const kind = zones.get(card.parentId)?.kind;
+      const yaw = Math.abs(pose.turns - card.rotationQuarterTurns) * 90;
+      if (
+        pose.plane === 0 ||
+        ['deck', 'discard', 'lostZone'].includes(kind ?? '')
+      ) {
+        expect(yaw).toBe(0);
+        continue;
+      }
+      // Never more than a degree or so, and never more than a hair off.
+      expect(yaw).toBeLessThanOrEqual(kind === 'prizes' ? 1.2 : 0.6);
+      expect(Math.abs(pose.bounds.x - card.bounds.x)).toBeLessThanOrEqual(
+        card.bounds.width * 0.005
+      );
+      if (yaw > 0) moved += 1;
+    }
+    expect(moved).toBeGreaterThan(0);
+  });
+
   it('keeps hand images flat and picks the same projected card at every quarter turn', () => {
     const scene = fixture();
     const original = scene.cards.find(
@@ -191,11 +228,20 @@ describe('live board depth', () => {
       small.pose(cover).elevation * 5,
       7
     );
+    // A held card rises about half its width; with reduced motion it is
+    // still raised (an instant change is not motion), and off is off.
+    expect(small.liftFor(100)).toBeCloseTo(45, 7);
     expect(
       new BoardDepthProjection(make(12), {
         ...preferences,
         reducedMotion: true,
-      }).lift
+      }).liftFor(100)
+    ).toBeCloseTo(45, 7);
+    expect(
+      new BoardDepthProjection(make(12), {
+        ...preferences,
+        depth: { ...preferences.depth!, lift: false },
+      }).liftFor(100)
     ).toBe(0);
   });
   it('uses screen distance for the drag threshold and the projected target for the logical drop', () => {

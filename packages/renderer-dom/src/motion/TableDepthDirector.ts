@@ -1,9 +1,11 @@
 import {
   BoardDepthProjection,
+  TABLE_CARD_THICKNESS,
   TablePoseMotion,
   planBoardMotion,
   tablePoseMatrix,
   tablePoseEdges,
+  tableShadowStyle,
   sameTablePose,
   type BoardPresentation,
   type BoardScene,
@@ -16,6 +18,14 @@ import {
 import { depthPaintKey } from './depth-paint-key.js';
 
 const timestamp = () => performance.now();
+/** How long a card takes to rise to its held height. */
+const LIFT_DURATION_MS = 120;
+/** A card under the pointer rises this share of its width, over this long. */
+const HOVER_RAISE = 0.06;
+const HOVER_RAISE_MS = 140;
+const easeOut = (t: number): number => 1 - (1 - t) ** 3;
+const easeInOut = (t: number): number =>
+  t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
 interface Ghost {
   element: HTMLElement;
   expires: number;
@@ -46,6 +56,18 @@ export class TableDepthDirector {
     { image: HTMLElement; face: HTMLElement; start: number; duration: number }
   >();
   private readonly markers = new Map<string, HTMLElement>();
+  /** A card picked up rises to its held height over a moment, not at once. */
+  private readonly lifts = new Map<
+    string,
+    { from: number; start: number; duration: number }
+  >();
+  private readonly held = new Set<string>();
+  /** The card under the pointer rises a little, as a card does when touched. */
+  private hovered: string | null = null;
+  private readonly raises = new Map<
+    string,
+    { from: number; to: number; start: number; duration: number }
+  >();
   private readonly cards = new Map<string, CardSceneNode>();
   private projection: BoardDepthProjection | null = null;
   private frame: number | null = null;
@@ -62,8 +84,65 @@ export class TableDepthDirector {
       this.motion.active ||
       this.ghosts.size > 0 ||
       this.shuffles.size > 0 ||
-      this.flips.size > 0
+      this.flips.size > 0 ||
+      this.lifts.size > 0 ||
+      this.raising()
     );
+  }
+  private raising(): boolean {
+    const now = timestamp();
+    for (const raise of this.raises.values())
+      if (now < raise.start + raise.duration) return true;
+    return false;
+  }
+  private raiseAt(key: string, now: number): number {
+    const raise = this.raises.get(key);
+    if (!raise) return 0;
+    const progress =
+      raise.duration > 0
+        ? Math.min(1, Math.max(0, (now - raise.start) / raise.duration))
+        : 1;
+    return raise.from + (raise.to - raise.from) * easeOut(progress);
+  }
+  /**
+   * The card under the pointer, by render key: it rises a little off the
+   * table, and the one it left settles back. Never a held card, a flat one
+   * or one in flight.
+   */
+  hover(key: string | null) {
+    if (key === this.hovered) return;
+    const now = timestamp();
+    const raise = (target: string, to: number) => {
+      const from = this.raiseAt(target, now);
+      if (from === 0 && to === 0) {
+        this.raises.delete(target);
+        return;
+      }
+      this.raises.set(target, {
+        from,
+        to,
+        start: now,
+        duration: HOVER_RAISE_MS * this.durationScale,
+      });
+    };
+    const previous = this.hovered;
+    this.hovered = key;
+    if (previous) raise(previous, 0);
+    const pose = key ? this.motion.poses.get(key) : undefined;
+    if (
+      key &&
+      pose &&
+      pose.plane === 1 &&
+      !this.held.has(key) &&
+      !this.motion.has(key)
+    )
+      raise(key, HOVER_RAISE * pose.bounds.width);
+    for (const target of [previous, key]) {
+      const base = target ? this.motion.poses.get(target) : undefined;
+      if (target && base) this.paint(target, base);
+    }
+    this.schedule();
+    this.onActivity?.();
   }
   current(key: string) {
     return this.painted.get(key);
@@ -120,6 +199,22 @@ export class TableDepthDirector {
     for (const [key, card] of this.cards) {
       const target = projection.pose(card, presentation);
       const held = this.elements.get(key)?.dataset.held !== undefined;
+      if (held && !this.held.has(key) && this.durationScale > 0) {
+        const from = this.painted.get(key)?.elevation;
+        if (from !== undefined && from < target.elevation)
+          this.lifts.set(key, {
+            from,
+            start: at,
+            duration: LIFT_DURATION_MS * this.durationScale,
+          });
+      }
+      if (held) {
+        this.held.add(key);
+        this.raises.delete(key);
+      } else {
+        this.held.delete(key);
+        this.lifts.delete(key);
+      }
       const shuffle = this.shuffles.get(key);
       if (shuffle && (held || !sameTablePose(shuffle.base, target))) {
         // A newer move owns the card. Continue from its visible shuffle pose,
@@ -144,14 +239,6 @@ export class TableDepthDirector {
         oldPose &&
         (oldPose.bounds.x !== oldCard.bounds.x ||
           oldPose.bounds.y !== oldCard.bounds.y);
-      const duration =
-        replacedHeldPile ||
-        held ||
-        discontinuity ||
-        (!cause && previous !== next)
-          ? 0
-          : this.durationScale *
-            (onlyHeight ? (projection.settings.animate ? 180 : 0) : 420);
       const source = flight
         ? this.sourcePose(
             flight.from,
@@ -160,12 +247,48 @@ export class TableDepthDirector {
             target
           )
         : undefined;
+      // A card carried across the table takes longer the further it goes,
+      // and arcs above its path as a hand would carry it.
+      const distance = source
+        ? Math.hypot(
+            source.bounds.x +
+              source.bounds.width / 2 -
+              (target.bounds.x + target.bounds.width / 2),
+            source.bounds.y +
+              source.bounds.height / 2 -
+              (target.bounds.y + target.bounds.height / 2)
+          )
+        : 0;
+      const still =
+        replacedHeldPile ||
+        held ||
+        discontinuity ||
+        (!cause && previous !== next);
+      const duration = still
+        ? 0
+        : this.durationScale *
+          (onlyHeight
+            ? projection.settings.animate
+              ? 180
+              : 0
+            : source
+              ? Math.min(560, Math.max(320, 300 + 0.22 * distance))
+              : 420);
+      const arc =
+        source && duration > 0 && target.plane === 1
+          ? Math.min(
+              target.bounds.width,
+              Math.max(0.25 * target.bounds.width, 0.2 * distance)
+            ) * projection.settings.strength
+          : 0;
       const from = source
         ? {
             ...source,
             thickness: Math.min(
               source.thickness,
-              source.bounds.width * 0.0055 * projection.settings.strength
+              source.bounds.width *
+                TABLE_CARD_THICKNESS *
+                projection.settings.strength
             ),
           }
         : undefined;
@@ -175,7 +298,8 @@ export class TableDepthDirector {
         at,
         duration,
         from,
-        (flight?.delay ?? 0) * 1000 * this.durationScale
+        (flight?.delay ?? 0) * 1000 * this.durationScale,
+        arc
       );
       if (flight?.fromImageUrl && duration > 0)
         this.flipFace(key, flight, at, duration);
@@ -359,12 +483,15 @@ export class TableDepthDirector {
     image.alt = '';
     image.draggable = false;
     face.append(image);
-    const start = at + flight.delay * 1000 * this.durationScale;
+    // Turned over by hand during the middle of the move: the old face
+    // turns on edge, the faces change hidden, the new one turns flat.
+    const start =
+      at + flight.delay * 1000 * this.durationScale + duration * 0.2;
     this.flips.set(key, {
       image,
       face,
       start,
-      duration: Math.min(duration, 320 * this.durationScale),
+      duration: duration * 0.6,
     });
   }
   private clearFlip(key: string) {
@@ -376,10 +503,26 @@ export class TableDepthDirector {
     this.flips.delete(key);
   }
 
-  private paint(key: string, pose: TableCardPose) {
+  private paint(key: string, target: TableCardPose) {
     const projection = this.projection;
     const element = this.elements.get(key) ?? this.ghosts.get(key)?.element;
     if (!projection || !element) return;
+    let pose = target;
+    const now = timestamp();
+    const raised = this.raiseAt(key, now);
+    if (raised > 0) pose = { ...pose, elevation: pose.elevation + raised };
+    else if (this.raises.get(key)?.to === 0) this.raises.delete(key);
+    const lift = this.lifts.get(key);
+    if (lift) {
+      const progress = Math.min(1, (now - lift.start) / lift.duration);
+      if (progress >= 1) this.lifts.delete(key);
+      else
+        pose = {
+          ...pose,
+          elevation:
+            lift.from + (pose.elevation - lift.from) * easeOut(progress),
+        };
+    }
     this.painted.set(key, pose);
     element.style.width = `${pose.bounds.width}px`;
     element.style.height = `${pose.bounds.height}px`;
@@ -408,15 +551,23 @@ export class TableDepthDirector {
       geometry
         .querySelector('[data-depth-lines]')
         ?.setAttribute('d', edges.lines);
+      const look = tableShadowStyle(edges.above, pose.bounds.width);
       const shadow = geometry.querySelector<SVGPathElement>(
         '[data-depth-shadow]'
       );
-      shadow?.setAttribute('d', edges.shadow);
-      if (shadow)
+      if (shadow) {
+        shadow.setAttribute('d', edges.shadow);
+        shadow.style.opacity = look.castOpacity.toFixed(3);
         shadow.style.filter =
-          pose.elevation - pose.thickness > 2
-            ? `blur(${Math.min(5, 1.2 + Math.max(0, pose.elevation - pose.thickness) * 0.075)}px)`
-            : 'none';
+          look.castBlur > 0 ? `blur(${look.castBlur.toFixed(2)}px)` : 'none';
+      }
+      const contact = geometry.querySelector<SVGPathElement>(
+        '[data-depth-contact]'
+      );
+      if (contact) {
+        contact.setAttribute('d', edges.contact);
+        contact.style.opacity = look.contactOpacity.toFixed(3);
+      }
     }
     if (card)
       for (const marker of projection.scene.markers) {
@@ -456,7 +607,13 @@ export class TableDepthDirector {
 
   private readonly tick = (at: number) => {
     this.frame = null;
-    for (const [key, pose] of this.motion.sampleAll(at)) this.paint(key, pose);
+    const sampled = this.motion.sampleAll(at);
+    for (const [key, pose] of sampled) this.paint(key, pose);
+    for (const key of new Set([...this.lifts.keys(), ...this.raises.keys()])) {
+      if (sampled.has(key)) continue;
+      const pose = this.motion.poses.get(key);
+      if (pose) this.paint(key, pose);
+    }
     // Cards that landed earlier keep their lift until their group has landed.
     for (const [key, element] of this.elements) {
       if (element.dataset.flying !== undefined && !this.lifted(key)) {
@@ -469,7 +626,19 @@ export class TableDepthDirector {
         Math.min(1, (at - flip.start) / flip.duration)
       );
       if (progress >= 0.5) flip.image.remove();
-      flip.face.style.transform = `scaleX(${0.04 + 0.96 * Math.abs(Math.cos(progress * Math.PI))})`;
+      const base = this.motion.poses.get(key) ?? this.painted.get(key);
+      if (base) {
+        const turn = easeInOut(progress);
+        this.paint(key, {
+          ...base,
+          flip:
+            progress >= 1
+              ? 0
+              : turn < 0.5
+                ? turn * Math.PI
+                : (turn - 1) * Math.PI,
+        });
+      }
       if (progress === 1) this.clearFlip(key);
     }
     for (const [key, shuffle] of this.shuffles) {
@@ -537,6 +706,9 @@ export class TableDepthDirector {
     for (const key of this.flips.keys()) this.clearFlip(key);
     for (const key of this.ghosts.keys()) this.removeGhost(key);
     this.shuffles.clear();
+    this.lifts.clear();
+    this.raises.clear();
+    this.hovered = null;
     this.onActivity?.();
   }
   destroy() {

@@ -14,6 +14,7 @@ import {
   openAppMenu,
   openDeck,
   openPlayOnline,
+  useFlatTable,
 } from './support/table-shell.js';
 
 const SOLO_CARD_BACK_URL =
@@ -58,6 +59,8 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     });
   });
 
+  // Its drags aim at zones' logical centres: the flat table.
+  await useFlatTable(page);
   await page.goto('/?room-lobby=1&renderer=dom');
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')

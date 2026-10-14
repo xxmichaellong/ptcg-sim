@@ -20,6 +20,8 @@ export interface BoardDepthPreferences {
   readonly lift: boolean;
   readonly animate: boolean;
   readonly parallax?: boolean;
+  /** Cards at rest lie a touch askew, as on a real table (on unless off). */
+  readonly scatter?: boolean;
 }
 
 export interface BoardPreferences {

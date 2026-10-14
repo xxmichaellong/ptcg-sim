@@ -252,7 +252,7 @@ it('has one clock, preserves an acknowledged flight, and cancels without leaving
   director.attach(surface, layer);
   const preferences = {
     ...DEFAULT_BOARD_PREFERENCES,
-    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const },
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
   };
   const before = new BoardDepthProjection(scene, preferences);
   director.commit(
@@ -319,4 +319,116 @@ it('has one clock, preserves an acknowledged flight, and cancels without leaving
   director.destroy();
   expect(layer.childElementCount).toBe(0);
   expect(director.current(card.renderKey!)).toBeUndefined();
+});
+
+it('carries a card across the table in an arc and turns it over on the way', () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let serial = 0;
+  let now = 0;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frames.set(++serial, callback);
+    return serial;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+  const advance = (at: number) => {
+    now = at;
+    for (const [id, frame] of [...frames]) {
+      frames.delete(id);
+      frame(now);
+    }
+  };
+  const view = createRendererSpikeView();
+  const scene = createBoardSceneForViewport(view, {
+    viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+    bottomPlayerId: view.playerOrder[0]!,
+    splitRatio: 0.5,
+    geometryVersion: 1,
+  });
+  const boardZone = scene.zones.find(
+    (zone) => zone.kind === 'board' && zone.side === 'local'
+  )!;
+  const activeZone = scene.zones.find(
+    (zone) => zone.kind === 'active' && zone.side === 'local'
+  )!;
+  // A card on the local Board (the staging area), played to the Active.
+  const card = scene.cards.find(
+    (candidate) =>
+      candidate.renderKey !== null && candidate.parentId === boardZone.id
+  )!;
+  // The card goes to the Active and shows a new face on the way there.
+  const moved = {
+    ...scene,
+    revision: scene.revision + 1,
+    cards: scene.cards.map((candidate) =>
+      candidate.id === card.id
+        ? {
+            ...candidate,
+            parentId: activeZone.id,
+            bounds: {
+              ...candidate.bounds,
+              x: activeZone.bounds.x,
+              y: activeZone.bounds.y,
+            },
+            imageUrl: `${candidate.imageUrl}?turned`,
+          }
+        : candidate
+    ),
+  };
+  const elements = new Map(
+    moved.cards
+      .filter((candidate) => candidate.renderKey)
+      .map((candidate) => {
+        const element = document.createElement('button');
+        const face = document.createElement('span');
+        face.className = 'ptcgsim-card__face';
+        element.append(face);
+        return [candidate.renderKey!, element];
+      })
+  );
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), document.createElement('div'));
+  const preferences = {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const },
+  };
+  director.commit(
+    null,
+    new BoardDepthProjection(scene, preferences),
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  const landed = new BoardDepthProjection(moved, preferences);
+  director.commit(
+    scene,
+    landed,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  const key = card.renderKey!;
+  const target = landed.pose(moved.cards.find((c) => c.id === card.id)!);
+  let highest = 0;
+  let steepest = 0;
+  for (let at = 16; at <= 1200; at += 16) {
+    advance(at);
+    const pose = director.current(key)!;
+    highest = Math.max(highest, pose.elevation - target.elevation);
+    steepest = Math.max(steepest, Math.abs(pose.flip ?? 0));
+  }
+  // Above its path by at least a quarter of its width at the top of the arc.
+  expect(highest).toBeGreaterThan(card.bounds.width * 0.25 - 1);
+  // Turned on its edge, never past it: the face is never seen from behind.
+  expect(steepest).toBeGreaterThan(Math.PI / 2 - 0.2);
+  expect(steepest).toBeLessThanOrEqual(Math.PI / 2 + 1e-9);
+  // Landed flat where the table says it is, with no clock left running.
+  const rest = director.current(key)!;
+  expect(rest.flip ?? 0).toBe(0);
+  expect(rest.elevation).toBeCloseTo(target.elevation, 6);
+  expect(rest.bounds.x).toBeCloseTo(target.bounds.x, 6);
+  expect(director.active).toBe(false);
+  director.destroy();
 });

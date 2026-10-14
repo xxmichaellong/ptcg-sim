@@ -1,11 +1,11 @@
-import {
-  DEFAULT_BOARD_DEPTH,
-  TABLE_SPLIT,
-  type TableViewMode,
-} from '@ptcgsim/renderer-contract';
+import { TABLE_SPLIT, TABLE_TILT_MAXIMUM } from '@ptcgsim/renderer-contract';
 import { useSyncExternalStore } from 'react';
 
-import { depthSettings } from '../../motion/depth-settings.js';
+import {
+  DEFAULT_TABLE_DEPTH,
+  depthSettings,
+  type TableDepthMode,
+} from '../../motion/depth-settings.js';
 import {
   RangeRow,
   SegmentedControl,
@@ -23,7 +23,8 @@ const SHOW_CHOICES: readonly SegmentedChoice<BoardShowChoice>[] = [
   { value: 'theirs', id: 'boardShowTheirs', label: 'Theirs' },
 ];
 
-const DEPTH_CHOICES: readonly SegmentedChoice<TableViewMode>[] = [
+const DEPTH_CHOICES: readonly SegmentedChoice<TableDepthMode>[] = [
+  { value: 'auto', id: 'tableViewAuto', label: 'Auto' },
   { value: 'flat', id: 'tableViewFlat', label: 'Flat' },
   { value: 'depth', id: 'tableViewDepth', label: 'Raised' },
   { value: 'table', id: 'tableViewTable', label: 'Tabletop' },
@@ -75,13 +76,18 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
         value={depth.mode}
         onChange={(mode) => depthStore.update({ mode })}
       >
-        {depth.mode === 'table' ? (
+        {depth.mode === 'auto' ? (
+          <span className="ptcgsim-form-hint">
+            A tilted tabletop on a wide screen, flat on an upright phone.
+          </span>
+        ) : null}
+        {depth.mode === 'table' || depth.mode === 'auto' ? (
           <RangeRow
             id="tableTiltRange"
             label="Table angle"
             valueText={`${String(depth.tilt)}°`}
             min={0}
-            max={18}
+            max={TABLE_TILT_MAXIMUM}
             value={depth.tilt}
             onChange={(tilt) => depthStore.update({ tilt })}
           />
@@ -109,6 +115,13 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
               label="Animate stack height"
               checked={depth.animate}
               onChange={(animate) => depthStore.update({ animate })}
+            />
+            <SwitchRow
+              id="tableScatterCheckbox"
+              label="Natural card placement"
+              hint="Cards rest a touch askew, as on a real table."
+              checked={depth.scatter !== false}
+              onChange={(scatter) => depthStore.update({ scatter })}
             />
             <SwitchRow
               id="tableParallaxCheckbox"
@@ -155,7 +168,7 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
         className="ds-button ds-button--secondary ptcgsim-settings-reset"
         onClick={() => {
           viewStore.reset();
-          depthStore.update(DEFAULT_BOARD_DEPTH);
+          depthStore.update(DEFAULT_TABLE_DEPTH);
         }}
       >
         Reset table view

@@ -94,3 +94,17 @@ export const closeActivity = async (page: Page): Promise<void> => {
   await panel.getByRole('button', { name: /^Close/u }).click();
   await expect(panel).toHaveCount(0);
 };
+
+/**
+ * Plays on the flat table. A landscape window shows the tilted tabletop by
+ * default (Auto); a spec that works in the table's flat coordinates (drags
+ * aimed at a zone's logical centre) asks for the flat table instead.
+ */
+export const useFlatTable = async (page: Page): Promise<void> => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ptcgsim.table-depth.v1',
+      JSON.stringify({ mode: 'flat' })
+    );
+  });
+};

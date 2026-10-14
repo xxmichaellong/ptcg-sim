@@ -15,9 +15,22 @@ export const BOARD_SURFACE_CSS = `
   z-index: -15;
   transform-origin: 0 0;
   pointer-events: none;
-  border-radius: 18px;
-  background: radial-gradient(ellipse at 50% 42%, var(--color-felt-glow, #365b6544), transparent 65%), linear-gradient(145deg, var(--color-felt, #1c3e47), var(--color-felt-deep, #122a33));
-  box-shadow: inset 0 0 0 1px var(--color-felt-line-strong, #bde4de33), 0 5px 0 #07131b55, 0 14px 28px #0004;
+  border-radius: 22px;
+  /* A cloth playmat under a lamp: a woven texture that foreshortens with
+     the table, light falling off from just above the middle, and a rubber
+     rim with the mat's thickness showing along its near edge. */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 70% 62% at 50% 38%, var(--color-felt-glow, #365b6555), transparent 72%),
+    radial-gradient(ellipse 125% 105% at 50% 45%, var(--color-felt, #1c3e47) 42%, var(--color-felt-deep, #122a33) 100%);
+  background-size: 160px 160px, auto, auto;
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow:
+    inset 0 0 0 4px rgb(0 0 0 / 0.3),
+    inset 0 0 0 5px rgb(255 255 255 / 0.07),
+    inset 0 0 120px rgb(0 0 0 / 0.32),
+    0 6px 0 rgb(4 10 14 / 0.55),
+    0 24px 44px rgb(0 0 0 / 0.42);
 }
 .ptcgsim-card__depth {
   position: absolute;
@@ -27,7 +40,8 @@ export const BOARD_SURFACE_CSS = `
   overflow: visible;
   pointer-events: none;
 }
-.ptcgsim-card__depth [data-depth-shadow] { fill: #071018; opacity: 0.32; }
+.ptcgsim-card__depth [data-depth-shadow] { fill: #071018; }
+.ptcgsim-card__depth [data-depth-contact] { fill: #03080c; }
 .ptcgsim-card__depth [data-depth-side] { fill: #526070; stroke: #152536; stroke-width: 0.45; }
 .ptcgsim-card__depth [data-depth-lines] { fill: none; stroke: #d0d7dd; stroke-width: 0.4; opacity: 0.5; }
 .ptcgsim-card[data-depth-card] .ptcgsim-card__face { box-shadow: var(--ptcgsim-ring, 0 0 #0000), 0 0 0 0.55px #e6eff54d; }

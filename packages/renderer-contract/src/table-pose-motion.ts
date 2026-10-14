@@ -9,7 +9,8 @@ export const sameTablePose = (a: TableCardPose, b: TableCardPose): boolean =>
   a.elevation === b.elevation &&
   a.thickness === b.thickness &&
   a.turns === b.turns &&
-  a.plane === b.plane;
+  a.plane === b.plane &&
+  (a.flip ?? 0) === (b.flip ?? 0);
 
 export const interpolateTablePose = (
   a: TableCardPose,
@@ -30,6 +31,7 @@ export const interpolateTablePose = (
     elevation: Math.max(0, mix(a.elevation, b.elevation)),
     thickness: Math.max(0, mix(a.thickness, b.thickness)),
     plane: Math.max(0, Math.min(1, mix(a.plane, b.plane))),
+    ...(a.flip || b.flip ? { flip: mix(a.flip ?? 0, b.flip ?? 0) } : {}),
   };
 };
 
@@ -39,6 +41,8 @@ interface Travel {
   start: number;
   duration: number;
   delay: number;
+  /** How high above its path a card arcs at the middle of the move. */
+  arc: number;
 }
 /** Pure, interruptible pose timing, driven by a renderer's single on-demand clock. */
 export class TablePoseMotion {
@@ -59,7 +63,8 @@ export class TablePoseMotion {
     now: number,
     duration = 0,
     from?: TableCardPose,
-    delay = 0
+    delay = 0,
+    arc = 0
   ) {
     const oldTarget = this.target(key);
     if (duration > 0 && oldTarget && sameTablePose(oldTarget, target)) return;
@@ -76,6 +81,7 @@ export class TablePoseMotion {
       start: now,
       duration,
       delay,
+      arc: Math.max(0, arc),
     });
   }
   sample(key: string, now: number): TableCardPose | undefined {
@@ -93,7 +99,17 @@ export class TablePoseMotion {
     const eased =
       1 -
       springStateAt(SPRING_PRESETS.snappy, 1, 0, progress * 0.45).displacement;
-    const current = interpolateTablePose(travel.from, travel.to, eased);
+    const between = interpolateTablePose(travel.from, travel.to, eased);
+    // Carried across the table, a card rises and falls as a hand moves it.
+    const current =
+      travel.arc > 0
+        ? {
+            ...between,
+            elevation:
+              between.elevation +
+              travel.arc * Math.sin(Math.PI * Math.min(1, progress)),
+          }
+        : between;
     this.poses.set(key, current);
     return current;
   }

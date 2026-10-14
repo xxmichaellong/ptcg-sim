@@ -9,6 +9,7 @@ import {
 import {
   BoardDragController,
   BoardDepthProjection,
+  TABLE_CARD_THICKNESS,
   TablePoseMotion,
   tablePoseQuad,
   tablePoseLocalPoint,
@@ -847,7 +848,9 @@ export class PixiBoardRenderer implements BoardRenderer {
             ...source,
             thickness: Math.min(
               source.thickness,
-              source.bounds.width * 0.0055 * this.depth.settings.strength
+              source.bounds.width *
+                TABLE_CARD_THICKNESS *
+                this.depth.settings.strength
             ),
           }
         : undefined;
@@ -1546,7 +1549,9 @@ export class PixiBoardRenderer implements BoardRenderer {
             ...base,
             thickness: Math.min(
               base.thickness,
-              base.bounds.width * 0.0055 * this.depth.settings.strength
+              base.bounds.width *
+                TABLE_CARD_THICKNESS *
+                this.depth.settings.strength
             ),
           },
           start:
@@ -1651,7 +1656,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         grabPoint = this.depth.cardPoint(card, point, {
           ...base,
           plane: 1,
-          elevation: base.elevation + this.depth.lift,
+          elevation: base.elevation + this.depth.liftFor(base.bounds.width),
         });
       const hit = this.depth.drop(point, card.id, (target) =>
         target.renderKey

@@ -316,7 +316,18 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       await openActivity(page);
     }
     // The log docks beside the table at this width: the feed above the chat
-    // field, both inside the panel, the table laid out to its left.
+    // field, both inside the panel, the table laid out to its left. It
+    // slides in; measure it once it has arrived at the window's edge.
+    await expect
+      .poll(() =>
+        creator.page.evaluate(
+          () =>
+            globalThis.document
+              .querySelector('#activitySheet')
+              ?.getBoundingClientRect().right ?? 0
+        )
+      )
+      .toBeCloseTo(1280, 0);
     const connectedChrome = await creator.page.evaluate(() => {
       const bounds = (selector: string) => {
         const node = globalThis.document.querySelector(selector);

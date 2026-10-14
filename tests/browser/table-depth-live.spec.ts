@@ -343,7 +343,7 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   await expect.poll(idleFrames).toBe(0);
 });
 
-test('reduced motion keeps physical piles but removes drag lift and animated travel', async ({
+test('reduced motion keeps physical piles and lifts a held card at once, without travel', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -369,7 +369,18 @@ test('reduced motion keeps physical piles but removes drag lift and animated tra
   await page.mouse.down();
   await page.mouse.move(from.x + 70, from.y - 30, { steps: 5 });
   await expect(card).toHaveAttribute('data-held', 'drag');
-  await expect(card).toHaveAttribute('data-elevation', elevation!);
+  // Picked up, the card stands about half its width above the table: a
+  // change of state, not motion, so it is already there, with no clock.
+  const width = (await scene(page)).cards.find((c) => c.id === hand.id)!.bounds
+    .width;
+  expect(Number(await card.getAttribute('data-elevation'))).toBeCloseTo(
+    Number(elevation) + 0.45 * width,
+    1
+  );
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-motion',
+    'idle'
+  );
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await expect(page.locator('.ptcgsim-card-ghost')).toHaveCount(0);
