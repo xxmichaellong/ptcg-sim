@@ -461,6 +461,13 @@ export interface BoardRenderer {
    * (its tilt, its theme) instead of the defaults for a frame.
    */
   setPreferences(preferences: BoardPreferences): void;
+  /**
+   * Runs `work` and paints what it installed before returning, inside the
+   * caller's frame. A table resized on every frame of an animation (a log
+   * sliding in beside it) otherwise paints a frame behind what moves beside
+   * it. Optional: a renderer that paints on its own clock leaves it out.
+   */
+  paintWithin?(work: () => void): void;
   getDiagnostics?(): BoardRendererDiagnostics;
   destroy(): void;
 }

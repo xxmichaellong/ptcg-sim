@@ -826,6 +826,24 @@ describe('opt-in React DOM board session runtime', () => {
     );
     expect(runtime.getBoardSnapshot()?.scene?.viewport.width).toBe(1200);
     expect(host.style.width).toBe('1200px');
+    // A frame of the activity log's slide paints the table in that frame
+    // (outside act, as an animation frame is), not a frame behind the log.
+    const environment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+    const actEnvironment = environment.IS_REACT_ACT_ENVIRONMENT;
+    environment.IS_REACT_ACT_ENVIRONMENT = false;
+    try {
+      runtime.setShellMode('sidebar', 0.5, { immediate: true });
+    } finally {
+      environment.IS_REACT_ACT_ENVIRONMENT = actEnvironment;
+    }
+    const slidWidth = runtime.getBoardSnapshot()!.scene!.viewport.width;
+    expect(slidWidth).toBeLessThan(1200);
+    expect(
+      host.querySelector<HTMLElement>('.ptcgsim-board-surface')?.style.width
+    ).toBe(`${String(slidWidth)}px`);
+    await act(async () => {
+      runtime.setShellMode('fullscreen');
+    });
     await act(async () => {
       runtime.resizeBoard('lower', 480);
     });

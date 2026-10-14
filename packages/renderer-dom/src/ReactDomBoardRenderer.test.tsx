@@ -1439,6 +1439,38 @@ describe('React DOM board renderer', () => {
     );
   });
 
+  it('paints what is installed inside paintWithin before it returns', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const revision = () =>
+      host
+        .querySelector('.ptcgsim-board-surface')
+        ?.getAttribute('data-revision');
+    // Outside act, as an animation frame is: React would paint an ordinary
+    // install in a later task, after the browser had drawn the frame.
+    const environment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+    const actEnvironment = environment.IS_REACT_ACT_ENVIRONMENT;
+    environment.IS_REACT_ACT_ENVIRONMENT = false;
+    try {
+      renderer.installScene(createScene(2, 40), []);
+      expect(revision()).toBe('1');
+      renderer.paintWithin(() => renderer.installScene(createScene(3, 80), []));
+      expect(revision()).toBe('3');
+    } finally {
+      environment.IS_REACT_ACT_ENVIRONMENT = actEnvironment;
+    }
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('clears scene and presentation synchronously while retaining the mounted root', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

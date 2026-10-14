@@ -1,5 +1,8 @@
 import {
+  createContext,
+  useContext,
   useLayoutEffect,
+  useMemo,
   useRef,
   type CSSProperties,
   type ReactNode,
@@ -13,6 +16,16 @@ import '../../design/panel-controls.css';
 import type { DockSlide } from './dock-slide.js';
 import { useExitGhost } from './exit-ghost.js';
 import './table-shell.css';
+
+/**
+ * How far the docked log has come in, for what sits over the table and
+ * keeps clear of it (TableCentre). Read where it is used: set on the page,
+ * every frame of a slide restyled everything on it, the board included.
+ */
+const DockRevealContext = createContext<{
+  readonly docked: boolean;
+  readonly slide: DockSlide | undefined;
+}>({ docked: false, slide: undefined });
 
 /**
  * The page around the table (ADR-030): the table fills the window, and
@@ -41,49 +54,41 @@ export const TableShell = ({
   readonly board: ReactNode;
   readonly children?: ReactNode;
 }) => {
-  const ref = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    const shell = ref.current;
-    if (!shell) return;
-    const paint = (): void => {
-      shell.style.setProperty(
-        '--activity-reveal',
-        String(dockSlide ? dockSlide.value() : docked ? 1 : 0)
-      );
-    };
-    paint();
-    return dockSlide?.subscribe(paint);
-  }, [docked, dockSlide]);
+  const reveal = useMemo(
+    () => ({ docked, slide: dockSlide }),
+    [docked, dockSlide]
+  );
   return (
-    <main
-      ref={ref}
-      className={`app-shell remote-room-route table-shell${
-        darkMode ? ' remote-room-route--dark' : ''
-      }`}
-      data-app-route={route}
-      data-session-phase={sessionPhase}
-      data-dark-mode={String(darkMode)}
-      data-room-background={background?.kind ?? 'default'}
-      data-activity-docked={docked ? 'true' : undefined}
-      style={
-        background
-          ? {
-              backgroundImage: roomBackgroundCssImage(background),
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat',
-            }
-          : undefined
-      }
-    >
-      <section
-        className="board-column board-column--table"
-        aria-label="Game board"
-        data-board-shell="table"
+    <DockRevealContext.Provider value={reveal}>
+      <main
+        className={`app-shell remote-room-route table-shell${
+          darkMode ? ' remote-room-route--dark' : ''
+        }`}
+        data-app-route={route}
+        data-session-phase={sessionPhase}
+        data-dark-mode={String(darkMode)}
+        data-room-background={background?.kind ?? 'default'}
+        data-activity-docked={docked ? 'true' : undefined}
+        style={
+          background
+            ? {
+                backgroundImage: roomBackgroundCssImage(background),
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+              }
+            : undefined
+        }
       >
-        {board}
-      </section>
-      {children}
-    </main>
+        <section
+          className="board-column board-column--table"
+          aria-label="Game board"
+          data-board-shell="table"
+        >
+          {board}
+        </section>
+        {children}
+      </main>
+    </DockRevealContext.Provider>
   );
 };
 
@@ -125,6 +130,20 @@ export const TableCentre = ({
   // vanishing from under the pointer.
   const ref = useRef<HTMLDivElement>(null);
   useExitGhost(ref);
+  // Clear of a docked log, as far as it has slid in.
+  const { docked, slide } = useContext(DockRevealContext);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const paint = (): void => {
+      element.style.setProperty(
+        '--activity-reveal',
+        String(slide ? slide.value() : docked ? 1 : 0)
+      );
+    };
+    paint();
+    return slide?.subscribe(paint);
+  }, [docked, slide]);
   return (
     <div
       ref={ref}

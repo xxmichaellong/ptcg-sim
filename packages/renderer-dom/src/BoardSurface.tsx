@@ -38,6 +38,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -107,6 +108,33 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
 /** Geometry sentinels only; visible chrome and resize input remain route-owned. */
 /** The clear space the centre line keeps on either side of the Stadium. */
 const SEAM_GAP_PX = 10;
+
+/**
+ * How long the table's size holds before the mat is painted afresh at it.
+ * While the size keeps changing -- a log sliding in beside the table, a
+ * window being dragged -- the mat keeps the size it was painted at and is
+ * scaled onto the new one, so its weave, lamp light and shadows are not
+ * rasterised again on every frame: that work outran the frames and let the
+ * desk flash through the table.
+ */
+const MAT_SETTLE_MS = 180;
+
+/** The size the mat is painted at: the table's, once it has held still. */
+const useSettledSize = (
+  width: number,
+  height: number
+): { readonly width: number; readonly height: number } => {
+  const [settled, setSettled] = useState({ width, height });
+  useEffect(() => {
+    if (settled.width === width && settled.height === height) return;
+    const timer = setTimeout(
+      () => setSettled({ width, height }),
+      MAT_SETTLE_MS
+    );
+    return () => clearTimeout(timer);
+  }, [width, height, settled.width, settled.height]);
+  return settled.width > 0 && settled.height > 0 ? settled : { width, height };
+};
 
 const PlayerFrameNode = memo(function PlayerFrameNode({
   frame,
@@ -1366,6 +1394,13 @@ export const BoardSurface = ({
     stadium.y + stadium.height > lower.bounds.y
       ? { left: stadium.x, right: stadium.x + stadium.width }
       : undefined;
+  // The mat as last painted, scaled onto the table's current size; what is
+  // printed on it is drawn at the current size on a layer of its own (see
+  // MAT_SETTLE_MS).
+  const matSize = useSettledSize(scene.viewport.width, scene.viewport.height);
+  const matScaleX = scene.viewport.width / matSize.width;
+  const matScaleY = scene.viewport.height / matSize.height;
+  const matScaled = matScaleX !== 1 || matScaleY !== 1;
   const frames = scene.layout.players
     .filter((frame) => !frame.hidden)
     .map((frame) => (
@@ -1575,14 +1610,27 @@ export const BoardSurface = ({
             className="ptcgsim-depth-mat"
             aria-hidden="true"
             style={{
-              width: scene.viewport.width,
-              height: scene.viewport.height,
-              transform: `matrix3d(${tableCardMatrix(depth.camera, { x: 0, y: 0, width: scene.viewport.width, height: scene.viewport.height }, 0).join(',')})`,
+              width: matSize.width,
+              height: matSize.height,
+              transform: `matrix3d(${tableCardMatrix(depth.camera, { x: 0, y: 0, width: scene.viewport.width, height: scene.viewport.height }, 0).join(',')})${matScaled ? ` scale(${String(matScaleX)}, ${String(matScaleY)})` : ''}`,
             }}
           >
             {/* The halves' tints and the seam are printed on the mat, so
                 they lie on it however it is tilted. */}
-            {frames}
+            <div
+              className="ptcgsim-depth-mat__print"
+              style={{
+                width: scene.viewport.width,
+                height: scene.viewport.height,
+                ...(matScaled
+                  ? {
+                      transform: `scale(${String(1 / matScaleX)}, ${String(1 / matScaleY)})`,
+                    }
+                  : {}),
+              }}
+            >
+              {frames}
+            </div>
           </div>
         ) : (
           frames

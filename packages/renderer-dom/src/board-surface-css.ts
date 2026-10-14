@@ -34,6 +34,19 @@ export const BOARD_SURFACE_CSS = `
     inset 0 0 90px rgb(10 6 2 / 0.28),
     0 3px 0 var(--color-felt-rim, #0d1410),
     0 14px 34px rgb(10 6 2 / 0.4);
+  /* Kept as painted while the table resizes; only its transform follows
+     (BoardSurface's MAT_SETTLE_MS). */
+  will-change: transform;
+}
+/* What is printed on the mat, at the table's current size on a layer of its
+   own, so laying the table out again never repaints the mat's cloth. */
+.ptcgsim-depth-mat__print {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform;
 }
 /* A held Pokémon that would swap places with the one under it: ⇄ on its face. */
 .ptcgsim-card__drop-action {

@@ -187,6 +187,22 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     }
   }
 
+  /**
+   * Commits what `work` installs -- and whatever the page around the table
+   * updates with it -- before returning. React would otherwise render it in
+   * a later task, after the browser has painted the frame in which the
+   * table was resized: a table sliding beside the activity log then painted
+   * a frame behind the log. Called from an animation frame, never during a
+   * render.
+   */
+  paintWithin(work: () => void): void {
+    if (this.destroyed) {
+      work();
+      return;
+    }
+    flushSync(work);
+  }
+
   setPreferences(preferences: BoardPreferences): void {
     if (this.destroyed) throw new Error('Board renderer is destroyed');
     this.preferences = preferences;

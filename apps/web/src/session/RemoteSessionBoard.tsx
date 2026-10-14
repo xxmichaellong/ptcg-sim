@@ -455,6 +455,12 @@ export const RemoteSessionBoard = ({
 
     let actualRendererKind = rendererKind;
     let publishedRevision: number | undefined;
+    let publishedPerspective:
+      | {
+          readonly flipped: boolean;
+          readonly actingPlayerId: string | undefined;
+        }
+      | undefined;
     const publish = (): void => {
       if (disposed || !runtime) return;
       const snapshot = runtime.getBoardSnapshot();
@@ -491,14 +497,22 @@ export const RemoteSessionBoard = ({
       const own = ownPlayerIdOf(view);
       const bottom = runtime.getLayoutState().bottomPlayerId;
       const flipped = own !== undefined && bottom !== own;
+      const actingPlayerId = view.viewer.kind === 'player' ? bottom : undefined;
       displayPolicyRef.current = {
         ...displayPolicyRef.current,
-        actingPlayerId: view.viewer.kind === 'player' ? bottom : undefined,
+        actingPlayerId,
       };
-      onPerspectiveChangeRef.current?.({
-        flipped,
-        actingPlayerId: view.viewer.kind === 'player' ? bottom : undefined,
-      });
+      // The layout changes on every frame of a sliding log; the perspective
+      // only when the table turns. Telling the route each time re-rendered
+      // all of it -- the hidden deck screen too -- frame after frame.
+      if (
+        publishedPerspective?.flipped === flipped &&
+        publishedPerspective.actingPlayerId === actingPlayerId
+      ) {
+        return;
+      }
+      publishedPerspective = { flipped, actingPlayerId };
+      onPerspectiveChangeRef.current?.(publishedPerspective);
     };
     const scheduleViewportSynchronization = (): void => {
       if (disposed || resizeFrame !== undefined) return;
@@ -645,15 +659,18 @@ export const RemoteSessionBoard = ({
   }, [hideOpponentHand, roomMode, sortedHandPlayerIds]);
 
   useEffect(() => {
-    const apply = (): void => {
+    const apply = (immediate: boolean): void => {
       const reveal = sidePanelRef.current();
       runtimeRef.current?.setShellMode(
         reveal > 0 ? 'sidebar' : 'fullscreen',
-        reveal
+        reveal,
+        { immediate }
       );
     };
-    apply();
-    return sidePanelSlide?.subscribe(apply);
+    apply(false);
+    // Each frame of the slide paints the table in that frame, beside the
+    // log as it is drawn there.
+    return sidePanelSlide?.subscribe(() => apply(true));
   }, [sidePanel, sidePanelSlide]);
 
   useEffect(() => {

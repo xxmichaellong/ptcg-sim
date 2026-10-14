@@ -430,17 +430,31 @@ export class BoardSessionRuntime {
 
   /**
    * A docked side panel beside the table (`sidebar`) or none; `reveal` is
-   * how far a sliding panel has come in, 0 to 1.
+   * how far a sliding panel has come in, 0 to 1. `immediate` (a frame of
+   * the panel's slide) paints the table within the caller's frame, so it
+   * keeps pace with the panel instead of trailing it by a frame.
    */
-  setShellMode(shellMode: BoardShellMode, reveal = 1): void {
+  setShellMode(
+    shellMode: BoardShellMode,
+    reveal = 1,
+    options?: { readonly immediate?: boolean }
+  ): void {
     const { sidePanelReveal: _reveal, ...rest } = this.layoutState;
-    this.replaceLayoutState({
-      ...rest,
-      shellMode,
-      ...(shellMode === 'sidebar' && reveal < 1
-        ? { sidePanelReveal: reveal }
-        : {}),
-    });
+    const apply = (): void => {
+      this.replaceLayoutState({
+        ...rest,
+        shellMode,
+        ...(shellMode === 'sidebar' && reveal < 1
+          ? { sidePanelReveal: reveal }
+          : {}),
+      });
+    };
+    const renderer = this.renderer;
+    if (options?.immediate && renderer?.paintWithin) {
+      renderer.paintWithin(apply);
+    } else {
+      apply();
+    }
   }
 
   flipBoard(): void {

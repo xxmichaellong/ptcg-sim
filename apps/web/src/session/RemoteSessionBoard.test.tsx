@@ -829,6 +829,67 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it('tells the route of a new perspective only when the table turns, not on every frame of a sliding log', async () => {
+    const session = new FakeRemoteBoardSession(initialState());
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    // A log sliding in, a frame at a time.
+    let reveal = 0;
+    const listeners = new Set<() => void>();
+    const slide = {
+      value: () => reveal,
+      target: () => 1 as const,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      to: () => undefined,
+      stop: () => undefined,
+    };
+    const onPerspectiveChange = vi.fn();
+    const commands = createRef<BoardCommands>();
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          onIntent={vi.fn()}
+          onPerspectiveChange={onPerspectiveChange}
+          commandsRef={commands}
+          sidePanel
+          sidePanelSlide={slide}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    expect(onPerspectiveChange).toHaveBeenCalledTimes(1);
+    const widths = new Set<number>();
+    for (const step of [0.2, 0.45, 0.7, 0.9, 1]) {
+      reveal = step;
+      await act(async () => {
+        for (const listener of listeners) listener();
+      });
+      widths.add(selectedScene().viewport.width);
+    }
+    // The table laid itself out again on every frame...
+    expect(widths.size).toBe(5);
+    // ...and the route, which re-renders whatever it holds on a new
+    // perspective, heard nothing.
+    expect(onPerspectiveChange).toHaveBeenCalledTimes(1);
+
+    await act(async () => commands.current?.flipBoard());
+    expect(onPerspectiveChange).toHaveBeenCalledTimes(2);
+    expect(onPerspectiveChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flipped: true })
+    );
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
   it('keeps an empty Lost Zone off the table until the player adds it', async () => {
     const view = withEmptyOwnLostZone();
     const session = new FakeRemoteBoardSession({ ...initialState(), view });
