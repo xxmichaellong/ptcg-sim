@@ -70,6 +70,58 @@ export const looseBoardTargetAt = (
   );
 };
 
+/**
+ * How far past its edge a zone still takes a card on the table: a card held
+ * just over a pile's or the bench's border plainly means that zone, not the
+ * loose board beside it.
+ */
+export const dropReachFor = (scene: BoardScene): number =>
+  scene.layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
+    ? Math.max(12, Math.min(32, scene.viewport.width * 0.016))
+    : 0;
+
+const distanceToRect = (
+  rect: { x: number; y: number; width: number; height: number },
+  x: number,
+  y: number
+): number =>
+  Math.hypot(
+    Math.max(rect.x - x, 0, x - (rect.x + rect.width)),
+    Math.max(rect.y - y, 0, y - (rect.y + rect.height))
+  );
+
+/**
+ * The zone a card dropped at (x, y) lands in: the topmost zone under the
+ * point; else, on the table, the nearest zone within reach of it (the
+ * loose board excepted, which is the felt itself); else the loose board of
+ * the half it is over.
+ */
+export const zoneDropTargetAt = (
+  scene: BoardScene,
+  x: number,
+  y: number
+): string | null => {
+  const zones = topmostFirst(scene.zones).filter((zone) => zone.interactive);
+  const under = zones.find((zone) => containsPoint(zone.bounds, x, y));
+  if (under) return under.id;
+  const reach = dropReachFor(scene);
+  let nearest: { readonly id: string; readonly distance: number } | null = null;
+  for (const zone of zones) {
+    if (zone.kind === 'board') continue;
+    const distance = distanceToRect(zone.bounds, x, y);
+    if (distance <= reach && (!nearest || distance < nearest.distance)) {
+      nearest = { id: zone.id, distance };
+    }
+  }
+  return nearest?.id ?? looseBoardTargetAt(scene, x, y);
+};
+
+/**
+ * What a card dropped with the pointer at (x, y) lands on: the topmost card
+ * under the pointer (its stack, to join it), else a zone. Players aim with
+ * the pointer: a hand card is gripped by its visible top, its face hanging
+ * below.
+ */
 export const resolveBoardDropTarget = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
@@ -88,11 +140,7 @@ export const resolveBoardDropTarget = (
       )
   );
   if (card) return card.parentId;
-  const zone = topmostFirst(scene.zones).find(
-    (candidate) =>
-      candidate.interactive && containsPoint(candidate.bounds, x, y)
-  );
-  return zone?.id ?? looseBoardTargetAt(scene, x, y);
+  return zoneDropTargetAt(scene, x, y);
 };
 
 /** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */
@@ -192,6 +240,10 @@ export class BoardDragController {
     if (this.active !== gesture) return false;
     this.active = null;
     if (!gesture.dragging) return false;
+    // It comes down centred where it was held, so it never jumps by the
+    // grip on release.
+    const centreX = input.x + gesture.centerOffsetX;
+    const centreY = input.y + gesture.centerOffsetY;
     const targetId =
       input.targetId !== undefined
         ? input.targetId
@@ -203,8 +255,8 @@ export class BoardDragController {
         kind: 'CardDropRequested',
         cardId: gesture.cardId,
         targetId,
-        x: input.dropPoint?.x ?? input.x,
-        y: input.dropPoint?.y ?? input.y,
+        x: input.dropPoint?.x ?? centreX,
+        y: input.dropPoint?.y ?? centreY,
       });
     }
     return true;

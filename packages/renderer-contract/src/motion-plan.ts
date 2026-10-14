@@ -90,12 +90,25 @@ export interface PileShuffle {
   }[];
 }
 
+/**
+ * A card that joined a Pokémon already in play: attached to it, or evolving
+ * it. The Pokémon acknowledges it once the card has landed.
+ */
+export interface StackJoin {
+  /** The painted node that arrived. */
+  readonly arrivingRenderKey: string;
+  /** The Pokémon's face on top of the stack, the one that answers. */
+  readonly hostRenderKey: string;
+  readonly kind: 'attach' | 'evolve';
+}
+
 export interface MotionPlan {
   readonly cause: BoardSceneMotionCause;
   readonly flights: readonly CardFlight[];
   readonly ghosts: readonly CardGhost[];
   readonly pulses: readonly MarkerPulse[];
   readonly shuffles: readonly PileShuffle[];
+  readonly joins: readonly StackJoin[];
 }
 
 const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
@@ -104,7 +117,57 @@ const EMPTY_PLAN = (cause: BoardSceneMotionCause): MotionPlan => ({
   ghosts: [],
   pulses: [],
   shuffles: [],
+  joins: [],
 });
+
+const JOINING_ROLES = new Set(['stackAttachment', 'stackEvolution']);
+
+/**
+ * Cards that joined a stack that was already in play. A whole stack moving
+ * (a switch) keeps its cards and joins nothing; a Pokémon put into play
+ * makes a new stack, which nothing was waiting on.
+ */
+const detectJoins = (
+  previous: BoardScene,
+  next: BoardScene
+): readonly StackJoin[] => {
+  const previousParent = new Map(
+    previous.cards.map((card) => [String(card.id), card.parentId])
+  );
+  const previousStacks = new Set(
+    previous.cards
+      .filter((card) => JOINING_ROLES.has(card.role))
+      .map((card) => card.parentId)
+  );
+  const joins: StackJoin[] = [];
+  const answered = new Set<string>();
+  for (const card of next.cards) {
+    if (
+      card.renderKey === null ||
+      !JOINING_ROLES.has(card.role) ||
+      !previousStacks.has(card.parentId) ||
+      previousParent.get(String(card.id)) === card.parentId
+    ) {
+      continue;
+    }
+    const host = next.cards
+      .filter(
+        (candidate) =>
+          candidate.parentId === card.parentId &&
+          candidate.role === 'stackEvolution' &&
+          candidate.renderKey !== null
+      )
+      .sort((left, right) => right.zIndex - left.zIndex)[0];
+    if (!host?.renderKey || answered.has(host.renderKey)) continue;
+    answered.add(host.renderKey);
+    joins.push({
+      arrivingRenderKey: card.renderKey,
+      hostRenderKey: host.renderKey,
+      kind: card.role === 'stackEvolution' ? 'evolve' : 'attach',
+    });
+  }
+  return joins;
+};
 
 /** Piles a shuffle can apply to and that paint a cover worth riffling. */
 const SHUFFLED_PILE_KINDS = new Set(['deck', 'prizes']);
@@ -552,5 +615,6 @@ export const planBoardMotion = (
     ghosts,
     pulses,
     shuffles: detectShuffles(previous, next, flights, ghosts),
+    joins: detectJoins(previous, next),
   };
 };

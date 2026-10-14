@@ -118,6 +118,26 @@ export const BOARD_SURFACE_CSS = `
   opacity: var(--ptcgsim-glare, 0);
   transition: opacity 220ms ease-out;
 }
+/* A Pokémon answering a card that joined it: a ring of light that swells
+   from its edge and fades (BoardMotionDirector.acknowledge animates it). */
+.ptcgsim-card__ack {
+  position: absolute;
+  inset: -2px;
+  z-index: 3;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  box-shadow:
+    0 0 0 2.5px var(--ptcgsim-ack-edge, rgb(255 228 160 / 0.95)),
+    0 0 20px 6px var(--ptcgsim-ack-glow, rgb(255 196 90 / 0.55)),
+    inset 0 0 18px var(--ptcgsim-ack-wash, rgb(255 232 170 / 0.4));
+  opacity: 0;
+  pointer-events: none;
+}
+.ptcgsim-card__ack[data-kind='evolve'] {
+  box-shadow:
+    0 0 0 3px var(--ptcgsim-ack-edge, rgb(255 228 160 / 1)),
+    0 0 28px 9px var(--ptcgsim-ack-glow, rgb(255 196 90 / 0.6)),
+    inset 0 0 26px var(--ptcgsim-ack-wash, rgb(255 232 170 / 0.5));
+}
 .ptcgsim-card__face > img {
   display: block;
   width: 100%;

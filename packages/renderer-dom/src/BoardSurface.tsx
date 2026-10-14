@@ -1175,6 +1175,21 @@ export const BoardSurface = ({
           ...gripRef.current,
           point,
         });
+      // The pointer aims; the card comes down straight below where it is
+      // held, centred there, so it never jumps by the grip on release.
+      const u = gripRef.current.x - 0.5;
+      const v = gripRef.current.y - 0.5;
+      const turn = (source.rotationQuarterTurns * Math.PI) / 2;
+      const centre = {
+        x:
+          grabPoint.x -
+          (u * source.bounds.width * Math.cos(turn) -
+            v * source.bounds.height * Math.sin(turn)),
+        y:
+          grabPoint.y -
+          (u * source.bounds.width * Math.sin(turn) +
+            v * source.bounds.height * Math.cos(turn)),
+      };
       const hit = depth.drop(point, source.id, (card) =>
         card.renderKey ? director.depth.current(card.renderKey) : undefined
       );
@@ -1184,7 +1199,7 @@ export const BoardSurface = ({
         x: grabPoint.x,
         y: grabPoint.y,
         screenPoint: point,
-        dropPoint: hit.point,
+        dropPoint: centre,
         targetId: hit.targetId,
       };
     }

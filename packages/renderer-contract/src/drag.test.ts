@@ -1,7 +1,12 @@
 import { asPlayerId, asViewCardId } from '@ptcgsim/game-core';
 import { describe, expect, it, vi } from 'vitest';
 
-import { BoardDragController, resolveBoardDropTarget } from './drag.js';
+import {
+  BoardDragController,
+  dropReachFor,
+  resolveBoardDropTarget,
+  zoneDropTargetAt,
+} from './drag.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
@@ -151,12 +156,62 @@ describe('renderer-neutral drag controller', () => {
         kind: 'CardDropRequested',
         cardId: sourceId,
         targetId: 'target-stack',
-        x: 520,
-        y: 160,
+        // Centred where the card was held, not at the pointer.
+        x: 550,
+        y: 206,
       },
     ]);
     expect(controller.consumeSuppressedClick(sourceId)).toBe(true);
     expect(controller.consumeSuppressedClick(sourceId)).toBe(false);
+  });
+
+  it('aims with the pointer and puts the card down centred where it is held', () => {
+    const updates: BoardPresentationUpdate[] = [];
+    const intents: BoardIntent[] = [];
+    const controller = new BoardDragController({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: (update) => updates.push(update),
+    });
+    // Gripped by its top-left corner: the face is 35px right and 51px
+    // below the pointer, which is over the bench.
+    controller.pointerDown(scene(), sourceId, input(25, 435));
+    controller.pointerMove(scene(), input(450, 120));
+    expect(updates.at(-1)).toEqual({
+      kind: 'DragChanged',
+      drag: { cardId: sourceId, x: 485, y: 171, targetId: 'target-zone' },
+    });
+    controller.pointerUp(scene(), input(450, 120));
+    // It lands where its face was, not with its centre under the pointer.
+    expect(intents).toEqual([
+      {
+        kind: 'CardDropRequested',
+        cardId: sourceId,
+        targetId: 'target-zone',
+        x: 485,
+        y: 171,
+      },
+    ]);
+  });
+
+  it('lets a zone on the table take a card held just past its edge', () => {
+    const table: BoardScene = {
+      ...scene(),
+      layout: { ...layout, geometryVersion: 2 },
+    };
+    const reach = dropReachFor(table);
+    expect(reach).toBeGreaterThanOrEqual(12);
+    // Just left of the bench, and just below it.
+    expect(zoneDropTargetAt(table, 400 - reach + 1, 150)).toBe('target-zone');
+    expect(zoneDropTargetAt(table, 450, 300 + reach - 1)).toBe('target-zone');
+    // Well clear of every zone it is the felt again.
+    expect(zoneDropTargetAt(table, 400 - reach - 30, 150)).not.toBe(
+      'target-zone'
+    );
+    // Just past the hand's corner.
+    expect(zoneDropTargetAt(table, 305, 397)).toBe('source-zone');
+    // v1's own board keeps exact zones.
+    expect(dropReachFor(scene())).toBe(0);
+    expect(zoneDropTargetAt(scene(), 395, 150)).toBeNull();
   });
 
   it('cancels active presentation when the pointer or card is invalidated', () => {

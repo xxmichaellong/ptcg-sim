@@ -1,6 +1,7 @@
 import {
   SPRING_PRESETS,
   planBoardMotion,
+  springFromPerceptual,
   springSettleTime,
   springStateAt,
   type BoardScene,
@@ -10,6 +11,7 @@ import {
   type MarkerPulse,
   type PileShuffle,
   type Rect,
+  type StackJoin,
   type SpringConfig,
   type BoardDepthProjection,
   type BoardPresentation,
@@ -62,6 +64,20 @@ const turnBetween = (from: number, to: number): number => {
   const delta = ((((to - from) % 4) + 4) % 4) * 90;
   return delta > 180 ? delta - 360 : delta;
 };
+
+/**
+ * A card the player has just put down comes to rest on this: critically
+ * damped and quick, so it settles into its place in one motion, never past
+ * it and back.
+ */
+const LANDING_SPRING = springFromPerceptual({
+  response: 0.24,
+  dampingRatio: 1,
+});
+/** How long after it is let go a card still lands rather than travels. */
+const LANDING_WINDOW_MS = 2500;
+/** How long a Pokémon's answer to a card joining it lasts. */
+const ACKNOWLEDGE_MS = 420;
 
 const springFor = (
   cause: BoardSceneMotion['cause'],
@@ -212,9 +228,10 @@ export class BoardMotionDirector {
         motion &&
         !['replace', 'layout', 'flip'].includes(motion.cause)
       ) {
-        for (const pulse of planBoardMotion(previous, next, motion.cause)
-          .pulses)
-          this.pulse(pulse);
+        const plan = planBoardMotion(previous, next, motion.cause);
+        for (const pulse of plan.pulses) this.pulse(pulse);
+        for (const join of plan.joins)
+          this.acknowledge(join, this.depth.landsIn(join.arrivingRenderKey));
       }
       return;
     }
@@ -256,6 +273,15 @@ export class BoardMotionDirector {
     }
     for (const ghost of plan.ghosts) this.startGhost(ghost, cause);
     for (const pulse of plan.pulses) this.pulse(pulse);
+    for (const join of plan.joins) {
+      const landing = this.flights.get(join.arrivingRenderKey)?.animation;
+      const timing = landing?.effect?.getComputedTiming();
+      const endsIn =
+        timing && typeof timing.endTime === 'number'
+          ? Math.max(0, timing.endTime - Number(landing?.currentTime ?? 0))
+          : 0;
+      this.acknowledge(join, endsIn);
+    }
     for (const shuffle of plan.shuffles) {
       if (shuffle.spread) this.gatherSpread(shuffle, held);
       else this.riffle(shuffle);
@@ -407,11 +433,15 @@ export class BoardMotionDirector {
       fromX = from.x;
       fromY = from.y;
     }
+    // Put down by hand, a card is not thrown on past its place by the
+    // pointer's speed: it settles where it was put.
     const release = this.releases.get(planned.renderKey);
-    if (release && at - release.at < 250) {
-      vx = release.vx;
-      vy = release.vy;
-    }
+    const landing =
+      planned.kind === 'move' &&
+      !running &&
+      release !== undefined &&
+      at - release.at <
+        LANDING_WINDOW_MS * Math.max(1, this.settings.durationScale);
     this.releases.delete(planned.renderKey);
     const x0 = fromX - to.x;
     const y0 = fromY - to.y;
@@ -426,7 +456,7 @@ export class BoardMotionDirector {
     ) {
       return;
     }
-    const spring = springFor(cause, planned.kind);
+    const spring = landing ? LANDING_SPRING : springFor(cause, planned.kind);
     const settle = Math.max(
       springSettleTime(spring, x0, vx, 0.5),
       springSettleTime(spring, y0, vy, 0.5),
@@ -691,6 +721,44 @@ export class BoardMotionDirector {
         easing: 'linear',
       })
     );
+  }
+
+  /**
+   * A Pokémon answers a card that joined it -- an Energy attached, an
+   * evolution laid on top -- once the card has landed: a soft ring of light
+   * swells from its edge and fades. Only one ring's opacity and scale
+   * change, so it costs the compositor alone; nothing under reduced motion.
+   */
+  private acknowledge(join: StackJoin, afterMs: number): void {
+    if (this.settings.reduced || this.settings.durationScale <= 0) return;
+    const host = this.elements.get(join.hostRenderKey);
+    const body = host?.querySelector<HTMLElement>('.ptcgsim-card__body');
+    if (!body || typeof body.animate !== 'function') return;
+    for (const stale of Array.from(
+      body.querySelectorAll(':scope > .ptcgsim-card__ack')
+    ))
+      stale.remove();
+    const ring = document.createElement('span');
+    ring.className = 'ptcgsim-card__ack';
+    ring.dataset.kind = join.kind;
+    ring.setAttribute('aria-hidden', 'true');
+    body.append(ring);
+    const animation = ring.animate(
+      [
+        { opacity: 0, scale: '0.97' },
+        { opacity: 1, scale: '1', offset: 0.28 },
+        { opacity: 0, scale: join.kind === 'evolve' ? '1.09' : '1.06' },
+      ],
+      {
+        duration: ACKNOWLEDGE_MS * this.settings.durationScale,
+        delay: afterMs,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+        fill: 'backwards',
+      }
+    );
+    const remove = () => ring.remove();
+    void animation.finished.then(remove, remove);
+    this.track(animation, join.hostRenderKey);
   }
 
   /** A brief amount next to the counter, distinct from its persistent total. */

@@ -268,6 +268,47 @@ describe('headless board session controller', () => {
     expect(result.state.view?.revision).toBe(5);
   });
 
+  it('lights only a target the drop would take, and the card keeps following over anything else', () => {
+    const state = install();
+    const cardId = cardIn(state.scene!, ':hand');
+    const dragOver = (targetId: string, deps = dependencies) =>
+      apply(
+        state,
+        {
+          kind: 'RendererPresentationUpdated',
+          update: {
+            kind: 'DragChanged',
+            drag: { cardId, x: 5, y: 6, targetId },
+          },
+        },
+        deps
+      ).state.presentation.drag;
+    expect(dragOver('zone:spike-blue:discard')).toEqual({
+      cardId,
+      x: 5,
+      y: 6,
+      targetId: 'zone:spike-blue:discard',
+    });
+    // Its own place is lit: the card goes back there.
+    expect(dragOver('zone:spike-blue:hand')?.targetId).toBe(
+      'zone:spike-blue:hand'
+    );
+    // Something that is no target: the card still follows, unlit.
+    expect(dragOver('no-such-zone')).toEqual({
+      cardId,
+      x: 5,
+      y: 6,
+      targetId: null,
+    });
+    // A target the drop would refuse is not lit either.
+    expect(
+      dragOver('zone:spike-blue:discard', {
+        ...dependencies,
+        resolveDrop: () => ({ ok: false, reason: 'unsupported_target' }),
+      })
+    ).toEqual({ cardId, x: 5, y: 6, targetId: null });
+  });
+
   it('cancels reconnect gestures without reinstalling a phase-only scene', () => {
     let state = install();
     const cardId = cardIn(state.scene!, ':hand');

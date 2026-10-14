@@ -1,7 +1,7 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 import { containsPoint } from './geometry.js';
 import { compositionHold } from './card-composition.js';
-import { looseBoardTargetAt } from './drag.js';
+import { zoneDropTargetAt } from './drag.js';
 import type {
   BoardPreferences,
   BoardDepthPreferences,
@@ -517,15 +517,9 @@ export class BoardDepthProjection {
       return { point: local, targetId: card.parentId };
     }
     const local = this.boardPoint(point);
-    const zone = [...this.scene.zones]
-      .sort((a, b) => b.zIndex - a.zIndex)
-      .find(
-        (zone) =>
-          zone.interactive && containsPoint(zone.bounds, local.x, local.y)
-      );
     return {
       point: local,
-      targetId: zone?.id ?? looseBoardTargetAt(this.scene, local.x, local.y),
+      targetId: zoneDropTargetAt(this.scene, local.x, local.y),
     };
   }
 

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { BoardDepthProjection, DEFAULT_BOARD_DEPTH } from './board-depth.js';
 import { DEFAULT_BOARD_PREFERENCES } from './defaults.js';
-import { looseBoardTargetAt, resolveBoardDropTarget } from './drag.js';
+import {
+  dropReachFor,
+  looseBoardTargetAt,
+  resolveBoardDropTarget,
+} from './drag.js';
 import { containsPoint } from './geometry.js';
 import {
   createTableLayoutSnapshot,
@@ -49,9 +53,24 @@ const emptyFelt = (scene: BoardScene, playerId: string) => {
       x < half.bounds.x + half.bounds.width;
       x += 6
     ) {
+      // Clear of every zone by more than the reach a zone takes past its
+      // edge, which still belongs to that zone.
+      const reach = dropReachFor(scene) + 1;
       const taken =
-        scene.zones.some((zone) => containsPoint(zone.bounds, x, y)) ||
-        scene.cards.some((card) => containsPoint(card.bounds, x, y));
+        scene.zones.some((zone) =>
+          containsPoint(
+            zone.kind === 'board'
+              ? zone.bounds
+              : {
+                  x: zone.bounds.x - reach,
+                  y: zone.bounds.y - reach,
+                  width: zone.bounds.width + 2 * reach,
+                  height: zone.bounds.height + 2 * reach,
+                },
+            x,
+            y
+          )
+        ) || scene.cards.some((card) => containsPoint(card.bounds, x, y));
       if (!taken) return { x, y };
     }
   throw new Error('No bare felt in this half');

@@ -171,7 +171,81 @@ describe('BoardMotionDirector', () => {
     expect(test.director.active).toBe(true);
   });
 
-  it('starts a dropped card from the drop point with the speed it was let go at', () => {
+  it('has a Pokémon answer an Energy attached to it once the card lands', () => {
+    const stackId = 'stack:blue:active';
+    const energy = base.zones[handId]!.cards[1]!;
+    const attached: MatchViewState = {
+      ...base,
+      revision: base.revision + 1,
+      zones: {
+        ...base.zones,
+        [handId]: {
+          ...base.zones[handId]!,
+          cards: base.zones[handId]!.cards.filter((card) => card !== energy),
+        },
+      },
+      stacks: {
+        ...base.stacks,
+        [stackId]: {
+          ...base.stacks[stackId]!,
+          attachmentCards: [...base.stacks[stackId]!.attachmentCards, energy],
+        },
+      },
+    };
+    for (const reduced of [false, true]) {
+      recorded = [];
+      const test = setup();
+      test.director.setSettings({ reduced, durationScale: 1 });
+      const before = sceneOf(base);
+      const after = sceneOf(attached);
+      test.register(before);
+      test.register(after);
+      test.director.commit(
+        null,
+        before,
+        undefined,
+        paintedOf(before),
+        new Set()
+      );
+      test.director.commit(
+        before,
+        after,
+        { cause: 'advance' },
+        paintedOf(after),
+        new Set()
+      );
+      const host = after.cards
+        .filter(
+          (card) => card.parentId === stackId && card.role === 'stackEvolution'
+        )
+        .sort((left, right) => right.zIndex - left.zIndex)[0]!;
+      const ring = test.elements
+        .get(host.renderKey!)!
+        .querySelector('.ptcgsim-card__ack');
+      const answer = recorded.find((entry) => entry.element === ring);
+      if (reduced) {
+        expect(ring).toBeNull();
+        continue;
+      }
+      expect(ring?.getAttribute('data-kind')).toBe('attach');
+      // It swells and fades: opacity and scale only, nothing that lays out.
+      expect(answer?.keyframes.map((frame) => frame.opacity)).toEqual([
+        0, 1, 0,
+      ]);
+      expect(
+        answer?.keyframes.every((frame) =>
+          Object.keys(frame).every((name) =>
+            ['opacity', 'scale', 'offset'].includes(name)
+          )
+        )
+      ).toBe(true);
+      expect(Number(answer?.options.duration)).toBeGreaterThanOrEqual(300);
+      expect(Number(answer?.options.duration)).toBeLessThanOrEqual(450);
+      expect(test.director.active).toBe(true);
+    }
+  });
+
+  it('lands a dropped card from the drop point, never past its place', () => {
     const drop = (release?: { readonly vx: number; readonly vy: number }) => {
       recorded = [];
       const test = setup();
@@ -201,7 +275,7 @@ describe('BoardMotionDirector', () => {
       )!.bounds;
       return { flight: flight!, dropRect, to };
     };
-    const still = drop();
+    const still = drop({ vx: 0, vy: 0 });
     const [x0, y0] = translateOf(still.flight.keyframes[0]!);
     expect(x0).toBeCloseTo(
       still.dropRect.x +
@@ -215,14 +289,21 @@ describe('BoardMotionDirector', () => {
         (still.to.y + still.to.height / 2),
       1
     );
-    // Thrown upward hard: one frame in it has climbed much further than a
-    // card let go from rest, and its first frame is the same drop point.
+    // However hard it was let go, a card put down comes straight to rest:
+    // it closes on its place every frame and never passes it.
     const thrown = drop({ vx: 0, vy: -2_400 });
     expect(translateOf(thrown.flight.keyframes[0]!)).toEqual([x0, y0]);
-    const step = (flight: RecordedAnimation) =>
-      translateOf(flight.keyframes[1]!)[1]! -
-      translateOf(flight.keyframes[0]!)[1]!;
-    expect(step(thrown.flight)).toBeLessThan(step(still.flight) - 20);
+    for (const flight of [still.flight, thrown.flight]) {
+      const offsets = flight.keyframes.map((frame) => translateOf(frame));
+      for (const [index, [x, y]] of offsets.entries()) {
+        expect(x! * x0! >= -1e-6 && y! * y0! >= -1e-6).toBe(true);
+        if (index > 0) {
+          const [px, py] = offsets[index - 1]!;
+          expect(Math.abs(x!)).toBeLessThanOrEqual(Math.abs(px!) + 1e-6);
+          expect(Math.abs(y!)).toBeLessThanOrEqual(Math.abs(py!) + 1e-6);
+        }
+      }
+    }
   });
 
   it('redirects a card mid-flight from where it is drawn, not from where it started', () => {

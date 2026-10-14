@@ -43,7 +43,38 @@ interface Travel {
   delay: number;
   /** How high above its path a card arcs at the middle of the move. */
   arc: number;
+  /**
+   * A card the player has just put down: it comes to rest in one smooth,
+   * decelerating motion, with no spring past its place.
+   */
+  landing: boolean;
 }
+
+/** Decelerating to rest, never past it. */
+const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
+
+/**
+ * A card carried across the table follows a critically damped spring: quick
+ * away, slowing into its place, and never past it. Sampled over this much
+ * spring time and scaled to arrive exactly at the end of the move.
+ */
+const TRAVEL_SPRING_SECONDS = 0.45;
+const TRAVEL_SPRING_END =
+  1 -
+  springStateAt(SPRING_PRESETS.settle, 1, 0, TRAVEL_SPRING_SECONDS)
+    .displacement;
+const travelEase = (progress: number): number =>
+  Math.min(
+    1,
+    (1 -
+      springStateAt(
+        SPRING_PRESETS.settle,
+        1,
+        0,
+        progress * TRAVEL_SPRING_SECONDS
+      ).displacement) /
+      TRAVEL_SPRING_END
+  );
 /** Pure, interruptible pose timing, driven by a renderer's single on-demand clock. */
 export class TablePoseMotion {
   readonly poses = new Map<string, TableCardPose>();
@@ -57,6 +88,11 @@ export class TablePoseMotion {
   target(key: string) {
     return this.travel.get(key)?.to ?? this.poses.get(key);
   }
+  /** When the card's current move ends, on the clock it was set with. */
+  endsAt(key: string): number | null {
+    const travel = this.travel.get(key);
+    return travel ? travel.start + travel.delay + travel.duration : null;
+  }
   set(
     key: string,
     target: TableCardPose,
@@ -64,7 +100,8 @@ export class TablePoseMotion {
     duration = 0,
     from?: TableCardPose,
     delay = 0,
-    arc = 0
+    arc = 0,
+    landing = false
   ) {
     const oldTarget = this.target(key);
     if (duration > 0 && oldTarget && sameTablePose(oldTarget, target)) return;
@@ -82,6 +119,7 @@ export class TablePoseMotion {
       duration,
       delay,
       arc: Math.max(0, arc),
+      landing,
     });
   }
   sample(key: string, now: number): TableCardPose | undefined {
@@ -96,18 +134,21 @@ export class TablePoseMotion {
       this.poses.set(key, travel.to);
       return travel.to;
     }
-    const eased =
-      1 -
-      springStateAt(SPRING_PRESETS.snappy, 1, 0, progress * 0.45).displacement;
+    // Neither easing passes its mark: a card overshooting would come down
+    // past its place, or sink into the table, and bob back.
+    const eased = travel.landing
+      ? easeOutCubic(progress)
+      : travelEase(progress);
     const between = interpolateTablePose(travel.from, travel.to, eased);
-    // Carried across the table, a card rises and falls as a hand moves it.
+    // Carried across the table, a card rises and falls as a hand moves it,
+    // highest halfway along its path: up quickly, then lowered gently onto
+    // its place rather than arriving high and dropping.
     const current =
       travel.arc > 0
         ? {
             ...between,
             elevation:
-              between.elevation +
-              travel.arc * Math.sin(Math.PI * Math.min(1, progress)),
+              between.elevation + travel.arc * Math.sin(Math.PI * eased),
           }
         : between;
     this.poses.set(key, current);

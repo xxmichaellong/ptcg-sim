@@ -1562,6 +1562,10 @@
               "kind": "value"
             },
             {
+              "name": "dropReachFor",
+              "kind": "value"
+            },
+            {
               "name": "findBoardLayoutRegion",
               "kind": "value"
             },
@@ -1970,6 +1974,10 @@
               "kind": "value"
             },
             {
+              "name": "StackJoin",
+              "kind": "type"
+            },
+            {
               "name": "TABLE_CARD_THICKNESS",
               "kind": "value"
             },
@@ -2088,6 +2096,10 @@
             {
               "name": "ZoneCountSceneNode",
               "kind": "type"
+            },
+            {
+              "name": "zoneDropTargetAt",
+              "kind": "value"
             },
             {
               "name": "ZoneSceneNode",

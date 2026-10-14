@@ -94,6 +94,7 @@ describe('planBoardMotion', () => {
         ghosts: [],
         pulses: [],
         shuffles: [],
+        joins: [],
       });
     }
   });
@@ -457,5 +458,65 @@ describe('planBoardMotion', () => {
       scene.markers.find((marker) => marker.kind === 'damage')!.id;
     expect(markerOf(after)).not.toBe(markerOf(before));
     expect(planBoardMotion(before, after, 'advance').pulses).toEqual([]);
+  });
+
+  it('has a Pokémon answer a card that joined it, and only that', () => {
+    const stackId = 'stack:blue:active';
+    const hand = zoneId(blue, 'hand');
+    const [moving, ...rest] = cardsOf(base, hand);
+    const stack = base.stacks[stackId]!;
+    const attached: MatchViewState = {
+      ...base,
+      revision: base.revision + 1,
+      zones: { ...base.zones, [hand]: { ...base.zones[hand]!, cards: rest } },
+      stacks: {
+        ...base.stacks,
+        [stackId]: {
+          ...stack,
+          attachmentCards: [...stack.attachmentCards, moving!],
+        },
+      },
+    };
+    const before = sceneOf(base);
+    const after = sceneOf(attached);
+    const keyOf = (scene: typeof after, id: string) =>
+      scene.cards.find((card) => String(card.id) === id)!.renderKey;
+    const top = after.cards
+      .filter(
+        (card) => card.parentId === stackId && card.role === 'stackEvolution'
+      )
+      .sort((left, right) => right.zIndex - left.zIndex)[0]!;
+    expect(planBoardMotion(before, after, 'advance').joins).toEqual([
+      {
+        arrivingRenderKey: keyOf(after, String(moving!.id)),
+        hostRenderKey: top.renderKey,
+        kind: 'attach',
+      },
+    ]);
+    // An evolution laid on top: the new top card answers.
+    const { view, card } = freshKnown(base, blue, 'evolved-top');
+    const evolved: MatchViewState = {
+      ...view,
+      revision: view.revision + 1,
+      stacks: {
+        ...view.stacks,
+        [stackId]: {
+          ...view.stacks[stackId]!,
+          evolutionCards: [...view.stacks[stackId]!.evolutionCards, card],
+        },
+      },
+    };
+    const evolvedScene = sceneOf(evolved);
+    expect(
+      planBoardMotion(sceneOf(view), evolvedScene, 'advance').joins
+    ).toEqual([
+      {
+        arrivingRenderKey: keyOf(evolvedScene, String(card.id)),
+        hostRenderKey: keyOf(evolvedScene, String(card.id)),
+        kind: 'evolve',
+      },
+    ]);
+    // Nothing joined: nothing answers.
+    expect(planBoardMotion(before, before, 'advance').joins).toEqual([]);
   });
 });

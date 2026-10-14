@@ -544,11 +544,13 @@ const reconcilePresentation = (
       ? state.presentation.hoveredCardId
       : null;
   const drag = state.presentation.drag;
+  // A new view mid-drag keeps the card in hand; only a target it no longer
+  // has stops being lit.
   const reconciledDrag =
-    drag &&
-    hasCard(scene, drag.cardId) &&
-    (drag.targetId === null || hasDropTarget(view, scene, drag.targetId))
-      ? drag
+    drag && hasCard(scene, drag.cardId)
+      ? drag.targetId === null || hasDropTarget(view, scene, drag.targetId)
+        ? drag
+        : { ...drag, targetId: null }
       : null;
   const openedZoneId =
     state.presentation.openedZoneId &&
@@ -1420,25 +1422,62 @@ const handleIntent = (
   }
 };
 
+/**
+ * Whether dropping the held card on `targetId` would do something: the lit
+ * target is always where the card goes. Its own place (a no-op) counts, as
+ * the card goes back there.
+ */
+const dropWouldLand = (
+  state: BoardSessionControllerState,
+  drag: NonNullable<BoardPresentation['drag']>,
+  targetId: string,
+  dependencies: BoardSessionControllerDependencies
+): boolean => {
+  const view = state.view;
+  const scene = state.scene;
+  if (
+    !view ||
+    !scene ||
+    state.sessionPhase !== 'ready' ||
+    !state.canSubmitCommands ||
+    !hasDropTarget(view, scene, targetId)
+  ) {
+    return false;
+  }
+  const resolution = (dependencies.resolveDrop ?? resolveBoardDrop)(
+    view,
+    scene,
+    {
+      kind: 'CardDropRequested',
+      cardId: drag.cardId,
+      targetId,
+      x: drag.x,
+      y: drag.y,
+    }
+  );
+  return resolution.ok || resolution.reason === 'no_op';
+};
+
 const handlePresentationUpdate = (
   state: BoardSessionControllerState,
-  update: BoardPresentationUpdate
+  update: BoardPresentationUpdate,
+  dependencies: BoardSessionControllerDependencies
 ): BoardSessionControllerReduction => {
   if (!state.scene) return ignored(state);
   if (update.kind === 'DragChanged') {
     const drag = update.drag;
-    if (
-      drag &&
-      (!hasCard(state.scene, drag.cardId) ||
-        (drag.targetId !== null &&
-          (!state.view ||
-            !hasDropTarget(state.view, state.scene, drag.targetId))))
-    ) {
-      return ignored(state);
-    }
+    if (drag && !hasCard(state.scene, drag.cardId)) return ignored(state);
+    // The card keeps following the pointer whatever is under it; only a
+    // target the drop would take is lit.
+    const shown =
+      drag && drag.targetId !== null
+        ? dropWouldLand(state, drag, drag.targetId, dependencies)
+          ? drag
+          : { ...drag, targetId: null }
+        : drag;
     return installPresentation(state, {
       ...state.presentation,
-      drag,
+      drag: shown,
       ...(drag ? { selectedCardId: null } : {}),
     });
   }
@@ -1852,7 +1891,7 @@ export const reduceBoardSessionController = (
         dependencies
       );
     case 'RendererPresentationUpdated':
-      return handlePresentationUpdate(state, action.update);
+      return handlePresentationUpdate(state, action.update, dependencies);
     case 'HoverChanged': {
       if (
         action.cardId !== null &&

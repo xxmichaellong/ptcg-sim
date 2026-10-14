@@ -22,6 +22,10 @@ import { depthPaintKey } from './depth-paint-key.js';
 const timestamp = () => performance.now();
 /** How long a card takes to rise to its held height. */
 const LIFT_DURATION_MS = 120;
+/** A card let go of comes down to the table over this long. */
+const LANDING_DESCENT_MS = 160;
+/** How long after it is let go a card still lands rather than travels. */
+const LANDING_WINDOW_MS = 2500;
 /** A card under the pointer rises this share of its width, over this long. */
 const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
@@ -85,6 +89,12 @@ export class TableDepthDirector {
   >();
   private readonly held = new Set<string>();
   /**
+   * Cards the player has just let go of, and when: until each is in its
+   * place it comes down and slides there in one smooth motion, without the
+   * arc of a card carried across the table.
+   */
+  private readonly released = new Map<string, number>();
+  /**
    * Where the pointer holds the held cards: a point on one card's face, as
    * fractions of it, and the pointer over it.
    */
@@ -121,6 +131,11 @@ export class TableDepthDirector {
       this.lifts.size > 0 ||
       this.raising()
     );
+  }
+  /** How long until the card is in its place, in milliseconds from now. */
+  landsIn(key: string): number {
+    const end = this.motion.endsAt(key);
+    return end === null ? 0 : Math.max(0, end - timestamp());
   }
   private raising(): boolean {
     const now = timestamp();
@@ -251,6 +266,7 @@ export class TableDepthDirector {
         this.shuffles.delete(key);
         this.motion.delete(key);
         this.painted.delete(key);
+        this.released.delete(key);
       }
     this.markers.clear();
     for (const element of Array.from(
@@ -290,10 +306,17 @@ export class TableDepthDirector {
             this.riffles.delete(riffleKey);
           }
       } else {
+        if (this.held.has(key)) this.released.set(key, at);
         this.held.delete(key);
         this.lifts.delete(key);
         if (this.grip?.key === key) this.grip = null;
       }
+      const releasedAt = this.released.get(key);
+      const landing =
+        !held &&
+        releasedAt !== undefined &&
+        at - releasedAt < LANDING_WINDOW_MS * Math.max(1, this.durationScale);
+      if (releasedAt !== undefined && !landing) this.released.delete(key);
       const shuffle = this.shuffles.get(key);
       if (shuffle && (held || !sameTablePose(shuffle.base, target))) {
         // A newer move owns the card. Continue from its visible shuffle pose,
@@ -348,18 +371,24 @@ export class TableDepthDirector {
         : this.durationScale *
           (onlyHeight
             ? projection.settings.animate
-              ? 180
+              ? LANDING_DESCENT_MS
               : 0
-            : source
-              ? Math.min(560, Math.max(320, 300 + 0.22 * distance))
-              : 420);
+            : landing
+              ? // Put down by hand: it slides the last of the way into its
+                // place, quickly, as a card pushed square on the table does.
+                Math.min(300, Math.max(180, 160 + 0.15 * distance))
+              : source
+                ? Math.min(560, Math.max(320, 300 + 0.22 * distance))
+                : 420);
       const arc =
-        source && duration > 0 && target.plane === 1
+        source && duration > 0 && target.plane === 1 && !landing
           ? Math.min(
               target.bounds.width,
               Math.max(0.25 * target.bounds.width, 0.2 * distance)
             ) * projection.settings.strength
           : 0;
+      // In its place now: the next move of it is an ordinary one.
+      if (landing && !onlyHeight && duration > 0) this.released.delete(key);
       const from = source
         ? {
             ...source,
@@ -377,8 +406,9 @@ export class TableDepthDirector {
         at,
         duration,
         from,
-        (flight?.delay ?? 0) * 1000 * this.durationScale,
-        arc
+        landing ? 0 : (flight?.delay ?? 0) * 1000 * this.durationScale,
+        arc,
+        landing
       );
       if (flight?.fromImageUrl && duration > 0)
         this.flipFace(key, flight, at, duration);
@@ -850,8 +880,14 @@ export class TableDepthDirector {
       if (shadow) {
         shadow.setAttribute('d', edges.shadow);
         shadow.style.opacity = look.castOpacity.toFixed(3);
-        shadow.style.filter =
-          look.castBlur > 0 ? `blur(${look.castBlur.toFixed(2)}px)` : 'none';
+        // The blur in quarter pixels, rewritten only when it changes: a new
+        // filter re-rasterizes the shadow, and a card sliding at one height
+        // keeps the same one.
+        const blur =
+          look.castBlur > 0
+            ? `blur(${(Math.round(look.castBlur * 4) / 4).toFixed(2)}px)`
+            : 'none';
+        if (shadow.style.filter !== blur) shadow.style.filter = blur;
       }
       const contact = geometry.querySelector<SVGPathElement>(
         '[data-depth-contact]'
@@ -1025,6 +1061,7 @@ export class TableDepthDirector {
     for (const key of this.ghosts.keys()) this.removeGhost(key);
     this.shuffles.clear();
     this.lifts.clear();
+    this.released.clear();
     this.raises.clear();
     this.hovered = null;
     this.onActivity?.();
