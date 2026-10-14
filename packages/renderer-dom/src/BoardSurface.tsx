@@ -72,6 +72,8 @@ const FACE_DOWN_LABEL = 'Face-down card';
  */
 const LIFTED_Z_INDEX = 9_000;
 const DRAG_Z_INDEX = 20_000;
+/** How far the pointer moves after a drop before hover answers it again. */
+const HOVER_REST_SLOP_PX = 4;
 const NO_ASIDES: ReadonlyMap<
   CardSceneNode['id'],
   { readonly x: number; readonly y: number }
@@ -897,6 +899,18 @@ export const BoardSurface = ({
     y: number;
   } | null>(null);
   const hoverFrameRef = useRef<number | null>(null);
+  // Where the pointer let go of a dragged card. The card is still settling
+  // into its place there, so hover leaves it alone -- no lift, no lean --
+  // until the pointer moves on; otherwise it would sink and pop back up.
+  const hoverRestRef = useRef<{
+    readonly x: number;
+    readonly y: number;
+  } | null>(null);
+  const restHover = (at: { readonly x: number; readonly y: number } | null) => {
+    hoverRestRef.current = at;
+    if (at) surfaceRef.current?.setAttribute('data-hover-rest', '');
+    else surfaceRef.current?.removeAttribute('data-hover-rest');
+  };
   const velocity = useMemo(() => new VelocityTracker(100), []);
   const previousSceneRef = useRef<BoardScene | null>(null);
   useLayoutEffect(
@@ -1414,10 +1428,23 @@ export const BoardSurface = ({
             );
           }
         } else {
+          const rest = hoverRestRef.current;
+          if (
+            rest &&
+            Math.hypot(event.clientX - rest.x, event.clientY - rest.y) <
+              HOVER_REST_SLOP_PX
+          ) {
+            clearHover();
+            return;
+          }
+          if (rest) restHover(null);
           trackHover(event);
         }
       }}
-      onPointerLeave={() => clearHover()}
+      onPointerLeave={() => {
+        restHover(null);
+        clearHover();
+      }}
       onPointerUp={(event) => {
         const ownsGrab =
           capturedPointerRef.current?.pointerId === event.pointerId;
@@ -1430,6 +1457,10 @@ export const BoardSurface = ({
         }
         velocity.reset();
         swing.release();
+        if (released && event.pointerType !== 'touch') {
+          restHover({ x: event.clientX, y: event.clientY });
+          clearHover();
+        }
         if (input && dragController.pointerUp(scene, input)) {
           event.preventDefault();
         }

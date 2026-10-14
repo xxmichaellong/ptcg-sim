@@ -170,6 +170,13 @@ export const tablePoseLocalPoint = (
   };
 };
 
+/** Twice a polygon's area, positive when it winds as the card's own face does. */
+const signedArea = (points: readonly TablePoint[]): number =>
+  points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length]!;
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0);
+
 /** Neutral paper/sleeve edges. Geometry is bounded independently of pile size. */
 export const tablePoseEdges = (
   camera: TableCamera,
@@ -190,30 +197,35 @@ export const tablePoseEdges = (
     ...pose,
     elevation: pose.elevation - pose.thickness,
   });
-  const path = (points: readonly TablePoint[]) =>
-    `M${points.map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`).join('L')}Z`;
-  const sides = top
-    .map((_, index) =>
-      path([
-        top[index]!,
-        bottom[index]!,
-        bottom[(index + 1) % 4]!,
-        top[(index + 1) % 4]!,
-      ])
-    )
-    .join('');
-  const lines = Array.from(
-    { length: Math.min(8, Math.max(0, bands - 1)) },
-    (_, index) => {
-      const ratio = (index + 1) / (Math.min(8, bands - 1) + 1);
-      return path(
-        top.map((point, i) => ({
-          x: point.x + (bottom[i]!.x - point.x) * ratio,
-          y: point.y + (bottom[i]!.y - point.y) * ratio,
-        }))
-      );
-    }
-  ).join('');
+  const coordinates = (points: readonly TablePoint[]) =>
+    points
+      .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
+      .join('L');
+  const path = (points: readonly TablePoint[]) => `M${coordinates(points)}Z`;
+  const side = (index: number): readonly TablePoint[] => [
+    top[index]!,
+    bottom[index]!,
+    bottom[(index + 1) % 4]!,
+    top[(index + 1) % 4]!,
+  ];
+  // Only the sides turned toward the viewer are drawn. Those wind the same
+  // way as the top face (positive area here); the far ones wind the other
+  // way, and in one filled path they would cancel the near ones where they
+  // overlap, leaving holes the mat shows through.
+  const facing = [0, 1, 2, 3].filter((index) => signedArea(side(index)) > 1e-6);
+  const sides = facing.map((index) => path(side(index))).join('');
+  const bandCount = Math.min(8, Math.max(0, bands - 1));
+  // Where the cards of a pile meet, along the sides that show.
+  const lines = Array.from({ length: bandCount }, (_, band) => {
+    const ratio = (band + 1) / (bandCount + 1);
+    const at = (index: number): TablePoint => ({
+      x: top[index]!.x + (bottom[index]!.x - top[index]!.x) * ratio,
+      y: top[index]!.y + (bottom[index]!.y - top[index]!.y) * ratio,
+    });
+    return facing
+      .map((index) => `M${coordinates([at(index), at((index + 1) % 4)])}`)
+      .join('');
+  }).join('');
   // Two shadows, as a card under a lamp has: a dark contact shadow right
   // beneath it that is gone once it lifts, and a soft cast shadow that
   // slides away, spreads and fades as it rises. The light is to the upper

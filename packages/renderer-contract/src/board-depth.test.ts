@@ -3,6 +3,7 @@ import {
   BoardDepthProjection,
   DEFAULT_BOARD_DEPTH,
   parseBoardDepth,
+  tablePoseEdges,
   tablePoseLocalPoint,
   tablePoseQuad,
 } from './board-depth.js';
@@ -252,6 +253,30 @@ describe('live board depth', () => {
       small.pose(cover).elevation * 5,
       7
     );
+    // Only the sides turned toward the viewer are drawn, all wound one
+    // way: a far side in the same filled path would cancel a near one where
+    // they overlap and let the mat show through the pile.
+    const edges = tablePoseEdges(full.camera, full.pose(cover), 60);
+    const faces = edges.sides
+      .split('Z')
+      .filter(Boolean)
+      .map((face) =>
+        face
+          .replace('M', '')
+          .split('L')
+          .map((pair) => pair.split(',').map(Number) as [number, number])
+      );
+    expect(faces.length).toBeGreaterThan(0);
+    expect(faces.length).toBeLessThanOrEqual(2);
+    for (const face of faces) {
+      const area = face.reduce((sum, [x, y], index) => {
+        const [nextX, nextY] = face[(index + 1) % face.length]!;
+        return sum + x * nextY - nextX * y;
+      }, 0);
+      expect(area).toBeGreaterThan(0);
+    }
+    // The pages show as lines along those sides only: one per side per band.
+    expect(edges.lines.match(/M/g)).toHaveLength(8 * faces.length);
     // A held card rises about half its width; with reduced motion it is
     // still raised (an instant change is not motion), and off is off.
     expect(small.liftFor(100)).toBeCloseTo(45, 7);

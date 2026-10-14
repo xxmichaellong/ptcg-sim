@@ -16,6 +16,8 @@ export const BOARD_SURFACE_CSS = `
   transform-origin: 0 0;
   pointer-events: none;
   border-radius: 18px;
+  /* What is printed on it (the halves' tints) keeps to its rounded corners. */
+  overflow: hidden;
   /* A cloth playmat on the desk: a fine woven texture that foreshortens
      with the table, the lamp's light falling off from up and to the left,
      an overlocked edge, and the rubber's thickness along its near side. */
@@ -163,18 +165,19 @@ export const BOARD_SURFACE_CSS = `
 @media (hover: hover) and (pointer: fine) {
   /* On the table the hand runs off the screen edge: a hovered card rises
      fully into view, above its neighbours (in its own frame, so the
-     opponent's turned hand rises toward the centre). */
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover {
+     opponent's turned hand rises toward the centre). Not while a card just
+     dropped is settling under a pointer that has not moved since. */
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover {
     z-index: 8500 !important;
   }
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover > .ptcgsim-card__body {
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover > .ptcgsim-card__body {
     translate: 0 -22%;
     scale: 1.06;
   }
-  .ptcgsim-board-surface[data-dragging='false'] .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
+  .ptcgsim-board-surface[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
     scale: var(--ptcgsim-hover-scale, 1.035);
   }
-  .ptcgsim-board-surface[data-dragging='false'] .ptcgsim-card:enabled:hover .ptcgsim-card__face {
+  .ptcgsim-board-surface[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover .ptcgsim-card__face {
     --ptcgsim-lift: 3.2;
   }
 }
