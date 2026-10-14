@@ -118,6 +118,12 @@ const SEAM_GAP_PX = 10;
  * desk flash through the table.
  */
 const MAT_SETTLE_MS = 180;
+/**
+ * ...and for this many frames in a row. A slide changes the size on every
+ * frame it gets, so a slow frame on a busy machine is never mistaken for
+ * the size holding still.
+ */
+const MAT_SETTLE_FRAMES = 3;
 
 /** The size the mat is painted at: the table's, once it has held still. */
 const useSettledSize = (
@@ -127,11 +133,24 @@ const useSettledSize = (
   const [settled, setSettled] = useState({ width, height });
   useEffect(() => {
     if (settled.width === width && settled.height === height) return;
-    const timer = setTimeout(
-      () => setSettled({ width, height }),
-      MAT_SETTLE_MS
-    );
-    return () => clearTimeout(timer);
+    const settle = () => setSettled({ width, height });
+    if (typeof requestAnimationFrame !== 'function') {
+      const timer = setTimeout(settle, MAT_SETTLE_MS);
+      return () => clearTimeout(timer);
+    }
+    const started = performance.now();
+    let frames = 0;
+    let handle = 0;
+    const tick = (now: number) => {
+      frames += 1;
+      if (frames >= MAT_SETTLE_FRAMES && now - started >= MAT_SETTLE_MS) {
+        settle();
+        return;
+      }
+      handle = requestAnimationFrame(tick);
+    };
+    handle = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(handle);
   }, [width, height, settled.width, settled.height]);
   return settled.width > 0 && settled.height > 0 ? settled : { width, height };
 };
