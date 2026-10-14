@@ -525,10 +525,12 @@ it('riffles a shuffled deck with stand-ins, hides the pile meanwhile, and gives 
   director.destroy();
 });
 
-it("raises a joined card's pieces together, and keeps the grip under the pointer while a card rises", () => {
+it("raises and lifts a joined card's pieces together, and keeps the grip under the pointer while it rises", () => {
   const frames: FrameRequestCallback[] = [];
   let now = 0;
-  vi.stubGlobal('performance', { now: () => now });
+  // A slow browser: the clock moves on while the cards are being painted.
+  let drift = 0;
+  vi.stubGlobal('performance', { now: () => (now += drift) });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
     frames.push(callback)
   );
@@ -569,7 +571,9 @@ it("raises a joined card's pieces together, and keeps the grip under the pointer
   const scene = {
     ...base,
     cards: base.cards.map((card) =>
-      card === first || card === second ? { ...card, composition } : card
+      card === first || card === second
+        ? { ...card, role: 'stackEvolution' as const, composition }
+        : card
     ),
   };
   const elements = new Map(
@@ -603,9 +607,11 @@ it("raises a joined card's pieces together, and keeps the grip under the pointer
   expect(height(first)).toBeGreaterThan(resting);
   expect(height(second)).toBe(height(first));
 
-  // Picked up, the card's grip stays under the pointer at every height on
-  // the way up, not only at the height it was at when the pointer moved.
-  elements.get(first.renderKey!)!.dataset.held = 'drag';
+  // Picked up, the pieces rise as one, and the grip stays under the
+  // pointer at every height on the way up, not only at the height it was
+  // at when the pointer moved.
+  for (const element of elements.values()) element.dataset.held = 'drag';
+  drift = 3;
   const point = { x: 400, y: 380 };
   director.grab({ key: first.renderKey!, x: 0.27, y: 0.61, point });
   director.commit(
@@ -633,6 +639,7 @@ it("raises a joined card's pieces together, and keeps the grip under the pointer
   const pickedUp = height(first);
   for (const at of [100, 130, 400]) {
     advance(at);
+    expect(height(second)).toBe(height(first));
     expect(grip().x).toBeCloseTo(point.x, 6);
     expect(grip().y).toBeCloseTo(point.y, 6);
   }

@@ -177,7 +177,7 @@ export class TableDepthDirector {
         raise(target, HOVER_RAISE * pose.bounds.width);
     for (const target of new Set([...settling, ...rising])) {
       const base = this.motion.poses.get(target);
-      if (base) this.paint(target, base);
+      if (base) this.paint(target, base, now);
     }
     this.schedule();
     this.onActivity?.();
@@ -400,7 +400,7 @@ export class TableDepthDirector {
         (this.elements.get(key)?.dataset.flying !== undefined) !==
           this.lifted(key)
       )
-        this.paint(key, pose);
+        this.paint(key, pose, at);
     }
     if (plan && this.durationScale > 0) {
       for (const ghost of plan.ghosts) {
@@ -604,17 +604,21 @@ export class TableDepthDirector {
       const element = ghost(key);
       if (!element) continue;
       element.style.opacity = halfThickness > 0.3 ? '1' : '0';
-      this.paint(key, halfPose(side));
+      this.paint(key, halfPose(side), at);
     }
     const middle = ghost(riffle.middle);
     if (middle) {
       middle.style.opacity = middleThickness > 0.3 ? '1' : '0';
-      this.paint(riffle.middle, {
-        ...base,
-        bounds: { ...base.bounds, x: base.bounds.x + settle },
-        thickness: middleThickness,
-        elevation: middleThickness,
-      });
+      this.paint(
+        riffle.middle,
+        {
+          ...base,
+          bounds: { ...base.bounds, x: base.bounds.x + settle },
+          thickness: middleThickness,
+          elevation: middleThickness,
+        },
+        at
+      );
     }
     return false;
   }
@@ -679,7 +683,7 @@ export class TableDepthDirector {
       ...(toImage ? { fromImage: image, toImage } : {}),
     });
     this.motion.set(key, holdFor ? from : to, at, duration, from, delay);
-    this.paint(key, from);
+    this.paint(key, from, at);
     return key;
   }
 
@@ -770,11 +774,15 @@ export class TableDepthDirector {
     return held && under ? { x: under.x - held.x, y: under.y - held.y } : null;
   }
 
-  private paint(key: string, target: TableCardPose) {
+  /**
+   * Paints one card at `now`. Every card painted in one pass is given the
+   * same time, so cards moving together (a joined card's pieces, a held
+   * stack) are painted at the same point of their move.
+   */
+  private paint(key: string, target: TableCardPose, now = timestamp()) {
     const projection = this.projection;
     const element = this.elements.get(key) ?? this.ghosts.get(key)?.element;
     if (!projection || !element) return;
-    const now = timestamp();
     let pose = this.elevated(key, target, now);
     if (this.raiseAt(key, now) <= 0 && this.raises.get(key)?.to === 0)
       this.raises.delete(key);
@@ -885,11 +893,11 @@ export class TableDepthDirector {
   private readonly tick = (at: number) => {
     this.frame = null;
     const sampled = this.motion.sampleAll(at);
-    for (const [key, pose] of sampled) this.paint(key, pose);
+    for (const [key, pose] of sampled) this.paint(key, pose, at);
     for (const key of new Set([...this.lifts.keys(), ...this.raises.keys()])) {
       if (sampled.has(key)) continue;
       const pose = this.motion.poses.get(key);
-      if (pose) this.paint(key, pose);
+      if (pose) this.paint(key, pose, at);
     }
     // Cards that landed earlier keep their lift until their group has landed.
     for (const [key, element] of this.elements) {
@@ -906,15 +914,19 @@ export class TableDepthDirector {
       const base = this.motion.poses.get(key) ?? this.painted.get(key);
       if (base) {
         const turn = easeInOut(progress);
-        this.paint(key, {
-          ...base,
-          flip:
-            progress >= 1
-              ? 0
-              : turn < 0.5
-                ? turn * Math.PI
-                : (turn - 1) * Math.PI,
-        });
+        this.paint(
+          key,
+          {
+            ...base,
+            flip:
+              progress >= 1
+                ? 0
+                : turn < 0.5
+                  ? turn * Math.PI
+                  : (turn - 1) * Math.PI,
+          },
+          at
+        );
       }
       if (progress === 1) this.clearFlip(key);
     }
@@ -925,22 +937,26 @@ export class TableDepthDirector {
       );
       if (t === 1) {
         this.shuffles.delete(key);
-        this.paint(key, shuffle.base);
+        this.paint(key, shuffle.base, at);
         continue;
       }
       const fan = Math.sin(t * Math.PI) ** 2;
-      this.paint(key, {
-        ...shuffle.base,
-        bounds: {
-          ...shuffle.base.bounds,
-          x:
-            shuffle.base.bounds.x +
-            shuffle.side * shuffle.base.bounds.width * 0.48 * fan,
-          y: shuffle.base.bounds.y - 3 * fan,
+      this.paint(
+        key,
+        {
+          ...shuffle.base,
+          bounds: {
+            ...shuffle.base.bounds,
+            x:
+              shuffle.base.bounds.x +
+              shuffle.side * shuffle.base.bounds.width * 0.48 * fan,
+            y: shuffle.base.bounds.y - 3 * fan,
+          },
+          elevation: shuffle.base.elevation + 9 * fan,
+          turns: shuffle.base.turns + shuffle.side * 0.055 * fan,
         },
-        elevation: shuffle.base.elevation + 9 * fan,
-        turns: shuffle.base.turns + shuffle.side * 0.055 * fan,
-      });
+        at
+      );
     }
     for (const [key, riffle] of this.riffles)
       if (this.paintRiffle(riffle, at)) this.riffles.delete(key);
