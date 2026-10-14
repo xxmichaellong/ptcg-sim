@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { openDeck } from './support/table-shell.js';
+
 /**
  * The deck picker's current tournament lists. The server's feed is stubbed
  * here (its Limitless refresh is covered by the Worker runtime tests), so
@@ -38,7 +40,7 @@ const openDeckPicker = async (page: Page): Promise<void> => {
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
   });
-  await page.locator('#deckImportButton').click();
+  await openDeck(page);
   await page.locator('#decklistsButton').click();
   await expect(page.locator('#decklistsContextMenu')).toBeVisible();
 };

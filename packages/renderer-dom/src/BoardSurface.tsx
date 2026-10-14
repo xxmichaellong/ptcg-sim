@@ -1150,6 +1150,12 @@ export const BoardSurface = ({
               : base.elevation + depth.liftFor(base.bounds.width),
         });
       }
+      if (source.renderKey)
+        director.depth.grab({
+          key: source.renderKey,
+          ...gripRef.current,
+          point,
+        });
       const hit = depth.drop(point, source.id, (card) =>
         card.renderKey ? director.depth.current(card.renderKey) : undefined
       );

@@ -7,11 +7,13 @@ import {
   tablePoseEdges,
   tableShadowStyle,
   sameTablePose,
+  unprojectTablePoint,
   type BoardPresentation,
   type BoardScene,
   type BoardSceneMotion,
   type CardSceneNode,
   type TableCardPose,
+  type TablePoint,
   type CardFlight,
   type Rect,
 } from '@ptcgsim/renderer-contract';
@@ -82,6 +84,16 @@ export class TableDepthDirector {
     { from: number; start: number; duration: number }
   >();
   private readonly held = new Set<string>();
+  /**
+   * Where the pointer holds the held cards: a point on one card's face, as
+   * fractions of it, and the pointer over it.
+   */
+  private grip: {
+    readonly key: string;
+    readonly x: number;
+    readonly y: number;
+    readonly point: TablePoint;
+  } | null = null;
   /** The card under the pointer rises a little, as a card does when touched. */
   private hovered: string | null = null;
   private readonly raises = new Map<
@@ -148,25 +160,53 @@ export class TableDepthDirector {
     };
     const previous = this.hovered;
     this.hovered = key;
-    if (previous) raise(previous, 0);
+    // A joined card's pieces rise and settle together, as the one card.
+    const settling = previous ? this.joined(previous) : [];
+    const rising = key ? this.joined(key) : [];
+    for (const target of settling)
+      if (!rising.includes(target)) raise(target, 0);
     const pose = key ? this.motion.poses.get(key) : undefined;
     if (
-      key &&
       pose &&
       pose.plane === 1 &&
-      !this.held.has(key) &&
-      !this.motion.has(key)
+      rising.every(
+        (target) => !this.held.has(target) && !this.motion.has(target)
+      )
     )
-      raise(key, HOVER_RAISE * pose.bounds.width);
-    for (const target of [previous, key]) {
-      const base = target ? this.motion.poses.get(target) : undefined;
-      if (target && base) this.paint(target, base);
+      for (const target of rising)
+        raise(target, HOVER_RAISE * pose.bounds.width);
+    for (const target of new Set([...settling, ...rising])) {
+      const base = this.motion.poses.get(target);
+      if (base) this.paint(target, base);
     }
     this.schedule();
     this.onActivity?.();
   }
   current(key: string) {
     return this.painted.get(key);
+  }
+  /**
+   * Where the pointer holds the card it is carrying (by render key, with
+   * the grip as fractions of its face). A card still rising to its held
+   * height is kept with its grip under the pointer.
+   */
+  grab(grip: {
+    readonly key: string;
+    readonly x: number;
+    readonly y: number;
+    readonly point: TablePoint;
+  }) {
+    this.grip = grip;
+  }
+  /** The render keys of a joined card's pieces, or the card alone. */
+  private joined(key: string): string[] {
+    const card = this.cards.get(key);
+    if (!card?.composition) return [key];
+    const pieces: string[] = [];
+    for (const [other, piece] of this.cards)
+      if (piece.composition && piece.parentId === card.parentId)
+        pieces.push(other);
+    return pieces;
   }
   attach(surface: HTMLElement | null, layer: HTMLElement | null) {
     this.surface = surface;
@@ -217,12 +257,23 @@ export class TableDepthDirector {
       this.surface?.querySelectorAll<HTMLElement>('[data-marker-id]') ?? []
     ))
       this.markers.set(element.dataset.markerId!, element);
-    for (const [key, card] of this.cards) {
+    // The card the pointer holds goes first: the cards carried with it are
+    // placed from where it is painted.
+    const gripped = this.grip?.key;
+    const order = [...this.cards].sort(
+      ([a], [b]) => Number(b === gripped) - Number(a === gripped)
+    );
+    for (const [key, card] of order) {
       const target = projection.pose(card, presentation);
       const held = this.elements.get(key)?.dataset.held !== undefined;
       if (held && !this.held.has(key) && this.durationScale > 0) {
-        const from = this.painted.get(key)?.elevation;
-        if (from !== undefined && from < target.elevation)
+        // A joined card's pieces rise together, from the highest of them.
+        const from = Math.max(
+          ...this.joined(key).map(
+            (piece) => this.painted.get(piece)?.elevation ?? -Infinity
+          )
+        );
+        if (Number.isFinite(from) && from < target.elevation)
           this.lifts.set(key, {
             from,
             start: at,
@@ -241,6 +292,7 @@ export class TableDepthDirector {
       } else {
         this.held.delete(key);
         this.lifts.delete(key);
+        if (this.grip?.key === key) this.grip = null;
       }
       const shuffle = this.shuffles.get(key);
       if (shuffle && (held || !sameTablePose(shuffle.base, target))) {
@@ -668,26 +720,76 @@ export class TableDepthDirector {
     this.flips.delete(key);
   }
 
+  /** A card's pose with its hover raise and the lift it is rising through. */
+  private elevated(
+    key: string,
+    target: TableCardPose,
+    now: number
+  ): TableCardPose {
+    let elevation = target.elevation + Math.max(0, this.raiseAt(key, now));
+    const lift = this.lifts.get(key);
+    if (lift && now - lift.start < lift.duration)
+      elevation =
+        lift.from +
+        (elevation - lift.from) *
+          easeOut(Math.max(0, (now - lift.start) / lift.duration));
+    return elevation === target.elevation ? target : { ...target, elevation };
+  }
+  /**
+   * How far the held cards move on the table so the grip stays under the
+   * pointer at the height they are painted at. The pointer was solved at
+   * the height painted when it moved; a card still rising since would
+   * otherwise slide out from under it.
+   */
+  private gripShift(now: number): TablePoint | null {
+    const grip = this.grip;
+    const camera = this.projection?.camera;
+    const target = grip && this.motion.poses.get(grip.key);
+    if (
+      !grip ||
+      !camera ||
+      !target ||
+      target.plane !== 1 ||
+      !this.held.has(grip.key)
+    )
+      return null;
+    const pose = this.elevated(grip.key, target, now);
+    const m = tablePoseMatrix(camera, pose);
+    const x = grip.x * pose.bounds.width;
+    const y = grip.y * pose.bounds.height;
+    const w = m[3]! * x + m[7]! * y + m[15]!;
+    const held = unprojectTablePoint(
+      camera,
+      {
+        x: (m[0]! * x + m[4]! * y + m[12]!) / w,
+        y: (m[1]! * x + m[5]! * y + m[13]!) / w,
+      },
+      pose.elevation
+    );
+    const under = unprojectTablePoint(camera, grip.point, pose.elevation);
+    return held && under ? { x: under.x - held.x, y: under.y - held.y } : null;
+  }
+
   private paint(key: string, target: TableCardPose) {
     const projection = this.projection;
     const element = this.elements.get(key) ?? this.ghosts.get(key)?.element;
     if (!projection || !element) return;
-    let pose = target;
     const now = timestamp();
-    const raised = this.raiseAt(key, now);
-    if (raised > 0) pose = { ...pose, elevation: pose.elevation + raised };
-    else if (this.raises.get(key)?.to === 0) this.raises.delete(key);
+    let pose = this.elevated(key, target, now);
+    if (this.raiseAt(key, now) <= 0 && this.raises.get(key)?.to === 0)
+      this.raises.delete(key);
     const lift = this.lifts.get(key);
-    if (lift) {
-      const progress = Math.min(1, (now - lift.start) / lift.duration);
-      if (progress >= 1) this.lifts.delete(key);
-      else
-        pose = {
-          ...pose,
-          elevation:
-            lift.from + (pose.elevation - lift.from) * easeOut(progress),
-        };
-    }
+    if (lift && now - lift.start >= lift.duration) this.lifts.delete(key);
+    const shift = this.held.has(key) ? this.gripShift(now) : null;
+    if (shift)
+      pose = {
+        ...pose,
+        bounds: {
+          ...pose.bounds,
+          x: pose.bounds.x + shift.x,
+          y: pose.bounds.y + shift.y,
+        },
+      };
     this.painted.set(key, pose);
     element.style.width = `${pose.bounds.width}px`;
     element.style.height = `${pose.bounds.height}px`;

@@ -26,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
   document.body.replaceChildren();
 });
 
@@ -52,6 +53,23 @@ describe('card image retry', () => {
     scheduleCardImageRetry(image);
     vi.advanceTimersByTime(120_000);
     expect(image.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=${last}`);
+  });
+
+  it('does not keep a card taken off the table alive while it waits', () => {
+    // A waiting retry holds its image weakly; once the card is collected,
+    // the wait ends with nothing to do.
+    const deref = vi.fn(() => undefined);
+    vi.stubGlobal(
+      'WeakRef',
+      class {
+        deref = deref;
+      }
+    );
+    const image = failedImage();
+    scheduleCardImageRetry(image);
+    vi.advanceTimersByTime(60_000);
+    expect(deref).toHaveBeenCalledOnce();
+    expect(image.getAttribute('src')).toBe(ART);
   });
 
   it('stops once the image loads, and forgets a card whose address changed', () => {

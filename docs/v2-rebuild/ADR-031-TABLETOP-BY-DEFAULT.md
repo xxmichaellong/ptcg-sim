@@ -41,10 +41,13 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    halves' tints and the seam are printed on it.
 4. **Cards are sleeved**: 0.8% of a card's width thick, so a deck stands
    about half a card high.
-5. **Picked up**, a card rises about half its width over 120ms, and the
-   grip is solved at the height it is painted at, so it stays under the
-   pointer while it rises. With reduced motion it is raised at once.
-6. **Under the pointer**, a table card rises 6% of its width.
+5. **Picked up**, a card rises about half its width over 120ms, and its
+   grip stays under the pointer at every height on the way: each painted
+   frame places the held cards so the gripped point is under the pointer
+   at the height painted, not only when the pointer moves. With reduced
+   motion it is raised at once.
+6. **Under the pointer**, a table card rises 6% of its width. A joined
+   card's pieces rise, settle and are picked up together, as the one card.
 7. **Carried across the table**, a card takes 320–560ms by distance and
    arcs above its path, as a hand would carry it. **Turned over** on the
    way, it turns about its long axis during the middle of the move: the old

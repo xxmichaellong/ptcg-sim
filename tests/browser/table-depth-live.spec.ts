@@ -294,6 +294,11 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   await idle(page);
   const card = page.locator(`[data-card-id="${hand.id}"]`);
   for (const cancel of ['Escape', 'blur', 'resize']) {
+    // A card under the pointer rises a little first: grip it where it
+    // rests then, as a player would.
+    const resting = await paintedPoint(card, 0.27, 0.61);
+    await page.mouse.move(resting.x, resting.y);
+    await idle(page);
     const from = await paintedPoint(card, 0.27, 0.61);
     const to = { x: from.x + 70, y: from.y - 30 };
     await page.mouse.move(from.x, from.y);

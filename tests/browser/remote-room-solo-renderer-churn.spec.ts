@@ -89,6 +89,44 @@ const collectGarbageCollectedMemory = async (cdp: CDPSession) => {
   };
 };
 
+/**
+ * The page's nodes by kind (element tag and first class, or a text node by
+ * its parent's), so a failed convergence gate shows what grew. Detached
+ * nodes are not in it: when the counters differ and this does not, the
+ * difference is nodes held after they left the page.
+ */
+const readDomCensus = (page: Page): Promise<Record<string, number>> =>
+  page.evaluate(() => {
+    const kind = (element: Element | null): string =>
+      element
+        ? `${element.tagName.toLowerCase()}.${String(element.getAttribute('class') ?? '').split(' ')[0]}`
+        : '';
+    const counts: Record<string, number> = {};
+    const walker = document.createTreeWalker(document, NodeFilter.SHOW_ALL);
+    for (
+      let node: Node | null = walker.currentNode;
+      node;
+      node = walker.nextNode()
+    ) {
+      const key =
+        node instanceof Element
+          ? kind(node)
+          : `#${node.nodeType} in ${kind(node.parentElement)}`;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  });
+
+const censusDifference = (
+  before: Record<string, number>,
+  after: Record<string, number>
+): Record<string, number> =>
+  Object.fromEntries(
+    [...new Set([...Object.keys(before), ...Object.keys(after)])]
+      .map((key) => [key, (after[key] ?? 0) - (before[key] ?? 0)] as const)
+      .filter(([, difference]) => difference !== 0)
+  );
+
 const readRevision = async (page: Page): Promise<number> => {
   const value = await page
     .locator('.ptcgsim-board-surface')
@@ -778,6 +816,7 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   await cdp.send('HeapProfiler.enable');
   const baselineMemory = await collectGarbageCollectedMemory(cdp);
   const baselineCounters = baselineMemory.counters;
+  const baselineCensus = await readDomCensus(page);
   const baselineHeap = baselineMemory.heap;
 
   let measuredZoneBrowserOpenings = 0;
@@ -800,13 +839,24 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   const final = await readResourceEvidence(page, renderer);
   const finalMemory = await collectGarbageCollectedMemory(cdp);
   const finalCounters = finalMemory.counters;
+  const finalCensus = await readDomCensus(page);
   const finalHeap = finalMemory.heap;
   const retainedHeapRatio = finalHeap.usedSize / baselineHeap.usedSize;
   const socketLifecycle = await readSocketLifecycleSummary(page);
   await renderer.dispose();
 
   await testInfo.attach('solo-setup-reset-zone-memory-samples.json', {
-    body: Buffer.from(JSON.stringify({ baselineMemory, finalMemory }, null, 2)),
+    body: Buffer.from(
+      JSON.stringify(
+        {
+          baselineMemory,
+          finalMemory,
+          domDifference: censusDifference(baselineCensus, finalCensus),
+        },
+        null,
+        2
+      )
+    ),
     contentType: 'application/json',
   });
 

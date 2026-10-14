@@ -82,7 +82,13 @@ export const scheduleCardImageRetry = (image: HTMLImageElement): void => {
   if (state.timer !== undefined) clearTimeout(state.timer);
   const delay = RETRY_DELAYS_MS[state.attempt];
   if (delay === undefined) return;
-  state.timer = setTimeout(() => retry(image, state), delay);
+  // Held weakly: a card taken off the table is not kept, with its whole
+  // detached subtree, until its next attempt is due.
+  const held = new WeakRef(image);
+  state.timer = setTimeout(() => {
+    const target = held.deref();
+    if (target) retry(target, state);
+  }, delay);
 };
 
 /** Call from the image's load handler. */

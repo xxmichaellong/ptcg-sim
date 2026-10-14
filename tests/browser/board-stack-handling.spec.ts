@@ -246,12 +246,16 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
     );
 
     // Every frame of the move, wherever the two overlap, the Pokémon must be
-    // what paints on top.
+    // what paints on top. Sampling runs until the move has settled, however
+    // long the drag takes to perform.
     await page.evaluate(
       ({ pokemonId, energyId }) => {
         const samples: string[] = [];
-        (window as unknown as { __layering: string[] }).__layering = samples;
-        const end = performance.now() + 2_500;
+        const state = window as unknown as {
+          __layering: string[];
+          __layeringStop?: boolean;
+        };
+        state.__layering = samples;
         const tick = (): void => {
           const card = document.querySelector(`[data-card-id="${pokemonId}"]`);
           const attached = document.querySelector(
@@ -282,7 +286,7 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
               );
             }
           }
-          if (performance.now() < end) requestAnimationFrame(tick);
+          if (!state.__layeringStop) requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
       },
@@ -294,9 +298,14 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
       await zoneCentre(page, 'bench')
     );
     await page.waitForTimeout(2_600);
-    const samples = await page.evaluate(
-      () => (window as unknown as { __layering: string[] }).__layering
-    );
+    const samples = await page.evaluate(() => {
+      const state = window as unknown as {
+        __layering: string[];
+        __layeringStop?: boolean;
+      };
+      state.__layeringStop = true;
+      return state.__layering;
+    });
     await testInfo.attach(`layering-${depthMode}.json`, {
       body: Buffer.from(JSON.stringify(samples)),
       contentType: 'application/json',

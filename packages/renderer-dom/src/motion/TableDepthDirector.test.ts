@@ -7,6 +7,8 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   createBoardSceneForViewport,
   createRendererSpikeView,
+  tablePoseMatrix,
+  type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
@@ -520,5 +522,120 @@ it('riffles a shuffled deck with stand-ins, hides the pile meanwhile, and gives 
   expect(layer.childElementCount).toBe(0);
   expect(pile.style.opacity).toBe('');
   expect(director.active).toBe(false);
+  director.destroy();
+});
+
+it("raises a joined card's pieces together, and keeps the grip under the pointer while a card rises", () => {
+  const frames: FrameRequestCallback[] = [];
+  let now = 0;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+    frames.push(callback)
+  );
+  vi.stubGlobal('cancelAnimationFrame', () => {});
+  const advance = (to: number) => {
+    now = to;
+    for (const callback of frames.splice(0)) callback(now);
+  };
+  const view = createRendererSpikeView();
+  const base = createBoardSceneForViewport(view, {
+    viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+    bottomPlayerId: view.playerOrder[0]!,
+    splitRatio: 0.5,
+    geometryVersion: 1,
+  });
+  const [first, second] = base.cards.filter(
+    (card) => card.renderKey && card.parentId === 'zone:spike-blue:board'
+  ) as [CardSceneNode, CardSceneNode];
+  const left = Math.min(first.bounds.x, second.bounds.x);
+  const top = Math.min(first.bounds.y, second.bounds.y);
+  const composition = {
+    kind: 'joined' as const,
+    bounds: {
+      x: left,
+      y: top,
+      width:
+        Math.max(
+          first.bounds.x + first.bounds.width,
+          second.bounds.x + second.bounds.width
+        ) - left,
+      height:
+        Math.max(
+          first.bounds.y + first.bounds.height,
+          second.bounds.y + second.bounds.height
+        ) - top,
+    },
+  };
+  const scene = {
+    ...base,
+    cards: base.cards.map((card) =>
+      card === first || card === second ? { ...card, composition } : card
+    ),
+  };
+  const elements = new Map(
+    [first, second].map((card) => [
+      card.renderKey!,
+      document.createElement('button'),
+    ])
+  );
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), document.createElement('div'));
+  const projection = new BoardDepthProjection(scene, {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
+  });
+  director.commit(
+    null,
+    projection,
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  const height = (card: CardSceneNode) =>
+    director.current(card.renderKey!)!.elevation;
+  const resting = height(first);
+  expect(height(second)).toBe(resting);
+
+  // Under the pointer, the joined card's pieces rise together.
+  director.hover(first.renderKey);
+  advance(70);
+  expect(height(first)).toBeGreaterThan(resting);
+  expect(height(second)).toBe(height(first));
+
+  // Picked up, the card's grip stays under the pointer at every height on
+  // the way up, not only at the height it was at when the pointer moved.
+  elements.get(first.renderKey!)!.dataset.held = 'drag';
+  const point = { x: 400, y: 380 };
+  director.grab({ key: first.renderKey!, x: 0.27, y: 0.61, point });
+  director.commit(
+    scene,
+    projection,
+    {
+      ...DEFAULT_BOARD_PRESENTATION,
+      drag: { cardId: first.id, x: 420, y: 400, targetId: null },
+    },
+    undefined,
+    false,
+    1
+  );
+  const grip = () => {
+    const pose = director.current(first.renderKey!)!;
+    const m = tablePoseMatrix(projection.camera, pose);
+    const x = 0.27 * pose.bounds.width;
+    const y = 0.61 * pose.bounds.height;
+    const w = m[3]! * x + m[7]! * y + m[15]!;
+    return {
+      x: (m[0]! * x + m[4]! * y + m[12]!) / w,
+      y: (m[1]! * x + m[5]! * y + m[13]!) / w,
+    };
+  };
+  const pickedUp = height(first);
+  for (const at of [100, 130, 400]) {
+    advance(at);
+    expect(grip().x).toBeCloseTo(point.x, 6);
+    expect(grip().y).toBeCloseTo(point.y, 6);
+  }
+  expect(height(first)).toBeGreaterThan(pickedUp);
   director.destroy();
 });

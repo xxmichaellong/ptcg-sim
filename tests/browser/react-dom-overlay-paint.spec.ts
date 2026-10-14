@@ -960,6 +960,17 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
   await expect(prize).toBeFocused();
   await expect(prize).toHaveAccessibleName(fixture.replayLocalCardLabel);
   await expect(prize.locator('img')).toHaveAttribute('alt', '');
+  // Newer Chromium opens a keyboard context menu with the pointer put on
+  // the focused card and leaves it there; its hover raise is not the face
+  // swap this compares with the card measured before the menu.
+  await page.mouse.move(1, 1);
+  await expect
+    .poll(() =>
+      prize
+        .locator('.ptcgsim-card__body')
+        .evaluate((body) => getComputedStyle(body).scale)
+    )
+    .toBe('none');
   const candidatePrizeShown = await replayCardPaintMetrics(prize, 'candidate');
   const candidatePrizeShownImage = await prize.screenshot({
     animations: 'disabled',

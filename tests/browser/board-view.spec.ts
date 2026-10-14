@@ -194,6 +194,13 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
   });
+  // The room shows before the table publishes its scene.
+  await page.waitForFunction(() =>
+    Boolean(
+      (window as unknown as { readonly __PTCG_RENDERER_SPIKE__?: object })
+        .__PTCG_RENDERER_SPIKE__
+    )
+  );
   await expect
     .poll(
       async () =>
