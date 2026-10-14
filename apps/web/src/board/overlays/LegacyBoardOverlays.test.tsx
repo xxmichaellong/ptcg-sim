@@ -11,6 +11,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cancelAllDialogRequests } from '../../ui/dialog-requests.js';
+import { preferences } from '../../preferences/preference-store.js';
+import { TOUCH_PICKUP_MS } from './useOverlayCardDrag.js';
+import { ZONE_BROWSER_PREFERENCES } from './zone-browser-preferences.js';
 import { OverlayHost } from '../../ui/OverlayHost.js';
 import {
   createInitialBoardSessionControllerState,
@@ -110,6 +113,7 @@ const typeAndSubmit = async (value: string): Promise<void> => {
 
 const actions = (): LegacyBoardOverlayActions => ({
   emitOpenedZoneCardIntent: vi.fn(),
+  updateDrag: vi.fn(),
   dismiss: vi.fn(),
   invokeContextAction: vi.fn(),
   invokeZoneAction: vi.fn(),
@@ -1695,8 +1699,13 @@ describe('legacy board overlays', () => {
     await act(async () => source.dispatchEvent(event('pointerdown')));
     expect(callbacks.emitOpenedZoneCardIntent).not.toHaveBeenCalled();
     await act(async () => document.dispatchEvent(event('pointermove', 80, 80)));
+    // The card is held over the table by the table's own drag: no copy of it
+    // is drawn here.
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cardId: discardCards[0]!.id })
+    );
     expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
-      1
+      0
     );
     expect(
       host
@@ -1709,13 +1718,17 @@ describe('legacy board overlays', () => {
     await act(async () =>
       document.dispatchEvent(event('pointerup', targetX, targetY))
     );
+    // It comes down where the held card's centre is: gripped 20px into a
+    // 126 x 176 face, the centre trails the pointer by the rest of the half.
+    const held = discardCards[0]!.bounds;
     expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledExactlyOnceWith({
       kind: 'CardDropRequested',
       cardId: discardCards[0]!.id,
       targetId: hand.id,
-      x: targetX + 43,
-      y: targetY + 68,
+      x: expect.closeTo(targetX + (0.5 - 20 / 126) * held.width, 6),
+      y: expect.closeTo(targetY + (0.5 - 20 / 176) * held.height, 6),
     });
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
     expect(
       host
         .querySelector('[data-legacy-zone-browser]')
@@ -1737,9 +1750,7 @@ describe('legacy board overlays', () => {
     );
     expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
     expect(callbacks.dismiss).not.toHaveBeenCalled();
-    expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
-      0
-    );
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
     expect(
       resolveOpenedZoneDropTarget(
         scene,
@@ -1778,6 +1789,246 @@ describe('legacy board overlays', () => {
     );
     expect(callbacks.dismiss).not.toHaveBeenCalled();
     expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
+  });
+
+  /** The overlay root spans the board, one board pixel to one client pixel. */
+  const boardSizedOverlay = (): void => {
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: scene.viewport.width,
+      bottom: scene.viewport.height,
+      width: scene.viewport.width,
+      height: scene.viewport.height,
+      toJSON: () => ({}),
+    });
+  };
+  const pointer = (
+    type: string,
+    clientX: number,
+    clientY: number,
+    pointerType = 'mouse'
+  ): Event => {
+    const dispatched = new Event(type, { bubbles: true, cancelable: true });
+    Object.defineProperties(dispatched, {
+      clientX: { value: clientX },
+      clientY: { value: clientY },
+      pointerId: { value: 9 },
+      button: { value: 0 },
+      pointerType: { value: pointerType },
+    });
+    return dispatched;
+  };
+
+  it('drags a card out of the stack view onto the table, and the view steps aside', async () => {
+    const callbacks = { ...actions(), emitCardIntent: vi.fn() };
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const top = view.stacks[stackId]!.evolutionCards.at(-1)!;
+    const hand = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:hand`
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'stack', stackId, focusCardId: top.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    boardSizedOverlay();
+    const source = host.querySelector<HTMLElement>(
+      `[data-stack-preview-card-id="${top.id}"]`
+    )!;
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
+      x: 100,
+      y: 100,
+      left: 100,
+      top: 100,
+      right: 226,
+      bottom: 276,
+      width: 126,
+      height: 176,
+      toJSON: () => ({}),
+    });
+    await act(async () =>
+      source.dispatchEvent(pointer('pointerdown', 163, 188))
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointermove', 300, 300))
+    );
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cardId: top.id })
+    );
+    expect(
+      host
+        .querySelector('[data-preview-kind="stack"]')
+        ?.getAttribute('data-preview-dragging-card')
+    ).toBe(String(top.id));
+    const handX = hand.bounds.x + hand.bounds.width / 2;
+    const handY = hand.bounds.y + hand.bounds.height / 2;
+    await act(async () =>
+      document.dispatchEvent(pointer('pointerup', handX, handY))
+    );
+    // A card in play goes through the table's own intent, and the view,
+    // having done its job, closes.
+    expect(callbacks.emitCardIntent).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: top.id,
+        targetId: hand.id,
+      })
+    );
+    expect(callbacks.emitOpenedZoneCardIntent).not.toHaveBeenCalled();
+    expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
+  });
+
+  it('picks a pile card up with a held finger, and lets a swipe scroll', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const card = scene.cards.find(
+      (candidate) => candidate.parentId === discard.id
+    )!;
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            presentation: {
+              ...state().presentation,
+              openedZoneId: discard.id,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    boardSizedOverlay();
+    const source = host.querySelector<HTMLElement>(
+      `[data-overlay-card-id="${card.id}"]`
+    )!;
+    // No move handle: the whole card is what is picked up.
+    expect(source.querySelector('[data-panel-drag-handle]')).toBeNull();
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
+      x: 20,
+      y: 20,
+      left: 20,
+      top: 20,
+      right: 146,
+      bottom: 196,
+      width: 126,
+      height: 176,
+      toJSON: () => ({}),
+    });
+    // A swipe before the hold scrolls the pile; nothing is picked up.
+    await act(async () =>
+      source.dispatchEvent(pointer('pointerdown', 60, 60, 'touch'))
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointermove', 60, 90, 'touch'))
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointerup', 60, 90, 'touch'))
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, TOUCH_PICKUP_MS + 50));
+    });
+    expect(callbacks.updateDrag).not.toHaveBeenCalled();
+    // Held still, it is picked up, and then follows the finger.
+    await act(async () =>
+      source.dispatchEvent(pointer('pointerdown', 60, 60, 'touch'))
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, TOUCH_PICKUP_MS + 50));
+    });
+    expect(source.getAttribute('data-armed')).toBe('true');
+    await act(async () =>
+      document.dispatchEvent(pointer('pointermove', 260, 300, 'touch'))
+    );
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cardId: card.id })
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointercancel', 260, 300, 'touch'))
+    );
+    expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
+  });
+
+  it('stacks copies of a card on one tile when asked, and remembers it', async () => {
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const pile = scene.cards.filter((card) => card.parentId === discard.id);
+    expect(pile.length).toBeGreaterThan(1);
+    // Every card in the pile a copy of the first.
+    const copies = {
+      ...scene,
+      cards: scene.cards.map((card) =>
+        card.parentId === discard.id
+          ? {
+              ...card,
+              label: pile[0]!.label,
+              imageUrl: pile[0]!.imageUrl,
+              concealed: false,
+            }
+          : card
+      ),
+    };
+    preferences().reset(ZONE_BROWSER_PREFERENCES);
+    try {
+      const render = async () =>
+        act(async () => {
+          root.render(
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                scene: copies,
+                presentation: {
+                  ...state().presentation,
+                  openedZoneId: discard.id,
+                },
+              }),
+              darkMode: false,
+              actions: actions(),
+            })
+          );
+        });
+      await render();
+      const tiles = () => host.querySelectorAll('[data-overlay-card-id]');
+      expect(tiles()).toHaveLength(pile.length);
+      const toggle = host.querySelector<HTMLButtonElement>(
+        '[data-zone-action="stackCopies"]'
+      )!;
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+      await act(async () => toggle.click());
+      expect(preferences().get(ZONE_BROWSER_PREFERENCES).stackCopies).toBe(
+        true
+      );
+      expect(tiles()).toHaveLength(1);
+      const stacked = tiles()[0]!;
+      expect(stacked.getAttribute('data-copy-stack')).toBe(String(pile.length));
+      expect(stacked.textContent).toContain(`×${pile.length}`);
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      // Opened again, the pile stays stacked.
+      await act(async () => root.render(null));
+      await render();
+      expect(tiles()).toHaveLength(1);
+    } finally {
+      preferences().reset(ZONE_BROWSER_PREFERENCES);
+    }
   });
 
   it('preserves the source discard confirmation without adding one to deck shuffle', async () => {

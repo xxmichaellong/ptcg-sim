@@ -967,7 +967,8 @@
   background: var(--color-surface-hover);
 }
 
-.ptcgsim-overlay-toggle:has(input:checked) {
+.ptcgsim-overlay-toggle:has(input:checked),
+.ptcgsim-overlay-toggle[aria-pressed='true'] {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
   box-shadow: inset 0 2px 3px oklch(0 0 0 / 0.3);
@@ -979,7 +980,8 @@
   height: 16px;
 }
 
-.ptcgsim-overlay-toggle:has(input:focus-visible) {
+.ptcgsim-overlay-toggle:has(input:focus-visible),
+button.ptcgsim-overlay-toggle:focus-visible {
   outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
   outline-offset: 2px;
 }
@@ -1057,57 +1059,20 @@
 .ptcgsim-legacy-work-area-card {
   touch-action: pan-x;
 }
-.ptcgsim-panel-drag-handle {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #ffffff55;
-  background: #15202bdd;
-  color: white;
-  box-shadow: 0 2px 6px #0005;
-  touch-action: none;
-  cursor: grab;
+/* A finger held on a card has picked it up (useOverlayCardDrag). */
+.ptcgsim-zone-card[data-armed],
+.ptcgsim-legacy-work-area-card[data-armed],
+.ptcgsim-legacy-stack-preview-card[data-armed],
+.ptcgsim-card-preview-stage[data-armed] {
+  scale: 1.04;
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
 }
-.ptcgsim-panel-drag-handle svg {
-  width: 20px;
-  height: 20px;
-}
-@media (hover: hover) and (pointer: fine) {
-  .ptcgsim-panel-drag-handle {
-    opacity: 0;
-  }
-  .ptcgsim-zone-card:hover .ptcgsim-panel-drag-handle,
-  .ptcgsim-zone-card:focus-visible .ptcgsim-panel-drag-handle,
-  .ptcgsim-legacy-work-area-card:hover .ptcgsim-panel-drag-handle {
-    opacity: 1;
-  }
-}
-.ptcgsim-panel-drag-face {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 126px;
-  height: 176px;
-  z-index: var(--layer-drag);
-  border-radius: 5px;
-  background: var(--color-surface-3);
-  box-shadow:
-    0 12px 25px #0006,
-    0 0 0 1px #ffffff50;
+
+/* The preview steps aside while a card shown in it is dragged to the table. */
+.ptcgsim-legacy-card-preview[data-preview-dragging-card] {
+  opacity: 0;
   pointer-events: none;
-  overflow: hidden;
-  --card-light: 0.4;
-}
-.ptcgsim-panel-drag-face img {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
 }
 
 .ptcgsim-card-actions {
@@ -1341,6 +1306,28 @@
     var(--shadow-3);
 }
 
+/* Copies stacked on one tile: the edges of the cards beneath show. */
+.ptcgsim-zone-card[data-copy-stack] {
+  --ptcgsim-copy-edge: var(--color-surface-3, #3a3029);
+  --ptcgsim-copy-rim: var(--color-border-strong, #00000066);
+  box-shadow:
+    3px 3px 0 -1px var(--ptcgsim-copy-edge),
+    3px 3px 0 0 var(--ptcgsim-copy-rim),
+    6px 6px 0 -1px var(--ptcgsim-copy-edge),
+    6px 6px 0 0 var(--ptcgsim-copy-rim),
+    var(--shadow-2);
+}
+.ptcgsim-zone-card[data-copy-stack][aria-pressed='true'] {
+  box-shadow:
+    0 0 0 var(--ptcgsim-ring-width, 3px)
+      var(--ptcgsim-ring-selected, var(--color-gold)),
+    3px 3px 0 -1px var(--ptcgsim-copy-edge),
+    3px 3px 0 0 var(--ptcgsim-copy-rim),
+    6px 6px 0 -1px var(--ptcgsim-copy-edge),
+    6px 6px 0 0 var(--ptcgsim-copy-rim),
+    var(--shadow-3);
+}
+
 :root[data-motion='reduced'] .ptcgsim-zone-card:hover {
   translate: none;
 }
@@ -1538,6 +1525,24 @@
   min-width: 0;
   max-width: 190px;
   flex: 1 1 0;
+}
+
+/* Each label keeps to its own button; too narrow a row for words (a phone)
+   shows the icons alone, named by their tooltips. */
+.ptcgsim-legacy-work-area-buttons {
+  container-type: inline-size;
+}
+
+.ptcgsim-work-area-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 620px) {
+  .ptcgsim-work-area-button-label {
+    display: none;
+  }
 }
 
 /* "Show board": the panel steps aside; only its way back stays. */

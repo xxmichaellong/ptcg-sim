@@ -252,6 +252,20 @@ export class BoardSessionRuntime {
     return adapter.emitIntent(intent);
   }
 
+  /**
+   * A card dragged out of an overlay (a pile's viewer, a work area, the stack
+   * view) is dragged on the table, exactly as one picked up there: the same
+   * held card, lit targets and room made in a row. The controller accepts
+   * only a card on the table or in the opened pile.
+   */
+  emitOverlayDrag(drag: BoardPresentation['drag']): boolean {
+    this.assertUsable();
+    return (
+      this.adapter?.emitPresentationUpdate({ kind: 'DragChanged', drag }) ??
+      false
+    );
+  }
+
   /** Validates duplicated card input against the currently open safe zone. */
   emitOpenedZoneCardIntent(intent: OpenedZoneCardIntent): boolean {
     this.assertUsable();

@@ -697,6 +697,9 @@ export const RemoteSessionBoard = ({
       emitOpenedZoneCardIntent: (intent) => {
         runtimeRef.current?.emitOpenedZoneCardIntent(intent);
       },
+      updateDrag: (drag) => {
+        runtimeRef.current?.emitOverlayDrag(drag);
+      },
       emitCardIntent: (intent) => {
         runtimeRef.current?.emitIntent(intent);
       },

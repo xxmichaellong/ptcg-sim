@@ -15,6 +15,7 @@ import {
   tablePileHeight,
   tableShadowStyle,
   sameTablePose,
+  withHeldCards,
   type TableCardPose,
   type TableCamera,
 } from '@ptcgsim/renderer-contract';
@@ -43,6 +44,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
 import {
@@ -57,6 +59,7 @@ import {
   type PaintedCard,
 } from './motion/BoardMotionDirector.js';
 import { DragSwing } from './motion/DragSwing.js';
+import { liftHeldCards } from './motion/held-card-lift.js';
 import { depthPaintKey } from './motion/depth-paint-key.js';
 import {
   HoverTilt,
@@ -927,7 +930,7 @@ const paintedCards = (
 };
 
 export const BoardSurface = ({
-  scene,
+  scene: installedScene,
   presentation,
   preferences,
   adapters,
@@ -945,6 +948,21 @@ export const BoardSurface = ({
   readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  // A card in the hand that the table does not draw (picked out of a pile's
+  // viewer) is painted while it is held and settling, so it moves like any
+  // other (held-cards.ts). Keyed by which cards those are, so the scene stays
+  // the same object frame to frame.
+  const heldKey = [
+    presentation.openedZoneId ?? '',
+    presentation.drag?.cardId ?? '',
+    ...presentation.settling.map(
+      (entry) => `${entry.cardId}@${String(entry.x)},${String(entry.y)}`
+    ),
+  ].join('\u0000');
+  const scene = useMemo(
+    () => withHeldCards(installedScene, presentation),
+    [installedScene, heldKey]
+  );
   // Card art that failed to load tries again by itself (card-image-retry).
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -989,6 +1007,19 @@ export const BoardSurface = ({
     if (at) surfaceRef.current?.setAttribute('data-hover-rest', '');
     else surfaceRef.current?.removeAttribute('data-hover-rest');
   };
+  // A card let go of from anywhere -- the table, or a viewer, whose pointer
+  // the table never sees -- rests hover where it was dropped.
+  const dragRef = useRef(presentation.drag);
+  dragRef.current = presentation.drag;
+  useEffect(() => {
+    const release = (event: PointerEvent) => {
+      if (!dragRef.current || event.pointerType === 'touch') return;
+      hoverRestRef.current = { x: event.clientX, y: event.clientY };
+      surfaceRef.current?.setAttribute('data-hover-rest', '');
+    };
+    window.addEventListener('pointerup', release, true);
+    return () => window.removeEventListener('pointerup', release, true);
+  }, []);
   const velocity = useMemo(() => new VelocityTracker(100), []);
   const previousSceneRef = useRef<BoardScene | null>(null);
   // The scene a timer started at pointer-down should act on: the latest.
@@ -1048,14 +1079,58 @@ export const BoardSurface = ({
         : arrangementOffsets(scene, arrangementHold(scene, presentation)),
     [depth, scene, presentation]
   );
+  // A card carried over a window open on the table (the "Looking at cards"
+  // or attached-cards window, a pile's viewer) is shown above it, on the
+  // lift layer (held-card-lift.ts) beside the surface: the windows sit over
+  // the surface.
+  const liftRef = useRef<HTMLDivElement>(null);
+  const [liftHost, setLiftHost] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setLiftHost(surfaceRef.current?.parentElement ?? null);
+  }, []);
+  const lifting =
+    presentation.drag !== null &&
+    (presentation.openedZoneId !== null ||
+      installedScene.zones.some(
+        (zone) =>
+          (zone.kind === 'inspection' ||
+            zone.kind === 'attachmentResolution') &&
+          zone.count > 0
+      ));
+  useLayoutEffect(() => {
+    const surface = surfaceRef.current;
+    const layer = liftRef.current;
+    if (!lifting || !surface || !layer) return;
+    return liftHeldCards(surface, layer);
+  }, [lifting, liftHost]);
+  // The installed scene the last motion was planned for: a held card coming
+  // into or out of the painted scene is no new scene, and replays nothing.
+  const plannedSceneRef = useRef<BoardScene | null>(null);
   useLayoutEffect(() => {
     const { painted, held } = paintedCards(scene, presentation, asides);
-    director.commit(previousSceneRef.current, scene, motion, painted, held, {
-      projection,
-      presentation,
-    });
+    const fresh = plannedSceneRef.current !== installedScene;
+    plannedSceneRef.current = installedScene;
+    director.commit(
+      previousSceneRef.current,
+      scene,
+      fresh ? motion : undefined,
+      painted,
+      held,
+      {
+        projection,
+        presentation,
+      }
+    );
     previousSceneRef.current = scene;
-  }, [director, scene, presentation, motion, projection, asides]);
+  }, [
+    director,
+    scene,
+    installedScene,
+    presentation,
+    motion,
+    projection,
+    asides,
+  ]);
   const capturedPointerRef = useRef<{
     readonly element: HTMLElement;
     readonly pointerId: number;
@@ -1253,7 +1328,11 @@ export const BoardSurface = ({
       x: ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width,
       y: ((event.clientY - bounds.top) * scene.viewport.height) / bounds.height,
     };
-    const source = starting ?? grabbed.current;
+    const source =
+      starting ??
+      (grabbed.current &&
+        (scene.cards.find((card) => card.id === grabbed.current?.id) ??
+          grabbed.current));
     if (depth && source) {
       const base = depth.pose(source);
       let grabPoint;
@@ -1813,6 +1892,26 @@ export const BoardSurface = ({
           />
         ))}
       </div>
+      {lifting && liftHost
+        ? createPortal(
+            <div
+              ref={liftRef}
+              className="ptcgsim-board-lift"
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                zIndex: 'var(--table-layer-drag, 8)',
+                pointerEvents: 'none',
+                overflow: 'clip',
+              }}
+            >
+              <div style={{ position: 'absolute', inset: 0 }} />
+            </div>,
+            liftHost
+          )
+        : null}
     </div>
   );
 };

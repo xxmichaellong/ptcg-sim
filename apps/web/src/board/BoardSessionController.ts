@@ -1367,11 +1367,13 @@ const handleIntent = (
         intent
       );
       if (!resolution.ok) return rejectIntent(state, intent, resolution.reason);
-      // Hold a board-painted card where it was dropped until the session
-      // resolves the command; a card dragged out of an opened zone has no
-      // board node to hold, so it is left to the authoritative publication.
+      // Hold the card where it was dropped until the session resolves the
+      // command. One dragged out of an opened zone is painted there too while
+      // it settles (the renderer's held cards), so it flies on from the drop.
       const settledCard = installedScene.cards.find(
-        (card) => card.id === intent.cardId && card.renderKey !== null
+        (card) =>
+          card.id === intent.cardId &&
+          (card.renderKey !== null || allowOpenedZoneCard)
       );
       const settling: readonly SettlingEntry[] = settledCard
         ? [
@@ -1510,7 +1512,13 @@ const handlePresentationUpdate = (
   if (!state.scene) return ignored(state);
   if (update.kind === 'DragChanged') {
     const drag = update.drag;
-    if (drag && !hasCard(state.scene, drag.cardId)) return ignored(state);
+    // A card on the table, or one picked out of the opened pile's viewer.
+    if (
+      drag &&
+      !hasCard(state.scene, drag.cardId) &&
+      !hasOpenedZoneCard(state, state.scene, drag.cardId)
+    )
+      return ignored(state);
     // The card keeps following the pointer whatever is under it; only a
     // target the drop would take is lit, and a swap is marked as one.
     const shown = ((): BoardPresentation['drag'] => {

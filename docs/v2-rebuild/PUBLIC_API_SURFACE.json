@@ -1274,6 +1274,10 @@
               "kind": "type-value"
             },
             {
+              "name": "boardDragInput",
+              "kind": "value"
+            },
+            {
               "name": "BoardIntent",
               "kind": "type"
             },
@@ -1479,6 +1483,10 @@
             },
             {
               "name": "CardGhost",
+              "kind": "type"
+            },
+            {
+              "name": "CardGrip",
               "kind": "type"
             },
             {
@@ -2120,6 +2128,10 @@
             {
               "name": "VelocityTracker",
               "kind": "type-value"
+            },
+            {
+              "name": "withHeldCards",
+              "kind": "value"
             },
             {
               "name": "ZoneCountSceneNode",

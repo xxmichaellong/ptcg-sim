@@ -1,10 +1,12 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 import {
   BoardDragController,
-  resolveBoardDropTarget,
+  boardDragInput,
   type BoardDepthProjection,
   type BoardIntent,
+  type BoardPresentation,
   type BoardScene,
+  type CardGrip,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
@@ -23,24 +25,43 @@ interface Options {
   readonly emit: (
     intent: Extract<BoardIntent, { kind: 'CardDropRequested' }>
   ) => void;
-}
-interface Grip {
-  card: CardSceneNode;
-  target: HTMLElement;
-  pointerId: number;
-  u: number;
-  v: number;
-  x: number;
-  y: number;
-  ghost: HTMLElement | null;
-  frame: number | null;
+  /**
+   * The table's drag: the card picked up here is held over the table as one
+   * picked up there (lit targets, a row making room, the landing).
+   */
+  readonly updateDrag?: (drag: BoardPresentation['drag']) => void;
 }
 
-/** The board gesture contract, with a screen-space face while leaving a panel. */
+interface Grip {
+  readonly card: CardSceneNode;
+  readonly target: HTMLElement;
+  readonly pointerId: number;
+  /** Where on the card's face it was pressed. */
+  readonly grip: CardGrip;
+  /** Touch: picked up once held still; until then the finger scrolls. */
+  armed: boolean;
+  hold: number | null;
+  readonly startX: number;
+  readonly startY: number;
+}
+
+/** A finger held this long on a card picks it up; a swipe scrolls the pile. */
+export const TOUCH_PICKUP_MS = 350;
+/** A finger that strays this far before then is scrolling. */
+const TOUCH_SLOP_PX = 8;
+
+/**
+ * Cards shown outside the table -- a pile's viewer, a work area, the stack
+ * view, a card's preview -- are picked up and dragged through the table's own
+ * drag: the same controller, the same projected aim and room-making
+ * (boardDragInput), and the table paints the held card (withHeldCards), so a
+ * card leaving a viewer lifts, lights its targets, opens a gap and lands as
+ * any card moved on the table does. The viewer steps aside while it is held.
+ */
 export const useOverlayCardDrag = (options: Options) => {
   const latest = useRef(options);
   latest.current = options;
-  // Buried pile cards have no board hit target, but are individually movable
+  // Buried pile cards have no table hit target, but are individually movable
   // inside an authorized open panel. Override only the current source.
   const gestureScene = (scene: BoardScene, id: ViewCardId): BoardScene => ({
     ...scene,
@@ -50,6 +71,7 @@ export const useOverlayCardDrag = (options: Options) => {
   });
   const grip = useRef<Grip | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
+  const [armedCardId, setArmedCardId] = useState<ViewCardId | null>(null);
   const controller = useMemo(
     () =>
       new BoardDragController({
@@ -59,24 +81,7 @@ export const useOverlayCardDrag = (options: Options) => {
         emitPresentationUpdate: (update) => {
           if (update.kind !== 'DragChanged') return;
           setDraggingCardId(update.drag?.cardId ?? null);
-          const current = grip.current;
-          if (!update.drag || !current || current.ghost) return;
-          const ghost = current.target.ownerDocument.createElement('div');
-          ghost.className = 'ptcgsim-panel-drag-face card-material';
-          ghost.setAttribute('aria-hidden', 'true');
-          ghost.dataset.finish = current.card.concealed
-            ? 'sheen'
-            : (current.card.finish ?? 'sheen');
-          if (!current.card.concealed && current.card.presentation?.foilRegion)
-            ghost.dataset.foilRegion = current.card.presentation.foilRegion;
-          const image = current.target.ownerDocument.createElement('img');
-          image.src = current.card.imageUrl;
-          image.alt = '';
-          image.draggable = false;
-          ghost.append(image);
-          ghost.style.transform = `translate3d(${current.x - current.u * 126}px, ${current.y - current.v * 176}px, 0)`;
-          current.target.ownerDocument.body.append(ghost);
-          current.ghost = ghost;
+          latest.current.updateDrag?.(update.drag);
         },
       }),
     []
@@ -87,8 +92,7 @@ export const useOverlayCardDrag = (options: Options) => {
     const current = grip.current;
     grip.current = null;
     if (current) {
-      if (current.frame !== null) cancelAnimationFrame(current.frame);
-      current.ghost?.remove();
+      if (current.hold !== null) clearTimeout(current.hold);
       try {
         current.target.releasePointerCapture(current.pointerId);
       } catch {
@@ -96,100 +100,124 @@ export const useOverlayCardDrag = (options: Options) => {
       }
     }
     setDraggingCardId(null);
+    setArmedCardId(null);
+  };
+
+  /** The pointer in the board's own coordinates. */
+  const boardPoint = (
+    target: HTMLElement,
+    scene: BoardScene,
+    clientX: number,
+    clientY: number
+  ): { readonly x: number; readonly y: number } | null => {
+    const bounds = target
+      .closest('[data-legacy-board-overlays]')
+      ?.getBoundingClientRect();
+    if (!bounds?.width || !bounds.height) return null;
+    return {
+      x: ((clientX - bounds.left) * scene.viewport.width) / bounds.width,
+      y: ((clientY - bounds.top) * scene.viewport.height) / bounds.height,
+    };
+  };
+
+  /** Picks the card up: from here on the gesture is the table's drag. */
+  const pickUp = (current: Grip, clientX: number, clientY: number): boolean => {
+    const { scene, depth } = latest.current;
+    if (!scene) return false;
+    const point = boardPoint(current.target, scene, clientX, clientY);
+    if (!point) return false;
+    return controller.pointerDown(
+      gestureScene(scene, current.card.id),
+      current.card.id,
+      boardDragInput(
+        scene,
+        depth,
+        current.card,
+        current.pointerId,
+        point,
+        current.grip,
+        true
+      )
+    );
   };
 
   useEffect(() => {
-    const input = (event: PointerEvent) => {
-      const current = grip.current;
-      const { scene, depth, cards, enabled } = latest.current;
-      if (!current || current.pointerId !== event.pointerId || !scene)
-        return null;
-      if (
-        !enabled ||
-        !cards.some(
+    const present = (current: Grip): boolean => {
+      const { cards, enabled } = latest.current;
+      return (
+        enabled &&
+        cards.some(
           (card) =>
             card.id === current.card.id &&
             card.parentId === current.card.parentId &&
             card.imageUrl === current.card.imageUrl &&
             card.concealed === current.card.concealed
         )
-      ) {
+      );
+    };
+    const input = (event: PointerEvent) => {
+      const current = grip.current;
+      const { scene, depth } = latest.current;
+      if (!current || current.pointerId !== event.pointerId || !scene)
+        return null;
+      if (!present(current)) {
         finish();
         return null;
       }
-      const bounds = current.target
-        .closest('[data-legacy-board-overlays]')
-        ?.getBoundingClientRect();
-      if (!bounds?.width || !bounds.height) return null;
-      const screen = {
-        x:
-          ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width,
-        y:
-          ((event.clientY - bounds.top) * scene.viewport.height) /
-          bounds.height,
-      };
-      const hit = depth?.drop(screen, current.card.id) ?? {
-        point: screen,
-        targetId: resolveBoardDropTarget(
-          scene,
-          current.card.id,
-          screen.x,
-          screen.y
-        ),
-      };
-      // Picking follows the pointer, while settling follows the held face's
-      // centre. An off-centre grip must not jump to a centred grip on release.
-      const centre = {
-        x:
-          screen.x +
-          ((0.5 - current.u) * 126 * scene.viewport.width) / bounds.width,
-        y:
-          screen.y +
-          ((0.5 - current.v) * 176 * scene.viewport.height) / bounds.height,
-      };
-      const dropPoint = depth?.boardPoint(centre) ?? centre;
+      const point = boardPoint(
+        current.target,
+        scene,
+        event.clientX,
+        event.clientY
+      );
+      if (!point) return null;
+      const value = boardDragInput(
+        scene,
+        depth,
+        current.card,
+        event.pointerId,
+        point,
+        current.grip
+      );
+      // Off the table there is nothing to drop on.
       const inside =
-        screen.x >= 0 &&
-        screen.y >= 0 &&
-        screen.x <= scene.viewport.width &&
-        screen.y <= scene.viewport.height;
-      return {
-        pointerId: event.pointerId,
-        button: 0,
-        x: hit.point.x,
-        y: hit.point.y,
-        screenPoint: { x: event.clientX, y: event.clientY },
-        dropPoint,
-        targetId: inside ? hit.targetId : null,
-      };
+        point.x >= 0 &&
+        point.y >= 0 &&
+        point.x <= scene.viewport.width &&
+        point.y <= scene.viewport.height;
+      return inside ? value : { ...value, targetId: null };
     };
     const move = (event: PointerEvent) => {
+      const current = grip.current;
+      if (!current || current.pointerId !== event.pointerId) return;
+      if (!current.armed) {
+        // A finger that moves before the card is picked up scrolls the pile.
+        if (
+          Math.hypot(
+            event.clientX - current.startX,
+            event.clientY - current.startY
+          ) > TOUCH_SLOP_PX
+        )
+          finish();
+        return;
+      }
       const value = input(event);
       if (!value || !latest.current.scene) return;
       if (
-        !controller.pointerMove(
-          gestureScene(latest.current.scene, grip.current!.card.id),
+        controller.pointerMove(
+          gestureScene(latest.current.scene, current.card.id),
           value
         )
       )
-        return;
-      event.preventDefault();
-      const current = grip.current!;
-      current.x = event.clientX;
-      current.y = event.clientY;
-      if (current.frame !== null) return;
-      current.frame = requestAnimationFrame(() => {
-        current.frame = null;
-        if (current.ghost)
-          current.ghost.style.transform = `translate3d(${current.x - current.u * 126}px, ${current.y - current.v * 176}px, 0)`;
-      });
+        event.preventDefault();
     };
     const up = (event: PointerEvent) => {
-      if (grip.current?.pointerId !== event.pointerId) return;
-      const value = input(event);
+      const current = grip.current;
+      if (current?.pointerId !== event.pointerId) return;
+      const value = current.armed ? input(event) : null;
       if (value && latest.current.scene)
         controller.pointerUp(
-          gestureScene(latest.current.scene, grip.current!.card.id),
+          gestureScene(latest.current.scene, current.card.id),
           value
         );
       else controller.cancel();
@@ -197,6 +225,10 @@ export const useOverlayCardDrag = (options: Options) => {
     };
     const cancelPointer = (event: PointerEvent) => {
       if (grip.current?.pointerId === event.pointerId) finish();
+    };
+    // Once a finger has picked a card up, it drags; it no longer scrolls.
+    const holdTouch = (event: TouchEvent) => {
+      if (grip.current?.armed && event.cancelable) event.preventDefault();
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || !grip.current) return;
@@ -212,6 +244,10 @@ export const useOverlayCardDrag = (options: Options) => {
     window.addEventListener('pointerup', up, true);
     window.addEventListener('pointercancel', cancelPointer, true);
     window.addEventListener('lostpointercapture', cancelPointer, true);
+    window.addEventListener('touchmove', holdTouch, {
+      capture: true,
+      passive: false,
+    });
     window.addEventListener('keydown', escape, true);
     window.addEventListener('blur', cancel);
     window.addEventListener('resize', cancel);
@@ -221,6 +257,7 @@ export const useOverlayCardDrag = (options: Options) => {
       window.removeEventListener('pointerup', up, true);
       window.removeEventListener('pointercancel', cancelPointer, true);
       window.removeEventListener('lostpointercapture', cancelPointer, true);
+      window.removeEventListener('touchmove', holdTouch, true);
       window.removeEventListener('keydown', escape, true);
       window.removeEventListener('blur', cancel);
       window.removeEventListener('resize', cancel);
@@ -256,6 +293,8 @@ export const useOverlayCardDrag = (options: Options) => {
 
   return {
     draggingCardId,
+    /** Touch: the card a held finger has just picked up. */
+    armedCardId,
     consumeClick: (id: ViewCardId) => controller.consumeSuppressedClick(id),
     onPointerDown: (
       event: ReactPointerEvent<HTMLElement>,
@@ -263,39 +302,39 @@ export const useOverlayCardDrag = (options: Options) => {
     ) => {
       const { scene, enabled } = latest.current;
       if (!enabled || !scene || grip.current || event.button !== 0) return;
-      // Touching artwork scrolls the pile. Its visible grip explicitly starts
-      // a drag; mouse and pen can still pick up anywhere on the face.
-      if (
-        event.pointerType === 'touch' &&
-        !(
-          event.target instanceof Element &&
-          event.target.closest('[data-panel-drag-handle]')
-        )
-      )
-        return;
       const bounds = event.currentTarget.getBoundingClientRect();
       if (!bounds.width || !bounds.height) return;
-      if (
-        !controller.pointerDown(gestureScene(scene, card.id), card.id, {
-          pointerId: event.pointerId,
-          button: event.button,
-          x: card.bounds.x + card.bounds.width / 2,
-          y: card.bounds.y + card.bounds.height / 2,
-          screenPoint: { x: event.clientX, y: event.clientY },
-        })
-      )
-        return;
-      grip.current = {
+      const current: Grip = {
         card,
         target: event.currentTarget,
         pointerId: event.pointerId,
-        u: (event.clientX - bounds.left) / bounds.width,
-        v: (event.clientY - bounds.top) / bounds.height,
-        x: event.clientX,
-        y: event.clientY,
-        ghost: null,
-        frame: null,
+        grip: {
+          x: (event.clientX - bounds.left) / bounds.width,
+          y: (event.clientY - bounds.top) / bounds.height,
+        },
+        armed: event.pointerType !== 'touch',
+        hold: null,
+        startX: event.clientX,
+        startY: event.clientY,
       };
+      if (current.armed && !pickUp(current, event.clientX, event.clientY))
+        return;
+      grip.current = current;
+      if (!current.armed) {
+        // Touching a card scrolls the pile; holding it still picks it up.
+        const { clientX, clientY } = event;
+        current.hold = window.setTimeout(() => {
+          current.hold = null;
+          if (grip.current !== current) return;
+          if (!pickUp(current, clientX, clientY)) {
+            finish();
+            return;
+          }
+          current.armed = true;
+          setArmedCardId(card.id);
+          navigator.vibrate?.(8);
+        }, TOUCH_PICKUP_MS);
+      }
       try {
         event.currentTarget.setPointerCapture(event.pointerId);
       } catch {

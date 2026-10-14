@@ -226,7 +226,9 @@
        toast        notices, above everything they could be about; they never
                     take input outside their own box
        tooltip      tooltips, over the menus and toasts they describe
-       drag         a card carried out of a viewer (on <body>), over all
+       drag         anything carried over the whole window, over all (a
+                    card held on the table rises over its own viewers on
+                    --table-layer-drag instead)
 
      On the table (inside the board column's context), lowest first:
        affordances  what the table offers on its felt (+, markers)
@@ -237,7 +239,10 @@
        viewers      the board overlays: pile viewers, the "Looking at cards"
                     and attached-cards windows, the card menu and the
                     preview (ordered among themselves by --viewer-layer-*,
-                    each in its own context so its insides stay inside). */
+                    each in its own context so its insides stay inside)
+       drag         the card in the hand, carried over a window open on the
+                    table: the board's lift layer shows it above the
+                    viewers (renderer-dom held-card-lift.ts) */
   --layer-table: 0;
   --layer-chrome: 100;
   --layer-panel: 200;
@@ -255,6 +260,7 @@
   --table-layer-inspector: 5;
   --table-layer-banner: 6;
   --table-layer-viewers: 7;
+  --table-layer-drag: 8;
 
   /* Within the viewers: a window, then the pile viewer (modal, over its
      scrim), the card preview opened from either, the card menu (which can

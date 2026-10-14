@@ -272,9 +272,7 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
       'data-motion',
       'idle'
     );
-    await expect(
-      owner!.locator('[data-held="drag"], .ptcgsim-panel-drag-face')
-    ).toHaveCount(0);
+    await expect(owner!.locator('[data-held="drag"]')).toHaveCount(0);
     expect(errors).toEqual([]);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));

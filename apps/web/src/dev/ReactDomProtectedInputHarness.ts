@@ -589,6 +589,9 @@ export const mountReactDomProtectedInputHarness = async (
     emitOpenedZoneCardIntent: (intent) => {
       runtime.emitOpenedZoneCardIntent(intent);
     },
+    updateDrag: (drag) => {
+      runtime.emitOverlayDrag(drag);
+    },
     dismiss: (scope) => {
       runtime.dismissLocalPresentation(scope);
     },

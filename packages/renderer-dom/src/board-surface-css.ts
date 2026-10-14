@@ -8,6 +8,11 @@
  * down-screen whatever the card's quarter turn.
  */
 export const BOARD_SURFACE_CSS = `
+/* A held card shown over the table's windows by its copy on the lift layer
+   (held-card-lift.ts) stays where it is, unseen: it still has the pointer. */
+.ptcgsim-card[data-lifted] {
+  visibility: hidden !important;
+}
 .ptcgsim-depth-mat {
   position: absolute;
   left: 0;
@@ -78,7 +83,7 @@ export const BOARD_SURFACE_CSS = `
     scale: 0.6;
   }
 }
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__drop-action {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card__drop-action {
   animation: none;
 }
 .ptcgsim-card__depth {
@@ -101,12 +106,12 @@ export const BOARD_SURFACE_CSS = `
   translate: none !important;
   transform: none !important;
 }
-.ptcgsim-board-surface .ptcgsim-card {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card {
   background: transparent;
   -webkit-tap-highlight-color: transparent;
   outline-offset: 3px;
 }
-.ptcgsim-board-surface .ptcgsim-card:focus-visible {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card:focus-visible {
   outline: 2px solid var(--ptcgsim-focus-ring, rgb(120 160 255));
 }
 .ptcgsim-card__body {
@@ -213,22 +218,22 @@ export const BOARD_SURFACE_CSS = `
      fully into view, above its neighbours (in its own frame, so the
      opponent's turned hand rises toward the centre). Not while a card just
      dropped is settling under a pointer that has not moved since. */
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover {
+  :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover {
     z-index: 8500 !important;
   }
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover > .ptcgsim-card__body {
+  :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):enabled:hover > .ptcgsim-card__body {
     translate: 0 -22%;
     scale: 1.06;
   }
   /* Turned to read upright for the viewer, the far hand rises down toward
      the table's centre instead. */
-  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'][data-far-upright]:not([data-hover-rest]) .ptcgsim-card[data-in-hand][data-card-side='opponent']:not([data-held]):enabled:hover > .ptcgsim-card__body {
+  :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false'][data-far-upright]:not([data-hover-rest]) .ptcgsim-card[data-in-hand][data-card-side='opponent']:not([data-held]):enabled:hover > .ptcgsim-card__body {
     translate: 0 22%;
   }
-  .ptcgsim-board-surface[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
+  :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
     scale: var(--ptcgsim-hover-scale, 1.035);
   }
-  .ptcgsim-board-surface[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover .ptcgsim-card__face {
+  :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover .ptcgsim-card__face {
     --ptcgsim-lift: 3.2;
   }
 }
@@ -270,18 +275,18 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-card:not([data-depth-card]) {
   transition: translate calc(200ms * var(--motion-scale, 1)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card,
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__body,
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__face {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card,
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card__body,
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card__face {
   transition: none;
 }
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card > .ptcgsim-card__body {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card > .ptcgsim-card__body {
   scale: none !important;
   rotate: none !important;
 }
 /* A hovered hand card still rises into view (it is mostly off the screen),
    only without the slide. */
-.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card:not([data-in-hand]:hover) > .ptcgsim-card__body {
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card:not([data-in-hand]:hover) > .ptcgsim-card__body {
   translate: none !important;
 }
 

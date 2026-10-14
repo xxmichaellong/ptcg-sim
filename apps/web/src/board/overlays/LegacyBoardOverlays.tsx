@@ -9,6 +9,7 @@ import {
   legacyMarkerCssColor,
   resolveBoardDropTarget,
   type BoardDepthProjection,
+  type BoardPresentation,
   type BoardScene,
   type BoardScenePlayerFrame,
   type CardSceneNode,
@@ -40,6 +41,7 @@ import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { SpiralIcon } from '@phosphor-icons/react/dist/csr/Spiral';
 import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
+import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { SwapIcon } from '@phosphor-icons/react/dist/csr/Swap';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { WrenchIcon } from '@phosphor-icons/react/dist/csr/Wrench';
@@ -53,6 +55,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type CSSProperties,
   type RefObject,
 } from 'react';
@@ -112,6 +115,12 @@ import {
 } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
 import { useOverlayCardDrag } from './useOverlayCardDrag.js';
+import {
+  ZONE_BROWSER_PREFERENCES,
+  zoneBrowserTiles,
+} from './zone-browser-preferences.js';
+import { preferences } from '../../preferences/preference-store.js';
+import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
 
@@ -126,6 +135,11 @@ export type {
 
 export interface LegacyBoardOverlayActions {
   readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => void;
+  /**
+   * The table's drag, for a card picked up in an overlay: the table holds it
+   * as one picked up there (BoardSessionRuntime.emitOverlayDrag).
+   */
+  readonly updateDrag?: (drag: BoardPresentation['drag']) => void;
   /** Table-owned card intents from the work-area popups' own card images. */
   readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
   /** Opens one card's full preview from inside the stack view. */
@@ -1364,10 +1378,18 @@ const Preview = ({
   sourceBounds,
   source,
   actions,
+  scene,
+  depth,
+  openedZoneId = null,
 }: {
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
   readonly canModify: boolean;
+  /** The table, for dragging a shown card onto it. */
+  readonly scene?: BoardScene;
+  readonly depth?: BoardDepthProjection;
+  /** The pile open for browsing, whose cards are moved through it. */
+  readonly openedZoneId?: string | null;
   readonly frame?: BoardScenePlayerFrame;
   readonly board: OverlayBoardSize;
   readonly viewport: BoardScene['viewport'];
@@ -1398,6 +1420,31 @@ const Preview = ({
   );
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'preview');
+  // Any card shown here can be picked up and put on the table, exactly as
+  // from the table itself; the preview steps aside while it is held and has
+  // done its job once the card is dropped somewhere.
+  const drag = useOverlayCardDrag({
+    scene,
+    ...(depth ? { depth } : {}),
+    cards,
+    enabled: canModify && scene !== undefined,
+    emit: (intent) => {
+      const card = cards.find((entry) => entry.id === intent.cardId);
+      if (openedZoneId !== null && card?.parentId === openedZoneId)
+        actions.emitOpenedZoneCardIntent(intent);
+      else actions.emitCardIntent?.(intent);
+      dismiss();
+    },
+    ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
+  });
+  const draggingCardId = drag.draggingCardId ?? undefined;
+  /** A drag that ends without moving the card is still no click. */
+  const swallowDragClick = (event: ReactMouseEvent, cardId: ViewCardId) => {
+    if (drag.consumeClick(cardId) && event.detail > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
   const previewedCardId =
     individualCardId ?? (kind === 'card' ? cards[0]?.id : undefined);
   // The card zooms out of where it was clicked -- a card on the table, in a
@@ -1517,6 +1564,7 @@ const Preview = ({
       className="ptcgsim-legacy-card-preview"
       data-legacy-card-preview="true"
       data-preview-kind="card"
+      data-preview-dragging-card={draggingCardId}
       role="dialog"
       aria-modal="true"
       aria-label={readingCard?.label ?? 'Card preview'}
@@ -1577,8 +1625,12 @@ const Preview = ({
         <span
           ref={stage}
           className="ptcgsim-card-preview-stage"
+          data-preview-drag-card-id={readingCard.id}
+          data-armed={drag.armedCardId === readingCard.id ? 'true' : undefined}
           onPointerMove={tilt.onPointerMove}
           onPointerLeave={tilt.onPointerLeave}
+          onPointerDown={(event) => drag.onPointerDown(event, readingCard)}
+          onClickCapture={(event) => swallowDragClick(event, readingCard.id)}
         >
           <span
             ref={tiltTarget}
@@ -1597,6 +1649,7 @@ const Preview = ({
       className={`ptcgsim-legacy-stack-preview is-${cards[0]?.side ?? 'local'}${showPieces ? ' is-piece-list' : ''}`}
       data-legacy-card-preview="true"
       data-preview-kind="stack"
+      data-preview-dragging-card={draggingCardId}
       role="dialog"
       aria-modal="true"
       aria-label="Card stack preview"
@@ -1649,9 +1702,13 @@ const Preview = ({
           // a click still opens the card.
           tabIndex={composition ? 0 : -1}
           data-preview-tabbable={composition ? 'true' : undefined}
+          data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+          draggable={false}
           onMouseDown={(event) => event.preventDefault()}
+          onPointerDown={(event) => drag.onPointerDown(event, card)}
           onClick={(event) => {
             event.stopPropagation();
+            if (drag.consumeClick(card.id) && event.detail > 0) return;
             if (composition) setIndividualCardId(card.id);
             else actions.previewCard?.(card.id);
           }}
@@ -1857,8 +1914,14 @@ const ZoneBrowser = ({
     cards,
     enabled: state.canSubmitCommands && !obscured,
     emit: actions.emitOpenedZoneCardIntent,
+    ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
   });
   const draggingCardId = drag.draggingCardId;
+  const { stackCopies } = usePreference(ZONE_BROWSER_PREFERENCES);
+  const tiles = useMemo(
+    () => zoneBrowserTiles(renderedCards, stackCopies),
+    [renderedCards, stackCopies]
+  );
 
   return (
     <>
@@ -1935,6 +1998,28 @@ const ZoneBrowser = ({
               <SortAscendingIcon aria-hidden="true" weight="bold" />
               Sort
             </label>
+            {copies.size > 0 ? (
+              <button
+                type="button"
+                className="ptcgsim-overlay-toggle"
+                data-zone-action="stackCopies"
+                aria-pressed={stackCopies}
+                aria-label="Stack copies"
+                title={
+                  stackCopies
+                    ? 'Show every copy on its own'
+                    : 'Stack copies of a card together'
+                }
+                onClick={() =>
+                  preferences().set(ZONE_BROWSER_PREFERENCES, {
+                    stackCopies: !stackCopies,
+                  })
+                }
+              >
+                <StackIcon aria-hidden="true" weight="bold" />
+                Stack
+              </button>
+            ) : null}
             <ShowBoardButton
               showingBoard={showingBoard}
               // "Back to Board" would read as the table itself.
@@ -1996,13 +2081,17 @@ const ZoneBrowser = ({
               {cards.length > 0 ? 'No matching cards' : 'No cards here'}
             </p>
           ) : null}
-          {renderedCards.map((card) => (
+          {tiles.map(({ card, count }) => (
             <button
               type="button"
               key={card.id}
               className="ptcgsim-zone-card"
               data-overlay-card-id={card.id}
-              aria-label={card.label}
+              data-copy-stack={count > 1 ? count : undefined}
+              data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+              aria-label={
+                count > 1 ? `${card.label}, ${count} copies` : card.label
+              }
               aria-pressed={state.presentation.selectedCardId === card.id}
               draggable={false}
               onPointerDown={(event) => drag.onPointerDown(event, card)}
@@ -2043,15 +2132,6 @@ const ZoneBrowser = ({
               }}
             >
               <OverlayCardImage card={card} variant="zone" />
-              {state.canSubmitCommands ? (
-                <span
-                  data-panel-drag-handle="true"
-                  className="ptcgsim-panel-drag-handle"
-                  aria-hidden="true"
-                >
-                  <ArrowsOutCardinalIcon />
-                </span>
-              ) : null}
               {abilityMarkedCardIds.has(card.id) ? (
                 <span
                   className="ptcgsim-legacy-zone-ability-marker"
@@ -2060,9 +2140,9 @@ const ZoneBrowser = ({
                   aria-hidden="true"
                 />
               ) : null}
-              {(copies.get(card.id) ?? 0) > 1 ? (
+              {count > 1 || (copies.get(card.id) ?? 0) > 1 ? (
                 <span className="ptcgsim-zone-copy-badge" aria-hidden="true">
-                  ×{copies.get(card.id)}
+                  ×{count > 1 ? count : copies.get(card.id)}
                 </span>
               ) : null}
             </button>
@@ -2149,6 +2229,7 @@ const WorkAreaPanel = ({
     cards,
     enabled: interactive,
     emit: (intent) => emit?.(intent),
+    ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
   });
   const draggingCardId = drag.draggingCardId;
   const withActions =
@@ -2208,6 +2289,7 @@ const WorkAreaPanel = ({
             data-work-area-card-id={card.id}
             aria-label={card.label}
             aria-pressed={state.presentation.selectedCardId === card.id}
+            data-armed={drag.armedCardId === card.id ? 'true' : undefined}
             disabled={!interactive}
             draggable={false}
             onPointerDown={(event) => drag.onPointerDown(event, card)}
@@ -2238,15 +2320,6 @@ const WorkAreaPanel = ({
             }}
           >
             <OverlayCardImage card={card} variant="zone" />
-            {interactive ? (
-              <span
-                data-panel-drag-handle="true"
-                className="ptcgsim-panel-drag-handle"
-                aria-hidden="true"
-              >
-                <ArrowsOutCardinalIcon />
-              </span>
-            ) : null}
           </button>
         ))}
       </div>
@@ -2270,6 +2343,8 @@ const WorkAreaPanel = ({
                 key={button.id}
                 className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
                 data-work-area-action={button.id}
+                aria-label={button.label}
+                title={button.label}
                 onClick={() =>
                   own
                     ? actions.invokeWorkAreaAction?.(source, button.id)
@@ -2281,7 +2356,9 @@ const WorkAreaPanel = ({
                 }
               >
                 <ActionIcon aria-hidden="true" />
-                {button.label}
+                <span className="ptcgsim-work-area-button-label">
+                  {button.label}
+                </span>
               </button>
             );
           })}
@@ -2781,6 +2858,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           }
           source={previewSource}
           actions={actions}
+          scene={scene}
+          {...(depth ? { depth } : {})}
+          openedZoneId={state.presentation.openedZoneId}
         />
       ) : null}
     </div>

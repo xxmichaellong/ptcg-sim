@@ -594,6 +594,8 @@ describe('headless board session controller', () => {
       kind: 'CardDropRequested',
       cardId: sourceCard.id,
       targetId: targetZoneId,
+      x: 420,
+      y: 310,
     };
 
     expect(
@@ -658,9 +660,12 @@ describe('headless board session controller', () => {
       intent,
     });
 
+    // The card leaves the viewer for the table: it settles where it was
+    // dropped (painted there by the renderer) until the move lands.
     expect(accepted.state.presentation).toEqual({
       ...DEFAULT_BOARD_PRESENTATION,
       openedZoneId: sourceZone.id,
+      settling: [{ cardId: sourceCard.id, x: 420, y: 310, commandId: null }],
     });
     expect(accepted.state.overlays).toEqual({
       contextMenuCardId: null,

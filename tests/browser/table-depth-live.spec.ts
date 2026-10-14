@@ -729,6 +729,8 @@ test('opened piles offer tap and keyboard movement, and cancel pen and touch ges
   await browser.getByRole('button', { name: 'Read', exact: true }).click();
   await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
   await page.keyboard.press('Escape');
+  const surface = page.locator('.ptcgsim-board-surface');
+  const sourceId = await source.getAttribute('data-overlay-card-id');
   for (const pointerType of ['pen', 'touch']) {
     const box = (await source.boundingBox())!;
     const position = {
@@ -740,18 +742,25 @@ test('opened piles offer tap and keyboard movement, and cancel pen and touch ges
       buttons: 1,
       isPrimary: true,
     };
-    await (
-      pointerType === 'touch'
-        ? source.locator('[data-panel-drag-handle]')
-        : source
-    ).dispatchEvent('pointerdown', position);
+    await source.dispatchEvent('pointerdown', position);
+    // A finger picks the card up by holding it still; a pen at once.
+    if (pointerType === 'touch') {
+      await expect(source).toHaveAttribute('data-armed', 'true');
+    }
     await source.dispatchEvent('pointermove', {
       ...position,
       clientX: position.clientX + 30,
     });
-    await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(1);
+    // Held by the table's own drag: the table paints the card in the hand.
+    await expect(surface).toHaveAttribute('data-dragging', 'true');
+    await expect(
+      page.locator(
+        `.ptcgsim-card[data-card-id="${sourceId}"][data-held="drag"]`
+      )
+    ).toHaveCount(1);
     await source.dispatchEvent('pointercancel', position);
-    await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(0);
+    await expect(surface).toHaveAttribute('data-dragging', 'false');
+    await expect(page.locator('[data-held="drag"]')).toHaveCount(0);
     await expect(browser).toBeVisible();
   }
   const hand = (await scene(page)).zones.find(
@@ -770,7 +779,7 @@ test('opened piles offer tap and keyboard movement, and cancel pen and touch ges
         (await scene(page)).zones.find((zone) => zone.id === hand.id)?.count
     )
     .toBe(hand.count + 1);
-  await expect(page.locator('.ptcgsim-panel-drag-face')).toHaveCount(0);
+  await expect(page.locator('[data-held="drag"]')).toHaveCount(0);
 });
 
 test('optional parallax settles without an idle clock and freezes the camera during a drag', async ({
