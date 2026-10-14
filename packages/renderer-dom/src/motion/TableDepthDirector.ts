@@ -724,19 +724,34 @@ export class TableDepthDirector {
     this.flips.delete(key);
   }
 
-  /** A card's pose with its hover raise and the lift it is rising through. */
+  /** A card's height with its hover raise and the lift it is rising through. */
+  private height(key: string, target: TableCardPose, now: number): number {
+    const elevation = target.elevation + Math.max(0, this.raiseAt(key, now));
+    const lift = this.lifts.get(key);
+    return lift && now - lift.start < lift.duration
+      ? lift.from +
+          (elevation - lift.from) *
+            easeOut(Math.max(0, (now - lift.start) / lift.duration))
+      : elevation;
+  }
+  /**
+   * A card's pose at the height it is painted at. A joined card's held
+   * pieces share the highest of their heights: crossing a spot that takes
+   * only one piece lets the others go, and when they are carried again
+   * they are at the card's height at once, not a rise behind it.
+   */
   private elevated(
     key: string,
     target: TableCardPose,
     now: number
   ): TableCardPose {
-    let elevation = target.elevation + Math.max(0, this.raiseAt(key, now));
-    const lift = this.lifts.get(key);
-    if (lift && now - lift.start < lift.duration)
-      elevation =
-        lift.from +
-        (elevation - lift.from) *
-          easeOut(Math.max(0, (now - lift.start) / lift.duration));
+    let elevation = this.height(key, target, now);
+    if (this.held.has(key) && this.cards.get(key)?.composition)
+      for (const piece of this.joined(key)) {
+        const pose = piece === key ? undefined : this.motion.poses.get(piece);
+        if (pose && this.held.has(piece))
+          elevation = Math.max(elevation, this.height(piece, pose, now));
+      }
     return elevation === target.elevation ? target : { ...target, elevation };
   }
   /**

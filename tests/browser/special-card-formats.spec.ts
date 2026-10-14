@@ -149,6 +149,11 @@ const join = async (page: Page, piece: string, anchor: string) => {
       page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.scene.revision)
     )
     .toBeGreaterThan(revision);
+  // The card lands before anything else is done with it: one still in
+  // flight from the deck leaves the deck under a double-click aimed at it.
+  await expect(
+    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+  ).toHaveCount(1);
   return (await sceneCard(page, piece)).id;
 };
 

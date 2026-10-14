@@ -609,22 +609,31 @@ it("raises and lifts a joined card's pieces together, and keeps the grip under t
 
   // Picked up, the pieces rise as one, and the grip stays under the
   // pointer at every height on the way up, not only at the height it was
-  // at when the pointer moved.
-  for (const element of elements.values()) element.dataset.held = 'drag';
+  // at when the pointer moved. The second piece is carried a moment after
+  // the first (as when the pointer crosses a spot that takes only one) and
+  // is at the card's height at once.
   drift = 3;
   const point = { x: 400, y: 380 };
-  director.grab({ key: first.renderKey!, x: 0.27, y: 0.61, point });
-  director.commit(
-    scene,
-    projection,
-    {
-      ...DEFAULT_BOARD_PRESENTATION,
-      drag: { cardId: first.id, x: 420, y: 400, targetId: null },
-    },
-    undefined,
-    false,
-    1
-  );
+  const carry = (held: readonly CardSceneNode[]) => {
+    for (const card of held)
+      elements.get(card.renderKey!)!.dataset.held = 'drag';
+    director.grab({ key: first.renderKey!, x: 0.27, y: 0.61, point });
+    director.commit(
+      scene,
+      projection,
+      {
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { cardId: first.id, x: 420, y: 400, targetId: null },
+      },
+      undefined,
+      false,
+      1
+    );
+  };
+  carry([first]);
+  advance(100);
+  carry([first, second]);
+  expect(height(second)).toBe(height(first));
   const grip = () => {
     const pose = director.current(first.renderKey!)!;
     const m = tablePoseMatrix(projection.camera, pose);
@@ -637,7 +646,7 @@ it("raises and lifts a joined card's pieces together, and keeps the grip under t
     };
   };
   const pickedUp = height(first);
-  for (const at of [100, 130, 400]) {
+  for (const at of [130, 160, 400]) {
     advance(at);
     expect(height(second)).toBe(height(first));
     expect(grip().x).toBeCloseTo(point.x, 6);
