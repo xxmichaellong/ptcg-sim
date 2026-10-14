@@ -499,28 +499,17 @@ export const activityPresentationEffectsForEvents = (
   );
 
 /** Maps authenticated ephemeral chat into the same bounded local feed. */
-/** v1's sidebar "free button" posts its flower as an unnamed player line. */
-export const LEGACY_FREE_BUTTON_MESSAGE = '🌺';
-
 export const presentationEffectsForChatMessage = (
   message: ChatMessage,
   observedRevision = 0
 ): readonly PresentationEffect[] => {
-  const freeButton =
-    Boolean(message.playerId) && message.message === LEGACY_FREE_BUTTON_MESSAGE;
-  const visibleMessage = freeButton
-    ? message.message
-    : `${message.displayName}: ${message.message}`;
+  const visibleMessage = `${message.displayName}: ${message.message}`;
   return [
     {
       kind: 'activity',
       revision: observedRevision,
       eventType: 'ChatMessage',
-      category: freeButton
-        ? 'player'
-        : message.playerId
-          ? 'message'
-          : 'spectator',
+      category: message.playerId ? 'message' : 'spectator',
       message: visibleMessage,
       ...(message.playerId ? { playerId: message.playerId } : {}),
     },

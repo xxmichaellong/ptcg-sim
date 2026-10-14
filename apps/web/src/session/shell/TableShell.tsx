@@ -1,10 +1,16 @@
-import type { CSSProperties, ReactNode } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 import {
   roomBackgroundCssImage,
   type RoomBackground,
 } from '../browser-room-background.js';
 import '../../design/panel-controls.css';
+import type { DockSlide } from './dock-slide.js';
 import './table-shell.css';
 
 /**
@@ -19,6 +25,7 @@ export const TableShell = ({
   background,
   sessionPhase,
   docked = false,
+  dockSlide,
   board,
   children,
 }: {
@@ -28,38 +35,56 @@ export const TableShell = ({
   readonly sessionPhase?: string;
   /** The activity log is docked at the right, and the table beside it. */
   readonly docked?: boolean;
+  /** How far the docked log has slid in; what sits over the table follows. */
+  readonly dockSlide?: DockSlide;
   readonly board: ReactNode;
   readonly children?: ReactNode;
-}) => (
-  <main
-    className={`app-shell remote-room-route table-shell${
-      darkMode ? ' remote-room-route--dark' : ''
-    }`}
-    data-app-route={route}
-    data-session-phase={sessionPhase}
-    data-dark-mode={String(darkMode)}
-    data-room-background={background?.kind ?? 'default'}
-    data-activity-docked={docked ? 'true' : undefined}
-    style={
-      background
-        ? {
-            backgroundImage: roomBackgroundCssImage(background),
-            backgroundSize: '100% 100%',
-            backgroundRepeat: 'no-repeat',
-          }
-        : undefined
-    }
-  >
-    <section
-      className="board-column board-column--table"
-      aria-label="Game board"
-      data-board-shell="table"
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const shell = ref.current;
+    if (!shell) return;
+    const paint = (): void => {
+      shell.style.setProperty(
+        '--activity-reveal',
+        String(dockSlide ? dockSlide.value() : docked ? 1 : 0)
+      );
+    };
+    paint();
+    return dockSlide?.subscribe(paint);
+  }, [docked, dockSlide]);
+  return (
+    <main
+      ref={ref}
+      className={`app-shell remote-room-route table-shell${
+        darkMode ? ' remote-room-route--dark' : ''
+      }`}
+      data-app-route={route}
+      data-session-phase={sessionPhase}
+      data-dark-mode={String(darkMode)}
+      data-room-background={background?.kind ?? 'default'}
+      data-activity-docked={docked ? 'true' : undefined}
+      style={
+        background
+          ? {
+              backgroundImage: roomBackgroundCssImage(background),
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            }
+          : undefined
+      }
     >
-      {board}
-    </section>
-    {children}
-  </main>
-);
+      <section
+        className="board-column board-column--table"
+        aria-label="Game board"
+        data-board-shell="table"
+      >
+        {board}
+      </section>
+      {children}
+    </main>
+  );
+};
 
 /** Something the table must say until it is resolved: a lost room. */
 export const TableBanner = ({

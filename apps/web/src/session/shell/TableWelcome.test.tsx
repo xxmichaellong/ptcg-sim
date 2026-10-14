@@ -8,7 +8,7 @@ import {
   closeShortcutsDialog,
   useShortcutsDialogState,
 } from '../../hotkeys/shortcuts-dialog-state.js';
-import { closeHelpPage, HelpSheetHost } from './help-pages.js';
+import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { TableWelcome } from './TableWelcome.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -77,15 +77,17 @@ describe('TableWelcome', () => {
     const onLoadDeck = vi.fn();
     const onPlayOnline = vi.fn();
     const onDismiss = vi.fn();
-    await render({ buildId: 'v2-test', onLoadDeck, onPlayOnline, onDismiss });
+    await render({ onLoadDeck, onPlayOnline, onDismiss });
     const card = host.querySelector('[data-table-welcome="true"]')!;
     expect(card.getAttribute('aria-labelledby')).toBe('tableWelcomeTitle');
     expect(host.querySelector('#tableWelcomeTitle')?.textContent).toBe(
       'Welcome to PTCG-sim'
     );
-    expect(host.querySelector('.welcome-version-build')?.textContent).toBe(
-      'v2-test'
+    // The release notes go by the release they lead with.
+    expect(host.querySelector('#changelogLink')?.textContent).toBe(
+      RELEASE_NAME
     );
+    expect(RELEASE_NAME).toMatch(/^v\d+(\.\d+)+$/u);
 
     await act(async () => button('#welcomeLoadDeckButton').click());
     expect(onLoadDeck).toHaveBeenCalledOnce();

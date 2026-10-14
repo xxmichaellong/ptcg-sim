@@ -13,7 +13,7 @@ import {
   DEFAULT_MOTION_SETTINGS,
   motionSettings,
 } from '../../motion/motion-settings.js';
-import { closeHelpPage, HelpSheetHost } from './help-pages.js';
+import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { SettingsSheet, type SettingsSheetProps } from './SettingsSheet.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -179,7 +179,7 @@ describe('SettingsSheet', () => {
       [...about.querySelectorAll<HTMLButtonElement>('button')].find(
         (candidate) => candidate.textContent?.includes(title)
       )!;
-    await act(async () => row("What's new").click());
+    await act(async () => row(RELEASE_NAME).click());
     await settle();
     expect(document.querySelector('#changelog')).not.toBeNull();
     expect(

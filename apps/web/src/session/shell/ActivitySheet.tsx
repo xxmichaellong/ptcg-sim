@@ -22,6 +22,7 @@ import type { LegacyGamePresentationRuntime } from '../../presentation/LegacyGam
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from '../../ui/overlay-surface.js';
 import { Sheet } from '../../ui/Sheet.js';
+import { useDockSlide, type DockSlide } from './dock-slide.js';
 import {
   ChatComposer,
   type LiveRoomControls,
@@ -41,6 +42,8 @@ export interface ActivityPanelProps {
    * while play goes on, as the old sidebar did, and the table makes room.
    */
   readonly docked: boolean;
+  /** Carries the docked log in and out (useActivityDocking). */
+  readonly slide?: DockSlide;
   readonly presentation: ActivityRuntime;
   readonly perspective?: LegacyActivityPerspective;
   readonly feedId: 'chatbox' | 'p2Chatbox';
@@ -120,6 +123,29 @@ const ActivityBody = ({
   </div>
 );
 
+/** The log in its column beside the table, sliding in and out. */
+const ActivityDock = ({
+  slide,
+  children,
+}: {
+  readonly slide: DockSlide | undefined;
+  readonly children: ReactNode;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  useDockSlide(ref, slide);
+  return (
+    <aside
+      ref={ref}
+      id="activitySheet"
+      className="ptcgsim-activity-dock"
+      aria-labelledby="activityDockTitle"
+      {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'panel' }}
+    >
+      {children}
+    </aside>
+  );
+};
+
 /**
  * The battle log and chat (ADR-030). Docked beside the table on a wide
  * screen, so play goes on with it open; over the table on a smaller one,
@@ -130,6 +156,7 @@ export const ActivityPanel = ({
   open,
   onOpenChange,
   docked,
+  slide,
   status,
   headerActions: extraActions,
   onExportLog,
@@ -147,12 +174,7 @@ export const ActivityPanel = ({
   );
   if (docked) {
     return open ? (
-      <aside
-        id="activitySheet"
-        className="ptcgsim-activity-dock"
-        aria-labelledby="activityDockTitle"
-        {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'panel' }}
-      >
+      <ActivityDock slide={slide}>
         <header className="ptcgsim-sheet__header">
           <div className="ptcgsim-sheet__heading">
             <h2 id="activityDockTitle" className="ptcgsim-sheet__title">
@@ -175,7 +197,7 @@ export const ActivityPanel = ({
         <div className="ptcgsim-activity-dock__body">
           <ActivityBody {...body} />
         </div>
-      </aside>
+      </ActivityDock>
     ) : null;
   }
   return (
@@ -215,21 +237,21 @@ const worthTicking = (
   return item.playerId === undefined || item.playerId !== ownSeat;
 };
 
-/** What counts toward the unread badge: what others said, and who came. */
+/**
+ * What counts toward the unread badge: everything worth a word over the
+ * table, and who came and went.
+ */
 const worthCounting = (
   item: ActivityFeedItem,
   ownSeat: string | undefined,
   solo: boolean
 ): boolean =>
-  item.eventType === 'Presence' ||
-  (!solo &&
-    item.eventType === 'ChatMessage' &&
-    (item.playerId === undefined || item.playerId !== ownSeat));
+  item.eventType === 'Presence' || worthTicking(item, ownSeat, solo);
 
 /**
- * The rail's Activity button: a count of what others said since the log
- * was last open, and, while it is closed, their newest lines over the
- * table for a few seconds.
+ * The rail's Activity button: a count of what others did and said since
+ * the log was last open, and, while it is closed, their newest lines over
+ * the table for a few seconds.
  */
 export const ActivityLauncher = ({
   presentation,

@@ -151,7 +151,7 @@ describe('ActivityLauncher', () => {
       )
     );
 
-  it('counts what others said and who came since the log was last open', async () => {
+  it('counts what others did and said and who came since the log was last open', async () => {
     const source = feedSource([chat(OTHER, 'already read')]);
     const onToggle = vi.fn();
     await renderLauncher(source, { onToggle });
@@ -163,12 +163,14 @@ describe('ActivityLauncher', () => {
         chat(OTHER, 'gl hf'),
         chat(OWN, 'you too'),
         move(OTHER, 'Red drew a card'),
+        move(OWN, 'Blue drew a card'),
         presence('Red joined')
       )
     );
-    expect(badge()).toBe('2');
+    // Their line, their move and their arrival; not the player's own.
+    expect(badge()).toBe('3');
     const button = host.querySelector<HTMLButtonElement>('#activityButton')!;
-    expect(button.getAttribute('aria-label')).toBe('Activity, 2 new');
+    expect(button.getAttribute('aria-label')).toBe('Activity, 3 new');
     expect(button.getAttribute('aria-expanded')).toBe('false');
     await act(async () => button.click());
     expect(onToggle).toHaveBeenCalledOnce();
@@ -182,15 +184,23 @@ describe('ActivityLauncher', () => {
     expect(badge()).toBe('1');
   });
 
-  it('counts only arrivals at a Solo table, where every word is the player own', async () => {
+  it('counts only announcements and arrivals at a Solo table, where every move is the player own', async () => {
     const source = feedSource();
     await renderLauncher(source, { solo: true });
     await act(async () =>
-      source.push(chat(OTHER, 'a note'), chat(OWN, 'another'))
+      source.push(
+        chat(OTHER, 'a note'),
+        chat(OWN, 'another'),
+        move(OTHER, 'Red drew a card')
+      )
     );
     expect(badge()).toBeNull();
     await act(async () => source.push(presence('Spectator joined')));
     expect(badge()).toBe('1');
+    await act(async () =>
+      source.push(item('DeckLoaded', 'announcement', 'Red loaded deck'))
+    );
+    expect(badge()).toBe('2');
   });
 
   it("flashes the other side's lines over the table while the log is closed", async () => {
@@ -258,7 +268,6 @@ describe('ActivityPanel', () => {
     message: '',
     setMessage: vi.fn(),
     handleMessageKeyDown: vi.fn(),
-    sendFlower: vi.fn(),
     sendMessage: vi.fn(),
   } as unknown as LiveRoomControls;
 

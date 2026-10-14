@@ -41,7 +41,9 @@
     center;
   background-blend-mode: soft-light;
   mix-blend-mode: color-dodge;
-  opacity: calc(var(--card-light) * var(--card-foil-strength));
+  opacity: calc(
+    var(--card-light) * var(--card-foil-strength) * var(--card-foil-scale, 1)
+  );
 }
 
 .card-material[data-finish]::after {
@@ -54,6 +56,16 @@
   );
   mix-blend-mode: soft-light;
   opacity: calc(var(--card-light) * 0.65);
+}
+
+/* A foil already catches the light in its colours: its white highlight
+   stays soft, and its colours a touch lower, so the art keeps its contrast
+   and the foil's texture still shows. */
+.card-material:is([data-finish='holo'], [data-finish='rainbow'])::after {
+  opacity: calc(var(--card-light) * 0.3);
+}
+.card-material:is([data-finish='holo'], [data-finish='rainbow']) {
+  --card-foil-scale: 0.8;
 }
 
 .card-material[data-finish='holo']::before {

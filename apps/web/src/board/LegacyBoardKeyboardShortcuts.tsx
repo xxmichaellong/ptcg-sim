@@ -156,6 +156,15 @@ export const LegacyBoardKeyboardShortcuts = ({
         return;
       }
       const mode: HotkeyMode = selectedCardId === null ? 'table' : 'card';
+      // A held key acts once: the system's key repeat would otherwise set
+      // up, draw or discard again many times a second. Its default stays
+      // kept from the browser (a held Alt+D must not reach the address bar).
+      if (event.repeat && event.key !== 'Escape') {
+        if (keymap.resolve(event, mode) !== null && event.cancelable) {
+          event.preventDefault();
+        }
+        return;
+      }
       if (keymap.resolve(event, mode) === 'table.shortcuts') {
         if (event.cancelable) event.preventDefault();
         onToggleShortcuts(mode);

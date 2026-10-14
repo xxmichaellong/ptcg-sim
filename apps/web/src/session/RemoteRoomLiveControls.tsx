@@ -1,4 +1,3 @@
-import { Flower } from '@phosphor-icons/react/dist/csr/Flower';
 import { PaperPlaneRight } from '@phosphor-icons/react/dist/csr/PaperPlaneRight';
 import type {
   ClientSessionState,
@@ -452,9 +451,6 @@ export const useLiveRoomControls = ({
   const fullscreen = (): void => {
     requestFullscreen();
   };
-  const sendFlower = (): void => {
-    session.sendChat('🌺', playerId);
-  };
 
   /** The hidden file pickers behind "Enter replay mode" and "Resume". */
   const fileInputs = (
@@ -496,7 +492,6 @@ export const useLiveRoomControls = ({
     setMessage,
     sendMessage,
     handleMessageKeyDown,
-    sendFlower,
     submitTable,
     submitLifecycle,
     submitBothLifecycle,
@@ -518,7 +513,7 @@ export const useLiveRoomControls = ({
 
 export type LiveRoomControls = ReturnType<typeof useLiveRoomControls>;
 
-/** The chat field and the flower, for the activity sheet. */
+/** The chat field and its send button, for the activity sheet. */
 export const ChatComposer = ({
   controls,
 }: {
@@ -539,17 +534,6 @@ export const ChatComposer = ({
         onChange={(event) => controls.setMessage(event.target.value)}
         onKeyDown={controls.handleMessageKeyDown}
       />
-      <button
-        id={controls.solo ? 'FREEBUTTON' : 'p2FREEBUTTON'}
-        type="button"
-        className="ds-icon-button ptcgsim-chat-composer__flower"
-        disabled={!controls.ready}
-        aria-label="Send a flower"
-        title="Send a flower"
-        onClick={controls.sendFlower}
-      >
-        <Flower size={20} weight="fill" aria-hidden="true" />
-      </button>
       <button
         type="button"
         className="ds-icon-button ptcgsim-chat-composer__send"

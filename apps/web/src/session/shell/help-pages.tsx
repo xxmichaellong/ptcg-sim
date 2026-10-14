@@ -37,9 +37,16 @@ const subscribe = (listener: () => void) => {
   };
 };
 
+/**
+ * The release the notes lead with (`v1.6`): the menu, Settings and the
+ * welcome card name the notes by it.
+ */
+export const RELEASE_NAME =
+  /<h2>\s*(v\d+(?:\.\d+)*)/u.exec(changelogMarkup)?.[1] ?? 'Release notes';
+
 const TITLES: Readonly<Record<HelpPage, string>> = {
   tutorial: 'How to play on PTCG-sim',
-  changelog: "What's new",
+  changelog: RELEASE_NAME,
   donations: 'Sponsors & Donations',
 };
 

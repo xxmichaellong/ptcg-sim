@@ -78,7 +78,6 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#appMenuButton')).toBeVisible();
   await openActivity(page);
   await expect(page.locator('#messageInput')).toBeEnabled();
-  await expect(page.locator('#FREEBUTTON')).toBeVisible();
   await expect(page.locator('#chatbox')).toBeVisible();
   await expect(page.locator('#roomHeader')).toHaveCount(0);
   // Before a deck, the rail asks for one; Solo's both-sides actions wait in

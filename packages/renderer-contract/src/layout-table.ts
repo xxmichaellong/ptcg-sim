@@ -647,6 +647,7 @@ export const createTableLayoutSnapshot = (
     hiddenPhysicalSide: _hidden,
     hideEmptyLostZone: _lostZone,
     seamBandPx,
+    sidePanelReveal,
     ...semanticState
   } = state;
   if (
@@ -665,8 +666,16 @@ export const createTableLayoutSnapshot = (
     ...semanticState,
     geometryVersion: 1,
   });
+  if (
+    sidePanelReveal !== undefined &&
+    !(sidePanelReveal >= 0 && sidePanelReveal <= 1)
+  ) {
+    throw new Error('Side panel reveal must be between 0 and 1');
+  }
   const fullScreen = state.shellMode === 'fullscreen';
-  const rail = fullScreen ? 0 : tableRailWidth(state.viewport.width);
+  const rail = fullScreen
+    ? 0
+    : tableRailWidth(state.viewport.width) * (sidePanelReveal ?? 1);
   const playAreaWidth = Math.max(1, state.viewport.width - rail);
   const playAreaBounds: Rect = {
     x: 0,

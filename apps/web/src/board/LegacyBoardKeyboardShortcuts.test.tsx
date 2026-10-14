@@ -317,6 +317,37 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('acts once for a held key, and keeps its repeats from the browser', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+    const press = (repeat: boolean) => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'n',
+        code: 'KeyN',
+        altKey: true,
+        repeat,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(event);
+      return event;
+    };
+    press(false);
+    const repeats = Array.from({ length: 20 }, () => press(true));
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'setupOwnPlayer' },
+    ]);
+    expect(repeats.every((event) => event.defaultPrevented)).toBe(true);
+    // Let go and press again: that is a new press.
+    press(false);
+    expect(onRequest).toHaveBeenCalledTimes(2);
+  });
+
   it('routes prompt-driven hand keys only while unselected and preserves source defaults', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

@@ -152,6 +152,12 @@ export interface BoardLayoutState {
    */
   readonly seamBandPx?: number;
   /**
+   * Geometry v2 only: how far a docked side panel (`shellMode: 'sidebar'`)
+   * has slid in, 0 to 1, while it moves; the table gives up that share of
+   * the panel's column. Absent means all the way.
+   */
+  readonly sidePanelReveal?: number;
+  /**
    * How far each scrolling zone is scrolled, in physical pixels, keyed by
    * zone id: v1's `#hand` scrollLeft and `#board` scrollTop. Absent means 0.
    */

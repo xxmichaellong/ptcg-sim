@@ -937,7 +937,8 @@
   }
 }
 
-/* The Sort switch: a real checkbox in a button-sized chip. */
+/* The Sort toggle: a button-sized chip that is on or off, latched in while
+   on. The checkbox inside keeps its role, name and keys, out of sight. */
 .ptcgsim-overlay-toggle {
   display: inline-flex;
   box-sizing: border-box;
@@ -962,6 +963,13 @@
 .ptcgsim-overlay-toggle:has(input:checked) {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
+  box-shadow: inset 0 2px 3px oklch(0 0 0 / 0.3);
+  color: var(--ds-accent-text, var(--color-accent));
+}
+
+.ptcgsim-overlay-toggle svg {
+  width: 16px;
+  height: 16px;
 }
 
 .ptcgsim-overlay-toggle:has(input:focus-visible) {
@@ -969,12 +977,17 @@
   outline-offset: 2px;
 }
 
+.ptcgsim-overlay-toggle {
+  position: relative;
+}
+
 .ptcgsim-overlay-toggle input {
-  width: 16px;
-  height: 16px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
   margin: 0;
-  accent-color: var(--color-accent);
-  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ptcgsim-overlay-toggle input:focus-visible {

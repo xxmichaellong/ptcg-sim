@@ -139,23 +139,14 @@ textarea {
   max-height: none;
   font-size: var(--text-xs) !important;
 }
-.board-spike-host[data-geometry='2'] .legacy-hand-sort {
-  top: auto;
-  left: 14px;
-  bottom: 84px;
-  font-size: var(--text-xs) !important;
-}
-.board-spike-host[data-geometry='2'] .legacy-hand-sort span {
-  font-size: var(--text-xs) !important;
-}
 /* A half too short to stack them (a phone held sideways): the markers
-   side by side at the bottom of the corner, Sort just above. */
+   side by side at the bottom of the corner. */
 .board-spike-host[data-geometry='2']
   .legacy-player-frame-chrome[data-corner='compact']
   .legacy-once-per-game-controls {
   left: 6px;
   bottom: 6px;
-  width: 88px;
+  width: auto;
   flex-direction: row;
   justify-content: flex-start;
   gap: 4px;
@@ -165,23 +156,91 @@ textarea {
   .legacy-once-per-game-button {
   height: 24px !important;
 }
+
+/* Sort hand: an icon toggle at the head of the corner's markers. On, it is
+   latched in: sunk into its socket in the seat's colour, with a bar under
+   the icon. The checkbox inside keeps its role, name and keys. */
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle {
+  position: relative;
+  inset: auto;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--color-surface-2) 82%, transparent);
+  box-shadow:
+    var(--highlight-top),
+    0 1px 0 oklch(0 0 0 / 0.35);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    translate var(--duration-instant) var(--ease-out);
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle svg {
+  width: 16px;
+  height: 16px;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--toggle:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--color-surface-3) 90%,
+      transparent
+    );
+    color: var(--color-text);
+  }
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:active {
+  translate: 0 1px;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:has(:checked) {
+  --sort-seat: var(--color-you);
+
+  border-color: color-mix(in oklab, var(--sort-seat) 50%, transparent);
+  background: color-mix(in oklab, var(--sort-seat) 24%, var(--color-surface-1));
+  box-shadow: inset 0 2px 3px oklch(0 0 0 / 0.35);
+  color: color-mix(in oklab, var(--sort-seat) 70%, white);
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--opponent.legacy-hand-sort--toggle:has(:checked) {
+  --sort-seat: var(--color-opponent);
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--toggle:has(:checked)::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 12px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--sort-seat);
+  translate: -50% 0;
+}
 .board-spike-host[data-geometry='2']
   .legacy-player-frame-chrome[data-corner='compact']
-  .legacy-hand-sort {
-  left: 8px;
-  bottom: 34px;
-}
-/* v1's translucent side colours vanish on the Day felt: the word reads in
-   the muted text colour on either felt, and the box carries the seat. */
-.board-spike-host[data-geometry='2'] .legacy-hand-sort,
-.board-spike-host[data-geometry='2'] .legacy-hand-sort span {
-  color: var(--color-text-muted) !important;
-}
-.board-spike-host[data-geometry='2'] .legacy-hand-sort--local input {
-  accent-color: var(--color-you);
-}
-.board-spike-host[data-geometry='2'] .legacy-hand-sort--opponent input {
-  accent-color: var(--color-opponent);
+  .legacy-hand-sort--toggle {
+  width: 24px;
+  height: 24px;
 }
 /* Keep the markers readable on the rotated half, including after a flip.
    Rotate the button so the tile's independent face-down animation still works. */

@@ -183,13 +183,16 @@
   min-width: 0;
 }
 
-/* Two panes: seasons on the left, that season's decks on the right. */
+/* Two panes: seasons on the left, that season's decks on the right. The
+   menu keeps to the panel's right edge and, where the panel is narrower
+   than it wants to be, opens out to the left over whatever is beside it
+   (the deck builder), so season and deck names read in full. */
 .legacy-deck-import .decklists-context-menu {
   position: absolute;
   z-index: var(--z-popover);
   right: 0;
   bottom: calc(100% + var(--space-2));
-  left: 0;
+  width: max(100%, min(34rem, calc(100vw - 2 * var(--space-4))));
   max-height: min(62vh, 560px);
   overflow: hidden;
 }

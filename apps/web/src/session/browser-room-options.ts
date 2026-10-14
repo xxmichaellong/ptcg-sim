@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+
 import type { ActivityFeedItem } from '../presentation/ActivityFeedModel.js';
 
 export const serializeBattleLog = (
@@ -66,3 +68,52 @@ export const requestBrowserFullscreen = (
     return false;
   }
 };
+
+interface VendorFullscreenDocument {
+  readonly fullscreenElement?: Element | null;
+  readonly webkitFullscreenElement?: Element | null;
+  readonly exitFullscreen?: () => Promise<void> | void;
+  readonly webkitExitFullscreen?: () => Promise<void> | void;
+}
+
+const fullscreenDocument = (): VendorFullscreenDocument | undefined =>
+  globalThis.document as VendorFullscreenDocument | undefined;
+
+/** Whether the page is full screen now. */
+export const isBrowserFullscreen = (
+  document: VendorFullscreenDocument | undefined = fullscreenDocument()
+): boolean =>
+  Boolean(document?.fullscreenElement ?? document?.webkitFullscreenElement);
+
+/** Leaves full screen, if the page is in it. */
+export const exitBrowserFullscreen = (
+  document: VendorFullscreenDocument | undefined = fullscreenDocument()
+): void => {
+  if (!document || !isBrowserFullscreen(document)) return;
+  const exit = document.exitFullscreen ?? document.webkitExitFullscreen;
+  try {
+    const result = exit?.call(document);
+    if (result) void result.catch(() => undefined);
+  } catch {
+    // Already leaving.
+  }
+};
+
+const subscribeFullscreen = (listener: () => void): (() => void) => {
+  const target = globalThis.document;
+  if (!target) return () => undefined;
+  target.addEventListener('fullscreenchange', listener);
+  target.addEventListener('webkitfullscreenchange', listener);
+  return () => {
+    target.removeEventListener('fullscreenchange', listener);
+    target.removeEventListener('webkitfullscreenchange', listener);
+  };
+};
+
+/** Whether the page is full screen, kept current as it enters and leaves. */
+export const useBrowserFullscreen = (): boolean =>
+  useSyncExternalStore(
+    subscribeFullscreen,
+    () => isBrowserFullscreen(),
+    () => false
+  );

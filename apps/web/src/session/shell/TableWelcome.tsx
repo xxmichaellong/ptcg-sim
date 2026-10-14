@@ -11,7 +11,12 @@ import { chordKeycaps, detectKeyboardPlatform } from '../../hotkeys/chords.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
-import { DISCORD_URL, openHelpPage, REPOSITORY_URL } from './help-pages.js';
+import {
+  DISCORD_URL,
+  openHelpPage,
+  RELEASE_NAME,
+  REPOSITORY_URL,
+} from './help-pages.js';
 import './table-welcome.css';
 
 const LOGO_URL = '/v2/assets/blank-logo.png';
@@ -59,12 +64,10 @@ const PlayTip = () => {
  * is on the table; the menu keeps the same help.
  */
 export const TableWelcome = ({
-  buildId = import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2',
   onLoadDeck,
   onPlayOnline,
   onDismiss,
 }: {
-  readonly buildId?: string;
   readonly onLoadDeck?: () => void;
   readonly onPlayOnline?: () => void;
   readonly onDismiss?: () => void;
@@ -103,8 +106,7 @@ export const TableWelcome = ({
           onClick={() => openHelpPage('changelog')}
         >
           <SparkleIcon {...decorative} weight="fill" />
-          <span className="welcome-version-build">{buildId}</span>
-          <span className="welcome-version-label">What&apos;s new</span>
+          <span className="welcome-version-label">{RELEASE_NAME}</span>
         </button>
       </div>
     </header>

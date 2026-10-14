@@ -403,12 +403,6 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     }
     await expect(playerTwo.page.locator('#p2MessageInput')).toHaveValue('');
 
-    // v1's free button posts its flower as an unnamed player line.
-    await playerTwo.page.locator('#p2FREEBUTTON').click();
-    await expect(
-      creator.page.locator('#p2Chatbox').getByText('🌺', { exact: true })
-    ).toBeVisible();
-
     // Red's deck is loaded, so the rail asks for Set up first; then the
     // turn's actions are there.
     await expect(playerTwo.page.locator('#p2AttackButton')).toHaveCount(0);
@@ -442,7 +436,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(spectator.page.locator('#p2UndoButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2SetupButton')).toHaveCount(0);
     await expect(spectator.page.locator('#p2ResetButton')).toHaveCount(0);
-    await expect(spectator.page.locator('#p2FREEBUTTON')).toBeEnabled();
+    await expect(spectator.page.locator('#p2MessageInput')).toBeEnabled();
     await spectator.page.locator('#p2MessageInput').fill('still watching');
     await spectator.page.locator('#p2MessageInput').press('Enter');
     await expect(

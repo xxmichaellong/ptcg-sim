@@ -41,7 +41,11 @@ const GHOST_STRIPPED_ATTRIBUTES = new Set([
 /** A ghost outlives its animation by at most this long. */
 const GHOST_LIFETIME_MS = 450;
 
-const stripGhost = (ghost: Element): void => {
+/**
+ * Makes a copy of an overlay's last frame inert and unfindable: no id, role,
+ * `data-*` or `aria-*` attribute, hidden from assistive technology.
+ */
+export const stripGhost = (ghost: Element): void => {
   for (const element of [ghost, ...ghost.querySelectorAll('*')]) {
     for (const name of element.getAttributeNames()) {
       if (GHOST_KEPT_ATTRIBUTES.has(name)) continue;

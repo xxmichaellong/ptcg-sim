@@ -27,15 +27,11 @@
   box-shadow: -12px 0 32px oklch(0 0 0 / 0.25);
   color: var(--color-text);
   font-family: var(--font-ui);
-  animation: ptcgsim-activity-dock-in
-    calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-snappy);
 }
 
-@keyframes ptcgsim-activity-dock-in {
-  from {
-    translate: 24px 0;
-    opacity: 0;
-  }
+/* The log's last frame, sliding out after it closed (dock-slide.ts). */
+.ptcgsim-activity-dock[inert] {
+  pointer-events: none;
 }
 
 .ptcgsim-activity-dock__body {
@@ -202,10 +198,6 @@
 .ptcgsim-chat-composer #messageInput::placeholder,
 .ptcgsim-chat-composer #p2MessageInput::placeholder {
   color: var(--color-text-faint);
-}
-
-.ptcgsim-chat-composer__flower {
-  color: var(--color-opponent);
 }
 
 .ptcgsim-chat-composer__send {

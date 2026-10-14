@@ -2,6 +2,7 @@ import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwis
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { CornersInIcon } from '@phosphor-icons/react/dist/csr/CornersIn';
 import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
@@ -22,7 +23,11 @@ import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
-import { openHelpPage } from './help-pages.js';
+import {
+  exitBrowserFullscreen,
+  useBrowserFullscreen,
+} from '../browser-room-options.js';
+import { openHelpPage, RELEASE_NAME } from './help-pages.js';
 
 /** What the app menu can do in the current room and mode. */
 export interface AppMenuModel {
@@ -53,7 +58,8 @@ const entriesFor = (
   model: AppMenuModel,
   shortcutsHint: string | undefined,
   reloadHint: string | undefined,
-  touchOnly: boolean
+  touchOnly: boolean,
+  fullscreen: boolean
 ): ActionMenuEntry[] => {
   const entries: ActionMenuEntry[] = [];
   if (model.onPlaySolo) {
@@ -151,12 +157,22 @@ const entriesFor = (
 
   const viewEntries: ActionMenuEntry[] = [];
   if (model.onFullscreen) {
-    viewEntries.push({
-      id: 'fullscreenButton',
-      label: 'Full screen',
-      icon: CornersOutIcon,
-      onSelect: model.onFullscreen,
-    });
+    // Full screen already: the same entry takes the page back out.
+    viewEntries.push(
+      fullscreen
+        ? {
+            id: 'fullscreenButton',
+            label: 'Exit full screen',
+            icon: CornersInIcon,
+            onSelect: () => exitBrowserFullscreen(),
+          }
+        : {
+            id: 'fullscreenButton',
+            label: 'Full screen',
+            icon: CornersOutIcon,
+            onSelect: model.onFullscreen,
+          }
+    );
   }
   if (model.onReloadImages) {
     viewEntries.push({
@@ -179,7 +195,7 @@ const entriesFor = (
       onSelect: () => openHelpPage('tutorial'),
     },
     {
-      label: "What's new",
+      label: RELEASE_NAME,
       icon: SparkleIcon,
       onSelect: () => openHelpPage('changelog'),
     }
@@ -216,6 +232,7 @@ const entriesFor = (
 export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
   const hint = useHotkeyHints();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
+  const fullscreen = useBrowserFullscreen();
   return (
     <ActionMenu
       label="Menu"
@@ -227,7 +244,8 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
         model,
         hint('table.shortcuts'),
         hint('table.refreshImages'),
-        touchOnly
+        touchOnly,
+        fullscreen
       )}
       {...(model.heading
         ? {

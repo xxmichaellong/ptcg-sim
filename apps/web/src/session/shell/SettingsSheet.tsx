@@ -24,7 +24,7 @@ import {
   type SegmentedChoice,
 } from '../../ui/FormControls.js';
 import { Sheet } from '../../ui/Sheet.js';
-import { DISCORD_URL, openHelpPage } from './help-pages.js';
+import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 
 const REDUCE_MOTION_CHOICES: readonly SegmentedChoice<ReduceMotionChoice>[] = [
   { value: 'system', id: 'reduceMotionSystem', label: 'System' },
@@ -176,7 +176,7 @@ export const SettingsSheet = ({
     <SettingsSection title="About">
       <LinkRow
         icon={<SparkleIcon aria-hidden="true" weight="fill" />}
-        title="What's new"
+        title={RELEASE_NAME}
         onClick={() => openHelpPage('changelog')}
       />
       <LinkRow

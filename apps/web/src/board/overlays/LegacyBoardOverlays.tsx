@@ -19,6 +19,7 @@ import {
 import type { Icon } from '@phosphor-icons/react';
 import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
 import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
+import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import { ArrowLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowLineUp';
 import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
 import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
@@ -1931,6 +1932,7 @@ const ZoneBrowser = ({
                   setSortEnabled(event.currentTarget.checked)
                 }
               />
+              <SortAscendingIcon aria-hidden="true" weight="bold" />
               Sort
             </label>
             <ShowBoardButton

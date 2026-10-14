@@ -1031,8 +1031,8 @@ export const ShortcutsDialog = ({
       <footer className="ptcgsim-shortcuts__footer">
         <p>
           {changed > 0
-            ? `${changed} shortcut${changed === 1 ? '' : 's'} changed · saved in this browser`
-            : 'Your changes are saved in this browser.'}
+            ? `${changed} shortcut${changed === 1 ? '' : 's'} changed`
+            : null}
         </p>
         {confirmingReset ? (
           <div className="ptcgsim-shortcuts__confirm" role="group">

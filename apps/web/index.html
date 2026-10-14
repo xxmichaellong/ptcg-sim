@@ -31,6 +31,83 @@
       sizes="any"
     />
     <link rel="shortcut icon" href="/v2/assets/favicon.ico" />
+    <script>
+      // A deploy reaches Cloudflare's machines over several seconds. In that
+      // window this page and its scripts can come from different versions;
+      // a script the other version lacks comes back as this page, which the
+      // browser refuses, and the table would stay blank. While nothing is on
+      // screen, reload instead, a few times with a growing pause.
+      (function () {
+        var key = 'ptcgsim:stale-assets';
+        var assets = location.origin + '/assets/';
+        var waiting = false;
+        var ours = function (url) {
+          return typeof url === 'string' && url.indexOf(assets) === 0;
+        };
+        var failedImport = function (message) {
+          message = String(message);
+          return (
+            (/dynamically imported module/i.test(message) &&
+              message.indexOf(assets) !== -1) ||
+            /Importing a module script failed/i.test(message)
+          );
+        };
+        var showing = function () {
+          return (
+            document.querySelector(
+              '[data-app-route]:not([data-app-route$="-loading"])'
+            ) !== null
+          );
+        };
+        var recover = function () {
+          if (waiting) return;
+          var now = Date.now();
+          var tries = 0;
+          var since = now;
+          try {
+            var saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+            if (saved && now - saved.since < 300000) {
+              tries = saved.tries;
+              since = saved.since;
+            }
+          } catch (error) {}
+          if (tries >= 6) return;
+          waiting = true;
+          setTimeout(
+            function () {
+              waiting = false;
+              if (showing()) return;
+              try {
+                sessionStorage.setItem(
+                  key,
+                  JSON.stringify({ tries: tries + 1, since: since })
+                );
+              } catch (error) {}
+              location.reload();
+            },
+            500 * Math.pow(2, tries)
+          );
+        };
+        window.addEventListener('vite:preloadError', recover);
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event.target;
+            if (target && target.tagName === 'SCRIPT') {
+              if (ours(target.src)) recover();
+            } else if (target && target.tagName === 'LINK') {
+              if (ours(target.href)) recover();
+            } else if (failedImport(event.message)) {
+              recover();
+            }
+          },
+          true
+        );
+        window.addEventListener('unhandledrejection', function (event) {
+          if (failedImport(event.reason && event.reason.message)) recover();
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

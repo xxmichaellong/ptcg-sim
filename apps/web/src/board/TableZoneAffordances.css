@@ -82,18 +82,6 @@
   outline-offset: 2px;
 }
 
-:root:not([data-motion='reduced']) .table-zone-add {
-  animation: table-zone-add-breathe 2.6s var(--ease-in-out) infinite;
-}
-
-@keyframes table-zone-add-breathe {
-  50% {
-    box-shadow:
-      0 0 0 6px color-mix(in oklab, var(--color-accent) 14%, transparent),
-      var(--shadow-2);
-  }
-}
-
 /* ---- The optional Lost Zone ------------------------------------------- */
 
 /* Added from just beneath the discard pile: a ghost of the pile, in the

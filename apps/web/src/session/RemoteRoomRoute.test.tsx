@@ -1144,6 +1144,30 @@ describe('RemoteRoomRoute', () => {
 
       await chooseMenuItem('fullscreenButton');
       expect(requestFullscreen).toHaveBeenCalledOnce();
+      // Once full screen, the same entry takes the page back out.
+      const exitFullscreen = vi.fn();
+      Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        value: document.documentElement,
+      });
+      Object.defineProperty(document, 'exitFullscreen', {
+        configurable: true,
+        value: exitFullscreen,
+      });
+      await act(async () => {
+        document.dispatchEvent(new Event('fullscreenchange'));
+      });
+      await openMenu();
+      expect(get('#fullscreenButton').textContent).toBe('Exit full screen');
+      await click('#fullscreenButton');
+      await settle();
+      expect(exitFullscreen).toHaveBeenCalledOnce();
+      expect(requestFullscreen).toHaveBeenCalledOnce();
+      Reflect.deleteProperty(document, 'fullscreenElement');
+      Reflect.deleteProperty(document, 'exitFullscreen');
+      await act(async () => {
+        document.dispatchEvent(new Event('fullscreenchange'));
+      });
 
       await click('#exitReplay');
       expect(boardHarness.replaying).toBe(false);

@@ -44,15 +44,13 @@
 .ptcgsim-table-centre {
   position: fixed;
   inset: 0;
+  /* Clear of a docked log, as far as it has slid in (TableShell.tsx). */
+  right: calc(var(--rail-width) * var(--activity-reveal, 0));
   z-index: var(--z-chrome);
   display: grid;
   place-items: center;
   padding: var(--space-4);
   pointer-events: none;
-}
-
-.table-shell[data-activity-docked='true'] .ptcgsim-table-centre {
-  right: var(--rail-width);
 }
 
 /* Above the seam, clear of the rail: the empty table's far half. */

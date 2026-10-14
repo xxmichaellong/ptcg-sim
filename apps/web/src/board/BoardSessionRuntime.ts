@@ -116,6 +116,7 @@ const sameLayoutState = (
   left.hiddenPhysicalSide === right.hiddenPhysicalSide &&
   (left.hideEmptyLostZone ?? false) === (right.hideEmptyLostZone ?? false) &&
   (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
+  (left.sidePanelReveal ?? 1) === (right.sidePanelReveal ?? 1) &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -425,8 +426,19 @@ export class BoardSessionRuntime {
     });
   }
 
-  setShellMode(shellMode: BoardShellMode): void {
-    this.replaceLayoutState({ ...this.layoutState, shellMode });
+  /**
+   * A docked side panel beside the table (`sidebar`) or none; `reveal` is
+   * how far a sliding panel has come in, 0 to 1.
+   */
+  setShellMode(shellMode: BoardShellMode, reveal = 1): void {
+    const { sidePanelReveal: _reveal, ...rest } = this.layoutState;
+    this.replaceLayoutState({
+      ...rest,
+      shellMode,
+      ...(shellMode === 'sidebar' && reveal < 1
+        ? { sidePanelReveal: reveal }
+        : {}),
+    });
   }
 
   flipBoard(): void {

@@ -641,6 +641,7 @@ export const RemoteRoomRoute = ({
               : {})}
             sessionPhase={state.sessionPhase}
             docked={activity.docked && activity.open}
+            dockSlide={activity.slide}
             board={
               <RemoteSessionBoard
                 session={runtime.session}
@@ -656,6 +657,7 @@ export const RemoteRoomRoute = ({
                 rail={rail}
                 commandsRef={boardCommands}
                 sidePanel={activity.docked && activity.open}
+                sidePanelSlide={activity.slide}
                 keysSuspended={deckOpen}
                 {...(loadDeck ? { loadDeck } : {})}
               />
@@ -687,6 +689,7 @@ export const RemoteRoomRoute = ({
               open={activity.open}
               onOpenChange={activity.setOpen}
               docked={activity.docked}
+              slide={activity.slide}
               presentation={runtime.presentation}
               {...(state.view ? { perspective: state.view } : {})}
               feedId={feedId}

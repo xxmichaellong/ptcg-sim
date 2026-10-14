@@ -68,7 +68,7 @@ where you are ("Solo table", "Room ABC123", "Replay"):
 - Game: Exit replay, Watch a replay…, Save online game, Resume a saved
   game…, Download replay;
 - Full screen, Reload card images;
-- Tutorial, What's new;
+- Tutorial, the release notes (named by the release, `v1.6`);
 - Copy an invitation, Leave room (in a room).
 
 ### 4. The activity log

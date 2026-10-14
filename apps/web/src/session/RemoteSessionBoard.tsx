@@ -74,6 +74,7 @@ import { useReplaySession } from '../replay/useReplaySession.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
 import { applySoloOpponentHandVisibility } from './solo-opponent-hand-visibility.js';
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
+import type { DockSlide } from './shell/dock-slide.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import { toast } from '../ui/toast.js';
@@ -97,7 +98,7 @@ const layoutFor = (
     ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
   >,
   boardView: BoardViewSettings,
-  sidePanel: boolean,
+  sidePanel: number,
   seamBandPx: number | undefined
 ): BoardLayoutState => {
   const firstPlayerId = view.playerOrder[0];
@@ -115,7 +116,8 @@ const layoutFor = (
     playerIds: [firstPlayerId, secondPlayerId],
     bottomPlayerId:
       view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId,
-    shellMode: sidePanel ? 'sidebar' : 'fullscreen',
+    shellMode: sidePanel > 0 ? 'sidebar' : 'fullscreen',
+    ...(sidePanel > 0 && sidePanel < 1 ? { sidePanelReveal: sidePanel } : {}),
     vertical: tableVerticalLayout(boardView.split),
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
     ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
@@ -244,6 +246,7 @@ export const RemoteSessionBoard = ({
   rail,
   commandsRef,
   sidePanel = false,
+  sidePanelSlide,
   keysSuspended = false,
   loadDeck,
 }: {
@@ -274,6 +277,11 @@ export const RemoteSessionBoard = ({
   readonly commandsRef?: Ref<BoardCommands>;
   /** The activity log is docked at the right; the table keeps clear of it. */
   readonly sidePanel?: boolean;
+  /**
+   * How far the docked log has slid in; while given, the table makes room
+   * as it moves rather than at once.
+   */
+  readonly sidePanelSlide?: DockSlide;
   /** Something over the whole table (the deck screen) owns the keyboard. */
   readonly keysSuspended?: boolean;
   /** The seats whose empty deck shows a `+`, and what it opens. */
@@ -308,8 +316,10 @@ export const RemoteSessionBoard = ({
     sortedHandPlayerIds,
     actingPlayerId: undefined,
   });
-  const sidePanelRef = useRef(sidePanel);
-  sidePanelRef.current = sidePanel;
+  const sidePanelReveal = (): number =>
+    sidePanelSlide ? sidePanelSlide.value() : sidePanel ? 1 : 0;
+  const sidePanelRef = useRef(sidePanelReveal);
+  sidePanelRef.current = sidePanelReveal;
   // Under a finger the rail's targets are 44px, so the seam opens to fit.
   const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
   const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : undefined;
@@ -523,7 +533,7 @@ export const RemoteSessionBoard = ({
           layout: layoutFor(
             view,
             boardViewRef.current,
-            sidePanelRef.current,
+            sidePanelRef.current(),
             seamBandRef.current
           ),
           createRenderer,
@@ -628,8 +638,16 @@ export const RemoteSessionBoard = ({
   }, [hideOpponentHand, roomMode, sortedHandPlayerIds]);
 
   useEffect(() => {
-    runtimeRef.current?.setShellMode(sidePanel ? 'sidebar' : 'fullscreen');
-  }, [sidePanel]);
+    const apply = (): void => {
+      const reveal = sidePanelRef.current();
+      runtimeRef.current?.setShellMode(
+        reveal > 0 ? 'sidebar' : 'fullscreen',
+        reveal
+      );
+    };
+    apply();
+    return sidePanelSlide?.subscribe(apply);
+  }, [sidePanel, sidePanelSlide]);
 
   useEffect(() => {
     const hiddenPhysicalSide = hiddenPhysicalSideFor(boardView.show);

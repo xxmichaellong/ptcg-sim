@@ -146,7 +146,7 @@
   }
 }
 
-/* The build and a "What's new" link to the release notes. */
+/* The release (v1.6), a link to its notes. */
 .table-welcome .welcome-version {
   display: inline-flex;
   align-items: center;
@@ -187,15 +187,10 @@
   outline-offset: 2px;
 }
 
-.table-welcome .welcome-version-build {
+.table-welcome .welcome-version-label {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-bold);
-}
-
-.table-welcome .welcome-version-label {
-  color: var(--color-text-muted);
-  font-weight: var(--weight-medium);
 }
 
 /* "shortcuts" in the tip opens the keyboard shortcuts list. */

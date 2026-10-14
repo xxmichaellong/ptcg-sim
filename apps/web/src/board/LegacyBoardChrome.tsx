@@ -1,3 +1,4 @@
+import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import { TABLE_CONTROL_CORNER_HEIGHT_PX } from '@ptcgsim/renderer-contract';
 import type {
@@ -14,6 +15,7 @@ import {
 } from './OncePerGameTile.js';
 import { TableRail, type RailAction } from './rail/TableRail.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
+import { Tooltip } from '../ui/Tooltip.js';
 
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
@@ -62,6 +64,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   onToggle,
   handSorted,
   onToggleHandSort,
+  table,
 }: {
   readonly frame: BoardPlayerLayout;
   readonly player: MatchViewState['players'][string];
@@ -70,6 +73,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   readonly onToggle: LegacyBoardChromeActions['toggleOncePerGame'];
   readonly handSorted: boolean;
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
+  /** The play-mat table: Sort is an icon toggle among the markers. */
+  readonly table: boolean;
 }) {
   // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
   // the text flipped back upright on the rotated opponent frame. The label
@@ -147,15 +152,49 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
       <div
         className={`legacy-once-per-game-controls legacy-once-per-game-controls--${frame.side}`}
       >
+        {onToggleHandSort && table ? (
+          <Tooltip
+            content={handSorted ? 'Stop sorting hand' : 'Sort hand'}
+            side={playerSide === 'local' ? 'top' : 'bottom'}
+          >
+            <label
+              className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide}`}
+              htmlFor={sortCheckboxId}
+              data-hand-sort-player={frame.playerId}
+              data-player-side={playerSide}
+              data-upright={
+                frame.rotationQuarterTurns === 2 ? 'turned' : undefined
+              }
+            >
+              <input
+                id={sortCheckboxId}
+                type="checkbox"
+                checked={handSorted}
+                onChange={(event) =>
+                  onToggleHandSort(frame.playerId, event.currentTarget.checked)
+                }
+              />
+              <SortAscendingIcon aria-hidden="true" weight="bold" />
+              <span
+                className={`ds-visually-hidden ${
+                  frame.rotationQuarterTurns === 2 ? 'opp-text' : 'self-text'
+                }`}
+              >
+                Sort
+              </span>
+            </label>
+          </Tooltip>
+        ) : null}
         {button('vstar')}
         {button('gx')}
       </div>
-      {onToggleHandSort && (
+      {onToggleHandSort && !table && (
         <label
           className={`legacy-hand-sort legacy-hand-sort--${playerSide}`}
           htmlFor={sortCheckboxId}
           data-hand-sort-player={frame.playerId}
           data-player-side={playerSide}
+          data-upright={frame.rotationQuarterTurns === 2 ? 'turned' : undefined}
           style={{ fontSize: frame.frameBounds.height * 0.05 }}
         >
           <input
@@ -166,8 +205,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
               onToggleHandSort(frame.playerId, event.currentTarget.checked)
             }
           />{' '}
-          {/* The frame's own rotation decides the counter-flip, as v1's
-              flipBoard swaps self-text/opp-text; the colour follows the seat. */}
+          {/* The frame's own rotation decides the class, as v1's flipBoard
+              swaps self-text/opp-text; the colour follows the seat. */}
           <span
             className={
               frame.rotationQuarterTurns === 2 ? 'opp-text' : 'self-text'
@@ -287,6 +326,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             darkMode={darkMode}
             onToggle={actions.toggleOncePerGame}
             handSorted={sortedHandPlayerIds?.has(frame.playerId) ?? false}
+            table={layout.geometryVersion === 2}
             onToggleHandSort={actions.toggleHandSort}
           />
         ) : null;

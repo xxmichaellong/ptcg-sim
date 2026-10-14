@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   downloadBrowserTextFile,
+  exitBrowserFullscreen,
+  isBrowserFullscreen,
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
@@ -63,5 +65,30 @@ describe('browser room options', () => {
     expect(requestBrowserFullscreen(element)).toBe(true);
     await Promise.resolve();
     expect(requestFullscreen.mock.contexts[0]).toBe(element);
+  });
+
+  it('knows when the page is full screen and leaves only then', async () => {
+    const exitFullscreen = vi.fn(function (this: object) {
+      return Promise.reject(new Error('already leaving'));
+    });
+    const windowed = { fullscreenElement: null, exitFullscreen };
+    expect(isBrowserFullscreen(windowed)).toBe(false);
+    exitBrowserFullscreen(windowed);
+    expect(exitFullscreen).not.toHaveBeenCalled();
+
+    const full = { fullscreenElement: {} as Element, exitFullscreen };
+    expect(isBrowserFullscreen(full)).toBe(true);
+    exitBrowserFullscreen(full);
+    await Promise.resolve();
+    expect(exitFullscreen.mock.contexts[0]).toBe(full);
+    // Safari's prefixed names.
+    const webkitExitFullscreen = vi.fn();
+    const safari = {
+      webkitFullscreenElement: {} as Element,
+      webkitExitFullscreen,
+    };
+    expect(isBrowserFullscreen(safari)).toBe(true);
+    exitBrowserFullscreen(safari);
+    expect(webkitExitFullscreen).toHaveBeenCalledOnce();
   });
 });

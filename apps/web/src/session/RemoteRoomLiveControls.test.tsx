@@ -396,11 +396,6 @@ describe('useLiveRoomControls', () => {
       element<HTMLButtonElement>(host, '[aria-label="Send message"]').click()
     );
     expect(session.sendChat).toHaveBeenCalledWith('by the button', playerId);
-
-    await act(async () =>
-      element<HTMLButtonElement>(host, '#p2FREEBUTTON').click()
-    );
-    expect(session.sendChat).toHaveBeenCalledWith('🌺', playerId);
     expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
@@ -412,9 +407,7 @@ describe('useLiveRoomControls', () => {
       roomMode: 'solo',
     });
     expect(host.querySelector('#messageInput')).not.toBeNull();
-    expect(host.querySelector('#FREEBUTTON')).not.toBeNull();
     expect(host.querySelector('#p2MessageInput')).toBeNull();
-    expect(host.querySelector('#p2FREEBUTTON')).toBeNull();
     await act(async () => root.unmount());
   });
 
@@ -463,14 +456,12 @@ describe('useLiveRoomControls', () => {
     await press((live) => {
       live.submitTable('attack');
       live.submitUndo();
-      live.sendFlower();
     });
     expect(session.commands()).toEqual([
       { type: 'DeclareAttack', targetPlayerId: otherPlayerId },
       // A multiplayer player only ever takes back their own move.
       { type: 'ApplySoloUndo', targetPlayerId: playerId },
     ]);
-    expect(session.sendChat).toHaveBeenCalledWith('🌺', otherPlayerId);
     await act(async () => root.unmount());
   });
 
@@ -886,7 +877,7 @@ describe('useLiveRoomControls', () => {
     expect(reportReplayImportFailure).not.toHaveBeenCalled();
   });
 
-  it('disables the chat field and flower until the session is ready', async () => {
+  it('disables the chat field until the session is ready', async () => {
     const session = new FakeLiveSession({
       ...baseState(),
       phase: 'connecting',
@@ -898,9 +889,6 @@ describe('useLiveRoomControls', () => {
       onExportState: vi.fn(),
     });
 
-    expect(element<HTMLButtonElement>(host, '#p2FREEBUTTON').disabled).toBe(
-      true
-    );
     expect(element<HTMLInputElement>(host, '#p2MessageInput').disabled).toBe(
       true
     );
