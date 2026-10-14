@@ -1218,11 +1218,35 @@
           "source": "packages/renderer-contract/src/index.ts",
           "symbols": [
             {
+              "name": "arrangedZone",
+              "kind": "value"
+            },
+            {
+              "name": "arrangementHold",
+              "kind": "value"
+            },
+            {
+              "name": "ArrangementHold",
+              "kind": "type"
+            },
+            {
+              "name": "arrangementIndexAt",
+              "kind": "value"
+            },
+            {
+              "name": "arrangementOffsets",
+              "kind": "value"
+            },
+            {
               "name": "assertLayoutOptions",
               "kind": "value"
             },
             {
               "name": "assertViewport",
+              "kind": "value"
+            },
+            {
+              "name": "benchRearrangementTarget",
               "kind": "value"
             },
             {

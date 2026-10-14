@@ -33,6 +33,64 @@ const cardIn = (next: MatchViewState, cardId: string): string | undefined => {
 };
 
 describe('predictWireCommand', () => {
+  it('rearranges a hand and benches a Pokémon at the place asked for, as the room will', () => {
+    const [first, second, third] = hand.cards;
+    const rearranged = predictWireCommand(view, {
+      type: 'MoveCard',
+      cardId: first!.id,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: hand.id,
+      destinationIndex: 2,
+    })!;
+    expect(
+      rearranged.zones[hand.id]!.cards.slice(0, 3).map((card) => card.id)
+    ).toEqual([second!.id, third!.id, first!.id]);
+
+    // Two Pokémon benched, then the Active benched between them.
+    const benched = [hand.cards[0]!, hand.cards[1]!].reduce(
+      (current, card, index) =>
+        predictWireCommand(current, {
+          type: 'MoveCardToPlay',
+          cardId: card.id,
+          expectedSourceZoneId: hand.id,
+          boardPlayerId: blue,
+          slot: 'bench',
+          benchIndex: index,
+        })!,
+      view
+    );
+    const bench = benched.boards[blue]!.benchStackIds;
+    expect(bench).toHaveLength(2);
+    const between = predictWireCommand(benched, {
+      type: 'MovePlayStack',
+      stackId: active.id,
+      expectedSourceSlot: 'active',
+      expectedActiveStackId: active.id,
+      expectedBenchStackIds: [...bench],
+      destinationSlot: 'bench',
+      benchIndex: 1,
+    })!;
+    expect(between.boards[blue]).toMatchObject({
+      activeStackId: null,
+      benchStackIds: [bench[0], active.id, bench[1]],
+    });
+    // The far left of the bench.
+    const left = predictWireCommand(between, {
+      type: 'MovePlayStack',
+      stackId: bench[1]!,
+      expectedSourceSlot: 'bench',
+      expectedActiveStackId: null,
+      expectedBenchStackIds: [bench[0]!, active.id, bench[1]!],
+      destinationSlot: 'bench',
+      benchIndex: 0,
+    })!;
+    expect(left.boards[blue]!.benchStackIds).toEqual([
+      bench[1],
+      bench[0],
+      active.id,
+    ]);
+  });
+
   it('moves a card between zones and refuses when the card is not where the command says', () => {
     const card = hand.cards[0]!;
     const predicted = predictWireCommand(view, {

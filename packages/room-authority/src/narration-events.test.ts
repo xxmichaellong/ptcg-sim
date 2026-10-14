@@ -134,6 +134,27 @@ describe('battle-log narration', () => {
     expect(JSON.stringify(hidden.narration)).not.toContain('Secret');
   });
 
+  it('logs nothing for a hand rearranged, and keeps its cards private', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const rearranged = step(
+      state,
+      {
+        type: 'MoveCard',
+        cardId: hand.cardIds.at(-1)!,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: hand.id,
+        destinationIndex: 0,
+      },
+      context
+    );
+    expect(rearranged.state.zones[hand.id]!.cardIds[0]).toBe(
+      hand.cardIds.at(-1)
+    );
+    expect(rearranged.narration).toEqual([]);
+    expect(JSON.stringify(rearranged.narration)).not.toContain('Secret');
+  });
+
   it('narrates a card dragged into an open popup as a move to that popup', () => {
     const { state, context } = table();
     const opened = step(

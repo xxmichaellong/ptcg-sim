@@ -266,6 +266,9 @@ const narrate = (
 ): readonly Narration[] => {
   switch (event.type) {
     case 'CardMoved': {
+      // Rearranging a zone (a hand, the loose board) is not news, and
+      // naming the card would tell the other side what a hand holds.
+      if (event.expectedSourceZoneId === event.destinationZoneId) return [];
       const playerId = ownerOf(state, previousState, event.cardId);
       const source = zoneSource(
         state,

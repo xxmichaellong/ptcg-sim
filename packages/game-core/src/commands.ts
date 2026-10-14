@@ -97,6 +97,11 @@ export type GameCommand =
       readonly expectedBenchStackIds: readonly StackId[];
       readonly destinationSlot: PlaySlot;
       readonly targetStackId?: StackId;
+      /**
+       * Where on the bench it goes, counted among the other benched stacks;
+       * absent, at the end. Only for a bench destination with no target.
+       */
+      readonly benchIndex?: number;
     }
   | {
       readonly type: 'MoveInspectedCard';

@@ -308,6 +308,8 @@ describe('live board depth', () => {
         targetId: target.id,
         x: 300,
         y: 400,
+        // The bench keeps an order the player sets: its place there.
+        index: 0,
       },
     ]);
   });

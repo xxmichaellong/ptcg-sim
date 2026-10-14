@@ -26,6 +26,8 @@ const LIFT_DURATION_MS = 120;
 const LANDING_DESCENT_MS = 160;
 /** How long after it is let go a card still lands rather than travels. */
 const LANDING_WINDOW_MS = 2500;
+/** A row opening (or closing) a gap for the card held over it. */
+const MAKE_ROOM_MS = 200;
 /** A card under the pointer rises this share of its width, over this long. */
 const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
@@ -379,7 +381,10 @@ export class TableDepthDirector {
                 Math.min(300, Math.max(180, 160 + 0.15 * distance))
               : source
                 ? Math.min(560, Math.max(320, 300 + 0.22 * distance))
-                : 420);
+                : previous === next
+                  ? // Only the held card moved: a row making room for it.
+                    MAKE_ROOM_MS
+                  : 420);
       const arc =
         source && duration > 0 && target.plane === 1 && !landing
           ? Math.min(

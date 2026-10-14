@@ -1,6 +1,11 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 import { containsPoint } from './geometry.js';
 import { compositionHold } from './card-composition.js';
+import {
+  arrangementHold,
+  arrangementOffsets,
+  benchRearrangementTarget,
+} from './arrangement.js';
 import { zoneDropTargetAt } from './drag.js';
 import type {
   BoardPreferences,
@@ -407,14 +412,48 @@ export class BoardDepthProjection {
     }
   }
 
+  /** The open gap of the zone a card is held over, kept per presentation. */
+  private arranged: {
+    readonly presentation: BoardPresentation;
+    readonly offsets: ReturnType<typeof arrangementOffsets>;
+  } | null = null;
+
+  private arrangementOffset(
+    card: CardSceneNode,
+    presentation?: BoardPresentation
+  ): { readonly x: number; readonly y: number } | undefined {
+    if (!presentation) return undefined;
+    if (this.arranged?.presentation !== presentation)
+      this.arranged = {
+        presentation,
+        offsets: arrangementOffsets(
+          this.scene,
+          arrangementHold(this.scene, presentation)
+        ),
+      };
+    return this.arranged.offsets.get(card.id);
+  }
+
   pose(card: CardSceneNode, presentation?: BoardPresentation): TableCardPose {
-    const base = this.poses.get(card.id) ?? {
+    const resting = this.poses.get(card.id) ?? {
       bounds: card.bounds,
       turns: card.rotationQuarterTurns,
       elevation: 0,
       thickness: 0,
       plane: 0,
     };
+    // A zone a card is held over makes room for it.
+    const aside = this.arrangementOffset(card, presentation);
+    const base = aside
+      ? {
+          ...resting,
+          bounds: {
+            ...resting.bounds,
+            x: resting.bounds.x + aside.x,
+            y: resting.bounds.y + aside.y,
+          },
+        }
+      : resting;
     const drag = compositionHold(this.scene, card, presentation?.drag);
     const hold =
       drag ??
@@ -514,6 +553,8 @@ export class BoardDepthProjection {
       };
       if (card.clipBounds && !containsPoint(card.clipBounds, local.x, local.y))
         continue;
+      const bench = benchRearrangementTarget(this.scene, sourceId, card);
+      if (bench) return { point: this.boardPoint(point), targetId: bench };
       return { point: local, targetId: card.parentId };
     }
     const local = this.boardPoint(point);

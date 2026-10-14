@@ -444,6 +444,9 @@ export const resolveWireCommand = (
           ...(wire.targetStackId
             ? { targetStackId: asStackId(wire.targetStackId) }
             : {}),
+          ...(wire.benchIndex === undefined
+            ? {}
+            : { benchIndex: wire.benchIndex }),
         },
       };
     }

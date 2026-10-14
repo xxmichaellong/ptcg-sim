@@ -83,6 +83,21 @@ const containsCard = (
   cardId: string
 ): boolean => cards.some((card) => card.id === cardId);
 
+/**
+ * Zones whose order the player sets freely (arrangement.ts): a hand and the
+ * loose board. Piles keep their order; a deck's is hidden.
+ */
+const ARRANGED_ZONE_KINDS = new Set(['hand', 'board']);
+
+/** The place asked for, where the destination keeps an order a player sets. */
+const placeIn = (
+  kind: string,
+  index: number | undefined
+): { readonly destinationIndex?: number } =>
+  index !== undefined && ARRANGED_ZONE_KINDS.has(kind)
+    ? { destinationIndex: index }
+    : {};
+
 /** Converts one renderer-safe drop into an explicit, preconditioned command. */
 export const resolveBoardDrop = (
   view: BoardDropView,
@@ -149,8 +164,21 @@ export const resolveBoardDrop = (
     }
     if (destinationZone.kind === 'stadium')
       return resolveCardStadiumMoveAction(view, intent.cardId);
+    const place = placeIn(destinationZone.kind, intent.index);
     if (sourceZone) {
-      if (destinationZone.id === sourceZone.id) return rejected('no_op');
+      if (destinationZone.id === sourceZone.id) {
+        // Rearranged within its zone: a new place in an order the player
+        // sets, or nothing to do.
+        const at = sourceZone.cards.findIndex(
+          (card) => card.id === intent.cardId
+        );
+        if (
+          place.destinationIndex === undefined ||
+          place.destinationIndex === at
+        ) {
+          return rejected('no_op');
+        }
+      }
       return {
         ok: true,
         command: {
@@ -158,6 +186,7 @@ export const resolveBoardDrop = (
           cardId: intent.cardId,
           expectedSourceZoneId: sourceZone.id,
           destinationZoneId: destinationZone.id,
+          ...place,
         },
       };
     }
@@ -169,6 +198,7 @@ export const resolveBoardDrop = (
           cardId: intent.cardId,
           expectedStackId: sourceStack.id,
           destinationZoneId: destinationZone.id,
+          ...place,
         },
       };
     }
@@ -180,6 +210,7 @@ export const resolveBoardDrop = (
           cardId: intent.cardId,
           expectedWorkAreaId: sourceInspection.id,
           destinationZoneId: destinationZone.id,
+          ...place,
         },
       };
     }
@@ -191,6 +222,7 @@ export const resolveBoardDrop = (
           cardId: intent.cardId,
           expectedWorkAreaId: sourceStaged.id,
           destinationZoneId: destinationZone.id,
+          ...place,
         },
       };
     }
@@ -277,6 +309,11 @@ export const resolveBoardDrop = (
   const slot = playSlotTarget(scene, intent.targetId);
   if (slot?.playerId) {
     const destinationSlot = slot.kind === 'active' ? 'active' : 'bench';
+    // A place on the bench, counted among the Pokémon that stay there.
+    const benchPlace =
+      destinationSlot === 'bench' && intent.index !== undefined
+        ? { benchIndex: intent.index }
+        : {};
     if (sourceStaged) {
       if (
         !sourceRepresentsStagedStack ||
@@ -297,6 +334,7 @@ export const resolveBoardDrop = (
           expectedActiveStackId: board.activeStackId,
           expectedBenchStackIds: [...board.benchStackIds],
           destinationSlot,
+          ...benchPlace,
         },
       };
     }
@@ -308,6 +346,15 @@ export const resolveBoardDrop = (
       if (sourceStack.slot === 'active' && destinationSlot === 'active') {
         return rejected('no_op');
       }
+      const bench = view.boards[sourceStack.boardPlayerId]?.benchStackIds ?? [];
+      if (
+        sourceStack.slot === 'bench' &&
+        destinationSlot === 'bench' &&
+        intent.index !== undefined &&
+        bench.indexOf(sourceStack.id) === intent.index
+      ) {
+        return rejected('no_op');
+      }
       return {
         ok: true,
         command: {
@@ -316,10 +363,9 @@ export const resolveBoardDrop = (
           expectedSourceSlot: sourceStack.slot,
           expectedActiveStackId:
             view.boards[sourceStack.boardPlayerId]?.activeStackId ?? null,
-          expectedBenchStackIds: [
-            ...(view.boards[sourceStack.boardPlayerId]?.benchStackIds ?? []),
-          ],
+          expectedBenchStackIds: [...bench],
           destinationSlot,
+          ...benchPlace,
         },
       };
     }
@@ -332,6 +378,7 @@ export const resolveBoardDrop = (
         expectedSourceZoneId: sourceZone.id,
         boardPlayerId: slot.playerId,
         slot: destinationSlot,
+        ...benchPlace,
       },
     };
   }

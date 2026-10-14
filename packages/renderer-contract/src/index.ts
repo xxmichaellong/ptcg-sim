@@ -1,3 +1,4 @@
+export * from './arrangement.js';
 export * from './defaults.js';
 export * from './card-material.js';
 export * from './card-composition.js';

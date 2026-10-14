@@ -16,7 +16,12 @@ import {
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import { sameCardPresentation } from './card-presentation.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
-import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
+import {
+  asWorkAreaId,
+  type CardInstanceId,
+  type PlayerId,
+  type StackId,
+} from './ids.js';
 import {
   activeInspectionViewerIds,
   cloneInspectionViewerIds,
@@ -1455,6 +1460,14 @@ export const decideCommand = (
 
       let activeStackId = board.activeStackId;
       const benchStackIds = [...board.benchStackIds];
+      // Benched among the others at the place asked for, at the end if none.
+      const bench = (ids: StackId[]): void => {
+        ids.splice(
+          Math.max(0, Math.min(command.benchIndex ?? ids.length, ids.length)),
+          0,
+          stack.id
+        );
+      };
       if (target) {
         if (stack.slot === 'active') {
           const targetIndex = benchStackIds.indexOf(target.id);
@@ -1483,13 +1496,16 @@ export const decideCommand = (
         activeStackId = stack.id;
       } else if (stack.slot === 'active') {
         activeStackId = null;
-        benchStackIds.push(stack.id);
+        bench(benchStackIds);
+        // v1: the one Pokémon that was benched comes up in its place.
         if (benchStackIds.length === 2) {
-          activeStackId = benchStackIds.shift()!;
+          const promoted = benchStackIds.find((id) => id !== stack.id)!;
+          benchStackIds.splice(benchStackIds.indexOf(promoted), 1);
+          activeStackId = promoted;
         }
       } else {
         benchStackIds.splice(sourceBenchIndex, 1);
-        benchStackIds.push(stack.id);
+        bench(benchStackIds);
       }
 
       if (

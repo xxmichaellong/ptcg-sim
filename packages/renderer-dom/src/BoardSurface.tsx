@@ -1,4 +1,7 @@
 import {
+  arrangementHold,
+  arrangementIndexAt,
+  arrangementOffsets,
   BoardDragController,
   compositionHold,
   presentHeldMarker,
@@ -69,6 +72,10 @@ const FACE_DOWN_LABEL = 'Face-down card';
  */
 const LIFTED_Z_INDEX = 9_000;
 const DRAG_Z_INDEX = 20_000;
+const NO_ASIDES: ReadonlyMap<
+  CardSceneNode['id'],
+  { readonly x: number; readonly y: number }
+> = new Map();
 
 /**
  * The table shows this card's back: it is concealed, or (the deck cover) it
@@ -461,6 +468,8 @@ const CardNode = memo(
     camera,
     bands = 1,
     pose,
+    asideX = 0,
+    asideY = 0,
   }: {
     readonly card: CardSceneNode;
     readonly selected: boolean;
@@ -478,6 +487,9 @@ const CardNode = memo(
     readonly camera?: TableCamera;
     readonly bands?: number;
     readonly pose?: TableCardPose;
+    /** Moved aside on the flat table, making room for a card held near it. */
+    readonly asideX?: number;
+    readonly asideY?: number;
   }) {
     const imageRef = useRef<HTMLImageElement>(null);
     const renderKey = card.renderKey ?? '';
@@ -595,6 +607,9 @@ const CardNode = memo(
             ...(clip ? { clipPath: clip } : {}),
             transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
             transformOrigin: 'center',
+            ...(!camera && !held && (asideX !== 0 || asideY !== 0)
+              ? { translate: `${String(asideX)}px ${String(asideY)}px` }
+              : {}),
             ...(camera && pose
               ? {
                   left: 0,
@@ -791,7 +806,11 @@ const ZoneCountNode = memo(function ZoneCountNode({
 /** Where each painted card is drawn this commit, including held cards. */
 const paintedCards = (
   scene: BoardScene,
-  presentation: BoardPresentation
+  presentation: BoardPresentation,
+  asides: ReadonlyMap<
+    CardSceneNode['id'],
+    { readonly x: number; readonly y: number }
+  >
 ): {
   readonly painted: Map<string, PaintedCard>;
   readonly held: Set<string>;
@@ -806,6 +825,7 @@ const paintedCards = (
         .map((entry) => compositionHold(scene, card, entry))
         .find(Boolean);
     if (hold) held.add(card.renderKey);
+    const aside = asides.get(card.id);
     painted.set(card.renderKey, {
       rect: hold
         ? {
@@ -813,7 +833,13 @@ const paintedCards = (
             x: hold.x - card.bounds.width / 2,
             y: hold.y - card.bounds.height / 2,
           }
-        : card.bounds,
+        : aside
+          ? {
+              ...card.bounds,
+              x: card.bounds.x + aside.x,
+              y: card.bounds.y + aside.y,
+            }
+          : card.bounds,
       rotationQuarterTurns: card.rotationQuarterTurns,
     });
   }
@@ -907,14 +933,22 @@ export const BoardSurface = ({
   }, [director, swing, tilt, preferences.reducedMotion, animationSpeed]);
   // Every commit tells the director where cards are now drawn; a new scene
   // also gets a motion plan from the last one.
+  // A row making room on the flat table (the tilted one poses it itself).
+  const asides = useMemo(
+    () =>
+      depth
+        ? NO_ASIDES
+        : arrangementOffsets(scene, arrangementHold(scene, presentation)),
+    [depth, scene, presentation]
+  );
   useLayoutEffect(() => {
-    const { painted, held } = paintedCards(scene, presentation);
+    const { painted, held } = paintedCards(scene, presentation, asides);
     director.commit(previousSceneRef.current, scene, motion, painted, held, {
       projection,
       presentation,
     });
     previousSceneRef.current = scene;
-  }, [director, scene, presentation, motion, projection]);
+  }, [director, scene, presentation, motion, projection, asides]);
   const capturedPointerRef = useRef<{
     readonly element: HTMLElement;
     readonly pointerId: number;
@@ -1201,6 +1235,13 @@ export const BoardSurface = ({
         screenPoint: point,
         dropPoint: centre,
         targetId: hit.targetId,
+        arrangementIndex: arrangementIndexAt(
+          scene,
+          source.id,
+          hit.targetId,
+          hit.point.x,
+          hit.point.y
+        ),
       };
     }
     return {
@@ -1491,6 +1532,12 @@ export const BoardSurface = ({
                   .map((entry) => compositionHold(scene, card, entry))
                   .find(Boolean) ?? null
               }
+              {...(asides.has(card.id)
+                ? {
+                    asideX: asides.get(card.id)!.x,
+                    asideY: asides.get(card.id)!.y,
+                  }
+                : {})}
               emitIntent={adapters.emitIntent}
               consumeSuppressedClick={consumeSuppressedClick}
               registerElement={registerElement}

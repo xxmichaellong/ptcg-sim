@@ -210,6 +210,11 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-damage-change[data-direction='heal'] {
   color: var(--color-mint, #9fd6bb);
 }
+/* A row on the flat table sliding aside to make room for a held card. */
+.ptcgsim-card:not([data-depth-card]) {
+  transition: translate calc(200ms * var(--motion-scale, 1)) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card,
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__body,
 .ptcgsim-board-surface[data-reduced-motion='true'] .ptcgsim-card__face {
   transition: none;

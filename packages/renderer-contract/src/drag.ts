@@ -1,5 +1,6 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 
+import { arrangementIndexAt, benchRearrangementTarget } from './arrangement.js';
 import { containsPoint, containsPointInRotatedRect } from './geometry.js';
 import { TABLE_LAYOUT_GEOMETRY_VERSION } from './layout-table.js';
 import type {
@@ -18,6 +19,8 @@ export interface BoardPointerInput {
   readonly screenPoint?: { readonly x: number; readonly y: number };
   readonly dropPoint?: { readonly x: number; readonly y: number };
   readonly targetId?: string | null;
+  /** The place in an arranged zone, from projected picking (null: none). */
+  readonly arrangementIndex?: number | null;
 }
 
 interface ActiveGesture {
@@ -139,7 +142,8 @@ export const resolveBoardDropTarget = (
         y
       )
   );
-  if (card) return card.parentId;
+  if (card)
+    return benchRearrangementTarget(scene, sourceCardId, card) ?? card.parentId;
   return zoneDropTargetAt(scene, x, y);
 };
 
@@ -215,19 +219,33 @@ export class BoardDragController {
       }
       gesture.dragging = true;
     }
+    const targetId =
+      input.targetId !== undefined
+        ? input.targetId
+        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.adapters.emitPresentationUpdate({
       kind: 'DragChanged',
       drag: {
         cardId: gesture.cardId,
         x: input.x + gesture.centerOffsetX,
         y: input.y + gesture.centerOffsetY,
-        targetId:
-          input.targetId !== undefined
-            ? input.targetId
-            : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y),
+        targetId,
+        ...(index === null ? {} : { index }),
       },
     });
     return true;
+  }
+
+  private arrangementIndex(
+    scene: BoardScene,
+    cardId: ViewCardId,
+    targetId: string | null,
+    input: BoardPointerInput
+  ): number | null {
+    return input.arrangementIndex !== undefined
+      ? input.arrangementIndex
+      : arrangementIndexAt(scene, cardId, targetId, input.x, input.y);
   }
 
   pointerUp(scene: BoardScene, input: BoardPointerInput): boolean {
@@ -248,6 +266,7 @@ export class BoardDragController {
       input.targetId !== undefined
         ? input.targetId
         : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.suppressedClickCardId = gesture.cardId;
     this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     if (targetId) {
@@ -257,6 +276,7 @@ export class BoardDragController {
         targetId,
         x: input.dropPoint?.x ?? centreX,
         y: input.dropPoint?.y ?? centreY,
+        ...(index === null ? {} : { index }),
       });
     }
     return true;

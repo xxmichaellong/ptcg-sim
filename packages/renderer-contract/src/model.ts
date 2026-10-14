@@ -51,6 +51,12 @@ export interface BoardPresentation {
     readonly x: number;
     readonly y: number;
     readonly targetId: string | null;
+    /**
+     * Where in the target zone it would go, when that zone keeps an order the
+     * player sets (a hand, the bench, the loose board): the zone opens a gap
+     * there (see arrangement.ts).
+     */
+    readonly index?: number;
   } | null;
   readonly openedZoneId: string | null;
   /**
@@ -68,6 +74,15 @@ export interface SettlingCard {
   /** Physical drop point; the card is centred on it like a drag. */
   readonly x: number;
   readonly y: number;
+  /**
+   * Put into a place in an arranged zone: the zone keeps its gap open until
+   * the scene it was dropped on gives way to the next.
+   */
+  readonly arrangement?: {
+    readonly targetId: string;
+    readonly index: number;
+    readonly revision: number;
+  };
 }
 
 export interface Rect {
@@ -279,6 +294,8 @@ export type BoardIntent =
       /** Physical drop point, so the card can be held there while it settles. */
       readonly x: number;
       readonly y: number;
+      /** Its place among the target zone's items, where it keeps an order. */
+      readonly index?: number;
     }
   | { readonly kind: 'CardContextRequested'; readonly cardId: ViewCardId }
   | {

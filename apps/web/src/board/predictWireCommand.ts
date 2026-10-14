@@ -704,13 +704,27 @@ const predict = (
         benchStackIds.splice(sourceBenchIndex, 1);
         if (activeStackId) benchStackIds.push(activeStackId);
         activeStackId = stack.id;
-      } else if (stack.slot === 'active') {
-        activeStackId = null;
-        benchStackIds.push(stack.id);
-        if (benchStackIds.length === 2) activeStackId = benchStackIds.shift()!;
       } else {
-        benchStackIds.splice(sourceBenchIndex, 1);
-        benchStackIds.push(stack.id);
+        // Benched among the others at the place asked for (game-core's
+        // MovePlayStack), at the end if none.
+        if (stack.slot === 'active') activeStackId = null;
+        else benchStackIds.splice(sourceBenchIndex, 1);
+        benchStackIds.splice(
+          Math.max(
+            0,
+            Math.min(
+              command.benchIndex ?? benchStackIds.length,
+              benchStackIds.length
+            )
+          ),
+          0,
+          stack.id
+        );
+        if (stack.slot === 'active' && benchStackIds.length === 2) {
+          const promoted = benchStackIds.find((id) => id !== stack.id)!;
+          benchStackIds.splice(benchStackIds.indexOf(promoted), 1);
+          activeStackId = promoted;
+        }
       }
       let next = withBoard(view, stack.boardPlayerId, {
         activeStackId,

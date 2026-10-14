@@ -178,7 +178,14 @@ describe('renderer-neutral drag controller', () => {
     controller.pointerMove(scene(), input(450, 120));
     expect(updates.at(-1)).toEqual({
       kind: 'DragChanged',
-      drag: { cardId: sourceId, x: 485, y: 171, targetId: 'target-zone' },
+      drag: {
+        cardId: sourceId,
+        x: 485,
+        y: 171,
+        targetId: 'target-zone',
+        // The bench keeps an order: first, as it holds nothing yet.
+        index: 0,
+      },
     });
     controller.pointerUp(scene(), input(450, 120));
     // It lands where its face was, not with its centre under the pointer.
@@ -189,6 +196,7 @@ describe('renderer-neutral drag controller', () => {
         targetId: 'target-zone',
         x: 485,
         y: 171,
+        index: 0,
       },
     ]);
   });

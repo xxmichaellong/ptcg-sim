@@ -1383,6 +1383,15 @@ const handleIntent = (
               x: intent.x,
               y: intent.y,
               commandId: null,
+              ...(intent.index === undefined
+                ? {}
+                : {
+                    arrangement: {
+                      targetId: intent.targetId,
+                      index: intent.index,
+                      revision: installedScene.revision,
+                    },
+                  }),
             },
           ]
         : settlingEntries(state.presentation);
@@ -1453,6 +1462,7 @@ const dropWouldLand = (
       targetId,
       x: drag.x,
       y: drag.y,
+      ...(drag.index === undefined ? {} : { index: drag.index }),
     }
   );
   return resolution.ok || resolution.reason === 'no_op';

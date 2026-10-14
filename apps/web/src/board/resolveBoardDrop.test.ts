@@ -51,6 +51,66 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('puts a card at a place in a hand, on the bench, or on the loose board (PX-041)', () => {
+    const input = fixture();
+    const hand = input.view.zones['zone:spike-blue:hand']!;
+    const first = hand.cards[0]!.id;
+    const drop = (targetId: string, index?: number, cardId = first) =>
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId,
+        targetId,
+        x: 0,
+        y: 0,
+        ...(index === undefined ? {} : { index }),
+      });
+    // Rearranged within the hand.
+    expect(drop('zone:spike-blue:hand', 2)).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCard',
+        cardId: first,
+        expectedSourceZoneId: 'zone:spike-blue:hand',
+        destinationZoneId: 'zone:spike-blue:hand',
+        destinationIndex: 2,
+      },
+    });
+    // Its own place, or no place: nothing to do.
+    expect(drop('zone:spike-blue:hand', 0)).toEqual({
+      ok: false,
+      reason: 'no_op',
+    });
+    expect(drop('zone:spike-blue:hand')).toEqual({
+      ok: false,
+      reason: 'no_op',
+    });
+    // Into the loose board at a place; a pile keeps its own order.
+    expect(drop('zone:spike-blue:board', 0)).toMatchObject({
+      ok: true,
+      command: { type: 'MoveCard', destinationIndex: 0 },
+    });
+    const discarded = drop('zone:spike-blue:discard', 0);
+    expect(discarded.ok && discarded.command).not.toHaveProperty(
+      'destinationIndex'
+    );
+    // Benched at a place among the Pokémon there.
+    expect(drop('slot:spike-blue:bench', 0)).toMatchObject({
+      ok: true,
+      command: { type: 'MoveCardToPlay', slot: 'bench', benchIndex: 0 },
+    });
+    const activeTop =
+      input.view.stacks['stack:blue:active']!.evolutionCards.at(-1)!.id;
+    expect(drop('slot:spike-blue:bench', 0, activeTop)).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId: 'stack:blue:active',
+        destinationSlot: 'bench',
+        benchIndex: 0,
+      },
+    });
+  });
+
   it('resolves active, bench, and existing-stack play targets', () => {
     const input = fixture();
     const card = localHandCard(input);
