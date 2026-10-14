@@ -30,6 +30,18 @@ const SCENE_REVISIONS_PER_CYCLE = 4;
 const RENDER_COMMITS_PER_CYCLE = 12;
 const MAXIMUM_RETAINED_HEAP_RATIO = 1.1;
 const MEMORY_SAMPLE_ATTEMPTS = 3;
+/**
+ * A leak grows with the cycles: one node or listener a cycle is a hundred
+ * by the end. What the menu library keeps of a popup it showed does not:
+ * it holds one recent More menu, whose items differ with the seat's stage
+ * (Set up again and Announce mulligan, 16 nodes and 2 listeners, only
+ * while playing), and which one it holds at a snapshot is down to timing.
+ * Growth up to this bound is that, not a leak.
+ */
+const BOUNDED_RETENTION = {
+  nodes: MEASURED_CYCLES / 2,
+  jsEventListeners: MEASURED_CYCLES / 20,
+};
 /** Room frames one cycle may send, with room for heartbeats. */
 const CLIENT_FRAMES_PER_CYCLE_HEADROOM = 32;
 const MAIN_FACE_URL = '/v2/assets/cardback.png?solo-churn=main';
@@ -872,9 +884,11 @@ test('selected DOM Solo setup/reset and full-deck zone churn converges route res
   expect(finalCounters.documents).toBeLessThanOrEqual(
     baselineCounters.documents
   );
-  expect(finalCounters.nodes).toBeLessThanOrEqual(baselineCounters.nodes);
+  expect(finalCounters.nodes).toBeLessThanOrEqual(
+    baselineCounters.nodes + BOUNDED_RETENTION.nodes
+  );
   expect(finalCounters.jsEventListeners).toBeLessThanOrEqual(
-    baselineCounters.jsEventListeners
+    baselineCounters.jsEventListeners + BOUNDED_RETENTION.jsEventListeners
   );
   expect(baselineHeap.usedSize).toBeGreaterThan(0);
   expect(

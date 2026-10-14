@@ -48,6 +48,9 @@ export const DeckLayer = ({
     layer.current?.focus({ preventScroll: true });
     return () => {
       const target = returnFocus.current;
+      // Not kept: an opener that has since left the page (an app-menu item)
+      // would otherwise hold its whole closed menu in memory.
+      returnFocus.current = null;
       if (target instanceof HTMLElement && target.isConnected) {
         target.focus({ preventScroll: true });
       }
