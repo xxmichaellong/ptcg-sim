@@ -330,6 +330,40 @@ describe('LegacyDeckImportPanel', () => {
     expect(samples.selectRandom).toHaveBeenCalledOnce();
   });
 
+  it('imports a random deck only once it has arrived', async () => {
+    let arrive:
+      | ((deck: { readonly name: string; readonly decklist: string }) => void)
+      | undefined;
+    const samples: PopularDecklistSource = {
+      ...fakeSamples(),
+      selectRandom: vi.fn(
+        async () =>
+          await new Promise((resolve) => {
+            arrive = resolve;
+          })
+      ),
+    };
+    const { importDecklist } = await mount({ samples });
+    const importButton =
+      host.querySelector<HTMLButtonElement>('#importButton')!;
+
+    await click(host.querySelector('#randomButton')!);
+    // Pressed straight after Random, Import would take the old, empty text.
+    expect(importButton.disabled).toBe(true);
+    await click(importButton);
+    expect(importDecklist).not.toHaveBeenCalled();
+
+    await act(async () =>
+      arrive?.({ name: 'Random Deck', decklist: '1 Random BRS 2' })
+    );
+    expect(importButton.disabled).toBe(false);
+    await click(importButton);
+    expect(importDecklist).toHaveBeenCalledWith(
+      '1 Random BRS 2',
+      expect.anything()
+    );
+  });
+
   it('deduplicates a pending book load and aborts all sample work on teardown', async () => {
     let loadSignal: AbortSignal | undefined;
     let randomSignal: AbortSignal | undefined;

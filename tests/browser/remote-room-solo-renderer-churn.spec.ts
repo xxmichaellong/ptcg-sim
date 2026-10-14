@@ -971,14 +971,33 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
   const errors = collectRuntimeErrors(page);
   const renderer = await openChurnRoom(page);
   const residue = () =>
-    page.evaluate(() => ({
-      cardGhosts: document.querySelectorAll('.ptcgsim-card-ghost').length,
-      overlayGhosts: document.querySelectorAll('.ptcgsim-overlay-ghost').length,
-      flying: document.querySelectorAll('[data-flying]').length,
-      animations: document
+    page.evaluate(() => {
+      const running = document
         .getAnimations()
-        .filter((animation) => animation.playState === 'running').length,
-    }));
+        .filter((animation) => animation.playState === 'running');
+      return {
+        cardGhosts: document.querySelectorAll('.ptcgsim-card-ghost').length,
+        overlayGhosts: document.querySelectorAll('.ptcgsim-overlay-ghost')
+          .length,
+        flying: document.querySelectorAll('[data-flying]').length,
+        animations: running.length,
+        // Named, so a failure says what is still moving and where.
+        moving: running.map((animation) => {
+          const target = (animation.effect as KeyframeEffect | null)?.target;
+          const name =
+            animation instanceof CSSAnimation
+              ? animation.animationName
+              : animation instanceof CSSTransition
+                ? `${animation.transitionProperty} transition`
+                : 'scripted animation';
+          return `${name} on ${
+            target
+              ? [target.tagName.toLowerCase(), ...target.classList].join('.')
+              : 'nothing'
+          }`;
+        }),
+      };
+    });
   const settledResidue = async () => {
     // Exit copies of closed overlays live at most 450ms.
     await page.waitForTimeout(600);
@@ -990,7 +1009,11 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
   for (let cycle = 0; cycle < 6; cycle += 1) {
     const evidence = await runCycle(page, renderer, undefined, previousCardIds);
     expect(evidence.zoneBrowserOpenings).toBe(4);
-    expect(await settledResidue(), `cycle ${cycle} residue`).toEqual(NONE);
+    const { moving, ...left } = await settledResidue();
+    expect(
+      left,
+      `cycle ${cycle} residue; still moving: ${moving.join(', ') || 'nothing'}`
+    ).toEqual(NONE);
     first ??= evidence;
     // Motion adds no node that outlives it: each phase ends as the first did
     // (the battle log is the one thing meant to grow).

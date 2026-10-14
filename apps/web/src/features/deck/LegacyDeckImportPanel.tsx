@@ -207,6 +207,9 @@ export const LegacyDeckImportPanel = ({
   >({ main: '', alternate: '' });
   const [language, setLanguage] = useState<PastedDecklistLanguage>('English');
   const [notice, setNotice] = useState<Notice>('idle');
+  // A random deck on its way: Import waits for it rather than importing
+  // the text it is about to replace.
+  const [picking, setPicking] = useState(false);
   const [review, setReview] = useState<DecklistReview | undefined>(undefined);
   const [sampleCollection, setSampleCollection] = useState<
     PopularDecklistCollection | undefined
@@ -380,6 +383,7 @@ export const LegacyDeckImportPanel = ({
     randomAbort.current?.abort();
     const controller = new AbortController();
     randomAbort.current = controller;
+    setPicking(true);
     void samples
       .selectRandom({ signal: controller.signal })
       .then((deck) => {
@@ -389,7 +393,9 @@ export const LegacyDeckImportPanel = ({
         if (!controller.signal.aborted) setNotice('failed');
       })
       .finally(() => {
-        if (randomAbort.current === controller) randomAbort.current = undefined;
+        if (randomAbort.current !== controller) return;
+        randomAbort.current = undefined;
+        setPicking(false);
       });
   };
 
@@ -668,7 +674,7 @@ export const LegacyDeckImportPanel = ({
               type="button"
               className="ds-button ds-button--primary deck-import-primary"
               hidden={Boolean(review)}
-              disabled={notice === 'loading'}
+              disabled={notice === 'loading' || picking}
               onClick={beginImport}
             >
               {notice === 'loading' ? (
