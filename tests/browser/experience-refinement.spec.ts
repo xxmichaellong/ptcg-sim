@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import {
+  appMenu,
+  appMenuOpener,
   closeSheet,
   openAppMenu,
   openDeck,
@@ -245,11 +247,12 @@ test('the app menu and the custom-card form support keyboard navigation and focu
   page,
 }) => {
   await startTable(page);
-  // The room's options are the app menu now (ADR-030).
-  const options = page.locator('#appMenuButton');
+  // The room's options are the app menu now (ADR-030), behind the open
+  // toolbar's More.
+  const options = await appMenuOpener(page);
   await options.focus();
   await page.keyboard.press('Enter');
-  const menu = page.getByRole('menu', { name: 'Menu' });
+  const menu = appMenu(page);
   const items = menu.getByRole('menuitem');
   await expect(items.first()).toBeFocused();
   await page.keyboard.press('End');

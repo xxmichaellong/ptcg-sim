@@ -76,15 +76,22 @@ const render = async (menu: AppMenuModel, width = 1200): Promise<void> => {
 };
 
 const toolbarIds = (): string[] =>
-  [...document.querySelectorAll('.ptcgsim-app-toolbar > [id]')].map(
-    (button) => button.id
-  );
+  [
+    ...document.querySelectorAll(
+      '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
+    ),
+  ].map((button) => button.id);
 
-const openMenu = async (): Promise<string[]> => {
+const press = async (selector: string): Promise<void> => {
   await act(async () =>
-    document.querySelector<HTMLButtonElement>('#appMenuButton')!.click()
+    document.querySelector<HTMLButtonElement>(selector)!.click()
   );
   await settle();
+};
+
+/** Opens a menu from its button and lists its entries. */
+const openMenu = async (selector: string): Promise<string[]> => {
+  await press(selector);
   return [
     ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
   ].map((item) => item.id);
@@ -97,28 +104,32 @@ const choose = async (id: string): Promise<void> => {
   await settle();
 };
 
+const toggle = (): HTMLButtonElement =>
+  document.querySelector<HTMLButtonElement>('#appMenuButton')!;
+
 describe('AppMenu', () => {
-  it('shows the deck, where to play, the keys and Settings as buttons', async () => {
+  it('opens along the rail: the deck, where to play, the keys, Settings and More', async () => {
     const menu = model();
     await render(menu);
     expect(toolbarIds()).toEqual([
+      'appMenuButton',
       'deckImportButton',
       'p2Button',
       'shortcutsButton',
       'settingsButton',
-      'appMenuButton',
+      'appMoreButton',
     ]);
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(toggle().getAttribute('aria-controls')).toBe('appToolbarDrawer');
     // Icons only; their names are the buttons' labels.
     expect(
       document.querySelector('#deckImportButton')?.getAttribute('aria-label')
     ).toBe('Deck');
-    await act(async () =>
-      document.querySelector<HTMLButtonElement>('#settingsButton')!.click()
-    );
+    await press('#settingsButton');
     expect(menu.onSettings).toHaveBeenCalledOnce();
 
-    // The rest is behind the last button, and nothing is offered twice.
-    const rest = await openMenu();
+    // The rest is behind More, and nothing is offered twice.
+    const rest = await openMenu('#appMoreButton');
     expect(rest).toEqual([
       'fullscreenButton',
       'reloadImagesButton',
@@ -127,7 +138,6 @@ describe('AppMenu', () => {
       'donationsButton',
       'discordButton',
       'contactButton',
-      'hideToolbarButton',
     ]);
     expect(
       document.querySelector('[role="menu"] #changelogButton')?.textContent
@@ -140,41 +150,53 @@ describe('AppMenu', () => {
     touchOnly = true;
     await render(model());
     expect(toolbarIds()).not.toContain('shortcutsButton');
-    expect(await openMenu()).not.toContain('shortcutsButton');
+    expect(await openMenu('#appMoreButton')).not.toContain('shortcutsButton');
   });
 
-  it('folds into one menu button, as the player leaves it', async () => {
+  it('closes into its first button and opens again from it, as the player leaves it', async () => {
     await render(model());
-    await openMenu();
-    await choose('hideToolbarButton');
+    const drawer = document.querySelector<HTMLElement>('#appToolbarDrawer')!;
+    await press('#appMenuButton');
     expect(preferences().get(SHELL_PREFERENCES).toolbarCollapsed).toBe(true);
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    // Closed, its buttons are out of reach: not focusable, not clickable.
+    expect(drawer.inert).toBe(true);
+    await press('#appMenuButton');
+    expect(preferences().get(SHELL_PREFERENCES).toolbarCollapsed).toBe(false);
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(drawer.inert).toBe(false);
+  });
+
+  it('starts as the player left it', async () => {
+    preferences().patch(SHELL_PREFERENCES, { toolbarCollapsed: true });
+    await render(model());
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(
+      document.querySelector<HTMLElement>('#appToolbarDrawer')?.style.width
+    ).toBe('0px');
+  });
+
+  it('is one menu holding everything on a rail too narrow to open along', async () => {
+    await render(model(), 600);
+    // One rail button of its own, no toolbar to open.
     expect(document.querySelector('.ptcgsim-app-toolbar')).toBeNull();
-    const all = await openMenu();
+    expect(document.querySelector('#appMenuButton')).not.toBeNull();
+    const all = await openMenu('#appMenuButton');
     expect(all.slice(0, 4)).toEqual([
       'deckImportButton',
       'p2Button',
       'shortcutsButton',
       'settingsButton',
     ]);
-    expect(all.at(-1)).toBe('showToolbarButton');
-    await choose('showToolbarButton');
-    expect(preferences().get(SHELL_PREFERENCES).toolbarCollapsed).toBe(false);
-    expect(toolbarIds()).toContain('settingsButton');
-  });
-
-  it('stays folded on a rail too narrow for it, with nothing to unfold', async () => {
-    await render(model(), 600);
-    expect(document.querySelector('.ptcgsim-app-toolbar')).toBeNull();
-    const all = await openMenu();
-    expect(all).toContain('settingsButton');
-    expect(all).not.toContain('showToolbarButton');
+    expect(all).toContain('changelogButton');
+    expect(all).not.toContain('appMoreButton');
   });
 
   it('opens the community pages outside the table', async () => {
     const open = vi.fn();
     vi.stubGlobal('open', open);
     await render(model());
-    await openMenu();
+    await openMenu('#appMoreButton');
     await choose('discordButton');
     expect(open).toHaveBeenCalledWith(
       expect.stringContaining('discord.gg'),

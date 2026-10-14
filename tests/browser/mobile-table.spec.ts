@@ -1,6 +1,10 @@
 import { devices, expect, test, type Page } from '@playwright/test';
 
-import { chooseMenuItem } from './support/table-shell.js';
+import {
+  appMenu,
+  appMenuOpener,
+  chooseMenuItem,
+} from './support/table-shell.js';
 
 /**
  * Phones and touch screens are first-class (ADR-030): an upright phone gets
@@ -223,8 +227,8 @@ test.describe('a tablet held sideways', () => {
     const viewport = page.viewportSize()!;
 
     // The app menu fits the window.
-    await page.locator('#appMenuButton').tap();
-    const menu = page.getByRole('menu', { name: 'Menu' });
+    await (await appMenuOpener(page)).tap();
+    const menu = appMenu(page);
     await expect(menu).toBeVisible();
     const menuBox = (await menu.boundingBox())!;
     expect(menuBox.y).toBeGreaterThanOrEqual(0);

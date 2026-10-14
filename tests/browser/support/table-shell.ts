@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * The room's shell (ADR-030): the table fills the window; the app menu sits
@@ -8,12 +8,44 @@ import { expect, type Page } from '@playwright/test';
  */
 
 /**
- * Opens the app menu and waits for it: the toolbar's last button, or the
- * one menu button of a folded toolbar.
+ * Opens the app toolbar along the rail, if the player has closed it. (On a
+ * narrow rail the same button opens a menu instead, and is left alone.)
  */
+export const openToolbar = async (page: Page): Promise<void> => {
+  const closed = page.locator(
+    '#appMenuButton[aria-controls="appToolbarDrawer"][aria-expanded="false"]'
+  );
+  if ((await closed.count()) === 0) return;
+  await closed.click();
+  await expect(page.locator('#appMenuButton')).toHaveAttribute(
+    'aria-expanded',
+    'true'
+  );
+};
+
+/**
+ * The button that opens the app menu: the open toolbar's last button,
+ * More, or on a rail too narrow to open it along, the one menu button
+ * that holds everything.
+ */
+export const appMenuOpener = async (page: Page): Promise<Locator> => {
+  await expect(page.locator('#appMenuButton')).toBeVisible();
+  await openToolbar(page);
+  const more = page.locator('#appMoreButton');
+  return (await more.count()) > 0 ? more : page.locator('#appMenuButton');
+};
+
+/**
+ * The open app menu, named for the button that opened it: More, or Menu on
+ * a narrow rail.
+ */
+export const appMenu = (page: Page): Locator =>
+  page.getByRole('menu', { name: /^(More|Menu)$/u });
+
+/** Opens the app menu and waits for it. */
 export const openAppMenu = async (page: Page): Promise<void> => {
-  await page.locator('#appMenuButton').click();
-  await expect(page.getByRole('menu', { name: 'Menu' })).toBeVisible();
+  await (await appMenuOpener(page)).click();
+  await expect(appMenu(page)).toBeVisible();
 };
 
 /**
@@ -22,6 +54,7 @@ export const openAppMenu = async (page: Page): Promise<void> => {
  */
 export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
   await expect(page.locator('#appMenuButton')).toBeVisible();
+  await openToolbar(page);
   const onToolbar = page.locator(`.ptcgsim-app-toolbar #${id}`);
   if (await onToolbar.isVisible()) {
     await onToolbar.click();

@@ -90,11 +90,11 @@
 /* ---- The app toolbar, at the rail's left end (AppMenu.tsx) -------------- */
 
 /* One segmented pill, so the app's buttons read as a group apart from the
-   turn's actions beside it. */
+   turn's actions beside it. Its first button opens it along the rail and
+   closes it again: the pill grows from that button and shrinks back to it. */
 .ptcgsim-app-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
   box-sizing: border-box;
   height: var(--rail-height, 40px);
   padding: 2px;
@@ -102,6 +102,60 @@
   border-radius: calc(var(--radius-control) + 2px);
   background: var(--color-surface-2);
   box-shadow: var(--shadow-2), var(--highlight-top);
+}
+
+/* Its width is set as it opens and closes (AppMenu.tsx); what does not fit
+   yet is clipped, so the buttons come out of the menu button. */
+.ptcgsim-app-toolbar__drawer {
+  height: 100%;
+  overflow: hidden;
+  /* Eased at both ends, so the bar is seen to grow and to shrink rather
+     than jump most of the way at once. */
+  transition: width calc(var(--duration-slow) * var(--motion-scale, 1))
+    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ptcgsim-app-toolbar__items {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  height: 100%;
+  /* A hairline between the menu button and what it opens. */
+  margin-left: 2px;
+  padding-left: 3px;
+  border-left: 1px solid var(--color-border);
+}
+
+/* The buttons follow one another out, and go back together. */
+.ptcgsim-app-toolbar__items > .ptcgsim-rail-button {
+  transition:
+    opacity calc(var(--duration-normal) * var(--motion-scale, 1))
+      var(--ease-out),
+    translate calc(var(--duration-normal) * var(--motion-scale, 1))
+      var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-app-toolbar[data-open='true']
+  .ptcgsim-app-toolbar__items
+  > .ptcgsim-rail-button {
+  transition-delay:
+    calc(var(--i, 0) * 30ms * var(--motion-scale, 1)),
+    calc(var(--i, 0) * 30ms * var(--motion-scale, 1)), 0s;
+}
+
+.ptcgsim-app-toolbar[data-open='false']
+  .ptcgsim-app-toolbar__items
+  > .ptcgsim-rail-button {
+  opacity: 0;
+  translate: -10px 0;
+}
+
+/* Open, the menu button reads as pressed in. */
+.ptcgsim-app-toolbar .ptcgsim-app-toolbar__toggle[aria-expanded='true'] {
+  background: var(--color-surface-3);
+  color: var(--color-text);
 }
 
 .ptcgsim-app-toolbar .ptcgsim-rail-button {

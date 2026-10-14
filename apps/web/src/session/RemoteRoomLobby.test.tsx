@@ -390,10 +390,19 @@ const click = async (selector: string): Promise<void> => {
   await settle();
 };
 
+/**
+ * The button that opens the app menu: the open toolbar's More, or on a
+ * narrow rail its one menu button.
+ */
+const menuButton = (): string =>
+  present('#appMoreButton') ? '#appMoreButton' : '#appMenuButton';
+
 /** Opens the app menu at the rail's left end. */
 const openMenu = async (): Promise<void> => {
-  await click('#appMenuButton');
-  expect(present('[role="menu"][aria-label="Menu"]')).toBe(true);
+  await click(menuButton());
+  expect(
+    present('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
+  ).toBe(true);
 };
 
 /**
@@ -411,18 +420,25 @@ const chooseMenuItem = async (id: string): Promise<void> => {
  */
 const menuEntryIds = async (): Promise<string[]> => {
   const toolbar = [
-    ...document.querySelectorAll('.ptcgsim-app-toolbar > [id]'),
+    ...document.querySelectorAll(
+      '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
+    ),
   ].map((entry) => entry.id);
+  const opener = menuButton();
   await openMenu();
   const ids = [
-    ...toolbar.filter((id) => id !== 'appMenuButton'),
+    ...toolbar.filter((id) => id !== 'appMenuButton' && id !== 'appMoreButton'),
     ...[
-      ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
+      ...document.querySelectorAll(
+        '[role="menu"]:is([aria-label="Menu"], [aria-label="More"]) [id]'
+      ),
     ].map((entry) => entry.id),
   ];
   // Closed from its own button: an Escape would also reach the sheet below.
-  await click('#appMenuButton');
-  expect(present('[role="menu"][aria-label="Menu"]')).toBe(false);
+  await click(opener);
+  expect(
+    present('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
+  ).toBe(false);
   return ids;
 };
 

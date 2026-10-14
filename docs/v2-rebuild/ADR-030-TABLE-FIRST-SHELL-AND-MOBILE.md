@@ -62,22 +62,24 @@ are kept where they still name the same control (`#setupButton`,
 ### 3. The app toolbar
 
 A toolbar at the rail's left end (`session/shell/AppMenu.tsx`), one
-segmented group, open by default: **Deck** (the acting seat's), **Play
-online** (Solo table, from the lobby), **Keyboard shortcuts** (not on a
-touch-only screen) and **Settings**, then a menu button for the rest, headed
-by where you are ("Solo table", "Room ABC123", "Replay"):
+segmented group. Its first button (☰) opens it along the rail and closes it
+back into itself, animating its width so the game actions move with it; the
+choice is kept in `ptcgsim.shell.v1`, open by default. Open, it shows
+**Deck** (the acting seat's), **Play online** (Solo table, from the lobby),
+**Keyboard shortcuts** (not on a touch-only screen) and **Settings**, then
+**More** (⋯) for the rest, headed by where you are ("Solo table", "Room
+ABC123", "Replay"):
 
 - Game: Exit replay, Watch a replay…, Save online game, Resume a saved
   game…, Download replay;
 - Full screen (Exit full screen while full screen), Reload card images;
 - Help: Tutorial, the release notes (named by the release, `v1.6`),
   Sponsors & Donations, Discord, contact;
-- Copy an invitation, Leave room (in a room);
-- Fold the toolbar.
+- Copy an invitation, Leave room (in a room).
 
-Folded (kept in `ptcgsim.shell.v1`, or on a rail narrower than 820px) it is one
-menu button holding all of it, with Show toolbar. Settings holds settings
-only: the table, the page, motion.
+On a rail narrower than 820px there is no room to open it along, so ☰ opens
+one menu holding all of it. Settings holds settings only: the table, the
+page, motion.
 
 ### 4. The activity log
 

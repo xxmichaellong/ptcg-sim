@@ -390,14 +390,22 @@ const menuIds = (): string[] =>
     (item) => item.id
   );
 
+/**
+ * Opens the app menu: the open toolbar's More, or on a narrow rail its one
+ * menu button.
+ */
 const openMenu = async (): Promise<void> => {
-  await click('#appMenuButton');
+  await click(find('#appMoreButton') ? '#appMoreButton' : '#appMenuButton');
   await settle();
-  expect(find('[role="menu"][aria-label="Menu"]')).not.toBeNull();
+  expect(
+    find('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
+  ).not.toBeNull();
 };
 
 const closeMenu = async (): Promise<void> => {
-  const menu = find('[role="menu"][aria-label="Menu"]');
+  const menu = find(
+    '[role="menu"]:is([aria-label="Menu"], [aria-label="More"])'
+  );
   if (menu) await pressEscape(menu);
 };
 
@@ -524,18 +532,21 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
-    // The toolbar shows the deck, where to play, the keys and Settings;
-    // the rest is behind its last button.
+    // The toolbar opens from its first button onto the deck, where to play,
+    // the keys and Settings; the rest is behind its last button, More.
     expect(
-      [...document.querySelectorAll('.ptcgsim-app-toolbar > [id]')].map(
-        (button) => button.id
-      )
+      [
+        ...document.querySelectorAll(
+          '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
+        ),
+      ].map((button) => button.id)
     ).toEqual([
+      'appMenuButton',
       'deckImportButton',
       'p2Button',
       'shortcutsButton',
       'settingsButton',
-      'appMenuButton',
+      'appMoreButton',
     ]);
     await openMenu();
     expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');
