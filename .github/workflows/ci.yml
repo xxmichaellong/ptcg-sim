@@ -39,11 +39,19 @@ jobs:
       - name: Verify tracked files remain unchanged
         run: git diff --exit-code
 
+  # The browser jobs start alongside the quality gate, not after it. The
+  # Chromium suite is split across runners by how long its files take
+  # (scripts/browser-shards.mjs): one after another its tests take about
+  # half an hour; the longest shard (the Solo churn soak alone) about ten
+  # minutes.
   chromium:
-    name: Chromium regression gate
-    needs: quality
+    name: Chromium regression gate (${{ matrix.shard }}/4)
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -77,12 +85,23 @@ jobs:
             sleep 30
           done
       - name: Run browser regressions
-        run: corepack pnpm run check:browser
+        run: |
+          corepack pnpm exec playwright test --list --project=chromium --reporter=json > "$RUNNER_TEMP/browser-tests.json"
+          # Through a file, so a planning error fails the step instead of
+          # leaving no files (which would run the whole suite).
+          node scripts/browser-shards.mjs ${{ matrix.shard }}/4 < "$RUNNER_TEMP/browser-tests.json" > "$RUNNER_TEMP/shard-specs.txt"
+          mapfile -t specs < "$RUNNER_TEMP/shard-specs.txt"
+          corepack pnpm exec playwright test --project=chromium "${specs[@]}"
+      # The preview and continuation configs take under a minute; the last
+      # shard has room for them (the soak always lands on shard 1).
+      - name: Run preview and continuation regressions
+        if: matrix.shard == 4
+        run: corepack pnpm run check:browser:configs
       - name: Upload browser diagnostics
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-chromium-${{ github.run_attempt }}
+          name: playwright-chromium-${{ matrix.shard }}-${{ github.run_attempt }}
           path: |
             playwright-report/
             test-results/
@@ -90,10 +109,17 @@ jobs:
           retention-days: 14
 
   cross-browser:
-    name: Firefox and WebKit functional gate
-    needs: quality
+    name: ${{ matrix.name }} functional gate
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: firefox
+            name: Firefox
+          - browser: webkit
+            name: WebKit
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -114,25 +140,25 @@ jobs:
               sudo mv "$chrome_source" "$chrome_source.disabled"
             fi
           done
-      - name: Install Playwright Firefox and WebKit
+      - name: Install Playwright ${{ matrix.name }}
         run: |
           for browser_install_attempt in 1 2 3; do
-            if corepack pnpm exec playwright install --with-deps firefox webkit; then
+            if corepack pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
               exit 1
             fi
-            echo "::warning::Playwright Firefox/WebKit installation failed; retrying in 30 seconds"
+            echo "::warning::Playwright ${{ matrix.name }} installation failed; retrying in 30 seconds"
             sleep 30
           done
       - name: Run cross-browser functional regressions
-        run: corepack pnpm run check:cross-browser
+        run: corepack pnpm run check:cross-browser --project=${{ matrix.browser }}
       - name: Upload cross-browser diagnostics
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-cross-browser-${{ github.run_attempt }}
+          name: playwright-${{ matrix.browser }}-${{ github.run_attempt }}
           path: |
             playwright-report/cross-browser/
             test-results/cross-browser/
