@@ -146,6 +146,12 @@ export interface BoardLayoutState {
    */
   readonly hideEmptyLostZone?: boolean;
   /**
+   * The viewer reads the far player's cards the right way up rather than
+   * facing their owner across the table. Only which way those cards face
+   * changes; where everything lies stays the same.
+   */
+  readonly farCardsUpright?: boolean;
+  /**
    * Geometry v2 only: the least height of the clear band at the centre line,
    * where the table controls sit. A touch device asks for room for 44px
    * targets; without it the band follows the table's size.
@@ -319,6 +325,8 @@ export interface BoardLayoutSnapshot {
   readonly zoneScrollPx: Readonly<Record<string, number>>;
   /** Carried from the layout state: an empty Lost Zone is not shown. */
   readonly hideEmptyLostZone?: boolean;
+  /** Carried from the layout state: the far player's cards face the viewer. */
+  readonly farCardsUpright?: boolean;
 }
 
 export interface BoardPlayStackCardHitRegion {
@@ -1067,6 +1075,7 @@ export const createBoardLayoutSnapshot = (
       },
     },
     zoneScrollPx: { ...(state.zoneScrollPx ?? {}) },
+    ...(state.farCardsUpright ? { farCardsUpright: true as const } : {}),
   };
 };
 

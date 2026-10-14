@@ -118,6 +118,7 @@ const sameLayoutState = (
   (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
   (left.sidePanelReveal ?? 1) === (right.sidePanelReveal ?? 1) &&
   (left.oncePerGameMarkers ?? 0) === (right.oncePerGameMarkers ?? 0) &&
+  (left.farCardsUpright ?? false) === (right.farCardsUpright ?? false) &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -489,12 +490,14 @@ export class BoardSessionRuntime {
     readonly hideEmptyLostZone?: boolean;
     readonly seamBandPx?: number;
     readonly oncePerGameMarkers?: number;
+    readonly farCardsUpright?: boolean;
   }): void {
     const {
       hiddenPhysicalSide: _previous,
       hideEmptyLostZone: _lostZone,
       seamBandPx: _seam,
       oncePerGameMarkers: _markers,
+      farCardsUpright: _upright,
       ...rest
     } = this.layoutState;
     this.replaceLayoutState({
@@ -508,6 +511,7 @@ export class BoardSessionRuntime {
       ...(view.oncePerGameMarkers
         ? { oncePerGameMarkers: view.oncePerGameMarkers }
         : {}),
+      ...(view.farCardsUpright ? { farCardsUpright: true } : {}),
     });
   }
 

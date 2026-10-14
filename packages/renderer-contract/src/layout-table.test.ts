@@ -1,6 +1,7 @@
 import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
+import { resolveBoardDropTarget } from './drag.js';
 import { CARD_ASPECT_RATIO } from './geometry.js';
 import type { BoardLayoutState } from './layout.js';
 import {
@@ -831,5 +832,97 @@ describe('table layout (geometry v2)', () => {
     const many = layoutTablePrizes(content, 'local', 8);
     for (const rect of [...mine, ...theirs, ...many])
       expect(inside(rect, content)).toBe(true);
+  });
+  it("turns the far player's cards to read upright when the viewer asks, and nothing else", () => {
+    const view = createRendererSpikeView();
+    const facing = createBoardScene(
+      view,
+      createTableLayoutSnapshot(stateAt(1440, 900))
+    );
+    const upright = createBoardScene(
+      view,
+      createTableLayoutSnapshot(stateAt(1440, 900, { farCardsUpright: true }))
+    );
+    expect(facing.layout.farCardsUpright).toBeUndefined();
+    expect(upright.layout.farCardsUpright).toBe(true);
+    expect(upright.zones).toEqual(facing.zones);
+    expect(upright.cards.map((card) => card.id)).toEqual(
+      facing.cards.map((card) => card.id)
+    );
+    const far = upright.cards.filter((card) => card.side === 'opponent');
+    expect(far.length).toBeGreaterThan(0);
+    for (const card of upright.cards) {
+      const before = facing.cards.find((item) => item.id === card.id)!;
+      // Where it lies is unchanged; only a far card turns, half round.
+      expect(card.bounds, card.label).toEqual(before.bounds);
+      expect(card.rotationQuarterTurns, card.label).toBe(
+        card.side === 'opponent'
+          ? (before.rotationQuarterTurns + 2) % 4
+          : before.rotationQuarterTurns
+      );
+    }
+    // The red Active was turned a quarter by its player: it keeps that turn,
+    // now counted from upright, as the same card on the near side shows it.
+    const redTop = upright.cards.find(
+      (card) =>
+        card.parentId === 'stack:red:active' && card.role === 'stackEvolution'
+    )!;
+    expect(redTop.rotationQuarterTurns % 2).toBe(1);
+    // Its damage counter sits where it would on the viewer's own card: a
+    // third of the way from its right edge, a quarter of the way down.
+    const damage = upright.markers.find(
+      (marker) =>
+        marker.kind === 'damage' &&
+        upright.cards.find((card) => card.id === marker.parentCardId)?.side ===
+          'opponent'
+    )!;
+    const host = upright.cards.find((card) => card.id === damage.parentCardId)!;
+    const nearDamage = upright.markers.find(
+      (marker) =>
+        marker.kind === 'damage' &&
+        upright.cards.find((card) => card.id === marker.parentCardId)?.side ===
+          'local'
+    )!;
+    const nearHost = upright.cards.find(
+      (card) => card.id === nearDamage.parentCardId
+    )!;
+    const offset = (marker: Rect, card: Rect) => ({
+      x: (marker.x + marker.width / 2 - card.x - card.width / 2) / card.width,
+      y:
+        (marker.y + marker.height / 2 - card.y - card.height / 2) / card.height,
+    });
+    const painted = (card: typeof host): Rect =>
+      card.rotationQuarterTurns % 2 === 1
+        ? {
+            x: card.bounds.x + (card.bounds.width - card.bounds.height) / 2,
+            y: card.bounds.y + (card.bounds.height - card.bounds.width) / 2,
+            width: card.bounds.height,
+            height: card.bounds.width,
+          }
+        : card.bounds;
+    const farOffset = offset(damage.bounds, painted(host));
+    const nearOffset = offset(nearDamage.bounds, painted(nearHost));
+    expect(Math.sign(farOffset.x)).toBe(Math.sign(nearOffset.x));
+    expect(Math.sign(farOffset.y)).toBe(Math.sign(nearOffset.y));
+    // Turned where it lies, a far card is still found where it is painted.
+    const centre = {
+      x: redTop.bounds.x + redTop.bounds.width / 2,
+      y: redTop.bounds.y + redTop.bounds.height / 2,
+    };
+    expect(
+      resolveBoardDropTarget(
+        upright,
+        upright.cards.find((card) => card.side === 'local')!.id,
+        centre.x,
+        centre.y
+      )
+    ).toBe(
+      resolveBoardDropTarget(
+        facing,
+        facing.cards.find((card) => card.side === 'local')!.id,
+        centre.x,
+        centre.y
+      )
+    );
   });
 });

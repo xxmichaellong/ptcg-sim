@@ -283,6 +283,12 @@ export interface BoardSceneLayout {
       readonly height: number;
     };
   };
+  /**
+   * The far player's cards are turned to read the right way up for the
+   * viewer (BoardLayoutState.farCardsUpright), so a held hand card on that
+   * side rises toward the table's centre the other way.
+   */
+  readonly farCardsUpright?: true;
 }
 
 export interface BoardScene {

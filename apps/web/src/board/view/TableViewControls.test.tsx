@@ -85,11 +85,13 @@ describe('TableViewControls', () => {
     await act(async () => input('hideHandCheckbox').click());
     await act(async () => input('hoverPreviewCheckbox').click());
     await act(async () => input('lostZoneCheckbox').click());
+    await act(async () => input('opponentUprightCheckbox').click());
     expect(boardViewSettings().getSnapshot()).toMatchObject({
       zoneOutlines: false,
       hideOpponentHand: true,
       hoverPreview: true,
       lostZone: true,
+      opponentCardsUpright: true,
     });
 
     await act(async () =>

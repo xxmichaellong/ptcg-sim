@@ -207,6 +207,11 @@ export const BOARD_SURFACE_CSS = `
     translate: 0 -22%;
     scale: 1.06;
   }
+  /* Turned to read upright for the viewer, the far hand rises down toward
+     the table's centre instead. */
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'][data-far-upright]:not([data-hover-rest]) .ptcgsim-card[data-in-hand][data-card-side='opponent']:not([data-held]):enabled:hover > .ptcgsim-card__body {
+    translate: 0 22%;
+  }
   .ptcgsim-board-surface[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:enabled:hover > .ptcgsim-card__body {
     scale: var(--ptcgsim-hover-scale, 1.035);
   }

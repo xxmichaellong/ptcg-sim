@@ -1026,6 +1026,7 @@ export const createTableLayoutSnapshot = (
     },
     zoneScrollPx: {},
     ...(state.hideEmptyLostZone ? { hideEmptyLostZone: true as const } : {}),
+    ...(state.farCardsUpright ? { farCardsUpright: true as const } : {}),
   };
 };
 

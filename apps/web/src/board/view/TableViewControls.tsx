@@ -154,6 +154,15 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
         onChange={(gxMarker) => viewStore.update({ gxMarker })}
       />
       <SwitchRow
+        id="opponentUprightCheckbox"
+        label="Opponent's cards face me"
+        hint="Their cards read the right way up for you. Off, they face their owner, as across a real table."
+        checked={view.opponentCardsUpright}
+        onChange={(opponentCardsUpright) =>
+          viewStore.update({ opponentCardsUpright })
+        }
+      />
+      <SwitchRow
         id="zoneOutlinesCheckbox"
         label="Zone outlines"
         checked={view.zoneOutlines}

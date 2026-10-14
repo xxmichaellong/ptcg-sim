@@ -154,6 +154,7 @@ export const createBoardSceneLayout = (
     stadiumBounds: copyRect(snapshot.shared.stadium.physicalDeclaredBounds),
     boardControlsAnchor: { ...snapshot.shared.boardControlsAnchor },
   },
+  ...(snapshot.farCardsUpright ? { farCardsUpright: true as const } : {}),
 });
 
 /**
@@ -239,6 +240,55 @@ const layoutLegacyPrizeColumn = (
     };
     return side === 'opponent' ? rotateRectInFrame(rect, frame) : rect;
   });
+};
+
+/**
+ * The viewer's choice to read the far player's cards the right way up
+ * (BoardLayoutState.farCardsUpright). Every card on the far half, and a
+ * Stadium its player put down, turns half round where it lies -- a joined
+ * card's pieces about the card they make, so its art still reads across
+ * them -- and the counters on a card turn with it. Where everything lies is
+ * unchanged, and a card a player turned keeps that turn, now counted from
+ * upright.
+ */
+const turnFarCardsToViewer = (
+  cards: readonly CardSceneNode[],
+  markers: readonly MarkerSceneNode[],
+  bottomPlayerId: PlayerId
+): {
+  readonly cards: readonly CardSceneNode[];
+  readonly markers: readonly MarkerSceneNode[];
+} => {
+  const turned = new Map<ViewCardId, CardSceneNode>();
+  const faced = cards.map((card) => {
+    const far =
+      card.side === 'opponent' ||
+      (card.side === 'shared' && card.ownerId !== bottomPlayerId);
+    if (!far) return card;
+    turned.set(card.id, card);
+    return {
+      ...card,
+      rotationQuarterTurns: ((card.rotationQuarterTurns + 2) %
+        4) as QuarterTurns,
+      ...(card.composition
+        ? { bounds: rotateRectInFrame(card.bounds, card.composition.bounds) }
+        : {}),
+    };
+  });
+  return {
+    cards: faced,
+    markers: markers.map((marker) => {
+      const host = turned.get(marker.parentCardId);
+      if (!host) return marker;
+      return {
+        ...marker,
+        bounds: rotateRectInFrame(
+          marker.bounds,
+          host.composition?.bounds ?? host.bounds
+        ),
+      };
+    }),
+  };
 };
 
 /** Half-turn of a rectangle about the centre of its enclosing frame. */
@@ -1170,6 +1220,9 @@ export const createBoardScene = (
       : []
   );
   const shownCardIds = new Set<ViewCardId>(shownCards.map((card) => card.id));
+  const faced = layout.farCardsUpright
+    ? turnFarCardsToViewer(shownCards, markers, layout.bottomPlayerId)
+    : { cards: shownCards, markers };
 
   return {
     matchId: view.matchId,
@@ -1185,11 +1238,11 @@ export const createBoardScene = (
         (left, right) =>
           left.zIndex - right.zIndex || left.id.localeCompare(right.id)
       ),
-    cards: shownCards.sort(
+    cards: [...faced.cards].sort(
       (left, right) =>
         left.zIndex - right.zIndex || left.id.localeCompare(right.id)
     ),
-    markers: markers
+    markers: faced.markers
       .filter((marker) => shownCardIds.has(marker.parentCardId))
       .sort(compareMarkerPaintOrder),
     counts: counts

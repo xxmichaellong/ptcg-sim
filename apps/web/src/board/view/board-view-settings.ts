@@ -38,6 +38,11 @@ export interface BoardViewSettings {
    */
   readonly vstarMarker: boolean;
   readonly gxMarker: boolean;
+  /**
+   * The far player's cards read the right way up for this viewer, instead
+   * of facing their owner across the table. Off by default.
+   */
+  readonly opponentCardsUpright: boolean;
 }
 
 export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
@@ -49,6 +54,7 @@ export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   lostZone: false,
   vstarMarker: false,
   gxMarker: false,
+  opponentCardsUpright: false,
 };
 
 const isShow = (value: unknown): value is BoardShowChoice =>
@@ -93,6 +99,10 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
       DEFAULT_BOARD_VIEW.vstarMarker
     ),
     gxMarker: flag(Reflect.get(value, 'gxMarker'), DEFAULT_BOARD_VIEW.gxMarker),
+    opponentCardsUpright: flag(
+      Reflect.get(value, 'opponentCardsUpright'),
+      DEFAULT_BOARD_VIEW.opponentCardsUpright
+    ),
   };
 };
 

@@ -341,4 +341,40 @@ describe('composed board scenes', () => {
       expect(card.imageUrl).toBe(view.players[playerId]!.cardBackUrl);
     }
   });
+  it("reads a far joined card upright, its pieces where the viewer's own would be", () => {
+    const { view, stack, playerId } = fixture();
+    const other = view.playerOrder.find((id) => id !== playerId)!;
+    const sceneFor = (bottomPlayerId: PlayerId, farCardsUpright: boolean) =>
+      createBoardScene(
+        view,
+        createTableLayoutSnapshot({
+          viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+          bottomPlayerId,
+          playerIds: view.playerOrder as [PlayerId, PlayerId],
+          shellMode: 'fullscreen',
+          vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+          geometryVersion: 2,
+          ...(farCardsUpright ? { farCardsUpright: true } : {}),
+        })
+      );
+    // Each piece's place in the joined card, and which way it faces.
+    const arrangement = (scene: ReturnType<typeof sceneFor>) =>
+      scene.cards
+        .filter((card) => card.parentId === stack.id)
+        .map((card) => {
+          const whole = card.composition!.bounds;
+          return {
+            id: card.id,
+            x: Math.round(((card.bounds.x - whole.x) / whole.width) * 1000),
+            y: Math.round(((card.bounds.y - whole.y) / whole.height) * 1000),
+            turns: card.rotationQuarterTurns,
+          };
+        })
+        .sort((left, right) => left.id.localeCompare(right.id));
+    const near = arrangement(sceneFor(playerId, false));
+    const facing = arrangement(sceneFor(other, false));
+    const upright = arrangement(sceneFor(other, true));
+    expect(facing).not.toEqual(near);
+    expect(upright).toEqual(near);
+  });
 });

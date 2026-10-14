@@ -130,6 +130,7 @@ const layoutFor = (
     ...(oncePerGameMarkerCount(boardView) > 0
       ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
       : {}),
+    ...(boardView.opponentCardsUpright ? { farCardsUpright: true } : {}),
   };
 };
 
@@ -663,11 +664,13 @@ export const RemoteSessionBoard = ({
       hideEmptyLostZone: !boardView.lostZone,
       ...(seamBandPx ? { seamBandPx } : {}),
       oncePerGameMarkers: markerCount,
+      farCardsUpright: boardView.opponentCardsUpright,
     });
   }, [
     boardView.split,
     boardView.show,
     boardView.lostZone,
+    boardView.opponentCardsUpright,
     markerCount,
     seamBandPx,
   ]);

@@ -33,6 +33,7 @@ it('starts with both halves, an even split, no hover preview and no optional pie
     lostZone: false,
     vstarMarker: false,
     gxMarker: false,
+    opponentCardsUpright: false,
   });
   expect(new BoardViewSettingsStore(new PreferenceStore()).getSnapshot()).toBe(
     DEFAULT_BOARD_VIEW
@@ -111,4 +112,14 @@ it('hides the top half for "mine" and the bottom half for "theirs"', () => {
   expect(hiddenPhysicalSideFor('both')).toBeUndefined();
   expect(hiddenPhysicalSideFor('mine')).toBe('upper');
   expect(hiddenPhysicalSideFor('theirs')).toBe('lower');
+});
+
+it("keeps the choice to read the opponent's cards upright, and only a real yes", () => {
+  expect(
+    parseBoardView({ opponentCardsUpright: true }).opponentCardsUpright
+  ).toBe(true);
+  expect(
+    parseBoardView({ opponentCardsUpright: 'yes' }).opponentCardsUpright
+  ).toBe(false);
+  expect(parseBoardView({}).opponentCardsUpright).toBe(false);
 });
