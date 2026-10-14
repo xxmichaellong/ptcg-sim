@@ -189,31 +189,12 @@ export const fitCardComposition = (
 };
 
 /**
- * Whether a drop on this target takes the whole stack with the grabbed
- * piece: another stack or a play slot does (the stack moves), nothing yet
- * is the player still deciding, and a pile takes only the piece.
- */
-const carriesWholeStack = (
-  scene: BoardScene,
-  targetId: string | null
-): boolean =>
-  targetId === null ||
-  scene.zones.some(
-    (zone) =>
-      zone.id === targetId && (zone.kind === 'active' || zone.kind === 'bench')
-  ) ||
-  scene.cards.some(
-    (card) =>
-      card.parentId === targetId &&
-      (card.role === 'stackEvolution' || card.role === 'stackAttachment')
-  );
-
-/**
- * Follow the grabbed piece without collapsing the other pieces onto its
- * centre. The other pieces of a joined Pokémon come along only while the
- * drag would carry them (see carriesWholeStack); over a pile, and once
- * dropped, only the grabbed piece is held, so the table shows what the drop
- * does.
+ * Follow the grabbed card without collapsing the rest of its Pokémon onto
+ * its centre. A Pokémon moves whole: a card of the Pokémon itself (an
+ * evolution, or one piece of a joined card) carries everything under and
+ * attached to it while it is dragged, wherever it is held, and the stack
+ * settles together once dropped as a whole. A card lifted off by a long
+ * press (`detached`), or an attached Energy or Tool, moves alone.
  */
 export const compositionHold = <
   T extends {
@@ -228,17 +209,24 @@ export const compositionHold = <
 ): T | null => {
   if (!hold) return null;
   if (hold.cardId === card.id) return hold;
+  const { targetId, wholeStack, detached } = hold as {
+    readonly targetId?: string | null;
+    readonly wholeStack?: boolean;
+    readonly detached?: boolean;
+  };
+  // A drag has a target (perhaps none yet); a settling drop carries the
+  // stack only when the drop moved all of it.
+  if (detached || (targetId === undefined && !wholeStack)) return null;
+  if (card.role !== 'stackEvolution' && card.role !== 'stackAttachment') {
+    return null;
+  }
   const anchor = scene.cards.find((item) => item.id === hold.cardId);
   if (
-    !anchor?.composition ||
+    !anchor ||
     anchor.role !== 'stackEvolution' ||
     anchor.parentId !== card.parentId
   )
     return null;
-  const { targetId } = hold as { readonly targetId?: string | null };
-  if (targetId === undefined || !carriesWholeStack(scene, targetId)) {
-    return null;
-  }
   return {
     ...hold,
     x:

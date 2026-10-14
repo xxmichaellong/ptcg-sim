@@ -57,6 +57,17 @@ export interface BoardPresentation {
      * there (see arrangement.ts).
      */
     readonly index?: number;
+    /**
+     * Only the grabbed card, lifted off its Pokémon by a long press: the rest
+     * of the stack stays. Without it, a Pokémon carries its whole stack.
+     */
+    readonly detached?: boolean;
+    /** What the drop would do, where the table marks it (a swap's ⇄). */
+    readonly action?: {
+      readonly kind: 'swap';
+      /** The Pokémon it would trade places with. */
+      readonly stackId: string;
+    };
   } | null;
   readonly openedZoneId: string | null;
   /**
@@ -83,6 +94,8 @@ export interface SettlingCard {
     readonly index: number;
     readonly revision: number;
   };
+  /** A whole Pokémon was dropped: its stack settles with the grabbed card. */
+  readonly wholeStack?: boolean;
 }
 
 export interface Rect {
@@ -296,6 +309,8 @@ export type BoardIntent =
       readonly y: number;
       /** Its place among the target zone's items, where it keeps an order. */
       readonly index?: number;
+      /** The grabbed card alone, lifted off its Pokémon by a long press. */
+      readonly detached?: boolean;
     }
   | { readonly kind: 'CardContextRequested'; readonly cardId: ViewCardId }
   | {

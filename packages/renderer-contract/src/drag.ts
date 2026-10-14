@@ -32,6 +32,8 @@ interface ActiveGesture {
   readonly centerOffsetY: number;
   readonly screenStart: { readonly x: number; readonly y: number } | undefined;
   dragging: boolean;
+  /** Lifted off its Pokémon by a long press: it moves alone. */
+  detached: boolean;
 }
 
 export interface BoardInteractionCancellation {
@@ -44,6 +46,26 @@ const cardAt = (
   cardId: ViewCardId
 ): CardSceneNode | undefined =>
   scene.cards.find((candidate) => candidate.id === cardId);
+
+/**
+ * A Pokémon's card that a long press can lift off the rest of its stack (to
+ * devolve it, say): a card of the Pokémon itself, with other cards under or
+ * attached to it. A joined card's pieces never come apart.
+ */
+export const canDetachFromStack = (
+  scene: BoardScene,
+  cardId: ViewCardId
+): boolean => {
+  const card = cardAt(scene, cardId);
+  return Boolean(
+    card?.interactive &&
+    card.role === 'stackEvolution' &&
+    !card.composition &&
+    scene.cards.some(
+      (other) => other.id !== card.id && other.parentId === card.parentId
+    )
+  );
+};
 
 /**
  * On the redesigned table, empty felt is the board. A card dropped where no
@@ -184,7 +206,47 @@ export class BoardDragController {
       centerOffsetY: card.bounds.y + card.bounds.height / 2 - input.y,
       screenStart: input.screenPoint,
       dragging: false,
+      detached: false,
     };
+    return true;
+  }
+
+  /**
+   * A long press on a Pokémon lifts the pressed card off its stack: it rises
+   * where it is and the drag that follows moves it alone. Only before the
+   * pointer has started a drag, and only for a card that has a stack to
+   * leave.
+   */
+  detach(scene: BoardScene, pointerId: number): boolean {
+    const gesture = this.active;
+    if (
+      !gesture ||
+      gesture.pointerId !== pointerId ||
+      gesture.dragging ||
+      !canDetachFromStack(scene, gesture.cardId)
+    ) {
+      return false;
+    }
+    const card = cardAt(scene, gesture.cardId)!;
+    gesture.dragging = true;
+    gesture.detached = true;
+    const x = card.bounds.x + card.bounds.width / 2;
+    const y = card.bounds.y + card.bounds.height / 2;
+    this.adapters.emitPresentationUpdate({
+      kind: 'DragChanged',
+      drag: {
+        cardId: gesture.cardId,
+        x,
+        y,
+        targetId: resolveBoardDropTarget(
+          scene,
+          gesture.cardId,
+          x - gesture.centerOffsetX,
+          y - gesture.centerOffsetY
+        ),
+        detached: true,
+      },
+    });
     return true;
   }
 
@@ -232,6 +294,7 @@ export class BoardDragController {
         y: input.y + gesture.centerOffsetY,
         targetId,
         ...(index === null ? {} : { index }),
+        ...(gesture.detached ? { detached: true } : {}),
       },
     });
     return true;
@@ -277,6 +340,7 @@ export class BoardDragController {
         x: input.dropPoint?.x ?? centreX,
         y: input.dropPoint?.y ?? centreY,
         ...(index === null ? {} : { index }),
+        ...(gesture.detached ? { detached: true } : {}),
       });
     }
     return true;

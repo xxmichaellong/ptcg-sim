@@ -255,7 +255,7 @@ describe('composed board scenes', () => {
       }
     }
   );
-  it('carries a joined Pokémon whole only toward a drop that moves it whole', () => {
+  it('carries a joined Pokémon whole wherever it is held, and settles it whole only when the drop moved it whole', () => {
     const { view, cards, stack, playerId } = fixture();
     const scene = createBoardScene(
       view,
@@ -282,15 +282,25 @@ describe('composed board scenes', () => {
       scene.zones.find(
         (zone) => zone.kind === kind && zone.playerId === playerId
       )!.id;
-    // Picked up, or over a play slot: the whole Pokémon comes along.
+    // Picked up, over a play slot or over a pile: the whole Pokémon comes
+    // along, as the drop sends all of it.
     expect(compositionHold(scene, other, drag(null))).not.toBeNull();
     expect(compositionHold(scene, other, drag(zoneOf('bench')))).not.toBeNull();
-    // Over a pile only the grabbed piece moves (the drop sends only it), and
-    // once dropped only the grabbed piece is held where it landed.
-    expect(compositionHold(scene, other, drag(zoneOf('discard')))).toBeNull();
+    expect(
+      compositionHold(scene, other, drag(zoneOf('discard')))
+    ).not.toBeNull();
+    // Dropped, it settles whole only when the drop moved all of it.
     expect(
       compositionHold(scene, other, { cardId: grabbed.id, x: 400, y: 300 })
     ).toBeNull();
+    expect(
+      compositionHold(scene, other, {
+        cardId: grabbed.id,
+        x: 400,
+        y: 300,
+        wholeStack: true,
+      })
+    ).not.toBeNull();
     // The grabbed piece itself always follows.
     expect(compositionHold(scene, grabbed, drag(zoneOf('discard')))).toEqual(
       drag(zoneOf('discard'))
