@@ -172,10 +172,15 @@ describe('renderer-neutral drag controller', () => {
       emitIntent: (intent) => intents.push(intent),
       emitPresentationUpdate: (update) => updates.push(update),
     });
+    // On the redesigned table, which arranges freely.
+    const table: BoardScene = {
+      ...scene(),
+      layout: { ...layout, geometryVersion: 2 },
+    };
     // Gripped by its top-left corner: the face is 35px right and 51px
     // below the pointer, which is over the bench.
-    controller.pointerDown(scene(), sourceId, input(25, 435));
-    controller.pointerMove(scene(), input(450, 120));
+    controller.pointerDown(table, sourceId, input(25, 435));
+    controller.pointerMove(table, input(450, 120));
     expect(updates.at(-1)).toEqual({
       kind: 'DragChanged',
       drag: {
@@ -187,7 +192,7 @@ describe('renderer-neutral drag controller', () => {
         index: 0,
       },
     });
-    controller.pointerUp(scene(), input(450, 120));
+    controller.pointerUp(table, input(450, 120));
     // It lands where its face was, not with its centre under the pointer.
     expect(intents).toEqual([
       {

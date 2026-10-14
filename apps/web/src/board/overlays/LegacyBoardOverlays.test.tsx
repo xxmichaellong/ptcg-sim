@@ -1715,8 +1715,6 @@ describe('legacy board overlays', () => {
       targetId: hand.id,
       x: targetX + 43,
       y: targetY + 68,
-      // Into the hand at the place it was dropped.
-      index: expect.any(Number),
     });
     expect(
       host

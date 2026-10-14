@@ -1,7 +1,11 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { containsPoint } from './geometry.js';
-import { layoutTableHand, layoutTableRow } from './layout-table.js';
+import {
+  layoutTableHand,
+  layoutTableRow,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
+} from './layout-table.js';
 import type {
   BoardPresentation,
   BoardScene,
@@ -42,12 +46,16 @@ const centreX = (rect: Rect): number => rect.x + rect.width / 2;
 
 const STACK_ROLES = new Set(['stackEvolution', 'stackAttachment']);
 
-/** The zone a card is being arranged in, when `targetId` is one. */
+/**
+ * The zone a card is being arranged in, when `targetId` is one. Only the
+ * redesigned table (geometry v2) arranges freely; v1's geometry keeps v1's
+ * order, where a card dropped back in its own zone stays put.
+ */
 export const arrangedZone = (
   scene: BoardScene,
   targetId: string | null | undefined
 ): ZoneSceneNode | undefined =>
-  targetId
+  targetId && scene.layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
     ? scene.zones.find(
         (zone) =>
           zone.id === targetId &&
