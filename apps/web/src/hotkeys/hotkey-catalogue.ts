@@ -392,8 +392,8 @@ export const HOTKEY_ACTIONS = [
   }),
   action('table.flipBoard', {
     group: 'table',
-    label: 'Switch side',
-    short: 'Switch side',
+    label: 'Flip the table',
+    short: 'Flip',
     scope: 'any',
     defaultChord: 'alt+f',
   }),

@@ -240,6 +240,18 @@ export const BOARD_SURFACE_CSS = `
   box-shadow: inset 0 0 0 1.5px var(--color-felt-line, rgb(255 255 255 / 0.14));
   background: oklch(1 0 0 / 0.018);
 }
+.ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='false'] .ptcgsim-zone-lostZone {
+  transition:
+    background-color var(--duration-fast, 140ms) ease-out,
+    box-shadow var(--duration-fast, 140ms) ease-out,
+    opacity 200ms ease-out;
+}
+/* The optional Lost Zone, put out, fades onto the mat rather than popping. */
+@starting-style {
+  .ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='false'] .ptcgsim-zone-lostZone {
+    opacity: 0;
+  }
+}
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-board[data-zone-outline='true'] {
   box-shadow: none;
   background: none;

@@ -53,6 +53,31 @@
   pointer-events: none;
 }
 
+/* Put away, its last frame fades and sinks a little (exit-ghost.ts). */
+.ptcgsim-table-centre.is-leaving {
+  pointer-events: none;
+}
+
+.ptcgsim-table-centre.is-leaving > * {
+  pointer-events: none;
+  animation: ptcgsim-table-centre-out
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-in)
+    forwards;
+}
+
+@keyframes ptcgsim-table-centre-out {
+  to {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.98;
+  }
+}
+
+:root[data-motion='reduced'] .ptcgsim-table-centre.is-leaving > *,
+:root[data-motion-speed='instant'] .ptcgsim-table-centre.is-leaving > * {
+  animation-duration: 1ms;
+}
+
 /* Above the seam, clear of the rail: the empty table's far half. */
 .ptcgsim-table-centre[data-area='upper'] {
   bottom: calc((1 - var(--table-seam, 0.5)) * 100% + 24px);

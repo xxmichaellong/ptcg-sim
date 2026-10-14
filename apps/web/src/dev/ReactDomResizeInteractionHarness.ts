@@ -264,7 +264,7 @@ export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
       },
       {
         id: 'flipBoardButton',
-        label: 'Switch side',
+        label: 'Flip',
         icon: ArrowsDownUpIcon,
         onSelect: () => runtime.flipBoard(),
       },

@@ -41,7 +41,7 @@ describe('fitting the rail', () => {
       action('pass', 5),
       action('coin', 2),
       action('undo', 3),
-      action('switch', 6, { title: 'Switch side' }),
+      action('switch', 6, { title: 'Flip the table' }),
     ];
     const reset: ActionMenuEntry = {
       id: 'reset',
@@ -66,7 +66,7 @@ describe('fitting the rail', () => {
     const moved = fitted.more[2];
     expect(
       moved?.kind !== 'separator' && moved?.kind !== 'label' && moved?.label
-    ).toBe('Switch side');
+    ).toBe('Flip the table');
   });
 
   it('falls back to positions when no priorities are given', () => {

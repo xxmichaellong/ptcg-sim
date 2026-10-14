@@ -292,3 +292,16 @@
     width: 36px;
   }
 }
+
+/* What the table offers fades in where it appears (a seat with no deck, a
+   marker put out, the + in the staging area). */
+:root:not([data-motion='reduced']) .table-zone-affordance {
+  transition: opacity calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+@starting-style {
+  :root:not([data-motion='reduced']) .table-zone-affordance {
+    opacity: 0;
+  }
+}

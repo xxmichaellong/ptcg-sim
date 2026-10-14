@@ -38,38 +38,46 @@ right and the table lays itself out beside it (§4).
 Geometry v2 keeps a clear band at the centre line between the halves; the
 **table rail** lives there (`board/rail/TableRail.tsx`, painted by
 `LegacyBoardChrome` from the layout's `boardControlsAnchor`, following the
-seam when the table is tilted). Its left end holds the **app menu**, its
+seam when the table is tilted). Its left end holds the **app toolbar**, its
 right end the **activity log**, and between them only the turn's **game
 actions**, stopping short of the Stadium, which straddles the seam:
 
-| Seat stage (`board/seat-stage.ts`) | Rail actions                                    |
-| ---------------------------------- | ----------------------------------------------- |
-| No cards yet                       | **Load a deck** (primary), Coin, Switch side    |
-| A deck not yet set up              | **Set up** (primary), Coin, Undo, Switch side   |
-| Playing                            | Turn, Attack, Pass, Coin, Undo, Switch side     |
-| Replay                             | Restart, Back, **Next**, End, Switch side, Exit |
+| Seat stage (`board/seat-stage.ts`) | Rail actions                             |
+| ---------------------------------- | ---------------------------------------- |
+| No cards yet                       | **Load a deck** (primary), Coin, Flip    |
+| A deck not yet set up              | **Set up** (primary), Coin, Undo, Flip   |
+| Playing                            | Turn, Attack, Pass, Coin, Undo, Flip     |
+| Replay                             | Restart, Back, **Next**, End, Flip, Exit |
 
 The rarer actions sit behind **More**: Set up again, Announce mulligan,
-Reset, and in Solo Set up both sides / Reset both sides, and Change deck.
-Spectators see only Switch side. Labels give way to icons when the rail is
-short (a container query); each button keeps its full name for its tooltip
+Reset, and in Solo Set up both sides / Reset both sides. (Changing the deck
+is the toolbar's Deck.) Spectators see only Flip. The actions are icons, 40px
+for a mouse and 44px under a finger; each keeps its full name for its tooltip
 and for assistive tech, with the key that does the same. The board owns
-Turn, Coin (which waits on the room's answer), Switch side and Mulligan; the
+Turn, Coin (which waits on the room's answer), Flip and Mulligan; the
 route orders them among its own (`BoardRailModel.compose`). v1's control ids
 are kept where they still name the same control (`#setupButton`,
 `#p2AttackButton`, `#turnButton`, `#flipCoinButton`, `#flipBoardButton`).
 
-### 3. The app menu
+### 3. The app toolbar
 
-One button at the rail's left end (`session/shell/AppMenu.tsx`), headed by
-where you are ("Solo table", "Room ABC123", "Replay"):
+A toolbar at the rail's left end (`session/shell/AppMenu.tsx`), one
+segmented group, open by default: **Deck** (the acting seat's), **Play
+online** (Solo table, from the lobby), **Keyboard shortcuts** (not on a
+touch-only screen) and **Settings**, then a menu button for the rest, headed
+by where you are ("Solo table", "Room ABC123", "Replay"):
 
-- Play online… (from Solo), Deck…, Settings…, Keyboard shortcuts;
 - Game: Exit replay, Watch a replay…, Save online game, Resume a saved
   game…, Download replay;
-- Full screen, Reload card images;
-- Tutorial, the release notes (named by the release, `v1.6`);
-- Copy an invitation, Leave room (in a room).
+- Full screen (Exit full screen while full screen), Reload card images;
+- Help: Tutorial, the release notes (named by the release, `v1.6`),
+  Sponsors & Donations, Discord, contact;
+- Copy an invitation, Leave room (in a room);
+- Fold the toolbar.
+
+Folded (kept in `ptcgsim.shell.v1`, or on a rail narrower than 820px) it is one
+menu button holding all of it, with Show toolbar. Settings holds settings
+only: the table, the page, motion.
 
 ### 4. The activity log
 
@@ -78,12 +86,26 @@ The rail's right end opens the battle log and chat
 500px tall it docks at the right, `--rail-width` wide, and the table lays out
 beside it (the layout's `sidebar` shell), so play goes on with it open; it
 stays as the player left it (`ptcgsim.shell.v1`). Narrower, it opens over the
-table, and from the bottom on a phone. Its header holds the room's name, Copy
+table, and from the bottom on a phone. Docked, it slides in and out and the
+table makes room as it moves, both driven by one spring
+(`session/shell/dock-slide.ts`). Its header holds the room's name, Copy
 an invitation, and the log's own actions (Download, Clear). While it is
-closed the launcher counts what others said and who came or went since it
-was last open, and the other side's newest lines show above it for a few
-seconds; a player's own moves do not, nor anything at a Solo table but the
-room's announcements.
+closed the launcher counts what the other side did and said, the room's
+announcements and who came or went since it was last open, and the same
+lines show above it for a few seconds; a player's own moves do not count.
+
+### 4a. The optional pieces
+
+The Lost Zone and the VSTAR/GX markers are optional (few formats use them):
+off by default, kept on this device (`ptcgsim.board-view.v1`). On, they sit
+beside each player's prizes toward the centre line, the Lost Zone level with
+the Active (the Tournament Handbook keeps it directly above the prizes), the
+markers beside it; the staging area takes the rest of the row
+(`BoardPlayerLayout.extras`). A table too narrow for them keeps the Lost Zone
+at the end of the outer column and the markers by the hand. A small `+` in
+the viewer's staging area adds or removes them; Settings has the same
+switches; an empty Lost Zone can be put away from its corner. A Lost Zone
+holding cards always shows.
 
 ### 5. Sheets and the deck screen
 

@@ -183,3 +183,25 @@
   width: var(--rail-height, 32px);
   padding: 0;
 }
+
+/* An action that joins the rail (the next stage's) fades and grows in
+   rather than popping. */
+:root:not([data-motion='reduced'])
+  .ptcgsim-table-rail__actions
+  > .ptcgsim-rail-button {
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    scale var(--duration-instant) var(--ease-out),
+    opacity calc(var(--duration-normal) * var(--motion-scale, 1))
+      var(--ease-out);
+}
+
+@starting-style {
+  :root:not([data-motion='reduced'])
+    .ptcgsim-table-rail__actions
+    > .ptcgsim-rail-button {
+    opacity: 0;
+    scale: 0.85;
+  }
+}

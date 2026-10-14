@@ -48,7 +48,7 @@ const boardHarness = vi.hoisted(() => ({
   revision: undefined as number | undefined,
   replaying: false,
   refreshImages: 0,
-  /** Whether the board would offer Switch side (Solo, spectators, coaching). */
+  /** Whether the board would offer Flip (Solo, spectators, coaching). */
   switchSide: false,
   pressed: [] as string[],
 }));
@@ -109,7 +109,7 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
             }
           : {}),
         ...(boardHarness.switchSide
-          ? { switchSide: own('flipBoardButton', 'Switch side') }
+          ? { switchSide: own('flipBoardButton', 'Flip') }
           : {}),
       });
       return (
@@ -515,7 +515,7 @@ describe('RemoteRoomRoute', () => {
     expect(find('#roomHeader')).toBeNull();
     expect(find('#appMenuButton')).not.toBeNull();
     expect(find('#activityButton')).not.toBeNull();
-    // Not yet seated: only the board's own Switch side.
+    // Not yet seated: only the board's own Flip.
     expect(railIds()).toEqual(['flipBoardButton']);
 
     const socket = await connect(socketFactory);

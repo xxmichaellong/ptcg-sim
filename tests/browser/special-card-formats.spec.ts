@@ -104,7 +104,7 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
       )!.id
   );
   if (!(await page.locator('[data-legacy-zone-browser]').isVisible())) {
-    // A pile in flight (after Switch side) takes no double-click.
+    // A pile in flight (after Flip) takes no double-click.
     await expect(
       page.locator('.ptcgsim-board-surface[data-motion="idle"]')
     ).toHaveCount(1);

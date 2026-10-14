@@ -11,6 +11,7 @@ import {
 } from '../browser-room-background.js';
 import '../../design/panel-controls.css';
 import type { DockSlide } from './dock-slide.js';
+import { useExitGhost } from './exit-ghost.js';
 import './table-shell.css';
 
 /**
@@ -119,16 +120,23 @@ export const TableCentre = ({
 }: {
   readonly seam?: number;
   readonly children: ReactNode;
-}) => (
-  <div
-    className="ptcgsim-table-centre"
-    data-area={seam === undefined ? undefined : 'upper'}
-    style={
-      seam === undefined
-        ? undefined
-        : ({ '--table-seam': String(seam) } as CSSProperties)
-    }
-  >
-    {children}
-  </div>
-);
+}) => {
+  // Put away (a deck loaded, the card dismissed), it fades rather than
+  // vanishing from under the pointer.
+  const ref = useRef<HTMLDivElement>(null);
+  useExitGhost(ref);
+  return (
+    <div
+      ref={ref}
+      className="ptcgsim-table-centre"
+      data-area={seam === undefined ? undefined : 'upper'}
+      style={
+        seam === undefined
+          ? undefined
+          : ({ '--table-seam': String(seam) } as CSSProperties)
+      }
+    >
+      {children}
+    </div>
+  );
+};
