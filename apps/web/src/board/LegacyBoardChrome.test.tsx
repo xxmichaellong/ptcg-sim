@@ -415,7 +415,7 @@ describe('LegacyBoardChrome', () => {
     host.remove();
   });
 
-  it('styles the rail as glassy pills from the design tokens', () => {
+  it('styles the rail as rounded buttons from the design tokens', () => {
     const css = readFileSync(
       join(import.meta.dirname, 'rail', 'TableRail.css'),
       'utf8'
@@ -425,7 +425,7 @@ describe('LegacyBoardChrome', () => {
       'var(--color-surface-2)',
       'var(--color-border)',
       'var(--shadow-2)',
-      'var(--radius-pill)',
+      'var(--radius-control)',
       'var(--duration-instant)',
       'var(--rail-height, 32px)',
     ]) {

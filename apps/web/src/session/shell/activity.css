@@ -256,8 +256,6 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-  backdrop-filter: blur(10px) saturate(1.2);
   box-shadow: var(--shadow-3);
   color: var(--color-text);
   font-family: var(--font-ui);

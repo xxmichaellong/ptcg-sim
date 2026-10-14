@@ -51,10 +51,8 @@
   margin: 0;
   padding: 0 0.85em;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-control);
   background: var(--color-surface-2);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-  backdrop-filter: blur(10px) saturate(1.2);
   box-shadow: var(--shadow-2), var(--highlight-top);
   color: var(--color-text);
   font-family: var(--font-ui);

@@ -11,8 +11,6 @@
   border-radius: var(--radius-xl);
   background: var(--color-surface-2);
   box-shadow: var(--shadow-5), var(--highlight-top);
-  -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
-  backdrop-filter: blur(var(--surface-blur)) saturate(1.2);
   color: var(--color-text);
   font-family: var(--font-ui);
   font-size: var(--text-sm);

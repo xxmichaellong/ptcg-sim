@@ -15,22 +15,23 @@ export const BOARD_SURFACE_CSS = `
   z-index: -15;
   transform-origin: 0 0;
   pointer-events: none;
-  border-radius: 22px;
-  /* A cloth playmat under a lamp: a woven texture that foreshortens with
-     the table, light falling off from just above the middle, and a rubber
-     rim with the mat's thickness showing along its near edge. */
+  border-radius: 18px;
+  /* A cloth playmat on the desk: a fine woven texture that foreshortens
+     with the table, the lamp's light falling off from up and to the left,
+     an overlocked edge, and the rubber's thickness along its near side. */
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse 70% 62% at 50% 38%, var(--color-felt-glow, #365b6555), transparent 72%),
-    radial-gradient(ellipse 125% 105% at 50% 45%, var(--color-felt, #1c3e47) 42%, var(--color-felt-deep, #122a33) 100%);
-  background-size: 160px 160px, auto, auto;
-  background-blend-mode: soft-light, normal, normal;
+    radial-gradient(ellipse 60% 55% at 42% 38%, var(--color-felt-glow, rgb(255 214 160 / 0.13)), transparent 72%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.95' numOctaves='2' seed='3' stitchTiles='stitch' result='a'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95 0.05' numOctaves='2' seed='7' stitchTiles='stitch' result='b'/%3E%3CfeComposite in='a' in2='b' operator='arithmetic' k1='0' k2='0.5' k3='0.5' k4='0' result='c'/%3E%3CfeColorMatrix in='c' type='matrix' values='0.2 0.2 0.2 0 0.2 0.2 0.2 0.2 0 0.2 0.2 0.2 0.2 0 0.2 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23f%29'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 110% 105% at 46% 46%, var(--color-felt, #1e4636) 38%, var(--color-felt-deep, #143024) 100%);
+  background-size: auto, 96px 96px, auto;
+  background-blend-mode: normal, soft-light, normal;
   box-shadow:
-    inset 0 0 0 4px rgb(0 0 0 / 0.3),
-    inset 0 0 0 5px rgb(255 255 255 / 0.07),
-    inset 0 0 120px rgb(0 0 0 / 0.32),
-    0 6px 0 rgb(4 10 14 / 0.55),
-    0 24px 44px rgb(0 0 0 / 0.42);
+    inset 0 0 0 1px var(--color-felt-rim, #0d1410),
+    inset 0 0 0 5px var(--color-felt-thread, #14261d),
+    inset 0 0 0 6px var(--color-felt-thread-hi, #2b4a3b),
+    inset 0 0 90px rgb(10 6 2 / 0.28),
+    0 3px 0 var(--color-felt-rim, #0d1410),
+    0 14px 34px rgb(10 6 2 / 0.4);
 }
 .ptcgsim-card__depth {
   position: absolute;
@@ -40,11 +41,12 @@ export const BOARD_SURFACE_CSS = `
   overflow: visible;
   pointer-events: none;
 }
-.ptcgsim-card__depth [data-depth-shadow] { fill: #071018; }
-.ptcgsim-card__depth [data-depth-contact] { fill: #03080c; }
-.ptcgsim-card__depth [data-depth-side] { fill: #526070; stroke: #152536; stroke-width: 0.45; }
-.ptcgsim-card__depth [data-depth-lines] { fill: none; stroke: #d0d7dd; stroke-width: 0.4; opacity: 0.5; }
-.ptcgsim-card[data-depth-card] .ptcgsim-card__face { box-shadow: var(--ptcgsim-ring, 0 0 #0000), 0 0 0 0.55px #e6eff54d; }
+.ptcgsim-card__depth [data-depth-shadow] { fill: var(--ptcgsim-shadow-tint, #0e0804); }
+.ptcgsim-card__depth [data-depth-contact] { fill: var(--ptcgsim-contact-tint, #070402); }
+/* A card's edge is paper; a stack's, many papers. */
+.ptcgsim-card__depth [data-depth-side] { fill: var(--ptcgsim-card-edge, #d8d0bf); stroke: #6d6352; stroke-width: 0.45; }
+.ptcgsim-card__depth [data-depth-lines] { fill: none; stroke: #f3ecdc; stroke-width: 0.4; opacity: 0.55; }
+.ptcgsim-card[data-depth-card] .ptcgsim-card__face { box-shadow: var(--ptcgsim-ring, 0 0 #0000), 0 0 0 0.55px rgb(243 236 220 / 0.3); }
 .ptcgsim-card[data-depth-card]:not([data-in-hand]) > .ptcgsim-card__body,
 .ptcgsim-card[data-depth-card][data-held] > .ptcgsim-card__body {
   scale: 1 !important;
@@ -252,6 +254,23 @@ export const BOARD_SURFACE_CSS = `
     opacity: 0;
   }
 }
+/* The mark printed under each Active, as on an official mat: a ring with
+   a band across it, faint enough that a card covers it. */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-active[data-zone-outline='true']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 74%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 2px solid var(--color-felt-mark, rgb(232 220 192 / 0.1));
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, transparent 13%, var(--color-felt-mark, rgb(232 220 192 / 0.1)) 13% 17%, transparent 17%),
+    linear-gradient(transparent calc(50% - 1px), var(--color-felt-mark, rgb(232 220 192 / 0.1)) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+}
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-board[data-zone-outline='true'] {
   box-shadow: none;
   background: none;
@@ -264,8 +283,9 @@ export const BOARD_SURFACE_CSS = `
   left: 8px;
   top: 6px;
   color: var(--color-felt-label, rgb(255 255 255 / 0.45));
-  font: 600 10px/1 var(--font-ui, sans-serif);
-  letter-spacing: 0.12em;
+  /* Printed on the mat in the card game's own typeface, like a real mat. */
+  font: 600 11px/1 var(--font-display, sans-serif);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   pointer-events: none;
   white-space: nowrap;

@@ -25,7 +25,11 @@
     var(--ease-in-out) both;
 }
 .turn-banner[data-side='local'] {
-  --turn-banner-tint: oklch(0.5 0.15 var(--hue-you) / 0.82);
+  --turn-banner-tint: color-mix(
+    in oklab,
+    var(--color-accent-fill) 85%,
+    transparent
+  );
 }
 .turn-banner[data-side='opponent'] {
   --turn-banner-tint: oklch(0.48 0.16 var(--hue-opponent) / 0.82);

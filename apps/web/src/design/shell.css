@@ -48,15 +48,44 @@ textarea {
   display: none;
 }
 
-/* The felt: a lamp-lit table with a soft vignette and a faint weave. It
-   fills the window (ADR-030); a docked log sits over its right edge while
-   the table lays itself out beside it. */
+/* The desk the mat lies on: walnut by night, oak by day, under one lamp up
+   and to the left, falling off toward the window's edges. It fills the
+   window (ADR-030); a docked log sits over its right edge while the table
+   lays itself out beside it. The mat itself is the board's (BoardSurface's
+   depth mat). */
 .remote-room-route .board-column {
+  --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -1.210 0 0 0 0.688'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.880 0 0 0 0.468'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
+
   inset: 0;
   width: 100%;
   background:
     radial-gradient(
-      ellipse 70% 60% at 48% 52%,
+      ellipse 55% 50% at 42% 40%,
+      var(--color-lamp),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 85% 80% at 47% 47%,
+      transparent 45%,
+      rgb(10 6 2 / 0.42) 100%
+    ),
+    var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
+  background-size:
+    auto,
+    auto,
+    640px 360px,
+    auto;
+  background-color: var(--color-desk);
+}
+:root[data-theme='day'] .remote-room-route .board-column {
+  --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -0.660 0 0 0 0.375'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.480 0 0 0 0.255'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
+}
+/* Flat, there is no mat drawn: the felt itself fills the table. */
+.remote-room-route
+  .board-column:has(.ptcgsim-board-surface[data-table-view='flat']) {
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 46% 46%,
       var(--color-felt-glow),
       transparent 70%
     ),
@@ -66,16 +95,6 @@ textarea {
       var(--color-felt-deep) 100%
     );
   background-color: var(--color-felt);
-  box-shadow: inset 0 0 120px oklch(0 0 0 / 0.35);
-}
-.remote-room-route .board-column::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.18;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 /* A chosen background becomes the play mat, dimmed so cards stay legible. */
 .remote-room-route[data-room-background='image'] .board-column,
@@ -95,7 +114,6 @@ textarea {
   background: var(--color-surface-2);
   color: var(--color-text);
   box-shadow: var(--shadow-5), var(--highlight-top);
-  backdrop-filter: blur(16px);
 }
 .custom-popup .popup-button {
   height: 34px;

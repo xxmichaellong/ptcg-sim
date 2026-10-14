@@ -77,6 +77,8 @@
   --radius-lg: 18px;
   --radius-xl: 24px;
   --radius-pill: 999px;
+  /* Buttons on the table: rounded rectangles, as on a real control. */
+  --radius-control: 10px;
 
   /* Shared interaction geometry, used by dialogs, panels and board chrome. */
   --control-height: 36px;
@@ -218,127 +220,140 @@
 }
 
 /* ---- Night table (default) ---------------------------------------- */
+/* A green cloth playmat on a walnut desk under a warm lamp; the page's
+   panels are warm paper-dark, the ink cream. One blue for the player's
+   own actions; seats in blue and red. Shadows are the desk's dark, never
+   black. */
 :root,
 :root[data-theme='night'] {
-  --color-room: oklch(0.145 0.015 270);
-  --color-felt: oklch(0.275 0.032 var(--hue-table));
-  --color-felt-deep: oklch(0.205 0.026 var(--hue-table));
-  --color-felt-line: oklch(0.82 0.025 var(--hue-table) / 0.13);
-  --color-felt-line-strong: oklch(0.86 0.05 var(--hue-table) / 0.3);
-  --color-felt-label: oklch(0.9 0.018 var(--hue-table) / 0.62);
-  --color-felt-glow: oklch(0.53 0.045 var(--hue-table) / 0.2);
+  --color-room: #241911;
+  --color-desk: #2f2017;
+  --color-desk-hi: #3d2a1e;
+  --color-desk-grain: rgb(14 8 4 / 0.55);
+  --color-felt: #1e4636;
+  --color-felt-deep: #143024;
+  --color-felt-thread: #14261d;
+  --color-felt-thread-hi: #2b4a3b;
+  --color-felt-rim: #0d1410;
+  --color-felt-line: rgb(232 220 192 / 0.3);
+  --color-felt-line-strong: rgb(232 220 192 / 0.46);
+  --color-felt-label: rgb(232 220 192 / 0.66);
+  --color-felt-glow: rgb(255 214 160 / 0.13);
+  --color-lamp: rgb(255 214 160 / 0.16);
 
-  --color-surface-1: oklch(0.205 0.014 270 / 0.96);
-  --color-rail: oklch(0.175 0.012 270);
-  --color-surface-2: oklch(0.24 0.018 270 / 0.97);
-  --color-surface-3: oklch(0.29 0.02 270);
-  --color-surface-sunken: oklch(0.16 0.012 270 / 0.92);
-  --color-surface-hover: oklch(1 0 0 / 0.06);
-  --color-surface-pressed: oklch(1 0 0 / 0.1);
-  --color-scrim: oklch(0.1 0.02 256 / 0.62);
+  --color-surface-1: #2a221c;
+  --color-rail: #241d18;
+  --color-surface-2: #30271f;
+  --color-surface-3: #3d3128;
+  --color-surface-sunken: #1f1813;
+  --color-surface-hover: rgb(255 240 220 / 0.06);
+  --color-surface-pressed: rgb(255 240 220 / 0.1);
+  --color-scrim: rgb(16 10 6 / 0.6);
 
-  --color-border: oklch(0.9 0.015 270 / 0.1);
-  --color-border-strong: oklch(0.9 0.015 270 / 0.22);
+  --color-border: rgb(232 214 190 / 0.14);
+  --color-border-strong: rgb(232 214 190 / 0.28);
 
-  --color-text: oklch(0.965 0.005 85);
-  --color-text-muted: oklch(0.8 0.012 270);
-  --color-text-faint: oklch(0.68 0.014 270);
-  --color-text-on-accent: oklch(0.99 0.004 250);
+  --color-text: #f3ebdc;
+  --color-text-muted: #c9bba6;
+  --color-text-faint: #a3937f;
+  --color-text-on-accent: #ffffff;
 
-  --color-accent: oklch(0.62 0.17 var(--hue-you));
-  --color-accent-hover: oklch(0.67 0.17 var(--hue-you));
-  --color-accent-pressed: oklch(0.57 0.16 var(--hue-you));
-  --color-accent-soft: oklch(0.62 0.17 var(--hue-you) / 0.18);
+  --color-accent: #6ea4e6;
+  --color-accent-hover: #86b4ec;
+  --color-accent-pressed: #5b94d8;
+  --color-accent-soft: rgb(110 164 230 / 0.2);
   /* Solid controls with --color-text-on-accent labels: at least 4.5:1. The
      brighter --color-accent stays for icons, rings and borders on the
      dark surfaces, where it needs 3:1 against them instead. */
-  --color-accent-fill: oklch(0.53 0.17 var(--hue-you));
-  --color-accent-fill-hover: oklch(0.56 0.17 var(--hue-you));
-  --color-accent-fill-pressed: oklch(0.49 0.16 var(--hue-you));
+  --color-accent-fill: #3672b5;
+  --color-accent-fill-hover: #3f7dc2;
+  --color-accent-fill-pressed: #2f659f;
 
-  --color-you: oklch(0.7 0.15 var(--hue-you));
-  --color-you-soft: oklch(0.7 0.15 var(--hue-you) / 0.2);
-  --color-opponent: oklch(0.68 0.17 var(--hue-opponent));
-  --color-opponent-soft: oklch(0.68 0.17 var(--hue-opponent) / 0.2);
-  --color-gold: oklch(0.84 0.15 var(--hue-gold));
+  --color-you: #5b9be0;
+  --color-you-soft: rgb(91 155 224 / 0.2);
+  --color-opponent: #e0675a;
+  --color-opponent-soft: rgb(224 103 90 / 0.2);
+  --color-gold: #ffd04d;
   --color-mint: oklch(0.82 0.14 var(--hue-mint));
   --color-sky: oklch(0.78 0.11 232);
-  --color-danger: oklch(0.64 0.21 25);
-  --color-danger-soft: oklch(0.64 0.21 25 / 0.18);
-  --color-danger-fill: oklch(0.55 0.2 25);
+  --color-danger: oklch(0.66 0.19 28);
+  --color-danger-soft: oklch(0.66 0.19 28 / 0.18);
+  --color-danger-fill: oklch(0.55 0.19 28);
   --color-warning: oklch(0.8 0.16 75);
   --color-success: oklch(0.76 0.15 155);
 
-  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.35);
-  --shadow-2: 0 2px 6px oklch(0 0 0 / 0.38), 0 1px 2px oklch(0 0 0 / 0.3);
-  --shadow-3: 0 8px 20px oklch(0 0 0 / 0.42), 0 2px 6px oklch(0 0 0 / 0.3);
-  --shadow-4: 0 16px 40px oklch(0 0 0 / 0.5), 0 4px 12px oklch(0 0 0 / 0.32);
-  --shadow-5: 0 28px 64px oklch(0 0 0 / 0.55), 0 8px 20px oklch(0 0 0 / 0.35);
-  --highlight-top: inset 0 1px 0 oklch(1 0 0 / 0.07);
+  --shadow-1: 0 1px 2px rgb(14 8 4 / 0.4);
+  --shadow-2: 0 2px 6px rgb(14 8 4 / 0.42), 0 1px 2px rgb(14 8 4 / 0.32);
+  --shadow-3: 0 8px 20px rgb(14 8 4 / 0.45), 0 2px 6px rgb(14 8 4 / 0.32);
+  --shadow-4: 0 16px 40px rgb(14 8 4 / 0.52), 0 4px 12px rgb(14 8 4 / 0.34);
+  --shadow-5: 0 28px 64px rgb(14 8 4 / 0.56), 0 8px 20px rgb(14 8 4 / 0.36);
+  --highlight-top: inset 0 1px 0 rgb(255 240 220 / 0.07);
 
   color-scheme: dark;
 }
 
 /* ---- Day table ------------------------------------------------------ */
+/* The same mat on a light oak desk by daylight; paper-white panels. */
 :root[data-theme='day'] {
-  --color-room: oklch(0.9 0.01 85);
-  --color-felt: oklch(0.885 0.018 85);
-  --color-felt-deep: oklch(0.805 0.022 85);
-  --color-felt-line: oklch(0.35 0.025 75 / 0.16);
-  --color-felt-line-strong: oklch(0.35 0.025 75 / 0.28);
-  --color-felt-label: oklch(0.3 0.02 75 / 0.7);
-  --color-felt-glow: oklch(0.99 0.01 85 / 0.4);
+  --color-room: #b8956a;
+  --color-desk: #c4a074;
+  --color-desk-hi: #d6b88f;
+  --color-desk-grain: rgb(96 62 30 / 0.3);
+  --color-felt: #2f6b50;
+  --color-felt-deep: #24553f;
+  --color-felt-thread: #244d3a;
+  --color-felt-thread-hi: #3f7a5f;
+  --color-felt-rim: #1b2a22;
+  --color-felt-line: rgb(244 236 216 / 0.34);
+  --color-felt-line-strong: rgb(244 236 216 / 0.5);
+  --color-felt-label: rgb(244 236 216 / 0.74);
+  --color-felt-glow: rgb(255 248 232 / 0.12);
+  --color-lamp: rgb(255 248 232 / 0.14);
 
-  --color-surface-1: oklch(0.985 0.004 85 / 0.92);
-  --color-rail: oklch(0.965 0.006 85);
-  --color-surface-2: oklch(0.995 0.002 85 / 0.96);
-  --color-surface-3: oklch(0.95 0.006 85);
-  --color-surface-sunken: oklch(0.93 0.008 85 / 0.9);
-  --color-surface-hover: oklch(0 0 0 / 0.05);
-  --color-surface-pressed: oklch(0 0 0 / 0.09);
-  --color-scrim: oklch(0.2 0.02 256 / 0.4);
+  --color-surface-1: #f7f1e6;
+  --color-rail: #f3ecdf;
+  --color-surface-2: #fffcf6;
+  --color-surface-3: #efe6d6;
+  --color-surface-sunken: #ece3d3;
+  --color-surface-hover: rgb(60 40 20 / 0.05);
+  --color-surface-pressed: rgb(60 40 20 / 0.09);
+  --color-scrim: rgb(40 28 16 / 0.36);
 
-  --color-border: oklch(0 0 0 / 0.1);
-  --color-border-strong: oklch(0 0 0 / 0.2);
+  --color-border: rgb(60 40 20 / 0.14);
+  --color-border-strong: rgb(60 40 20 / 0.26);
 
-  --color-text: oklch(0.22 0.02 256);
-  --color-text-muted: oklch(0.4 0.02 256);
-  --color-text-faint: oklch(0.52 0.016 256);
-  --color-text-on-accent: oklch(0.99 0.004 250);
+  --color-text: #2a241f;
+  --color-text-muted: #5f554a;
+  --color-text-faint: #7d7264;
+  --color-text-on-accent: #ffffff;
 
-  --color-accent: oklch(0.55 0.18 var(--hue-you));
-  --color-accent-hover: oklch(0.5 0.18 var(--hue-you));
-  --color-accent-pressed: oklch(0.46 0.17 var(--hue-you));
-  --color-accent-soft: oklch(0.55 0.18 var(--hue-you) / 0.14);
+  --color-accent: #2c5f99;
+  --color-accent-hover: #244f82;
+  --color-accent-pressed: #1f466f;
+  --color-accent-soft: rgb(44 95 153 / 0.14);
   --color-accent-fill: var(--color-accent);
   --color-accent-fill-hover: var(--color-accent-hover);
   --color-accent-fill-pressed: var(--color-accent-pressed);
 
-  --color-you: oklch(0.52 0.17 var(--hue-you));
-  --color-you-soft: oklch(0.52 0.17 var(--hue-you) / 0.16);
-  --color-opponent: oklch(0.54 0.19 var(--hue-opponent));
-  --color-opponent-soft: oklch(0.54 0.19 var(--hue-opponent) / 0.16);
-  --color-gold: oklch(0.72 0.16 var(--hue-gold));
+  --color-you: #2c64b0;
+  --color-you-soft: rgb(44 100 176 / 0.16);
+  --color-opponent: #b8402f;
+  --color-opponent-soft: rgb(184 64 47 / 0.16);
+  --color-gold: #ffd04d;
   --color-mint: oklch(0.62 0.15 var(--hue-mint));
   --color-sky: oklch(0.58 0.13 236);
-  --color-danger: oklch(0.55 0.21 25);
-  --color-danger-soft: oklch(0.55 0.21 25 / 0.14);
+  --color-danger: oklch(0.55 0.2 28);
+  --color-danger-soft: oklch(0.55 0.2 28 / 0.14);
   --color-danger-fill: var(--color-danger);
   --color-warning: oklch(0.66 0.16 70);
   --color-success: oklch(0.58 0.15 155);
 
-  --shadow-1: 0 1px 2px oklch(0.2 0.02 256 / 0.18);
-  --shadow-2:
-    0 2px 6px oklch(0.2 0.02 256 / 0.18), 0 1px 2px oklch(0.2 0.02 256 / 0.14);
-  --shadow-3:
-    0 8px 20px oklch(0.2 0.02 256 / 0.2), 0 2px 6px oklch(0.2 0.02 256 / 0.14);
-  --shadow-4:
-    0 16px 40px oklch(0.2 0.02 256 / 0.24),
-    0 4px 12px oklch(0.2 0.02 256 / 0.16);
-  --shadow-5:
-    0 28px 64px oklch(0.2 0.02 256 / 0.28),
-    0 8px 20px oklch(0.2 0.02 256 / 0.18);
-  --highlight-top: inset 0 1px 0 oklch(1 0 0 / 0.6);
+  --shadow-1: 0 1px 2px rgb(60 36 14 / 0.2);
+  --shadow-2: 0 2px 6px rgb(60 36 14 / 0.2), 0 1px 2px rgb(60 36 14 / 0.16);
+  --shadow-3: 0 8px 20px rgb(60 36 14 / 0.22), 0 2px 6px rgb(60 36 14 / 0.16);
+  --shadow-4: 0 16px 40px rgb(60 36 14 / 0.26), 0 4px 12px rgb(60 36 14 / 0.18);
+  --shadow-5: 0 28px 64px rgb(60 36 14 / 0.3), 0 8px 20px rgb(60 36 14 / 0.2);
+  --highlight-top: inset 0 1px 0 rgb(255 255 255 / 0.6);
 
   color-scheme: light;
 }
@@ -347,7 +362,7 @@
 :root {
   --ptcgsim-card-radius: 4.8% / 3.4%;
   --ptcgsim-card-blank: var(--neutral-600);
-  --ptcgsim-card-shadow: oklch(0.05 0.02 256 / 0.42);
+  --ptcgsim-card-shadow: rgb(14 8 4 / 0.45);
   --ptcgsim-ring-width: 3px;
   --ptcgsim-ring-selected: var(--color-gold);
   --ptcgsim-ring-target: var(--color-mint);
