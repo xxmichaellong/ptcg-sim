@@ -1007,14 +1007,19 @@ export const BoardSurface = ({
   const latestSceneRef = useRef(scene);
   latestSceneRef.current = scene;
   const detachTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const detachFrameRef = useRef<number | null>(null);
   const cancelDetachTimer = () => {
-    if (detachTimerRef.current === null) return;
-    clearTimeout(detachTimerRef.current);
+    if (detachTimerRef.current !== null) clearTimeout(detachTimerRef.current);
+    if (detachFrameRef.current !== null)
+      cancelAnimationFrame(detachFrameRef.current);
     detachTimerRef.current = null;
+    detachFrameRef.current = null;
   };
   useEffect(
     () => () => {
       if (detachTimerRef.current !== null) clearTimeout(detachTimerRef.current);
+      if (detachFrameRef.current !== null)
+        cancelAnimationFrame(detachFrameRef.current);
     },
     []
   );
@@ -1563,10 +1568,23 @@ export const BoardSurface = ({
             canDetachFromStack(scene, target.card.id)
           ) {
             const pointerId = event.pointerId;
-            detachTimerRef.current = setTimeout(() => {
-              detachTimerRef.current = null;
+            const lift = () => {
               if (dragController.detach(latestSceneRef.current, pointerId))
                 clearHover();
+            };
+            detachTimerRef.current = setTimeout(() => {
+              detachTimerRef.current = null;
+              // A busy page can still hold the move that began the drag:
+              // the next frame delivers it first, and a card already being
+              // dragged never comes off its stack.
+              if (typeof requestAnimationFrame !== 'function') {
+                lift();
+                return;
+              }
+              detachFrameRef.current = requestAnimationFrame(() => {
+                detachFrameRef.current = null;
+                lift();
+              });
             }, DETACH_PRESS_MS);
           }
           const body = target.element.querySelector<HTMLElement>(

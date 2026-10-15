@@ -91,6 +91,7 @@ const watchSlide = (page: Page): Promise<void> =>
         emptyFrames: number;
         brokenImageFrames: number;
         framesSampled: number;
+        armed: boolean;
         stop: () => void;
       };
     };
@@ -105,6 +106,9 @@ const watchSlide = (page: Page): Promise<void> =>
       emptyFrames: 0,
       brokenImageFrames: 0,
       framesSampled: 0,
+      // Only what follows the click counts: the table can still be settling
+      // from what came before when the watch starts.
+      armed: false,
       stop: () => undefined as void,
     };
     w.__slide = record;
@@ -135,7 +139,7 @@ const watchSlide = (page: Page): Promise<void> =>
     };
     requestAnimationFrame(tick);
     const board = new MutationObserver(() => {
-      record.boardChanges.push({ phase: record.phase });
+      if (record.armed) record.boardChanges.push({ phase: record.phase });
     });
     board.observe(surface, { attributes: true, attributeFilter: ['style'] });
     const mat = surface.querySelector<HTMLElement>('.ptcgsim-depth-mat');
@@ -144,7 +148,7 @@ const watchSlide = (page: Page): Promise<void> =>
       const size = `${mat!.style.width}x${mat!.style.height}`;
       if (size !== matSize) {
         matSize = size;
-        record.matResizes += 1;
+        if (record.armed) record.matResizes += 1;
       }
     });
     if (mat)
@@ -177,10 +181,15 @@ const readSlide = (page: Page): Promise<SlideRecord> =>
     const {
       stop,
       phase: _phase,
+      armed: _armed,
       ...record
     } = (
       window as unknown as {
-        __slide: SlideRecord & { stop: () => void; phase: string };
+        __slide: SlideRecord & {
+          stop: () => void;
+          phase: string;
+          armed: boolean;
+        };
       }
     ).__slide;
     stop();
@@ -227,6 +236,10 @@ test('the table makes room for the sliding log in step with it, whole on every f
         (window as unknown as { __slide: { framesSampled: number } }).__slide
           .framesSampled >= 2
     );
+    await page.evaluate(() => {
+      (window as unknown as { __slide: { armed: boolean } }).__slide.armed =
+        true;
+    });
     await button.click();
     if (opening) await expect(page.locator('#activitySheet')).toBeVisible();
     else await expect(page.locator('#activitySheet')).toHaveCount(0);

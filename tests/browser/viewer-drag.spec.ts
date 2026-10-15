@@ -187,18 +187,28 @@ test('a card dragged out of the deck viewer is held by the table, makes room in 
           return Math.abs(now.x - before[3]!.x);
         })
         .toBeGreaterThan(8);
-      // From the moment it is let go: where the card is painted next.
+      // From the moment it is let go: where the card is painted next. A slow
+      // runner can paint that frame after the server answered, with the card
+      // already in the hand under its new alias.
       await page.evaluate((id) => {
         const record = window as unknown as {
           __afterRelease?: { x: number; y: number };
         };
+        const known = new Set(
+          [...document.querySelectorAll<HTMLElement>('[data-in-hand]')].map(
+            (card) => card.dataset.cardId
+          )
+        );
         window.addEventListener(
           'pointerup',
           () => {
             const look = () => {
-              const body = document.querySelector(
-                `.ptcgsim-card[data-card-id="${id}"] > .ptcgsim-card__body`
-              );
+              const card =
+                document.querySelector(`.ptcgsim-card[data-card-id="${id}"]`) ??
+                [
+                  ...document.querySelectorAll<HTMLElement>('[data-in-hand]'),
+                ].find((candidate) => !known.has(candidate.dataset.cardId));
+              const body = card?.querySelector(':scope > .ptcgsim-card__body');
               if (!body) {
                 requestAnimationFrame(look);
                 return;
