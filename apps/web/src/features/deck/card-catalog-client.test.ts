@@ -112,8 +112,7 @@ describe('loading the card catalog', () => {
 
   it('waits, and asks again, while the server builds its first catalog', async () => {
     const clock = timers();
-    const building = () =>
-      Response.json({ error: 'unavailable', building: true }, { status: 503 });
+    const building = () => Response.json({ available: false, building: true });
     const { fetch, requests } = server({
       [CARD_CATALOG_PATH]: [building, building, () => manifest()],
       [bodyUrl(VERSION)]: [fixtureBody],
@@ -253,8 +252,7 @@ describe('loading the card catalog', () => {
 
   it('stops everything when disposed', async () => {
     const clock = timers();
-    const building = () =>
-      Response.json({ error: 'unavailable', building: true }, { status: 503 });
+    const building = () => Response.json({ available: false, building: true });
     const { fetch, requests } = server({ [CARD_CATALOG_PATH]: [building] });
     const client = createCardCatalogClient({
       fetch,

@@ -13,7 +13,7 @@ import type {
  * it from disk. The last body that loaded is remembered here too, so a
  * visit whose manifest request fails (offline, the server mid-deploy) still
  * gets cards. While the server is still building its first catalog it
- * answers 503, and the loader waits and asks again.
+ * says so (`building`), and the loader waits and asks again.
  */
 
 export const CARD_CATALOG_PATH = '/v2/cards/catalog';
@@ -157,9 +157,8 @@ export const createCardCatalogClient = (
     } catch {
       return { kind: 'unavailable' };
     }
-    if (response.status === 503 && isRecord(body) && body.building === true) {
-      return { kind: 'building' };
-    }
+    // Still building: wait and ask again.
+    if (isRecord(body) && body.building === true) return { kind: 'building' };
     if (
       !response.ok ||
       !isRecord(body) ||

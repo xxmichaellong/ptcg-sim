@@ -41,6 +41,9 @@ describe('current deck lists', () => {
       fetchCurrentDecklists(respond({ error: 'unavailable' }, 503))
     ).rejects.toThrow();
     await expect(
+      fetchCurrentDecklists(respond({ available: false }))
+    ).rejects.toThrow('No current deck lists yet');
+    await expect(
       fetchCurrentDecklists(respond({ ...feed, fetchedAt: 'soon' }))
     ).rejects.toThrow();
     await expect(fetchCurrentDecklists(respond('not json'))).rejects.toThrow();

@@ -15,8 +15,9 @@ const CACHEABLE_HEADERS = {
 
 /**
  * `GET /v2/decks/current`: the deck picker's current lists, credited to
- * their source. 503 while none have been fetched yet, so the picker keeps
- * its built-in lists. The browser may keep a copy for a quarter of an hour.
+ * their source. `{ available: false }` while none have been fetched yet,
+ * so the picker keeps its built-in lists. The browser may keep a copy for a
+ * quarter of an hour.
  */
 export const handleCurrentDecksRequest = async (
   request: Request,
@@ -29,7 +30,11 @@ export const handleCurrentDecksRequest = async (
     return json({ error: 'invalid_request' }, 400);
   }
   const feed = await readFeed();
-  if (!feed) return json({ error: 'unavailable' }, 503);
+  // No lists yet is the feed's state, not a server failure: a 200 the
+  // picker reads, which browsers don't log as an error.
+  if (!feed) {
+    return json({ available: false }, 200);
+  }
   return Response.json(
     {
       source: 'Limitless TCG',

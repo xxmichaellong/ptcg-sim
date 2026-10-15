@@ -6,7 +6,7 @@ import type { CatalogManifest } from './builder.js';
  *
  *   GET /v2/cards/catalog              what is published: its version, the
  *                                      body's URL, when it was built, how
- *                                      big it is; 503 while a first build
+ *                                      big it is; `building` while a first build
  *                                      has nothing yet
  *   GET /v2/cards/catalog/<v>.json     the body for a version; it never
  *                                      changes, so it is cached for a year
@@ -47,8 +47,11 @@ export const handleCardCatalogManifestRequest = async (
   const refused = checkMethod(request);
   if (refused) return refused;
   const manifest = await readManifest();
+  // Not built yet is a state of the catalog, not a failure of the server:
+  // a 200 the loader reads and asks again on, which browsers don't log as
+  // an error.
   if (!manifest) {
-    return json({ error: 'unavailable', building: true }, 503, {
+    return json({ available: false, building: true }, 200, {
       'Retry-After': '5',
     });
   }

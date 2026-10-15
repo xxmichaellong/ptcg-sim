@@ -76,16 +76,16 @@ describe('GET /v2/cards/catalog', () => {
     });
   });
 
-  it('answers 503 while there is nothing yet, asking again in seconds', async () => {
+  it('says it is building while there is nothing yet, as a 200 browsers do not log', async () => {
     const response = await handleCardCatalogManifestRequest(
       new Request(`${ORIGIN}${CARD_CATALOG_PATH}`),
       async () => null
     );
-    expect(response.status).toBe(503);
+    expect(response.status).toBe(200);
     expect(response.headers.get('Retry-After')).toBe('5');
     expect(response.headers.get('Cache-Control')).toContain('no-store');
     expect(await response.json()).toEqual({
-      error: 'unavailable',
+      available: false,
       building: true,
     });
   });

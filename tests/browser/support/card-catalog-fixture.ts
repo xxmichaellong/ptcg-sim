@@ -18,7 +18,7 @@ const cardCount = (catalog: typeof fixture): number =>
 
 /**
  * Serves `catalog` for `/v2/cards/catalog` and its body. With `building`,
- * the manifest answers 503 as a server still building its first catalog
+ * the manifest answers `building` as a server still building its first catalog
  * does, until `ready()` is called.
  */
 export const routeCardCatalog = async (
@@ -37,10 +37,10 @@ export const routeCardCatalog = async (
     requests += 1;
     if (building) {
       await route.fulfill({
-        status: 503,
+        status: 200,
         contentType: 'application/json',
         headers: { 'Retry-After': '5', 'Cache-Control': 'no-store' },
-        body: JSON.stringify({ error: 'unavailable', building: true }),
+        body: JSON.stringify({ available: false, building: true }),
       });
       return;
     }

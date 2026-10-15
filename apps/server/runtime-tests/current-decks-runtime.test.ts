@@ -64,20 +64,24 @@ afterEach(() => {
 });
 
 describe('current decks from Limitless', () => {
-  it('answers 503 until any lists exist, without retrying Limitless on every request', async () => {
+  it('says none are available until any lists exist, without retrying Limitless on every request', async () => {
     serveLimitless(null);
     const first = await getCurrentDecks();
-    expect(first.status).toBe(503);
+    expect(first.status).toBe(200);
     expect(first.headers.get('Cache-Control')).toContain('no-store');
-    expect(await first.json()).toEqual({ error: 'unavailable' });
+    expect(await first.json()).toEqual({ available: false });
     const calls = limitlessCalls;
     expect(calls).toBeGreaterThan(0);
-    expect((await getCurrentDecks()).status).toBe(503);
+    expect(await (await getCurrentDecks()).json()).toEqual({
+      available: false,
+    });
     // A failed attempt holds further ones back for a while, even once the
     // object has been evicted and comes back fresh.
     expect(limitlessCalls).toBe(calls);
     await evictDurableObject(feedStub());
-    expect((await getCurrentDecks()).status).toBe(503);
+    expect(await (await getCurrentDecks()).json()).toEqual({
+      available: false,
+    });
     expect(limitlessCalls).toBe(calls);
   });
 

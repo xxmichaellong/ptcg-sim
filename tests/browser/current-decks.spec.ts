@@ -85,7 +85,7 @@ test('the deck screen keeps its classic decks when current lists are unavailable
 }) => {
   test.setTimeout(60_000);
   await page.route('**/v2/decks/current', (route) =>
-    route.fulfill({ status: 503, json: { error: 'unavailable' } })
+    route.fulfill({ json: { available: false } })
   );
   await openDeckScreen(page);
   await expect(

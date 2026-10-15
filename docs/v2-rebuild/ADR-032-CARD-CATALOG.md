@@ -52,7 +52,8 @@ fast and current. The sources, measured on 2026-10-15:
 3. **Versions are content hashes.** The catalog's version hashes every set's
    stored JSON and the ban list, so it changes only when a card does.
    `GET /v2/cards/catalog` names the version and its body's URL (cached five
-   minutes, 503 while a first build has nothing). `GET
+   minutes; while a first build has nothing, a 200 saying `building`, which
+   the loader asks again on, never a logged 503). `GET
 /v2/cards/catalog/<version>.json` is the body, assembled by joining the
    stored sets' JSON without parsing them, cached for a year as immutable,
    and kept in the location's edge cache. The browser's HTTP cache keeps it

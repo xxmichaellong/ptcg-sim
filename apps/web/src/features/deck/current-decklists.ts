@@ -44,6 +44,7 @@ export const fetchCurrentDecklists = async (
     }
     const body: unknown = JSON.parse(text);
     if (!isRecord(body)) throw new Error('Unexpected current deck lists');
+    if (body.available === false) throw new Error('No current deck lists yet');
     const { fetchedAt, groups } = body;
     if (
       typeof fetchedAt !== 'string' ||

@@ -44,7 +44,8 @@ limitlesstcg.com, with no documented API.
    and the deck has exactly 60 cards. The client decodes the feed with the
    same bounded decoder as the built-in corpus.
 4. **`GET /v2/decks/current`** returns the lists with their source and fetch
-   time, cacheable for 15 minutes. It returns 503 while there are none. The
+   time, cacheable for 15 minutes. While there are none it answers 200
+   `{ available: false }` (a 503 would log a console error on every visit). The
    client asks only when the menu first opens. When the request fails, the
    menu shows the built-in seasons alone and retries a minute later.
 5. **Credit.** The current group carries a line crediting Limitless, linked to

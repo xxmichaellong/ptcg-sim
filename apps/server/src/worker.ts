@@ -1242,6 +1242,15 @@ const worker: ExportedHandler<Env> = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const telemetry = createTelemetry('edge', env.BUILD_ID);
+    if (
+      url.pathname === CARD_CATALOG_PATH &&
+      env.CARD_CATALOG_SOURCE === 'off'
+    ) {
+      return Response.json(
+        { available: false, building: false },
+        { headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
     if (url.pathname === CARD_CATALOG_PATH) {
       return observeHttp(telemetry, 'card_catalog', () =>
         handleCardCatalogManifestRequest(request, () =>

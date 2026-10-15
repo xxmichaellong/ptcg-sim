@@ -133,9 +133,9 @@ describe('the card catalog', () => {
   it('starts building on the first request and serves it once built', async () => {
     serveTcgdex(true);
     const first = await getManifest();
-    expect(first.status).toBe(503);
+    expect(first.status).toBe(200);
     expect(await first.json()).toEqual({
-      error: 'unavailable',
+      available: false,
       building: true,
     });
 
@@ -203,7 +203,9 @@ describe('the card catalog', () => {
     expect(calls).toBe(1);
     await evictDurableObject(catalogStub());
     expect(await catalogStub().refresh()).toBe(0);
-    expect((await getManifest()).status).toBe(503);
+    expect(await (await getManifest()).json()).toMatchObject({
+      building: true,
+    });
     expect(tcgdexCalls).toBe(calls);
   });
 
