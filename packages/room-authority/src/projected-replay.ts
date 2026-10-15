@@ -145,11 +145,14 @@ export const buildProjectedReplay = (
       // aliases prevents correlation with identities from the discarded branch.
       identities = emptyProjectionIdentityState();
     }
+    // Solo's windows show as they did live; hands and prizes are the local
+    // disclosure's below.
     const projected = projectRecipient(
       state,
       viewer,
       identities,
-      replayOpaqueIds
+      replayOpaqueIds,
+      mode === 'solo' ? 'solo-replay' : 'multiplayer'
     );
     identities = projected.identities;
     const localDisclosure = permitsLocalDisclosure

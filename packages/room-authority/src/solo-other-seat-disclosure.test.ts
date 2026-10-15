@@ -87,7 +87,10 @@ const loaded = (): MatchState => {
   return state;
 };
 
-const project = (state: MatchState, mode: 'solo' | 'multiplayer') => {
+const project = (
+  state: MatchState,
+  mode: 'solo' | 'solo-replay' | 'multiplayer'
+) => {
   let opaque = 0;
   return projectRecipient(
     state,
@@ -173,6 +176,38 @@ describe("Solo's view of the other seat", () => {
     const room = project(state, 'multiplayer').workAreas[red]!
       .attachmentResolution!;
     expect(room.cards.every((card) => card.kind === 'concealed')).toBe(true);
+    // A Solo replay shows the window as it was live.
+    const replay = project(state, 'solo-replay').workAreas[red]!
+      .attachmentResolution!;
+    expect(replay.cards.every((card) => card.kind === 'known')).toBe(true);
+  });
+
+  it("shows Red's deck to browse from a flipped board, but leaves a Solo replay's hands to its own disclosure", () => {
+    const start = loaded();
+    const deck = playerZoneId(red, 'deck');
+    const drawn = run(start, {
+      type: 'MoveCard',
+      cardId: start.zones[deck]!.cardIds[0]!,
+      expectedSourceZoneId: deck,
+      destinationZoneId: playerZoneId(red, 'hand'),
+    });
+    expect(
+      project(drawn, 'solo').zones[deck]!.cards.every(
+        (card) => card.kind === 'known'
+      )
+    ).toBe(true);
+    expect(
+      project(drawn, 'multiplayer').zones[deck]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    const replay = project(drawn, 'solo-replay');
+    expect(replay.zones[playerZoneId(red, 'hand')]!.cards).toEqual([
+      expect.objectContaining({ kind: 'concealed' }),
+    ]);
+    expect(
+      replay.zones[deck]!.cards.every((card) => card.kind === 'concealed')
+    ).toBe(true);
   });
 
   it('keeps both seats consenting to each other: Solo cannot take it back', () => {

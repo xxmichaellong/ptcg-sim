@@ -38,7 +38,12 @@ export interface OpaqueIdSource {
 }
 
 /** Persisted authority mode, supplied only by the room boundary. */
-type RecipientProjectionMode = 'solo' | 'multiplayer';
+/**
+ * `solo` shows its one player everything either seat holds; `solo-replay`
+ * only the other seat's windows, leaving hands and prizes to the replay's
+ * own disclosure (projected-replay.ts).
+ */
+type RecipientProjectionMode = 'solo' | 'solo-replay' | 'multiplayer';
 
 export const emptyProjectionIdentityState = (): ProjectionIdentityState => ({
   cardAliases: [],
@@ -147,13 +152,14 @@ export const projectRecipient = (
 
   const ordinarySnapshot = projectMatch(state, viewer, adapter);
   // Solo is backed by a persisted one-player admission ceiling. That sole
-  // player controls both source boards, so what the other seat holds in its
-  // hand and in its attached-card window (a Pokémon taken apart) is shown
-  // through the player's existing concealment-generation aliases, whoever
-  // owns each card. Multiplayer and spectators retain the ordinary
-  // least-privileged projection.
+  // player controls both source boards, so what the other seat holds -- its
+  // hand, its deck (to browse from a flipped board) and its attached-card
+  // window (a Pokémon taken apart) -- is shown through the player's existing
+  // concealment-generation aliases, whoever owns each card. Multiplayer and
+  // spectators retain the ordinary least-privileged projection.
+  const discloseZones = mode === 'solo';
   const snapshot =
-    mode === 'solo' && viewer.kind === 'player'
+    mode !== 'multiplayer' && viewer.kind === 'player'
       ? (() => {
           let changed = false;
           const definitions = { ...ordinarySnapshot.definitions };
@@ -206,7 +212,8 @@ export const projectRecipient = (
               definitionId,
               ownerId: card.ownerId,
               category: card.currentCategory,
-              // A hand is held face up; a window shows each card as it lay.
+              // A hand is held face up; a deck or window shows each card as
+              // it lies.
               face: place === 'hand' ? ('up' as const) : card.face,
               orientationQuarterTurns: card.orientationQuarterTurns,
               abilityUsed: card.abilityUsed,
@@ -234,13 +241,17 @@ export const projectRecipient = (
           };
           const zones = Object.fromEntries(
             Object.entries(ordinarySnapshot.zones).map(([zoneId, zone]) => {
-              if (zone.kind !== 'hand' || zone.ownerId === viewer.playerId) {
+              if (
+                !discloseZones ||
+                (zone.kind !== 'hand' && zone.kind !== 'deck') ||
+                zone.ownerId === viewer.playerId
+              ) {
                 return [zoneId, zone];
               }
               const canonicalZone = state.zones[zoneId];
               if (
                 !canonicalZone ||
-                canonicalZone.kind !== 'hand' ||
+                canonicalZone.kind !== zone.kind ||
                 canonicalZone.ownerId !== zone.ownerId
               ) {
                 throw new Error(
@@ -250,7 +261,7 @@ export const projectRecipient = (
               const cards = discloseAll(
                 zone.cards,
                 canonicalZone.cardIds,
-                'hand'
+                zone.kind === 'hand' ? 'hand' : 'window'
               );
               return cards === zone.cards
                 ? [zoneId, zone]

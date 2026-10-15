@@ -1239,19 +1239,24 @@ export const decideCommand = (
       if (!source || !destination) {
         return reject('not_found', 'Source or destination zone does not exist');
       }
+      // A card arriving in an occupied Stadium first sends the old one to
+      // the discard, so it lands in an empty zone.
+      const displacesStadium =
+        destination.id === stadiumZoneId() &&
+        source.id !== destination.id &&
+        destination.cardIds.length > 0;
+      const destinationLength = displacesStadium
+        ? 0
+        : destination.cardIds.length;
       const destinationIndex = Math.max(
         0,
         Math.min(
-          command.destinationIndex ?? destination.cardIds.length,
-          destination.cardIds.length
+          command.destinationIndex ?? destinationLength,
+          destinationLength
         )
       );
       const events: DomainEvent[] = [];
-      if (
-        destination.id === stadiumZoneId() &&
-        source.id !== destination.id &&
-        destination.cardIds.length > 0
-      ) {
+      if (displacesStadium) {
         const offsets = new Map<string, number>();
         for (const displacedId of destination.cardIds) {
           const displaced = state.cards[displacedId];
