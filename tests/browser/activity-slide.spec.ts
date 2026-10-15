@@ -220,6 +220,13 @@ test('the table makes room for the sliding log in step with it, whole on every f
 
   for (const opening of [true, false]) {
     await watchSlide(page);
+    // The sampler marks each frame; on a slow runner its first can come
+    // after the click, and what the click changed would read as unframed.
+    await page.waitForFunction(
+      () =>
+        (window as unknown as { __slide: { framesSampled: number } }).__slide
+          .framesSampled >= 2
+    );
     await button.click();
     if (opening) await expect(page.locator('#activitySheet')).toBeVisible();
     else await expect(page.locator('#activitySheet')).toHaveCount(0);
