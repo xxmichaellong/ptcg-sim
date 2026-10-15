@@ -110,6 +110,8 @@ const setUpright = async (page: Page, on: boolean) => {
   if (on) await toggle.check();
   else await toggle.uncheck();
   await closeSheet(page);
+  // Gone, not just closing: its backdrop would take the next press.
+  await expect(page.locator('#settings')).toHaveCount(0);
   const surface = page.locator('.ptcgsim-board-surface');
   if (on) await expect(surface).toHaveAttribute('data-far-upright', 'true');
   else await expect(surface).not.toHaveAttribute('data-far-upright');

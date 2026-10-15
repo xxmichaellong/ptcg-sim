@@ -420,6 +420,25 @@ test('development route reaches and resumes a real durable room through the same
       },
     ]);
 
+  // Only the reconnect's own commits are counted: the table settles first
+  // (the log docking in, the mat repainting at its new size), which on a
+  // slow runner can still be under way here.
+  const renderCommits = () =>
+    page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.()
+          ?.renderCommits ?? -1
+    );
+  await expect
+    .poll(
+      async () => {
+        const before = await renderCommits();
+        await page.waitForTimeout(400);
+        return (await renderCommits()) - before;
+      },
+      { timeout: 10_000 }
+    )
+    .toBe(0);
   const beforeReconnect = await page.evaluate(() => {
     const globals = globalThis as BrowserDevRoomGlobals;
     const handle = globals.__ptcgsimDevRoom;
