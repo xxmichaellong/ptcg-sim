@@ -11,7 +11,11 @@ import {
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import { PROTOCOL_VERSION, type ServerMessage } from '@ptcgsim/protocol';
+import {
+  MAX_CLIENT_FRAME_CODE_UNITS,
+  PROTOCOL_VERSION,
+  type ServerMessage,
+} from '@ptcgsim/protocol';
 import { describe, expect, it, vi } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
@@ -214,6 +218,43 @@ describe('serialized room session hub', () => {
         retryable: true,
       }),
     ]);
+  });
+
+  it('refuses a frame over the size limit at once, never holding it in the queue', async () => {
+    const setup = await fixture();
+    const client = connection('oversized-frames');
+    // Hold the queue: a Hello waits on its rate limit.
+    let release = (): void => undefined;
+    setup.rateLimits.attempt.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ allowed: false, retryAfterSeconds: 1 });
+        })
+    );
+    const held = setup.hub.handleFrame(
+      client.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const oversized = 'x'.repeat(MAX_CLIENT_FRAME_CODE_UNITS + 1);
+    for (let index = 0; index < 3; index += 1) {
+      await setup.hub.handleFrame(client.value, oversized);
+    }
+    // Answered while the queue is still held, and no slot is kept for them.
+    expect(client.messages).toEqual(
+      Array.from({ length: 3 }, () =>
+        expect.objectContaining({
+          type: 'ServerNotice',
+          code: 'invalid_message',
+          message: 'Message rejected: frame_too_large',
+        })
+      )
+    );
+    expect(client.close).not.toHaveBeenCalled();
+    release();
+    await held;
   });
 
   it('closes a connection that exceeds its fixed ingress window', async () => {

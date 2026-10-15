@@ -16,6 +16,7 @@ import {
   expireDisconnectedRoomSessions,
 } from '@ptcgsim/room-authority';
 import {
+  MAX_CLIENT_FRAME_CODE_UNITS,
   PROTOCOL_VERSION,
   SESSION_RECONNECT_GRACE_MS,
   parseClientFrame,
@@ -168,6 +169,14 @@ export class RoomSessionHub {
     this.connections.set(connection.id, connection);
     if (!this.reserveClientFrame(connection.id)) {
       return this.rejectIngressOverload(connection);
+    }
+    // Refused before it is queued: a frame over the limit is never parsed,
+    // and holding it while the room is busy would let a connection pile up
+    // megabytes in memory.
+    if (frame.length > MAX_CLIENT_FRAME_CODE_UNITS) {
+      this.releaseClientFrame(connection.id);
+      this.rejectInvalidFrame(connection, frame, 'frame_too_large');
+      return Promise.resolve();
     }
     const run = this.tail.then(async () => {
       try {
@@ -768,28 +777,36 @@ export class RoomSessionHub {
     return run;
   }
 
+  private rejectInvalidFrame(
+    connection: RuntimeConnection,
+    frame: string,
+    reason: string
+  ): void {
+    const revision = this.coordinator.currentSnapshot().state.revision;
+    this.dependencies.telemetry.roomCommand({
+      commandType: 'Unknown',
+      outcome: 'rejected',
+      reason: 'invalid_message',
+      startRevision: revision,
+      endRevision: revision,
+      requestBytes: encodedBytes(frame),
+      publicationBytes: 0,
+      deliveryCount: 0,
+      durationMs: 0,
+    });
+    this.send(
+      connection,
+      notice('invalid_message', `Message rejected: ${reason}`)
+    );
+  }
+
   private async processFrame(
     connection: RuntimeConnection,
     frame: string
   ): Promise<void> {
     const parsed = parseClientFrame(frame);
     if (!parsed.ok) {
-      const revision = this.coordinator.currentSnapshot().state.revision;
-      this.dependencies.telemetry.roomCommand({
-        commandType: 'Unknown',
-        outcome: 'rejected',
-        reason: 'invalid_message',
-        startRevision: revision,
-        endRevision: revision,
-        requestBytes: encodedBytes(frame),
-        publicationBytes: 0,
-        deliveryCount: 0,
-        durationMs: 0,
-      });
-      this.send(
-        connection,
-        notice('invalid_message', `Message rejected: ${parsed.reason}`)
-      );
+      this.rejectInvalidFrame(connection, frame, parsed.reason);
       return;
     }
     const message = parsed.value;
