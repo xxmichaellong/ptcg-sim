@@ -10,6 +10,7 @@ import {
   type MatchState,
   type MatchViewState,
   type ProjectionIdentityAdapter,
+  type ViewCard,
   type ViewerRole,
 } from '@ptcgsim/game-core';
 
@@ -146,15 +147,91 @@ export const projectRecipient = (
 
   const ordinarySnapshot = projectMatch(state, viewer, adapter);
   // Solo is backed by a persisted one-player admission ceiling. That sole
-  // player controls both source boards, so expose the opposing hand through
-  // the player's existing concealment-generation aliases. Multiplayer and
-  // spectators retain the ordinary least-privileged projection.
+  // player controls both source boards, so what the other seat holds in its
+  // hand and in its attached-card window (a Pokémon taken apart) is shown
+  // through the player's existing concealment-generation aliases, whoever
+  // owns each card. Multiplayer and spectators retain the ordinary
+  // least-privileged projection.
   const snapshot =
     mode === 'solo' && viewer.kind === 'player'
       ? (() => {
           let changed = false;
           const definitions = { ...ordinarySnapshot.definitions };
           const decklistRankOf = decklistRanks(state);
+          const disclose = (
+            projectedCard: ViewCard,
+            cardId: CardInstanceId | undefined,
+            place: 'hand' | 'window'
+          ): ViewCard => {
+            if (projectedCard.kind === 'known') return projectedCard;
+            const card = cardId === undefined ? undefined : state.cards[cardId];
+            const definition = card
+              ? state.definitions[card.definitionId]
+              : undefined;
+            if (!card || !definition) {
+              throw new Error(
+                'Solo other-seat disclosure diverged from canonical state'
+              );
+            }
+            const definitionId = adapter.viewDefinitionId({
+              viewerKey,
+              definitionId: definition.id,
+            });
+            if (!definitions[definitionId]) {
+              definitions[definitionId] = {
+                id: definitionId,
+                name: definition.name,
+                category: definition.category,
+                imageUrl: definition.imageUrl,
+                ...(definition.presentation
+                  ? {
+                      presentation: {
+                        ...definition.presentation,
+                        ...(definition.presentation.join
+                          ? { join: { ...definition.presentation.join } }
+                          : {}),
+                      },
+                    }
+                  : {}),
+                ...(definition.imageUrlSmall
+                  ? { imageUrlSmall: definition.imageUrlSmall }
+                  : {}),
+              };
+            }
+            changed = true;
+            const decklistRank = decklistRankOf(card);
+            return {
+              kind: 'known' as const,
+              id: projectedCard.id,
+              definitionId,
+              ownerId: card.ownerId,
+              category: card.currentCategory,
+              // A hand is held face up; a window shows each card as it lay.
+              face: place === 'hand' ? ('up' as const) : card.face,
+              orientationQuarterTurns: card.orientationQuarterTurns,
+              abilityUsed: card.abilityUsed,
+              publiclyRevealed: false as const,
+              // Sort orders this hand like any other.
+              ...(decklistRank === undefined ? {} : { decklistRank }),
+            };
+          };
+          const discloseAll = (
+            cards: readonly ViewCard[],
+            cardIds: readonly CardInstanceId[],
+            place: 'hand' | 'window'
+          ): readonly ViewCard[] => {
+            if (cardIds.length !== cards.length) {
+              throw new Error(
+                'Solo other-seat disclosure diverged from canonical state'
+              );
+            }
+            const disclosed = cards.map((card, index) =>
+              disclose(card, cardIds[index], place)
+            );
+            return disclosed.every((card, index) => card === cards[index])
+              ? cards
+              : disclosed;
+          };
           const zones = Object.fromEntries(
             Object.entries(ordinarySnapshot.zones).map(([zoneId, zone]) => {
               if (zone.kind !== 'hand' || zone.ownerId === viewer.playerId) {
@@ -164,74 +241,67 @@ export const projectRecipient = (
               if (
                 !canonicalZone ||
                 canonicalZone.kind !== 'hand' ||
-                canonicalZone.ownerId !== zone.ownerId ||
-                canonicalZone.cardIds.length !== zone.cards.length
+                canonicalZone.ownerId !== zone.ownerId
               ) {
                 throw new Error(
                   'Solo opponent-hand disclosure diverged from canonical state'
                 );
               }
-              let zoneChanged = false;
-              const cards = zone.cards.map((projectedCard, index) => {
-                if (projectedCard.kind === 'known') return projectedCard;
-                const card = state.cards[canonicalZone.cardIds[index]!];
-                const definition = card
-                  ? state.definitions[card.definitionId]
-                  : undefined;
-                if (!card || !definition || card.ownerId !== zone.ownerId) {
-                  throw new Error(
-                    'Solo opponent-hand card diverged from canonical state'
-                  );
-                }
-                const definitionId = adapter.viewDefinitionId({
-                  viewerKey,
-                  definitionId: definition.id,
-                });
-                if (!definitions[definitionId]) {
-                  definitions[definitionId] = {
-                    id: definitionId,
-                    name: definition.name,
-                    category: definition.category,
-                    imageUrl: definition.imageUrl,
-                    ...(definition.presentation
-                      ? {
-                          presentation: {
-                            ...definition.presentation,
-                            ...(definition.presentation.join
-                              ? { join: { ...definition.presentation.join } }
-                              : {}),
-                          },
-                        }
-                      : {}),
-                    ...(definition.imageUrlSmall
-                      ? { imageUrlSmall: definition.imageUrlSmall }
-                      : {}),
-                  };
-                }
-                changed = true;
-                zoneChanged = true;
-                const decklistRank = decklistRankOf(card);
-                return {
-                  kind: 'known' as const,
-                  id: projectedCard.id,
-                  definitionId,
-                  ownerId: card.ownerId,
-                  category: card.currentCategory,
-                  face: 'up' as const,
-                  orientationQuarterTurns: card.orientationQuarterTurns,
-                  abilityUsed: card.abilityUsed,
-                  publiclyRevealed: false as const,
-                  // Sort orders this hand like any other.
-                  ...(decklistRank === undefined ? {} : { decklistRank }),
-                };
-              });
-              return zoneChanged
-                ? [zoneId, { ...zone, cards }]
-                : [zoneId, zone];
+              const cards = discloseAll(
+                zone.cards,
+                canonicalZone.cardIds,
+                'hand'
+              );
+              return cards === zone.cards
+                ? [zoneId, zone]
+                : [zoneId, { ...zone, cards }];
             })
           );
+          const workAreas = Object.fromEntries(
+            Object.entries(ordinarySnapshot.workAreas).map(
+              ([playerId, areas]) => {
+                const staged = areas.attachmentResolution;
+                const canonical =
+                  state.workAreas[playerId]?.attachmentResolution;
+                if (playerId === viewer.playerId || !staged || !canonical) {
+                  return [playerId, areas];
+                }
+                const cards = discloseAll(
+                  staged.cards,
+                  canonical.cardIds,
+                  'window'
+                );
+                const evolutionCards = discloseAll(
+                  staged.evolutionCards,
+                  canonical.evolutionCardIds,
+                  'window'
+                );
+                const attachmentCards = discloseAll(
+                  staged.attachmentCards,
+                  canonical.attachmentCardIds,
+                  'window'
+                );
+                return cards === staged.cards &&
+                  evolutionCards === staged.evolutionCards &&
+                  attachmentCards === staged.attachmentCards
+                  ? [playerId, areas]
+                  : [
+                      playerId,
+                      {
+                        ...areas,
+                        attachmentResolution: {
+                          ...staged,
+                          cards,
+                          evolutionCards,
+                          attachmentCards,
+                        },
+                      },
+                    ];
+              }
+            )
+          );
           return changed
-            ? { ...ordinarySnapshot, definitions, zones }
+            ? { ...ordinarySnapshot, definitions, zones, workAreas }
             : ordinarySnapshot;
         })()
       : ordinarySnapshot;

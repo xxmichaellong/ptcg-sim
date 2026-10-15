@@ -1331,6 +1331,10 @@ export const resolveWireCommand = (
       };
     }
     case 'SetCoachingConsent':
+      // Solo's one player sits in both seats, which consent to each other
+      // from the start; taking it back would only lock a flipped board out
+      // of the other seat's private cards.
+      if (undoContext.mode === 'solo') return rejected('precondition_failed');
       return {
         accepted: true,
         command: {
