@@ -45,6 +45,8 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly boardPlayerId: string;
       readonly slot: 'active' | 'bench';
       readonly benchIndex?: number;
+      /** The stacks there were as it was sent; the play made none of them. */
+      readonly before: ReadonlySet<string>;
     }
   >();
   /**
@@ -64,7 +66,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         : placement.benchIndex === undefined
           ? board.benchStackIds.at(-1)
           : board.benchStackIds[placement.benchIndex];
-    return stackId ? view.stacks[stackId] : undefined;
+    // A stack that was already there is not the one it made: the play was
+    // refused, and the move that named it must be refused as stale too.
+    return stackId && !placement.before.has(stackId)
+      ? view.stacks[stackId]
+      : undefined;
   };
 
   const stackIdFor = (id: string, view: MatchViewState): string => {
@@ -146,6 +152,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         ...(command.benchIndex === undefined
           ? {}
           : { benchIndex: command.benchIndex }),
+        before: new Set(Object.keys(view.stacks)),
       });
     }
     // Stacks first, so a card alias they reveal is known for every field.

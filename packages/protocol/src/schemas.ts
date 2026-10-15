@@ -283,14 +283,16 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('MovePlayStackToZone'),
     stackId: IdentifierSchema,
+    // As many as a stack can show (StackViewSchema): a command for any
+    // Pokémon on the table must pass, or the room never answers it.
     expectedEvolutionCardIds: v.pipe(
       v.array(IdentifierSchema),
       v.minLength(1),
-      v.maxLength(60)
+      v.maxLength(200)
     ),
     expectedAttachmentCardIds: v.pipe(
       v.array(IdentifierSchema),
-      v.maxLength(60)
+      v.maxLength(200)
     ),
     destinationZoneId: IdentifierSchema,
     destinationIndex: v.optional(NonNegativeIntegerSchema),

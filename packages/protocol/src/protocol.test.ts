@@ -421,6 +421,33 @@ describe('client protocol ingress', () => {
     expect('ignored' in result.value.command).toBe(false);
   });
 
+  it('accepts a whole Pokémon moved however many cards it carries, up to what a stack shows', () => {
+    const frame = (attachments: number) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command: {
+            type: 'MovePlayStackToZone',
+            stackId: 'stack',
+            expectedEvolutionCardIds: ['basic'],
+            expectedAttachmentCardIds: Array.from(
+              { length: attachments },
+              (_, index) => `energy-${index}`
+            ),
+            destinationZoneId: 'zone:blue:discard',
+          },
+        })
+      ).ok;
+    expect(frame(61)).toBe(true);
+    expect(frame(200)).toBe(true);
+    expect(frame(201)).toBe(false);
+  });
+
   it('rejects unknown command variants and invalid sequences', () => {
     const unknown = parseClientFrame(
       JSON.stringify({

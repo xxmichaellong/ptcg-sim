@@ -119,8 +119,22 @@ describe('rebinding predicted references', () => {
       boardPlayerId: active.boardPlayerId,
       slot: 'active',
     } as WireGameCommand;
-    // The play itself is sent first, and is where the rebinder learns it.
-    expect(rebind(played, view)).toBe(played);
+    // The play itself is sent first, and is where the rebinder learns it,
+    // on a table where the active spot was still empty.
+    const { [active.id]: _absent, ...withoutActive } = view.stacks;
+    expect(
+      rebind(played, {
+        ...view,
+        stacks: withoutActive,
+        boards: {
+          ...view.boards,
+          [active.boardPlayerId]: {
+            ...view.boards[active.boardPlayerId]!,
+            activeStackId: null,
+          },
+        },
+      })
+    ).toBe(played);
     expect(
       rebind(
         {
@@ -136,5 +150,42 @@ describe('rebinding predicted references', () => {
       targetStackId: active.id,
       expectedTargetTopCardId: now.id,
     });
+  });
+
+  it("never binds a refused play's stack to the Pokémon already in that spot", () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const active = view.stacks['stack:blue:active']!;
+    const single: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: {
+          ...active,
+          evolutionCards: [active.evolutionCards.at(-1)!],
+        },
+      },
+    };
+    // Sent while that one-card Pokémon was already active; the room refused
+    // the play, and the active spot holds what it held.
+    rebind(
+      {
+        type: 'MoveCardToPlay',
+        cardId: 'refused-play',
+        expectedSourceZoneId: 'zone:spike-blue:hand',
+        boardPlayerId: active.boardPlayerId,
+        slot: 'active',
+      } as WireGameCommand,
+      single
+    );
+    expect(
+      rebind(
+        {
+          type: 'RotateStack',
+          stackId: 'predicted-stack:refused-play',
+        } as unknown as WireGameCommand,
+        single
+      )
+    ).toMatchObject({ stackId: 'predicted-stack:refused-play' });
   });
 });
