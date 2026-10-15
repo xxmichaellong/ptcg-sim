@@ -3,6 +3,7 @@ import {
   asViewDefinitionId,
   findCardLocation,
   isCardKnownToViewer,
+  decklistRanks,
   projectMatch,
   type CardDefinitionId,
   type CardInstanceId,
@@ -153,6 +154,7 @@ export const projectRecipient = (
       ? (() => {
           let changed = false;
           const definitions = { ...ordinarySnapshot.definitions };
+          const decklistRankOf = decklistRanks(state);
           const zones = Object.fromEntries(
             Object.entries(ordinarySnapshot.zones).map(([zoneId, zone]) => {
               if (zone.kind !== 'hand' || zone.ownerId === viewer.playerId) {
@@ -208,6 +210,7 @@ export const projectRecipient = (
                 }
                 changed = true;
                 zoneChanged = true;
+                const decklistRank = decklistRankOf(card);
                 return {
                   kind: 'known' as const,
                   id: projectedCard.id,
@@ -218,6 +221,8 @@ export const projectRecipient = (
                   orientationQuarterTurns: card.orientationQuarterTurns,
                   abilityUsed: card.abilityUsed,
                   publiclyRevealed: false as const,
+                  // Sort orders this hand like any other.
+                  ...(decklistRank === undefined ? {} : { decklistRank }),
                 };
               });
               return zoneChanged

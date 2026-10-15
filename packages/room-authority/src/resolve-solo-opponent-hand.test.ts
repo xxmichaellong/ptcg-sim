@@ -99,6 +99,20 @@ const fixture = () => {
 };
 
 describe('Solo opponent-hand authority resolution', () => {
+  it("discloses the other seat's hand with its decklist ranks, so Sort orders it", () => {
+    const prepared = fixture();
+    const projected = projectRecipient(
+      prepared.state,
+      session.viewer,
+      prepared.identities,
+      { nextOpaqueId: () => 'solo-hand-unused-opaque-id' },
+      'solo'
+    );
+    expect(projected.snapshot.zones[prepared.handId]!.cards).toEqual([
+      expect.objectContaining({ kind: 'known', decklistRank: 0 }),
+    ]);
+  });
+
   it('accepts the disclosed hand alias only under persisted Solo mode', () => {
     const prepared = fixture();
     const command = {

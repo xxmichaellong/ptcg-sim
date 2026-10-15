@@ -538,6 +538,10 @@
               "kind": "type"
             },
             {
+              "name": "decklistRanks",
+              "kind": "value"
+            },
+            {
               "name": "diffMatchState",
               "kind": "value"
             },

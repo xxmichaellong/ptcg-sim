@@ -71,6 +71,15 @@ const canInspectPrivateCards = (
     );
   });
 
+/**
+ * Each player's card definitions are their own. A catalog ID shared with the
+ * other player's deck let a deck load probe that player's concealed cards
+ * (game-core refuses a clashing definition) and mixed their decklists' Sort
+ * order. Clients only ever see opaque definition IDs, so this never shows.
+ */
+const ownedDefinitionId = (ownerId: PlayerId, definitionId: string) =>
+  asCardDefinitionId(`${ownerId}/${definitionId}`);
+
 export const resolveWireCommand = (
   state: MatchState,
   identities: ProjectionIdentityState,
@@ -135,7 +144,7 @@ export const resolveWireCommand = (
           entries: wire.entries.map((entry) => ({
             definition: {
               ...entry.definition,
-              id: asCardDefinitionId(entry.definition.id),
+              id: ownedDefinitionId(targetPlayerId, entry.definition.id),
             },
             count: entry.count,
           })),

@@ -1,9 +1,19 @@
+/**
+ * Keys sort in one fixed collation, so the canonical bytes are the same in
+ * every runtime: a Turkish locale orders "I" and "i" differently, and a
+ * replay file hashed in one browser failed its check in another. en-US is
+ * the order every stored hash and replay file was already made in (the
+ * Worker's default, and most browsers'); a plain code-unit order would
+ * orphan them.
+ */
+const keyOrder = new Intl.Collator('en-US').compare;
+
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
+        .sort(([left], [right]) => keyOrder(left, right))
         .map(([key, child]) => [key, canonicalize(child)])
     );
   }

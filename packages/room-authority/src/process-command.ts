@@ -6,6 +6,7 @@ import {
   type PlayerId,
 } from '@ptcgsim/game-core';
 import {
+  MAX_SERVER_FRAME_CODE_UNITS,
   PROTOCOL_VERSION,
   serializeMatchViewState,
   type ClientMessage,
@@ -297,6 +298,34 @@ const narratedActorOf = (
   }
 };
 
+/**
+ * Every concealed card carries its owner's card back on the wire, so a long
+ * custom back on a full deck multiplies past what one frame can carry, and
+ * a session sent such a frame fails. A command that would push the total
+ * past half the frame limit is refused (the rest is room enough for the
+ * definitions, each deck's bounded by the one frame that loaded it).
+ */
+const MAX_CONCEALED_CARD_BACK_CODE_UNITS = MAX_SERVER_FRAME_CODE_UNITS / 2;
+
+const cardBackCodeUnits = (state: MatchState): number => {
+  let total = 0;
+  for (const card of Object.values(state.cards)) {
+    total += state.players[card.ownerId]?.cardBackUrl.length ?? 0;
+  }
+  return total;
+};
+
+const exceedsCardBackBudget = (
+  current: MatchState,
+  next: MatchState
+): boolean => {
+  const after = cardBackCodeUnits(next);
+  return (
+    after > MAX_CONCEALED_CARD_BACK_CODE_UNITS &&
+    after > cardBackCodeUnits(current)
+  );
+};
+
 export const processAuthorityCommand = async (
   current: RoomAuthoritySnapshot,
   envelope: CommandEnvelope,
@@ -459,7 +488,18 @@ export const processAuthorityCommand = async (
         resolution.command,
         dependencies.commandContext
       );
-      if (execution.accepted) {
+      if (
+        execution.accepted &&
+        exceedsCardBackBudget(current.state, execution.state)
+      ) {
+        outcome = {
+          commandId: envelope.commandId,
+          clientSequence: envelope.clientSequence,
+          accepted: false,
+          revision: current.state.revision,
+          code: 'precondition_failed',
+        };
+      } else if (execution.accepted) {
         nextState = execution.state;
         eventBatch =
           session.viewer.kind === 'player'

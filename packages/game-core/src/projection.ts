@@ -213,6 +213,29 @@ export const isCardKnownToViewer = (
   return true;
 };
 
+/**
+ * Where a card sorts in its owner's hand. v1's Sort walks the decklist in
+ * declared order; the baseline deck list keeps that order, and ranking by
+ * the first card of each definition keeps copies indistinguishable, as they
+ * are in v1. Ranked per owner: two players' decks may share a definition.
+ */
+export const decklistRanks = (
+  state: MatchState
+): ((card: CardInstance) => number | undefined) => {
+  const ranks = new Map<string, number>();
+  const key = (ownerId: PlayerId, definitionId: CardDefinitionId) =>
+    `${ownerId}\u0000${definitionId}`;
+  for (const cardIds of Object.values(state.deckLists)) {
+    cardIds.forEach((cardId, index) => {
+      const card = state.cards[cardId];
+      if (!card) return;
+      const cardKey = key(card.ownerId, card.definitionId);
+      if (!ranks.has(cardKey)) ranks.set(cardKey, index);
+    });
+  }
+  return (card) => ranks.get(key(card.ownerId, card.definitionId));
+};
+
 export const projectMatch = (
   state: MatchState,
   viewer: ViewerRole,
@@ -220,18 +243,7 @@ export const projectMatch = (
 ): MatchViewState => {
   const key = viewerKey(viewer);
   const definitions: Record<string, ViewCardDefinition> = {};
-  // v1's Sort walks the decklist in declared order. The baseline deck list
-  // keeps that order, and ranking by the first card of each definition keeps
-  // copies indistinguishable, as they are in v1.
-  const decklistRanks = new Map<CardDefinitionId, number>();
-  for (const cardIds of Object.values(state.deckLists)) {
-    cardIds.forEach((cardId, index) => {
-      const definitionId = state.cards[cardId]?.definitionId;
-      if (definitionId !== undefined && !decklistRanks.has(definitionId)) {
-        decklistRanks.set(definitionId, index);
-      }
-    });
-  }
+  const decklistRankOf = decklistRanks(state);
 
   const projectCard = (cardId: CardInstanceId): ViewCard => {
     const card = state.cards[cardId];
@@ -265,7 +277,7 @@ export const projectMatch = (
     if (!definitions[definitionId]) {
       definitions[definitionId] = projectDefinition(definitionId, definition);
     }
-    const decklistRank = decklistRanks.get(card.definitionId);
+    const decklistRank = decklistRankOf(card);
     return {
       kind: 'known',
       id,

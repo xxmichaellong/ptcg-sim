@@ -98,4 +98,48 @@ describe('decklist rank in the projection', () => {
       )
     ).toBe(true);
   });
+
+  it("ranks each player's cards by that player's own list when both decks share a definition", () => {
+    let state = createEmptyMatch(asMatchId('rank-shared-match'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    // Blue declares Zapdos then Abra; Red declares Abra then Zapdos.
+    for (const [playerId, list] of [
+      [p1, entries],
+      [p2, [...entries].reverse()],
+    ] as const) {
+      const loaded = executeCommand(
+        state,
+        { type: 'LoadDeck', playerId, entries: list },
+        context
+      );
+      if (!loaded.accepted) throw new Error(loaded.message);
+      const drawn = executeCommand(
+        loaded.state,
+        { type: 'DrawCards', playerId, count: 3 },
+        context
+      );
+      if (!drawn.accepted) throw new Error(drawn.message);
+      state = drawn.state;
+    }
+    const red = projectMatch(
+      state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    const ranks = red.zones[playerZoneId(p2, 'hand')]!.cards.map((viewCard) =>
+      viewCard.kind === 'known'
+        ? [
+            state.definitions[viewCard.definitionId]?.name,
+            viewCard.decklistRank,
+          ]
+        : 'concealed'
+    );
+    expect(ranks).toEqual([
+      ['Abra', 0],
+      ['Abra', 0],
+      ['Zapdos', 2],
+    ]);
+  });
 });

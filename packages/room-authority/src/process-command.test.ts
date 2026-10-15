@@ -11,7 +11,12 @@ import {
   playerZoneId,
   type CommandContext,
 } from '@ptcgsim/game-core';
-import { PROTOCOL_VERSION, type ClientMessage } from '@ptcgsim/protocol';
+import {
+  MAX_SERVER_FRAME_CODE_UNITS,
+  PROTOCOL_VERSION,
+  serializeMatchViewState,
+  type ClientMessage,
+} from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createRoomAdmissionState } from './admission.js';
@@ -307,6 +312,135 @@ describe('authoritative room command transaction', () => {
       )?.message
     ).toMatchObject({ accepted: true });
     expect(moved.snapshot.state.zones[handId]!.cardIds).toHaveLength(6);
+  });
+
+  it("keeps each player's card definitions apart, so a deck load cannot probe the other's concealed cards", async () => {
+    const dependencies = createDependencies(createPersistence());
+    const definition = {
+      id: 'catalog-shared-definition',
+      name: 'Charizard ex',
+      category: 'Pokémon' as const,
+      imageUrl: 'https://cards.example/charizard.png',
+    };
+    const blue = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'blue-deck', {
+        type: 'LoadDeck',
+        entries: [{ definition, count: 4 }],
+      }),
+      dependencies
+    );
+    expect(blue.committed).toBe(true);
+    // Red guesses Blue's catalog ID under another name: once refused as a
+    // clash with Blue's concealed cards, which told Red what Blue held.
+    const probe = await processAuthorityCommand(
+      blue.snapshot,
+      command(
+        'session-player-two',
+        1,
+        'red-probe',
+        {
+          type: 'LoadDeck',
+          entries: [{ definition: { ...definition, name: 'Probe' }, count: 1 }],
+        },
+        blue.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(
+      probe.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: true });
+    const names = Object.values(probe.snapshot.state.cards).map((card) => [
+      card.ownerId,
+      probe.snapshot.state.definitions[card.definitionId]?.name,
+    ]);
+    expect(new Set(names.map((entry) => entry.join(' ')))).toEqual(
+      new Set([`${p1} Charizard ex`, `${p2} Probe`])
+    );
+  });
+
+  it('refuses a card back so long that the table would no longer fit in one frame', async () => {
+    const dependencies = createDependencies(createPersistence());
+    let current = createSnapshot();
+    const sequences = { 'session-player-one': 1, 'session-player-two': 1 };
+    const submit = async (
+      sessionId: keyof typeof sequences,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]++,
+          `${sessionId}-${sequences[sessionId]}`,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      return result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    // Two full decks: every card concealed from a spectator.
+    for (const sessionId of [
+      'session-player-one',
+      'session-player-two',
+    ] as const) {
+      await expect(
+        submit(sessionId, {
+          type: 'LoadDeck',
+          entries: [
+            {
+              definition: {
+                id: 'full-deck-card',
+                name: 'Full deck card',
+                category: 'Trainer',
+                imageUrl: 'https://cards.example/full.png',
+              },
+              count: 200,
+            },
+          ],
+        })
+      ).resolves.toMatchObject({ accepted: true });
+    }
+    const back = (length: number) =>
+      `https://backs.example/${'b'.repeat(length - 26)}.png`;
+    await expect(
+      submit('session-player-one', {
+        type: 'SetCardBack',
+        cardBackUrl: back(4_096),
+      })
+    ).resolves.toMatchObject({ accepted: false, code: 'precondition_failed' });
+    await expect(
+      submit('session-player-one', {
+        type: 'SetCardBack',
+        cardBackUrl: back(600),
+      })
+    ).resolves.toMatchObject({ accepted: true });
+    await expect(
+      submit('session-player-two', {
+        type: 'SetCardBack',
+        cardBackUrl: back(600),
+      })
+    ).resolves.toMatchObject({ accepted: true });
+    // What is kept still fits: the widest view, a spectator's, in one frame.
+    const spectator = projectRecipient(
+      current.state,
+      { kind: 'spectator' },
+      current.identities,
+      dependencies.opaqueIds,
+      current.mode
+    );
+    expect(
+      JSON.stringify({
+        type: 'StatePublication',
+        snapshot: serializeMatchViewState(spectator.snapshot),
+      }).length
+    ).toBeLessThan(MAX_SERVER_FRAME_CODE_UNITS);
   });
 
   it('draws, flips and empties the hand for the seat a flipped Solo board names', async () => {
