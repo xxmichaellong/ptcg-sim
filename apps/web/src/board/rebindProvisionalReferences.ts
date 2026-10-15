@@ -9,57 +9,76 @@ import type { WireGameCommand } from '@ptcgsim/protocol';
 const PREDICTED_STACK = 'predicted-stack:';
 const PREDICTED_WORK_AREA = 'predicted-work-area:';
 const PREDICTED_INSPECTION = 'predicted-inspection:';
+/** Stacks remembered, newest last: far more than a queue of moves needs. */
+const REMEMBERED_STACKS = 64;
 
-const roomIdFor = (id: string, view: MatchViewState): string => {
-  if (id.startsWith(PREDICTED_STACK)) {
-    // The stack holding the card it was predicted from.
-    const cardId = id.slice(PREDICTED_STACK.length);
-    return (
-      Object.values(view.stacks).find((stack) =>
-        stack.evolutionCards.some((card) => card.id === cardId)
-      )?.id ?? id
-    );
-  }
-  if (id.startsWith(PREDICTED_WORK_AREA)) {
-    const stackId = id.slice(PREDICTED_WORK_AREA.length);
-    return (
-      Object.values(view.workAreas).find(
-        (areas) => areas.attachmentResolution?.sourceStackId === stackId
-      )?.attachmentResolution?.id ?? id
-    );
-  }
-  if (id.startsWith(PREDICTED_INSPECTION)) {
-    const ownerId = id.slice(PREDICTED_INSPECTION.length);
-    return view.workAreas[ownerId]?.inspection?.id ?? id;
-  }
-  return id;
-};
+export type ProvisionalRebinder = (
+  command: WireGameCommand,
+  view: MatchViewState
+) => WireGameCommand;
 
 /**
  * A command built on a prediction (Energy attached to a Pokémon played a
  * moment before) names what it targets by its predicted ID. Just before it
- * is sent, the room has published the real one; this swaps them. Anything
- * not found is left for the room to refuse as stale.
+ * is sent, the room has published the real one; this swaps them. A stack
+ * once found is remembered, so a window later made by taking it apart is
+ * found too, after the stack itself is gone. Anything not found is left
+ * for the room to refuse as stale. One per session.
  */
-export const rebindProvisionalReferences = (
-  command: WireGameCommand,
-  view: MatchViewState
-): WireGameCommand => {
-  let changed = false;
-  const rebind = (value: unknown): unknown => {
-    if (typeof value === 'string') {
-      const id = roomIdFor(value, view);
-      if (id !== value) changed = true;
-      return id;
+export const createProvisionalRebinder = (): ProvisionalRebinder => {
+  const stacks = new Map<string, string>();
+
+  const stackIdFor = (id: string, view: MatchViewState): string => {
+    if (!id.startsWith(PREDICTED_STACK)) return id;
+    const cardId = id.slice(PREDICTED_STACK.length);
+    const found = Object.values(view.stacks).find((stack) =>
+      stack.evolutionCards.some((card) => card.id === cardId)
+    )?.id;
+    if (found) {
+      stacks.delete(id);
+      stacks.set(id, found);
+      if (stacks.size > REMEMBERED_STACKS) {
+        stacks.delete(stacks.keys().next().value!);
+      }
+      return found;
     }
-    if (Array.isArray(value)) return value.map(rebind);
-    if (value !== null && typeof value === 'object') {
-      return Object.fromEntries(
-        Object.entries(value).map(([key, child]) => [key, rebind(child)])
+    return stacks.get(id) ?? id;
+  };
+
+  const roomIdFor = (id: string, view: MatchViewState): string => {
+    if (id.startsWith(PREDICTED_STACK)) return stackIdFor(id, view);
+    if (id.startsWith(PREDICTED_WORK_AREA)) {
+      const stackId = stackIdFor(id.slice(PREDICTED_WORK_AREA.length), view);
+      return (
+        Object.values(view.workAreas).find(
+          (areas) => areas.attachmentResolution?.sourceStackId === stackId
+        )?.attachmentResolution?.id ?? id
       );
     }
-    return value;
+    if (id.startsWith(PREDICTED_INSPECTION)) {
+      const ownerId = id.slice(PREDICTED_INSPECTION.length);
+      return view.workAreas[ownerId]?.inspection?.id ?? id;
+    }
+    return id;
   };
-  const rebound = rebind(command) as WireGameCommand;
-  return changed ? rebound : command;
+
+  return (command, view) => {
+    let changed = false;
+    const rebind = (value: unknown): unknown => {
+      if (typeof value === 'string') {
+        const id = roomIdFor(value, view);
+        if (id !== value) changed = true;
+        return id;
+      }
+      if (Array.isArray(value)) return value.map(rebind);
+      if (value !== null && typeof value === 'object') {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, child]) => [key, rebind(child)])
+        );
+      }
+      return value;
+    };
+    const rebound = rebind(command) as WireGameCommand;
+    return changed ? rebound : command;
+  };
 };

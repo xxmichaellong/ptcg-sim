@@ -552,7 +552,7 @@ export const resolveLegacyBoardShortcutAction = (
         return { ok: false, reason: 'invalid_value' };
       }
       return retainResolution(
-        resolveCardPlayMoveAction(view, request.cardId, request.slot),
+        resolveCardPlayMoveAction(view, request.cardId, request.slot, acting),
         true
       );
     case 'beginAttachOrEvolve': {
@@ -567,7 +567,12 @@ export const resolveLegacyBoardShortcutAction = (
     }
     case 'moveCardToStadium':
       return retainResolution(
-        resolveCardStadiumMoveAction(view, request.cardId, request.placement),
+        resolveCardStadiumMoveAction(
+          view,
+          request.cardId,
+          request.placement,
+          acting
+        ),
         true
       );
   }

@@ -11,8 +11,6 @@ import {
   type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import {
-  lazy,
-  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -40,6 +38,7 @@ import {
   oncePerGameMarkerCount,
 } from '../board/view/board-view-settings.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
+import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import {
   createRemoteRoom,
   RemoteRoomInvitationError,
@@ -75,11 +74,6 @@ import { TableBanner, TableShell } from './shell/TableShell.js';
 
 import '../design/panel-controls.css';
 import './lobby.css';
-
-const LegacyDeckBuilderSession = lazy(async () => ({
-  default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
-    .LegacyDeckBuilderSession,
-}));
 
 const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Froakie',
@@ -1220,27 +1214,25 @@ export const RemoteRoomLobby = ({
           open={overlay === 'deck'}
           onClose={() => setOverlay(undefined)}
         >
-          <Suspense fallback={null}>
-            <LegacyDeckBuilderSession
-              open={overlay === 'deck'}
-              alternateEnabled={parkedSolo?.mode === 'solo'}
-              installOnSessionAttach
-              onRequestClose={() => {
-                setOverlay(undefined);
-                void handleSolo();
-              }}
-              onCustodyChange={setDeckCustody}
-              {...(deckCustody
-                ? {
-                    store: deckCustody.store,
-                    cardBackStore: deckCustody.cardBackStore,
-                  }
-                : {})}
-              {...(dependencies.requestCardBack
-                ? { requestCardBack: dependencies.requestCardBack }
-                : {})}
-            />
-          </Suspense>
+          <LazyDeckBuilderSession
+            open={overlay === 'deck'}
+            alternateEnabled={parkedSolo?.mode === 'solo'}
+            installOnSessionAttach
+            onRequestClose={() => {
+              setOverlay(undefined);
+              void handleSolo();
+            }}
+            onCustodyChange={setDeckCustody}
+            {...(deckCustody
+              ? {
+                  store: deckCustody.store,
+                  cardBackStore: deckCustody.cardBackStore,
+                }
+              : {})}
+            {...(dependencies.requestCardBack
+              ? { requestCardBack: dependencies.requestCardBack }
+              : {})}
+          />
         </DeckLayer>
       ) : null}
     </TableShell>

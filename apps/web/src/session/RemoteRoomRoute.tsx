@@ -20,8 +20,6 @@ import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { SwordIcon } from '@phosphor-icons/react/dist/csr/Sword';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
 import {
-  lazy,
-  Suspense,
   useEffect,
   useRef,
   useState,
@@ -40,6 +38,7 @@ import type {
   DeckBuilderTarget,
 } from '../features/deck/deck-builder-store.js';
 import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
+import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
 import { preferences as pagePreferences } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
@@ -81,11 +80,6 @@ import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { toast } from '../ui/toast.js';
-
-const LegacyDeckBuilderSession = lazy(async () => ({
-  default: (await import('../features/deck/LegacyDeckBuilderSession.js'))
-    .LegacyDeckBuilderSession,
-}));
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
@@ -687,24 +681,22 @@ export const RemoteRoomRoute = ({
             ) : null}
             {deckActivated ? (
               <DeckLayer open={deckOpen} onClose={closeSheet}>
-                <Suspense fallback={null}>
-                  <LegacyDeckBuilderSession
-                    session={runtime.session}
-                    open={deckOpen}
-                    {...(deckTarget ? { openTarget: deckTarget } : {})}
-                    alternateEnabled={solo}
-                    installOnSessionAttach={installDeckOnSessionAttach}
-                    prepareForNewSessionOnAttach={!deckSessionPrepared}
-                    onSessionAttach={onDeckSessionAttach}
-                    onRequestClose={closeSheet}
-                    {...(onDeckCustodyChange
-                      ? { onCustodyChange: onDeckCustodyChange }
-                      : {})}
-                    {...(deckStore ? { store: deckStore } : {})}
-                    {...(cardBackStore ? { cardBackStore } : {})}
-                    {...(requestCardBack ? { requestCardBack } : {})}
-                  />
-                </Suspense>
+                <LazyDeckBuilderSession
+                  session={runtime.session}
+                  open={deckOpen}
+                  {...(deckTarget ? { openTarget: deckTarget } : {})}
+                  alternateEnabled={solo}
+                  installOnSessionAttach={installDeckOnSessionAttach}
+                  prepareForNewSessionOnAttach={!deckSessionPrepared}
+                  onSessionAttach={onDeckSessionAttach}
+                  onRequestClose={closeSheet}
+                  {...(onDeckCustodyChange
+                    ? { onCustodyChange: onDeckCustodyChange }
+                    : {})}
+                  {...(deckStore ? { store: deckStore } : {})}
+                  {...(cardBackStore ? { cardBackStore } : {})}
+                  {...(requestCardBack ? { requestCardBack } : {})}
+                />
               </DeckLayer>
             ) : null}
             {live.fileInputs}

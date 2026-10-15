@@ -177,3 +177,17 @@
     min-height: 44px;
   }
 }
+
+/* The deck screen's script failed to load (LazyDeckBuilderSession.tsx). */
+.ptcgsim-deck-layer__unavailable {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin: auto 0;
+  padding: var(--space-4) var(--space-2);
+  text-align: center;
+}
+
+.ptcgsim-deck-layer__unavailable p {
+  margin: 0;
+}

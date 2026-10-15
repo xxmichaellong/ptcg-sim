@@ -179,7 +179,14 @@ export const resolveBoardDrop = (
       return rejected('stale_target');
     }
     if (destinationZone.kind === 'stadium')
-      return resolveCardStadiumMoveAction(view, intent.cardId);
+      return resolveCardStadiumMoveAction(
+        view,
+        intent.cardId,
+        undefined,
+        options.eitherSeatsWindows
+          ? (sourceInspectionPlayerId ?? sourceStagedPlayerId)
+          : undefined
+      );
     const place = placeIn(destinationZone.kind, intent.index);
     if (sourceZone) {
       if (destinationZone.id === sourceZone.id) {

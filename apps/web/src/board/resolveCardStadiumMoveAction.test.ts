@@ -182,4 +182,43 @@ describe('selected-card stadium placement', () => {
       ).toEqual({ ok: false, reason: 'unsupported_target' });
     }
   });
+
+  it("moves a card from the other seat's window for the seat at the bottom (a flipped Solo board)", () => {
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const other = view.playerOrder[1]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const card = hand.cards[0]!;
+    const looked: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+      },
+      workAreas: {
+        ...view.workAreas,
+        [other]: {
+          ...view.workAreas[other]!,
+          inspection: {
+            id: 'other-seat-inspection',
+            sourceZoneId: hand.id,
+            cards: [card],
+          },
+        },
+      },
+    };
+    expect(resolveCardStadiumMoveAction(looked, card.id)).toEqual({
+      ok: false,
+      reason: 'unsupported_source',
+    });
+    expect(
+      resolveCardStadiumMoveAction(looked, card.id, undefined, other)
+    ).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MoveCardToStadium',
+        expectedSourceId: 'other-seat-inspection',
+      },
+    });
+  });
 });

@@ -37,7 +37,9 @@ const rejected = (
 export const resolveCardPlayMoveAction = (
   view: MatchViewState,
   cardId: ViewCardId,
-  destinationSlot: CardPlayMoveDestination
+  destinationSlot: CardPlayMoveDestination,
+  /** The seat at the bottom (a flipped Solo board): its window is worked too. */
+  actingPlayerId?: string
 ): CardPlayMoveResolution => {
   if (view.viewer.kind !== 'player') return rejected('not_player');
 
@@ -72,7 +74,9 @@ export const resolveCardPlayMoveAction = (
   if (sourceInspection) return rejected('unsupported_source');
   if (sourceStaged) {
     if (
-      sourceStagedPlayerId !== view.viewer.playerId ||
+      !sourceStagedPlayerId ||
+      (sourceStagedPlayerId !== view.viewer.playerId &&
+        sourceStagedPlayerId !== actingPlayerId) ||
       sourceStaged.evolutionCards.at(-1)?.id !== cardId
     ) {
       return rejected('unsupported_source');
@@ -83,6 +87,9 @@ export const resolveCardPlayMoveAction = (
       ok: true,
       command: {
         type: 'RestoreStagedStack',
+        ...(sourceStagedPlayerId === view.viewer.playerId
+          ? {}
+          : { targetPlayerId: sourceStagedPlayerId }),
         expectedWorkAreaId: sourceStaged.id,
         expectedActiveStackId: board.activeStackId,
         expectedBenchStackIds: [...board.benchStackIds],

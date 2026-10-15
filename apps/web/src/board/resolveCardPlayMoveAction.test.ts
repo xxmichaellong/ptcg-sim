@@ -87,6 +87,50 @@ describe('selected-card play placement', () => {
     });
   });
 
+  it("restores the other seat's taken-apart Pokémon for the seat at the bottom (a flipped Solo board)", () => {
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const other = view.playerOrder[1]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const stagedCard = hand.cards[0]!;
+    const staged: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+      },
+      workAreas: {
+        ...view.workAreas,
+        [other]: {
+          ...view.workAreas[other]!,
+          attachmentResolution: {
+            id: 'other-seat-staged',
+            sourceStackId: 'removed-other-stack',
+            cards: [stagedCard],
+            evolutionCards: [stagedCard],
+            attachmentCards: [],
+            suggestedSlot: 'bench',
+          },
+        },
+      },
+    };
+    expect(resolveCardPlayMoveAction(staged, stagedCard.id, 'bench')).toEqual({
+      ok: false,
+      reason: 'unsupported_source',
+    });
+    expect(
+      resolveCardPlayMoveAction(staged, stagedCard.id, 'bench', other)
+    ).toMatchObject({
+      ok: true,
+      command: {
+        type: 'RestoreStagedStack',
+        targetPlayerId: other,
+        expectedWorkAreaId: 'other-seat-staged',
+        destinationSlot: 'bench',
+      },
+    });
+  });
+
   it('fails closed for spectators, stale/unsupported sources, missing boards, and active no-ops', () => {
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
