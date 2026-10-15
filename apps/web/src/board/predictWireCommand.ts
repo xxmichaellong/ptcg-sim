@@ -955,8 +955,10 @@ const predict = (
       return moveZoneContents(view, viewerId, source.id, deck.id);
     }
     case 'MovePrizesToDeckBottom': {
-      const prizes = ownZone(view, viewerId, 'prizes');
-      const deck = ownZone(view, viewerId, 'deck');
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const prizes = ownZone(view, target, 'prizes');
+      const deck = ownZone(view, target, 'deck');
       if (!prizes || !deck) return null;
       return moveZoneContents(view, viewerId, prizes.id, deck.id);
     }

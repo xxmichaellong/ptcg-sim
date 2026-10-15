@@ -175,7 +175,10 @@ const clientFrame = (socket: FakeSocket, index: number): ClientMessage =>
   JSON.parse(socket.sent[index]!) as ClientMessage;
 
 const setup = (
-  policy: ConstructorParameters<typeof RemoteGameSession>[0]['policy'] = {}
+  policy: ConstructorParameters<typeof RemoteGameSession>[0]['policy'] = {},
+  rebindCommand?: ConstructorParameters<
+    typeof RemoteGameSession
+  >[0]['rebindCommand']
 ) => {
   const factory = new FakeSocketFactory();
   const scheduler = new FakeScheduler();
@@ -188,6 +191,7 @@ const setup = (
     now: () => now,
     createCommandId: () => `command-${++commandId}`,
     policy,
+    ...(rebindCommand ? { rebindCommand } : {}),
   });
   const connect = () => {
     session.connect({
@@ -530,6 +534,50 @@ describe('RemoteGameSession', () => {
       commandId: 'command-2',
       lastSeenRevision: 1,
     });
+  });
+
+  it('rebinds what a queued command names against the view it is finally sent on', () => {
+    const seen: number[] = [];
+    const test = setup({}, (command, current) => {
+      seen.push(current.revision);
+      return command.type === 'MoveCardToPlay' &&
+        command.targetStackId === 'predicted-stack:card' &&
+        current.revision >= 1
+        ? { ...command, targetStackId: 'stack-made-by-the-room' }
+        : command;
+    });
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    test.session.submit({
+      type: 'MoveCardToPlay',
+      cardId: 'energy',
+      expectedSourceZoneId: 'zone:blue:hand',
+      boardPlayerId: 'blue',
+      slot: 'bench',
+      targetStackId: 'predicted-stack:card',
+    });
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-1',
+      executedClientSequence: 1,
+      snapshot: view(1),
+    });
+
+    expect(clientFrame(socket, 2)).toMatchObject({
+      commandId: 'command-2',
+      command: { targetStackId: 'stack-made-by-the-room' },
+    });
+    // Once, as each command is first sent: a retry resends it unchanged.
+    expect(seen).toEqual([0, 1]);
   });
 
   it('keeps what the sender saw when someone else changed the match meanwhile', () => {

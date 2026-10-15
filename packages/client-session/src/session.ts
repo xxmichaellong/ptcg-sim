@@ -40,6 +40,8 @@ interface PendingCommand {
   envelope: CommandEnvelope;
   /** Whether `lastSeenRevision` has been settled before the first send. */
   revisionSettled?: boolean;
+  /** Whether its references have been rebound before the first send. */
+  rebound?: boolean;
   status: PendingCommandSummary['state'];
   retries: number;
   publicationRevision?: number;
@@ -69,6 +71,17 @@ export interface ClientSessionDependencies {
   readonly random?: () => number;
   readonly now?: () => number;
   readonly policy?: Partial<ClientSessionPolicy>;
+  /**
+   * Rewrites what a queued command refers to just before it is first sent,
+   * against the room's latest view. A command built on a prediction can
+   * name something the client made up while the command that creates it
+   * was still on its way (a Pokémon just played, a window just opened);
+   * by the time it is sent, the room has created it under its own ID.
+   */
+  readonly rebindCommand?: (
+    command: WireGameCommand,
+    view: MatchViewState
+  ) => WireGameCommand;
 }
 
 export type SubmitCommandResult =
@@ -174,6 +187,7 @@ export class RemoteGameSession {
   private readonly scheduler: ClientSessionScheduler;
   private readonly random: () => number;
   private readonly now: () => number;
+  private readonly rebindCommand: ClientSessionDependencies['rebindCommand'];
   private readonly policy: ClientSessionPolicy;
   private readonly listeners = new Set<() => void>();
   private readonly pending: PendingCommand[] = [];
@@ -202,6 +216,7 @@ export class RemoteGameSession {
     this.scheduler = dependencies.scheduler ?? defaultScheduler;
     this.random = dependencies.random ?? Math.random;
     this.now = dependencies.now ?? Date.now;
+    this.rebindCommand = dependencies.rebindCommand;
     this.policy = validPolicy({
       ...DEFAULT_CLIENT_SESSION_POLICY,
       ...dependencies.policy,
@@ -976,6 +991,7 @@ export class RemoteGameSession {
     const head = this.pending[0];
     if (!head || head.status !== 'queued') return;
     this.settleLastSeenRevision(head);
+    this.rebindReferences(head);
     const generation = this.socketGeneration;
     const sessionId = this.sessionId;
     head.status = 'in_flight';
@@ -1020,6 +1036,17 @@ export class RemoteGameSession {
       if (!this.ownRevisions.has(revision)) return;
     }
     head.envelope = { ...head.envelope, lastSeenRevision: current };
+  }
+
+  private rebindReferences(head: PendingCommand): void {
+    if (head.rebound) return;
+    head.rebound = true;
+    const view = this.state.view;
+    if (!this.rebindCommand || !view) return;
+    const command = this.rebindCommand(head.envelope.command, view);
+    if (command !== head.envelope.command) {
+      head.envelope = { ...head.envelope, command };
+    }
   }
 
   private retryHead(): void {

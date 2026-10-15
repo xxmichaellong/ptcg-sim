@@ -410,6 +410,21 @@ describe('predictWireCommand', () => {
     ).toBeNull();
   });
 
+  it("returns the prizes of the seat a flipped board names, not the viewer's", () => {
+    const redPrizes = view.zones[`zone:${red}:prizes`]!;
+    const redDeck = view.zones[`zone:${red}:deck`]!;
+    expect(redPrizes.cards.length).toBeGreaterThan(0);
+    const returned = predictWireCommand(view, {
+      type: 'MovePrizesToDeckBottom',
+      targetPlayerId: red,
+    })!;
+    expect(returned.zones[redPrizes.id]!.cards).toHaveLength(0);
+    expect(returned.zones[redDeck.id]!.cards).toHaveLength(
+      redDeck.cards.length + redPrizes.cards.length
+    );
+    expect(returned.zones[prizes.id]!.cards).toHaveLength(prizes.cards.length);
+  });
+
   it('starts a turn optimistically: markers, loose boards, draw and counter', () => {
     const board = view.zones[`zone:${blue}:board`]!;
     const [top, ...rest] = active.evolutionCards;

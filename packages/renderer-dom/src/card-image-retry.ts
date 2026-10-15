@@ -38,10 +38,15 @@ const withoutRetryMarker = (url: string): string => {
   }
 };
 
-/** The same address with a marker, so a cached failure is not reused. */
+/**
+ * The same address with a marker, so a cached failure is not reused. One
+ * with a query of its own (a signed link, say) is asked for again exactly:
+ * a parameter added to it could break its signature.
+ */
 const withRetryMarker = (url: string, attempt: number): string => {
   try {
     const parsed = new URL(url, globalThis.location?.href);
+    if (parsed.search !== '') return url;
     parsed.searchParams.set(RETRY_PARAMETER, String(attempt));
     return parsed.href;
   } catch {

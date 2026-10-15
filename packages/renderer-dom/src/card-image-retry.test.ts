@@ -55,6 +55,33 @@ describe('card image retry', () => {
     expect(image.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=${last}`);
   });
 
+  it('asks for an address with a query of its own again exactly, so a signed link still works', () => {
+    const signed = `${ART}?X-Amz-Signature=abc123&X-Amz-Expires=600`;
+    const image = failedImage(signed);
+    let assigned = 0;
+    const set = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      'src'
+    )!;
+    Object.defineProperty(image, 'src', {
+      configurable: true,
+      get: () => set.get!.call(image),
+      set: (value: string) => {
+        assigned += 1;
+        set.set!.call(image, value);
+      },
+    });
+    scheduleCardImageRetry(image);
+    vi.advanceTimersByTime(1_500);
+    expect(assigned).toBe(1);
+    expect(image.getAttribute('src')).toBe(signed);
+    expect(image.dataset.cardImageState).toBe('loading');
+    image.dataset.cardImageState = 'failed';
+    expect(retryFailedCardImages(document.body)).toBe(1);
+    expect(assigned).toBe(2);
+    expect(image.getAttribute('src')).toBe(signed);
+  });
+
   it('does not keep a card taken off the table alive while it waits', () => {
     // A waiting retry holds its image weakly; once the card is collected,
     // the wait ends with nothing to do.

@@ -20,6 +20,7 @@ import {
   type RemoteContinuationPort,
   type RemoteContinuationSourceInput,
 } from './RemoteContinuationCustody.js';
+import { rebindProvisionalReferences } from '../board/rebindProvisionalReferences.js';
 
 export interface RemoteRoomSessionDependencies extends Omit<
   ClientSessionDependencies,
@@ -71,6 +72,7 @@ export class RemoteRoomRuntime {
   }: RemoteRoomRuntimeOptions) {
     const {
       socketFactory = createBrowserWebSocketFactory(),
+      rebindCommand = rebindProvisionalReferences,
       ...remainingSessionDependencies
     } = sessionDependencies;
     this.roomCode = connection.roomCode;
@@ -85,6 +87,7 @@ export class RemoteRoomRuntime {
         : undefined;
     this.session = new RemoteGameSession({
       socketFactory,
+      rebindCommand,
       ...remainingSessionDependencies,
     });
 
