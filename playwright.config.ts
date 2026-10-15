@@ -10,12 +10,18 @@ export default defineConfig({
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
-  retries: 0,
+  // On CI a failed test runs once more; one that then passes is reported as
+  // flaky (scripts/report-flaky.mjs) instead of turning the run red.
+  retries: process.env['CI'] ? 1 : 0,
   workers: 1,
   timeout: 45_000,
   expect: { timeout: 10_000 },
   reporter: process.env['CI']
-    ? [['github'], ['html', { open: 'never' }]]
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+        ['json', { outputFile: 'test-results/results.json' }],
+      ]
     : [['list'], ['html', { open: 'never' }]],
   use: {
     ...devices['Desktop Chrome'],

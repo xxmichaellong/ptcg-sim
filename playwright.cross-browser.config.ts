@@ -13,7 +13,8 @@ export default defineConfig({
   ],
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
-  retries: 0,
+  // As in playwright.config.ts: one retry on CI, reported when used.
+  retries: process.env['CI'] ? 1 : 0,
   workers: 1,
   timeout: 60_000,
   expect: { timeout: 10_000 },
@@ -28,6 +29,7 @@ export default defineConfig({
             outputFolder: 'playwright-report/cross-browser',
           },
         ],
+        ['json', { outputFile: 'test-results/cross-browser/results.json' }],
       ]
     : [
         ['list'],

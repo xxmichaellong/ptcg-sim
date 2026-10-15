@@ -15,11 +15,29 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
  *
  * prints shard 2's spec files, one per line. The recorded times
  * (tests/browser/durations.json) only steer the balance: every file the
- * listing has runs on exactly one shard, and the slowest (the Solo churn
- * soak) always lands on shard 1.
+ * listing has runs on exactly one shard.
+ *
+ * The evidence specs (EVIDENCE_SPECS: the Solo churn soak and the renderer
+ * comparison, a third of the suite's time) are left out of the shards and
+ * run in their own CI job, only when board code changed;
+ *
+ *   playwright test --list --project=chromium --reporter=json \
+ *     | node scripts/browser-shards.mjs evidence
+ *
+ * prints them.
  */
 
 export const DURATIONS = 'tests/browser/durations.json';
+
+/** Long evidence runs, kept off the per-push shards (see the CI workflow). */
+export const EVIDENCE_SPECS = Object.freeze([
+  'remote-room-solo-renderer-churn.spec.ts',
+  'renderer-spike.spec.ts',
+]);
+
+/** Whether a listed spec file is one of the evidence specs. */
+export const isEvidenceSpec = (file) =>
+  EVIDENCE_SPECS.includes(file.split('/').at(-1));
 
 /** Each shard's files (sorted) and their recorded seconds, slowest first in. */
 export const planShards = (files, count, seconds) => {
@@ -72,24 +90,40 @@ export const listedFiles = (report) => {
   };
 };
 
+/** Prints this run's shard (`2/8`) of the non-evidence spec files. */
+const printShard = (testDir, files, which) => {
+  const { index, count } = parseShard(which);
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const { seconds } = JSON.parse(
+    readFileSync(join(repoRoot, DURATIONS), 'utf8')
+  );
+  const shard = planShards(
+    files.filter((file) => !isEvidenceSpec(file)),
+    count,
+    seconds
+  )[index];
+  process.stderr.write(
+    `Shard ${index + 1}/${count}: ${shard.files.length} files, about ${Math.round(shard.seconds / 60)} min\n`
+  );
+  for (const file of shard.files)
+    process.stdout.write(`${relative(process.cwd(), join(testDir, file))}\n`);
+};
+
 const isMain =
   process.argv[1] !== undefined &&
   pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
 
 if (isMain) {
   try {
-    const { index, count } = parseShard(process.argv[2]);
-    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-    const { seconds } = JSON.parse(
-      readFileSync(join(repoRoot, DURATIONS), 'utf8')
-    );
     const { testDir, files } = listedFiles(JSON.parse(readFileSync(0, 'utf8')));
-    const shard = planShards(files, count, seconds)[index];
-    process.stderr.write(
-      `Shard ${index + 1}/${count}: ${shard.files.length} files, about ${Math.round(shard.seconds / 60)} min\n`
-    );
-    for (const file of shard.files)
-      process.stdout.write(`${relative(process.cwd(), join(testDir, file))}\n`);
+    if (process.argv[2] === 'evidence') {
+      for (const file of files.filter(isEvidenceSpec))
+        process.stdout.write(
+          `${relative(process.cwd(), join(testDir, file))}\n`
+        );
+    } else {
+      printShard(testDir, files, process.argv[2]);
+    }
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : error}\n`);
     process.exitCode = 1;
