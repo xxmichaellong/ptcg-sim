@@ -262,15 +262,24 @@ test('the table makes room for the sliding log in step with it, whole on every f
         Math.ceil(record.boardChanges.length / 3)
       );
     }
-    const width = await tableWidth(page);
+    // Where the slide comes to rest (a slow runner may still be painting
+    // its last frame when the wait above ends).
     if (opening) {
-      const log = await page.locator('#activitySheet').boundingBox();
-      expect(log).not.toBeNull();
-      expect(Math.abs(width - log!.x)).toBeLessThanOrEqual(1);
-      expect(width).toBeLessThan(viewport.width);
+      await expect
+        .poll(async () => {
+          const log = await page.locator('#activitySheet').boundingBox();
+          const width = await tableWidth(page);
+          return log !== null &&
+            Math.abs(width - log.x) <= 1 &&
+            width < viewport.width
+            ? 'beside the log'
+            : `${width} against ${log?.x}`;
+        })
+        .toBe('beside the log');
     } else {
-      expect(width).toBe(viewport.width);
+      await expect.poll(() => tableWidth(page)).toBe(viewport.width);
     }
+    const width = await tableWidth(page);
     // Once the table has held its size, the mat is painted at it, unscaled
     // (compared whole, so a failure shows what the mat was).
     await expect
