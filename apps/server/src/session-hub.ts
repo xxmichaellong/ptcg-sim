@@ -1088,12 +1088,14 @@ export class RoomSessionHub {
               : {}),
           });
           if (!rateLimit.allowed) {
+            // Ends the request: the client waits on a replay until it is
+            // told none is coming, and a retryable notice would resend
+            // whatever command it has in flight.
             this.send(
               connection,
               notice(
-                'rate_limited',
-                `Too many replay requests; retry in ${rateLimit.retryAfterSeconds} seconds`,
-                true
+                'replay_unavailable',
+                `Too many replay requests; retry in ${rateLimit.retryAfterSeconds} seconds`
               )
             );
             return;

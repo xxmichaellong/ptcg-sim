@@ -1,0 +1,131 @@
+import {
+  asCardDefinitionId,
+  asCardInstanceId,
+  asInspectionId,
+  asMatchId,
+  asPlayerId,
+  asStackId,
+  asWorkAreaId,
+  createEmptyMatch,
+  executeCommand,
+  playerZoneId,
+  type CommandContext,
+  type MatchState,
+} from '@ptcgsim/game-core';
+import type { WireGameCommand } from '@ptcgsim/protocol';
+import { describe, expect, it } from 'vitest';
+
+import { emptyProjectionIdentityState } from './identity-registry.js';
+import { DEFAULT_AUTHORITY_POLICY, type AuthoritySession } from './model.js';
+import { resolveWireCommand } from './resolve-command.js';
+
+/**
+ * A flipped Solo board acts for the other seat: its deck shortcuts shuffle
+ * and privately view that seat's deck. Multiplayer keeps each deck its
+ * owner's.
+ */
+
+const p1 = asPlayerId('solo-deck-controller');
+const p2 = asPlayerId('solo-deck-other');
+const context: CommandContext = {
+  nextCardId: (() => {
+    let card = 0;
+    return () => asCardInstanceId(`solo-deck-card-${++card}`);
+  })(),
+  nextStackId: () => asStackId('solo-deck-stack'),
+  nextInspectionId: () => asInspectionId('solo-deck-inspection'),
+  nextWorkAreaId: () => asWorkAreaId('solo-deck-work-area'),
+  shuffle: (values) => [...values].reverse(),
+  randomInt: () => 0,
+};
+const session: AuthoritySession = {
+  id: 'solo-deck-session',
+  viewer: { kind: 'player', playerId: p1 },
+  active: true,
+  nextClientSequence: 1,
+  recentOutcomes: [],
+};
+
+const withOtherDeck = (): MatchState => {
+  const empty = createEmptyMatch(asMatchId('solo-deck-match'), [
+    { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+    { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+  ]);
+  const loaded = executeCommand(
+    empty,
+    {
+      type: 'LoadDeck',
+      playerId: p2,
+      entries: [
+        {
+          definition: {
+            id: asCardDefinitionId('solo-deck-definition'),
+            name: 'Other seat card',
+            category: 'Trainer',
+            imageUrl: 'https://cards.example/other-seat.png',
+          },
+          count: 3,
+        },
+      ],
+    },
+    context
+  );
+  if (!loaded.accepted) throw new Error(loaded.message);
+  return loaded.state;
+};
+
+const resolve = (
+  state: MatchState,
+  command: WireGameCommand,
+  mode: 'solo' | 'multiplayer'
+) =>
+  resolveWireCommand(
+    state,
+    emptyProjectionIdentityState(),
+    session,
+    command,
+    DEFAULT_AUTHORITY_POLICY,
+    state.revision,
+    { mode }
+  );
+
+describe("a flipped Solo board's deck shortcuts", () => {
+  it("shuffle the other seat's deck in Solo only", () => {
+    const state = withOtherDeck();
+    const shuffle: WireGameCommand = {
+      type: 'ShuffleZone',
+      zoneId: playerZoneId(p2, 'deck'),
+    };
+    expect(resolve(state, shuffle, 'multiplayer')).toEqual({
+      accepted: false,
+      code: 'unauthorized',
+    });
+    const solo = resolve(state, shuffle, 'solo');
+    expect(solo.accepted).toBe(true);
+    if (!solo.accepted) return;
+    expect(executeCommand(state, solo.command, context).accepted).toBe(true);
+  });
+
+  it("show the other seat's deck privately to Solo's player only", () => {
+    const state = withOtherDeck();
+    const look: WireGameCommand = {
+      type: 'ExtractDeckCardsForInspection',
+      ownerPlayerId: p2,
+      count: 2,
+      edge: 'top',
+      visibility: 'private',
+    };
+    expect(resolve(state, look, 'multiplayer')).toEqual({
+      accepted: false,
+      code: 'unauthorized',
+    });
+    const solo = resolve(state, look, 'solo');
+    expect(solo.accepted).toBe(true);
+    if (!solo.accepted) return;
+    expect(solo.command).toMatchObject({ playerId: p2, viewerIds: [p1] });
+    const looked = executeCommand(state, solo.command, context);
+    expect(looked.accepted).toBe(true);
+    if (!looked.accepted) return;
+    expect(looked.state.workAreas[p2]?.inspection?.cardIds).toHaveLength(2);
+  });
+});

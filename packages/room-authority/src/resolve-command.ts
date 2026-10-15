@@ -819,7 +819,9 @@ export const resolveWireCommand = (
     case 'ShuffleZone': {
       const zone = state.zones[wire.zoneId];
       if (!zone) return rejected('stale_reference');
-      if (zone.ownerId !== actorId) return rejected('unauthorized');
+      // Solo's player shuffles either seat's deck from a flipped board.
+      if (zone.ownerId !== actorId && undoContext.mode !== 'solo')
+        return rejected('unauthorized');
       return {
         accepted: true,
         command: { type: 'ShuffleZone', zoneId: asZoneId(wire.zoneId) },
@@ -1232,8 +1234,11 @@ export const resolveWireCommand = (
     case 'ExtractDeckCardsForInspection': {
       const ownerId = asPlayerId(wire.ownerPlayerId);
       if (!state.players[ownerId]) return rejected('stale_reference');
+      // A private look at the other seat's deck is Solo's alone: its one
+      // player controls both seats, and only that player is shown the cards.
       if (
         ownerId !== actorId &&
+        undoContext.mode !== 'solo' &&
         !(wire.visibility === 'public' && policy.allowOpponentPublicInteraction)
       ) {
         return rejected('unauthorized');

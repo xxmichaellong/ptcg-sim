@@ -913,6 +913,26 @@ describe('RemoteGameSession', () => {
     expect(socket.close).toHaveBeenCalledWith(4400, 'inconsistent_publication');
   });
 
+  it('stops waiting on a replay the room refuses, without resending the command in flight', () => {
+    const test = setup();
+    const socket = test.admit();
+    expect(test.session.submit({ type: 'FlipCoin' }).queued).toBe(true);
+    expect(test.session.requestReplay()).toBe(true);
+    const sent = socket.sent.length;
+
+    socket.serverMessage({
+      type: 'ServerNotice',
+      protocolVersion: PROTOCOL_VERSION,
+      code: 'replay_unavailable',
+      message: 'Too many replay requests; retry in 19 seconds',
+      retryable: false,
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({ replayLoading: false });
+    expect(socket.sent).toHaveLength(sent);
+    expect(test.session.requestReplay()).toBe(true);
+  });
+
   it('assembles a streamed role-projected replay atomically', () => {
     const test = setup();
     const socket = test.admit();
@@ -1339,6 +1359,32 @@ describe('RemoteGameSession', () => {
       phase: 'failed',
       failure: { code: 'invalid_server_frame' },
     });
+  });
+
+  it('refuses a command too large for one frame without holding up the queue', () => {
+    const test = setup();
+    const socket = test.admit();
+    const sentBefore = socket.sent.length;
+    const imageUrl = `https://cards.example/${'x'.repeat(4_000)}.png`;
+    const oversized = test.session.submit({
+      type: 'LoadDeck',
+      entries: Array.from({ length: 20 }, (_, index) => ({
+        definition: {
+          id: `definition-${index}`,
+          name: `Card ${index}`,
+          category: 'Trainer' as const,
+          imageUrl,
+        },
+        count: 1,
+      })),
+    });
+    expect(oversized).toEqual({ queued: false, reason: 'too_large' });
+    expect(socket.sent).toHaveLength(sentBefore);
+    expect(test.session.getSnapshot().pendingCommands).toEqual([]);
+
+    const next = test.session.submit({ type: 'FlipCoin' });
+    expect(next).toMatchObject({ queued: true, clientSequence: 1 });
+    expect(socket.sent).toHaveLength(sentBefore + 1);
   });
 
   it('bounds queues and event histories', () => {

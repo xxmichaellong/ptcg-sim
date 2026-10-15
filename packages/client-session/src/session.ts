@@ -8,6 +8,7 @@ import {
 import {
   hydrateMatchViewState,
   MAX_CHAT_CODE_UNITS,
+  MAX_CLIENT_FRAME_CODE_UNITS,
   PROTOCOL_VERSION,
   parseServerFrame,
   type ClientMessage,
@@ -79,7 +80,11 @@ export type SubmitCommandResult =
   | {
       readonly queued: false;
       readonly reason:
-        'not_ready' | 'spectator' | 'queue_full' | 'command_pending';
+        | 'not_ready'
+        | 'spectator'
+        | 'queue_full'
+        | 'command_pending'
+        | 'too_large';
     };
 
 const initialState = (): ClientSessionState => ({
@@ -279,6 +284,17 @@ export class RemoteGameSession {
       lastSeenRevision: this.state.view?.revision ?? 0,
       command,
     };
+    // The room drops a frame over its limit without answering it, and a
+    // command never answered holds up every one queued behind it. Measured
+    // at the largest revision a resend could carry.
+    if (
+      JSON.stringify({
+        ...envelope,
+        lastSeenRevision: Number.MAX_SAFE_INTEGER,
+      }).length > MAX_CLIENT_FRAME_CODE_UNITS
+    ) {
+      return { queued: false, reason: 'too_large' };
+    }
     this.pending.push({ envelope, status: 'queued', retries: 0 });
     this.updateState({
       nextClientSequence: clientSequence + 1,

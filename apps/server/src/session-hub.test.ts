@@ -1474,9 +1474,9 @@ describe('serialized room session hub', () => {
     expect(client.messages).toEqual([
       expect.objectContaining({
         type: 'ServerNotice',
-        code: 'rate_limited',
+        code: 'replay_unavailable',
         message: expect.stringContaining('19 seconds'),
-        retryable: true,
+        retryable: false,
       }),
     ]);
     expect(setup.rateLimits.attempt).toHaveBeenLastCalledWith('replay', 10_000);
