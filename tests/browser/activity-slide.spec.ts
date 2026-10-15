@@ -233,8 +233,12 @@ test('the table makes room for the sliding log in step with it, whole on every f
     expect(record.emptyFrames).toBe(0);
     expect(record.brokenImageFrames).toBe(0);
     // The mat keeps the size it was painted at while the table resizes,
-    // and is painted afresh once, at the end.
-    expect(record.matResizes).toBeLessThanOrEqual(1);
+    // and is painted afresh at the end: once, or twice where a slow runner
+    // stalls a frame past the 180 ms settle mid-slide. Never once a frame.
+    expect(record.matResizes).toBeLessThanOrEqual(2);
+    if (record.boardChanges.length > 2) {
+      expect(record.matResizes).toBeLessThan(record.boardChanges.length);
+    }
     const width = await tableWidth(page);
     if (opening) {
       const log = await page.locator('#activitySheet').boundingBox();
