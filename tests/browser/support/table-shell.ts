@@ -36,11 +36,14 @@ export const appMenuOpener = async (page: Page): Promise<Locator> => {
 };
 
 /**
- * The open app menu, named for the button that opened it: More, or Menu on
- * a narrow rail.
+ * The open app menu, found by the button that opened it (the toolbar's More,
+ * or Menu on a narrow rail). Not by its name: the rail's own More menu,
+ * still fading out after a game action, is named "More" too.
  */
 export const appMenu = (page: Page): Locator =>
-  page.getByRole('menu', { name: /^(More|Menu)$/u });
+  page.locator(
+    '[role="menu"]:is([aria-labelledby="appMoreButton"], [aria-labelledby="appMenuButton"]):not([data-ending-style])'
+  );
 
 /** Opens the app menu and waits for it. */
 export const openAppMenu = async (page: Page): Promise<void> => {
