@@ -870,6 +870,30 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
+  it('keeps the current room when a new one is made but never admits its host', async () => {
+    const first = creationResult(runtime({ label: 'current table' }));
+    const second = creationResult(
+      runtime({ label: 'never admitted', phase: 'failed' })
+    );
+    const createRoom = vi
+      .fn()
+      .mockResolvedValueOnce(first.value)
+      .mockResolvedValueOnce(second.value);
+    const { root } = await mount(lobbyDependencies(custody(), createRoom));
+    await settle();
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await act(async () => {
+        element<HTMLButtonElement>('#generateIdButton').click();
+        await flush();
+      });
+    }
+    expect(createRoom).toHaveBeenCalledTimes(2);
+    // The new room's handshake failed: it goes, the first stays.
+    expect(second.dispose).toHaveBeenCalledOnce();
+    expect(first.dispose).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
   it('keeps the table when the room an invitation leads to never admits this session', async () => {
     const invitation = custody();
     invitation.acceptPaste.mockImplementation((event) => {

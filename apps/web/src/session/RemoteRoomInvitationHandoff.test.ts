@@ -36,7 +36,7 @@ const paste = (custody: RemoteRoomInvitationJoinCustody, text: string) =>
   });
 
 describe('remote room foreground invitation handoff', () => {
-  it('intercepts paste, exposes only safe metadata, and clears custody after bootstrap', async () => {
+  it('intercepts paste, exposes only safe metadata, and keeps custody until admission clears it', async () => {
     const preventDefault = vi.fn();
     const clipboardData = { getData: vi.fn(() => handoffText) };
     const custody = new RemoteRoomInvitationJoinCustody(() => 10_000);
@@ -71,6 +71,17 @@ describe('remote room foreground invitation handoff', () => {
       displayName: 'Red',
       requestedRole: 'player',
     });
+    // An exchange does not use the invitation up (admission does): a session
+    // that fails before admission can join with it again.
+    const retried = await custody.bootstrap(joinInput, {
+      fetch: vi.fn(async () => acceptedResponse()),
+      origin: 'https://play.example',
+      now: () => 10_000,
+      createRuntime: () => runtime,
+    });
+    expect(retried.runtime).toBe(runtime);
+    // Once admitted, the lobby clears it.
+    custody.clear();
     await expect(custody.bootstrap(joinInput)).rejects.toMatchObject({
       code: 'missing_invitation',
     });

@@ -135,7 +135,9 @@ export class RemoteRoomInvitationJoinCustody {
         result.runtime.dispose();
         throw new RemoteRoomInvitationHandoffError('disposed');
       }
-      this.#handoff = undefined;
+      // Kept until the caller clears it, once the room has admitted the
+      // session: an exchange does not use the invitation up, admission
+      // does, so a session that fails before then can join again with it.
       return result;
     } finally {
       this.#joining = false;

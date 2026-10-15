@@ -474,6 +474,18 @@ export const RemoteRoomLobby = ({
         result.dispose();
         return;
       }
+      // The table stays until the new room has admitted its host: a
+      // handshake that fails after the room was made must not cost it.
+      try {
+        await waitForAdmission(result.runtime, active.abort.signal);
+      } catch (error) {
+        result.dispose();
+        throw error;
+      }
+      if (active.owner.disposed || ownerRef.current !== active.owner) {
+        result.dispose();
+        return;
+      }
       // Reading the Multiplayer panel leaves a live Solo table alone; a room
       // that actually exists is the real transition, and that is where v1's
       // park belongs. A refused generate leaves the table where it was.
@@ -682,6 +694,8 @@ export const RemoteRoomLobby = ({
         result.runtime.dispose();
         return;
       }
+      // Admitted: the invitation is used up.
+      active.owner.invitation.clear();
       active.owner.guestRuntime = result.runtime;
       active.owner.creator?.result.dispose();
       active.owner.creator = undefined;
