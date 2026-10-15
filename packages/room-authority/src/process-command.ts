@@ -29,6 +29,7 @@ import type {
   AuthorityCommandTiming,
   AuthorityCommandTimingBreakdown,
   AuthorityDependencies,
+  AuthorityMode,
   AuthorityPersistenceTiming,
   AuthorityProcessResult,
   AuthorityRejectionCode,
@@ -262,7 +263,11 @@ const projectForSessions = (
  * "Red drew 3 cards", "Red flipped heads". Card movement keeps naming the
  * submitting seat, as v1 does when a player moves the opponent's cards.
  */
-const narratedActorOf = (command: GameCommand): PlayerId | undefined => {
+const narratedActorOf = (
+  command: GameCommand,
+  state: MatchState,
+  mode: AuthorityMode
+): PlayerId | undefined => {
   switch (command.type) {
     case 'DrawCards':
     case 'DiscardHandAndDraw':
@@ -278,6 +283,15 @@ const narratedActorOf = (command: GameCommand): PlayerId | undefined => {
       return command.playerId;
     case 'ApplySoloUndo':
       return command.targetPlayerId;
+    // Solo's deck shortcuts work the deck of the seat at the bottom, and
+    // name it. (In a room each player shuffles only their own deck, and a
+    // public look at the other's names who looked.)
+    case 'ShuffleZone':
+      return mode === 'solo'
+        ? (state.zones[command.zoneId]?.ownerId ?? undefined)
+        : undefined;
+    case 'ExtractDeckCardsForInspection':
+      return mode === 'solo' ? command.playerId : undefined;
     default:
       return undefined;
   }
@@ -452,8 +466,11 @@ export const processAuthorityCommand = async (
             ? {
                 ...execution.batch,
                 actorPlayerId:
-                  narratedActorOf(resolution.command) ??
-                  session.viewer.playerId,
+                  narratedActorOf(
+                    resolution.command,
+                    current.state,
+                    current.mode
+                  ) ?? session.viewer.playerId,
                 issuer: {
                   playerId: session.viewer.playerId,
                   commandId: envelope.commandId,

@@ -429,6 +429,54 @@ describe('authoritative room command transaction', () => {
     expect(forged.snapshot.state.revision).toBe(
       discarded.snapshot.state.revision
     );
+
+    // Its deck shortcuts shuffle and look at that seat's deck, and say so.
+    const shuffled = await processAuthorityCommand(
+      forged.snapshot,
+      command(
+        'session-player-one',
+        6,
+        'shuffle-for-flipped-seat',
+        { type: 'ShuffleZone', zoneId: playerZoneId(p2, 'deck') },
+        forged.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const looked = await processAuthorityCommand(
+      shuffled.snapshot,
+      command(
+        'session-player-one',
+        7,
+        'look-for-flipped-seat',
+        {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: p2,
+          count: 2,
+          edge: 'top',
+          visibility: 'private',
+        },
+        shuffled.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const narrated = [shuffled, looked].flatMap((result) => {
+      const publication = result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === 'session-player-one' &&
+          delivery.message.type === 'StatePublication'
+      )?.message;
+      return publication?.type === 'StatePublication'
+        ? (publication.presentationEvents ?? [])
+        : [];
+    });
+    expect(narrated).toEqual([
+      expect.objectContaining({ type: 'ZoneShuffled', playerId: p2 }),
+      expect.objectContaining({
+        type: 'DeckCardsLooked',
+        playerId: p2,
+        cardCount: 2,
+      }),
+    ]);
   });
 
   it('commits the event, new state, frontier, and outcome before ordered delivery', async () => {
