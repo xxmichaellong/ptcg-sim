@@ -114,4 +114,25 @@ describe('seatStage', () => {
       expect(seatStage(view, playerId)).toBe('playing');
     }
   });
+
+  it('is playing with the whole deck out in a window, not empty', () => {
+    const base = createEmptyBoardView();
+    const view: MatchViewState = {
+      ...base,
+      workAreas: {
+        ...base.workAreas,
+        [blue]: {
+          ...(base.workAreas[blue] ?? { attachmentResolution: null }),
+          inspection: {
+            id: 'whole-deck-look',
+            sourceZoneId: `zone:${blue}:deck`,
+            cards: Array.from({ length: 60 }, (_, index) =>
+              facedown(index, blue)
+            ),
+          },
+        },
+      },
+    };
+    expect(seatStage(view, blue)).toBe('playing');
+  });
 });

@@ -22,6 +22,12 @@ export const seatStage = (
     total += zone.cards.length;
     if (zone.kind === 'deck') inDeck += zone.cards.length;
   }
+  // Cards out in a window (a look through the whole deck, a Pokémon taken
+  // apart) are the seat's too.
+  const areas = view.workAreas[playerId];
+  total +=
+    (areas?.inspection?.cards.length ?? 0) +
+    (areas?.attachmentResolution?.cards.length ?? 0);
   if (total === 0) return 'empty';
   return inDeck === total ? 'loaded' : 'playing';
 };

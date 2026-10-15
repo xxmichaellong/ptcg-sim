@@ -56,6 +56,56 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
    */
   const cards = new Map<string, string>();
 
+  /**
+   * Draws sent and not yet seen land: a drawn card comes into the hand
+   * under a new alias, so a move made on it before then names the deck's.
+   * Each is matched up by place at the next send, once it has landed.
+   */
+  let draws: {
+    readonly playerId: string;
+    readonly drawn: readonly string[];
+    readonly at: number;
+  }[] = [];
+  const zoneOf = (view: MatchViewState, playerId: string, kind: string) =>
+    Object.values(view.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === kind
+    );
+  const recordDraw = (command: WireGameCommand, view: MatchViewState) => {
+    if (view.viewer.kind !== 'player') return;
+    const playerId =
+      ('targetPlayerId' in command ? command.targetPlayerId : undefined) ??
+      view.viewer.playerId;
+    const deck = zoneOf(view, playerId, 'deck');
+    const hand = zoneOf(view, playerId, 'hand');
+    if (!deck || !hand) return;
+    const draw =
+      command.type === 'DrawCards'
+        ? { count: command.count, at: hand.cards.length }
+        : command.type === 'StartTurn'
+          ? { count: 1, at: hand.cards.length }
+          : command.type === 'DiscardHandAndDraw'
+            ? { count: command.count, at: 0 }
+            : undefined;
+    if (!draw) return;
+    const drawn = deck.cards.slice(0, draw.count).map((card) => card.id);
+    if (drawn.length > 0) draws.push({ playerId, drawn, at: draw.at });
+  };
+  const settleDraws = (view: MatchViewState) => {
+    for (const draw of draws) {
+      const arrived =
+        zoneOf(view, draw.playerId, 'hand')?.cards.slice(
+          draw.at,
+          draw.at + draw.drawn.length
+        ) ?? [];
+      if (arrived.length !== draw.drawn.length) continue;
+      draw.drawn.forEach((old, index) => {
+        const now = arrived[index]!.id;
+        if (now !== old) remember(cards, old, now);
+      });
+    }
+    draws = [];
+  };
+
   const placedStack = (id: string, view: MatchViewState) => {
     const placement = placements.get(id);
     const board = placement ? view.boards[placement.boardPlayerId] : undefined;
@@ -143,6 +193,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   };
 
   return (command, view) => {
+    settleDraws(view);
     // A Pokémon played into a new stack: remember where, in case its card
     // comes back under another alias.
     if (command.type === 'MoveCardToPlay' && !command.targetStackId) {
@@ -172,7 +223,9 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       }
       return value;
     };
-    const rebound = rebind(command) as WireGameCommand;
-    return changed ? rebound : command;
+    const walked = rebind(command) as WireGameCommand;
+    const rebound = changed ? walked : command;
+    recordDraw(rebound, view);
+    return rebound;
   };
 };

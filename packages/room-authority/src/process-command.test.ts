@@ -314,6 +314,104 @@ describe('authoritative room command transaction', () => {
     expect(moved.snapshot.state.zones[handId]!.cardIds).toHaveLength(6);
   });
 
+  it('counts a card back twice for a card listed twice in an attached-card window', async () => {
+    const context = createContext();
+    let state = createSnapshot().state;
+    const run = (command: Parameters<typeof executeCommand>[1]) => {
+      const executed = executeCommand(state, command, context);
+      if (!executed.accepted) throw new Error(executed.message);
+      state = executed.state;
+    };
+    run({
+      type: 'LoadDeck',
+      playerId: p1,
+      entries: [
+        {
+          definition: {
+            id: asCardDefinitionId('window-mon'),
+            name: 'Window Mon',
+            category: 'Pokémon',
+            imageUrl: 'https://cards.example/mon.png',
+          },
+          count: 1,
+        },
+        {
+          definition: {
+            id: asCardDefinitionId('window-energy'),
+            name: 'Window Energy',
+            category: 'Energy',
+            imageUrl: 'https://cards.example/energy.png',
+          },
+          count: 64,
+        },
+      ],
+    });
+    const deck = playerZoneId(p1, 'deck');
+    const hand = playerZoneId(p1, 'hand');
+    const mon = state.zones[deck]!.cardIds.find(
+      (cardId) => state.cards[cardId]!.currentCategory === 'Pokémon'
+    )!;
+    for (const cardId of [...state.zones[deck]!.cardIds])
+      run({
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: deck,
+        destinationZoneId: hand,
+      });
+    run({
+      type: 'MoveCardToPlay',
+      cardId: mon,
+      expectedSourceZoneId: hand,
+      boardPlayerId: p1,
+      slot: 'active',
+    });
+    const stackId = state.boards[p1]!.activeStackId!;
+    for (const cardId of [...state.zones[hand]!.cardIds])
+      run({
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: hand,
+        boardPlayerId: p1,
+        slot: 'active',
+        targetStackId: stackId,
+      });
+    // The Pokémon leaves: its 64 Energy wait in the window, each listed in
+    // its flat order and again among its attachments.
+    run({
+      type: 'MoveCardFromStack',
+      cardId: mon,
+      expectedStackId: stackId,
+      destinationZoneId: hand,
+    });
+    expect(
+      state.workAreas[p1]?.attachmentResolution?.attachmentCardIds
+    ).toHaveLength(64);
+    const current = {
+      ...createSnapshot(),
+      state,
+      replayHistory: createReplayHistory(state),
+    };
+    const result = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-one',
+        1,
+        'long-back',
+        {
+          type: 'SetCardBack',
+          cardBackUrl: `https://backs.example/${'b'.repeat(4_030 - 26)}.png`,
+        },
+        state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(
+      result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
   it("keeps each player's card definitions apart, so a deck load cannot probe the other's concealed cards", async () => {
     const dependencies = createDependencies(createPersistence());
     const definition = {

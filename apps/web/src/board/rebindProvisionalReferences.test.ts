@@ -188,4 +188,37 @@ describe('rebinding predicted references', () => {
       )
     ).toMatchObject({ stackId: 'predicted-stack:refused-play' });
   });
+
+  it('names a drawn card as the hand has it once the draw has landed', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const top = deck.cards[0]!;
+    rebind({ type: 'DrawCards', count: 1 }, view);
+    // The room published the draw: the card is the hand's last, renamed.
+    const landed: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [deck.id]: { ...deck, cards: deck.cards.slice(1) },
+        [hand.id]: {
+          ...hand,
+          cards: [...hand.cards, { ...top, id: 'alias-in-hand' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: top.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        landed
+      )
+    ).toMatchObject({ cardId: 'alias-in-hand' });
+  });
 });

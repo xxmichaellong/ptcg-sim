@@ -310,15 +310,28 @@ const MAX_CONCEALED_CARD_BACK_CODE_UNITS = MAX_SERVER_FRAME_CODE_UNITS / 2;
 const cardBackCodeUnits = (state: MatchState): number => {
   // As written on the wire: quotes and backslashes in a URL are escaped.
   const encoded = new Map<string, number>();
-  let total = 0;
-  for (const card of Object.values(state.cards)) {
-    const url = state.players[card.ownerId]?.cardBackUrl ?? '';
+  const backOf = (cardId: string): number => {
+    const ownerId = state.cards[cardId]?.ownerId;
+    const url = (ownerId && state.players[ownerId]?.cardBackUrl) || '';
     let length = encoded.get(url);
     if (length === undefined) {
       length = JSON.stringify(url).length;
       encoded.set(url, length);
     }
-    total += length;
+    return length;
+  };
+  let total = 0;
+  for (const cardId of Object.keys(state.cards)) total += backOf(cardId);
+  // An attached-card window lists each card twice: in its flat order and
+  // again among its evolutions or its attachments.
+  for (const areas of Object.values(state.workAreas)) {
+    const staged = areas?.attachmentResolution;
+    if (!staged) continue;
+    for (const cardId of [
+      ...staged.evolutionCardIds,
+      ...staged.attachmentCardIds,
+    ])
+      total += backOf(cardId);
   }
   return total;
 };
