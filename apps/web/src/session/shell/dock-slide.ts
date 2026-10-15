@@ -19,8 +19,13 @@ export interface DockSlide {
   readonly value: () => number;
   /** Where it is heading: 1 while the log is open, 0 once it is put away. */
   readonly target: () => 0 | 1;
-  /** Calls `listener` on every frame the value changes. */
-  readonly subscribe: (listener: () => void) => () => void;
+  /**
+   * Calls `listener` on every frame the value changes, and once when it is
+   * put somewhere at once. `inFrame` is true only inside an animation
+   * frame, where a listener may paint synchronously; a jump can come from a
+   * React effect, where it must not.
+   */
+  readonly subscribe: (listener: (inFrame: boolean) => void) => () => void;
   /** Slides there; `jump` (or reduced motion) puts it there at once. */
   readonly to: (target: 0 | 1, options?: { readonly jump?: boolean }) => void;
   /** Stops a slide where it would end. */
@@ -38,7 +43,7 @@ export const createDockSlide = (
     return motion.reduced ? 0 : motion.durationScale;
   }
 ): DockSlide => {
-  const listeners = new Set<() => void>();
+  const listeners = new Set<(inFrame: boolean) => void>();
   let target: 0 | 1 = initial;
   let value: number = initial;
   // The current leg: where it started, how fast, when, and how long it runs.
@@ -53,8 +58,8 @@ export const createDockSlide = (
     | undefined;
   let frame: number | undefined;
 
-  const notify = (): void => {
-    for (const listener of [...listeners]) listener();
+  const notify = (inFrame: boolean): void => {
+    for (const listener of [...listeners]) listener(inFrame);
   };
   const stateAt = (now: number) => {
     if (!leg) return { value, velocity: 0, done: true };
@@ -79,7 +84,7 @@ export const createDockSlide = (
     value = state.value;
     if (state.done) leg = undefined;
     else frame = requestAnimationFrame(tick);
-    notify();
+    notify(true);
   };
   const stop = (): void => {
     if (frame !== undefined) cancelAnimationFrame(frame);
@@ -107,7 +112,7 @@ export const createDockSlide = (
       if (!(scale > 0)) {
         leg = undefined;
         value = next;
-        notify();
+        notify(false);
         return;
       }
       const from = current.value;

@@ -998,10 +998,31 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
         }),
       };
     });
+  /**
+   * Exit copies of closed overlays live at most 450ms, so ghosts are counted
+   * at 600ms. A short fade still finishing on a slow runner (the rail
+   * coming back from dim after a viewer closes) is not residue: running
+   * animations get up to 2s more to end, and any still running then is
+   * named. An animation that never ends, or keeps restarting, still fails.
+   */
   const settledResidue = async () => {
-    // Exit copies of closed overlays live at most 450ms.
     await page.waitForTimeout(600);
-    return residue();
+    const atGhostDeadline = await residue();
+    let settled = atGhostDeadline;
+    for (
+      let waited = 0;
+      settled.animations > 0 && waited < 2_000;
+      waited += 100
+    ) {
+      await page.waitForTimeout(100);
+      settled = await residue();
+    }
+    return {
+      ...settled,
+      cardGhosts: atGhostDeadline.cardGhosts,
+      overlayGhosts: atGhostDeadline.overlayGhosts,
+      flying: atGhostDeadline.flying,
+    };
   };
   const NONE = { cardGhosts: 0, overlayGhosts: 0, flying: 0, animations: 0 };
   let previousCardIds: readonly string[] = [];

@@ -222,11 +222,13 @@ test('the table makes room for the sliding log in step with it, whole on every f
     const late = record.boardChanges.filter(
       (change) => change.phase !== 'frame'
     );
-    expect(record.panelChanges, 'the log slid').toBeGreaterThan(3);
+    // Slid, not jumped: over more than one frame. The slide is timed, so a
+    // slow runner draws it in fewer, longer frames (three on CI).
+    expect(record.panelChanges, 'the log slid').toBeGreaterThan(1);
     expect(
       record.boardChanges.length,
       'the table resized with it'
-    ).toBeGreaterThan(3);
+    ).toBeGreaterThan(1);
     expect(late, 'every resize painted in the frame the log moved').toEqual([]);
     expect(record.emptyFrames).toBe(0);
     expect(record.brokenImageFrames).toBe(0);

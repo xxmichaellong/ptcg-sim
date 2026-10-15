@@ -669,8 +669,9 @@ export const RemoteSessionBoard = ({
     };
     apply(false);
     // Each frame of the slide paints the table in that frame, beside the
-    // log as it is drawn there.
-    return sidePanelSlide?.subscribe(() => apply(true));
+    // log as it is drawn there. A jump (instant motion) can come from a
+    // React effect, where a synchronous paint is refused, so it waits.
+    return sidePanelSlide?.subscribe((inFrame) => apply(inFrame));
   }, [sidePanel, sidePanelSlide]);
 
   useEffect(() => {
