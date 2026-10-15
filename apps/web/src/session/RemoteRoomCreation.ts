@@ -116,6 +116,19 @@ export class RemoteRoomInvitationCustody {
     return this.copy('spectator', clipboard, signal);
   }
 
+  /**
+   * v1's one copy key: a player invitation while a seat is free, a spectator
+   * invitation once both are taken. One clipboard write either way, begun
+   * while the click still counts: a second write after a slow refusal would
+   * have no user gesture left, and the browser would refuse it.
+   */
+  copyPlayerOrSpectatorInvitation(
+    clipboard = currentBrowserInvitationClipboard(),
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitationCopyReceipt> {
+    return this.copy(['player', 'spectator'], clipboard, signal);
+  }
+
   get roomCode(): string {
     return this.#roomCode;
   }
@@ -127,7 +140,9 @@ export class RemoteRoomInvitationCustody {
   }
 
   private async copy(
-    requestedRole: RemoteRoomInvitation['requestedRole'],
+    roles:
+      | RemoteRoomInvitation['requestedRole']
+      | readonly RemoteRoomInvitation['requestedRole'][],
     clipboard: DeferredTextClipboardWriter | undefined,
     signal?: AbortSignal
   ): Promise<RemoteRoomInvitationCopyReceipt> {
@@ -139,7 +154,10 @@ export class RemoteRoomInvitationCustody {
     }
     this.#copying = true;
     try {
-      const invitation = this.issue(requestedRole, signal);
+      const invitation = this.issueFirstAvailable(
+        typeof roles === 'string' ? [roles] : roles,
+        signal
+      );
       const text = invitation.then(serializeRoomInvitationHandoffText);
       await Promise.all([clipboard.writeText(text), text]);
       const handoff = await invitation;
@@ -159,6 +177,28 @@ export class RemoteRoomInvitationCustody {
     } finally {
       this.#copying = false;
     }
+  }
+
+  /** The first of `roles` the room has room for. */
+  private async issueFirstAvailable(
+    roles: readonly RemoteRoomInvitation['requestedRole'][],
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitation> {
+    for (const [index, role] of roles.entries()) {
+      try {
+        return await this.issue(role, signal);
+      } catch (error) {
+        const last = index === roles.length - 1;
+        if (
+          last ||
+          !(error instanceof RemoteRoomInvitationError) ||
+          error.code !== 'seat_unavailable'
+        ) {
+          throw error;
+        }
+      }
+    }
+    throw new RemoteRoomInvitationError('invalid_input');
   }
 
   private async issue(

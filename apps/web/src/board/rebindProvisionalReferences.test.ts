@@ -99,4 +99,42 @@ describe('rebinding predicted references', () => {
       )
     ).toMatchObject({ expectedWorkAreaId: 'room-work-area' });
   });
+
+  it("finds a Pokémon whose card changed alias as it entered play (Solo's other seat), where it was played", () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const active = view.stacks['stack:blue:active']!;
+    const now = active.evolutionCards.at(-1)!;
+    const single: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: { ...active, evolutionCards: [now] },
+      },
+    };
+    const played = {
+      type: 'MoveCardToPlay',
+      cardId: 'alias-while-in-hand',
+      expectedSourceZoneId: 'zone:spike-red:hand',
+      boardPlayerId: active.boardPlayerId,
+      slot: 'active',
+    } as WireGameCommand;
+    // The play itself is sent first, and is where the rebinder learns it.
+    expect(rebind(played, view)).toBe(played);
+    expect(
+      rebind(
+        {
+          type: 'PlaceCardOnPlayStack',
+          cardId: 'energy',
+          expectedSourceId: 'zone:spike-red:hand',
+          targetStackId: 'predicted-stack:alias-while-in-hand',
+          expectedTargetTopCardId: 'alias-while-in-hand',
+        } as unknown as WireGameCommand,
+        single
+      )
+    ).toMatchObject({
+      targetStackId: active.id,
+      expectedTargetTopCardId: now.id,
+    });
+  });
 });

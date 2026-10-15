@@ -41,7 +41,6 @@ import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilde
 import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import {
   createRemoteRoom,
-  RemoteRoomInvitationError,
   type RemoteRoomCreationResult,
 } from './RemoteRoomCreation.js';
 import {
@@ -183,7 +182,8 @@ interface ConnectedRoom {
   readonly runtime: RemoteRoomRuntime;
   readonly rendererKind: RendererKind;
   readonly mode: 'solo' | 'multiplayer';
-  readonly coachingConsent: boolean;
+  /** Set once admitted; left out, the room keeps its own (a restored game). */
+  readonly coachingConsent?: boolean;
 }
 
 const normalizeDisplayName = (
@@ -769,11 +769,11 @@ export const RemoteRoomLobby = ({
       setRoomCode(result.runtime.roomCode);
       setCoachingConsent(false);
       setCopyConfirmed(false);
+      // The save keeps the consent it was made with.
       setConnected({
         runtime: result.runtime,
         rendererKind,
         mode: 'multiplayer',
-        coachingConsent: false,
       });
       previousCreator?.result.dispose();
       if (previousGuest && previousGuest !== result.runtime) {
@@ -799,17 +799,7 @@ export const RemoteRoomLobby = ({
     // One key, as in v1: a player invitation while a seat is free (its
     // holder may still choose to watch), a spectator invitation once both
     // seats are taken.
-    try {
-      await invitations.copyPlayerInvitation();
-    } catch (error) {
-      if (
-        !(error instanceof RemoteRoomInvitationError) ||
-        error.code !== 'seat_unavailable'
-      ) {
-        throw error;
-      }
-      await invitations.copySpectatorInvitation();
-    }
+    await invitations.copyPlayerOrSpectatorInvitation();
     return true;
   };
 
@@ -1041,12 +1031,13 @@ export const RemoteRoomLobby = ({
   if (connected) {
     return (
       <>
-        {connected.mode === 'multiplayer' && (
-          <InitialCoachingConsent
-            runtime={connected.runtime}
-            consent={connected.coachingConsent}
-          />
-        )}
+        {connected.mode === 'multiplayer' &&
+          connected.coachingConsent !== undefined && (
+            <InitialCoachingConsent
+              runtime={connected.runtime}
+              consent={connected.coachingConsent}
+            />
+          )}
         <RemoteRoomRoute
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}

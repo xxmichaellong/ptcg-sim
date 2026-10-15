@@ -295,6 +295,11 @@ const creationResult = (
     requestedRole: 'spectator' as const,
     expiresAt: 40_000,
   }));
+  const copyPlayerOrSpectatorInvitation = vi.fn(async () => ({
+    roomCode: ROOM_CODE,
+    requestedRole: 'player' as const,
+    expiresAt: 40_000,
+  }));
   const dispose = vi.fn();
   const value = {
     runtime: roomRuntime.value,
@@ -308,6 +313,7 @@ const creationResult = (
       roomCode: ROOM_CODE,
       copyPlayerInvitation,
       copySpectatorInvitation,
+      copyPlayerOrSpectatorInvitation,
     },
     dispose,
   } as unknown as RemoteRoomCreationResult;
@@ -316,6 +322,7 @@ const creationResult = (
     dispose,
     copyPlayerInvitation,
     copySpectatorInvitation,
+    copyPlayerOrSpectatorInvitation,
     roomRuntime,
   };
 };
@@ -1066,22 +1073,20 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
 
-    // A transient failure is reported, never swapped for a spectator link
-    // the recipient could not take the seat with.
+    // The one copy key asks custody for whichever invitation the room has
+    // room for, in a single clipboard write (RemoteRoomCreation.test.ts),
+    // and reports a failure as it is.
     const copy = roomRouteHarness.onCopyInvitation!;
-    created.copyPlayerInvitation.mockRejectedValueOnce(
+    created.copyPlayerOrSpectatorInvitation.mockRejectedValueOnce(
       new RemoteRoomInvitationError('issue_failed')
     );
     await expect(copy('player')).rejects.toMatchObject({
       code: 'issue_failed',
     });
-    expect(created.copySpectatorInvitation).not.toHaveBeenCalled();
-
-    created.copyPlayerInvitation.mockRejectedValueOnce(
-      new RemoteRoomInvitationError('seat_unavailable')
-    );
     await expect(copy('player')).resolves.toBe(true);
-    expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
+    expect(created.copyPlayerOrSpectatorInvitation).toHaveBeenCalledTimes(2);
+    expect(created.copyPlayerInvitation).not.toHaveBeenCalled();
+    expect(created.copySpectatorInvitation).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
   });
@@ -1302,7 +1307,8 @@ describe('remote room lobby wiring', () => {
   it('keeps the live room on failed restore and atomically replaces it after exact retry', async () => {
     const invitation = custody();
     const created = creationResult(runtime({ label: 'source' }));
-    const restored = runtime({ label: 'restored' });
+    // Saved with coaching consent on.
+    const restored = runtime({ label: 'restored', coachingConsent: true });
     const restore = vi
       .fn()
       .mockRejectedValueOnce(new Error('redacted restore failure'))
@@ -1366,6 +1372,10 @@ describe('remote room lobby wiring', () => {
       'private opponent invitation'
     );
     expect(document.body.textContent).toContain('restored');
+    // The save keeps the coaching consent it was made with.
+    expect(restored.submit).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SetCoachingConsent' })
+    );
     expect(roomRouteHarness.installDeckOnSessionAttach).toBe(false);
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(restored.dispose).not.toHaveBeenCalled();

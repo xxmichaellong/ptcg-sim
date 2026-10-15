@@ -386,6 +386,46 @@ describe('remote room invitation custody', () => {
     expect(receivers).toEqual([undefined]);
   });
 
+  it('copies a spectator invitation once both seats are taken, in the one clipboard write the click began', async () => {
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({ error: 'seat_unavailable' }, { status: 409 })
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: spectatorInvitation,
+            requestedRole: 'spectator',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+      now: () => 10_000,
+    });
+    const clipboard = capturingClipboard();
+    let writes = 0;
+    await expect(
+      custody.copyPlayerOrSpectatorInvitation({
+        writeText: (text) => {
+          writes += 1;
+          return clipboard.writer.writeText(text);
+        },
+      })
+    ).resolves.toMatchObject({ requestedRole: 'spectator' });
+    expect(writes).toBe(1);
+    expect(clipboard.values).toHaveLength(1);
+    expect(clipboard.values[0]).toContain(spectatorInvitation);
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+  });
+
   it('does not serialize secrets and clears every master credential on dispose', async () => {
     const custody = new RemoteRoomInvitationCustody({
       roomCode: 'ABCDEFGH2345',
