@@ -163,15 +163,6 @@
   }
 }
 
-.ptcgsim-rail-tooltip-hint {
-  margin-left: 4px;
-  padding: 0 4px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-xs);
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-}
-
 /* The game actions are icons; the tooltips carry the words and keys. */
 .ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button__label {
   display: none;

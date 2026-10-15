@@ -122,6 +122,7 @@ export const RendererSpikeBoard = ({
   preferences,
   table,
   chrome,
+  onSettledChange,
 }: {
   readonly view: MatchViewState;
   readonly rendererKind: RendererKind;
@@ -137,6 +138,11 @@ export const RendererSpikeBoard = ({
   readonly table?: SpikeTableLayout;
   /** Paint over the board, placed by its layout (the table rail). */
   readonly chrome?: (layout: BoardLayoutSnapshot) => ReactNode;
+  /**
+   * Whether the board is ready to be seen: painted with its chrome, or
+   * failed. False again whenever it starts over or leaves the page.
+   */
+  readonly onSettledChange?: (settled: boolean) => void;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
@@ -169,6 +175,11 @@ export const RendererSpikeBoard = ({
     DEFAULT_BOARD_PRESENTATION
   );
   presentationRef.current = presentation;
+  const onSettledChangeRef = useRef(onSettledChange);
+  onSettledChangeRef.current = onSettledChange;
+  const settled =
+    status.kind === 'failed' ||
+    (status.kind === 'ready' && (chrome === undefined || layout !== undefined));
 
   useEffect(() => {
     const host = hostRef.current;
@@ -301,6 +312,7 @@ export const RendererSpikeBoard = ({
     void mount();
     return () => {
       disposed = true;
+      onSettledChangeRef.current?.(false);
       resizeObserver?.disconnect();
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       window.removeEventListener('resize', scheduleInstallSize);
@@ -318,6 +330,10 @@ export const RendererSpikeBoard = ({
       installedRef.current = null;
     };
   }, [rendererKind]);
+
+  useEffect(() => {
+    onSettledChangeRef.current?.(settled);
+  }, [settled]);
 
   useEffect(() => {
     rendererRef.current?.setPreferences(

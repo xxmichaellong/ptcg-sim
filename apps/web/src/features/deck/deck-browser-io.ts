@@ -1,78 +1,67 @@
-import {
-  parseSimCsvResult,
-  serializeDeckToSimCsv,
-  type Deck,
-  type DeckCsvIssue,
-} from '@ptcgsim/deck-core';
-
 /**
  * UTF-8 can require three bytes for one JavaScript code unit; the final three
- * bytes allow its optional BOM. The parser owns the authoritative
+ * bytes allow its optional BOM. The parsers own the authoritative
  * 1,000,000-code-unit bound, while this preflight prevents a File.text()
  * allocation from getting there with an obviously oversized file.
  */
-export const MAX_DECK_CSV_FILE_BYTES = 3_000_003;
-export const DECK_CSV_FILENAME = 'ptcg-sim-deck.csv';
-/** v1's deck-import review Save writes this name. */
-export const DECKLIST_CSV_FILENAME = 'decklist.csv';
+export const MAX_DECK_FILE_BYTES = 3_000_003;
 
-export type DeckCsvFileImportFailure =
-  | { readonly ok: false; readonly reason: 'aborted' }
-  | { readonly ok: false; readonly reason: 'file_too_large' }
-  | { readonly ok: false; readonly reason: 'read_failed' }
+export type DeckFileReadResult =
+  | { readonly ok: true; readonly text: string }
   | {
       readonly ok: false;
-      readonly reason: 'invalid_csv';
-      readonly issues: readonly DeckCsvIssue[];
+      readonly reason: 'aborted' | 'file_too_large' | 'read_failed';
     };
 
-export type DeckCsvFileImportResult =
-  { readonly ok: true; readonly deck: Deck } | DeckCsvFileImportFailure;
-
-export interface DeckCsvFileLike {
+export interface DeckFileLike {
   readonly size: number;
   text(): Promise<string>;
 }
 
-/** Reads one bounded foreground file and delegates all CSV semantics to core. */
-export const importDeckCsvFile = async (
-  file: DeckCsvFileLike,
+/** Reads one bounded deck file (a v1 CSV or a decklist) as text. */
+export const readDeckFile = async (
+  file: DeckFileLike,
   options: { readonly signal?: AbortSignal } = {}
-): Promise<DeckCsvFileImportResult> => {
+): Promise<DeckFileReadResult> => {
   if (options.signal?.aborted) return { ok: false, reason: 'aborted' };
   if (
     !Number.isSafeInteger(file.size) ||
     file.size < 0 ||
-    file.size > MAX_DECK_CSV_FILE_BYTES
+    file.size > MAX_DECK_FILE_BYTES
   ) {
     return { ok: false, reason: 'file_too_large' };
   }
-
-  let source: string;
+  let text: string;
   try {
-    source = await file.text();
+    text = await file.text();
   } catch {
     return { ok: false, reason: 'read_failed' };
   }
   if (options.signal?.aborted) return { ok: false, reason: 'aborted' };
-
-  const parsed = parseSimCsvResult(source);
-  return parsed.ok
-    ? parsed
-    : { ok: false, reason: 'invalid_csv', issues: parsed.issues };
+  return { ok: true, text };
 };
 
-export interface DeckCsvDownloadDependencies {
+export interface DownloadDependencies {
   readonly document?: Document;
   readonly url?: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
-  /** v1 names the deck builder's export and the review Save differently. */
-  readonly filename?: string;
 }
 
-/** Downloads already-serialized deck CSV and always releases its object URL. */
-export const downloadDeckCsvText = (
+/** A file name from a deck name: letters, digits and dashes. */
+export const deckFileName = (name: string, extension: string): string => {
+  const base = name
+    .normalize('NFKD')
+    .replaceAll(/\p{M}/gu, '')
+    .replaceAll(/[^A-Za-z0-9]+/gu, '-')
+    .replaceAll(/^-+|-+$/gu, '')
+    .slice(0, 60);
+  return `${base || 'deck'}.${extension}`;
+};
+
+/** Downloads text as a file and always releases its object URL. */
+export const downloadTextFile = (
   source: string,
-  dependencies: DeckCsvDownloadDependencies = {}
+  file: { readonly name: string; readonly type: string },
+  dependencies: DownloadDependencies = {}
 ): boolean => {
   const documentObject = dependencies.document ?? globalThis.document;
   const urlObject = dependencies.url ?? globalThis.URL;
@@ -88,13 +77,11 @@ export const downloadDeckCsvText = (
   let link: HTMLAnchorElement | undefined;
   try {
     objectUrl = urlObject.createObjectURL(
-      new Blob([source], {
-        type: 'text/csv;charset=utf-8',
-      })
+      new Blob([source], { type: file.type })
     );
     link = documentObject.createElement('a');
     link.href = objectUrl;
-    link.download = dependencies.filename ?? DECK_CSV_FILENAME;
+    link.download = file.name;
     link.style.display = 'none';
     documentObject.body.append(link);
     link.click();
@@ -106,12 +93,6 @@ export const downloadDeckCsvText = (
     if (objectUrl !== undefined) urlObject.revokeObjectURL(objectUrl);
   }
 };
-
-/** Downloads the legacy-compatible CSV and always releases its object URL. */
-export const downloadDeckCsv = (
-  deck: Deck,
-  dependencies: DeckCsvDownloadDependencies = {}
-): boolean => downloadDeckCsvText(serializeDeckToSimCsv(deck), dependencies);
 
 export type DeckBeforeUnloadTarget = Pick<
   Window,

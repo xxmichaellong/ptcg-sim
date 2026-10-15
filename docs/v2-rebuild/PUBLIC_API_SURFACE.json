@@ -170,32 +170,100 @@
               "kind": "value"
             },
             {
-              "name": "applyLocalControls",
+              "name": "CARD_CATEGORIES",
               "kind": "value"
             },
             {
-              "name": "CardPoolFilter",
+              "name": "CardCategory",
               "kind": "type"
             },
             {
-              "name": "CardSearchControls",
-              "kind": "type"
-            },
-            {
-              "name": "CardSearchPlan",
-              "kind": "type"
-            },
-            {
-              "name": "CardSortField",
-              "kind": "type"
-            },
-            {
-              "name": "createEmptyDeck",
+              "name": "cardCategoryOf",
               "kind": "value"
             },
             {
-              "name": "Deck",
+              "name": "CardQuery",
               "kind": "type"
+            },
+            {
+              "name": "CardRuleFacts",
+              "kind": "type"
+            },
+            {
+              "name": "CATALOG_SORTS",
+              "kind": "value"
+            },
+            {
+              "name": "CATALOG_WIRE_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "CatalogAbility",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogAttack",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogCard",
+              "kind": "type"
+            },
+            {
+              "name": "catalogCardId",
+              "kind": "value"
+            },
+            {
+              "name": "catalogIndex",
+              "kind": "value"
+            },
+            {
+              "name": "CatalogIndex",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogSearchOptions",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogSearchResult",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogSet",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogSort",
+              "kind": "type"
+            },
+            {
+              "name": "CatalogWireError",
+              "kind": "type-value"
+            },
+            {
+              "name": "checkDeck",
+              "kind": "value"
+            },
+            {
+              "name": "compareCollectorNumbers",
+              "kind": "value"
+            },
+            {
+              "name": "countOf",
+              "kind": "value"
+            },
+            {
+              "name": "coverCardOf",
+              "kind": "value"
+            },
+            {
+              "name": "customCardId",
+              "kind": "value"
+            },
+            {
+              "name": "DECK_FORMAT_IDS",
+              "kind": "value"
             },
             {
               "name": "DECK_FORMATS",
@@ -206,15 +274,15 @@
               "kind": "type"
             },
             {
-              "name": "DeckCardGroup",
+              "name": "deckCardFromCatalog",
+              "kind": "value"
+            },
+            {
+              "name": "DeckCardOptions",
               "kind": "type"
             },
             {
-              "name": "DeckCardVariant",
-              "kind": "type"
-            },
-            {
-              "name": "DeckCounts",
+              "name": "DeckCheck",
               "kind": "type"
             },
             {
@@ -226,43 +294,107 @@
               "kind": "type"
             },
             {
-              "name": "DeckFilters",
+              "name": "DeckEntry",
               "kind": "type"
             },
             {
-              "name": "DeckFormat",
+              "name": "DeckFormatId",
               "kind": "type"
             },
             {
-              "name": "DeckImportFormat",
+              "name": "DeckFormatRules",
               "kind": "type"
             },
             {
-              "name": "DeckValidationResult",
+              "name": "DeckIssue",
               "kind": "type"
             },
             {
-              "name": "detectDeckFormat",
+              "name": "DeckList",
+              "kind": "type"
+            },
+            {
+              "name": "DecklistMatch",
+              "kind": "type"
+            },
+            {
+              "name": "deckListOf",
               "kind": "value"
             },
             {
-              "name": "detectImportFormat",
+              "name": "deckStats",
               "kind": "value"
             },
             {
-              "name": "filterDeck",
+              "name": "DeckStats",
+              "kind": "type"
+            },
+            {
+              "name": "deckTotals",
               "kind": "value"
             },
             {
-              "name": "formatImageUrl",
+              "name": "DeckTotals",
+              "kind": "type"
+            },
+            {
+              "name": "decodeCatalog",
               "kind": "value"
             },
             {
-              "name": "getDeckCounts",
+              "name": "describeDeckIssue",
               "kind": "value"
             },
             {
-              "name": "getSortedDeckCardArray",
+              "name": "EMPTY_DECK_LIST",
+              "kind": "value"
+            },
+            {
+              "name": "ENERGY_TYPES",
+              "kind": "value"
+            },
+            {
+              "name": "EnergyType",
+              "kind": "type"
+            },
+            {
+              "name": "evolutionLineOf",
+              "kind": "value"
+            },
+            {
+              "name": "findCatalogPrint",
+              "kind": "value"
+            },
+            {
+              "name": "foldText",
+              "kind": "value"
+            },
+            {
+              "name": "formatDecklistText",
+              "kind": "value"
+            },
+            {
+              "name": "formatSimCsv",
+              "kind": "value"
+            },
+            {
+              "name": "guessDeckFormat",
+              "kind": "value"
+            },
+            {
+              "name": "handChance",
+              "kind": "value"
+            },
+            {
+              "name": "isBasicEnergy",
+              "kind": "value"
+            },
+            {
+              "name": "isBasicPokemon",
+              "kind": "value"
+            },
+            {
+              "name": "isDeckFormatId",
               "kind": "value"
             },
             {
@@ -270,11 +402,35 @@
               "kind": "value"
             },
             {
+              "name": "isPocketCard",
+              "kind": "value"
+            },
+            {
               "name": "LegacyCardType",
               "kind": "type"
             },
             {
-              "name": "normalizeSearchQuery",
+              "name": "lineCardId",
+              "kind": "value"
+            },
+            {
+              "name": "LoadedCatalog",
+              "kind": "type"
+            },
+            {
+              "name": "matchesClause",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_ENTRY_COUNT",
+              "kind": "value"
+            },
+            {
+              "name": "normalizeCollectorNumber",
+              "kind": "value"
+            },
+            {
+              "name": "parseCardQuery",
               "kind": "value"
             },
             {
@@ -322,11 +478,51 @@
               "kind": "type"
             },
             {
-              "name": "prepareCardSearchTerm",
+              "name": "printFromImageUrl",
               "kind": "value"
             },
             {
+              "name": "printId",
+              "kind": "value"
+            },
+            {
+              "name": "printKey",
+              "kind": "value"
+            },
+            {
+              "name": "printsOf",
+              "kind": "value"
+            },
+            {
+              "name": "QUERY_FIELDS",
+              "kind": "value"
+            },
+            {
+              "name": "QueryClause",
+              "kind": "type"
+            },
+            {
+              "name": "QueryField",
+              "kind": "type"
+            },
+            {
+              "name": "QueryOperator",
+              "kind": "type"
+            },
+            {
               "name": "removeCard",
+              "kind": "value"
+            },
+            {
+              "name": "replacePrinting",
+              "kind": "value"
+            },
+            {
+              "name": "ResolvedDecklistRow",
+              "kind": "type"
+            },
+            {
+              "name": "resolveDecklistRow",
               "kind": "value"
             },
             {
@@ -338,19 +534,47 @@
               "kind": "value"
             },
             {
-              "name": "resolveSearchPlan",
+              "name": "ruleName",
               "kind": "value"
             },
             {
-              "name": "serializeDeckToSimCsv",
+              "name": "sameDeckList",
               "kind": "value"
             },
             {
-              "name": "SortDirection",
+              "name": "sampleOpening",
+              "kind": "value"
+            },
+            {
+              "name": "searchCatalog",
+              "kind": "value"
+            },
+            {
+              "name": "setCardCount",
+              "kind": "value"
+            },
+            {
+              "name": "SIM_CSV_HEADER",
+              "kind": "value"
+            },
+            {
+              "name": "sortDeckList",
+              "kind": "value"
+            },
+            {
+              "name": "WireCatalog",
               "kind": "type"
             },
             {
-              "name": "validateDeck",
+              "name": "WireCatalogCard",
+              "kind": "type"
+            },
+            {
+              "name": "WireCatalogSet",
+              "kind": "type"
+            },
+            {
+              "name": "withCatalogFacts",
               "kind": "value"
             }
           ]

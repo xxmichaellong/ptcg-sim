@@ -156,3 +156,12 @@ export const ONCE_PER_GAME_TILE_ASPECT: Readonly<
   gx: 150 / 100,
   vstar: 182 / 92,
 };
+
+/** What a marker's tooltip says: what a press on it does. */
+export const oncePerGameTooltip = (
+  marker: 'gx' | 'vstar',
+  used: boolean
+): string => {
+  const name = marker === 'gx' ? 'GX' : 'VSTAR';
+  return used ? `${name} used: press to undo` : `Mark ${name} used`;
+};

@@ -188,7 +188,7 @@ describe('parsePastedDecklist', () => {
     });
 
     const tooManyCards = parsePastedDecklist(
-      Array.from({ length: 11 }, (_, index) => `10000 Card ${index}`).join('\n')
+      Array.from({ length: 101 }, (_, index) => `999 Card ${index}`).join('\n')
     );
     expect(tooManyCards.ok).toBe(false);
     if (tooManyCards.ok) throw new Error('Expected an oversized deck failure.');

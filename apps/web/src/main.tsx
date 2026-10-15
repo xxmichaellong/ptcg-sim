@@ -7,6 +7,7 @@ import { installPageMotion } from './motion/page-motion.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
 import { applySavedPageTheme } from './session/page-theme.js';
 import { HelpSheetHost } from './session/shell/help-pages.js';
+import { tableCurtain } from './session/shell/table-curtain.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
 import './styles.css';
@@ -46,6 +47,8 @@ const devRoomRequested =
 // table, as in v1; `room-lobby=1` opens on the Multiplayer panel instead,
 // which is what the browser gates and existing links use.
 const rendererSpikeRequested = parameters.get('renderer-spike') === '1';
+const depthLabRequested =
+  TableDepthLab !== null && parameters.get('depth-lab') === '1';
 const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
   ? undefined
   : {
@@ -62,6 +65,11 @@ installPageMotion();
 applySavedPageTheme();
 // The page asks before a reload or a closed tab discards the table.
 installLeaveGuard();
+// index.html opens on a loading screen that the lobby lifts once its table
+// is ready (table-curtain.ts); the developer pages have none to wait for.
+if (depthLabRequested || devRoomRequested || !roomLobbyRoute) {
+  tableCurtain().drop();
+}
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');
@@ -71,7 +79,7 @@ if (!root) throw new Error('Missing application root');
 createRoot(root).render(
   <StrictMode>
     <OverlayHost>
-      {TableDepthLab && parameters.get('depth-lab') === '1' ? (
+      {depthLabRequested && TableDepthLab ? (
         <Suspense fallback={<main className="app-shell" />}>
           <TableDepthLab />
         </Suspense>

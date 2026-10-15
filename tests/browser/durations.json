@@ -15,7 +15,6 @@
     "legacy-bench-marker-rotation-geometry.spec.ts": 6,
     "legacy-contained-card-geometry.spec.ts": 6,
     "legacy-cssom-rounding.spec.ts": 9,
-    "legacy-deck-builder-browser-parity.spec.ts": 17,
     "legacy-dom-geometry.spec.ts": 3,
     "legacy-energy-attachment-reflow-geometry.spec.ts": 3,
     "legacy-evolution-reflow-geometry.spec.ts": 6,

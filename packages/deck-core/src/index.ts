@@ -1,42 +1,104 @@
 export {
-  applyLocalControls,
-  normalizeSearchQuery,
-  prepareCardSearchTerm,
-  resolveSearchPlan,
-} from './card-search.js';
+  CARD_CATEGORIES,
+  EMPTY_DECK_LIST,
+  MAX_ENTRY_COUNT,
+  addCard,
+  countOf,
+  coverCardOf,
+  customCardId,
+  deckListOf,
+  deckTotals,
+  printId,
+  removeCard,
+  replacePrinting,
+  ruleName,
+  sameDeckList,
+  setCardCount,
+  sortDeckList,
+} from './deck-list.js';
 export type {
-  CardPoolFilter,
-  CardSearchControls,
-  CardSearchPlan,
-  CardSortField,
-  SortDirection,
-} from './card-search.js';
-export { getSortedDeckCardArray } from './card-sort.js';
+  CardCategory,
+  CardRuleFacts,
+  DeckCard,
+  DeckEntry,
+  DeckList,
+  DeckTotals,
+} from './deck-list.js';
 export {
-  formatImageUrl,
+  DECK_FORMATS,
+  DECK_FORMAT_IDS,
+  checkDeck,
+  describeDeckIssue,
+  guessDeckFormat,
+  isBasicEnergy,
+  isBasicPokemon,
+  isDeckFormatId,
+  isPocketCard,
+} from './deck-rules.js';
+export type {
+  DeckCheck,
+  DeckFormatId,
+  DeckFormatRules,
+  DeckIssue,
+} from './deck-rules.js';
+export { CATALOG_SORTS, ENERGY_TYPES } from './catalog.js';
+export type {
+  CatalogAbility,
+  CatalogAttack,
+  CatalogCard,
+  CatalogSet,
+  CatalogSort,
+  EnergyType,
+  LoadedCatalog,
+} from './catalog.js';
+export {
+  QUERY_FIELDS,
+  compareCollectorNumbers,
+  foldText,
+  matchesClause,
+  parseCardQuery,
+  printsOf,
+  searchCatalog,
+} from './card-query.js';
+export type {
+  CardQuery,
+  CatalogSearchOptions,
+  CatalogSearchResult,
+  QueryClause,
+  QueryField,
+  QueryOperator,
+} from './card-query.js';
+export {
+  catalogIndex,
+  deckCardFromCatalog,
+  evolutionLineOf,
+  findCatalogPrint,
+  lineCardId,
+  printFromImageUrl,
+  printKey,
+  resolveDecklistRow,
+  withCatalogFacts,
+} from './catalog-deck.js';
+export type {
+  CatalogIndex,
+  DeckCardOptions,
+  DecklistMatch,
+  ResolvedDecklistRow,
+} from './catalog-deck.js';
+export { formatDecklistText } from './decklist-text.js';
+export { deckStats, handChance, sampleOpening } from './deck-stats.js';
+export type { DeckStats } from './deck-stats.js';
+export {
+  SIM_CSV_HEADER,
+  cardCategoryOf,
+  formatSimCsv,
   parseSimCsvResult,
-  serializeDeckToSimCsv,
 } from './csv-adapter.js';
 export type {
   DeckCsvIssue,
   DeckCsvIssueCode,
   ParseSimCsvResult,
 } from './csv-adapter.js';
-export {
-  addCard,
-  createEmptyDeck,
-  detectImportFormat,
-  filterDeck,
-  getDeckCounts,
-  removeCard,
-} from './deck-state.js';
-export type { DeckFilters, DeckImportFormat } from './deck-state.js';
-export {
-  DECK_FORMATS,
-  detectDeckFormat,
-  validateDeck,
-} from './deck-validation.js';
-export type { DeckFormat, DeckValidationResult } from './deck-validation.js';
 export {
   PASTED_DECKLIST_LANGUAGES,
   isPastedDecklistPocketSet,
@@ -54,10 +116,15 @@ export type {
   PastedDecklistRow,
   ResolvePastedDecklistImageOptions,
 } from './pasted-decklist.js';
+export {
+  CATALOG_WIRE_VERSION,
+  CatalogWireError,
+  catalogCardId,
+  decodeCatalog,
+  normalizeCollectorNumber,
+} from './catalog-wire.js';
 export type {
-  Deck,
-  DeckCard,
-  DeckCardGroup,
-  DeckCardVariant,
-  DeckCounts,
-} from './types.js';
+  WireCatalog,
+  WireCatalogCard,
+  WireCatalogSet,
+} from './catalog-wire.js';

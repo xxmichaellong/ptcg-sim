@@ -40,7 +40,7 @@ import {
 } from '../browser-room-options.js';
 import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
-import { Tooltip } from '../../ui/Tooltip.js';
+import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import {
   CONTACT_URL,
   DISCORD_URL,
@@ -291,15 +291,6 @@ const restEntries = (
 /** A rail at least this wide has room to open the toolbar along it. */
 const TOOLBAR_MIN_RAIL_PX = 820;
 
-const tooltipFor = (label: string, hint?: string): ReactNode =>
-  hint ? (
-    <>
-      {label} <kbd className="ptcgsim-rail-tooltip-hint">{hint}</kbd>
-    </>
-  ) : (
-    label
-  );
-
 /**
  * Opens and closes the drawer by its width, so the rail's game actions
  * (which start clear of the toolbar, TableRail.tsx) move with it frame by
@@ -389,6 +380,7 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
         align="center"
         entries={[...primary, { kind: 'separator' }, ...rest]}
         {...(header ? { header } : {})}
+        tooltip="Menu"
         trigger={
           <RailButton
             id="appMenuButton"
@@ -431,7 +423,7 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
           {primary.map((entry, index) => (
             <Tooltip
               key={entry.id}
-              content={tooltipFor(entry.label, entry.hint)}
+              content={withKeyHint(entry.label, entry.hint)}
               side="top"
             >
               <RailButton
@@ -451,6 +443,7 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
             align="center"
             entries={rest}
             {...(header ? { header } : {})}
+            tooltip="More options"
             trigger={
               <RailButton
                 id="appMoreButton"

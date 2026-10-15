@@ -223,6 +223,8 @@
        dialog       dialogs, which a sheet or the deck screen can open
        popover      menus, selects and popovers: always above whatever opened
                     them, a sheet or a dialog included
+       curtain      the loading screen over a table being set up or traded
+                    (index.html, table-curtain.ts); paint only, never input
        toast        notices, above everything they could be about; they never
                     take input outside their own box
        tooltip      tooltips, over the menus and toasts they describe
@@ -250,6 +252,7 @@
   --layer-sheet: 2000;
   --layer-dialog: 2100;
   --layer-popover: 2200;
+  --layer-curtain: 2500;
   --layer-toast: 3000;
   --layer-tooltip: 4000;
   --layer-drag: 5000;

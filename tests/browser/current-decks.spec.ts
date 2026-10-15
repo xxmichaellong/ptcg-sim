@@ -34,18 +34,16 @@ const FEED = {
   },
 };
 
-const openDeckPicker = async (page: Page): Promise<void> => {
+const openDeckScreen = async (page: Page): Promise<void> => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
   });
   await openDeck(page);
-  await page.locator('#decklistsButton').click();
-  await expect(page.locator('#decklistsContextMenu')).toBeVisible();
 };
 
-test('the deck picker leads with current tournament lists and credits Limitless', async ({
+test('the deck screen leads with current tournament lists and credits Limitless', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -54,44 +52,47 @@ test('the deck picker leads with current tournament lists and credits Limitless'
     feedRequests += 1;
     await route.fulfill({ json: FEED });
   });
-  await openDeckPicker(page);
+  await openDeckScreen(page);
+  const meta = page.getByRole('list', { name: 'Current Standard' });
+  await expect(meta.getByRole('listitem')).toHaveCount(2);
   expect(feedRequests).toBe(1);
-
-  const groups = page.locator('.decklists-group');
-  await expect(groups.first()).toHaveText('Current Standard');
-  await expect(groups.first()).toHaveAttribute('data-current', 'true');
-  // The built-in seasons follow.
-  await expect(groups.nth(1)).toHaveText('2023-2024 S&V');
-
-  const decks = page.locator('.decklists-context-menu-item');
-  await expect(decks).toHaveCount(2);
-  await expect(decks.first().locator('.decklists-deck-name')).toHaveText(
-    'Dragapult'
-  );
-  await expect(decks.first().locator('.decklists-deck-finish')).toHaveText(
-    '1st of 285'
-  );
-  const credit = page.locator('.decklists-source a');
+  const first = meta.getByRole('listitem').first();
+  await expect(first.locator('.deck-tile__name')).toHaveText('Dragapult');
+  await expect(first.locator('.deck-tile__meta')).toHaveText('1st of 285');
+  const credit = page.locator('.deck-section-note a');
   await expect(credit).toHaveText('Limitless');
   await expect(credit).toHaveAttribute('target', '_blank');
 
-  await decks.first().click();
-  await expect(page.locator('#decklistsContextMenu')).toBeHidden();
-  await expect(page.locator('#mainDeckImportInput')).toHaveValue(
-    FEED.groups['Current Standard']['Dragapult — 1st of 285']
+  // Choosing a list puts it on the seat at once, without saving it.
+  await first
+    .getByRole('button', { name: /Dragapult — 1st of 285: try it/u })
+    .click();
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
+  );
+  await expect(page.locator('#nativeDeckBuilderTargetMain')).toContainText(
+    'Dragapult — 1st of 285'
+  );
+  await expect(first.getByRole('button', { name: /try it/u })).toHaveAttribute(
+    'aria-pressed',
+    'true'
   );
 });
 
-test('the deck picker keeps its built-in seasons when current lists are unavailable', async ({
+test('the deck screen keeps its classic decks when current lists are unavailable', async ({
   page,
 }) => {
   test.setTimeout(60_000);
   await page.route('**/v2/decks/current', (route) =>
     route.fulfill({ status: 503, json: { error: 'unavailable' } })
   );
-  await openDeckPicker(page);
-  const groups = page.locator('.decklists-group');
-  await expect(groups.first()).toHaveText('2023-2024 S&V');
-  await expect(groups).toHaveCount(22);
-  await expect(page.locator('.decklists-source')).toHaveCount(0);
+  await openDeckScreen(page);
+  await expect(
+    page.getByText('No current tournament decks right now.')
+  ).toBeVisible();
+  const seasons = page.locator('#deckClassicSeason option');
+  await expect(seasons).toHaveCount(22);
+  await expect(seasons.first()).toHaveText('2023-2024 S&V');
+  await expect(page.locator('.deck-section-note')).toHaveCount(0);
 });

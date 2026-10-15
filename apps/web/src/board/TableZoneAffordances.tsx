@@ -16,6 +16,7 @@ import { Tooltip } from '../ui/Tooltip.js';
 import {
   ONCE_PER_GAME_TILE_ASPECT,
   OncePerGameTile,
+  oncePerGameTooltip,
 } from './OncePerGameTile.js';
 import { seatStage } from './seat-stage.js';
 import './TableZoneAffordances.css';
@@ -209,6 +210,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
           label="On the table"
           side="top"
           align="start"
+          tooltip="Lost Zone, VSTAR and GX markers"
           entries={[
             { kind: 'label', label: 'On the table' },
             ...(lostZone
@@ -239,7 +241,6 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
               type="button"
               className="table-zone-extras"
               aria-label="Add to the table"
-              title="Lost Zone, VSTAR and GX markers"
             >
               <PlusIcon {...decorative} weight="bold" />
             </button>
@@ -278,25 +279,31 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
                   ? player.oncePerGame.gxUsed
                   : player.oncePerGame.vstarUsed;
               return (
-                <button
+                <Tooltip
                   key={marker}
-                  type="button"
-                  className={`table-marker${used ? ' used-special-move' : ''}`}
-                  data-once-per-game-marker={marker}
-                  data-player-id={frame.playerId}
-                  data-player-side={own ? 'local' : 'opponent'}
-                  aria-label={`${player.displayName} ${MARKER_LABEL[marker]}`}
-                  aria-pressed={used}
-                  style={
-                    {
-                      '--table-marker-aspect':
-                        ONCE_PER_GAME_TILE_ASPECT[marker],
-                    } as CSSProperties
-                  }
-                  onClick={() => markers.onToggle(frame.playerId, marker)}
+                  content={oncePerGameTooltip(marker, used)}
+                  // Beside the column, clear of the other marker.
+                  side={own ? 'right' : 'left'}
                 >
-                  <OncePerGameTile marker={marker} />
-                </button>
+                  <button
+                    type="button"
+                    className={`table-marker${used ? ' used-special-move' : ''}`}
+                    data-once-per-game-marker={marker}
+                    data-player-id={frame.playerId}
+                    data-player-side={own ? 'local' : 'opponent'}
+                    aria-label={`${player.displayName} ${MARKER_LABEL[marker]}`}
+                    aria-pressed={used}
+                    style={
+                      {
+                        '--table-marker-aspect':
+                          ONCE_PER_GAME_TILE_ASPECT[marker],
+                      } as CSSProperties
+                    }
+                    onClick={() => markers.onToggle(frame.playerId, marker)}
+                  >
+                    <OncePerGameTile marker={marker} />
+                  </button>
+                </Tooltip>
               );
             })}
           </div>,

@@ -32,6 +32,118 @@
     />
     <link rel="shortcut icon" href="/v2/assets/favicon.ico" />
     <script>
+      // The saved theme (Night or Day) is on the page before its first
+      // paint, so the loading screen below never flashes the other one.
+      // page-theme.ts applies the same preference again once the app runs.
+      (function () {
+        try {
+          var table = JSON.parse(
+            localStorage.getItem('ptcgsim.table.v1') || 'null'
+          );
+          document.documentElement.dataset.theme =
+            table && table.darkMode === false ? 'day' : 'night';
+        } catch (error) {}
+      })();
+    </script>
+    <style>
+      /*
+       * The loading screen over the table (session/shell/table-curtain.ts).
+       * It is painted here, before any stylesheet or script has loaded, so
+       * it reads the design tokens with their own values as fallbacks.
+       * It is only paint: it never takes the pointer.
+       */
+      #tableCurtain {
+        --curtain-desk: var(--color-desk, #2f2017);
+        --curtain-desk-hi: var(--color-desk-hi, #3d2a1e);
+        --curtain-lamp: var(--color-lamp, rgb(255 214 160 / 0.16));
+        --curtain-ink: var(--color-text-muted, #c9bba6);
+
+        position: fixed;
+        inset: 0;
+        z-index: var(--layer-curtain, 2500);
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(
+            ellipse 55% 50% at 42% 40%,
+            var(--curtain-lamp),
+            transparent 72%
+          ),
+          radial-gradient(
+            ellipse 85% 80% at 47% 47%,
+            transparent 45%,
+            rgb(10 6 2 / 0.42) 100%
+          ),
+          linear-gradient(var(--curtain-desk-hi), var(--curtain-desk));
+        background-color: var(--curtain-desk);
+        color: var(--curtain-ink);
+        opacity: 1;
+        pointer-events: none;
+        transition: opacity var(--table-curtain-fade, 0ms)
+          cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      :root[data-theme='day'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #c4a074);
+        --curtain-desk-hi: var(--color-desk-hi, #d6b88f);
+        --curtain-lamp: var(--color-lamp, rgb(255 248 232 / 0.14));
+        --curtain-ink: var(--color-text-muted, #5f554a);
+      }
+      #tableCurtain[hidden] {
+        display: none;
+      }
+      /* Down, it is wholly down: a swap under it is never glimpsed. */
+      #tableCurtain[data-state='covering'] {
+        transition: none;
+      }
+      #tableCurtain[data-state='leaving'] {
+        opacity: 0;
+      }
+      /* A short load never shows its indicator: it waits, then fades in. */
+      .table-curtain__indicator {
+        display: grid;
+        justify-items: center;
+        gap: 14px;
+        animation: table-curtain-indicator 240ms ease-out 400ms both;
+      }
+      .table-curtain__spinner {
+        box-sizing: border-box;
+        width: 28px;
+        height: 28px;
+        border: 2.5px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 50%;
+        opacity: 0.7;
+        animation: table-curtain-spin 0.9s linear infinite;
+      }
+      .table-curtain__label {
+        font:
+          500 13px/1.4 'Inter Variable',
+          'Inter',
+          ui-sans-serif,
+          system-ui,
+          sans-serif;
+        letter-spacing: 0.01em;
+      }
+      @keyframes table-curtain-indicator {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes table-curtain-spin {
+        to {
+          rotate: 1turn;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .table-curtain__spinner {
+          animation-duration: 2.4s;
+        }
+      }
+      :root[data-motion='reduced'] .table-curtain__spinner {
+        animation-duration: 2.4s;
+      }
+    </style>
+    <script>
       // A deploy reaches Cloudflare's machines over several seconds. In that
       // window this page and its scripts can come from different versions;
       // a script the other version lacks comes back as this page, which the
@@ -111,6 +223,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <div
+      id="tableCurtain"
+      data-state="covering"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="table-curtain__indicator">
+        <span class="table-curtain__spinner" aria-hidden="true"></span>
+        <span class="table-curtain__label">Setting up the table…</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

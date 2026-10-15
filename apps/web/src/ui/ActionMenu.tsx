@@ -1,9 +1,10 @@
 import { Menu } from '@base-ui/react/menu';
 import type { Icon } from '@phosphor-icons/react';
-import { useContext, type ReactElement, type ReactNode } from 'react';
+import { useContext, useState, type ReactElement, type ReactNode } from 'react';
 
 import { OverlayContainerContext } from './overlay-host-registry.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
+import { Tooltip } from './Tooltip.js';
 import './action-menu.css';
 
 export type ActionMenuEntry =
@@ -38,9 +39,17 @@ export const ActionMenu = ({
   header,
   open,
   onOpenChange,
+  tooltip,
+  tooltipSide = 'top',
 }: {
   /** The button that opens it. It must forward a ref and DOM props. */
   readonly trigger: ReactElement;
+  /**
+   * What the button's tooltip says (an icon-only button's name). It stays
+   * away while the menu is open, so it never lies over the menu.
+   */
+  readonly tooltip?: ReactNode;
+  readonly tooltipSide?: 'top' | 'bottom' | 'left' | 'right';
   readonly entries: readonly ActionMenuEntry[];
   /** The menu's accessible name. */
   readonly label: string;
@@ -52,12 +61,25 @@ export const ActionMenu = ({
   readonly onOpenChange?: (open: boolean) => void;
 }) => {
   const container = useContext(OverlayContainerContext);
+  const [shown, setShown] = useState(false);
+  const menuTrigger = <Menu.Trigger render={trigger} />;
   return (
     <Menu.Root
       {...(open === undefined ? {} : { open })}
-      {...(onOpenChange ? { onOpenChange: (next) => onOpenChange(next) } : {})}
+      onOpenChange={(next) => {
+        setShown(next);
+        onOpenChange?.(next);
+      }}
     >
-      <Menu.Trigger render={trigger} />
+      {tooltip ? (
+        // The tooltip's trigger renders the menu's, which renders the
+        // button: one element carries both, and its own id and name.
+        <Tooltip content={tooltip} side={tooltipSide} disabled={open ?? shown}>
+          {menuTrigger}
+        </Tooltip>
+      ) : (
+        menuTrigger
+      )}
       <Menu.Portal container={container}>
         <Menu.Positioner
           className="ptcgsim-action-menu-positioner"

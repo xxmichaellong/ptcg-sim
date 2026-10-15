@@ -37,7 +37,7 @@ import type {
   DeckBuilderStore,
   DeckBuilderTarget,
 } from '../features/deck/deck-builder-store.js';
-import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
+import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js';
 import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
 import { preferences as pagePreferences } from '../preferences/preference-store.js';
@@ -80,6 +80,7 @@ import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { toast } from '../ui/toast.js';
+import { Tooltip } from '../ui/Tooltip.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
@@ -93,7 +94,7 @@ export interface RemoteRoomRouteProps {
   readonly requestCardBack?: BrowserCardBackRequest;
   readonly deckSurfaceActivated?: boolean;
   readonly onDeckSurfaceActivate?: () => void;
-  readonly onDeckCustodyChange?: (custody: LegacyDeckBuilderCustody) => void;
+  readonly onDeckCustodyChange?: (custody: DeckBuilderCustody) => void;
   readonly deckSessionPrepared?: boolean;
   /** Restored games retain the saved table rather than auto-installing editor state. */
   readonly installDeckOnSessionAttach?: boolean;
@@ -104,6 +105,12 @@ export interface RemoteRoomRouteProps {
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  /**
+   * Whether the table is ready to be seen: the board has painted (or
+   * failed), or the room has a failure to show over it. The lobby lifts the
+   * loading screen on it (table-curtain.ts).
+   */
+  readonly onTableSettledChange?: (settled: boolean) => void;
   /** Atomic owner-level replacement after a server-held save is restored. */
   readonly onResumeSavedGame?: (
     contents: string,
@@ -147,6 +154,20 @@ export interface RemoteRoomRouteProps {
 
 type RouteSheet = 'deck' | 'settings' | 'online';
 
+/** A failure the room must show is reason enough to show the table. */
+const SettledByFailure = ({
+  onSettledChange,
+}: {
+  readonly onSettledChange?: (settled: boolean) => void;
+}) => {
+  const report = useRef(onSettledChange);
+  report.current = onSettledChange;
+  useEffect(() => {
+    report.current?.(true);
+  }, []);
+  return null;
+};
+
 /**
  * The room screen (ADR-030): the table fills the window. Its rail holds the
  * turn's actions between the app menu and the activity log; everything else
@@ -168,6 +189,7 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  onTableSettledChange,
   onResumeSavedGame,
   continuationAvailable = false,
   onMultiplayerNavigate,
@@ -602,11 +624,17 @@ export const RemoteRoomRoute = ({
                 sidePanelSlide={activity.slide}
                 keysSuspended={deckOpen}
                 {...(loadDeck ? { loadDeck } : {})}
+                {...(onTableSettledChange
+                  ? { onSettledChange: onTableSettledChange }
+                  : {})}
               />
             }
           >
             {state.failure ? (
-              <TableBanner>{state.failure.message}</TableBanner>
+              <>
+                <TableBanner>{state.failure.message}</TableBanner>
+                <SettledByFailure onSettledChange={onTableSettledChange} />
+              </>
             ) : null}
             {welcome ? (
               <TableCentre
@@ -639,16 +667,17 @@ export const RemoteRoomRoute = ({
               {...(canCopy
                 ? {
                     headerActions: (
-                      <button
-                        id="roomHeaderCopyButton"
-                        type="button"
-                        className="ds-icon-button"
-                        title="Copy an invitation"
-                        aria-label="Copy an invitation"
-                        onClick={() => void copyInvitation('player')}
-                      >
-                        <CopyIcon aria-hidden="true" weight="bold" />
-                      </button>
+                      <Tooltip content="Copy an invitation" side="bottom">
+                        <button
+                          id="roomHeaderCopyButton"
+                          type="button"
+                          className="ds-icon-button"
+                          aria-label="Copy an invitation"
+                          onClick={() => void copyInvitation('player')}
+                        >
+                          <CopyIcon aria-hidden="true" weight="bold" />
+                        </button>
+                      </Tooltip>
                     ),
                   }
                 : {})}

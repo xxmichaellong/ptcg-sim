@@ -15,6 +15,8 @@ import {
   toast,
   Tooltip,
 } from './index.js';
+import { ActionMenu } from './ActionMenu.js';
+import { withKeyHint } from './Tooltip.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -536,5 +538,75 @@ describe('Tooltip', () => {
     expect(tip?.textContent).toBe('Shuffle (Alt+S)');
     expect(isOverlaySurfaceTarget(tip)).toBe(true);
     expect(isOverlaySurfaceTarget(trigger)).toBe(false);
+  });
+});
+
+describe('withKeyHint', () => {
+  it('puts the key after the words as a key cap, and nothing without one', async () => {
+    const element = document.createElement('div');
+    document.body.append(element);
+    hosts.push(element);
+    const root = createRoot(element);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        <>
+          <p>{withKeyHint('Flip a coin', 'F')}</p>
+          <p>{withKeyHint('Attack')}</p>
+        </>
+      );
+    });
+    const [keyed, plain] = element.querySelectorAll('p');
+    expect(keyed?.textContent).toBe('Flip a coin F');
+    expect(
+      keyed?.querySelector('kbd.ptcgsim-ui-tooltip__hint')?.textContent
+    ).toBe('F');
+    expect(plain?.textContent).toBe('Attack');
+    expect(plain?.querySelector('kbd')).toBeNull();
+  });
+});
+
+describe('ActionMenu tooltip', () => {
+  it('names its button on focus, keeps the button its own, and goes quiet while open', async () => {
+    const element = document.createElement('div');
+    document.body.append(element);
+    hosts.push(element);
+    const root = createRoot(element);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        <OverlayHost>
+          <ActionMenu
+            label="More"
+            tooltip="More options"
+            entries={[{ id: 'menuRow', label: 'Row', onSelect: () => {} }]}
+            trigger={
+              <button type="button" id="menuOpener" aria-label="More">
+                …
+              </button>
+            }
+          />
+        </OverlayHost>
+      );
+    });
+    const trigger = element.querySelector<HTMLButtonElement>('#menuOpener')!;
+    // One element carries the menu, the tooltip, its own id and its name.
+    expect(element.querySelectorAll('button')).toHaveLength(1);
+    expect(trigger.getAttribute('aria-label')).toBe('More');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    await act(async () => {
+      trigger.focus();
+      trigger.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    });
+    await settle();
+    const tip = () =>
+      document.querySelector(
+        '[data-ptcgsim-overlay="tooltip"]:not([data-ending-style])'
+      );
+    expect(tip()?.textContent).toBe('More options');
+    await click(trigger);
+    await settle();
+    expect(document.querySelector('#menuRow')).not.toBeNull();
+    expect(tip()).toBeNull();
   });
 });

@@ -46,7 +46,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787',
+        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787 --var CARD_CATALOG_SOURCE:off',
       url: 'http://127.0.0.1:8787/v2/health',
       reuseExistingServer: !process.env['CI'],
       timeout: 60_000,

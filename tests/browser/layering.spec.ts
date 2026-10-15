@@ -48,10 +48,10 @@ const setUpTable = async (page: Page, touch: boolean): Promise<void> => {
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });
   await press('[data-load-deck-player][aria-label="Load a deck"]');
-  await press('#randomButton');
-  await expect(page.locator('#mainDeckImportInput')).not.toHaveValue('');
-  await press('#importButton');
-  await press('#confirmButton');
+  await press('#deckSurpriseButton');
+  await expect(
+    page.locator('#nativeDeckBuilderSummaryPanel')
+  ).not.toHaveAttribute('data-card-count', '0');
   await press('#deckBackButton');
   await press('#setupButton');
   await expect

@@ -1,16 +1,27 @@
 import {
   addCard,
-  createEmptyDeck,
-  getDeckCounts,
+  deckTotals,
+  EMPTY_DECK_LIST,
   removeCard,
-  type Deck,
+  sameDeckList,
   type DeckCard,
+  type DeckFormatId,
+  type DeckList,
 } from '@ptcgsim/deck-core';
 
 export type DeckBuilderTarget = 'main' | 'alternate';
 
+/** Which deck a seat holds: a saved one, or one picked without saving. */
+export interface DeckSlotLabel {
+  /** The saved deck it is, when it is one. */
+  readonly deckId?: string;
+  readonly name: string;
+  readonly format?: DeckFormatId;
+}
+
 export interface DeckBuilderSlotSnapshot {
-  readonly deck: Deck;
+  readonly deck: DeckList;
+  readonly label?: DeckSlotLabel;
   readonly revision: number;
   readonly installedRevision: number;
   readonly dirty: boolean;
@@ -27,7 +38,7 @@ export interface DeckBuilderSnapshot {
 export interface DeckInstallReceipt {
   readonly target: DeckBuilderTarget;
   readonly revision: number;
-  readonly deck: Deck;
+  readonly deck: DeckList;
 }
 
 export type DeckInstallOutcome = 'installed' | 'failed';
@@ -35,29 +46,19 @@ export type DeckInstallOutcome = 'installed' | 'failed';
 export interface DeckBuilderStoreOptions {
   readonly alternateEnabled?: boolean;
   readonly initialTarget?: DeckBuilderTarget;
-  readonly mainDeck?: Deck;
-  readonly alternateDeck?: Deck;
+  readonly mainDeck?: DeckList;
+  readonly alternateDeck?: DeckList;
 }
 
 type Listener = () => void;
 
-const deepFreeze = <Value>(
-  value: Value,
-  seen = new WeakSet<object>()
-): Value => {
-  if (value === null || typeof value !== 'object' || seen.has(value)) {
-    return value;
-  }
-  seen.add(value);
-  for (const key of Reflect.ownKeys(value)) {
-    deepFreeze((value as Record<PropertyKey, unknown>)[key], seen);
-  }
-  return Object.freeze(value);
-};
-
-const cloneDeck = (deck: Deck): Deck => deepFreeze(structuredClone(deck));
-
-const freezeOwnedDeck = (deck: Deck): Deck => deepFreeze(deck);
+const sameLabel = (
+  left: DeckSlotLabel | undefined,
+  right: DeckSlotLabel | undefined
+): boolean =>
+  left?.deckId === right?.deckId &&
+  left?.name === right?.name &&
+  left?.format === right?.format;
 
 const nextRevision = (revision: number): number => {
   if (revision >= Number.MAX_SAFE_INTEGER) {
@@ -67,21 +68,24 @@ const nextRevision = (revision: number): number => {
 };
 
 const createSlot = (
-  deck: Deck,
+  deck: DeckList,
   revision = 0,
   installedRevision = revision,
-  installingRevision?: number
+  installingRevision?: number,
+  label?: DeckSlotLabel
 ): DeckBuilderSlotSnapshot =>
   Object.freeze({
     deck,
+    ...(label ? { label } : {}),
     revision,
     installedRevision,
     dirty: revision !== installedRevision,
     ...(installingRevision === undefined ? {} : { installingRevision }),
   });
 
-const createInitialSlot = (deck: Deck | undefined): DeckBuilderSlotSnapshot =>
-  createSlot(cloneDeck(deck ?? createEmptyDeck()));
+const createInitialSlot = (
+  deck: DeckList | undefined
+): DeckBuilderSlotSnapshot => createSlot(deck ?? EMPTY_DECK_LIST);
 
 const createSnapshot = (
   target: DeckBuilderTarget,
@@ -99,9 +103,10 @@ const createSnapshot = (
 };
 
 /**
- * Owns the editable main and alternate decks independently of React, files,
- * network commands, and the live board. Install receipts make async success
- * acknowledgement generation-safe, so edits made during a load stay dirty.
+ * Owns the deck on each seat -- main, and the alternate in Solo --
+ * independently of React, the saved-deck library, network commands and the
+ * live board. Install receipts make async success acknowledgement
+ * generation-safe, so edits made during a load stay dirty.
  */
 export class DeckBuilderStore {
   #alternateEnabled: boolean;
@@ -150,7 +155,9 @@ export class DeckBuilderStore {
       alternate = createSlot(
         alternate.deck,
         alternate.revision,
-        alternate.installedRevision
+        alternate.installedRevision,
+        undefined,
+        alternate.label
       );
     }
     this.#alternateEnabled = enabled;
@@ -182,18 +189,22 @@ export class DeckBuilderStore {
       const settled =
         slot.installingRevision === undefined
           ? slot
-          : createSlot(slot.deck, slot.revision, slot.installedRevision);
-      if (
-        !enabled ||
-        settled.dirty ||
-        getDeckCounts(settled.deck).total === 0
-      ) {
+          : createSlot(
+              slot.deck,
+              slot.revision,
+              slot.installedRevision,
+              undefined,
+              slot.label
+            );
+      if (!enabled || settled.dirty || deckTotals(settled.deck).total === 0) {
         return settled;
       }
       return createSlot(
         settled.deck,
         nextRevision(settled.revision),
-        settled.installedRevision
+        settled.installedRevision,
+        undefined,
+        settled.label
       );
     };
 
@@ -241,42 +252,74 @@ export class DeckBuilderStore {
   addCard(card: DeckCard, target = this.#state.target): boolean {
     if (!card.name || !this.#canEdit(target)) return false;
     const slot = this.#state.slots[target];
-    return this.#replaceEditedSlot(target, addCard(slot.deck, card), false);
+    return this.#replaceEditedSlot(target, addCard(slot.deck, card));
   }
 
   removeCard(card: DeckCard, target = this.#state.target): boolean {
     if (!card.name || !this.#canEdit(target)) return false;
     const slot = this.#state.slots[target];
     const nextDeck = removeCard(slot.deck, card);
-    if (
-      Object.is(getDeckCounts(nextDeck).total, getDeckCounts(slot.deck).total)
-    ) {
-      return false;
-    }
-    return this.#replaceEditedSlot(target, nextDeck, false);
+    if (nextDeck === slot.deck) return false;
+    return this.#replaceEditedSlot(target, nextDeck);
   }
 
-  replaceDeck(target: DeckBuilderTarget, deck: Deck): boolean {
+  /**
+   * Puts a deck on a seat. With a label, the seat now holds that deck (a
+   * saved one, or one picked from a list); without, it keeps its label.
+   * The same cards under the same label change nothing.
+   */
+  replaceDeck(
+    target: DeckBuilderTarget,
+    deck: DeckList,
+    label?: DeckSlotLabel | null
+  ): boolean {
     if (!this.#canEdit(target)) return false;
-    return this.#replaceEditedSlot(target, deck, true);
+    const current = this.#state.slots[target];
+    const nextLabel =
+      label === undefined ? current.label : (label ?? undefined);
+    if (sameDeckList(current.deck, deck)) {
+      // The same cards under a new name (a rename, a deleted saved deck)
+      // are not a new deck for the table.
+      if (sameLabel(current.label, nextLabel)) return false;
+      this.#replaceSlot(
+        target,
+        createSlot(
+          current.deck,
+          current.revision,
+          current.installedRevision,
+          current.installingRevision,
+          nextLabel
+        )
+      );
+      return true;
+    }
+    return this.#replaceEditedSlot(target, deck, nextLabel);
   }
 
   clearDeck(target = this.#state.target): boolean {
     if (
       !this.#canEdit(target) ||
-      getDeckCounts(this.#state.slots[target].deck).total === 0
+      (deckTotals(this.#state.slots[target].deck).total === 0 &&
+        !this.#state.slots[target].label)
     ) {
       return false;
     }
-    return this.#replaceEditedSlot(target, createEmptyDeck(), false);
+    return this.#replaceEditedSlot(target, EMPTY_DECK_LIST, undefined);
   }
 
   /** Replaces one editor slot from an already-installed external deck. */
-  synchronizeDeck(target: DeckBuilderTarget, deck: Deck): void {
+  synchronizeDeck(
+    target: DeckBuilderTarget,
+    deck: DeckList,
+    label?: DeckSlotLabel
+  ): void {
     const current = this.#state.slots[target];
     const revision = nextRevision(current.revision);
     if (this.#pending?.target === target) this.#pending = undefined;
-    this.#replaceSlot(target, createSlot(cloneDeck(deck), revision, revision));
+    this.#replaceSlot(
+      target,
+      createSlot(deck, revision, revision, undefined, label ?? current.label)
+    );
   }
 
   /**
@@ -303,7 +346,8 @@ export class DeckBuilderStore {
           slot.deck,
           slot.revision,
           slot.installedRevision,
-          slot.revision
+          slot.revision,
+          slot.label
         )
       );
       return receipt;
@@ -324,7 +368,13 @@ export class DeckBuilderStore {
         : slot.installedRevision;
     this.#replaceSlot(
       receipt.target,
-      createSlot(slot.deck, slot.revision, installedRevision)
+      createSlot(
+        slot.deck,
+        slot.revision,
+        installedRevision,
+        undefined,
+        slot.label
+      )
     );
     return true;
   }
@@ -335,17 +385,18 @@ export class DeckBuilderStore {
 
   #replaceEditedSlot(
     target: DeckBuilderTarget,
-    deck: Deck,
-    clone: boolean
+    deck: DeckList,
+    label: DeckSlotLabel | undefined = this.#state.slots[target].label
   ): boolean {
     const current = this.#state.slots[target];
     this.#replaceSlot(
       target,
       createSlot(
-        clone ? cloneDeck(deck) : freezeOwnedDeck(deck),
+        deck,
         nextRevision(current.revision),
         current.installedRevision,
-        current.installingRevision
+        current.installingRevision,
+        label
       )
     );
     return true;

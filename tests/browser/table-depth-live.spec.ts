@@ -72,8 +72,9 @@ const start = async (page: Page, renderer = 'dom') => {
       'QTY,Name,Type,URL\n30,Greninja,Pokémon,/v2/assets/cardback.png?greninja\n20,Head Ringer,Trainer,/v2/assets/cardback.png?tool\n10,Water Energy,Energy,/v2/assets/cardback.png?energy'
     ),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();

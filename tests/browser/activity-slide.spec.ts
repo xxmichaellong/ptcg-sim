@@ -26,8 +26,6 @@ const startTable = async (page: Page): Promise<void> => {
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible();
   await openDeck(page);
-  const builderView = page.getByRole('radio', { name: 'Builder' });
-  if (await builderView.isVisible()) await builderView.click();
   await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'slide.csv',
@@ -41,8 +39,9 @@ const startTable = async (page: Page): Promise<void> => {
       ].join('\n')
     ),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();

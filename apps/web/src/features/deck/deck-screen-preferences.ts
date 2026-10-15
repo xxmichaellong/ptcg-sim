@@ -1,0 +1,71 @@
+import {
+  CATALOG_SORTS,
+  PASTED_DECKLIST_LANGUAGES,
+  type CatalogSort,
+  type PastedDecklistLanguage,
+} from '@ptcgsim/deck-core';
+
+import { definePreference } from '../../preferences/preference-store.js';
+
+/** How the player likes the deck screen, kept between visits. */
+export interface DeckScreenPreferences {
+  /** The deck shown as rows of names, or as card images. */
+  readonly deckView: 'list' | 'images';
+  readonly sort: CatalogSort;
+  /** Every printing of a card in the search results, not one per card. */
+  readonly allPrints: boolean;
+  /** Card images in this language where Limitless has them. */
+  readonly language: PastedDecklistLanguage;
+  /** Saved decks last put on each seat, for the next room. */
+  readonly lastDeckIds: {
+    readonly main?: string;
+    readonly alternate?: string;
+  };
+}
+
+const DEFAULTS: DeckScreenPreferences = Object.freeze({
+  deckView: 'list',
+  sort: 'newest',
+  allPrints: false,
+  language: 'English',
+  lastDeckIds: Object.freeze({}),
+});
+
+const field = (value: unknown, key: string): unknown =>
+  typeof value === 'object' && value !== null
+    ? Reflect.get(value, key)
+    : undefined;
+
+const deckId = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 && value.length <= 64
+    ? value
+    : undefined;
+
+export const DECK_SCREEN_PREFERENCES = definePreference<DeckScreenPreferences>({
+  key: 'ptcgsim.deck-screen.v1',
+  defaults: DEFAULTS,
+  parse: (value) => {
+    const view = field(value, 'deckView');
+    const sort = field(value, 'sort');
+    const language = field(value, 'language');
+    const last = field(value, 'lastDeckIds');
+    const main = deckId(field(last, 'main'));
+    const alternate = deckId(field(last, 'alternate'));
+    return {
+      deckView: view === 'images' ? 'images' : 'list',
+      sort: (CATALOG_SORTS as readonly unknown[]).includes(sort)
+        ? (sort as CatalogSort)
+        : DEFAULTS.sort,
+      allPrints: field(value, 'allPrints') === true,
+      language: (PASTED_DECKLIST_LANGUAGES as readonly unknown[]).includes(
+        language
+      )
+        ? (language as PastedDecklistLanguage)
+        : DEFAULTS.language,
+      lastDeckIds: Object.freeze({
+        ...(main ? { main } : {}),
+        ...(alternate ? { alternate } : {}),
+      }),
+    };
+  },
+});

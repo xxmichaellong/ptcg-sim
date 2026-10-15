@@ -33,6 +33,19 @@ shell). Nothing is docked beside it by default. The one exception is the
 player's own choice: the activity log, opened on a wide screen, docks at the
 right and the table lays itself out beside it (§4).
 
+The table appears once. The page opens on a loading screen painted by
+`index.html` itself (`#tableCurtain`: the desk, and after a moment a spinner
+and "Setting up the table…"); it stays while the lobby, the board renderer
+and the Solo room load and connect, and fades away once the room's table has
+painted (`session/shell/table-curtain.ts`). The empty table the lobby shows
+while that room is made is never seen on the way to it, so the board no
+longer appears, vanishes and comes back. Trading one table for another later
+(joining or leaving a room, Play online parking a Solo game) draws the same
+screen over the old table first and lifts it from the new one, so no frame
+shows a bare desk. It is only paint, never input, and follows the motion
+settings: under reduced motion it lifts at once, and tables are traded
+without it.
+
 ### 2. One rail, along the seam
 
 Geometry v2 keeps a clear band at the centre line between the halves; the

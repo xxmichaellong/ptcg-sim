@@ -1,66 +1,66 @@
-import { isDatabaseCard, isFormattedDeckCard } from './card-compare.js';
-import type { Deck, DeckCard, DeckCardGroup } from './types.js';
+import {
+  customCardId,
+  deckListOf,
+  type CardCategory,
+  type DeckCard,
+  type DeckList,
+} from './deck-list.js';
+
+/**
+ * The simulator's own deck file, kept from v1 so existing files still open:
+ *
+ *   QTY,Name,Type,URL[,Presentation]
+ *   4,Dreepy,Pokémon,https://…/TWM_128_R_EN.png
+ *
+ * Parsing is transactional: a file with any bad row gives no deck at all,
+ * only the issues, so a half-read deck never replaces a good one.
+ */
 
 export const SIM_CSV_HEADER = 'QTY,Name,Type,URL';
 export const MAX_DECK_CSV_CODE_UNITS = 1_000_000;
 export const MAX_DECK_CSV_ROWS = 10_000;
-export const MAX_DECK_CARD_QUANTITY = 10_000;
+export const MAX_DECK_CARD_QUANTITY = 999;
 export const MAX_DECK_TOTAL_CARDS = 100_000;
 export const MAX_DECK_CARD_NAME_CODE_UNITS = 256;
 export const MAX_DECK_CARD_TYPE_CODE_UNITS = 64;
 export const MAX_DECK_IMAGE_URL_CODE_UNITS = 4_096;
-
-export const formatImageUrl = (card: DeckCard = {}): string => {
-  if (isDatabaseCard(card)) return card.images?.large || '';
-
-  if (isFormattedDeckCard(card)) {
-    const image = card.image || '';
-    if (image.startsWith('assets') && !image.includes('tishinator')) {
-      return `https://tishinator.github.io/PTCGDeckBuilder${image}`;
-    }
-    return image;
-  }
-  return '';
-};
-
-export const formatCardType = (card: DeckCard = {}): string =>
-  card.supertype || '';
 
 const escapeCsvCell = (value: string | number): string => {
   const text = String(value);
   return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 };
 
-export const serializeDeckToSimCsv = (decklist: Deck = {}): string => {
-  const rows: string[] = [];
-  const hasPresentation = Object.values(decklist).some((group) =>
-    group.cards.some((variant) => variant.data.presentation !== undefined)
+export const formatSimCsv = (list: DeckList): string => {
+  const hasPresentation = list.some(
+    (entry) => entry.card.presentation !== undefined
   );
-  for (const [cardName, group] of Object.entries(decklist)) {
-    for (const variant of group?.cards ?? []) {
-      const type = formatCardType(variant.data);
-      const url = formatImageUrl(variant.data);
-      if (!cardName || !type || !url) continue;
-      rows.push(
-        [
-          variant.count,
-          cardName,
-          type,
-          url,
-          ...(hasPresentation
-            ? [
-                variant.data.presentation === undefined
-                  ? ''
-                  : JSON.stringify(variant.data.presentation),
-              ]
-            : []),
-        ]
-          .map(escapeCsvCell)
-          .join(',')
-      );
-    }
-  }
+  const rows = list.map(({ card, count }) =>
+    [
+      count,
+      card.name,
+      card.category,
+      card.image,
+      ...(hasPresentation
+        ? [
+            card.presentation === undefined
+              ? ''
+              : JSON.stringify(card.presentation),
+          ]
+        : []),
+    ]
+      .map(escapeCsvCell)
+      .join(',')
+  );
   return `${SIM_CSV_HEADER}${hasPresentation ? ',Presentation' : ''}\n${rows.join('\n')}`;
+};
+
+/** A card type as v1 files and decklists spell it. */
+export const cardCategoryOf = (value: string): CardCategory | undefined => {
+  const folded = value.trim().toLowerCase().replaceAll('é', 'e');
+  if (folded === 'pokemon') return 'Pokémon';
+  if (folded === 'trainer') return 'Trainer';
+  if (folded === 'energy') return 'Energy';
+  return undefined;
 };
 
 export type DeckCsvIssueCode =
@@ -77,6 +77,7 @@ export type DeckCsvIssueCode =
   | 'name_too_long'
   | 'missing_type'
   | 'type_too_long'
+  | 'invalid_type'
   | 'missing_url'
   | 'url_too_long';
 
@@ -87,7 +88,7 @@ export interface DeckCsvIssue {
 }
 
 export type ParseSimCsvResult =
-  | { readonly ok: true; readonly deck: Deck }
+  | { readonly ok: true; readonly cards: DeckList }
   | { readonly ok: false; readonly issues: readonly DeckCsvIssue[] };
 
 interface ParsedCsv {
@@ -171,15 +172,6 @@ const parseCsvRows = (source: string): ParsedCsv => {
   return { rows, issues };
 };
 
-const setOwnGroup = (deck: Deck, name: string, group: DeckCardGroup): void => {
-  Object.defineProperty(deck, name, {
-    configurable: true,
-    enumerable: true,
-    value: group,
-    writable: true,
-  });
-};
-
 const isBlankRow = (row: readonly string[]): boolean =>
   row.length === 1 && (row[0] ?? '').trim() === '';
 
@@ -224,7 +216,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
     });
   }
 
-  const deck: Deck = {};
+  const entries: { card: DeckCard; count: number }[] = [];
   let totalCards = 0;
   for (
     let index = 1;
@@ -312,6 +304,13 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
         message: `Row ${rowNumber} card type exceeds ${MAX_DECK_CARD_TYPE_CODE_UNITS} code units.`,
       });
       rowValid = false;
+    } else if (!cardCategoryOf(supertype)) {
+      issues.push({
+        code: 'invalid_type',
+        row: rowNumber,
+        message: `Row ${rowNumber} card type must be Pokémon, Trainer or Energy.`,
+      });
+      rowValid = false;
     }
     if (!image) {
       issues.push({
@@ -340,50 +339,20 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       continue;
     }
 
-    let group = Object.prototype.hasOwnProperty.call(deck, name)
-      ? deck[name]
-      : undefined;
-    if (!group) {
-      group = { cards: [], totalCount: 0 };
-      setOwnGroup(deck, name, group);
-    }
-    const existing = group.cards.find(
-      (variant) =>
-        variant.data.image === image &&
-        JSON.stringify(variant.data.presentation) ===
-          JSON.stringify(presentation)
-    );
-    if (existing) existing.count += quantity;
-    else {
-      group.cards.push({
-        data: {
-          count: quantityText,
-          name,
-          supertype,
-          image,
-          ...(presentation ? { presentation } : {}),
-        },
-        count: quantity,
-      });
-    }
-    group.totalCount += quantity;
+    const category = cardCategoryOf(supertype)!;
+    entries.push({
+      card: Object.freeze({
+        id: customCardId([name, category, image, presentation]),
+        name,
+        category,
+        image,
+        ...(presentation ? { presentation } : {}),
+      }),
+      count: quantity,
+    });
   }
 
-  return issues.length > 0 ? { ok: false, issues } : { ok: true, deck };
-};
-
-export class DeckCsvParseError extends Error {
-  readonly issues: readonly DeckCsvIssue[];
-
-  constructor(issues: readonly DeckCsvIssue[]) {
-    super(issues.map((issue) => issue.message).join(' '));
-    this.name = 'DeckCsvParseError';
-    this.issues = issues;
-  }
-}
-
-export const parseSimCsv = (csvData: string = ''): Deck => {
-  const result = parseSimCsvResult(csvData);
-  if (!result.ok) throw new DeckCsvParseError(result.issues);
-  return result.deck;
+  return issues.length > 0
+    ? { ok: false, issues }
+    : { ok: true, cards: deckListOf(entries) };
 };

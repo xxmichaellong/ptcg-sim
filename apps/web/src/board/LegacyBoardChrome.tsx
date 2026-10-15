@@ -7,12 +7,19 @@ import type {
   BoardPlayerLayout,
   ZoneCountSceneNode,
 } from '@ptcgsim/renderer-contract';
-import { memo, type CSSProperties, type ReactNode } from 'react';
+import {
+  memo,
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 import './LegacyBoardChrome.css';
 import {
   ONCE_PER_GAME_TILE_ASPECT,
   OncePerGameTile,
+  oncePerGameTooltip,
 } from './OncePerGameTile.js';
 import { TableRail, type RailAction } from './rail/TableRail.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
@@ -20,6 +27,10 @@ import { Tooltip } from '../ui/Tooltip.js';
 
 type OncePerGameMarker = 'vstar' | 'gx';
 const BOTH_MARKERS: readonly OncePerGameMarker[] = ['vstar', 'gx'];
+
+/** What the hand's Sort toggle's tooltip says, off and on. */
+export const handSortTooltip = (sorted: boolean): string =>
+  sorted ? 'Stop sorting hand' : 'Sort hand in decklist order';
 
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
@@ -112,26 +123,31 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
         : player.oncePerGame.vstarUsed;
     const label = marker === 'gx' ? 'GX' : 'VSTAR';
     return (
-      <button
-        type="button"
-        className={`legacy-once-per-game-button${
-          darkMode ? ' dark-mode-2' : ''
-        }${used ? ' used-special-move' : ''}`}
-        data-once-per-game-marker={marker}
-        data-player-id={frame.playerId}
-        data-player-side={playerSide}
-        aria-label={`${player.displayName} ${label}`}
-        aria-pressed={used}
-        style={{
-          height: tileHeight + ONCE_PER_GAME_TILE_PADDING * 2,
-          width:
-            tileHeight * ONCE_PER_GAME_TILE_ASPECT[marker] +
-            ONCE_PER_GAME_TILE_PADDING * 2,
-        }}
-        onClick={() => onToggle(frame.playerId, marker)}
+      <Tooltip
+        content={oncePerGameTooltip(marker, used)}
+        side={playerSide === 'local' ? 'top' : 'bottom'}
       >
-        <OncePerGameTile marker={marker} />
-      </button>
+        <button
+          type="button"
+          className={`legacy-once-per-game-button${
+            darkMode ? ' dark-mode-2' : ''
+          }${used ? ' used-special-move' : ''}`}
+          data-once-per-game-marker={marker}
+          data-player-id={frame.playerId}
+          data-player-side={playerSide}
+          aria-label={`${player.displayName} ${label}`}
+          aria-pressed={used}
+          style={{
+            height: tileHeight + ONCE_PER_GAME_TILE_PADDING * 2,
+            width:
+              tileHeight * ONCE_PER_GAME_TILE_ASPECT[marker] +
+              ONCE_PER_GAME_TILE_PADDING * 2,
+          }}
+          onClick={() => onToggle(frame.playerId, marker)}
+        >
+          <OncePerGameTile marker={marker} />
+        </button>
+      </Tooltip>
     );
   };
   return (
@@ -164,7 +180,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
       >
         {onToggleHandSort && table && !sortInPill ? (
           <Tooltip
-            content={handSorted ? 'Stop sorting hand' : 'Sort hand'}
+            content={handSortTooltip(handSorted)}
             side={playerSide === 'local' ? 'top' : 'bottom'}
           >
             <label
@@ -243,9 +259,12 @@ export interface TableHandCount {
   readonly playerId: PlayerId;
 }
 
+/** The least room between a hand's pill and the table's edge. */
+const HAND_PILL_EDGE = 4;
+
 /**
  * The hand's count and its Sort as one pill where the table counts the
- * hand: [cards 7 | ⇅]. Sort is the checkbox it always was (its id, role and
+ * hand: [7 | ⇅]. Sort is the checkbox it always was (its id, role and
  * keys), drawn as the pill's latched-in end.
  */
 const TableHandPill = memo(function TableHandPill({
@@ -264,15 +283,63 @@ const TableHandPill = memo(function TableHandPill({
   const horizontal =
     node.horizontalAlign === 'left'
       ? { left: node.anchor.x }
-      : { right: `calc(100% - ${node.anchor.x}px)` };
+      : { right: `calc(100% - ${String(node.anchor.x)}px)` };
   const vertical =
     node.verticalAlign === 'top'
       ? { top: node.anchor.y }
-      : { bottom: `calc(100% - ${node.anchor.y}px)` };
+      : { bottom: `calc(100% - ${String(node.anchor.y)}px)` };
+  // The pill is wider than a badge: on a narrow screen a badge's anchor sits
+  // so near the edge that the pill would hang off the table. Measured after
+  // layout, it is nudged back inside.
+  const pill = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element = pill.current;
+    if (!element) return;
+    const fit = (): void => {
+      element.style.translate = '';
+      const box = element.getBoundingClientRect();
+      const host = element.offsetParent?.getBoundingClientRect();
+      const left = Math.max(host?.left ?? 0, 0) + HAND_PILL_EDGE;
+      const top = Math.max(host?.top ?? 0, 0) + HAND_PILL_EDGE;
+      const right =
+        Math.min(host?.right ?? globalThis.innerWidth, globalThis.innerWidth) -
+        HAND_PILL_EDGE;
+      const bottom =
+        Math.min(
+          host?.bottom ?? globalThis.innerHeight,
+          globalThis.innerHeight
+        ) - HAND_PILL_EDGE;
+      const dx =
+        box.left < left
+          ? left - box.left
+          : box.right > right
+            ? right - box.right
+            : 0;
+      const dy =
+        box.top < top
+          ? top - box.top
+          : box.bottom > bottom
+            ? bottom - box.bottom
+            : 0;
+      if (dx !== 0 || dy !== 0) {
+        element.style.translate = `${String(dx)}px ${String(dy)}px`;
+      }
+    };
+    fit();
+    globalThis.addEventListener('resize', fit);
+    return () => globalThis.removeEventListener('resize', fit);
+  }, [
+    node.anchor.x,
+    node.anchor.y,
+    node.horizontalAlign,
+    node.verticalAlign,
+    node.count,
+  ]);
   const sortId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
   return (
     <div
+      ref={pill}
       className={`table-hand-pill table-hand-pill--${playerSide}`}
       data-hand-pill-player={playerId}
       data-sorted={sorted ? 'true' : undefined}
@@ -288,7 +355,7 @@ const TableHandPill = memo(function TableHandPill({
       </span>
       {onToggleHandSort ? (
         <Tooltip
-          content={sorted ? 'Stop sorting hand' : 'Sort hand'}
+          content={handSortTooltip(sorted)}
           side={playerSide === 'local' ? 'top' : 'bottom'}
         >
           <label

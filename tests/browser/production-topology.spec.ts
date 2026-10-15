@@ -117,7 +117,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
   await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   expect(await loadedDeckResources()).toEqual([]);
   await page.locator('#onlineDeckButton').click();
-  await expect(page.locator('#deckImport')).toBeVisible();
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
   await expect
     .poll(async () => (await loadedDeckResources()).length)
     .toBeGreaterThan(0);

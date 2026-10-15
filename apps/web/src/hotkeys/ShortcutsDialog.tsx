@@ -31,6 +31,7 @@ import {
 } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
 import { Dialog } from '../ui/Dialog.js';
+import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
 import {
   chordFromInput,
   chordHint,
@@ -512,19 +513,24 @@ const ShortcutRow = memo(function ShortcutRow({
           </button>
         ) : null}
         {custom && !recording ? (
-          <button
-            type="button"
-            className="ds-icon-button ptcgsim-shortcut-row__reset"
-            aria-label={`Reset ${entry.label} to ${
-              defaultChord ? chordHint(defaultChord, platform) : 'its default'
-            }`}
-            title={`Back to ${
-              defaultChord ? chordHint(defaultChord, platform) : 'default'
-            }`}
-            onClick={() => onReset(entry.id)}
+          <Tooltip
+            content={withKeyHint(
+              defaultChord ? 'Reset to' : 'Reset to no key',
+              defaultChord ? chordHint(defaultChord, platform) : undefined
+            )}
+            side="left"
           >
-            <ArrowCounterClockwiseIcon {...decorative} />
-          </button>
+            <button
+              type="button"
+              className="ds-icon-button ptcgsim-shortcut-row__reset"
+              aria-label={`Reset ${entry.label} to ${
+                defaultChord ? chordHint(defaultChord, platform) : 'its default'
+              }`}
+              onClick={() => onReset(entry.id)}
+            >
+              <ArrowCounterClockwiseIcon {...decorative} />
+            </button>
+          </Tooltip>
         ) : null}
       </div>
       {error ? (
@@ -933,14 +939,16 @@ export const ShortcutsDialog = ({
             }}
           />
         </label>
-        <button
-          type="button"
-          className="ds-icon-button ptcgsim-shortcuts__close"
-          aria-label="Close keyboard shortcuts"
-          onClick={() => onOpenChange(false)}
-        >
-          <XIcon {...decorative} />
-        </button>
+        <Tooltip content={withKeyHint('Close', 'Esc')} side="bottom">
+          <button
+            type="button"
+            className="ds-icon-button ptcgsim-shortcuts__close"
+            aria-label="Close keyboard shortcuts"
+            onClick={() => onOpenChange(false)}
+          >
+            <XIcon {...decorative} />
+          </button>
+        </Tooltip>
       </div>
       <div className="ptcgsim-shortcuts__body" onKeyDown={handleDialogKeyDown}>
         <div className="ptcgsim-shortcuts__bar">

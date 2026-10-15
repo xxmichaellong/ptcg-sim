@@ -1,5 +1,31 @@
 # Deck core migration
 
+> **Current state (2026-10-15).** The deck screen was redesigned (ADR-033)
+> on a card catalog the server builds from TCGdex (ADR-032). In
+> `@ptcgsim/deck-core`, the v1 grouped `Deck`, `card-compare`, `deck-state`,
+> `card-sort`, `deck-validation` and `card-search` modules are gone. Today it
+> holds:
+>
+> - `deck-list.ts`: the deck primitive (`DeckList` of self-contained
+>   `DeckCard` entries), its operations, display order by evolution line and
+>   kind, and `sameDeckList` (the same deck on the table);
+> - `deck-rules.ts`: Standard, Expanded, Unlimited and TCG Pocket rules as
+>   typed issues (`checkDeck`, `describeDeckIssue`, `guessDeckFormat`);
+> - `deck-stats.ts`: counts and opening-hand odds;
+> - `catalog.ts`, `catalog-wire.ts`: the catalog's types and its wire decoder;
+> - `card-query.ts`: Limitless-syntax search over the catalog;
+> - `catalog-deck.ts`: catalog cards as deck cards, and decklist lines and
+>   image addresses matched to printings;
+> - `decklist-text.ts`: Pokémon TCG Live's export text;
+> - `csv-adapter.ts`, `pasted-decklist.ts`: the v1 CSV and the pasted-list
+>   parser, kept.
+>
+> In the web app, the deck screen is `DeckScreen.tsx` (home), `DeckEditor.tsx`
+> and their panels; saved decks are `deck-library.ts` (IndexedDB); the import
+> is `deck-import.ts`; `LegacyDeckBuilderWorkspace`, `LegacyDeckImportPanel`
+> and the runtime `tcgdex-catalog-*` search are retired. The sections below are
+> the migration's history.
+
 ## Status and scope
 
 `@ptcgsim/deck-core` is the browser-independent foundation for the replacement

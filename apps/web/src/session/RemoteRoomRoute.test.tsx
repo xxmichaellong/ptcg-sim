@@ -63,6 +63,28 @@ vi.mock('../ui/toast.js', async (importOriginal) => {
  * the actions the route composes around the board's own (painted here as
  * plain buttons with the rail's ids), its commands, and its props.
  */
+/** The card catalog stays idle here: these tests never search cards. */
+vi.mock('../features/deck/card-catalog-client.js', () => {
+  const idle = { status: 'idle' } as const;
+  const source = {
+    getSnapshot: () => idle,
+    subscribe: () => () => undefined,
+    load: () => undefined,
+    retry: () => undefined,
+  };
+  return { cardCatalog: () => source };
+});
+
+/** Nor do they need the tournament-deck feed. */
+vi.mock('../features/deck/current-decklists.js', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../features/deck/current-decklists.js')
+  >()),
+  fetchCurrentDecklists: async () => {
+    throw new Error('No feed in unit tests.');
+  },
+}));
+
 vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
   const original =
     await importOriginal<typeof import('./RemoteSessionBoard.js')>();
@@ -448,7 +470,7 @@ const chooseLogAction = async (id: string): Promise<void> => {
 const openDeckFromMenu = async (): Promise<void> => {
   await chooseMenuItem('deckImportButton');
   await act(async () => {
-    await import('../features/deck/LegacyDeckBuilderSession.js');
+    await import('../features/deck/DeckBuilderSession.js');
     await flushConsumers();
   });
   await settle();
@@ -724,7 +746,7 @@ describe('RemoteRoomRoute', () => {
     // The toolbar's Deck opens the deck screen, which owns the keys.
     await click('#deckImportButton');
     await act(async () => {
-      await import('../features/deck/LegacyDeckBuilderSession.js');
+      await import('../features/deck/DeckBuilderSession.js');
       await flushConsumers();
     });
     await settle();
@@ -830,12 +852,10 @@ describe('RemoteRoomRoute', () => {
       // The deck screen opens over the table; a room has no second seat.
       await openDeckFromMenu();
       expect(find('.ptcgsim-deck-layer[data-open="true"]')).not.toBeNull();
-      expect(get('#deckImport').hidden).toBe(false);
-      expect(get('#altImportHeaderButton').getAttribute('aria-disabled')).toBe(
-        'true'
-      );
+      expect(find('#deckPasteInput')).not.toBeNull();
+      expect(find('#nativeDeckBuilderTargetAlt')).toBeNull();
       await click('#deckBackButton');
-      expect(get('#deckImport').hidden).toBe(true);
+      expect(find('.ptcgsim-deck-layer[data-open="false"]')).not.toBeNull();
 
       const socket = await connect(socketFactory);
       expect(socket.sent).toHaveLength(1);
@@ -1315,7 +1335,7 @@ describe('RemoteRoomRoute', () => {
 
     await click('#welcomeLoadDeckButton');
     await act(async () => {
-      await import('../features/deck/LegacyDeckBuilderSession.js');
+      await import('../features/deck/DeckBuilderSession.js');
       await flushConsumers();
     });
     await settle();
@@ -1378,7 +1398,7 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.loadDeck?.playerIds).toEqual(view.playerOrder);
     await act(async () => {
       boardHarness.props?.loadDeck?.onLoad(otherPlayer);
-      await import('../features/deck/LegacyDeckBuilderSession.js');
+      await import('../features/deck/DeckBuilderSession.js');
       await flushConsumers();
     });
     await settle();
@@ -1531,8 +1551,9 @@ describe('RemoteRoomRoute', () => {
 
     act(() =>
       deckStore.addCard({
+        id: 'custom:route-pikachu',
         name: 'Route Pikachu',
-        supertype: 'Pokémon',
+        category: 'Pokémon',
         image: 'data:image/not-filtered',
       })
     );
@@ -1594,11 +1615,9 @@ describe('RemoteRoomRoute', () => {
       <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
     );
     await openDeckFromMenu();
+    // Solo: a seat tab for P2.
     await vi.waitFor(() =>
-      expect(find('#altImportHeaderButton')).not.toBeNull()
-    );
-    expect(get('#altImportHeaderButton').getAttribute('aria-disabled')).toBe(
-      'false'
+      expect(find('#nativeDeckBuilderTargetAlt')).not.toBeNull()
     );
     await click('#deckBackButton');
 
@@ -1619,5 +1638,34 @@ describe('RemoteRoomRoute', () => {
     await act(async () => root.unmount());
     runtime.dispose();
     expect(runtime.session.getSnapshot().phase).toBe('closed');
+  });
+
+  it('tells its owner when the table is ready to be seen: the board painted, or a failure to say', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const onTableSettledChange = vi.fn();
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="solo"
+        onTableSettledChange={onTableSettledChange}
+      />
+    );
+    // The board reports its own paint straight to the owner.
+    expect(boardHarness.props?.onSettledChange).toBe(onTableSettledChange);
+    expect(onTableSettledChange).not.toHaveBeenCalled();
+
+    const socket = socketFactory.socket!;
+    await act(async () => {
+      socket.serverOpen();
+      socket.serverFrame('{');
+    });
+    // A room that failed has something to say over its table.
+    expect(find('#roomHeaderText')).not.toBeNull();
+    expect(onTableSettledChange).toHaveBeenCalledWith(true);
+
+    await act(async () => root.unmount());
+    runtime.dispose();
   });
 });

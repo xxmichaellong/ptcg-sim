@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Deck, DeckCard } from '@ptcgsim/deck-core';
+import {
+  deckListOf,
+  deckTotals,
+  type DeckCard,
+  type DeckList,
+} from '@ptcgsim/deck-core';
 
 import {
   DeckBuilderStore,
@@ -10,28 +15,20 @@ import {
 const card = (name: string, id = name.toLowerCase()): DeckCard => ({
   id,
   name,
-  supertype: 'Pokémon',
+  category: 'Pokémon',
   image: `https://cards.invalid/${id}.png`,
 });
 
-const deckWith = (entry: DeckCard, count = 1): Deck => ({
-  [entry.name ?? 'Card']: {
-    cards: [{ data: entry, count }],
-    totalCount: count,
-  },
-});
+const deckWith = (entry: DeckCard, count = 1): DeckList =>
+  deckListOf([{ card: entry, count }]);
 
 const slotCount = (
   store: DeckBuilderStore,
   target: 'main' | 'alternate'
-): number =>
-  Object.values(store.getSnapshot().slots[target].deck).reduce(
-    (total, group) => total + group.totalCount,
-    0
-  );
+): number => deckTotals(store.getSnapshot().slots[target].deck).total;
 
 describe('DeckBuilderStore', () => {
-  it('starts with independent clean cloned decks and a stable frozen snapshot', () => {
+  it('starts with clean decks and a stable frozen snapshot', () => {
     const main = deckWith(card('Pikachu'));
     const alternate = deckWith(card('Eevee'), 2);
     const store = new DeckBuilderStore({
@@ -39,9 +36,6 @@ describe('DeckBuilderStore', () => {
       alternateDeck: alternate,
     });
     const snapshot = store.getSnapshot();
-
-    main.Pikachu!.totalCount = 99;
-    alternate.Eevee!.totalCount = 99;
 
     expect(store.getSnapshot()).toBe(snapshot);
     expect(snapshot).toMatchObject({
@@ -55,7 +49,8 @@ describe('DeckBuilderStore', () => {
     });
     expect(slotCount(store, 'main')).toBe(1);
     expect(slotCount(store, 'alternate')).toBe(2);
-    expect(Object.isFrozen(snapshot.slots.main.deck.Pikachu)).toBe(true);
+    expect(Object.isFrozen(snapshot.slots.main.deck)).toBe(true);
+    expect(Object.isFrozen(snapshot.slots.main.deck[0])).toBe(true);
   });
 
   it('switches targets without losing either deck or conflating dirty state', () => {
@@ -185,7 +180,14 @@ describe('DeckBuilderStore', () => {
     const listener = vi.fn();
     store.subscribe(listener);
 
-    expect(store.addCard({ image: '/missing-name.png' })).toBe(false);
+    expect(
+      store.addCard({
+        id: 'x',
+        name: '',
+        category: 'Pokémon',
+        image: '/missing-name.png',
+      })
+    ).toBe(false);
     expect(store.removeCard(card('Missing'))).toBe(false);
 
     expect(store.getSnapshot().hasDirtyDecks).toBe(false);
@@ -202,7 +204,7 @@ describe('DeckBuilderStore', () => {
     expect(store.clearDeck()).toBe(true);
     expect(store.clearDeck()).toBe(false);
 
-    expect(original.Pikachu?.totalCount).toBe(2);
+    expect(deckTotals(original).total).toBe(2);
     expect(slotCount(store, 'main')).toBe(0);
     expect(store.getSnapshot().slots.main).toMatchObject({
       revision: 3,
@@ -211,13 +213,35 @@ describe('DeckBuilderStore', () => {
     });
   });
 
-  it('transactionally leaves state unchanged when an input cannot be cloned', () => {
-    const store = new DeckBuilderStore();
-    const before = store.getSnapshot();
-    const invalid = deckWith({ ...card('Broken'), callback: () => undefined });
-
-    expect(() => store.replaceDeck('main', invalid)).toThrow();
-    expect(store.getSnapshot()).toBe(before);
+  it('relabels a seat without dirtying it when the cards are the same', () => {
+    const pikachu = deckWith(card('Pikachu'));
+    const store = new DeckBuilderStore({ mainDeck: pikachu });
+    expect(
+      store.replaceDeck('main', pikachu, { deckId: 'a', name: 'Mine' })
+    ).toBe(true);
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      label: { deckId: 'a', name: 'Mine' },
+      revision: 0,
+      dirty: false,
+    });
+    // The same cards read back from storage are a new object, not a new deck.
+    expect(
+      store.replaceDeck('main', deckListOf([...pikachu]), {
+        deckId: 'a',
+        name: 'Mine',
+      })
+    ).toBe(false);
+    expect(store.replaceDeck('main', deckWith(card('Pikachu'), 2))).toBe(true);
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      label: { deckId: 'a', name: 'Mine' },
+      revision: 1,
+      dirty: true,
+    });
+    expect(
+      store.replaceDeck('main', store.getSnapshot().slots.main.deck, null)
+    ).toBe(true);
+    expect(store.getSnapshot().slots.main.label).toBeUndefined();
+    expect(store.getSnapshot().slots.main.revision).toBe(1);
   });
 
   it('synchronizes an externally installed deck as clean without switching targets', () => {
@@ -227,7 +251,6 @@ describe('DeckBuilderStore', () => {
 
     const loaded = deckWith(card('Loaded'), 3);
     store.synchronizeDeck('main', loaded);
-    loaded.Loaded!.totalCount = 99;
 
     expect(store.getSnapshot().target).toBe('alternate');
     expect(store.getSnapshot().slots.main).toMatchObject({
@@ -250,7 +273,7 @@ describe('DeckBuilderStore', () => {
     const main = store.beginNextDirtyInstall();
 
     expect(main?.target).toBe('main');
-    expect(Object.keys(main!.deck)).toEqual([]);
+    expect(main!.deck).toEqual([]);
     expect(Object.isFrozen(main)).toBe(true);
     expect(store.getSnapshot().slots.main.installingRevision).toBe(1);
     expect(
@@ -317,9 +340,9 @@ describe('DeckBuilderStore', () => {
       dirty: false,
     });
     expect(store.getSnapshot().slots.main.installingRevision).toBeUndefined();
-    expect(Object.keys(store.getSnapshot().slots.main.deck)).toEqual([
-      'Authority',
-    ]);
+    expect(
+      store.getSnapshot().slots.main.deck.map((entry) => entry.card.name)
+    ).toEqual(['Authority']);
   });
 
   it('rejects copied or foreign receipts without changing the pending install', () => {

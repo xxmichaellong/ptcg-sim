@@ -123,6 +123,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -1213,24 +1214,32 @@ const ShowBoardButton = ({
   readonly panelName: string;
   readonly onShowingBoardChange: (showingBoard: boolean) => void;
 }) => (
-  <button
-    type="button"
-    className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
-    aria-pressed={showingBoard}
-    onClick={() => onShowingBoardChange(!showingBoard)}
+  // "Show board" could read as the Board pile; the tooltip says what it
+  // does. The way back names itself.
+  <Tooltip
+    content="See the table without closing this"
+    side="bottom"
+    disabled={showingBoard}
   >
-    {showingBoard ? (
-      <>
-        <ArrowUUpLeftIcon aria-hidden="true" />
-        Back to {panelName}
-      </>
-    ) : (
-      <>
-        <EyeIcon aria-hidden="true" />
-        Show board
-      </>
-    )}
-  </button>
+    <button
+      type="button"
+      className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
+      aria-pressed={showingBoard}
+      onClick={() => onShowingBoardChange(!showingBoard)}
+    >
+      {showingBoard ? (
+        <>
+          <ArrowUUpLeftIcon aria-hidden="true" />
+          Back to {panelName}
+        </>
+      ) : (
+        <>
+          <EyeIcon aria-hidden="true" />
+          Show board
+        </>
+      )}
+    </button>
+  </Tooltip>
 );
 
 const OverlayCardImage = ({
@@ -1986,39 +1995,50 @@ const ZoneBrowser = ({
                 {primary.label}
               </button>
             ) : null}
-            <label className="ptcgsim-overlay-toggle">
-              <input
-                type="checkbox"
-                data-zone-action="sortZone"
-                checked={sortEnabled}
-                onChange={(event) =>
-                  setSortEnabled(event.currentTarget.checked)
-                }
-              />
-              <SortAscendingIcon aria-hidden="true" weight="bold" />
-              Sort
-            </label>
+            <Tooltip
+              content={
+                sortEnabled ? 'Back to pile order' : 'Sort in decklist order'
+              }
+              side="bottom"
+            >
+              <label className="ptcgsim-overlay-toggle">
+                <input
+                  type="checkbox"
+                  data-zone-action="sortZone"
+                  checked={sortEnabled}
+                  onChange={(event) =>
+                    setSortEnabled(event.currentTarget.checked)
+                  }
+                />
+                <SortAscendingIcon aria-hidden="true" weight="bold" />
+                Sort
+              </label>
+            </Tooltip>
             {copies.size > 0 ? (
-              <button
-                type="button"
-                className="ptcgsim-overlay-toggle"
-                data-zone-action="stackCopies"
-                aria-pressed={stackCopies}
-                aria-label="Stack copies"
-                title={
+              <Tooltip
+                content={
                   stackCopies
                     ? 'Show every copy on its own'
                     : 'Stack copies of a card together'
                 }
-                onClick={() =>
-                  preferences().set(ZONE_BROWSER_PREFERENCES, {
-                    stackCopies: !stackCopies,
-                  })
-                }
+                side="bottom"
               >
-                <StackIcon aria-hidden="true" weight="bold" />
-                Stack
-              </button>
+                <button
+                  type="button"
+                  className="ptcgsim-overlay-toggle"
+                  data-zone-action="stackCopies"
+                  aria-pressed={stackCopies}
+                  aria-label="Stack copies"
+                  onClick={() =>
+                    preferences().set(ZONE_BROWSER_PREFERENCES, {
+                      stackCopies: !stackCopies,
+                    })
+                  }
+                >
+                  <StackIcon aria-hidden="true" weight="bold" />
+                  Stack
+                </button>
+              </Tooltip>
             ) : null}
             <ShowBoardButton
               showingBoard={showingBoard}
@@ -2342,29 +2362,30 @@ const WorkAreaPanel = ({
         <div className="ptcgsim-legacy-work-area-buttons">
           {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
             const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
+            // A narrow panel shows only the icons; the tooltip names each.
             return (
-              <button
-                type="button"
-                key={button.id}
-                className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
-                data-work-area-action={button.id}
-                aria-label={button.label}
-                title={button.label}
-                onClick={() =>
-                  own
-                    ? actions.invokeWorkAreaAction?.(source, button.id)
-                    : actions.invokeWorkAreaAction?.(
-                        source,
-                        button.id,
-                        zone.playerId ?? undefined
-                      )
-                }
-              >
-                <ActionIcon aria-hidden="true" />
-                <span className="ptcgsim-work-area-button-label">
-                  {button.label}
-                </span>
-              </button>
+              <Tooltip key={button.id} content={button.label} side="top">
+                <button
+                  type="button"
+                  className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
+                  data-work-area-action={button.id}
+                  aria-label={button.label}
+                  onClick={() =>
+                    own
+                      ? actions.invokeWorkAreaAction?.(source, button.id)
+                      : actions.invokeWorkAreaAction?.(
+                          source,
+                          button.id,
+                          zone.playerId ?? undefined
+                        )
+                  }
+                >
+                  <ActionIcon aria-hidden="true" />
+                  <span className="ptcgsim-work-area-button-label">
+                    {button.label}
+                  </span>
+                </button>
+              </Tooltip>
             );
           })}
         </div>

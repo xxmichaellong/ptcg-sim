@@ -37,6 +37,10 @@
         "name": "PTCG_DECK_FEED",
         "class_name": "PtcgDeckFeed",
       },
+      {
+        "name": "PTCG_CARD_CATALOG",
+        "class_name": "PtcgCardCatalog",
+      },
     ],
   },
   "ratelimits": [
@@ -94,12 +98,17 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "PtcgCardCatalog": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
     "PtcgRoom": {
       "type": "durable-object",
       "storage": "sqlite",
     },
   },
-  // Refreshes the deck picker's current lists from Limitless once a day.
+  // Once a day: refreshes the deck picker's current lists from Limitless,
+  // and the deck builder's card catalog from TCGdex.
   "triggers": {
     "crons": ["17 6 * * *"],
   },
@@ -135,6 +144,10 @@
           {
             "name": "PTCG_DECK_FEED",
             "class_name": "PtcgDeckFeed",
+          },
+          {
+            "name": "PTCG_CARD_CATALOG",
+            "class_name": "PtcgCardCatalog",
           },
         ],
       },
@@ -190,6 +203,10 @@
           "storage": "sqlite",
         },
         "PtcgDeckFeed": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgCardCatalog": {
           "type": "durable-object",
           "storage": "sqlite",
         },

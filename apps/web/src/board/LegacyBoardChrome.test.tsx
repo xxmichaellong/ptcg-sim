@@ -21,9 +21,12 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  handSortTooltip,
   LegacyBoardChrome,
   type LegacyBoardChromeRail,
+  type TableHandCount,
 } from './LegacyBoardChrome.js';
+import { oncePerGameTooltip } from './OncePerGameTile.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -620,5 +623,100 @@ describe('LegacyBoardChrome', () => {
       )
     ).toEqual(['spike-blue']);
     await act(async () => root.unmount());
+  });
+
+  it('counts the hand in a pill of the number and Sort, Sort named by its tooltip', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const toggleHandSort = vi.fn();
+    const handCount = (
+      playerId: string,
+      side: 'local' | 'opponent',
+      count: number
+    ): TableHandCount => ({
+      playerId: asPlayerId(playerId),
+      node: {
+        id: `${playerId}-hand-count`,
+        zoneId: `${playerId}-hand`,
+        playerId: asPlayerId(playerId),
+        side,
+        kind: 'hand',
+        count,
+        anchor: { x: 900, y: side === 'local' ? 680 : 40 },
+        horizontalAlign: side === 'local' ? 'left' : 'right',
+        verticalAlign: side === 'local' ? 'bottom' : 'top',
+        fontSizePx: 13,
+        color: 'rgb(90 110 188)',
+        zIndex: 1,
+        label: `${count} cards in hand`,
+      },
+    });
+    const render = (sorted: ReadonlySet<string>) =>
+      act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={createTableLayoutSnapshot({
+              ...layoutState(),
+              geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+              shellMode: 'fullscreen',
+              vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+            })}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn(), toggleHandSort }}
+            sortedHandPlayerIds={new Set([...sorted].map(asPlayerId))}
+            handCounts={[
+              handCount('spike-blue', 'local', 7),
+              handCount('spike-red', 'opponent', 6),
+            ]}
+          />
+        )
+      );
+    await render(new Set());
+    const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
+    // The number and Sort, nothing else (PX-046: no cards icon).
+    expect(
+      [...pill.children].map((child) => child.className.split(' ').at(-1))
+    ).toEqual(['table-hand-pill__count', 'table-hand-pill__sort']);
+    expect(pill.querySelector('.table-hand-pill__count')?.textContent).toBe(
+      '7'
+    );
+    expect(pill.querySelector('.table-hand-pill__count svg')).toBeNull();
+    // Sort is still v1's checkbox, its id and name on the input.
+    const checkbox = pill.querySelector<HTMLInputElement>('#sortHandCheckbox')!;
+    expect(checkbox.closest('label')?.textContent).toBe('Sort');
+    await act(async () => {
+      checkbox.focus();
+      checkbox.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    });
+    await vi.waitFor(() =>
+      expect(
+        document.querySelector('[data-ptcgsim-overlay="tooltip"]')?.textContent
+      ).toBe('Sort hand in decklist order')
+    );
+    await act(async () => checkbox.click());
+    expect(toggleHandSort).toHaveBeenCalledWith(asPlayerId('spike-blue'), true);
+    await render(new Set(['spike-blue']));
+    // A press puts the tooltip away; focus coming back brings it, reworded.
+    await act(async () => {
+      checkbox.blur();
+      checkbox.focus();
+      checkbox.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    });
+    await vi.waitFor(() =>
+      expect(
+        document.querySelector('[data-ptcgsim-overlay="tooltip"]')?.textContent
+      ).toBe('Stop sorting hand')
+    );
+    await act(async () => root.unmount());
+  });
+
+  it('words the Sort and marker tooltips by what a press does', () => {
+    expect(handSortTooltip(false)).toBe('Sort hand in decklist order');
+    expect(handSortTooltip(true)).toBe('Stop sorting hand');
+    expect(oncePerGameTooltip('vstar', false)).toBe('Mark VSTAR used');
+    expect(oncePerGameTooltip('gx', true)).toBe('GX used: press to undo');
   });
 });

@@ -132,7 +132,7 @@ for (const mode of ['flat', 'table'] as const)
       });
       await expect(
         page.locator('#nativeDeckBuilderSummaryPanel')
-      ).toContainText('Total: 60');
+      ).toHaveAttribute('data-card-count', '60');
       await page.locator('#nativeDeckBuilderPlayButton').click();
       await expect(
         page.locator('.ptcgsim-deck-layer[data-open="false"]')

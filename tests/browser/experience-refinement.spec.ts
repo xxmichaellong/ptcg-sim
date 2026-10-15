@@ -18,9 +18,6 @@ const startTable = async (page: Page, renderer = 'dom'): Promise<void> => {
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible();
   await openDeck(page);
-  // A short window shows the decklist and the builder one at a time.
-  const builderView = page.getByRole('radio', { name: 'Builder' });
-  if (await builderView.isVisible()) await builderView.click();
   await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'experience.csv',
@@ -34,8 +31,9 @@ const startTable = async (page: Page, renderer = 'dom'): Promise<void> => {
       ].join('\n')
     ),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();
@@ -277,6 +275,7 @@ test('the app menu and the custom-card form support keyboard navigation and focu
   ).toBe(true);
 
   await openDeck(page);
+  await page.locator('#deckNewButton').click();
   const custom = page.locator('#nativeDeckBuilderAddCustomCard');
   await custom.click();
   await expect(page.locator('#nativeCustomCardName')).toBeFocused();

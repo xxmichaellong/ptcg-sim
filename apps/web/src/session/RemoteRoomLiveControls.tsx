@@ -38,6 +38,7 @@ import {
 import { useGameSession } from './useGameSession.js';
 import { confirmAction } from '../ui/dialog-requests.js';
 import { toast } from '../ui/toast.js';
+import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
 
 export type RemoteRoomLiveSession = Pick<
   RemoteGameSession,
@@ -534,15 +535,17 @@ export const ChatComposer = ({
         onChange={(event) => controls.setMessage(event.target.value)}
         onKeyDown={controls.handleMessageKeyDown}
       />
-      <button
-        type="button"
-        className="ds-icon-button ptcgsim-chat-composer__send"
-        disabled={!controls.ready || controls.message.trim().length === 0}
-        aria-label="Send message"
-        onClick={controls.sendMessage}
-      >
-        <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
-      </button>
+      <Tooltip content={withKeyHint('Send', 'Enter')}>
+        <button
+          type="button"
+          className="ds-icon-button ptcgsim-chat-composer__send"
+          disabled={!controls.ready || controls.message.trim().length === 0}
+          aria-label="Send message"
+          onClick={controls.sendMessage}
+        >
+          <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
+        </button>
+      </Tooltip>
     </div>
   );
 };

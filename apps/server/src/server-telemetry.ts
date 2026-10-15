@@ -11,10 +11,12 @@ export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v2';
 
 export type ServerTelemetryLevel = 'info' | 'warn' | 'error';
 export type ServerTelemetrySource =
-  'edge' | 'room' | 'continuation' | 'deck_feed';
+  'edge' | 'room' | 'continuation' | 'deck_feed' | 'card_catalog';
 export type ServerHttpRoute =
   | 'health'
   | 'current_decks'
+  | 'card_catalog'
+  | 'card_catalog_body'
   | 'room_creation'
   | 'continuation_creation'
   | 'continuation_restore'
@@ -71,7 +73,8 @@ export type ServerFailureSubsystem =
   | 'replay_projection'
   | 'socket_send'
   | 'socket_upgrade'
-  | 'deck_feed_refresh';
+  | 'deck_feed_refresh'
+  | 'card_catalog_refresh';
 
 export type TelemetryReason =
   | AuthorityRejectionCode

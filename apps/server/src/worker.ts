@@ -59,6 +59,17 @@ import {
   initializeContinuationTarget,
   validateContinuationTargetPlan,
 } from './continuation-target.js';
+import {
+  CardCatalogBuilder,
+  type CatalogManifest,
+  type CatalogStore,
+} from './card-catalog/builder.js';
+import {
+  CARD_CATALOG_PATH,
+  cardCatalogBodyVersion,
+  handleCardCatalogBodyRequest,
+  handleCardCatalogManifestRequest,
+} from './card-catalog/http.js';
 import { initializeNewRoom } from './create-room.js';
 import {
   CURRENT_DECKS_PATH,
@@ -115,8 +126,14 @@ interface Env {
   readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
+  readonly PTCG_CARD_CATALOG: DurableObjectNamespace<PtcgCardCatalog>;
   /** Optional secret: a Limitless API key raises its rate limit. */
   readonly LIMITLESS_API_KEY?: string;
+  /**
+   * `off` keeps the card catalog from fetching TCGdex at all (browser specs,
+   * which serve their own fixture); anything else, or nothing, builds it.
+   */
+  readonly CARD_CATALOG_SOURCE?: string;
   readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
@@ -1129,14 +1146,124 @@ export class PtcgDeckFeed extends DurableObject<Env> {
   }
 }
 
+/**
+ * This location's Cloudflare cache, where there is one (not on workers.dev
+ * or in tests, where its operations do nothing or it is absent).
+ */
+const edgeCache = (): Cache | undefined =>
+  typeof caches === 'undefined'
+    ? undefined
+    : (caches as unknown as { readonly default?: Cache }).default;
+
+/** One catalog for everyone, built from TCGdex's English cards. */
+const CARD_CATALOG_NAME = 'tcgdex-en';
+
+const sha256Hex = async (value: string): Promise<string> =>
+  [
+    ...new Uint8Array(
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+    ),
+  ]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+const durableCatalogStore = (storage: DurableObjectStorage): CatalogStore => ({
+  get: async <T>(key: string) => await storage.get<T>(key),
+  getMany: async <T>(keys: readonly string[]) =>
+    await storage.get<T>([...keys]),
+  put: async (key, value) => {
+    await storage.put(key, value);
+  },
+  delete: async (key) => {
+    await storage.delete(key);
+  },
+  getAlarm: async () => await storage.getAlarm(),
+  setAlarm: async (at) => {
+    await storage.setAlarm(at);
+  },
+});
+
+/**
+ * The deck builder's card catalog (card-catalog/builder.ts, ADR-032): built
+ * from TCGdex one set per alarm, refreshed by the daily cron and by a
+ * request that finds it missing or stale, and served as one immutable body
+ * per version.
+ */
+export class PtcgCardCatalog extends DurableObject<Env> {
+  private readonly telemetry = createTelemetry(
+    'card_catalog',
+    this.env.BUILD_ID
+  );
+  private readonly builder = new CardCatalogBuilder({
+    store: durableCatalogStore(this.ctx.storage),
+    fetch: (input, init) => fetch(input, init),
+    now: Date.now,
+    sha256: sha256Hex,
+    onFailure: () =>
+      this.telemetry.failure({
+        subsystem: 'card_catalog_refresh',
+        retryable: true,
+      }),
+  });
+
+  private get disabled(): boolean {
+    return this.env.CARD_CATALOG_SOURCE === 'off';
+  }
+
+  async manifest(): Promise<CatalogManifest | null> {
+    if (this.disabled) return null;
+    if (await this.builder.needsRefresh()) {
+      this.ctx.waitUntil(this.builder.refresh());
+    }
+    return this.builder.manifest();
+  }
+
+  /** The cron's entry point: how many sets are queued. */
+  async refresh(): Promise<number> {
+    return this.disabled ? 0 : this.builder.refresh();
+  }
+
+  async body(version: string): Promise<ReadableStream<Uint8Array> | null> {
+    const parts = await this.builder.body(version);
+    return parts ? new Blob([...parts]).stream() : null;
+  }
+
+  override async alarm(): Promise<void> {
+    if (!this.disabled) await this.builder.step();
+  }
+}
+
 const worker: ExportedHandler<Env> = {
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).refresh());
+    ctx.waitUntil(env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).refresh());
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const telemetry = createTelemetry('edge', env.BUILD_ID);
+    if (url.pathname === CARD_CATALOG_PATH) {
+      return observeHttp(telemetry, 'card_catalog', () =>
+        handleCardCatalogManifestRequest(request, () =>
+          env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).manifest()
+        )
+      );
+    }
+    const catalogVersion = cardCatalogBodyVersion(url.pathname);
+    if (catalogVersion) {
+      return observeHttp(telemetry, 'card_catalog_body', () =>
+        handleCardCatalogBodyRequest(
+          request,
+          catalogVersion,
+          (version) =>
+            env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).body(version),
+          {
+            cache: edgeCache(),
+            waitUntil: (promise) => ctx.waitUntil(promise),
+          }
+        )
+      );
+    }
     if (url.pathname === CURRENT_DECKS_PATH) {
       return observeHttp(telemetry, 'current_decks', () =>
         handleCurrentDecksRequest(request, () =>

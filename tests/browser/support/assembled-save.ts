@@ -29,8 +29,9 @@ export const assembleSavedPrint = async (page: Page) => {
     mimeType: 'text/csv',
     buffer: Buffer.from(['QTY,Name,Type,URL,Presentation', ...rows].join('\n')),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 4'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '4'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   for (let part = 1; part <= 4; part++) {

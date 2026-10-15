@@ -5,6 +5,7 @@ import { useContext, type ReactNode, type RefObject } from 'react';
 import { useCompactLayout } from './breakpoints.js';
 import { OverlayContainerContext } from './overlay-host-registry.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
+import { Tooltip, withKeyHint } from './Tooltip.js';
 import './sheet.css';
 
 export type SheetPlacement = 'center' | 'side';
@@ -106,9 +107,14 @@ export const Sheet = ({
               {headerActions ? (
                 <div className="ptcgsim-sheet__actions">{headerActions}</div>
               ) : null}
-              <Drawer.Close className="ptcgsim-sheet__close" aria-label="Close">
-                <XIcon aria-hidden="true" />
-              </Drawer.Close>
+              <Tooltip content={withKeyHint('Close', 'Esc')} side="bottom">
+                <Drawer.Close
+                  className="ptcgsim-sheet__close"
+                  aria-label="Close"
+                >
+                  <XIcon aria-hidden="true" />
+                </Drawer.Close>
+              </Tooltip>
             </header>
             <Drawer.Content className="ptcgsim-sheet__body">
               {children}

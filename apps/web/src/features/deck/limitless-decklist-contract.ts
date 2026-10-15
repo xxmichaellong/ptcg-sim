@@ -1,9 +1,6 @@
 import type {
   LegacyCardType,
-  PastedDecklistFormat,
-  PastedDecklistIssue,
   PastedDecklistLanguage,
-  PastedDecklistRow,
 } from '@ptcgsim/deck-core';
 
 export const LIMITLESS_DECKLIST_IMPORT_URL =
@@ -18,7 +15,6 @@ const DEFAULT_LIMITS = {
   errorCodeUnits: 512,
   // V1 assigns every deck image in one pass. The 200-row import ceiling keeps
   // that source-parity fan-out finite while leaving browser scheduling intact.
-  imageConcurrency: 200,
 } as const;
 
 export interface LimitlessDecklistLimits {
@@ -28,7 +24,6 @@ export interface LimitlessDecklistLimits {
   readonly responseCards?: number;
   readonly responseErrors?: number;
   readonly errorCodeUnits?: number;
-  readonly imageConcurrency?: number;
 }
 
 export interface ResolvedLimitlessDecklistLimits {
@@ -38,7 +33,6 @@ export interface ResolvedLimitlessDecklistLimits {
   readonly responseCards: number;
   readonly responseErrors: number;
   readonly errorCodeUnits: number;
-  readonly imageConcurrency: number;
 }
 
 const positiveInteger = (
@@ -72,10 +66,6 @@ export const resolveLimitlessDecklistLimits = (
   errorCodeUnits: positiveInteger(
     limits.errorCodeUnits,
     DEFAULT_LIMITS.errorCodeUnits
-  ),
-  imageConcurrency: positiveInteger(
-    limits.imageConcurrency,
-    DEFAULT_LIMITS.imageConcurrency
   ),
 });
 
@@ -114,46 +104,10 @@ export interface LimitlessDecklistResponse {
   readonly errors: readonly string[];
 }
 
-export type PastedDecklistImportFailureReason =
-  | 'aborted'
-  | 'empty_decklist'
-  | 'invalid_decklist'
-  | 'import_too_large'
-  | LimitlessDecklistErrorCode
-  | 'incomplete_metadata'
-  | 'image_loader_unavailable'
-  | 'image_load_failed';
-
-export type PastedDecklistImportResult =
-  | {
-      readonly ok: true;
-      readonly format: PastedDecklistFormat;
-      readonly rows: readonly PastedDecklistRow[];
-    }
-  | {
-      readonly ok: false;
-      readonly reason: PastedDecklistImportFailureReason;
-      readonly issues?: readonly PastedDecklistIssue[];
-      /**
-       * Bounded transient rows that the source-shaped review table may repair.
-       * They are never installed or published until that separate confirmation.
-       */
-      readonly draftRows?: readonly PastedDecklistRow[];
-      /** One-based positions in the parsed row list, never raw player input. */
-      readonly rowNumbers?: readonly number[];
-      readonly status?: number;
-    };
-
-export type PastedDecklistImageLoader = Pick<
-  HTMLImageElement,
-  'onload' | 'onerror' | 'src'
->;
-
 export interface ImportPastedDecklistOptions {
   readonly language?: PastedDecklistLanguage;
   readonly signal?: AbortSignal;
   readonly fetch?: typeof globalThis.fetch;
-  readonly createImage?: () => PastedDecklistImageLoader;
   readonly endpoint?: string;
   readonly limits?: LimitlessDecklistLimits;
 }

@@ -65,7 +65,7 @@ test('reading Play online leaves a live Solo table mounted', async ({
 
   // Deck and Settings keep it mounted too, as they always have.
   await openDeck(page);
-  await expect(page.locator('#deckImport')).toBeVisible();
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
   await closeDeck(page);
   await openSettings(page);
   expect(await marked()).toBe(1);

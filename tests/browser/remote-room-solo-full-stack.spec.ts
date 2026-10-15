@@ -108,13 +108,13 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   ).toHaveCount(2);
 
   await openDeck(page);
-  await expect(page.locator('#deckImport')).toBeVisible();
-  await expect(page.locator('#altImportHeaderButton')).toHaveAttribute(
-    'aria-disabled',
-    'false'
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
+  // Solo gives the deck screen a seat tab for P2.
+  await page.locator('#nativeDeckBuilderTargetAlt').click();
+  await expect(page.locator('#nativeDeckBuilderTargetAlt')).toHaveAttribute(
+    'aria-pressed',
+    'true'
   );
-  await page.locator('#altImportHeaderButton').click();
-  await expect(page.locator('#altDeckImportInput')).toBeVisible();
   const cardBackPrompt = answerOverlayPrompt(page, SOLO_CARD_BACK_URL);
   await page.locator('#changeCardBackButton').click();
   expect((await cardBackPrompt).message).toBe('Change card back');
@@ -131,8 +131,9 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
       )
     ),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 1'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '1'
   );
   // Blue gets a card too, so a game is under way for the rail's turn
   // actions at the end.
@@ -147,8 +148,9 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
       ].join('\n')
     ),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 1'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '1'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect(
@@ -296,10 +298,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#roomIdInput')).toHaveValue('');
   await closeSheet(page);
   await openDeck(page);
-  await expect(page.locator('#altImportHeaderButton')).toHaveAttribute(
-    'aria-disabled',
-    'false'
-  );
+  await expect(page.locator('#nativeDeckBuilderTargetAlt')).toBeVisible();
   await closeDeck(page);
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
   await openActivity(page);

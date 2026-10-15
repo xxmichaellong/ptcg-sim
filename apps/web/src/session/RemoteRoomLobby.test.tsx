@@ -37,6 +37,8 @@ const lobbyBoardHarness = vi.hoisted(() => ({
   parkedRoomMode: undefined as string | undefined,
   parkedRail: undefined as BoardRailModel | undefined,
   parkedKeysSuspended: undefined as boolean | undefined,
+  onEmptySettledChange: undefined as ((settled: boolean) => void) | undefined,
+  onParkedSettledChange: undefined as ((settled: boolean) => void) | undefined,
 }));
 const roomRouteHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
@@ -61,6 +63,7 @@ const roomRouteHarness = vi.hoisted(() => ({
         signal: AbortSignal
       ) => Promise<void>)
     | undefined,
+  onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
 }));
 
 /** Enough of a table layout for the empty table's rail to place itself. */
@@ -75,7 +78,9 @@ vi.mock('../RendererSpikeBoard.js', () => ({
     readonly view: { readonly matchId: string };
     readonly table?: { readonly lowerShare: number };
     readonly chrome?: (layout: BoardLayoutSnapshot) => ReactNode;
+    readonly onSettledChange?: (settled: boolean) => void;
   }) => {
+    lobbyBoardHarness.onEmptySettledChange = props.onSettledChange;
     lobbyBoardHarness.preferences = props.preferences;
     lobbyBoardHarness.viewMatchId = props.view.matchId;
     lobbyBoardHarness.table = props.table;
@@ -85,13 +90,37 @@ vi.mock('../RendererSpikeBoard.js', () => ({
   },
 }));
 
+/** The card catalog stays idle here: these tests never search cards. */
+vi.mock('../features/deck/card-catalog-client.js', () => {
+  const idle = { status: 'idle' } as const;
+  const source = {
+    getSnapshot: () => idle,
+    subscribe: () => () => undefined,
+    load: () => undefined,
+    retry: () => undefined,
+  };
+  return { cardCatalog: () => source };
+});
+
+/** Nor do they need the tournament-deck feed. */
+vi.mock('../features/deck/current-decklists.js', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../features/deck/current-decklists.js')
+  >()),
+  fetchCurrentDecklists: async () => {
+    throw new Error('No feed in unit tests.');
+  },
+}));
+
 vi.mock('./RemoteSessionBoard.js', () => ({
   RemoteSessionBoard: (props: {
     readonly session: unknown;
     readonly roomMode?: string;
     readonly rail?: BoardRailModel;
     readonly keysSuspended?: boolean;
+    readonly onSettledChange?: (settled: boolean) => void;
   }) => {
+    lobbyBoardHarness.onParkedSettledChange = props.onSettledChange;
     lobbyBoardHarness.parkedSession = props.session;
     lobbyBoardHarness.parkedRoomMode = props.roomMode;
     lobbyBoardHarness.parkedRail = props.rail;
@@ -118,6 +147,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     continuationAvailable,
     installDeckOnSessionAttach,
     onResumeSavedGame,
+    onTableSettledChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -141,7 +171,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
       deliverOpponentInvitation: (text: string) => Promise<void>,
       signal: AbortSignal
     ) => Promise<void>;
+    readonly onTableSettledChange?: (settled: boolean) => void;
   }) => {
+    roomRouteHarness.onTableSettledChange = onTableSettledChange;
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
     roomRouteHarness.background = background;
@@ -457,7 +489,7 @@ const menuEntryIds = async (): Promise<string[]> => {
 const openDeck = async (): Promise<void> => {
   await chooseMenuItem('deckImportButton');
   await act(async () => {
-    await import('../features/deck/LegacyDeckBuilderSession.js');
+    await import('../features/deck/DeckBuilderSession.js');
     await flush();
   });
   await settle();
@@ -485,6 +517,43 @@ const playOnlineOpen = (): boolean => present('#playOnlineSheet');
 
 const lobbyRoute = (): HTMLElement =>
   element<HTMLElement>('[data-app-route="remote-room-lobby"]');
+
+/**
+ * The loading screen, as the lobby drives it: already down over a loading
+ * page (`covering`, where a swap happens at once), or gone, where a swap
+ * waits until `cover` says the old table is covered.
+ */
+const testCurtain = (state: 'covering' | 'gone') => {
+  const swaps: (() => void)[] = [];
+  const value = {
+    state: () => state,
+    reveal: vi.fn(),
+    drop: vi.fn(),
+    handOff: vi.fn((swap: () => void) => {
+      if (state === 'covering') swap();
+      else swaps.push(swap);
+    }),
+  };
+  const cover = async (): Promise<void> => {
+    await act(async () => {
+      for (const swap of swaps.splice(0)) swap();
+      await flush();
+    });
+  };
+  return { value, cover };
+};
+
+/** A board (or the room) says whether its table has painted. */
+const reportSettled = async (
+  report: ((settled: boolean) => void) | undefined,
+  settled: boolean
+): Promise<void> => {
+  expect(report).toBeDefined();
+  await act(async () => {
+    report?.(settled);
+    await flush();
+  });
+};
 
 describe('remote room lobby wiring', () => {
   beforeEach(() => {
@@ -569,14 +638,15 @@ describe('remote room lobby wiring', () => {
     expect(entries).not.toContain('leaveRoomButton');
 
     await openDeck();
-    expect(element<HTMLElement>('#deckImport').hidden).toBe(false);
+    expect(document.querySelector('#deckPasteInput')).not.toBeNull();
     // Play online gives way to the deck screen and comes back after it.
     expect(playOnlineOpen()).toBe(false);
-    expect(
-      element('#altImportHeaderButton').getAttribute('aria-disabled')
-    ).toBe('true');
+    // Before a Solo room there is only the player's own seat.
+    expect(document.querySelector('#nativeDeckBuilderTargetAlt')).toBeNull();
     await closeDeck();
-    expect(element<HTMLElement>('#deckImport').hidden).toBe(true);
+    expect(element<HTMLElement>('.ptcgsim-deck-layer').dataset.open).toBe(
+      'false'
+    );
     expect(playOnlineOpen()).toBe(true);
 
     await openSettings();
@@ -714,6 +784,122 @@ describe('remote room lobby wiring', () => {
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
+  it('lifts the loading screen once, over the Solo room, never over its stand-in', async () => {
+    const curtain = testCurtain('covering');
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const creation = deferred<typeof created.value>();
+    const createRoom = vi.fn(() => creation.promise);
+    const { root } = await mount(
+      { ...lobbyDependencies(custody(), createRoom), curtain: curtain.value },
+      false,
+      'solo'
+    );
+    await settle();
+
+    // The empty table painted while the room is still being made: it only
+    // stands in for that room, and the page never shows it.
+    await reportSettled(lobbyBoardHarness.onEmptySettledChange, true);
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+
+    await act(async () => {
+      creation.resolve(created.value);
+      await flush();
+    });
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(curtain.value.handOff).toHaveBeenCalledOnce();
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+    // The stand-in leaving says nothing; the room's table painting lifts it.
+    await reportSettled(roomRouteHarness.onTableSettledChange, false);
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+    await reportSettled(roomRouteHarness.onTableSettledChange, true);
+    expect(curtain.value.reveal).toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+  });
+
+  it('lifts the loading screen over the empty table when no Solo room could be made', async () => {
+    const curtain = testCurtain('covering');
+    let fail: ((error: unknown) => void) | undefined;
+    const createRoom = vi.fn(
+      () =>
+        new Promise<never>((_resolve, reject) => {
+          fail = reject;
+        })
+    );
+    const { root } = await mount(
+      { ...lobbyDependencies(custody(), createRoom), curtain: curtain.value },
+      false,
+      'solo'
+    );
+    await settle();
+    await reportSettled(lobbyBoardHarness.onEmptySettledChange, true);
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fail?.(Object.assign(new Error('internal detail'), { code: 'offline' }));
+      await flush();
+    });
+    await settle();
+    // What went wrong is said over the empty table, which is now the page.
+    expect(element('#roomHeaderText').textContent).toBe(
+      'Could not start Solo mode. Please try again.'
+    );
+    expect(curtain.value.reveal).toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+  });
+
+  it('lifts the loading screen over the empty table when Play online is the landing', async () => {
+    const curtain = testCurtain('covering');
+    const { root } = await mount({
+      ...lobbyDependencies(custody(), vi.fn()),
+      curtain: curtain.value,
+    });
+    await settle();
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+    await reportSettled(lobbyBoardHarness.onEmptySettledChange, true);
+    expect(curtain.value.reveal).toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
+  it('trades the table under the curtain: the room arrives only once the old table is covered', async () => {
+    const curtain = testCurtain('gone');
+    const created = creationResult();
+    const createRoom = vi.fn(async () => created.value);
+    const { root } = await mount({
+      ...lobbyDependencies(custody(), createRoom),
+      curtain: curtain.value,
+    });
+    await settle();
+    await reportSettled(lobbyBoardHarness.onEmptySettledChange, true);
+    await act(async () => {
+      inputValue(element('#nameInput'), 'Blue');
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+    // Making a room keeps the empty table: nothing to trade yet.
+    expect(curtain.value.handOff).not.toHaveBeenCalled();
+    await act(async () => {
+      element<HTMLButtonElement>('#joinRoomButton').click();
+      await flush();
+    });
+    expect(curtain.value.handOff).toHaveBeenCalledOnce();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(false);
+    expect(present('[data-app-route="remote-room-lobby"]')).toBe(true);
+
+    // Until the swap, the old table may still ask (the arriving curtain
+    // ignores it); from the swap on, only the new table's paint counts.
+    curtain.value.reveal.mockClear();
+    await curtain.cover();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    // The empty table went with the swap: only the room's table lifts it.
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+    await reportSettled(roomRouteHarness.onTableSettledChange, true);
+    expect(curtain.value.reveal).toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+  });
+
   it('starts one-player authority from Solo and parks it while Play online is open', async () => {
     const invitation = custody();
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
@@ -767,9 +953,8 @@ describe('remote room lobby wiring', () => {
     await openDeck();
     // Keys pressed on the deck screen never reach the parked table.
     expect(lobbyBoardHarness.parkedKeysSuspended).toBe(true);
-    expect(
-      element('#altImportHeaderButton').getAttribute('aria-disabled')
-    ).toBe('false');
+    // The parked table is Solo: the deck screen offers P2's seat.
+    expect(present('#nativeDeckBuilderTargetAlt')).toBe(true);
     await closeDeck();
     expect(playOnlineOpen()).toBe(true);
 
@@ -1516,8 +1701,9 @@ describe('remote room lobby wiring', () => {
     });
     const retainedDeckStore = roomRouteHarness.deckStore!;
     const retainedCard: DeckCard = {
+      id: 'custom:retained',
       name: 'Retained Through Leave',
-      supertype: 'Pokémon',
+      category: 'Pokémon',
       image: '/retained-through-leave.png',
     };
     act(() => retainedDeckStore.addCard(retainedCard));
@@ -1538,9 +1724,9 @@ describe('remote room lobby wiring', () => {
     expect(element<HTMLInputElement>('#darkModeCheckbox').checked).toBe(false);
     await closeSheet('settings');
     await openDeck();
-    expect(element('#nativeDeckBuilderSummaryPanel').textContent).toContain(
-      'Total: 1'
-    );
+    expect(
+      element('#nativeDeckBuilderSummaryPanel').getAttribute('data-card-count')
+    ).toBe('1');
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();

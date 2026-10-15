@@ -683,8 +683,9 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
     mimeType: 'text/csv',
     buffer: deckCsv('Main Energy', MAIN_FACE_URL),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
   );
   await page.locator('#nativeDeckBuilderTargetAlt').click();
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
@@ -692,8 +693,9 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
     mimeType: 'text/csv',
     buffer: deckCsv('Alternate Energy', ALTERNATE_FACE_URL),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 60'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect(

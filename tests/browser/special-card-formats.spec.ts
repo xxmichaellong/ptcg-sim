@@ -73,8 +73,9 @@ const start = async (page: Page) => {
     mimeType: 'text/csv',
     buffer: Buffer.from(csv()),
   });
-  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toContainText(
-    'Total: 12'
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '12'
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect
@@ -421,7 +422,7 @@ for (const mode of ['flat', 'table'] as const)
       });
       await expect(
         page.locator('#nativeDeckBuilderSummaryPanel')
-      ).toContainText('Total: 1');
+      ).toHaveAttribute('data-card-count', '1');
       await page.locator('#nativeDeckBuilderPlayButton').click();
       await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeHidden();
       await expect

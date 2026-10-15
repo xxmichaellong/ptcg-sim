@@ -15,7 +15,7 @@ import {
 } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
-import { Tooltip } from '../../ui/Tooltip.js';
+import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import './TableRail.css';
 
 /** One of the turn's actions on the rail. */
@@ -99,15 +99,6 @@ export const RailButton = forwardRef<
     </button>
   );
 });
-
-const tooltipFor = (label: string, hint?: string): ReactNode =>
-  hint ? (
-    <>
-      {label} <kbd className="ptcgsim-rail-tooltip-hint">{hint}</kbd>
-    </>
-  ) : (
-    label
-  );
 
 export interface TableRailProps {
   /** Where the seam is: the rail's top, its height, and where actions start. */
@@ -325,7 +316,7 @@ export const TableRail = memo(function TableRail({
           {fitted.shown.map((action) => (
             <Tooltip
               key={action.id}
-              content={tooltipFor(action.title ?? action.label, action.hint)}
+              content={withKeyHint(action.title ?? action.label, action.hint)}
               side="top"
             >
               <RailButton
@@ -345,6 +336,7 @@ export const TableRail = memo(function TableRail({
               entries={fitted.more}
               side="top"
               align="start"
+              tooltip="More game actions"
               trigger={
                 <RailButton
                   id="moreActionsButton"

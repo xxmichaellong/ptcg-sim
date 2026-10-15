@@ -3,6 +3,7 @@ import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import type { ReactNode } from 'react';
 
 import { Sheet } from '../../ui/Sheet.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 import './online-sheet.css';
 
 /**
@@ -48,16 +49,17 @@ export const OnlineSheet = ({
                 </button>
               ) : null}
               {onSettings ? (
-                <button
-                  id="onlineSettingsButton"
-                  type="button"
-                  className="ds-icon-button"
-                  aria-label="Settings"
-                  title="Settings"
-                  onClick={onSettings}
-                >
-                  <GearSixIcon aria-hidden="true" weight="bold" />
-                </button>
+                <Tooltip content="Settings" side="bottom">
+                  <button
+                    id="onlineSettingsButton"
+                    type="button"
+                    className="ds-icon-button"
+                    aria-label="Settings"
+                    onClick={onSettings}
+                  >
+                    <GearSixIcon aria-hidden="true" weight="bold" />
+                  </button>
+                </Tooltip>
               ) : null}
             </>
           ),

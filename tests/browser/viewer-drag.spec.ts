@@ -450,7 +450,11 @@ test("on a phone the window's buttons keep to themselves", async ({ page }) => {
         right: box.right,
         overflows: element.scrollWidth > element.clientWidth + 1,
         name: element.getAttribute('aria-label'),
-        title: element.getAttribute('title'),
+        // Its words, where the row has room for them.
+        words: Boolean(
+          element.querySelector<HTMLElement>('.ptcgsim-work-area-button-label')
+            ?.offsetWidth
+        ),
       };
     })
   );
@@ -459,8 +463,13 @@ test("on a phone the window's buttons keep to themselves", async ({ page }) => {
     // Nothing spills out of its button, and no button runs into the next.
     expect(box.overflows).toBe(false);
     expect(box.name).toBeTruthy();
-    expect(box.title).toBe(box.name);
+    // Too narrow for words: the icons alone, each named by its tooltip.
+    expect(box.words).toBe(false);
     if (index > 0)
       expect(box.left).toBeGreaterThanOrEqual(boxes[index - 1]!.right - 1);
   }
+  await buttons.first().hover();
+  await expect(
+    page.locator('[data-ptcgsim-overlay="tooltip"]:not([data-ending-style])')
+  ).toHaveText(boxes[0]!.name!);
 });

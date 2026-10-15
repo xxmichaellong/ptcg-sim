@@ -1157,4 +1157,61 @@ describe('RemoteSessionBoard replay binding', () => {
     await act(async () => root.unmount());
     replay.dispose();
   });
+
+  it('says when its table is ready to be seen, and that it is not while it starts over or leaves', async () => {
+    const { view: _view, ...withoutView } = initialState();
+    const session = new FakeRemoteBoardSession({
+      ...withoutView,
+      phase: 'connecting',
+    });
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const onSettledChange = vi.fn();
+    const settledNow = (): unknown => onSettledChange.mock.calls.at(-1)?.[0];
+
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          onIntent={vi.fn()}
+          rail={railOf()}
+          onSettledChange={onSettledChange}
+        />
+      )
+    );
+    expect(onSettledChange).not.toHaveBeenCalledWith(true);
+
+    await act(async () => session.publish(initialState()));
+    await waitForRevision(host, 10);
+    for (
+      let attempt = 0;
+      attempt < 100 && settledNow() !== true;
+      attempt += 1
+    ) {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+    }
+    expect(settledNow()).toBe(true);
+    // The rail is placed by then: the table is whole when it is shown.
+    expect(host.querySelector('#menuStub')).not.toBeNull();
+
+    // Another match starts the table over.
+    onSettledChange.mockClear();
+    await act(async () =>
+      session.publish({
+        ...initialState(),
+        view: { ...atRevision(11), matchId: 'another-match' },
+      })
+    );
+    expect(onSettledChange.mock.calls[0]).toEqual([false]);
+
+    await act(async () => root.unmount());
+    expect(settledNow()).toBe(false);
+    replay.dispose();
+  });
 });

@@ -256,6 +256,7 @@ export const RemoteSessionBoard = ({
   sidePanelSlide,
   keysSuspended = false,
   loadDeck,
+  onSettledChange,
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
@@ -293,6 +294,12 @@ export const RemoteSessionBoard = ({
   readonly keysSuspended?: boolean;
   /** The seats whose empty deck shows a `+`, and what it opens. */
   readonly loadDeck?: TableZoneAffordancesProps['loadDeck'];
+  /**
+   * Whether the table is ready to be seen: its scene painted with the
+   * chrome around it, or the renderer failed. False again whenever it
+   * starts over (another match or seat) or leaves the page.
+   */
+  readonly onSettledChange?: (settled: boolean) => void;
 }) => {
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
@@ -341,6 +348,8 @@ export const RemoteSessionBoard = ({
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
   const onPerspectiveChangeRef = useRef(onPerspectiveChange);
+  const onSettledChangeRef = useRef(onSettledChange);
+  onSettledChangeRef.current = onSettledChange;
   displayPolicyRef.current = {
     ...displayPolicyRef.current,
     roomMode,
@@ -439,6 +448,7 @@ export const RemoteSessionBoard = ({
     const host = hostRef.current;
     const view = replayState.view;
     if (!host) return;
+    onSettledChangeRef.current?.(false);
     if (!view || !identity) {
       setBoardState(undefined);
       setLayout(undefined);
@@ -637,6 +647,7 @@ export const RemoteSessionBoard = ({
 
     return () => {
       disposed = true;
+      onSettledChangeRef.current?.(false);
       unsubscribeBoard?.();
       unsubscribeLayout?.();
       resizeObserver?.disconnect();
@@ -937,6 +948,14 @@ export const RemoteSessionBoard = ({
     boardState?.scene !== undefined &&
     rendererStatus.kind !== 'failed' &&
     rendererStatus.kind !== 'destroyed';
+  const settled =
+    rendererStatus.kind === 'failed' ||
+    (rendererStatus.kind === 'ready' &&
+      boardState?.scene !== undefined &&
+      layout !== undefined);
+  useEffect(() => {
+    onSettledChangeRef.current?.(settled);
+  }, [settled]);
   const coveredByPopup =
     boardState !== undefined &&
     (boardState.presentation.openedZoneId !== null ||

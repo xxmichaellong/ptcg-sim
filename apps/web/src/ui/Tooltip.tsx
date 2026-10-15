@@ -23,8 +23,25 @@ export interface TooltipProps {
 export const TOOLTIP_DELAY_MS = 500;
 
 /**
+ * A tooltip's words with the key that does the same at the end, as a key
+ * cap: "Flip a coin [F]". Without a key (the player freed it, or there is
+ * none) it is just the words.
+ */
+export const withKeyHint = (label: ReactNode, hint?: string): ReactNode =>
+  hint ? (
+    <>
+      {label} <kbd className="ptcgsim-ui-tooltip__hint">{hint}</kbd>
+    </>
+  ) : (
+    label
+  );
+
+/**
  * A short label shown on hover or keyboard focus, positioned by Base UI and
  * kept on screen. It never takes focus and never hides the element it names.
+ * A finger's tap never opens one (Base UI opens on a mouse's hover or a
+ * keyboard's focus only), and the label itself takes no presses: whatever
+ * it lies over stays in reach, and it goes as the pointer leaves.
  */
 export const Tooltip = ({
   content,
@@ -35,7 +52,7 @@ export const Tooltip = ({
 }: TooltipProps) => {
   const container = useContext(OverlayContainerContext);
   return (
-    <BaseTooltip.Root disabled={disabled}>
+    <BaseTooltip.Root disabled={disabled} disableHoverablePopup>
       <BaseTooltip.Trigger
         render={children}
         {...(delay === undefined ? {} : { delay })}

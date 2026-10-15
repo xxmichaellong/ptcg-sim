@@ -3,7 +3,7 @@ import type {
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { Deck, DeckCard } from '@ptcgsim/deck-core';
+import type { DeckList } from '@ptcgsim/deck-core';
 import {
   isCardPresentation,
   resolveCardPresentation,
@@ -76,18 +76,11 @@ const browserDigest: DeckDefinitionDigest = {
 
 type CardCategory = LoadDeckEntries[number]['definition']['category'];
 
-const canonicalCategory = (supertype: unknown): CardCategory => {
-  if (supertype === 'Pokémon' || supertype === 'Pokemon') return 'Pokémon';
-  if (supertype === 'Trainer') return 'Trainer';
-  if (supertype === 'Energy') return 'Energy';
-  return 'Unknown';
-};
-
-const exactImageUrl = (card: DeckCard): string => {
-  const large = card.images?.large;
-  if (typeof large === 'string' && large !== '') return large;
-  return typeof card.image === 'string' ? card.image : '';
-};
+const CATEGORIES: ReadonlySet<unknown> = new Set([
+  'Pokémon',
+  'Trainer',
+  'Energy',
+]);
 
 interface DefinitionCandidate {
   readonly identity: string;
@@ -107,90 +100,87 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
- * Converts the editor's permissive card records into one closed wire deck.
- * Definition IDs are content-addressed so equal visible definitions share an
- * ID across targets and reloads without embedding player-controlled text.
+ * Converts a deck list into one closed wire deck. Definition IDs are
+ * content-addressed so equal visible definitions share an ID across targets
+ * and reloads without embedding player-controlled text. A deck comes from
+ * storage the page doesn't fully control (a saved deck, a file), so every
+ * field is checked again here.
  */
 export const deckToLoadDeckEntries = async (
-  deck: Deck,
+  deck: DeckList,
   dependencies: {
     readonly digest?: DeckDefinitionDigest;
     readonly signal?: AbortSignal;
   } = {}
 ): Promise<LoadDeckEntries> => {
-  if (!isRecord(deck)) fail('invalid_deck');
+  if (!Array.isArray(deck)) fail('invalid_deck');
   const candidates = new Map<string, DefinitionCandidate>();
   let totalCards = 0;
 
-  for (const [groupName, group] of Object.entries(deck)) {
-    if (!isRecord(group) || !Array.isArray(group.cards)) fail('invalid_deck');
-    for (const variant of group.cards) {
-      if (dependencies.signal?.aborted) fail('aborted');
-      if (!isRecord(variant) || !isRecord(variant.data)) fail('invalid_deck');
-      const count = variant.count;
-      if (
-        !Number.isSafeInteger(count) ||
-        count <= 0 ||
-        count > MAX_DECK_CARDS
-      ) {
-        fail('invalid_count');
-      }
-      totalCards += count;
-      if (totalCards > MAX_DECK_CARDS) fail('too_many_cards');
+  for (const entry of deck as readonly unknown[]) {
+    if (dependencies.signal?.aborted) fail('aborted');
+    if (!isRecord(entry) || !isRecord(entry.card)) fail('invalid_deck');
+    const { card, count } = entry as {
+      readonly card: Record<string, unknown>;
+      readonly count: unknown;
+    };
+    if (
+      typeof count !== 'number' ||
+      !Number.isSafeInteger(count) ||
+      count <= 0 ||
+      count > MAX_DECK_CARDS
+    ) {
+      fail('invalid_count');
+    }
+    totalCards += count as number;
+    if (totalCards > MAX_DECK_CARDS) fail('too_many_cards');
 
-      const card = variant.data as DeckCard;
-      const name =
-        groupName !== ''
-          ? groupName
-          : typeof card.name === 'string'
-            ? card.name
-            : '';
-      if (name === '') fail('missing_name');
-      if (name.length > MAX_CARD_NAME_CODE_UNITS) fail('name_too_long');
-      const imageUrl = exactImageUrl(card);
-      if (imageUrl === '') fail('missing_image');
-      if (imageUrl.length > MAX_IMAGE_URL_CODE_UNITS) fail('url_too_long');
-      const small = card.images?.small;
-      if (
-        typeof small === 'string' &&
-        small.length > MAX_IMAGE_URL_CODE_UNITS
-      ) {
-        fail('url_too_long');
-      }
-      const category = canonicalCategory(card.supertype);
-      if (
-        card.presentation !== undefined &&
-        !isCardPresentation(card.presentation)
-      )
-        fail('invalid_deck');
-      const presentation = resolveCardPresentation({
-        name,
-        imageUrl,
-        presentation: card.presentation,
-      });
-      const imageUrlSmall =
-        typeof small === 'string' && small !== '' ? small : undefined;
-      const identity = JSON.stringify([
+    const name = typeof card.name === 'string' ? card.name : '';
+    if (name === '') fail('missing_name');
+    if (name.length > MAX_CARD_NAME_CODE_UNITS) fail('name_too_long');
+    const imageUrl = typeof card.image === 'string' ? card.image : '';
+    if (imageUrl === '') fail('missing_image');
+    if (imageUrl.length > MAX_IMAGE_URL_CODE_UNITS) fail('url_too_long');
+    const small = card.imageSmall;
+    if (typeof small === 'string' && small.length > MAX_IMAGE_URL_CODE_UNITS) {
+      fail('url_too_long');
+    }
+    if (!CATEGORIES.has(card.category)) fail('invalid_deck');
+    const category = card.category as CardCategory;
+    if (
+      card.presentation !== undefined &&
+      !isCardPresentation(card.presentation)
+    )
+      fail('invalid_deck');
+    const presentation = resolveCardPresentation({
+      name,
+      imageUrl,
+      presentation: card.presentation as CardPresentation | undefined,
+    });
+    const imageUrlSmall =
+      typeof small === 'string' && small !== '' && small !== imageUrl
+        ? small
+        : undefined;
+    const identity = JSON.stringify([
+      name,
+      category,
+      imageUrl,
+      imageUrlSmall ?? null,
+      ...(presentation ? [presentation] : []),
+    ]);
+    const existing = candidates.get(identity);
+    if (existing) existing.count += count as number;
+    else {
+      candidates.set(identity, {
+        identity,
         name,
         category,
         imageUrl,
-        imageUrlSmall ?? null,
-        ...(presentation ? [presentation] : []),
-      ]);
-      const existing = candidates.get(identity);
-      if (existing) existing.count += count;
-      else {
-        candidates.set(identity, {
-          identity,
-          name,
-          category,
-          imageUrl,
-          ...(presentation ? { presentation } : {}),
-          ...(imageUrlSmall === undefined ? {} : { imageUrlSmall }),
-          count,
-        });
-        if (candidates.size > MAX_DECK_ENTRIES) fail('too_many_entries');
-      }
+        ...(presentation ? { presentation } : {}),
+        ...(imageUrlSmall === undefined ? {} : { imageUrlSmall }),
+        count: count as number,
+      });
+      if (candidates.size > MAX_DECK_ENTRIES) fail('too_many_entries');
     }
   }
 

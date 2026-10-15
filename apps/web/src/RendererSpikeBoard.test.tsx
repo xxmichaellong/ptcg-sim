@@ -372,4 +372,39 @@ describe('RendererSpikeBoard application boundary', () => {
       }
     }
   });
+
+  it('says when it is ready to be seen, with its chrome placed, and when it leaves', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const onSettledChange = vi.fn();
+    await act(async () => {
+      root.render(
+        <RendererSpikeBoard
+          view={createRendererSpikeView()}
+          rendererKind="dom"
+          onIntent={() => undefined}
+          submitCommand={() => undefined}
+          table={{ lowerShare: 0.5 }}
+          chrome={() => <div data-testid="spike-chrome" />}
+          onSettledChange={onSettledChange}
+        />
+      );
+      await Promise.resolve();
+    });
+    expect(onSettledChange).not.toHaveBeenCalledWith(true);
+
+    await act(async () => {
+      rendererHarness.adapters?.reportStatus?.({
+        kind: 'ready',
+        generation: 1,
+      });
+      await Promise.resolve();
+    });
+    expect(host.querySelector('[data-testid="spike-chrome"]')).not.toBeNull();
+    expect(onSettledChange).toHaveBeenLastCalledWith(true);
+
+    await act(async () => root.unmount());
+    expect(onSettledChange).toHaveBeenLastCalledWith(false);
+  });
 });

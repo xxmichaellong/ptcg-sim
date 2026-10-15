@@ -36,6 +36,26 @@ workerd on NixOS needs `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to
 reach Limitless over TLS. Without it the refresh fails and the endpoint
 answers 503, which the picker treats as "built-in lists only".
 
+## Card catalog (ADR-032)
+
+`GET /v2/cards/catalog` names the deck builder's current card catalog and
+its body, `GET /v2/cards/catalog/<version>.json` (immutable, edge-cached).
+The one `PtcgCardCatalog` Durable Object (`tcgdex-en`) builds it from
+TCGdex's GraphQL API, one set per alarm step. The daily cron (`17 6 * * *`)
+queues new, changed and the stalest sets; a request that finds no catalog,
+or a list of sets over 30 hours old, starts a refresh too. A first build is
+about 220 steps a second and a half apart and publishes every 20 sets; until
+then the manifest answers 503 `{ "building": true }` and the browser waits.
+A failed TCGdex request holds the next one back ten minutes and keeps what
+is stored. Each failure emits `server_failure` with subsystem
+`card_catalog_refresh` (source `card_catalog`).
+
+Nothing needs provisioning. Locally, workerd on NixOS needs
+`SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to reach TCGdex over TLS.
+The Expanded ban list is `src/card-catalog/bans.ts`; set codes for sets
+TCGdex had on 2026-10-15 are `src/card-catalog/set-codes.json`
+(`scripts/card-catalog/build-set-codes.ts` regenerates it).
+
 ## Pre-admission WebSocket edge boundary
 
 The room's durable `socket_upgrade` budget of 120 attempts per minute is an

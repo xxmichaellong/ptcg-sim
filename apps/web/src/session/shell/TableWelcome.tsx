@@ -11,6 +11,7 @@ import { chordKeycaps, detectKeyboardPlatform } from '../../hotkeys/chords.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 import {
   DISCORD_URL,
   openHelpPage,
@@ -78,14 +79,16 @@ export const TableWelcome = ({
     data-table-welcome="true"
   >
     {onDismiss ? (
-      <button
-        type="button"
-        className="ds-icon-button table-welcome__dismiss"
-        aria-label="Hide welcome"
-        onClick={onDismiss}
-      >
-        <XIcon {...decorative} weight="bold" />
-      </button>
+      <Tooltip content="Hide welcome" side="bottom">
+        <button
+          type="button"
+          className="ds-icon-button table-welcome__dismiss"
+          aria-label="Hide welcome"
+          onClick={onDismiss}
+        >
+          <XIcon {...decorative} weight="bold" />
+        </button>
+      </Tooltip>
     ) : null}
     <header className="table-welcome__hero">
       <img
@@ -98,16 +101,18 @@ export const TableWelcome = ({
       />
       <div>
         <h2 id="tableWelcomeTitle">Welcome to PTCG-sim</h2>
-        <button
-          id="changelogLink"
-          type="button"
-          className="welcome-version"
-          aria-haspopup="dialog"
-          onClick={() => openHelpPage('changelog')}
-        >
-          <SparkleIcon {...decorative} weight="fill" />
-          <span className="welcome-version-label">{RELEASE_NAME}</span>
-        </button>
+        <Tooltip content="What's new" side="bottom">
+          <button
+            id="changelogLink"
+            type="button"
+            className="welcome-version"
+            aria-haspopup="dialog"
+            onClick={() => openHelpPage('changelog')}
+          >
+            <SparkleIcon {...decorative} weight="fill" />
+            <span className="welcome-version-label">{RELEASE_NAME}</span>
+          </button>
+        </Tooltip>
       </div>
     </header>
     <p className="table-welcome__lead">

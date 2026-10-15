@@ -3,7 +3,7 @@ import type {
   CompletedCommandSummary,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { Deck, DeckCard } from '@ptcgsim/deck-core';
+import { deckListOf, type DeckCard, type DeckList } from '@ptcgsim/deck-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
@@ -23,14 +23,20 @@ const card = (
   name: string,
   image = `custom+unsafe://cards/${name}`,
   extra: Partial<DeckCard> = {}
-): DeckCard => ({ name, supertype: 'Pokémon', image, ...extra });
-
-const deckWith = (entry: DeckCard, count = 1): Deck => ({
-  [entry.name ?? 'Card']: {
-    cards: [{ data: entry, count }],
-    totalCount: count,
-  },
+): DeckCard => ({
+  id: `custom:${name}:${image}`,
+  name,
+  category: 'Pokémon',
+  image,
+  ...extra,
 });
+
+const deckWith = (entry: DeckCard, count = 1): DeckList =>
+  deckListOf([{ card: entry, count }]);
+
+/** A list as storage might hold it, unchecked. */
+const raw = (entries: readonly unknown[]): DeckList =>
+  entries as unknown as DeckList;
 
 const deterministicDigest: DeckDefinitionDigest = {
   async digestIdentity(identity) {
@@ -165,29 +171,23 @@ describe('deckToLoadDeckEntries', () => {
   it('content-addresses canonical definitions and preserves arbitrary images exactly', async () => {
     const unsafeLarge = 'custom+unsafe://host/card?token=exact';
     const unsafeSmall = 'data:not-an-image-but-browser-owned';
-    const source: Deck = {
-      Pikachu: {
-        cards: [
-          {
-            data: card('Pikachu', 'ignored-image', {
-              id: 'provider-id-is-not-authority-id',
-              supertype: 'Pokemon',
-              images: { large: unsafeLarge, small: unsafeSmall },
-            }),
-            count: 2,
-          },
-          {
-            data: card('Pikachu', 'ignored-metadata', {
-              id: 'different-provider-id',
-              supertype: 'Pokemon',
-              images: { large: unsafeLarge, small: unsafeSmall },
-            }),
-            count: 1,
-          },
-        ],
-        totalCount: 999,
+    const source = deckListOf([
+      {
+        card: card('Pikachu', unsafeLarge, {
+          id: 'SVI 1',
+          imageSmall: unsafeSmall,
+        }),
+        count: 2,
       },
-    };
+      {
+        // Another printing that looks the same on the table is one definition.
+        card: card('Pikachu', unsafeLarge, {
+          id: 'SVP 2',
+          imageSmall: unsafeSmall,
+        }),
+        count: 1,
+      },
+    ]);
 
     const first = await deckToLoadDeckEntries(source);
     const second = await deckToLoadDeckEntries(source);
@@ -207,68 +207,53 @@ describe('deckToLoadDeckEntries', () => {
     expect(Object.isFrozen(first[0]?.definition)).toBe(true);
   });
 
-  it('maps exact known supertypes and otherwise uses Unknown', async () => {
-    const source: Deck = {
-      Switch: {
-        cards: [
-          {
-            data: card('Switch', 'switch', { supertype: 'Trainer' }),
-            count: 1,
-          },
-        ],
-        totalCount: 1,
-      },
-      Energy: {
-        cards: [
-          { data: card('Energy', 'energy', { supertype: 'Energy' }), count: 1 },
-        ],
-        totalCount: 1,
-      },
-      Mystery: {
-        cards: [
-          {
-            data: card('Mystery', 'mystery', { supertype: 'Supporter' }),
-            count: 1,
-          },
-        ],
-        totalCount: 1,
-      },
-    };
-    expect(
-      (await deckToLoadDeckEntries(source)).map(
-        (entry) => entry.definition.category
-      )
-    ).toEqual(['Trainer', 'Energy', 'Unknown']);
+  it('keeps each card kind, and sends a small image only when it differs', async () => {
+    const entries = await deckToLoadDeckEntries(
+      deckListOf([
+        {
+          card: card('Switch', 'switch', {
+            category: 'Trainer',
+            imageSmall: 'switch',
+          }),
+          count: 1,
+        },
+        { card: card('Energy', 'energy', { category: 'Energy' }), count: 1 },
+      ])
+    );
+    expect(entries.map((entry) => entry.definition.category)).toEqual([
+      'Trainer',
+      'Energy',
+    ]);
+    expect(entries[0]!.definition.imageUrlSmall).toBeUndefined();
   });
 
   it('accepts an explicit empty deck and rejects invalid wire resources atomically', async () => {
-    await expect(deckToLoadDeckEntries({})).resolves.toEqual([]);
+    await expect(deckToLoadDeckEntries([])).resolves.toEqual([]);
 
-    const cases: readonly [Deck, string][] = [
+    const cases: readonly [DeckList, string][] = [
       [deckWith(card('Pikachu'), 201), 'invalid_count'],
       [
-        {
-          A: {
-            cards: [{ data: card('A'), count: 200 }],
-            totalCount: 200,
-          },
-          B: {
-            cards: [{ data: card('B'), count: 1 }],
-            totalCount: 1,
-          },
-        },
+        deckListOf([
+          { card: card('A'), count: 200 },
+          { card: card('B'), count: 1 },
+        ]),
         'too_many_cards',
       ],
       [
-        deckWith({ name: '', supertype: 'Pokémon', image: 'image' }),
+        raw([{ card: { ...card('Pikachu'), name: '' }, count: 1 }]),
         'missing_name',
       ],
       [deckWith(card('x'.repeat(257))), 'name_too_long'],
-      [deckWith(card('Pikachu', '')), 'missing_image'],
+      [raw([{ card: card('Pikachu', ''), count: 1 }]), 'missing_image'],
       [
         deckWith(card('Pikachu', 'x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1))),
         'url_too_long',
       ],
+      [
+        raw([{ card: { ...card('Odd'), category: 'Supporter' }, count: 1 }]),
+        'invalid_deck',
+      ],
+      [raw([{ card: card('Zero'), count: 0 }]), 'invalid_count'],
     ];
     for (const [source, code] of cases) {
       await expect(
@@ -286,15 +271,10 @@ describe('deckToLoadDeckEntries', () => {
 
     await expect(
       deckToLoadDeckEntries(
-        {
-          Pikachu: {
-            cards: [
-              { data: card('Pikachu', 'first'), count: 1 },
-              { data: card('Pikachu', 'second'), count: 1 },
-            ],
-            totalCount: 2,
-          },
-        },
+        deckListOf([
+          { card: card('Pikachu', 'first'), count: 1 },
+          { card: card('Pikachu', 'second'), count: 1 },
+        ]),
         { digest: { digestIdentity: async () => '0'.repeat(64) } }
       )
     ).rejects.toMatchObject({ code: 'identity_collision' });
@@ -315,12 +295,12 @@ describe('deckToLoadDeckEntries', () => {
     ).rejects.toMatchObject({ code: 'aborted' });
 
     await expect(
-      deckToLoadDeckEntries(
-        {
-          Broken: { cards: [null], totalCount: 1 },
-        } as unknown as Deck,
-        { digest: deterministicDigest }
-      )
+      deckToLoadDeckEntries(raw([null]), { digest: deterministicDigest })
+    ).rejects.toMatchObject({ code: 'invalid_deck' });
+    await expect(
+      deckToLoadDeckEntries({} as unknown as DeckList, {
+        digest: deterministicDigest,
+      })
     ).rejects.toMatchObject({ code: 'invalid_deck' });
   });
 });
@@ -427,12 +407,9 @@ describe('DeckInstallCoordinator', () => {
   });
 
   it('reports conversion and authority failures without cleaning the deck', async () => {
-    const invalid: Deck = {
-      Broken: {
-        cards: [{ data: { name: 'Broken', supertype: 'Pokémon' }, count: 1 }],
-        totalCount: 1,
-      },
-    };
+    const invalid = raw([
+      { card: { id: 'x', name: 'Broken', category: 'Pokémon' }, count: 1 },
+    ]);
     const conversionStore = new DeckBuilderStore();
     conversionStore.replaceDeck('main', invalid);
     const conversionFailures: DeckInstallCoordinatorFailure[] = [];

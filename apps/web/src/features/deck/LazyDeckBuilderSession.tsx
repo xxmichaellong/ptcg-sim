@@ -6,12 +6,33 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { LegacyDeckBuilderSession as DeckBuilderSession } from './LegacyDeckBuilderSession.js';
+import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
+import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
+
+import type { DeckBuilderSession } from './DeckBuilderSession.js';
 
 const DeckBuilder = lazy(async () => ({
-  default: (await import('./LegacyDeckBuilderSession.js'))
-    .LegacyDeckBuilderSession,
+  default: (await import('./DeckBuilderSession.js')).DeckBuilderSession,
 }));
+
+/** While the deck screen's script arrives: a way back, and a sign of life. */
+const Loading = ({ onClose }: { readonly onClose: () => void }) => (
+  <div className="ptcgsim-deck-layer__loading" role="status">
+    <button
+      id="deckBackButton"
+      type="button"
+      className="ds-button ds-button--ghost"
+      onClick={onClose}
+    >
+      <ArrowLeftIcon aria-hidden="true" weight="bold" />
+      Table
+    </button>
+    <p>
+      <CircleNotchIcon aria-hidden="true" weight="bold" className="ds-spin" />
+      Opening your decks…
+    </p>
+  </div>
+);
 
 /**
  * The deck screen is a script of its own, fetched the first time it opens.
@@ -54,8 +75,10 @@ class LoadBoundary extends Component<
 export const LazyDeckBuilderSession = (
   props: ComponentProps<typeof DeckBuilderSession>
 ) => (
-  <LoadBoundary onClose={props.onRequestClose}>
-    <Suspense fallback={null}>
+  <LoadBoundary onClose={props.onBack ?? props.onRequestClose}>
+    <Suspense
+      fallback={<Loading onClose={props.onBack ?? props.onRequestClose} />}
+    >
       <DeckBuilder {...props} />
     </Suspense>
   </LoadBoundary>

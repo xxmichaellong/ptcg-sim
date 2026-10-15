@@ -37,7 +37,7 @@ import {
   boardViewSettings,
   oncePerGameMarkerCount,
 } from '../board/view/board-view-settings.js';
-import type { LegacyDeckBuilderCustody } from '../features/deck/LegacyDeckBuilderSession.js';
+import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js';
 import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import {
   createRemoteRoom,
@@ -70,6 +70,7 @@ import { AppMenu, type AppMenuModel } from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
+import { tableCurtain, type TableCurtain } from './shell/table-curtain.js';
 import { TableBanner, TableShell } from './shell/TableShell.js';
 
 import '../design/panel-controls.css';
@@ -167,6 +168,8 @@ export interface RemoteRoomLobbyDependencies {
   readonly continuationAvailability?: (signal: AbortSignal) => Promise<boolean>;
   /** Where the table settings and name are remembered: the page's. */
   readonly preferences?: PreferenceStore;
+  /** The loading screen over the table: the page's (index.html). */
+  readonly curtain?: TableCurtain;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
@@ -296,6 +299,13 @@ export const RemoteRoomLobby = ({
 }) => {
   const emptyBoardView = useMemo(createEmptyBoardView, []);
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
+  const curtain = dependencies.curtain ?? tableCurtain();
+  // Which table has painted since the last swap: the empty table, or a
+  // game's (the room's, or a parked Solo game). The page opens behind the
+  // loading screen (table-curtain.ts), and the first of them to paint lifts
+  // it -- except the empty table while it only stands in for a Solo room
+  // still being made, which the page never shows on the way to that room.
+  const settledTableRef = useRef<'empty' | 'game'>(undefined);
   const preparedDeckSessions = useRef(new WeakSet<object>());
   const restoredDeckSessions = useRef(new WeakSet<object>());
   const store = dependencies.preferences ?? pagePreferences();
@@ -325,7 +335,7 @@ export const RemoteRoomLobby = ({
   // The deck screen or Settings, over whichever of those is showing.
   const [overlay, setOverlay] = useState<'deck' | 'settings'>();
   const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
-  const [deckCustody, setDeckCustody] = useState<LegacyDeckBuilderCustody>();
+  const [deckCustody, setDeckCustody] = useState<DeckBuilderCustody>();
   // Dark mode is remembered on this device (the page's preferences); the
   // board still receives v1's shape, and nothing while it is the default.
   const table = usePreference(TABLE_PREFERENCES, store);
@@ -437,6 +447,60 @@ export const RemoteRoomLobby = ({
     void handleSolo();
   });
 
+  const awaitingSoloRoom = (): boolean => {
+    const owner = ownerRef.current;
+    if (!owner) return landing === 'solo';
+    return (
+      owner.operation?.kind === 'solo' ||
+      (landing === 'solo' && !owner.landedOnSolo)
+    );
+  };
+  const revealSettledTable = (): void => {
+    const settled = settledTableRef.current;
+    if (settled === undefined) return;
+    if (settled === 'empty' && awaitingSoloRoom()) return;
+    curtain.reveal();
+  };
+  const handleEmptyTableSettled = (settled: boolean): void => {
+    settledTableRef.current = settled ? 'empty' : undefined;
+    revealSettledTable();
+  };
+  const handleGameTableSettled = (settled: boolean): void => {
+    settledTableRef.current = settled ? 'game' : undefined;
+    revealSettledTable();
+  };
+  // A Solo room that could not be made leaves the empty table to show,
+  // with what went wrong.
+  useEffect(() => {
+    revealSettledTable();
+  });
+
+  /**
+   * Trades the table on screen for another under the loading screen, so
+   * the one never vanishes before the other has painted: the curtain covers
+   * the old table, `swap` puts the new one in, and its first paint lifts
+   * the curtain. A `swap` that finds nothing to do any more returns false,
+   * and the old table lifts it again. Settles once `swap` has run.
+   */
+  const handOffTable = (swap: () => boolean | void): Promise<void> =>
+    new Promise((resolve, reject) => {
+      curtain.handOff(() => {
+        const previous = settledTableRef.current;
+        settledTableRef.current = undefined;
+        try {
+          if (swap() === false) {
+            settledTableRef.current = previous;
+            revealSettledTable();
+          }
+          resolve();
+        } catch (error) {
+          settledTableRef.current = previous;
+          revealSettledTable();
+          reject(error);
+        }
+      });
+    });
+
   const beginOperation = (
     kind: LobbyOperation
   ):
@@ -486,24 +550,36 @@ export const RemoteRoomLobby = ({
         result.dispose();
         return;
       }
-      // Reading the Multiplayer panel leaves a live Solo table alone; a room
-      // that actually exists is the real transition, and that is where v1's
-      // park belongs. A refused generate leaves the table where it was.
-      parkSoloForMultiplayer();
-      const previous = active.owner.creator;
-      active.owner.creator = { result, displayName };
-      active.owner.guestRuntime?.dispose();
-      delete active.owner.guestRuntime;
-      previous?.result.dispose();
-      setParkedSolo(undefined);
-      active.owner.invitation.clear();
-      setName(displayName);
-      rememberName();
-      setRoomCode(result.invitations.roomCode);
-      setReceipt(undefined);
-      setCopyConfirmed(false);
-      // A retry that works retires the failure it follows.
-      setStatus(undefined);
+      const owner = active.owner;
+      const settle = (): boolean => {
+        if (owner.disposed || ownerRef.current !== owner) {
+          result.dispose();
+          return false;
+        }
+        // Reading the Multiplayer panel leaves a live Solo table alone; a
+        // room that actually exists is the real transition, and that is
+        // where v1's park belongs. A refused generate leaves the table where
+        // it was.
+        parkSoloForMultiplayer();
+        const previous = owner.creator;
+        owner.creator = { result, displayName };
+        owner.guestRuntime?.dispose();
+        delete owner.guestRuntime;
+        previous?.result.dispose();
+        setParkedSolo(undefined);
+        owner.invitation.clear();
+        setName(displayName);
+        rememberName();
+        setRoomCode(result.invitations.roomCode);
+        setReceipt(undefined);
+        setCopyConfirmed(false);
+        // A retry that works retires the failure it follows.
+        setStatus(undefined);
+        return true;
+      };
+      // Leaving a live Solo table for the lobby's trades the table.
+      if (connected?.mode === 'solo') await handOffTable(settle);
+      else settle();
     } catch (error) {
       if (!active.owner.disposed) {
         setStatus(safeFailureMessage('generate', error));
@@ -516,8 +592,11 @@ export const RemoteRoomLobby = ({
   const handleSolo = async (): Promise<void> => {
     setActivePanel('solo');
     if (parkedSolo) {
-      setParkedSolo(undefined);
-      setConnected(parkedSolo);
+      const parked = parkedSolo;
+      await handOffTable(() => {
+        setParkedSolo(undefined);
+        setConnected(parked);
+      });
       return;
     }
     const active = beginOperation('solo');
@@ -537,24 +616,31 @@ export const RemoteRoomLobby = ({
         result.dispose();
         return;
       }
-      const previous = active.owner.creator;
-      active.owner.creator = { result, displayName };
-      active.owner.guestRuntime?.dispose();
-      delete active.owner.guestRuntime;
-      previous?.result.dispose();
-      active.owner.invitation.clear();
-      // Solo's fixed name is never written back into the Multiplayer Name
-      // box, which v1 leaves for the visitor to fill in themselves.
-      setRoomCode('');
-      setReceipt(undefined);
-      setCoachingConsent(false);
-      setCopyConfirmed(false);
-      setStatus(undefined);
-      setConnected({
-        runtime: result.runtime,
-        rendererKind,
-        mode: result.mode,
-        coachingConsent: false,
+      const owner = active.owner;
+      await handOffTable(() => {
+        if (owner.disposed || ownerRef.current !== owner) {
+          result.dispose();
+          return false;
+        }
+        const previous = owner.creator;
+        owner.creator = { result, displayName };
+        owner.guestRuntime?.dispose();
+        delete owner.guestRuntime;
+        previous?.result.dispose();
+        owner.invitation.clear();
+        // Solo's fixed name is never written back into the Multiplayer Name
+        // box, which v1 leaves for the visitor to fill in themselves.
+        setRoomCode('');
+        setReceipt(undefined);
+        setCoachingConsent(false);
+        setCopyConfirmed(false);
+        setStatus(undefined);
+        setConnected({
+          runtime: result.runtime,
+          rendererKind,
+          mode: result.mode,
+          coachingConsent: false,
+        });
       });
     } catch (error) {
       if (!active.owner.disposed) {
@@ -655,11 +741,14 @@ export const RemoteRoomLobby = ({
         setStatus('Your name changed. Generate a new room before joining.');
         return;
       }
-      setConnected({
-        runtime: creator.result.runtime,
-        rendererKind,
-        mode: creator.result.mode,
-        coachingConsent,
+      await handOffTable(() => {
+        if (owner.disposed) return false;
+        setConnected({
+          runtime: creator.result.runtime,
+          rendererKind,
+          mode: creator.result.mode,
+          coachingConsent,
+        });
       });
       return;
     }
@@ -694,19 +783,26 @@ export const RemoteRoomLobby = ({
         result.runtime.dispose();
         return;
       }
-      // Admitted: the invitation is used up.
-      active.owner.invitation.clear();
-      active.owner.guestRuntime = result.runtime;
-      active.owner.creator?.result.dispose();
-      active.owner.creator = undefined;
-      setParkedSolo(undefined);
-      setName(displayName);
-      rememberName();
-      setConnected({
-        runtime: result.runtime,
-        rendererKind,
-        mode: 'multiplayer',
-        coachingConsent,
+      const joined = active.owner;
+      await handOffTable(() => {
+        if (joined.disposed || ownerRef.current !== joined) {
+          result.runtime.dispose();
+          return false;
+        }
+        // Admitted: the invitation is used up.
+        joined.invitation.clear();
+        joined.guestRuntime = result.runtime;
+        joined.creator?.result.dispose();
+        joined.creator = undefined;
+        setParkedSolo(undefined);
+        setName(displayName);
+        rememberName();
+        setConnected({
+          runtime: result.runtime,
+          rendererKind,
+          mode: 'multiplayer',
+          coachingConsent,
+        });
       });
     } catch (error) {
       if (!active.owner.disposed) setStatus(safeFailureMessage('join', error));
@@ -718,29 +814,32 @@ export const RemoteRoomLobby = ({
   const handleLeave = (): void => {
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
-    const nextInvitation = dependencies.createInvitationJoinCustody();
-    if (owner.copyReset !== undefined) {
-      clearTimeout(owner.copyReset);
-      delete owner.copyReset;
-    }
-    owner.invitation.dispose();
-    owner.invitation = nextInvitation;
-    owner.restoration?.dispose();
-    delete owner.restoration;
-    if (owner.creator) {
-      owner.creator.result.dispose();
-      delete owner.creator;
-    } else {
-      owner.guestRuntime?.dispose();
-      delete owner.guestRuntime;
-    }
-    setReceipt(undefined);
-    setRoomCode('');
-    setCoachingConsent(false);
-    setCopyConfirmed(false);
-    setConnected(undefined);
-    setParkedSolo(undefined);
-    setStatus(undefined);
+    void handOffTable(() => {
+      if (owner.disposed || ownerRef.current !== owner) return false;
+      const nextInvitation = dependencies.createInvitationJoinCustody();
+      if (owner.copyReset !== undefined) {
+        clearTimeout(owner.copyReset);
+        delete owner.copyReset;
+      }
+      owner.invitation.dispose();
+      owner.invitation = nextInvitation;
+      owner.restoration?.dispose();
+      delete owner.restoration;
+      if (owner.creator) {
+        owner.creator.result.dispose();
+        delete owner.creator;
+      } else {
+        owner.guestRuntime?.dispose();
+        delete owner.guestRuntime;
+      }
+      setReceipt(undefined);
+      setRoomCode('');
+      setCoachingConsent(false);
+      setCopyConfirmed(false);
+      setConnected(undefined);
+      setParkedSolo(undefined);
+      setStatus(undefined);
+    });
   };
 
   const handleResumeSavedGame = async (
@@ -781,31 +880,47 @@ export const RemoteRoomLobby = ({
         return;
       }
 
-      // A restored table already owns its deck. Retained editor drafts must
-      // wait for an explicit edit/play action instead of overwriting the save.
-      restoredDeckSessions.current.add(result.runtime.session);
-      const previousCreator = active.owner.creator;
-      const previousGuest = active.owner.guestRuntime;
-      active.owner.guestRuntime = result.runtime;
-      delete active.owner.creator;
-      delete active.owner.restoration;
-      setParkedSolo(undefined);
-      setName(displayName);
-      rememberName();
-      setReceipt(undefined);
-      setRoomCode(result.runtime.roomCode);
-      setCoachingConsent(false);
-      setCopyConfirmed(false);
-      // The save keeps the consent it was made with.
-      setConnected({
-        runtime: result.runtime,
-        rendererKind,
-        mode: 'multiplayer',
-      });
-      previousCreator?.result.dispose();
-      if (previousGuest && previousGuest !== result.runtime) {
-        previousGuest.dispose();
-      }
+      const owner = active.owner;
+      const settle = (): boolean => {
+        if (
+          combinedSignal.aborted ||
+          owner.disposed ||
+          ownerRef.current !== owner
+        ) {
+          result.runtime.dispose();
+          return false;
+        }
+        // A restored table already owns its deck. Retained editor drafts
+        // must wait for an explicit edit/play action instead of overwriting
+        // the save.
+        restoredDeckSessions.current.add(result.runtime.session);
+        const previousCreator = owner.creator;
+        const previousGuest = owner.guestRuntime;
+        owner.guestRuntime = result.runtime;
+        delete owner.creator;
+        delete owner.restoration;
+        setParkedSolo(undefined);
+        setName(displayName);
+        rememberName();
+        setReceipt(undefined);
+        setRoomCode(result.runtime.roomCode);
+        setCoachingConsent(false);
+        setCopyConfirmed(false);
+        // The save keeps the consent it was made with.
+        setConnected({
+          runtime: result.runtime,
+          rendererKind,
+          mode: 'multiplayer',
+        });
+        previousCreator?.result.dispose();
+        if (previousGuest && previousGuest !== result.runtime) {
+          previousGuest.dispose();
+        }
+        return true;
+      };
+      // A new room's table takes the screen; the same one stays put.
+      if (connected?.runtime === result.runtime) settle();
+      else await handOffTable(settle);
     } finally {
       endOperation(active.owner);
     }
@@ -1088,6 +1203,7 @@ export const RemoteRoomLobby = ({
             preparedDeckSessions.current.add(connected.runtime.session)
           }
           onLeave={handleLeave}
+          onTableSettledChange={handleGameTableSettled}
           continuationAvailable={continuationAvailable ?? false}
           onResumeSavedGame={handleResumeSavedGame}
           onMultiplayerNavigate={handleMultiplayerNavigate}
@@ -1166,6 +1282,7 @@ export const RemoteRoomLobby = ({
               }),
             }}
             keysSuspended={overlay === 'deck'}
+            onSettledChange={handleGameTableSettled}
           />
         ) : (
           <RendererSpikeBoard
@@ -1184,6 +1301,7 @@ export const RemoteRoomLobby = ({
               />
             )}
             preferences={emptyBoardPreferences}
+            onSettledChange={handleEmptyTableSettled}
           />
         )
       }
@@ -1240,6 +1358,7 @@ export const RemoteRoomLobby = ({
               setOverlay(undefined);
               void handleSolo();
             }}
+            onBack={() => setOverlay(undefined)}
             onCustodyChange={setDeckCustody}
             {...(deckCustody
               ? {

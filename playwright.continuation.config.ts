@@ -105,7 +105,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4176 --persist-to ${freshServerState} ${continuationVariables}`,
+          command: `corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4176 --persist-to ${freshServerState} ${continuationVariables} --var CARD_CATALOG_SOURCE:off`,
           url: `${LOCAL_CONTINUATION_PREVIEW_URL}/v2/health`,
           reuseExistingServer: false,
           timeout: 90_000,

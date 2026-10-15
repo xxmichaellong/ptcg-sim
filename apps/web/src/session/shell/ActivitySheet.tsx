@@ -22,6 +22,7 @@ import type { LegacyGamePresentationRuntime } from '../../presentation/LegacyGam
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from '../../ui/overlay-surface.js';
 import { Sheet } from '../../ui/Sheet.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 import { useDockSlide, type DockSlide } from './dock-slide.js';
 import {
   ChatComposer,
@@ -88,13 +89,14 @@ const LogMenu = ({
       side="bottom"
       align="end"
       entries={entries}
+      tooltip="Battle log options"
+      tooltipSide="bottom"
       trigger={
         <button
           id="activityLogMenuButton"
           type="button"
           className="ds-icon-button"
           aria-label="Battle log options"
-          title="Battle log options"
         >
           <DotsThreeIcon aria-hidden="true" weight="bold" />
         </button>
@@ -185,14 +187,16 @@ export const ActivityPanel = ({
             ) : null}
           </div>
           <div className="ptcgsim-sheet__actions">{headerActions}</div>
-          <button
-            type="button"
-            className="ptcgsim-sheet__close"
-            aria-label="Close activity"
-            onClick={() => onOpenChange(false)}
-          >
-            <XIcon aria-hidden="true" />
-          </button>
+          <Tooltip content="Close activity" side="bottom">
+            <button
+              type="button"
+              className="ptcgsim-sheet__close"
+              aria-label="Close activity"
+              onClick={() => onOpenChange(false)}
+            >
+              <XIcon aria-hidden="true" />
+            </button>
+          </Tooltip>
         </header>
         <div className="ptcgsim-activity-dock__body">
           <ActivityBody {...body} />
@@ -330,16 +334,22 @@ export const ActivityLauncher = ({
           ))}
         </ol>
       ) : null}
-      <RailButton
-        id="activityButton"
-        icon={ChatCircleTextIcon}
-        label="Activity"
-        iconOnly
-        badge={unread}
-        aria-expanded={open}
-        aria-controls={open ? 'activitySheet' : undefined}
-        onClick={onToggle}
-      />
+      {/* Beside the button: the newest lines rise above it. */}
+      <Tooltip
+        content={open ? 'Hide battle log and chat' : 'Battle log and chat'}
+        side="left"
+      >
+        <RailButton
+          id="activityButton"
+          icon={ChatCircleTextIcon}
+          label="Activity"
+          iconOnly
+          badge={unread}
+          aria-expanded={open}
+          aria-controls={open ? 'activitySheet' : undefined}
+          onClick={onToggle}
+        />
+      </Tooltip>
     </div>
   );
 };

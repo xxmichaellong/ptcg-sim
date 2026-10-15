@@ -37,6 +37,11 @@ textarea {
 }
 
 /* ---- The room ------------------------------------------------------ */
+/* While the lobby or the room is still loading, the page is the room's,
+   never v1's grey (the loading screen is over it in any case). */
+.app-shell[data-app-route$='-loading'] {
+  background: var(--color-room);
+}
 .remote-room-route,
 .remote-room-route--dark {
   background-color: var(--color-room);
@@ -222,21 +227,14 @@ textarea {
 .board-spike-host[data-geometry='2'] .table-hand-pill__count {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px 0 7px;
+  justify-content: center;
+  /* The number alone (PX-046), centred in the pill's rounded end and as
+     wide as the Sort end beside it, so the two halves balance. */
+  min-width: 30px;
+  box-sizing: border-box;
+  padding: 0 7px 0 9px;
   font: 700 13px/1 var(--font-display, sans-serif);
   font-variant-numeric: tabular-nums;
-}
-/* Two fanned cards: this is the hand's count, not a pile's. */
-.board-spike-host[data-geometry='2'] .table-hand-pill__count::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  height: 14px;
-  background: var(--table-hand-tint);
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1.6' y='3.6' width='7.4' height='10.4' rx='1.4' transform='rotate(-14 5.3 8.8)' fill='white'/%3E%3Crect x='6.6' y='1.8' width='7.4' height='10.4' rx='1.4' transform='rotate(9 10.3 7)' fill='white' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E")
-    center / contain no-repeat;
-  mask-mode: luminance;
 }
 /* Sort is the pill's end, latched in when on (the toggle rules below). */
 .board-spike-host[data-geometry='2']

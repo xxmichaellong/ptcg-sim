@@ -217,7 +217,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       )
     ).toBeVisible();
     await openDeck(playerTwo.page);
-    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
+    await expect(playerTwo.page.locator('#deckPasteInput')).toBeVisible();
     await playerTwo.page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
       name: 'retained-before-room.csv',
       mimeType: 'text/csv',
@@ -230,7 +230,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     });
     await expect(
       playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
-    ).toContainText('Total: 1');
+    ).toHaveAttribute('data-card-count', '1');
     const cardBackPrompt = answerOverlayPrompt(
       playerTwo.page,
       CUSTOM_CARD_BACK_URL
@@ -245,7 +245,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       .toBe(1);
     await closeDeck(playerTwo.page);
     await openPlayOnline(playerTwo.page);
-    await expect(playerTwo.page.locator('#deckImport')).toBeHidden();
+    await expect(playerTwo.page.locator('#deckPasteInput')).toBeHidden();
     await expect(
       playerTwo.page.locator('#playOnlineSheet #p2Box')
     ).toBeVisible();
@@ -684,10 +684,10 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
     await closeSheet(playerTwo.page);
     await openDeck(playerTwo.page);
-    await expect(playerTwo.page.locator('#deckImport')).toBeVisible();
+    await expect(playerTwo.page.locator('#deckPasteInput')).toBeVisible();
     await expect(
       playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
-    ).toContainText('Total: 1');
+    ).toHaveAttribute('data-card-count', '1');
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);

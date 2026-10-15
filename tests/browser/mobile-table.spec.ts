@@ -63,9 +63,10 @@ const loadRandomDeck = async (page: Page): Promise<void> => {
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="true"]')
   ).toBeVisible();
-  await page.locator('#randomButton').tap();
-  await page.locator('#importButton').tap();
-  await page.locator('#confirmButton').tap();
+  await page.locator('#deckSurpriseButton').tap();
+  await expect(
+    page.locator('#nativeDeckBuilderSummaryPanel')
+  ).not.toHaveAttribute('data-card-count', '0');
   await page.locator('#deckBackButton').tap();
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
@@ -162,6 +163,18 @@ test.describe('an upright phone', () => {
     await loadRandomDeck(page);
     await setUp(page);
 
+    // Both hands' count pills sit inside the window, not off its edges.
+    const pills = page.locator('.table-hand-pill');
+    await expect(pills).toHaveCount(2);
+    for (let index = 0; index < 2; index += 1) {
+      const box = (await pills.nth(index).boundingBox())!;
+      const size = page.viewportSize()!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(size.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(size.height);
+    }
+
     // The rail: 44px targets inside the window, clear of the Stadium and
     // of the log's button; what does not fit waits in More.
     const viewport = page.viewportSize()!;
@@ -236,19 +249,19 @@ test.describe('a tablet held sideways', () => {
     expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(viewport.width);
     await page.keyboard.press('Escape');
 
-    // The deck screen has room for both columns here.
+    // The deck screen opens on the decks, ready for a paste.
     const plus = page.locator(
       '[data-load-deck-player][aria-label="Load a deck"]'
     );
     await plus.tap();
     const layer = page.locator('.ptcgsim-deck-layer[data-open="true"]');
     await expect(layer).toBeVisible();
-    await expect(layer).not.toHaveAttribute('data-deck-view', /.+/u);
-    await expect(page.locator('#deckImport')).toBeVisible();
+    await expect(page.locator('#deckPasteInput')).toBeVisible();
     await expect(page.locator('#nativeDeckBuilderWorkspace')).toBeVisible();
-    await page.locator('#randomButton').tap();
-    await page.locator('#importButton').tap();
-    await page.locator('#confirmButton').tap();
+    await page.locator('#deckSurpriseButton').tap();
+    await expect(
+      page.locator('#nativeDeckBuilderSummaryPanel')
+    ).not.toHaveAttribute('data-card-count', '0');
     await page.locator('#deckBackButton').tap();
     await expect(page.locator('#setupButton')).toBeVisible();
 

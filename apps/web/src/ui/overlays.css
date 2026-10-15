@@ -518,6 +518,7 @@
 
 .ptcgsim-ui-tooltip-positioner {
   z-index: var(--layer-tooltip);
+  pointer-events: none;
 }
 
 .ptcgsim-ui-tooltip {
@@ -533,10 +534,22 @@
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
+  /* A label, never a target: what it lies over keeps its presses. */
+  pointer-events: none;
   transform-origin: var(--transform-origin);
   transition-property: opacity, scale;
   transition-duration: var(--ui-overlay-enter-duration);
   transition-timing-function: var(--ui-overlay-enter-easing);
+}
+
+/* The key that does the same, after the words (withKeyHint). */
+.ptcgsim-ui-tooltip__hint {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
 }
 
 .ptcgsim-ui-tooltip[data-starting-style] {
