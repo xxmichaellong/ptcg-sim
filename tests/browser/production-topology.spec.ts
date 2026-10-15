@@ -37,9 +37,14 @@ const collectRuntimeErrors = (page: Page): string[] => {
   return errors;
 };
 
+// Static assets and the deck screen's read-only card data (ADR-032, ADR-029)
+// are served from the same Worker but are not the room authority.
+const NOT_AUTHORITY = ['/v2/assets/', '/v2/cards/catalog', '/v2/decks/current'];
+
 const authorityPath = (request: Request): string | undefined => {
   const pathname = new URL(request.url()).pathname;
-  return pathname.startsWith('/v2/') && !pathname.startsWith('/v2/assets/')
+  return pathname.startsWith('/v2/') &&
+    !NOT_AUTHORITY.some((prefix) => pathname.startsWith(prefix))
     ? pathname
     : undefined;
 };
@@ -108,7 +113,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
       performance
         .getEntriesByType('resource')
         .map((entry) => entry.name)
-        .filter((url) => url.includes('LegacyDeckBuilderSession-'))
+        .filter((url) => url.includes('/DeckBuilderSession-'))
     );
   expect(await loadedDeckResources()).toEqual([]);
   // The lobby opens on Play online, a sheet over the table (ADR-030), with

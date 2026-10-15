@@ -532,8 +532,9 @@ source-shaped behavior in both the pre-room lobby and connected live room. The
 normal/default application route and frozen v1 website are unchanged. React
 `lazy`/`Suspense` keeps the editor, stores, catalog adapter, and Deck CSS out of
 the lobby and live-room startup chunks. The production-topology browser gate
-asserts that no `LegacyDeckBuilderSession` resource has loaded before the first
-Deck click and that the resource appears only after activation.
+asserts that no `DeckBuilderSession` (once `LegacyDeckBuilderSession`) resource
+has loaded before the first Deck click and that the resource appears only after
+activation.
 
 The first lazy session owns its `DeckBuilderStore` and `CardBackCustodyStore`,
 then reports those exact objects to `RemoteRoomLobby`. That parent retains them
