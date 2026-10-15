@@ -43,6 +43,7 @@ import {
   createRemoteRoom,
   type RemoteRoomCreationResult,
 } from './RemoteRoomCreation.js';
+import { waitForAdmission } from './wait-for-admission.js';
 import {
   RemoteRoomInvitationJoinCustody,
   type RemoteRoomInvitationHandoffReceipt,
@@ -665,6 +666,18 @@ export const RemoteRoomLobby = ({
         asSpectator: spectator,
         signal: active.abort.signal,
       });
+      if (active.owner.disposed || ownerRef.current !== active.owner) {
+        result.runtime.dispose();
+        return;
+      }
+      // The table this replaces stays until the room has admitted the new
+      // session: a ticket that lapses before then must not cost it.
+      try {
+        await waitForAdmission(result.runtime, active.abort.signal);
+      } catch (error) {
+        result.runtime.dispose();
+        throw error;
+      }
       if (active.owner.disposed || ownerRef.current !== active.owner) {
         result.runtime.dispose();
         return;

@@ -14,6 +14,7 @@ import {
   type RemoteRoomBootstrapResult,
 } from './RemoteRoomBootstrap.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import { waitForAdmission } from './wait-for-admission.js';
 
 const MAX_HANDOFF_FUTURE_MS = 30 * 24 * 60 * 60_000 + 5 * 60_000;
 
@@ -46,46 +47,10 @@ export interface RemoteRoomRestorationDependencies {
   readonly bootstrap?: typeof bootstrapRemoteRoom;
 }
 
-const waitForRestoredPlayer = async (
+const waitForRestoredPlayer = (
   runtime: RemoteRoomRuntime,
   signal: AbortSignal
-): Promise<void> =>
-  new Promise<void>((resolve, reject) => {
-    let unsubscribe = (): void => undefined;
-    let settled = false;
-    const settle = (error?: Error): void => {
-      if (settled) return;
-      settled = true;
-      signal.removeEventListener('abort', onAbort);
-      unsubscribe();
-      if (error) reject(error);
-      else resolve();
-    };
-    const inspect = (): void => {
-      const state = runtime.session.getSnapshot();
-      if (state.phase === 'ready') {
-        settle(
-          state.role === 'player'
-            ? undefined
-            : new Error('Restored session has the wrong role')
-        );
-      } else if (
-        state.phase === 'failed' ||
-        state.phase === 'closed' ||
-        state.phase === 'superseded'
-      ) {
-        settle(new Error('Restored session did not become ready'));
-      }
-    };
-    const onAbort = (): void => settle(new Error('Restoration was cancelled'));
-    if (signal.aborted) {
-      onAbort();
-      return;
-    }
-    signal.addEventListener('abort', onAbort, { once: true });
-    unsubscribe = runtime.session.subscribe(inspect);
-    inspect();
-  });
+): Promise<void> => waitForAdmission(runtime, signal, 'player');
 
 /**
  * Retains one imported bearer and stable restore operation outside React. A

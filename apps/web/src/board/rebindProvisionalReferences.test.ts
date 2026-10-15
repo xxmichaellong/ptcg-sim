@@ -193,15 +193,21 @@ describe('rebinding predicted references', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
-    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const shown = view.zones[`zone:${playerId}:deck`]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
-    const top = deck.cards[0]!;
-    rebind({ type: 'DrawCards', count: 1 }, view);
+    // A player reads their own deck: its top card is known to them.
+    const top = { ...hand.cards[0]!, id: 'deck-top-alias' as never };
+    const deck = { ...shown, cards: [top, ...shown.cards.slice(1)] };
+    const before: MatchViewState = {
+      ...view,
+      zones: { ...view.zones, [deck.id]: deck },
+    };
+    rebind({ type: 'DrawCards', count: 1 }, before);
     // The room published the draw: the card is the hand's last, renamed.
     const landed: MatchViewState = {
-      ...view,
+      ...before,
       zones: {
-        ...view.zones,
+        ...before.zones,
         [deck.id]: { ...deck, cards: deck.cards.slice(1) },
         [hand.id]: {
           ...hand,
@@ -220,5 +226,49 @@ describe('rebinding predicted references', () => {
         landed
       )
     ).toMatchObject({ cardId: 'alias-in-hand' });
+  });
+
+  it('names a card taken back into the hand as the hand has it', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const discard = view.zones[`zone:${playerId}:discard`]!;
+    const card = { ...hand.cards[0]!, id: 'in-discard' as never };
+    const before: MatchViewState = {
+      ...view,
+      zones: { ...view.zones, [discard.id]: { ...discard, cards: [card] } },
+    };
+    rebind(
+      {
+        type: 'MoveCard',
+        cardId: 'in-discard',
+        expectedSourceZoneId: discard.id,
+        destinationZoneId: hand.id,
+      },
+      before
+    );
+    const landed: MatchViewState = {
+      ...before,
+      zones: {
+        ...before.zones,
+        [discard.id]: { ...discard, cards: [] },
+        [hand.id]: {
+          ...hand,
+          cards: [...hand.cards, { ...card, id: 'back-in-hand' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: 'in-discard',
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:lostZone`,
+        },
+        landed
+      )
+    ).toMatchObject({ cardId: 'back-in-hand' });
   });
 });

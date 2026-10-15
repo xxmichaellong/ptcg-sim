@@ -242,6 +242,8 @@ const runtime = (
   options: {
     readonly label?: string;
     readonly coachingConsent?: boolean;
+    /** Where its session has got to: admitted (`ready`) unless said. */
+    readonly phase?: 'ready' | 'connecting' | 'failed';
   } = {}
 ) => {
   const view = createRendererSpikeView();
@@ -269,7 +271,10 @@ const runtime = (
     label: options.label,
     roomCode: ROOM_CODE,
     session: {
-      getSnapshot: () => ({ phase: 'ready' as const, view: projected }),
+      getSnapshot: () => ({
+        phase: options.phase ?? ('ready' as const),
+        view: projected,
+      }),
       subscribe: (listener: () => void) => {
         listeners.add(listener);
         return () => listeners.delete(listener);
@@ -862,6 +867,51 @@ describe('remote room lobby wiring', () => {
     expect(invitation.bootstrap.mock.calls[0]?.[0]).toMatchObject({
       asSpectator: true,
     });
+    await act(async () => root.unmount());
+  });
+
+  it('keeps the table when the room an invitation leads to never admits this session', async () => {
+    const invitation = custody();
+    invitation.acceptPaste.mockImplementation((event) => {
+      event.preventDefault();
+      return {
+        roomCode: ROOM_CODE,
+        requestedRole: 'player' as const,
+        expiresAt: 40_000,
+      };
+    });
+    const refused = runtime({ label: 'refused guest', phase: 'failed' });
+    invitation.bootstrap.mockResolvedValueOnce({
+      runtime: refused.value,
+      mode: 'multiplayer',
+      requestedRole: 'player',
+    });
+    const created = creationResult(runtime({ label: 'current table' }));
+    const { root } = await mount(
+      lobbyDependencies(
+        invitation,
+        vi.fn(async () => created.value)
+      )
+    );
+    await settle();
+    // A table of this player's own is ready to join...
+    await act(async () => {
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+    // ...when they paste someone's invitation and join that instead.
+    await act(async () => {
+      paste(element<HTMLInputElement>('#roomIdInput'), RAW_HANDOFF);
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>('#joinRoomButton').click();
+      await flush();
+    });
+    // That room never admitted the session: it goes, the table stays.
+    expect(refused.dispose).toHaveBeenCalledOnce();
+    expect(created.dispose).not.toHaveBeenCalled();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(false);
     await act(async () => root.unmount());
   });
 

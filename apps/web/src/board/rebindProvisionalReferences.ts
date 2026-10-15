@@ -1,6 +1,8 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
+import { predictWireCommand } from './predictWireCommand.js';
+
 /**
  * The IDs predictWireCommand gives what a predicted command creates, until
  * the room publishes it: a Pokémon played into a new stack, a stack taken
@@ -57,53 +59,54 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const cards = new Map<string, string>();
 
   /**
-   * Draws sent and not yet seen land: a drawn card comes into the hand
-   * under a new alias, so a move made on it before then names the deck's.
-   * Each is matched up by place at the next send, once it has landed.
+   * Cards a sent command brings into a hand (a draw, a card taken back from
+   * the discard, a Pokémon picked up): the hand gets them under new
+   * aliases, so a move made on one before then names the old. Each is
+   * matched by its definition among the hand's new cards at the next send,
+   * once the command has landed.
    */
-  let draws: {
-    readonly playerId: string;
-    readonly drawn: readonly string[];
-    readonly at: number;
+  let arrivals: {
+    readonly zoneId: string;
+    readonly before: ReadonlySet<string>;
+    readonly cards: readonly {
+      readonly alias: string;
+      readonly definitionId: string;
+    }[];
   }[] = [];
-  const zoneOf = (view: MatchViewState, playerId: string, kind: string) =>
-    Object.values(view.zones).find(
-      (zone) => zone.ownerId === playerId && zone.kind === kind
-    );
-  const recordDraw = (command: WireGameCommand, view: MatchViewState) => {
-    if (view.viewer.kind !== 'player') return;
-    const playerId =
-      ('targetPlayerId' in command ? command.targetPlayerId : undefined) ??
-      view.viewer.playerId;
-    const deck = zoneOf(view, playerId, 'deck');
-    const hand = zoneOf(view, playerId, 'hand');
-    if (!deck || !hand) return;
-    const draw =
-      command.type === 'DrawCards'
-        ? { count: command.count, at: hand.cards.length }
-        : command.type === 'StartTurn'
-          ? { count: 1, at: hand.cards.length }
-          : command.type === 'DiscardHandAndDraw'
-            ? { count: command.count, at: 0 }
-            : undefined;
-    if (!draw) return;
-    const drawn = deck.cards.slice(0, draw.count).map((card) => card.id);
-    if (drawn.length > 0) draws.push({ playerId, drawn, at: draw.at });
-  };
-  const settleDraws = (view: MatchViewState) => {
-    for (const draw of draws) {
-      const arrived =
-        zoneOf(view, draw.playerId, 'hand')?.cards.slice(
-          draw.at,
-          draw.at + draw.drawn.length
-        ) ?? [];
-      if (arrived.length !== draw.drawn.length) continue;
-      draw.drawn.forEach((old, index) => {
-        const now = arrived[index]!.id;
-        if (now !== old) remember(cards, old, now);
-      });
+  const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
+    const predicted = predictWireCommand(view, command);
+    if (!predicted) return;
+    for (const zone of Object.values(predicted.zones)) {
+      if (zone.kind !== 'hand') continue;
+      const before = new Set(
+        (view.zones[zone.id]?.cards ?? []).map((card) => card.id)
+      );
+      const cards = zone.cards.flatMap((card) =>
+        card.kind === 'known' && !before.has(card.id)
+          ? [{ alias: card.id, definitionId: card.definitionId }]
+          : []
+      );
+      if (cards.length > 0) arrivals.push({ zoneId: zone.id, before, cards });
     }
-    draws = [];
+  };
+  const settleArrivals = (view: MatchViewState) => {
+    for (const arrival of arrivals) {
+      const hand = view.zones[arrival.zoneId]?.cards ?? [];
+      const present = new Set<string>(hand.map((card) => card.id));
+      const fresh = hand.filter(
+        (card) => card.kind === 'known' && !arrival.before.has(card.id)
+      );
+      for (const { alias, definitionId } of arrival.cards) {
+        if (present.has(alias)) continue;
+        const index = fresh.findIndex(
+          (card) => card.kind === 'known' && card.definitionId === definitionId
+        );
+        if (index < 0) continue;
+        remember(cards, alias, fresh[index]!.id);
+        fresh.splice(index, 1);
+      }
+    }
+    arrivals = [];
   };
 
   const placedStack = (id: string, view: MatchViewState) => {
@@ -193,7 +196,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   };
 
   return (command, view) => {
-    settleDraws(view);
+    settleArrivals(view);
     // A Pokémon played into a new stack: remember where, in case its card
     // comes back under another alias.
     if (command.type === 'MoveCardToPlay' && !command.targetStackId) {
@@ -225,7 +228,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     };
     const walked = rebind(command) as WireGameCommand;
     const rebound = changed ? walked : command;
-    recordDraw(rebound, view);
+    recordArrivals(rebound, view);
     return rebound;
   };
 };

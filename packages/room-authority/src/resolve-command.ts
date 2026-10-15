@@ -444,13 +444,32 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
+      const carried = [
+        ...wire.expectedEvolutionCardIds,
+        ...wire.expectedAttachmentCardIds,
+      ].map(resolveCard);
+      if (carried.some((card) => !card)) return rejected('stale_reference');
+      // Every card it carries must be one the actor may move on its own: a
+      // face-down card of the opponent's would be turned up by the move.
+      if (
+        carried.some(
+          (card) =>
+            !canControlCard(
+              state,
+              actorId,
+              state.cards[card!.cardId]!.ownerId,
+              card!.known,
+              policy,
+              undoContext.mode
+            )
+        )
+      ) {
+        return rejected('unauthorized');
+      }
       const canonical = (aliases: readonly string[]) =>
-        aliases.map((alias) => resolveCard(alias)?.cardId ?? null);
+        aliases.map((alias) => resolveCard(alias)!.cardId);
       const evolutionCardIds = canonical(wire.expectedEvolutionCardIds);
       const attachmentCardIds = canonical(wire.expectedAttachmentCardIds);
-      if (evolutionCardIds.includes(null) || attachmentCardIds.includes(null)) {
-        return rejected('stale_reference');
-      }
       return {
         accepted: true,
         command: {
