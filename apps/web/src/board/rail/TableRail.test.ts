@@ -75,4 +75,51 @@ describe('fitting the rail', () => {
     expect(fitted.shown.map((shown) => shown.id)).toEqual(['a']);
     expect(ids(fitted.more)).toEqual(['b', 'c']);
   });
+
+  it('puts one or two rarer actions on the rail instead of a menu for them', () => {
+    const actions = [action('turn'), action('coin')];
+    const both: ActionMenuEntry[] = [
+      {
+        id: 'setupBothButton',
+        label: 'Set up both sides',
+        icon: CoinIcon,
+        onSelect: vi.fn(),
+      },
+      {
+        id: 'resetBothButton',
+        label: 'Reset both sides',
+        icon: CoinIcon,
+        onSelect: vi.fn(),
+      },
+    ];
+    const roomy = fitRailActions(actions, both, 6 * 46 + 5 * 6, 46);
+    expect(roomy.shown.map((shown) => shown.id)).toEqual([
+      'turn',
+      'coin',
+      'setupBothButton',
+      'resetBothButton',
+    ]);
+    expect(roomy.shown[2]?.title).toBe('Set up both sides');
+    expect(roomy.more).toEqual([]);
+    // Three or more stay a menu.
+    const three = fitRailActions(
+      actions,
+      [
+        ...both,
+        { id: 'reset', label: 'Reset', icon: CoinIcon, onSelect: vi.fn() },
+      ],
+      9 * 46 + 8 * 6,
+      46
+    );
+    expect(three.shown.map((shown) => shown.id)).toEqual(['turn', 'coin']);
+    expect(ids(three.more)).toEqual([
+      'setupBothButton',
+      'resetBothButton',
+      'reset',
+    ]);
+    // Short of room, they are the first back into More.
+    const short = fitRailActions(actions, both, 3 * 46 + 2 * 6, 46);
+    expect(short.shown.map((shown) => shown.id)).toEqual(['turn', 'coin']);
+    expect(ids(short.more)).toEqual(['setupBothButton', 'resetBothButton']);
+  });
 });

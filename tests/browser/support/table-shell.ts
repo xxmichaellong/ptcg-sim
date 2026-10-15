@@ -117,11 +117,19 @@ export const openPlayOnline = async (page: Page): Promise<void> => {
   await expect(page.locator('#playOnlineSheet')).toBeVisible();
 };
 
-/** A rarer game action behind the rail's More: `resetButton`, `setupBothButton`. */
+/**
+ * A rarer game action: `resetButton`, `setupBothButton`. More holds three
+ * or more; one or two sit on the rail itself (TableRail's fitRailActions).
+ */
 export const chooseMoreAction = async (
   page: Page,
   id: string
 ): Promise<void> => {
+  const onRail = page.locator(`#boardButtonContainer #${id}`);
+  if (await onRail.isVisible()) {
+    await onRail.click();
+    return;
+  }
   await page.locator('#moreActionsButton').click();
   await page.locator(`#${id}`).click();
 };

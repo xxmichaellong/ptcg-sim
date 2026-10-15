@@ -151,9 +151,19 @@ const RailWidthContext = createContext<number | undefined>(undefined);
 export const useRailWidth = (): number | undefined =>
   useContext(RailWidthContext);
 
+/** A menu is worth opening for three choices or more; fewer sit out. */
+const MENU_MINIMUM = 3;
+
+type MenuItem = Extract<ActionMenuEntry, { readonly onSelect: () => void }>;
+
+const isMenuItem = (entry: ActionMenuEntry): entry is MenuItem =>
+  (entry.kind ?? 'item') === 'item';
+
 /**
- * Splits the actions between the rail and More when they cannot all fit as
- * icons: the most important stay, in their order, and the others lead More.
+ * Splits the actions between the rail and More. More is for three choices
+ * or more: one or two rarer actions sit on the rail as icons beside the
+ * rest. When they cannot all fit as icons, the most important stay, in
+ * their order, and the others lead More.
  */
 export const fitRailActions = (
   actions: readonly RailAction[],
@@ -164,19 +174,44 @@ export const fitRailActions = (
   readonly shown: readonly RailAction[];
   readonly more: readonly ActionMenuEntry[];
 } => {
-  const extra = more ?? [];
+  const items = (more ?? []).filter(isMenuItem);
+  const promotable =
+    items.length > 0 &&
+    items.length < MENU_MINIMUM &&
+    items.every(
+      (item) =>
+        item.icon !== undefined &&
+        typeof item.label === 'string' &&
+        item.disabled !== true
+    );
+  const all: readonly RailAction[] = promotable
+    ? [
+        ...actions,
+        ...items.map((item, index) => ({
+          id: item.id ?? `more-action-${index}`,
+          label: item.label as string,
+          title: item.label as string,
+          icon: item.icon!,
+          hint: item.hint,
+          onSelect: item.onSelect,
+          // The rarer ones: first back into More when room is short.
+          priority: Number.MAX_SAFE_INTEGER - items.length + index,
+        })),
+      ]
+    : actions;
+  const extra = promotable ? [] : (more ?? []);
   const slots = Math.max(0, Math.floor((room + GAP_PX) / (buttonPx + GAP_PX)));
-  const needed = actions.length + (extra.length > 0 ? 1 : 0);
-  if (needed <= slots) return { shown: actions, more: extra };
+  const needed = all.length + (extra.length > 0 ? 1 : 0);
+  if (needed <= slots) return { shown: all, more: extra };
   const keep = Math.max(0, slots - 1);
   const kept = new Set(
-    actions
+    all
       .map((action, index) => ({ action, rank: action.priority ?? index }))
       .sort((left, right) => left.rank - right.rank)
       .slice(0, keep)
       .map(({ action }) => action)
   );
-  const moved: ActionMenuEntry[] = actions
+  const moved: ActionMenuEntry[] = all
     .filter((action) => !kept.has(action))
     .map((action) => ({
       id: action.id,
@@ -186,7 +221,7 @@ export const fitRailActions = (
       onSelect: action.onSelect,
     }));
   return {
-    shown: actions.filter((action) => kept.has(action)),
+    shown: all.filter((action) => kept.has(action)),
     more:
       extra.length > 0 ? [...moved, { kind: 'separator' }, ...extra] : moved,
   };

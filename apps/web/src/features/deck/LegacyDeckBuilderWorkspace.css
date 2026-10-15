@@ -360,6 +360,31 @@
   font-size: var(--text-sm);
 }
 
+/* Sort by and its direction: two choices each, out on the row. */
+.native-deck-builder-sort {
+  grid-row: 2;
+  padding: 2px;
+}
+
+.native-deck-builder-sort .ptcgsim-segmented-control__option label {
+  height: 24px;
+  font-size: var(--text-xs);
+}
+
+.native-deck-builder-sort-direction {
+  grid-row: 2;
+  justify-self: start;
+  gap: var(--space-1);
+  height: 30px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.native-deck-builder-sort-direction svg {
+  width: 16px;
+  height: 16px;
+}
+
 .native-deck-builder-search-status-row {
   display: flex;
   gap: var(--space-1-5);

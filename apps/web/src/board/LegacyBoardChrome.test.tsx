@@ -240,12 +240,25 @@ describe('LegacyBoardChrome', () => {
           onSelect: flipCoin,
         },
       ],
+      // Three rarer actions: a menu's worth (fewer sit on the rail).
       more: [
         {
           id: 'mulliganButton',
           label: 'Announce mulligan',
           icon: ShuffleIcon,
           onSelect: mulligan,
+        },
+        {
+          id: 'setupButton',
+          label: 'Set up again',
+          icon: ShuffleIcon,
+          onSelect: vi.fn(),
+        },
+        {
+          id: 'resetButton',
+          label: 'Reset',
+          icon: ShuffleIcon,
+          onSelect: vi.fn(),
         },
       ],
     });

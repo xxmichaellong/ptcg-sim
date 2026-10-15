@@ -178,13 +178,29 @@ describe('LegacyDeckBuilderWorkspace', () => {
       host.querySelector<HTMLSelectElement>('#nativeDeckBuilderCardTypeFilter')
         ?.value
     ).toBe('all');
+    // Two choices each, out on the row (PX-044).
     expect(
-      host.querySelector<HTMLSelectElement>('#nativeDeckBuilderSortBy')?.value
+      host.querySelector<HTMLInputElement>(
+        '#nativeDeckBuilderSortBy input:checked'
+      )?.value
     ).toBe('releaseDate');
     expect(
-      host.querySelector<HTMLSelectElement>('#nativeDeckBuilderSortDirection')
-        ?.value
+      host
+        .querySelector<HTMLButtonElement>('#nativeDeckBuilderSortDirection')
+        ?.getAttribute('data-direction')
     ).toBe('desc');
+    await click(host.querySelector('#nativeDeckBuilderSortDirection')!);
+    expect(
+      host
+        .querySelector<HTMLButtonElement>('#nativeDeckBuilderSortDirection')
+        ?.getAttribute('data-direction')
+    ).toBe('asc');
+    await click(host.querySelector('#nativeDeckBuilderSortBy-name')!);
+    expect(
+      host.querySelector<HTMLInputElement>(
+        '#nativeDeckBuilderSortBy input:checked'
+      )?.value
+    ).toBe('name');
     expect(
       host.querySelector<HTMLButtonElement>('#nativeDeckBuilderPlayButton')
         ?.disabled
@@ -539,7 +555,7 @@ describe('LegacyDeckBuilderWorkspace', () => {
     )!;
     await select(layout.querySelector('select')!, 'trio');
     await input(layout.querySelector('input')!, 'illustration-one');
-    await select(layout.querySelectorAll('select')[1]!, '2');
+    await click(layout.querySelector('#nativeCustomCardPiece-2')!);
     await select(
       host.querySelector<HTMLSelectElement>('#nativeCustomCardFinish')!,
       'rainbow'

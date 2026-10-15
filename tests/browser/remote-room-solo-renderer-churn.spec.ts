@@ -186,13 +186,19 @@ const stayUnderClientFrameLimit = async (page: Page): Promise<void> => {
   }
 };
 
-/** Solo's both-sides actions, behind the rail's More (ADR-030). */
+/**
+ * Solo's both-sides actions: on the rail when they are all its rarer
+ * actions, behind More with the rest once a game is under way (ADR-030).
+ */
 const expectBothActionsEnabled = async (page: Page): Promise<void> => {
-  await page.locator('#moreActionsButton').click();
+  const more = page.locator('#moreActionsButton');
+  const inMenu = await more.isVisible();
+  if (inMenu) await more.click();
   await expect(page.locator('#setupBothButton')).toBeEnabled();
   await expect(page.locator('#resetBothButton')).toBeEnabled();
+  if (!inMenu) return;
   await page.keyboard.press('Escape');
-  await expect(page.locator('#setupBothButton')).toHaveCount(0);
+  await expect(page.locator('[role="menu"] #setupBothButton')).toHaveCount(0);
 };
 
 const submitBoth = async (
@@ -208,8 +214,9 @@ const submitBoth = async (
     'data-revision',
     String(before + 2)
   );
-  // The menu has closed behind the choice, so nothing of it is counted.
-  await expect(page.locator('#setupBothButton')).toHaveCount(0);
+  // A menu it came from has closed behind the choice, so nothing of it is
+  // counted.
+  await expect(page.locator('[role="menu"] #setupBothButton')).toHaveCount(0);
 };
 
 const churnDeckZoneBrowsers = async (

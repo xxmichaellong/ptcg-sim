@@ -252,12 +252,26 @@ const openCandidateDeckBuilder = async (
  * selects offer the same values, the decklist fields keep a placeholder,
  * every button has a name, and every region of the panel is on screen.
  */
+/**
+ * Two-choice dropdowns, out on the row instead (PX-044): Sort by is a
+ * toggle and its direction a button. Each keeps its id.
+ */
+const REDESIGNED_CONTROLS: Readonly<Record<string, string>> = {
+  nativeDeckBuilderSortBy: 'DIV',
+  nativeDeckBuilderSortDirection: 'BUTTON',
+};
+
 const expectStructuralParity = (
   source: SurfaceCapture,
   candidate: SurfaceCapture
 ): void => {
   for (const [id, legacy] of Object.entries(source.controls)) {
     const control = candidate.controls[id]!;
+    const redesigned = REDESIGNED_CONTROLS[id];
+    if (redesigned) {
+      expect(control.tag, `#${id} element (PX-044)`).toBe(redesigned);
+      continue;
+    }
     expect(control.tag, `#${id} element`).toBe(legacy.tag);
     if (legacy.tag === 'SELECT') {
       const values = (text: string) =>

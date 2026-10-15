@@ -80,19 +80,24 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#messageInput')).toBeEnabled();
   await expect(page.locator('#chatbox')).toBeVisible();
   await expect(page.locator('#roomHeader')).toHaveCount(0);
-  // Before a deck, the rail asks for one; Solo's both-sides actions wait in
-  // More, and there is no room to leave.
-  for (const id of ['loadDeckButton', 'flipCoinButton', 'flipBoardButton']) {
+  // Before a deck, the rail asks for one; Solo's both-sides actions sit on
+  // it too (two are not worth a menu), and there is no room to leave.
+  for (const id of [
+    'loadDeckButton',
+    'flipCoinButton',
+    'flipBoardButton',
+    'setupBothButton',
+    'resetBothButton',
+  ]) {
     await expect(
       page.locator(`#boardButtonContainer #${id}`),
       id
     ).toBeVisible();
   }
   await expect(page.locator('#attackButton')).toHaveCount(0);
-  await page.locator('#moreActionsButton').click();
+  await expect(page.locator('#moreActionsButton')).toHaveCount(0);
   await expect(page.locator('#setupBothButton')).toBeEnabled();
   await expect(page.locator('#resetBothButton')).toBeEnabled();
-  await page.keyboard.press('Escape');
   await openAppMenu(page);
   await expect(page.locator('#leaveRoomButton')).toHaveCount(0);
   await page.keyboard.press('Escape');

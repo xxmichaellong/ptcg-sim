@@ -8,6 +8,8 @@ import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGl
 import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
+import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
+import { SortDescendingIcon } from '@phosphor-icons/react/dist/csr/SortDescending';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { UploadSimpleIcon } from '@phosphor-icons/react/dist/csr/UploadSimple';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
@@ -56,6 +58,7 @@ import type {
 import '../../design/panel-controls.css';
 import { confirmAction } from '../../ui/dialog-requests.js';
 import { trapFocus } from '../../ui/focus.js';
+import '../../ui/form-controls.css';
 import './LegacyDeckBuilderWorkspace.css';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 
@@ -647,12 +650,13 @@ const CustomCardDialog = ({
                       onChange={(event) => setArtworkGroup(event.target.value)}
                     />
                   </label>
-                  <label className="native-deck-builder-modal-label">
-                    Piece position
-                    <select
-                      className="ds-select"
-                      value={piece}
-                      onChange={(event) => setPiece(event.target.value)}
+                  {/* Two to four places: all out at once (PX-044). */}
+                  <div className="native-deck-builder-modal-label">
+                    <span id="nativeCustomCardPieceLabel">Piece position</span>
+                    <div
+                      className="ptcgsim-segmented-control"
+                      role="radiogroup"
+                      aria-labelledby="nativeCustomCardPieceLabel"
                     >
                       {(cardLayout === 'union'
                         ? [
@@ -667,12 +671,25 @@ const CustomCardDialog = ({
                             ? ['Left', 'Middle', 'Right']
                             : ['Left', 'Right']
                       ).map((label, index) => (
-                        <option key={label} value={index}>
-                          {label}
-                        </option>
+                        <span
+                          key={label}
+                          className="ptcgsim-segmented-control__option"
+                        >
+                          <input
+                            type="radio"
+                            id={`nativeCustomCardPiece-${index}`}
+                            name="nativeCustomCardPiece"
+                            value={index}
+                            checked={piece === String(index)}
+                            onChange={() => setPiece(String(index))}
+                          />
+                          <label htmlFor={`nativeCustomCardPiece-${index}`}>
+                            {label}
+                          </label>
+                        </span>
                       ))}
-                    </select>
-                  </label>
+                    </div>
+                  </div>
                   <p>
                     Use the same group for pieces from one illustration. Place
                     Pokémon pieces in one stack, or Stadium pieces in the
@@ -1265,30 +1282,67 @@ export const LegacyDeckBuilderWorkspace = ({
                     <option value="tcg">TCG</option>
                     <option value="pocket">Pocket</option>
                   </select>
-                  <select
+                  {/* Two choices each: out on the row, not in a dropdown
+                      (PX-044). */}
+                  <div
                     id="nativeDeckBuilderSortBy"
-                    className="native-deck-builder-search-select ds-select"
+                    className="ptcgsim-segmented-control native-deck-builder-sort"
+                    role="radiogroup"
                     aria-label="Sort by"
-                    value={sortBy}
-                    onChange={(event) =>
-                      setSortBy(event.target.value as CardSortField)
-                    }
                   >
-                    <option value="releaseDate">Release Date</option>
-                    <option value="name">Name</option>
-                  </select>
-                  <select
+                    {(
+                      [
+                        ['releaseDate', 'Release Date'],
+                        ['name', 'Name'],
+                      ] as const satisfies readonly (readonly [
+                        CardSortField,
+                        string,
+                      ])[]
+                    ).map(([value, label]) => (
+                      <span
+                        key={value}
+                        className="ptcgsim-segmented-control__option"
+                      >
+                        <input
+                          type="radio"
+                          id={`nativeDeckBuilderSortBy-${value}`}
+                          name="nativeDeckBuilderSortBy"
+                          value={value}
+                          checked={sortBy === value}
+                          onChange={() => setSortBy(value)}
+                        />
+                        <label htmlFor={`nativeDeckBuilderSortBy-${value}`}>
+                          {label}
+                        </label>
+                      </span>
+                    ))}
+                  </div>
+                  <button
                     id="nativeDeckBuilderSortDirection"
-                    className="native-deck-builder-search-select ds-select"
-                    aria-label="Sort direction"
-                    value={sortDirection}
-                    onChange={(event) =>
-                      setSortDirection(event.target.value as SortDirection)
+                    type="button"
+                    className="ds-button ds-button--secondary native-deck-builder-sort-direction"
+                    data-direction={sortDirection}
+                    aria-label={
+                      sortDirection === 'desc'
+                        ? 'Sorted descending; sort ascending'
+                        : 'Sorted ascending; sort descending'
+                    }
+                    title="Sort direction"
+                    onClick={() =>
+                      setSortDirection(
+                        (sortDirection === 'desc'
+                          ? 'asc'
+                          : 'desc') satisfies SortDirection
+                      )
                     }
                   >
-                    <option value="desc">Desc</option>
-                    <option value="asc">Asc</option>
-                  </select>
+                    {sortDirection === 'desc' ? (
+                      <SortDescendingIcon aria-hidden="true" weight="bold" />
+                    ) : (
+                      <SortAscendingIcon aria-hidden="true" weight="bold" />
+                    )}
+                    {sortDirection === 'desc' ? 'Desc' : 'Asc'}
+                  </button>
                   <button
                     id="nativeDeckBuilderSearchButton"
                     type="button"
