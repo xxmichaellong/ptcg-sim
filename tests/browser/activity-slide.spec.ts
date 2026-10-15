@@ -251,22 +251,29 @@ test('the table makes room for the sliding log in step with it, whole on every f
     } else {
       expect(width).toBe(viewport.width);
     }
-    // Once the table has held its size, the mat is painted at it, unscaled.
+    // Once the table has held its size, the mat is painted at it, unscaled
+    // (compared whole, so a failure shows what the mat was).
     await expect
       .poll(
         () =>
-          page.evaluate((tableWidth) => {
+          page.evaluate(() => {
             const element =
               document.querySelector<HTMLElement>('.ptcgsim-depth-mat');
-            if (!element) return true;
-            return (
-              Math.abs(Number.parseFloat(element.style.width) - tableWidth) <
-                0.5 && !element.style.transform.includes('scale(')
+            const surface = document.querySelector<HTMLElement>(
+              '.ptcgsim-board-surface'
             );
-          }, width),
+            if (!element || !surface) return null;
+            return {
+              width: Math.round(Number.parseFloat(element.style.width)),
+              table: Math.round(Number.parseFloat(surface.style.width)),
+              scaled: element.style.transform.includes('scale('),
+            };
+          }),
         { timeout: 3_000 }
       )
-      .toBe(true);
+      .toEqual(
+        expect.objectContaining({ width: Math.round(width), scaled: false })
+      );
   }
 
   expect(
