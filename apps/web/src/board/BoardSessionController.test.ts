@@ -1269,6 +1269,52 @@ describe('headless board session controller', () => {
     }
   });
 
+  it("keeps a flipped board's hand prompt open for the seat at the bottom across a new frame", () => {
+    // Turned around (Solo, coaching): the other seat sits at the bottom and
+    // its hand shortcuts are the ones that prompt.
+    const flipped: BoardSessionControllerDependencies = {
+      createScene: (view) =>
+        createBoardSceneForViewport(view, {
+          viewport,
+          bottomPlayerId: view.playerOrder.find(
+            (playerId) =>
+              view.viewer.kind !== 'player' || playerId !== view.viewer.playerId
+          )!,
+          splitRatio: 0.5,
+          geometryVersion: 1,
+        }),
+    };
+    const state = install(initialFrame(), flipped);
+    const opened = apply(
+      state,
+      {
+        kind: 'LegacyShortcutActionRequested',
+        request: { action: 'discardOwnHandAndDraw' },
+      },
+      flipped
+    );
+    const prompt = opened.state.overlays.input;
+    expect(prompt).toMatchObject({ kind: 'shortcutCount' });
+    expect(
+      prompt?.kind === 'shortcutCount' && state.view?.viewer.kind === 'player'
+        ? prompt.playerId !== state.view.viewer.playerId
+        : false
+    ).toBe(true);
+    // The room publishes something else: the prompt stays.
+    const advanced = apply(
+      opened.state,
+      {
+        kind: 'FrameReceived',
+        frame: liveFrame(
+          2,
+          withRevision(state.view!, state.view!.revision + 1)
+        ),
+      },
+      flipped
+    );
+    expect(advanced.state.overlays.input).toEqual(prompt);
+  });
+
   it('owns unselected hand shortcut prompts through exact staged submission', () => {
     const state = install();
     if (state.view?.viewer.kind !== 'player') {

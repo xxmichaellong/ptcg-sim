@@ -157,6 +157,23 @@ describe('legacy board keyboard shortcut bridge', () => {
       { action: 'resolveOwnLooseBoard', destination: 'hand' },
       { action: 'resolveOwnLooseBoard', destination: 'shuffleIntoDeck' },
     ]);
+
+    // Enter on a focused button (a rail action, a menu row) is that
+    // button's own press: it never also discards the loose board.
+    onRequest.mockClear();
+    const button = document.createElement('button');
+    button.id = 'flipCoinButton';
+    document.body.append(button);
+    button.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    expect(onRequest).not.toHaveBeenCalled();
+    button.remove();
   });
 
   it('emits one closed unselected deck request for each supported chord', async () => {

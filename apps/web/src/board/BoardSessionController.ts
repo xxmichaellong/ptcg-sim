@@ -587,10 +587,12 @@ const reconcilePresentation = (
   const input = state.overlays.input;
   const shortcutInputZone =
     input?.kind === 'shortcutCount' ? view.zones[input.zoneId] : undefined;
+  // The prompt is for the seat at the bottom, which a flipped board (Solo,
+  // coaching) turns to the other player's.
   const shortcutInputIsCurrent =
     input?.kind === 'shortcutCount' &&
     view.viewer.kind === 'player' &&
-    view.viewer.playerId === input.playerId &&
+    actingPlayerIdOf(view, scene.bottomPlayerId) === input.playerId &&
     Boolean(view.players[input.playerId]) &&
     shortcutInputZone?.kind === 'hand' &&
     shortcutInputZone.ownerId === input.playerId;

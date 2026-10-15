@@ -99,10 +99,18 @@ const isSelectedOpenedZoneCardTarget = (
   );
 };
 
+/**
+ * Enter on something that Enter already activates -- a card, a zone, or any
+ * button or link (a rail action, a menu row) -- is that thing's own press,
+ * not the table's Enter (which discards the loose board).
+ */
+const NATIVE_ENTER_TARGET =
+  '[data-card-id], [data-zone-id], button, a[href], summary, [role="button"], [role="menuitem"], [role="link"]';
+
 const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
   (event.key === 'Enter' || event.code === 'Enter') &&
   event.target instanceof Element &&
-  event.target.closest('[data-card-id], [data-zone-id]') !== null;
+  event.target.closest(NATIVE_ENTER_TARGET) !== null;
 
 /**
  * Route-owned document bridge for the characterized board shortcuts.
