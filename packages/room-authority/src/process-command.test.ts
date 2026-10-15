@@ -1272,13 +1272,27 @@ describe('authoritative room command transaction', () => {
     expect(retried.snapshot.state.revision).toBe(1);
     expect(retried.committed).toBe(false);
     expect(recoveredPersistence.transactions).toHaveLength(0);
-    expect(retried.deliveries).toHaveLength(2);
-    expect(retried.deliveries[0]?.message).toMatchObject({
+    // Nobody was told of the commit, so every session hears of it now.
+    const active = Object.values(durable.sessions)
+      .filter((session) => session.active)
+      .map((session) => session.id);
+    expect(retried.deliveries).toHaveLength(active.length + 1);
+    expect(
+      retried.deliveries
+        .filter((delivery) => delivery.message.type === 'StatePublication')
+        .map((delivery) => delivery.sessionId)
+        .sort()
+    ).toEqual([...active].sort());
+    expect(
+      retried.deliveries.find(
+        (delivery) => delivery.sessionId === 'session-player-one'
+      )?.message
+    ).toMatchObject({
       type: 'StatePublication',
       coveringCommandId: 'load-deck-command',
       executedClientSequence: 1,
     });
-    expect(retried.deliveries[1]?.message).toMatchObject({
+    expect(retried.deliveries.at(-1)?.message).toMatchObject({
       type: 'CommandResult',
       accepted: true,
       revision: 1,

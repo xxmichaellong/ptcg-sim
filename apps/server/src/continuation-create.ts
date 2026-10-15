@@ -123,6 +123,12 @@ const exactKeys = (value: object, expected: readonly string[]): boolean => {
 const safeNonNegativeInteger = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 
+const validSourceBuild = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  value.length >= 1 &&
+  value.length <= 128 &&
+  [...value].every((character) => character >= ' ');
+
 const validLifetime = (createdAt: number, expiresAt: number): boolean =>
   safeNonNegativeInteger(createdAt) &&
   safeNonNegativeInteger(expiresAt) &&
@@ -190,7 +196,9 @@ const validatePlan = (
     plan.operationId !== input.operationId ||
     !SAVE_ID_PATTERN.test(plan.saveId) ||
     plan.requesterSessionId !== input.requesterSessionId ||
-    plan.sourceBuild !== input.sourceBuild ||
+    // The build that reserved it, kept when a deploy lands before a retry:
+    // the save records where its snapshot came from, not who finished it.
+    !validSourceBuild(plan.sourceBuild) ||
     !validLifetime(plan.createdAt, plan.expiresAt) ||
     plan.createdAt > reservedAt ||
     reservedAt >= plan.expiresAt ||
@@ -273,9 +281,7 @@ export const coordinateContinuationCreation = async (
     !ROOM_CODE_PATTERN.test(input.sourceRoomCode) ||
     input.requesterSessionId.length < 1 ||
     input.requesterSessionId.length > 256 ||
-    input.sourceBuild.length < 1 ||
-    input.sourceBuild.length > 128 ||
-    [...input.sourceBuild].some((character) => character < ' ')
+    !validSourceBuild(input.sourceBuild)
   ) {
     return undefined;
   }

@@ -136,6 +136,67 @@ describe('room command coordinator', () => {
     expect(durable.state.revision).toBe(2);
   });
 
+  it('republishes a recovered commit to every session, not just the one that retries it', async () => {
+    const opponent = {
+      id: 'opponent',
+      viewer: { kind: 'player', playerId: p2 },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+    } as const;
+    let durable: RoomAuthoritySnapshot = {
+      ...snapshot(),
+      sessions: { ...snapshot().sessions, opponent },
+    };
+    let shouldCrashAfterCommit = true;
+    const store: AuthoritySnapshotStore = {
+      load: async () => durable,
+      commit: async (transaction) => {
+        durable = transaction.snapshot;
+        if (shouldCrashAfterCommit) {
+          shouldCrashAfterCommit = false;
+          throw new Error('lost response after commit');
+        }
+      },
+    };
+    const coordinator = new RoomAuthorityCoordinator(
+      durable,
+      store,
+      dependencies()
+    );
+
+    await expect(coordinator.submit(envelope(1))).rejects.toThrow(
+      'lost response after commit'
+    );
+    const retry = await coordinator.submit(envelope(1));
+    const published = (sessionId: string) =>
+      retry.deliveries.find(
+        (item) =>
+          item.sessionId === sessionId &&
+          item.message.type === 'StatePublication'
+      )?.message;
+    expect(published('session')).toMatchObject({
+      snapshot: { revision: 1 },
+    });
+    expect(published('opponent')).toMatchObject({
+      coveringCommandId: 'command-1',
+      executedClientSequence: 0,
+      snapshot: { revision: 1 },
+    });
+    expect(
+      retry.deliveries.filter((item) => item.sessionId === 'opponent')
+    ).toHaveLength(1);
+
+    // Once a later command has carried everyone on, a retry of the earlier
+    // one answers only the session that sent it.
+    await coordinator.submit(envelope(2));
+    const late = await coordinator.submit(envelope(1));
+    expect(late.deliveries.map((item) => item.sessionId)).toEqual([
+      'session',
+      'session',
+    ]);
+  });
+
   it('reloads a commit that became durable before the storage call threw', async () => {
     let durable = snapshot();
     let shouldCrashAfterCommit = true;

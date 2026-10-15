@@ -78,6 +78,10 @@ const welcome = (
 class FakeSocket implements SessionSocket {
   readonly sent: string[] = [];
   readonly close = vi.fn((code?: number, reason?: string): void => {
+    // A browser's WebSocket refuses any other code (InvalidAccessError).
+    if (code !== undefined && code !== 1000 && (code < 3000 || code > 4999)) {
+      throw new DOMException(`Close code ${code}`, 'InvalidAccessError');
+    }
     const event = this.clientCloseEvent;
     if (!event) return;
     this.clientCloseEvent = undefined;
@@ -1254,7 +1258,7 @@ describe('RemoteGameSession', () => {
     const socket = test.admit();
     socket.throwOnSend = true;
     socket.clientCloseEvent = {
-      code: 1012,
+      code: 4012,
       reason: 'synchronous transport close',
       wasClean: false,
     };
@@ -1267,7 +1271,7 @@ describe('RemoteGameSession', () => {
     });
     expect(test.scheduler.tasks.size).toBe(1);
     expect([...test.scheduler.tasks.values()][0]?.delayMs).toBe(250);
-    expect(socket.close).toHaveBeenCalledWith(1012, 'Command write failed');
+    expect(socket.close).toHaveBeenCalledWith(4012, 'Command write failed');
   });
 
   it('ignores stale publications and fails closed on divergent equal revisions', () => {

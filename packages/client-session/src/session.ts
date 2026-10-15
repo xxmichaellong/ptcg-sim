@@ -1118,7 +1118,10 @@ export class RemoteGameSession {
 
   private reconnectTransport(reason: string): void {
     this.socketGeneration += 1;
-    this.closeSocket(1012, reason);
+    // 1012 (service restart) in the range a browser lets a page close with:
+    // it refuses anything but 1000 and 3000-4999, and the old socket would
+    // stay open beside the new one.
+    this.closeSocket(4012, reason);
     this.scheduleReconnect();
   }
 

@@ -2490,11 +2490,13 @@ describe('named model scenarios', () => {
     expect(resultMessage(ambiguousDuplicate, playerOneSessionId)).toMatchObject(
       ambiguousOutcome
     );
+    // Nobody was sent the commit that failed after it became durable, so
+    // its retry carries every session to it.
     expect(
       ambiguousDuplicate.deliveries
         .filter((delivery) => delivery.message.type === 'StatePublication')
         .map((delivery) => delivery.sessionId)
-    ).toEqual([playerOneSessionId]);
+    ).toEqual([playerOneSessionId, playerTwoSessionId, spectatorSessionId]);
     expect(harness.authoritySource.callCounts()).toEqual(afterAmbiguousCalls);
     expect(harness.storage.transactionCalls).toBe(beforeDuplicateTransactions);
     expect(stableSerialize([...harness.storage.values.entries()])).toBe(
@@ -2504,8 +2506,8 @@ describe('named model scenarios', () => {
     expect(playerView(harness, p1).revision).toBe(
       committedAfterFailure.state.revision
     );
-    expect(stableSerialize(playerView(harness, p2))).toBe(
-      beforeAmbiguousViews.get(playerTwoSessionId)
+    expect(playerView(harness, p2).revision).toBe(
+      committedAfterFailure.state.revision
     );
     expect(harness.storage.values.has(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toBe(
       true

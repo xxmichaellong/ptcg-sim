@@ -428,6 +428,45 @@ describe('continuation cross-object creation coordinator', () => {
     });
   });
 
+  it('finishes a pending save after a deploy changed the build, keeping the build that reserved it', async () => {
+    const harness = await createHarness();
+    const builds: string[] = [];
+    const saveForId = harness.dependencies.saveForId;
+    const dependencies: ContinuationCreationCoordinatorDependencies = {
+      ...harness.dependencies,
+      saveForId: (selectedSaveId) => {
+        const save = saveForId(selectedSaveId);
+        return {
+          ...save,
+          createReserved: (input) => {
+            builds.push(input.sourceBuild);
+            return save.createReserved(input);
+          },
+        };
+      },
+    };
+    harness.saveStorage.failPutWhenKeyStartsWith = CONTINUATION_STORAGE_KEY;
+    await expect(coordinate(harness, dependencies)).rejects.toThrow(
+      'transactional put failure'
+    );
+    harness.saveStorage.failPutWhenKeyStartsWith = undefined;
+    await expect(
+      coordinateContinuationCreation(
+        {
+          sourceRoomCode,
+          requesterSessionId: 'create-session-one',
+          operationId,
+          sourceBuild: 'continuation-create-next-deploy',
+        },
+        dependencies
+      )
+    ).resolves.toMatchObject({
+      state: 'created',
+      receipt: { saveId, operationId, createdAt },
+    });
+    expect(builds).toEqual([sourceBuild, sourceBuild]);
+  });
+
   it('recovers pre-commit and ambiguous committed global quota leases', async () => {
     const failed = await createHarness();
     failed.quotaStorage.failPutWhenKeyStartsWith =

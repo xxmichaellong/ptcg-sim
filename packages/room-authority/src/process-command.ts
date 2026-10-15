@@ -339,25 +339,38 @@ export const processAuthorityCommand = async (
     }
     const replayDeliveries: AuthorityDelivery[] = [];
     if (duplicate.accepted) {
-      const projected = timer.measureProjection(() =>
-        projectRecipient(
-          current.state,
-          session.viewer,
-          current.identities,
-          dependencies.opaqueIds,
-          current.mode
-        )
-      );
-      replayDeliveries.push({
-        sessionId: session.id,
-        message: {
-          type: 'StatePublication',
-          protocolVersion: PROTOCOL_VERSION,
-          coveringCommandId: duplicate.commandId,
-          executedClientSequence: session.nextClientSequence - 1,
-          snapshot: serializeMatchViewState(projected.snapshot),
-        },
-      });
+      // A commit can become durable and then fail before its publications
+      // go out; the coordinator reloads it and the issuer retries. While it
+      // is still the latest revision, everyone may have missed it, so it
+      // goes to every session again (one that has it ignores an identical
+      // revision). A later commit has already carried them past it.
+      const recipients =
+        duplicate.revision === current.state.revision
+          ? Object.values(current.sessions).filter(
+              (candidate) => candidate.active
+            )
+          : [session];
+      for (const recipient of recipients) {
+        const projected = timer.measureProjection(() =>
+          projectRecipient(
+            current.state,
+            recipient.viewer,
+            current.identities,
+            dependencies.opaqueIds,
+            current.mode
+          )
+        );
+        replayDeliveries.push({
+          sessionId: recipient.id,
+          message: {
+            type: 'StatePublication',
+            protocolVersion: PROTOCOL_VERSION,
+            coveringCommandId: duplicate.commandId,
+            executedClientSequence: recipient.nextClientSequence - 1,
+            snapshot: serializeMatchViewState(projected.snapshot),
+          },
+        });
+      }
     }
     return {
       snapshot: current,
