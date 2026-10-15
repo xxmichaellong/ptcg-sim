@@ -142,4 +142,52 @@ describe('decklist rank in the projection', () => {
       ['Zapdos', 2],
     ]);
   });
+
+  it("ranks another player's visible card only among what the viewer can see", () => {
+    let state = createEmptyMatch(asMatchId('rank-private-match'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const loaded = executeCommand(
+      state,
+      { type: 'LoadDeck', playerId: p1, entries },
+      context
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const drawn = executeCommand(
+      loaded.state,
+      { type: 'DrawCards', playerId: p1, count: 3 },
+      context
+    );
+    if (!drawn.accepted) throw new Error(drawn.message);
+    state = drawn.state;
+    // An Abra (card 1 of Blue's list) goes to the discard, face up.
+    const abra = state.zones[playerZoneId(p1, 'hand')]!.cardIds.find(
+      (cardId) => state.cards[cardId]!.definitionId === 'rank-abra'
+    )!;
+    const discarded = executeCommand(
+      state,
+      {
+        type: 'MoveCard',
+        cardId: abra,
+        expectedSourceZoneId: playerZoneId(p1, 'hand'),
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      context
+    );
+    if (!discarded.accepted) throw new Error(discarded.message);
+    state = discarded.state;
+    const rankFor = (viewer: typeof p1) => {
+      const card = projectMatch(
+        state,
+        { kind: 'player', playerId: viewer },
+        identities
+      ).zones[playerZoneId(p1, 'discard')]!.cards[0]!;
+      return card.kind === 'known' ? card.decklistRank : 'concealed';
+    };
+    // Blue knows where it sits in the list; Red learns only that it is the
+    // first of Blue's cards Red can see, not how many come before it.
+    expect(rankFor(p1)).toBe(1);
+    expect(rankFor(p2)).toBe(0);
+  });
 });

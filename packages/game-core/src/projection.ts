@@ -244,6 +244,34 @@ export const projectMatch = (
   const key = viewerKey(viewer);
   const definitions: Record<string, ViewCardDefinition> = {};
   const decklistRankOf = decklistRanks(state);
+  // Another player's card ranks only among that player's cards this viewer
+  // can read: its place in the whole decklist would tell how many cards,
+  // and which, the hidden rest of the deck holds.
+  const sharedRanks = new Map<string, number>();
+  {
+    const seen = new Map<PlayerId, Map<CardDefinitionId, number>>();
+    for (const card of Object.values(state.cards)) {
+      if (viewer.kind === 'player' && viewer.playerId === card.ownerId)
+        continue;
+      const rank = decklistRankOf(card);
+      if (rank === undefined || !isCardKnownToViewer(state, viewer, card))
+        continue;
+      const owner = seen.get(card.ownerId) ?? new Map();
+      seen.set(card.ownerId, owner);
+      owner.set(card.definitionId, rank);
+    }
+    for (const [ownerId, definitions] of seen) {
+      [...definitions.entries()]
+        .sort(([, left], [, right]) => left - right)
+        .forEach(([definitionId], index) =>
+          sharedRanks.set(`${ownerId}\u0000${definitionId}`, index)
+        );
+    }
+  }
+  const visibleRankOf = (card: CardInstance): number | undefined =>
+    viewer.kind === 'player' && viewer.playerId === card.ownerId
+      ? decklistRankOf(card)
+      : sharedRanks.get(`${card.ownerId}\u0000${card.definitionId}`);
 
   const projectCard = (cardId: CardInstanceId): ViewCard => {
     const card = state.cards[cardId];
@@ -277,7 +305,7 @@ export const projectMatch = (
     if (!definitions[definitionId]) {
       definitions[definitionId] = projectDefinition(definitionId, definition);
     }
-    const decklistRank = decklistRankOf(card);
+    const decklistRank = visibleRankOf(card);
     return {
       kind: 'known',
       id,
