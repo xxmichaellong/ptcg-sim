@@ -99,10 +99,20 @@ const placeIn = (
     : {};
 
 /** Converts one renderer-safe drop into an explicit, preconditioned command. */
+export interface BoardDropOptions {
+  /**
+   * Cards may leave either seat's open window (a look at a deck, attached
+   * cards being moved), not only the viewer's: Solo, whose one player
+   * controls both seats.
+   */
+  readonly eitherSeatsWindows?: boolean;
+}
+
 export const resolveBoardDrop = (
   view: BoardDropView,
   scene: BoardScene,
-  intent: DropIntent
+  intent: DropIntent,
+  options: BoardDropOptions = {}
 ): BoardDropResolution => {
   if (view.viewer.kind !== 'player') return rejected('not_player');
   if (
@@ -153,10 +163,13 @@ export const resolveBoardDrop = (
   if (!sourceZone && !sourceStack && !sourceInspection && !sourceStaged) {
     return rejected('stale_card');
   }
-  if (sourceStaged && sourceStagedPlayerId !== view.viewer.playerId) {
+  const viewerPlayerId = view.viewer.playerId;
+  const worksWindowOf = (playerId: string | undefined): boolean =>
+    playerId === viewerPlayerId || options.eitherSeatsWindows === true;
+  if (sourceStaged && !worksWindowOf(sourceStagedPlayerId)) {
     return rejected('unsupported_source');
   }
-  if (sourceInspection && sourceInspectionPlayerId !== view.viewer.playerId) {
+  if (sourceInspection && !worksWindowOf(sourceInspectionPlayerId)) {
     return rejected('unsupported_source');
   }
 
@@ -337,7 +350,8 @@ export const resolveBoardDrop = (
     if (sourceStaged) {
       if (
         !sourceRepresentsStagedStack ||
-        sourceStagedPlayerId !== view.viewer.playerId
+        !sourceStagedPlayerId ||
+        !worksWindowOf(sourceStagedPlayerId)
       ) {
         return rejected('unsupported_source');
       }
@@ -350,6 +364,9 @@ export const resolveBoardDrop = (
         ok: true,
         command: {
           type: 'RestoreStagedStack',
+          ...(sourceStagedPlayerId === view.viewer.playerId
+            ? {}
+            : { targetPlayerId: sourceStagedPlayerId }),
           expectedWorkAreaId: sourceStaged.id,
           expectedActiveStackId: board.activeStackId,
           expectedBenchStackIds: [...board.benchStackIds],

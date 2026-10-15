@@ -154,7 +154,7 @@ export const initializeNewRoom = async (
   }
   // v1's solo table calls its two seats Blue and Red; a multiplayer seat is
   // renamed by whoever takes it.
-  const state = createEmptyMatch(asMatchId(input.matchId), [
+  const created = createEmptyMatch(asMatchId(input.matchId), [
     {
       playerId: playerOneId,
       displayName: input.mode === 'solo' ? 'Blue' : 'Player 1',
@@ -166,6 +166,21 @@ export const initializeNewRoom = async (
       cardBackUrl: input.playerTwoCardBackUrl,
     },
   ]);
+  // Solo's one player sits in both seats, so each seat has, in effect,
+  // agreed to the other seeing its private cards: a flipped board looks at
+  // the other seat's prizes or a face-down card as that seat would.
+  const state =
+    input.mode === 'solo'
+      ? {
+          ...created,
+          players: Object.fromEntries(
+            Object.entries(created.players).map(([playerId, player]) => [
+              playerId,
+              { ...player, coachingConsent: true },
+            ])
+          ),
+        }
+      : created;
   const snapshot: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,

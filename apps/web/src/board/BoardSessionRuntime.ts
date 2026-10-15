@@ -50,6 +50,7 @@ export interface BoardSessionRuntimeOptions {
   readonly onBoardEffect?: (effect: BoardSessionRendererEffect) => void;
   readonly onSubmission?: BoardSessionAdapterOptions['onSubmission'];
   readonly onCommandRefused?: BoardSessionAdapterOptions['onCommandRefused'];
+  readonly resolveDrop?: BoardSessionAdapterOptions['resolveDrop'];
   readonly reportError?: (error: unknown) => void;
   readonly reportRendererStatus?: (status: BoardRendererStatus) => void;
   /** The hovered card, for a route-owned inspector. Presentational only. */
@@ -585,6 +586,9 @@ export class BoardSessionRuntime {
         : {}),
       ...(this.options.onCommandRefused
         ? { onCommandRefused: this.options.onCommandRefused }
+        : {}),
+      ...(this.options.resolveDrop
+        ? { resolveDrop: this.options.resolveDrop }
         : {}),
       reportEffectFailure: (error) => this.reportError(error),
     });

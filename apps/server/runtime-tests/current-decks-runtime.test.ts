@@ -73,7 +73,11 @@ describe('current decks from Limitless', () => {
     const calls = limitlessCalls;
     expect(calls).toBeGreaterThan(0);
     expect((await getCurrentDecks()).status).toBe(503);
-    // A failed attempt holds further ones back for a while.
+    // A failed attempt holds further ones back for a while, even once the
+    // object has been evicted and comes back fresh.
+    expect(limitlessCalls).toBe(calls);
+    await evictDurableObject(feedStub());
+    expect((await getCurrentDecks()).status).toBe(503);
     expect(limitlessCalls).toBe(calls);
   });
 

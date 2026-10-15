@@ -56,6 +56,7 @@ import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import { refusalNotice } from '../board/refusal-notice.js';
+import { resolveBoardDrop } from '../board/resolveBoardDrop.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
 import {
   boardViewSettings,
@@ -572,6 +573,11 @@ export const RemoteSessionBoard = ({
             return applyHandSortDisplay(covered, policy.sortedHandPlayerIds);
           },
           onIntent: (intent) => onIntentRef.current(intent),
+          // Solo's player moves cards out of either seat's window.
+          resolveDrop: (dropView, scene, intent) =>
+            resolveBoardDrop(dropView, scene, intent, {
+              eitherSeatsWindows: displayPolicyRef.current.roomMode === 'solo',
+            }),
           onSubmission: (command, result) => {
             onSubmissionRef.current?.(command, result);
             if (

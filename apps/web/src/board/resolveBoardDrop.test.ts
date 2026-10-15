@@ -627,6 +627,27 @@ describe('board drop command resolution', () => {
       )
     ).toEqual({ ok: false, reason: 'unsupported_source' });
     expect(submit).not.toHaveBeenCalled();
+    // Solo's player works either seat's window.
+    expect(
+      resolveBoardDrop(
+        view,
+        scene,
+        {
+          kind: 'CardDropRequested',
+          cardId: viewCard.id,
+          targetId: `zone:${viewerPlayerId}:discard`,
+        },
+        { eitherSeatsWindows: true }
+      )
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveInspectedCard',
+        cardId: viewCard.id,
+        expectedWorkAreaId: 'foreign-inspection-work-area',
+        destinationZoneId: `zone:${viewerPlayerId}:discard`,
+      },
+    });
   });
 
   it('moves staged cards individually or restores the represented stack', () => {

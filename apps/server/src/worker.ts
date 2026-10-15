@@ -1043,6 +1043,8 @@ export class PtcgRoom extends DurableObject<Env> {
 }
 
 const DECK_FEED_STORAGE_KEY = 'current-decks:feed';
+/** When a failed attempt lets the next one go to Limitless. */
+const DECK_FEED_RETRY_STORAGE_KEY = 'current-decks:retry-after';
 /** One feed for everyone. */
 const DECK_FEED_NAME = 'limitless-standard';
 /** The daily refresh missed (or failed) for longer than this: try again. */
@@ -1053,12 +1055,12 @@ const DECK_FEED_RETRY_AFTER_MS = 10 * 60 * 1000;
 /**
  * The deck picker's current lists from Limitless (current-decks.ts). The
  * daily cron refreshes them; a request finding none, or a day-old set,
- * refreshes them too. Attempts are serialized and spaced out, and a failed
- * one keeps the lists already stored.
+ * refreshes them too. Attempts are serialized, and a failed one keeps the
+ * lists already stored and holds the next one back for a while -- stored,
+ * so an outage still holds it back after the object is evicted.
  */
 export class PtcgDeckFeed extends DurableObject<Env> {
   private refreshing: Promise<CurrentDeckFeed | null> | undefined;
-  private lastAttemptAt = Number.NEGATIVE_INFINITY;
   private readonly telemetry = createTelemetry('deck_feed', this.env.BUILD_ID);
 
   async current(): Promise<CurrentDeckFeed | null> {
@@ -1089,32 +1091,41 @@ export class PtcgDeckFeed extends DurableObject<Env> {
 
   private refreshFeed(): Promise<CurrentDeckFeed | null> {
     if (this.refreshing) return this.refreshing;
-    if (Date.now() - this.lastAttemptAt < DECK_FEED_RETRY_AFTER_MS) {
+    this.refreshing = this.attemptRefresh().finally(() => {
+      this.refreshing = undefined;
+    });
+    return this.refreshing;
+  }
+
+  private async attemptRefresh(): Promise<CurrentDeckFeed | null> {
+    const retryAfter = await this.ctx.storage.get<unknown>(
+      DECK_FEED_RETRY_STORAGE_KEY
+    );
+    if (typeof retryAfter === 'number' && Date.now() < retryAfter) {
       return this.stored();
     }
-    this.lastAttemptAt = Date.now();
-    this.refreshing = fetchCurrentDeckFeed({
-      fetch: (input, init) => fetch(input, init),
-      now: Date.now,
-      ...(this.env.LIMITLESS_API_KEY
-        ? { apiKey: this.env.LIMITLESS_API_KEY }
-        : {}),
-    })
-      .then(async (feed) => {
-        await this.ctx.storage.put(DECK_FEED_STORAGE_KEY, feed);
-        return feed;
-      })
-      .catch(async () => {
-        this.telemetry.failure({
-          subsystem: 'deck_feed_refresh',
-          retryable: true,
-        });
-        return this.stored();
-      })
-      .finally(() => {
-        this.refreshing = undefined;
+    try {
+      const feed = await fetchCurrentDeckFeed({
+        fetch: (input, init) => fetch(input, init),
+        now: Date.now,
+        ...(this.env.LIMITLESS_API_KEY
+          ? { apiKey: this.env.LIMITLESS_API_KEY }
+          : {}),
       });
-    return this.refreshing;
+      await this.ctx.storage.put(DECK_FEED_STORAGE_KEY, feed);
+      await this.ctx.storage.delete(DECK_FEED_RETRY_STORAGE_KEY);
+      return feed;
+    } catch {
+      this.telemetry.failure({
+        subsystem: 'deck_feed_refresh',
+        retryable: true,
+      });
+      await this.ctx.storage.put(
+        DECK_FEED_RETRY_STORAGE_KEY,
+        Date.now() + DECK_FEED_RETRY_AFTER_MS
+      );
+      return this.stored();
+    }
   }
 }
 

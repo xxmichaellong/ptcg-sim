@@ -37,6 +37,11 @@ describe('new durable room initialization', () => {
     expect(result.snapshot.state.playerOrder).toHaveLength(2);
     expect(result.snapshot.mode).toBe('multiplayer');
     expect(result.snapshot.admission?.playerSeatLimit).toBe(2);
+    expect(
+      Object.values(result.snapshot.state.players).map(
+        (player) => player.coachingConsent
+      )
+    ).toEqual([false, false]);
     expect(result.snapshot.admission?.spectatorCapabilityDigest).toHaveLength(
       43
     );
@@ -63,6 +68,12 @@ describe('new durable room initialization', () => {
     expect(result.snapshot.mode).toBe('solo');
     expect(result.snapshot.admission?.playerSeatLimit).toBe(1);
     expect(result.snapshot.state.playerOrder).toHaveLength(2);
+    // One player in both seats: each seat may look at the other's cards.
+    expect(
+      Object.values(result.snapshot.state.players).map(
+        (player) => player.coachingConsent
+      )
+    ).toEqual([true, true]);
     expect(
       result.credentials.playerTwoSeatCapability.length
     ).toBeGreaterThanOrEqual(32);

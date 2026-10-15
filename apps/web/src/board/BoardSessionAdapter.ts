@@ -24,6 +24,7 @@ import {
   type BoardPresentationDismissScope,
   type OpenedZoneCardIntent,
   type BoardSessionControllerEffect,
+  type BoardSessionControllerOptions,
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
@@ -66,6 +67,8 @@ export interface BoardSessionAdapterOptions {
    * has just been withdrawn from the board. Called once per command.
    */
   readonly onCommandRefused?: (completed: CompletedCommandSummary) => void;
+  /** Resolves a dropped card into a command (Solo widens whose windows). */
+  readonly resolveDrop?: BoardSessionControllerOptions['resolveDrop'];
   readonly reportEffectFailure?: (
     error: unknown,
     effect: BoardSessionControllerEffect
@@ -144,6 +147,7 @@ export class BoardSessionAdapter {
       ...(options.reportEffectFailure
         ? { reportEffectFailure: options.reportEffectFailure }
         : {}),
+      ...(options.resolveDrop ? { resolveDrop: options.resolveDrop } : {}),
     });
     this.synchronize();
     const unsubscribe = options.replay.subscribe(this.synchronize);

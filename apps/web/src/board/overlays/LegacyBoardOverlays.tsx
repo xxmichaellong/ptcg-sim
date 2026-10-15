@@ -2217,14 +2217,17 @@ const WorkAreaPanel = ({
   const own =
     state.view?.viewer.kind === 'player' &&
     zone.playerId === state.view.viewer.playerId;
+  // Solo's player works the other seat's window too: card by card as well
+  // as all at once.
+  const controls = own || allowOpponentResolution;
   const heading =
     zone.kind === 'inspection'
       ? 'Looking at cards...'
-      : own
+      : controls
         ? 'Move attached cards'
         : 'Opponent moving cards...';
   const emit = actions.emitCardIntent;
-  const interactive = own && state.canSubmitCommands && emit !== undefined;
+  const interactive = controls && state.canSubmitCommands && emit !== undefined;
   const drag = useOverlayCardDrag({
     scene: state.scene,
     ...(depth ? { depth } : {}),
@@ -2235,7 +2238,7 @@ const WorkAreaPanel = ({
   });
   const draggingCardId = drag.draggingCardId;
   const withActions =
-    (own || allowOpponentResolution) &&
+    controls &&
     state.canSubmitCommands &&
     actions.invokeWorkAreaAction !== undefined;
   const layout = workAreaPanelLayout(
@@ -2243,11 +2246,11 @@ const WorkAreaPanel = ({
     board,
     cards.length,
     withActions,
-    own && emit !== undefined
+    controls && emit !== undefined
   );
   const hint = withActions
     ? 'Drag a card out, or move them all with a button below'
-    : own
+    : controls
       ? undefined
       : zone.kind === 'inspection'
         ? 'Your opponent is looking at these cards'
@@ -2325,7 +2328,7 @@ const WorkAreaPanel = ({
           </button>
         ))}
       </div>
-      {own && emit ? (
+      {controls && emit ? (
         <OverlayCardActions
           card={cards.find(
             (card) => card.id === state.presentation.selectedCardId

@@ -114,6 +114,11 @@ export const resolveWireCommand = (
     return rejected('stale_reference');
   }
 
+  // Solo's one player controls both seats, and so both seats' windows (a
+  // look at a deck, attached cards being moved) whichever side is down.
+  const controlsSeat = (playerId: PlayerId): boolean =>
+    playerId === actorId || undoContext.mode === 'solo';
+
   const resolveCard = (alias: string) => {
     return resolveViewCard(
       state,
@@ -298,7 +303,7 @@ export const resolveWireCommand = (
         }
         case 'inspectionWorkArea': {
           const inspection = state.workAreas[location.playerId]?.inspection;
-          if (!inspection || location.playerId !== actorId) {
+          if (!inspection || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
           sourceId = inspection.id;
@@ -309,7 +314,7 @@ export const resolveWireCommand = (
         case 'attachmentResolutionWorkArea': {
           const resolution =
             state.workAreas[location.playerId]?.attachmentResolution;
-          if (!resolution || location.playerId !== actorId) {
+          if (!resolution || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
           sourceId = resolution.id;
@@ -501,7 +506,7 @@ export const resolveWireCommand = (
         return rejected('stale_reference');
       }
       if (
-        location.playerId !== actorId ||
+        !controlsSeat(location.playerId) ||
         !canControlCard(
           state,
           actorId,
@@ -512,7 +517,7 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
-      const inspection = state.workAreas[actorId]?.inspection;
+      const inspection = state.workAreas[location.playerId]?.inspection;
       if (
         !inspection ||
         inspection.id !== wire.expectedWorkAreaId ||
@@ -573,11 +578,12 @@ export const resolveWireCommand = (
       if (
         !location ||
         location.kind !== 'attachmentResolutionWorkArea' ||
-        location.playerId !== actorId
+        !controlsSeat(location.playerId)
       ) {
         return rejected('unauthorized');
       }
-      const resolution = state.workAreas[actorId]?.attachmentResolution;
+      const resolution =
+        state.workAreas[location.playerId]?.attachmentResolution;
       if (
         !resolution ||
         resolution.id !== wire.expectedWorkAreaId ||
@@ -704,7 +710,7 @@ export const resolveWireCommand = (
         }
         case 'inspectionWorkArea': {
           const inspection = state.workAreas[location.playerId]?.inspection;
-          if (!inspection || location.playerId !== actorId) {
+          if (!inspection || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
           sourceId = inspection.id;
@@ -715,7 +721,7 @@ export const resolveWireCommand = (
         case 'attachmentResolutionWorkArea': {
           const resolution =
             state.workAreas[location.playerId]?.attachmentResolution;
-          if (!resolution || location.playerId !== actorId) {
+          if (!resolution || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
           sourceId = resolution.id;

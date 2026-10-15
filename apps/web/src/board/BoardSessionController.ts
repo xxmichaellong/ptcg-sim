@@ -290,6 +290,7 @@ export interface BoardSessionControllerOptions {
   ) => void;
   /** Called each time the dispatch queue drains. */
   readonly onIdle?: () => void;
+  readonly resolveDrop?: BoardSessionControllerDependencies['resolveDrop'];
 }
 
 const EMPTY_OVERLAYS: BoardOverlayState = {

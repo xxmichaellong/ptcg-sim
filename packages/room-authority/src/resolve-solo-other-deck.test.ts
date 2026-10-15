@@ -15,7 +15,10 @@ import {
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
-import { emptyProjectionIdentityState } from './identity-registry.js';
+import {
+  emptyProjectionIdentityState,
+  projectRecipient,
+} from './identity-registry.js';
 import { DEFAULT_AUTHORITY_POLICY, type AuthoritySession } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
 
@@ -46,7 +49,7 @@ const session: AuthoritySession = {
   recentOutcomes: [],
 };
 
-const withOtherDeck = (): MatchState => {
+const withOtherDeck = (count = 3): MatchState => {
   const empty = createEmptyMatch(asMatchId('solo-deck-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
@@ -64,7 +67,7 @@ const withOtherDeck = (): MatchState => {
             category: 'Trainer',
             imageUrl: 'https://cards.example/other-seat.png',
           },
-          count: 3,
+          count,
         },
       ],
     },
@@ -77,11 +80,12 @@ const withOtherDeck = (): MatchState => {
 const resolve = (
   state: MatchState,
   command: WireGameCommand,
-  mode: 'solo' | 'multiplayer'
+  mode: 'solo' | 'multiplayer',
+  identities = emptyProjectionIdentityState()
 ) =>
   resolveWireCommand(
     state,
-    emptyProjectionIdentityState(),
+    identities,
     session,
     command,
     DEFAULT_AUTHORITY_POLICY,
@@ -127,5 +131,96 @@ describe("a flipped Solo board's deck shortcuts", () => {
     expect(looked.accepted).toBe(true);
     if (!looked.accepted) return;
     expect(looked.state.workAreas[p2]?.inspection?.cardIds).toHaveLength(2);
+  });
+
+  it("move a card out of the other seat's window in Solo only", () => {
+    const state = withOtherDeck();
+    const looked = resolve(
+      state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: p2,
+        count: 2,
+        edge: 'top',
+        visibility: 'private',
+      },
+      'solo'
+    );
+    if (!looked.accepted) throw new Error('look refused');
+    const opened = executeCommand(state, looked.command, context);
+    if (!opened.accepted) throw new Error(opened.message);
+    let opaque = 0;
+    const projected = projectRecipient(
+      opened.state,
+      session.viewer,
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) =>
+          `solo-deck-${kind}-${String(++opaque).padStart(8, '0')}`,
+      },
+      'solo'
+    );
+    const window = projected.snapshot.workAreas[p2]!.inspection!;
+    const move: WireGameCommand = {
+      type: 'MoveInspectedCard',
+      cardId: window.cards[0]!.id,
+      expectedWorkAreaId: window.id,
+      destinationZoneId: playerZoneId(p2, 'hand'),
+    };
+    expect(
+      resolve(opened.state, move, 'multiplayer', projected.identities)
+    ).toEqual({ accepted: false, code: 'unauthorized' });
+    const solo = resolve(opened.state, move, 'solo', projected.identities);
+    expect(solo.accepted).toBe(true);
+    if (!solo.accepted) return;
+    const moved = executeCommand(opened.state, solo.command, context);
+    expect(moved.accepted).toBe(true);
+    if (!moved.accepted) return;
+    expect(moved.state.zones[playerZoneId(p2, 'hand')]!.cardIds).toHaveLength(
+      1
+    );
+  });
+
+  it("look at the other seat's prizes once both seats have consented, as a Solo room's do", () => {
+    const loaded = withOtherDeck(20);
+    const prized = executeCommand(
+      loaded,
+      { type: 'SetupPlayer', playerId: p2 },
+      context
+    );
+    if (!prized.accepted) throw new Error(prized.message);
+    const solo: MatchState = {
+      ...prized.state,
+      players: Object.fromEntries(
+        Object.entries(prized.state.players).map(([id, player]) => [
+          id,
+          { ...player, coachingConsent: true },
+        ])
+      ),
+    };
+    let opaque = 0;
+    const projected = projectRecipient(
+      solo,
+      session.viewer,
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) =>
+          `solo-prize-${kind}-${String(++opaque).padStart(8, '0')}`,
+      },
+      'solo'
+    );
+    const prizes = projected.snapshot.zones[playerZoneId(p2, 'prizes')]!;
+    expect(prizes.cards.length).toBeGreaterThan(0);
+    const look: WireGameCommand = {
+      type: 'BeginZoneInspection',
+      targetPlayerId: p2,
+      zoneId: prizes.id,
+      expectedCardIds: prizes.cards.map((card) => card.id),
+    };
+    const resolved = resolve(solo, look, 'solo', projected.identities);
+    expect(resolved.accepted).toBe(true);
+    if (!resolved.accepted) return;
+    expect(resolved.command).toMatchObject({ viewerPlayerId: p1 });
+    expect(executeCommand(solo, resolved.command, context).accepted).toBe(true);
   });
 });
