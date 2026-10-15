@@ -578,12 +578,18 @@ const resolveContextAction = (
         return rejected('invalid_value');
       }
       if (request.destination === 'board') {
-        return resolveCardZoneMoveAction(view, request.cardId, 'board');
+        return resolveCardZoneMoveAction(
+          view,
+          request.cardId,
+          'board',
+          actingPlayerId
+        );
       }
       const resolution = resolveDeckRelativeCardAction(
         view,
         request.cardId,
-        DECK_ACTION_BY_MOVE_CHOICE[request.destination]
+        DECK_ACTION_BY_MOVE_CHOICE[request.destination],
+        actingPlayerId
       );
       return resolution.ok
         ? command(resolution.command)

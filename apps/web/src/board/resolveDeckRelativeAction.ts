@@ -46,7 +46,9 @@ export type DeckRelativeActionResolution =
 export const resolveDeckRelativeCardAction = (
   view: MatchViewState,
   cardId: string,
-  action: DeckRelativeAction
+  action: DeckRelativeAction,
+  /** The seat at the bottom (a flipped Solo board): its window is worked too. */
+  actingPlayerId?: string
 ): DeckRelativeActionResolution => {
   if (view.viewer.kind !== 'player') {
     return { ok: false, reason: 'not_player' };
@@ -56,7 +58,8 @@ export const resolveDeckRelativeCardAction = (
   if (
     located.isLowerEvolution ||
     ((located.sourceKind === 'inspection' || located.sourceKind === 'staged') &&
-      located.sourcePlayerId !== view.viewer.playerId)
+      located.sourcePlayerId !== view.viewer.playerId &&
+      located.sourcePlayerId !== actingPlayerId)
   ) {
     return { ok: false, reason: 'unsupported_source' };
   }

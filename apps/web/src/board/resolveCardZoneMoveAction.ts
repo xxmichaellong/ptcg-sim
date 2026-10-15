@@ -40,14 +40,17 @@ const rejected = (
 export const resolveCardZoneMoveAction = (
   view: MatchViewState,
   cardId: ViewCardId,
-  destination: CardZoneMoveDestination
+  destination: CardZoneMoveDestination,
+  /** The seat at the bottom (a flipped Solo board): its window is worked too. */
+  actingPlayerId?: string
 ): CardZoneMoveResolution => {
   if (view.viewer.kind !== 'player') return rejected('not_player');
   const located = locateViewCardActionSource(view, cardId);
   if (!located) return rejected('stale_card');
   if (
     (located.sourceKind === 'inspection' || located.sourceKind === 'staged') &&
-    located.sourcePlayerId !== view.viewer.playerId
+    located.sourcePlayerId !== view.viewer.playerId &&
+    located.sourcePlayerId !== actingPlayerId
   ) {
     return rejected('unsupported_source');
   }

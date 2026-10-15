@@ -49,9 +49,13 @@ const canControlCard = (
   actorId: PlayerId,
   ownerId: PlayerId,
   known: boolean,
-  policy: AuthorityPolicy
+  policy: AuthorityPolicy,
+  mode: AuthorityMode
 ): boolean =>
   ownerId === actorId ||
+  // Solo's one player controls both seats' cards, face-down ones too: a
+  // flipped board takes the other seat's prizes.
+  (mode === 'solo' && Boolean(state.players[ownerId])) ||
   (policy.allowOpponentPublicInteraction &&
     known &&
     Boolean(state.players[ownerId]));
@@ -202,7 +206,8 @@ export const resolveWireCommand = (
           actorId,
           state.cards[card.cardId]!.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -236,7 +241,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -339,7 +345,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -397,7 +404,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -512,7 +520,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -546,10 +555,12 @@ export const resolveWireCommand = (
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');
       const canonicalCard = state.cards[card.cardId]!;
-      const areas = state.workAreas[actorId];
-      const open =
-        areas?.inspection?.id === wire.expectedWorkAreaId ||
-        areas?.attachmentResolution?.id === wire.expectedWorkAreaId;
+      const open = Object.entries(state.workAreas).some(
+        ([playerId, areas]) =>
+          controlsSeat(asPlayerId(playerId)) &&
+          (areas?.inspection?.id === wire.expectedWorkAreaId ||
+            areas?.attachmentResolution?.id === wire.expectedWorkAreaId)
+      );
       if (!open) return rejected('stale_reference');
       if (
         !canControlCard(
@@ -557,7 +568,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -746,7 +758,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -907,7 +920,11 @@ export const resolveWireCommand = (
       const source = state.zones[wire.sourceZoneId];
       const destination = state.zones[wire.destinationZoneId];
       if (!source || !destination) return rejected('stale_reference');
-      if (source.ownerId !== actorId || destination.ownerId !== actorId) {
+      if (
+        !source.ownerId ||
+        !controlsSeat(source.ownerId) ||
+        destination.ownerId !== source.ownerId
+      ) {
         return rejected('unauthorized');
       }
       if (source.kind === 'board' || destination.kind === 'board') {
@@ -962,13 +979,15 @@ export const resolveWireCommand = (
     case 'ShuffleZoneToDeckBottom': {
       const source = state.zones[wire.sourceZoneId];
       if (!source) return rejected('stale_reference');
-      if (source.ownerId !== actorId) return rejected('unauthorized');
+      // Into the deck of the pile's owner (either seat, in Solo).
+      if (!source.ownerId || !controlsSeat(source.ownerId))
+        return rejected('unauthorized');
       if (source.kind === 'board') return rejected('precondition_failed');
       return {
         accepted: true,
         command: {
           type: wire.type,
-          playerId: actorId,
+          playerId: source.ownerId,
           sourceZoneId: asZoneId(wire.sourceZoneId),
         },
       };
@@ -1058,7 +1077,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -1112,7 +1132,8 @@ export const resolveWireCommand = (
           actorId,
           canonicalCard.ownerId,
           card.known,
-          policy
+          policy,
+          undoContext.mode
         )
       ) {
         return rejected('unauthorized');
@@ -1293,15 +1314,17 @@ export const resolveWireCommand = (
       };
     }
     case 'CloseInspection': {
-      const inspection = state.workAreas[actorId]?.inspection;
-      if (!inspection || inspection.id !== wire.expectedWorkAreaId) {
-        return rejected('stale_reference');
-      }
+      const owner = state.playerOrder.find(
+        (playerId) =>
+          controlsSeat(playerId) &&
+          state.workAreas[playerId]?.inspection?.id === wire.expectedWorkAreaId
+      );
+      if (!owner) return rejected('stale_reference');
       return {
         accepted: true,
         command: {
           type: 'CloseInspection',
-          playerId: actorId,
+          playerId: owner,
           expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           returnTo: wire.returnTo,
         },

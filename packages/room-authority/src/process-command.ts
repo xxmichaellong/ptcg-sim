@@ -308,9 +308,17 @@ const narratedActorOf = (
 const MAX_CONCEALED_CARD_BACK_CODE_UNITS = MAX_SERVER_FRAME_CODE_UNITS / 2;
 
 const cardBackCodeUnits = (state: MatchState): number => {
+  // As written on the wire: quotes and backslashes in a URL are escaped.
+  const encoded = new Map<string, number>();
   let total = 0;
   for (const card of Object.values(state.cards)) {
-    total += state.players[card.ownerId]?.cardBackUrl.length ?? 0;
+    const url = state.players[card.ownerId]?.cardBackUrl ?? '';
+    let length = encoded.get(url);
+    if (length === undefined) {
+      length = JSON.stringify(url).length;
+      encoded.set(url, length);
+    }
+    total += length;
   }
   return total;
 };

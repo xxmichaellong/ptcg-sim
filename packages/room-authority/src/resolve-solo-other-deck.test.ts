@@ -223,4 +223,115 @@ describe("a flipped Solo board's deck shortcuts", () => {
     expect(resolved.command).toMatchObject({ viewerPlayerId: p1 });
     expect(executeCommand(solo, resolved.command, context).accepted).toBe(true);
   });
+
+  it("take the other seat's face-down prize, shuffle its discard back, and add to and close its window, in Solo only", () => {
+    const prized = executeCommand(
+      withOtherDeck(20),
+      { type: 'SetupPlayer', playerId: p2 },
+      context
+    );
+    if (!prized.accepted) throw new Error(prized.message);
+    let state = prized.state;
+    let opaque = 0;
+    const project = () =>
+      projectRecipient(
+        state,
+        session.viewer,
+        emptyProjectionIdentityState(),
+        {
+          nextOpaqueId: (kind) =>
+            `solo-more-${kind}-${String(++opaque).padStart(8, '0')}`,
+        },
+        'solo'
+      );
+    const both = (
+      command: WireGameCommand,
+      identities: ReturnType<typeof project>['identities']
+    ) => {
+      expect(resolve(state, command, 'multiplayer', identities)).toMatchObject({
+        accepted: false,
+      });
+      const solo = resolve(state, command, 'solo', identities);
+      if (!solo.accepted) throw new Error(`refused: ${command.type}`);
+      const executed = executeCommand(state, solo.command, context);
+      if (!executed.accepted) throw new Error(executed.message);
+      state = executed.state;
+      return solo.command;
+    };
+
+    // A face-down prize into its seat's hand.
+    let projected = project();
+    const prizes = projected.snapshot.zones[playerZoneId(p2, 'prizes')]!;
+    expect(prizes.cards[0]!.kind).toBe('concealed');
+    both(
+      {
+        type: 'MoveCard',
+        cardId: prizes.cards[0]!.id,
+        expectedSourceZoneId: prizes.id,
+        destinationZoneId: playerZoneId(p2, 'hand'),
+      },
+      projected.identities
+    );
+    // Its discard shuffled into its own deck.
+    projected = project();
+    const hand = projected.snapshot.zones[playerZoneId(p2, 'hand')]!;
+    both(
+      {
+        type: 'MoveCard',
+        cardId: hand.cards[0]!.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: playerZoneId(p2, 'discard'),
+      },
+      projected.identities
+    );
+    projected = project();
+    expect(
+      both(
+        {
+          type: 'ShuffleZoneIntoDeck',
+          sourceZoneId: playerZoneId(p2, 'discard'),
+        },
+        projected.identities
+      )
+    ).toMatchObject({ playerId: p2 });
+    // A card dropped into its open window, which then closes.
+    const opened = resolve(
+      state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: p2,
+        count: 1,
+        edge: 'top',
+        visibility: 'private',
+      },
+      'solo'
+    );
+    if (!opened.accepted) throw new Error('look refused');
+    const looked = executeCommand(state, opened.command, context);
+    if (!looked.accepted) throw new Error(looked.message);
+    state = looked.state;
+    projected = project();
+    const window = projected.snapshot.workAreas[p2]!.inspection!;
+    const inHand = projected.snapshot.zones[playerZoneId(p2, 'hand')]!;
+    both(
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: inHand.cards[0]!.id,
+        expectedWorkAreaId: window.id,
+      },
+      projected.identities
+    );
+    expect(state.workAreas[p2]?.inspection?.cardIds).toHaveLength(2);
+    expect(
+      both(
+        {
+          type: 'CloseInspection',
+          expectedWorkAreaId: window.id,
+          returnTo: 'top',
+        },
+        project().identities
+      )
+    ).toMatchObject({ playerId: p2 });
+    expect(state.workAreas[p2]?.inspection).toBeNull();
+  });
 });

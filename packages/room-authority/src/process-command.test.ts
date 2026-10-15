@@ -421,6 +421,13 @@ describe('authoritative room command transaction', () => {
         cardBackUrl: back(600),
       })
     ).resolves.toMatchObject({ accepted: true });
+    // Measured as written on the wire: a quote is two characters there.
+    await expect(
+      submit('session-player-two', {
+        type: 'SetCardBack',
+        cardBackUrl: `https://backs.example/${'"'.repeat(600)}.png`,
+      })
+    ).resolves.toMatchObject({ accepted: false, code: 'precondition_failed' });
     await expect(
       submit('session-player-two', {
         type: 'SetCardBack',

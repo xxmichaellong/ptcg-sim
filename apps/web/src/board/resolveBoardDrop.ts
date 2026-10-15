@@ -101,9 +101,9 @@ const placeIn = (
 /** Converts one renderer-safe drop into an explicit, preconditioned command. */
 export interface BoardDropOptions {
   /**
-   * Cards may leave either seat's open window (a look at a deck, attached
-   * cards being moved), not only the viewer's: Solo, whose one player
-   * controls both seats.
+   * Cards may leave and join either seat's open window (a look at a deck,
+   * attached cards being moved), and either seat's cards may, not only the
+   * viewer's: Solo, whose one player controls both seats.
    */
   readonly eitherSeatsWindows?: boolean;
 }
@@ -316,7 +316,7 @@ export const resolveBoardDrop = (
       (zone.kind === 'inspection' || zone.kind === 'attachmentResolution')
   );
   if (workAreaTarget) {
-    if (workAreaTarget.playerId !== view.viewer.playerId) {
+    if (!worksWindowOf(workAreaTarget.playerId ?? undefined)) {
       return rejected('unsupported_target');
     }
     if (
@@ -326,7 +326,7 @@ export const resolveBoardDrop = (
       return rejected('no_op');
     }
     const card = scene.cards.find((entry) => entry.id === intent.cardId);
-    if (card && card.ownerId !== view.viewer.playerId) {
+    if (card && !worksWindowOf(card.ownerId)) {
       return rejected('unsupported_source');
     }
     return {

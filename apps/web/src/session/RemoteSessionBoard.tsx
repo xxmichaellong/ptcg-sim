@@ -304,6 +304,10 @@ export const RemoteSessionBoard = ({
   );
   const boardViewRef = useRef(boardView);
   boardViewRef.current = boardView;
+  // A live Solo table shows or covers the other seat's hand on this screen
+  // alone (Hide opponent hand); there is no one to ask for a look.
+  const liveSoloRef = useRef(false);
+  liveSoloRef.current = roomMode === 'solo' && replayState.mode === 'live';
   const markerCount = oncePerGameMarkerCount(boardView);
   const preferences = useBoardParallax(hostRef, basePreferences);
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
@@ -754,6 +758,12 @@ export const RemoteSessionBoard = ({
         runtimeRef.current?.dismissLocalPresentation(scope);
       },
       invokeContextAction: (action, cardId) => {
+        if (action === 'toggleOpponentHand' && liveSoloRef.current) {
+          boardViewStore.update({
+            hideOpponentHand: !boardViewStore.getSnapshot().hideOpponentHand,
+          });
+          return;
+        }
         runtimeRef.current?.emitLegacyOverlayAction({
           kind: 'context',
           action,

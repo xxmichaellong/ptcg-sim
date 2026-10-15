@@ -526,7 +526,12 @@ export const resolveLegacyBoardShortcutAction = (
         return { ok: false, reason: 'invalid_value' };
       }
       return retainResolution(
-        resolveDeckRelativeCardAction(view, request.cardId, request.deckAction),
+        resolveDeckRelativeCardAction(
+          view,
+          request.cardId,
+          request.deckAction,
+          acting
+        ),
         true
       );
     case 'moveCardToZone':
@@ -534,7 +539,12 @@ export const resolveLegacyBoardShortcutAction = (
         return { ok: false, reason: 'invalid_value' };
       }
       return retainResolution(
-        resolveCardZoneMoveAction(view, request.cardId, request.destination),
+        resolveCardZoneMoveAction(
+          view,
+          request.cardId,
+          request.destination,
+          acting
+        ),
         true
       );
     case 'moveCardToPlay':
