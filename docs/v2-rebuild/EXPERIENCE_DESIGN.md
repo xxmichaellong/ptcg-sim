@@ -130,7 +130,10 @@ board) beside it; five bench slots below; deck, discard and Lost Zone down
 the outer right as equal piles; the stadium on the seam. The hand runs along
 the screen edge, partly off it until hovered, with its count at the far end
 of its strip; the opponent's half is the same mat turned around, with a
-slimmer hand strip. Each player's VSTAR/GX tiles and hand-sort switch sit in
+slimmer hand strip (60 % of the near one's since 2026-10-16: the near half
+takes 54 % of the height by default, so both boards keep cards of one size
+and share the room the far hand gives up; a table too narrow for those
+cards keeps an even split's and widens the seam instead). Each player's VSTAR/GX tiles and hand-sort switch sit in
 the corner beside their hand, and the table controls (turn, coin, flip,
 refresh, full screen) sit on the seam. The chrome is a right rail (tabs, log,
 chat, actions) `clamp(300px, 23vw, 380px)` wide.

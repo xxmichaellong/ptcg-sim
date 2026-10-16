@@ -9,6 +9,8 @@ type TextureEntryPhase = 'pending' | 'ready' | 'failed' | 'unloading';
 interface TextureEntry<Texture> {
   readonly url: string;
   readonly promise: Promise<Texture>;
+  /** The loaded texture, once ready. */
+  texture?: Texture;
   references: number;
   phase: TextureEntryPhase;
   unloadTask: Promise<void> | null;
@@ -73,6 +75,18 @@ export class TextureAssetLeaseBroker<Texture> {
         this.releaseEntry(entry);
       },
     };
+  }
+
+  /**
+   * The texture for a URL that is loaded and leased right now, if any: a new
+   * view can show it at once instead of a placeholder while its own lease
+   * resolves.
+   */
+  peek(url: string): Texture | undefined {
+    const entry = this.entries.get(url);
+    return entry?.phase === 'ready' && entry.references > 0
+      ? entry.texture
+      : undefined;
   }
 
   subscribeErrors(listener: (error: unknown) => void): () => void {
@@ -142,8 +156,11 @@ export class TextureAssetLeaseBroker<Texture> {
     this.entries.set(url, entry);
     this.lifecycleEntries.add(entry);
     void entry.promise.then(
-      () => {
-        if (entry.phase === 'pending') entry.phase = 'ready';
+      (texture) => {
+        if (entry.phase === 'pending') {
+          entry.phase = 'ready';
+          entry.texture = texture;
+        }
       },
       () => {
         if (entry.phase === 'pending') {
@@ -231,6 +248,11 @@ export class CardTextureRegistry<Texture> {
 
   get placeholder(): Texture {
     return this.broker.placeholder;
+  }
+
+  /** A loaded, leased texture for this URL, if there is one right now. */
+  peek(url: string): Texture | undefined {
+    return this.disposed ? undefined : this.broker.peek(url);
   }
 
   bind(

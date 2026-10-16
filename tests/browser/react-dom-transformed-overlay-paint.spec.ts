@@ -216,6 +216,14 @@ const mountCandidate = async (
     readonly openedPileAbilityMarkers?: boolean;
   } = {}
 ): Promise<OverlayFixture> => {
+  // These compare every card of a pile with v1's, which shows each copy on
+  // its own; the candidate's piles stack copies by default (PX-048).
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      'ptcgsim.zone-browser.v1',
+      JSON.stringify({ stackPiles: false })
+    )
+  );
   await page.goto('/?renderer-spike=1&renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
@@ -698,8 +706,15 @@ test('transformed stack and zone overlays keep real-v1 content and protected sem
   await expect(
     zone.getByRole('searchbox', { name: 'Search cards' })
   ).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(zone.getByRole('combobox', { name: 'Card size' })).toBeFocused();
+  for (const size of [
+    zone.getByRole('button', { name: 'Smaller cards' }),
+    zone.getByRole('slider', { name: 'Card size' }),
+    zone.getByRole('button', { name: 'Larger cards' }),
+    zone.getByRole('button', { name: /^Card size 100%/u }),
+  ]) {
+    await page.keyboard.press('Tab');
+    await expect(size).toBeFocused();
+  }
   await page.keyboard.press('Tab');
   await expect(firstZoneCard).toBeFocused();
   await primaryZoneAction.focus();

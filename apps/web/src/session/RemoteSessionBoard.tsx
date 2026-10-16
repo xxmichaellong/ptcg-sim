@@ -36,7 +36,8 @@ import {
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
-import { CoinFlipOverlay } from '../board/CoinFlipOverlay.js';
+import { TableCoins } from '../board/TableCoin.js';
+import { tableCoinSpots } from '../board/table-coin.js';
 import {
   LegacyBoardChrome,
   type LegacyBoardChromeRail,
@@ -53,9 +54,10 @@ import {
   type TableZoneAffordancesProps,
 } from '../board/TableZoneAffordances.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
+import { FacePreloader } from '../board/face-preload.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
-import { refusalNotice } from '../board/refusal-notice.js';
+import { refusalNotice, unsentNotice } from '../board/refusal-notice.js';
 import { resolveBoardDrop } from '../board/resolveBoardDrop.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
 import {
@@ -368,9 +370,10 @@ export const RemoteSessionBoard = ({
   });
   const [layout, setLayout] = useState<BoardLayoutSnapshot>();
   // Only the room rolls the coin, so the face cannot be predicted the way
-  // every other command is. The control says it is waiting instead, which is
+  // every other command is. The seat's coin is in the air instead, which is
   // what the delay actually is.
-  const [coinPending, setCoinPending] = useState(false);
+  const [coinPendingSeat, setCoinPendingSeat] = useState<PlayerId>();
+  const coinPending = coinPendingSeat !== undefined;
   const coinPendingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   // Whether the last press on the table was a finger's: a tapped card then
   // gets the touch bar, since a finger has no right-click or double-click.
@@ -470,6 +473,8 @@ export const RemoteSessionBoard = ({
 
     let actualRendererKind = rendererKind;
     let publishedRevision: number | undefined;
+    // Faces about to be turned up, loaded before they turn.
+    const faces = new FacePreloader();
     let publishedPerspective:
       | {
           readonly flipped: boolean;
@@ -484,9 +489,11 @@ export const RemoteSessionBoard = ({
       const revision = snapshot?.view?.revision;
       if (revision !== publishedRevision) {
         publishedRevision = revision;
-        setCoinPending(false);
+        setCoinPendingSeat(undefined);
       }
       setBoardState(snapshot);
+      if (snapshot)
+        faces.update(snapshot.view, snapshot.scene, snapshot.presentation);
       const renderer = runtime.getRenderer();
       if (!snapshot?.scene || !renderer) {
         if (window.__PTCG_RENDERER_SPIKE__?.renderer === renderer) {
@@ -594,6 +601,11 @@ export const RemoteSessionBoard = ({
             }),
           onSubmission: (command, result) => {
             onSubmissionRef.current?.(command, result);
+            // A move that never left this client still answers the press.
+            if (!result.queued && !disposed) {
+              const notice = unsentNotice(result.reason, command.type);
+              if (notice) toast(notice);
+            }
             if (
               result.queued &&
               command.type === 'SetPublicReveal' &&
@@ -608,8 +620,8 @@ export const RemoteSessionBoard = ({
             }
           },
           // The card has already gone back; say why.
-          onCommandRefused: (completed) => {
-            if (!disposed) toast(refusalNotice(completed.code));
+          onCommandRefused: (completed, commandType) => {
+            if (!disposed) toast(refusalNotice(completed.code, commandType));
           },
           reportError: (error) => console.error('[board-session]', error),
           reportRendererStatus: (status) => {
@@ -901,17 +913,21 @@ export const RemoteSessionBoard = ({
           action: 'startOwnTurn',
         });
       },
-      flipCoin: (): void => {
+      /** Flips for `playerId`'s coin on the table, or the acting seat's. */
+      flipCoin: (playerId?: PlayerId): void => {
         const submitted = runtimeRef.current?.emitLegacyShortcutAction({
           action: 'flipCoin',
+          ...(playerId === undefined ? {} : { playerId }),
         });
         if (submitted === false) return;
-        setCoinPending(true);
+        const seat = playerId ?? displayPolicyRef.current.actingPlayerId;
+        if (seat === undefined) return;
+        setCoinPendingSeat(seat as PlayerId);
         clearTimeout(coinPendingTimerRef.current);
         // The publication that carries the result clears this; the ceiling is
         // only here so a rejected or lost command cannot leave it spinning.
         coinPendingTimerRef.current = setTimeout(
-          () => setCoinPending(false),
+          () => setCoinPendingSeat(undefined),
           COIN_PENDING_CEILING_MS
         );
       },
@@ -1000,6 +1016,33 @@ export const RemoteSessionBoard = ({
   const flipAllowed = boardFlipAllowed(roomMode, boardState?.view);
   flipAllowedRef.current = flipAllowed;
   const hint = useHotkeyHints();
+  // The coin lies on the table (PX-051); the rail keeps a Coin only for a
+  // table with no room for it, or with the acting seat's half hidden.
+  const tableCoinShown = useMemo(
+    () => (layout ? tableCoinSpots(layout).some((spot) => spot.own) : false),
+    [layout]
+  );
+  const views = boardState?.view;
+  // Solo plays both seats, so either coin flips for its own; in a room the
+  // viewer flips only the seat they act for.
+  const coinSeats = useMemo((): readonly PlayerId[] => {
+    if (!layout || !views || views.viewer.kind !== 'player') return [];
+    return roomMode === 'solo'
+      ? views.playerOrder
+      : views.playerOrder.filter(
+          (playerId) => playerId === layout.bottomPlayerId
+        );
+  }, [layout, roomMode, views]);
+  const playerNames = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(views?.players ?? {}).map(([playerId, player]) => [
+          playerId,
+          player.displayName,
+        ])
+      ),
+    [views?.players]
+  );
   const chromeRail = useMemo((): LegacyBoardChromeRail | undefined => {
     if (!rail) return undefined;
     const own: BoardOwnRailActions = {
@@ -1014,16 +1057,20 @@ export const RemoteSessionBoard = ({
               hint: hint('table.startTurn'),
               onSelect: tableActions.takeTurn,
             },
-            coin: {
-              id: 'flipCoinButton',
-              label: 'Coin',
-              title: 'Flip a coin',
-              icon: CoinIcon,
-              priority: RAIL_PRIORITY.coin,
-              pending: coinPending,
-              hint: hint('table.flipCoin'),
-              onSelect: tableActions.flipCoin,
-            },
+            ...(tableCoinShown
+              ? {}
+              : {
+                  coin: {
+                    id: 'flipCoinButton',
+                    label: 'Coin',
+                    title: 'Flip a coin',
+                    icon: CoinIcon,
+                    priority: RAIL_PRIORITY.coin,
+                    pending: coinPending,
+                    hint: hint('table.flipCoin'),
+                    onSelect: () => tableActions.flipCoin(),
+                  },
+                }),
             mulligan: {
               id: 'mulliganButton',
               label: 'Announce mulligan',
@@ -1059,7 +1106,15 @@ export const RemoteSessionBoard = ({
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
     };
-  }, [rail, playerActions, flipAllowed, coinPending, hint, tableActions]);
+  }, [
+    rail,
+    playerActions,
+    flipAllowed,
+    coinPending,
+    hint,
+    tableActions,
+    tableCoinShown,
+  ]);
 
   // Each hand's count, where the table shows it: the chrome draws it as a
   // pill with that hand's Sort.
@@ -1114,20 +1169,28 @@ export const RemoteSessionBoard = ({
             />
           ) : null}
           {layout ? (
-            <CoinFlipOverlay
+            <TableCoins
               {...(coinFlip ? { source: coinFlip } : {})}
               layout={layout}
-              pending={coinPending}
-              pendingPlayerId={
-                displayPolicyRef.current.actingPlayerId ??
-                (boardState.view?.viewer.kind === 'player'
-                  ? boardState.view.viewer.playerId
-                  : undefined)
-              }
+              {...(depthProjection ? { depth: depthProjection } : {})}
+              pendingPlayerId={coinPendingSeat}
               // At "instant" the coin shows its result without a toss.
               reducedMotion={
                 preferences.reducedMotion || preferences.animationSpeed === 0
               }
+              {...(playerActions && coinSeats.length > 0
+                ? {
+                    flip: {
+                      playerIds: coinSeats,
+                      onFlip: tableActions.flipCoin,
+                      ...(hint('table.flipCoin')
+                        ? { hint: hint('table.flipCoin') }
+                        : {}),
+                    },
+                  }
+                : {})}
+              names={playerNames}
+              covered={coveredByPopup}
             />
           ) : null}
           {layout &&

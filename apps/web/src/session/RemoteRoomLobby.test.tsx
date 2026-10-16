@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import {
+  TABLE_SPLIT,
   createRendererSpikeView,
   type BoardLayoutSnapshot,
   type BoardPreferences,
@@ -593,7 +594,7 @@ describe('remote room lobby wiring', () => {
     expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
     // Laid out like the room's, the optional pieces off as there by default.
     expect(lobbyBoardHarness.table).toEqual({
-      lowerShare: 0.5,
+      lowerShare: TABLE_SPLIT.defaultLowerShare,
       seamBandPx: 42,
       hideEmptyLostZone: true,
     });

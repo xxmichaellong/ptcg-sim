@@ -1,5 +1,4 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
-import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { ChatCircleDotsIcon } from '@phosphor-icons/react/dist/csr/ChatCircleDots';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
@@ -33,6 +32,7 @@ import { RailButton, useRailWidth } from '../../board/rail/TableRail.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
+import { DeckIcon } from '../../ui/DeckIcon.js';
 import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
 import {
   exitBrowserFullscreen,
@@ -110,7 +110,7 @@ const primaryEntries = (
     entries.push({
       id: 'deckImportButton',
       label: 'Deck',
-      icon: CardsIcon,
+      icon: DeckIcon,
       onSelect: model.onDeck,
     });
   }

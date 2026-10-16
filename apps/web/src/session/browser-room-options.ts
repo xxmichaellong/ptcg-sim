@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import type { ActivityFeedItem } from '../presentation/ActivityFeedModel.js';
+import type { ToastOptions } from '../ui/toast.js';
 
 export const serializeBattleLog = (
   items: readonly Pick<ActivityFeedItem, 'message'>[]
@@ -97,6 +98,29 @@ export const exitBrowserFullscreen = (
   } catch {
     // Already leaving.
   }
+};
+
+/** Said when the browser keeps the page in its window. */
+export const FULLSCREEN_REFUSED_NOTICE = {
+  id: 'fullscreen-refused',
+  title: "Full screen isn't available here",
+  body: 'This browser keeps the table in its window.',
+  tone: 'warning',
+} as const satisfies ToastOptions;
+
+/**
+ * Calls `refused` whenever the browser turns a full-screen request down
+ * after accepting the call (it answers with `fullscreenerror`, not a throw).
+ */
+export const onFullscreenRefused = (refused: () => void): (() => void) => {
+  const target = globalThis.document;
+  if (!target) return () => undefined;
+  target.addEventListener('fullscreenerror', refused);
+  target.addEventListener('webkitfullscreenerror', refused);
+  return () => {
+    target.removeEventListener('fullscreenerror', refused);
+    target.removeEventListener('webkitfullscreenerror', refused);
+  };
 };
 
 const subscribeFullscreen = (listener: () => void): (() => void) => {

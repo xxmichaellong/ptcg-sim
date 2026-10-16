@@ -2068,6 +2068,11 @@ it.each(['flat', 'table'] as const)(
     renderer.installScene(changed, [], 'advance', { cause: 'advance' });
     expect(app.canvas.dataset.motion).toBe('active');
     expect(renderer.getDiagnostics().localTextureBindings).toBe(baseline + 1);
+    // The turn waits, old face up, until both faces have loaded.
+    const waiting = performance.now() + 50;
+    for (const fn of [...frames.values()]) fn(waiting);
+    expect(app.canvas.dataset.motion).toBe('active');
+    await new Promise((resolve) => setTimeout(resolve, 0));
     for (const at of [performance.now() + 100, performance.now() + 1000]) {
       const pending = [...frames.values()];
       frames.clear();

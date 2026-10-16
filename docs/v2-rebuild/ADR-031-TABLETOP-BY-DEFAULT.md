@@ -33,8 +33,11 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
 2. **The camera** may tilt to 35°. The eye sits 1.5 window diagonals away
    (about a 37° lens). The tilted table is fitted between the two hands,
    which stay flat along the edges, with a full sixty-card deck standing on
-   it; the fit depends on the layout alone, so the table never moves when a
-   pile grows or shrinks.
+   it, and centred between them, so the room above the mat's far edge is
+   the room below its near edge (2026-10-16; it was centred in the window,
+   which left the far side's band of mat and hand looking empty). The fit
+   depends on the layout alone, so the table never moves when a pile grows
+   or shrinks.
 3. **The mat** is a cloth playmat under a lamp: a woven texture that
    foreshortens with the tilt, light falling off from just above the
    middle, a rubber rim and the mat's thickness along its near edge. The

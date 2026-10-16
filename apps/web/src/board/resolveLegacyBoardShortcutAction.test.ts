@@ -1,5 +1,6 @@
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 
+import { asPlayerId } from '@ptcgsim/game-core';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
@@ -437,6 +438,36 @@ describe('legacy board shortcut action resolver', () => {
         { action: 'flipCoin' }
       )
     ).toEqual({ ok: false, reason: 'not_player' });
+    // A coin pressed on the table flips for its own seat.
+    const other = Object.keys(view.players).find(
+      (playerId) => playerId !== viewerId
+    )!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'flipCoin',
+        playerId: asPlayerId(other),
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'FlipCoin', targetPlayerId: other },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'flipCoin',
+        playerId: asPlayerId(viewerId),
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'FlipCoin' },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'flipCoin',
+        playerId: asPlayerId('nobody'),
+      })
+    ).toEqual({ ok: false, reason: 'stale_player' });
   });
 
   it('derives lifecycle, turn, and solo-undo targets from the viewer perspective', () => {

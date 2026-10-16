@@ -14,10 +14,10 @@ import {
   type CardSceneNode,
   type TableCardPose,
   type TablePoint,
-  type CardFlight,
   type Rect,
 } from '@ptcgsim/renderer-contract';
 import { depthPaintKey } from './depth-paint-key.js';
+import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 
 const timestamp = () => performance.now();
 /** How long a card takes to rise to its held height. */
@@ -38,6 +38,8 @@ const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
 /** A riffle shuffle, from split to squared pile. */
 const RIFFLE_MS = 900;
+/** A card turned over by hand, from flat to flat again. */
+const TURN_MS = 420;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
 const easeInOut = (t: number): number =>
   t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
@@ -51,6 +53,19 @@ interface Ghost {
   toImage?: string;
   start: number;
   duration: number;
+}
+/**
+ * A card being turned over: `image` is the face it had (the back), shown
+ * over its own until it is on its edge; `start` is Infinity while its own
+ * face is still loading. A zero `duration` turns nothing, only holds the old
+ * face up until the new one is ready (reduced motion).
+ */
+interface Flip {
+  image: HTMLElement | null;
+  readonly face: HTMLElement;
+  start: number;
+  readonly duration: number;
+  stopWaiting?: () => void;
 }
 interface Shuffle {
   key: string;
@@ -84,10 +99,7 @@ export class TableDepthDirector {
   private readonly ghosts = new Map<string, Ghost>();
   private readonly shuffles = new Map<string, Shuffle>();
   private readonly riffles = new Map<string, Riffle>();
-  private readonly flips = new Map<
-    string,
-    { image: HTMLElement; face: HTMLElement; start: number; duration: number }
-  >();
+  private readonly flips = new Map<string, Flip>();
   private readonly markers = new Map<string, HTMLElement>();
   /** A card picked up rises to its held height over a moment, not at once. */
   private readonly lifts = new Map<
@@ -260,7 +272,8 @@ export class TableDepthDirector {
       cause?.cause === 'replace' ||
       cause?.cause === 'layout' ||
       cause?.cause === 'flip';
-    if (discontinuity || reduced || durationScale === 0) this.cancel();
+    if (discontinuity || reduced || durationScale === 0)
+      this.cancel(!discontinuity);
     this.context = context;
     this.projection = projection;
     this.durationScale = reduced ? 0 : durationScale;
@@ -444,8 +457,16 @@ export class TableDepthDirector {
           this.airborne.add(key);
         else this.airborne.delete(key);
       }
-      if (flight?.fromImageUrl && duration > 0)
-        this.flipFace(key, flight, at, duration);
+      if (flight?.fromImageUrl && (duration > 0 || this.durationScale === 0))
+        // Turned over by hand during the move: it sets off showing its old
+        // face and turns over a little way into the trip.
+        this.flipFace(
+          key,
+          flight.fromImageUrl,
+          at + flight.delay * 1000 * this.durationScale + duration * 0.2,
+          TURN_MS * this.durationScale
+        );
+      else if (flight?.fromRenderKey) this.carryFlip(flight.fromRenderKey, key);
       if (held) {
         this.shuffles.delete(key);
         this.clearFlip(key);
@@ -761,41 +782,71 @@ export class TableDepthDirector {
     return key;
   }
 
+  /**
+   * Turns the card over by hand: the old face (`fromImageUrl`, a card back
+   * mostly) turns on its edge, the faces change hidden, and its own face
+   * turns flat. It waits for that face to be ready -- holding the old one
+   * up -- so it never turns up an empty card. Null shows no old face: the
+   * card is past its edge already.
+   */
   private flipFace(
     key: string,
-    flight: CardFlight,
-    at: number,
+    fromImageUrl: string | null,
+    start: number,
     duration: number
   ) {
     this.clearFlip(key);
-    const face = this.elements
-      .get(key)
-      ?.querySelector<HTMLElement>('.ptcgsim-card__face');
-    if (!face || !flight.fromImageUrl) return;
-    const image = document.createElement('img');
-    image.className = 'ptcgsim-card__turn';
-    image.src = flight.fromImageUrl;
-    image.alt = '';
-    image.draggable = false;
-    face.append(image);
-    // Turned over by hand during the middle of the move: the old face
-    // turns on edge, the faces change hidden, the new one turns flat.
-    const start =
-      at + flight.delay * 1000 * this.durationScale + duration * 0.2;
-    this.flips.set(key, {
-      image,
-      face,
-      start,
-      duration: duration * 0.6,
-    });
+    const element = this.elements.get(key);
+    const face = element?.querySelector<HTMLElement>('.ptcgsim-card__face');
+    if (!element || !face) return;
+    element.dataset.turning = '';
+    let image: HTMLElement | null = null;
+    if (fromImageUrl !== null) {
+      const turn = document.createElement('img');
+      turn.className = 'ptcgsim-card__turn';
+      turn.src = fromImageUrl;
+      turn.alt = '';
+      turn.draggable = false;
+      face.append(turn);
+      image = turn;
+    }
+    const flip: Flip = { image, face, start, duration };
+    this.flips.set(key, flip);
+    const own = faceImageOf(face);
+    // Not yet begun and its face not ready: it waits, back up, and turns
+    // once it is (or at once if that is already later than planned).
+    if (image && !(start < timestamp()) && !isFaceReady(own)) {
+      flip.start = Infinity;
+      flip.stopWaiting = whenFaceReady(own, () => {
+        if (this.flips.get(key) !== flip) return;
+        delete flip.stopWaiting;
+        flip.start = Math.max(timestamp(), start);
+        this.schedule();
+      });
+    }
+  }
+  /**
+   * The card was re-aliased mid-turn (the room answering a predicted move):
+   * the new node carries on the turn the old one had under way.
+   */
+  private carryFlip(from: string, to: string) {
+    const flip = this.flips.get(from);
+    if (!flip || from === to) return;
+    const fromImageUrl = flip.image?.getAttribute('src') ?? null;
+    this.clearFlip(from);
+    this.flipFace(to, fromImageUrl, flip.start, flip.duration);
   }
   private clearFlip(key: string) {
     const flip = this.flips.get(key);
-    if (flip) {
-      flip.image.remove();
-      flip.face.style.removeProperty('transform');
-    }
+    if (!flip) return;
+    flip.stopWaiting?.();
+    flip.image?.remove();
+    flip.face.style.removeProperty('transform');
     this.flips.delete(key);
+    const element = this.elements.get(key);
+    if (!element) return;
+    delete element.dataset.turning;
+    if (!this.lifted(key)) delete element.dataset.flying;
   }
 
   /** A card's height with its hover raise and the lift it is rising through. */
@@ -981,7 +1032,9 @@ export class TableDepthDirector {
    * landing in it leaves the rest of the row in its order beneath.
    */
   private lifted(key: string): boolean {
-    if (this.inFlight(key)) return true;
+    // Turning over, it stays over the table (and over the old top of a pile
+    // it landed on) until it lies flat.
+    if (this.inFlight(key) || this.flips.has(key)) return true;
     const card = this.cards.get(key);
     if (!card || !STACK_PIECE_ROLES.has(card.role)) return false;
     for (const [other, mate] of this.cards) {
@@ -1006,24 +1059,39 @@ export class TableDepthDirector {
       }
     }
     for (const [key, flip] of this.flips) {
-      const progress = Math.max(
-        0,
-        Math.min(1, (at - flip.start) / flip.duration)
-      );
-      if (progress >= 0.5) flip.image.remove();
+      const progress =
+        flip.duration > 0
+          ? Math.max(0, Math.min(1, (at - flip.start) / flip.duration))
+          : at >= flip.start
+            ? 1
+            : 0;
+      if (progress >= 0.5) {
+        flip.image?.remove();
+        flip.image = null;
+      }
       const base = this.motion.poses.get(key) ?? this.painted.get(key);
-      if (base) {
+      if (base && flip.duration > 0) {
         const turn = easeInOut(progress);
+        const angle =
+          progress >= 1
+            ? 0
+            : turn < 0.5
+              ? turn * Math.PI
+              : (turn - 1) * Math.PI;
         this.paint(
           key,
           {
             ...base,
-            flip:
-              progress >= 1
-                ? 0
-                : turn < 0.5
-                  ? turn * Math.PI
-                  : (turn - 1) * Math.PI,
+            flip: angle,
+            // Turned about its middle, a card on the table rises by half its
+            // width so its edge never dips under the cloth, and a little
+            // more, as a card is tossed over.
+            elevation:
+              base.elevation +
+              base.plane *
+                base.bounds.width *
+                (0.5 * Math.abs(Math.sin(angle)) +
+                  0.06 * Math.sin(Math.PI * progress)),
           },
           at
         );
@@ -1067,7 +1135,12 @@ export class TableDepthDirector {
       }
       if (
         at >= ghost.expires ||
-        (ghost.holdFor && !this.motion.has(ghost.holdFor) && at > ghost.start)
+        // The old top keeps the pile covered until the new one has landed
+        // and turned over on it.
+        (ghost.holdFor &&
+          !this.motion.has(ghost.holdFor) &&
+          !this.flips.has(ghost.holdFor) &&
+          at > ghost.start)
       )
         this.removeGhost(key);
       else if (
@@ -1090,7 +1163,11 @@ export class TableDepthDirector {
     this.painted.delete(key);
     this.airborne.delete(key);
   }
-  cancel() {
+  /**
+   * Stops every motion. `keepHolds` keeps a card that only holds its old
+   * face up while its new one loads (reduced motion): it turns nothing.
+   */
+  cancel(keepHolds = false) {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;
     this.motion.finish();
@@ -1103,7 +1180,8 @@ export class TableDepthDirector {
       )
         this.paint(key, pose);
     }
-    for (const key of this.flips.keys()) this.clearFlip(key);
+    for (const [key, flip] of this.flips)
+      if (!keepHolds || flip.duration > 0) this.clearFlip(key);
     for (const riffle of this.riffles.values())
       if (riffle.pile)
         this.elements.get(riffle.pile)?.style.removeProperty('opacity');

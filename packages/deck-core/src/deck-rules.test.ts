@@ -6,6 +6,7 @@ import {
   ruleName,
   sortDeckList,
   coverCardOf,
+  hasRuleBox,
   replacePrinting,
   removeCard,
   setCardCount,
@@ -171,7 +172,7 @@ describe('deck lists', () => {
     const list = deckListOf([
       { card: basic('TWM 128', 'Dreepy'), count: 4 },
       {
-        card: card('TWM 130', 'Dragapult ex', 'Pokémon', { stage: 'Stage 2' }),
+        card: card('TWM 130', 'Dragapult', 'Pokémon', { stage: 'Stage 2' }),
         count: 3,
       },
     ]);
@@ -187,6 +188,52 @@ describe('deck lists', () => {
       },
     ]);
     expect(coverCardOf(tagged)?.name).toBe('Dragapult ex');
+  });
+
+  it('pictures a deck named for its Pokémon by the first one named', () => {
+    const list = deckListOf([
+      {
+        card: basic('MEG 104', 'Mega Kangaskhan ex', { tags: ['ex', 'Mega'] }),
+        count: 4,
+      },
+      { card: basic('SCR 84', 'Dwebble'), count: 3 },
+      {
+        card: card('SCR 85', 'Crustle', 'Pokémon', { stage: 'Stage 1' }),
+        count: 3,
+      },
+      { card: basic('JTG 95', "N's Zorua"), count: 4 },
+      {
+        card: card('JTG 98', "N's Zoroark ex", 'Pokémon', {
+          stage: 'Stage 1',
+          tags: ['ex'],
+        }),
+        count: 3,
+      },
+    ]);
+    expect(coverCardOf(list, 'Crustle')?.name).toBe('Crustle');
+    // Words are matched whole and without case; the strongest print wins.
+    expect(coverCardOf(list, "n's zoroark")?.name).toBe("N's Zoroark ex");
+    // A name that calls no Pokémon in the list falls back to the attacker.
+    expect(coverCardOf(list, 'Basic Box')?.name).toBe('Mega Kangaskhan ex');
+    expect(coverCardOf(list, 'Pikachu')?.name).toBe('Mega Kangaskhan ex');
+  });
+
+  it('knows a rule-box Pokémon by its name or its tags', () => {
+    for (const name of [
+      'Dragapult ex',
+      'Mew VMAX',
+      'Arceus VSTAR',
+      'Pikachu-GX',
+      'M Rayquaza-EX',
+      'Mega Lucario ex',
+    ])
+      expect(hasRuleBox(basic('X 1', name))).toBe(true);
+    for (const name of ['Dreepy', 'Vikavolt', 'Exeggutor', "N's Zorua"])
+      expect(hasRuleBox(basic('X 1', name))).toBe(false);
+    expect(hasRuleBox(basic('X 1', 'Lugia', { tags: ['V'] }))).toBe(true);
+    expect(hasRuleBox(card('X 2', 'Professor Burnet ex', 'Trainer'))).toBe(
+      false
+    );
   });
 
   it('counts copies by name, ignoring a Trainer subtitle, spacing and accents', () => {

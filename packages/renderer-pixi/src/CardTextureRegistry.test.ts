@@ -50,6 +50,26 @@ describe('Pixi card texture registry', () => {
     expect(broker.getDiagnostics().references).toBe(0);
   });
 
+  it('lends a loaded, leased texture at once, and nothing else', async () => {
+    const pending = deferred<string>();
+    const broker = new TextureAssetLeaseBroker({
+      placeholder: 'placeholder',
+      load: () => pending.promise,
+      unload: async () => undefined,
+    });
+    const registry = new CardTextureRegistry(broker);
+    registry.bind('card', '/face.png', vi.fn(), vi.fn());
+    expect(registry.peek('/face.png')).toBeUndefined();
+    pending.resolve('face-texture');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(registry.peek('/face.png')).toBe('face-texture');
+    expect(registry.peek('/other.png')).toBeUndefined();
+    registry.release('card');
+    expect(registry.peek('/face.png')).toBeUndefined();
+    registry.destroy();
+  });
+
   it('returns broker-bound leases whose release is idempotent', async () => {
     const unload = vi.fn(async () => undefined);
     const broker = new TextureAssetLeaseBroker({

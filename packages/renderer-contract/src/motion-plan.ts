@@ -1,5 +1,6 @@
 import type { QuarterTurns } from '@ptcgsim/game-core';
 
+import { isPileStandIn } from './held-cards.js';
 import type {
   BoardScene,
   BoardSceneMotionCause,
@@ -32,6 +33,14 @@ export interface CardFlight {
    * from a hidden hand.
    */
   readonly fromImageUrl?: string;
+  /**
+   * The painted node it was, when that node is gone from the next scene: a
+   * card re-aliased mid-move (the room's answer to a predicted move), or a
+   * card that left the painted table and came back under another key. A
+   * renderer carries on there whatever that node was doing -- above all, a
+   * turn over that is under way.
+   */
+  readonly fromRenderKey?: string;
   /** Seconds to wait before setting off, so a run of cards fans out. */
   readonly delay: number;
   /**
@@ -347,6 +356,18 @@ export const planBoardMotion = (
   const flights: CardFlight[] = [];
   const ghosts: CardGhost[] = [];
   const unmatchedArrivals: CardSceneNode[] = [];
+  const nextPaintedKeys = new Set(nextPainted.map((card) => card.renderKey!));
+  /** A node of the previous scene that the next one no longer paints. */
+  const goneKey = (key: string | undefined): { fromRenderKey?: string } =>
+    key !== undefined && !nextPaintedKeys.has(key)
+      ? { fromRenderKey: key }
+      : {};
+  // Cards that kept their id while crossing from one container to another:
+  // a pile's count changes by them, and they are already accounted for.
+  const movedOut = new Map<string, number>();
+  const movedIn = new Map<string, number>();
+  const tally = (counts: Map<string, number>, containerId: string) =>
+    counts.set(containerId, (counts.get(containerId) ?? 0) + 1);
 
   for (const card of nextPainted) {
     const key = card.renderKey!;
@@ -372,6 +393,10 @@ export const planBoardMotion = (
       continue;
     }
     if (sameCard) {
+      if (sameCard.parentId !== card.parentId) {
+        tally(movedOut, sameCard.parentId);
+        tally(movedIn, card.parentId);
+      }
       // The card was on the table under another key -- a pile cover now shows
       // it, or it came off a pile -- so the node arrives from there.
       if (
@@ -386,6 +411,7 @@ export const planBoardMotion = (
           ...(fromImage !== paintedImage(card)
             ? { fromImageUrl: fromImage }
             : {}),
+          ...goneKey(sameCard.renderKey ?? undefined),
           delay: 0,
           kind: sameNode ? 'move' : 'enter',
         });
@@ -417,6 +443,9 @@ export const planBoardMotion = (
   const unmatchedDepartures: Endpoint[] = [];
   for (const card of previousByKey.values()) {
     if (nextPaintedIds.has(String(card.id))) continue;
+    // A pile's cover painted while its top card is held is no card at all:
+    // the held card is the one that went somewhere.
+    if (isPileStandIn(card)) continue;
     const stillThere = nextById.get(String(card.id));
     if (stillThere) {
       // Now hidden inside a pile (no longer its top): it slides under.
@@ -464,18 +493,16 @@ export const planBoardMotion = (
       rotationQuarterTurns: face.rotationQuarterTurns,
       imageUrl: paintedImage(face),
     });
+    const leaving = paintedLeaving + (movedOut.get(zone.id) ?? 0);
+    const arriving = paintedArriving + (movedIn.get(zone.id) ?? 0);
     if (after < before) {
       const face = pileFace(previous, zone.id);
-      for (let index = 0; index < before - after - paintedLeaving; index += 1) {
+      for (let index = 0; index < before - after - leaving; index += 1) {
         if (face) hiddenSources.push(hiddenEndpoint(face));
       }
     } else if (after > before) {
       const face = pileFace(next, zone.id);
-      for (
-        let index = 0;
-        index < after - before - paintedArriving;
-        index += 1
-      ) {
+      for (let index = 0; index < after - before - arriving; index += 1) {
         if (face) hiddenSinks.push(hiddenEndpoint(face));
       }
     }
@@ -543,6 +570,7 @@ export const planBoardMotion = (
           ...(source.imageUrl !== paintedImage(card)
             ? { fromImageUrl: source.imageUrl }
             : {}),
+          ...goneKey(source.renderKey),
           delay: stagger(source.containerId),
           kind: 'enter',
         });

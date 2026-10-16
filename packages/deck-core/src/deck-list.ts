@@ -352,20 +352,58 @@ export const sortDeckList = (list: DeckList): DeckList => {
   );
 };
 
-/** The card to picture a deck by: its most-copied Pokémon, else its first card. */
-export const coverCardOf = (list: DeckList): DeckCard | undefined => {
-  let best: DeckEntry | undefined;
-  for (const entry of list) {
-    if (entry.card.category !== 'Pokémon') continue;
-    const weight = (candidate: DeckEntry): number =>
-      candidate.count * 10 +
-      (candidate.card.facts?.stage === 'Basic' ? 0 : 5) +
-      (candidate.card.facts?.tags?.some((tag) =>
-        ['ex', 'EX', 'GX', 'V', 'VMAX', 'VSTAR', 'Mega'].includes(tag)
-      )
-        ? 20
-        : 0);
-    if (!best || weight(entry) > weight(best)) best = entry;
+// A rule-box Pokémon's name ends in its mechanic ("Dragapult ex", "Mew
+// VMAX", "Pikachu-GX", "M Rayquaza-EX") or starts with Mega.
+const RULE_BOX_NAME =
+  /(?:[\s-](?:ex|EX|GX|V|VMAX|VSTAR|V-UNION)$)|^(?:Mega|M) /u;
+
+/**
+ * Whether a card is a rule-box Pokémon (ex, EX, GX, V, VMAX, VSTAR, Mega):
+ * the deck's main attackers, printed full art.
+ */
+export const hasRuleBox = (card: DeckCard): boolean =>
+  card.category === 'Pokémon' &&
+  (RULE_BOX_NAME.test(card.name) ||
+    (card.facts?.tags?.some((tag) =>
+      ['ex', 'EX', 'GX', 'V', 'VMAX', 'VSTAR', 'Mega'].includes(tag)
+    ) ??
+      false));
+
+/** A name's words as card names spell them: lower case, no accents. */
+const nameWords = (name: string): string[] =>
+  name
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .split(/[^a-z0-9']+/u)
+    .filter((word) => word.length >= 3);
+
+/**
+ * The card to picture a deck by. A deck named for its Pokémon ("Dragapult
+ * Dusknoir", "Lucario Hariyama", "N's Zoroark") is pictured by the first
+ * one its name calls that the list holds, at its strongest print (the
+ * evolved, rule-box card over its Basic); otherwise by its main attacker,
+ * the most-copied Pokémon weighted the same way, else its first card.
+ */
+export const coverCardOf = (
+  list: DeckList,
+  name?: string
+): DeckCard | undefined => {
+  const weight = (candidate: DeckEntry): number =>
+    candidate.count * 10 +
+    (candidate.card.facts?.stage === 'Basic' ? 0 : 5) +
+    (hasRuleBox(candidate.card) ? 20 : 0);
+  const pokemon = list.filter((entry) => entry.card.category === 'Pokémon');
+  const strongest = (entries: readonly DeckEntry[]): DeckEntry | undefined =>
+    entries.reduce<DeckEntry | undefined>(
+      (best, entry) => (!best || weight(entry) > weight(best) ? entry : best),
+      undefined
+    );
+  for (const word of name ? nameWords(name) : []) {
+    const named = strongest(
+      pokemon.filter((entry) => nameWords(entry.card.name).includes(word))
+    );
+    if (named) return named.card;
   }
-  return (best ?? list[0])?.card;
+  return (strongest(pokemon) ?? list[0])?.card;
 };

@@ -24,6 +24,7 @@ import {
   type OpaqueIdSource,
   type ProjectionIdentityState,
 } from './identity-registry.js';
+import { identitiesSurvivingUndo } from './undo-identities.js';
 
 const p1 = asPlayerId('identity-player-one');
 const p2 = asPlayerId('identity-player-two');
@@ -350,6 +351,129 @@ describe('projection identity registry', () => {
         resolveViewCard(state, projected.identities, viewer, alias)
       ).toBeUndefined();
     }
+  });
+
+  // An undo restores an older state. Only the cards the move taken back
+  // carried across a concealment boundary may change alias; everything else
+  // keeps its alias, so the table leaves it where it lies.
+  describe('through an undo', () => {
+    const viewers = [asPlayer(p1), asPlayer(p2), spectator];
+    const deckId = playerZoneId(p1, 'deck');
+    /** Every alias each viewer is shown, and the deck's in order. */
+    const allAliases = (
+      state: MatchState,
+      identities: ProjectionIdentityState,
+      source: OpaqueIdSource
+    ) => {
+      let next = identities;
+      const shown = viewers.map((viewer) => {
+        const projected = project(state, viewer, next, source);
+        next = projected.identities;
+        const zones = projected.snapshot.zones;
+        return {
+          all: Object.values(zones).flatMap((zone) =>
+            zone.cards.map((card) => card.id as string)
+          ),
+          deck: zones[deckId]!.cards.map((card) => card.id as string),
+        };
+      });
+      return { shown, next };
+    };
+
+    it('keeps every alias the move left alone and rotates the card it drew', () => {
+      const { state: before, context } = loadedMatch();
+      const source = createIdSource();
+      const seen = allAliases(before, emptyProjectionIdentityState(), source);
+      const drawn = run(
+        before,
+        { type: 'DrawCards', playerId: p1, count: 1 },
+        context
+      );
+      const branch = allAliases(drawn, seen.next, source);
+      const restored = allAliases(
+        before,
+        identitiesSurvivingUndo(branch.next, drawn, before),
+        source
+      );
+      const drawnCardId = drawn.zones[playerZoneId(p1, 'hand')]!.cardIds[0]!;
+      const deckIndex = before.zones[deckId]!.cardIds.indexOf(drawnCardId);
+      restored.shown.forEach(({ all, deck }, viewer) => {
+        const changed = all.filter(
+          (alias) => !seen.shown[viewer]!.all.includes(alias)
+        );
+        // Eleven of the twelve cards on the table are exactly as they were;
+        // the one that changed is the card that went back to the deck.
+        expect(changed).toEqual([deck[deckIndex]]);
+        // Its alias is one neither branch ever showed, so the draw cannot
+        // be tied to the restored deck.
+        expect(branch.shown[viewer]!.all).not.toContain(changed[0]);
+      });
+    });
+
+    it('rotates a whole pile when the move taken back shuffled it', () => {
+      const { state: before, context } = loadedMatch();
+      const source = createIdSource();
+      const seen = concealedAliasesFor(
+        before,
+        asPlayer(p2),
+        emptyProjectionIdentityState(),
+        source,
+        deckId
+      );
+      const shuffled = run(
+        before,
+        { type: 'ShuffleZone', zoneId: deckId },
+        context
+      );
+      const branch = concealedAliasesFor(
+        shuffled,
+        asPlayer(p2),
+        seen.next,
+        source,
+        deckId
+      );
+      const restored = concealedAliasesFor(
+        before,
+        asPlayer(p2),
+        identitiesSurvivingUndo(branch.next, shuffled, before),
+        source,
+        deckId
+      );
+      for (const alias of restored.aliases) {
+        expect(seen.aliases).not.toContain(alias);
+        expect(branch.aliases).not.toContain(alias);
+      }
+    });
+
+    it('drops discarded-branch aliases of viewers who were away during the move', () => {
+      const { state: before, context } = loadedMatch();
+      const source = createIdSource();
+      // The spectator saw the deck before the shuffle and nothing since; its
+      // stale entries must not outlive the generation the undo threw away.
+      const away = concealedAliasesFor(
+        before,
+        spectator,
+        emptyProjectionIdentityState(),
+        source,
+        deckId
+      );
+      const shuffled = run(
+        before,
+        { type: 'ShuffleZone', zoneId: deckId },
+        context
+      );
+      const branch = project(shuffled, asPlayer(p2), away.next, source);
+      const kept = identitiesSurvivingUndo(branch.identities, shuffled, before);
+      expect(
+        kept.cardAliases.filter(
+          (entry) =>
+            entry.cardId && before.zones[deckId]!.cardIds.includes(entry.cardId)
+        )
+      ).toEqual([]);
+      expect(kept.definitionAliases).toEqual(
+        branch.identities.definitionAliases
+      );
+    });
   });
 
   it('drops aliases for cards a new deck load removed', () => {

@@ -1189,8 +1189,9 @@ describe('legacy board overlays', () => {
       '[data-legacy-zone-browser]'
     )!;
     // Sized from the board area, not from v1's player frame: a short pile
-    // draws its cards at a third of the board's height (at most 300px).
-    const layout = zoneBrowserLayout(scene.viewport, discardCards.length);
+    // draws its cards at a third of the board's height (at most 300px). It
+    // is sized for its tiles: the two copies share one.
+    const layout = zoneBrowserLayout(scene.viewport, discardCards.length - 1);
     expect(layout.cardHeight).toBeCloseTo(Math.min(720 * 0.34, 300));
     expect(Number.parseFloat(browser.style.left)).toBeCloseTo(layout.left);
     expect(Number.parseFloat(browser.style.top)).toBeCloseTo(layout.top);
@@ -1210,13 +1211,16 @@ describe('legacy board overlays', () => {
       host.querySelector(
         `[data-overlay-card-id="${id}"] .ptcgsim-zone-copy-badge`
       )?.textContent ?? null;
-    // Each copy on its own: no ×N, which would read as a stack (the
-    // stacked view counts its tiles instead).
+    // A pile stacks its copies by default: the first copy's tile counts
+    // them, the second has none of its own, and a single card has no ×1.
     expect([badge(first.id), badge(second.id), badge(third.id)]).toEqual([
-      null,
+      '×2',
       null,
       null,
     ]);
+    expect(host.querySelector(`[data-overlay-card-id="${second.id}"]`)).toBe(
+      null
+    );
     // Face-down cards are never counted.
     expect(
       zoneCopyCounts([
@@ -1970,29 +1974,42 @@ describe('legacy board overlays', () => {
     expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
   });
 
-  it('stacks copies of a card on one tile when asked, and remembers it', async () => {
-    const discard = scene.zones.find(
-      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
-    )!;
-    const pile = scene.cards.filter((card) => card.parentId === discard.id);
+  it('stacks copies in a pile and not in the hand by default, and remembers each choice', async () => {
+    const zoneOf = (kind: string) =>
+      scene.zones.find(
+        (candidate) => candidate.id === `zone:${firstPlayer}:${kind}`
+      )!;
+    const discard = zoneOf('discard');
+    const hand = zoneOf('hand');
+    const pileOf = (zoneId: string) =>
+      scene.cards.filter((card) => card.parentId === zoneId);
+    const pile = pileOf(discard.id);
+    const held = pileOf(hand.id);
     expect(pile.length).toBeGreaterThan(1);
-    // Every card in the pile a copy of the first.
+    expect(held.length).toBeGreaterThan(1);
+    // Every card in each a copy of that zone's first.
     const copies = {
       ...scene,
-      cards: scene.cards.map((card) =>
-        card.parentId === discard.id
+      cards: scene.cards.map((card) => {
+        const first =
+          card.parentId === discard.id
+            ? pile[0]
+            : card.parentId === hand.id
+              ? held[0]
+              : undefined;
+        return first
           ? {
               ...card,
-              label: pile[0]!.label,
-              imageUrl: pile[0]!.imageUrl,
+              label: first.label,
+              imageUrl: first.imageUrl,
               concealed: false,
             }
-          : card
-      ),
+          : card;
+      }),
     };
     preferences().reset(ZONE_BROWSER_PREFERENCES);
     try {
-      const render = async () =>
+      const render = async (openedZoneId: string) =>
         act(async () => {
           root.render(
             createElement(LegacyBoardOverlays, {
@@ -2000,7 +2017,7 @@ describe('legacy board overlays', () => {
                 scene: copies,
                 presentation: {
                   ...state().presentation,
-                  openedZoneId: discard.id,
+                  openedZoneId,
                 },
               }),
               darkMode: false,
@@ -2008,26 +2025,38 @@ describe('legacy board overlays', () => {
             })
           );
         });
-      await render();
       const tiles = () => host.querySelectorAll('[data-overlay-card-id]');
-      expect(tiles()).toHaveLength(pile.length);
-      const toggle = host.querySelector<HTMLButtonElement>(
-        '[data-zone-action="stackCopies"]'
-      )!;
-      expect(toggle.getAttribute('aria-pressed')).toBe('false');
-      await act(async () => toggle.click());
-      expect(preferences().get(ZONE_BROWSER_PREFERENCES).stackCopies).toBe(
-        true
-      );
+      const toggle = () =>
+        host.querySelector<HTMLButtonElement>(
+          '[data-zone-action="stackCopies"]'
+        )!;
+
+      // A pile opens stacked: one tile counting its copies.
+      await render(discard.id);
       expect(tiles()).toHaveLength(1);
       const stacked = tiles()[0]!;
       expect(stacked.getAttribute('data-copy-stack')).toBe(String(pile.length));
       expect(stacked.textContent).toContain(`×${pile.length}`);
-      expect(toggle.getAttribute('aria-pressed')).toBe('true');
-      // Opened again, the pile stays stacked.
+      expect(toggle().getAttribute('aria-pressed')).toBe('true');
+
+      // The hand opens with every card on its own.
       await act(async () => root.render(null));
-      await render();
-      expect(tiles()).toHaveLength(1);
+      await render(hand.id);
+      expect(tiles()).toHaveLength(held.length);
+      expect(toggle().getAttribute('aria-pressed')).toBe('false');
+
+      // Unstacking the pile leaves the hand's choice alone, and is kept.
+      await act(async () => root.render(null));
+      await render(discard.id);
+      await act(async () => toggle().click());
+      expect(preferences().get(ZONE_BROWSER_PREFERENCES)).toMatchObject({
+        stackPiles: false,
+        stackHand: false,
+      });
+      expect(tiles()).toHaveLength(pile.length);
+      await act(async () => root.render(null));
+      await render(discard.id);
+      expect(tiles()).toHaveLength(pile.length);
     } finally {
       preferences().reset(ZONE_BROWSER_PREFERENCES);
     }
@@ -2278,8 +2307,8 @@ describe('legacy board overlays', () => {
     expect(editor.getAttribute('aria-label')).toBe('Damage counter');
     const hint = () =>
       host.querySelector<HTMLElement>('.ptcgsim-marker-editor-hint');
-    expect(hint()?.textContent).toBe('Enter to set · Esc to cancel');
-    expect(hint()?.getAttribute('aria-hidden')).toBe('true');
+    // Nothing to say until a value is refused: Enter and Esc are a given.
+    expect(hint()).toBeNull();
     // The ring is the stylesheet's: the field's own box stays the counter's.
     expect(editor.style.outline).toBe('');
     expect(Number.parseFloat(editor.style.left)).toBeCloseTo(

@@ -671,7 +671,32 @@ describe('RemoteRoomRoute', () => {
         switchSide: true,
         rail: ['loadDeckButton', 'flipCoinButton', 'flipBoardButton'],
         primary: 'loadDeckButton',
+        // The other side has a deck, so both sides can be set up.
         more: ['setupBothButton', 'resetBothButton'],
+      },
+      {
+        name: 'Solo, nobody has a deck',
+        roomMode: 'solo',
+        snapshot: emptyTableView(),
+        switchSide: true,
+        rail: ['loadDeckButton', 'flipCoinButton', 'flipBoardButton'],
+        primary: 'loadDeckButton',
+        // Nothing to set up or reset on either side yet.
+        more: [],
+      },
+      {
+        name: 'Solo, deck loaded',
+        roomMode: 'solo',
+        snapshot: loadedSeatView(),
+        switchSide: true,
+        rail: [
+          'setupButton',
+          'flipCoinButton',
+          'undoButton',
+          'flipBoardButton',
+        ],
+        primary: 'setupButton',
+        more: ['resetButton', 'setupBothButton', 'resetBothButton'],
       },
     ];
     for (const stage of stages) {

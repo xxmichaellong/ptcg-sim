@@ -14,13 +14,17 @@ export interface TooltipProps {
    */
   readonly children: ReactElement;
   readonly side?: 'top' | 'bottom' | 'left' | 'right';
-  /** Hover delay in milliseconds. Defaults to the provider's (500 ms). */
+  /** Hover delay in milliseconds. Defaults to the provider's (100 ms). */
   readonly delay?: number;
   readonly disabled?: boolean;
 }
 
-/** The hover/focus delay shared by every tooltip under one provider. */
-export const TOOLTIP_DELAY_MS = 500;
+/**
+ * The hover delay shared by every tooltip under one provider: short enough
+ * to feel immediate, long enough that sweeping the pointer across a row of
+ * controls doesn't flash each label. Once one is open the next opens at once.
+ */
+export const TOOLTIP_DELAY_MS = 100;
 
 /**
  * A tooltip's words with the key that does the same at the end, as a key

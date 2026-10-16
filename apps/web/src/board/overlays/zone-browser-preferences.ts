@@ -5,23 +5,71 @@ import { definePreference } from '../../preferences/preference-store.js';
 /** How the player likes a pile's viewer laid out, kept between visits. */
 export interface ZoneBrowserPreferences {
   /**
-   * Copies of one card share a single stacked tile with their count, rather
-   * than one tile each.
+   * Piles -- the deck, discard, Lost Zone, prizes, the Board -- show copies
+   * of one card as a single stacked tile with their count.
    */
-  readonly stackCopies: boolean;
+  readonly stackPiles: boolean;
+  /** The hand does the same; off by default, a hand is read card by card. */
+  readonly stackHand: boolean;
+  /**
+   * How large the viewer draws its cards, as a multiple of the size it would
+   * fit them at on its own. 1 is that size; the scale is linear.
+   */
+  readonly zoom: number;
 }
+
+export const ZONE_BROWSER_ZOOM_MIN = 0.5;
+export const ZONE_BROWSER_ZOOM_MAX = 2;
+export const ZONE_BROWSER_ZOOM_STEP = 0.1;
+
+const STEPS_PER_UNIT = Math.round(1 / ZONE_BROWSER_ZOOM_STEP);
+
+/** A zoom kept on the scale's steps and inside its range. */
+export const clampZoneBrowserZoom = (zoom: number): number =>
+  Number.isFinite(zoom)
+    ? Math.min(
+        ZONE_BROWSER_ZOOM_MAX,
+        Math.max(
+          ZONE_BROWSER_ZOOM_MIN,
+          Math.round(zoom / ZONE_BROWSER_ZOOM_STEP) / STEPS_PER_UNIT
+        )
+      )
+    : 1;
+
+const ZONE_BROWSER_DEFAULTS: ZoneBrowserPreferences = Object.freeze({
+  stackPiles: true,
+  stackHand: false,
+  zoom: 1,
+});
 
 export const ZONE_BROWSER_PREFERENCES =
   definePreference<ZoneBrowserPreferences>({
     key: 'ptcgsim.zone-browser.v1',
-    defaults: Object.freeze({ stackCopies: false }),
-    parse: (value) => ({
-      stackCopies:
-        typeof value === 'object' &&
-        value !== null &&
-        Reflect.get(value, 'stackCopies') === true,
-    }),
+    defaults: ZONE_BROWSER_DEFAULTS,
+    parse: (value) => {
+      if (typeof value !== 'object' || value === null || Array.isArray(value))
+        return ZONE_BROWSER_DEFAULTS;
+      const flag = (key: string, fallback: boolean): boolean => {
+        const stored = Reflect.get(value, key);
+        return typeof stored === 'boolean' ? stored : fallback;
+      };
+      // Before 2026-10-16 one switch stacked every viewer and was off by
+      // default, so only a stored `true` was a choice: stacking everywhere.
+      const legacy = Reflect.get(value, 'stackCopies') === true;
+      const zoom = Reflect.get(value, 'zoom');
+      return {
+        stackPiles: flag('stackPiles', ZONE_BROWSER_DEFAULTS.stackPiles),
+        stackHand: flag('stackHand', legacy),
+        zoom: typeof zoom === 'number' ? clampZoneBrowserZoom(zoom) : 1,
+      };
+    },
   });
+
+/** Which of the two stacking choices a zone's viewer follows. */
+export const zoneBrowserStackKey = (
+  zoneKind: string
+): 'stackHand' | 'stackPiles' =>
+  zoneKind === 'hand' ? 'stackHand' : 'stackPiles';
 
 /** One tile in a pile's viewer: a card, and the copies stacked under it. */
 export interface ZoneBrowserTile {

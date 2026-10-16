@@ -386,6 +386,10 @@
               "kind": "value"
             },
             {
+              "name": "hasRuleBox",
+              "kind": "value"
+            },
+            {
               "name": "isBasicEnergy",
               "kind": "value"
             },
@@ -1862,6 +1866,10 @@
               "kind": "value"
             },
             {
+              "name": "isPileStandIn",
+              "kind": "value"
+            },
+            {
               "name": "layoutLegacyActiveQ0Markers",
               "kind": "value"
             },
@@ -2255,6 +2263,10 @@
             },
             {
               "name": "TABLE_CONTROL_CORNER_PX",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_FAR_HAND_SCALE",
               "kind": "value"
             },
             {

@@ -340,6 +340,37 @@ describe('live board depth', () => {
   });
 });
 
+describe('a flat card turned over', () => {
+  it('is seen in depth about its own middle, and lies flat again at rest', () => {
+    const scene = fixture();
+    const card = scene.cards.find(
+      (candidate) => candidate.renderKey && candidate.parentId.endsWith(':hand')
+    )!;
+    const projection = new BoardDepthProjection(scene, preferences);
+    const flat = { ...projection.pose(card), plane: 0 };
+    const { bounds } = flat;
+    // At rest: exactly its rectangle, wherever it is on the screen.
+    expect(tablePoseQuad(projection.camera, flat)).toEqual([
+      { x: bounds.x, y: bounds.y },
+      { x: bounds.x + bounds.width, y: bounds.y },
+      { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+      { x: bounds.x, y: bounds.y + bounds.height },
+    ]);
+    const [a, b, c, d] = tablePoseQuad(projection.camera, {
+      ...flat,
+      flip: Math.PI / 3,
+    });
+    // Narrower, still centred on its middle, one edge nearer (taller) than
+    // the other.
+    const middle = bounds.x + bounds.width / 2;
+    expect(b!.x - a!.x).toBeLessThan(bounds.width * 0.75);
+    expect((a!.x + b!.x) / 2).toBeCloseTo(middle, -1);
+    expect(Math.abs(c!.y - b!.y - (d!.y - a!.y))).toBeGreaterThan(
+      bounds.height * 0.05
+    );
+  });
+});
+
 describe('physical pose timing', () => {
   it('retargets from the current visible height and stops completely at rest', () => {
     const motion = new TablePoseMotion();

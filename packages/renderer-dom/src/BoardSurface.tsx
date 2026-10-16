@@ -522,7 +522,10 @@ const CardNode = memo(
     readonly drag: BoardPresentation['drag'];
     readonly settle: SettlingCard | null;
     readonly emitIntent: BoardRendererAdapters['emitIntent'];
-    readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
+    readonly consumeSuppressedClick: (
+      cardId: CardSceneNode['id'],
+      renderKey: CardSceneNode['renderKey']
+    ) => boolean;
     readonly registerElement: (
       renderKey: string,
       element: HTMLElement | null
@@ -668,7 +671,10 @@ const CardNode = memo(
         }
         disabled={!card.interactive}
         onClick={(event) => {
-          if (!consumeSuppressedClick(card.id) || event.detail === 0) {
+          if (
+            !consumeSuppressedClick(card.id, card.renderKey) ||
+            event.detail === 0
+          ) {
             activate();
           }
         }}
@@ -1126,8 +1132,8 @@ export const BoardSurface = ({
     [adapters]
   );
   const consumeSuppressedClick = useCallback(
-    (cardId: CardSceneNode['id']) =>
-      dragController.consumeSuppressedClick(cardId),
+    (cardId: CardSceneNode['id'], renderKey: CardSceneNode['renderKey']) =>
+      dragController.consumeSuppressedClick(cardId, renderKey),
     [dragController]
   );
   const registerElement = director.register;

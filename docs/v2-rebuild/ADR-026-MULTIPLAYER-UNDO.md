@@ -2,7 +2,7 @@
 
 - Status: **ACCEPTED**
 - Decision date: 2026-10-06
-- Last reviewed: 2026-10-06
+- Last reviewed: 2026-10-16
 - Scope: undo in both room modes, its history, its event payload, and the
   per-command validation path
 - Supersedes: the storage design and the Solo-only scope of ADR-014; ADR-014's
@@ -77,9 +77,14 @@ itself, deriving and applying the checkpoint, is under 2 ms of that.
 - A first-time seat claim rebases the replay history (ADR-016), so moves made
   before the opponent joins cannot be undone afterwards. A reconnect does not
   claim a seat and keeps them.
-- An undo rotates every projection alias, now for both players and spectators,
-  so a command the opponent sent against the old aliases is refused rather than
-  applied to the wrong card.
+- An undo rotates the alias of every card the move taken back carried across
+  a concealment boundary (drawn, revealed, shuffled, turned over), for both
+  players and spectators, so a command the opponent sent against one of those
+  aliases is refused rather than applied to the wrong card. Since 2026-10-16 a
+  card the move left in the same visibility generation keeps its alias
+  (`identitiesSurvivingUndo`): every viewer could already follow it through
+  that move, a command sent against it still names that very card, and the
+  table leaves it still instead of dealing the whole board again.
 - Authority snapshot schema 8 drops `soloUndoHistory`; schemas 1 to 7 migrate by
   discarding it. Undo after migration reads the replay history those rooms
   already have.

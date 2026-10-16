@@ -232,6 +232,44 @@ describe('renderer-neutral drag controller', () => {
     expect(controller.consumeSuppressedClick(sourceId)).toBe(false);
   });
 
+  it('drops the click a drag off a pile ends with, though its cover now shows the next card', () => {
+    const controller = new BoardDragController({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+    });
+    const pile = (): BoardScene => ({
+      ...scene(),
+      cards: scene().cards.map((card) =>
+        card.id === sourceId
+          ? {
+              ...card,
+              renderKey: 'cover:deck',
+              primaryAction: { kind: 'openZone' as const, zoneId: 'deck' },
+            }
+          : card
+      ),
+    });
+    const nextTop = asViewCardId('next-top');
+    controller.pointerDown(pile(), sourceId, input(30, 440));
+    controller.pointerMove(pile(), input(520, 160));
+    expect(controller.pointerUp(pile(), input(520, 160))).toBe(true);
+    // The cover's click arrives after the drop, standing for the next card.
+    expect(controller.consumeSuppressedClick(nextTop, 'cover:deck')).toBe(true);
+    // Only that one click.
+    expect(controller.consumeSuppressedClick(nextTop, 'cover:deck')).toBe(
+      false
+    );
+
+    // Another element's click is never taken for it.
+    controller.pointerDown(pile(), sourceId, input(30, 440));
+    controller.pointerMove(pile(), input(520, 160));
+    controller.pointerUp(pile(), input(520, 160));
+    expect(
+      controller.consumeSuppressedClick(targetCardId, 'card:target-card')
+    ).toBe(false);
+    expect(controller.consumeSuppressedClick(targetCardId)).toBe(false);
+  });
+
   it('aims with the pointer and puts the card down centred where it is held', () => {
     const updates: BoardPresentationUpdate[] = [];
     const intents: BoardIntent[] = [];

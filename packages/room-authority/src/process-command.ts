@@ -13,10 +13,7 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
-import {
-  emptyProjectionIdentityState,
-  projectRecipient,
-} from './identity-registry.js';
+import { projectRecipient } from './identity-registry.js';
 import {
   authoritySnapshotValidationMatches,
   prepareValidatedReplayHistoryTransition,
@@ -42,6 +39,7 @@ import type {
 import { resolveWireCommand } from './resolve-command.js';
 import { presentationEventsForBatch } from './presentation-events.js';
 import { undoCheckpointFor } from './undo-history.js';
+import { identitiesSurvivingUndo } from './undo-identities.js';
 
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
@@ -595,9 +593,15 @@ export const processAuthorityCommand = async (
       mode: current.mode,
       state: candidateState,
       replayHistory,
+      // An undo rotates only the aliases of cards the move taken back carried
+      // across a concealment boundary (identitiesSurvivingUndo).
       identities:
         accepted && envelope.command.type === 'ApplySoloUndo'
-          ? emptyProjectionIdentityState()
+          ? identitiesSurvivingUndo(
+              current.identities,
+              current.state,
+              candidateState
+            )
           : current.identities,
       sessions,
       ...(current.admission ? { admission: current.admission } : {}),

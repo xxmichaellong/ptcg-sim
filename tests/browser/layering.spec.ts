@@ -133,10 +133,12 @@ test.describe('on a phone', () => {
     await page.keyboard.press('Alt+3');
     const area = page.locator('[data-legacy-work-area="inspection"]');
     await expect(area).toBeVisible();
-    await area.locator('[data-work-area-card-id]').first().tap();
+    const card = area.locator('[data-work-area-card-id]').first();
+    await card.tap();
     const bar = area.locator('.ptcgsim-card-actions');
     await expect(bar).toBeVisible();
-    await bar.getByRole('button', { name: 'Read' }).tap();
+    // Tapped again, the card is read.
+    await card.dblclick();
     await expect(page.locator('[data-legacy-card-preview]')).toBeVisible();
     // The window's sticky action bar and its card handles used to cut
     // across the card being read.
@@ -195,7 +197,7 @@ test('in a pile viewer, a preview and a card menu open over its bars', async ({
   await page.keyboard.press('Escape');
   await expect(menu).toHaveCount(0);
 
-  await bar.getByRole('button', { name: 'Read' }).click();
+  await browser.locator('[data-overlay-card-id]').nth(1).dblclick();
   await expect(page.locator('[data-legacy-card-preview]')).toBeVisible();
   for (const under of [
     '[data-legacy-zone-browser] .ptcgsim-card-actions',

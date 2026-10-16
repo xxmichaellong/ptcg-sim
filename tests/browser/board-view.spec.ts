@@ -221,6 +221,7 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
     )
     .toBe(540);
   await page.locator('#boardViewResetButton').click();
+  // Back to the default split: the near half takes 54% (PX-047).
   await expect
     .poll(async () =>
       Math.round(
@@ -228,7 +229,7 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
           ?.height ?? 0
       )
     )
-    .toBe(450);
+    .toBe(486);
   expect(errors).toEqual([]);
 });
 

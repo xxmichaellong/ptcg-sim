@@ -7,7 +7,6 @@ import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/csr/LockSimple';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
-import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { TableIcon } from '@phosphor-icons/react/dist/csr/Table';
 import { WarningIcon } from '@phosphor-icons/react/dist/csr/Warning';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
@@ -30,6 +29,7 @@ import {
   type PreferenceStore,
 } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
+import { DeckIcon } from '../ui/DeckIcon.js';
 import { Dialog } from '../ui/Dialog.js';
 import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
 import {
@@ -83,7 +83,7 @@ const decorative = { 'aria-hidden': true, focusable: false } as const;
 const GROUP_ICONS: Readonly<Record<HotkeyGroupId, Icon>> = {
   move: ArrowsOutCardinalIcon,
   card: CardsIcon,
-  deck: StackIcon,
+  deck: DeckIcon,
   hand: HandGrabbingIcon,
   board: SquaresFourIcon,
   table: TableIcon,

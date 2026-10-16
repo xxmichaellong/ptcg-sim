@@ -94,6 +94,25 @@ describe('overlay layout', () => {
     );
   });
 
+  it('scales the fitted card size linearly with zoom, within what fits', () => {
+    const fitted = zoneBrowserLayout(LAPTOP, 47).cardHeight;
+    expect(zoneBrowserLayout(LAPTOP, 47, 1).cardHeight).toBe(fitted);
+    expect(zoneBrowserLayout(LAPTOP, 47, 0.5).cardHeight).toBeCloseTo(
+      fitted * 0.5
+    );
+    expect(zoneBrowserLayout(LAPTOP, 47, 1.5).cardHeight).toBeCloseTo(
+      fitted * 1.5
+    );
+    // Never larger than one card fits the panel, never below the minimum.
+    const huge = zoneBrowserLayout(LAPTOP, 3, 2);
+    expectOnBoard(huge, LAPTOP);
+    expect(huge.cardHeight).toBeLessThanOrEqual(huge.height);
+    expect(zoneBrowserLayout(SMALL, 3, 0.01).cardHeight).toBe(
+      OVERLAY_CARD_MIN_HEIGHT
+    );
+    expect(zoneBrowserLayout(LAPTOP, 47, Number.NaN).cardHeight).toBe(fitted);
+  });
+
   it('grows a work area around the scene box it covers, on the board', () => {
     // Where the v1 geometry puts "Looking at cards..." on the lower half.
     const zone = { x: 141.5, y: 492.75, width: 792, height: 380 };

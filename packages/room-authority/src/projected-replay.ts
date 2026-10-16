@@ -20,6 +20,7 @@ import {
 import type { AuthorityMode, ReplayHistory } from './model.js';
 import { presentationEventsForBatch } from './presentation-events.js';
 import { replayHistoryStates } from './replay-history.js';
+import { identitiesSurvivingUndo } from './undo-identities.js';
 
 export interface ProjectedReplayFrame {
   readonly snapshot: MatchViewState;
@@ -140,10 +141,16 @@ export const buildProjectedReplay = (
   const frames: ProjectedReplayFrame[] = [];
   for (const [index, state] of states.entries()) {
     const entry = index === 0 ? undefined : history.entries[index - 1];
-    if (entry?.batch.events.some((event) => event.type === 'UndoApplied')) {
-      // Undo restores an older visibility generation. Rotating all replay-local
-      // aliases prevents correlation with identities from the discarded branch.
-      identities = emptyProjectionIdentityState();
+    const undone = index === 0 ? undefined : states[index - 1];
+    if (
+      undone &&
+      entry?.batch.events.some((event) => event.type === 'UndoApplied')
+    ) {
+      // Undo restores an older visibility generation. Aliases of cards the
+      // move taken back carried across a concealment boundary rotate, so the
+      // discarded branch cannot be correlated with the restored one; the
+      // rest stay still, as they do live.
+      identities = identitiesSurvivingUndo(identities, undone, state);
     }
     // Solo's windows show as they did live; hands and prizes are the local
     // disclosure's below.

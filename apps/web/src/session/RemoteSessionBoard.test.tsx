@@ -17,6 +17,7 @@ import { act, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import {
@@ -552,7 +553,11 @@ describe('RemoteSessionBoard replay binding', () => {
       label: 'Turn',
       title: 'Start turn',
     });
-    expect(own.coin).toMatchObject({ id: 'flipCoinButton', label: 'Coin' });
+    // The coin lies on the table (PX-051), so the rail has none.
+    expect(own.coin).toBeUndefined();
+    expect(
+      host.querySelector('[data-table-coin="local"] #flipCoinButton')
+    ).not.toBeNull();
     expect(own.mulligan).toMatchObject({ id: 'mulliganButton' });
     // Turning the table around is for Solo, spectators and coaching.
     expect(own.switchSide).toBeUndefined();
@@ -766,23 +771,29 @@ describe('RemoteSessionBoard replay binding', () => {
     await waitForRevision(host, 10);
     const coin = () =>
       host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
+    const phase = () =>
+      host.querySelector<HTMLElement>('[data-table-coin="local"]')!.dataset
+        .coinPhase;
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       await act(async () => coin().click());
       expect(session.submit).toHaveBeenCalledWith({ type: 'FlipCoin' });
-      expect(coin().dataset.controlPending).toBe('true');
+      // The table's coin is up in the air at once.
+      expect(phase()).toBe('tossing');
       expect(coin().getAttribute('aria-busy')).toBe('true');
 
       // A local publication -- opening the deck -- is not the room's answer.
       await openLocalDeck(host);
-      expect(coin().dataset.controlPending).toBe('true');
+      await act(async () => vi.advanceTimersByTime(COIN_PENDING_GRACE_MS));
+      expect(phase()).toBe('tossing');
 
       // The answer is an ordinary board publication, well inside the ceiling.
       await act(async () =>
         session.publish({ ...session.getSnapshot(), view: atRevision(11) })
       );
-      expect(coin().dataset.controlPending).toBeUndefined();
+      await act(async () => vi.advanceTimersByTime(COIN_PENDING_GRACE_MS));
+      expect(phase()).toBe('resting');
     } finally {
       vi.useRealTimers();
     }
@@ -812,15 +823,20 @@ describe('RemoteSessionBoard replay binding', () => {
     await waitForRevision(host, 10);
     const coin = () =>
       host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
+    const phase = () =>
+      host.querySelector<HTMLElement>('[data-table-coin="local"]')!.dataset
+        .coinPhase;
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       await act(async () => coin().click());
-      expect(coin().dataset.controlPending).toBe('true');
+      expect(phase()).toBe('tossing');
       await act(async () => vi.advanceTimersByTime(3_999));
-      expect(coin().dataset.controlPending).toBe('true');
+      expect(phase()).toBe('tossing');
+      // Four seconds without an answer: it comes down after the short grace.
       await act(async () => vi.advanceTimersByTime(1));
-      expect(coin().dataset.controlPending).toBeUndefined();
+      await act(async () => vi.advanceTimersByTime(COIN_PENDING_GRACE_MS));
+      expect(phase()).toBe('resting');
     } finally {
       vi.useRealTimers();
     }

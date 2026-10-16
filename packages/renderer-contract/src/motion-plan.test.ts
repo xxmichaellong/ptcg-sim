@@ -6,6 +6,8 @@ import {
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_BOARD_PRESENTATION } from './defaults.js';
+import { withHeldCards } from './held-cards.js';
 import { planBoardMotion } from './motion-plan.js';
 import { createBoardSceneForViewport } from './scene.js';
 import { createRendererSpikeView } from './spike-fixture.js';
@@ -518,5 +520,80 @@ describe('planBoardMotion', () => {
     ]);
     // Nothing joined: nothing answers.
     expect(planBoardMotion(before, before, 'advance').joins).toEqual([]);
+  });
+
+  describe('a deck card turned onto the discard', () => {
+    const deck = cardsOf(base, zoneId(blue, 'deck'));
+    const discard = cardsOf(base, zoneId(blue, 'discard'));
+    const before = sceneOf(base);
+    const deckKey = `cover:${zoneId(blue, 'deck')}`;
+    const discardKey = `cover:${zoneId(blue, 'discard')}`;
+    const top = before.cards.find((card) => card.renderKey === deckKey)!;
+    // The owner learns the card as it lands; it keeps its alias.
+    const { view, card: learned } = freshKnown(base, blue, 'turned-up');
+    const turned = { ...learned, id: top.id } as ViewCard;
+    const after = sceneOf(
+      withZones(view, {
+        [zoneId(blue, 'deck')]: deck.filter((card) => card.id !== top.id),
+        [zoneId(blue, 'discard')]: [...discard, turned],
+      })
+    );
+
+    it('flies it over and turns it up, as one card and no other', () => {
+      const plan = planBoardMotion(before, after, 'advance');
+      expect(
+        plan.flights.find((flight) => flight.renderKey === discardKey)
+      ).toMatchObject({
+        from: top.bounds,
+        fromImageUrl: top.tableImageUrl,
+      });
+      // Only the old top, holding the pile covered until it lands.
+      expect(plan.ghosts.map((ghost) => ghost.holdFor)).toEqual([discardKey]);
+    });
+
+    it('does the same for the top card dragged out of the deck viewer', () => {
+      const held = withHeldCards(before, {
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { cardId: top.id, x: 600, y: 500, targetId: null },
+        openedZoneId: zoneId(blue, 'deck'),
+      });
+      const carried = held.cards.find(
+        (card) => card.renderKey === `card:${String(top.id)}`
+      )!;
+      const plan = planBoardMotion(held, after, 'predict');
+      expect(
+        plan.flights.find((flight) => flight.renderKey === discardKey)
+      ).toMatchObject({
+        from: carried.bounds,
+        fromImageUrl: carried.imageUrl,
+        fromRenderKey: carried.renderKey,
+      });
+      // The deck's stand-in cover is no card: nothing else flies or fades.
+      expect(plan.ghosts.map((ghost) => ghost.holdFor)).toEqual([discardKey]);
+    });
+  });
+
+  it('names the node a card was painted as when the room re-aliases it mid-move', () => {
+    const hand = cardsOf(base, zoneId(blue, 'hand'));
+    const { view, card: predicted } = freshKnown(base, blue, 'predicted');
+    const answered = { ...predicted, id: asViewCardId('answered') } as ViewCard;
+    const before = sceneOf(
+      withZones(view, { [zoneId(blue, 'hand')]: [...hand, predicted] })
+    );
+    const after = sceneOf(
+      withZones(view, { [zoneId(blue, 'hand')]: [...hand, answered] })
+    );
+    const plan = planBoardMotion(before, after, 'advance');
+    expect(
+      plan.flights.find((flight) => flight.renderKey === 'card:answered')
+    ).toMatchObject({ fromRenderKey: 'card:predicted', kind: 'enter' });
+    // A key the next scene still paints is not gone.
+    expect(
+      plan.flights.filter(
+        (flight) =>
+          flight.fromRenderKey !== undefined &&
+          after.cards.some((card) => card.renderKey === flight.fromRenderKey)
+      )
+    ).toEqual([]);
   });
 });

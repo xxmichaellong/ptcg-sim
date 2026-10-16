@@ -363,10 +363,12 @@ describe('composed board scenes', () => {
         .filter((card) => card.parentId === stack.id)
         .map((card) => {
           const whole = card.composition!.bounds;
+          // (+ 0 turns a rounded -0 into 0.)
           return {
             id: card.id,
-            x: Math.round(((card.bounds.x - whole.x) / whole.width) * 1000),
-            y: Math.round(((card.bounds.y - whole.y) / whole.height) * 1000),
+            x: Math.round(((card.bounds.x - whole.x) / whole.width) * 1000) + 0,
+            y:
+              Math.round(((card.bounds.y - whole.y) / whole.height) * 1000) + 0,
             turns: card.rotationQuarterTurns,
           };
         })

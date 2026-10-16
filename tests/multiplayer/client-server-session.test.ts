@@ -3824,10 +3824,14 @@ describe('client/server multiplayer contract', () => {
     expect(undone.revision).toBe(4);
     expect(undone.zones[hand.id]?.cards).toHaveLength(7);
     expect(undone.zones[deck.id]?.cards).toHaveLength(1);
+    // The hand the undo left alone keeps its aliases; the card that went
+    // back to the deck returns under one the drawn branch never showed.
     const undoAliases = undone.zones[hand.id]!.cards.map((card) => card.id);
-    expect(undoAliases.every((alias) => !setupAliases.includes(alias))).toBe(
+    expect(undoAliases.every((alias) => setupAliases.includes(alias))).toBe(
       true
     );
+    const drawnAliases = drawn.zones[hand.id]!.cards.map((card) => card.id);
+    expect(drawnAliases).not.toContain(undone.zones[deck.id]!.cards[0]!.id);
     expect(player.session.getSnapshot().presentationEvents.at(-1)).toEqual({
       type: 'UndoApplied',
       revision: 4,
@@ -3928,6 +3932,9 @@ describe('client/server multiplayer contract', () => {
     const redDeckAliases = zoneOf(redBefore, 'deck').cards.map(
       (card) => card.id
     );
+    const redHandAliases = zoneOf(redBefore, 'hand').cards.map(
+      (card) => card.id
+    );
 
     // Red cannot take back Blue's draw.
     red.session.submit({ type: 'ApplySoloUndo', targetPlayerId: redId });
@@ -3959,15 +3966,23 @@ describe('client/server multiplayer contract', () => {
         revertedRevision: 2,
       });
     }
-    // The cards that came back carry fresh aliases for the opponent, so the
-    // discarded branch cannot be matched against the restored one.
+    // The cards the undo left in the deck keep their aliases; the two that
+    // came back carry fresh ones for the opponent, so the discarded branch
+    // cannot be matched against the restored one.
     const restoredAliases = zoneOf(
       red.session.getSnapshot().view!,
       'deck'
     ).cards.map((card) => card.id);
     expect(
-      restoredAliases.some((alias) => redDeckAliases.includes(alias))
-    ).toBe(false);
+      redDeckAliases.every((alias) => restoredAliases.includes(alias))
+    ).toBe(true);
+    const returned = restoredAliases.filter(
+      (alias) => !redDeckAliases.includes(alias)
+    );
+    expect(returned).toHaveLength(2);
+    expect(returned.some((alias) => redHandAliases.includes(alias))).toBe(
+      false
+    );
 
     // The deck load is a boundary nothing is taken back past.
     blue.session.submit({ type: 'ApplySoloUndo', targetPlayerId: blueId });

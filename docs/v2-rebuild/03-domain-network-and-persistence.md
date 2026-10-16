@@ -909,8 +909,9 @@ gaining an empty invitation registry. A nonzero root is explicitly exposed as
 
 Projection happens only inside the authority boundary. Each request starts a
 fresh artifact-local opaque identity registry, preserves aliases while the same
-visibility generation remains active, and clears the registry after
-`UndoApplied` so identities from a discarded branch cannot correlate with the
+visibility generation remains active, and after `UndoApplied` keeps only the
+aliases of cards whose visibility generation the move taken back left
+unchanged, so identities from a discarded branch cannot correlate with the
 restored branch. The canonical base, batches, hashes, card IDs, and definition
 IDs never appear in replay protocol messages. Player sessions receive only that
 player's historical projection; spectator sessions receive only the public

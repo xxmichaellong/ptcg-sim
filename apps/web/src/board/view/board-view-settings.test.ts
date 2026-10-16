@@ -70,8 +70,8 @@ it('clamps the split to whole percentages the table allows', () => {
   expect(parseBoardView({ split: 0.9 }).split).toBe(0.66);
   expect(parseBoardView({ split: 0.1 }).split).toBe(0.34);
   expect(parseBoardView({ split: 0.5555 }).split).toBe(0.56);
-  expect(parseBoardView({ split: Number.NaN }).split).toBe(0.5);
-  expect(parseBoardView({ split: '0.6' }).split).toBe(0.5);
+  expect(parseBoardView({ split: Number.NaN }).split).toBe(0.54);
+  expect(parseBoardView({ split: '0.6' }).split).toBe(0.54);
 });
 
 it('falls back to defaults for damaged or blocked storage', () => {

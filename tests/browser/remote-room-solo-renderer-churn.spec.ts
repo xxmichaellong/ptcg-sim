@@ -655,6 +655,13 @@ const useAnimationSpeed = async (
 
 /** A Solo room on the DOM renderer with both 60-card churn decks installed. */
 const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
+  // Full-deck churn paints every card in the viewer, each copy on its own.
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      'ptcgsim.zone-browser.v1',
+      JSON.stringify({ stackPiles: false })
+    )
+  );
   await page.goto('/?room-lobby=1&renderer=dom');
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
@@ -669,7 +676,9 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
   );
   // The log stays open (docked) so its rows are part of what is measured.
   await openActivity(page);
-  await expectBothActionsEnabled(page);
+  // Neither side has a deck yet, so there is nothing to set up or reset.
+  await expect(page.locator('#setupBothButton')).toHaveCount(0);
+  await expect(page.locator('#resetBothButton')).toHaveCount(0);
 
   const renderer = await page.evaluateHandle(
     () => window.__PTCG_RENDERER_SPIKE__?.renderer
@@ -708,6 +717,7 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
     'data-revision',
     String(beforeDeckInstall + 2)
   );
+  await expectBothActionsEnabled(page);
   return renderer;
 };
 

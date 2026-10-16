@@ -82,9 +82,31 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   await page.locator(`[data-card-id="${deck.id}"]`).dblclick();
   const browser = page.locator('[data-legacy-zone-browser]');
   const cards = browser.locator('button[data-overlay-card-id]');
+  // A pile opens with copies of a card stacked on one tile; together the
+  // tiles still hold every card.
+  const stack = browser.getByRole('button', { name: 'Stack copies' });
+  await expect(stack).toHaveAttribute('aria-pressed', 'true');
+  await expect
+    .poll(() =>
+      cards.evaluateAll((tiles) =>
+        tiles.reduce(
+          (sum, tile) =>
+            sum + Number(tile.getAttribute('data-copy-stack') ?? 1),
+          0
+        )
+      )
+    )
+    .toBe(47);
+  expect(await cards.count()).toBeLessThan(47);
+  await stack.click();
   await expect(cards).toHaveCount(47);
+  // Card size is a linear zoom on the fitted size.
   const initialHeight = (await cards.first().boundingBox())!.height;
-  await page.getByRole('combobox', { name: 'Card size' }).selectOption('large');
+  const larger = browser.getByRole('button', { name: 'Larger cards' });
+  for (let step = 0; step < 4; step += 1) await larger.click();
+  await expect(
+    browser.getByRole('button', { name: /Card size 140%/u })
+  ).toBeVisible();
   await expect
     .poll(async () => (await cards.first().boundingBox())!.height)
     .toBeGreaterThan(initialHeight * 1.3);
@@ -308,8 +330,8 @@ test('magnified desktop viewport keeps card reading and movement controls reacha
     const source = browser.locator('[data-overlay-card-id]').first();
     await source.focus();
     await page.keyboard.press('Enter');
-    const read = browser.getByRole('button', { name: 'Read', exact: true });
-    await read.click();
+    // Reading is a double-click, as everywhere on the table.
+    await source.dblclick();
     const preview = page.locator('[data-preview-kind="card"]');
     await expect(preview).toBeVisible();
     const box = (await preview
@@ -320,7 +342,7 @@ test('magnified desktop viewport keeps card reading and movement controls reacha
     expect(box.x + box.width).toBeLessThanOrEqual(721);
     expect(box.y + box.height).toBeLessThanOrEqual(451);
     await page.keyboard.press('Escape');
-    await expect(read).toBeFocused();
+    await expect(source).toBeFocused();
     const move = browser.getByRole('button', { name: 'Move', exact: true });
     await expect(move).toBeEnabled();
     await move.scrollIntoViewIfNeeded();

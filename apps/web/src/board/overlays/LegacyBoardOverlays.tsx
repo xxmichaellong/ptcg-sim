@@ -36,6 +36,8 @@ import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
 import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
+import { MagnifyingGlassMinusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassMinus';
+import { MagnifyingGlassPlusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassPlus';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/csr/PawPrint';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
@@ -104,7 +106,6 @@ import {
   zoneBrowserLayout,
   type OverlayBoardSize,
   type OverlayPanelLayout,
-  type CardBrowserSize,
 } from './overlayLayout.js';
 import {
   createTiltHandlers,
@@ -116,7 +117,12 @@ import {
 import './LegacyBoardOverlays.css';
 import { useOverlayCardDrag } from './useOverlayCardDrag.js';
 import {
+  clampZoneBrowserZoom,
   ZONE_BROWSER_PREFERENCES,
+  ZONE_BROWSER_ZOOM_MAX,
+  ZONE_BROWSER_ZOOM_MIN,
+  ZONE_BROWSER_ZOOM_STEP,
+  zoneBrowserStackKey,
   zoneBrowserTiles,
 } from './zone-browser-preferences.js';
 import { preferences } from '../../preferences/preference-store.js';
@@ -1835,7 +1841,6 @@ const ZoneBrowser = ({
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
   const [query, setQuery] = useState('');
-  const [cardSize, setCardSize] = useState<CardBrowserSize>('auto');
   const [showingBoard, setShowingBoard] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
@@ -1901,7 +1906,22 @@ const ZoneBrowser = ({
       : ordered;
   }, [cards, sortEnabled, query]);
   const copies = useMemo(() => zoneCopyCounts(cards), [cards]);
-  const layout = zoneBrowserLayout(board, cards.length, cardSize);
+  const browserPreferences = usePreference(ZONE_BROWSER_PREFERENCES);
+  const { zoom } = browserPreferences;
+  const setZoom = (next: number) =>
+    preferences().set(ZONE_BROWSER_PREFERENCES, {
+      ...preferences().get(ZONE_BROWSER_PREFERENCES),
+      zoom: clampZoneBrowserZoom(next),
+    });
+  // Piles stack copies of a card by default; the hand shows each one.
+  const stackKey = zoneBrowserStackKey(zone.kind);
+  const stackCopies = browserPreferences[stackKey];
+  // Sized for the whole pile as it is tiled, so a search never resizes it.
+  const tileCount = useMemo(
+    () => zoneBrowserTiles(cards, stackCopies).length,
+    [cards, stackCopies]
+  );
+  const layout = zoneBrowserLayout(board, tileCount, zoom);
   const title = ZONE_BROWSER_TITLES[zone.kind] ?? zone.label;
   const owner =
     zone.playerId !== null
@@ -1926,7 +1946,6 @@ const ZoneBrowser = ({
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
   });
   const draggingCardId = drag.draggingCardId;
-  const { stackCopies } = usePreference(ZONE_BROWSER_PREFERENCES);
   const tiles = useMemo(
     () => zoneBrowserTiles(renderedCards, stackCopies),
     [renderedCards, stackCopies]
@@ -2031,7 +2050,8 @@ const ZoneBrowser = ({
                   aria-label="Stack copies"
                   onClick={() =>
                     preferences().set(ZONE_BROWSER_PREFERENCES, {
-                      stackCopies: !stackCopies,
+                      ...preferences().get(ZONE_BROWSER_PREFERENCES),
+                      [stackKey]: !stackCopies,
                     })
                   }
                 >
@@ -2076,24 +2096,63 @@ const ZoneBrowser = ({
             />
           </label>
           <span className="ptcgsim-browser-results" role="status">
-            {query.trim()
-              ? `${renderedCards.length} of ${cards.length}`
-              : 'Double-click to read'}
+            {query.trim() ? `${renderedCards.length} of ${cards.length}` : ''}
           </span>
-          <label className="ptcgsim-browser-size">
-            Card size
-            <select
+          <div
+            className="ptcgsim-browser-zoom"
+            role="group"
+            aria-label="Card size"
+          >
+            <Tooltip content="Smaller cards" side="bottom">
+              <button
+                type="button"
+                className="ptcgsim-browser-zoom-step"
+                data-zone-action="zoomOut"
+                aria-label="Smaller cards"
+                disabled={zoom <= ZONE_BROWSER_ZOOM_MIN}
+                onClick={() => setZoom(zoom - ZONE_BROWSER_ZOOM_STEP)}
+              >
+                <MagnifyingGlassMinusIcon aria-hidden="true" weight="bold" />
+              </button>
+            </Tooltip>
+            <input
+              type="range"
+              className="ptcgsim-browser-zoom-slider"
+              data-zone-action="zoom"
               aria-label="Card size"
-              value={cardSize}
+              aria-valuetext={`${Math.round(zoom * 100)}%`}
+              min={ZONE_BROWSER_ZOOM_MIN * 100}
+              max={ZONE_BROWSER_ZOOM_MAX * 100}
+              step={ZONE_BROWSER_ZOOM_STEP * 100}
+              value={Math.round(zoom * 100)}
               onChange={(event) =>
-                setCardSize(event.currentTarget.value as CardBrowserSize)
+                setZoom(Number(event.currentTarget.value) / 100)
               }
-            >
-              <option value="auto">Auto</option>
-              <option value="compact">Compact</option>
-              <option value="large">Large</option>
-            </select>
-          </label>
+            />
+            <Tooltip content="Larger cards" side="bottom">
+              <button
+                type="button"
+                className="ptcgsim-browser-zoom-step"
+                data-zone-action="zoomIn"
+                aria-label="Larger cards"
+                disabled={zoom >= ZONE_BROWSER_ZOOM_MAX}
+                onClick={() => setZoom(zoom + ZONE_BROWSER_ZOOM_STEP)}
+              >
+                <MagnifyingGlassPlusIcon aria-hidden="true" weight="bold" />
+              </button>
+            </Tooltip>
+            <Tooltip content="Back to 100%" side="bottom">
+              <button
+                type="button"
+                className="ptcgsim-browser-zoom-value"
+                data-zone-action="zoomReset"
+                aria-label={`Card size ${Math.round(zoom * 100)}%, back to 100%`}
+                onClick={() => setZoom(1)}
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+            </Tooltip>
+          </div>
         </div>
         <div className="ptcgsim-legacy-zone-cards">
           {renderedCards.length === 0 ? (
@@ -2268,13 +2327,12 @@ const WorkAreaPanel = ({
     withActions,
     controls && emit !== undefined
   );
-  const hint = withActions
-    ? 'Drag a card out, or move them all with a button below'
-    : controls
-      ? undefined
-      : zone.kind === 'inspection'
-        ? 'Your opponent is looking at these cards'
-        : 'Your opponent is moving these cards';
+  // Only whose cards these are, when they are not the viewer's to move.
+  const hint = controls
+    ? undefined
+    : zone.kind === 'inspection'
+      ? 'Your opponent is looking at these cards'
+      : 'Your opponent is moving these cards';
 
   return (
     <section
@@ -2596,34 +2654,36 @@ const MarkerEditor = ({
       }}
     />
   );
-  // A counter being edited wears a ring (see the stylesheet) and says how to
-  // finish, or what it accepts once a value has been refused.
+  // A counter being edited wears a ring (see the stylesheet); once a value
+  // has been refused, it says what it accepts.
   const hint = invalid
     ? input.kind === 'damage'
       ? 'A whole number, up to 9990'
       : 'At most 16 characters'
-    : 'Enter to set · Esc to cancel';
+    : undefined;
   const board = state.scene?.viewport;
   const hintCenter = marker.bounds.x + marker.bounds.width / 2;
   return (
     <>
       {field}
-      <span
-        className={`ptcgsim-marker-editor-hint${invalid ? ' is-invalid' : ''}`}
-        aria-hidden="true"
-        style={{
-          left: board
-            ? Math.min(
-                Math.max(hintCenter, MARKER_HINT_HALF_WIDTH_PX),
-                board.width - MARKER_HINT_HALF_WIDTH_PX
-              )
-            : hintCenter,
-          top: marker.bounds.y + marker.bounds.height + 8,
-          zIndex: marker.zIndex,
-        }}
-      >
-        {hint}
-      </span>
+      {hint ? (
+        <span
+          className="ptcgsim-marker-editor-hint is-invalid"
+          aria-hidden="true"
+          style={{
+            left: board
+              ? Math.min(
+                  Math.max(hintCenter, MARKER_HINT_HALF_WIDTH_PX),
+                  board.width - MARKER_HINT_HALF_WIDTH_PX
+                )
+              : hintCenter,
+            top: marker.bounds.y + marker.bounds.height + 8,
+            zIndex: marker.zIndex,
+          }}
+        >
+          {hint}
+        </span>
+      ) : null}
     </>
   );
 };

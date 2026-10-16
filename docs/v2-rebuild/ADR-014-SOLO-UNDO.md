@@ -8,7 +8,9 @@
 > restoration, new-revision undo, and alias rotation, but derives undo from
 > the replay history instead of a second stored history, records the restore
 > as a patch, and allows a multiplayer player to take back their own newest
-> move. The storage description below is historical.
+> move. The storage description below is historical. Since 2026-10-16 the
+> rotation below covers only cards the move taken back carried across a
+> concealment boundary; the rest keep their aliases (ADR-026).
 
 - Scope: undo semantics, history, and hidden identity
 

@@ -7,6 +7,7 @@ import type { BoardLayoutState } from './layout.js';
 import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   TABLE_CONTROL_CORNER_PX,
+  TABLE_FAR_HAND_SCALE,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   TABLE_SPLIT,
   createLayoutSnapshotFor,
@@ -184,6 +185,45 @@ describe('table layout (geometry v2)', () => {
       const prizes = region(snapshot, 'local', 'prizes').physicalDeclaredBounds;
       expect(hand.x - prizes.x).toBeGreaterThanOrEqual(TABLE_CONTROL_CORNER_PX);
     }
+  });
+
+  it('gives the far hand the smaller strip, and both halves cards of one size', () => {
+    for (const [width, height, shellMode] of [
+      [1440, 900, 'fullscreen'],
+      [1440, 900, 'sidebar'],
+      [1280, 720, 'fullscreen'],
+      [1920, 1080, 'sidebar'],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode })
+      );
+      const strip = (side: 'local' | 'opponent') =>
+        region(snapshot, side, 'hand').physicalDeclaredBounds.height;
+      const label = `${width}x${height} ${shellMode}`;
+      expect(strip('opponent'), label).toBeLessThan(
+        strip('local') * (TABLE_FAR_HAND_SCALE + 0.05)
+      );
+      const bench = (side: 'local' | 'opponent') =>
+        region(snapshot, side, 'bench').physicalDeclaredBounds.height;
+      expect(Math.abs(bench('local') - bench('opponent')), label).toBeLessThan(
+        3
+      );
+    }
+    // Wide enough, the room the far hand gives up goes to both boards.
+    const even = createTableLayoutSnapshot(
+      stateAt(1440, 900, {
+        shellMode: 'fullscreen',
+        vertical: tableVerticalLayout(0.5),
+      })
+    );
+    const balanced = createTableLayoutSnapshot(
+      stateAt(1440, 900, { shellMode: 'fullscreen' })
+    );
+    expect(
+      region(balanced, 'local', 'bench').physicalDeclaredBounds.height
+    ).toBeGreaterThan(
+      region(even, 'local', 'bench').physicalDeclaredBounds.height
+    );
   });
 
   it('keeps the Stadium clear of both halves on a split table', () => {

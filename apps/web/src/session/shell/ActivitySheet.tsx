@@ -227,11 +227,11 @@ const TICKER_LINE_MS = 5_000;
 const TICKER_LINES = 3;
 
 /**
- * What is worth a word over the table while the log is closed: what the
- * other side does and says, and the room's announcements. A player's own
- * moves are already in front of them.
+ * What the player would not otherwise know: what the other side does and
+ * says, and the room's announcements. A player's own moves are already in
+ * front of them.
  */
-const worthTicking = (
+const newsToPlayer = (
   item: ActivityFeedItem,
   ownSeat: string | undefined,
   solo: boolean
@@ -242,15 +242,33 @@ const worthTicking = (
 };
 
 /**
- * What counts toward the unread badge: everything worth a word over the
- * table, and who came and went.
+ * Attack and Pass change nothing on the table (v1 only wrote them in its
+ * always-open log), so the line is the button's only answer: it is said
+ * over the table even when it is the player's own.
+ */
+const DECLARATIONS: ReadonlySet<ActivityFeedItem['eventType']> = new Set([
+  'AttackDeclared',
+  'PassDeclared',
+]);
+
+/** What is worth a word over the table while the log is closed. */
+const worthTicking = (
+  item: ActivityFeedItem,
+  ownSeat: string | undefined,
+  solo: boolean
+): boolean =>
+  newsToPlayer(item, ownSeat, solo) || DECLARATIONS.has(item.eventType);
+
+/**
+ * What counts toward the unread badge: what the player would not otherwise
+ * know, and who came and went.
  */
 const worthCounting = (
   item: ActivityFeedItem,
   ownSeat: string | undefined,
   solo: boolean
 ): boolean =>
-  item.eventType === 'Presence' || worthTicking(item, ownSeat, solo);
+  item.eventType === 'Presence' || newsToPlayer(item, ownSeat, solo);
 
 /**
  * The rail's Activity button: a count of what others did and said since

@@ -80,15 +80,16 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#messageInput')).toBeEnabled();
   await expect(page.locator('#chatbox')).toBeVisible();
   await expect(page.locator('#roomHeader')).toHaveCount(0);
-  // Before a deck, the rail asks for one; Solo's both-sides actions sit on
-  // it too (two are not worth a menu), and there is no room to leave.
-  for (const id of [
-    'loadDeckButton',
-    'flipCoinButton',
-    'flipBoardButton',
-    'setupBothButton',
-    'resetBothButton',
-  ]) {
+  // Before a deck, the rail asks for one, and there is no room to leave.
+  // Neither side has a deck to set up or reset, so Solo's both-sides
+  // actions wait for one. The coin lies on the table instead (PX-051).
+  await expect(
+    page.locator('[data-table-coin="local"] #flipCoinButton')
+  ).toBeVisible();
+  await expect(
+    page.locator('#boardButtonContainer #flipCoinButton')
+  ).toHaveCount(0);
+  for (const id of ['loadDeckButton', 'flipBoardButton']) {
     await expect(
       page.locator(`#boardButtonContainer #${id}`),
       id
@@ -96,16 +97,11 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   }
   await expect(page.locator('#attackButton')).toHaveCount(0);
   await expect(page.locator('#moreActionsButton')).toHaveCount(0);
-  await expect(page.locator('#setupBothButton')).toBeEnabled();
-  await expect(page.locator('#resetBothButton')).toBeEnabled();
+  await expect(page.locator('#setupBothButton')).toHaveCount(0);
+  await expect(page.locator('#resetBothButton')).toHaveCount(0);
   await openAppMenu(page);
   await expect(page.locator('#leaveRoomButton')).toHaveCount(0);
   await page.keyboard.press('Escape');
-
-  await chooseMoreAction(page, 'resetBothButton');
-  await expect(
-    page.locator('#chatbox [data-event-type="PlayerReset"]')
-  ).toHaveCount(2);
 
   await openDeck(page);
   await expect(page.locator('#deckPasteInput')).toBeVisible();
@@ -164,6 +160,11 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   ).toBeVisible();
   expect(cardBackRequests).toBeGreaterThanOrEqual(1);
 
+  // With a deck on a side, both sides can be reset and set up at once.
+  await chooseMoreAction(page, 'resetBothButton');
+  await expect(
+    page.locator('#chatbox [data-event-type="PlayerReset"]')
+  ).toHaveCount(2);
   await chooseMoreAction(page, 'setupBothButton');
   await expect(
     page.locator('#chatbox [data-event-type="PlayerSetup"]')

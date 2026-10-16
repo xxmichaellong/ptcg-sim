@@ -1,7 +1,7 @@
-import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import type { ReactNode } from 'react';
 
+import { DeckIcon } from '../../ui/DeckIcon.js';
 import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import './online-sheet.css';
@@ -44,7 +44,7 @@ export const OnlineSheet = ({
                   className="ds-button ds-button--ghost"
                   onClick={onDeck}
                 >
-                  <CardsIcon aria-hidden="true" weight="bold" />
+                  <DeckIcon aria-hidden="true" weight="bold" />
                   Deck
                 </button>
               ) : null}

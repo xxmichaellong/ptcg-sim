@@ -16,6 +16,7 @@ import {
   type BoardDepthProjection,
   type BoardPresentation,
 } from '@ptcgsim/renderer-contract';
+import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
 /** Where a painted card was last drawn, including a drag or settle hold. */
@@ -53,6 +54,29 @@ interface Flight {
    */
   readonly group: string;
 }
+
+/**
+ * A card turning over: `overlay` is the face it had (the back), shown over
+ * its own until it is on its edge. `startAt` is Infinity while its own face
+ * is still loading; a zero `duration` turns nothing and only holds the old
+ * face up until the new one is ready (reduced motion).
+ */
+interface Turn {
+  /** The card (or ghost) turning over, kept lifted until it lies flat. */
+  readonly element: HTMLElement;
+  readonly face: HTMLElement;
+  readonly overlay: HTMLImageElement | null;
+  startAt: number;
+  readonly duration: number;
+  readonly animations: Animation[];
+  stopWaiting?: () => void;
+  /** Settles once it has turned (or was stopped). */
+  readonly done: Promise<void>;
+  readonly settle: () => void;
+}
+
+/** A card turned over by hand, from flat to flat again. */
+const TURN_MS = 420;
 
 const centerOf = (rect: Rect) => ({
   x: rect.x + rect.width / 2,
@@ -126,6 +150,9 @@ export class BoardMotionDirector {
   private readonly ghosts = new Set<HTMLElement>();
   private readonly extras = new Set<Animation>();
   private readonly cardExtras = new Map<string, Set<Animation>>();
+  /** Cards turning over, by render key (or a ghost's own key). */
+  private readonly turns = new Map<string, Turn>();
+  private ghostSerial = 0;
   private tableTurn: Animation | null = null;
   private ghostLayer: HTMLElement | null = null;
   private surface: HTMLElement | null = null;
@@ -181,6 +208,7 @@ export class BoardMotionDirector {
       this.flights.size > 0 ||
       this.ghosts.size > 0 ||
       this.extras.size > 0 ||
+      this.turns.size > 0 ||
       this.depth.active
     );
   }
@@ -243,6 +271,7 @@ export class BoardMotionDirector {
     for (const key of held) {
       if (this.flights.has(key)) this.stopFlight(key);
       this.stopCardExtras(key);
+      this.stopTurn(key);
     }
     if (!motion || !previous || previous === next) return;
     const cause = motion.cause;
@@ -298,6 +327,7 @@ export class BoardMotionDirector {
     for (const animation of this.extras) animation.cancel();
     this.extras.clear();
     this.cardExtras.clear();
+    for (const key of [...this.turns.keys()]) this.stopTurn(key);
     this.tableTurn = null;
     for (const ghost of this.ghosts) ghost.remove();
     this.ghosts.clear();
@@ -340,7 +370,7 @@ export class BoardMotionDirector {
       this.landedAwaitingGroup.set(flight.group, waiting);
       return;
     }
-    delete flight.element.dataset.flying;
+    this.comeDown(flight.element);
     this.releaseGroupIfLanded(flight.group);
   }
 
@@ -351,7 +381,17 @@ export class BoardMotionDirector {
     const waiting = this.landedAwaitingGroup.get(group);
     if (!waiting) return;
     this.landedAwaitingGroup.delete(group);
-    for (const element of waiting) delete element.dataset.flying;
+    for (const element of waiting) this.comeDown(element);
+  }
+
+  /**
+   * A card that has landed drops back among the cards -- unless it is still
+   * turning over, when it stays over the table until it lies flat.
+   */
+  private comeDown(element: HTMLElement): void {
+    if ([...this.turns.values()].some((turn) => turn.element === element))
+      return;
+    delete element.dataset.flying;
   }
 
   private stopCardExtras(renderKey: string): void {
@@ -396,6 +436,10 @@ export class BoardMotionDirector {
     const reduced = this.settings.reduced;
     if (reduced) {
       this.stopFlight(planned.renderKey);
+      // Nothing turns, but the old face stays up until the new one is
+      // ready, so the card never shows empty.
+      if (planned.fromImageUrl)
+        this.turnOver(element, planned.fromImageUrl, at, 0, planned.renderKey);
       if (planned.kind !== 'move') {
         this.track(
           element.animate([{ opacity: 0 }, { opacity: 1 }], {
@@ -408,7 +452,12 @@ export class BoardMotionDirector {
       return;
     }
     const to = centerOf(target.bounds);
-    const running = this.flights.get(planned.renderKey);
+    // A card re-aliased mid-flight carries on from where its old node is.
+    const running =
+      this.flights.get(planned.renderKey) ??
+      (planned.fromRenderKey !== undefined
+        ? this.flights.get(planned.fromRenderKey)
+        : undefined);
     // Where the card is drawn now: mid-flight, held where it was dropped, or
     // where the planner says it was.
     let fromX: number;
@@ -446,6 +495,12 @@ export class BoardMotionDirector {
     const x0 = fromX - to.x;
     const y0 = fromY - to.y;
     this.stopFlight(planned.renderKey);
+    if (planned.fromRenderKey !== undefined) {
+      if (this.flights.has(planned.fromRenderKey))
+        this.stopFlight(planned.fromRenderKey);
+      if (!planned.fromImageUrl)
+        this.carryTurn(planned.fromRenderKey, element, planned.renderKey);
+    }
     if (
       Math.abs(x0) < 0.5 &&
       Math.abs(y0) < 0.5 &&
@@ -527,61 +582,160 @@ export class BoardMotionDirector {
       this.notify();
     });
     if (planned.fromImageUrl) {
+      // It sets off showing its old face and turns over a little way in.
       this.turnOver(
         element,
         planned.fromImageUrl,
-        settle * durationScale,
-        delaySeconds * durationScale,
+        at + (delaySeconds + settle * 0.12) * durationScale * 1000,
+        TURN_MS * durationScale,
         planned.renderKey
       );
     }
   }
 
   /**
-   * A squash-flip on the card face: it shows `fromImageUrl` until the card is
-   * edge-on, then its real face.
+   * Turns the card over by hand, in depth: the old face (`fromImageUrl`, a
+   * card back mostly) turns on its edge about the card's long axis, the
+   * faces change hidden, and its own face turns flat, the card rising a
+   * little toward the eye on the way. It waits for that face to be ready --
+   * holding the old one up -- so it never turns up an empty card. Null
+   * shows no old face: the card is past its edge already.
    */
   private turnOver(
     element: HTMLElement,
-    fromImageUrl: string,
-    flightSeconds: number,
-    delaySeconds: number,
-    renderKey?: string
+    fromImageUrl: string | null,
+    startAt: number,
+    duration: number,
+    key: string
   ): void {
+    this.stopTurn(key);
     const face = element.querySelector<HTMLElement>('.ptcgsim-card__face');
     if (!face || !canAnimate(face)) return;
-    const overlay = document.createElement('img');
-    overlay.className = 'ptcgsim-card__turn';
-    overlay.alt = '';
-    overlay.draggable = false;
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.src = fromImageUrl;
-    face.append(overlay);
-    const duration = Math.min(0.42, Math.max(0.2, flightSeconds * 0.7)) * 1000;
-    const delay = (delaySeconds + flightSeconds * 0.12) * 1000;
-    const squash = face.animate(
-      [
-        { transform: 'scaleX(1)' },
-        { transform: 'scaleX(0.04)', offset: 0.5 },
-        { transform: 'scaleX(1)' },
-      ],
-      { duration, delay, easing: 'ease-in-out', fill: 'backwards' }
-    );
-    const swap = overlay.animate(
-      [
-        { opacity: 1 },
-        { opacity: 1, offset: 0.5 },
-        { opacity: 0, offset: 0.501 },
-        { opacity: 0 },
-      ],
-      { duration, delay, fill: 'both' }
-    );
-    this.track(squash, renderKey);
-    this.track(swap, renderKey);
-    void swap.finished.then(
-      () => overlay.remove(),
-      () => overlay.remove()
-    );
+    let overlay: HTMLImageElement | null = null;
+    if (fromImageUrl !== null) {
+      overlay = document.createElement('img');
+      overlay.className = 'ptcgsim-card__turn';
+      overlay.alt = '';
+      overlay.draggable = false;
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.src = fromImageUrl;
+      face.append(overlay);
+    }
+    let settle!: () => void;
+    const done = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    const turn: Turn = {
+      element,
+      face,
+      overlay,
+      startAt,
+      duration,
+      animations: [],
+      done,
+      settle,
+    };
+    this.turns.set(key, turn);
+    element.dataset.turning = '';
+    this.notify();
+    const begin = () => {
+      if (this.turns.get(key) !== turn) return;
+      delete turn.stopWaiting;
+      if (duration <= 0) {
+        this.stopTurn(key);
+        return;
+      }
+      const at = now();
+      const lens = `perspective(${String(Math.round(Math.max(1, face.offsetWidth) * 4))}px)`;
+      const timing: KeyframeAnimationOptions = {
+        duration,
+        delay: Math.max(0, turn.startAt - at),
+        fill: 'both',
+      };
+      const spin = face.animate(
+        [
+          {
+            transform: `${lens} rotateY(0deg) scale(1)`,
+            easing: 'cubic-bezier(0.5, 0, 0.9, 0.5)',
+          },
+          { transform: `${lens} rotateY(90deg) scale(1.06)`, offset: 0.5 },
+          {
+            transform: `${lens} rotateY(-90deg) scale(1.06)`,
+            offset: 0.5,
+            easing: 'cubic-bezier(0.1, 0.5, 0.5, 1)',
+          },
+          { transform: `${lens} rotateY(0deg) scale(1)` },
+        ],
+        timing
+      );
+      turn.animations.push(spin);
+      if (overlay) {
+        const swap = overlay.animate(
+          [
+            { opacity: 1 },
+            { opacity: 1, offset: 0.5 },
+            { opacity: 0, offset: 0.5 },
+            { opacity: 0 },
+          ],
+          timing
+        );
+        void swap.finished.catch(() => undefined);
+        turn.animations.push(swap);
+      }
+      // Carried on from a node re-aliased mid-turn: it picks up where it was.
+      if (at > turn.startAt)
+        for (const animation of turn.animations)
+          animation.currentTime = Math.min(duration, at - turn.startAt);
+      void spin.finished.then(
+        () => {
+          if (this.turns.get(key) === turn) this.stopTurn(key);
+        },
+        () => undefined
+      );
+    };
+    const own = faceImageOf(face);
+    if (overlay && !(startAt < now()) && !isFaceReady(own)) {
+      turn.startAt = Infinity;
+      turn.stopWaiting = whenFaceReady(own, () => {
+        turn.startAt = Math.max(now(), startAt);
+        begin();
+      });
+      return;
+    }
+    begin();
+  }
+
+  /**
+   * The card was re-aliased mid-turn (the room answering a predicted move):
+   * the new node carries on the turn the old one had under way.
+   */
+  private carryTurn(from: string, element: HTMLElement, to: string): void {
+    const turn = this.turns.get(from);
+    if (!turn || from === to) return;
+    const halfway = now() >= turn.startAt + turn.duration / 2;
+    const fromImageUrl =
+      turn.overlay && !halfway ? turn.overlay.getAttribute('src') : null;
+    this.stopTurn(from);
+    this.turnOver(element, fromImageUrl, turn.startAt, turn.duration, to);
+  }
+
+  private stopTurn(key: string): void {
+    const turn = this.turns.get(key);
+    if (!turn) return;
+    this.turns.delete(key);
+    turn.stopWaiting?.();
+    for (const animation of turn.animations) animation.cancel();
+    turn.overlay?.remove();
+    delete turn.element.dataset.turning;
+    turn.settle();
+    // Flat again: it comes down among the cards, unless still travelling.
+    if (
+      ![...this.flights.values()].some(
+        (flight) => flight.element === turn.element
+      )
+    )
+      delete turn.element.dataset.flying;
+    this.notify();
   }
 
   private startGhost(planned: CardGhost, cause: BoardSceneMotion['cause']) {
@@ -611,7 +765,9 @@ export class BoardMotionDirector {
     layer.append(ghost);
     this.ghosts.add(ghost);
     this.notify();
+    const turnKey = `ghost:${String(this.ghostSerial++)}`;
     const remove = () => {
+      this.stopTurn(turnKey);
       ghost.remove();
       this.ghosts.delete(ghost);
       this.notify();
@@ -628,7 +784,11 @@ export class BoardMotionDirector {
         remove();
         return;
       }
-      void flight.finished.then(remove);
+      // The old top keeps the pile covered until the new one has landed
+      // and turned over on it.
+      void flight.finished
+        .then(() => this.turns.get(planned.holdFor!)?.done)
+        .then(remove);
       return;
     }
     if (!planned.to) {
@@ -682,13 +842,15 @@ export class BoardMotionDirector {
     });
     this.track(animation);
     if (planned.toImageUrl) {
+      // Its new face first, so the turn waits for it to be ready.
+      image.src = planned.toImageUrl;
       this.turnOver(
         ghost,
         planned.imageUrl,
-        settle * scale,
-        planned.delay * scale
+        now() + (planned.delay + settle * 0.12) * scale * 1000,
+        Math.min(TURN_MS, settle * 800) * scale,
+        turnKey
       );
-      image.src = planned.toImageUrl;
     }
     void animation.finished.then(remove, remove);
   }

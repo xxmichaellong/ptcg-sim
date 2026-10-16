@@ -11,7 +11,6 @@ import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowC
 import { ArrowsClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
-import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { FastForwardIcon } from '@phosphor-icons/react/dist/csr/FastForward';
 import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag';
@@ -64,6 +63,8 @@ import type {
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import {
   downloadBrowserTextFile,
+  FULLSCREEN_REFUSED_NOTICE,
+  onFullscreenRefused,
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
@@ -79,6 +80,7 @@ import { TableWelcome } from './shell/TableWelcome.js';
 import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
+import { DeckIcon } from '../ui/DeckIcon.js';
 import { toast } from '../ui/toast.js';
 import { Tooltip } from '../ui/Tooltip.js';
 
@@ -307,6 +309,12 @@ export const RemoteRoomRoute = ({
     requestFullscreen,
   });
   const hint = useHotkeyHints();
+  // A browser that takes the request and then declines it says so only
+  // with an event; the player hears it too.
+  useEffect(
+    () => onFullscreenRefused(() => toast(FULLSCREEN_REFUSED_NOTICE)),
+    []
+  );
   const shellPreferences = usePreference(SHELL_PREFERENCES);
   const exportBattleLog = (): void => {
     downloadTextFile(
@@ -331,6 +339,12 @@ export const RemoteRoomRoute = ({
         const soloLive = !replaying && solo;
         const feedId = replaying || soloLive ? 'chatbox' : 'p2Chatbox';
         const stage = seatStage(state.view, live.playerId);
+        // Both sides are set up or reset only once either has a deck to use;
+        // before that the pair would only report two invalid decks.
+        const anySeatHasDeck =
+          state.view?.playerOrder.some(
+            (playerId) => seatStage(state.view, playerId) !== 'empty'
+          ) ?? false;
         const roomName = replaying
           ? 'Replay'
           : solo
@@ -434,7 +448,7 @@ export const RemoteRoomRoute = ({
               actions.push({
                 id: 'loadDeckButton',
                 label: 'Load a deck',
-                icon: CardsIcon,
+                icon: DeckIcon,
                 primary: true,
                 priority: RAIL_PRIORITY.lead,
                 onSelect: () => openDeck(actingTarget),
@@ -489,7 +503,7 @@ export const RemoteRoomRoute = ({
               onSelect: () => live.submitLifecycle('reset'),
             });
           }
-          if (solo) {
+          if (solo && anySeatHasDeck) {
             if (more.length > 0) more.push({ kind: 'separator' });
             more.push(
               {
@@ -519,9 +533,13 @@ export const RemoteRoomRoute = ({
             : {}),
           onSettings: () => setSheet('settings'),
           onFullscreen: () => {
-            requestFullscreen();
+            if (!requestFullscreen()) toast(FULLSCREEN_REFUSED_NOTICE);
           },
-          onReloadImages: () => boardCommands.current?.refreshImages(),
+          onReloadImages: () => {
+            boardCommands.current?.refreshImages();
+            // Nothing changes on the table when every image already loaded.
+            toast({ id: 'reload-images', title: 'Reloading card images' });
+          },
           ...(canCopy
             ? { onCopyInvitation: () => void copyInvitation('player') }
             : {}),

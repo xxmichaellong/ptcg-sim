@@ -54,6 +54,12 @@ export const createTableCamera = (options: {
    * window when absent.
    */
   readonly fitBounds?: Rect;
+  /**
+   * The band the tilted table is centred in: between the hands, so the room
+   * above it and below it is the same however tall each hand is. The whole
+   * window when absent.
+   */
+  readonly centreBand?: { readonly top: number; readonly bottom: number };
   /** The eye's distance as a multiple of the window's diagonal. */
   readonly lens?: number;
 }): TableCamera => {
@@ -130,11 +136,32 @@ export const createTableCamera = (options: {
     (width - 2 * margin) / (maxX - minX),
     (height - 2 * margin) / (maxY - minY)
   );
+  const band =
+    options.centreBand &&
+    Number.isFinite(options.centreBand.top) &&
+    Number.isFinite(options.centreBand.bottom) &&
+    options.centreBand.bottom > options.centreBand.top
+      ? options.centreBand
+      : { top: 0, bottom: height };
+  // The mat itself is centred (a deck standing on its far edge only has
+  // to fit), and never so far that anything leaves the window.
+  const surface = points.slice(0, 4);
+  const surfaceTop = Math.min(...surface.map((point) => point.y));
+  const surfaceBottom = Math.max(...surface.map((point) => point.y));
+  const fromCentre = (y: number): number => scale * (y - (minY + maxY) / 2);
+  const centreY = bounded(
+    (band.top + band.bottom) / 2 -
+      (fromCentre(surfaceTop) + fromCentre(surfaceBottom)) / 2,
+    margin - fromCentre(minY),
+    Math.max(margin - fromCentre(minY), height - margin - fromCentre(maxY))
+  );
   return {
     ...camera,
     scale,
     offsetX: -scale * ((minX + maxX) / 2 - width / 2),
-    offsetY: -scale * ((minY + maxY) / 2 - height / 2),
+    // The projected table's middle lands on the band's middle: (y - h/2)
+    // scaled about the window's centre, shifted by the band's offset.
+    offsetY: -scale * ((minY + maxY) / 2 - height / 2) + (centreY - height / 2),
   };
 };
 

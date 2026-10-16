@@ -2,7 +2,11 @@ import type { CardSceneNode } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import {
+  clampZoneBrowserZoom,
   ZONE_BROWSER_PREFERENCES,
+  ZONE_BROWSER_ZOOM_MAX,
+  ZONE_BROWSER_ZOOM_MIN,
+  zoneBrowserStackKey,
   zoneBrowserTiles,
 } from './zone-browser-preferences.js';
 
@@ -41,14 +45,56 @@ describe('zone browser tiles', () => {
     ]);
   });
 
-  it('remembers the choice and reads anything else as off', () => {
-    expect(ZONE_BROWSER_PREFERENCES.defaults).toEqual({ stackCopies: false });
-    expect(ZONE_BROWSER_PREFERENCES.parse({ stackCopies: true })).toEqual({
-      stackCopies: true,
+  it('stacks piles but not the hand by default, at the fitted size', () => {
+    expect(ZONE_BROWSER_PREFERENCES.defaults).toEqual({
+      stackPiles: true,
+      stackHand: false,
+      zoom: 1,
     });
-    for (const stored of [null, 'yes', { stackCopies: 'true' }, []])
-      expect(ZONE_BROWSER_PREFERENCES.parse(stored)).toEqual({
-        stackCopies: false,
-      });
+    expect(zoneBrowserStackKey('hand')).toBe('stackHand');
+    for (const kind of ['deck', 'discard', 'lostZone', 'prizes', 'board'])
+      expect(zoneBrowserStackKey(kind)).toBe('stackPiles');
+  });
+
+  it('remembers each choice and reads anything else as the default', () => {
+    expect(
+      ZONE_BROWSER_PREFERENCES.parse({
+        stackPiles: false,
+        stackHand: true,
+        zoom: 1.5,
+      })
+    ).toEqual({ stackPiles: false, stackHand: true, zoom: 1.5 });
+    for (const stored of [
+      null,
+      'yes',
+      [],
+      { stackPiles: 'false', stackHand: 1, zoom: 'big' },
+    ])
+      expect(ZONE_BROWSER_PREFERENCES.parse(stored)).toEqual(
+        ZONE_BROWSER_PREFERENCES.defaults
+      );
+  });
+
+  it('keeps a stored "stack copies" from the one-switch days as stacking everywhere', () => {
+    expect(ZONE_BROWSER_PREFERENCES.parse({ stackCopies: true })).toEqual({
+      stackPiles: true,
+      stackHand: true,
+      zoom: 1,
+    });
+    // It was off by default, so a stored "off" was never a choice.
+    expect(ZONE_BROWSER_PREFERENCES.parse({ stackCopies: false })).toEqual(
+      ZONE_BROWSER_PREFERENCES.defaults
+    );
+  });
+
+  it('keeps zoom on its steps and inside its range', () => {
+    expect(clampZoneBrowserZoom(1.04)).toBe(1);
+    expect(clampZoneBrowserZoom(1.26)).toBe(1.3);
+    expect(clampZoneBrowserZoom(9)).toBe(ZONE_BROWSER_ZOOM_MAX);
+    expect(clampZoneBrowserZoom(0)).toBe(ZONE_BROWSER_ZOOM_MIN);
+    expect(clampZoneBrowserZoom(Number.NaN)).toBe(1);
+    expect(ZONE_BROWSER_PREFERENCES.parse({ zoom: 7 }).zoom).toBe(
+      ZONE_BROWSER_ZOOM_MAX
+    );
   });
 });

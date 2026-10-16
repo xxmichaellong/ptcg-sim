@@ -49,8 +49,22 @@ export const tableRailWidth = (viewportWidth: number): number =>
     )
   );
 
-/** Both players start with equal halves of the table. */
-const DEFAULT_LOWER_SHARE = 0.5;
+/**
+ * How much of a near hand's strip the far hand's keeps. The far hand is the
+ * one across the table -- usually the opponent's, which a player reads far
+ * less than their own -- so its cards show smaller and the room goes to both
+ * boards.
+ */
+export const TABLE_FAR_HAND_SCALE = 0.6;
+
+/**
+ * The near half's default share of the table: the whole percentage that
+ * gives both halves card rows of about the same size (the near ones a hair
+ * larger) once the far hand's strip is the smaller one.
+ */
+const DEFAULT_LOWER_SHARE = 0.54;
+/** An even split, where both hands were the same size. */
+const EVEN_SPLIT_SHARE = 0.5;
 const MINIMUM_HALF_SHARE = 0.34;
 const HANDLE_HEIGHT_RATIO = 0.025 as const;
 
@@ -167,6 +181,14 @@ interface HalfOptions {
   readonly lostZoneBeside?: boolean;
   /** How many once-per-game markers sit beside the prizes, 0 to 2. */
   readonly markerCount?: number;
+  /** The hand strip's size against a near hand's: smaller across the table. */
+  readonly handScale?: number;
+  /**
+   * Lay the mat out only this tall, at the player's edge; the rest of the
+   * half widens the clear band at the centre line. A table too narrow for
+   * the cards its height would give keeps them smaller this way.
+   */
+  readonly fitHeight?: number;
 }
 
 /**
@@ -214,7 +236,7 @@ const layoutHalf = (
   const proportions = HALF_PROPORTIONS;
   const margin = seamMarginFor(height, options);
   const gap = Math.max(6, height * proportions.rowGap);
-  const handStrip = height * proportions.handStrip;
+  const handStrip = height * proportions.handStrip * (options.handScale ?? 1);
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
   const active = rows * proportions.activeShare;
   const bench = rows - active;
@@ -544,15 +566,49 @@ const bestOf = (
     ? portrait
     : landscape;
 
+/**
+ * A half laid out short of its frame, moved to the player's edge: the
+ * `band` left over widens the clear band at the centre line.
+ */
+const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
+  if (band <= 0) return geometry;
+  const lowered = (rect: Rect): Rect => ({ ...rect, y: rect.y + band });
+  return {
+    regions: geometry.regions.map((region) => ({
+      ...region,
+      rect: lowered(region.rect),
+    })),
+    cardHeights: geometry.cardHeights,
+    middle: geometry.middle,
+    seamMargin: geometry.seamMargin + band,
+    ...(geometry.extras
+      ? {
+          extras: {
+            ...(geometry.extras.markers
+              ? { markers: lowered(geometry.extras.markers) }
+              : {}),
+            control: lowered(geometry.extras.control),
+          },
+        }
+      : {}),
+  };
+};
+
 const layoutTableHalf = (
   width: number,
   height: number,
   options: HalfOptions
-): HalfGeometry =>
-  bestOf(
-    layoutHalf(width, height, options),
-    layoutHalfPortrait(width, height, options)
-  );
+): HalfGeometry => {
+  // Mat or portrait mat is chosen at the frame's full height, so fitting
+  // the mat shorter never turns it into the other.
+  const landscape = layoutHalf(width, height, options);
+  const portrait = layoutHalfPortrait(width, height, options);
+  if (bestOf(landscape, portrait) === portrait) return portrait;
+  const fitted = options.fitHeight;
+  return fitted !== undefined && fitted < height
+    ? atPlayerEdge(layoutHalf(width, fitted, options), height - fitted)
+    : landscape;
+};
 
 /**
  * A half given the whole table. Laid out at full height its cards would
@@ -594,31 +650,10 @@ const layoutSoloHalf = (
       if (fits(middle)) low = middle;
       else high = middle;
     }
-    fitted = Math.max(low, height * DEFAULT_LOWER_SHARE);
+    fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
   }
-  const geometry = layoutHalf(width, fitted, options);
-  const band = height - fitted;
-  const lowered = (rect: Rect): Rect => ({ ...rect, y: rect.y + band });
   return bestOf(
-    {
-      regions: geometry.regions.map((region) => ({
-        ...region,
-        rect: lowered(region.rect),
-      })),
-      cardHeights: geometry.cardHeights,
-      middle: geometry.middle,
-      seamMargin: geometry.seamMargin + band,
-      ...(geometry.extras
-        ? {
-            extras: {
-              ...(geometry.extras.markers
-                ? { markers: lowered(geometry.extras.markers) }
-                : {}),
-              control: lowered(geometry.extras.control),
-            },
-          }
-        : {}),
-    },
+    atPlayerEdge(layoutHalf(width, fitted, options), height - fitted),
     portrait
   );
 };
@@ -881,8 +916,13 @@ export const createTableLayoutSnapshot = (
     };
   };
 
-  const lower = buildPlayer(semantics.players[0], frames.lower);
-  let upper = buildPlayer(semantics.players[1], frames.upper);
+  let lower = buildPlayer(semantics.players[0], frames.lower);
+  // Across the table, the hand is the smaller one.
+  const farOptions: HalfOptions =
+    hidden === undefined
+      ? { ...halfOptions, handScale: TABLE_FAR_HAND_SCALE }
+      : halfOptions;
+  let upper = buildPlayer(semantics.players[1], frames.upper, farOptions);
   const activeOf = (player: BoardPlayerLayout): Rect =>
     player.regions.find((region) => region.kind === 'active')!
       .physicalDeclaredBounds;
@@ -894,43 +934,88 @@ export const createTableLayoutSnapshot = (
     // The seam between the halves: the stadium straddles it to the right of
     // the Actives, the board controls sit at its left.
     const seamY = lower.player.frameBounds.y;
-    const stadiumHeight = Math.min(
-      lower.geometry.cardHeights.bench,
-      upper.geometry.cardHeights.bench
-    );
-    const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
-    const lowerActive = activeOf(lower.player);
-    stadium = {
-      x: Math.min(
-        playAreaWidth - stadiumWidth - 8,
-        lowerActive.x + lowerActive.width + stadiumWidth * 0.35
-      ),
-      y: seamY - stadiumHeight / 2,
-      width: stadiumWidth,
-      height: stadiumHeight,
-    };
-    // The far half's staging area lies beside its Active on the Stadium's
-    // side of the table; it stops short of the Stadium instead of running
-    // under it (layoutHalf keeps it whole where that would leave it less
-    // than a card wide).
-    const farBoard = upper.player.regions.find(
-      (region) => region.kind === 'board'
-    )?.physicalDeclaredBounds;
-    const reserve = farBoard
-      ? stadium.x + stadium.width + STADIUM_CLEARANCE_PX - farBoard.x
-      : 0;
-    if (
-      farBoard &&
-      reserve > 0 &&
-      farBoard.y < stadium.y + stadium.height &&
-      farBoard.y + farBoard.height > stadium.y &&
-      farBoard.x < stadium.x + stadium.width
-    ) {
-      upper = buildPlayer(semantics.players[1], frames.upper, {
+    // Both halves laid out `scale` of their frames tall, at the players'
+    // edges, with the Stadium straddling the seam to the right of the
+    // Actives.
+    const splitAt = (scale: number) => {
+      const fit = (frame: Rect): HalfOptions =>
+        scale < 1 ? { fitHeight: frame.height * scale } : {};
+      const near = buildPlayer(semantics.players[0], frames.lower, {
         ...halfOptions,
-        boardEndReservePx: reserve,
+        ...fit(frames.lower),
       });
+      const farFit = { ...farOptions, ...fit(frames.upper) };
+      let far = buildPlayer(semantics.players[1], frames.upper, farFit);
+      const stadiumHeight = Math.min(
+        near.geometry.cardHeights.bench,
+        far.geometry.cardHeights.bench
+      );
+      const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
+      const nearActive = activeOf(near.player);
+      const placed: Rect = {
+        x: Math.min(
+          playAreaWidth - stadiumWidth - 8,
+          nearActive.x + nearActive.width + stadiumWidth * 0.35
+        ),
+        y: seamY - stadiumHeight / 2,
+        width: stadiumWidth,
+        height: stadiumHeight,
+      };
+      // The far half's staging area lies beside its Active on the Stadium's
+      // side of the table; it stops short of the Stadium instead of running
+      // under it (layoutHalf keeps it whole where that would leave it less
+      // than a pile wide).
+      const farBoard = far.player.regions.find(
+        (region) => region.kind === 'board'
+      )?.physicalDeclaredBounds;
+      const reserve = farBoard
+        ? placed.x + placed.width + STADIUM_CLEARANCE_PX - farBoard.x
+        : 0;
+      if (
+        farBoard &&
+        reserve > 0 &&
+        farBoard.y < placed.y + placed.height &&
+        farBoard.y + farBoard.height > placed.y &&
+        farBoard.x < placed.x + placed.width
+      ) {
+        far = buildPlayer(semantics.players[1], frames.upper, {
+          ...farFit,
+          boardEndReservePx: reserve,
+        });
+      }
+      const staging =
+        far.player.regions.find((region) => region.kind === 'board')
+          ?.physicalDeclaredBounds.width ?? Infinity;
+      return {
+        near,
+        far,
+        stadium: placed,
+        // The far staging area still holds a card beside the Stadium (with
+        // a hair to spare, so the search never settles a rounding short).
+        fits: staging >= stadiumWidth + 0.5,
+      };
+    };
+    let split = splitAt(1);
+    if (!split.fits) {
+      // The cards the halves' heights would give leave the far staging
+      // area under a card wide on this table: take the tallest mats that
+      // keep it, never smaller than an even split's (taller only ever
+      // means bigger cards and a narrower middle).
+      const floor = EVEN_SPLIT_SHARE / DEFAULT_LOWER_SHARE;
+      let low = floor;
+      let high = 1;
+      if (splitAt(low).fits) {
+        for (let step = 0; step < 16; step += 1) {
+          const middle = (low + high) / 2;
+          if (splitAt(middle).fits) low = middle;
+          else high = middle;
+        }
+      }
+      split = splitAt(low);
     }
+    lower = split.near;
+    upper = split.far;
+    stadium = split.stadium;
     // The controls straddle the seam inside the clear band on both sides.
     const controlsHeight = Math.max(
       20,

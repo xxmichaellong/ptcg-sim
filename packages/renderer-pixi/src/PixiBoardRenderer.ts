@@ -61,6 +61,28 @@ import {
 } from './CardTextureRegistry.js';
 
 const MAX_CONTEXT_RECOVERY_ATTEMPTS = 3;
+/** A card turned over by hand, from flat to flat again. */
+const TURN_MS = 420;
+/** Longest a turn waits for its faces before turning regardless. */
+const FACE_WAIT_LIMIT_MS = 2500;
+const easeInOut = (t: number): number =>
+  t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+
+/**
+ * A card being turned over: it shows `texture` (the face it had, a card
+ * back mostly) until it is on its edge, then its own face. It waits, holding
+ * the old face up, until both faces are loaded (`start` is Infinity until
+ * then).
+ */
+interface FaceTurn {
+  start: number;
+  /** Its place in the move: it never turns before this. */
+  readonly plannedStart: number;
+  readonly created: number;
+  readonly duration: number;
+  texture: Texture | null;
+  readonly lease: string;
+}
 
 const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
   placeholder: Texture.WHITE,
@@ -91,7 +113,12 @@ interface CardView {
   descriptor: CardSceneNode;
   paintedPose?: TableCardPose;
   faceTexture?: Texture;
-  turnScale?: number;
+  /** The image `faceTexture` was loaded from (or failed to load). */
+  faceTextureUrl?: string;
+  /** Its face failed to load: the placeholder shows, dimmed. */
+  faceFailed?: boolean;
+  /** Turned about its long axis while being turned over (radians). */
+  turnAngle?: number;
 }
 
 interface MarkerView {
@@ -158,10 +185,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private light: Graphics | null = null;
   private lightKey: string | null = null;
   private lightPosition = 0.5;
-  private readonly faceTurns = new Map<
-    string,
-    { start: number; duration: number; texture: Texture; lease: string }
-  >();
+  private readonly faceTurns = new Map<string, FaceTurn>();
   private readonly markerPulses = new Map<
     string,
     { start: number; duration: number }
@@ -270,7 +294,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         throw new Error('Presentation event revision does not match the scene');
       }
     }
-    this.clearFeedback();
+    this.clearPulses();
     this.previousDepth = this.depth;
     this.previousPainted = new Map(
       [...this.cardViews].flatMap(([key, view]) =>
@@ -623,8 +647,14 @@ export class PixiBoardRenderer implements BoardRenderer {
       if (!view) {
         const outline = new Graphics({ label: `target:${renderKey}` });
         outline.eventMode = 'none';
+        // A face already in the page shows at once, never a blank first.
         const options = {
-          texture: retainedTexture ?? this.textures.placeholder,
+          texture:
+            retainedTexture ??
+            this.textures.peek(
+              descriptor.tableImageUrl ?? descriptor.imageUrl
+            ) ??
+            this.textures.placeholder,
           label: renderKey,
         };
         const sprite = this.depth.enabled
@@ -636,7 +666,12 @@ export class PixiBoardRenderer implements BoardRenderer {
         sprite.accessible = true;
         sprite.on('pointertap', (event: FederatedPointerEvent) => {
           if (!this.isPrimaryActivation(event)) return;
-          if (this.dragController.consumeSuppressedClick(view!.descriptor.id)) {
+          if (
+            this.dragController.consumeSuppressedClick(
+              view!.descriptor.id,
+              view!.descriptor.renderKey
+            )
+          ) {
             return;
           }
           const primaryAction = view!.descriptor.primaryAction;
@@ -694,7 +729,8 @@ export class PixiBoardRenderer implements BoardRenderer {
               this.pointerInput(event, view!.descriptor)
             )
           ) {
-            this.clearFeedback();
+            this.stopTurn(renderKey);
+            this.clearPulses();
             this.grabbed = view!.descriptor;
             this.grabbedPointerId = event.pointerId;
             try {
@@ -727,8 +763,12 @@ export class PixiBoardRenderer implements BoardRenderer {
           if (!current || currentUrl(current.descriptor) !== expectedUrl)
             return;
           current.faceTexture = texture;
-          if (!this.faceTurns.has(renderKey)) current.sprite.texture = texture;
-          current.sprite.tint = 0xffffff;
+          current.faceTextureUrl = expectedUrl;
+          current.faceFailed = false;
+          if (!this.faceTurns.has(renderKey)) {
+            current.sprite.texture = texture;
+            current.sprite.tint = 0xffffff;
+          }
           this.scheduleRender();
         },
         (error) => {
@@ -736,12 +776,25 @@ export class PixiBoardRenderer implements BoardRenderer {
           if (!current || currentUrl(current.descriptor) !== expectedUrl)
             return;
           current.faceTexture = this.textures.placeholder;
-          current.sprite.texture = this.textures.placeholder;
-          current.sprite.tint = 0x777777;
+          current.faceTextureUrl = expectedUrl;
+          current.faceFailed = true;
+          // A card mid-turn keeps its old face up until it is on its edge.
+          if (!this.faceTurns.has(renderKey)) {
+            current.sprite.texture = this.textures.placeholder;
+            current.sprite.tint = 0x777777;
+          }
           this.adapters.reportError(error);
           this.scheduleRender();
         }
       );
+      // Already in the page (another card shows it): it is ready now.
+      const ready = this.textures.peek(expectedUrl);
+      if (ready && view.faceTextureUrl !== expectedUrl) {
+        view.faceTexture = ready;
+        view.faceTextureUrl = expectedUrl;
+        if (!this.faceTurns.has(renderKey)) view.sprite.texture = ready;
+        view.sprite.tint = 0xffffff;
+      }
     }
 
     const nextMarkerIds = new Set(scene.markers.map((marker) => marker.id));
@@ -909,7 +962,11 @@ export class PixiBoardRenderer implements BoardRenderer {
       held ? held.x : descriptor.bounds.x + descriptor.bounds.width / 2,
       held ? held.y : descriptor.bounds.y + descriptor.bounds.height / 2
     );
-    sprite.width = descriptor.bounds.width * (view.turnScale ?? 1);
+    sprite.width =
+      descriptor.bounds.width *
+      (view.turnAngle === undefined
+        ? 1
+        : Math.max(0.025, Math.abs(Math.cos(view.turnAngle))));
     sprite.height = descriptor.bounds.height;
     sprite.rotation = descriptor.rotationQuarterTurns * (Math.PI / 2);
     sprite.zIndex = dragging
@@ -1210,26 +1267,21 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (!this.depth || !(view.sprite instanceof PerspectiveMesh)) return;
     const { sprite, edge, outline, descriptor } = view;
     view.paintedPose = pose;
-    const quad = tablePoseQuad(this.depth.camera, pose);
-    if (view.turnScale !== undefined) {
-      for (const [a, b] of [
-        [0, 1],
-        [3, 2],
-      ] as const) {
-        const left = quad[a]!;
-        const right = quad[b]!;
-        const dx = ((right.x - left.x) * (1 - view.turnScale)) / 2;
-        const dy = ((right.y - left.y) * (1 - view.turnScale)) / 2;
-        (quad as { x: number; y: number }[])[a] = {
-          x: left.x + dx,
-          y: left.y + dy,
-        };
-        (quad as { x: number; y: number }[])[b] = {
-          x: right.x - dx,
-          y: right.y - dy,
-        };
-      }
-    }
+    const angle = view.turnAngle ?? 0;
+    // Turned about its middle, a card on the table rises by half its width
+    // so its edge never dips under the cloth.
+    const quad = tablePoseQuad(
+      this.depth.camera,
+      angle === 0
+        ? pose
+        : {
+            ...pose,
+            flip: angle,
+            elevation:
+              pose.elevation +
+              pose.plane * pose.bounds.width * 0.56 * Math.abs(Math.sin(angle)),
+          }
+    );
     sprite.position.set(0, 0);
     sprite.scale.set(1);
     sprite.rotation = 0;
@@ -1385,74 +1437,140 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private startFeedback(plan: MotionPlan): void {
-    if (this.preferences.reducedMotion || this.preferences.animationSpeed === 0)
-      return;
+    const reduced =
+      this.preferences.reducedMotion || this.preferences.animationSpeed === 0;
     const now = performance.now();
     const speed = this.preferences.animationSpeed ?? 1;
     for (const flight of plan.flights) {
       const view = this.cardViews.get(flight.renderKey);
       // Only turn toward an already disclosed face. Concealment always snaps
       // to its safe back, and never keeps an old private texture alive.
-      if (
-        !view ||
-        !flight.fromImageUrl ||
-        view.descriptor.concealed ||
-        view.descriptor.tableImageUrl ||
-        this.faceTurns.size >= 16
-      )
+      if (!view || view.descriptor.concealed || view.descriptor.tableImageUrl)
         continue;
-      const lease = `face-turn:${this.effectSerial++}`;
-      const effect = {
-        start: now + flight.delay * 1000 * speed,
-        duration: 320 * speed,
-        texture: this.textures.placeholder,
-        lease,
-      };
-      this.faceTurns.set(flight.renderKey, effect);
-      this.textures.bind(
-        lease,
-        flight.fromImageUrl,
-        (texture) => {
-          if (this.faceTurns.get(flight.renderKey) !== effect) return;
-          effect.texture = texture;
-          this.scheduleRender();
-        },
-        this.adapters.reportError
-      );
+      if (flight.fromImageUrl) {
+        // Under reduced motion nothing turns: a sprite keeps the face it
+        // shows until its new one has loaded, with no clock running.
+        if (reduced || this.faceTurns.size >= 16) continue;
+        // It sets off showing its old face and turns over a little way in.
+        this.startTurn(
+          flight.renderKey,
+          flight.fromImageUrl,
+          now + (flight.delay * 1000 + 40) * speed,
+          TURN_MS * speed,
+          now
+        );
+      } else if (flight.fromRenderKey !== undefined) {
+        // Re-aliased mid-turn (the room answering a predicted move): the new
+        // node carries on the turn the old one had under way.
+        const turn = this.faceTurns.get(flight.fromRenderKey);
+        if (turn && flight.fromRenderKey !== flight.renderKey) {
+          this.faceTurns.delete(flight.fromRenderKey);
+          this.stopTurn(flight.renderKey);
+          this.faceTurns.set(flight.renderKey, turn);
+        }
+      }
     }
-    for (const pulse of plan.pulses) {
-      if (this.markerViews.has(pulse.markerId) && this.markerPulses.size < 32)
-        this.markerPulses.set(pulse.markerId, {
-          start: now,
-          duration: 260 * speed,
-        });
-    }
+    if (!reduced)
+      for (const pulse of plan.pulses) {
+        if (this.markerViews.has(pulse.markerId) && this.markerPulses.size < 32)
+          this.markerPulses.set(pulse.markerId, {
+            start: now,
+            duration: 260 * speed,
+          });
+      }
     this.sampleFeedback(now);
     this.scheduleDepth();
   }
 
+  private startTurn(
+    key: string,
+    fromImageUrl: string,
+    plannedStart: number,
+    duration: number,
+    now: number
+  ): void {
+    this.stopTurn(key);
+    const lease = `face-turn:${String(this.effectSerial++)}`;
+    const turn: FaceTurn = {
+      start: Infinity,
+      plannedStart,
+      created: now,
+      duration,
+      texture: null,
+      lease,
+    };
+    this.faceTurns.set(key, turn);
+    const loaded = (texture: Texture) => {
+      if (this.faceTurns.get(key) !== turn) return;
+      turn.texture = texture;
+      this.scheduleDepth();
+      this.scheduleRender();
+    };
+    this.textures.bind(lease, fromImageUrl, loaded, (error) => {
+      loaded(this.textures.placeholder);
+      this.adapters.reportError(error);
+    });
+    // Its old face is in the page already (the back the pile shows): it
+    // sets off showing it, not a blank.
+    const shown = this.textures.peek(fromImageUrl);
+    const view = this.cardViews.get(key);
+    if (shown) {
+      turn.texture = shown;
+      if (view) view.sprite.texture = shown;
+    }
+  }
+
+  private stopTurn(key: string): void {
+    const turn = this.faceTurns.get(key);
+    if (!turn) return;
+    this.faceTurns.delete(key);
+    this.textures.release(turn.lease);
+    const view = this.cardViews.get(key);
+    if (!view) return;
+    delete view.turnAngle;
+    view.sprite.texture = view.faceTexture ?? this.textures.placeholder;
+    view.sprite.tint = view.faceFailed ? 0x777777 : 0xffffff;
+    this.applyCardView(view);
+  }
+
   private sampleFeedback(at: number): void {
-    for (const [key, effect] of this.faceTurns) {
+    for (const [key, turn] of this.faceTurns) {
       const view = this.cardViews.get(key);
-      const t = Math.max(0, Math.min(1, (at - effect.start) / effect.duration));
-      if (!view || t === 1) {
-        this.faceTurns.delete(key);
-        this.textures.release(effect.lease);
-        if (view) {
-          delete view.turnScale;
-          view.sprite.texture = view.faceTexture ?? this.textures.placeholder;
-          this.applyCardView(view);
-        }
+      if (!view) {
+        this.stopTurn(key);
         continue;
       }
-      view.turnScale = Math.max(0.025, Math.abs(Math.cos(Math.PI * t)));
-      view.sprite.texture =
-        t < 0.5
-          ? effect.texture
-          : (view.faceTexture ?? this.textures.placeholder);
+      if (turn.start === Infinity) {
+        // Both faces in the page (or waited on long enough): it turns, at
+        // once if that is already later than planned.
+        const faceUrl =
+          view.descriptor.tableImageUrl ?? view.descriptor.imageUrl;
+        if (
+          (turn.texture !== null && view.faceTextureUrl === faceUrl) ||
+          at - turn.created >= FACE_WAIT_LIMIT_MS
+        )
+          turn.start = Math.max(at, turn.plannedStart);
+      }
+      const t = Math.max(0, Math.min(1, (at - turn.start) / turn.duration));
+      if (t === 1) {
+        this.stopTurn(key);
+        continue;
+      }
+      const eased = easeInOut(t);
+      view.turnAngle = eased < 0.5 ? eased * Math.PI : (eased - 1) * Math.PI;
+      if (t < 0.5) {
+        if (turn.texture) view.sprite.texture = turn.texture;
+        view.sprite.tint = 0xffffff;
+      } else {
+        view.sprite.texture = view.faceTexture ?? this.textures.placeholder;
+        view.sprite.tint = view.faceFailed ? 0x777777 : 0xffffff;
+      }
       if (this.depth?.enabled && view.paintedPose)
         this.paintDepthCard(view, view.paintedPose);
-      else view.sprite.width = view.descriptor.bounds.width * view.turnScale;
+      else
+        view.sprite.width =
+          view.descriptor.bounds.width *
+          Math.max(0.025, Math.abs(Math.cos(view.turnAngle)));
     }
     for (const [key, effect] of this.markerPulses) {
       const view = this.markerViews.get(key);
@@ -1462,22 +1580,18 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
   }
 
-  private clearFeedback(): void {
-    for (const [key, effect] of this.faceTurns) {
-      this.textures.release(effect.lease);
-      const view = this.cardViews.get(key);
-      if (view) {
-        delete view.turnScale;
-        view.sprite.texture = view.faceTexture ?? this.textures.placeholder;
-        this.applyCardView(view);
-      }
-    }
-    this.faceTurns.clear();
+  /** Marker pulses and the hover light: what a new scene starts afresh. */
+  private clearPulses(): void {
     for (const key of this.markerPulses.keys())
       this.markerViews.get(key)?.root.scale.set(1);
     this.markerPulses.clear();
     this.lightKey = null;
     this.light?.clear();
+  }
+
+  private clearFeedback(): void {
+    for (const key of [...this.faceTurns.keys()]) this.stopTurn(key);
+    this.clearPulses();
   }
 
   private startDepthShuffles(plan: MotionPlan): void {

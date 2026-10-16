@@ -9,6 +9,30 @@ import {
 } from './table-camera.js';
 
 describe('table camera', () => {
+  it('centres the tilted mat between the hands', () => {
+    const fitBounds = { x: 0, y: 70, width: 1440, height: 700 };
+    const band = { top: 70, bottom: 770 };
+    const camera = createTableCamera({
+      width: 1440,
+      height: 900,
+      mode: 'table',
+      tiltDegrees: 22,
+      maximumElevation: 40,
+      fitBounds,
+      centreBand: band,
+    });
+    const top = projectTablePoint(camera, { x: 720, y: fitBounds.y, z: 0 });
+    const bottom = projectTablePoint(camera, {
+      x: 720,
+      y: fitBounds.y + fitBounds.height,
+      z: 0,
+    });
+    // The same room above the mat's far edge as below its near edge.
+    expect(top.y - band.top).toBeCloseTo(band.bottom - bottom.y, 0);
+    expect(top.y).toBeGreaterThan(band.top);
+    expect(bottom.y).toBeLessThan(band.bottom);
+  });
+
   it.each(['flat', 'depth', 'table'] as const)(
     'round trips board and elevated cursor points in %s mode',
     (mode) => {

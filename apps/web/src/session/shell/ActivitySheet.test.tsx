@@ -259,6 +259,24 @@ describe('ActivityLauncher', () => {
     );
     expect(tickerLines()).toEqual(['Blue loaded deck']);
   });
+
+  it("says the player's own Attack and Pass over the table, the buttons' only answer, without counting them", async () => {
+    for (const solo of [true, false]) {
+      await act(async () => root.unmount());
+      root = createRoot(host);
+      const source = feedSource();
+      await renderLauncher(source, { solo });
+      await act(async () =>
+        source.push(
+          move(OWN, 'Blue drew a card'),
+          item('AttackDeclared', 'player', 'Blue attacked', OWN),
+          item('PassDeclared', 'player', 'Blue passed', OWN)
+        )
+      );
+      expect(tickerLines()).toEqual(['Blue attacked', 'Blue passed']);
+      expect(badge()).toBeNull();
+    }
+  });
 });
 
 describe('ActivityPanel', () => {

@@ -26,6 +26,8 @@ export interface BoardPointerInput {
 interface ActiveGesture {
   readonly pointerId: number;
   readonly cardId: ViewCardId;
+  /** The painted element pressed: for a pile, its cover (`cover:<zone>`). */
+  readonly renderKey: string | null;
   readonly startX: number;
   readonly startY: number;
   readonly centerOffsetX: number;
@@ -172,7 +174,16 @@ export const resolveBoardDropTarget = (
 /** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */
 export class BoardDragController {
   private active: ActiveGesture | null = null;
-  private suppressedClickCardId: ViewCardId | null = null;
+  /**
+   * The press a finished drag leaves behind, whose click the renderer drops.
+   * A pile's cover is one element for whichever card is on top, so by the
+   * time its click arrives it may stand for the next card: the click is
+   * matched by the element pressed as well as by the card.
+   */
+  private suppressedClick: {
+    readonly cardId: ViewCardId;
+    readonly renderKey: string | null;
+  } | null = null;
 
   constructor(
     private readonly adapters: Pick<
@@ -196,10 +207,11 @@ export class BoardDragController {
     }
     const card = cardAt(scene, cardId);
     if (!card?.interactive) return false;
-    this.suppressedClickCardId = null;
+    this.suppressedClick = null;
     this.active = {
       pointerId: input.pointerId,
       cardId,
+      renderKey: card.renderKey,
       startX: input.x,
       startY: input.y,
       centerOffsetX: card.bounds.x + card.bounds.width / 2 - input.x,
@@ -330,7 +342,7 @@ export class BoardDragController {
         ? input.targetId
         : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
     const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
-    this.suppressedClickCardId = gesture.cardId;
+    this.suppressClickOf(gesture);
     this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     if (targetId) {
       this.adapters.emitIntent({
@@ -356,10 +368,17 @@ export class BoardDragController {
     }
     this.active = null;
     if (gesture.dragging) {
-      this.suppressedClickCardId = gesture.cardId;
+      this.suppressClickOf(gesture);
       this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     }
     return gesture.dragging;
+  }
+
+  private suppressClickOf(gesture: ActiveGesture): void {
+    this.suppressedClick = {
+      cardId: gesture.cardId,
+      renderKey: gesture.renderKey,
+    };
   }
 
   reconcile(scene: BoardScene): void {
@@ -367,9 +386,24 @@ export class BoardDragController {
     if (gesture && !cardAt(scene, gesture.cardId)?.interactive) this.cancel();
   }
 
-  consumeSuppressedClick(cardId: ViewCardId): boolean {
-    if (this.suppressedClickCardId !== cardId) return false;
-    this.suppressedClickCardId = null;
+  /**
+   * Whether a click on this card -- painted under `renderKey` -- is the one
+   * a drag just ended with, which must not also select it or open its pile.
+   * Asked once per click: it is forgotten once matched.
+   */
+  consumeSuppressedClick(
+    cardId: ViewCardId,
+    renderKey?: string | null
+  ): boolean {
+    const suppressed = this.suppressedClick;
+    if (
+      !suppressed ||
+      (suppressed.cardId !== cardId &&
+        (renderKey == null || suppressed.renderKey !== renderKey))
+    ) {
+      return false;
+    }
+    this.suppressedClick = null;
     return true;
   }
 
@@ -377,7 +411,7 @@ export class BoardDragController {
   cancelInteraction(): number | null {
     const pointerId = this.active?.pointerId ?? null;
     this.active = null;
-    this.suppressedClickCardId = null;
+    this.suppressedClick = null;
     return pointerId;
   }
 
@@ -388,13 +422,13 @@ export class BoardDragController {
   cancelForRendererFailure(): BoardInteractionCancellation {
     const gesture = this.active;
     if (!gesture) {
-      this.suppressedClickCardId = null;
+      this.suppressedClick = null;
       return { pointerId: null, wasDragging: false };
     }
     const pointerId = gesture.pointerId;
     const wasDragging = gesture.dragging;
     this.active = null;
-    this.suppressedClickCardId = null;
+    this.suppressedClick = null;
     if (wasDragging) {
       this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     }

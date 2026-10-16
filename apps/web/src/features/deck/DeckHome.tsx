@@ -17,6 +17,7 @@ import {
   catalogIndex,
   checkDeck,
   coverCardOf,
+  hasRuleBox,
   deckCardFromCatalog,
   deckListOf,
   deckTotals,
@@ -89,7 +90,12 @@ export const DeckCover = ({
   readonly card: DeckCard | undefined;
   readonly name: string;
 }) => (
-  <span className="deck-cover" aria-hidden="true">
+  <span
+    className="deck-cover"
+    // Rule-box prints are full art, their Pokémon lower than a plain card's.
+    data-full-art={card && hasRuleBox(card) ? 'true' : undefined}
+    aria-hidden="true"
+  >
     {card ? (
       <CardImage
         src={card.imageSmall ?? card.image}
@@ -155,7 +161,7 @@ const SavedDeckTile = ({
   const cover = useMemo(
     () =>
       deck.cards.find((entry) => entry.card.id === deck.coverId)?.card ??
-      coverCardOf(deck.cards),
+      coverCardOf(deck.cards, deck.name),
     [deck]
   );
   const rename = async (): Promise<void> => {
@@ -313,7 +319,7 @@ const UnsavedSeatTile = ({
         role="group"
         aria-label={`${name} on ${SEAT_NAMES[target]}`}
       >
-        <DeckCover card={coverCardOf(slot.deck)} name={name} />
+        <DeckCover card={coverCardOf(slot.deck, name)} name={name} />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{name}</span>
           <span className="deck-tile__meta">
@@ -367,7 +373,8 @@ const UnsavedSeatTile = ({
 /** A list's cards from the catalog, for its cover and count. */
 const resolveListCover = (
   catalog: LoadedCatalog | undefined,
-  text: string
+  text: string,
+  name: string
 ): { readonly cover?: DeckCard; readonly cards?: DeckList } => {
   if (!catalog) return {};
   const parsed = parsePastedDecklist(text);
@@ -381,7 +388,7 @@ const resolveListCover = (
         : [];
     })
   );
-  const cover = coverCardOf(cards);
+  const cover = coverCardOf(cards, splitFinish(name)[0]);
   return { cards, ...(cover ? { cover } : {}) };
 };
 
@@ -572,7 +579,7 @@ export const DeckHome = ({
       if (!found.has(deck.decklist)) {
         found.set(
           deck.decklist,
-          resolveListCover(loadedCatalog, deck.decklist).cover
+          resolveListCover(loadedCatalog, deck.decklist, deck.name).cover
         );
       }
     }

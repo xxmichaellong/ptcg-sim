@@ -291,8 +291,7 @@ export const DeckListPanel = ({
       >
         {sorted.length === 0 ? (
           <p className="deck-panel__empty">
-            No cards yet. Search on the left and click a card to add it, or
-            paste a whole list on this screen.
+            No cards yet. A whole list can be pasted anywhere on this screen.
           </p>
         ) : (
           GROUPS.map((group) => {
@@ -433,7 +432,6 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
                   src={card.imageSmall ?? card.image}
                   fallback={limitlessScanOf(card)}
                   alt={card.name}
-                  title={card.name}
                 />
               </li>
             ))}
@@ -449,7 +447,6 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
                   src={card.imageSmall ?? card.image}
                   fallback={limitlessScanOf(card)}
                   alt={card.name}
-                  title={card.name}
                 />
               </li>
             ))}

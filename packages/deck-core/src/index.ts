@@ -5,6 +5,7 @@ export {
   addCard,
   countOf,
   coverCardOf,
+  hasRuleBox,
   customCardId,
   deckListOf,
   deckTotals,

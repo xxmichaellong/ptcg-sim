@@ -83,7 +83,14 @@ export type LegacyBoardShortcutActionRequest =
       readonly edge: LegacyOwnDeckInspectionEdge;
     }
   | { readonly action: 'shuffleOwnDeck' }
-  | { readonly action: 'flipCoin' }
+  | {
+      readonly action: 'flipCoin';
+      /**
+       * The seat whose coin was pressed on the table (Solo plays both);
+       * the acting seat when absent, as the key flips.
+       */
+      readonly playerId?: PlayerId;
+    }
   | { readonly action: 'setupOwnPlayer' }
   | { readonly action: 'resetOwnPlayer' }
   | { readonly action: 'startOwnTurn' }
@@ -314,15 +321,16 @@ export const resolveLegacyBoardShortcutAction = (
       };
     }
     case 'flipCoin': {
-      if (view.viewer.kind !== 'player' || acting === undefined) {
+      const seat = request.playerId ?? acting;
+      if (view.viewer.kind !== 'player' || seat === undefined) {
         return { ok: false, reason: 'not_player' };
       }
-      if (!view.players[acting]) {
+      if (!view.players[seat]) {
         return { ok: false, reason: 'stale_player' };
       }
       return {
         ok: true,
-        command: { type: 'FlipCoin', ...targetSeatField(view, acting) },
+        command: { type: 'FlipCoin', ...targetSeatField(view, seat) },
         dismissSelection: false,
       };
     }

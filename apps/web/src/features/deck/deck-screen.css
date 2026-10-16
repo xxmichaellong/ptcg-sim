@@ -423,12 +423,22 @@ div.deck-tile__choose {
 }
 
 .deck-cover img {
-  /* The artwork window, not the whole card. */
+  /*
+   * The middle of the artwork window, never the frame: on a 63 x 88 card the
+   * art spans about 10-47% of the height (ex prints keep their Pokemon in the
+   * same band), so a square as tall as that band is 193% of the card's width
+   * wide, centred across and on the band's middle (28.5% down).
+   */
   position: absolute;
-  top: -15%;
-  left: -20%;
-  width: 140%;
+  top: -27%;
+  left: -46.5%;
+  width: 193%;
   height: auto;
+}
+
+/* Full art: the Pokemon sits lower, under the ability text (about 33%). */
+.deck-cover[data-full-art] img {
+  top: -40%;
 }
 
 .deck-cover__initial {

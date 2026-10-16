@@ -3,7 +3,7 @@ import type {
   ClientSessionState,
   RemoteGameSession,
 } from '@ptcgsim/client-session';
-import { MAX_CHAT_CODE_UNITS } from '@ptcgsim/protocol';
+import { MAX_CHAT_CODE_UNITS, type WireGameCommand } from '@ptcgsim/protocol';
 import {
   useEffect,
   useRef,
@@ -12,12 +12,14 @@ import {
   type KeyboardEvent,
 } from 'react';
 
+import { refusalNotice, unsentNotice } from '../board/refusal-notice.js';
 import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
 import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
 import { resolveTableAction } from '../board/resolveTableAction.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
   downloadBrowserTextFile,
+  FULLSCREEN_REFUSED_NOTICE,
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
@@ -203,15 +205,27 @@ export const useLiveRoomControls = ({
   const solo = roomMode === 'solo';
   const ready = state.phase === 'ready';
 
+  // Every press is answered: a command this client could not send says why,
+  // as one the room refuses does (refusal-notice.ts).
+  const send = (command: WireGameCommand): boolean => {
+    const result = session.submit(command);
+    if (!result.queued) {
+      const notice = unsentNotice(result.reason, command.type);
+      if (notice) toast(notice);
+    }
+    return result.queued;
+  };
   const submitTable = (action: 'attack' | 'pass'): void => {
     if (!playerId || !state.view) return;
     const resolution = resolveTableAction(state.view, playerId, action);
-    if (resolution.ok) session.submit(resolution.command);
+    if (resolution.ok) send(resolution.command);
+    else toast(refusalNotice(undefined, 'table'));
   };
   const submitLifecycle = (action: 'setup' | 'reset'): void => {
     if (!playerId || !state.view) return;
     const resolution = resolveLifecycleAction(state.view, playerId, action);
-    if (resolution.ok) session.submit(resolution.command);
+    if (resolution.ok) send(resolution.command);
+    else toast(refusalNotice(undefined, 'table'));
   };
   const submitBothLifecycle = (action: 'setup' | 'reset'): void => {
     if (!playerId || !state.view || !solo) return;
@@ -225,7 +239,11 @@ export const useLiveRoomControls = ({
     ];
     for (const target of targets) {
       const resolution = resolveLifecycleAction(state.view, target, action);
-      if (!resolution.ok || !session.submit(resolution.command).queued) return;
+      if (!resolution.ok) {
+        toast(refusalNotice(undefined, 'table'));
+        return;
+      }
+      if (!send(resolution.command)) return;
     }
   };
   const submitUndo = (): void => {
@@ -450,7 +468,7 @@ export const useLiveRoomControls = ({
     presentation.clearActivity();
   };
   const fullscreen = (): void => {
-    requestFullscreen();
+    if (!requestFullscreen()) toast(FULLSCREEN_REFUSED_NOTICE);
   };
 
   /** The hidden file pickers behind "Enter replay mode" and "Resume". */

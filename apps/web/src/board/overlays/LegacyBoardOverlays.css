@@ -872,8 +872,7 @@
     scale var(--duration-instant, 90ms) ease;
 }
 
-.ptcgsim-overlay-button:disabled,
-.ptcgsim-card-actions select:disabled {
+.ptcgsim-overlay-button:disabled {
   opacity: 0.45;
   cursor: default;
   box-shadow: none;
@@ -1100,14 +1099,6 @@ button.ptcgsim-overlay-toggle:focus-visible {
   white-space: nowrap;
   font-size: 13px;
 }
-.ptcgsim-card-actions select {
-  max-width: 180px;
-  min-height: 36px;
-  color: var(--color-text);
-  background: var(--color-surface-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
 @media (max-width: 600px) {
   .ptcgsim-card-actions {
     gap: 6px;
@@ -1116,15 +1107,38 @@ button.ptcgsim-overlay-toggle:focus-visible {
   .ptcgsim-card-actions-label {
     display: none;
   }
-  .ptcgsim-card-actions select {
-    flex: 1;
-    width: 0;
-    min-width: 0;
+  .ptcgsim-card-actions {
+    justify-content: flex-end;
   }
 }
 .is-showing-board .ptcgsim-card-actions {
   opacity: 0;
   pointer-events: none;
+}
+
+/* A phone's panel has no room for the header buttons' words: their icons
+   stay, and the words still name them. The way back from Show board keeps
+   its words, as the one thing left on the screen. */
+@media (max-width: 600px) {
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-actions {
+    gap: var(--space-1);
+  }
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-button,
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-toggle {
+    gap: 0;
+    padding: 0 var(--space-2);
+    font-size: 0;
+  }
+  /* Whose pile it is stays as the seat's dot; the title keeps the room. */
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-seat {
+    gap: 0;
+    font-size: 0;
+  }
+  .is-showing-board .ptcgsim-legacy-zone-toolbar .ptcgsim-show-board-button {
+    gap: var(--space-1-5);
+    padding: 0 var(--space-3);
+    font-size: var(--text-md);
+  }
 }
 
 .ptcgsim-legacy-zone-browser .ptcgsim-overlay-header {
@@ -1232,26 +1246,70 @@ button.ptcgsim-overlay-toggle:focus-visible {
   color: var(--color-text-faint);
 }
 
-.ptcgsim-browser-size {
+/* Card size: a linear zoom, stepped by the buttons or slid. */
+.ptcgsim-browser-zoom {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
+  gap: var(--space-1);
+  flex: none;
 }
 
-.ptcgsim-browser-size select {
+.ptcgsim-browser-zoom-step,
+.ptcgsim-browser-zoom-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: var(--control-height-compact);
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
+  min-width: var(--control-height-compact);
+  padding: 0 var(--space-1);
+  border: 0;
   border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.ptcgsim-browser-zoom-value {
+  min-width: 4.5ch;
+  color: var(--color-text);
+}
+
+.ptcgsim-browser-zoom-step svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ptcgsim-browser-zoom-step:hover:not(:disabled),
+.ptcgsim-browser-zoom-value:hover {
   background: var(--color-surface-3);
   color: var(--color-text);
-  font: inherit;
 }
 
-.ptcgsim-browser-size select:focus-visible {
+.ptcgsim-browser-zoom-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ptcgsim-browser-zoom-step:focus-visible,
+.ptcgsim-browser-zoom-value:focus-visible,
+.ptcgsim-browser-zoom-slider:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+.ptcgsim-browser-zoom-slider {
+  width: 104px;
+  margin: 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .ptcgsim-browser-zoom-slider {
+    display: none;
+  }
 }
 
 .ptcgsim-browser-results {

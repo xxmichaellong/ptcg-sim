@@ -64,9 +64,13 @@ export interface BoardSessionAdapterOptions {
   ) => void;
   /**
    * The room refused one of this client's queued commands: its prediction
-   * has just been withdrawn from the board. Called once per command.
+   * has just been withdrawn from the board. Called once per command, with
+   * the refused command's type.
    */
-  readonly onCommandRefused?: (completed: CompletedCommandSummary) => void;
+  readonly onCommandRefused?: (
+    completed: CompletedCommandSummary,
+    commandType: string | undefined
+  ) => void;
   /** Resolves a dropped card into a command (Solo widens whose windows). */
   readonly resolveDrop?: BoardSessionControllerOptions['resolveDrop'];
   readonly reportEffectFailure?: (
@@ -133,6 +137,7 @@ export class BoardSessionAdapter {
   private nextFrameToken = 0;
   private disposed = false;
   private lastPendingCommandIds: readonly string[] = [];
+  private lastPendingCommandTypes: ReadonlyMap<string, string> = new Map();
   private synchronizeWhenIdle = false;
 
   constructor(private readonly options: BoardSessionAdapterOptions) {
@@ -343,6 +348,12 @@ export class BoardSessionAdapter {
       ...(motionHint ? { motionHint } : {}),
     };
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
+    this.lastPendingCommandTypes = new Map(
+      liveState.pendingCommands.map((pending) => [
+        pending.commandId,
+        pending.commandType,
+      ])
+    );
     return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
 
@@ -360,7 +371,8 @@ export class BoardSessionAdapter {
       const completed = liveState.completedCommands.find(
         (candidate) => candidate.commandId === commandId
       );
-      if (completed && !completed.accepted) report(completed);
+      if (completed && !completed.accepted)
+        report(completed, this.lastPendingCommandTypes.get(commandId));
     }
   }
 

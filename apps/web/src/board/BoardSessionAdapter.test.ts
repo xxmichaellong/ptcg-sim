@@ -239,6 +239,7 @@ const setup = (
   const refusals: Array<{
     readonly commandId: string;
     readonly code: string | undefined;
+    readonly commandType: string | undefined;
   }> = [];
   const adapter = new BoardSessionAdapter({
     live,
@@ -250,8 +251,12 @@ const setup = (
     },
     ...(transformView ? { transformView } : {}),
     onSubmission: (command, result) => submissions.push({ command, result }),
-    onCommandRefused: (completed) =>
-      refusals.push({ commandId: completed.commandId, code: completed.code }),
+    onCommandRefused: (completed, commandType) =>
+      refusals.push({
+        commandId: completed.commandId,
+        code: completed.code,
+        commandType,
+      }),
   });
   live.connect(connection);
   const socket = socketFactory.sockets[0]!;
@@ -770,10 +775,17 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(parentOf(second.id)).toBe(handId);
     expect(lastMotion()).toBe('rollback');
     expect(test.adapter.getSnapshot().view?.revision).toBe(2);
-    // The route hears about the refusal once, with the room's reason.
+    // The route hears about the refusal once, with the room's reason and
+    // what was refused.
     expect(test.refusals).toEqual([
-      { commandId: 'board-command-2', code: 'stale_reference' },
+      {
+        commandId: 'board-command-2',
+        code: 'stale_reference',
+        commandType: (test.submissions.at(-1)?.command as { type: string })
+          .type,
+      },
     ]);
+    expect(test.refusals[0]?.commandType).toMatch(/^Move/u);
     test.adapter.synchronize();
     expect(test.refusals).toHaveLength(1);
 

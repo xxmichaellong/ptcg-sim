@@ -851,8 +851,8 @@ export const CardSearchPanel = ({
                 <div ref={sentinel} className="card-search__sentinel" />
               ) : null}
               <p className="card-search__footer">
-                Click a card to add it · Shift+click removes one · Right-click
-                for details · Enter in the search adds the first card
+                Shift+click removes one · Right-click for details · Enter in the
+                search adds the first card
               </p>
             </>
           )

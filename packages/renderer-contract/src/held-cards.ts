@@ -7,6 +7,13 @@ import type { BoardPresentation, BoardScene, CardSceneNode } from './model.js';
 const COVER_STAND_IN = '\u0000pile';
 
 /**
+ * Whether a card is the stand-in a pile's cover is painted as while its top
+ * card is held: no card of the match, only the pile keeping its height.
+ */
+export const isPileStandIn = (card: Pick<CardSceneNode, 'id'>): boolean =>
+  String(card.id).endsWith(COVER_STAND_IN);
+
+/**
  * The card itself, painted face up as it will be once it lands; settling,
  * it lies where it was dropped, so whatever the next scene makes of it --
  * the same card, or the card under a new alias once it has crossed into a

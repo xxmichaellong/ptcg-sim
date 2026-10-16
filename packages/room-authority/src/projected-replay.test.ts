@@ -326,7 +326,7 @@ describe('role-projected replay', () => {
     expect(JSON.stringify(replay)).not.toContain('Oversized local definition');
   });
 
-  it('preserves aliases across unchanged frames and rotates them after undo', () => {
+  it('keeps aliases across unchanged frames and through an undo that moved nothing', () => {
     const adapter = context();
     let state = initialState();
     let history = createReplayHistory(state);
@@ -394,7 +394,9 @@ describe('role-projected replay', () => {
       (card) => card.id
     );
     expect(unchangedIds).toEqual(setupIds);
-    expect(restoredIds).not.toEqual(setupIds);
+    // Taking back a coin flip crossed no concealment boundary: the hand
+    // stays exactly as it was, under the same aliases.
+    expect(restoredIds).toEqual(setupIds);
     expect(replay.frames[4]!.presentationEvents).toEqual([
       {
         type: 'UndoApplied',

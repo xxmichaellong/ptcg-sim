@@ -457,8 +457,9 @@ Release requires all of the following:
     randomness, advances revision, keeps the reverted audit event, and remains
     forbidden in explicit multiplayer mode.
 12. Undo after a hidden/random action rotates discarded-branch handles for every
-    recipient; reconnect preserves only the restored branch and does not replay
-    the presentation fact.
+    recipient, while cards the action left in the same visibility generation
+    keep theirs; reconnect preserves only the restored branch and does not
+    replay the presentation fact.
 13. Projected replay playback is bounded and deterministic: backward navigation
     never reruns domain logic or randomness, forward effects match only the
     frames crossed, and a rejected replacement leaves the active replay intact.

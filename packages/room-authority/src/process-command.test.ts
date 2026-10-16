@@ -2412,9 +2412,29 @@ describe('authoritative room command transaction', () => {
       handId
     ]!.cards.map((card) => card.id);
     expect(undoAliases).toHaveLength(7);
-    expect(undoAliases.every((alias) => !setupAliases.includes(alias))).toBe(
-      true
+    // The six cards the random play left in the hand never crossed a
+    // concealment boundary, so they keep their aliases and stay still. The
+    // card it played face down comes back under an alias neither branch
+    // ever showed.
+    const playedSpectatorPublication = played.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-spectator' &&
+        delivery.message.type === 'StatePublication'
     );
+    if (playedSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing discarded-branch spectator publication');
+    }
+    const discardedBranchAliases = Object.values(
+      playedSpectatorPublication.message.snapshot.zones
+    ).flatMap((zone) => zone.cards.map((card) => card.id));
+    expect(undoAliases.filter((alias) => setupAliases.includes(alias))).toEqual(
+      setupAliases.filter((alias) => discardedBranchAliases.includes(alias))
+    );
+    const returned = undoAliases.filter(
+      (alias) => !setupAliases.includes(alias)
+    );
+    expect(returned).toHaveLength(1);
+    expect(discardedBranchAliases).not.toContain(returned[0]);
 
     const branched = await processAuthorityCommand(
       undone.snapshot,

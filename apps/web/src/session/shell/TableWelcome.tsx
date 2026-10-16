@@ -1,4 +1,3 @@
-import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
 import { HandPointingIcon } from '@phosphor-icons/react/dist/csr/HandPointing';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
@@ -11,6 +10,7 @@ import { chordKeycaps, detectKeyboardPlatform } from '../../hotkeys/chords.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import { DeckIcon } from '../../ui/DeckIcon.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import {
   DISCORD_URL,
@@ -27,14 +27,14 @@ const decorative = { 'aria-hidden': true, focusable: false } as const;
 const PlayTip = () => {
   const touch = useMediaQuery(COARSE_POINTER_QUERY);
   const opener = useKeymap().chord('table.shortcuts');
+  // Only what a first visit would not find on its own: dragging and
+  // double-clicking are what anyone tries first.
   if (touch) {
-    return (
-      <>Drag to play. Tap a card for its actions; tap it again to read it.</>
-    );
+    return <>Tap a card for its actions; tap it again to read it.</>;
   }
   return (
     <>
-      Drag to play. Double-click to read. Right-click for actions.
+      Right-click a card for its actions.
       {opener ? (
         <>
           {' '}
@@ -129,7 +129,7 @@ export const TableWelcome = ({
     </p>
     <ol className="table-welcome__steps">
       <li>
-        <CardsIcon {...decorative} />
+        <DeckIcon {...decorative} />
         <span>
           Load a <strong>deck</strong>, then press <strong>Set up</strong>.
         </span>
@@ -149,7 +149,7 @@ export const TableWelcome = ({
           className="ds-button ds-button--primary"
           onClick={onLoadDeck}
         >
-          <CardsIcon {...decorative} weight="bold" />
+          <DeckIcon {...decorative} weight="bold" />
           Load a deck
         </button>
       ) : null}

@@ -57,6 +57,12 @@ export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
   };
 };
 
+/**
+ * How far off, in card widths, the eye sees a flat card (in the hand) being
+ * turned over from: near enough that its edges visibly near and recede.
+ */
+const FLAT_TURN_DISTANCE = 3;
+
 /** A number in [0, 1) that a key always gives, for a card's resting lie. */
 const keyedUnit = (key: string, salt: number): number => {
   let hash = 2166136261 ^ salt;
@@ -88,21 +94,28 @@ export const tablePoseMatrix = (
     pose.flip ?? 0
   );
   if (pose.plane === 1) return projected;
+  // Flat, a card being turned over is seen in depth about its own middle,
+  // as an eye a few card-widths away would see it; lying still it is flat.
+  const flip = pose.flip ?? 0;
   const flat = tableCardMatrix(
     {
       ...camera,
+      width: 2 * (pose.bounds.x + pose.bounds.width / 2),
+      height: 2 * (pose.bounds.y + pose.bounds.height / 2),
       scale: 1,
       offsetX: 0,
       offsetY: 0,
       sine: 0,
       cosine: 1,
-      inverseDistance: 0,
+      inverseDistance:
+        flip === 0 ? 0 : 1 / (FLAT_TURN_DISTANCE * pose.bounds.width),
       skewX: 0,
       skewY: 0,
     },
     pose.bounds,
     0,
-    pose.turns
+    pose.turns,
+    flip
   );
   return pose.plane === 0
     ? flat
@@ -296,7 +309,8 @@ export class BoardDepthProjection {
     this.settings = parseBoardDepth(preferences.depth);
     this.enabled = this.settings.mode !== 'flat';
     // The tilted table must fit the window between the hands, which stay
-    // flat along its edges, with a full deck standing on it. Both come from
+    // flat along its edges, with a full deck standing on it, and sit centred
+    // between them, so the room above it matches the room below. All come from
     // the layout alone: a camera that moved with every draw would shift the
     // whole table and stop every card in flight.
     const centre = scene.viewport.height / 2;
@@ -334,7 +348,9 @@ export class BoardDepthProjection {
       mode: this.settings.mode,
       tiltDegrees: this.settings.tilt,
       maximumElevation: fullDeck,
-      ...(fitBounds ? { fitBounds } : {}),
+      ...(fitBounds
+        ? { fitBounds, centreBand: { top: fitTop, bottom: fitBottom } }
+        : {}),
       margin: this.enabled ? 8 : 0,
       ...(this.settings.parallax &&
       !preferences.reducedMotion &&
