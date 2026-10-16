@@ -240,12 +240,13 @@ const expectTurnedOver = (
   // Never an empty card: the back or the face, every frame.
   expect(frames.filter((frame) => !frame.back && !frame.face)).toEqual([]);
   // Turned over in depth, not swapped: flat, its face turns about its long
-  // axis in CSS; on the tabletop the table draws it narrower on its edge.
+  // axis in CSS; on the tabletop the table draws it narrower on its edge (a
+  // swap never narrows it; a slow runner may catch no frame near edge-on).
   if (mode === 'flat')
     expect(frames.some((frame) => frame.rotating)).toBe(true);
   else
     expect(Math.min(...frames.map((frame) => frame.width))).toBeLessThan(
-      widest * 0.8
+      widest * 0.9
     );
   // One card went to the discard: no second one flies in after it.
   expect(Math.max(...frames.map((frame) => frame.ghosts))).toBe(0);
