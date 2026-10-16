@@ -956,6 +956,91 @@ describe('serialized room session hub', () => {
     ).resolves.toMatchObject({ accepted: true });
   });
 
+  it('keeps every dropped session queued when saving the first one fails', async () => {
+    const setup = await fixture();
+    const blue = connection('blue-broadcaster');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const blueWelcome = blue.messages[0];
+    if (blueWelcome?.type !== 'Welcome') throw new Error('missing welcome');
+    /** A socket that stops taking frames when told to. */
+    const breakable = (id: string) => {
+      let broken = false;
+      const messages: ServerMessage[] = [];
+      const value: RuntimeConnection = {
+        id,
+        send: (frame) => {
+          if (broken) throw new Error('socket gone');
+          messages.push(JSON.parse(frame) as ServerMessage);
+        },
+        close: vi.fn(),
+      };
+      return { value, messages, breakNow: () => (broken = true) };
+    };
+    const watchers = await Promise.all(
+      ['first', 'second'].map(async (name) => {
+        const ticket = await setup.hub.issueAdmissionTicket({
+          capability: setup.spectatorCapability,
+          displayName: `Watcher ${name}`,
+          requestedRole: 'spectator',
+        });
+        if (!ticket.accepted) throw new Error(ticket.code);
+        const socket = breakable(`watcher-${name}`);
+        await setup.hub.handleFrame(
+          socket.value,
+          helloFrame({
+            admissionTicket: ticket.admissionTicket,
+            resumeToken: ticket.resumeCapability,
+            displayName: `Watcher ${name}`,
+            requestedRole: 'spectator',
+          })
+        );
+        const welcome = socket.messages[0];
+        if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+        return { socket, sessionId: welcome.sessionId };
+      })
+    );
+    for (const watcher of watchers) watcher.socket.breakNow();
+    // Both sockets fail on the next broadcast; the first save fails.
+    vi.spyOn(setup.store, 'commitAdmission').mockRejectedValueOnce(
+      new Error('storage unavailable')
+    );
+    await setup.hub
+      .handleFrame(
+        blue.value,
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: blueWelcome.sessionId,
+          clientSequence: 1,
+          commandId: 'broadcast-flip',
+          lastSeenRevision: 0,
+          command: { type: 'FlipCoin' },
+        })
+      )
+      .catch(() => undefined);
+
+    // The next piece of work saves both.
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: 'after-failure',
+      })
+    );
+    for (const watcher of watchers) {
+      expect(
+        setup.store.durable.sessions[watcher.sessionId]?.reconnectExpiresAt
+      ).toBeTypeOf('number');
+    }
+  });
+
   it('repairs a missing disconnect marker once after runtime restoration', async () => {
     const setup = await fixture();
     const player = connection('lost-runtime-player');

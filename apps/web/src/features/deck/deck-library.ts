@@ -19,9 +19,9 @@ import {
  *   per deck, and whatever is pending is written when the page is hidden.
  * - Another tab's change arrives on a BroadcastChannel and is read back,
  *   unless this tab changed that deck meanwhile.
- * - A write that fails (storage full or taken away) leaves the library
- *   `memory`, so the screen says changes last only for this visit; the
- *   failed decks are tried again with the next write.
+ * - A write or removal that fails (storage full or taken away) leaves the
+ *   library `memory`, so the screen says changes last only for this visit,
+ *   until the next write has tried it again and it went through.
  * - Everything read back is decoded defensively: a record from a future or
  *   hand-edited build that doesn't decode is skipped, never thrown.
  */
@@ -252,10 +252,13 @@ export class DeckLibrary {
   readonly #listeners = new Set<Listener>();
   readonly #decks = new Map<string, SavedDeck>();
   readonly #pending = new Set<string>();
+  /** Decks removed here and not yet from storage. */
+  readonly #removals = new Set<string>();
+  /** Decks whose last write or removal failed. */
+  readonly #unsaved = new Set<string>();
   /** How many times each deck changed here, so a read-back can tell. */
   readonly #edits = new Map<string, number>();
   #loaded: 'loading' | 'ready' | 'failed';
-  #writeFailed = false;
   #timer: ReturnType<typeof setTimeout> | undefined;
   #snapshot: DeckLibrarySnapshot;
   #detach: () => void = () => undefined;
@@ -378,10 +381,10 @@ export class DeckLibrary {
     this.#pending.delete(id);
     this.#edited(id);
     this.#publish();
-    void this.#backend
-      ?.remove(id)
-      .then(() => this.#announce(id))
-      .catch(() => this.#failed(true));
+    if (this.#backend) {
+      this.#removals.add(id);
+      void this.flush();
+    }
     return current;
   }
 
@@ -390,7 +393,7 @@ export class DeckLibrary {
     this.#put(deck, true);
   }
 
-  /** Writes every pending change now. */
+  /** Writes every pending change, and removal, now. */
   async flush(): Promise<void> {
     if (this.#timer !== undefined) {
       clearTimeout(this.#timer);
@@ -400,21 +403,39 @@ export class DeckLibrary {
       const deck = this.#decks.get(id);
       return deck ? [deck] : [];
     });
+    const removals = [...this.#removals];
     this.#pending.clear();
-    if (!this.#backend || decks.length === 0) return;
-    try {
-      await this.#backend.write(decks);
-    } catch {
-      // Full or blocked: the decks stay in memory for this visit, and are
-      // tried again with the next write.
-      for (const deck of decks) {
-        if (this.#decks.has(deck.id)) this.#pending.add(deck.id);
+    this.#removals.clear();
+    const backend = this.#backend;
+    if (!backend) return;
+    if (decks.length > 0) {
+      try {
+        await backend.write(decks);
+        for (const deck of decks) {
+          this.#unsaved.delete(deck.id);
+          this.#announce(deck.id);
+        }
+      } catch {
+        // Full or blocked: the decks stay in memory for this visit, and
+        // are tried again with the next write.
+        for (const deck of decks) {
+          this.#unsaved.add(deck.id);
+          if (this.#decks.has(deck.id)) this.#pending.add(deck.id);
+        }
       }
-      this.#failed(true);
-      return;
     }
-    for (const deck of decks) this.#announce(deck.id);
-    this.#failed(false);
+    for (const id of removals) {
+      try {
+        await backend.remove(id);
+        this.#unsaved.delete(id);
+        this.#announce(id);
+      } catch {
+        this.#unsaved.add(id);
+        // Unless it was put back meanwhile.
+        if (!this.#decks.has(id)) this.#removals.add(id);
+      }
+    }
+    if (this.#status() !== this.#snapshot.status) this.#publish();
   }
 
   dispose(): void {
@@ -430,6 +451,7 @@ export class DeckLibrary {
    */
   #put(deck: SavedDeck, now = false): void {
     this.#decks.set(deck.id, deck);
+    this.#removals.delete(deck.id);
     this.#edited(deck.id);
     this.#publish();
     if (!this.#backend) return;
@@ -464,7 +486,9 @@ export class DeckLibrary {
   }
 
   async #reload(id: string): Promise<void> {
-    if (!this.#backend || this.#pending.has(id)) return;
+    if (!this.#backend || this.#pending.has(id) || this.#removals.has(id)) {
+      return;
+    }
     const edits = this.#edits.get(id);
     let record: unknown;
     try {
@@ -473,7 +497,13 @@ export class DeckLibrary {
       return;
     }
     // Changed here while it was read: this tab's change is the newer one.
-    if (this.#pending.has(id) || this.#edits.get(id) !== edits) return;
+    if (
+      this.#pending.has(id) ||
+      this.#removals.has(id) ||
+      this.#edits.get(id) !== edits
+    ) {
+      return;
+    }
     const deck = decodeSavedDeck(record);
     if (deck) this.#decks.set(id, deck);
     else this.#decks.delete(id);
@@ -492,15 +522,11 @@ export class DeckLibrary {
     this.#edits.set(id, (this.#edits.get(id) ?? 0) + 1);
   }
 
-  #failed(failing: boolean): void {
-    if (this.#writeFailed === failing) return;
-    this.#writeFailed = failing;
-    this.#publish();
-  }
-
   #status(): DeckLibraryStatus {
     if (this.#loaded === 'loading') return 'loading';
-    return this.#loaded === 'failed' || this.#writeFailed ? 'memory' : 'ready';
+    return this.#loaded === 'failed' || this.#unsaved.size > 0
+      ? 'memory'
+      : 'ready';
   }
 
   #publish(): void {

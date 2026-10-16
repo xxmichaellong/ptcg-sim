@@ -250,6 +250,46 @@ describe('loading the card catalog', () => {
     client.dispose();
   });
 
+  it('keeps asking until the full catalog has loaded, not just been named', async () => {
+    const clock = timers();
+    const smaller = { ...fixture, sets: fixture.sets.slice(0, 2) };
+    const { fetch } = server({
+      [CARD_CATALOG_PATH]: [
+        () => manifest(VERSION, false),
+        () => manifest(NEXT, true),
+      ],
+      [bodyUrl(VERSION)]: [() => Response.json(smaller)],
+      [bodyUrl(NEXT)]: [
+        () => new Response('busy', { status: 503 }),
+        fixtureBody,
+      ],
+    });
+    const client = createCardCatalogClient({
+      fetch,
+      storage: memoryStorage(),
+      ...clock,
+    });
+    client.load();
+    await vi.waitFor(() =>
+      expect(clock.delays()).toEqual([CATALOG_INCOMPLETE_RECHECK_MS])
+    );
+    // The full one is named, but its body fails this time.
+    clock.runAll();
+    await vi.waitFor(() =>
+      expect(clock.delays()).toEqual([CATALOG_INCOMPLETE_RECHECK_MS])
+    );
+    const partial = client.getSnapshot();
+    expect(partial.status === 'ready' && partial.catalog.cards.length).toBe(2);
+    clock.runAll();
+    await vi.waitFor(() => {
+      const next = client.getSnapshot();
+      expect(next.status === 'ready' && next.catalog.cards.length).toBe(74);
+    });
+    await Promise.resolve();
+    expect(clock.delays()).toEqual([]);
+    client.dispose();
+  });
+
   it('stops everything when disposed', async () => {
     const clock = timers();
     const building = () => Response.json({ available: false, building: true });

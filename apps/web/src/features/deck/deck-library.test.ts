@@ -307,6 +307,39 @@ describe('the deck library', () => {
     expect((records.get('kept') as SavedDeck).name).toBe('Not stored');
   });
 
+  it('tries a removal that failed again, and only then says decks are kept', async () => {
+    const { backend, records } = memoryBackend();
+    const remove = backend.remove;
+    let blocked = true;
+    backend.remove = async (id) => {
+      if (blocked) throw new Error('blocked');
+      await remove(id);
+    };
+    let ids = 0;
+    const library = new DeckLibrary({
+      backend,
+      writeDelayMs: 0,
+      createId: () => `deck-${++ids}`,
+    });
+    await settle();
+    library.create({ name: 'Gone', format: 'standard', cards });
+    await settle();
+    library.remove('deck-1');
+    await settle();
+    expect(library.getSnapshot().status).toBe('memory');
+
+    // Another deck saves, but the removal still fails: still memory.
+    library.create({ name: 'Other', format: 'standard', cards });
+    await settle();
+    expect(records.has('deck-1')).toBe(true);
+    expect(library.getSnapshot().status).toBe('memory');
+
+    blocked = false;
+    await library.flush();
+    expect(records.has('deck-1')).toBe(false);
+    expect(library.getSnapshot().status).toBe('ready');
+  });
+
   it('keeps working for the visit when storage fails', async () => {
     const backend: DeckLibraryBackend = {
       readAll: async () => {

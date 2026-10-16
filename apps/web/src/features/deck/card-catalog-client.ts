@@ -249,8 +249,12 @@ export const createCardCatalogClient = (
           if (await loadBody(answer.manifest.url, run)) {
             version = answer.manifest.version;
           }
+          if (run !== generation) return;
         }
-        if (!answer.manifest.complete) recheck(run);
+        // Until the whole catalog is what loaded, ask again.
+        if (!answer.manifest.complete || answer.manifest.version !== version) {
+          recheck(run);
+        }
       })();
     });
   };

@@ -409,12 +409,16 @@ export class RoomSessionHub {
     while (this.pendingDisconnects.size > 0) {
       const pending = [...this.pendingDisconnects];
       this.pendingDisconnects.clear();
-      for (const [sessionId, publishPresence] of pending) {
+      for (const [index, [sessionId, publishPresence]] of pending.entries()) {
         if (this.sessionConnections.has(sessionId)) continue;
         try {
           await this.persistSessionDisconnect(sessionId, publishPresence);
         } catch (error) {
-          this.queueSessionDisconnect(sessionId, publishPresence);
+          // This one and every one after it wait for the next flush: their
+          // sockets are gone, so nothing else would bring them back.
+          for (const [unsaved, publish] of pending.slice(index)) {
+            this.queueSessionDisconnect(unsaved, publish);
+          }
           throw error;
         }
       }
