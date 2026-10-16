@@ -270,39 +270,55 @@ export const findCatalogPrint = (
   return undefined;
 };
 
+/** Lists already brought up to a catalog, so a second look costs nothing. */
+const reconciled = new WeakMap<object, LoadedCatalog>();
+
+const sameFacts = (left: unknown, right: unknown): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
+
 /**
- * A deck whose cards lack catalog facts (imported while the catalog was
- * away, or from a v1 file) with the facts found, and everything the table
- * shows kept as it was. The same list back when nothing was found.
+ * A deck with its cards' facts as the catalog has them now: added where a
+ * card has none (imported while the catalog was away, or from a v1 file),
+ * and updated where they changed (a rotation, a ban, a legal reprint).
+ * Everything the table shows is kept as it was, and a card made by hand is
+ * left alone. The same list back when nothing changed.
  */
 export const withCatalogFacts = (
   list: readonly { readonly card: DeckCard; readonly count: number }[],
   catalog: LoadedCatalog
 ): readonly { readonly card: DeckCard; readonly count: number }[] => {
+  if (reconciled.get(list) === catalog) return list;
   let changed = false;
   const next = list.map((entry) => {
     const { card } = entry;
-    if (card.facts || card.presentation !== undefined) return entry;
+    if (card.presentation !== undefined) return entry;
     const print = findCatalogPrint(catalog, card);
     if (!print) return entry;
-    changed = true;
     const {
       image: _image,
       imageSmall: _imageSmall,
       ...found
     } = deckCardFromCatalog(print, { catalog });
+    if (card.facts && sameFacts(card.facts, found.facts)) return entry;
+    changed = true;
     return Object.freeze({
       count: entry.count,
-      card: Object.freeze({
-        ...found,
-        id: card.id,
-        name: card.name,
-        image: card.image,
-        ...(card.imageSmall ? { imageSmall: card.imageSmall } : {}),
-      }),
+      card: Object.freeze(
+        card.facts
+          ? { ...card, facts: found.facts }
+          : {
+              ...found,
+              id: card.id,
+              name: card.name,
+              image: card.image,
+              ...(card.imageSmall ? { imageSmall: card.imageSmall } : {}),
+            }
+      ),
     });
   });
-  return changed ? Object.freeze(next) : list;
+  const result = changed ? Object.freeze(next) : list;
+  reconciled.set(result, catalog);
+  return result;
 };
 
 /** A printing's id for a deck card made from a list line (no catalog). */

@@ -382,7 +382,11 @@ interface DecodedPrint {
  * What makes two printings the same card: the same name and the same
  * rules. Reprints, full arts and promos share it, so they share legality
  * (a reprint legal in a format makes every print of it legal there). A
- * hash taken in one pass with no copies: the decoder keys 20,000 cards.
+ * Trainer is its name alone: an older print plays with the newest print's
+ * wording (tournament rules 5.4.2.2), so Base Set's Switch is the Switch
+ * of today. TCG Pocket is another game: its cards never share a group
+ * with the TCG's, and keep to their rules. A hash taken in one pass with
+ * no copies: the decoder keys 20,000 cards.
  */
 export const printGroupKey = (card: {
   readonly name: string;
@@ -394,11 +398,17 @@ export const printGroupKey = (card: {
   readonly attacks: readonly CatalogAttack[];
   readonly text?: string | undefined;
   readonly energyType?: 'Basic' | 'Special' | undefined;
+  readonly pocket?: boolean | undefined;
 }): string => {
   const hash = new GroupHash();
+  const game = card.pocket ? 'p' : '';
   if (card.category === 'Energy' && card.energyType === 'Basic') {
     hash.add(card.name);
-    return `e${hash.digest()}`;
+    return `${game}e${hash.digest()}`;
+  }
+  if (card.category === 'Trainer' && !card.pocket) {
+    hash.add(card.name);
+    return `t${hash.digest()}`;
   }
   hash.add(card.name);
   hash.add(card.category);
@@ -416,7 +426,7 @@ export const printGroupKey = (card: {
     hash.add(attack.text ?? '');
   }
   hash.add(card.text ?? '');
-  return `g${hash.digest()}`;
+  return `${game}g${hash.digest()}`;
 };
 
 const decodeCard = (
@@ -516,6 +526,7 @@ const decodeCard = (
       attacks,
       text: effect,
       energyType,
+      pocket: set.pocket,
     }),
     basicEnergy: category === 'Energy' && energyType === 'Basic',
   };

@@ -232,6 +232,30 @@ describe('catalog facts for decks made without the catalog', () => {
     expect(sameDeckList(imported, upgraded)).toBe(true);
     expect(withCatalogFacts(upgraded, catalog)).toBe(upgraded);
   });
+
+  it('brings saved facts up to the catalog, keeping the rest of the card', () => {
+    const current = deckCardFromCatalog(CARDS[0]!, { catalog });
+    // Saved before a legal reprint: illegal then, and its own image.
+    const saved = deckListOf([
+      {
+        card: {
+          ...current,
+          image: 'https://example.test/kept.png',
+          facts: {
+            ...current.facts,
+            legal: { standard: false, expanded: false },
+          },
+        },
+        count: 2,
+      },
+    ]);
+    const refreshed = withCatalogFacts(saved, catalog);
+    expect(refreshed).not.toBe(saved);
+    expect(refreshed[0]!.card.facts).toEqual(current.facts);
+    expect(refreshed[0]!.card.image).toBe('https://example.test/kept.png');
+    expect(refreshed[0]!.count).toBe(2);
+    expect(withCatalogFacts(refreshed, catalog)).toBe(refreshed);
+  });
 });
 
 describe('decklist text', () => {

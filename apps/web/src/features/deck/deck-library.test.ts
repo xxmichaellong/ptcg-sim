@@ -340,6 +340,60 @@ describe('the deck library', () => {
     expect(library.getSnapshot().status).toBe('ready');
   });
 
+  it('never brings back a deck whose removal is still on its way', async () => {
+    const { backend, records } = memoryBackend();
+    let receive: ((event: Event) => void) | undefined;
+    const channel = {
+      postMessage: vi.fn(),
+      addEventListener: (_type: string, listener: (event: Event) => void) => {
+        receive = listener;
+      },
+      removeEventListener: vi.fn(),
+      close: vi.fn(),
+    };
+    let ids = 0;
+    const library = new DeckLibrary({
+      backend,
+      channel,
+      writeDelayMs: 0,
+      createId: () => `deck-${++ids}`,
+    });
+    await settle();
+    library.create({ name: 'Removed', format: 'standard', cards });
+    library.create({ name: 'Edited', format: 'standard', cards });
+    await settle();
+
+    // A slow write holds the flush that carries the removal.
+    const write = backend.write;
+    let finishWrite!: () => void;
+    backend.write = async (decks) => {
+      await new Promise<void>((resolve) => {
+        finishWrite = resolve;
+      });
+      await write(decks);
+    };
+    library.update('deck-2', { name: 'Edited again' });
+    library.remove('deck-1');
+    await settle();
+    // Another tab announces deck-1 meanwhile.
+    receive?.(new MessageEvent('message', { data: { id: 'deck-1' } }));
+    await settle();
+    finishWrite();
+    await settle();
+    await settle();
+    expect(library.get('deck-1')).toBeUndefined();
+    expect(records.has('deck-1')).toBe(false);
+
+    // Put back while a removal waits: the deck stays.
+    backend.write = write;
+    const removed = library.remove('deck-2')!;
+    library.restore(removed);
+    await settle();
+    await settle();
+    expect(records.has('deck-2')).toBe(true);
+    expect(library.get('deck-2')?.name).toBe('Edited again');
+  });
+
   it('keeps working for the visit when storage fails', async () => {
     const backend: DeckLibraryBackend = {
       readAll: async () => {

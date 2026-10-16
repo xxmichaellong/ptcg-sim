@@ -75,7 +75,9 @@ fast and current. The sources, measured on 2026-10-15:
    data (1,113 cards) before it closes; the rest come from TCGdex's suffix,
    stage, rarity and the card's name.
 6. **Legality is the card's, not the print's.** Prints with the same name and
-   rules share a print group. A group is legal in a format when TCGdex marks
+   rules share a print group; a Trainer's group is its name alone, since an
+   older print plays with the newest wording (tournament rules 5.4.2.2),
+   and TCG Pocket's cards keep to their own groups. A group is legal in a format when TCGdex marks
    any of its prints legal there (so a rotated print is legal through a legal
    reprint), Basic Energy is legal everywhere, TCG Pocket cards nowhere, and
    the Expanded ban list (`bans.ts`, 49 prints) bans every print of a banned

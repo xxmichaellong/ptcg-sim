@@ -194,6 +194,9 @@ describe('decoding the catalog', () => {
     // Basic Energy is one card whatever set it's from.
     expect(card('SVE 5').printGroup).toBe(card('MEE 5').printGroup);
     expect(card('SVE 5').printGroup).not.toBe(card('SVE 6').printGroup);
+    // TCG Pocket's Professor's Research is another game's card.
+    expect(card('P-A 7').printGroup).not.toBe(card('SVI 189').printGroup);
+    expect(card('P-A 7').legal).toEqual({ standard: false, expanded: false });
     // 74 prints, six of them reprints of another print here.
     expect(new Set(catalog.cards.map((entry) => entry.printGroup)).size).toBe(
       68
@@ -312,21 +315,45 @@ describe('untrusted input', () => {
 
   it('keys print groups by rules, ignoring case and spacing', () => {
     const base = {
-      name: 'Judge',
+      name: 'Shadow Rider',
+      category: 'Pokémon' as const,
+      stage: 'Basic',
+      hp: 70,
+      types: [],
+      abilities: [{ name: 'Gallop', text: 'Draw a card.' }],
+      attacks: [],
+    };
+    const same = printGroupKey({
+      ...base,
+      name: 'shadow  rider',
+      abilities: [{ name: 'Gallop', text: 'draw a  card.' }],
+    });
+    expect(printGroupKey(base)).toBe(same);
+    expect(
+      printGroupKey({
+        ...base,
+        abilities: [{ name: 'Gallop', text: 'Draw 2 cards.' }],
+      })
+    ).not.toBe(same);
+    // A Trainer is its name: an old print plays with the new wording.
+    const switchCard = {
+      name: 'Switch',
       category: 'Trainer' as const,
       types: [],
       abilities: [],
       attacks: [],
-      text: 'Each player shuffles their hand into their deck and draws 4 cards.',
     };
-    const same = printGroupKey({
-      ...base,
-      text: 'each player  shuffles their hand into their deck and draws 4 cards.',
-    });
-    expect(printGroupKey(base)).toBe(same);
     expect(
-      printGroupKey({ ...base, text: `${base.text} Then more.` })
-    ).not.toBe(same);
+      printGroupKey({
+        ...switchCard,
+        text: 'Switch 1 of your Benched Pokémon with your Active Pokémon.',
+      })
+    ).toBe(
+      printGroupKey({
+        ...switchCard,
+        text: 'Switch your Active Pokémon with 1 of your Benched Pokémon.',
+      })
+    );
     expect(
       printGroupKey({
         ...base,

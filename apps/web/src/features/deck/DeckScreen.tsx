@@ -123,9 +123,10 @@ export const DeckScreen = ({
 
   useEffect(() => () => importAbort.current?.abort(), []);
 
-  // Decks imported before the catalog arrived (or from v1 files) get its
-  // facts once it is here, so the rules can check them. Nothing the table
-  // shows changes, so no seat reloads for it.
+  // Saved decks get the catalog's facts once it is here, so the rules check
+  // them as they stand now: added for decks imported before it arrived (or
+  // from v1 files), updated after a rotation, a ban or a legal reprint.
+  // Nothing the table shows changes, so no seat reloads for it.
   const catalogState = useCardCatalog(catalog, open);
   useEffect(() => {
     if (catalogState.status !== 'ready' || libraryState.status === 'loading')

@@ -403,9 +403,10 @@ export class DeckLibrary {
       const deck = this.#decks.get(id);
       return deck ? [deck] : [];
     });
+    // A removal stays marked until storage has it, so a read-back meanwhile
+    // can't bring the deck back.
     const removals = [...this.#removals];
     this.#pending.clear();
-    this.#removals.clear();
     const backend = this.#backend;
     if (!backend) return;
     if (decks.length > 0) {
@@ -425,14 +426,15 @@ export class DeckLibrary {
       }
     }
     for (const id of removals) {
+      // Put back meanwhile: its write is the newer change.
+      if (this.#decks.has(id)) continue;
       try {
         await backend.remove(id);
+        this.#removals.delete(id);
         this.#unsaved.delete(id);
         this.#announce(id);
       } catch {
         this.#unsaved.add(id);
-        // Unless it was put back meanwhile.
-        if (!this.#decks.has(id)) this.#removals.add(id);
       }
     }
     if (this.#status() !== this.#snapshot.status) this.#publish();

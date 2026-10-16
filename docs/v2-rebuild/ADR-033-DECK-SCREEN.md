@@ -73,7 +73,9 @@ specifically without blocking, and go from deck to table in one click.
    (Limitless numbers some sets differently from TCGdex), then Basic Energy
    by name (every spelling, PTCGO's `Basic {R} Energy` included), then the
    name alone. `withCatalogFacts` gives decks made without the catalog their
-   facts later, without changing anything the table shows.
+   facts later, and keeps saved decks' facts as the catalog has them now (a
+   rotation, a ban, a legal reprint), without changing anything the table
+   shows.
 5. **Search** is Limitless's syntax over the catalog in memory
    (`parseCardQuery`, `searchCatalog`): `t:`, `s:`, `is:`, `hp>=`, `ac<=cc`,
    `text:draw_3_cards`, `w:`, `rs:`, `rc:`, `reg>=`, `f:`, `e:`, `a:`, `r:`,
