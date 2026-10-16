@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { changedFiles, jobsFor } from './ci-changes.mjs';
+import { changedFiles, ciPassedOn, jobsFor } from './ci-changes.mjs';
 
 test('documentation alone needs no browser run', () => {
   assert.deepEqual(jobsFor(['docs/v2-rebuild/ADR-030.md', 'README.md']), {
@@ -43,5 +43,26 @@ test('with nothing to compare against, everything runs', () => {
   assert.deepEqual(
     changedFiles('abc', 'def', () => 'a.ts\nb/c.md\n\n'),
     ['a.ts', 'b/c.md']
+  );
+});
+
+test('only a head CI passed on vouches for what a later push skips', () => {
+  const runs = (conclusions) => () => JSON.stringify(conclusions);
+  assert.equal(ciPassedOn('abc', 'o/r', runs(['success'])), true);
+  // Cancelled by the next push, failed, or still running: everything runs.
+  assert.equal(ciPassedOn('abc', 'o/r', runs(['cancelled'])), false);
+  assert.equal(ciPassedOn('abc', 'o/r', runs(['failure'])), false);
+  assert.equal(ciPassedOn('abc', 'o/r', runs([null])), false);
+  assert.equal(ciPassedOn('abc', 'o/r', runs([])), false);
+  // A rerun that passed counts.
+  assert.equal(ciPassedOn('abc', 'o/r', runs(['failure', 'success'])), true);
+  // Nothing to ask, or no answer.
+  assert.equal(ciPassedOn('', 'o/r', runs(['success'])), false);
+  assert.equal(ciPassedOn('abc', '', runs(['success'])), false);
+  assert.equal(
+    ciPassedOn('abc', 'o/r', () => {
+      throw new Error('no gh');
+    }),
+    false
   );
 });

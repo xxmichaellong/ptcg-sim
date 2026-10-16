@@ -335,7 +335,7 @@ export const isPastedDecklistPocketSet = (
   return /^[A-Z]\d+[a-z]?$/u.test(setCode) || setCode === 'P-A';
 };
 
-const isUnambiguousPocketCode = (setCode: string): boolean =>
+export const isUnambiguousPocketCode = (setCode: string): boolean =>
   setCode === 'P-A' || setCode === 'B1' || /^A\d+[a-z]?$/u.test(setCode);
 
 const detectFormat = (rows: readonly ParsedRow[]): PastedDecklistFormat => {

@@ -12,11 +12,14 @@ import { pathToFileURL } from 'node:url';
  *             scripts/browser-shards.mjs).
  *
  * A pull request push is compared with the head it replaced, so a long-lived
- * branch pays for what changed now, not for everything since main. When
- * there is nothing to compare with (a new pull request, a manual run, a
- * force push), everything runs.
+ * branch pays for what changed now, not for everything since main -- but
+ * only once CI has passed on that head: a run cancelled by this push, or
+ * one that failed, vouches for nothing. When there is nothing to compare
+ * with (a new pull request, a manual run, a force push, a head CI hasn't
+ * passed), everything runs.
  *
- *   BEFORE=<sha> AFTER=<sha> node scripts/ci-changes.mjs >> "$GITHUB_OUTPUT"
+ *   BEFORE=<sha> AFTER=<sha> GITHUB_REPOSITORY=<owner/repo> GH_TOKEN=<token> \
+ *     node scripts/ci-changes.mjs >> "$GITHUB_OUTPUT"
  */
 
 const DOCUMENTATION = [/^docs\//u, /\.md$/u, /^LICENSE/u];
@@ -63,16 +66,43 @@ export const changedFiles = (before, after, git = execFileSync) => {
   }
 };
 
+/**
+ * Whether this workflow passed on a commit: only then may a later push
+ * skip what that run checked.
+ */
+export const ciPassedOn = (sha, repository, run = execFileSync) => {
+  if (!sha || !repository || NO_COMMIT.test(sha)) return false;
+  try {
+    const conclusions = JSON.parse(
+      run(
+        'gh',
+        [
+          'api',
+          `repos/${repository}/actions/workflows/ci.yml/runs?head_sha=${sha}&per_page=20`,
+          '--jq',
+          '[.workflow_runs[].conclusion]',
+        ],
+        { encoding: 'utf8' }
+      )
+    );
+    return Array.isArray(conclusions) && conclusions.includes('success');
+  } catch {
+    return false;
+  }
+};
+
 const isMain =
   process.argv[1] !== undefined &&
   pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
 
 if (isMain) {
-  const files = changedFiles(process.env.BEFORE, process.env.AFTER);
+  const { BEFORE, AFTER, GITHUB_REPOSITORY } = process.env;
+  const vouched = ciPassedOn(BEFORE, GITHUB_REPOSITORY);
+  const files = vouched ? changedFiles(BEFORE, AFTER) : null;
   const jobs = jobsFor(files);
   process.stderr.write(
     files === null
-      ? 'No earlier head to compare with: everything runs.\n'
+      ? 'No earlier head that passed CI to compare with: everything runs.\n'
       : `${files.length} files changed: browser=${jobs.browser}, evidence=${jobs.evidence}\n`
   );
   process.stdout.write(`browser=${jobs.browser}\nevidence=${jobs.evidence}\n`);

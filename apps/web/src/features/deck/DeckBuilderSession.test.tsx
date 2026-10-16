@@ -445,6 +445,32 @@ describe('DeckBuilderSession', () => {
     ]);
   });
 
+  it('keeps the old deck name when a rename is cancelled with Escape', async () => {
+    await renderSession({ store: new DeckBuilderStore(), open: true });
+    await click('#deckNewButton');
+    const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    await act(async () => {
+      input.focus();
+      const setValue = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!;
+      setValue.call(input, 'Typed then cancelled');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      );
+    });
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
+      'Untitled deck',
+    ]);
+    expect(host.querySelector<HTMLInputElement>('#deckNameInput')!.value).toBe(
+      'Untitled deck'
+    );
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

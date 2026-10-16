@@ -42,12 +42,16 @@ jobs:
   # What this push changed decides which browser jobs it needs
   # (scripts/ci-changes.mjs): documentation alone runs none; board code also
   # runs the long evidence specs. A pull request push is compared with the
-  # head it replaced; with nothing to compare (a new pull request, a manual
-  # run, a force push) everything runs.
+  # head it replaced, once CI passed on it; with nothing to compare (a new
+  # pull request, a manual run, a force push, a head CI hasn't passed)
+  # everything runs.
   changes:
     name: What changed
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
       browser: ${{ steps.jobs.outputs.browser }}
       evidence: ${{ steps.jobs.outputs.evidence }}
@@ -61,6 +65,7 @@ jobs:
         env:
           BEFORE: ${{ github.event_name != 'workflow_dispatch' && github.event.before || '' }}
           AFTER: ${{ github.event.pull_request.head.sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
         run: node scripts/ci-changes.mjs >> "$GITHUB_OUTPUT"
 
   # The Chromium suite, the evidence specs aside, is split across eight

@@ -157,6 +157,32 @@ describe('finding the printing a decklist line means', () => {
     });
   });
 
+  it('keeps a TCG Pocket line in Pocket, and other lines out of it', () => {
+    const PA = { ...set('pa', 'P-A', '2024-10-30', 100), pocket: true };
+    const research = card(PA, '7', "Professor's Research", {
+      category: 'Trainer',
+      stage: undefined,
+    });
+    const withPocket: LoadedCatalog = {
+      ...catalog,
+      cards: [...CARDS, research],
+      sets: [...catalog.sets, PA],
+      byId: new Map([...CARDS, research].map((entry) => [entry.id, entry])),
+    };
+    const pocketIndex = catalogIndex(withPocket);
+    // A Pocket set the catalog lacks finds no TCG card instead.
+    expect(
+      resolveDecklistRow(pocketIndex, row('2 Pikachu A1 94')).card
+    ).toBeUndefined();
+    expect(
+      resolveDecklistRow(pocketIndex, row("2 Professor's Research A1 999"))
+    ).toMatchObject({ match: 'name', card: { id: 'P-A 7' } });
+    // A TCG line never lands on the Pocket card.
+    expect(
+      resolveDecklistRow(pocketIndex, row("4 Professor's Research")).card
+    ).toBeUndefined();
+  });
+
   it('falls back to the newest ordinary printing of the name', () => {
     expect(resolveDecklistRow(index, row('2 Dragapult ex'))).toMatchObject({
       match: 'name',

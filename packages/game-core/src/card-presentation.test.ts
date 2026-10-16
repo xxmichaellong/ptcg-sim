@@ -21,6 +21,27 @@ describe('card artwork metadata', () => {
       readingQuarterTurns: 1,
       join: { part: 1, columns: 1, rows: 2 },
     });
+    // Limitless's scans, as v1 files and pasted lists carry them, join the
+    // same way, with the same key.
+    const union = (number: string) =>
+      resolveCardPresentation({
+        name: 'Mewtwo V-UNION',
+        imageUrl: `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SP/SP_${number}_R_EN.png`,
+      })?.join;
+    expect(union('159')).toMatchObject({ part: 0, rows: 2, columns: 2 });
+    expect(union('162')).toEqual({
+      ...resolveCardPresentation({
+        name: 'Mewtwo V-UNION',
+        imageUrl: 'https://images.pokemontcg.io/swshp/SWSH162_hires.png',
+      })?.join,
+    });
+    expect(
+      resolveCardPresentation({
+        name: 'Lugia LEGEND',
+        imageUrl:
+          'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/HS/HS_114_R_EN_LG.png',
+      })?.join
+    ).toMatchObject({ key: 'hgss1:113:Lugia LEGEND', part: 1 });
     expect(resolveCardPresentation({ name: 'Greninja BREAK' })).toEqual({
       readingQuarterTurns: 1,
       overlay: 'upper-half',

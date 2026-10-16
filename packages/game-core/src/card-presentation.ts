@@ -84,6 +84,34 @@ const LEGEND_STARTS: Readonly<Record<string, readonly number[]>> = {
   hgss4: [99, 101],
 };
 const UNION_STARTS = [139, 155, 159, 163, 215, 287];
+/** Limitless's (and Pokémon TCG Live's) codes for those sets. */
+const LIMITLESS_SETS: Readonly<Record<string, string>> = {
+  HS: 'hgss1',
+  UL: 'hgss2',
+  UD: 'hgss3',
+  TM: 'hgss4',
+  SP: 'swshp',
+};
+
+/** The set and number an image shows: TCGdex's paths, or Limitless's scans. */
+const printOf = (
+  url: string
+): { readonly set: string; readonly number: number } | undefined => {
+  const tcgdex = /\/(hgss[1-4]|swshp)\/(?:SWSH)?(\d+)(?:\/|[._-]|$)/iu.exec(
+    url
+  );
+  if (tcgdex) {
+    return { set: tcgdex[1]!.toLowerCase(), number: Number(tcgdex[2]) };
+  }
+  const limitless = /\/tpci\/(HS|UL|UD|TM|SP)\/\1_0*(\d+)_/u.exec(url);
+  if (limitless) {
+    return {
+      set: LIMITLESS_SETS[limitless[1]!]!,
+      number: Number(limitless[2]),
+    };
+  }
+  return undefined;
+};
 
 /** Catalog/CSV compatibility. Unknown printings need explicit metadata. */
 export const resolveCardPresentation = (card: {
@@ -96,10 +124,9 @@ export const resolveCardPresentation = (card: {
   if (/\bBREAK$/u.test(name))
     return { readingQuarterTurns: 1, overlay: 'upper-half' };
   const url = card.imageUrl ?? '';
-  const print = /\/(hgss[1-4]|swshp)\/(?:SWSH)?(\d+)(?:\/|[._-]|$)/iu.exec(url);
+  const print = printOf(url);
   if (print) {
-    const set = print[1]!.toLowerCase();
-    const number = Number(print[2]);
+    const { set, number } = print;
     const union = /V[- ]UNION/iu.test(name) && set === 'swshp';
     const starts = union
       ? UNION_STARTS

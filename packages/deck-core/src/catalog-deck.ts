@@ -2,6 +2,7 @@ import type { CatalogCard, LoadedCatalog } from './catalog.js';
 import { foldText, trainerName } from './card-query.js';
 import { printId, type DeckCard } from './deck-list.js';
 import {
+  isUnambiguousPocketCode,
   resolvePastedDecklistImageUrl,
   type PastedDecklistLanguage,
   type PastedDecklistRow,
@@ -213,7 +214,11 @@ export const resolveDecklistRow = (
     const card = preferred(inSet);
     if (card) return { row, card, match: 'name_in_set' };
   }
-  const energy = ENERGY_NAME.exec(name);
+  // A TCG Pocket line stays in Pocket, and any other line out of it: the
+  // same name in the other game is another card.
+  const pocket =
+    row.setCode !== undefined && isUnambiguousPocketCode(row.setCode);
+  const energy = pocket ? null : ENERGY_NAME.exec(name);
   if (energy) {
     const type = ENERGY_SYMBOLS[energy[1]!] ?? energy[1];
     const basics = (index.byName.get(`${type} energy`) ?? []).filter(
@@ -222,7 +227,9 @@ export const resolveDecklistRow = (
     const card = preferred(basics);
     if (card) return { row, card, match: 'energy' };
   }
-  const card = preferred(named.filter((candidate) => !candidate.set.pocket));
+  const card = preferred(
+    named.filter((candidate) => Boolean(candidate.set.pocket) === pocket)
+  );
   return card ? { row, card, match: 'name' } : { row };
 };
 

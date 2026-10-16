@@ -127,6 +127,8 @@ export const DeckEditor = ({
   const searchRef = useRef<HTMLInputElement>(null);
   const editor = useRef<HTMLDivElement>(null);
   const nameFocused = useRef(false);
+  /** Escape leaves the field without saving what was typed. */
+  const nameCancelled = useRef(false);
   const customOpener = useRef<HTMLElement | null>(null);
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const zoom = useHoverZoom(editor);
@@ -350,12 +352,14 @@ export const DeckEditor = ({
             }}
             onBlur={() => {
               nameFocused.current = false;
-              commitName();
+              if (nameCancelled.current) nameCancelled.current = false;
+              else commitName();
             }}
             onChange={(event) => setNameDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') event.currentTarget.blur();
               if (event.key === 'Escape') {
+                nameCancelled.current = true;
                 setNameDraft(deck.name);
                 event.currentTarget.blur();
                 event.stopPropagation();
