@@ -271,6 +271,55 @@ describe('loading the card catalog', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('gives up on a body that stops arriving, and stops it when disposed', async () => {
+    vi.useFakeTimers();
+    try {
+      const aborted: string[] = [];
+      /** Headers at once, then a body that never finishes. */
+      const stalled = (url: string, signal: AbortSignal) =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('{"v":'));
+              signal.addEventListener('abort', () => {
+                aborted.push(url);
+                controller.error(signal.reason);
+              });
+            },
+          }),
+          { headers: { 'content-type': 'application/json' } }
+        );
+      const fetch = (async (input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === CARD_CATALOG_PATH
+          ? manifest()
+          : stalled(String(input), init!.signal!)) as typeof globalThis.fetch;
+
+      const timedOut = createCardCatalogClient({
+        fetch,
+        storage: memoryStorage(),
+        ...timers(),
+      });
+      timedOut.load();
+      await vi.advanceTimersByTimeAsync(59_000);
+      expect(statusOf(timedOut)).toBe('loading');
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(statusOf(timedOut)).toBe('failed');
+      expect(aborted).toEqual([bodyUrl(VERSION)]);
+
+      const disposed = createCardCatalogClient({
+        fetch,
+        storage: memoryStorage(),
+        ...timers(),
+      });
+      disposed.load();
+      await vi.advanceTimersByTimeAsync(10);
+      disposed.dispose();
+      expect(aborted).toEqual([bodyUrl(VERSION), bodyUrl(VERSION)]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('is one catalog per page', () => {
     expect(cardCatalog()).toBe(cardCatalog());
   });

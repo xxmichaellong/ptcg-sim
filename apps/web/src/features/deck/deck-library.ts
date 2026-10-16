@@ -17,7 +17,11 @@ import {
  *   some browsers), the library still works for the visit and says so.
  * - Edits apply in memory at once and reach storage shortly after, batched
  *   per deck, and whatever is pending is written when the page is hidden.
- * - Another tab's change arrives on a BroadcastChannel and is read back.
+ * - Another tab's change arrives on a BroadcastChannel and is read back,
+ *   unless this tab changed that deck meanwhile.
+ * - A write that fails (storage full or taken away) leaves the library
+ *   `memory`, so the screen says changes last only for this visit; the
+ *   failed decks are tried again with the next write.
  * - Everything read back is decoded defensively: a record from a future or
  *   hand-edited build that doesn't decode is skipped, never thrown.
  */
@@ -248,6 +252,10 @@ export class DeckLibrary {
   readonly #listeners = new Set<Listener>();
   readonly #decks = new Map<string, SavedDeck>();
   readonly #pending = new Set<string>();
+  /** How many times each deck changed here, so a read-back can tell. */
+  readonly #edits = new Map<string, number>();
+  #loaded: 'loading' | 'ready' | 'failed';
+  #writeFailed = false;
   #timer: ReturnType<typeof setTimeout> | undefined;
   #snapshot: DeckLibrarySnapshot;
   #detach: () => void = () => undefined;
@@ -258,8 +266,9 @@ export class DeckLibrary {
     this.#createId = options.createId ?? randomId;
     this.#channel = options.channel ?? null;
     this.#writeDelayMs = options.writeDelayMs ?? WRITE_DELAY_MS;
+    this.#loaded = this.#backend ? 'loading' : 'failed';
     this.#snapshot = Object.freeze({
-      status: this.#backend ? 'loading' : 'memory',
+      status: this.#status(),
       decks: Object.freeze([]),
     });
     const onMessage = (event: Event): void => {
@@ -367,11 +376,12 @@ export class DeckLibrary {
     if (!current) return undefined;
     this.#decks.delete(id);
     this.#pending.delete(id);
+    this.#edited(id);
     this.#publish();
     void this.#backend
       ?.remove(id)
       .then(() => this.#announce(id))
-      .catch(() => undefined);
+      .catch(() => this.#failed(true));
     return current;
   }
 
@@ -394,10 +404,17 @@ export class DeckLibrary {
     if (!this.#backend || decks.length === 0) return;
     try {
       await this.#backend.write(decks);
-      for (const deck of decks) this.#announce(deck.id);
     } catch {
-      // Full or blocked: the decks stay in memory for this visit.
+      // Full or blocked: the decks stay in memory for this visit, and are
+      // tried again with the next write.
+      for (const deck of decks) {
+        if (this.#decks.has(deck.id)) this.#pending.add(deck.id);
+      }
+      this.#failed(true);
+      return;
     }
+    for (const deck of decks) this.#announce(deck.id);
+    this.#failed(false);
   }
 
   dispose(): void {
@@ -413,6 +430,7 @@ export class DeckLibrary {
    */
   #put(deck: SavedDeck, now = false): void {
     this.#decks.set(deck.id, deck);
+    this.#edited(deck.id);
     this.#publish();
     if (!this.#backend) return;
     this.#pending.add(deck.id);
@@ -432,8 +450,8 @@ export class DeckLibrary {
     try {
       records = await backend.readAll();
     } catch {
-      this.#snapshot = Object.freeze({ ...this.#snapshot, status: 'memory' });
-      this.#notify();
+      this.#loaded = 'failed';
+      this.#publish();
       return;
     }
     for (const record of records) {
@@ -441,21 +459,21 @@ export class DeckLibrary {
       // A deck made during the load is newer than what storage had.
       if (deck && !this.#decks.has(deck.id)) this.#decks.set(deck.id, deck);
     }
-    this.#snapshot = Object.freeze({
-      status: 'ready',
-      decks: newestFirst(this.#decks.values()),
-    });
-    this.#notify();
+    this.#loaded = 'ready';
+    this.#publish();
   }
 
   async #reload(id: string): Promise<void> {
     if (!this.#backend || this.#pending.has(id)) return;
+    const edits = this.#edits.get(id);
     let record: unknown;
     try {
       record = await this.#backend.read(id);
     } catch {
       return;
     }
+    // Changed here while it was read: this tab's change is the newer one.
+    if (this.#pending.has(id) || this.#edits.get(id) !== edits) return;
     const deck = decodeSavedDeck(record);
     if (deck) this.#decks.set(id, deck);
     else this.#decks.delete(id);
@@ -470,9 +488,24 @@ export class DeckLibrary {
     }
   }
 
+  #edited(id: string): void {
+    this.#edits.set(id, (this.#edits.get(id) ?? 0) + 1);
+  }
+
+  #failed(failing: boolean): void {
+    if (this.#writeFailed === failing) return;
+    this.#writeFailed = failing;
+    this.#publish();
+  }
+
+  #status(): DeckLibraryStatus {
+    if (this.#loaded === 'loading') return 'loading';
+    return this.#loaded === 'failed' || this.#writeFailed ? 'memory' : 'ready';
+  }
+
   #publish(): void {
     this.#snapshot = Object.freeze({
-      status: this.#snapshot.status,
+      status: this.#status(),
       decks: newestFirst(this.#decks.values()),
     });
     this.#notify();

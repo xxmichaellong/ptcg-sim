@@ -46,7 +46,7 @@ fast and current. The sources, measured on 2026-10-15:
    fourteenth of the rest fetched longest ago, so every set is fetched again
    within two weeks. Each alarm fetches one set, normalizes it
    (`apps/server/src/card-catalog/normalize.ts`) and stores its JSON as one
-   value, so no invocation parses more than one set. A first build is 220
+   value, keyed by its hash, so no invocation parses more than one set. A first build is 220
    steps a second and a half apart; it publishes every 20 sets, so search
    works within a minute of a fresh deploy.
 3. **Versions are content hashes.** The catalog's version hashes every set's
@@ -56,7 +56,10 @@ fast and current. The sources, measured on 2026-10-15:
    the loader asks again on, never a logged 503). `GET
 /v2/cards/catalog/<version>.json` is the body, assembled by joining the
    stored sets' JSON without parsing them, cached for a year as immutable,
-   and kept in the location's edge cache. The browser's HTTP cache keeps it
+   and kept in the location's edge cache. A version names the stored value
+   of each of its sets, and a value is removed only once no published
+   version names it, so a set refetched mid-refresh never changes the body
+   being served. The browser's HTTP cache keeps it
    between visits; the last body that loaded is also remembered, so a visit
    whose manifest request fails still has cards.
 4. **Set codes and numbers are Pokémon TCG Live's and Limitless's**, so a

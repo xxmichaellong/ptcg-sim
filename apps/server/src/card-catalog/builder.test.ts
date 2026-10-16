@@ -111,6 +111,10 @@ const memoryStore = () => {
   };
 };
 
+/** The stored set values, by key. */
+const setValues = (values: ReadonlyMap<string, unknown>) =>
+  [...values].filter(([key]) => key.startsWith('catalog:set:'));
+
 const sha256 = async (value: string) =>
   createHash('sha256').update(value).digest('hex');
 
@@ -381,7 +385,98 @@ describe('building the card catalog', () => {
     await builder.refresh();
     await drain();
     expect((await builder.manifest())?.sets).toEqual(['me05', 'sv01']);
-    expect(memory.values.has(KEYS.set('sv02'))).toBe(false);
+    expect(setValues(memory.values).map(([key]) => key)).not.toContainEqual(
+      expect.stringContaining('sv02')
+    );
+  });
+
+  it('never changes a published body while a refresh refetches its sets', async () => {
+    const { builder, source, memory, drain, advance } = setup(THREE_SETS);
+    await builder.refresh();
+    await drain();
+    const first = (await builder.manifest())!;
+    const firstBody = (await builder.body(first.version))!.join('');
+
+    advance(DAY);
+    source.setSets(
+      THREE_SETS.map((set) => (set.id === 'sv02' ? { ...set, total: 5 } : set))
+    );
+    expect(await builder.refresh()).toBe(2);
+    memory.takeAlarm();
+    await builder.step(); // sv02, changed; not yet published
+    expect(await builder.manifest()).toEqual(first);
+    expect((await builder.body(first.version))!.join('')).toBe(firstBody);
+
+    await drain();
+    const second = (await builder.manifest())!;
+    expect(second.version).not.toBe(first.version);
+    expect(await builder.body(first.version)).toBeNull();
+    const sets = (
+      JSON.parse((await builder.body(second.version))!.join('')) as {
+        sets: { id: string; cards: unknown[] }[];
+      }
+    ).sets;
+    expect(sets.map((set) => [set.id, set.cards.length])).toEqual([
+      ['me05', 4],
+      ['sv02', 5],
+      ['sv01', 3],
+    ]);
+    // One stored value per set: the replaced cards went with their version.
+    expect(setValues(memory.values)).toHaveLength(3);
+  });
+
+  it('reads, and then moves on from, sets stored without their hash', async () => {
+    const { builder, source, memory, drain, advance } = setup(THREE_SETS);
+    await builder.refresh();
+    await drain();
+    // As the build before this one stored them.
+    const stored = memory.values;
+    const meta = stored.get(KEYS.meta) as Record<string, unknown>;
+    const index = stored.get(KEYS.index) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    for (const [key, value] of setValues(stored)) {
+      stored.delete(key);
+      stored.set(
+        KEYS.set(key.slice('catalog:set:'.length).split('@')[0]!),
+        value
+      );
+    }
+    const { keys: _keys, ...legacyMeta } = meta;
+    stored.set(KEYS.meta, legacyMeta);
+    stored.set(
+      KEYS.index,
+      Object.fromEntries(
+        Object.entries(index).map(([id, { key: _key, ...entry }]) => [
+          id,
+          entry,
+        ])
+      )
+    );
+    const first = (await builder.manifest())!;
+    const firstBody = (await builder.body(first.version))!.join('');
+    expect(JSON.parse(firstBody).sets).toHaveLength(3);
+
+    advance(DAY);
+    source.setSets(
+      THREE_SETS.map((set) => (set.id === 'sv02' ? { ...set, total: 5 } : set))
+    );
+    await builder.refresh();
+    memory.takeAlarm();
+    await builder.step();
+    expect((await builder.body(first.version))!.join('')).toBe(firstBody);
+    await drain();
+    const second = (await builder.manifest())!;
+    expect(
+      (
+        JSON.parse((await builder.body(second.version))!.join('')) as {
+          sets: unknown[];
+        }
+      ).sets
+    ).toHaveLength(3);
+    expect(stored.has(KEYS.set('sv02'))).toBe(false);
+    expect(setValues(stored)).toHaveLength(3);
   });
 
   it('asks for a fresh list once the stored one is over a day old', async () => {

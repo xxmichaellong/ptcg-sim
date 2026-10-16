@@ -86,9 +86,11 @@ specifically without blocking, and go from deck to table in one click.
    (name, format, cards, cover, source, created and changed times). Edits
    apply in memory at once and reach storage batched per deck, and whatever
    is pending is written when the page is hidden. Another tab's change
-   arrives on a BroadcastChannel. Records are decoded defensively and a bad
-   one is skipped. Where IndexedDB is blocked, the library works for the
-   visit and says so. There are no accounts; decks are this device's, and
+   arrives on a BroadcastChannel and is read back, unless this tab changed
+   that deck meanwhile. Records are decoded defensively and a bad one is
+   skipped. Where IndexedDB is blocked, or a write fails (storage full),
+   the library works for the visit and says so, on the deck list and in
+   the editor, and the next write tries the failed decks again. There are no accounts; decks are this device's, and
    leave it as text or files.
 7. **Seats hold decks; the library holds decks.** A seat (`DeckBuilderStore`)
    holds the deck it will play and a label: the saved deck it is, or the

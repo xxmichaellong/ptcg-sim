@@ -584,6 +584,10 @@ div.deck-tile__choose {
   opacity: 1;
 }
 
+.deck-editor__saved[data-unsaved='true'] {
+  color: var(--color-warning);
+}
+
 .deck-editor__tools {
   display: flex;
   align-items: center;

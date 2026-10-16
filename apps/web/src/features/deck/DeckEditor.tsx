@@ -7,6 +7,7 @@ import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { ExportIcon } from '@phosphor-icons/react/dist/csr/Export';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import {
   addCard,
   checkDeck,
@@ -77,6 +78,8 @@ const isTextEntry = (element: EventTarget | null): boolean =>
 export interface DeckEditorProps {
   readonly deck: SavedDeck;
   readonly library: DeckLibraryActions;
+  /** Storage isn't keeping decks: a change lasts only this visit. */
+  readonly unsaved: boolean;
   readonly catalog: CardCatalogSource;
   readonly store: DeckBuilderStore;
   readonly target: DeckBuilderTarget;
@@ -93,6 +96,7 @@ export interface DeckEditorProps {
 export const DeckEditor = ({
   deck,
   library,
+  unsaved,
   catalog,
   store,
   target,
@@ -381,10 +385,16 @@ export const DeckEditor = ({
         </div>
         <span
           className="deck-editor__saved"
-          data-shown={saved ? 'true' : undefined}
+          data-shown={saved || unsaved ? 'true' : undefined}
+          data-unsaved={unsaved ? 'true' : undefined}
           aria-live="polite"
         >
-          {saved ? (
+          {unsaved ? (
+            <>
+              <WarningCircleIcon {...decorative} weight="bold" /> Saved for this
+              visit only
+            </>
+          ) : saved ? (
             <>
               <CheckIcon {...decorative} weight="bold" /> Saved
             </>

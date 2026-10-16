@@ -233,6 +233,80 @@ describe('the deck library', () => {
     expect(channel.close).toHaveBeenCalled();
   });
 
+  it('keeps a change made here while another tab’s is read back', async () => {
+    const { backend, records, writes } = memoryBackend();
+    let receive: ((event: Event) => void) | undefined;
+    const channel = {
+      postMessage: vi.fn(),
+      addEventListener: (_type: string, listener: (event: Event) => void) => {
+        receive = listener;
+      },
+      removeEventListener: vi.fn(),
+      close: vi.fn(),
+    };
+    const library = new DeckLibrary({
+      backend,
+      channel,
+      writeDelayMs: 0,
+      createId: () => 'shared',
+    });
+    await settle();
+    library.create({ name: 'Mine', format: 'standard', cards });
+    await settle();
+
+    // The other tab's write lands, and the read of it is slow.
+    records.set('shared', {
+      ...(records.get('shared') as object),
+      name: 'Older, from elsewhere',
+    });
+    let finishRead!: () => void;
+    const read = backend.read;
+    backend.read = async (id) => {
+      const record = await read(id);
+      await new Promise<void>((resolve) => {
+        finishRead = resolve;
+      });
+      return record;
+    };
+    receive?.(new MessageEvent('message', { data: { id: 'shared' } }));
+    await settle();
+    // Changed here before the read comes back, and written.
+    library.update('shared', { name: 'Newer, from here' });
+    await settle();
+    finishRead();
+    await settle();
+    expect(library.get('shared')?.name).toBe('Newer, from here');
+    expect((records.get('shared') as SavedDeck).name).toBe('Newer, from here');
+    expect(writes.at(-1)).toEqual(['shared']);
+  });
+
+  it('says so when a write fails after loading, and tries it again', async () => {
+    const { backend, records } = memoryBackend();
+    const write = backend.write;
+    let full = true;
+    backend.write = async (decks) => {
+      if (full) throw new Error('QuotaExceededError');
+      await write(decks);
+    };
+    const library = new DeckLibrary({
+      backend,
+      writeDelayMs: 0,
+      createId: () => 'kept',
+    });
+    await settle();
+    expect(library.getSnapshot().status).toBe('ready');
+    library.create({ name: 'Not stored', format: 'standard', cards });
+    await settle();
+    expect(library.getSnapshot().status).toBe('memory');
+    expect(library.get('kept')?.name).toBe('Not stored');
+
+    // Room again: the next write takes the failed deck along.
+    full = false;
+    await library.flush();
+    expect(library.getSnapshot().status).toBe('ready');
+    expect((records.get('kept') as SavedDeck).name).toBe('Not stored');
+  });
+
   it('keeps working for the visit when storage fails', async () => {
     const backend: DeckLibraryBackend = {
       readAll: async () => {

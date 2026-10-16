@@ -118,22 +118,28 @@ export const createCardCatalogClient = (
     }, delay);
   };
 
-  const request = async (
+  /**
+   * Fetches and reads a response. The deadline and `dispose()` cover the
+   * body too: headers can arrive and the body then stall.
+   */
+  const request = async <T>(
     url: string,
     timeoutMs: number,
-    cache: RequestCache
-  ): Promise<Response> => {
+    cache: RequestCache,
+    read: (response: Response) => Promise<T>
+  ): Promise<T> => {
     const controller = new AbortController();
     requests.add(controller);
     const deadline = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      return await fetchRequest(url, {
+      const response = await fetchRequest(url, {
         headers: { accept: 'application/json' },
         credentials: 'omit',
         redirect: 'error',
         cache,
         signal: controller.signal,
       });
+      return await read(response);
     } finally {
       clearTimeout(deadline);
       requests.delete(controller);
@@ -141,26 +147,25 @@ export const createCardCatalogClient = (
   };
 
   const readManifest = async (): Promise<ManifestAnswer> => {
-    let response: Response;
-    try {
-      response = await request(
-        CARD_CATALOG_PATH,
-        MANIFEST_TIMEOUT_MS,
-        'no-cache'
-      );
-    } catch {
-      return { kind: 'unavailable' };
-    }
+    let ok: boolean;
     let body: unknown;
     try {
-      body = await response.json();
+      ({ ok, body } = await request(
+        CARD_CATALOG_PATH,
+        MANIFEST_TIMEOUT_MS,
+        'no-cache',
+        async (response) => ({
+          ok: response.ok,
+          body: (await response.json()) as unknown,
+        })
+      ));
     } catch {
       return { kind: 'unavailable' };
     }
     // Still building: wait and ask again.
     if (isRecord(body) && body.building === true) return { kind: 'building' };
     if (
-      !response.ok ||
+      !ok ||
       !isRecord(body) ||
       typeof body.version !== 'string' ||
       typeof body.url !== 'string' ||
@@ -179,9 +184,18 @@ export const createCardCatalogClient = (
   };
 
   const readBody = async (url: string): Promise<LoadedCatalog> => {
-    const response = await request(url, BODY_TIMEOUT_MS, 'default');
-    if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
-    const text = await response.text();
+    const text = await request(
+      url,
+      BODY_TIMEOUT_MS,
+      'default',
+      async (response) => {
+        if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
+          throw new Error(`HTTP ${String(response.status)}`);
+        }
+        return await response.text();
+      }
+    );
     if (text.length > MAXIMUM_BODY_CODE_UNITS) {
       throw new Error('The card catalog is too large.');
     }

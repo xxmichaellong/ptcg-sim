@@ -607,6 +607,7 @@ export const DeckScreen = ({
             key={editingDeck.id}
             deck={editingDeck}
             library={decks}
+            unsaved={libraryState.status === 'memory'}
             catalog={catalog}
             store={store}
             target={target}

@@ -8,9 +8,12 @@
  *   weeks (errata, regulation marks, late images).
  * - Each alarm step fetches one queued set (one request, two for a set
  *   whose code isn't known yet), normalizes it and stores its JSON as one
- *   value. No step ever parses more than one set.
+ *   value, under its content's hash. No step ever parses more than one set.
  * - When the queue is empty the catalog is published: a version hashed
  *   from every set's content, so the body only changes when a card does.
+ *   A version names the stored value of each of its sets, and those are
+ *   only removed once no published version names them: a set refetched
+ *   mid-refresh never changes the body of the version being served.
  *   A first build publishes as it goes, every few sets, newest first, so
  *   search works before the build is done.
  * - A failed request holds the next one back for ten minutes and keeps
@@ -58,7 +61,9 @@ const KEYS = Object.freeze({
   index: 'catalog:index',
   meta: 'catalog:meta',
   retryAfter: 'catalog:retry-after',
-  set: (id: string) => `catalog:set:${id}`,
+  /** A set's cards, under their hash (without one: as stored before). */
+  set: (id: string, hash?: string) =>
+    hash === undefined ? `catalog:set:${id}` : `catalog:set:${id}@${hash}`,
 });
 
 /** The storage the builder needs: a Durable Object's, or a test's. */
@@ -81,6 +86,11 @@ export interface CatalogManifest {
   readonly complete: boolean;
 }
 
+/** As stored: with where each set's cards are kept. */
+interface StoredManifest extends CatalogManifest {
+  readonly keys?: Readonly<Record<string, string>>;
+}
+
 interface StoredList {
   readonly listedAt: number;
   readonly sets: readonly TcgdexSetSummary[];
@@ -88,6 +98,8 @@ interface StoredList {
 
 interface IndexEntry {
   readonly hash: string;
+  /** Where its cards are stored (without one: `KEYS.set(id)`). */
+  readonly key?: string;
   readonly cards: number;
   readonly total: number;
   readonly fetchedAt: number;
@@ -149,6 +161,21 @@ const readBounded = async (response: Response): Promise<string> => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const keyOf = (id: string, entry: IndexEntry): string =>
+  entry.key ?? KEYS.set(id);
+
+/** The stored values a published version is read from. */
+const publishedKeys = (meta: StoredManifest | undefined): Set<string> =>
+  new Set(meta?.sets.map((id) => meta.keys?.[id] ?? KEYS.set(id)) ?? []);
+
+const sameKeys = (
+  left: Readonly<Record<string, string>> | undefined,
+  right: Readonly<Record<string, string>>
+): boolean =>
+  left !== undefined &&
+  Object.keys(left).length === Object.keys(right).length &&
+  Object.entries(right).every(([id, key]) => left[id] === key);
+
 export class CardCatalogBuilder {
   readonly #store: CatalogStore;
   readonly #fetch: typeof globalThis.fetch;
@@ -169,7 +196,10 @@ export class CardCatalogBuilder {
 
   /** The published catalog, if any. */
   async manifest(): Promise<CatalogManifest | null> {
-    return (await this.#store.get<CatalogManifest>(KEYS.meta)) ?? null;
+    const stored = await this.#store.get<StoredManifest>(KEYS.meta);
+    if (!stored) return null;
+    const { keys: _keys, ...manifest } = stored;
+    return manifest;
   }
 
   /**
@@ -276,11 +306,13 @@ export class CardCatalogBuilder {
         }
         const built = wireSetJson(set, code, cards);
         const hash = (await this.#sha256(built.json)).slice(0, 16);
-        await this.#store.put(KEYS.set(set.id), built.json);
+        const key = KEYS.set(set.id, hash);
+        await this.#store.put(key, built.json);
         await this.#store.put(KEYS.index, {
           ...index,
           [set.id]: {
             hash,
+            key,
             cards: built.cards,
             total: set.total,
             fetchedAt: now,
@@ -288,6 +320,15 @@ export class CardCatalogBuilder {
         } satisfies CatalogIndex);
         await this.#store.put(KEYS.queue, rest);
         await this.#store.delete(KEYS.retryAfter);
+        // Cards fetched earlier this round that no version was given.
+        const earlier = index[set.id];
+        const before = earlier ? keyOf(set.id, earlier) : undefined;
+        if (before !== undefined && before !== key) {
+          const published = await this.#store.get<StoredManifest>(KEYS.meta);
+          if (!publishedKeys(published).has(before)) {
+            await this.#store.delete(before);
+          }
+        }
       } catch {
         // Tried again at the back of the queue, unless it has failed too
         // often this round; what is stored for it stays.
@@ -307,10 +348,10 @@ export class CardCatalogBuilder {
 
   /**
    * The catalog body for a version, as parts to join, or null when that
-   * version isn't the published one.
+   * version isn't the published one (or stopped being it while read).
    */
   async body(version: string): Promise<readonly string[] | null> {
-    const meta = await this.#store.get<CatalogManifest>(KEYS.meta);
+    const meta = await this.#store.get<StoredManifest>(KEYS.meta);
     if (!meta || meta.version !== version) return null;
     const parts: string[] = [
       `{"v":${String(CARD_CATALOG_WIRE_VERSION)},"builtAt":${JSON.stringify(meta.builtAt)},"source":"TCGdex","bans":${JSON.stringify({ standard: STANDARD_BANS, expanded: EXPANDED_BANS })},"sets":[`,
@@ -321,11 +362,14 @@ export class CardCatalogBuilder {
       start < meta.sets.length;
       start += CARD_CATALOG_LIMITS.readBatch
     ) {
-      const ids = meta.sets.slice(start, start + CARD_CATALOG_LIMITS.readBatch);
-      const stored = await this.#store.getMany<string>(ids.map(KEYS.set));
-      for (const id of ids) {
-        const json = stored.get(KEYS.set(id));
-        if (typeof json !== 'string') continue;
+      const keys = meta.sets
+        .slice(start, start + CARD_CATALOG_LIMITS.readBatch)
+        .map((id) => meta.keys?.[id] ?? KEYS.set(id));
+      const stored = await this.#store.getMany<string>(keys);
+      for (const key of keys) {
+        const json = stored.get(key);
+        // Removed: a newer version was published while this one was read.
+        if (typeof json !== 'string') return null;
         parts.push(first ? json : `,${json}`);
         first = false;
       }
@@ -339,7 +383,7 @@ export class CardCatalogBuilder {
       await this.#publish(now, true);
       return;
     }
-    const meta = await this.#store.get<CatalogManifest>(KEYS.meta);
+    const meta = await this.#store.get<StoredManifest>(KEYS.meta);
     if (!meta?.complete) {
       const index = (await this.#store.get<CatalogIndex>(KEYS.index)) ?? {};
       const stored = Object.keys(index).length;
@@ -365,15 +409,20 @@ export class CardCatalogBuilder {
       .map((set) => set.id)
       .filter((id) => index[id] !== undefined);
     if (order.length === 0) return;
-    // Sets TCGdex no longer lists leave the catalog.
+    const previous = await this.#store.get<StoredManifest>(KEYS.meta);
+    // Sets TCGdex no longer lists leave the catalog; their cards go once
+    // no published version names them.
     const removed = Object.keys(index).filter((id) => !listed.has(id));
+    const unused = new Set(removed.map((id) => keyOf(id, index[id]!)));
     if (removed.length > 0) {
       const kept = Object.fromEntries(
         Object.entries(index).filter(([id]) => listed.has(id))
       );
       await this.#store.put(KEYS.index, kept);
-      for (const id of removed) await this.#store.delete(KEYS.set(id));
     }
+    const keys = Object.fromEntries(
+      order.map((id) => [id, keyOf(id, index[id]!)])
+    );
     const version = (
       await this.#sha256(
         [
@@ -383,11 +432,17 @@ export class CardCatalogBuilder {
         ].join('\n')
       )
     ).slice(0, 20);
-    const previous = await this.#store.get<CatalogManifest>(KEYS.meta);
     // Complete once every listed set has had its turn this round; a set
     // that failed keeps its last stored cards, or has none yet.
     const complete = queueEmpty;
-    if (previous?.version === version && previous.complete === complete) return;
+    if (
+      previous?.version === version &&
+      previous.complete === complete &&
+      sameKeys(previous.keys, keys)
+    ) {
+      await this.#removeUnused(unused, publishedKeys(previous));
+      return;
+    }
     await this.#store.put(KEYS.meta, {
       version,
       builtAt:
@@ -397,7 +452,20 @@ export class CardCatalogBuilder {
       sets: order,
       cards: order.reduce((total, id) => total + index[id]!.cards, 0),
       complete,
-    } satisfies CatalogManifest);
+      keys,
+    } satisfies StoredManifest);
+    // What the last version named and this one doesn't.
+    for (const key of publishedKeys(previous)) unused.add(key);
+    await this.#removeUnused(unused, new Set(Object.values(keys)));
+  }
+
+  async #removeUnused(
+    keys: ReadonlySet<string>,
+    named: ReadonlySet<string>
+  ): Promise<void> {
+    for (const key of keys) {
+      if (!named.has(key)) await this.#store.delete(key);
+    }
   }
 
   async #codeFor(set: TcgdexSetSummary): Promise<string | undefined> {
