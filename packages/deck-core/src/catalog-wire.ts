@@ -7,7 +7,7 @@ import {
   type EnergyType,
   type LoadedCatalog,
 } from './catalog.js';
-import { foldText } from './card-query.js';
+import { foldText, trainerName } from './card-query.js';
 import type { CardCategory } from './deck-list.js';
 
 /**
@@ -396,7 +396,8 @@ interface DecodedPrint {
  * (a reprint legal in a format makes every print of it legal there). A
  * Trainer is its name alone: an older print plays with the newest print's
  * wording (tournament rules 5.4.2.2), so Base Set's Switch is the Switch
- * of today -- unless one is an ACE SPEC or Prism Star and the other not,
+ * of today, and a subtitle doesn't count ("Boss's Orders (Giovanni)") --
+ * unless one is an ACE SPEC or Prism Star and the other not,
  * as Base Set's Computer Search and Boundaries Crossed's are. Basic Energy
  * is its type ("Basic Fire Energy" is Fire Energy). TCG Pocket is another
  * game: its cards never share a group with the TCG's, and keep to their
@@ -423,7 +424,7 @@ export const printGroupKey = (card: {
     return `${game}e${hash.digest()}`;
   }
   if (card.category === 'Trainer' && !card.pocket) {
-    hash.add(card.name);
+    hash.add(trainerName(card.name));
     for (const tag of DISTINCT_TRAINER_TAGS) {
       if (card.tags?.includes(tag)) hash.add(tag);
     }

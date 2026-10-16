@@ -1,5 +1,5 @@
 import type { CatalogCard, LoadedCatalog } from './catalog.js';
-import { foldText } from './card-query.js';
+import { foldText, trainerName } from './card-query.js';
 import { printId, type DeckCard } from './deck-list.js';
 import {
   resolvePastedDecklistImageUrl,
@@ -142,10 +142,15 @@ export const catalogIndex = (catalog: LoadedCatalog): CatalogIndex => {
     for (const card of catalog.cards) {
       const key = printKey(card.set.code ?? card.set.id, card.number);
       if (!byPrint.has(key)) byPrint.set(key, card);
-      const name = foldText(card.name);
-      const named = byName.get(name);
-      if (named) named.push(card);
-      else byName.set(name, [card]);
+      const names = new Set([foldText(card.name)]);
+      // A Trainer is found by its name without a subtitle too.
+      if (card.category === 'Trainer')
+        names.add(foldText(trainerName(card.name)));
+      for (const name of names) {
+        const named = byName.get(name);
+        if (named) named.push(card);
+        else byName.set(name, [card]);
+      }
     }
     index = { byPrint, byName };
     indexes.set(catalog, index);
@@ -175,6 +180,12 @@ const isOrdinary = (card: CatalogCard): boolean =>
   !/^\d+$/u.test(card.number) ||
   Number(card.number) <= card.set.official;
 
+/** Whether a catalogued card goes by a name: a Trainer's subtitle aside. */
+const goesBy = (card: CatalogCard, name: string): boolean =>
+  foldText(card.name) === foldText(name) ||
+  (card.category === 'Trainer' &&
+    foldText(trainerName(card.name)) === foldText(trainerName(name)));
+
 /** Newest ordinary printing first, then newest of any kind. */
 const preferred = (cards: readonly CatalogCard[]): CatalogCard | undefined =>
   [...cards].sort(
@@ -190,7 +201,7 @@ export const resolveDecklistRow = (
 ): ResolvedDecklistRow => {
   if (row.setCode && row.number) {
     const card = index.byPrint.get(printKey(row.setCode, row.number));
-    if (card && foldText(card.name) === foldText(row.name)) {
+    if (card && goesBy(card, row.name)) {
       return { row, card, match: 'print' };
     }
   }
@@ -246,9 +257,7 @@ export const findCatalogPrint = (
 ): CatalogCard | undefined => {
   const index = catalogIndex(catalog);
   const named = (candidate: CatalogCard | undefined) =>
-    candidate && foldText(candidate.name) === foldText(card.name)
-      ? candidate
-      : undefined;
+    candidate && goesBy(candidate, card.name) ? candidate : undefined;
   if (card.set && card.number) {
     const found = named(index.byPrint.get(printKey(card.set, card.number)));
     if (found) return found;

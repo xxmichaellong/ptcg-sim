@@ -212,6 +212,18 @@ export const DeckScreen = ({
     [placeOnSeat]
   );
 
+  /**
+   * An import's lifetime: a newer import, or the screen going away, ends
+   * it. It starts before a file or the clipboard is read, so nothing read
+   * after the screen has gone lands on a seat.
+   */
+  const beginImport = useCallback((): AbortController => {
+    importAbort.current?.abort();
+    const controller = new AbortController();
+    importAbort.current = controller;
+    return controller;
+  }, []);
+
   const runImport = useCallback(
     async (
       text: string,
@@ -221,11 +233,12 @@ export const DeckScreen = ({
       },
       options: { readonly save: boolean; readonly name?: string } = {
         save: true,
-      }
+      },
+      started?: AbortController
     ): Promise<boolean> => {
-      importAbort.current?.abort();
-      const controller = new AbortController();
-      importAbort.current = controller;
+      const controller =
+        started && importAbort.current === started ? started : beginImport();
+      if (controller.signal.aborted) return false;
       setImporting(true);
       try {
         // The catalog makes a list's import exact; an import never waits
@@ -298,12 +311,20 @@ export const DeckScreen = ({
         }
       }
     },
-    [catalog, library, placeOnSeat, screenPreferences.language, target]
+    [
+      beginImport,
+      catalog,
+      library,
+      placeOnSeat,
+      screenPreferences.language,
+      target,
+    ]
   );
 
   const importFile = useCallback(
     async (file: File) => {
-      const read = await readDeckFile(file);
+      const controller = beginImport();
+      const read = await readDeckFile(file, { signal: controller.signal });
       if (!read.ok) {
         if (read.reason !== 'aborted') {
           toast({
@@ -317,16 +338,23 @@ export const DeckScreen = ({
         }
         return;
       }
-      await runImport(read.text, { kind: 'file', label: file.name });
+      await runImport(
+        read.text,
+        { kind: 'file', label: file.name },
+        undefined,
+        controller
+      );
     },
-    [runImport]
+    [beginImport, runImport]
   );
 
   const importClipboard = useCallback(async () => {
+    const controller = beginImport();
     let text: string;
     try {
       text = await readClipboard();
     } catch {
+      if (controller.signal.aborted) return;
       toast({
         title: "The clipboard can't be read here",
         body: 'Paste the list with Ctrl+V (⌘V on a Mac) instead.',
@@ -334,8 +362,8 @@ export const DeckScreen = ({
       });
       return;
     }
-    await runImport(text, { kind: 'paste' });
-  }, [readClipboard, runImport]);
+    await runImport(text, { kind: 'paste' }, undefined, controller);
+  }, [beginImport, readClipboard, runImport]);
 
   // Paste anywhere on the screen (outside a text field) imports the list.
   useEffect(() => {

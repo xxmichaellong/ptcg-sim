@@ -189,8 +189,9 @@ describe('importing a decklist', () => {
       'TWM 128',
       expect.stringMatching(/^custom:/u),
     ]);
-    // The file's own image is kept.
+    // The file's own image is kept, small as well as large.
     expect(result.ok && result.cards[0]!.card.image).toContain('limitlesstcg');
+    expect(result.ok && result.cards[0]!.card.imageSmall).toBeUndefined();
     expect(result.ok && result.cards[0]!.card.facts?.stage).toBe('Basic');
   });
 

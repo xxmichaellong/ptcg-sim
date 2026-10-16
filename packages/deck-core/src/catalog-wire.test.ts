@@ -394,6 +394,24 @@ describe('untrusted input', () => {
         abilities: [{ name: 'Gallop', text: 'Draw 2 cards.' }],
       })
     ).not.toBe(same);
+    // A Trainer's subtitle is cosmetic.
+    expect(
+      printGroupKey({
+        name: "Boss's Orders (Giovanni)",
+        category: 'Trainer',
+        types: [],
+        abilities: [],
+        attacks: [],
+      })
+    ).toBe(
+      printGroupKey({
+        name: "Boss's Orders",
+        category: 'Trainer',
+        types: [],
+        abilities: [],
+        attacks: [],
+      })
+    );
     // A Trainer is its name: an old print plays with the new wording.
     const switchCard = {
       name: 'Switch',

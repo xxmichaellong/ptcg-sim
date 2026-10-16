@@ -236,6 +236,13 @@ export const parseCardQuery = (text: string): CardQuery => {
 };
 
 /** Letters and digits only, lower case, accents folded: "Pokémon" = "pokemon". */
+/**
+ * A Trainer's name without its cosmetic subtitle: "Boss's Orders
+ * (Giovanni)" is Boss's Orders, and plays as any other.
+ */
+export const trainerName = (name: string): string =>
+  name.replace(/\s*\([^)]*\)\s*$/u, '');
+
 export const foldText = (value: string): string =>
   value
     .normalize('NFKD')

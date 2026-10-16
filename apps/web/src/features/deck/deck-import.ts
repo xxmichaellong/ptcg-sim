@@ -173,20 +173,27 @@ const importCsv = (
     };
   }
   // A v1 file kept only names and images; a catalogued printing gets its
-  // facts back, so the rules can check it.
+  // facts back, so the rules can check it. The file's picture stays, its
+  // thumbnail too: a German scan isn't shown small in English.
   const cards = deckListOf(
     parsed.cards.map(({ card, count }) => {
       const print =
         options.catalog && !card.presentation
           ? findCatalogPrint(options.catalog, card)
           : undefined;
+      if (!print) return { card, count };
+      const {
+        imageSmall,
+        image: catalogImage,
+        ...found
+      } = deckCardFromCatalog(print, { catalog: options.catalog! });
+      const small = card.image === catalogImage ? imageSmall : card.imageSmall;
       return {
-        card: print
-          ? {
-              ...deckCardFromCatalog(print, { catalog: options.catalog! }),
-              image: card.image,
-            }
-          : card,
+        card: {
+          ...found,
+          image: card.image,
+          ...(small ? { imageSmall: small } : {}),
+        },
         count,
       };
     })

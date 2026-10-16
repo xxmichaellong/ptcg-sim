@@ -379,6 +379,37 @@ describe('DeckBuilderSession', () => {
     expect(store.getSnapshot().slots.main.dirty).toBe(true);
   });
 
+  it('drops a file still being read when the deck screen goes away', async () => {
+    const store = new DeckBuilderStore();
+    await renderSession({ store, open: true });
+    const input = host.querySelector<HTMLInputElement>(
+      '#nativeDeckBuilderCsvImport'
+    )!;
+    let finishRead!: (text: string) => void;
+    const file = new File([''], 'deck.csv', { type: 'text/csv' });
+    Object.defineProperty(file, 'text', {
+      value: () =>
+        new Promise<string>((resolve) => {
+          finishRead = resolve;
+        }),
+    });
+    Object.defineProperty(input, 'files', {
+      value: [file],
+      configurable: true,
+    });
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => root?.unmount());
+    root = undefined;
+    finishRead(
+      'QTY,Name,Type,URL\n4,Pikachu,Pokémon,custom+unsafe://player-host/Pikachu'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(library.getSnapshot().decks).toEqual([]);
+    expect(store.getSnapshot().slots.main.revision).toBe(0);
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

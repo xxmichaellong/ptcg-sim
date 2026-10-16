@@ -112,6 +112,34 @@ describe('finding the printing a decklist line means', () => {
     });
   });
 
+  it("finds a Trainer's printing whatever its subtitle", () => {
+    const RCL = set('swsh2', 'RCL', '2020-05-01', 192);
+    const MEG = set('me01', 'MEG', '2025-09-26', 132);
+    const trainer = { category: 'Trainer' as const, stage: undefined };
+    const bosses = [
+      card(RCL, '154', "Boss's Orders (Giovanni)", trainer),
+      card(MEG, '114', "Boss's Orders", trainer),
+    ];
+    const withBosses: LoadedCatalog = {
+      ...catalog,
+      cards: bosses,
+      sets: [RCL, MEG],
+      byId: new Map(bosses.map((entry) => [entry.id, entry])),
+    };
+    const bossIndex = catalogIndex(withBosses);
+    expect(
+      resolveDecklistRow(bossIndex, row("4 Boss's Orders RCL 154"))
+    ).toMatchObject({ match: 'print', card: { id: 'RCL 154' } });
+    expect(
+      findCatalogPrint(withBosses, {
+        name: "Boss's Orders",
+        set: 'RCL',
+        number: '154',
+        image: 'x',
+      })?.id
+    ).toBe('RCL 154');
+  });
+
   it('finds a card by name in the set given when the number differs', () => {
     // Limitless numbers the Mega Evolution Energy differently from TCGdex.
     expect(
