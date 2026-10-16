@@ -263,11 +263,27 @@ export const createCardCatalogClient = (
     const answer = await readManifest();
     if (current !== generation) return;
     if (answer.kind === 'ready') {
-      if (await loadBody(answer.manifest.url, current)) {
+      let { manifest } = answer;
+      let loaded = await loadBody(manifest.url, current);
+      if (current !== generation) return;
+      if (!loaded) {
+        // A newer version published between the two requests retires the
+        // body just named: ask which one is current, once.
+        const again = await readManifest();
         if (current !== generation) return;
-        version = answer.manifest.version;
+        if (
+          again.kind === 'ready' &&
+          again.manifest.version !== manifest.version
+        ) {
+          manifest = again.manifest;
+          loaded = await loadBody(manifest.url, current);
+          if (current !== generation) return;
+        }
+      }
+      if (loaded) {
+        version = manifest.version;
         attempts = 0;
-        if (!answer.manifest.complete) recheck(current);
+        if (!manifest.complete) recheck(current);
         return;
       }
     }

@@ -75,13 +75,17 @@ fast and current. The sources, measured on 2026-10-15:
    data (1,113 cards) before it closes; the rest come from TCGdex's suffix,
    stage, rarity and the card's name.
 6. **Legality is the card's, not the print's.** Prints with the same name and
-   rules share a print group; a Trainer's group is its name alone, since an
-   older print plays with the newest wording (tournament rules 5.4.2.2),
-   and TCG Pocket's cards keep to their own groups. A group is legal in a format when TCGdex marks
-   any of its prints legal there (so a rotated print is legal through a legal
-   reprint), Basic Energy is legal everywhere, TCG Pocket cards nowhere, and
+   rules share a print group. A Trainer's group is its name (an older print
+   plays with the newest wording, tournament rules 5.4.2.2), apart from an
+   ACE SPEC or Prism Star print; a Basic Energy's is its type; TCG Pocket's
+   cards keep to their own groups. A group is legal in a format when TCGdex
+   marks any of its prints legal there (so a rotated print is legal through
+   a legal reprint), Basic Energy is legal whatever its set (but Fairy
+   Energy left Standard with the Fairy type), TCG Pocket cards nowhere, and
    the Expanded ban list (`bans.ts`, 49 prints) bans every print of a banned
-   card. Standard bans none.
+   card. Standard bans none. TCGdex calls some Special Energy "Normal"
+   (Reversal, Prism, Team Rocket's); only the nine Basic Energy names are
+   taken as Basic.
 7. **Images** are TCGdex's (600×825 WebP for the table, 245×337 for
    results; CORS-enabled). Where TCGdex has none, the card uses Limitless's
    scan, for the series Limitless covers; a card with neither is left out.

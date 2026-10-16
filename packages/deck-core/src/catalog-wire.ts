@@ -362,6 +362,17 @@ class GroupHash {
 
 type Mutable = Record<string, unknown>;
 
+/**
+ * The nine Basic Energy cards, by name. TCGdex calls some Special Energy
+ * "Normal" (Reversal, Prism, Team Rocket's, the ex era's Nitro Fire and
+ * its kin), so a Basic Energy is one it calls so *and* that is named so.
+ */
+const BASIC_ENERGY =
+  /^(?:basic\s+)?(grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy)\s+energy$/iu;
+
+/** Mechanics that make a Trainer another card than one of its name. */
+const DISTINCT_TRAINER_TAGS = ['ACE SPEC', 'Prism Star'];
+
 const assign = (target: Mutable, key: string, value: unknown): void => {
   if (value !== undefined) target[key] = value;
 };
@@ -375,7 +386,8 @@ interface DecodedPrint {
   readonly tags: readonly string[];
   readonly legal: number;
   readonly groupKey: string;
-  readonly basicEnergy: boolean;
+  /** Its type, lower case, when it is Basic Energy. */
+  readonly basicEnergy: string | undefined;
 }
 
 /**
@@ -384,8 +396,11 @@ interface DecodedPrint {
  * (a reprint legal in a format makes every print of it legal there). A
  * Trainer is its name alone: an older print plays with the newest print's
  * wording (tournament rules 5.4.2.2), so Base Set's Switch is the Switch
- * of today. TCG Pocket is another game: its cards never share a group
- * with the TCG's, and keep to their rules. A hash taken in one pass with
+ * of today -- unless one is an ACE SPEC or Prism Star and the other not,
+ * as Base Set's Computer Search and Boundaries Crossed's are. Basic Energy
+ * is its type ("Basic Fire Energy" is Fire Energy). TCG Pocket is another
+ * game: its cards never share a group with the TCG's, and keep to their
+ * rules. A hash taken in one pass with
  * no copies: the decoder keys 20,000 cards.
  */
 export const printGroupKey = (card: {
@@ -398,16 +413,20 @@ export const printGroupKey = (card: {
   readonly attacks: readonly CatalogAttack[];
   readonly text?: string | undefined;
   readonly energyType?: 'Basic' | 'Special' | undefined;
+  readonly tags?: readonly string[] | undefined;
   readonly pocket?: boolean | undefined;
 }): string => {
   const hash = new GroupHash();
   const game = card.pocket ? 'p' : '';
   if (card.category === 'Energy' && card.energyType === 'Basic') {
-    hash.add(card.name);
+    hash.add(BASIC_ENERGY.exec(card.name.trim())?.[1] ?? card.name);
     return `${game}e${hash.digest()}`;
   }
   if (card.category === 'Trainer' && !card.pocket) {
     hash.add(card.name);
+    for (const tag of DISTINCT_TRAINER_TAGS) {
+      if (card.tags?.includes(tag)) hash.add(tag);
+    }
     return `t${hash.digest()}`;
   }
   hash.add(card.name);
@@ -457,7 +476,13 @@ const decodeCard = (
       ? value.tt
       : undefined;
   const energyType =
-    value.et === 'B' ? 'Basic' : value.et === 'S' ? 'Special' : undefined;
+    value.et === 'B'
+      ? BASIC_ENERGY.test(name)
+        ? 'Basic'
+        : 'Special'
+      : value.et === 'S'
+        ? 'Special'
+        : undefined;
   const weakness = typeof value.wk === 'string' ? energy(value.wk) : undefined;
   const resistance =
     typeof value.rs === 'string' ? energy(value.rs) : undefined;
@@ -526,9 +551,13 @@ const decodeCard = (
       attacks,
       text: effect,
       energyType,
+      tags,
       pocket: set.pocket,
     }),
-    basicEnergy: category === 'Energy' && energyType === 'Basic',
+    basicEnergy:
+      category === 'Energy' && energyType === 'Basic'
+        ? BASIC_ENERGY.exec(name)?.[1]?.toLowerCase()
+        : undefined,
   };
 };
 
@@ -648,12 +677,15 @@ export const decodeCatalog = (value: unknown): LoadedCatalog => {
   const cards: CatalogCard[] = prints.map((print) => {
     const group = groups.get(print.groupKey)!;
     const pocket = print.card.set.pocket ?? false;
-    // Basic Energy is legal in every format, whatever set it's from.
+    // Basic Energy is legal whatever set it's from, but Fairy Energy left
+    // Standard with the Fairy type (unless TCGdex says otherwise).
     const legal = pocket
       ? 0
-      : print.basicEnergy
-        ? LEGAL_STANDARD | LEGAL_EXPANDED
-        : group.legal;
+      : print.basicEnergy === 'fairy'
+        ? group.legal | LEGAL_EXPANDED
+        : print.basicEnergy
+          ? LEGAL_STANDARD | LEGAL_EXPANDED
+          : group.legal;
     const allowed = legal & ~group.banned;
     let tags = groupTags.get(print.groupKey);
     if (!tags) {

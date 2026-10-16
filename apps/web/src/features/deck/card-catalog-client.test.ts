@@ -137,6 +137,30 @@ describe('loading the card catalog', () => {
     client.dispose();
   });
 
+  it('asks again when a newer version retires the body it was told of', async () => {
+    const { fetch, requests } = server({
+      [CARD_CATALOG_PATH]: [() => manifest(VERSION), () => manifest(NEXT)],
+      [bodyUrl(VERSION)]: [
+        () => Response.json({ error: 'not_found' }, { status: 404 }),
+      ],
+      [bodyUrl(NEXT)]: [fixtureBody],
+    });
+    const client = createCardCatalogClient({
+      fetch,
+      storage: memoryStorage(),
+      ...timers(),
+    });
+    client.load();
+    await vi.waitFor(() => expect(statusOf(client)).toBe('ready'));
+    expect(requests).toEqual([
+      CARD_CATALOG_PATH,
+      bodyUrl(VERSION),
+      CARD_CATALOG_PATH,
+      bodyUrl(NEXT),
+    ]);
+    client.dispose();
+  });
+
   it('uses the last body that loaded when the manifest cannot be had', async () => {
     const { fetch, requests } = server({
       [bodyUrl(VERSION)]: [fixtureBody],

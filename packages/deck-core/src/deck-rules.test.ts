@@ -249,6 +249,12 @@ describe('deck lists', () => {
     expect(ruleName({ name: 'Unown (A)', category: 'Pokémon' })).toBe(
       'unown (a)'
     );
+    // A Pokémon-EX is another Pokémon than a Pokémon ex, however spelled.
+    const ex = ruleName({ name: 'Rayquaza ex', category: 'Pokémon' });
+    const upper = ruleName({ name: 'Rayquaza EX', category: 'Pokémon' });
+    expect(upper).not.toBe(ex);
+    expect(ruleName({ name: 'Rayquaza-EX', category: 'Pokémon' })).toBe(upper);
+    expect(ruleName({ name: 'rayquaza  ex', category: 'Pokémon' })).toBe(ex);
   });
 });
 

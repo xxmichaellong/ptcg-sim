@@ -241,6 +241,25 @@ export const DeckBuilderSession = ({
     wasOpen.current = open;
   }, [flush, open]);
 
+  // A seat's deck that changes while the screen is closed (an import that
+  // finished after it closed) goes on the table as closing would have put
+  // it. Only a new deck does: a failed install waits, as it does after a
+  // close, rather than retrying on every change of state.
+  useEffect(() => {
+    if (open) return;
+    const revisions = () => {
+      const { slots } = store.getSnapshot();
+      return [slots.main.revision, slots.alternate.revision] as const;
+    };
+    let seen = revisions();
+    return store.subscribe(() => {
+      const next = revisions();
+      if (next[0] === seen[0] && next[1] === seen[1]) return;
+      seen = next;
+      if (store.getSnapshot().hasDirtyDecks) coordinator.current?.flush();
+    });
+  }, [open, store]);
+
   useEffect(() => {
     if (open && openTarget) store.selectTarget(openTarget);
   }, [open, openTarget, store]);

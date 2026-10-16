@@ -313,6 +313,65 @@ describe('untrusted input', () => {
     expect(decoded.cards).toHaveLength(0);
   });
 
+  it('tells Basic Energy, Special Energy and ACE SPEC Trainers apart', () => {
+    const decoded = decodeCatalog({
+      ...body([]),
+      sets: [
+        {
+          id: 'old',
+          name: 'Old',
+          code: 'OLD',
+          series: 'Base',
+          released: '1999-01-09',
+          cards: [
+            { n: '71', nm: 'Computer Search', c: 'T', tx: 'Search.' },
+            { n: '97', nm: 'Fairy Energy', c: 'E', et: 'B', lg: 2 },
+          ],
+        },
+        {
+          id: 'new',
+          name: 'New',
+          code: 'NEW',
+          series: 'SV',
+          released: '2024-01-01',
+          cards: [
+            {
+              n: '137',
+              nm: 'Computer Search',
+              c: 'T',
+              tg: ['ACE SPEC'],
+              tx: 'Search, as an ACE SPEC.',
+              lg: 2,
+            },
+            {
+              n: '266',
+              nm: 'Reversal Energy',
+              c: 'E',
+              et: 'B',
+              tx: 'Provides {C} Energy.',
+              lg: 3,
+            },
+            { n: '2', nm: 'Fire Energy', c: 'E', et: 'B', lg: 3 },
+            { n: '3', nm: 'Basic Fire Energy', c: 'E', et: 'B' },
+          ],
+        },
+      ],
+    });
+    const find = (id: string) =>
+      decoded.cards.find((entry) => entry.id === id)!;
+    // Base Set's Computer Search isn't the ACE SPEC one.
+    expect(find('OLD 71').printGroup).not.toBe(find('NEW 137').printGroup);
+    expect(find('OLD 71').legal.expanded).toBe(false);
+    expect(find('OLD 71').tags).not.toContain('ACE SPEC');
+    // TCGdex's "Normal" Reversal Energy is Special Energy.
+    expect(find('NEW 266').energyType).toBe('Special');
+    // Fire Energy by any name is one card, legal everywhere.
+    expect(find('NEW 3').printGroup).toBe(find('NEW 2').printGroup);
+    expect(find('NEW 3').legal).toEqual({ standard: true, expanded: true });
+    // Fairy Energy is out of Standard.
+    expect(find('OLD 97').legal).toEqual({ standard: false, expanded: true });
+  });
+
   it('keys print groups by rules, ignoring case and spacing', () => {
     const base = {
       name: 'Shadow Rider',

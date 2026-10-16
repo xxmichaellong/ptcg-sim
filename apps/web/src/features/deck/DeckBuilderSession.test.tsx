@@ -413,6 +413,29 @@ describe('DeckBuilderSession', () => {
     expect(store.getSnapshot().slots.main.installingRevision).toBeUndefined();
   });
 
+  it('puts a deck that lands after the surface closed on the table', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    await renderSession({ session, store, open: true });
+    await renderSession({ session, store, open: false });
+    await Promise.resolve();
+    expect(session.commands).toHaveLength(0);
+
+    // An import that was still on its way when the surface closed.
+    act(() => {
+      store.replaceDeck('main', deckListOf([{ card: card(), count: 1 }]), {
+        name: 'Late import',
+      });
+    });
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+    expect(session.commands[0]).toMatchObject({ type: 'LoadDeck' });
+
+    // A failed install isn't retried by the store's own changes.
+    act(() => session.completeLatest(false));
+    await Promise.resolve();
+    expect(session.commands).toHaveLength(1);
+  });
+
   it('makes Play close the surface, flushes the captured target, and reports retryable authority failure', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();
