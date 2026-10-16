@@ -157,6 +157,45 @@ describe('finding the printing a decklist line means', () => {
     });
   });
 
+  it("finds an old list's printing by its id, and never swaps EX for ex", () => {
+    const TM = set('hgss4', 'TM', '2010-11-03', 102);
+    const PAL = set('sv02', 'PAL', '2023-06-09', 193);
+    const FLF = set('xy2', 'FLF', '2014-05-07', 106);
+    const OBF = set('sv03', 'OBF', '2023-08-11', 197);
+    const DF = set('ex15', 'DF', '2006-11-08', 113);
+    const cards = [
+      card(TM, '84', 'Yanma'),
+      card(TM, '79', 'Treecko'),
+      card(DF, '19', 'Lickitung δ'),
+      card(PAL, '6', 'Yanma'),
+      card(FLF, '12', 'Charizard EX', { hp: 180 }),
+      card(OBF, '125', 'Charizard ex', { stage: 'Stage 2' }),
+    ];
+    const old: LoadedCatalog = {
+      ...catalog,
+      cards,
+      sets: [TM, DF, PAL, FLF, OBF],
+      byId: new Map(cards.map((entry) => [entry.id, entry])),
+    };
+    const oldIndex = catalogIndex(old);
+    expect(resolveDecklistRow(oldIndex, row('4 Yanma hgss4-84'))).toMatchObject(
+      { match: 'print', card: { id: 'TM 84' } }
+    );
+    // TCGdex spells some names otherwise; an id on the wrong card is ignored.
+    expect(
+      resolveDecklistRow(oldIndex, row('2 Lickitung ex15-19'))
+    ).toMatchObject({ match: 'print', card: { id: 'DF 19' } });
+    expect(
+      resolveDecklistRow(oldIndex, row('1 Relicanth hgss4-79')).match
+    ).not.toBe('print');
+    for (const line of ['1 Charizard EX', '1 Charizard-EX']) {
+      expect(resolveDecklistRow(oldIndex, row(line)).card?.id).toBe('FLF 12');
+    }
+    expect(resolveDecklistRow(oldIndex, row('1 Charizard ex')).card?.id).toBe(
+      'OBF 125'
+    );
+  });
+
   it('keeps a TCG Pocket line in Pocket, and other lines out of it', () => {
     const PA = { ...set('pa', 'P-A', '2024-10-30', 100), pocket: true };
     const research = card(PA, '7', "Professor's Research", {

@@ -612,6 +612,17 @@ export const RemoteRoomLobby = ({
         rendererKind,
         signal: active.abort.signal,
       });
+      // A room or table this replaces stays until Solo has admitted its
+      // player: a handshake that fails after the room was made must not
+      // cost them. (With nothing to replace, the table shows it connecting.)
+      if (active.owner.creator || connected) {
+        try {
+          await waitForAdmission(result.runtime, active.abort.signal);
+        } catch (error) {
+          result.dispose();
+          throw error;
+        }
+      }
       if (active.owner.disposed || ownerRef.current !== active.owner) {
         result.dispose();
         return;

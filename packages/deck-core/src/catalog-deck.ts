@@ -39,6 +39,23 @@ const canonicalNumber = (number: string): string =>
     .toUpperCase()
     .replaceAll(/(^|\D)0+(?=\d)/gu, '$1');
 
+/** Pokémon TCG API set ids (old lists' `hgss4-84`) TCGdex spells otherwise. */
+const LEGACY_SET_IDS: Readonly<Record<string, string>> = { base6: 'lc' };
+
+const setIdKey = (setId: string, number: string): string => {
+  const id = setId.trim().toLowerCase();
+  return `${LEGACY_SET_IDS[id] ?? id} ${canonicalNumber(number)}`;
+};
+
+/**
+ * "EX" (a Pokémon-EX) or "ex" (a Pokémon ex) closing a name: two different
+ * Pokémon however a search folds them.
+ */
+const exMark = (name: string): 'EX' | 'ex' | undefined => {
+  const mark = /[\s-](EX|ex)(?=\s|$)/u.exec(name.trim())?.[1];
+  return mark === 'EX' || mark === 'ex' ? mark : undefined;
+};
+
 /** The key a printing is looked up by, whatever spelling a list uses. */
 export const printKey = (set: string, number: string): string =>
   `${canonicalSet(set)} ${canonicalNumber(number)}`;
@@ -129,6 +146,8 @@ export interface ResolvedDecklistRow {
 
 export interface CatalogIndex {
   readonly byPrint: ReadonlyMap<string, CatalogCard>;
+  /** By TCGdex set id and number, for old lists' `hgss4-84`. */
+  readonly bySetId: ReadonlyMap<string, CatalogCard>;
   readonly byName: ReadonlyMap<string, readonly CatalogCard[]>;
 }
 
@@ -139,10 +158,13 @@ export const catalogIndex = (catalog: LoadedCatalog): CatalogIndex => {
   let index = indexes.get(catalog);
   if (!index) {
     const byPrint = new Map<string, CatalogCard>();
+    const bySetId = new Map<string, CatalogCard>();
     const byName = new Map<string, CatalogCard[]>();
     for (const card of catalog.cards) {
       const key = printKey(card.set.code ?? card.set.id, card.number);
       if (!byPrint.has(key)) byPrint.set(key, card);
+      const setKey = setIdKey(card.set.id, card.number);
+      if (!bySetId.has(setKey)) bySetId.set(setKey, card);
       const names = new Set([foldText(card.name)]);
       // A Trainer is found by its name without a subtitle too.
       if (card.category === 'Trainer')
@@ -153,7 +175,7 @@ export const catalogIndex = (catalog: LoadedCatalog): CatalogIndex => {
         else byName.set(name, [card]);
       }
     }
-    index = { byPrint, byName };
+    index = { byPrint, bySetId, byName };
     indexes.set(catalog, index);
   }
   return index;
@@ -181,11 +203,33 @@ const isOrdinary = (card: CatalogCard): boolean =>
   !/^\d+$/u.test(card.number) ||
   Number(card.number) <= card.set.official;
 
-/** Whether a catalogued card goes by a name: a Trainer's subtitle aside. */
+/**
+ * Whether a catalogued card goes by a name: a Trainer's subtitle aside, and
+ * a Pokémon-EX never a Pokémon ex.
+ */
 const goesBy = (card: CatalogCard, name: string): boolean =>
-  foldText(card.name) === foldText(name) ||
+  (foldText(card.name) === foldText(name) &&
+    (card.category !== 'Pokémon' || exMark(card.name) === exMark(name))) ||
   (card.category === 'Trainer' &&
     foldText(trainerName(card.name)) === foldText(trainerName(name)));
+
+/**
+ * Whether a list's name fits the card its id names: one's words within the
+ * other's, since TCGdex and old lists spell some differently ("Pokegear" is
+ * Pokégear 3.0, "Regigigas Lv.X" is TCGdex's Regigigas of that number, a δ
+ * Pokémon goes without its δ). A wrong id ("Relicanth" on a Treecko) fails.
+ */
+const fitsId = (card: CatalogCard, name: string): boolean => {
+  const words = (value: string) => new Set(foldText(value).split(' '));
+  const listed = words(name);
+  const catalogued = words(card.name);
+  const within = (inner: Set<string>, outer: Set<string>) =>
+    [...inner].every((word) => outer.has(word));
+  return (
+    (within(listed, catalogued) || within(catalogued, listed)) &&
+    (card.category !== 'Pokémon' || exMark(card.name) === exMark(name))
+  );
+};
 
 /** Newest ordinary printing first, then newest of any kind. */
 const preferred = (cards: readonly CatalogCard[]): CatalogCard | undefined =>
@@ -206,8 +250,23 @@ export const resolveDecklistRow = (
       return { row, card, match: 'print' };
     }
   }
+  // An old list's Pokémon TCG API id: `4 Yanma hgss4-84`.
+  const separator = row.catalogId?.indexOf('-') ?? -1;
+  if (row.catalogId && separator > 0) {
+    const card = index.bySetId.get(
+      setIdKey(
+        row.catalogId.slice(0, separator),
+        row.catalogId.slice(separator + 1)
+      )
+    );
+    if (card && fitsId(card, row.name)) {
+      return { row, card, match: 'print' };
+    }
+  }
   const name = foldText(row.name);
-  const named = index.byName.get(name) ?? [];
+  const named = (index.byName.get(name) ?? []).filter((card) =>
+    goesBy(card, row.name)
+  );
   if (row.setCode && named.length > 0) {
     const set = canonicalSet(row.setCode);
     const inSet = named.filter((card) => card.set.code === set);

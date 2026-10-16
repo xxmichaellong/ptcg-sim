@@ -1080,6 +1080,32 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
+  it('keeps a generated room when the Solo table that would replace it never admits', async () => {
+    const room = creationResult(runtime({ label: 'generated room' }));
+    const solo = creationResult(
+      runtime({ label: 'solo never admitted', phase: 'failed' }),
+      'solo'
+    );
+    const createRoom = vi
+      .fn()
+      .mockResolvedValueOnce(room.value)
+      .mockResolvedValueOnce(solo.value);
+    const { root } = await mount(lobbyDependencies(custody(), createRoom));
+    await settle();
+    await act(async () => {
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+    // Putting Play online away goes to Solo; Solo's handshake fails.
+    await closeSheet('playOnlineSheet');
+    expect(createRoom).toHaveBeenCalledTimes(2);
+    expect(createRoom.mock.calls[1]?.[0]).toMatchObject({ mode: 'solo' });
+    expect(solo.dispose).toHaveBeenCalledOnce();
+    expect(room.dispose).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+    expect(room.dispose).toHaveBeenCalledOnce();
+  });
+
   it('keeps the table when the room an invitation leads to never admits this session', async () => {
     const invitation = custody();
     invitation.acceptPaste.mockImplementation((event) => {
