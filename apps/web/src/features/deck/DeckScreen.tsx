@@ -236,9 +236,14 @@ export const DeckScreen = ({
       },
       started?: AbortController
     ): Promise<boolean> => {
-      const controller =
-        started && importAbort.current === started ? started : beginImport();
-      if (controller.signal.aborted) return false;
+      // A read a newer import (or the screen going away) overtook is dropped.
+      if (
+        started &&
+        (started.signal.aborted || importAbort.current !== started)
+      ) {
+        return false;
+      }
+      const controller = started ?? beginImport();
       setImporting(true);
       try {
         // The catalog makes a list's import exact; an import never waits

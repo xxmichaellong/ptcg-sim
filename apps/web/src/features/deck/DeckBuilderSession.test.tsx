@@ -195,6 +195,7 @@ const renderSession = async (options: {
   readonly onSessionAttach?: (session: DeckInstallSession) => void;
   readonly onRequestClose?: () => void;
   readonly requestCardBack?: BrowserCardBackRequest;
+  readonly readClipboard?: () => Promise<string>;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
@@ -228,6 +229,9 @@ const renderSession = async (options: {
           : {})}
         {...(options.requestCardBack
           ? { requestCardBack: options.requestCardBack }
+          : {})}
+        {...(options.readClipboard
+          ? { readClipboard: options.readClipboard }
           : {})}
         {...(options.beforeUnloadTarget
           ? { beforeUnloadTarget: options.beforeUnloadTarget }
@@ -408,6 +412,37 @@ describe('DeckBuilderSession', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(library.getSnapshot().decks).toEqual([]);
     expect(store.getSnapshot().slots.main.revision).toBe(0);
+  });
+
+  it('lets the newest clipboard import win, whichever read comes back last', async () => {
+    const store = new DeckBuilderStore();
+    const reads: ((text: string) => void)[] = [];
+    await renderSession({
+      store,
+      open: true,
+      readClipboard: () =>
+        new Promise<string>((resolve) => {
+          reads.push(resolve);
+        }),
+    });
+    await click('#deckClipboardButton');
+    await click('#deckClipboardButton');
+    const list = (name: string) =>
+      `QTY,Name,Type,URL\n4,${name},Pokémon,custom+unsafe://player-host/${name}`;
+    await act(async () => {
+      reads[1]!(list('Newer'));
+    });
+    await vi.waitFor(() =>
+      expect(store.getSnapshot().slots.main.label?.name).toBe('Newer deck')
+    );
+    await act(async () => {
+      reads[0]!(list('Older'));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store.getSnapshot().slots.main.label?.name).toBe('Newer deck');
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
+      'Newer deck',
+    ]);
   });
 
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {

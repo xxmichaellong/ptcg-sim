@@ -219,58 +219,65 @@ export class CardCatalogBuilder {
 
   /** Lists the sets and queues the ones to fetch; returns how many. */
   refresh(): Promise<number> {
-    return this.#exclusive(async () => {
-      const now = this.#now();
-      if (await this.#waiting(now)) return 0;
-      let sets: readonly TcgdexSetSummary[];
-      try {
-        sets = normalizeTcgdexSets(await this.#graphql(TCGDEX_SETS_QUERY));
-        if (sets.length === 0)
-          throw new CardCatalogSourceError('invalid_response');
-      } catch {
-        await this.#fail('sets', now);
-        return 0;
-      }
-      await this.#store.delete(KEYS.retryAfter);
-      await this.#store.put(KEYS.list, {
-        listedAt: now,
-        sets,
-      } satisfies StoredList);
-      const index = (await this.#store.get<CatalogIndex>(KEYS.index)) ?? {};
-      const listed = new Set(sets.map((set) => set.id));
-      const newestFirst = [...sets].sort(
-        (left, right) =>
-          right.released.localeCompare(left.released) ||
-          left.id.localeCompare(right.id)
-      );
-      const due = newestFirst.filter(
-        (set) => index[set.id]?.total !== set.total
-      );
-      const rotation = Math.ceil(
-        sets.length / CARD_CATALOG_LIMITS.rotationDays
-      );
-      const stale = sets
-        .filter((set) => index[set.id]?.total === set.total)
-        .sort(
-          (left, right) =>
-            index[left.id]!.fetchedAt - index[right.id]!.fetchedAt
-        )
-        .slice(0, rotation);
-      const queued = (
-        (await this.#store.get<QueueEntry[]>(KEYS.queue)) ?? []
-      ).filter((entry) => listed.has(entry.id));
-      const ids = new Set(queued.map((entry) => entry.id));
-      const queue = [...queued];
-      for (const set of [...due, ...stale]) {
-        if (ids.has(set.id)) continue;
-        ids.add(set.id);
-        queue.push({ id: set.id, attempts: 0 });
-      }
-      await this.#store.put(KEYS.queue, queue);
-      if (queue.length > 0) await this.#schedule(now);
-      else await this.#publish(now, true);
-      return queue.length;
-    });
+    return this.#exclusive(() => this.#refresh());
+  }
+
+  /**
+   * A refresh if one is still due when its turn comes: requests that all
+   * found the catalog stale start one refresh between them, not one each.
+   */
+  refreshIfDue(): Promise<number> {
+    return this.#exclusive(async () =>
+      (await this.needsRefresh()) ? await this.#refresh() : 0
+    );
+  }
+
+  async #refresh(): Promise<number> {
+    const now = this.#now();
+    if (await this.#waiting(now)) return 0;
+    let sets: readonly TcgdexSetSummary[];
+    try {
+      sets = normalizeTcgdexSets(await this.#graphql(TCGDEX_SETS_QUERY));
+      if (sets.length === 0)
+        throw new CardCatalogSourceError('invalid_response');
+    } catch {
+      await this.#fail('sets', now);
+      return 0;
+    }
+    await this.#store.delete(KEYS.retryAfter);
+    await this.#store.put(KEYS.list, {
+      listedAt: now,
+      sets,
+    } satisfies StoredList);
+    const index = (await this.#store.get<CatalogIndex>(KEYS.index)) ?? {};
+    const listed = new Set(sets.map((set) => set.id));
+    const newestFirst = [...sets].sort(
+      (left, right) =>
+        right.released.localeCompare(left.released) ||
+        left.id.localeCompare(right.id)
+    );
+    const due = newestFirst.filter((set) => index[set.id]?.total !== set.total);
+    const rotation = Math.ceil(sets.length / CARD_CATALOG_LIMITS.rotationDays);
+    const stale = sets
+      .filter((set) => index[set.id]?.total === set.total)
+      .sort(
+        (left, right) => index[left.id]!.fetchedAt - index[right.id]!.fetchedAt
+      )
+      .slice(0, rotation);
+    const queued = (
+      (await this.#store.get<QueueEntry[]>(KEYS.queue)) ?? []
+    ).filter((entry) => listed.has(entry.id));
+    const ids = new Set(queued.map((entry) => entry.id));
+    const queue = [...queued];
+    for (const set of [...due, ...stale]) {
+      if (ids.has(set.id)) continue;
+      ids.add(set.id);
+      queue.push({ id: set.id, attempts: 0 });
+    }
+    await this.#store.put(KEYS.queue, queue);
+    if (queue.length > 0) await this.#schedule(now);
+    else await this.#publish(now, true);
+    return queue.length;
   }
 
   /** One alarm's work: fetches the next queued set. */

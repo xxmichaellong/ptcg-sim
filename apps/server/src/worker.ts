@@ -1212,8 +1212,10 @@ export class PtcgCardCatalog extends DurableObject<Env> {
 
   async manifest(): Promise<CatalogManifest | null> {
     if (this.disabled) return null;
+    // Requests arriving together all find it stale; the first refresh
+    // freshens it, and the others then find nothing to do.
     if (await this.builder.needsRefresh()) {
-      this.ctx.waitUntil(this.builder.refresh());
+      this.ctx.waitUntil(this.builder.refreshIfDue());
     }
     return this.builder.manifest();
   }

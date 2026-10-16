@@ -488,6 +488,20 @@ describe('building the card catalog', () => {
     expect(await builder.needsRefresh()).toBe(true);
   });
 
+  it('starts one refresh for requests that all found it stale', async () => {
+    const { builder, source, drain, advance } = setup(THREE_SETS);
+    await Promise.all(Array.from({ length: 10 }, () => builder.refreshIfDue()));
+    expect(source.calls.filter((call) => call === 'sets')).toHaveLength(1);
+    await drain();
+    advance(CARD_CATALOG_LIMITS.staleAfterMs + 1);
+    source.calls.length = 0;
+    await Promise.all(Array.from({ length: 10 }, () => builder.refreshIfDue()));
+    expect(source.calls.filter((call) => call === 'sets')).toHaveLength(1);
+    // The cron's refresh runs whatever.
+    await builder.refresh();
+    expect(source.calls.filter((call) => call === 'sets')).toHaveLength(2);
+  });
+
   it('never runs two pieces of work at once', async () => {
     const { builder, source, drain } = setup(THREE_SETS);
     await Promise.all([builder.refresh(), builder.refresh(), builder.step()]);
