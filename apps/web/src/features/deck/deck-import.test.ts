@@ -163,6 +163,33 @@ describe('importing a decklist', () => {
     ]);
   });
 
+  it('takes a printing the catalog lacks as the line says, never another card of its name', async () => {
+    // The catalog has Dreepy, but not this printing of it.
+    const fetchRequest = vi.fn<typeof fetch>(async () =>
+      jsonResponse({
+        cards: [
+          {
+            name: 'Dreepy',
+            set: 'PGO',
+            number: '99',
+            region: 'int',
+            card_type: 'pokemon',
+          },
+        ],
+      })
+    );
+    const result = await importDeckText('4 Dreepy PGO 99', {
+      catalog,
+      fetch: fetchRequest,
+    });
+    expect(result.ok && result.cards[0]!.card).toMatchObject({
+      id: 'PGO 99',
+      name: 'Dreepy',
+      image: expect.stringContaining('/tpci/PGO/PGO_099_R_EN'),
+    });
+    expect(result.ok && result.missing).toEqual([]);
+  });
+
   it('keeps going without the catalog, and without Limitless', async () => {
     const result = await importDeckText('2 Arceus V BRS 122\n1 Who Knows', {
       fetch: vi.fn<typeof fetch>(async () => {

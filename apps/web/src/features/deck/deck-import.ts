@@ -53,8 +53,6 @@ export type DeckImportResult =
       readonly format: DeckFormatId;
       /** Lines no card could be found for; not in `cards`. */
       readonly missing: readonly DeckImportLine[];
-      /** Cards placed by name alone: maybe another printing than meant. */
-      readonly guessed: readonly string[];
     }
   | {
       readonly ok: false;
@@ -198,14 +196,13 @@ const importCsv = (
       };
     })
   );
-  return finish(cards, namedInText(text), [], []);
+  return finish(cards, namedInText(text), []);
 };
 
 const finish = (
   cards: DeckList,
   name: string | undefined,
-  missing: readonly DeckImportLine[],
-  guessed: readonly string[]
+  missing: readonly DeckImportLine[]
 ): DeckImportResult =>
   cards.length === 0 && missing.length === 0
     ? {
@@ -219,7 +216,6 @@ const finish = (
         name: name ?? suggestDeckName(cards, (card) => card.facts?.tags ?? []),
         format: guessDeckFormat(cards),
         missing,
-        guessed,
       };
 
 export const importDeckText = async (
@@ -260,18 +256,21 @@ export const importDeckText = async (
   }
 
   const entries: { card: DeckCard; count: number }[] = [];
-  const guessed: string[] = [];
   let rest: PastedDecklistRow[] = [];
   const index = options.catalog ? catalogIndex(options.catalog) : undefined;
   for (const row of parsed.rows) {
     const resolved = index ? resolveDecklistRow(index, row) : undefined;
-    if (resolved?.card) {
+    // A line naming a printing the catalog doesn't have (a set it lacks,
+    // or one still being built) is never swapped for another card of its
+    // name -- Charizard PGO 10 is not Base Set's -- but taken as the line
+    // says, like a line the catalog can't place at all; its facts follow
+    // once the catalog has it.
+    if (resolved?.card && !(resolved.match === 'name' && row.setCode)) {
       const card = deckCardFromCatalog(resolved.card, {
         ...(options.language ? { language: options.language } : {}),
         ...(options.catalog ? { catalog: options.catalog } : {}),
       });
       entries.push({ card, count: row.quantity });
-      if (resolved.match === 'name' && row.setCode) guessed.push(card.id);
     } else {
       rest.push(row);
     }
@@ -304,5 +303,5 @@ export const importDeckText = async (
       }
     }
   }
-  return finish(deckListOf(entries), namedInText(text), missing, guessed);
+  return finish(deckListOf(entries), namedInText(text), missing);
 };

@@ -1667,12 +1667,18 @@ const handleOverlayAction = (
         : []),
     ]);
   }
+  const submissions = [resolution.command, ...(resolution.followUps ?? [])].map(
+    (command): BoardSessionControllerEffect => ({
+      kind: 'SubmitCommand',
+      command,
+    })
+  );
   if (request.kind === 'zone') {
     const local = clearLocalPresentation(state);
     const next = nextState(state, local);
     return accepted(next, [
       { kind: 'InstallPresentation', presentation: next.presentation },
-      { kind: 'SubmitCommand', command: resolution.command },
+      ...submissions,
     ]);
   }
   const next = submittedInputIdentity
@@ -1689,7 +1695,7 @@ const handleOverlayAction = (
             presentation: next.presentation,
           },
         ] satisfies BoardSessionControllerEffect[])),
-    { kind: 'SubmitCommand', command: resolution.command },
+    ...submissions,
   ]);
 };
 

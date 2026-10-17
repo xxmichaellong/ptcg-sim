@@ -73,6 +73,72 @@ describe('legacy board overlay action resolver', () => {
     ]);
   });
 
+  it('looks at the Prizes still face down, and covers every look at them', () => {
+    const view = createRendererSpikeView();
+    const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const prizes = zoneIn(view, localId, 'prizes');
+    const [first, second, ...others] = prizes.cards;
+    const known = (card: (typeof prizes.cards)[number]) =>
+      ({
+        kind: 'known',
+        id: card.id,
+        definitionId: 'def',
+        category: 'Pokémon',
+        face: 'up',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      }) as unknown as (typeof prizes.cards)[number];
+    // One Prize looked at on its own: the rest are still to see.
+    const oneLooked: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [prizes.id]: { ...prizes, cards: [known(first!), second!, ...others] },
+      },
+      privateInspections: [
+        {
+          id: 'look-one',
+          sourcePlayerId: localId as never,
+          sourceId: prizes.id,
+          cardIds: [first!.id],
+        },
+      ],
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        oneLooked,
+        context('togglePrizes', second!.id)
+      )
+    ).toMatchObject({ ok: true, command: { type: 'BeginZoneInspection' } });
+    // All seen, by two looks: covering ends both.
+    const allSeen: MatchViewState = {
+      ...oneLooked,
+      zones: {
+        ...view.zones,
+        [prizes.id]: { ...prizes, cards: prizes.cards.map(known) },
+      },
+      privateInspections: [
+        ...oneLooked.privateInspections,
+        {
+          id: 'look-rest',
+          sourcePlayerId: localId as never,
+          sourceId: prizes.id,
+          cardIds: [second!.id, ...others.map((card) => card.id)],
+        },
+      ],
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        allSeen,
+        context('togglePrizes', first!.id)
+      )
+    ).toEqual({
+      ok: true,
+      command: { type: 'EndPrivateInspection', inspectionId: 'look-one' },
+      followUps: [{ type: 'EndPrivateInspection', inspectionId: 'look-rest' }],
+    });
+  });
+
   it('reuses stale-safe annotation, visibility, inspection, and random resolvers', () => {
     const view = createRendererSpikeView();
     const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';

@@ -72,7 +72,9 @@ specifically without blocking, and go from deck to table in one click.
    number (promo codes aliased: PR-SV → SVP), then the name in that set
    (Limitless numbers some sets differently from TCGdex), then Basic Energy
    by name (every spelling, PTCGO's `Basic {R} Energy` included), then the
-   name alone. `withCatalogFacts` gives decks made without the catalog their
+   name alone -- but only for a line that names no printing: one naming a
+   printing the catalog lacks is taken as written (with Limitless's help),
+   never swapped for another card of its name. `withCatalogFacts` gives decks made without the catalog their
    facts later, and keeps saved decks' facts as the catalog has them now (a
    rotation, a ban, a legal reprint), without changing anything the table
    shows.

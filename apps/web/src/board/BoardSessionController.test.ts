@@ -2247,6 +2247,41 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('submits every command an action resolves to, in order', () => {
+    const end = (inspectionId: string) =>
+      ({ type: 'EndPrivateInspection', inspectionId }) as const;
+    const resolveOverlayAction = vi.fn(() => ({
+      ok: true as const,
+      command: end('look-one'),
+      followUps: [end('look-two')],
+    }));
+    const deps = { createScene, resolveOverlayAction };
+    let state = install(undefined, deps);
+    const prizeCard = cardIn(state.scene!, ':prizes');
+    state = apply(
+      state,
+      {
+        kind: 'RendererIntent',
+        intent: { kind: 'CardContextRequested', cardId: prizeCard },
+      },
+      deps
+    ).state;
+    const covered = apply(
+      state,
+      {
+        kind: 'LegacyOverlayActionRequested',
+        request: { kind: 'context', action: 'togglePrizes', cardId: prizeCard },
+      },
+      deps
+    );
+    expect(
+      covered.effects.filter((effect) => effect.kind === 'SubmitCommand')
+    ).toEqual([
+      { kind: 'SubmitCommand', command: end('look-one') },
+      { kind: 'SubmitCommand', command: end('look-two') },
+    ]);
+  });
+
   it('closes an opened pile only after its card context action resolves', () => {
     let state = install();
     const discard = state.scene!.zones.find((zone) =>

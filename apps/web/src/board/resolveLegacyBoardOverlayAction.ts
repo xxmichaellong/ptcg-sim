@@ -286,7 +286,12 @@ export type LegacyBoardOverlayInput =
   LegacyBoardMarkerEditor | LegacyBoardCountPrompt;
 
 export type LegacyBoardOverlayActionResolution =
-  | { readonly ok: true; readonly command: WireGameCommand }
+  | {
+      readonly ok: true;
+      readonly command: WireGameCommand;
+      /** Sent after it, in order: covering every look at a zone. */
+      readonly followUps?: readonly WireGameCommand[];
+    }
   | {
       readonly ok: true;
       readonly input: LegacyBoardOverlayInput;
@@ -496,10 +501,25 @@ const resolveContextAction = (
       if (zone?.kind !== 'prizes' || zone.ownerId === null) {
         return rejected('unsupported_target');
       }
-      const looking = !view.privateInspections.some(
+      // Look while any Prize is still face down to this player (one looked
+      // at on its own leaves the rest to see); cover once all are seen,
+      // ending every look at them, each Prize's own included.
+      if (zone.cards.some((card) => card.kind !== 'known')) {
+        return resolveZoneInspectionAction(view, zone.ownerId, 'prizes', true);
+      }
+      const looks = view.privateInspections.filter(
         (inspection) => inspection.sourceId === zone.id
       );
-      return resolveZoneInspectionAction(view, zone.ownerId, 'prizes', looking);
+      const [first, ...rest] = looks.map((inspection): WireGameCommand => ({
+        type: 'EndPrivateInspection',
+        inspectionId: inspection.id,
+      }));
+      if (!first) return rejected('no_op');
+      return {
+        ok: true,
+        command: first,
+        ...(rest.length > 0 ? { followUps: rest } : {}),
+      };
     }
     case 'revealPrizes':
       return zone?.kind === 'prizes' && zone.ownerId !== null

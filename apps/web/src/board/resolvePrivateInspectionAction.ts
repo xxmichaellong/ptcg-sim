@@ -89,7 +89,9 @@ export const resolveZoneInspectionAction = (
   if (zone.cards.length === 0) {
     return { ok: false, reason: 'empty_zone' };
   }
-  if (active || zone.cards.every((card) => card.kind === 'known')) {
+  // Cards looked at one by one leave the rest to see: only a zone this
+  // player sees whole has nothing left to look at.
+  if (zone.cards.every((card) => card.kind === 'known')) {
     return { ok: false, reason: 'no_op' };
   }
   return {
