@@ -135,9 +135,9 @@ export interface ClientSessionPolicy {
    */
   readonly connectionAttemptTimeoutMs: number;
   /**
-   * How long a command sent to the room may go with nothing at all coming
-   * back before the connection is taken for dead (a route dropped without
-   * a close) and resumed on another.
+   * How long a command sent to the room (or a replay asked of it) may go
+   * with nothing at all coming back before the connection is taken for dead
+   * (a route dropped without a close) and resumed on another.
    */
   readonly commandAnswerTimeoutMs: number;
 }

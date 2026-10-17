@@ -414,7 +414,10 @@ export class RemoteGameSession {
       type: 'RequestReplay',
       protocolVersion: PROTOCOL_VERSION,
     });
-    if (sent) this.updateState({ replayLoading: true });
+    if (sent) {
+      this.updateState({ replayLoading: true });
+      this.armAnswerDeadline();
+    }
     return sent;
   }
 
@@ -678,6 +681,7 @@ export class RemoteGameSession {
       case 'SessionSuperseded':
         this.manualClose = true;
         this.cancelReconnect();
+        this.cancelAnswerDeadline();
         this.socketGeneration += 1;
         this.closeSocket(4409, 'Session superseded');
         this.clearCapabilities();
@@ -1257,9 +1261,10 @@ export class RemoteGameSession {
   }
 
   /**
-   * A command sent and not yet settled, with nothing coming back for a
-   * while: the connection went quiet without closing (a dropped route), so
-   * it is resumed on another, which sends the command again.
+   * A command sent and not yet settled, or a replay asked for, with nothing
+   * coming back for a while: the connection went quiet without closing (a
+   * dropped route), so it is resumed on another, which sends the command
+   * again (a replay is given up, to be asked for again).
    */
   private armAnswerDeadline(): void {
     this.cancelAnswerDeadline();
@@ -1272,12 +1277,14 @@ export class RemoteGameSession {
     }, this.policy.commandAnswerTimeoutMs);
   }
 
-  /** The head command is the room's to answer (its result or publication). */
+  /** The room owes an answer: the head command's, or a replay's. */
   private awaitingRoom(): boolean {
     const status = this.pending[0]?.status;
     return (
       this.state.phase === 'ready' &&
-      (status === 'in_flight' || status === 'awaiting_publication')
+      (status === 'in_flight' ||
+        status === 'awaiting_publication' ||
+        this.state.replayLoading)
     );
   }
 

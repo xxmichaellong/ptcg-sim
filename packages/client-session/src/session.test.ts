@@ -1456,6 +1456,24 @@ describe('RemoteGameSession', () => {
     expect(test.scheduler.tasks.size).toBe(0);
   });
 
+  it('gives up a replay the room went quiet on, so it can be asked again', () => {
+    const test = setup();
+    const socket = test.admit();
+    expect(test.session.requestReplay()).toBe(true);
+    expect([...test.scheduler.tasks.values()][0]?.delayMs).toBe(10_000);
+    test.scheduler.runNext();
+    expect(socket.close).toHaveBeenCalled();
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      replayLoading: false,
+    });
+    test.scheduler.runNext();
+    const resumed = test.factory.sockets[1]!;
+    resumed.serverOpen();
+    resumed.serverMessage(welcome());
+    expect(test.session.requestReplay()).toBe(true);
+  });
+
   it('drops a stalled attempt for another, within the reconnect grace', () => {
     const test = setup();
     const first = test.admit();
