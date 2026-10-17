@@ -425,6 +425,82 @@ describe('dragging a card into an open work area', () => {
     expect(state.workAreas[p1]!.inspection!.cardIds).toContain(blueEnergy);
   });
 
+  it("leaves a Pokémon's dependents in its board's window when it leaves the other seat's board", () => {
+    const { state: prepared, context, workAreaId } = prepare();
+    let state = accepted(
+      prepared,
+      { type: 'LoadDeck', playerId: p2, entries: deckEntries() },
+      context
+    );
+    const hand = playerZoneId(p1, 'hand');
+    const of = (category: 'Pokémon' | 'Energy') =>
+      state.zones[hand]!.cardIds.filter(
+        (id) => state.cards[id]!.currentCategory === category
+      );
+    const [ownMon, awayMon] = of('Pokémon');
+    const [ownEnergy, awayEnergy] = of('Energy');
+    expect([ownMon, awayMon, ownEnergy, awayEnergy]).not.toContain(undefined);
+    const playWith = (
+      board: typeof p1,
+      mon: CardInstanceId,
+      energy: CardInstanceId
+    ) => {
+      state = accepted(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: mon,
+          expectedSourceZoneId: hand,
+          boardPlayerId: board,
+          slot: 'active',
+        },
+        context
+      );
+      state = accepted(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: energy,
+          expectedSourceZoneId: hand,
+          boardPlayerId: board,
+          slot: 'active',
+          targetStackId: state.boards[board]!.activeStackId!,
+        },
+        context
+      );
+    };
+    // Blue already has an attached-card window open...
+    playWith(p1, ownMon!, ownEnergy!);
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: ownMon!,
+        expectedStackId: state.boards[p1]!.activeStackId!,
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      context
+    );
+    const blueWindow = state.workAreas[p1]!.attachmentResolution!;
+    // ...and a Pokémon of Blue's, with an Energy, sits on Red's board.
+    playWith(p2, awayMon!, awayEnergy!);
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: awayMon!,
+        expectedWorkAreaId: workAreaId,
+      },
+      context
+    );
+    expect(state.workAreas[p1]!.inspection!.cardIds).toContain(awayMon);
+    // Its Energy waits in Red's board's window; Blue's is as it was.
+    expect(state.workAreas[p2]!.attachmentResolution?.cardIds).toEqual([
+      awayEnergy,
+    ]);
+    expect(state.workAreas[p1]!.attachmentResolution).toEqual(blueWindow);
+  });
+
   it('plays a card being looked at straight to the Bench', () => {
     const { state, context, workAreaId } = prepare();
     const inspected = state.workAreas[p1]!.inspection!.cardIds;

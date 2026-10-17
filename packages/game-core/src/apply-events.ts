@@ -2301,9 +2301,17 @@ const applyEventInternal = (
           stacks = remainingStacks;
           boards = removeStackFromBoards(state, new Set([stack.id]));
           if (source.attachmentResolution) {
+            // The dependents wait in the board's own attached-card window,
+            // as when any Pokémon leaves its stack: the other seat's, for a
+            // Pokémon played on that board.
+            const seat = stack.boardPlayerId;
+            const seatResolution =
+              seat === event.playerId
+                ? resolution
+                : (state.workAreas[seat]?.attachmentResolution ?? null);
             if (
-              resolution &&
-              resolution.id !== source.attachmentResolution.id
+              seatResolution &&
+              seatResolution.id !== source.attachmentResolution.id
             ) {
               throw new Error('Attachment resolution work area changed');
             }
@@ -2324,16 +2332,16 @@ const applyEventInternal = (
             ) {
               throw new Error('Work-area arrival has invalid dependent cards');
             }
-            nextResolution = resolution
+            const waiting: AttachmentResolutionWorkArea = seatResolution
               ? {
-                  ...resolution,
-                  cardIds: [...resolution.cardIds, ...remainingCardIds],
+                  ...seatResolution,
+                  cardIds: [...seatResolution.cardIds, ...remainingCardIds],
                   evolutionCardIds: [
-                    ...resolution.evolutionCardIds,
+                    ...seatResolution.evolutionCardIds,
                     ...remainingEvolutionCardIds,
                   ],
                   attachmentCardIds: [
-                    ...resolution.attachmentCardIds,
+                    ...seatResolution.attachmentCardIds,
                     ...remainingAttachmentCardIds,
                   ],
                 }
@@ -2345,6 +2353,8 @@ const applyEventInternal = (
                   attachmentCardIds: [...remainingAttachmentCardIds],
                   suggestedSlot: source.attachmentResolution.suggestedSlot,
                 };
+            if (seat === event.playerId) nextResolution = waiting;
+            else otherSeat = { seat, attachmentResolution: waiting };
             break;
           }
           // No new window: the dependents join the one this arrival targets.
