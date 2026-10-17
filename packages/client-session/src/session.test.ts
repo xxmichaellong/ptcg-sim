@@ -1460,6 +1460,17 @@ describe('RemoteGameSession', () => {
     const test = setup();
     const socket = test.admit();
     expect(test.session.requestReplay()).toBe(true);
+    // It starts, then stalls partway.
+    socket.serverMessage({
+      type: 'ReplayStarted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-1',
+      viewer: { kind: 'player', playerId: 'blue' },
+      startRevision: 0,
+      endRevision: 1,
+      truncated: false,
+      frameCount: 2,
+    });
     expect([...test.scheduler.tasks.values()][0]?.delayMs).toBe(10_000);
     test.scheduler.runNext();
     expect(socket.close).toHaveBeenCalled();

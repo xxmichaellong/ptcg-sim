@@ -1351,6 +1351,9 @@ export class RemoteGameSession {
     // it refuses anything but 1000 and 3000-4999, and the old socket would
     // stay open beside the new one.
     this.closeSocket(4012, reason);
+    // The old socket's close no longer comes here: a replay it was part way
+    // through is dropped now, as that close would have.
+    this.replayTransfer = undefined;
     this.scheduleReconnect();
   }
 
