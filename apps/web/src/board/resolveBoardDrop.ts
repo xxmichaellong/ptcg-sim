@@ -413,6 +413,23 @@ export const resolveBoardDrop = (
         },
       };
     }
+    // v1's card viewer: a card being looked at goes straight into play.
+    if (sourceInspection) {
+      if (!worksWindowOf(sourceInspectionPlayerId)) {
+        return rejected('unsupported_source');
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'MoveInspectedCardToPlay',
+          cardId: intent.cardId,
+          expectedWorkAreaId: sourceInspection.id,
+          boardPlayerId: slot.playerId,
+          slot: destinationSlot,
+          ...benchPlace,
+        },
+      };
+    }
     if (!sourceZone) return rejected('unsupported_target');
     return {
       ok: true,

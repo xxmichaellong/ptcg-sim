@@ -74,9 +74,10 @@ export const narrationEventsForBatch = (
 };
 
 /**
- * Two v1 actions are single log lines but several domain events: shuffling
- * one card into the deck (a departure to the deck, then a deck shuffle) and
- * switching a card with the deck top (two moves through the deck top). They
+ * Three v1 actions are single log lines but several domain events: shuffling
+ * one card into the deck (a departure to the deck, then a deck shuffle),
+ * switching a card with the deck top (two moves through the deck top), and
+ * playing a card being looked at (through the hand, onto the table). They
  * are recognised by batch shape so the log reads as v1's one line.
  */
 const narrateCompound = (
@@ -106,6 +107,24 @@ const narrateCompound = (
       if (!playerId || !source) return null;
       return [
         moved(batch.revision, playerId, 'shuffledIntoDeck', source, {
+          cardName: publicName(state, previousState, first.cardId),
+        }),
+      ];
+    }
+    // "moved X from viewing to bench": played from the viewer through the
+    // hand, which no one sees.
+    if (
+      first?.type === 'InspectedCardMoved' &&
+      second?.type === 'CardMovedToPlay' &&
+      second.cardId === first.cardId &&
+      second.expectedSourceZoneId === first.destinationZoneId &&
+      second.mode === 'newStack'
+    ) {
+      const playerId = ownerOf(state, previousState, first.cardId);
+      if (!playerId) return null;
+      return [
+        moved(batch.revision, playerId, 'moved', 'inspection', {
+          destination: second.slot,
           cardName: publicName(state, previousState, first.cardId),
         }),
       ];

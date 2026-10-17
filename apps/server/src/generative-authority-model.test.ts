@@ -791,6 +791,8 @@ const commandVariant = (command: WireGameCommand): string => {
     case 'MoveInspectedCard':
     case 'MoveStagedCard':
       return `${command.type}:index=${command.destinationIndex ?? 'omitted'}`;
+    case 'MoveInspectedCardToPlay':
+      return `${command.type}:${command.slot}`;
     case 'MoveCardToWorkArea':
       return command.type;
     case 'MovePlayStack':
@@ -1570,12 +1572,13 @@ describe('named model scenarios', () => {
     expect(() => parseIntegerEnvironment('MODEL_TEST', '1.5', 7, 10)).toThrow(
       'MODEL_TEST must be an integer from 1 through 10'
     );
-    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(54);
+    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(55);
     expect(new Set(Object.keys(MODEL_COMMAND_GENERATORS))).toEqual(
       new Set(Object.keys(MODEL_COMMAND_REGISTRY))
     );
     const expected = new Set<ScenarioModelCommandType>([
       'MoveInspectedCard',
+      'MoveInspectedCardToPlay',
       'MovePlayStackToZone',
       'MoveCardToWorkArea',
       'MoveStagedCard',
@@ -1675,6 +1678,20 @@ describe('named model scenarios', () => {
       work,
       coverage,
       playerOneSessionId,
+      'play-inspected',
+      {
+        type: 'MoveInspectedCardToPlay',
+        cardId: inspection.cards[0]!.id,
+        expectedWorkAreaId: inspection.id,
+        boardPlayerId: p1,
+        slot: 'bench',
+      }
+    );
+    inspection = playerView(work, p1).workAreas[p1]!.inspection!;
+    await submitScenarioCommand(
+      work,
+      coverage,
+      playerOneSessionId,
       'resolve-inspection',
       {
         type: 'ResolveInspectionCards',
@@ -1737,6 +1754,7 @@ describe('named model scenarios', () => {
     expect(coverage.observedScenarios).toEqual(
       new Set<ScenarioModelCommandType>([
         'MoveInspectedCard',
+        'MoveInspectedCardToPlay',
         'MoveCardToWorkArea',
         'MoveStagedCard',
         'RestoreStagedStack',

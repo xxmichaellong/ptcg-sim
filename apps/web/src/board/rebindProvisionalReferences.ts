@@ -210,8 +210,12 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   return (command, view) => {
     settleArrivals(view);
     // A Pokémon played into a new stack: remember where, in case its card
-    // comes back under another alias.
-    if (command.type === 'MoveCardToPlay' && !command.targetStackId) {
+    // comes back under another alias (as one played from the viewer does,
+    // having passed through its owner's hand).
+    if (
+      (command.type === 'MoveCardToPlay' && !command.targetStackId) ||
+      command.type === 'MoveInspectedCardToPlay'
+    ) {
       remember(placements, `${PREDICTED_STACK}${command.cardId}`, {
         boardPlayerId: command.boardPlayerId,
         slot: command.slot,

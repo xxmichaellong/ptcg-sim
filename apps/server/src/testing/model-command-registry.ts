@@ -57,6 +57,11 @@ export const MODEL_COMMAND_REGISTRY = {
     family: 'stack-work-area',
     rationale: 'requires an open inspection work area with a retained card',
   },
+  MoveInspectedCardToPlay: {
+    coverage: 'scenario',
+    family: 'stack-work-area',
+    rationale: 'requires an open inspection work area and room on the board',
+  },
   MoveCardToWorkArea: {
     coverage: 'scenario',
     family: 'stack-work-area',

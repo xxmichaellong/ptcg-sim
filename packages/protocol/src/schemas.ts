@@ -315,6 +315,15 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationZoneId: IdentifierSchema,
     destinationIndex: v.optional(NonNegativeIntegerSchema),
   }),
+  v.strictObject({
+    // A card being looked at, played straight to Active or the Bench.
+    type: v.literal('MoveInspectedCardToPlay'),
+    cardId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
+    boardPlayerId: IdentifierSchema,
+    slot: v.picklist(['active', 'bench'] as const),
+    benchIndex: v.optional(NonNegativeIntegerSchema),
+  }),
   v.object({
     // A card dragged into an open work-area popup, as v1's `viewCards` and
     // `attachedCards` containers accept drops from anywhere on the board.

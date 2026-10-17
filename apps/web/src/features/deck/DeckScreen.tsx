@@ -111,9 +111,13 @@ export const DeckScreen = ({
   const [importing, setImporting] = useState(false);
   const [dragging, setDragging] = useState(false);
   const importAbort = useRef<AbortController | undefined>(undefined);
+  /** The seat the import in flight will land on. */
+  const importSeat = useRef<DeckBuilderTarget | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
   const screen = useRef<HTMLDivElement>(null);
   const target = seats.target;
+  const targetNow = useRef(target);
+  targetNow.current = target;
   const seat = seats.slots[target];
   const seatTotal = deckTotals(seat.deck).total;
   const anySeatDeck =
@@ -202,14 +206,25 @@ export const DeckScreen = ({
     [rememberSeatDeck, store, target]
   );
 
+  /**
+   * A deck chosen for a seat outranks an import still reading for it: the
+   * import would otherwise land later and replace the choice (and, once
+   * Play is pressed, reset that side of the table).
+   */
+  const endImportFor = useCallback((slotTarget: DeckBuilderTarget) => {
+    if (importSeat.current === slotTarget) importAbort.current?.abort();
+  }, []);
+
   const chooseSaved = useCallback(
-    (deck: SavedDeck) =>
+    (deck: SavedDeck) => {
+      endImportFor(target);
       placeOnSeat(deck.cards, {
         deckId: deck.id,
         name: deck.name,
         format: deck.format,
-      }),
-    [placeOnSeat]
+      });
+    },
+    [endImportFor, placeOnSeat, target]
   );
 
   /**
@@ -221,6 +236,7 @@ export const DeckScreen = ({
     importAbort.current?.abort();
     const controller = new AbortController();
     importAbort.current = controller;
+    importSeat.current = targetNow.current;
     return controller;
   }, []);
 
@@ -312,6 +328,7 @@ export const DeckScreen = ({
       } finally {
         if (importAbort.current === controller) {
           importAbort.current = undefined;
+          importSeat.current = undefined;
           setImporting(false);
         }
       }
@@ -682,6 +699,7 @@ export const DeckScreen = ({
               else saveSeatDeck(slotTarget, true);
             }}
             onClearSeat={(slotTarget) => {
+              endImportFor(slotTarget);
               store.clearDeck(slotTarget);
               rememberSeatDeck(slotTarget, undefined);
             }}

@@ -125,6 +125,18 @@ export type GameCommand =
     }
   | {
       /**
+       * v1's card viewer: a card being looked at, played straight to the
+       * Active Spot or the Bench as a new Pokémon.
+       */
+      readonly type: 'MoveInspectedCardToPlay';
+      readonly cardId: CardInstanceId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly boardPlayerId: PlayerId;
+      readonly slot: PlaySlot;
+      readonly benchIndex?: number;
+    }
+  | {
+      /**
        * v1 registers the open `viewCards` / `attachedCards` popups as drop
        * targets, so a card can be dragged into the set being resolved and
        * then leave with it through the popup's bulk buttons.

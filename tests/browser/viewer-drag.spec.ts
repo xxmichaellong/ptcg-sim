@@ -373,6 +373,29 @@ test('the discard viewer and the Looking-at-cards window hand their cards to the
   await expect.poll(async () => (await zone(page, 'hand')).count).toBe(8);
   await expect(looking.locator('[data-work-area-card-id]')).toHaveCount(2);
   await idle(page);
+
+  // Straight onto the bench, as v1's viewer allows: on the part of it the
+  // window doesn't cover.
+  const bench = await zone(page, 'bench');
+  const next = looking.locator('[data-work-area-card-id]').first();
+  const nextId = (await next.getAttribute('data-work-area-card-id'))!;
+  const benchBox = (await page
+    .locator(`[data-zone-id="${bench.id}"]`)
+    .boundingBox())!;
+  const windowBox = (await looking.boundingBox())!;
+  const clear =
+    benchBox.x + benchBox.width - 12 > windowBox.x + windowBox.width
+      ? benchBox.x + benchBox.width - 12
+      : benchBox.x + 12;
+  await carry(
+    page,
+    nextId,
+    await centre(page, `[data-work-area-card-id="${nextId}"]`),
+    { x: clear, y: benchBox.y + benchBox.height / 2 }
+  );
+  await expect.poll(async () => (await zone(page, 'bench')).count).toBe(1);
+  await expect(looking.locator('[data-work-area-card-id]')).toHaveCount(1);
+  await idle(page);
 });
 
 test('a card carried over an open window shows above it, and joins it when dropped there', async ({

@@ -502,6 +502,23 @@ describe('board drop command resolution', () => {
         destinationZoneId: `zone:${playerId}:discard`,
       },
     });
+    // Straight into play, as v1's viewer allows.
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: viewCard.id,
+        targetId: `slot:${playerId}:bench`,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveInspectedCardToPlay',
+        cardId: viewCard.id,
+        expectedWorkAreaId: 'inspection-work-area',
+        boardPlayerId: playerId,
+        slot: 'bench',
+      },
+    });
   });
 
   it('drops a board card onto the painted popup the way v1 does', () => {

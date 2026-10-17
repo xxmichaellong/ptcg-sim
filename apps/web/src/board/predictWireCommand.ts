@@ -625,6 +625,26 @@ const predict = (
         command.benchIndex
       );
     }
+    case 'MoveInspectedCardToPlay': {
+      const taken = takeFromWorkArea(
+        view,
+        command.expectedWorkAreaId,
+        command.cardId
+      );
+      if (!taken) return null;
+      return placeNewStack(
+        taken.view,
+        emptyStack(
+          `predicted-stack:${taken.card.id}`,
+          command.boardPlayerId as PlayerId,
+          command.slot,
+          [taken.card],
+          []
+        ),
+        command.slot,
+        command.benchIndex
+      );
+    }
     case 'PlaceCardOnPlayStack': {
       const target = view.stacks[command.targetStackId];
       if (

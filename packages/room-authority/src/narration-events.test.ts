@@ -500,6 +500,42 @@ describe('battle-log narration', () => {
     expect(serialized).not.toContain('narration-definition-');
   });
 
+  it('tells a card played from the viewer as one move', () => {
+    const { state: dealt, context } = table();
+    let state = dealt;
+    state = step(
+      state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 3,
+        edge: 'top',
+      },
+      context
+    ).state;
+    const inspection = state.workAreas[p1]!.inspection!;
+    const played = step(
+      state,
+      {
+        type: 'MoveInspectedCardToPlay',
+        cardId: inspection.cardIds[0]!,
+        expectedWorkAreaId: inspection.id,
+        boardPlayerId: p1,
+        slot: 'bench',
+      },
+      context
+    );
+    expect(played.narration).toEqual([
+      expect.objectContaining({
+        type: 'CardMoved',
+        verb: 'moved',
+        source: 'inspection',
+        destination: 'bench',
+      }),
+    ]);
+  });
+
   it('tells a window of more cards than a publication holds in fewer lines', () => {
     const context = createContext();
     let state = createEmptyMatch(asMatchId('narration-bulk'), [

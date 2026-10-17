@@ -425,6 +425,49 @@ describe('dragging a card into an open work area', () => {
     expect(state.workAreas[p1]!.inspection!.cardIds).toContain(blueEnergy);
   });
 
+  it('plays a card being looked at straight to the Bench', () => {
+    const { state, context, workAreaId } = prepare();
+    const inspected = state.workAreas[p1]!.inspection!.cardIds;
+    const mon = inspected.find(
+      (id) => state.cards[id]!.currentCategory === 'Pokémon'
+    )!;
+    const hand = state.zones[playerZoneId(p1, 'hand')]!.cardIds;
+    const next = accepted(
+      state,
+      {
+        type: 'MoveInspectedCardToPlay',
+        cardId: mon,
+        expectedWorkAreaId: workAreaId,
+        boardPlayerId: p1,
+        slot: 'bench',
+      },
+      context
+    );
+    const benched = next.boards[p1]!.benchStackIds.map(
+      (id) => next.stacks[id]!.evolutionCardIds
+    );
+    expect(benched).toEqual([[mon]]);
+    expect(next.workAreas[p1]!.inspection!.cardIds).toEqual(
+      inspected.filter((id) => id !== mon)
+    );
+    // Through no hand: the hand is as it was.
+    expect(next.zones[playerZoneId(p1, 'hand')]!.cardIds).toEqual(hand);
+    // A card no longer looked at is refused, the window left alone.
+    expect(
+      rejected(
+        next,
+        {
+          type: 'MoveInspectedCardToPlay',
+          cardId: mon,
+          expectedWorkAreaId: workAreaId,
+          boardPlayerId: p1,
+          slot: 'active',
+        },
+        context
+      )
+    ).toBe('stale_reference');
+  });
+
   it('fails closed for a closed area and another player card', () => {
     const { state, context, workAreaId, handCardIds } = prepare();
     expect(

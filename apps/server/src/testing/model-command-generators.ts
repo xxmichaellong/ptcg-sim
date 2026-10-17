@@ -388,6 +388,7 @@ export const MODEL_COMMAND_GENERATORS = {
     };
   },
   MoveInspectedCard: () => undefined,
+  MoveInspectedCardToPlay: () => undefined,
   MovePlayStackToZone: () => undefined,
   MoveCardToWorkArea: () => undefined,
   MoveStagedCard: () => undefined,

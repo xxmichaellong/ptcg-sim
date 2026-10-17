@@ -14,6 +14,7 @@ import {
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
+import { applyEvent } from './apply-events.js';
 import { sameCardPresentation } from './card-presentation.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
 import {
@@ -1594,6 +1595,42 @@ export const decideCommand = (
         activeStackId,
         benchStackIds,
       });
+    }
+    case 'MoveInspectedCardToPlay': {
+      // As if taken into its owner's hand and played from there, in one
+      // batch: every rule of either move applies, and no one sees the hand.
+      const card = state.cards[command.cardId];
+      if (!card)
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      const hand = playerZoneId(card.ownerId, 'hand');
+      const taken = decideCommand(
+        state,
+        {
+          type: 'MoveInspectedCard',
+          cardId: command.cardId,
+          expectedWorkAreaId: command.expectedWorkAreaId,
+          destinationZoneId: hand,
+        },
+        context
+      );
+      if (!taken.accepted) return taken;
+      const inHand = taken.events.reduce(applyEvent, state);
+      const played = decideCommand(
+        inHand,
+        {
+          type: 'MoveCardToPlay',
+          cardId: command.cardId,
+          expectedSourceZoneId: hand,
+          boardPlayerId: command.boardPlayerId,
+          slot: command.slot,
+          ...(command.benchIndex === undefined
+            ? {}
+            : { benchIndex: command.benchIndex }),
+        },
+        context
+      );
+      if (!played.accepted) return played;
+      return accept(...taken.events, ...played.events);
     }
     case 'MoveInspectedCard': {
       const card = state.cards[command.cardId];

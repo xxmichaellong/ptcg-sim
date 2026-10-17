@@ -212,3 +212,36 @@ test('lines the catalog cannot place are listed, and the rest imports', async ({
   );
   await expect(page.locator('.deck-missing')).toContainText('Not A Real Card');
 });
+
+test('a deck chosen while an import still reads keeps the seat', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  // The catalog still building: a list import waits for it a moment.
+  await routeCardCatalog(page, { building: true });
+  await page.route('https://limitlesstcg.com/api/dm/import', (route) =>
+    route.fulfill({ json: { cards: [], errors: [] } })
+  );
+  await openSoloDeckScreen(page);
+  // A simulator file imports at once: a saved deck to choose.
+  await pasteOnScreen(
+    page,
+    'QTY,Name,Type,URL\n4,Dreepy,Pokémon,https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN.png'
+  );
+  await expect(seatCount(page)).toHaveAttribute('data-card-count', '4');
+  const dreepy = page
+    .getByRole('list', { name: 'Your decks' })
+    .getByRole('listitem')
+    .first();
+  await expect(dreepy.locator('.deck-tile__count')).toContainText('4/60');
+
+  // A list starts importing, then the player picks the saved deck.
+  await pasteOnScreen(page, LIST);
+  await dreepy.getByRole('button', { name: /put on P1/u }).click();
+  // Past the import's wait: the choice stands.
+  await page.waitForTimeout(3_500);
+  await expect(seatCount(page)).toHaveAttribute('data-card-count', '4');
+  await expect(
+    page.getByRole('list', { name: 'Your decks' }).getByRole('listitem')
+  ).toHaveCount(1);
+});

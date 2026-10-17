@@ -566,6 +566,51 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'MoveInspectedCardToPlay': {
+      // A card being looked at, played straight to Active or the Bench: as
+      // MoveInspectedCard to its owner's hand and MoveCardToPlay from there.
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      const location = findCardLocation(state, card.cardId);
+      if (!location || location.kind !== 'inspectionWorkArea') {
+        return rejected('stale_reference');
+      }
+      if (
+        !controlsSeat(location.playerId) ||
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy,
+          undoContext.mode
+        )
+      ) {
+        return rejected('unauthorized');
+      }
+      const inspection = state.workAreas[location.playerId]?.inspection;
+      if (
+        !inspection ||
+        inspection.id !== wire.expectedWorkAreaId ||
+        !state.players[wire.boardPlayerId]
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveInspectedCardToPlay',
+          cardId: card.cardId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          boardPlayerId: asPlayerId(wire.boardPlayerId),
+          slot: wire.slot,
+          ...(wire.benchIndex === undefined
+            ? {}
+            : { benchIndex: wire.benchIndex }),
+        },
+      };
+    }
     case 'MoveCardToWorkArea': {
       // v1's popups accept drops as well as produce them: a card dragged onto
       // the deck viewer or the attached-card window joins that set. The area
