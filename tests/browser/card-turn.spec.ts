@@ -243,15 +243,23 @@ const expectTurnedOver = (
   // axis in CSS; on the tabletop the table draws it narrower on its edge. A
   // runner that paints the 420 ms turn in a handful of frames (CI's software
   // renderer) may show none near edge-on, so that is judged only where the
-  // turn was seen in enough frames to show it.
+  // turn itself -- from the card first drawn narrower to it lying face up --
+  // was seen in enough frames to show it. (A card waiting, back up, for its
+  // face is marked turning too, but isn't turning yet.)
   if (mode === 'flat')
     expect(frames.some((frame) => frame.rotating)).toBe(true);
   else {
-    const turning = frames.filter((frame) => frame.turning);
-    if (turning.length >= 8)
-      expect(Math.min(...turning.map((frame) => frame.width))).toBeLessThan(
-        widest * 0.8
-      );
+    const start = frames.findIndex(
+      (frame) => frame.turning && frame.width < widest * 0.98
+    );
+    const end = frames.findIndex(
+      (frame, index) =>
+        index > start && frame.face && !frame.back && !frame.turning
+    );
+    if (start >= 0 && end - start >= 8)
+      expect(
+        Math.min(...frames.slice(start, end).map((frame) => frame.width))
+      ).toBeLessThan(widest * 0.8);
   }
   // One card went to the discard: no second one flies in after it.
   expect(Math.max(...frames.map((frame) => frame.ghosts))).toBe(0);
