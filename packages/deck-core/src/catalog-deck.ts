@@ -85,13 +85,34 @@ export const evolutionLineOf = (
   return root;
 };
 
+/**
+ * Series Limitless has translated scans of: HeartGold & SoulSilver on (its
+ * promos too). Not Diamond & Pearl, Platinum or older, McDonald's or the
+ * trainer kits, nor TCG Pocket -- their cards keep the catalog's scan.
+ * (Checked against Limitless, October 2026.)
+ */
+const TRANSLATED_SERIES = new Set([
+  'HeartGold & SoulSilver',
+  'Call of Legends',
+  'Black & White',
+  'XY',
+  'Sun & Moon',
+  'Sword & Shield',
+  'Scarlet & Violet',
+  'Mega Evolution',
+]);
+
 /** A deck card for a catalogued printing, with the facts the rules check. */
 export const deckCardFromCatalog = (
   card: CatalogCard,
   options: DeckCardOptions = {}
 ): DeckCard => {
   const localized =
-    options.language && options.language !== 'English' && card.set.code
+    options.language &&
+    options.language !== 'English' &&
+    card.set.code &&
+    !card.set.pocket &&
+    TRANSLATED_SERIES.has(card.set.series)
       ? resolvePastedDecklistImageUrl(
           { name: card.name, setCode: card.set.code, number: card.number },
           { language: options.language }
@@ -269,7 +290,10 @@ export const resolveDecklistRow = (
   );
   if (row.setCode && named.length > 0) {
     const set = canonicalSet(row.setCode);
-    const inSet = named.filter((card) => card.set.code === set);
+    const inSet = named.filter(
+      (card) =>
+        card.set.code !== undefined && canonicalSet(card.set.code) === set
+    );
     const card = preferred(inSet);
     if (card) return { row, card, match: 'name_in_set' };
   }

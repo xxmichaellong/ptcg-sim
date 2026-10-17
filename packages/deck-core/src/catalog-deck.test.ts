@@ -288,6 +288,24 @@ describe('finding the printing a decklist line means', () => {
   });
 });
 
+describe('card images in other languages', () => {
+  it('uses a translated scan only where Limitless has one', () => {
+    const SVI = {
+      ...set('sv01', 'SVI', '2023-03-31', 198),
+      series: 'Scarlet & Violet',
+    };
+    const BS = { ...set('base1', 'BS', '1999-01-09', 102), series: 'Base' };
+    const modern = deckCardFromCatalog(card(SVI, '1', 'Pineco'), {
+      language: 'German',
+    });
+    expect(modern.image).toContain('/tpci/SVI/SVI_001_R_DE.png');
+    const old = card(BS, '4', 'Charizard');
+    expect(deckCardFromCatalog(old, { language: 'German' }).image).toBe(
+      old.image
+    );
+  });
+});
+
 describe('catalog facts for decks made without the catalog', () => {
   it('adds facts and keeps what the table shows', () => {
     const imported = deckListOf([

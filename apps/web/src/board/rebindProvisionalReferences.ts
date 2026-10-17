@@ -60,10 +60,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
 
   /**
    * Cards a sent command brings into a hand (a draw, a card taken back from
-   * the discard, a Pokémon picked up): the hand gets them under new
-   * aliases, so a move made on one before then names the old. Each is
-   * matched by its definition among the hand's new cards at the next send,
-   * once the command has landed.
+   * the discard, a Pokémon picked up, or one moved within the hand, which
+   * the room renames too so the other player can't follow it): the hand
+   * gets them under new aliases, so a move made on one before then names
+   * the old. Each is matched by its definition among the hand's new cards
+   * at the next send, once the command has landed.
    */
   let arrivals: {
     readonly zoneId: string;
@@ -76,13 +77,14 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
     const predicted = predictWireCommand(view, command);
     if (!predicted) return;
+    const moved = command.type === 'MoveCard' ? command.cardId : undefined;
     for (const zone of Object.values(predicted.zones)) {
       if (zone.kind !== 'hand') continue;
       const before = new Set(
         (view.zones[zone.id]?.cards ?? []).map((card) => card.id)
       );
       const cards = zone.cards.flatMap((card) =>
-        card.kind === 'known' && !before.has(card.id)
+        card.kind === 'known' && (!before.has(card.id) || card.id === moved)
           ? [{ alias: card.id, definitionId: card.definitionId }]
           : []
       );

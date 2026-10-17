@@ -28,7 +28,7 @@ import {
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
-import { predictWireCommand } from './predictWireCommand.js';
+import { predictQueue, predictWireCommand } from './predictWireCommand.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 
@@ -299,20 +299,10 @@ export class BoardSessionAdapter {
     const source = sourceFor(replayState);
     const sourceView = viewFor(replayState, liveState);
     // Only live views carry predictions, and only for commands still in the
-    // session's queue -- whichever control submitted them. A prediction that
-    // no longer applies (its card moved, or the publication already shows the
-    // effect) returns null and is simply not shown. A command whose
-    // publication has landed is skipped outright: a draw has no precondition
-    // that fails once applied, and would otherwise be shown twice.
+    // session's queue -- whichever control submitted them (predictQueue).
     const predictedView =
       sourceView && source.kind === 'live'
-        ? liveState.pendingCommands.reduce<MatchViewState>(
-            (current, pending) =>
-              pending.published
-                ? current
-                : (predictWireCommand(current, pending.command) ?? current),
-            sourceView
-          )
+        ? predictQueue(sourceView, liveState.pendingCommands)
         : sourceView;
     const view = predictedView
       ? (this.options.transformView?.(predictedView, source) ?? predictedView)

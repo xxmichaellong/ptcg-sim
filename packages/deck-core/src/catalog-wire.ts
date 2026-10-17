@@ -577,10 +577,12 @@ const decodeSet = (value: unknown): CatalogSet | undefined => {
   ) {
     return undefined;
   }
+  // As spelled: TCG Pocket's mini-sets are "A1a", and their scans are found
+  // only so. Card ids and lookups are what is upper-cased.
   const code = text(value.code, 16);
   return Object.freeze({
     id,
-    ...optional('code', code?.toUpperCase()),
+    ...optional('code', code),
     name,
     series,
     released,

@@ -2,7 +2,7 @@ import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
-import { predictWireCommand } from './predictWireCommand.js';
+import { predictQueue, predictWireCommand } from './predictWireCommand.js';
 
 const blue = asPlayerId('spike-blue');
 const red = asPlayerId('spike-red');
@@ -592,4 +592,20 @@ it('predicts bulk removal into each card owner’s pile', () => {
   expect(cardIn(resolved, foreign.id)).toBe(`zone:${red}:discard`);
   for (const card of area.evolutionCards)
     expect(cardIn(resolved, card.id)).toBe(discard.id);
+});
+
+it('predicts nothing queued behind a shuffle until the shuffle is published', () => {
+  const draw = { command: { type: 'DrawCards' as const, count: 1 } };
+  const shuffle = {
+    command: { type: 'ShuffleZone' as const, zoneId: deck.id },
+  };
+  const handSize = (next: MatchViewState) => next.zones[hand.id]!.cards.length;
+  // A draw alone is shown at once.
+  expect(handSize(predictQueue(view, [draw]))).toBe(hand.cards.length + 1);
+  // Behind an unpublished shuffle it waits: the top card isn't known yet.
+  expect(handSize(predictQueue(view, [shuffle, draw]))).toBe(hand.cards.length);
+  // Once the shuffle's result is in the view, the draw is shown again.
+  expect(
+    handSize(predictQueue(view, [{ ...shuffle, published: true }, draw]))
+  ).toBe(hand.cards.length + 1);
 });

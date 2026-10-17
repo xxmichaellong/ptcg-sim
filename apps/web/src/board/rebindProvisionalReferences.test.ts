@@ -271,4 +271,44 @@ describe('rebinding predicted references', () => {
       )
     ).toMatchObject({ cardId: 'back-in-hand' });
   });
+
+  it('names a card moved within the hand as the hand has it after the move', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const [first, ...rest] = hand.cards;
+    // Moved to the end of the hand: the room renames it as it goes.
+    rebind(
+      {
+        type: 'MoveCard',
+        cardId: first!.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: hand.id,
+        destinationIndex: hand.cards.length - 1,
+      },
+      view
+    );
+    const landed: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: [...rest, { ...first!, id: 'renamed-in-hand' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: first!.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        landed
+      )
+    ).toMatchObject({ cardId: 'renamed-in-hand' });
+  });
 });

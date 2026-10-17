@@ -313,6 +313,24 @@ describe('untrusted input', () => {
     expect(decoded.cards).toHaveLength(0);
   });
 
+  it("keeps a TCG Pocket mini-set's code as spelled, for its scans", () => {
+    const decoded = decodeCatalog(
+      body([{ n: '1', nm: 'Celebi ex', c: 'P', im: '' }], {
+        id: 'A1a',
+        code: 'A1a',
+        name: 'Mythical Island',
+        series: 'Pokémon TCG Pocket',
+        released: '2024-12-17',
+        img: undefined,
+        pocket: true,
+      })
+    );
+    const card = decoded.cards[0]!;
+    expect(card.set.code).toBe('A1a');
+    expect(card.id).toBe('A1A 1');
+    expect(card.image).toContain('/pocket/A1a/A1a_001_');
+  });
+
   it('tells Basic Energy, Special Energy and ACE SPEC Trainers apart', () => {
     const decoded = decodeCatalog({
       ...body([]),

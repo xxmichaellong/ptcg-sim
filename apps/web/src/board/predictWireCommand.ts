@@ -1283,3 +1283,55 @@ const resolveWorkAreaCards = (
         : [...zone.cards, ...placed],
   });
 };
+
+/**
+ * Whether the room decides part of a command's outcome by chance (a deck
+ * shuffled, a card picked at random): what the commands queued after it
+ * would do can't be known until its result is published.
+ */
+export const isRandomizingCommand = (command: WireGameCommand): boolean => {
+  switch (command.type) {
+    case 'ShuffleZone':
+    case 'ShuffleCardIntoDeck':
+    case 'ShuffleZoneIntoDeck':
+    case 'ShuffleZoneToDeckBottom':
+    case 'ShuffleHandIntoDeckAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw':
+    case 'PlayRandomCardFaceDown':
+    case 'SetupPlayer':
+      return true;
+    case 'ResolveStagedCards':
+    case 'ResolveInspectionCards':
+    case 'ResolveLooseBoardCards':
+      return (
+        command.destination === 'shuffleIntoDeck' ||
+        command.destination === 'shuffleToDeckBottom'
+      );
+    default:
+      return false;
+  }
+};
+
+/**
+ * The view with a queue of commands predicted on it, in order. A command
+ * whose publication has landed is skipped (a draw would be shown twice); a
+ * prediction that no longer applies is not shown; and nothing after a
+ * command the room decides by chance is predicted, since it would be
+ * predicted against the order before the shuffle -- the wrong card drawn,
+ * shown as playable.
+ */
+export const predictQueue = (
+  view: MatchViewState,
+  queue: readonly {
+    readonly command: WireGameCommand;
+    readonly published?: boolean;
+  }[]
+): MatchViewState => {
+  let current = view;
+  for (const pending of queue) {
+    if (pending.published) continue;
+    current = predictWireCommand(current, pending.command) ?? current;
+    if (isRandomizingCommand(pending.command)) break;
+  }
+  return current;
+};
