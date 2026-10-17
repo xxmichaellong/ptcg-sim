@@ -163,6 +163,30 @@ describe('importing a decklist', () => {
     ]);
   });
 
+  it('keeps the list order whichever way each line was found', async () => {
+    const fetchRequest = vi.fn<typeof fetch>(async () =>
+      jsonResponse({
+        cards: [
+          {
+            name: 'Mystery Card',
+            set: 'XYZ',
+            number: '7',
+            region: 'int',
+            card_type: 'trainer',
+          },
+        ],
+      })
+    );
+    const result = await importDeckText('1 Mystery Card\n4 Dreepy TWM 128', {
+      catalog,
+      fetch: fetchRequest,
+    });
+    expect(result.ok && result.cards.map((entry) => entry.card.name)).toEqual([
+      'Mystery Card',
+      'Dreepy',
+    ]);
+  });
+
   it('takes a printing the catalog lacks as the line says, never another card of its name', async () => {
     // The catalog has Dreepy, but not this printing of it.
     const fetchRequest = vi.fn<typeof fetch>(async () =>

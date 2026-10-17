@@ -274,8 +274,11 @@ export const importDeckText = async (
     };
   }
 
-  const entries: { card: DeckCard; count: number }[] = [];
+  // Each line keeps its place in the list, whichever way it was found:
+  // the declared order is the order the table sorts a hand by.
+  const entries: ({ card: DeckCard; count: number } | undefined)[] = [];
   let rest: PastedDecklistRow[] = [];
+  const restAt: number[] = [];
   const index = options.catalog ? catalogIndex(options.catalog) : undefined;
   for (const row of parsed.rows) {
     const resolved = index ? resolveDecklistRow(index, row) : undefined;
@@ -294,6 +297,8 @@ export const importDeckText = async (
       });
       entries.push({ card, count: row.quantity });
     } else {
+      restAt.push(entries.length);
+      entries.push(undefined);
       rest.push(row);
     }
   }
@@ -311,9 +316,9 @@ export const importDeckText = async (
       return { ok: false, reason: 'aborted', message: '' };
     }
     rest = [...completed.rows];
-    for (const row of rest) {
+    for (const [position, row] of rest.entries()) {
       const card = cardFromLine(row);
-      if (card) entries.push({ card, count: row.quantity });
+      if (card) entries[restAt[position]!] = { card, count: row.quantity };
       else {
         missing.push({
           quantity: row.quantity,
@@ -325,5 +330,9 @@ export const importDeckText = async (
       }
     }
   }
-  return finish(deckListOf(entries), namedInText(text), missing);
+  return finish(
+    deckListOf(entries.filter((entry) => entry !== undefined)),
+    namedInText(text),
+    missing
+  );
 };
