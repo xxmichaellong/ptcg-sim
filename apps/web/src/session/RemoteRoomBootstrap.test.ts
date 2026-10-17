@@ -19,7 +19,60 @@ const input = {
   rendererKind: 'pixi' as const,
 };
 
+/**
+ * A fetch whose answer stalls -- before its headers, or partway through its
+ * body -- until the request's signal gives it up, as a browser's does.
+ */
+const stalledFetch =
+  (stall: 'headers' | 'body'): typeof fetch =>
+  async (_request, init) => {
+    const signal = init?.signal;
+    if (!signal) return new Promise<never>(() => undefined);
+    if (stall === 'headers') {
+      return new Promise<never>((_, reject) =>
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+        })
+      );
+    }
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"admission'));
+          signal.addEventListener(
+            'abort',
+            () => controller.error(signal.reason),
+            { once: true }
+          );
+        },
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
 describe('remote room admission bootstrap', () => {
+  it(
+    'gives up a ticket exchange whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      for (const [stall, code] of [
+        ['headers', 'exchange_failed'],
+        ['body', 'invalid_response'],
+      ] as const) {
+        const createRuntime = vi.fn(() => ({}) as RemoteRoomRuntime);
+        await expect(
+          bootstrapRemoteRoom(input, {
+            fetch: stalledFetch(stall),
+            origin: 'https://play.example',
+            requestTimeoutMs: 20,
+            createRuntime,
+          })
+        ).rejects.toMatchObject({ code });
+        expect(createRuntime).not.toHaveBeenCalled();
+      }
+    }
+  );
+
   it('exchanges the long-lived capability only in a same-origin POST body', async () => {
     const fetchImplementation = vi.fn(
       async (_request: RequestInfo | URL, _init?: RequestInit) =>

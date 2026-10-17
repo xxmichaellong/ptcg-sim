@@ -14,6 +14,7 @@ import {
   currentBrowserOrigin,
   normalizeHttpOrigin,
   readBoundedJsonResponse,
+  withRequestDeadline,
 } from './browser-json.js';
 
 const MAX_RESPONSE_BYTES = 2_048;
@@ -43,6 +44,8 @@ export interface RemoteRoomBootstrapDependencies {
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
   readonly now?: () => number;
+  /** How long the ticket exchange may take (ROOM_REQUEST_TIMEOUT_MS). */
+  readonly requestTimeoutMs?: number;
   readonly createRuntime?: (
     options: RemoteRoomRuntimeOptions
   ) => RemoteRoomRuntime;
@@ -111,7 +114,7 @@ export const bootstrapRemoteRoom = async (
       credentials: 'omit',
       redirect: 'error',
       referrerPolicy: 'no-referrer',
-      ...(input.signal ? { signal: input.signal } : {}),
+      signal: withRequestDeadline(input.signal, dependencies.requestTimeoutMs),
     });
   } catch {
     throw new RemoteRoomBootstrapError('exchange_failed');

@@ -24,6 +24,21 @@ export const normalizeHttpOrigin = (value: string): URL | undefined => {
   return url;
 };
 
+/** How long a room request may take, its answer read in full, before it fails. */
+export const ROOM_REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * The caller's signal with a deadline added: a request whose answer stalls
+ * (its headers or its body) is given up, not waited on forever.
+ */
+export const withRequestDeadline = (
+  signal: AbortSignal | undefined,
+  timeoutMs: number = ROOM_REQUEST_TIMEOUT_MS
+): AbortSignal => {
+  const deadline = AbortSignal.timeout(timeoutMs);
+  return signal ? AbortSignal.any([signal, deadline]) : deadline;
+};
+
 /** Parses a JSON response without trusting Content-Length or buffering forever. */
 export const readBoundedJsonResponse = async (
   response: Response,

@@ -20,6 +20,7 @@ import {
   currentBrowserOrigin,
   normalizeHttpOrigin,
   readBoundedJsonResponse,
+  withRequestDeadline,
 } from './browser-json.js';
 import {
   currentBrowserInvitationClipboard,
@@ -74,6 +75,8 @@ export interface RemoteRoomInvitationCustodyOptions {
   readonly fetch: typeof globalThis.fetch;
   readonly origin: URL;
   readonly signal?: AbortSignal;
+  /** How long issuing one invitation may take (ROOM_REQUEST_TIMEOUT_MS). */
+  readonly requestTimeoutMs?: number;
 }
 
 /**
@@ -85,6 +88,7 @@ export class RemoteRoomInvitationCustody {
   readonly #fetch: typeof globalThis.fetch;
   readonly #origin: URL;
   readonly #ownerSignal: AbortSignal | undefined;
+  readonly #requestTimeoutMs: number | undefined;
   readonly #abort = new AbortController();
   #playerCapability: string | undefined;
   #spectatorCapability: string | undefined;
@@ -97,6 +101,7 @@ export class RemoteRoomInvitationCustody {
     this.#fetch = options.fetch;
     this.#origin = options.origin;
     this.#ownerSignal = options.signal;
+    this.#requestTimeoutMs = options.requestTimeoutMs;
   }
 
   copyPlayerInvitation(
@@ -223,8 +228,10 @@ export class RemoteRoomInvitationCustody {
       ...(this.#ownerSignal ? [this.#ownerSignal] : []),
       ...(signal ? [signal] : []),
     ];
-    const activeSignal =
-      signals.length === 1 ? signals[0]! : AbortSignal.any(signals);
+    const activeSignal = withRequestDeadline(
+      signals.length === 1 ? signals[0]! : AbortSignal.any(signals),
+      this.#requestTimeoutMs
+    );
     let response: Response;
     try {
       // A browser-native fetch is receiver-sensitive in some runtimes. Copy it
@@ -303,6 +310,8 @@ export interface RemoteRoomCreationDependencies {
   readonly origin?: string;
   readonly bootstrap?: typeof bootstrapRemoteRoom;
   readonly now?: () => number;
+  /** How long each room request may take (ROOM_REQUEST_TIMEOUT_MS). */
+  readonly requestTimeoutMs?: number;
   readonly bootstrapDependencies?: Omit<
     RemoteRoomBootstrapDependencies,
     'fetch' | 'origin'
@@ -420,7 +429,7 @@ export const createRemoteRoom = async (
       credentials: 'omit',
       redirect: 'error',
       referrerPolicy: 'no-referrer',
-      ...(input.signal ? { signal: input.signal } : {}),
+      signal: withRequestDeadline(input.signal, dependencies.requestTimeoutMs),
     });
   } catch {
     throw new RemoteRoomCreationError('creation_failed');
@@ -458,6 +467,9 @@ export const createRemoteRoom = async (
     fetch: fetchImplementation,
     origin,
     ...(input.signal ? { signal: input.signal } : {}),
+    ...(dependencies.requestTimeoutMs !== undefined
+      ? { requestTimeoutMs: dependencies.requestTimeoutMs }
+      : {}),
   });
   try {
     const bootstrap = dependencies.bootstrap ?? bootstrapRemoteRoom;
@@ -483,6 +495,9 @@ export const createRemoteRoom = async (
         },
         fetch: fetchImplementation,
         origin: origin.origin,
+        ...(dependencies.requestTimeoutMs !== undefined
+          ? { requestTimeoutMs: dependencies.requestTimeoutMs }
+          : {}),
       }
     );
     let disposed = false;

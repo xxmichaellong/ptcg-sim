@@ -37,7 +37,79 @@ const capturingClipboard = () => {
   };
 };
 
+/**
+ * A fetch whose answer stalls -- before its headers, or partway through its
+ * body -- until the request's signal gives it up, as a browser's does.
+ */
+const stalledFetch =
+  (stall: 'headers' | 'body'): typeof fetch =>
+  async (_request, init) => {
+    const signal = init?.signal;
+    if (!signal) return new Promise<never>(() => undefined);
+    if (stall === 'headers') {
+      return new Promise<never>((_, reject) =>
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+        })
+      );
+    }
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"admission'));
+          signal.addEventListener(
+            'abort',
+            () => controller.error(signal.reason),
+            { once: true }
+          );
+        },
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
 describe('remote room creation bootstrap', () => {
+  it(
+    'gives up a room creation whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      for (const [stall, code] of [
+        ['headers', 'creation_failed'],
+        ['body', 'invalid_response'],
+      ] as const) {
+        const bootstrap = vi.fn();
+        await expect(
+          createRemoteRoom(input, {
+            fetch: stalledFetch(stall),
+            origin: 'https://play.example',
+            requestTimeoutMs: 20,
+            bootstrap,
+          })
+        ).rejects.toMatchObject({ code });
+        expect(bootstrap).not.toHaveBeenCalled();
+      }
+    }
+  );
+
+  it(
+    'gives up an invitation whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      const custody = new RemoteRoomInvitationCustody({
+        roomCode: 'ABCDEFGH2345',
+        playerCapability: credentials.playerTwoSeatCapability,
+        fetch: stalledFetch('headers'),
+        origin: new URL('https://play.example'),
+        requestTimeoutMs: 20,
+      });
+      const clipboard = capturingClipboard();
+      await expect(
+        custody.copyPlayerInvitation(clipboard.writer)
+      ).rejects.toMatchObject({ code: 'issue_failed' });
+      expect(clipboard.values).toEqual([]);
+    }
+  );
+
   it('creates and bootstraps the owner without putting capabilities in URLs or the result graph', async () => {
     const fetchImplementation = vi
       .fn<typeof fetch>()
