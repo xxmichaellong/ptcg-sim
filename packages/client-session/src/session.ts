@@ -231,6 +231,8 @@ export class RemoteGameSession {
   private reconnectTimer?: unknown;
   /** The deadline of the connection attempt in flight. */
   private attemptTimer?: unknown;
+  /** The deadline for the room to answer the command in flight. */
+  private answerTimer?: unknown;
   /** When an admitted session lost its transport: the grace runs from here. */
   private reconnectingSince?: number;
   private reconnectAttempts = 0;
@@ -268,6 +270,7 @@ export class RemoteGameSession {
     this.socketGeneration += 1;
     this.closeSocket(1000, 'Session replaced');
     this.cancelAttemptDeadline();
+    this.cancelAnswerDeadline();
     this.reconnectingSince = undefined;
     this.pending.length = 0;
     this.ownRevisions.clear();
@@ -439,6 +442,7 @@ export class RemoteGameSession {
     }
     this.socketGeneration += 1;
     this.cancelAttemptDeadline();
+    this.cancelAnswerDeadline();
     this.closeSocket(1000, 'Client left room');
     this.clearCapabilities();
     this.updateState({
@@ -492,7 +496,12 @@ export class RemoteGameSession {
           }
         },
         message: (frame) => {
-          if (this.isCurrent(generation)) this.handleFrame(frame);
+          if (!this.isCurrent(generation)) return;
+          this.handleFrame(frame);
+          // Anything from the room shows the connection is alive.
+          if (this.answerTimer !== undefined && this.isCurrent(generation)) {
+            this.armAnswerDeadline();
+          }
         },
         close: (event) => {
           if (this.isCurrent(generation)) this.handleClose(event);
@@ -1103,8 +1112,9 @@ export class RemoteGameSession {
     ) {
       return;
     }
-    if (
-      !this.sendEnvelope(head.envelope) &&
+    if (this.sendEnvelope(head.envelope)) {
+      this.armAnswerDeadline();
+    } else if (
       this.isCurrent(generation) &&
       this.state.phase === 'ready' &&
       this.sessionId === sessionId &&
@@ -1160,8 +1170,9 @@ export class RemoteGameSession {
     const generation = this.socketGeneration;
     const sessionId = this.sessionId;
     head.retries += 1;
-    if (
-      !this.sendEnvelope(head.envelope) &&
+    if (this.sendEnvelope(head.envelope)) {
+      this.armAnswerDeadline();
+    } else if (
       this.isCurrent(generation) &&
       this.state.phase === 'ready' &&
       this.sessionId === sessionId &&
@@ -1189,6 +1200,7 @@ export class RemoteGameSession {
 
   private handleClose(event: SessionSocketCloseEvent): void {
     this.cancelAttemptDeadline();
+    this.cancelAnswerDeadline();
     this.socket = undefined;
     this.replayTransfer = undefined;
     this.socketGeneration += 1;
@@ -1244,8 +1256,40 @@ export class RemoteGameSession {
     this.attemptTimer = undefined;
   }
 
+  /**
+   * A command sent and not yet settled, with nothing coming back for a
+   * while: the connection went quiet without closing (a dropped route), so
+   * it is resumed on another, which sends the command again.
+   */
+  private armAnswerDeadline(): void {
+    this.cancelAnswerDeadline();
+    if (!this.awaitingRoom()) return;
+    const generation = this.socketGeneration;
+    this.answerTimer = this.scheduler.schedule(() => {
+      this.answerTimer = undefined;
+      if (!this.isCurrent(generation) || !this.awaitingRoom()) return;
+      this.reconnectTransport('The room stopped answering');
+    }, this.policy.commandAnswerTimeoutMs);
+  }
+
+  /** The head command is the room's to answer (its result or publication). */
+  private awaitingRoom(): boolean {
+    const status = this.pending[0]?.status;
+    return (
+      this.state.phase === 'ready' &&
+      (status === 'in_flight' || status === 'awaiting_publication')
+    );
+  }
+
+  private cancelAnswerDeadline(): void {
+    if (this.answerTimer === undefined) return;
+    this.scheduler.cancel(this.answerTimer);
+    this.answerTimer = undefined;
+  }
+
   private scheduleReconnect(): void {
     this.cancelAttemptDeadline();
+    this.cancelAnswerDeadline();
     if (this.sessionId !== undefined && this.reconnectingSince === undefined) {
       this.reconnectingSince = this.now();
     }
@@ -1313,6 +1357,7 @@ export class RemoteGameSession {
     this.manualClose = true;
     this.cancelReconnect();
     this.cancelAttemptDeadline();
+    this.cancelAnswerDeadline();
     this.socketGeneration += 1;
     this.closeSocket(4400, failure.code);
     this.clearCapabilities();

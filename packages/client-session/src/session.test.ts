@@ -1407,6 +1407,55 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('resumes a connection that went quiet with a command unanswered', () => {
+    const test = setup();
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    // Traffic from the room puts the deadline off; it never fires while
+    // nothing awaits an answer.
+    const [first] = [...test.scheduler.tasks.values()];
+    expect(first?.delayMs).toBe(10_000);
+    socket.serverMessage({
+      type: 'ChatMessage',
+      protocolVersion: PROTOCOL_VERSION,
+      messageId: 'chat-1',
+      playerId: 'blue',
+      displayName: 'Blue',
+      message: 'Thinking',
+      createdAtMs: 1,
+    });
+    expect(test.scheduler.tasks.size).toBe(1);
+    // Then nothing: the connection is taken for dead and resumed.
+    test.scheduler.runNext();
+    expect(socket.close).toHaveBeenCalled();
+    expect(test.session.getSnapshot().phase).toBe('reconnecting');
+    test.scheduler.runNext();
+    const resumed = test.factory.sockets[1]!;
+    resumed.serverOpen();
+    resumed.serverMessage(welcome());
+    expect(clientFrame(resumed, 1)).toMatchObject({
+      type: 'Command',
+      commandId: 'command-1',
+    });
+    resumed.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+    resumed.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-1',
+      executedClientSequence: 1,
+      snapshot: view(1),
+    });
+    // Settled: no deadline is left behind.
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
   it('drops a stalled attempt for another, within the reconnect grace', () => {
     const test = setup();
     const first = test.admit();

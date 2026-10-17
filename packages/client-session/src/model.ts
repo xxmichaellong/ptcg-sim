@@ -134,6 +134,12 @@ export interface ClientSessionPolicy {
    * longer than what is left of the room's reconnect grace.
    */
   readonly connectionAttemptTimeoutMs: number;
+  /**
+   * How long a command sent to the room may go with nothing at all coming
+   * back before the connection is taken for dead (a route dropped without
+   * a close) and resumed on another.
+   */
+  readonly commandAnswerTimeoutMs: number;
 }
 
 export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
@@ -151,4 +157,5 @@ export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   reconnectMaximumDelayMs: 5_000,
   reconnectJitterRatio: 0.2,
   connectionAttemptTimeoutMs: 8_000,
+  commandAnswerTimeoutMs: 10_000,
 };
