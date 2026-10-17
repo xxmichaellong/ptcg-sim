@@ -390,6 +390,12 @@ class GroupHash {
   }
 }
 
+/** A Weakness or Resistance modifier as the server writes it: "×2", "-20". */
+const modifier = (value: unknown): string | undefined =>
+  typeof value === 'string' && /^[×+-]\d{1,3}$/u.test(value)
+    ? value
+    : undefined;
+
 type Mutable = Record<string, unknown>;
 
 /**
@@ -415,6 +421,12 @@ interface DecodedPrint {
   readonly groupKey: string;
   /** Its type, lower case, when it is Basic Energy. */
   readonly basicEnergy: string | undefined;
+  /**
+   * A Pokémon's Weakness, Resistance and Retreat, with their modifiers,
+   * when TCGdex has them all; prints otherwise alike are one card only
+   * when these agree.
+   */
+  readonly defense: string | undefined;
 }
 
 /**
@@ -514,6 +526,7 @@ const decodeCard = (
         ? 'Special'
         : undefined;
   const weakness = typeof value.wk === 'string' ? energy(value.wk) : undefined;
+  const weaknessValue = modifier(value.wv);
   const resistance =
     typeof value.rs === 'string' ? energy(value.rs) : undefined;
 
@@ -586,6 +599,13 @@ const decodeCard = (
     basicEnergy:
       category === 'Energy' && energyType === 'Basic'
         ? BASIC_ENERGY.exec(name)?.[1]?.toLowerCase()
+        : undefined,
+    defense:
+      category === 'Pokémon' &&
+      weakness &&
+      weaknessValue &&
+      retreat !== undefined
+        ? `${weakness}${weaknessValue}/${resistance ?? ''}${(resistance && modifier(value.rv)) ?? ''}/${String(retreat)}`
         : undefined,
   };
 };
@@ -682,6 +702,30 @@ export const decodeCatalog = (value: unknown): LoadedCatalog => {
       seen.add(print.card.id);
       prints.push(print);
     }
+  }
+
+  // Prints otherwise alike are one card only when their Weakness,
+  // Resistance and Retreat agree: Electrike AR 63's +10 Weakness is not
+  // ROS 24's ×2. TCGdex leaves them out of some prints (promos): such a
+  // print is taken for the newest print it otherwise matches.
+  const defenses = new Map<string, DecodedPrint[]>();
+  for (const print of prints) {
+    if (print.defense === undefined) continue;
+    const alike = defenses.get(print.groupKey) ?? [];
+    alike.push(print);
+    defenses.set(print.groupKey, alike);
+  }
+  for (const [index, print] of prints.entries()) {
+    const alike = defenses.get(print.groupKey);
+    if (!alike || alike.every((other) => other.defense === alike[0]!.defense)) {
+      continue;
+    }
+    const defense =
+      print.defense ??
+      alike.reduce((newest, other) =>
+        other.card.set.released > newest.card.set.released ? other : newest
+      ).defense!;
+    prints[index] = { ...print, groupKey: `${print.groupKey}/${defense}` };
   }
 
   // TCGdex has no text yet for some new prints (30C's Ultra Ball). Such a

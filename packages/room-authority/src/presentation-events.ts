@@ -165,15 +165,33 @@ const declarationEventsForBatch = (
       ];
     }
     if (event.type === 'CoachingConsentSet') {
-      return event.revokedInspections.map((revocation) => ({
-        type: 'PrivateInspectionEnded',
-        revision: batch.revision,
-        sourcePlayerId: revocation.sourcePlayerId,
-        viewerPlayerId: revocation.viewerPlayerId,
-        scope: revocation.scope,
-        source: presentationCardSource(state, revocation.sourceId),
-        cardCount: revocation.cardCount,
-      }));
+      // One line per viewer, source and scope, however many looks ended: a
+      // coach can hold 200 looks at single cards, and a batch's events are
+      // capped at 100 on the wire.
+      const ended = new Map<
+        string,
+        Extract<PresentationEvent, { readonly type: 'PrivateInspectionEnded' }>
+      >();
+      for (const revocation of event.revokedInspections) {
+        const source = presentationCardSource(state, revocation.sourceId);
+        const key = JSON.stringify([
+          revocation.sourcePlayerId,
+          revocation.viewerPlayerId,
+          revocation.scope,
+          source,
+        ]);
+        const known = ended.get(key);
+        ended.set(key, {
+          type: 'PrivateInspectionEnded',
+          revision: batch.revision,
+          sourcePlayerId: revocation.sourcePlayerId,
+          viewerPlayerId: revocation.viewerPlayerId,
+          scope: revocation.scope,
+          source,
+          cardCount: (known?.cardCount ?? 0) + revocation.cardCount,
+        });
+      }
+      return [...ended.values()];
     }
     if (event.type === 'UndoApplied') {
       return [

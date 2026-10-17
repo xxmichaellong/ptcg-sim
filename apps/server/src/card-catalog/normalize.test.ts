@@ -211,7 +211,28 @@ describe('TCGdex cards in wire form', () => {
     expect(card?.at).toEqual([['Bite', '', '30']]);
     expect(card?.ab).toEqual([['Ability', 'Flare', '']]);
     expect(card?.wk).toBe('M');
+    expect(card?.wv).toBe('×2');
     expect(card?.rs).toBe('G');
+    expect(card?.rv).toBe('-30');
+  });
+
+  it('keeps Weakness and Resistance modifiers as printed, one spelling each', () => {
+    const modifiers = (weakness: unknown, resistance: unknown) => {
+      const card = normalizeTcgdexCard(
+        {
+          ...dragapult,
+          weaknesses: [{ type: 'Fighting', value: weakness }],
+          resistances: [{ type: 'Metal', value: resistance }],
+        },
+        'sv06',
+        BASE
+      );
+      return [card?.wv, card?.rv];
+    };
+    expect(modifiers('+10', '−20')).toEqual(['+10', '-20']);
+    expect(modifiers('x2', '-30')).toEqual(['×2', '-30']);
+    // Missing or unreadable: the type alone.
+    expect(modifiers(null, 'lots')).toEqual([undefined, undefined]);
   });
 });
 

@@ -38,6 +38,14 @@ import {
 
 export const CARD_CATALOG_WIRE_VERSION = 1;
 
+/**
+ * What normalize.ts keeps of a card. A set stored with less is fetched
+ * again at the next refresh, so a field added here reaches every set in
+ * one refresh, published at once, not over the two-week rotation. 2: the
+ * Weakness and Resistance modifiers.
+ */
+export const CARD_CATALOG_NORMALIZATION = 2;
+
 export const CARD_CATALOG_LIMITS = Object.freeze({
   responseBytes: 8_000_000,
   requestTimeoutMs: 20_000,
@@ -103,6 +111,8 @@ interface IndexEntry {
   readonly cards: number;
   readonly total: number;
   readonly fetchedAt: number;
+  /** `CARD_CATALOG_NORMALIZATION` when fetched (without one: 1). */
+  readonly normalized?: number;
 }
 
 type CatalogIndex = Readonly<Record<string, IndexEntry>>;
@@ -256,7 +266,11 @@ export class CardCatalogBuilder {
         right.released.localeCompare(left.released) ||
         left.id.localeCompare(right.id)
     );
-    const due = newestFirst.filter((set) => index[set.id]?.total !== set.total);
+    const due = newestFirst.filter(
+      (set) =>
+        index[set.id]?.total !== set.total ||
+        (index[set.id]?.normalized ?? 1) < CARD_CATALOG_NORMALIZATION
+    );
     const rotation = Math.ceil(sets.length / CARD_CATALOG_LIMITS.rotationDays);
     const stale = sets
       .filter((set) => index[set.id]?.total === set.total)
@@ -323,6 +337,7 @@ export class CardCatalogBuilder {
             cards: built.cards,
             total: set.total,
             fetchedAt: now,
+            normalized: CARD_CATALOG_NORMALIZATION,
           },
         } satisfies CatalogIndex);
         await this.#store.put(KEYS.queue, rest);

@@ -239,6 +239,46 @@ describe('presentation event privacy', () => {
     expect(JSON.stringify(events)).not.toContain('Never published');
   });
 
+  it("ends a coach's many single-card looks in one line per source", () => {
+    const state = stateWithSecret('Never published', false);
+    const looks = Array.from({ length: 150 }, (_, index) => ({
+      inspectionId: `inspection-${String(index)}`,
+      scope: 'card' as const,
+      sourcePlayerId: ownerId,
+      sourceId: deckId,
+      viewerPlayerId: actorId,
+      cardCount: 1,
+    }));
+    const events = presentationEventsForBatch(
+      {
+        revision: 7,
+        events: [
+          {
+            type: 'CoachingConsentSet',
+            playerId: actorId,
+            expectedConsent: true,
+            consent: false,
+            revokedInspections: looks,
+          },
+        ],
+      },
+      state,
+      state
+    );
+    // A publication carries at most 100.
+    expect(events).toEqual([
+      {
+        type: 'PrivateInspectionEnded',
+        revision: 7,
+        sourcePlayerId: ownerId,
+        viewerPlayerId: actorId,
+        scope: 'card',
+        source: 'deck',
+        cardCount: 150,
+      },
+    ]);
+  });
+
   it('fails closed if a single-card reveal is not spectator-visible', () => {
     expect(() =>
       presentationEventsForBatch(

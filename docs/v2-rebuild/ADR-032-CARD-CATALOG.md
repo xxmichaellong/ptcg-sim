@@ -44,7 +44,9 @@ fast and current. The sources, measured on 2026-10-15:
    list of sets over 30 hours old) fetches TCGdex's list of sets and queues
    the sets that are new or whose card count changed, newest first, plus the
    fourteenth of the rest fetched longest ago, so every set is fetched again
-   within two weeks. Each alarm fetches one set, normalizes it
+   within two weeks; when normalize.ts keeps more of a card
+   (`CARD_CATALOG_NORMALIZATION`), every set stored with less is queued,
+   and the next version has them all. Each alarm fetches one set, normalizes it
    (`apps/server/src/card-catalog/normalize.ts`) and stores its JSON as one
    value, keyed by its hash, so no invocation parses more than one set. A first build is 220
    steps a second and a half apart; it publishes every 20 sets, so search
@@ -84,7 +86,10 @@ fast and current. The sources, measured on 2026-10-15:
    few staples reworded further are listed by name
    (`packages/deck-core/src/reprints.ts`). A Trainer TCGdex has no text for
    yet is legal where the newest print of its name is, and lends that print
-   nothing. A Trainer's subtitle doesn't count ("Boss's Orders
+   nothing. Pokémon alike in all that are one card only when their
+   Weakness, Resistance and Retreat agree, modifiers included (Electrike
+   AR 63's +10 Weakness is not ROS 24's ×2); a print TCGdex gives no
+   Weakness (some promos) is taken for the newest it matches. A Trainer's subtitle doesn't count ("Boss's Orders
    (Giovanni)"); a Basic Energy's group is its type; TCG Pocket's cards
    keep to their own groups. A group is legal in a format when TCGdex
    marks any of its prints legal there (so a rotated print is legal through

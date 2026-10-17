@@ -556,6 +556,73 @@ describe('untrusted input', () => {
     expect(find('G1 18').legal).toEqual({ standard: false, expanded: false });
   });
 
+  it('tells Pokémon apart by Weakness, Resistance and Retreat where TCGdex has them', () => {
+    const electrike = (
+      n: string,
+      defense: Record<string, unknown>,
+      lg = 0
+    ) => ({
+      n,
+      nm: 'Electrike',
+      c: 'P',
+      st: 'Basic',
+      hp: 60,
+      ty: 'L',
+      at: [['Bite', 'C', '10']],
+      ...defense,
+      ...(lg ? { lg } : {}),
+    });
+    const at = (
+      id: string,
+      code: string,
+      released: string,
+      cards: unknown[]
+    ) => ({
+      id,
+      name: code,
+      code,
+      series: 'Any',
+      released,
+      cards,
+    });
+    const decoded = decodeCatalog({
+      ...body([]),
+      sets: [
+        at('pl4', 'AR', '2009-11-04', [
+          electrike('63', { wk: 'F', wv: '+10', rs: 'M', rv: '-20', rt: 1 }),
+        ]),
+        at('xy6', 'ROS', '2015-05-06', [
+          electrike('24', { wk: 'F', wv: '×2', rs: 'M', rv: '-20', rt: 1 }, 2),
+        ]),
+        at('xy7', 'AOR', '2015-08-12', [
+          electrike('30', { wk: 'F', wv: '×2', rs: 'M', rv: '-20', rt: 1 }),
+        ]),
+        // A promo TCGdex gives no Weakness: the newest print it matches.
+        at('xyp', 'XYP', '2016-01-01', [electrike('99', { rt: 1 })]),
+      ],
+    });
+    const find = (id: string) =>
+      decoded.cards.find((entry) => entry.id === id)!;
+    expect(find('AR 63').printGroup).not.toBe(find('ROS 24').printGroup);
+    expect(find('AR 63').legal.expanded).toBe(false);
+    expect(find('AOR 30').printGroup).toBe(find('ROS 24').printGroup);
+    expect(find('AOR 30').legal.expanded).toBe(true);
+    expect(find('XYP 99').printGroup).toBe(find('ROS 24').printGroup);
+    // A catalog stored before the modifiers splits nothing.
+    const before = decodeCatalog({
+      ...body([]),
+      sets: [
+        at('pl4', 'AR', '2009-11-04', [
+          electrike('63', { wk: 'F', rs: 'M', rt: 1 }),
+        ]),
+        at('xy6', 'ROS', '2015-05-06', [
+          electrike('24', { wk: 'F', rs: 'M', rt: 1 }, 2),
+        ]),
+      ],
+    });
+    expect(before.cards[0]!.printGroup).toBe(before.cards[1]!.printGroup);
+  });
+
   it('keys print groups by rules, ignoring case and spacing', () => {
     const base = {
       name: 'Shadow Rider',

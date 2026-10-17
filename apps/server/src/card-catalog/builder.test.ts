@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   CARD_CATALOG_LIMITS,
+  CARD_CATALOG_NORMALIZATION,
   CARD_CATALOG_STORAGE_KEYS as KEYS,
   CardCatalogBuilder,
   type CatalogStore,
@@ -264,6 +265,47 @@ describe('building the card catalog', () => {
     expect(second.version).not.toBe(first.version);
     expect(second.sets[0]).toBe('new');
     expect(second.cards).toBe(first.cards + 2);
+  });
+
+  it('refetches every set normalized with less, publishing once at the end', async () => {
+    const sets: FakeSet[] = Array.from({ length: 30 }, (_, index) => ({
+      id: `s${String(index).padStart(2, '0')}`,
+      released: `2020-01-${String(index + 1).padStart(2, '0')}`,
+      total: 1,
+    }));
+    const { builder, source, memory, drain, advance } = setup(sets);
+    await builder.refresh();
+    await drain();
+    const first = (await builder.manifest())!;
+    // As stored before CARD_CATALOG_NORMALIZATION 2.
+    const index = memory.values.get('catalog:index') as Record<
+      string,
+      Record<string, unknown>
+    >;
+    for (const entry of Object.values(index)) delete entry.normalized;
+
+    advance(DAY);
+    source.calls.length = 0;
+    expect(await builder.refresh()).toBe(30);
+    await drain(29);
+    // The published catalog doesn't change while sets are refetched.
+    expect(await builder.manifest()).toEqual(first);
+    await drain();
+    expect(
+      source.calls.filter((call) => call.startsWith('cards:'))
+    ).toHaveLength(30);
+    const after = memory.values.get('catalog:index') as Record<
+      string,
+      { readonly normalized?: number }
+    >;
+    expect(
+      Object.values(after).every(
+        (entry) => entry.normalized === CARD_CATALOG_NORMALIZATION
+      )
+    ).toBe(true);
+    // Next time, only the rotation.
+    advance(DAY);
+    expect(await builder.refresh()).toBe(3);
   });
 
   it('keeps the version, and its build time, when nothing changed', async () => {

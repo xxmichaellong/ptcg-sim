@@ -88,12 +88,27 @@ const letters = (value: unknown): string | undefined => {
   return result === '' ? undefined : result.slice(0, 12);
 };
 
-const firstType = (value: unknown): string | undefined => {
+/**
+ * A card's first Weakness or Resistance with a type, and its modifier as
+ * printed ("×2", "+10", "-20"), when TCGdex has one: older cards' +10
+ * Weakness is another card than a reprint's ×2.
+ */
+const firstType = (
+  value: unknown
+): { readonly type: string; readonly value?: string } | undefined => {
   if (!Array.isArray(value)) return undefined;
   for (const entry of value) {
     if (isRecord(entry) && typeof entry.type === 'string') {
       const letter = ENERGY_LETTERS[entry.type];
-      if (letter) return letter;
+      if (!letter) continue;
+      const modifier =
+        typeof entry.value === 'string'
+          ? /^\s*([×xX*+\-−–])\s*(\d{1,3})\s*$/u.exec(entry.value)
+          : null;
+      if (!modifier) return { type: letter };
+      const sign = modifier[1]!;
+      const symbol = '×xX*'.includes(sign) ? '×' : sign === '+' ? '+' : '-';
+      return { type: letter, value: `${symbol}${modifier[2]!}` };
     }
   }
   return undefined;
@@ -229,7 +244,11 @@ export interface WireCard {
   ab?: [string, string, string][];
   at?: ([string, string, string] | [string, string, string, string])[];
   wk?: string;
+  /** The Weakness's modifier: "×2", "+10". */
+  wv?: string;
   rs?: string;
+  /** The Resistance's modifier: "-20". */
+  rv?: string;
   tg?: string[];
   lg?: number;
   im?: string;
@@ -337,9 +356,15 @@ export const normalizeTcgdexCard = (
     if (attacks.length > 0) card.at = attacks.slice(0, LIMITS.attacks);
   }
   const weakness = firstType(value.weaknesses);
-  if (weakness) card.wk = weakness;
+  if (weakness) {
+    card.wk = weakness.type;
+    if (weakness.value) card.wv = weakness.value;
+  }
   const resistance = firstType(value.resistances);
-  if (resistance) card.rs = resistance;
+  if (resistance) {
+    card.rs = resistance.type;
+    if (resistance.value) card.rv = resistance.value;
+  }
   const tags = cardTags({
     id,
     name,
