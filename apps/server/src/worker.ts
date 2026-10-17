@@ -758,7 +758,20 @@ export class PtcgRoom extends DurableObject<Env> {
     socket: WebSocket,
     code: number
   ): Promise<void> {
-    await this.disconnectSocket(socket);
+    try {
+      await this.disconnectSocket(socket);
+    } finally {
+      // The runtime doesn't answer a client's close itself: without this a
+      // transport dropped for a reconnect sits closing until it times out.
+      try {
+        socket.close(
+          code === 1000 || (code >= 3000 && code <= 4999) ? code : 1000,
+          'Closed'
+        );
+      } catch {
+        // Already closed.
+      }
+    }
     this.telemetry.roomSocket({
       outcome: 'closed',
       closeCode: code,

@@ -590,6 +590,26 @@ describe('Cloudflare Worker runtime', () => {
     ).toBe(1);
   });
 
+  it('answers a client that closes without leaving, so its close completes', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created, 'one', 'Runtime Blue');
+    const socket = await connect(created);
+    const admission = nextServerFrames(socket, 2);
+    socket.send(helloFrame(created, ticket, 'Runtime Blue'));
+    await admission;
+    // A reconnect drops its transport without a Leave.
+    const closed = nextSocketClose(socket);
+    socket.close(1000, 'Reconnecting');
+    const settled = await Promise.race([
+      closed,
+      new Promise<'unanswered'>((resolve) =>
+        setTimeout(() => resolve('unanswered'), 2_000)
+      ),
+    ]);
+    expect(settled).not.toBe('unanswered');
+    expect(socket.readyState).toBe(WebSocket.CLOSED);
+  });
+
   it('publishes real presence and durably revokes an explicit player leave', async () => {
     const created = await createRoom();
     const firstTicket = await issuePlayerTicket(created, 'one', 'Runtime Blue');
