@@ -609,3 +609,45 @@ it('predicts nothing queued behind a shuffle until the shuffle is published', ()
     handSize(predictQueue(view, [{ ...shuffle, published: true }, draw]))
   ).toBe(hand.cards.length + 1);
 });
+
+it('marks a Pokémon promoted to the Active as the Active', () => {
+  // One Pokémon benched, then the Active benched beside it: that one moves up.
+  const benched = predictWireCommand(view, {
+    type: 'MoveCardToPlay',
+    cardId: hand.cards[0]!.id,
+    expectedSourceZoneId: hand.id,
+    boardPlayerId: blue,
+    slot: 'bench',
+  })!;
+  const [only] = benched.boards[blue]!.benchStackIds;
+  const swapped = predictWireCommand(benched, {
+    type: 'MovePlayStack',
+    stackId: active.id,
+    expectedSourceSlot: 'active',
+    expectedActiveStackId: active.id,
+    expectedBenchStackIds: [only!],
+    destinationSlot: 'bench',
+  })!;
+  expect(swapped.boards[blue]!.activeStackId).toBe(only);
+  expect(swapped.stacks[only!]!.slot).toBe('active');
+  expect(swapped.stacks[active.id]!.slot).toBe('bench');
+});
+
+it('moves a card whose category changes to the end of the loose board, upright', () => {
+  const board = view.zones[`zone:${blue}:board`]!;
+  const card = hand.cards[0]!;
+  const changed = predictWireCommand(view, {
+    type: 'ChangeCardCategory',
+    cardId: card.id,
+    expectedSourceId: hand.id,
+    category: 'Energy',
+  })!;
+  expect(cardIn(changed, card.id)).toBe(board.id);
+  const placed = changed.zones[board.id]!.cards.at(-1)!;
+  expect(placed).toMatchObject({
+    id: card.id,
+    category: 'Energy',
+    orientationQuarterTurns: 0,
+  });
+  expect(changed.zones[hand.id]!.cards).toHaveLength(hand.cards.length - 1);
+});

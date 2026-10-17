@@ -761,13 +761,17 @@ const predict = (
         activeStackId,
         benchStackIds,
       });
-      for (const id of [stack.id, ...(target ? [target.id] : [])]) {
-        const moved = next.stacks[id];
-        if (!moved) return null;
-        next = withStack(next, {
-          ...moved,
-          slot: activeStackId === id ? 'active' : 'bench',
-        });
+      // Every Pokémon whose place changed says so -- the one moved, the one
+      // it swapped with, and one promoted to the Active when the Active
+      // went to a bench of one -- or a move made on it next names the old.
+      for (const id of [
+        ...(activeStackId ? [activeStackId] : []),
+        ...benchStackIds,
+      ]) {
+        const placed = next.stacks[id];
+        if (!placed) return null;
+        const slot = activeStackId === id ? 'active' : 'bench';
+        if (placed.slot !== slot) next = withStack(next, { ...placed, slot });
       }
       return next;
     }
@@ -1013,10 +1017,29 @@ const predict = (
       return updateCard(view, command.cardId, (card) =>
         card.kind === 'known' ? { ...card, abilityUsed: command.used } : card
       );
-    case 'ChangeCardCategory':
-      return updateCard(view, command.cardId, (card) =>
-        card.kind === 'known' ? { ...card, category: command.category } : card
+    case 'ChangeCardCategory': {
+      // The room moves the card to the end of the player's loose board --
+      // out of whatever held it, as any departure does (a Pokémon's cards
+      // under it staged) -- then names its category and sets it upright.
+      // A move made on it next names it there.
+      const board = ownZone(view, viewerId, 'board');
+      if (!board) return null;
+      const taken = takeFromSource(
+        view,
+        command.expectedSourceId,
+        command.cardId
       );
+      if (!taken) return null;
+      const card: ViewCard =
+        taken.card.kind === 'known'
+          ? {
+              ...taken.card,
+              category: command.category,
+              orientationQuarterTurns: 0,
+            }
+          : taken.card;
+      return placeInZone(taken.view, viewerId, board.id, card);
+    }
     case 'SetCardFace':
       return updateCard(view, command.cardId, (card) =>
         card.kind === 'known' ? { ...card, face: command.face } : card
