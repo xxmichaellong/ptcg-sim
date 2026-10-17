@@ -140,14 +140,18 @@ describe('finding the printing a decklist line means', () => {
     ).toBe('RCL 154');
   });
 
-  it('finds a card by name in the set given when the number differs', () => {
-    // Limitless numbers the Mega Evolution Energy differently from TCGdex.
+  it('never takes another number in the set given for the printing', () => {
+    // Another number in the set may be another card (Charizard EX FLF 11
+    // isn't FLF 12): only a match by name alone, which an import doesn't
+    // take for a printing it was given.
+    expect(
+      resolveDecklistRow(index, row('1 Dragapult ex TWM 131'))
+    ).toMatchObject({ match: 'name' });
+    // Limitless numbers the Mega Evolution Energy differently from TCGdex;
+    // Basic Energy is the same card by name.
     expect(
       resolveDecklistRow(index, row('4 Fire Energy MEE 10'))
-    ).toMatchObject({
-      match: 'name_in_set',
-      card: { id: 'MEE 2' },
-    });
+    ).toMatchObject({ match: 'energy', card: { id: 'MEE 2' } });
   });
 
   it('finds Basic Energy by name, newest ordinary printing first', () => {

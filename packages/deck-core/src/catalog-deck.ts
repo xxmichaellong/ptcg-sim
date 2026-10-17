@@ -161,8 +161,6 @@ export const deckCardFromCatalog = (
 export type DecklistMatch =
   /** Its set and number. */
   | 'print'
-  /** Its name, in the set it gave (the set numbers its cards differently). */
-  | 'name_in_set'
   /** Basic Energy, by name. */
   | 'energy'
   /** Its name alone: the newest ordinary printing, maybe not the one meant. */
@@ -311,15 +309,6 @@ export const resolveDecklistRow = (
   const named = (index.byName.get(name) ?? []).filter((card) =>
     goesBy(card, row.name)
   );
-  if (row.setCode && named.length > 0) {
-    const set = canonicalSet(row.setCode);
-    const inSet = named.filter(
-      (card) =>
-        card.set.code !== undefined && canonicalSet(card.set.code) === set
-    );
-    const card = preferred(inSet);
-    if (card) return { row, card, match: 'name_in_set' };
-  }
   // A TCG Pocket line stays in Pocket, and any other line out of it: the
   // same name in the other game is another card.
   const pocket =
