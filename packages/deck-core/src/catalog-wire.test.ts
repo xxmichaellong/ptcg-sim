@@ -59,6 +59,10 @@ describe('collector numbers', () => {
     expect(limitlessImages('BRS', 'TG1', false).large).toContain(
       '/tpci/BRS/BRS_TG1_R_EN_LG.png'
     );
+    // An alternate printing: padded, its letter in lower case.
+    expect(limitlessImages('PHF', '24A', false).large).toContain(
+      '/tpci/PHF/PHF_024a_R_EN_LG.png'
+    );
     const pocket = limitlessImages('A1', '1', true);
     expect(pocket.large).toBe(pocket.small);
     expect(pocket.large).toContain('/pocket/A1/A1_001_EN_SM.webp');

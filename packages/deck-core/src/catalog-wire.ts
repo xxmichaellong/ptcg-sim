@@ -253,8 +253,16 @@ const TRAINER_TYPES = new Set([
 ]);
 
 /** Pokémon TCG Live's image file number: three digits, or as printed. */
-const limitlessNumber = (number: string): string =>
-  /^\d+$/u.test(number) ? number.padStart(3, '0') : number;
+/**
+ * A number as Limitless names its scans: three digits, and an alternate
+ * printing's letter in lower case ("24A" is PHF_024a; "PHF_024A" is 403).
+ */
+export const limitlessNumber = (number: string): string =>
+  number.replace(
+    /^(\d+)([A-Za-z]?)$/u,
+    (_, digits: string, letter: string) =>
+      `${digits.padStart(3, '0')}${letter.toLowerCase()}`
+  );
 
 const LIMITLESS_CDN = 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com';
 

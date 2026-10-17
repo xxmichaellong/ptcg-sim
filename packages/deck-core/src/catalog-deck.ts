@@ -1,6 +1,6 @@
 import type { CatalogCard, LoadedCatalog } from './catalog.js';
 import { foldText, trainerName } from './card-query.js';
-import { catalogNumberOf } from './catalog-wire.js';
+import { catalogNumberOf, limitlessNumber } from './catalog-wire.js';
 import { printId, type DeckCard } from './deck-list.js';
 import {
   isUnambiguousPocketCode,
@@ -118,7 +118,12 @@ export const deckCardFromCatalog = (
     !card.set.pocket &&
     TRANSLATED_SERIES.has(card.set.series)
       ? resolvePastedDecklistImageUrl(
-          { name: card.name, setCode: card.set.code, number: card.number },
+          {
+            name: card.name,
+            setCode: card.set.code,
+            // Limitless names an alternate printing's scan in lower case.
+            number: limitlessNumber(card.number),
+          },
           { language: options.language }
         )
       : undefined;

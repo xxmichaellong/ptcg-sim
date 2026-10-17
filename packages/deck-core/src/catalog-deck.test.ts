@@ -386,6 +386,13 @@ describe('card images in other languages', () => {
     expect(deckCardFromCatalog(old, { language: 'German' }).image).toBe(
       old.image
     );
+    // An alternate printing's letter is lower case in Limitless's names.
+    const PHF = { ...set('xy4', 'PHF', '2014-11-05', 119), series: 'XY' };
+    expect(
+      deckCardFromCatalog(card(PHF, '24A', 'M Manectric EX'), {
+        language: 'German',
+      }).image
+    ).toContain('/tpci/PHF/PHF_024a_R_DE.png');
   });
 });
 
