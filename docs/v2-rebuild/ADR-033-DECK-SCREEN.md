@@ -77,7 +77,9 @@ specifically without blocking, and go from deck to table in one click.
    never swapped for another card of its name. `withCatalogFacts` gives decks made without the catalog their
    facts later, and keeps saved decks' facts as the catalog has them now (a
    rotation, a ban, a legal reprint), without changing anything the table
-   shows.
+   shows; a card typed otherwise than the catalog's print (in the card
+   dialog or a CSV) is played as typed and gets none. A CSV's two scans of
+   one printing (English and German) stay two entries.
 5. **Search** is Limitless's syntax over the catalog in memory
    (`parseCardQuery`, `searchCatalog`): `t:`, `s:`, `is:`, `hp>=`, `ac<=cc`,
    `text:draw_3_cards`, `w:`, `rs:`, `rc:`, `reg>=`, `f:`, `e:`, `a:`, `r:`,

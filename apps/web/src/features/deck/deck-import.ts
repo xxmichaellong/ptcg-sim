@@ -172,23 +172,42 @@ const importCsv = (
   }
   // A v1 file kept only names and images; a catalogued printing gets its
   // facts back, so the rules can check it. The file's picture stays, its
-  // thumbnail too: a German scan isn't shown small in English.
+  // thumbnail too: a German scan isn't shown small in English. A row typed
+  // otherwise than the catalog's card is played as the file says.
+  const rows = parsed.cards.map(({ card, count }) => {
+    const print =
+      options.catalog && !card.presentation
+        ? findCatalogPrint(options.catalog, card)
+        : undefined;
+    return {
+      card,
+      count,
+      print: print?.category === card.category ? print : undefined,
+    };
+  });
+  // Two scans of one printing (English and German) stay two entries: the
+  // ones not the catalog's own keep the file's id.
+  const scans = new Map<string, Set<string>>();
+  for (const { card, print } of rows) {
+    if (!print) continue;
+    const seen = scans.get(print.id) ?? new Set<string>();
+    seen.add(card.image);
+    scans.set(print.id, seen);
+  }
   const cards = deckListOf(
-    parsed.cards.map(({ card, count }) => {
-      const print =
-        options.catalog && !card.presentation
-          ? findCatalogPrint(options.catalog, card)
-          : undefined;
+    rows.map(({ card, count, print }) => {
       if (!print) return { card, count };
       const {
         imageSmall,
         image: catalogImage,
         ...found
       } = deckCardFromCatalog(print, { catalog: options.catalog! });
-      const small = card.image === catalogImage ? imageSmall : card.imageSmall;
+      const own = card.image === catalogImage;
+      const small = own ? imageSmall : card.imageSmall;
       return {
         card: {
           ...found,
+          ...(own || scans.get(print.id)!.size === 1 ? {} : { id: card.id }),
           image: card.image,
           ...(small ? { imageSmall: small } : {}),
         },

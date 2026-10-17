@@ -5,6 +5,7 @@ import { StarIcon } from '@phosphor-icons/react/dist/csr/Star';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import {
   countOf,
+  findCatalogPrint,
   printsOf,
   type CatalogCard,
   type DeckCard,
@@ -33,6 +34,19 @@ export interface CardDetailsFacts {
   readonly prints: readonly CatalogCard[];
 }
 
+/**
+ * The printing a deck card kept under its own id (a file's scan) is, by
+ * its set and number, unless it was made or typed by hand.
+ */
+const printOfOwnCard = (
+  catalog: LoadedCatalog,
+  card: DeckCard
+): CatalogCard | undefined => {
+  if (card.presentation !== undefined) return undefined;
+  const print = findCatalogPrint(catalog, card);
+  return print?.category === card.category ? print : undefined;
+};
+
 /** What the catalog says about an inspected card, if it knows it. */
 export const cardDetailsFacts = (
   catalog: LoadedCatalog | undefined,
@@ -42,7 +56,8 @@ export const cardDetailsFacts = (
   const card =
     inspected.kind === 'catalog'
       ? inspected.card
-      : catalog.byId.get(inspected.card.id);
+      : (catalog.byId.get(inspected.card.id) ??
+        printOfOwnCard(catalog, inspected.card));
   return card
     ? { card, prints: printsOf(catalog.cards, card.printGroup) }
     : undefined;

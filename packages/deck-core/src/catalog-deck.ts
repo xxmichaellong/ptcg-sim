@@ -395,8 +395,8 @@ const sameFacts = (left: unknown, right: unknown): boolean =>
  * A deck with its cards' facts as the catalog has them now: added where a
  * card has none (imported while the catalog was away, or from a v1 file),
  * and updated where they changed (a rotation, a ban, a legal reprint).
- * Everything the table shows is kept as it was, and a card made by hand is
- * left alone. The same list back when nothing changed.
+ * Everything the table shows is kept as it was, its type included, and a
+ * card made by hand is left alone. The same list back when nothing changed.
  */
 export const withCatalogFacts = (
   list: readonly { readonly card: DeckCard; readonly count: number }[],
@@ -408,7 +408,9 @@ export const withCatalogFacts = (
     const { card } = entry;
     if (card.presentation !== undefined) return entry;
     const print = findCatalogPrint(catalog, card);
-    if (!print) return entry;
+    // A card given another type than the catalog's (in the card dialog) is
+    // played as its maker said, not as that print.
+    if (!print || print.category !== card.category) return entry;
     const {
       image: _image,
       imageSmall: _imageSmall,

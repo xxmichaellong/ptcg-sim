@@ -390,6 +390,23 @@ describe('catalog facts for decks made without the catalog', () => {
     expect(withCatalogFacts(upgraded, catalog)).toBe(upgraded);
   });
 
+  it('leaves a card typed otherwise than the catalog as it was made', () => {
+    // The card dialog's Card Type: Dragapult ex's scan, played as a Trainer.
+    const made = deckListOf([
+      {
+        card: {
+          id: 'custom:typed',
+          name: 'Dragapult ex',
+          category: 'Trainer',
+          image:
+            'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN.png',
+        },
+        count: 1,
+      },
+    ]);
+    expect(withCatalogFacts(made, catalog)).toBe(made);
+  });
+
   it('brings saved facts up to the catalog, keeping the rest of the card', () => {
     const current = deckCardFromCatalog(CARDS[0]!, { catalog });
     // Saved before a legal reprint: illegal then, and its own image.

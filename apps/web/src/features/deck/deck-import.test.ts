@@ -222,6 +222,26 @@ describe('importing a decklist', () => {
     expect(result.ok && result.cards[0]!.card.facts?.stage).toBe('Basic');
   });
 
+  it('keeps two scans of one printing apart, and a row typed by hand as typed', async () => {
+    const scan = (language: string) =>
+      `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_${language}.png`;
+    const csv = `QTY,Name,Type,URL\n2,Dreepy,Pokémon,${scan('EN')}\n2,Dreepy,Pokémon,${scan('DE')}\n1,Dreepy,Trainer,${scan('JP')}`;
+    const result = await importDeckText(csv, { catalog });
+    if (!result.ok) throw new Error(result.message);
+    expect(
+      result.cards.map((entry) => [entry.card.image, entry.count])
+    ).toEqual([
+      [scan('EN'), 2],
+      [scan('DE'), 2],
+      [scan('JP'), 1],
+    ]);
+    expect(new Set(result.cards.map((entry) => entry.card.id)).size).toBe(3);
+    // The scans are still the catalogued card; the Trainer is the file's.
+    expect(result.cards[1]!.card.facts?.stage).toBe('Basic');
+    expect(result.cards[2]!.card).toMatchObject({ category: 'Trainer' });
+    expect(result.cards[2]!.card.facts).toBeUndefined();
+  });
+
   it('names a deck from its header or its main attackers', async () => {
     const named = await importDeckText(`### Spooky Ghosts\n${LIST}`, {
       catalog,
