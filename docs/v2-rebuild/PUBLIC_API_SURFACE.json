@@ -1226,6 +1226,10 @@
               "kind": "value"
             },
             {
+              "name": "MAX_PRESENTATION_EVENTS",
+              "kind": "value"
+            },
+            {
               "name": "MAX_REPLAY_FRAMES",
               "kind": "value"
             },

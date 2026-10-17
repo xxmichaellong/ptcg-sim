@@ -14,6 +14,7 @@ import {
   type GameCommand,
   type MatchState,
 } from '@ptcgsim/game-core';
+import { MAX_PRESENTATION_EVENTS } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { narrationEventsForBatch } from './narration-events.js';
@@ -497,5 +498,121 @@ describe('battle-log narration', () => {
     expect(serialized).not.toContain('Secret');
     expect(serialized).not.toContain('narration-card-');
     expect(serialized).not.toContain('narration-definition-');
+  });
+
+  it('tells a window of more cards than a publication holds in fewer lines', () => {
+    const context = createContext();
+    let state = createEmptyMatch(asMatchId('narration-bulk'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const deck = (
+      name: string,
+      category: 'Pokémon' | 'Energy',
+      count: number
+    ) => [
+      {
+        definition: {
+          id: asCardDefinitionId(`bulk-${name}`),
+          name,
+          category,
+          imageUrl: `/${name}.png`,
+        },
+        count,
+      },
+    ];
+    state = step(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [...deck('Mon', 'Pokémon', 1), ...deck('Own', 'Energy', 1)],
+      },
+      context
+    ).state;
+    state = step(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p2,
+        entries: deck('Theirs', 'Energy', 100),
+      },
+      context
+    ).state;
+    const blueDeck = playerZoneId(p1, 'deck');
+    const redDeck = playerZoneId(p2, 'deck');
+    const mon = state.zones[blueDeck]!.cardIds.find(
+      (id) => state.cards[id]!.currentCategory === 'Pokémon'
+    )!;
+    state = step(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: mon,
+        expectedSourceZoneId: blueDeck,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      context
+    ).state;
+    const stackId = state.boards[p1]!.activeStackId!;
+    for (const [zone, cardIds] of [
+      [blueDeck, [...state.zones[blueDeck]!.cardIds]],
+      [redDeck, [...state.zones[redDeck]!.cardIds]],
+    ] as const) {
+      for (const cardId of cardIds) {
+        state = step(
+          state,
+          {
+            type: 'MoveCardToPlay',
+            cardId,
+            expectedSourceZoneId: zone,
+            boardPlayerId: p1,
+            slot: 'active',
+            targetStackId: stackId,
+          },
+          context
+        ).state;
+      }
+    }
+    // The Pokémon leaves: 100 of Red's cards and one of Blue's wait.
+    state = step(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: mon,
+        expectedStackId: stackId,
+        destinationZoneId: playerZoneId(p1, 'hand'),
+      },
+      context
+    ).state;
+    const window = state.workAreas[p1]!.attachmentResolution!;
+    expect(window.attachmentCardIds).toHaveLength(101);
+    const resolved = executeCommand(
+      state,
+      {
+        type: 'ResolveStagedCards',
+        playerId: p1,
+        expectedWorkAreaId: window.id,
+        destination: 'discard',
+      },
+      context
+    );
+    if (!resolved.accepted) throw new Error(resolved.message);
+    const events = presentationEventsForBatch(
+      resolved.batch,
+      resolved.state,
+      state
+    );
+    expect(events.length).toBeLessThanOrEqual(MAX_PRESENTATION_EVENTS);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: 'CardsResolved',
+        verb: 'moved',
+        cardCount: 100,
+        source: 'attachmentResolution',
+        destination: 'discard',
+      })
+    );
   });
 });

@@ -3,7 +3,10 @@ import {
   type EventBatch,
   type MatchState,
 } from '@ptcgsim/game-core';
-import type { PresentationEvent } from '@ptcgsim/protocol';
+import {
+  MAX_PRESENTATION_EVENTS,
+  type PresentationEvent,
+} from '@ptcgsim/protocol';
 
 import { narrationEventsForBatch } from './narration-events.js';
 
@@ -56,7 +59,69 @@ export const presentationEventsForBatch = (
     throw new Error('Presentation state revision does not match event batch');
   }
   const narration = narrationEventsForBatch(batch, state, previousState);
-  return [...narration, ...declarationEventsForBatch(batch, state)];
+  return withinOneFrame(narration, declarationEventsForBatch(batch, state));
+};
+
+type CardMoved = Extract<PresentationEvent, { readonly type: 'CardMoved' }>;
+type CardsResolved = Extract<
+  PresentationEvent,
+  { readonly type: 'CardsResolved' }
+>;
+
+const RESOLVED_DESTINATIONS: ReadonlySet<string> = new Set<
+  CardsResolved['destination']
+>(['hand', 'discard', 'lostZone', 'deck', 'deckBottom', 'play']);
+
+/** The run a card-by-card move belongs to, if it can be told in bulk. */
+const runOf = (line: PresentationEvent): string | undefined =>
+  line.type === 'CardMoved' &&
+  line.verb === 'moved' &&
+  line.destination !== undefined &&
+  RESOLVED_DESTINATIONS.has(line.destination)
+    ? JSON.stringify([line.playerId, line.source, line.destination])
+    : line.type === 'CardsResolved' && line.verb === 'moved'
+      ? JSON.stringify([line.playerId, line.source, line.destination])
+      : undefined;
+
+/**
+ * A publication carries at most MAX_PRESENTATION_EVENTS, and a client
+ * refuses one with more. A batch that would say more (a window of 101
+ * cards resolved card by card) says it in fewer lines: a run of one move
+ * becomes "moved N card(s)", and past that the narration is cut short, so
+ * the table's declarations always go.
+ */
+const withinOneFrame = (
+  narration: readonly PresentationEvent[],
+  declarations: readonly PresentationEvent[]
+): readonly PresentationEvent[] => {
+  if (narration.length + declarations.length <= MAX_PRESENTATION_EVENTS) {
+    return [...narration, ...declarations];
+  }
+  const folded: PresentationEvent[] = [];
+  for (const line of narration) {
+    const last = folded.at(-1);
+    const run = runOf(line);
+    if (run === undefined || last === undefined || runOf(last) !== run) {
+      folded.push(line);
+      continue;
+    }
+    const counted = (event: PresentationEvent): number =>
+      event.type === 'CardsResolved' ? event.cardCount : 1;
+    const moved = line as CardMoved;
+    folded[folded.length - 1] = {
+      type: 'CardsResolved',
+      revision: moved.revision,
+      playerId: moved.playerId,
+      verb: 'moved',
+      cardCount: counted(last) + counted(line),
+      source: moved.source,
+      destination: moved.destination as CardsResolved['destination'],
+    };
+  }
+  return [
+    ...folded.slice(0, MAX_PRESENTATION_EVENTS - declarations.length),
+    ...declarations,
+  ];
 };
 
 const declarationEventsForBatch = (

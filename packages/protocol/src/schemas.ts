@@ -4,6 +4,7 @@ import {
   MAX_DECK_CARDS,
   MAX_DECK_ENTRIES,
   MAX_IMAGE_URL_CODE_UNITS,
+  MAX_PRESENTATION_EVENTS,
   MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
   PROTOCOL_VERSION,
@@ -1029,7 +1030,10 @@ const StatePublicationSchema = v.object({
   executedClientSequence: NonNegativeIntegerSchema,
   snapshot: MatchViewStateSchema,
   presentationEvents: v.optional(
-    v.pipe(v.array(PresentationEventSchema), v.maxLength(100))
+    v.pipe(
+      v.array(PresentationEventSchema),
+      v.maxLength(MAX_PRESENTATION_EVENTS)
+    )
   ),
 });
 
@@ -1166,7 +1170,10 @@ const ReplayFrameSchema = v.strictObject({
   snapshot: MatchViewStateSchema,
   localDisclosure: v.optional(ReplayLocalDisclosureSchema),
   presentationEvents: v.optional(
-    v.pipe(v.array(PresentationEventSchema), v.maxLength(100))
+    v.pipe(
+      v.array(PresentationEventSchema),
+      v.maxLength(MAX_PRESENTATION_EVENTS)
+    )
   ),
 });
 
