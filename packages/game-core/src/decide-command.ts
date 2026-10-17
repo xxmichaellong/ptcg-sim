@@ -388,6 +388,7 @@ const workAreaArrivalSource = (
   state: MatchState,
   location: CardLocation,
   target: 'inspection' | 'attachmentResolution',
+  targetWorkAreaId: string,
   context: CommandContext
 ): WorkAreaArrivalResolution => {
   switch (location.kind) {
@@ -480,7 +481,8 @@ const workAreaArrivalSource = (
       if (!inspection) {
         return reject('stale_reference', 'Inspection work area changed');
       }
-      if (target === 'inspection') {
+      // The other seat's window is another window, even of the same kind.
+      if (inspection.id === targetWorkAreaId) {
         return reject('invalid_command', 'Card is already in this work area');
       }
       return {
@@ -494,7 +496,7 @@ const workAreaArrivalSource = (
       if (!resolution) {
         return reject('stale_reference', 'Attached-card work area changed');
       }
-      if (target === 'attachmentResolution') {
+      if (resolution.id === targetWorkAreaId) {
         return reject('invalid_command', 'Card is already in this work area');
       }
       return {
@@ -1705,15 +1707,20 @@ export const decideCommand = (
       if (!location) {
         return reject('stale_reference', 'Card is no longer in play');
       }
-      const source = workAreaArrivalSource(state, location, target, context);
+      const source = workAreaArrivalSource(
+        state,
+        location,
+        target,
+        command.expectedWorkAreaId,
+        context
+      );
       if (!source.accepted) return source;
+      // Whoever is looking now sees it too: the set's active audience, not
+      // its first card's (an inspection made public, then extended
+      // privately, shows its first cards to no one).
       const viewerIds =
         target === 'inspection'
-          ? [
-              ...(destinationAreas.inspection!.viewerIdsByCardId[
-                destinationAreas.inspection!.cardIds[0]!
-              ] ?? []),
-            ]
+          ? [...(activeInspectionViewerIds(destinationAreas.inspection!) ?? [])]
           : [];
       return accept({
         type: 'CardMovedToWorkArea',

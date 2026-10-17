@@ -501,6 +501,123 @@ describe('dragging a card into an open work area', () => {
     expect(state.workAreas[p1]!.attachmentResolution).toEqual(blueWindow);
   });
 
+  it("gives a card joining an inspection the set's active audience", () => {
+    const { state: prepared, context, workAreaId } = prepare();
+    const inspection = prepared.workAreas[p1]!.inspection!;
+    // Looked at publicly first (no private viewers), then extended for Blue.
+    const state: MatchState = {
+      ...prepared,
+      workAreas: {
+        ...prepared.workAreas,
+        [p1]: {
+          ...prepared.workAreas[p1]!,
+          inspection: {
+            ...inspection,
+            viewerIdsByCardId: {
+              ...inspection.viewerIdsByCardId,
+              [inspection.cardIds[0]!]: [],
+            },
+          },
+        },
+      },
+    };
+    const handCard = state.zones[playerZoneId(p1, 'hand')]!.cardIds[0]!;
+    const next = accepted(
+      state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: handCard,
+        expectedWorkAreaId: workAreaId,
+      },
+      context
+    );
+    expect(next.workAreas[p1]!.inspection!.viewerIdsByCardId[handCard]).toEqual(
+      [p1]
+    );
+  });
+
+  it("moves a card from the other seat's attached-card window into its owner's", () => {
+    const { state: prepared, context } = prepare();
+    let state = accepted(
+      prepared,
+      { type: 'LoadDeck', playerId: p2, entries: deckEntries() },
+      context
+    );
+    const hand = playerZoneId(p1, 'hand');
+    const of = (category: 'Pokémon' | 'Energy') =>
+      state.zones[hand]!.cardIds.filter(
+        (id) => state.cards[id]!.currentCategory === category
+      );
+    const [ownMon] = of('Pokémon');
+    const [ownEnergy, awayEnergy] = of('Energy');
+    const redDeck = playerZoneId(p2, 'deck');
+    const redMon = state.zones[redDeck]!.cardIds.find(
+      (id) => state.cards[id]!.currentCategory === 'Pokémon'
+    )!;
+    const host = (
+      board: typeof p1,
+      mon: CardInstanceId,
+      from: string,
+      energy: CardInstanceId
+    ) => {
+      state = accepted(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: mon,
+          expectedSourceZoneId: from as never,
+          boardPlayerId: board,
+          slot: 'active',
+        },
+        context
+      );
+      const stackId = state.boards[board]!.activeStackId!;
+      state = accepted(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: energy,
+          expectedSourceZoneId: hand,
+          boardPlayerId: board,
+          slot: 'active',
+          targetStackId: stackId,
+        },
+        context
+      );
+      state = accepted(
+        state,
+        {
+          type: 'MoveCardFromStack',
+          cardId: mon,
+          expectedStackId: stackId,
+          destinationZoneId: playerZoneId(board, 'discard'),
+        },
+        context
+      );
+    };
+    // Each seat has its window open; Blue's Energy waits in Red's.
+    host(p1, ownMon!, hand, ownEnergy!);
+    host(p2, redMon, redDeck, awayEnergy!);
+    const blueWindow = state.workAreas[p1]!.attachmentResolution!;
+    expect(state.workAreas[p2]!.attachmentResolution!.cardIds).toEqual([
+      awayEnergy,
+    ]);
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: awayEnergy!,
+        expectedWorkAreaId: blueWindow.id,
+      },
+      context
+    );
+    expect(state.workAreas[p1]!.attachmentResolution!.cardIds).toEqual([
+      ownEnergy,
+      awayEnergy,
+    ]);
+    expect(state.workAreas[p2]!.attachmentResolution).toBeNull();
+  });
+
   it('plays a card being looked at straight to the Bench', () => {
     const { state, context, workAreaId } = prepare();
     const inspected = state.workAreas[p1]!.inspection!.cardIds;

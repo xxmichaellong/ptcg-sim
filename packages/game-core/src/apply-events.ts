@@ -2460,8 +2460,7 @@ const applyEventInternal = (
         if (!open || open.id !== event.expectedWorkAreaId) {
           throw new Error('Inspection arrival lost its work area');
         }
-        const existingViewerIds =
-          open.viewerIdsByCardId[open.cardIds[0]!] ?? [];
+        const existingViewerIds = activeInspectionViewerIds(open) ?? [];
         if (
           event.viewerIds.length !== existingViewerIds.length ||
           event.viewerIds.some(
