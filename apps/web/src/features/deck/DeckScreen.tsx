@@ -237,6 +237,17 @@ export const DeckScreen = ({
    * it. It starts before a file or the clipboard is read, so nothing read
    * after the screen has gone lands on a seat.
    */
+  /**
+   * Ends an import, unless a newer one has taken over: the controls are
+   * free again however it ended (a file that didn't open included).
+   */
+  const endImport = useCallback((controller: AbortController): void => {
+    if (importAbort.current !== controller) return;
+    importAbort.current = undefined;
+    importSeat.current = undefined;
+    setImporting(false);
+  }, []);
+
   const beginImport = useCallback((): AbortController => {
     importAbort.current?.abort();
     const controller = new AbortController();
@@ -331,16 +342,13 @@ export const DeckScreen = ({
         });
         return true;
       } finally {
-        if (importAbort.current === controller) {
-          importAbort.current = undefined;
-          importSeat.current = undefined;
-          setImporting(false);
-        }
+        endImport(controller);
       }
     },
     [
       beginImport,
       catalog,
+      endImport,
       library,
       placeOnSeat,
       screenPreferences.language,
@@ -363,6 +371,7 @@ export const DeckScreen = ({
             tone: 'warning',
           });
         }
+        endImport(controller);
         return;
       }
       await runImport(
@@ -372,7 +381,7 @@ export const DeckScreen = ({
         controller
       );
     },
-    [beginImport, runImport]
+    [beginImport, endImport, runImport]
   );
 
   const importClipboard = useCallback(async () => {
@@ -381,16 +390,18 @@ export const DeckScreen = ({
     try {
       text = await readClipboard();
     } catch {
-      if (controller.signal.aborted) return;
-      toast({
-        title: "The clipboard can't be read here",
-        body: 'Paste the list with Ctrl+V (⌘V on a Mac) instead.',
-        tone: 'warning',
-      });
+      if (!controller.signal.aborted) {
+        toast({
+          title: "The clipboard can't be read here",
+          body: 'Paste the list with Ctrl+V (⌘V on a Mac) instead.',
+          tone: 'warning',
+        });
+      }
+      endImport(controller);
       return;
     }
     await runImport(text, { kind: 'paste' }, undefined, controller);
-  }, [beginImport, readClipboard, runImport]);
+  }, [beginImport, endImport, readClipboard, runImport]);
 
   // Paste anywhere on the screen (outside a text field) imports the list.
   useEffect(() => {

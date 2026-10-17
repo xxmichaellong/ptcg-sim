@@ -23,7 +23,10 @@ import {
   CardBackCustodyStore,
   type CardBackInstallFailure,
 } from './card-back-custody.js';
-import type { DeckBeforeUnloadTarget } from './deck-browser-io.js';
+import {
+  MAX_DECK_FILE_BYTES,
+  type DeckBeforeUnloadTarget,
+} from './deck-browser-io.js';
 import { DeckBuilderStore } from './deck-builder-store.js';
 import type {
   DeckDefinitionDigest,
@@ -459,6 +462,33 @@ describe('DeckBuilderSession', () => {
     expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
       'Newer deck',
     ]);
+  });
+
+  it('frees the import controls when an import that took over fails', async () => {
+    await renderSession({
+      store: new DeckBuilderStore(),
+      open: true,
+      // A list waits for the catalog, so this import is still running.
+      readClipboard: () => Promise.resolve('4 Dreepy TWM 128'),
+    });
+    const button = () =>
+      host.querySelector<HTMLButtonElement>('#deckClipboardButton')!;
+    await click('#deckClipboardButton');
+    await vi.waitFor(() => expect(button().disabled).toBe(true));
+    // A file opened meanwhile takes over, and doesn't open.
+    const input = host.querySelector<HTMLInputElement>(
+      '#nativeDeckBuilderCsvImport'
+    )!;
+    const file = new File([''], 'deck.csv', { type: 'text/csv' });
+    Object.defineProperty(file, 'size', { value: MAX_DECK_FILE_BYTES + 1 });
+    Object.defineProperty(input, 'files', {
+      value: [file],
+      configurable: true,
+    });
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await vi.waitFor(() => expect(button().disabled).toBe(false));
   });
 
   it('keeps the old deck name when a rename is cancelled with Escape', async () => {
