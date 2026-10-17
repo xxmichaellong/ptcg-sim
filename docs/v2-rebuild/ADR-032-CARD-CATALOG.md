@@ -52,7 +52,10 @@ fast and current. The sources, measured on 2026-10-15:
    steps a second and a half apart; it publishes every 20 sets, so search
    works within a minute of a fresh deploy.
 3. **Versions are content hashes.** The catalog's version hashes every set's
-   stored JSON and the ban list, so it changes only when a card does.
+   stored JSON and the ban list, so it changes only when a card does. A
+   version keeps the ban lists it was made with, so its body never changes;
+   a deploy that changes `bans.ts` makes the next request refresh, and the
+   new lists come with a new version.
    `GET /v2/cards/catalog` names the version and its body's URL (cached five
    minutes; while a first build has nothing, a 200 saying `building`, which
    the loader asks again on, never a logged 503). `GET
@@ -68,7 +71,8 @@ fast and current. The sources, measured on 2026-10-15:
    pasted list and the catalog agree: a card's id is "TWM 130". Codes come
    from a checked-in table (`set-codes.json`, from
    `scripts/card-catalog/build-set-codes.ts`); a set released later is
-   looked up once from TCGdex's REST API and remembered. A short override
+   looked up from TCGdex's REST API and remembered once it has one (a set
+   TCGdex hasn't given one yet is asked again when next fetched). A short override
    list covers promos (`SP`, `SMP`, …), folded subsets and old collisions.
    Numbers drop leading zeros ("TG01" is TG1) and promo prefixes ("SWSH022"
    is SP 22).

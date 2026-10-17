@@ -97,7 +97,25 @@ export interface CatalogManifest {
 /** As stored: with where each set's cards are kept. */
 interface StoredManifest extends CatalogManifest {
   readonly keys?: Readonly<Record<string, string>>;
+  /**
+   * The ban lists the version was made with, so its body never changes
+   * (without them: as stored before, the code's lists).
+   */
+  readonly bans?: CatalogBans;
 }
+
+interface CatalogBans {
+  readonly standard: readonly string[];
+  readonly expanded: readonly string[];
+}
+
+const CURRENT_BANS: CatalogBans = {
+  standard: STANDARD_BANS,
+  expanded: EXPANDED_BANS,
+};
+
+const sameBans = (left: CatalogBans | undefined): boolean =>
+  left !== undefined && JSON.stringify(left) === JSON.stringify(CURRENT_BANS);
 
 interface StoredList {
   readonly listedAt: number;
@@ -208,13 +226,15 @@ export class CardCatalogBuilder {
   async manifest(): Promise<CatalogManifest | null> {
     const stored = await this.#store.get<StoredManifest>(KEYS.meta);
     if (!stored) return null;
-    const { keys: _keys, ...manifest } = stored;
+    const { keys: _keys, bans: _bans, ...manifest } = stored;
     return manifest;
   }
 
   /**
    * Whether a request should start a refresh: nothing published and
-   * nothing queued, or the list of sets is over a day old.
+   * nothing queued, the list of sets over a day old, or the published
+   * version made with other ban lists than the code's (a deploy changed
+   * bans.ts), which only a new version may carry.
    */
   async needsRefresh(): Promise<boolean> {
     const list = await this.#store.get<StoredList>(KEYS.list);
@@ -222,9 +242,10 @@ export class CardCatalogBuilder {
     if (this.#now() - list.listedAt > CARD_CATALOG_LIMITS.staleAfterMs) {
       return true;
     }
-    const meta = await this.#store.get<CatalogManifest>(KEYS.meta);
+    const meta = await this.#store.get<StoredManifest>(KEYS.meta);
     const queue = (await this.#store.get<QueueEntry[]>(KEYS.queue)) ?? [];
-    return !meta && queue.length === 0;
+    if (queue.length > 0) return false;
+    return !meta || !sameBans(meta.bans);
   }
 
   /** Lists the sets and queues the ones to fetch; returns how many. */
@@ -376,7 +397,7 @@ export class CardCatalogBuilder {
     const meta = await this.#store.get<StoredManifest>(KEYS.meta);
     if (!meta || meta.version !== version) return null;
     const parts: string[] = [
-      `{"v":${String(CARD_CATALOG_WIRE_VERSION)},"builtAt":${JSON.stringify(meta.builtAt)},"source":"TCGdex","bans":${JSON.stringify({ standard: STANDARD_BANS, expanded: EXPANDED_BANS })},"sets":[`,
+      `{"v":${String(CARD_CATALOG_WIRE_VERSION)},"builtAt":${JSON.stringify(meta.builtAt)},"source":"TCGdex","bans":${JSON.stringify(meta.bans ?? CURRENT_BANS)},"sets":[`,
     ];
     let first = true;
     for (
@@ -460,7 +481,8 @@ export class CardCatalogBuilder {
     if (
       previous?.version === version &&
       previous.complete === complete &&
-      sameKeys(previous.keys, keys)
+      sameKeys(previous.keys, keys) &&
+      sameBans(previous.bans)
     ) {
       await this.#removeUnused(unused, publishedKeys(previous));
       return;
@@ -475,6 +497,7 @@ export class CardCatalogBuilder {
       cards: order.reduce((total, id) => total + index[id]!.cards, 0),
       complete,
       keys,
+      bans: CURRENT_BANS,
     } satisfies StoredManifest);
     // What the last version named and this one doesn't.
     for (const key of publishedKeys(previous)) unused.add(key);
@@ -495,13 +518,15 @@ export class CardCatalogBuilder {
     if (seeded) return seeded;
     const learned =
       (await this.#store.get<Record<string, string>>(KEYS.codes)) ?? {};
-    if (set.id in learned) return learned[set.id] || undefined;
+    if (learned[set.id]) return learned[set.id];
     const details = await this.#getJson(
       `${TCGDEX_REST_URL}/sets/${encodeURIComponent(set.id)}`
     );
-    const code = setCodeFromDetails(set.id, details) ?? '';
-    await this.#store.put(KEYS.codes, { ...learned, [set.id]: code });
-    return code || undefined;
+    const code = setCodeFromDetails(set.id, details);
+    // Only a code found is kept: a set TCGdex hasn't given one yet is
+    // asked again the next time it is fetched.
+    if (code) await this.#store.put(KEYS.codes, { ...learned, [set.id]: code });
+    return code;
   }
 
   async #waiting(now: number): Promise<boolean> {

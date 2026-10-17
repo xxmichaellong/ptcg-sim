@@ -24,12 +24,15 @@ const tcgdex = (initial: readonly FakeSet[]) => {
   let sets = [...initial];
   const failing = new Set<string>();
   let listFails = false;
+  let abbreviation: string | undefined = 'NEW';
   const calls: string[] = [];
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url.startsWith('https://api.tcgdex.net/v2/en/sets/')) {
       calls.push(`rest:${url.slice(url.lastIndexOf('/') + 1)}`);
-      return Response.json({ abbreviation: { official: 'NEW' } });
+      return Response.json({
+        abbreviation: abbreviation ? { official: abbreviation } : {},
+      });
     }
     const query = JSON.parse(String(init?.body)).query as string;
     if (query.startsWith('{ sets')) {
@@ -73,6 +76,9 @@ const tcgdex = (initial: readonly FakeSet[]) => {
     recover: (id: string) => failing.delete(id),
     failList: (fails: boolean) => {
       listFails = fails;
+    },
+    setAbbreviation: (next: string | undefined) => {
+      abbreviation = next;
     },
   };
 };
@@ -306,6 +312,54 @@ describe('building the card catalog', () => {
     // Next time, only the rotation.
     advance(DAY);
     expect(await builder.refresh()).toBe(3);
+  });
+
+  it('serves a version with the bans it was made with, and republishes on new ones', async () => {
+    const { builder, memory, drain } = setup(THREE_SETS);
+    await builder.refresh();
+    await drain();
+    const version = (await builder.manifest())!.version;
+    const stored = () =>
+      memory.values.get('catalog:meta') as Record<string, unknown>;
+    expect(stored().bans).toBeDefined();
+    expect(await builder.needsRefresh()).toBe(false);
+
+    // Made with other lists than the code's (a deploy changed bans.ts):
+    // the version keeps its own, and a new one is due.
+    memory.values.set('catalog:meta', {
+      ...stored(),
+      bans: { standard: [], expanded: ['OLD 1'] },
+    });
+    expect((await builder.body(version))!.join('')).toContain('"OLD 1"');
+    expect(await builder.needsRefresh()).toBe(true);
+
+    // Stored before versions kept their bans: given them once, then quiet.
+    const { bans: _bans, ...legacy } = stored();
+    memory.values.set('catalog:meta', legacy);
+    expect(await builder.needsRefresh()).toBe(true);
+    await builder.refreshIfDue();
+    await drain();
+    expect(stored().bans).toBeDefined();
+    expect(await builder.needsRefresh()).toBe(false);
+    expect((await builder.manifest())!.version).toBe(version);
+  });
+
+  it('asks again for a set code TCGdex had not given yet', async () => {
+    const sets: FakeSet[] = [{ id: 'new', released: '2026-10-01', total: 1 }];
+    const { builder, source, drain, advance } = setup(sets);
+    source.setAbbreviation(undefined);
+    await builder.refresh();
+    await drain();
+    const first = (await builder.manifest())!.version;
+    expect((await builder.body(first))!.join('')).not.toContain('"NEW"');
+
+    source.setAbbreviation('NEW');
+    source.setSets([{ ...sets[0]!, total: 2 }]);
+    advance(DAY);
+    await builder.refresh();
+    await drain();
+    const second = (await builder.manifest())!.version;
+    expect((await builder.body(second))!.join('')).toContain('"NEW"');
   });
 
   it('keeps the version, and its build time, when nothing changed', async () => {
