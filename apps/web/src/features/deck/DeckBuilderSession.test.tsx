@@ -539,9 +539,18 @@ describe('DeckBuilderSession', () => {
     // Opened and closed: the restored table stays as it was.
     expect(session.commands).toHaveLength(0);
 
+    // A rename synced from the library changes nothing on the table...
     await renderSession({ session, store, open: true });
     act(() => {
-      store.replaceDeck('main', deck, { name: 'Same deck' });
+      store.replaceDeck('main', deck, { name: 'Renamed' });
+    });
+    await renderSession({ session, store, open: false });
+    await Promise.resolve();
+    expect(session.commands).toHaveLength(0);
+    // ...but a deck chosen for the seat goes on it.
+    await renderSession({ session, store, open: true });
+    act(() => {
+      store.replaceDeck('main', deck, { name: 'Same deck' }, { chosen: true });
     });
     await renderSession({ session, store, open: false });
     await vi.waitFor(() => expect(session.commands).toHaveLength(1));

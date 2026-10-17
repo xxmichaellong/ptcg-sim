@@ -199,8 +199,13 @@ export const DeckScreen = ({
   );
 
   const placeOnSeat = useCallback(
-    (cards: DeckList, label: DeckSlotLabel, slotTarget = target) => {
-      store.replaceDeck(slotTarget, cards, label);
+    (
+      cards: DeckList,
+      label: DeckSlotLabel,
+      slotTarget = target,
+      chosen = true
+    ) => {
+      store.replaceDeck(slotTarget, cards, label, { chosen });
       rememberSeatDeck(slotTarget, label.deckId);
     },
     [rememberSeatDeck, store, target]
@@ -429,10 +434,12 @@ export const DeckScreen = ({
           ...(slot.label ? { label: slot.label.name } : {}),
         },
       });
+      // The seat's own deck, now saved: a new name, not a new deck.
       placeOnSeat(
         saved.cards,
         { deckId: saved.id, name: saved.name, format: saved.format },
-        slotTarget
+        slotTarget,
+        false
       );
       if (edit) setView({ kind: 'edit', deckId: saved.id });
       return saved;

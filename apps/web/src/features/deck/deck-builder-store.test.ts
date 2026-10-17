@@ -153,11 +153,16 @@ describe('DeckBuilderStore', () => {
     const store = new DeckBuilderStore({ mainDeck: deck });
     // Installed in the last room: choosing it again changes nothing.
     expect(store.replaceDeck('main', deck)).toBe(false);
-    // A restored game keeps its table: nothing becomes dirty by itself...
+    // A restored game keeps its table: nothing becomes dirty by itself,
+    // nor by a rename synced from the library...
     store.forgetInstalls();
     expect(store.getSnapshot().slots.main.dirty).toBe(false);
+    expect(store.replaceDeck('main', deck, { name: 'Renamed' })).toBe(true);
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
     // ...but the deck chosen for the seat goes on it.
-    expect(store.replaceDeck('main', deck)).toBe(true);
+    expect(store.replaceDeck('main', deck, undefined, { chosen: true })).toBe(
+      true
+    );
     expect(store.getSnapshot().slots.main.dirty).toBe(true);
   });
 

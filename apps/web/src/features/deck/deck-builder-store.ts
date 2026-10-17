@@ -286,16 +286,25 @@ export class DeckBuilderStore {
    * saved one, or one picked from a list); without, it keeps its label.
    * The same cards under the same label change nothing.
    */
+  /**
+   * Puts a deck on a seat. `chosen`: the player picked it (a saved deck, an
+   * import), so in a restored game it goes on the table even when it is the
+   * last room's; a rename or a cover synced from the library never does.
+   */
   replaceDeck(
     target: DeckBuilderTarget,
     deck: DeckList,
-    label?: DeckSlotLabel | null
+    label?: DeckSlotLabel | null,
+    options: { readonly chosen?: boolean } = {}
   ): boolean {
     if (!this.#canEdit(target)) return false;
     const current = this.#state.slots[target];
     const nextLabel =
       label === undefined ? current.label : (label ?? undefined);
-    if (sameDeckList(current.deck, deck) && !this.#installedElsewhere[target]) {
+    if (
+      sameDeckList(current.deck, deck) &&
+      !(options.chosen && this.#installedElsewhere[target])
+    ) {
       // The same cards under a new name (a rename, a deleted saved deck)
       // are not a new deck for the table.
       if (sameLabel(current.label, nextLabel)) return false;
