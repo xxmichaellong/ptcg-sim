@@ -412,6 +412,99 @@ describe('authoritative room command transaction', () => {
     ).toMatchObject({ accepted: false, code: 'precondition_failed' });
   });
 
+  it('refuses a command whose publication a recipient frame could not carry', async () => {
+    // 200 cards, each its own, with long image URLs: the owner's view lists
+    // every definition in their deck.
+    const longDeck = (length: number) =>
+      Array.from({ length: 200 }, (_, index) => ({
+        definition: {
+          id: `long-${String(index)}`,
+          name: `Long ${String(index)}`,
+          category: 'Trainer' as const,
+          imageUrl: `https://cards.example/${String(index)}/${'x'.repeat(length)}.png`,
+        },
+        count: 1,
+      }));
+    const resultOf = (
+      result: Awaited<ReturnType<typeof processAuthorityCommand>>
+    ) =>
+      result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message;
+    const empty = createSnapshot();
+    const tooBig = await processAuthorityCommand(
+      empty,
+      command('session-player-one', 1, 'load-too-big', {
+        type: 'LoadDeck',
+        entries: longDeck(2_700),
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(tooBig)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    expect(
+      tooBig.deliveries.some(
+        (delivery) => delivery.message.type === 'StatePublication'
+      )
+    ).toBe(false);
+    expect(tooBig.snapshot.state).toBe(empty.state);
+    const fits = await processAuthorityCommand(
+      empty,
+      command('session-player-one', 1, 'load-fits', {
+        type: 'LoadDeck',
+        entries: longDeck(1_000),
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(fits)).toMatchObject({ accepted: true });
+
+    // A room already past the limit (stored before this check) may shrink,
+    // but not grow.
+    const loaded = executeCommand(
+      empty.state,
+      { type: 'LoadDeck', playerId: p1, entries: longDeck(2_700) as never },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const past = {
+      ...empty,
+      state: loaded.state,
+      replayHistory: createReplayHistory(loaded.state),
+    };
+    const longerBack = await processAuthorityCommand(
+      past,
+      command(
+        'session-player-one',
+        1,
+        'longer-back',
+        {
+          type: 'SetCardBack',
+          cardBackUrl: `https://backs.example/${'b'.repeat(300)}.png`,
+        },
+        loaded.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(longerBack)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    const reset = await processAuthorityCommand(
+      past,
+      command(
+        'session-player-one',
+        1,
+        'reset',
+        { type: 'ResetPlayer' },
+        loaded.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(reset)).toMatchObject({ accepted: true });
+  });
+
   it("keeps each player's card definitions apart, so a deck load cannot probe the other's concealed cards", async () => {
     const dependencies = createDependencies(createPersistence());
     const definition = {
@@ -1705,7 +1798,37 @@ describe('authoritative room command transaction', () => {
     expect(persistence.transactions).toHaveLength(48);
   });
 
-  it('publishes typed table signals once and persists stale broad-action rejection', async () => {
+  it("resends a coin's face when its committed flip is retried", async () => {
+    const dependencies = createDependencies(createPersistence());
+    const flipped = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'flip', { type: 'FlipCoin' }),
+      dependencies
+    );
+    const coin = (
+      deliveries: Awaited<
+        ReturnType<typeof processAuthorityCommand>
+      >['deliveries']
+    ) =>
+      deliveries.flatMap((delivery) =>
+        delivery.message.type === 'StatePublication'
+          ? (delivery.message.presentationEvents ?? []).filter(
+              (event) => event.type === 'CoinFlipped'
+            )
+          : []
+      );
+    expect(coin(flipped.deliveries)).toHaveLength(3);
+    // Committed, but its publications never went out: the issuer retries.
+    const retried = await processAuthorityCommand(
+      flipped.snapshot,
+      command('session-player-one', 1, 'flip', { type: 'FlipCoin' }),
+      dependencies
+    );
+    expect(retried.committed).toBe(false);
+    expect(coin(retried.deliveries)).toEqual(coin(flipped.deliveries));
+  });
+
+  it('publishes typed table signals, again on a retry of the latest revision, and persists stale broad-action rejection', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);
     const started = await processAuthorityCommand(
@@ -1752,10 +1875,18 @@ describe('authoritative room command transaction', () => {
     expect(duplicate.deliveries[0]?.message).toMatchObject({
       type: 'StatePublication',
     });
+    // A retry of the latest revision may be all a session ever gets of it
+    // (the commit held, its publication didn't), so the signals go again;
+    // a client that has the revision already ignores them.
     if (duplicate.deliveries[0]?.message.type === 'StatePublication') {
-      expect(
-        duplicate.deliveries[0].message.presentationEvents
-      ).toBeUndefined();
+      expect(duplicate.deliveries[0].message.presentationEvents).toEqual([
+        {
+          type: 'TurnStartFailedNoDeck',
+          revision: 1,
+          playerId: p1,
+          turnNumber: 0,
+        },
+      ]);
     }
 
     const stale = await processAuthorityCommand(

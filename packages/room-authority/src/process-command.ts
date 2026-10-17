@@ -10,6 +10,7 @@ import {
   PROTOCOL_VERSION,
   serializeMatchViewState,
   type ClientMessage,
+  type PresentationEvent,
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
@@ -38,6 +39,7 @@ import type {
 } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
 import { presentationEventsForBatch } from './presentation-events.js';
+import { replayHistoryStates } from './replay-history.js';
 import { undoCheckpointFor } from './undo-history.js';
 import { identitiesSurvivingUndo } from './undo-identities.js';
 
@@ -345,6 +347,20 @@ const exceedsCardBackBudget = (
   );
 };
 
+/** The presentation events of the batch that made the current revision. */
+const latestPresentationEvents = (
+  snapshot: RoomAuthoritySnapshot
+): readonly PresentationEvent[] => {
+  const entries = snapshot.replayHistory.entries;
+  const last = entries.at(-1);
+  if (!last || last.batch.revision !== snapshot.state.revision) return [];
+  const states = replayHistoryStates(snapshot.replayHistory);
+  return presentationEventsForBatch(last.batch, snapshot.state, states.at(-2)!);
+};
+
+const frameLength = (delivery: AuthorityDelivery): number =>
+  JSON.stringify(delivery.message).length;
+
 export const processAuthorityCommand = async (
   current: RoomAuthoritySnapshot,
   envelope: CommandEnvelope,
@@ -406,12 +422,17 @@ export const processAuthorityCommand = async (
       // is still the latest revision, everyone may have missed it, so it
       // goes to every session again (one that has it ignores an identical
       // revision). A later commit has already carried them past it.
-      const recipients =
-        duplicate.revision === current.state.revision
-          ? Object.values(current.sessions).filter(
-              (candidate) => candidate.active
-            )
-          : [session];
+      const latest = duplicate.revision === current.state.revision;
+      const recipients = latest
+        ? Object.values(current.sessions).filter(
+            (candidate) => candidate.active
+          )
+        : [session];
+      // What it showed (a coin's face) lives only in its events: they go
+      // again with it. A session that had them ignores the repeat.
+      const presentationEvents = latest
+        ? latestPresentationEvents(current)
+        : [];
       for (const recipient of recipients) {
         const projected = timer.measureProjection(() =>
           projectRecipient(
@@ -430,6 +451,9 @@ export const processAuthorityCommand = async (
             coveringCommandId: duplicate.commandId,
             executedClientSequence: recipient.nextClientSequence - 1,
             snapshot: serializeMatchViewState(projected.snapshot),
+            ...(presentationEvents.length > 0
+              ? { presentationEvents: [...presentationEvents] }
+              : {}),
           },
         });
       }
@@ -554,61 +578,69 @@ export const processAuthorityCommand = async (
     }
     return { nextState, eventBatch, outcome };
   });
-  const { nextState, eventBatch, outcome } = resolved;
-  const accepted = outcome.accepted;
+  let { outcome } = resolved;
   let replayTransition: ValidatedReplayHistoryTransition | undefined;
-  let canonicalEventBatch = eventBatch;
+  let canonicalEventBatch: EventBatch | undefined;
 
-  let candidate = timer.measureAuthority('historyAndCandidateMs', () => {
-    // Validated snapshots are frozen, so a candidate shares every part of
-    // the current one that the command left alone.
-    let replayHistory = current.replayHistory;
-    let candidateState: MatchState = current.state;
-    if (accepted) {
-      if (!eventBatch) {
-        throw new Error('Accepted command did not produce an event batch');
+  const buildCandidate = (
+    nextState: MatchState,
+    eventBatch: EventBatch | undefined
+  ): RoomAuthoritySnapshot =>
+    timer.measureAuthority('historyAndCandidateMs', () => {
+      const accepted = outcome.accepted;
+      replayTransition = undefined;
+      canonicalEventBatch = eventBatch;
+      // Validated snapshots are frozen, so a candidate shares every part of
+      // the current one that the command left alone.
+      let replayHistory = current.replayHistory;
+      let candidateState: MatchState = current.state;
+      if (accepted) {
+        if (!eventBatch) {
+          throw new Error('Accepted command did not produce an event batch');
+        }
+        replayTransition = prepareValidatedReplayHistoryTransition(
+          current,
+          currentSnapshotValidation,
+          eventBatch,
+          nextState,
+          dependencies.policy.maximumReplayEventBatches,
+          dependencies.policy.maximumReplayEventBytes
+        );
+        canonicalEventBatch = replayTransition.eventBatch;
+        candidateState = replayTransition.resultingState;
+        replayHistory = replayTransition.replayHistory;
       }
-      replayTransition = prepareValidatedReplayHistoryTransition(
-        current,
-        currentSnapshotValidation,
-        eventBatch,
-        nextState,
-        dependencies.policy.maximumReplayEventBatches,
-        dependencies.policy.maximumReplayEventBytes
-      );
-      canonicalEventBatch = replayTransition.eventBatch;
-      candidateState = replayTransition.resultingState;
-      replayHistory = replayTransition.replayHistory;
-    }
 
-    const sessions = { ...current.sessions };
-    sessions[session.id] = appendOutcome(
-      sessions[session.id]!,
-      outcome,
-      dependencies.policy.maximumRecentOutcomesPerSession
-    );
-    return {
-      schemaVersion: current.schemaVersion,
-      authorityVersion: current.authorityVersion + 1,
-      mode: current.mode,
-      state: candidateState,
-      replayHistory,
-      // An undo rotates only the aliases of cards the move taken back carried
-      // across a concealment boundary (identitiesSurvivingUndo).
-      identities:
-        accepted && envelope.command.type === 'ApplySoloUndo'
-          ? identitiesSurvivingUndo(
-              current.identities,
-              current.state,
-              candidateState
-            )
-          : current.identities,
-      sessions,
-      ...(current.admission ? { admission: current.admission } : {}),
-    } satisfies RoomAuthoritySnapshot;
-  });
+      const sessions = { ...current.sessions };
+      sessions[session.id] = appendOutcome(
+        sessions[session.id]!,
+        outcome,
+        dependencies.policy.maximumRecentOutcomesPerSession
+      );
+      return {
+        schemaVersion: current.schemaVersion,
+        authorityVersion: current.authorityVersion + 1,
+        mode: current.mode,
+        state: candidateState,
+        replayHistory,
+        // An undo rotates only the aliases of cards the move taken back
+        // carried across a concealment boundary (identitiesSurvivingUndo).
+        identities:
+          accepted && envelope.command.type === 'ApplySoloUndo'
+            ? identitiesSurvivingUndo(
+                current.identities,
+                current.state,
+                candidateState
+              )
+            : current.identities,
+        sessions,
+        ...(current.admission ? { admission: current.admission } : {}),
+      } satisfies RoomAuthoritySnapshot;
+    });
+
+  let candidate = buildCandidate(resolved.nextState, resolved.eventBatch);
   let publications: readonly AuthorityDelivery[] = [];
-  if (accepted) {
+  if (outcome.accepted) {
     const publicationEventBatch = canonicalEventBatch;
     if (!publicationEventBatch) {
       throw new Error('Accepted command did not produce an event batch');
@@ -622,8 +654,43 @@ export const processAuthorityCommand = async (
         current.state
       )
     );
-    candidate = projected.snapshot;
-    publications = projected.deliveries;
+    // A state some recipient's frame can't carry (long card backs and
+    // image URLs on two full decks laid out card by card) would fail that
+    // session on every publication from here on: refused before it is
+    // committed, as the card-back budget refuses the common case early. A
+    // room already past it may still shrink.
+    const grows = (delivery: AuthorityDelivery): boolean => {
+      const length = frameLength(delivery);
+      if (length <= MAX_SERVER_FRAME_CODE_UNITS) return false;
+      const recipient = current.sessions[delivery.sessionId];
+      if (!recipient || delivery.message.type !== 'StatePublication') {
+        return true;
+      }
+      const before = projectRecipient(
+        current.state,
+        recipient.viewer,
+        current.identities,
+        dependencies.opaqueIds,
+        current.mode
+      );
+      return (
+        JSON.stringify(delivery.message.snapshot).length >
+        JSON.stringify(serializeMatchViewState(before.snapshot)).length
+      );
+    };
+    if (projected.deliveries.some(grows)) {
+      outcome = {
+        commandId: envelope.commandId,
+        clientSequence: envelope.clientSequence,
+        accepted: false,
+        revision: current.state.revision,
+        code: 'precondition_failed',
+      };
+      candidate = buildCandidate(current.state, undefined);
+    } else {
+      candidate = projected.snapshot;
+      publications = projected.deliveries;
+    }
   }
 
   const candidateSnapshotValidation = timer.measureAuthority(
