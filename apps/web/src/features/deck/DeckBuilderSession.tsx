@@ -146,6 +146,7 @@ export const DeckBuilderSession = ({
   const failureHandler = useRef(onInstallFailure);
   const cardBackFailureHandler = useRef(onCardBackInstallFailure);
   const sessionAttachHandler = useRef(onSessionAttach);
+  const forgottenFor = useRef<DeckInstallSession | undefined>(undefined);
   const wasOpen = useRef(open);
   // Without a handler of its own, a deck that doesn't reach the table says
   // why, rather than nothing happening.
@@ -182,6 +183,12 @@ export const DeckBuilderSession = ({
       }
     } else {
       preparedBinding.current = undefined;
+      // A restored game keeps its own table: nothing goes on it by itself,
+      // but a deck chosen now is installed even if the last room had it.
+      if (forgottenFor.current !== session) {
+        forgottenFor.current = session;
+        store.forgetInstalls();
+      }
     }
     const currentCardBack = new CardBackInstallCoordinator({
       store: cardBackStore,

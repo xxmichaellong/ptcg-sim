@@ -113,6 +113,11 @@ export class DeckBuilderStore {
   readonly #listeners = new Set<Listener>();
   #pending?: DeckInstallReceipt;
   #state: DeckBuilderSnapshot;
+  /** Seats whose installed revision is another room's (a restored game's). */
+  #installedElsewhere: Record<DeckBuilderTarget, boolean> = {
+    main: false,
+    alternate: false,
+  };
 
   constructor(options: DeckBuilderStoreOptions = {}) {
     this.#alternateEnabled = options.alternateEnabled ?? true;
@@ -172,6 +177,15 @@ export class DeckBuilderStore {
       )
     );
     return true;
+  }
+
+  /**
+   * A room that keeps its own table (a restored game) attached: nothing goes
+   * on it by itself, but a deck then chosen for a seat is installed even
+   * when it is the one the last room had.
+   */
+  forgetInstalls(): void {
+    this.#installedElsewhere = { main: true, alternate: true };
   }
 
   /**
@@ -281,7 +295,7 @@ export class DeckBuilderStore {
     const current = this.#state.slots[target];
     const nextLabel =
       label === undefined ? current.label : (label ?? undefined);
-    if (sameDeckList(current.deck, deck)) {
+    if (sameDeckList(current.deck, deck) && !this.#installedElsewhere[target]) {
       // The same cards under a new name (a rename, a deleted saved deck)
       // are not a new deck for the table.
       if (sameLabel(current.label, nextLabel)) return false;
@@ -297,6 +311,7 @@ export class DeckBuilderStore {
       );
       return true;
     }
+    this.#installedElsewhere[target] = false;
     return this.#replaceEditedSlot(target, deck, nextLabel);
   }
 

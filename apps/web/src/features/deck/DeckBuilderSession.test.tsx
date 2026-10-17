@@ -528,6 +528,26 @@ describe('DeckBuilderSession', () => {
     expect(session.commands).toHaveLength(1);
   });
 
+  it("keeps a restored game's table, but installs a deck chosen for it", async () => {
+    const session = new FakeSession();
+    const deck = deckListOf([{ card: card(), count: 1 }]);
+    // The last room's deck, installed there.
+    const store = new DeckBuilderStore({ mainDeck: deck });
+    await renderSession({ session, store, open: true });
+    await renderSession({ session, store, open: false });
+    await Promise.resolve();
+    // Opened and closed: the restored table stays as it was.
+    expect(session.commands).toHaveLength(0);
+
+    await renderSession({ session, store, open: true });
+    act(() => {
+      store.replaceDeck('main', deck, { name: 'Same deck' });
+    });
+    await renderSession({ session, store, open: false });
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+    expect(session.commands[0]).toMatchObject({ type: 'LoadDeck' });
+  });
+
   it('makes Play close the surface, flushes the captured target, and reports retryable authority failure', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

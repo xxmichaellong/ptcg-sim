@@ -427,6 +427,48 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: 'renamed-in-hand' });
   });
 
+  it("forgets a refused hand move's card, so a new copy isn't taken for it", () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const [first, ...rest] = hand.cards;
+    const move = rebind(
+      {
+        type: 'MoveCard',
+        cardId: first!.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: hand.id,
+        destinationIndex: hand.cards.length - 1,
+      },
+      view
+    );
+    // Refused (the hand was reset meanwhile); a copy of the same card is
+    // drawn into the new hand.
+    rebind.refused(move);
+    const redrawn: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: [...rest, { ...first!, id: 'a-new-copy' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: first!.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        redrawn
+      )
+    ).toMatchObject({ cardId: first!.id });
+  });
+
   it('follows a card renamed twice by two moves within the hand', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();

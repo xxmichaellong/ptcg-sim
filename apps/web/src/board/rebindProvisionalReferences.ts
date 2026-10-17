@@ -94,6 +94,8 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly alias: string;
       readonly definitionId: string;
     }[];
+    /** The command, as sent, that would bring them. */
+    readonly command: WireGameCommand;
   }[] = [];
   const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
     const predicted = predictWireCommand(view, command);
@@ -109,7 +111,9 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
           ? [{ alias: card.id, definitionId: card.definitionId }]
           : []
       );
-      if (cards.length > 0) arrivals.push({ zoneId: zone.id, before, cards });
+      if (cards.length > 0) {
+        arrivals.push({ zoneId: zone.id, before, cards, command });
+      }
     }
   };
   const settleArrivals = (view: MatchViewState) => {
@@ -289,6 +293,9 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // goes as it is, for the room to refuse as stale, never rebound by
     // position to whatever stands there now.
     refused: (command: WireGameCommand) => {
+      // Nor did it bring anything into a hand: a new card there with the
+      // same face is someone else's.
+      arrivals = arrivals.filter((arrival) => arrival.command !== command);
       const placed = placementOf.get(command);
       if (placed === undefined) return;
       placements.delete(placed);

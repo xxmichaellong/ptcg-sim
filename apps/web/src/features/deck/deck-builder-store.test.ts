@@ -148,6 +148,19 @@ describe('DeckBuilderStore', () => {
     expect(store.settleInstall(receipt!, 'installed')).toBe(false);
   });
 
+  it("installs a chosen deck in a restored game, even the last room's", () => {
+    const deck = deckWith(card('Pikachu'));
+    const store = new DeckBuilderStore({ mainDeck: deck });
+    // Installed in the last room: choosing it again changes nothing.
+    expect(store.replaceDeck('main', deck)).toBe(false);
+    // A restored game keeps its table: nothing becomes dirty by itself...
+    store.forgetInstalls();
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
+    // ...but the deck chosen for the seat goes on it.
+    expect(store.replaceDeck('main', deck)).toBe(true);
+    expect(store.getSnapshot().slots.main.dirty).toBe(true);
+  });
+
   it('does not invent installs for clean empty or disabled alternate custody', () => {
     const empty = new DeckBuilderStore();
     expect(empty.prepareForNewSession()).toBe(false);
