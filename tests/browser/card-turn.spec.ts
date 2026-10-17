@@ -245,12 +245,15 @@ const expectTurnedOver = (
   // renderer) may show none near edge-on, so that is judged only where the
   // turn itself -- from the card first drawn narrower to it lying face up --
   // was seen in enough frames to show it. (A card waiting, back up, for its
-  // face is marked turning too, but isn't turning yet.)
+  // face is marked turning too, but isn't turning yet.) Narrower is judged
+  // against the card lying down, as it ends: the card held up in the hand
+  // is drawn bigger, and the card lying in wait would look narrowed by it.
   if (mode === 'flat')
     expect(frames.some((frame) => frame.rotating)).toBe(true);
   else {
+    const lying = frames.at(-1)!.width;
     const start = frames.findIndex(
-      (frame) => frame.turning && frame.width < widest * 0.98
+      (frame) => frame.turning && frame.width < lying * 0.98
     );
     const end = frames.findIndex(
       (frame, index) =>
@@ -259,7 +262,7 @@ const expectTurnedOver = (
     if (start >= 0 && end - start >= 8)
       expect(
         Math.min(...frames.slice(start, end).map((frame) => frame.width))
-      ).toBeLessThan(widest * 0.8);
+      ).toBeLessThan(lying * 0.8);
   }
   // One card went to the discard: no second one flies in after it.
   expect(Math.max(...frames.map((frame) => frame.ghosts))).toBe(0);
