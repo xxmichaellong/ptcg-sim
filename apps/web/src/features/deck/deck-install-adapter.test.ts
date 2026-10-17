@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { DeckBuilderStore } from './deck-builder-store.js';
 import {
+  deckInstallFailureNotice,
   DeckInstallAdapterError,
   DeckInstallCoordinator,
   deckToLoadDeckEntries,
@@ -603,5 +604,28 @@ describe('physical layout installation', () => {
       readingQuarterTurns: 1,
       join: { part: 0, columns: 1, rows: 2 },
     });
+  });
+});
+
+describe('telling the player a deck did not go on the table', () => {
+  it('says why, or nothing when there is nothing to say', () => {
+    expect(
+      deckInstallFailureNotice({
+        stage: 'conversion',
+        code: 'too_many_entries',
+      })
+    ).toBe('The table takes at most 200 different cards.');
+    expect(
+      deckInstallFailureNotice({ stage: 'conversion', code: 'too_many_cards' })
+    ).toBe('The table takes at most 200 cards.');
+    expect(
+      deckInstallFailureNotice({ stage: 'authority', code: 'stale_reference' })
+    ).toBe("The room didn't take it. Try again.");
+    expect(
+      deckInstallFailureNotice({ stage: 'conversion', code: 'aborted' })
+    ).toBeUndefined();
+    expect(
+      deckInstallFailureNotice({ stage: 'session', reason: 'ended' })
+    ).toBeUndefined();
   });
 });

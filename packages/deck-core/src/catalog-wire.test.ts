@@ -430,9 +430,10 @@ describe('untrusted input', () => {
         attacks: [],
       })
     );
-    // A Trainer is its name: an old print plays with the new wording.
-    const switchCard = {
-      name: 'Switch',
+    // In Standard and Expanded only the same text stands in for a reprint:
+    // Neo Genesis's coin-flip Super Rod is not today's.
+    const superRod = {
+      name: 'Super Rod',
       category: 'Trainer' as const,
       types: [],
       abilities: [],
@@ -440,13 +441,13 @@ describe('untrusted input', () => {
     };
     expect(
       printGroupKey({
-        ...switchCard,
-        text: 'Switch 1 of your Benched Pokémon with your Active Pokémon.',
+        ...superRod,
+        text: 'Flip a coin. If heads, put a card from your discard pile into your hand.',
       })
-    ).toBe(
+    ).not.toBe(
       printGroupKey({
-        ...switchCard,
-        text: 'Switch your Active Pokémon with 1 of your Benched Pokémon.',
+        ...superRod,
+        text: 'Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.',
       })
     );
     expect(

@@ -34,8 +34,13 @@ const WRITE_DELAY_MS = 120;
 
 export const MAX_DECK_NAME_LENGTH = 80;
 export const MAX_DECK_NOTES_LENGTH = 4_000;
-/** A deck far past any format; bounds what one record can hold. */
-const MAX_DECK_ENTRIES = 400;
+/**
+ * Bounds what one record can hold: as many cards as an import can bring
+ * (a pasted list's 10,000 lines, deck-core's MAX_PASTED_DECKLIST_LINES), so
+ * a deck the library saves always reads back. One too big for the table
+ * says so when it is put on a seat.
+ */
+const MAX_DECK_ENTRIES = 10_000;
 const MAX_URL_LENGTH = 4_096;
 const MAX_TEXT_LENGTH = 256;
 

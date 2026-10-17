@@ -502,3 +502,36 @@ export class DeckInstallCoordinator {
     }
   }
 }
+
+/**
+ * What a player is told when a deck doesn't reach the table, or nothing
+ * when there is nothing to tell (the install was superseded, or the room
+ * is gone and says so itself).
+ */
+export const deckInstallFailureNotice = (
+  failure: DeckInstallCoordinatorFailure
+): string | undefined => {
+  switch (failure.stage) {
+    case 'conversion':
+      switch (failure.code) {
+        case 'aborted':
+          return undefined;
+        case 'too_many_cards':
+          return `The table takes at most ${String(MAX_DECK_CARDS)} cards.`;
+        case 'too_many_entries':
+          return `The table takes at most ${String(MAX_DECK_ENTRIES)} different cards.`;
+        case 'missing_image':
+          return 'A card in it has no picture.';
+        case 'url_too_long':
+          return "A card's picture address is too long.";
+        case 'name_too_long':
+          return "A card's name is too long.";
+        default:
+          return "Its cards couldn't be read.";
+      }
+    case 'session':
+      return undefined;
+    default:
+      return "The room didn't take it. Try again.";
+  }
+};

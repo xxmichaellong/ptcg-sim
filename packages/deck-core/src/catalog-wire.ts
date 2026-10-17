@@ -399,9 +399,6 @@ type Mutable = Record<string, unknown>;
 const BASIC_ENERGY =
   /^(?:basic\s+)?(grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy)\s+energy$/iu;
 
-/** Mechanics that make a Trainer another card than one of its name. */
-const DISTINCT_TRAINER_TAGS = ['ACE SPEC', 'Prism Star'];
-
 const assign = (target: Mutable, key: string, value: unknown): void => {
   if (value !== undefined) target[key] = value;
 };
@@ -422,15 +419,13 @@ interface DecodedPrint {
 /**
  * What makes two printings the same card: the same name and the same
  * rules. Reprints, full arts and promos share it, so they share legality
- * (a reprint legal in a format makes every print of it legal there). A
- * Trainer is its name alone: an older print plays with the newest print's
- * wording (tournament rules 5.4.2.2), so Base Set's Switch is the Switch
- * of today, and a subtitle doesn't count ("Boss's Orders (Giovanni)") --
- * unless one is an ACE SPEC or Prism Star and the other not,
- * as Base Set's Computer Search and Boundaries Crossed's are. Basic Energy
- * is its type ("Basic Fire Energy" is Fire Energy). TCG Pocket is another
- * game: its cards never share a group with the TCG's, and keep to their
- * rules. A hash taken in one pass with
+ * (a reprint legal in a format makes every print of it legal there): in
+ * Standard and Expanded an older print stands in for a reprint only when
+ * its text is the same (the TCG Tournament Handbook), so Neo Genesis's
+ * coin-flip Super Rod is not today's. A Trainer's subtitle doesn't count
+ * ("Boss's Orders (Giovanni)" is Boss's Orders). Basic Energy is its type
+ * ("Basic Fire Energy" is Fire Energy). TCG Pocket is another game: its
+ * cards never share a group with the TCG's. A hash taken in one pass with
  * no copies: the decoder keys 20,000 cards.
  */
 export const printGroupKey = (card: {
@@ -443,7 +438,6 @@ export const printGroupKey = (card: {
   readonly attacks: readonly CatalogAttack[];
   readonly text?: string | undefined;
   readonly energyType?: 'Basic' | 'Special' | undefined;
-  readonly tags?: readonly string[] | undefined;
   readonly pocket?: boolean | undefined;
 }): string => {
   const hash = new GroupHash();
@@ -452,14 +446,11 @@ export const printGroupKey = (card: {
     hash.add(BASIC_ENERGY.exec(card.name.trim())?.[1] ?? card.name);
     return `${game}e${hash.digest()}`;
   }
-  if (card.category === 'Trainer' && !card.pocket) {
-    hash.add(trainerName(card.name));
-    for (const tag of DISTINCT_TRAINER_TAGS) {
-      if (card.tags?.includes(tag)) hash.add(tag);
-    }
-    return `t${hash.digest()}`;
-  }
-  hash.add(card.name);
+  hash.add(
+    card.category === 'Trainer' && !card.pocket
+      ? trainerName(card.name)
+      : card.name
+  );
   hash.add(card.category);
   hash.add(card.stage ?? '');
   hash.add(card.hp === undefined ? '' : String(card.hp));
@@ -581,7 +572,6 @@ const decodeCard = (
       attacks,
       text: effect,
       energyType,
-      tags,
       pocket: set.pocket,
     }),
     basicEnergy:

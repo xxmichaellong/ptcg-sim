@@ -30,10 +30,24 @@ import {
 } from './deck-builder-store.js';
 import {
   DeckInstallCoordinator,
+  deckInstallFailureNotice,
   type DeckDefinitionDigest,
   type DeckInstallCoordinatorFailure,
   type DeckInstallSession,
 } from './deck-install-adapter.js';
+import { toast } from '../../ui/toast.js';
+
+const noticeInstallFailure = (failure: DeckInstallCoordinatorFailure): void => {
+  const body = deckInstallFailureNotice(failure);
+  if (body) {
+    toast({
+      id: 'deck-install-failed',
+      title: "The deck didn't go on the table",
+      body,
+      tone: 'warning',
+    });
+  }
+};
 import {
   popularDecklistSource,
   type PopularDecklistSource,
@@ -133,7 +147,9 @@ export const DeckBuilderSession = ({
   const cardBackFailureHandler = useRef(onCardBackInstallFailure);
   const sessionAttachHandler = useRef(onSessionAttach);
   const wasOpen = useRef(open);
-  failureHandler.current = onInstallFailure;
+  // Without a handler of its own, a deck that doesn't reach the table says
+  // why, rather than nothing happening.
+  failureHandler.current = onInstallFailure ?? noticeInstallFailure;
   cardBackFailureHandler.current = onCardBackInstallFailure;
   sessionAttachHandler.current = onSessionAttach;
 

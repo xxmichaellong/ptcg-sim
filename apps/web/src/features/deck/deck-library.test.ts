@@ -394,6 +394,31 @@ describe('the deck library', () => {
     expect(library.get('deck-2')?.name).toBe('Edited again');
   });
 
+  it('reads back any deck it saved, however many different cards', async () => {
+    const { backend } = memoryBackend();
+    const library = new DeckLibrary({
+      backend,
+      writeDelayMs: 0,
+      createId: () => 'huge',
+    });
+    await settle();
+    const many = deckListOf(
+      Array.from({ length: 401 }, (_, index) => ({
+        card: {
+          ...card,
+          id: `X ${String(index)}`,
+          name: `Card ${String(index)}`,
+        },
+        count: 1,
+      }))
+    );
+    library.create({ name: 'Huge', format: 'unlimited', cards: many });
+    await settle();
+    const reloaded = new DeckLibrary({ backend });
+    await settle();
+    expect(reloaded.get('huge')?.cards).toHaveLength(401);
+  });
+
   it('keeps working for the visit when storage fails', async () => {
     const backend: DeckLibraryBackend = {
       readAll: async () => {

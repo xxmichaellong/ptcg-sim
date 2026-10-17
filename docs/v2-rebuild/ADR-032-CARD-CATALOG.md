@@ -75,10 +75,11 @@ fast and current. The sources, measured on 2026-10-15:
    data (1,113 cards) before it closes; the rest come from TCGdex's suffix,
    stage, rarity and the card's name.
 6. **Legality is the card's, not the print's.** Prints with the same name and
-   rules share a print group. A Trainer's group is its name (an older print
-   plays with the newest wording, tournament rules 5.4.2.2), apart from an
-   ACE SPEC or Prism Star print; a Basic Energy's is its type; TCG Pocket's
-   cards keep to their own groups. A group is legal in a format when TCGdex
+   rules share a print group: in Standard and Expanded an older print stands
+   in for a reprint only when its text is the same (the TCG Tournament
+   Handbook), so Neo Genesis's coin-flip Super Rod is not today's. A
+   Trainer's subtitle doesn't count ("Boss's Orders (Giovanni)"); a Basic
+   Energy's group is its type; TCG Pocket's cards keep to their own groups. A group is legal in a format when TCGdex
    marks any of its prints legal there (so a rotated print is legal through
    a legal reprint), Basic Energy is legal whatever its set (but Fairy
    Energy left Standard with the Fairy type), TCG Pocket cards nowhere, and
