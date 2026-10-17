@@ -452,6 +452,7 @@ export const printGroupKey = (card: {
   readonly attacks: readonly CatalogAttack[];
   readonly text?: string | undefined;
   readonly energyType?: 'Basic' | 'Special' | undefined;
+  readonly trainerType?: string | undefined;
   readonly pocket?: boolean | undefined;
 }): string => {
   const hash = new GroupHash();
@@ -466,6 +467,10 @@ export const printGroupKey = (card: {
       : card.name;
   hash.add(name);
   hash.add(card.category);
+  // Its kind is part of what a Trainer does: Base Set's Bill, an Item as
+  // the rules play a Trainer from before kinds were printed, is not the
+  // Supporter Bill, whatever the text says.
+  if (card.category === 'Trainer') hash.add(card.trainerType ?? 'Item');
   if (
     card.category === 'Trainer' &&
     !card.pocket &&
@@ -594,6 +599,7 @@ const decodeCard = (
       attacks,
       text: effect,
       energyType,
+      trainerType,
       pocket: set.pocket,
     }),
     basicEnergy:

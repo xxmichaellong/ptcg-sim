@@ -89,8 +89,9 @@ fast and current. The sources, measured on 2026-10-15:
    nothing. Pokémon alike in all that are one card only when their
    Weakness, Resistance and Retreat agree, modifiers included (Electrike
    AR 63's +10 Weakness is not ROS 24's ×2); a print TCGdex gives no
-   Weakness (some promos) is taken for the newest it matches. A Trainer's subtitle doesn't count ("Boss's Orders
-   (Giovanni)"); a Basic Energy's group is its type; TCG Pocket's cards
+   Weakness (some promos) is taken for the newest it matches. A Trainer's kind does (Base Set's Bill, an Item as
+   the rules play a Trainer printed before kinds were, is not the Supporter
+   Bill); its subtitle doesn't ("Boss's Orders (Giovanni)"); a Basic Energy's group is its type; TCG Pocket's cards
    keep to their own groups. A group is legal in a format when TCGdex
    marks any of its prints legal there (so a rotated print is legal through
    a legal reprint), Basic Energy is legal whatever its set (but Fairy

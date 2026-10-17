@@ -488,6 +488,44 @@ describe('untrusted input', () => {
     );
   });
 
+  it('keeps Trainers of different kinds apart, an unprinted kind being an Item', () => {
+    const trainer = (name: string, text: string, trainerType?: string) =>
+      printGroupKey({
+        name,
+        category: 'Trainer',
+        types: [],
+        abilities: [],
+        attacks: [],
+        text,
+        ...(trainerType ? { trainerType } : {}),
+      });
+    // Base Set's Bill and HeartGold's Supporter: the same text once the
+    // Supporter reminder goes, but not the same card.
+    expect(trainer('Bill', 'Draw 2 cards.')).not.toBe(
+      trainer(
+        'Bill',
+        'You can play only one Supporter card each turn. When you play this card, put it next to your Active Pokémon. When your turn ends, discard this card. Draw 2 cards.',
+        'Supporter'
+      )
+    );
+    // Base Set's Switch is today's Item.
+    expect(
+      trainer(
+        'Switch',
+        'Switch 1 of your own Benched Pokémon with your Active Pokémon.'
+      )
+    ).toBe(
+      trainer(
+        'Switch',
+        'Switch your Active Pokémon with 1 of your Benched Pokémon.',
+        'Item'
+      )
+    );
+    expect(trainer('Energy Search', 'Search.')).toBe(
+      trainer('Energy Search', 'Search.', 'Item')
+    );
+  });
+
   it('lets an older print share a reworded reprint’s legality, and a textless one borrow it', () => {
     const decoded = decodeCatalog({
       ...body([]),
