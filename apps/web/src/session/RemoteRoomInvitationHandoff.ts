@@ -13,8 +13,6 @@ import type {
   RemoteRoomBootstrapResult,
 } from './RemoteRoomBootstrap.js';
 
-const MAX_INVITATION_LIFETIME_MS = 24 * 60 * 60_000;
-
 export type RemoteRoomInvitationHandoffFailureCode =
   | 'invalid_handoff'
   | 'expired_invitation'
@@ -91,7 +89,6 @@ export class RemoteRoomInvitationJoinCustody {
     if (!parsed.ok) {
       throw new RemoteRoomInvitationHandoffError('invalid_handoff');
     }
-    this.assertLive(parsed.value);
     this.#handoff = parsed.value;
     return this.receipt(parsed.value);
   }
@@ -108,7 +105,6 @@ export class RemoteRoomInvitationJoinCustody {
     if (!handoff) {
       throw new RemoteRoomInvitationHandoffError('missing_invitation');
     }
-    this.assertLive(handoff);
     this.#joining = true;
     try {
       const signal = input.signal
@@ -121,10 +117,11 @@ export class RemoteRoomInvitationJoinCustody {
       };
       let result: RemoteRoomBootstrapResult;
       try {
-        result = await bootstrapRemoteRoomInvitation(
-          bootstrapInput,
-          dependencies
-        );
+        // The room judges whether it has expired, by its own clock.
+        result = await bootstrapRemoteRoomInvitation(bootstrapInput, {
+          now: this.#now,
+          ...dependencies,
+        });
       } catch (error) {
         if (this.#disposed) {
           throw new RemoteRoomInvitationHandoffError('disposed');
@@ -165,17 +162,6 @@ export class RemoteRoomInvitationJoinCustody {
   private assertIdle(): void {
     if (this.#joining) {
       throw new RemoteRoomInvitationHandoffError('join_in_progress');
-    }
-  }
-
-  private assertLive(handoff: RoomInvitationHandoff): void {
-    const now = this.#now();
-    if (
-      !Number.isSafeInteger(now) ||
-      handoff.expiresAt <= now ||
-      handoff.expiresAt - now > MAX_INVITATION_LIFETIME_MS
-    ) {
-      throw new RemoteRoomInvitationHandoffError('expired_invitation');
     }
   }
 

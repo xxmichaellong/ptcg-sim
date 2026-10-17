@@ -379,7 +379,6 @@ describe('remote room invitation custody', () => {
       playerCapability: credentials.playerTwoSeatCapability,
       fetch: fetchImplementation,
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
 
     await custody.copyPlayerInvitation(capturingClipboard().writer);
@@ -408,7 +407,6 @@ describe('remote room invitation custody', () => {
       spectatorCapability: credentials.spectatorCapability,
       fetch: fetchImplementation,
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
     const clipboard = capturingClipboard();
     let writes = 0;
@@ -433,7 +431,6 @@ describe('remote room invitation custody', () => {
       spectatorCapability: credentials.spectatorCapability,
       fetch: vi.fn<typeof fetch>(),
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
     expect(custody.roomCode).toBe('ABCDEFGH2345');
     expect(JSON.stringify(custody)).toBe('{}');
@@ -463,7 +460,6 @@ describe('remote room invitation custody', () => {
       playerCapability: credentials.playerTwoSeatCapability,
       fetch: fetchImplementation,
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
 
     await expect(custody.copyPlayerInvitation()).rejects.toMatchObject({
@@ -486,13 +482,12 @@ describe('remote room invitation custody', () => {
     expect(fetchImplementation).toHaveBeenCalledOnce();
   });
 
-  it('fails closed on missing custody and invalid or expired issue responses', async () => {
+  it('fails closed on missing custody and invalid issue responses', async () => {
     const withoutSpectator = new RemoteRoomInvitationCustody({
       roomCode: 'ABCDEFGH2345',
       playerCapability: credentials.playerTwoSeatCapability,
       fetch: vi.fn<typeof fetch>(),
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
     await expect(
       withoutSpectator.copySpectatorInvitation(capturingClipboard().writer)
@@ -530,29 +525,77 @@ describe('remote room invitation custody', () => {
         ),
         'invalid_response',
       ],
-      [
-        Response.json(
-          {
-            invitation: playerInvitation,
-            requestedRole: 'player',
-            expiresAt: 10_000,
-          },
-          { status: 201 }
-        ),
-        'expired_invitation',
-      ],
     ] as const) {
       const custody = new RemoteRoomInvitationCustody({
         roomCode: 'ABCDEFGH2345',
         playerCapability: credentials.playerTwoSeatCapability,
         fetch: vi.fn(async () => response.clone()),
         origin: new URL('https://play.example'),
-        now: () => 10_000,
       });
       await expect(
         custody.copyPlayerInvitation(capturingClipboard().writer)
       ).rejects.toMatchObject({ code });
     }
+  });
+
+  it('keeps one invitation in flight even when the clipboard fails first', async () => {
+    let finish: ((response: Response) => void) | undefined;
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+    });
+    let refused = false;
+    const failed = custody
+      .copyPlayerInvitation({
+        writeText: async () => {
+          throw new Error('denied');
+        },
+      })
+      .catch((error: unknown) => {
+        refused = true;
+        throw error;
+      });
+    await Promise.resolve();
+    await Promise.resolve();
+    // The clipboard said no, but the room is still issuing: a retry now
+    // would issue another, and one would revoke the other.
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'copy_in_progress' });
+    expect(refused).toBe(false);
+    finish?.(
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    await expect(failed).rejects.toMatchObject({ code: 'clipboard_failed' });
+    const clipboard = capturingClipboard();
+    fetchImplementation.mockResolvedValueOnce(
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    await custody.copyPlayerInvitation(clipboard.writer);
+    expect(clipboard.values).toHaveLength(1);
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
   });
 
   it('aborts an in-flight invitation issue when its owner is disposed', async () => {
@@ -569,7 +612,6 @@ describe('remote room invitation custody', () => {
       playerCapability: credentials.playerTwoSeatCapability,
       fetch: fetchImplementation,
       origin: new URL('https://play.example'),
-      now: () => 10_000,
     });
     const pending = custody.copyPlayerInvitation(capturingClipboard().writer);
     await expect(
@@ -635,19 +677,36 @@ describe('invited remote room bootstrap', () => {
     expect(result.runtime).toBe(runtime);
   });
 
-  it('rejects malformed and expired handoffs before network access', async () => {
+  it('rejects a malformed handoff before network access', async () => {
     const fetchImplementation = vi.fn<typeof fetch>();
-    for (const invitation of [
-      { roomCode: 'bad', invitation: playerInvitation },
-      {
-        roomCode: 'ABCDEFGH2345',
-        requestedRole: 'player',
-        invitation: playerInvitation,
-        expiresAt: 10_000,
-      },
-    ]) {
-      await expect(
-        bootstrapRemoteRoomInvitation(
+    await expect(
+      bootstrapRemoteRoomInvitation(
+        {
+          buildId: 'client-build',
+          displayName: 'Red',
+          rendererKind: 'pixi',
+          invitation: { roomCode: 'bad', invitation: playerInvitation },
+        },
+        { fetch: fetchImplementation, origin: 'https://play.example' }
+      )
+    ).rejects.toBeInstanceOf(Error);
+    expect(fetchImplementation).not.toHaveBeenCalled();
+  });
+
+  it("leaves an invitation's expiry to the room, and says so when it refuses one", async () => {
+    const invitation = {
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'player' as const,
+      invitation: playerInvitation,
+      expiresAt: 10_000,
+    };
+    const join = (now: number) => {
+      const fetchImplementation = vi.fn<typeof fetch>(async () =>
+        Response.json({ error: 'invalid_capability' }, { status: 403 })
+      );
+      return {
+        fetchImplementation,
+        joined: bootstrapRemoteRoomInvitation(
           {
             buildId: 'client-build',
             displayName: 'Red',
@@ -657,11 +716,21 @@ describe('invited remote room bootstrap', () => {
           {
             fetch: fetchImplementation,
             origin: 'https://play.example',
-            now: () => 10_000,
+            now: () => now,
           }
-        )
-      ).rejects.toBeInstanceOf(Error);
-    }
-    expect(fetchImplementation).not.toHaveBeenCalled();
+        ),
+      };
+    };
+    // Past its time by this browser's clock: the room is asked anyway (the
+    // clock may be fast), and its refusal is reported as an expiry.
+    const late = join(20_000);
+    await expect(late.joined).rejects.toMatchObject({
+      code: 'expired_invitation',
+    });
+    expect(late.fetchImplementation).toHaveBeenCalledTimes(1);
+    // Within it, a refusal is just a refusal.
+    await expect(join(5_000).joined).rejects.toMatchObject({
+      code: 'exchange_failed',
+    });
   });
 });

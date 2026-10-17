@@ -87,13 +87,20 @@ describe('remote room foreground invitation handoff', () => {
     });
   });
 
-  it('fails closed for plain room codes, malformed, oversized, and expired clipboard text', () => {
+  it('fails closed for plain room codes, malformed and oversized clipboard text', () => {
     const custody = new RemoteRoomInvitationJoinCustody(() => 10_000);
+    // Past its time by this browser's clock is still taken: the room
+    // judges expiry, and this clock may be fast.
+    expect(
+      paste(
+        custody,
+        serializeRoomInvitationHandoffText({ ...handoff, expiresAt: 10_000 })
+      )
+    ).toMatchObject({ roomCode: handoff.roomCode });
     for (const text of [
       'ABCDEFGH2345',
       'PTCGSIM2-INVITE:{',
       'x'.repeat(1_025),
-      serializeRoomInvitationHandoffText({ ...handoff, expiresAt: 10_000 }),
     ]) {
       expect(() => paste(custody, text)).toThrow(
         RemoteRoomInvitationHandoffError

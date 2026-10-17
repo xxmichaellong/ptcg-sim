@@ -19,7 +19,6 @@ const MAX_CONTINUATION_RESPONSE_BYTES = 4_096;
 const MAX_CONTINUATION_LIFETIME_MS = 30 * 24 * 60 * 60_000;
 const MIN_CONTINUATION_LIFETIME_MS = 60_000;
 const MAX_RESTORE_INVITATION_LIFETIME_MS = 24 * 60 * 60_000;
-const MAX_CLOCK_SKEW_MS = 5 * 60_000;
 const CONTINUATION_CAPABILITY_PATTERN =
   /^ptcgsave\.v1\.([A-Za-z0-9_-]{22})\.[A-Za-z0-9_-]{43}$/u;
 const BASE64URL_ALPHABET =
@@ -44,7 +43,6 @@ export class RemoteContinuationTransportError extends Error {
 export interface RemoteContinuationTransportDependencies {
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
-  readonly now?: () => number;
 }
 
 export interface RemoteContinuationCreationInput {
@@ -104,7 +102,6 @@ const requestContext = (
 ): {
   readonly fetch: typeof globalThis.fetch;
   readonly origin: URL;
-  readonly now: () => number;
 } => {
   const origin = normalizeHttpOrigin(
     dependencies.origin ?? currentBrowserOrigin() ?? ''
@@ -116,7 +113,6 @@ const requestContext = (
   return {
     fetch: fetchImplementation,
     origin,
-    now: dependencies.now ?? Date.now,
   };
 };
 
@@ -145,19 +141,6 @@ const performRequest = async (
   } catch {
     throw new RemoteContinuationTransportError('request_failed');
   }
-};
-
-const safeNow = (now: () => number): number => {
-  let value: number;
-  try {
-    value = now();
-  } catch {
-    throw new RemoteContinuationTransportError('invalid_response');
-  }
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new RemoteContinuationTransportError('invalid_response');
-  }
-  return value;
 };
 
 const throwForCreationStatus = (status: number): never => {
@@ -228,11 +211,10 @@ export const createRemoteContinuation = async (
   if (!parsed.ok || parsed.value.operationId !== input.operationId) {
     throw new RemoteContinuationTransportError('invalid_response');
   }
-  const now = safeNow(context.now);
+  // Judged by the server's clock, which made both times: this browser's
+  // may be minutes off either way.
   const lifetime = parsed.value.expiresAt - parsed.value.createdAt;
   if (
-    parsed.value.createdAt > now + MAX_CLOCK_SKEW_MS ||
-    parsed.value.expiresAt <= now ||
     lifetime < MIN_CONTINUATION_LIFETIME_MS ||
     lifetime > MAX_CONTINUATION_LIFETIME_MS
   ) {
@@ -283,12 +265,13 @@ export const restoreRemoteContinuation = async (
   ) {
     throw new RemoteContinuationTransportError('invalid_response');
   }
-  const now = safeNow(context.now);
+  // By the server's clock, as above: the opponent's invitation lasts
+  // fifteen minutes from the restore.
+  const invitationLifetime =
+    parsed.value.opponentInvitation.expiresAt - parsed.value.completedAt;
   if (
-    parsed.value.completedAt > now + MAX_CLOCK_SKEW_MS ||
-    parsed.value.opponentInvitation.expiresAt <= now ||
-    parsed.value.opponentInvitation.expiresAt - parsed.value.completedAt >
-      MAX_RESTORE_INVITATION_LIFETIME_MS
+    invitationLifetime <= 0 ||
+    invitationLifetime > MAX_RESTORE_INVITATION_LIFETIME_MS
   ) {
     throw new RemoteContinuationTransportError('expired_response');
   }

@@ -49,7 +49,6 @@ const restoreResponse = () => ({
 const dependencies = (fetchImplementation: typeof fetch) => ({
   fetch: fetchImplementation,
   origin: 'https://play.example',
-  now: () => now,
 });
 
 const expectCode = async (
@@ -237,7 +236,7 @@ describe('remote continuation HTTP transport', () => {
             ...restoreResponse(),
             opponentInvitation: {
               invitation: opponentInvitation,
-              expiresAt: now,
+              expiresAt: now + 25 * 60 * 60_000,
             },
           },
           { status: 201 }
@@ -254,6 +253,30 @@ describe('remote continuation HTTP transport', () => {
         code
       );
     }
+  });
+
+  it("judges a save's and an invitation's life by the server's clock alone", async () => {
+    // Made twenty minutes ago by the server's clock, which the browser's
+    // (whatever it reads) has no say in: still good for its fifteen minutes.
+    const restored = await restoreRemoteContinuation(
+      { capability, operationId: restoreOperationId },
+      dependencies(
+        vi.fn(async () =>
+          Response.json(
+            {
+              ...restoreResponse(),
+              completedAt: Date.now() - 20 * 60_000,
+              opponentInvitation: {
+                invitation: opponentInvitation,
+                expiresAt: Date.now() - 5 * 60_000,
+              },
+            },
+            { status: 201 }
+          )
+        )
+      )
+    );
+    expect(restored.opponentInvitation.invitation).toBe(opponentInvitation);
   });
 
   it('revokes with an exact same-origin DELETE and accepts only 204', async () => {
@@ -291,7 +314,7 @@ describe('remote continuation HTTP transport', () => {
     );
   });
 
-  it('normalizes bad origin, network, and clock failures without reflecting credentials', async () => {
+  it('normalizes bad origin and network failures without reflecting credentials', async () => {
     for (const operation of [
       createRemoteContinuation(
         { roomCode, resumeToken, operationId },
@@ -307,30 +330,6 @@ describe('remote continuation HTTP transport', () => {
             throw new Error(capability);
           })
         )
-      ),
-      createRemoteContinuation(
-        { roomCode, resumeToken, operationId },
-        {
-          ...dependencies(
-            vi.fn(async () =>
-              Response.json(creationResponse(), { status: 201 })
-            )
-          ),
-          now: () => Number.NaN,
-        }
-      ),
-      createRemoteContinuation(
-        { roomCode, resumeToken, operationId },
-        {
-          ...dependencies(
-            vi.fn(async () =>
-              Response.json(creationResponse(), { status: 201 })
-            )
-          ),
-          now: () => {
-            throw new Error(resumeToken);
-          },
-        }
       ),
     ]) {
       let error: unknown;

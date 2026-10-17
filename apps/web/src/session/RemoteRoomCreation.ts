@@ -11,6 +11,7 @@ import {
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
+  RemoteRoomBootstrapError,
   bootstrapRemoteRoom,
   type RemoteRoomBootstrapDependencies,
   type RemoteRoomBootstrapResult,
@@ -27,7 +28,6 @@ import {
 
 const MAX_CREATION_RESPONSE_BYTES = 4_096;
 const MAX_INVITATION_RESPONSE_BYTES = 2_048;
-const MAX_INVITATION_LIFETIME_MS = 24 * 60 * 60_000;
 
 export type RemoteRoomCreationFailureCode =
   'invalid_input' | 'creation_failed' | 'invalid_response' | 'bootstrap_failed';
@@ -73,7 +73,6 @@ export interface RemoteRoomInvitationCustodyOptions {
   readonly spectatorCapability?: string;
   readonly fetch: typeof globalThis.fetch;
   readonly origin: URL;
-  readonly now: () => number;
   readonly signal?: AbortSignal;
 }
 
@@ -85,7 +84,6 @@ export class RemoteRoomInvitationCustody {
   readonly #roomCode: string;
   readonly #fetch: typeof globalThis.fetch;
   readonly #origin: URL;
-  readonly #now: () => number;
   readonly #ownerSignal: AbortSignal | undefined;
   readonly #abort = new AbortController();
   #playerCapability: string | undefined;
@@ -98,7 +96,6 @@ export class RemoteRoomInvitationCustody {
     this.#spectatorCapability = options.spectatorCapability;
     this.#fetch = options.fetch;
     this.#origin = options.origin;
-    this.#now = options.now;
     this.#ownerSignal = options.signal;
   }
 
@@ -153,8 +150,9 @@ export class RemoteRoomInvitationCustody {
       throw new RemoteRoomInvitationError('copy_in_progress');
     }
     this.#copying = true;
+    let invitation: Promise<RemoteRoomInvitation> | undefined;
     try {
-      const invitation = this.issueFirstAvailable(
+      invitation = this.issueFirstAvailable(
         typeof roles === 'string' ? [roles] : roles,
         signal
       );
@@ -175,6 +173,10 @@ export class RemoteRoomInvitationCustody {
       }
       throw new RemoteRoomInvitationError('clipboard_failed');
     } finally {
+      // Held until the invitation settles, even when the clipboard failed
+      // first: a retry issuing another would race it, and whichever the
+      // room issued last revokes the other, perhaps the one copied.
+      await invitation?.catch(() => undefined);
       this.#copying = false;
     }
   }
@@ -284,14 +286,8 @@ export class RemoteRoomInvitationCustody {
         this.#abort.signal.aborted ? 'disposed' : 'issue_failed'
       );
     }
-    const now = this.#now();
-    if (
-      !Number.isSafeInteger(now) ||
-      parsed.value.expiresAt <= now ||
-      parsed.value.expiresAt - now > MAX_INVITATION_LIFETIME_MS
-    ) {
-      throw new RemoteRoomInvitationError('expired_invitation');
-    }
+    // Its expiry is the room's to judge, by the room's clock: a browser
+    // clock running fast would otherwise refuse every invitation it issues.
     return Object.freeze({ roomCode: this.#roomCode, ...parsed.value });
   }
 }
@@ -339,28 +335,37 @@ export const bootstrapRemoteRoomInvitation = async (
 ): Promise<RemoteRoomBootstrapResult> => {
   const parsed = parseRoomInvitationHandoff(input.invitation);
   if (!parsed.ok) throw new RemoteRoomInvitationError('invalid_input');
-  const now = (dependencies.now ?? Date.now)();
-  if (
-    !Number.isSafeInteger(now) ||
-    parsed.value.expiresAt <= now ||
-    parsed.value.expiresAt - now > MAX_INVITATION_LIFETIME_MS
-  ) {
-    throw new RemoteRoomInvitationError('expired_invitation');
+  // The room judges its expiry, by its own clock; this browser's may be
+  // off. Refused, it is called expired only if this clock agrees.
+  const expiredHere = (): boolean => {
+    const now = (dependencies.now ?? Date.now)();
+    return Number.isSafeInteger(now) && parsed.value.expiresAt <= now;
+  };
+  try {
+    return await bootstrapRemoteRoom(
+      {
+        buildId: input.buildId,
+        roomCode: parsed.value.roomCode,
+        displayName: input.displayName,
+        requestedRole: input.asSpectator
+          ? 'spectator'
+          : parsed.value.requestedRole,
+        capability: parsed.value.invitation,
+        rendererKind: input.rendererKind,
+        ...(input.signal ? { signal: input.signal } : {}),
+      },
+      dependencies
+    );
+  } catch (error) {
+    if (
+      error instanceof RemoteRoomBootstrapError &&
+      error.code === 'exchange_failed' &&
+      expiredHere()
+    ) {
+      throw new RemoteRoomInvitationError('expired_invitation');
+    }
+    throw error;
   }
-  return bootstrapRemoteRoom(
-    {
-      buildId: input.buildId,
-      roomCode: parsed.value.roomCode,
-      displayName: input.displayName,
-      requestedRole: input.asSpectator
-        ? 'spectator'
-        : parsed.value.requestedRole,
-      capability: parsed.value.invitation,
-      rendererKind: input.rendererKind,
-      ...(input.signal ? { signal: input.signal } : {}),
-    },
-    dependencies
-  );
 };
 
 const validInput = (input: RemoteRoomCreationInput): boolean => {
@@ -444,8 +449,6 @@ export const createRemoteRoom = async (
       ? parsed.value.credentials.playerTwoSeatCapability
       : undefined;
   const { roomCode, credentials } = parsed.value;
-  const now =
-    dependencies.now ?? dependencies.bootstrapDependencies?.now ?? Date.now;
   const invitations = new RemoteRoomInvitationCustody({
     roomCode,
     ...(playerCapability ? { playerCapability } : {}),
@@ -454,7 +457,6 @@ export const createRemoteRoom = async (
       : {}),
     fetch: fetchImplementation,
     origin,
-    now,
     ...(input.signal ? { signal: input.signal } : {}),
   });
   try {
