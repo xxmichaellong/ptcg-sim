@@ -244,6 +244,30 @@ describe('DeckBuilderStore', () => {
     expect(store.getSnapshot().slots.main.revision).toBe(1);
   });
 
+  it('lets go of a saved deck when its seat is cleared or given other cards unlabelled', () => {
+    const store = new DeckBuilderStore();
+    store.replaceDeck('main', deckWith(card('Pikachu')), {
+      deckId: 'saved',
+      name: 'Saved',
+    });
+    expect(store.clearDeck('main')).toBe(true);
+    expect(store.getSnapshot().slots.main.label).toBeUndefined();
+
+    store.replaceDeck('main', deckWith(card('Pikachu')), {
+      deckId: 'saved',
+      name: 'Saved',
+    });
+    expect(store.replaceDeck('main', deckWith(card('Eevee')), null)).toBe(true);
+    expect(store.getSnapshot().slots.main.label).toBeUndefined();
+    // Adding a card keeps the seat's deck what it was.
+    store.replaceDeck('main', deckWith(card('Pikachu')), {
+      deckId: 'saved',
+      name: 'Saved',
+    });
+    store.addCard(card('Eevee'));
+    expect(store.getSnapshot().slots.main.label?.deckId).toBe('saved');
+  });
+
   it('synchronizes an externally installed deck as clean without switching targets', () => {
     const store = new DeckBuilderStore();
     store.selectTarget('alternate');

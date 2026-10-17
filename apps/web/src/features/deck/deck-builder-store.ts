@@ -252,7 +252,11 @@ export class DeckBuilderStore {
   addCard(card: DeckCard, target = this.#state.target): boolean {
     if (!card.name || !this.#canEdit(target)) return false;
     const slot = this.#state.slots[target];
-    return this.#replaceEditedSlot(target, addCard(slot.deck, card));
+    return this.#replaceEditedSlot(
+      target,
+      addCard(slot.deck, card),
+      slot.label
+    );
   }
 
   removeCard(card: DeckCard, target = this.#state.target): boolean {
@@ -260,7 +264,7 @@ export class DeckBuilderStore {
     const slot = this.#state.slots[target];
     const nextDeck = removeCard(slot.deck, card);
     if (nextDeck === slot.deck) return false;
-    return this.#replaceEditedSlot(target, nextDeck);
+    return this.#replaceEditedSlot(target, nextDeck, slot.label);
   }
 
   /**
@@ -383,10 +387,11 @@ export class DeckBuilderStore {
     return target === 'main' || this.#alternateEnabled;
   }
 
+  /** `label` is the seat's label after: undefined clears it. */
   #replaceEditedSlot(
     target: DeckBuilderTarget,
     deck: DeckList,
-    label: DeckSlotLabel | undefined = this.#state.slots[target].label
+    label: DeckSlotLabel | undefined
   ): boolean {
     const current = this.#state.slots[target];
     this.#replaceSlot(

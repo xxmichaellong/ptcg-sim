@@ -181,8 +181,18 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       const ownerId = id.slice(PREDICTED_INSPECTION.length);
       return view.workAreas[ownerId]?.inspection?.id ?? id;
     }
-    const card = cards.get(id);
-    return card !== undefined && !cardInView(id, view) ? card : id;
+    if (!cards.has(id) || cardInView(id, view)) return id;
+    // Renamed more than once (moved within the hand twice): follow each
+    // rename to the name the room has it under now.
+    let card = cards.get(id)!;
+    for (
+      let step = 0;
+      step < REMEMBERED_STACKS && cards.has(card) && !cardInView(card, view);
+      step += 1
+    ) {
+      card = cards.get(card)!;
+    }
+    return card;
   };
 
   const collect = (value: unknown, view: MatchViewState): void => {

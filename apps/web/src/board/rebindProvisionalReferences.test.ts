@@ -311,4 +311,51 @@ describe('rebinding predicted references', () => {
       )
     ).toMatchObject({ cardId: 'renamed-in-hand' });
   });
+
+  it('follows a card renamed twice by two moves within the hand', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const [first, ...rest] = hand.cards;
+    const reorder = (cardId: string) =>
+      ({
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: hand.id,
+        destinationIndex: 0,
+      }) as const;
+    const withHand = (cards: MatchViewState['zones'][string]['cards']) =>
+      ({
+        ...view,
+        zones: { ...view.zones, [hand.id]: { ...hand, cards } },
+      }) as MatchViewState;
+    // Sent at once: the first move.
+    rebind(reorder(first!.id), view);
+    // The second was queued on the old name; sent once the first landed.
+    const once = withHand([
+      ...rest,
+      { ...first!, id: 'renamed-once' as never },
+    ]);
+    expect(rebind(reorder(first!.id), once)).toMatchObject({
+      cardId: 'renamed-once',
+    });
+    // The discard was queued on the old name too; sent after both.
+    const twice = withHand([
+      { ...first!, id: 'renamed-twice' as never },
+      ...rest,
+    ]);
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: first!.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        twice
+      )
+    ).toMatchObject({ cardId: 'renamed-twice' });
+  });
 });
