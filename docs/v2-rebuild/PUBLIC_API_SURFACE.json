@@ -414,6 +414,10 @@
               "kind": "type"
             },
             {
+              "name": "limitlessNumber",
+              "kind": "value"
+            },
+            {
               "name": "lineCardId",
               "kind": "value"
             },

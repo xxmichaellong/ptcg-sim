@@ -122,6 +122,7 @@ export {
   CatalogWireError,
   catalogCardId,
   decodeCatalog,
+  limitlessNumber,
   normalizeCollectorNumber,
 } from './catalog-wire.js';
 export type {

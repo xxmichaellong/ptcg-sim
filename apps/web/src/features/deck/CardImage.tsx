@@ -1,4 +1,7 @@
-import { resolvePastedDecklistImageUrl } from '@ptcgsim/deck-core';
+import {
+  limitlessNumber,
+  resolvePastedDecklistImageUrl,
+} from '@ptcgsim/deck-core';
 import { useState, type ImgHTMLAttributes } from 'react';
 
 /**
@@ -15,7 +18,8 @@ export const limitlessScanOf = (card: {
     ? resolvePastedDecklistImageUrl({
         name: card.name,
         setCode: card.set,
-        number: card.number,
+        // An alternate printing's letter is lower case in the scan's name.
+        number: limitlessNumber(card.number),
       })
     : undefined;
 

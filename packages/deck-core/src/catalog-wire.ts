@@ -252,7 +252,6 @@ const TRAINER_TYPES = new Set([
   "Rocket's Secret Machine",
 ]);
 
-/** Pokémon TCG Live's image file number: three digits, or as printed. */
 /**
  * A number as Limitless names its scans: three digits, and an alternate
  * printing's letter in lower case ("24A" is PHF_024a; "PHF_024A" is 403).
