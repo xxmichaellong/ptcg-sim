@@ -661,6 +661,51 @@ describe('untrusted input', () => {
     expect(before.cards[0]!.printGroup).toBe(before.cards[1]!.printGroup);
   });
 
+  it('keeps the pieces of a card printed in pieces apart, and a LEGEND half no Basic', () => {
+    const piece = (n: string, extra: Record<string, unknown> = {}) => ({
+      n,
+      nm: 'Mewtwo V-UNION',
+      c: 'P',
+      hp: 310,
+      ty: 'P',
+      tx: 'Once per game during your turn, combine 4 different Mewtwo V-UNION from your discard pile.',
+      ...extra,
+    });
+    const decoded = decodeCatalog({
+      ...body([]),
+      sets: [
+        {
+          id: 'swshp',
+          name: 'SWSH Promos',
+          code: 'SP',
+          series: 'Sword & Shield',
+          released: '2019-11-15',
+          cards: [
+            piece('159', { st: 'V-UNION' }),
+            piece('160', { st: 'V-UNION' }),
+            // TCGdex has no stage for some: the name says it.
+            piece('215'),
+            piece('216'),
+            {
+              n: '111',
+              nm: 'Ho-Oh LEGEND',
+              c: 'P',
+              st: 'Basic',
+              tg: ['LEGEND'],
+              tx: 'Put this card from your hand onto your Bench only with the other half.',
+            },
+          ],
+        },
+      ],
+    });
+    const find = (id: string) =>
+      decoded.cards.find((entry) => entry.id === id)!;
+    expect(find('SP 159').printGroup).not.toBe(find('SP 160').printGroup);
+    expect(find('SP 215').printGroup).not.toBe(find('SP 216').printGroup);
+    // Stored before the server said so: still LEGEND, not Basic.
+    expect(find('SP 111').stage).toBe('LEGEND');
+  });
+
   it('keys print groups by rules, ignoring case and spacing', () => {
     const base = {
       name: 'Shadow Rider',

@@ -141,6 +141,14 @@ describe('TCGdex cards in wire form', () => {
     expect(
       normalizeTcgdexCard({ ...dragapult, stage: 'Stage9' }, 'sv06', BASE)
     ).not.toHaveProperty('st');
+    // TCGdex's Ho-Oh LEGEND halves: "Basic", with the suffix "Legend".
+    expect(
+      normalizeTcgdexCard(
+        { ...dragapult, stage: 'Basic', suffix: 'Legend' },
+        'sv06',
+        BASE
+      )?.st
+    ).toBe('LEGEND');
   });
 
   it('leaves out what a Trainer or Energy cannot have', () => {

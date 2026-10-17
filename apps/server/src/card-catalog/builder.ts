@@ -42,9 +42,9 @@ export const CARD_CATALOG_WIRE_VERSION = 1;
  * What normalize.ts keeps of a card. A set stored with less is fetched
  * again at the next refresh, so a field added here reaches every set in
  * one refresh, published at once, not over the two-week rotation. 2: the
- * Weakness and Resistance modifiers.
+ * Weakness and Resistance modifiers. 3: a LEGEND half's stage.
  */
-export const CARD_CATALOG_NORMALIZATION = 2;
+export const CARD_CATALOG_NORMALIZATION = 3;
 
 export const CARD_CATALOG_LIMITS = Object.freeze({
   responseBytes: 8_000_000,

@@ -454,9 +454,12 @@ export const printGroupKey = (card: {
   readonly energyType?: 'Basic' | 'Special' | undefined;
   readonly trainerType?: string | undefined;
   readonly pocket?: boolean | undefined;
+  /** The printing itself, for a piece of a card printed in pieces. */
+  readonly piece?: string | undefined;
 }): string => {
   const hash = new GroupHash();
   const game = card.pocket ? 'p' : '';
+  if (card.piece !== undefined) hash.add(card.piece);
   if (card.category === 'Energy' && card.energyType === 'Basic') {
     hash.add(BASIC_ENERGY.exec(card.name.trim())?.[1] ?? card.name);
     return `${game}e${hash.digest()}`;
@@ -516,8 +519,13 @@ const decodeCard = (
   const dex = decodeDex(value.dx);
   if (!types || !abilities || !attacks || !tags || !dex) return undefined;
 
-  const stage =
-    typeof value.st === 'string' && STAGES.has(value.st) ? value.st : undefined;
+  // A LEGEND half is no Basic, whatever a catalog stored before the server
+  // said so has for its stage.
+  const stage = tags.includes('LEGEND')
+    ? 'LEGEND'
+    : typeof value.st === 'string' && STAGES.has(value.st)
+      ? value.st
+      : undefined;
   const trainerType =
     typeof value.tt === 'string' && TRAINER_TYPES.has(value.tt)
       ? value.tt
@@ -601,6 +609,13 @@ const decodeCard = (
       energyType,
       trainerType,
       pocket: set.pocket,
+      // Each piece of a card printed in pieces is its own: they share
+      // their rules text, but one doesn't stand in for another.
+      ...(stage === 'V-UNION' ||
+      stage === 'LEGEND' ||
+      / (?:V-UNION|LEGEND)$/u.test(name)
+        ? { piece: catalogCardId(set.code ?? set.id, number) }
+        : {}),
     }),
     basicEnergy:
       category === 'Energy' && energyType === 'Basic'

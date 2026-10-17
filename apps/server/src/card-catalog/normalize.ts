@@ -282,8 +282,14 @@ export const normalizeTcgdexCard = (
   if (!id.startsWith(`${setId}-`)) return undefined;
 
   const card: WireCard = { n: number, nm: name, c: category };
+  // TCGdex gives a LEGEND half the stage "Basic" (its suffix says LEGEND):
+  // it is no Basic Pokémon, and can't start a game.
   const stage =
-    typeof value.stage === 'string' ? STAGES[value.stage] : undefined;
+    value.suffix === 'Legend'
+      ? 'LEGEND'
+      : typeof value.stage === 'string'
+        ? STAGES[value.stage]
+        : undefined;
   if (stage) card.st = stage;
   const hp = integer(value.hp, 1_000);
   if (hp !== undefined && category === 'P') card.hp = hp;
