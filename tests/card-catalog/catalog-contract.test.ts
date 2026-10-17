@@ -12,7 +12,11 @@ import {
   CardCatalogBuilder,
   type CatalogStore,
 } from '../../apps/server/src/card-catalog/builder.js';
-import { decodeCatalog } from '../../packages/deck-core/src/catalog-wire.js';
+import { catalogNumber } from '../../apps/server/src/card-catalog/normalize.js';
+import {
+  catalogNumberOf,
+  decodeCatalog,
+} from '../../packages/deck-core/src/catalog-wire.js';
 
 const sets = [
   {
@@ -208,5 +212,23 @@ describe('the card catalog contract', () => {
       standard: true,
       expanded: true,
     });
+  });
+
+  it('writes TCGdex collector numbers the same way on both sides', () => {
+    for (const [setId, localId] of [
+      ['swshp', 'SWSH022'],
+      ['smp', 'SM85'],
+      ['xyp', 'XY01'],
+      ['bwp', 'BW95'],
+      ['hgssp', 'HGSS01'],
+      ['dpp', 'DP40'],
+      ['30th-c', '1'],
+      ['sv04', '163'],
+      ['swsh9', 'TG01'],
+    ] as const) {
+      expect(catalogNumberOf(setId, localId), `${setId} ${localId}`).toBe(
+        catalogNumber(setId, localId)
+      );
+    }
   });
 });

@@ -1,5 +1,6 @@
 import type { CatalogCard, LoadedCatalog } from './catalog.js';
 import { foldText, trainerName } from './card-query.js';
+import { catalogNumberOf } from './catalog-wire.js';
 import { printId, type DeckCard } from './deck-list.js';
 import {
   isUnambiguousPocketCode,
@@ -357,7 +358,10 @@ export const findCatalogPrint = (
     return named(index.byPrint.get(printKey(fromImage.set, fromImage.number)));
   }
   if (fromImage?.setId) {
-    const number = canonicalNumber(fromImage.number);
+    // TCGdex's own number for it ("SWSH022"), as the catalog writes it (22).
+    const number = canonicalNumber(
+      catalogNumberOf(fromImage.setId, fromImage.number)
+    );
     return named(
       catalog.cards.find(
         (candidate) =>

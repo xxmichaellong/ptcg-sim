@@ -54,6 +54,55 @@ const entries: readonly DeckEntry[] = [
 ];
 
 describe('decklist rank in the projection', () => {
+  it('gives two printings of one card one rank, as v1 sorts by name', () => {
+    const definition = (id: string, name: string) => ({
+      id: asCardDefinitionId(id),
+      name,
+      category: 'Trainer' as const,
+      imageUrl: `/${id}.png`,
+    });
+    let state = createEmptyMatch(asMatchId('rank-printings'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const loaded = executeCommand(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          { definition: definition('iono-185', 'Iono'), count: 1 },
+          { definition: definition('ultra-ball', 'Ultra Ball'), count: 1 },
+          { definition: definition('iono-254', 'Iono'), count: 1 },
+        ],
+      },
+      context
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    state = loaded.state;
+    const drawn = executeCommand(
+      state,
+      { type: 'DrawCards', playerId: p1, count: 3 },
+      context
+    );
+    if (!drawn.accepted) throw new Error(drawn.message);
+    const view = projectMatch(
+      drawn.state,
+      { kind: 'player', playerId: p1 },
+      identities
+    );
+    const ranks = view.zones[playerZoneId(p1, 'hand')]!.cards.map((viewCard) =>
+      viewCard.kind === 'known'
+        ? [view.definitions[viewCard.definitionId]?.name, viewCard.decklistRank]
+        : 'concealed'
+    );
+    expect(ranks).toEqual([
+      ['Iono', 0],
+      ['Ultra Ball', 1],
+      ['Iono', 0],
+    ]);
+  });
+
   it('ranks by declared order and gives every copy of a name one rank', () => {
     let state = createEmptyMatch(asMatchId('rank-match'), [
       { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },

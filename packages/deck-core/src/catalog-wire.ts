@@ -173,6 +173,35 @@ export const normalizeCollectorNumber = (value: string): string => {
   return match ? `${match[1]!}${match[2]!}${match[3]!}` : upper;
 };
 
+/**
+ * A TCGdex collector number as the catalog writes it, for a TCGdex set id:
+ * promos lose their series prefix ("SWSH022" in swshp is 22) and the 30th
+ * Classic Collection gains "CC". The server builds the catalog by the same
+ * rule (apps/server/src/card-catalog/normalize.ts `catalogNumber`; the
+ * catalog contract test holds the two together).
+ */
+export const catalogNumberOf = (setId: string, localId: string): string => {
+  const dropped = PROMO_NUMBER_PREFIXES[setId];
+  const number =
+    dropped &&
+    localId.startsWith(dropped) &&
+    /^\d/u.test(localId.slice(dropped.length))
+      ? localId.slice(dropped.length)
+      : localId;
+  return `${ADDED_NUMBER_PREFIXES[setId] ?? ''}${number}`;
+};
+const PROMO_NUMBER_PREFIXES: Readonly<Record<string, string>> = {
+  swshp: 'SWSH',
+  smp: 'SM',
+  xyp: 'XY',
+  bwp: 'BW',
+  hgssp: 'HGSS',
+  dpp: 'DP',
+};
+const ADDED_NUMBER_PREFIXES: Readonly<Record<string, string>> = {
+  '30th-c': 'CC',
+};
+
 /** The id of one printing: its set code and normalized number. */
 export const catalogCardId = (code: string, number: string): string =>
   `${code.trim().toUpperCase()} ${normalizeCollectorNumber(number)}`;

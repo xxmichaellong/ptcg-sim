@@ -252,6 +252,23 @@ describe('finding the printing a decklist line means', () => {
     expect(french.image).toContain('_R_FR');
   });
 
+  it("finds a promo by its TCGdex image, whose number keeps the series' prefix", () => {
+    const SP = set('swshp', 'SP', '2019-11-15', 307);
+    const rillaboom = card(SP, '22', 'Rillaboom');
+    const promos: LoadedCatalog = {
+      ...catalog,
+      cards: [rillaboom],
+      sets: [SP],
+      byId: new Map([[rillaboom.id, rillaboom]]),
+    };
+    expect(
+      findCatalogPrint(promos, {
+        name: 'Rillaboom',
+        image: 'https://assets.tcgdex.net/en/swsh/swshp/SWSH022/high.webp',
+      })?.id
+    ).toBe('SP 22');
+  });
+
   it('reads the printing from Limitless and TCGdex image addresses', () => {
     expect(
       printFromImageUrl(
