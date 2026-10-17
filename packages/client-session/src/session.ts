@@ -207,6 +207,15 @@ export class RemoteGameSession {
    * face) still show when they come; a repeat of shown ones does not.
    */
   private presentedRevision = -1;
+  /**
+   * Announcements for a revision this session doesn't have yet (the room
+   * committed a command whose publication it never sent): shown once the
+   * view reaches it.
+   */
+  private deferredAnnouncements: Extract<
+    ServerMessage,
+    { type: 'MulliganAnnouncement' | 'DeckViewAnnouncement' }
+  >['event'][] = [];
   private readonly pingTimes = new Map<number, number>();
   private state: ClientSessionState = initialState();
   private options?: Omit<
@@ -256,6 +265,7 @@ export class RemoteGameSession {
     this.pending.length = 0;
     this.ownRevisions.clear();
     this.presentedRevision = -1;
+    this.deferredAnnouncements = [];
     this.pingTimes.clear();
     this.replayTransfer = undefined;
     this.options = {
@@ -537,6 +547,17 @@ export class RemoteGameSession {
       case 'MulliganAnnouncement':
       case 'DeckViewAnnouncement': {
         const current = this.state.view;
+        if (this.state.phase === 'ready' && current) {
+          // Ahead of the view: held until it gets there. Behind it: stale.
+          if (message.event.revision > current.revision) {
+            this.deferredAnnouncements = [
+              ...this.deferredAnnouncements,
+              message.event,
+            ].slice(-16);
+            return;
+          }
+          if (message.event.revision < current.revision) return;
+        }
         if (
           this.state.phase !== 'ready' ||
           !current ||
@@ -842,6 +863,10 @@ export class RemoteGameSession {
       reconnectAttempt: 0,
       failure: undefined,
       view: nextView,
+      presentationEvents: this.releaseAnnouncements(
+        nextView,
+        this.state.presentationEvents
+      ),
       pendingCommands: this.pendingSummaries(),
     });
     if (
@@ -851,6 +876,25 @@ export class RemoteGameSession {
       return;
     }
     this.sendHead();
+  }
+
+  /** The announcements held for a view that has now reached them. */
+  private releaseAnnouncements(
+    view: MatchViewState,
+    events: ClientSessionState['presentationEvents']
+  ): ClientSessionState['presentationEvents'] {
+    const due = this.deferredAnnouncements.filter(
+      (event) => event.revision <= view.revision
+    );
+    if (due.length === 0) return events;
+    this.deferredAnnouncements = this.deferredAnnouncements.filter(
+      (event) => event.revision > view.revision
+    );
+    return appendManyBounded(
+      events,
+      due.filter((event) => view.players[event.playerId] !== undefined),
+      this.policy.maximumPresentationEvents
+    );
   }
 
   private handlePublication(
@@ -911,7 +955,9 @@ export class RemoteGameSession {
     if (advancesView || presentationEvents !== this.state.presentationEvents) {
       this.updateState({
         ...(advancesView ? { view: candidate } : {}),
-        presentationEvents,
+        presentationEvents: advancesView
+          ? this.releaseAnnouncements(candidate, presentationEvents)
+          : presentationEvents,
         pendingCommands: this.pendingSummaries(),
       });
       if (!this.isCurrent(generation) || this.state.phase !== 'ready') return;
@@ -940,7 +986,13 @@ export class RemoteGameSession {
     // reached this session (the room failed after committing it), and the
     // refresh carries it past. Its events, if any, may come with a retry.
     if (candidate.revision > current.revision) {
-      this.updateState({ view: candidate });
+      this.updateState({
+        view: candidate,
+        presentationEvents: this.releaseAnnouncements(
+          candidate,
+          this.state.presentationEvents
+        ),
+      });
       return;
     }
     if (

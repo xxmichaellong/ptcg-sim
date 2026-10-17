@@ -1827,23 +1827,45 @@ describe('RemoteGameSession', () => {
     expect(spectatorSocket.sent).toHaveLength(1);
   });
 
-  it('fails closed on a mulligan announcement for another revision or room player', () => {
-    for (const event of [
-      { type: 'MulliganDeclared', revision: 1, playerId: 'blue' },
-      { type: 'MulliganDeclared', revision: 0, playerId: 'intruder' },
-    ] as const) {
-      const test = setup();
-      const socket = test.admit();
-      socket.serverMessage({
-        type: 'MulliganAnnouncement',
-        protocolVersion: PROTOCOL_VERSION,
-        event,
-      });
-      expect(test.session.getSnapshot()).toMatchObject({
-        phase: 'failed',
-        failure: { code: 'inconsistent_publication' },
-      });
-    }
+  it('fails closed on a mulligan announcement for a player not in the room', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.serverMessage({
+      type: 'MulliganAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: { type: 'MulliganDeclared', revision: 0, playerId: 'intruder' },
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'inconsistent_publication' },
+    });
+  });
+
+  it('holds a mulligan announcement for a revision not here yet', () => {
+    const test = setup();
+    const socket = test.admit();
+    const event = {
+      type: 'MulliganDeclared',
+      revision: 1,
+      playerId: 'blue',
+    } as const;
+    // The room committed a command it never published, then announced.
+    socket.serverMessage({
+      type: 'MulliganAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event,
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      presentationEvents: [],
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+    });
+    expect(test.session.getSnapshot().presentationEvents).toEqual([event]);
   });
 
   it('sends a parameterless deck-view declaration and retains its typed room announcement', () => {
@@ -1887,23 +1909,45 @@ describe('RemoteGameSession', () => {
     expect(spectatorSocket.sent).toHaveLength(1);
   });
 
-  it('fails closed on a deck-view announcement for another revision or room player', () => {
-    for (const event of [
-      { type: 'DeckViewDeclared', revision: 1, playerId: 'blue' },
-      { type: 'DeckViewDeclared', revision: 0, playerId: 'intruder' },
-    ] as const) {
-      const test = setup();
-      const socket = test.admit();
-      socket.serverMessage({
-        type: 'DeckViewAnnouncement',
-        protocolVersion: PROTOCOL_VERSION,
-        event,
-      });
-      expect(test.session.getSnapshot()).toMatchObject({
-        phase: 'failed',
-        failure: { code: 'inconsistent_publication' },
-      });
-    }
+  it('fails closed on a deck-view announcement for a player not in the room', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.serverMessage({
+      type: 'DeckViewAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: { type: 'DeckViewDeclared', revision: 0, playerId: 'intruder' },
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'inconsistent_publication' },
+    });
+  });
+
+  it('holds a deck-view announcement for a revision not here yet', () => {
+    const test = setup();
+    const socket = test.admit();
+    const event = {
+      type: 'DeckViewDeclared',
+      revision: 1,
+      playerId: 'blue',
+    } as const;
+    // The room committed a command it never published, then announced.
+    socket.serverMessage({
+      type: 'DeckViewAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event,
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      presentationEvents: [],
+    });
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+    });
+    expect(test.session.getSnapshot().presentationEvents).toEqual([event]);
   });
 
   it('retries a transient handshake on a new socket with the same capability', () => {
