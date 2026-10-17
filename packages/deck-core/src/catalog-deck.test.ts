@@ -305,6 +305,36 @@ describe('finding the printing a decklist line means', () => {
     ).toBe('SP 22');
   });
 
+  it("finds v1's Pokémon TCG API scans of an old list's ids", () => {
+    const TM = set('hgss4', 'TM', '2010-11-03', 102);
+    const DPP = set('dpp', 'DPP', '2007-05-01', 56);
+    const LC = set('lc', 'LC', '2002-05-24', 110);
+    const cards = [
+      card(TM, '84', 'Yanma'),
+      card(DPP, '3', 'Piplup'),
+      card(LC, '7', 'Hitmonlee'),
+    ];
+    const old: LoadedCatalog = {
+      ...catalog,
+      cards,
+      sets: [TM, DPP, LC],
+      byId: new Map(cards.map((entry) => [entry.id, entry])),
+    };
+    const scan = (id: string, number: string) =>
+      `https://images.pokemontcg.io/${id}/${number}_hires.png`;
+    expect(printFromImageUrl(scan('hgss4', '84'))).toEqual({
+      setId: 'hgss4',
+      number: '84',
+    });
+    for (const [name, image, id] of [
+      ['Yanma', scan('hgss4', '84'), 'TM 84'],
+      ['Piplup', scan('dpp', 'DP03'), 'DPP 3'],
+      ['Hitmonlee', scan('base6', '7'), 'LC 7'],
+    ] as const) {
+      expect(findCatalogPrint(old, { name, image })?.id, name).toBe(id);
+    }
+  });
+
   it('reads the printing from Limitless and TCGdex image addresses', () => {
     expect(
       printFromImageUrl(

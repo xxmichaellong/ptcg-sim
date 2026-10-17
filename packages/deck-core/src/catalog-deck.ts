@@ -336,8 +336,9 @@ export const resolveDecklistRow = (
 
 /**
  * The printing a card image shows, read from the image's address: Limitless
- * scans (`…/tpci/PAL/PAL_185_R_EN.png`) and TCGdex assets
- * (`…/en/sv/sv02/185/high.webp`). Lets decks saved before the catalog --
+ * scans (`…/tpci/PAL/PAL_185_R_EN.png`), TCGdex assets
+ * (`…/en/sv/sv02/185/high.webp`) and the Pokémon TCG API's scans v1 gave an
+ * old list's ids (`…/hgss4/84_hires.png`). Lets decks saved before the catalog --
  * which kept only names and images -- find their cards again.
  */
 export const printFromImageUrl = (
@@ -355,6 +356,12 @@ export const printFromImageUrl = (
       url
     );
   if (tcgdex) return { setId: tcgdex[1]!, number: tcgdex[2]! };
+  // v1's scans for an old list's ids (`hgss4-84`): the Pokémon TCG API's.
+  const legacy =
+    /images\.pokemontcg\.io\/([a-z0-9.]+)\/([A-Za-z0-9]+?)(?:_hires)?\.png$/u.exec(
+      url
+    );
+  if (legacy) return { setId: tcgdexSetId(legacy[1]!), number: legacy[2]! };
   return undefined;
 };
 
