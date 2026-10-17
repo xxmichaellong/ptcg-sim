@@ -190,6 +190,27 @@ describe('importing a decklist', () => {
     expect(result.ok && result.missing).toEqual([]);
   });
 
+  it("takes an old list's id the catalog lacks as the line says too", async () => {
+    // The catalog has Dreepy, but not the printing this id names.
+    const fetchRequest = vi.fn<typeof fetch>(async () =>
+      jsonResponse({
+        cards: [
+          { name: 'Dreepy', set: 'TWM', number: '128', card_type: 'pokemon' },
+        ],
+      })
+    );
+    const result = await importDeckText('4 Dreepy xy99-12', {
+      catalog,
+      fetch: fetchRequest,
+    });
+    if (!result.ok) throw new Error(result.message);
+    expect(result.cards[0]!.card.id).not.toBe('TWM 128');
+    expect(result.cards[0]!.card).toMatchObject({
+      name: 'Dreepy',
+      image: 'https://images.pokemontcg.io/xy99/12_hires.png',
+    });
+  });
+
   it('keeps going without the catalog, and without Limitless', async () => {
     const result = await importDeckText('2 Arceus V BRS 122\n1 Who Knows', {
       fetch: vi.fn<typeof fetch>(async () => {

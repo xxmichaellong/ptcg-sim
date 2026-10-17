@@ -280,11 +280,14 @@ export const importDeckText = async (
   for (const row of parsed.rows) {
     const resolved = index ? resolveDecklistRow(index, row) : undefined;
     // A line naming a printing the catalog doesn't have (a set it lacks,
-    // or one still being built) is never swapped for another card of its
-    // name -- Charizard PGO 10 is not Base Set's -- but taken as the line
-    // says, like a line the catalog can't place at all; its facts follow
-    // once the catalog has it.
-    if (resolved?.card && !(resolved.match === 'name' && row.setCode)) {
+    // or one still being built), by set and number or by an old list's id,
+    // is never swapped for another card of its name -- Charizard PGO 10 is
+    // not Base Set's -- but taken as the line says, like a line the catalog
+    // can't place at all; its facts follow once the catalog has it.
+    if (
+      resolved?.card &&
+      !(resolved.match === 'name' && (row.setCode || row.catalogId))
+    ) {
       const card = deckCardFromCatalog(resolved.card, {
         ...(options.language ? { language: options.language } : {}),
         ...(options.catalog ? { catalog: options.catalog } : {}),

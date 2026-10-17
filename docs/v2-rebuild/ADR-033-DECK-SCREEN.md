@@ -69,11 +69,13 @@ specifically without blocking, and go from deck to table in one click.
    which every deck site reads. The v1 `QTY,Name,Type,URL` CSV stays readable
    and writable.
 4. **Matching a list line to a printing** (`resolveDecklistRow`): set and
-   number (promo codes aliased: PR-SV → SVP), then the name in that set
+   number (promo codes aliased: PR-SV → SVP), or an old list's Pokémon TCG
+   API id (`hgss4-84`; a promo's `dpp-DP03` is DPP 3), then the name in that set
    (Limitless numbers some sets differently from TCGdex), then Basic Energy
    by name (every spelling, PTCGO's `Basic {R} Energy` included), then the
    name alone -- but only for a line that names no printing: one naming a
-   printing the catalog lacks is taken as written (with Limitless's help),
+   printing the catalog lacks, by set and number or by id, is taken as
+   written (with Limitless's help),
    never swapped for another card of its name. `withCatalogFacts` gives decks made without the catalog their
    facts later, and keeps saved decks' facts as the catalog has them now (a
    rotation, a ban, a legal reprint), without changing anything the table

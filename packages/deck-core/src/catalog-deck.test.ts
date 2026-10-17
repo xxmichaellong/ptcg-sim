@@ -163,8 +163,11 @@ describe('finding the printing a decklist line means', () => {
     const FLF = set('xy2', 'FLF', '2014-05-07', 106);
     const OBF = set('sv03', 'OBF', '2023-08-11', 197);
     const DF = set('ex15', 'DF', '2006-11-08', 113);
+    const DPP = set('dpp', 'DPP', '2007-05-01', 56);
     const cards = [
       card(TM, '84', 'Yanma'),
+      card(DPP, '3', 'Piplup'),
+      card(PAL, '50', 'Piplup'),
       card(TM, '79', 'Treecko'),
       card(DF, '19', 'Lickitung δ'),
       card(PAL, '6', 'Yanma'),
@@ -174,13 +177,17 @@ describe('finding the printing a decklist line means', () => {
     const old: LoadedCatalog = {
       ...catalog,
       cards,
-      sets: [TM, DF, PAL, FLF, OBF],
+      sets: [TM, DF, DPP, PAL, FLF, OBF],
       byId: new Map(cards.map((entry) => [entry.id, entry])),
     };
     const oldIndex = catalogIndex(old);
     expect(resolveDecklistRow(oldIndex, row('4 Yanma hgss4-84'))).toMatchObject(
       { match: 'print', card: { id: 'TM 84' } }
     );
+    // A promo's id keeps its series' prefix; the catalog's number doesn't.
+    expect(
+      resolveDecklistRow(oldIndex, row('1 Piplup dpp-DP03'))
+    ).toMatchObject({ match: 'print', card: { id: 'DPP 3' } });
     // TCGdex spells some names otherwise; an id on the wrong card is ignored.
     expect(
       resolveDecklistRow(oldIndex, row('2 Lickitung ex15-19'))

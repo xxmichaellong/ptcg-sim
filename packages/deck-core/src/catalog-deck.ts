@@ -43,10 +43,13 @@ const canonicalNumber = (number: string): string =>
 /** Pokémon TCG API set ids (old lists' `hgss4-84`) TCGdex spells otherwise. */
 const LEGACY_SET_IDS: Readonly<Record<string, string>> = { base6: 'lc' };
 
-const setIdKey = (setId: string, number: string): string => {
+const tcgdexSetId = (setId: string): string => {
   const id = setId.trim().toLowerCase();
-  return `${LEGACY_SET_IDS[id] ?? id} ${canonicalNumber(number)}`;
+  return LEGACY_SET_IDS[id] ?? id;
 };
+
+const setIdKey = (setId: string, number: string): string =>
+  `${tcgdexSetId(setId)} ${canonicalNumber(number)}`;
 
 /**
  * "EX" (a Pokémon-EX) or "ex" (a Pokémon ex) closing a name: two different
@@ -287,10 +290,12 @@ export const resolveDecklistRow = (
   // An old list's Pokémon TCG API id: `4 Yanma hgss4-84`.
   const separator = row.catalogId?.indexOf('-') ?? -1;
   if (row.catalogId && separator > 0) {
+    // Promos by the number the catalog writes: `dpp-DP03` is DPP 3.
+    const setId = tcgdexSetId(row.catalogId.slice(0, separator));
     const card = index.bySetId.get(
       setIdKey(
-        row.catalogId.slice(0, separator),
-        row.catalogId.slice(separator + 1)
+        setId,
+        catalogNumberOf(setId, row.catalogId.slice(separator + 1))
       )
     );
     if (card && fitsId(card, row.name)) {
