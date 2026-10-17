@@ -111,12 +111,21 @@ export class CardBackCustodyStore {
     };
   };
 
-  replace(target: DeckBuilderTarget, url: string): boolean {
+  /**
+   * Chooses a seat's card back. The same one again is nothing new, unless
+   * the room shows another (`reinstall`: an undo or a restored game put
+   * it back), so the choice still goes to the table.
+   */
+  replace(
+    target: DeckBuilderTarget,
+    url: string,
+    options: { readonly reinstall?: boolean } = {}
+  ): boolean {
     if (!validUrl(url) || (target === 'alternate' && !this.#alternateEnabled)) {
       return false;
     }
     const current = this.#state.slots[target];
-    if (current.url === url) return false;
+    if (current.url === url && !options.reinstall) return false;
     this.#replaceSlot(
       target,
       createSlot(
@@ -271,6 +280,17 @@ interface SubmittedInstall {
   readonly receipt: CardBackInstallReceipt;
   readonly commandId: string;
 }
+
+/** The card back the room shows for a seat, if it shows one. */
+export const roomCardBackOf = (
+  session: DeckInstallSession | undefined,
+  target: DeckBuilderTarget
+): string | undefined => {
+  const view = session?.getSnapshot().view;
+  if (!view) return undefined;
+  const playerId = defaultTargetPlayerId(view, target);
+  return playerId ? view.players[playerId]?.cardBackUrl : undefined;
+};
 
 const defaultTargetPlayerId = (
   view: MatchViewState,

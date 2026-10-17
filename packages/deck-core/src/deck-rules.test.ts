@@ -255,6 +255,10 @@ describe('deck lists', () => {
     expect(upper).not.toBe(ex);
     expect(ruleName({ name: 'Rayquaza-EX', category: 'Pokémon' })).toBe(upper);
     expect(ruleName({ name: 'rayquaza  ex', category: 'Pokémon' })).toBe(ex);
+    // A level isn't part of the name: a LV.X shares its Pokémon's four.
+    expect(ruleName({ name: 'Luxray GL LV.X', category: 'Pokémon' })).toBe(
+      ruleName({ name: 'Luxray GL', category: 'Pokémon' })
+    );
   });
 });
 

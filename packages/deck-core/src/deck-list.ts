@@ -232,8 +232,10 @@ export const deckTotals = (list: DeckList): DeckTotals => {
  * accent in "Pokémon" never make two cards different, and a Trainer's
  * subtitle never does either: "Professor's Research (Professor Turo)" and
  * "Professor's Research (Professor Sada)" are four copies between them.
- * The one case that does: a Pokémon-EX ("Rayquaza EX", or "Rayquaza-EX")
- * is another Pokémon than a Pokémon ex ("Rayquaza ex").
+ * Nor does a level: "Luxray GL LV.X" is a Luxray GL, four between them
+ * (the rulebook: a level isn't part of a Pokémon's name). The one case
+ * that does: a Pokémon-EX ("Rayquaza EX", or "Rayquaza-EX") is another
+ * Pokémon than a Pokémon ex ("Rayquaza ex").
  */
 export const ruleName = (card: Pick<DeckCard, 'name' | 'category'>): string => {
   let name = card.name
@@ -242,6 +244,7 @@ export const ruleName = (card: Pick<DeckCard, 'name' | 'category'>): string => {
     .replaceAll(/\s+/gu, ' ')
     .trim();
   if (card.category === 'Trainer') name = name.replace(/\s*\([^)]*\)$/u, '');
+  if (card.category === 'Pokémon') name = name.replace(/\s+LV\.\s*X$/iu, '');
   const upperEx = card.category === 'Pokémon' && /[ -]EX$/u.test(name);
   if (upperEx) name = name.slice(0, -3);
   name = name.replaceAll('é', 'e').replaceAll('É', 'E').toLowerCase();

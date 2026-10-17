@@ -122,6 +122,22 @@ class FakeSession implements DeckInstallSession {
     this.#emit();
   }
 
+  /** The room shows this card back for a player (an undo put it back). */
+  showCardBack(playerId: string, cardBackUrl: string): void {
+    const current = this.#state.view!;
+    this.#state = {
+      ...this.#state,
+      view: {
+        ...current,
+        players: {
+          ...current.players,
+          [playerId]: { ...current.players[playerId]!, cardBackUrl },
+        },
+      },
+    };
+    this.#emit();
+  }
+
   listenerCount(): number {
     return this.#listeners.size;
   }
@@ -644,6 +660,35 @@ describe('DeckBuilderSession', () => {
     expect(requests[2]?.signal?.aborted).toBe(true);
     await act(async () => requests[2]?.resolve('/late.png'));
     expect(session.commands).toHaveLength(2);
+  });
+
+  it('chooses a card back again when the room shows another', async () => {
+    const session = new FakeSession();
+    const requests: Array<(url: string | undefined) => void> = [];
+    const requestCardBack: BrowserCardBackRequest = () =>
+      new Promise((resolve) => requests.push(resolve));
+    await renderSession({ session, open: true, requestCardBack });
+    const choose = async (url: string) => {
+      await click('#changeCardBackButton');
+      await act(async () => requests.at(-1)?.(url));
+    };
+    await choose('custom+unsafe://player-back/a');
+    act(() => session.completeLatest(true));
+    session.showCardBack(ownPlayerId, 'custom+unsafe://player-back/a');
+    expect(session.commands).toHaveLength(1);
+    // The same back while the room shows it: nothing to do.
+    await choose('custom+unsafe://player-back/a');
+    expect(session.commands).toHaveLength(1);
+    // An undo puts the old back on the table: choosing it again does.
+    act(() =>
+      session.showCardBack(ownPlayerId, 'custom+unsafe://player-back/old')
+    );
+    await choose('custom+unsafe://player-back/a');
+    expect(session.commands).toHaveLength(2);
+    expect(session.commands[1]).toEqual({
+      type: 'SetCardBack',
+      cardBackUrl: 'custom+unsafe://player-back/a',
+    });
   });
 
   it('retains a loaded card back before readiness and submits it once the player view is ready', async () => {

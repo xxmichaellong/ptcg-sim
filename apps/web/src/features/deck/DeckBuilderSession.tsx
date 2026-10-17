@@ -14,6 +14,7 @@ import {
 import {
   CardBackCustodyStore,
   CardBackInstallCoordinator,
+  roomCardBackOf,
   type CardBackInstallFailure,
 } from './card-back-custody.js';
 import { cardCatalog } from './card-catalog-client.js';
@@ -242,11 +243,19 @@ export const DeckBuilderSession = ({
 
   const applyCardBackSelection = useCallback(
     (cardBackUrl: string, target: DeckBuilderTarget | undefined): void => {
-      if (cardBackStore.replace(target ?? 'main', cardBackUrl)) {
+      const seat = target ?? 'main';
+      // The room may show another back than the one last installed (an
+      // undo, a restored game): then the same choice is still a change.
+      const shown = roomCardBackOf(session, seat);
+      if (
+        cardBackStore.replace(seat, cardBackUrl, {
+          reinstall: shown !== undefined && shown !== cardBackUrl,
+        })
+      ) {
         cardBackCoordinator.current?.flush();
       }
     },
-    [cardBackStore]
+    [cardBackStore, session]
   );
   const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
     applySelection: applyCardBackSelection,
