@@ -128,6 +128,12 @@ export interface ClientSessionPolicy {
   readonly reconnectBaseDelayMs: number;
   readonly reconnectMaximumDelayMs: number;
   readonly reconnectJitterRatio: number;
+  /**
+   * How long one connection attempt (the upgrade, then Hello to Welcome)
+   * may take before it is dropped for another; while reconnecting, never
+   * longer than what is left of the room's reconnect grace.
+   */
+  readonly connectionAttemptTimeoutMs: number;
 }
 
 export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
@@ -144,4 +150,5 @@ export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   reconnectBaseDelayMs: 250,
   reconnectMaximumDelayMs: 5_000,
   reconnectJitterRatio: 0.2,
+  connectionAttemptTimeoutMs: 8_000,
 };

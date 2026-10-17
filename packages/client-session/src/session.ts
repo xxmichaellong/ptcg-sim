@@ -10,6 +10,7 @@ import {
   MAX_CHAT_CODE_UNITS,
   MAX_CLIENT_FRAME_CODE_UNITS,
   PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
   parseServerFrame,
   type ClientMessage,
   type ServerMessage,
@@ -228,6 +229,10 @@ export class RemoteGameSession {
   private socket?: SessionSocket;
   private socketGeneration = 0;
   private reconnectTimer?: unknown;
+  /** The deadline of the connection attempt in flight. */
+  private attemptTimer?: unknown;
+  /** When an admitted session lost its transport: the grace runs from here. */
+  private reconnectingSince?: number;
   private reconnectAttempts = 0;
   private manualClose = false;
   private nextPingId = 0;
@@ -262,6 +267,8 @@ export class RemoteGameSession {
     this.cancelReconnect();
     this.socketGeneration += 1;
     this.closeSocket(1000, 'Session replaced');
+    this.cancelAttemptDeadline();
+    this.reconnectingSince = undefined;
     this.pending.length = 0;
     this.ownRevisions.clear();
     this.presentedRevision = -1;
@@ -431,6 +438,7 @@ export class RemoteGameSession {
       this.send({ type: 'Leave', protocolVersion: PROTOCOL_VERSION });
     }
     this.socketGeneration += 1;
+    this.cancelAttemptDeadline();
     this.closeSocket(1000, 'Client left room');
     this.clearCapabilities();
     this.updateState({
@@ -444,6 +452,7 @@ export class RemoteGameSession {
     const options = this.options;
     if (!options) return;
     const generation = ++this.socketGeneration;
+    this.armAttemptDeadline(generation);
     try {
       const socket = this.socketFactory.open(options.url, {
         open: () => {
@@ -841,6 +850,8 @@ export class RemoteGameSession {
     // A first admission shows nothing from before it; a resumed one may yet
     // be owed what it missed.
     if (!current) this.presentedRevision = candidate.revision;
+    this.cancelAttemptDeadline();
+    this.reconnectingSince = undefined;
     this.sessionId = message.sessionId;
     this.admissionTicket = undefined;
     this.reconnectAttempts = 0;
@@ -1177,6 +1188,7 @@ export class RemoteGameSession {
   }
 
   private handleClose(event: SessionSocketCloseEvent): void {
+    this.cancelAttemptDeadline();
     this.socket = undefined;
     this.replayTransfer = undefined;
     this.socketGeneration += 1;
@@ -1200,7 +1212,43 @@ export class RemoteGameSession {
     this.scheduleReconnect();
   }
 
+  /**
+   * An attempt that neither closes nor gets to Welcome (a stalled upgrade,
+   * a Hello never answered) is dropped for another, before it can use up
+   * the room's reconnect grace on its own.
+   */
+  private armAttemptDeadline(generation: number): void {
+    this.cancelAttemptDeadline();
+    let timeout = this.policy.connectionAttemptTimeoutMs;
+    if (this.reconnectingSince !== undefined) {
+      const left =
+        SESSION_RECONNECT_GRACE_MS - (this.now() - this.reconnectingSince);
+      timeout = Math.max(1, Math.min(timeout, left));
+    }
+    this.attemptTimer = this.scheduler.schedule(() => {
+      this.attemptTimer = undefined;
+      if (!this.isCurrent(generation)) return;
+      if (
+        this.state.phase !== 'connecting' &&
+        this.state.phase !== 'handshaking'
+      ) {
+        return;
+      }
+      this.reconnectTransport('Connection attempt timed out');
+    }, timeout);
+  }
+
+  private cancelAttemptDeadline(): void {
+    if (this.attemptTimer === undefined) return;
+    this.scheduler.cancel(this.attemptTimer);
+    this.attemptTimer = undefined;
+  }
+
   private scheduleReconnect(): void {
+    this.cancelAttemptDeadline();
+    if (this.sessionId !== undefined && this.reconnectingSince === undefined) {
+      this.reconnectingSince = this.now();
+    }
     if (this.reconnectAttempts >= this.policy.maximumReconnectAttempts) {
       this.fail({
         code: 'reconnect_exhausted',
@@ -1264,6 +1312,7 @@ export class RemoteGameSession {
   private fail(failure: ClientSessionFailure): void {
     this.manualClose = true;
     this.cancelReconnect();
+    this.cancelAttemptDeadline();
     this.socketGeneration += 1;
     this.closeSocket(4400, failure.code);
     this.clearCapabilities();

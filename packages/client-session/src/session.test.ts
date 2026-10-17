@@ -1407,6 +1407,36 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('drops a stalled attempt for another, within the reconnect grace', () => {
+    const test = setup();
+    const first = test.admit();
+    first.serverClose();
+    expect(test.session.getSnapshot().phase).toBe('reconnecting');
+    test.advance(20_000);
+    test.scheduler.runNext();
+    // The next attempt opens and sends Hello, but Welcome never comes.
+    const stalled = test.factory.sockets[1]!;
+    stalled.serverOpen();
+    expect(test.session.getSnapshot().phase).toBe('handshaking');
+    const deadline = [...test.scheduler.tasks.values()];
+    expect(deadline).toHaveLength(1);
+    // Twenty seconds of the grace are gone: it waits ten, not eight more.
+    expect(deadline[0]!.delayMs).toBeLessThanOrEqual(10_000);
+    test.scheduler.runNext();
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 2,
+    });
+    expect(stalled.close).toHaveBeenCalled();
+    test.scheduler.runNext();
+    const next = test.factory.sockets[2]!;
+    next.serverOpen();
+    next.serverMessage(welcome(1));
+    expect(test.session.getSnapshot().phase).toBe('ready');
+    // Admitted: no deadline is left behind.
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
   it('publishes each empty-queue reconnect phase exactly once', () => {
     const test = setup();
     const firstSocket = test.admit();
