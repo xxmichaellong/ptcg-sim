@@ -196,6 +196,35 @@ describe('finding the printing a decklist line means', () => {
     );
   });
 
+  it('never takes Nidoran♂ for Nidoran♀, nor Celebi ☆ for Celebi', () => {
+    const LM = set('ex12', 'LM', '2006-02-01', 92);
+    const CL = set('col1', 'CL', '2011-02-09', 95);
+    const cards = [
+      card(LM, '1', 'Nidoran♀'),
+      card(CL, '2', 'Celebi'),
+      card(LM, '3', 'Celebi ★'),
+    ];
+    const marked: LoadedCatalog = {
+      ...catalog,
+      cards,
+      sets: [LM, CL],
+      byId: new Map(cards.map((entry) => [entry.id, entry])),
+    };
+    const markedIndex = catalogIndex(marked);
+    expect(
+      resolveDecklistRow(markedIndex, row('4 Nidoran♂')).card
+    ).toBeUndefined();
+    expect(resolveDecklistRow(markedIndex, row('4 Nidoran ♀')).card?.id).toBe(
+      'LM 1'
+    );
+    expect(resolveDecklistRow(markedIndex, row('1 Celebi ☆')).card?.id).toBe(
+      'LM 3'
+    );
+    expect(resolveDecklistRow(markedIndex, row('1 Celebi')).card?.id).toBe(
+      'CL 2'
+    );
+  });
+
   it('keeps a TCG Pocket line in Pocket, and other lines out of it', () => {
     const PA = { ...set('pa', 'P-A', '2024-10-30', 100), pocket: true };
     const research = card(PA, '7', "Professor's Research", {

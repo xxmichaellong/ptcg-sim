@@ -310,6 +310,45 @@ describe('RemoteRoomRuntime', () => {
     runtime.dispose();
   });
 
+  it('asks for the replay only once every move sent has been answered', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: { socketFactory },
+    });
+    const socket = socketFactory.sockets[0]!;
+    socket.serverOpen();
+    socket.serverMessage(welcome());
+    runtime.session.submit({ type: 'DrawCards', count: 1 });
+    runtime.session.submit({ type: 'DrawCards', count: 1 });
+    const requestedReplay = () =>
+      socket.sent.some(
+        (frame) =>
+          (JSON.parse(frame) as { type: string }).type === 'RequestReplay'
+      );
+    void runtime.exportReplay();
+    await flushConsumers();
+    expect(requestedReplay()).toBe(false);
+    for (let answered = 0; answered < 2; answered += 1) {
+      const sent = JSON.parse(socket.sent.at(-1)!) as {
+        commandId: string;
+        clientSequence: number;
+      };
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: sent.commandId,
+        clientSequence: sent.clientSequence,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      });
+      await flushConsumers();
+    }
+    expect(requestedReplay()).toBe(true);
+    runtime.dispose();
+  });
+
   it('retries a failed save handoff and rotates only after successful delivery', async () => {
     const socketFactory = new FakeSocketFactory();
     const operationIds = ['C'.repeat(43), 'D'.repeat(43)];

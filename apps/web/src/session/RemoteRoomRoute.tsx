@@ -282,7 +282,7 @@ export const RemoteRoomRoute = ({
     );
   };
   const exportLivePerspective = (): void => {
-    void runtime.replay.requestReplayArtifact().then((result) => {
+    void runtime.exportReplay().then((result) => {
       if (result.ok) downloadPerspectiveReplay(result.artifact);
     });
   };

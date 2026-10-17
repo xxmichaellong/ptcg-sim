@@ -12,7 +12,10 @@ import {
 
 import { motionSettings } from '../motion/motion-settings.js';
 import { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
-import { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
+import {
+  ReplaySessionCoordinator,
+  type ReplayArtifactRequestResult,
+} from '../replay/ReplaySessionCoordinator.js';
 import {
   createBrowserContinuationPort,
   RemoteContinuationCustody,
@@ -179,6 +182,28 @@ export class RemoteRoomRuntime {
       custody.dispose();
       this.continuationCustody = undefined;
     }
+  }
+
+  /**
+   * This player's replay of the game, once every move sent has been
+   * answered: the request would otherwise overtake the moves queued behind
+   * the one in flight, and the file would miss them.
+   */
+  async exportReplay(
+    signal?: AbortSignal
+  ): Promise<ReplayArtifactRequestResult> {
+    try {
+      await this.commandsSettled(signal);
+    } catch {
+      return {
+        ok: false,
+        failure: {
+          code: 'unavailable',
+          message: 'The live session is not ready to export a replay',
+        },
+      };
+    }
+    return await this.replay.requestReplayArtifact();
   }
 
   /** Resolves once every move sent has been answered by the room. */

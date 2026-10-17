@@ -226,14 +226,26 @@ const isOrdinary = (card: CatalogCard): boolean =>
   Number(card.number) <= card.set.official;
 
 /**
+ * The symbols in a name that make it another card, which a search's folding
+ * drops: Nidoran♂ is not Nidoran♀, nor Celebi ☆ (or ★) Celebi, nor
+ * Shaymin ◇ Shaymin.
+ */
+const nameMarks = (name: string): string =>
+  [...name.replaceAll('★', '☆').matchAll(/[♂♀☆◇]/gu)]
+    .map(([mark]) => mark)
+    .sort()
+    .join('');
+
+/**
  * Whether a catalogued card goes by a name: a Trainer's subtitle aside, and
- * a Pokémon-EX never a Pokémon ex.
+ * a Pokémon-EX never a Pokémon ex, nor one name's ♂, ♀, ☆ or ◇ another's.
  */
 const goesBy = (card: CatalogCard, name: string): boolean =>
-  (foldText(card.name) === foldText(name) &&
+  nameMarks(card.name) === nameMarks(name) &&
+  ((foldText(card.name) === foldText(name) &&
     (card.category !== 'Pokémon' || exMark(card.name) === exMark(name))) ||
-  (card.category === 'Trainer' &&
-    foldText(trainerName(card.name)) === foldText(trainerName(name)));
+    (card.category === 'Trainer' &&
+      foldText(trainerName(card.name)) === foldText(trainerName(name))));
 
 /**
  * Whether a list's name fits the card its id names: one's words within the
