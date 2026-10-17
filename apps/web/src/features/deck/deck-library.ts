@@ -3,6 +3,7 @@ import {
   deckListOf,
   isDeckFormatId,
   MAX_ENTRY_COUNT,
+  type CardRuleFacts,
   type DeckCard,
   type DeckFormatId,
   type DeckList,
@@ -102,6 +103,48 @@ const boundedString = (value: unknown, maximum: number): string | undefined =>
     ? value
     : undefined;
 
+/**
+ * The rule facts a stored card kept, each one only if it has the shape the
+ * rules read: a malformed one is dropped (the catalog gives it back), so
+ * one bad record can't throw in the deck check.
+ */
+const decodeFacts = (value: unknown): CardRuleFacts | undefined => {
+  if (!isRecord(value)) return undefined;
+  const text = (key: keyof CardRuleFacts) => {
+    const found = boundedString(value[key], MAX_TEXT_LENGTH);
+    return found === undefined ? {} : { [key]: found };
+  };
+  const { tags, energyType, legal, pocket } = value;
+  const legality = isRecord(legal)
+    ? {
+        ...(typeof legal.standard === 'boolean'
+          ? { standard: legal.standard }
+          : {}),
+        ...(typeof legal.expanded === 'boolean'
+          ? { expanded: legal.expanded }
+          : {}),
+      }
+    : {};
+  return Object.freeze({
+    ...text('stage'),
+    ...text('evolvesFrom'),
+    ...text('line'),
+    ...text('trainerType'),
+    ...text('regulationMark'),
+    ...(Array.isArray(tags) &&
+    tags.every((tag) => boundedString(tag, MAX_TEXT_LENGTH) !== undefined)
+      ? { tags: Object.freeze([...(tags as string[])]) }
+      : {}),
+    ...(energyType === 'Basic' || energyType === 'Special'
+      ? { energyType }
+      : {}),
+    ...(Object.keys(legality).length > 0
+      ? { legal: Object.freeze(legality) }
+      : {}),
+    ...(typeof pocket === 'boolean' ? { pocket } : {}),
+  });
+};
+
 const decodeCard = (value: unknown): DeckCard | undefined => {
   if (!isRecord(value)) return undefined;
   const id = boundedString(value.id, MAX_TEXT_LENGTH);
@@ -130,9 +173,9 @@ const decodeCard = (value: unknown): DeckCard | undefined => {
     ...optional('number'),
     ...optional('setName'),
     ...optional('released'),
-    // Facts and presentation are plain data the rules and the table read
-    // defensively; they are kept as stored.
-    ...(isRecord(value.facts) ? { facts: value.facts } : {}),
+    ...(isRecord(value.facts) ? { facts: decodeFacts(value.facts) } : {}),
+    // Presentation is plain data the table reads defensively; it is kept
+    // as stored.
     ...(value.presentation !== undefined
       ? { presentation: value.presentation }
       : {}),

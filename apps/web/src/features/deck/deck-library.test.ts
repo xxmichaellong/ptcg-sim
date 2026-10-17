@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import 'fake-indexeddb/auto';
-import { deckListOf, type DeckCard } from '@ptcgsim/deck-core';
+import { checkDeck, deckListOf, type DeckCard } from '@ptcgsim/deck-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -486,5 +486,26 @@ describe('the deck library', () => {
         updatedAt: 1,
       })
     ).toBeUndefined();
+  });
+
+  it("drops a stored card's malformed rule facts, so the deck still checks", () => {
+    const deck = decodeSavedDeck({
+      id: 'a',
+      name: 'Fine',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            ...card,
+            facts: { stage: 'Basic', tags: {}, legal: { standard: 'yes' } },
+          },
+          count: 1,
+        },
+      ],
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    expect(deck?.cards[0]?.card.facts).toEqual({ stage: 'Basic' });
+    expect(() => checkDeck(deck!.cards, deck!.format)).not.toThrow();
   });
 });
