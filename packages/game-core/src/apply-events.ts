@@ -26,7 +26,14 @@ import {
 } from './lifecycle-reset.js';
 import { findCardLocation } from './location.js';
 import { MAX_IMAGE_URL_CODE_UNITS } from './model.js';
-import type { CardInstance, CardZone, MatchState, PlayStack } from './model.js';
+import type {
+  AttachmentResolutionWorkArea,
+  CardInstance,
+  CardZone,
+  InspectionWorkArea,
+  MatchState,
+  PlayStack,
+} from './model.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
@@ -37,6 +44,16 @@ import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
 import { stableHash } from './stable-hash.js';
 import { applyMatchStatePatch } from './state-patch.js';
+
+/** The seat whose open window of this kind has this id. */
+const workAreaSeat = (
+  state: MatchState,
+  kind: 'inspection' | 'attachmentResolution',
+  workAreaId: string
+): PlayerId | undefined =>
+  Object.entries(state.workAreas).find(
+    ([, areas]) => areas[kind]?.id === workAreaId
+  )?.[0] as PlayerId | undefined;
 
 const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
@@ -2174,6 +2191,14 @@ const applyEventInternal = (
       let boards = state.boards;
       let nextInspection = inspection;
       let nextResolution = resolution;
+      /** The other seat's window the card left, when it wasn't this seat's. */
+      let otherSeat:
+        | {
+            readonly seat: PlayerId;
+            readonly inspection?: InspectionWorkArea | null;
+            readonly attachmentResolution?: AttachmentResolutionWorkArea | null;
+          }
+        | undefined;
       const affectedCardIds = new Set<CardInstanceId>([event.cardId]);
       switch (event.source.kind) {
         case 'zone': {
@@ -2341,49 +2366,73 @@ const applyEventInternal = (
           break;
         }
         case 'inspection': {
-          if (!inspection || inspection.id !== event.source.workAreaId) {
+          // The source may be the other seat's window (a card of this
+          // player's left there): found by its id, wherever it is.
+          const seat = workAreaSeat(
+            state,
+            'inspection',
+            event.source.workAreaId
+          );
+          const source =
+            seat === event.playerId
+              ? inspection
+              : seat && state.workAreas[seat]?.inspection;
+          if (!seat || !source || source.id !== event.source.workAreaId) {
             throw new Error('Work-area arrival source inspection changed');
           }
-          const remaining = inspection.cardIds.filter(
+          const remaining = source.cardIds.filter(
             (cardId) => cardId !== event.cardId
           );
-          if (remaining.length === inspection.cardIds.length) {
+          if (remaining.length === source.cardIds.length) {
             throw new Error(
               'Work-area arrival source inspection lost the card'
             );
           }
-          nextInspection =
+          const left =
             remaining.length === 0
               ? null
               : {
-                  ...inspection,
+                  ...source,
                   cardIds: remaining,
                   viewerIdsByCardId: cloneInspectionViewerIds(
                     remaining,
-                    inspection.viewerIdsByCardId
+                    source.viewerIdsByCardId
                   ),
                 };
+          if (seat === event.playerId) nextInspection = left;
+          else otherSeat = { seat, inspection: left };
           break;
         }
         case 'attachmentResolution': {
-          if (!resolution || resolution.id !== event.source.workAreaId) {
+          const seat = workAreaSeat(
+            state,
+            'attachmentResolution',
+            event.source.workAreaId
+          );
+          const source =
+            seat === event.playerId
+              ? resolution
+              : seat && state.workAreas[seat]?.attachmentResolution;
+          if (!seat || !source || source.id !== event.source.workAreaId) {
             throw new Error('Work-area arrival source staging changed');
           }
           const without = (cardIds: readonly CardInstanceId[]) =>
             cardIds.filter((cardId) => cardId !== event.cardId);
-          const remaining = without(resolution.cardIds);
-          if (remaining.length === resolution.cardIds.length) {
+          const remaining = without(source.cardIds);
+          if (remaining.length === source.cardIds.length) {
             throw new Error('Work-area arrival source staging lost the card');
           }
-          nextResolution =
+          const left =
             remaining.length === 0
               ? null
               : {
-                  ...resolution,
+                  ...source,
                   cardIds: remaining,
-                  evolutionCardIds: without(resolution.evolutionCardIds),
-                  attachmentCardIds: without(resolution.attachmentCardIds),
+                  evolutionCardIds: without(source.evolutionCardIds),
+                  attachmentCardIds: without(source.attachmentCardIds),
                 };
+          if (seat === event.playerId) nextResolution = left;
+          else otherSeat = { seat, attachmentResolution: left };
           break;
         }
       }
@@ -2444,6 +2493,19 @@ const applyEventInternal = (
         boards,
         workAreas: {
           ...state.workAreas,
+          ...(otherSeat
+            ? {
+                [otherSeat.seat]: {
+                  ...state.workAreas[otherSeat.seat]!,
+                  ...(otherSeat.inspection === undefined
+                    ? {}
+                    : { inspection: otherSeat.inspection }),
+                  ...(otherSeat.attachmentResolution === undefined
+                    ? {}
+                    : { attachmentResolution: otherSeat.attachmentResolution }),
+                },
+              }
+            : {}),
           [event.playerId]: {
             inspection: nextInspection,
             attachmentResolution: nextResolution,

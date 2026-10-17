@@ -358,6 +358,73 @@ describe('dragging a card into an open work area', () => {
     ]);
   });
 
+  it("takes a card out of the other seat's attached-card window into its owner's", () => {
+    const { state: prepared, context, workAreaId } = prepare();
+    let state = accepted(
+      prepared,
+      { type: 'LoadDeck', playerId: p2, entries: deckEntries() },
+      context
+    );
+    // Blue's Energy hangs on Red's Pokémon; the Pokémon goes, alone, and
+    // Blue's card waits in Red's attached-card window.
+    const blueEnergy = state.zones[playerZoneId(p1, 'hand')]!.cardIds.find(
+      (id) => state.cards[id]!.currentCategory === 'Energy'
+    )!;
+    const redDeck = playerZoneId(p2, 'deck');
+    const redMon = state.zones[redDeck]!.cardIds.find(
+      (id) => state.cards[id]!.currentCategory === 'Pokémon'
+    )!;
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: redMon,
+        expectedSourceZoneId: redDeck,
+        boardPlayerId: p2,
+        slot: 'active',
+      },
+      context
+    );
+    const stackId = state.boards[p2]!.activeStackId!;
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: blueEnergy,
+        expectedSourceZoneId: playerZoneId(p1, 'hand'),
+        boardPlayerId: p2,
+        slot: 'active',
+        targetStackId: stackId,
+      },
+      context
+    );
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: redMon,
+        expectedStackId: stackId,
+        destinationZoneId: playerZoneId(p2, 'discard'),
+      },
+      context
+    );
+    const redWindow = state.workAreas[p2]!.attachmentResolution!;
+    expect(redWindow.attachmentCardIds).toEqual([blueEnergy]);
+
+    // Into Blue's own open inspection.
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToWorkArea',
+        cardId: blueEnergy,
+        expectedWorkAreaId: workAreaId,
+      },
+      context
+    );
+    expect(state.workAreas[p2]!.attachmentResolution).toBeNull();
+    expect(state.workAreas[p1]!.inspection!.cardIds).toContain(blueEnergy);
+  });
+
   it('fails closed for a closed area and another player card', () => {
     const { state, context, workAreaId, handCardIds } = prepare();
     expect(
