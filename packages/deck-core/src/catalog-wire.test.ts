@@ -478,13 +478,14 @@ describe('untrusted input', () => {
         'This card provides Colorless Energy. While in play, this card provides every type of Energy but provides only 1 Energy at a time. When you attach this card from your hand to 1 of your Pokémon, put 1 damage counter on that Pokémon.'
       )
     );
-    // Rare Candy that also skips to Stage 1 is another card.
+    // Errata made every Rare Candy one card, even those that also evolved
+    // to Stage 1: they are played as today's.
     expect(
       trainer(
         'Rare Candy',
         'Choose 1 of your Basic Pokémon in play. If you have a Stage 1 or Stage 2 card that evolves from that Pokémon in your hand, put that card on the Basic Pokémon. (This counts as evolving that Pokémon.)'
       )
-    ).not.toBe(
+    ).toBe(
       trainer(
         'Rare Candy',
         "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn."

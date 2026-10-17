@@ -83,7 +83,7 @@ fast and current. The sources, measured on 2026-10-15:
    today's but Ultra Ball DEX 102 is. Text is compared after undoing
    wording-only changes ({C} spelled "Colorless", "his or her", "Shuffle
    your deck afterward", the old Supporter and Stadium reminders, …), and a
-   few staples reworded further are listed by name
+   few staples reworded further, or made one card by official errata (Rare Candy, whose older prints are played as today's), are listed by name
    (`packages/deck-core/src/reprints.ts`). A Trainer TCGdex has no text for
    yet is legal where the newest print of its name is, and lends that print
    nothing. Pokémon alike in all that are one card only when their

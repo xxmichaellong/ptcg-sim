@@ -48,12 +48,6 @@ const WORDING: readonly (readonly [RegExp, string])[] = [
     'switch in $1 to the Active Spot',
   ],
   [/\bEnergy(?: card)? attached to 1 of\b/giu, 'Energy from 1 of'],
-  // Rare Candy: what "evolve" meant, spelled out on older prints.
-  [
-    /\bput that card on the Basic Pokémon\. \(This counts as evolving that Pokémon\.\)/giu,
-    'put that card onto the Basic Pokémon to evolve it.',
-  ],
-  [/, skipping the Stage 1\b/giu, ''],
 ];
 
 /**
@@ -73,15 +67,19 @@ export const rulesWording = (text: string): string => {
 };
 
 /**
- * Trainers every print of which is one card, reworded past what
- * `rulesWording` undoes. Each name was checked against all its English
- * prints; a later card with the name and another effect must come off.
+ * Trainers every print of which is one card: reworded past what
+ * `rulesWording` undoes, or made one by official errata, which has every
+ * print played as the newest (Rare Candy: its older prints, which also
+ * evolved to Stage 1, are legal as today's -- Limitless lists Sandstorm's
+ * as legal). Each name was checked against all its English prints; a
+ * later card with the name and another effect must come off.
  */
 export const ONE_CARD_TRAINERS: ReadonlySet<string> = new Set([
   'Copycat',
   'Counter Gain',
   'Lucky Helmet',
   'Pokémon Center Lady',
+  'Rare Candy',
   'Repel',
   'Scoop Up Cyclone',
   'Scramble Switch',
