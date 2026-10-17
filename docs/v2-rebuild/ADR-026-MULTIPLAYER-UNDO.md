@@ -74,9 +74,10 @@ itself, deriving and applying the checkpoint, is under 2 ms of that.
   replay entry, so a long run of undos consumes the window it reads: after 128
   moves a player can take back at least 64 of them. ADR-014 already treated
   128 as an operational bound rather than a promise.
-- A first-time seat claim rebases the replay history (ADR-016), so moves made
-  before the opponent joins cannot be undone afterwards. A reconnect does not
-  claim a seat and keeps them.
+- A first-time seat claim that renames the seat rebases the replay history
+  (ADR-016), so moves made before the opponent joins cannot be undone
+  afterwards. A claim under the seat's own name (a player resuming a restored
+  game) keeps it, and a reconnect does not claim a seat and keeps it too.
 - An undo rotates the alias of every card the move taken back carried across
   a concealment boundary (drawn, revealed, shuffled, turned over), for both
   players and spectators, so a command the opponent sent against one of those

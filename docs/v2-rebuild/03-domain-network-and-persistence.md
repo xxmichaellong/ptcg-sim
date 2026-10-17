@@ -899,8 +899,9 @@ plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 history. When either bound is exceeded, the oldest event is applied to the base
 before it is dropped, so the retained suffix still reconstructs and hash-checks
 the current canonical state. A single oversized batch safely compacts into the
-base instead of making retention unbounded. A first-time seat claim rebases the
-ledger because display-name metadata changes outside gameplay revisions. Stored
+base instead of making retention unbounded. A first-time seat claim that renames the
+seat rebases the ledger because display-name metadata changes outside gameplay
+revisions; one under the seat's own name keeps it. Stored
 schema-v1, schema-v2, and schema-v3 rooms migrate to a replay rooted at their
 current state. Schema-v4 rooms retain that replay while gaining empty ticket and
 invitation registries; schema-v5 rooms preserve their outstanding tickets while

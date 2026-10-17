@@ -394,6 +394,35 @@ export const parseLegacySpecialConditionInput = (
   return normalized.length <= 16 ? normalized : undefined;
 };
 
+/**
+ * Look at a hidden zone while any of its cards is still face down to this
+ * player (one looked at on its own leaves the rest to see); cover it once
+ * all are seen, ending every look at it, each card's own included.
+ */
+const toggleZoneLook = (
+  view: MatchViewState,
+  zone: ViewZone,
+  ownerId: string,
+  kind: 'hand' | 'prizes'
+): LegacyBoardOverlayActionResolution => {
+  if (zone.cards.some((card) => card.kind !== 'known')) {
+    return resolveZoneInspectionAction(view, ownerId, kind, true);
+  }
+  const looks = view.privateInspections.filter(
+    (inspection) => inspection.sourceId === zone.id
+  );
+  const [first, ...rest] = looks.map((inspection): WireGameCommand => ({
+    type: 'EndPrivateInspection',
+    inspectionId: inspection.id,
+  }));
+  if (!first) return rejected('no_op');
+  return {
+    ok: true,
+    command: first,
+    ...(rest.length > 0 ? { followUps: rest } : {}),
+  };
+};
+
 const commandForShuffle = (
   view: MatchViewState,
   zone: ViewZone,
@@ -501,25 +530,7 @@ const resolveContextAction = (
       if (zone?.kind !== 'prizes' || zone.ownerId === null) {
         return rejected('unsupported_target');
       }
-      // Look while any Prize is still face down to this player (one looked
-      // at on its own leaves the rest to see); cover once all are seen,
-      // ending every look at them, each Prize's own included.
-      if (zone.cards.some((card) => card.kind !== 'known')) {
-        return resolveZoneInspectionAction(view, zone.ownerId, 'prizes', true);
-      }
-      const looks = view.privateInspections.filter(
-        (inspection) => inspection.sourceId === zone.id
-      );
-      const [first, ...rest] = looks.map((inspection): WireGameCommand => ({
-        type: 'EndPrivateInspection',
-        inspectionId: inspection.id,
-      }));
-      if (!first) return rejected('no_op');
-      return {
-        ok: true,
-        command: first,
-        ...(rest.length > 0 ? { followUps: rest } : {}),
-      };
+      return toggleZoneLook(view, zone, zone.ownerId, 'prizes');
     }
     case 'revealPrizes':
       return zone?.kind === 'prizes' && zone.ownerId !== null
@@ -551,10 +562,7 @@ const resolveContextAction = (
       ) {
         return rejected('unsupported_target');
       }
-      const looking = !view.privateInspections.some(
-        (inspection) => inspection.sourceId === zone.id
-      );
-      return resolveZoneInspectionAction(view, zone.ownerId, 'hand', looking);
+      return toggleZoneLook(view, zone, zone.ownerId, 'hand');
     }
     case 'randomOpponentHandCard':
       return zone?.kind === 'hand' &&

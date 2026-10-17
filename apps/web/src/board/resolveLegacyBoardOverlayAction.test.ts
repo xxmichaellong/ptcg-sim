@@ -139,6 +139,76 @@ describe('legacy board overlay action resolver', () => {
     });
   });
 
+  it("looks at the rest of the opponent's hand, and covers every look at it", () => {
+    const view = createRendererSpikeView();
+    const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const opponentId = view.playerOrder.find((id) => id !== localId)!;
+    const hand = zoneIn(view, opponentId, 'hand');
+    const [first, second, ...others] = hand.cards;
+    expect(others.length).toBeGreaterThan(0);
+    const known = (card: (typeof hand.cards)[number]) =>
+      ({
+        kind: 'known',
+        id: card.id,
+        definitionId: 'def',
+        category: 'Pokémon',
+        face: 'up',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      }) as unknown as (typeof hand.cards)[number];
+    const look = (
+      id: string,
+      cards: readonly (typeof hand.cards)[number][]
+    ) => ({
+      id,
+      sourcePlayerId: opponentId as never,
+      sourceId: hand.id,
+      cardIds: cards.map((card) => card.id),
+    });
+    // One card looked at on its own (coaching): the rest are still to see.
+    const oneLooked: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: [known(first!), second!, ...others] },
+      },
+      privateInspections: [look('look-one', [first!])],
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        oneLooked,
+        context('toggleOpponentHand', second!.id)
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'BeginZoneInspection', zoneId: hand.id },
+    });
+    // Every card seen, each on its own: covering ends every look.
+    const allSeen: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.map(known) },
+      },
+      privateInspections: hand.cards.map((card, index) =>
+        look(`look-${String(index)}`, [card])
+      ),
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        allSeen,
+        context('toggleOpponentHand', first!.id)
+      )
+    ).toEqual({
+      ok: true,
+      command: { type: 'EndPrivateInspection', inspectionId: 'look-0' },
+      followUps: hand.cards.slice(1).map((_, index) => ({
+        type: 'EndPrivateInspection',
+        inspectionId: `look-${String(index + 1)}`,
+      })),
+    });
+  });
+
   it('reuses stale-safe annotation, visibility, inspection, and random resolvers', () => {
     const view = createRendererSpikeView();
     const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';

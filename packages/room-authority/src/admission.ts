@@ -840,8 +840,16 @@ const admitAuthorizedSession = async (
         },
       }
     : consumedAdmission;
+  // A display name is canonical metadata but not a gameplay event: a claim
+  // that changes it rebases the replay history, so every retained frame
+  // shows the name shown live. One that keeps it (a player resuming a
+  // restored game) keeps the history, and with it their undo.
+  const renamed =
+    authorized.role === 'player' &&
+    current.state.players[authorized.playerId]?.displayName !==
+      authorized.displayName;
   const state =
-    authorized.role === 'player'
+    authorized.role === 'player' && renamed
       ? {
           ...current.state,
           players: {
@@ -857,9 +865,7 @@ const admitAuthorizedSession = async (
     ...current,
     authorityVersion: current.authorityVersion + 1,
     state,
-    replayHistory: claimedPlayerId
-      ? createReplayHistory(state)
-      : current.replayHistory,
+    replayHistory: renamed ? createReplayHistory(state) : current.replayHistory,
     sessions,
     admission,
   };

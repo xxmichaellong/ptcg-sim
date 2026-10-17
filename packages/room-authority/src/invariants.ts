@@ -1288,7 +1288,13 @@ export const assertAdmissionTransactionTransition = (
         ) {
           problems.push('seat claim changed state outside its display name');
         }
-        if (
+        if (currentPlayer?.displayName === candidatePlayer?.displayName) {
+          if (
+            !structurallyEqual(candidate.replayHistory, current.replayHistory)
+          ) {
+            problems.push('seat claim changed replay history');
+          }
+        } else if (
           candidate.replayHistory.entries.length !== 0 ||
           !structurallyEqual(
             candidate.replayHistory.baseState,

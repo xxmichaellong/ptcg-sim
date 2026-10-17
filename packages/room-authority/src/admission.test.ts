@@ -25,7 +25,10 @@ import {
   type PersistedAdmissionTransaction,
   type RoomAuthoritySnapshot,
 } from './model.js';
-import { collectAuthoritySnapshotProblems } from './invariants.js';
+import {
+  assertAdmissionTransactionTransition,
+  collectAuthoritySnapshotProblems,
+} from './invariants.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -936,6 +939,61 @@ describe('room capability admission', () => {
       },
       entries: [],
     });
+  });
+
+  it('keeps replay history when a seat claim keeps the name', async () => {
+    const initial = createSnapshot();
+    const batch = {
+      revision: 1,
+      events: [
+        {
+          type: 'CoinFlipped' as const,
+          playerId: p1,
+          result: 'heads' as const,
+        },
+      ],
+    };
+    const state = applyEventBatch(initial.state, batch);
+    // A restored game: the history it was saved with, and no sessions yet.
+    const current: RoomAuthoritySnapshot = {
+      ...initial,
+      state,
+      replayHistory: appendReplayHistory(
+        initial.replayHistory,
+        batch,
+        state,
+        128
+      ),
+    };
+    const storage = persistence();
+    const result = await admitRoomSession(
+      current,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Player 1',
+      },
+      dependencies(createCrypto(), storage)
+    );
+    expect(result.accepted).toBe(true);
+    if (!result.accepted) return;
+    expect(result.snapshot.state).toEqual(state);
+    expect(result.snapshot.replayHistory).toEqual(current.replayHistory);
+
+    const transaction = storage.transactions[0]!;
+    expect(() =>
+      assertAdmissionTransactionTransition(current, transaction)
+    ).not.toThrow();
+    // Dropping it anyway is refused.
+    expect(() =>
+      assertAdmissionTransactionTransition(current, {
+        ...transaction,
+        snapshot: {
+          ...transaction.snapshot,
+          replayHistory: createReplayHistory(transaction.snapshot.state),
+        },
+      })
+    ).toThrow(/seat claim changed replay history/);
   });
 
   it('resumes the same command session without a durable mutation', async () => {
