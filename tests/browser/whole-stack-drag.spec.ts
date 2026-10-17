@@ -318,7 +318,12 @@ test('a long press lifts only the top card off its Pokémon', async ({
   const energyBefore = await box(page, energy.id);
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
-  await page.waitForTimeout(700);
+  // Held until the page has lifted the card (the board drags before the
+  // pointer has moved only after a long press): a busy runner can take
+  // longer than any fixed wait to see the press at all.
+  await expect(
+    page.locator('.ptcgsim-board-surface[data-dragging="true"]')
+  ).toHaveCount(1);
   for (let step = 1; step <= 12; step += 1) {
     await page.mouse.move(
       from.x + ((to.x - from.x) * step) / 12,
