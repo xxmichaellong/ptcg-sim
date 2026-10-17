@@ -1,0 +1,267 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Audit dependencies
+        run: corepack pnpm run audit:dependencies
+      - name: Run the non-browser quality gate
+        env:
+          CONTINUATION_KEYRING: ptcgsim-ci-secret-sentinel-never-ship-000001
+        run: corepack pnpm run check:ci
+      - name: Verify tracked files remain unchanged
+        run: git diff --exit-code
+
+  # What this push changed decides which browser jobs it needs
+  # (scripts/ci-changes.mjs): documentation alone runs none; board code also
+  # runs the long evidence specs. A pull request push is compared with the
+  # head it replaced, once CI passed on it; with nothing to compare (a new
+  # pull request, a manual run, a force push, a head CI hasn't passed)
+  # everything runs.
+  changes:
+    name: What changed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      browser: ${{ steps.jobs.outputs.browser }}
+      evidence: ${{ steps.jobs.outputs.evidence }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Decide which jobs this change needs
+        id: jobs
+        env:
+          BEFORE: ${{ github.event_name != 'workflow_dispatch' && github.event.before || '' }}
+          AFTER: ${{ github.event.pull_request.head.sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci-changes.mjs >> "$GITHUB_OUTPUT"
+
+  # The Chromium suite, the evidence specs aside, is split across eight
+  # runners by how long its files took last (scripts/browser-shards.mjs,
+  # tests/browser/durations.json): about four minutes each, half an hour one
+  # after another. A failed test runs once more; one that passes then is
+  # reported as flaky (scripts/report-flaky.mjs) rather than failing the run.
+  chromium:
+    name: Chromium regression gate (${{ matrix.shard }}/8)
+    needs: changes
+    if: needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Disable unrelated Chrome apt source
+        run: |
+          for chrome_source in \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.sources; do
+            if [ -f "$chrome_source" ]; then
+              sudo mv "$chrome_source" "$chrome_source.disabled"
+            fi
+          done
+      - name: Install Playwright Chromium
+        run: |
+          for browser_install_attempt in 1 2 3; do
+            if corepack pnpm exec playwright install --with-deps chromium; then
+              exit 0
+            fi
+            if [ "$browser_install_attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "::warning::Playwright Chromium installation failed; retrying in 30 seconds"
+            sleep 30
+          done
+      - name: Run browser regressions
+        run: |
+          corepack pnpm exec playwright test --list --project=chromium --reporter=json > "$RUNNER_TEMP/browser-tests.json"
+          # Through a file, so a planning error fails the step instead of
+          # leaving no files (which would run the whole suite).
+          node scripts/browser-shards.mjs ${{ matrix.shard }}/8 < "$RUNNER_TEMP/browser-tests.json" > "$RUNNER_TEMP/shard-specs.txt"
+          mapfile -t specs < "$RUNNER_TEMP/shard-specs.txt"
+          corepack pnpm exec playwright test --project=chromium "${specs[@]}"
+      # The preview and continuation configs take under a minute.
+      - name: Run preview and continuation regressions
+        if: matrix.shard == 8
+        run: corepack pnpm run check:browser:configs
+      - name: Report flaky tests
+        if: ${{ !cancelled() }}
+        run: node scripts/report-flaky.mjs test-results/results.json
+      - name: Upload browser diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-chromium-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # The long evidence specs (EVIDENCE_SPECS in scripts/browser-shards.mjs):
+  # the Solo churn soak (about 12 minutes) and the renderer comparison
+  # (about 6), each on its own runner, only when board code changed. They
+  # are not retried: a retry would double a long run.
+  evidence:
+    name: Chromium evidence (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.evidence == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - spec: remote-room-solo-renderer-churn.spec.ts
+            name: Solo churn soak
+          - spec: renderer-spike.spec.ts
+            name: renderer comparison
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Disable unrelated Chrome apt source
+        run: |
+          for chrome_source in \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.sources; do
+            if [ -f "$chrome_source" ]; then
+              sudo mv "$chrome_source" "$chrome_source.disabled"
+            fi
+          done
+      - name: Install Playwright Chromium
+        run: |
+          for browser_install_attempt in 1 2 3; do
+            if corepack pnpm exec playwright install --with-deps chromium; then
+              exit 0
+            fi
+            if [ "$browser_install_attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "::warning::Playwright Chromium installation failed; retrying in 30 seconds"
+            sleep 30
+          done
+      - name: Run the evidence spec
+        run: corepack pnpm exec playwright test --project=chromium --retries=0 tests/browser/${{ matrix.spec }}
+      - name: Upload evidence diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-evidence-${{ strategy.job-index }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  cross-browser:
+    name: ${{ matrix.name }} functional gate
+    needs: changes
+    if: needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: firefox
+            name: Firefox
+          - browser: webkit
+            name: WebKit
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Disable unrelated Chrome apt source
+        run: |
+          for chrome_source in \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.sources; do
+            if [ -f "$chrome_source" ]; then
+              sudo mv "$chrome_source" "$chrome_source.disabled"
+            fi
+          done
+      - name: Install Playwright ${{ matrix.name }}
+        run: |
+          for browser_install_attempt in 1 2 3; do
+            if corepack pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            if [ "$browser_install_attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "::warning::Playwright ${{ matrix.name }} installation failed; retrying in 30 seconds"
+            sleep 30
+          done
+      - name: Run cross-browser functional regressions
+        run: corepack pnpm run check:cross-browser --project=${{ matrix.browser }}
+      - name: Report flaky tests
+        if: ${{ !cancelled() }}
+        run: node scripts/report-flaky.mjs test-results/cross-browser/results.json
+      - name: Upload cross-browser diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/cross-browser/
+            test-results/cross-browser/
+          if-no-files-found: warn
+          retention-days: 14

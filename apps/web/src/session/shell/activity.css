@@ -1,0 +1,317 @@
+/*
+ * The activity log (ActivitySheet.tsx): docked beside the table on a wide
+ * screen, a drawer or bottom sheet otherwise; its launcher on the rail,
+ * with the unread count and the lines that flash over the table while it
+ * is closed. The feed's rows are chat bubbles for what people say and a
+ * seat-coloured line for what they do.
+ */
+
+/* ---- Docked ------------------------------------------------------------ */
+
+.ptcgsim-activity-dock {
+  --sheet-pad: var(--space-4);
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--layer-panel);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--rail-width);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-left: 1px solid var(--color-border);
+  background: var(--color-rail);
+  box-shadow: -12px 0 32px oklch(0 0 0 / 0.25);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+/* The log's last frame, sliding out after it closed (dock-slide.ts). */
+.ptcgsim-activity-dock[inert] {
+  pointer-events: none;
+}
+
+.ptcgsim-activity-dock__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 var(--sheet-pad) var(--sheet-pad);
+}
+
+/* ---- The feed and the chat field --------------------------------------- */
+
+.ptcgsim-activity-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  height: 100%;
+}
+
+/* In a sheet the body scrolls the feed, not the sheet. */
+.ptcgsim-activity-sheet .ptcgsim-sheet__body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ptcgsim-sheet[data-variant='bottom'].ptcgsim-activity-sheet {
+  height: min(70dvh, 640px);
+}
+
+.ptcgsim-activity-content .legacy-presentation-surface {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed {
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > p {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 3px var(--space-2);
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  text-align: left;
+  animation: ptcgsim-activity-row-in
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
+}
+
+@keyframes ptcgsim-activity-row-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .self-text,
+.ptcgsim-activity-content .legacy-activity-feed > .opp-text {
+  border-left: 3px solid var(--color-you);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .opp-text {
+  border-left-color: var(--color-opponent);
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .announcement {
+  width: auto;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .self-message,
+.ptcgsim-activity-content .legacy-activity-feed > .opp-message,
+.ptcgsim-activity-content .legacy-activity-feed > .spectator-message {
+  max-width: 88%;
+  margin-top: var(--space-1);
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-md);
+  user-select: text;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .self-message {
+  margin-left: auto;
+  border-bottom-right-radius: var(--radius-xs);
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .opp-message {
+  border-bottom-left-radius: var(--radius-xs);
+  background: var(--color-surface-3);
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .spectator-message {
+  border-bottom-left-radius: var(--radius-xs);
+  background: color-mix(
+    in oklab,
+    var(--color-gold) 22%,
+    var(--color-surface-3)
+  );
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-activity-content
+  .legacy-activity-feed
+  > p,
+:root[data-motion='reduced'] .ptcgsim-activity-dock {
+  animation: none;
+}
+
+.ptcgsim-chat-composer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.ptcgsim-chat-composer .ds-input,
+.ptcgsim-chat-composer #messageInput,
+.ptcgsim-chat-composer #p2MessageInput {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  outline: none;
+}
+
+.ptcgsim-chat-composer #messageInput:focus-visible,
+.ptcgsim-chat-composer #p2MessageInput:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.ptcgsim-chat-composer #messageInput::placeholder,
+.ptcgsim-chat-composer #p2MessageInput::placeholder {
+  color: var(--color-text-faint);
+}
+
+.ptcgsim-chat-composer__send {
+  color: var(--color-accent);
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-chat-composer .ds-input,
+  .ptcgsim-chat-composer #messageInput,
+  .ptcgsim-chat-composer #p2MessageInput,
+  .ptcgsim-chat-composer .ds-icon-button {
+    min-height: 44px;
+  }
+  .ptcgsim-chat-composer .ds-icon-button {
+    min-width: 44px;
+  }
+  /* Phones zoom into a field with text under 16px. */
+  .ptcgsim-chat-composer .ds-input {
+    font-size: 16px;
+  }
+}
+
+/* ---- The launcher ------------------------------------------------------ */
+
+.ptcgsim-activity-launcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* While the log is closed, what the other side does shows here for a few
+   seconds, stacked above the button, and never takes a press. */
+.ptcgsim-activity-ticker {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  width: max-content;
+  max-width: min(360px, 60vw);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.ptcgsim-activity-ticker__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 5px var(--space-3) 5px var(--space-2-5, 10px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+  animation:
+    ptcgsim-ticker-in calc(var(--duration-normal) * var(--motion-scale, 1))
+      var(--ease-out),
+    ptcgsim-ticker-out calc(var(--duration-slow) * var(--motion-scale, 1))
+      var(--ease-in) 4.6s forwards;
+}
+
+/* Whose line it is: a dot in the seat's colour. */
+.ptcgsim-activity-ticker__line::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-text-faint);
+}
+
+.ptcgsim-activity-ticker__line > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ptcgsim-activity-ticker__line.self-text::before,
+.ptcgsim-activity-ticker__line.self-message::before {
+  background: var(--color-you);
+}
+
+.ptcgsim-activity-ticker__line.opp-text::before,
+.ptcgsim-activity-ticker__line.opp-message::before {
+  background: var(--color-opponent);
+}
+
+.ptcgsim-activity-ticker__line.spectator-message::before {
+  background: var(--color-gold);
+}
+
+@keyframes ptcgsim-ticker-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@keyframes ptcgsim-ticker-out {
+  to {
+    opacity: 0;
+  }
+}
+
+:root[data-motion='reduced'] .ptcgsim-activity-ticker__line {
+  animation: ptcgsim-ticker-out 1ms linear 4.6s forwards;
+}

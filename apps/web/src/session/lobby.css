@@ -1,0 +1,197 @@
+/* The Multiplayer panel: your name, then hosting and joining as two steps.
+   Controls come from design/panel-controls.css. */
+
+.legacy-lobby-sidebox .lobby-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-1);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  scrollbar-width: thin;
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-out),
+    translate var(--ds-enter-duration) var(--ease-snappy);
+}
+
+@starting-style {
+  .legacy-lobby-sidebox .lobby-panel {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.legacy-lobby-sidebox .lobby-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--highlight-top), var(--shadow-3);
+}
+
+.legacy-lobby-sidebox .lobby-intro-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.legacy-lobby-sidebox .lobby-intro-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--ds-accent-text);
+}
+
+.legacy-lobby-sidebox .lobby-intro-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.legacy-lobby-sidebox .lobby-intro-copy {
+  min-width: 0;
+}
+
+.legacy-lobby-sidebox .lobby-intro-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.legacy-lobby-sidebox .lobby-intro-text {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.legacy-lobby-sidebox .lobby-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.legacy-lobby-sidebox .lobby-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-2);
+}
+
+.legacy-lobby-sidebox .lobby-step-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.legacy-lobby-sidebox .lobby-step-number {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.legacy-lobby-sidebox .lobby-step-copy {
+  min-width: 0;
+}
+
+.legacy-lobby-sidebox .lobby-step-title {
+  margin: 2px 0 var(--space-1);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.legacy-lobby-sidebox .lobby-step-copy em {
+  color: var(--color-text);
+  font-style: normal;
+  font-weight: var(--weight-semibold);
+}
+
+.legacy-lobby-sidebox .lobby-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.legacy-lobby-sidebox .lobby-step-actions .ds-button {
+  flex: 1 1 0;
+  min-width: max-content;
+}
+
+/* Room codes are short and typed by hand; give them room to read. */
+.legacy-lobby-sidebox .lobby-room-input {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  letter-spacing: 0.08em;
+}
+
+.legacy-lobby-sidebox .lobby-room-input::placeholder {
+  font-family: var(--font-ui);
+  letter-spacing: normal;
+}
+
+.legacy-lobby-sidebox .lobby-switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.legacy-lobby-sidebox #coachingModeLabel span {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Copy confirms with a check that pops in and a success tint. */
+.legacy-lobby-sidebox .lobby-copy-icon {
+  display: inline-flex;
+}
+
+.legacy-lobby-sidebox .lobby-copy.copied {
+  border-color: color-mix(in oklch, var(--color-success) 55%, transparent);
+  background: color-mix(in oklch, var(--color-success) 18%, transparent);
+  color: var(--ds-success-text);
+}
+
+.legacy-lobby-sidebox .lobby-copy.copied .lobby-copy-icon svg {
+  animation: ds-pop var(--duration-bouncy) var(--ease-bouncy);
+}
+
+.legacy-lobby-sidebox #lobby[aria-busy='true'] button:disabled,
+.legacy-lobby-sidebox #lobby[aria-busy='true'] input:disabled {
+  cursor: wait;
+}
+
+.legacy-lobby-sidebox .lobby-status {
+  flex: none;
+}

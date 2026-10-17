@@ -1,0 +1,455 @@
+import type { ViewCardId } from '@ptcgsim/game-core';
+
+import { arrangementIndexAt, benchRearrangementTarget } from './arrangement.js';
+import { containsPoint, containsPointInRotatedRect } from './geometry.js';
+import { TABLE_LAYOUT_GEOMETRY_VERSION } from './layout-table.js';
+import type {
+  BoardRendererAdapters,
+  BoardScene,
+  CardSceneNode,
+} from './model.js';
+import { topmostFirst } from './paint-order.js';
+
+export interface BoardPointerInput {
+  readonly pointerId: number;
+  readonly x: number;
+  readonly y: number;
+  readonly button: number;
+  /** Optional projected picking results. x/y still describe the grab plane. */
+  readonly screenPoint?: { readonly x: number; readonly y: number };
+  readonly dropPoint?: { readonly x: number; readonly y: number };
+  readonly targetId?: string | null;
+  /** The place in an arranged zone, from projected picking (null: none). */
+  readonly arrangementIndex?: number | null;
+}
+
+interface ActiveGesture {
+  readonly pointerId: number;
+  readonly cardId: ViewCardId;
+  /** The painted element pressed: for a pile, its cover (`cover:<zone>`). */
+  readonly renderKey: string | null;
+  readonly startX: number;
+  readonly startY: number;
+  readonly centerOffsetX: number;
+  readonly centerOffsetY: number;
+  readonly screenStart: { readonly x: number; readonly y: number } | undefined;
+  dragging: boolean;
+  /** Lifted off its Pokémon by a long press: it moves alone. */
+  detached: boolean;
+}
+
+export interface BoardInteractionCancellation {
+  readonly pointerId: number | null;
+  readonly wasDragging: boolean;
+}
+
+const cardAt = (
+  scene: BoardScene,
+  cardId: ViewCardId
+): CardSceneNode | undefined =>
+  scene.cards.find((candidate) => candidate.id === cardId);
+
+/**
+ * A Pokémon's card that a long press can lift off the rest of its stack (to
+ * devolve it, say): a card of the Pokémon itself, with other cards under or
+ * attached to it. A joined card's pieces never come apart.
+ */
+export const canDetachFromStack = (
+  scene: BoardScene,
+  cardId: ViewCardId
+): boolean => {
+  const card = cardAt(scene, cardId);
+  return Boolean(
+    card?.interactive &&
+    card.role === 'stackEvolution' &&
+    !card.composition &&
+    scene.cards.some(
+      (other) => other.id !== card.id && other.parentId === card.parentId
+    )
+  );
+};
+
+/**
+ * On the redesigned table, empty felt is the board. A card dropped where no
+ * zone or card claims the point lands on the loose board (v1's board zone)
+ * of the half it was dropped in, where both players can see it -- a
+ * Supporter being played, say. v1's own geometry keeps v1's behaviour.
+ */
+export const looseBoardTargetAt = (
+  scene: BoardScene,
+  x: number,
+  y: number
+): string | null => {
+  if (scene.layout.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION) {
+    return null;
+  }
+  const half = scene.layout.players.find(
+    (player) => !player.hidden && containsPoint(player.bounds, x, y)
+  );
+  if (!half) return null;
+  return (
+    scene.zones.find(
+      (zone) =>
+        zone.kind === 'board' &&
+        zone.playerId === half.playerId &&
+        zone.interactive
+    )?.id ?? null
+  );
+};
+
+/**
+ * How far past its edge a zone still takes a card on the table: a card held
+ * just over a pile's or the bench's border plainly means that zone, not the
+ * loose board beside it.
+ */
+export const dropReachFor = (scene: BoardScene): number =>
+  scene.layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
+    ? Math.max(12, Math.min(32, scene.viewport.width * 0.016))
+    : 0;
+
+const distanceToRect = (
+  rect: { x: number; y: number; width: number; height: number },
+  x: number,
+  y: number
+): number =>
+  Math.hypot(
+    Math.max(rect.x - x, 0, x - (rect.x + rect.width)),
+    Math.max(rect.y - y, 0, y - (rect.y + rect.height))
+  );
+
+/**
+ * The zone a card dropped at (x, y) lands in: the topmost zone under the
+ * point; else, on the table, the nearest zone within reach of it (the
+ * loose board excepted, which is the felt itself); else the loose board of
+ * the half it is over.
+ */
+export const zoneDropTargetAt = (
+  scene: BoardScene,
+  x: number,
+  y: number
+): string | null => {
+  const zones = topmostFirst(scene.zones).filter((zone) => zone.interactive);
+  const under = zones.find((zone) => containsPoint(zone.bounds, x, y));
+  if (under) return under.id;
+  const reach = dropReachFor(scene);
+  let nearest: { readonly id: string; readonly distance: number } | null = null;
+  for (const zone of zones) {
+    if (zone.kind === 'board') continue;
+    const distance = distanceToRect(zone.bounds, x, y);
+    if (distance <= reach && (!nearest || distance < nearest.distance)) {
+      nearest = { id: zone.id, distance };
+    }
+  }
+  return nearest?.id ?? looseBoardTargetAt(scene, x, y);
+};
+
+/**
+ * What a card dropped with the pointer at (x, y) lands on: the topmost card
+ * under the pointer (its stack, to join it), else a zone. Players aim with
+ * the pointer: a hand card is gripped by its visible top, its face hanging
+ * below.
+ */
+export const resolveBoardDropTarget = (
+  scene: BoardScene,
+  sourceCardId: ViewCardId,
+  x: number,
+  y: number
+): string | null => {
+  const card = topmostFirst(scene.cards).find(
+    (candidate) =>
+      candidate.id !== sourceCardId &&
+      candidate.interactive &&
+      containsPointInRotatedRect(
+        candidate.bounds,
+        candidate.rotationQuarterTurns,
+        x,
+        y
+      )
+  );
+  if (card)
+    return benchRearrangementTarget(scene, sourceCardId, card) ?? card.parentId;
+  return zoneDropTargetAt(scene, x, y);
+};
+
+/** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */
+export class BoardDragController {
+  private active: ActiveGesture | null = null;
+  /**
+   * The press a finished drag leaves behind, whose click the renderer drops.
+   * A pile's cover is one element for whichever card is on top, so by the
+   * time its click arrives it may stand for the next card: the click is
+   * matched by the element pressed as well as by the card.
+   */
+  private suppressedClick: {
+    readonly cardId: ViewCardId;
+    readonly renderKey: string | null;
+  } | null = null;
+
+  constructor(
+    private readonly adapters: Pick<
+      BoardRendererAdapters,
+      'emitIntent' | 'emitPresentationUpdate'
+    >,
+    private readonly thresholdPixels = 5
+  ) {
+    if (!Number.isFinite(thresholdPixels) || thresholdPixels < 0) {
+      throw new Error('Drag threshold must be a non-negative finite number');
+    }
+  }
+
+  pointerDown(
+    scene: BoardScene,
+    cardId: ViewCardId,
+    input: BoardPointerInput
+  ): boolean {
+    if (this.active || input.button !== 0 || !this.validPoint(input)) {
+      return false;
+    }
+    const card = cardAt(scene, cardId);
+    if (!card?.interactive) return false;
+    this.suppressedClick = null;
+    this.active = {
+      pointerId: input.pointerId,
+      cardId,
+      renderKey: card.renderKey,
+      startX: input.x,
+      startY: input.y,
+      centerOffsetX: card.bounds.x + card.bounds.width / 2 - input.x,
+      centerOffsetY: card.bounds.y + card.bounds.height / 2 - input.y,
+      screenStart: input.screenPoint,
+      dragging: false,
+      detached: false,
+    };
+    return true;
+  }
+
+  /**
+   * A long press on a Pokémon lifts the pressed card off its stack: it rises
+   * where it is and the drag that follows moves it alone. Only before the
+   * pointer has started a drag, and only for a card that has a stack to
+   * leave.
+   */
+  detach(scene: BoardScene, pointerId: number): boolean {
+    const gesture = this.active;
+    if (
+      !gesture ||
+      gesture.pointerId !== pointerId ||
+      gesture.dragging ||
+      !canDetachFromStack(scene, gesture.cardId)
+    ) {
+      return false;
+    }
+    const card = cardAt(scene, gesture.cardId)!;
+    gesture.dragging = true;
+    gesture.detached = true;
+    const x = card.bounds.x + card.bounds.width / 2;
+    const y = card.bounds.y + card.bounds.height / 2;
+    this.adapters.emitPresentationUpdate({
+      kind: 'DragChanged',
+      drag: {
+        cardId: gesture.cardId,
+        x,
+        y,
+        targetId: resolveBoardDropTarget(
+          scene,
+          gesture.cardId,
+          x - gesture.centerOffsetX,
+          y - gesture.centerOffsetY
+        ),
+        detached: true,
+      },
+    });
+    return true;
+  }
+
+  pointerMove(scene: BoardScene, input: BoardPointerInput): boolean {
+    const gesture = this.active;
+    if (
+      !gesture ||
+      gesture.pointerId !== input.pointerId ||
+      !this.validPoint(input)
+    ) {
+      return false;
+    }
+    const card = cardAt(scene, gesture.cardId);
+    if (!card?.interactive) {
+      this.cancel(input.pointerId);
+      return false;
+    }
+    if (!gesture.dragging) {
+      const xDistance =
+        input.screenPoint && gesture.screenStart
+          ? input.screenPoint.x - gesture.screenStart.x
+          : input.x - gesture.startX;
+      const yDistance =
+        input.screenPoint && gesture.screenStart
+          ? input.screenPoint.y - gesture.screenStart.y
+          : input.y - gesture.startY;
+      if (
+        xDistance * xDistance + yDistance * yDistance <
+        this.thresholdPixels * this.thresholdPixels
+      ) {
+        return false;
+      }
+      gesture.dragging = true;
+    }
+    const targetId =
+      input.targetId !== undefined
+        ? input.targetId
+        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
+    this.adapters.emitPresentationUpdate({
+      kind: 'DragChanged',
+      drag: {
+        cardId: gesture.cardId,
+        x: input.x + gesture.centerOffsetX,
+        y: input.y + gesture.centerOffsetY,
+        targetId,
+        ...(index === null ? {} : { index }),
+        ...(gesture.detached ? { detached: true } : {}),
+      },
+    });
+    return true;
+  }
+
+  private arrangementIndex(
+    scene: BoardScene,
+    cardId: ViewCardId,
+    targetId: string | null,
+    input: BoardPointerInput
+  ): number | null {
+    return input.arrangementIndex !== undefined
+      ? input.arrangementIndex
+      : arrangementIndexAt(scene, cardId, targetId, input.x, input.y);
+  }
+
+  pointerUp(scene: BoardScene, input: BoardPointerInput): boolean {
+    const gesture = this.active;
+    if (!gesture || gesture.pointerId !== input.pointerId) {
+      return false;
+    }
+    if (!this.validPoint(input)) return this.cancel(input.pointerId);
+    this.pointerMove(scene, input);
+    if (this.active !== gesture) return false;
+    this.active = null;
+    if (!gesture.dragging) return false;
+    // It comes down centred where it was held, so it never jumps by the
+    // grip on release.
+    const centreX = input.x + gesture.centerOffsetX;
+    const centreY = input.y + gesture.centerOffsetY;
+    const targetId =
+      input.targetId !== undefined
+        ? input.targetId
+        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
+    this.suppressClickOf(gesture);
+    this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
+    if (targetId) {
+      this.adapters.emitIntent({
+        kind: 'CardDropRequested',
+        cardId: gesture.cardId,
+        targetId,
+        x: input.dropPoint?.x ?? centreX,
+        y: input.dropPoint?.y ?? centreY,
+        ...(index === null ? {} : { index }),
+        ...(gesture.detached ? { detached: true } : {}),
+      });
+    }
+    return true;
+  }
+
+  cancel(pointerId?: number): boolean {
+    const gesture = this.active;
+    if (
+      !gesture ||
+      (pointerId !== undefined && pointerId !== gesture.pointerId)
+    ) {
+      return false;
+    }
+    this.active = null;
+    if (gesture.dragging) {
+      this.suppressClickOf(gesture);
+      this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
+    }
+    return gesture.dragging;
+  }
+
+  private suppressClickOf(gesture: ActiveGesture): void {
+    this.suppressedClick = {
+      cardId: gesture.cardId,
+      renderKey: gesture.renderKey,
+    };
+  }
+
+  reconcile(scene: BoardScene): void {
+    const gesture = this.active;
+    if (gesture && !cardAt(scene, gesture.cardId)?.interactive) this.cancel();
+  }
+
+  /**
+   * Whether a click on this card -- painted under `renderKey` -- is the one
+   * a drag just ended with, which must not also select it or open its pile.
+   * Asked once per click: it is forgotten once matched.
+   */
+  consumeSuppressedClick(
+    cardId: ViewCardId,
+    renderKey?: string | null
+  ): boolean {
+    const suppressed = this.suppressedClick;
+    if (
+      !suppressed ||
+      (suppressed.cardId !== cardId &&
+        (renderKey == null || suppressed.renderKey !== renderKey))
+    ) {
+      return false;
+    }
+    this.suppressedClick = null;
+    return true;
+  }
+
+  /** Clears one local gesture without emitting a second presentation update. */
+  cancelInteraction(): number | null {
+    const pointerId = this.active?.pointerId ?? null;
+    this.active = null;
+    this.suppressedClick = null;
+    return pointerId;
+  }
+
+  /**
+   * Renderer-owned failure boundary. Unlike an application-requested cancel,
+   * this must tell presentation state when an in-flight drag is lost.
+   */
+  cancelForRendererFailure(): BoardInteractionCancellation {
+    const gesture = this.active;
+    if (!gesture) {
+      this.suppressedClick = null;
+      return { pointerId: null, wasDragging: false };
+    }
+    const pointerId = gesture.pointerId;
+    const wasDragging = gesture.dragging;
+    this.active = null;
+    this.suppressedClick = null;
+    if (wasDragging) {
+      this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
+    }
+    return { pointerId, wasDragging };
+  }
+
+  destroy(): void {
+    this.cancelInteraction();
+  }
+
+  private validPoint(input: BoardPointerInput): boolean {
+    return (
+      Number.isSafeInteger(input.pointerId) &&
+      Number.isFinite(input.x) &&
+      Number.isFinite(input.y) &&
+      (!input.screenPoint ||
+        (Number.isFinite(input.screenPoint.x) &&
+          Number.isFinite(input.screenPoint.y))) &&
+      (!input.dropPoint ||
+        (Number.isFinite(input.dropPoint.x) &&
+          Number.isFinite(input.dropPoint.y)))
+    );
+  }
+}

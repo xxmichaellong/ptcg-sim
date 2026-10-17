@@ -1,0 +1,63 @@
+/* The help pages (help-pages.tsx): release notes and Sponsors read as an
+   article; the tutorial is a 16:9 frame. */
+
+.ptcgsim-help-article {
+  max-width: 68ch;
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+.ptcgsim-help-article h2 {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.ptcgsim-help-article h2:first-child {
+  margin-top: 0;
+}
+
+.ptcgsim-help-article h3 {
+  margin: var(--space-3) 0;
+  font-size: var(--text-lg);
+}
+
+.ptcgsim-help-article p {
+  margin: var(--space-2) 0;
+}
+
+.ptcgsim-help-article ul {
+  margin-block: var(--space-2) var(--space-4);
+  padding-left: var(--space-5);
+  list-style-type: disc;
+}
+
+.ptcgsim-help-article li {
+  margin-bottom: var(--space-2);
+}
+
+.ptcgsim-help-article hr {
+  margin: var(--space-6) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.ptcgsim-help-article a {
+  color: var(--ds-accent-text, var(--color-accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ptcgsim-help-video {
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: oklch(0 0 0);
+  aspect-ratio: 16 / 9;
+}
+
+.ptcgsim-help-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

@@ -1,0 +1,569 @@
+import { PaperPlaneRight } from '@phosphor-icons/react/dist/csr/PaperPlaneRight';
+import type {
+  ClientSessionState,
+  RemoteGameSession,
+} from '@ptcgsim/client-session';
+import { MAX_CHAT_CODE_UNITS, type WireGameCommand } from '@ptcgsim/protocol';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
+
+import { refusalNotice, unsentNotice } from '../board/refusal-notice.js';
+import { resolveLifecycleAction } from '../board/resolveLifecycleAction.js';
+import { resolveSoloUndoAction } from '../board/resolveSoloUndoAction.js';
+import { resolveTableAction } from '../board/resolveTableAction.js';
+import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
+import {
+  downloadBrowserTextFile,
+  FULLSCREEN_REFUSED_NOTICE,
+  requestBrowserFullscreen,
+  serializeBattleLog,
+} from './browser-room-options.js';
+import {
+  readBrowserContinuationFileText,
+  type BrowserContinuationFileLike,
+  type BrowserContinuationFileReadResult,
+} from './browser-continuation-file.js';
+import {
+  currentBrowserInvitationClipboard,
+  type DeferredTextClipboardWriter,
+} from './browser-invitation-clipboard.js';
+import {
+  readBrowserReplayFileBytes,
+  type BrowserReplayFileLike,
+  type BrowserReplayFileReadResult,
+} from './browser-replay-file.js';
+import { useGameSession } from './useGameSession.js';
+import { confirmAction } from '../ui/dialog-requests.js';
+import { toast } from '../ui/toast.js';
+import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
+
+export type RemoteRoomLiveSession = Pick<
+  RemoteGameSession,
+  'getSnapshot' | 'subscribe' | 'sendChat' | 'submit'
+>;
+
+export type RemoteRoomLivePresentation = Pick<
+  LegacyGamePresentationRuntime,
+  'activityFeed' | 'clearActivity'
+>;
+
+const ownPlayerId = (state: ClientSessionState): string | undefined =>
+  state.phase === 'ready' &&
+  state.role === 'player' &&
+  state.view?.viewer.kind === 'player'
+    ? state.view.viewer.playerId
+    : undefined;
+
+const reportInvalidReplayFile = (): void => {
+  toast({
+    title: 'Could not open the replay',
+    body: 'Error reading file. Please make sure the file is valid.',
+    tone: 'danger',
+  });
+};
+
+const reportContinuationFailure = (action: 'save' | 'resume'): void => {
+  toast(
+    action === 'save'
+      ? {
+          title: 'Could not save',
+          body: 'Could not save this online game. Please try again.',
+          tone: 'danger',
+        }
+      : {
+          title: 'Could not resume',
+          body: 'Could not resume this saved game. Please check the file and try again.',
+          tone: 'danger',
+        }
+  );
+};
+
+const reportContinuationResumeSuccess = (): void => {
+  toast({
+    title: 'Saved game resumed',
+    body: 'A player invitation for the restored room was copied to your clipboard.',
+    tone: 'success',
+  });
+};
+
+/** Asks before the sidebar's Leave Room ends a multiplayer game. */
+export type LiveRoomLeaveConfirmation = (options: {
+  readonly signal: AbortSignal;
+}) => boolean | PromiseLike<boolean>;
+
+const confirmLiveRoomLeave: LiveRoomLeaveConfirmation = ({ signal }) =>
+  confirmAction({
+    title: 'Leave the room?',
+    body: 'Are you sure you want to leave the room? Current game state will be lost.',
+    confirmLabel: 'Leave room',
+    tone: 'danger',
+    signal,
+  });
+
+export type BrowserReplayFileReader = (
+  file: BrowserReplayFileLike,
+  options?: { readonly signal?: AbortSignal }
+) => Promise<BrowserReplayFileReadResult>;
+
+export type BrowserContinuationFileReader = (
+  file: BrowserContinuationFileLike,
+  options?: { readonly signal?: AbortSignal }
+) => Promise<BrowserContinuationFileReadResult>;
+
+export type OpponentInvitationDelivery = (text: string) => Promise<void>;
+
+/**
+ * The connected room's controls, without a place on screen (ADR-030): the
+ * table rail shows the turn's actions, the activity sheet the chat field,
+ * and the app menu the room's options. One hook owns them so the pending
+ * saves, imports and the leave question stay single.
+ */
+export const useLiveRoomControls = ({
+  session,
+  presentation,
+  roomMode = 'multiplayer',
+  boardFlipped = false,
+  actingPlayerId,
+  onLeave,
+  onExportState,
+  onImportReplayFile,
+  onSaveOnlineGame,
+  onResumeSavedGame,
+  confirmLeave = confirmLiveRoomLeave,
+  downloadTextFile = downloadBrowserTextFile,
+  requestFullscreen = requestBrowserFullscreen,
+  readReplayFile = readBrowserReplayFileBytes,
+  readContinuationFile = readBrowserContinuationFileText,
+  getInvitationClipboard = currentBrowserInvitationClipboard,
+  reportReplayImportFailure = reportInvalidReplayFile,
+  reportOnlineSaveFailure = () => reportContinuationFailure('save'),
+  reportSavedGameResumeFailure = () => reportContinuationFailure('resume'),
+  reportSavedGameResumeSuccess = reportContinuationResumeSuccess,
+}: {
+  readonly session: RemoteRoomLiveSession;
+  readonly presentation: RemoteRoomLivePresentation;
+  readonly roomMode?: 'solo' | 'multiplayer';
+  /** v1 flipBoard swaps the seat colour of every sidebar action button. */
+  readonly boardFlipped?: boolean;
+  /**
+   * The seat the sidebar acts for: v1's initiator, the seat at the bottom
+   * of the board. Defaults to the viewer's own seat.
+   */
+  readonly actingPlayerId?: string;
+  readonly onLeave?: () => void;
+  readonly onExportState?: () => void;
+  readonly onImportReplayFile?: (contents: Uint8Array) => Promise<boolean>;
+  readonly onSaveOnlineGame?: (signal: AbortSignal) => Promise<void>;
+  readonly onResumeSavedGame?: (
+    contents: string,
+    deliverOpponentInvitation: OpponentInvitationDelivery,
+    signal: AbortSignal
+  ) => Promise<void>;
+  readonly confirmLeave?: LiveRoomLeaveConfirmation;
+  readonly downloadTextFile?: (filename: string, contents: string) => boolean;
+  readonly requestFullscreen?: () => boolean;
+  readonly readReplayFile?: BrowserReplayFileReader;
+  readonly readContinuationFile?: BrowserContinuationFileReader;
+  readonly getInvitationClipboard?: () =>
+    DeferredTextClipboardWriter | undefined;
+  readonly reportReplayImportFailure?: () => void;
+  readonly reportOnlineSaveFailure?: () => void;
+  readonly reportSavedGameResumeFailure?: () => void;
+  readonly reportSavedGameResumeSuccess?: () => void;
+}) => {
+  const state = useGameSession(session);
+  const seatColor = boardFlipped ? 'opp-color' : 'self-color';
+  const [message, setMessage] = useState('');
+  const [replayImportPending, setReplayImportPending] = useState(false);
+  const [continuationPending, setContinuationPending] = useState<
+    'save' | 'resume'
+  >();
+  const replayFileInputRef = useRef<HTMLInputElement>(null);
+  const continuationFileInputRef = useRef<HTMLInputElement>(null);
+  const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
+  const continuationAbortRef = useRef<AbortController | undefined>(undefined);
+  // The "leave the room?" question while it is being asked: one at a time,
+  // withdrawn if these controls unmount.
+  const leaveQuestion = useRef<AbortController | undefined>(undefined);
+  const latestOnLeave = useRef(onLeave);
+  useEffect(() => {
+    latestOnLeave.current = onLeave;
+  }, [onLeave]);
+  const ownSeat = ownPlayerId(state);
+  const playerId =
+    ownSeat !== undefined &&
+    actingPlayerId &&
+    state.view?.players[actingPlayerId]
+      ? actingPlayerId
+      : ownSeat;
+  const playerControls = playerId !== undefined;
+  const solo = roomMode === 'solo';
+  const ready = state.phase === 'ready';
+
+  // Every press is answered: a command this client could not send says why,
+  // as one the room refuses does (refusal-notice.ts).
+  const send = (command: WireGameCommand): boolean => {
+    const result = session.submit(command);
+    if (!result.queued) {
+      const notice = unsentNotice(result.reason, command.type);
+      if (notice) toast(notice);
+    }
+    return result.queued;
+  };
+  const submitTable = (action: 'attack' | 'pass'): void => {
+    if (!playerId || !state.view) return;
+    const resolution = resolveTableAction(state.view, playerId, action);
+    if (resolution.ok) send(resolution.command);
+    else toast(refusalNotice(undefined, 'table'));
+  };
+  const submitLifecycle = (action: 'setup' | 'reset'): void => {
+    if (!playerId || !state.view) return;
+    const resolution = resolveLifecycleAction(state.view, playerId, action);
+    if (resolution.ok) send(resolution.command);
+    else toast(refusalNotice(undefined, 'table'));
+  };
+  const submitBothLifecycle = (action: 'setup' | 'reset'): void => {
+    if (!playerId || !state.view || !solo) return;
+    // Both seats are queued at once. The second is built on the first one's
+    // predicted outcome, and the session brings it up to the revision the
+    // first produces, so it is not refused as stale and never waits a round
+    // trip of its own.
+    const targets = [
+      playerId,
+      ...state.view.playerOrder.filter((candidate) => candidate !== playerId),
+    ];
+    for (const target of targets) {
+      const resolution = resolveLifecycleAction(state.view, target, action);
+      if (!resolution.ok) {
+        toast(refusalNotice(undefined, 'table'));
+        return;
+      }
+      if (!send(resolution.command)) return;
+    }
+  };
+  const submitUndo = (): void => {
+    // Solo takes back the bottom seat's move; a multiplayer player only ever
+    // takes back their own, whichever way the board is turned.
+    const target = solo ? playerId : ownSeat;
+    if (!target || !state.view) return;
+    const resolution = resolveSoloUndoAction(state.view, target);
+    if (resolution.ok) session.submit(resolution.command);
+  };
+  const leaveRoom = (): void => {
+    if (!onLeave || leaveQuestion.current) return;
+    const question = new AbortController();
+    leaveQuestion.current = question;
+    const finish = (confirmed: boolean): void => {
+      if (leaveQuestion.current === question) leaveQuestion.current = undefined;
+      if (confirmed && !question.signal.aborted) latestOnLeave.current?.();
+    };
+    void Promise.resolve(confirmLeave({ signal: question.signal })).then(
+      finish,
+      () => finish(false)
+    );
+  };
+  useEffect(
+    () => () => {
+      leaveQuestion.current?.abort();
+      leaveQuestion.current = undefined;
+      replayImportAbortRef.current?.abort();
+      const continuation = continuationAbortRef.current;
+      continuationAbortRef.current = undefined;
+      continuation?.abort();
+    },
+    []
+  );
+  const saveOnlineGame = async (): Promise<void> => {
+    if (!onSaveOnlineGame || !ready || !playerControls || continuationPending) {
+      return;
+    }
+    const controller = new AbortController();
+    continuationAbortRef.current = controller;
+    setContinuationPending('save');
+
+    try {
+      await onSaveOnlineGame(controller.signal);
+    } catch {
+      if (!controller.signal.aborted) reportOnlineSaveFailure();
+    } finally {
+      if (continuationAbortRef.current === controller) {
+        continuationAbortRef.current = undefined;
+        setContinuationPending(undefined);
+      }
+    }
+  };
+  const resumeSavedGame = async (
+    event: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (
+      !file ||
+      !onResumeSavedGame ||
+      !ready ||
+      !playerControls ||
+      continuationPending
+    ) {
+      return;
+    }
+
+    const clipboard = getInvitationClipboard();
+    if (!clipboard) {
+      reportSavedGameResumeFailure();
+      return;
+    }
+    const controller = new AbortController();
+    continuationAbortRef.current = controller;
+    setContinuationPending('resume');
+
+    let resolveInvitation!: (text: string) => void;
+    let rejectInvitation!: () => void;
+    let invitationDelivered = false;
+    const invitationText = new Promise<string>((resolve, reject) => {
+      resolveInvitation = resolve;
+      rejectInvitation = () => reject(new Error('Invitation unavailable'));
+    });
+    void invitationText.catch(() => undefined);
+    let clipboardWrite: Promise<void>;
+    try {
+      clipboardWrite = clipboard.writeText(invitationText);
+    } catch {
+      rejectInvitation();
+      continuationAbortRef.current = undefined;
+      setContinuationPending(undefined);
+      reportSavedGameResumeFailure();
+      return;
+    }
+    void clipboardWrite.catch(() => undefined);
+    const deliverOpponentInvitation: OpponentInvitationDelivery = async (
+      text
+    ) => {
+      if (invitationDelivered) throw new Error('Invitation already delivered');
+      invitationDelivered = true;
+      resolveInvitation(text);
+      await clipboardWrite;
+    };
+
+    try {
+      let read: BrowserContinuationFileReadResult;
+      try {
+        read = await readContinuationFile(file, {
+          signal: controller.signal,
+        });
+      } catch {
+        read = { ok: false, reason: 'read_failed' };
+      }
+      if (
+        controller.signal.aborted ||
+        continuationAbortRef.current !== controller
+      ) {
+        if (!invitationDelivered) rejectInvitation();
+        return;
+      }
+      if (!read.ok) throw new Error('Invalid continuation file');
+      await onResumeSavedGame(
+        read.text,
+        deliverOpponentInvitation,
+        controller.signal
+      );
+      if (
+        controller.signal.aborted ||
+        continuationAbortRef.current !== controller
+      ) {
+        return;
+      }
+      reportSavedGameResumeSuccess();
+    } catch {
+      if (!invitationDelivered) rejectInvitation();
+      if (!controller.signal.aborted) reportSavedGameResumeFailure();
+    } finally {
+      if (continuationAbortRef.current === controller) {
+        continuationAbortRef.current = undefined;
+        setContinuationPending(undefined);
+      }
+    }
+  };
+  const importReplayFile = async (
+    event: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (
+      !file ||
+      !onImportReplayFile ||
+      !ready ||
+      state.replayLoading ||
+      replayImportPending
+    ) {
+      return;
+    }
+
+    replayImportAbortRef.current?.abort();
+    const controller = new AbortController();
+    replayImportAbortRef.current = controller;
+    setReplayImportPending(true);
+    let read: BrowserReplayFileReadResult;
+    try {
+      read = await readReplayFile(file, { signal: controller.signal });
+    } catch {
+      read = { ok: false, reason: 'read_failed' };
+    }
+    if (
+      controller.signal.aborted ||
+      replayImportAbortRef.current !== controller
+    ) {
+      return;
+    }
+
+    let imported = false;
+    if (read.ok) {
+      try {
+        imported = await onImportReplayFile(read.bytes);
+      } catch {
+        imported = false;
+      }
+    }
+    if (
+      controller.signal.aborted ||
+      replayImportAbortRef.current !== controller
+    ) {
+      return;
+    }
+    replayImportAbortRef.current = undefined;
+    setReplayImportPending(false);
+
+    if (!read.ok || !imported) reportReplayImportFailure();
+  };
+  const sendMessage = (): void => {
+    const normalized = message.trim();
+    if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
+      return;
+    }
+    // v1 prefixes the line with `systemState.initiator`'s name, which a
+    // flipped board moves to the other seat.
+    if (session.sendChat(normalized, playerId)) setMessage('');
+  };
+  const handleMessageKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>
+  ): void => {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    sendMessage();
+  };
+
+  const exportLog = (): void => {
+    downloadTextFile(
+      'battle-log.txt',
+      serializeBattleLog(presentation.activityFeed.getSnapshot().items)
+    );
+  };
+  const clearLog = (): void => {
+    presentation.clearActivity();
+  };
+  const fullscreen = (): void => {
+    if (!requestFullscreen()) toast(FULLSCREEN_REFUSED_NOTICE);
+  };
+
+  /** The hidden file pickers behind "Enter replay mode" and "Resume". */
+  const fileInputs = (
+    <>
+      {solo && onImportReplayFile ? (
+        <input
+          id="jsonReplay"
+          ref={replayFileInputRef}
+          type="file"
+          accept=".json"
+          hidden
+          onChange={(event) => void importReplayFile(event)}
+        />
+      ) : null}
+      {!solo && playerControls && onResumeSavedGame ? (
+        <input
+          id="continuationSaveFile"
+          ref={continuationFileInputRef}
+          type="file"
+          accept=".ptcgsave"
+          hidden
+          onChange={(event) => void resumeSavedGame(event)}
+        />
+      ) : null}
+    </>
+  );
+
+  return {
+    state,
+    ready,
+    solo,
+    playerId,
+    ownSeat,
+    playerControls,
+    seatColor,
+    continuationPending,
+    replayImportPending,
+    message,
+    setMessage,
+    sendMessage,
+    handleMessageKeyDown,
+    submitTable,
+    submitLifecycle,
+    submitBothLifecycle,
+    submitUndo,
+    leaveRoom: onLeave && !solo ? leaveRoom : undefined,
+    canImportReplay: solo && onImportReplayFile !== undefined,
+    importReplay: () => replayFileInputRef.current?.click(),
+    exportState: onExportState,
+    canSaveOnline: !solo && playerControls && onSaveOnlineGame !== undefined,
+    saveOnlineGame: () => void saveOnlineGame(),
+    canResumeSaved: !solo && playerControls && onResumeSavedGame !== undefined,
+    resumeSavedGame: () => continuationFileInputRef.current?.click(),
+    exportLog,
+    clearLog,
+    fullscreen,
+    fileInputs,
+  };
+};
+
+export type LiveRoomControls = ReturnType<typeof useLiveRoomControls>;
+
+/** The chat field and its send button, for the activity sheet. */
+export const ChatComposer = ({
+  controls,
+}: {
+  readonly controls: LiveRoomControls;
+}) => {
+  const id = controls.solo ? 'messageInput' : 'p2MessageInput';
+  return (
+    <div className="ptcgsim-chat-composer">
+      <input
+        id={id}
+        type="text"
+        className="ds-input"
+        placeholder="Message"
+        aria-label="Chat message"
+        maxLength={MAX_CHAT_CODE_UNITS}
+        disabled={!controls.ready}
+        value={controls.message}
+        onChange={(event) => controls.setMessage(event.target.value)}
+        onKeyDown={controls.handleMessageKeyDown}
+      />
+      <Tooltip content={withKeyHint('Send', 'Enter')}>
+        <button
+          type="button"
+          className="ds-icon-button ptcgsim-chat-composer__send"
+          disabled={!controls.ready || controls.message.trim().length === 0}
+          aria-label="Send message"
+          onClick={controls.sendMessage}
+        >
+          <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
+        </button>
+      </Tooltip>
+    </div>
+  );
+};

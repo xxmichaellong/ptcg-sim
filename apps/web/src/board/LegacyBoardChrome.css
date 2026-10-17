@@ -1,0 +1,205 @@
+.ptcgsim-legacy-board-chrome {
+  user-select: none;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-resizer {
+  position: absolute;
+  display: flex;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-strong, rgb(255 255 255 / 0.18));
+  border-radius: var(--radius-pill, 999px);
+  background-color: var(--ptcgsim-resizer-seat);
+  background-image: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0) 55%,
+    rgb(0 0 0 / 0.18)
+  );
+  box-shadow:
+    var(--shadow-2, 0 2px 6px rgb(0 0 0 / 0.38)),
+    var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+  /* v1's `#selfResizer`/`#oppResizer` are ordinary elements that show the
+     row-resize cursor on hover. The drag itself is captured on the board
+     host by hit rectangle, so the pill only has to be hoverable. */
+  cursor: row-resize;
+  pointer-events: auto;
+  transform: translateY(50%) scaleX(-1);
+  transition:
+    filter var(--duration-fast, 140ms) var(--ease-out, ease-out),
+    box-shadow var(--duration-fast, 140ms) var(--ease-out, ease-out);
+}
+
+/* The pill wears the colour of the seat whose half it resizes. */
+.ptcgsim-legacy-board-chrome .legacy-board-resizer[data-player-side='local'] {
+  --ptcgsim-resizer-seat: var(--color-you, rgb(90 110 188));
+}
+
+.ptcgsim-legacy-board-chrome
+  .legacy-board-resizer[data-player-side='opponent'] {
+  --ptcgsim-resizer-seat: var(--color-opponent, rgb(188 90 113));
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-resizer:hover {
+  filter: brightness(1.12);
+  box-shadow:
+    var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.42)),
+    var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+}
+
+.ptcgsim-legacy-board-chrome .legacy-player-frame-chrome {
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-controls {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  min-width: 10%;
+  height: 6%;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-controls--local {
+  right: 67%;
+  justify-content: flex-end;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-controls--opponent {
+  left: 67%;
+  justify-content: flex-start;
+}
+
+/* The GX and VSTAR markers are the real tiles; the button around one is
+   only the (comfortably large) target and the focus ring. */
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-button {
+  flex: none;
+  box-sizing: border-box;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  perspective: 240px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate var(--duration-fast, 140ms) var(--ease-out, ease-out),
+    scale var(--duration-instant, 90ms) var(--ease-out, ease-out);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-button:focus-visible {
+  outline: 2px solid var(--color-accent, rgb(90 110 188));
+  outline-offset: 1px;
+}
+
+.ptcgsim-legacy-board-chrome .once-per-game-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--duration-slow, 320ms)
+    var(--ease-snappy, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+
+/* Used: turned face down, the way the physical marker is. */
+.ptcgsim-legacy-board-chrome
+  .legacy-once-per-game-button[aria-pressed='true']
+  .once-per-game-tile {
+  transform: rotateY(180deg);
+}
+
+.ptcgsim-legacy-board-chrome .once-per-game-tile__face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.ptcgsim-legacy-board-chrome .once-per-game-tile__face--back {
+  transform: rotateY(180deg);
+}
+
+.ptcgsim-legacy-board-chrome .once-per-game-tile__face > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.45));
+  transition: filter var(--duration-fast, 140ms) var(--ease-out, ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-board-chrome .legacy-once-per-game-button:hover {
+    translate: 0 -1px;
+  }
+
+  .ptcgsim-legacy-board-chrome
+    .legacy-once-per-game-button:hover
+    .once-per-game-tile__face
+    > svg {
+    filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.45));
+  }
+}
+
+.ptcgsim-legacy-board-chrome .legacy-once-per-game-button:active {
+  scale: 0.96;
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-legacy-board-chrome
+  .legacy-once-per-game-button,
+:root[data-motion='reduced'] .ptcgsim-legacy-board-chrome .once-per-game-tile,
+:root[data-motion='reduced']
+  .ptcgsim-legacy-board-chrome
+  .once-per-game-tile__face
+  > svg {
+  transition: none;
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-legacy-board-chrome
+  .legacy-board-resizer {
+  transition: none;
+}
+
+/* v1 `#handLabel`: the hand Sort checkbox at the container's left edge, just
+   above the hand. The opponent frame is rotated a half turn, so its label
+   turns back upright as a whole: v1 flipped only the word (`.opp-text`),
+   which left the tick upside down. */
+.ptcgsim-legacy-board-chrome .legacy-hand-sort {
+  position: absolute;
+  bottom: 29.5%;
+  left: 0;
+  display: block;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort--local {
+  color: rgb(90 110 188 / 86.4%);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort--opponent {
+  color: rgb(188 90 113 / 86.4%);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort[data-upright='turned'] {
+  rotate: 180deg;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort input {
+  /* The browser's own checkbox margin, which v1 leaves in place. */
+  margin: 3px 3px 3px 4px;
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-hand-sort span {
+  display: inline-block;
+}
