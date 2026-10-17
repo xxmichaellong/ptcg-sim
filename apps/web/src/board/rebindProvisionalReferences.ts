@@ -14,10 +14,13 @@ const PREDICTED_INSPECTION = 'predicted-inspection:';
 /** Entries remembered, newest last: far more than a queue of moves needs. */
 const REMEMBERED_STACKS = 64;
 
-export type ProvisionalRebinder = (
+export type ProvisionalRebinder = ((
   command: WireGameCommand,
   view: MatchViewState
-) => WireGameCommand;
+) => WireGameCommand) & {
+  /** A command the room refused: the stack its play would have made isn't. */
+  readonly refused: (command: WireGameCommand) => void;
+};
 
 /**
  * A command built on a prediction (Energy attached to a Pokémon played a
@@ -234,16 +237,21 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     }
   };
 
-  return (command, view) => {
+  /** The placement a sent play recorded, by the command as it was sent. */
+  const placementOf = new WeakMap<WireGameCommand, string>();
+
+  const rebinder = (command: WireGameCommand, view: MatchViewState) => {
     settleArrivals(view);
     // A Pokémon played into a new stack: remember where, in case its card
     // comes back under another alias (as one played from the viewer does,
     // having passed through its owner's hand).
+    let placed: string | undefined;
     if (
       (command.type === 'MoveCardToPlay' && !command.targetStackId) ||
       command.type === 'MoveInspectedCardToPlay'
     ) {
-      remember(placements, `${PREDICTED_STACK}${command.cardId}`, {
+      placed = `${PREDICTED_STACK}${command.cardId}`;
+      remember(placements, placed, {
         boardPlayerId: command.boardPlayerId,
         slot: command.slot,
         ...(command.benchIndex === undefined
@@ -273,6 +281,18 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     const walked = rebind(command) as WireGameCommand;
     const rebound = changed ? walked : command;
     recordArrivals(rebound, view);
+    if (placed) placementOf.set(rebound, placed);
     return rebound;
   };
+  return Object.assign(rebinder, {
+    // Refused, the play made no stack: a move queued on its predicted one
+    // goes as it is, for the room to refuse as stale, never rebound by
+    // position to whatever stands there now.
+    refused: (command: WireGameCommand) => {
+      const placed = placementOf.get(command);
+      if (placed === undefined) return;
+      placements.delete(placed);
+      stacks.delete(placed);
+    },
+  });
 };

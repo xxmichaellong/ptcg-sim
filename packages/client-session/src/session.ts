@@ -78,10 +78,17 @@ export interface ClientSessionDependencies {
    * was still on its way (a Pokémon just played, a window just opened);
    * by the time it is sent, the room has created it under its own ID.
    */
-  readonly rebindCommand?: (
+  readonly rebindCommand?: ((
     command: WireGameCommand,
     view: MatchViewState
-  ) => WireGameCommand;
+  ) => WireGameCommand) & {
+    /**
+     * Told of a command the room refused, before the next is sent: what
+     * it was predicted to make never was, and nothing queued after it may
+     * be bound to something else in its place.
+     */
+    readonly refused?: (command: WireGameCommand) => void;
+  };
 }
 
 export type SubmitCommandResult =
@@ -994,6 +1001,8 @@ export class RemoteGameSession {
       return;
     }
     this.pending.shift();
+    if (!head.result.accepted)
+      this.rebindCommand?.refused?.(head.envelope.command);
     const completed: CompletedCommandSummary = {
       commandId: head.result.commandId,
       clientSequence: head.result.clientSequence,

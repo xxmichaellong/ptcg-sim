@@ -580,6 +580,47 @@ describe('RemoteGameSession', () => {
     expect(seen).toEqual([0, 1]);
   });
 
+  it('tells the rebinder of a refused command before the next is sent', () => {
+    const calls: string[] = [];
+    const rebind = Object.assign(
+      (command: Parameters<NonNullable<Parameters<typeof setup>[1]>>[0]) => {
+        calls.push(`rebind:${command.type}`);
+        return command;
+      },
+      {
+        refused: (
+          command: Parameters<NonNullable<Parameters<typeof setup>[1]>>[0]
+        ) => {
+          calls.push(`refused:${command.type}`);
+        },
+      }
+    );
+    const test = setup({}, rebind);
+    const socket = test.admit();
+    test.session.submit({
+      type: 'MoveCardToPlay',
+      cardId: 'mon',
+      expectedSourceZoneId: 'zone:blue:hand',
+      boardPlayerId: 'blue',
+      slot: 'active',
+    });
+    test.session.submit({ type: 'FlipCoin' });
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: false,
+      revision: 0,
+      code: 'stale_reference',
+    });
+    expect(calls).toEqual([
+      'rebind:MoveCardToPlay',
+      'refused:MoveCardToPlay',
+      'rebind:FlipCoin',
+    ]);
+  });
+
   it('keeps what the sender saw when someone else changed the match meanwhile', () => {
     const test = setup();
     const socket = test.admit();

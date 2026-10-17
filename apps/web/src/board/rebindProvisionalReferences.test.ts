@@ -244,6 +244,66 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ stackId: `predicted-stack:${played.id}` });
   });
 
+  it("forgets a refused play's stack, even with another copy in its spot", () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const active = view.stacks['stack:blue:active']!;
+    const top = active.evolutionCards.at(-1)!;
+    if (top.kind !== 'known') throw new Error('a known card');
+    const handId = 'zone:spike-blue:hand';
+    // The card played, and another copy of it.
+    const played = { ...top, id: 'played-copy' };
+    const other = { ...top, id: 'other-copy' };
+    const { [active.id]: _absent, ...withoutActive } = view.stacks;
+    const empty: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [handId]: {
+          ...view.zones[handId]!,
+          cards: [...view.zones[handId]!.cards, played],
+        },
+      },
+      stacks: withoutActive,
+      boards: {
+        ...view.boards,
+        [active.boardPlayerId]: {
+          ...view.boards[active.boardPlayerId]!,
+          activeStackId: null,
+        },
+      },
+    };
+    const play = rebind(
+      {
+        type: 'MoveCardToPlay',
+        cardId: played.id,
+        expectedSourceZoneId: handId,
+        boardPlayerId: active.boardPlayerId,
+        slot: 'active',
+      } as WireGameCommand,
+      empty
+    );
+    // The room refuses it; someone puts the other copy there instead.
+    rebind.refused(play);
+    const filled: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: { ...active, evolutionCards: [other] },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'SetDamage',
+          stackId: `predicted-stack:${played.id}`,
+          damage: 30,
+        } as unknown as WireGameCommand,
+        filled
+      )
+    ).toMatchObject({ stackId: `predicted-stack:${played.id}` });
+  });
+
   it('names a drawn card as the hand has it once the draw has landed', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
