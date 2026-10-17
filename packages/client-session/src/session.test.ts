@@ -1281,6 +1281,91 @@ describe('RemoteGameSession', () => {
     expect(test.session.getSnapshot().pendingCommands).toHaveLength(0);
   });
 
+  it("shows a retried flip's coin after a reconnect installed its revision", () => {
+    const test = setup();
+    const firstSocket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    // Committed, but the publication was lost with the transport.
+    firstSocket.serverClose();
+    test.scheduler.runNext();
+    const secondSocket = test.factory.sockets[1]!;
+    secondSocket.serverOpen();
+    secondSocket.serverMessage(welcome(2, view(1)));
+    expect(test.session.getSnapshot().view?.revision).toBe(1);
+    const coin = {
+      type: 'CoinFlipped' as const,
+      revision: 1,
+      playerId: 'blue',
+      result: 'heads' as const,
+    };
+    const publication: ServerMessage = {
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'command-1',
+      executedClientSequence: 1,
+      snapshot: view(1),
+      presentationEvents: [coin],
+    };
+    // The retry is answered with its publication, events and all.
+    secondSocket.serverMessage(publication);
+    secondSocket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+    expect(test.session.getSnapshot().presentationEvents).toEqual([coin]);
+    // Once shown, a repeat is not shown again.
+    secondSocket.serverMessage(publication);
+    expect(test.session.getSnapshot().presentationEvents).toEqual([coin]);
+  });
+
+  it('catches up on a refresh past a publication it never received', () => {
+    const test = setup();
+    const socket = test.admit();
+    // Someone's command committed, and the room failed before publishing
+    // it; another player's resume refreshes everyone past it.
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: view(1),
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: { revision: 1 },
+    });
+    // The command's retry still brings what it showed.
+    const coin = {
+      type: 'CoinFlipped' as const,
+      revision: 1,
+      playerId: 'red',
+      result: 'tails' as const,
+    };
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      coveringCommandId: 'red-command',
+      executedClientSequence: 0,
+      snapshot: view(1),
+      presentationEvents: [coin],
+    });
+    expect(test.session.getSnapshot().presentationEvents).toEqual([coin]);
+    // A refresh behind the view is still a divergence.
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: view(0),
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'inconsistent_publication' },
+    });
+  });
+
   it('publishes each empty-queue reconnect phase exactly once', () => {
     const test = setup();
     const firstSocket = test.admit();

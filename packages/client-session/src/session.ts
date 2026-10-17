@@ -193,6 +193,13 @@ export class RemoteGameSession {
   private readonly pending: PendingCommand[] = [];
   /** Recent revisions this client's own accepted commands produced. */
   private readonly ownRevisions = new Set<number>();
+  /**
+   * The newest revision whose presentation events this session has shown.
+   * A view installed without them (a reconnect's Welcome, a catch-up
+   * refresh) leaves it behind, so a retried command's events (a coin's
+   * face) still show when they come; a repeat of shown ones does not.
+   */
+  private presentedRevision = -1;
   private readonly pingTimes = new Map<number, number>();
   private state: ClientSessionState = initialState();
   private options?: Omit<
@@ -241,6 +248,7 @@ export class RemoteGameSession {
     this.closeSocket(1000, 'Session replaced');
     this.pending.length = 0;
     this.ownRevisions.clear();
+    this.presentedRevision = -1;
     this.pingTimes.clear();
     this.replayTransfer = undefined;
     this.options = {
@@ -802,6 +810,9 @@ export class RemoteGameSession {
           stableSerialize(candidate) === stableSerialize(current)))
         ? current
         : candidate;
+    // A first admission shows nothing from before it; a resumed one may yet
+    // be owed what it missed.
+    if (!current) this.presentedRevision = candidate.revision;
     this.sessionId = message.sessionId;
     this.admissionTicket = undefined;
     this.reconnectAttempts = 0;
@@ -875,13 +886,21 @@ export class RemoteGameSession {
       if (pending) pending.publicationRevision = message.snapshot.revision;
     }
     const presentationEvents =
-      candidate.revision > previousRevision && message.presentationEvents
+      candidate.revision > this.presentedRevision &&
+      candidate.revision >= previousRevision &&
+      message.presentationEvents
         ? appendManyBounded(
             this.state.presentationEvents,
             message.presentationEvents,
             this.policy.maximumPresentationEvents
           )
         : this.state.presentationEvents;
+    if (candidate.revision >= previousRevision) {
+      this.presentedRevision = Math.max(
+        this.presentedRevision,
+        candidate.revision
+      );
+    }
     if (advancesView || presentationEvents !== this.state.presentationEvents) {
       this.updateState({
         ...(advancesView ? { view: candidate } : {}),
@@ -910,6 +929,13 @@ export class RemoteGameSession {
       candidate.revision === current.revision &&
       stableSerialize(candidate) === stableSerialize(current);
     if (sameProjection) return;
+    // Ahead of this view: a command committed whose publication never
+    // reached this session (the room failed after committing it), and the
+    // refresh carries it past. Its events, if any, may come with a retry.
+    if (candidate.revision > current.revision) {
+      this.updateState({ view: candidate });
+      return;
+    }
     if (
       candidate.revision !== current.revision ||
       !isDisplayNameOnlyRefresh(current, candidate)
