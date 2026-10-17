@@ -154,6 +154,9 @@ export class RemoteRoomRuntime {
     write: RemoteContinuationHandoffWriter,
     signal?: AbortSignal
   ): Promise<void> {
+    // The save is of the room as it stands: moves still on their way to it
+    // go in first, or the file would miss the last of them.
+    await this.commandsSettled(signal);
     const custody = this.getContinuationCustody();
     await custody.handoffCreated(
       async (receipt: ContinuationCreationResponse) => {
@@ -176,6 +179,43 @@ export class RemoteRoomRuntime {
       custody.dispose();
       this.continuationCustody = undefined;
     }
+  }
+
+  /** Resolves once every move sent has been answered by the room. */
+  private commandsSettled(signal?: AbortSignal): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe = (): void => undefined;
+      let settled = false;
+      const settle = (error?: Error): void => {
+        if (settled) return;
+        settled = true;
+        signal?.removeEventListener('abort', onAbort);
+        unsubscribe();
+        if (error) reject(error);
+        else resolve();
+      };
+      const onAbort = (): void =>
+        settle(new RemoteContinuationCustodyError('cancelled'));
+      const inspect = (): void => {
+        if (this.disposed) {
+          settle(new RemoteContinuationCustodyError('disposed'));
+          return;
+        }
+        const state = this.session.getSnapshot();
+        if (state.phase !== 'ready') {
+          settle(new RemoteContinuationCustodyError('invalid_state'));
+        } else if (state.pendingCommands.length === 0) {
+          settle();
+        }
+      };
+      if (signal?.aborted) {
+        onAbort();
+        return;
+      }
+      signal?.addEventListener('abort', onAbort, { once: true });
+      unsubscribe = this.session.subscribe(inspect);
+      inspect();
+    });
   }
 
   /** Prevents route/controller graphs from becoming credential-bearing JSON. */

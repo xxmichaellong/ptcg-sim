@@ -255,6 +255,61 @@ describe('RemoteRoomRuntime', () => {
     );
   });
 
+  it('saves only once every move on its way to the room has landed', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const port: RemoteContinuationPort = {
+      create: vi.fn(async (input) => ({
+        format: 'ptcgsim-continuation-creation-result-v1' as const,
+        saveId: 'S'.repeat(22),
+        operationId: input.operationId,
+        capability: `ptcgsave.v1.${'S'.repeat(22)}.${'B'.repeat(43)}`,
+        createdAt: 2_000_000_000_000,
+        expiresAt: 2_000_086_400_000,
+      })),
+      restore: vi.fn(async (): Promise<never> => {
+        throw new Error('not used');
+      }),
+      revoke: vi.fn(async () => undefined),
+    };
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: { socketFactory },
+      continuation: { port, createOperationId: () => 'C'.repeat(43) },
+    });
+    const socket = socketFactory.sockets[0]!;
+    socket.serverOpen();
+    socket.serverMessage(welcome());
+    runtime.session.submit({ type: 'DrawCards', count: 1 });
+    runtime.session.submit({ type: 'DrawCards', count: 1 });
+
+    const saved = runtime.saveOnlineGame(vi.fn(() => true));
+    await flushConsumers();
+    expect(port.create).not.toHaveBeenCalled();
+    /** Answers the move last sent, refused: it is settled either way. */
+    const answerLatest = (): void => {
+      const sent = JSON.parse(socket.sent.at(-1)!) as {
+        commandId: string;
+        clientSequence: number;
+      };
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: sent.commandId,
+        clientSequence: sent.clientSequence,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      });
+    };
+    answerLatest();
+    await flushConsumers();
+    expect(port.create).not.toHaveBeenCalled();
+    answerLatest();
+    await saved;
+    expect(port.create).toHaveBeenCalledOnce();
+    runtime.dispose();
+  });
+
   it('retries a failed save handoff and rotates only after successful delivery', async () => {
     const socketFactory = new FakeSocketFactory();
     const operationIds = ['C'.repeat(43), 'D'.repeat(43)];

@@ -17,10 +17,9 @@ import {
 } from './browser-json.js';
 
 const MAX_RESPONSE_BYTES = 2_048;
-const MAX_TICKET_LIFETIME_MS = 5 * 60_000;
 
 export type RemoteRoomBootstrapFailureCode =
-  'invalid_input' | 'exchange_failed' | 'invalid_response' | 'expired_ticket';
+  'invalid_input' | 'exchange_failed' | 'invalid_response';
 
 export class RemoteRoomBootstrapError extends Error {
   constructor(readonly code: RemoteRoomBootstrapFailureCode) {
@@ -131,14 +130,9 @@ export const bootstrapRemoteRoom = async (
   if (!parsed.ok) {
     throw new RemoteRoomBootstrapError('invalid_response');
   }
-  const now = (dependencies.now ?? Date.now)();
-  if (
-    !Number.isSafeInteger(now) ||
-    parsed.value.expiresAt <= now ||
-    parsed.value.expiresAt - now > MAX_TICKET_LIFETIME_MS
-  ) {
-    throw new RemoteRoomBootstrapError('expired_ticket');
-  }
+  // The ticket's expiry is the server's clock, and the server holds it to
+  // that when the socket is admitted. This browser's clock may be minutes
+  // off, against a ticket that lasts seconds, so it doesn't judge.
 
   const createRuntime =
     dependencies.createRuntime ??

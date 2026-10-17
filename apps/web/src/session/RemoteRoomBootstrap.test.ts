@@ -75,7 +75,24 @@ describe('remote room admission bootstrap', () => {
     });
   });
 
-  it('fails closed on errors, malformed payloads, and expired tickets', async () => {
+  it("leaves a ticket's expiry to the server, whatever this browser's clock says", async () => {
+    for (const now of [10_000 + 31_000, 10_000 - 5 * 60_000 - 1]) {
+      const createRuntime = vi.fn(() => ({}) as RemoteRoomRuntime);
+      await bootstrapRemoteRoom(input, {
+        fetch: (async () =>
+          Response.json(
+            { admissionTicket, resumeToken, expiresAt: 40_000 },
+            { status: 201 }
+          )) as typeof fetch,
+        origin: 'https://play.example',
+        now: () => now,
+        createRuntime,
+      });
+      expect(createRuntime).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('fails closed on errors and malformed payloads', async () => {
     const cases = [
       {
         fetch: async () =>
@@ -89,14 +106,6 @@ describe('remote room admission bootstrap', () => {
             { status: 201 }
           ),
         expected: 'invalid_response',
-      },
-      {
-        fetch: async () =>
-          Response.json(
-            { admissionTicket, resumeToken, expiresAt: 10_000 },
-            { status: 201 }
-          ),
-        expected: 'expired_ticket',
       },
       {
         fetch: async () =>
