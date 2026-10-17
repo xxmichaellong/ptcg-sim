@@ -390,6 +390,172 @@ describe('untrusted input', () => {
     expect(find('OLD 97').legal).toEqual({ standard: false, expanded: true });
   });
 
+  it('takes reworded reprints for one card, and different effects for two', () => {
+    const trainer = (name: string, text?: string) =>
+      printGroupKey({
+        name,
+        category: 'Trainer',
+        types: [],
+        abilities: [],
+        attacks: [],
+        ...(text === undefined ? {} : { text }),
+      });
+    // TCGdex's own texts. The handbook's example: "the wording has been
+    // altered, the effect described remains unchanged".
+    expect(
+      trainer(
+        'Copycat',
+        "You can play only one Supporter card each turn. When you play this card, put it next to your Active Pokémon. When your turn ends, discard this card. Shuffle your hand into your deck. Then, count the number of cards in your opponent's hand and draw that many cards."
+      )
+    ).toBe(
+      trainer(
+        'Copycat',
+        "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand."
+      )
+    );
+    expect(
+      trainer(
+        'Ultra Ball',
+        'Discard 2 cards from your hand. (If you can’t discard 2 cards, you can’t play this card.) Search your deck for a Pokémon, reveal it, and put it into your hand. Shuffle your deck afterward.'
+      )
+    ).toBe(
+      trainer(
+        'Ultra Ball',
+        'You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.'
+      )
+    );
+    const same: readonly (readonly [string, string, string])[] = [
+      [
+        'Pokémon Catcher',
+        'Flip a coin. If heads, switch 1 of your opponent’s Benched Pokémon with his or her Active Pokémon.',
+        "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      ],
+      [
+        'Air Balloon',
+        'The Retreat Cost of the Pokémon this card is attached to is ColorlessColorless less.',
+        'The Retreat Cost of the Pokémon this card is attached to is {C}{C} less.',
+      ],
+      [
+        'Poké Ball',
+        'Flip a coin. If heads, search your deck for a Pokémon, show it to your opponent, and put it into your hand. Shuffle your deck afterward.',
+        'Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.',
+      ],
+      [
+        'Energy Switch',
+        'Move a basic Energy card attached to 1 of your Pokémon to another of your Pokémon.',
+        'Move a Basic Energy from 1 of your Pokémon to another of your Pokémon.',
+      ],
+      [
+        'Rare Candy',
+        'Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card on the Basic Pokémon. (This counts as evolving that Pokémon.) You can’t use this card during your first turn or on a Basic Pokémon that was put into play this turn.',
+        "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn.",
+      ],
+    ];
+    for (const [name, older, newer] of same) {
+      expect(trainer(name, older), name).toBe(trainer(name, newer));
+    }
+    // The handbook's other example: damage counters are not damage.
+    const rainbow = (text: string) =>
+      printGroupKey({
+        name: 'Rainbow Energy',
+        category: 'Energy',
+        energyType: 'Special',
+        types: [],
+        abilities: [],
+        attacks: [],
+        text,
+      });
+    expect(
+      rainbow(
+        "Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"
+      )
+    ).not.toBe(
+      rainbow(
+        'This card provides Colorless Energy. While in play, this card provides every type of Energy but provides only 1 Energy at a time. When you attach this card from your hand to 1 of your Pokémon, put 1 damage counter on that Pokémon.'
+      )
+    );
+    // Rare Candy that also skips to Stage 1 is another card.
+    expect(
+      trainer(
+        'Rare Candy',
+        'Choose 1 of your Basic Pokémon in play. If you have a Stage 1 or Stage 2 card that evolves from that Pokémon in your hand, put that card on the Basic Pokémon. (This counts as evolving that Pokémon.)'
+      )
+    ).not.toBe(
+      trainer(
+        'Rare Candy',
+        "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn."
+      )
+    );
+  });
+
+  it('lets an older print share a reworded reprint’s legality, and a textless one borrow it', () => {
+    const decoded = decodeCatalog({
+      ...body([]),
+      sets: [
+        {
+          id: 'bw5',
+          name: 'Dark Explorers',
+          code: 'DEX',
+          series: 'Black & White',
+          released: '2012-05-09',
+          cards: [
+            {
+              n: '102',
+              nm: 'Ultra Ball',
+              c: 'T',
+              tx: 'Discard 2 cards from your hand. (If you can’t discard 2 cards, you can’t play this card.) Search your deck for a Pokémon, reveal it, and put it into your hand. Shuffle your deck afterward.',
+              lg: 2,
+            },
+          ],
+        },
+        {
+          id: 'g1',
+          name: 'Gym Heroes',
+          code: 'G1',
+          series: 'Gym',
+          released: '2000-08-14',
+          cards: [{ n: '18', nm: 'Misty', c: 'T', tx: 'Misty, long ago.' }],
+        },
+        {
+          id: 'me01',
+          name: 'Mega Evolution',
+          code: 'MEG',
+          series: 'Mega Evolution',
+          released: '2025-09-26',
+          cards: [
+            {
+              n: '131',
+              nm: 'Ultra Ball',
+              c: 'T',
+              tx: 'You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.',
+              lg: 3,
+            },
+          ],
+        },
+        {
+          id: 'new',
+          name: 'New',
+          code: 'NEW',
+          series: 'Mega Evolution',
+          released: '2026-09-16',
+          // No text yet: legal where the newest Ultra Ball is, while this
+          // Misty, legal on its own, lends Gym Heroes' nothing.
+          cards: [
+            { n: '128', nm: 'Ultra Ball', c: 'T' },
+            { n: '5', nm: 'Misty', c: 'T', lg: 2 },
+          ],
+        },
+      ],
+    });
+    const find = (id: string) =>
+      decoded.cards.find((entry) => entry.id === id)!;
+    expect(find('DEX 102').printGroup).toBe(find('MEG 131').printGroup);
+    expect(find('DEX 102').legal).toEqual({ standard: true, expanded: true });
+    expect(find('NEW 128').legal).toEqual({ standard: true, expanded: true });
+    expect(find('NEW 5').legal).toEqual({ standard: false, expanded: true });
+    expect(find('G1 18').legal).toEqual({ standard: false, expanded: false });
+  });
+
   it('keys print groups by rules, ignoring case and spacing', () => {
     const base = {
       name: 'Shadow Rider',

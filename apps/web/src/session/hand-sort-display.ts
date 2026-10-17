@@ -1,5 +1,7 @@
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 
+import { reorderedZone } from '../board/roomOrder.js';
+
 /**
  * v1's hand "Sort" checkbox (`#sortHandCheckbox` in each player container)
  * reorders the painted hand without touching the array behind it. v1 walks the
@@ -7,8 +9,9 @@ import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
  * the same paint-only projection in that order: cards sort by the decklist
  * rank the projection discloses, equal ranks and concealed cards keep their
  * authoritative order, and no command is emitted. The projection leaves
- * aliases untouched, so a sorted hand submits exactly what an unsorted one
- * would.
+ * aliases untouched, and a command that lists the hand in order lists it in
+ * the room's (`roomOrder`), so a sorted hand submits exactly what an
+ * unsorted one would.
  */
 export const applyHandSortDisplay = (
   view: MatchViewState,
@@ -44,7 +47,7 @@ export const applyHandSortDisplay = (
         return [zoneId, zone];
       }
       changed = true;
-      return [zoneId, { ...zone, cards }];
+      return [zoneId, reorderedZone(zone, cards)];
     })
   );
   return changed ? { ...view, zones } : view;

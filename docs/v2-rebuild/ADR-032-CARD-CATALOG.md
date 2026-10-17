@@ -76,10 +76,17 @@ fast and current. The sources, measured on 2026-10-15:
    stage, rarity and the card's name.
 6. **Legality is the card's, not the print's.** Prints with the same name and
    rules share a print group: in Standard and Expanded an older print stands
-   in for a reprint only when its text is the same (the TCG Tournament
-   Handbook), so Neo Genesis's coin-flip Super Rod is not today's. A
-   Trainer's subtitle doesn't count ("Boss's Orders (Giovanni)"); a Basic
-   Energy's group is its type; TCG Pocket's cards keep to their own groups. A group is legal in a format when TCGdex
+   in for a reprint only when its text is functionally the same (the TCG
+   Tournament Handbook, 4.1.3), so Neo Genesis's coin-flip Super Rod is not
+   today's but Ultra Ball DEX 102 is. Text is compared after undoing
+   wording-only changes ({C} spelled "Colorless", "his or her", "Shuffle
+   your deck afterward", the old Supporter and Stadium reminders, …), and a
+   few staples reworded further are listed by name
+   (`packages/deck-core/src/reprints.ts`). A Trainer TCGdex has no text for
+   yet is legal where the newest print of its name is, and lends that print
+   nothing. A Trainer's subtitle doesn't count ("Boss's Orders
+   (Giovanni)"); a Basic Energy's group is its type; TCG Pocket's cards
+   keep to their own groups. A group is legal in a format when TCGdex
    marks any of its prints legal there (so a rotated print is legal through
    a legal reprint), Basic Energy is legal whatever its set (but Fairy
    Energy left Standard with the Fairy type), TCG Pocket cards nowhere, and

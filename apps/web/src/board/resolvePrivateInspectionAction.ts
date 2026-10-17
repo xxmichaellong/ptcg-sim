@@ -1,6 +1,8 @@
 import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
+import { roomOrder } from './roomOrder.js';
+
 export type PrivateInspectionActionResolution =
   | { readonly ok: true; readonly command: WireGameCommand }
   | {
@@ -100,7 +102,8 @@ export const resolveZoneInspectionAction = (
       type: 'BeginZoneInspection',
       targetPlayerId,
       zoneId: zone.id,
-      expectedCardIds: zone.cards.map((card) => card.id),
+      // In the room's order, however the hand is painted.
+      expectedCardIds: roomOrder(zone).map((card) => card.id),
     },
   };
 };

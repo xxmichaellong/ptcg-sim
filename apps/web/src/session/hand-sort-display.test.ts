@@ -1,7 +1,8 @@
-import { asPlayerId } from '@ptcgsim/game-core';
+import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
+import { resolveZoneInspectionAction } from '../board/resolvePrivateInspectionAction.js';
 import { applyHandSortDisplay } from './hand-sort-display.js';
 
 describe('hand sort display', () => {
@@ -103,5 +104,40 @@ describe('hand sort display', () => {
         card.kind === 'known' ? definitions[card.definitionId]!.name : ''
       )
     ).toEqual(['Zapdos', 'Abra', 'Abra']);
+  });
+
+  it("looks at a sorted hand in the room's order", () => {
+    const spike = createRendererSpikeView();
+    const blue = asPlayerId('spike-blue');
+    const red = asPlayerId('spike-red');
+    const handId = `zone:${red}:hand`;
+    const hand = spike.zones[handId]!;
+    const [first, ...rest] = hand.cards;
+    const known = spike.zones[`zone:${blue}:hand`]!.cards[0]!;
+    expect(rest.length).toBeGreaterThan(0);
+    // Coaching: the first card looked at on its own, the rest concealed.
+    const view: MatchViewState = {
+      ...spike,
+      zones: {
+        ...spike.zones,
+        [handId]: {
+          ...hand,
+          cards: [{ ...known, id: first!.id, decklistRank: 0 }, ...rest],
+        },
+      },
+    };
+    // Sorted, the known card goes behind the concealed ones...
+    const sorted = applyHandSortDisplay(view, new Set([red]));
+    expect(sorted.zones[handId]!.cards.at(-1)!.id).toBe(first!.id);
+    // ...but the look names the hand as the room keeps it.
+    expect(resolveZoneInspectionAction(sorted, red, 'hand', true)).toEqual({
+      ok: true,
+      command: {
+        type: 'BeginZoneInspection',
+        targetPlayerId: red,
+        zoneId: handId,
+        expectedCardIds: hand.cards.map((card) => card.id),
+      },
+    });
   });
 });

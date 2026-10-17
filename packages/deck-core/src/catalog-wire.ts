@@ -8,6 +8,7 @@ import {
   type LoadedCatalog,
 } from './catalog.js';
 import { foldText, trainerName } from './card-query.js';
+import { ONE_CARD_TRAINERS, rulesWording } from './reprints.js';
 import type { CardCategory } from './deck-list.js';
 
 /**
@@ -421,8 +422,9 @@ interface DecodedPrint {
  * rules. Reprints, full arts and promos share it, so they share legality
  * (a reprint legal in a format makes every print of it legal there): in
  * Standard and Expanded an older print stands in for a reprint only when
- * its text is the same (the TCG Tournament Handbook), so Neo Genesis's
- * coin-flip Super Rod is not today's. A Trainer's subtitle doesn't count
+ * its text is functionally the same (the TCG Tournament Handbook; see
+ * reprints.ts), so Neo Genesis's coin-flip Super Rod is not today's, but
+ * Ultra Ball DEX 102 is. A Trainer's subtitle doesn't count
  * ("Boss's Orders (Giovanni)" is Boss's Orders). Basic Energy is its type
  * ("Basic Fire Energy" is Fire Energy). TCG Pocket is another game: its
  * cards never share a group with the TCG's. A hash taken in one pass with
@@ -446,26 +448,33 @@ export const printGroupKey = (card: {
     hash.add(BASIC_ENERGY.exec(card.name.trim())?.[1] ?? card.name);
     return `${game}e${hash.digest()}`;
   }
-  hash.add(
+  const name =
     card.category === 'Trainer' && !card.pocket
       ? trainerName(card.name)
-      : card.name
-  );
+      : card.name;
+  hash.add(name);
   hash.add(card.category);
+  if (
+    card.category === 'Trainer' &&
+    !card.pocket &&
+    ONE_CARD_TRAINERS.has(name)
+  ) {
+    return `t${hash.digest()}`;
+  }
   hash.add(card.stage ?? '');
   hash.add(card.hp === undefined ? '' : String(card.hp));
   for (const type of card.types) hash.add(type);
   for (const ability of card.abilities) {
     hash.add(ability.name);
-    hash.add(ability.text);
+    hash.add(rulesWording(ability.text));
   }
   for (const attack of card.attacks) {
     hash.add(attack.name);
     for (const type of attack.cost) hash.add(type);
     hash.add(attack.damage);
-    hash.add(attack.text ?? '');
+    hash.add(rulesWording(attack.text ?? ''));
   }
-  hash.add(card.text ?? '');
+  hash.add(rulesWording(card.text ?? ''));
   return `${game}g${hash.digest()}`;
 };
 
@@ -675,6 +684,31 @@ export const decodeCatalog = (value: unknown): LoadedCatalog => {
     }
   }
 
+  // TCGdex has no text yet for some new prints (30C's Ultra Ball). Such a
+  // Trainer is taken to be legal where the newest print of its name with
+  // text is, so a reprint isn't kept out of the formats its card is in; it
+  // proves nothing about which card it is, so it lends that print nothing.
+  const textless = (print: DecodedPrint) =>
+    print.card.category === 'Trainer' &&
+    !print.card.set.pocket &&
+    print.card.text === undefined;
+  const newest = new Map<string, DecodedPrint>();
+  for (const print of prints) {
+    if (print.card.category !== 'Trainer' || print.card.set.pocket) continue;
+    if (textless(print)) continue;
+    const name = trainerName(print.card.name as string);
+    const known = newest.get(name);
+    if (!known || print.card.set.released > known.card.set.released) {
+      newest.set(name, print);
+    }
+  }
+  const lenders = new Map<DecodedPrint, string>();
+  for (const print of prints) {
+    if (!textless(print)) continue;
+    const named = newest.get(trainerName(print.card.name as string));
+    if (named) lenders.set(print, named.groupKey);
+  }
+
   // Legality and tags belong to the card, not the printing: a group is
   // legal where any of its prints is, banned where any is banned, and
   // carries every tag any print carries.
@@ -698,6 +732,9 @@ export const decodeCatalog = (value: unknown): LoadedCatalog => {
   const groupTags = new Map<string, readonly string[]>();
   const cards: CatalogCard[] = prints.map((print) => {
     const group = groups.get(print.groupKey)!;
+    const lender = lenders.has(print)
+      ? groups.get(lenders.get(print)!)
+      : undefined;
     const pocket = print.card.set.pocket ?? false;
     // Basic Energy is legal whatever set it's from, but Fairy Energy left
     // Standard with the Fairy type (unless TCGdex says otherwise).
@@ -707,8 +744,8 @@ export const decodeCatalog = (value: unknown): LoadedCatalog => {
         ? group.legal | LEGAL_EXPANDED
         : print.basicEnergy
           ? LEGAL_STANDARD | LEGAL_EXPANDED
-          : group.legal;
-    const allowed = legal & ~group.banned;
+          : group.legal | (lender?.legal ?? 0);
+    const allowed = legal & ~(group.banned | (lender?.banned ?? 0));
     let tags = groupTags.get(print.groupKey);
     if (!tags) {
       tags = Object.freeze([...group.tags]);
