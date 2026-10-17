@@ -189,6 +189,61 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ stackId: 'predicted-stack:refused-play' });
   });
 
+  it("never binds a refused play's stack to another card someone put there", () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const active = view.stacks['stack:blue:active']!;
+    const handId = 'zone:spike-blue:hand';
+    const hand = view.zones[handId]!;
+    const played = hand.cards.find((card) => card.kind === 'known')!;
+    if (played.kind !== 'known') throw new Error('a known hand card');
+    const other = active.evolutionCards.at(-1)!;
+    if (other.kind !== 'known' || other.definitionId === played.definitionId) {
+      throw new Error('a card of another definition');
+    }
+    const { [active.id]: _absent, ...withoutActive } = view.stacks;
+    const empty: MatchViewState = {
+      ...view,
+      stacks: withoutActive,
+      boards: {
+        ...view.boards,
+        [active.boardPlayerId]: {
+          ...view.boards[active.boardPlayerId]!,
+          activeStackId: null,
+        },
+      },
+    };
+    // A known card is played to the empty active spot...
+    rebind(
+      {
+        type: 'MoveCardToPlay',
+        cardId: played.id,
+        expectedSourceZoneId: handId,
+        boardPlayerId: active.boardPlayerId,
+        slot: 'active',
+      } as WireGameCommand,
+      empty
+    );
+    // ...the room refuses it, and another card is put there instead.
+    const filled: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: { ...active, evolutionCards: [other] },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'SetDamage',
+          stackId: `predicted-stack:${played.id}`,
+          damage: 30,
+        } as unknown as WireGameCommand,
+        filled
+      )
+    ).toMatchObject({ stackId: `predicted-stack:${played.id}` });
+  });
+
   it('names a drawn card as the hand has it once the draw has landed', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();

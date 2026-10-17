@@ -27,6 +27,22 @@ export type ProvisionalRebinder = (
  * found too, after the stack itself is gone. Anything not found is left
  * for the room to refuse as stale. One per session.
  */
+/** The definition of a card the sender can read, wherever it lies. */
+const definitionOf = (
+  view: MatchViewState,
+  cardId: string
+): { readonly definitionId?: string } => {
+  const cards = [
+    ...Object.values(view.zones).flatMap((zone) => zone.cards),
+    ...Object.values(view.workAreas).flatMap((areas) => [
+      ...(areas.inspection?.cards ?? []),
+      ...(areas.attachmentResolution?.cards ?? []),
+    ]),
+  ];
+  const card = cards.find((candidate) => candidate.id === cardId);
+  return card?.kind === 'known' ? { definitionId: card.definitionId } : {};
+};
+
 export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const remember = <Value>(
     memory: Map<string, Value>,
@@ -49,6 +65,8 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly benchIndex?: number;
       /** The stacks there were as it was sent; the play made none of them. */
       readonly before: ReadonlySet<string>;
+      /** What the played card is, when the sender could read it. */
+      readonly definitionId?: string;
     }
   >();
   /**
@@ -123,9 +141,18 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
           : board.benchStackIds[placement.benchIndex];
     // A stack that was already there is not the one it made: the play was
     // refused, and the move that named it must be refused as stale too.
-    return stackId && !placement.before.has(stackId)
-      ? view.stacks[stackId]
-      : undefined;
+    if (!stackId || placement.before.has(stackId)) return undefined;
+    const stack = view.stacks[stackId];
+    // Nor is one of another card someone put there since (the play refused,
+    // the spot filled by another): its card must be the one played.
+    const card = stack?.evolutionCards[0];
+    if (
+      placement.definitionId !== undefined &&
+      (card?.kind !== 'known' || card.definitionId !== placement.definitionId)
+    ) {
+      return undefined;
+    }
+    return stack;
   };
 
   const stackIdFor = (id: string, view: MatchViewState): string => {
@@ -223,6 +250,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
           ? {}
           : { benchIndex: command.benchIndex }),
         before: new Set(Object.keys(view.stacks)),
+        ...definitionOf(view, command.cardId),
       });
     }
     // Stacks first, so a card alias they reveal is known for every field.

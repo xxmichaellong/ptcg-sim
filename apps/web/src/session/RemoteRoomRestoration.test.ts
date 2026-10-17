@@ -2,6 +2,7 @@ import { serializeContinuationHandoffText } from '@ptcgsim/protocol';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { RemoteContinuationPort } from './RemoteContinuationCustody.js';
+import { RemoteContinuationTransportError } from './RemoteContinuationTransport.js';
 import {
   RemoteRoomRestorationCustody,
   RemoteRoomRestorationError,
@@ -206,20 +207,56 @@ describe('remote room restoration custody', () => {
     expect(dispose).not.toHaveBeenCalled();
   });
 
-  it('rejects malformed, expired, and implausibly future handoffs', () => {
-    for (const text of [
-      'not a save',
-      handoff(now),
-      handoff(now + 31 * 24 * 60 * 60_000),
-    ]) {
-      expect(
-        () =>
-          new RemoteRoomRestorationCustody(text, {
-            port: port() as RemoteContinuationPort,
-            createOperationId: () => operationId,
-            now: () => now,
-          })
-      ).toThrow(RemoteRoomRestorationError);
-    }
+  it('rejects a malformed handoff', () => {
+    expect(
+      () =>
+        new RemoteRoomRestorationCustody('not a save', {
+          port: port() as RemoteContinuationPort,
+          createOperationId: () => operationId,
+          now: () => now,
+        })
+    ).toThrow(RemoteRoomRestorationError);
+  });
+
+  it("leaves a save's expiry to the server, and says so when it refuses one", async () => {
+    const restoreWith = (clock: number) => {
+      const adapter = port();
+      adapter.restore.mockRejectedValue(
+        new RemoteContinuationTransportError('unavailable')
+      );
+      // Past its time, or far ahead of it, by this clock: still asked for.
+      const restoration = new RemoteRoomRestorationCustody(handoff(now), {
+        port: adapter,
+        createOperationId: () => operationId,
+        now: () => clock,
+        bootstrap: vi.fn(),
+      });
+      return {
+        adapter,
+        restored: restoration.restore({
+          buildId: 'test-build',
+          displayName: 'Blue',
+          rendererKind: 'dom',
+          deliverOpponentInvitation: vi.fn(),
+        }),
+      };
+    };
+    const late = restoreWith(now + 60_000);
+    await expect(late.restored).rejects.toMatchObject({
+      code: 'expired_handoff',
+    });
+    expect(late.adapter.restore).toHaveBeenCalledTimes(1);
+    // A clock behind the server's: the refusal is just a refusal.
+    await expect(restoreWith(now - 20 * 60_000).restored).rejects.toMatchObject(
+      { code: 'unavailable' }
+    );
+    expect(
+      () =>
+        new RemoteRoomRestorationCustody(handoff(now + 31 * 24 * 60 * 60_000), {
+          port: port() as RemoteContinuationPort,
+          createOperationId: () => operationId,
+          now: () => now,
+        })
+    ).not.toThrow();
   });
 });

@@ -13,10 +13,9 @@ import {
   bootstrapRemoteRoom,
   type RemoteRoomBootstrapResult,
 } from './RemoteRoomBootstrap.js';
+import { RemoteContinuationTransportError } from './RemoteContinuationTransport.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { waitForAdmission } from './wait-for-admission.js';
-
-const MAX_HANDOFF_FUTURE_MS = 30 * 24 * 60 * 60_000 + 5 * 60_000;
 
 export type RemoteRoomRestorationFailureCode =
   | 'invalid_handoff'
@@ -74,21 +73,9 @@ export class RemoteRoomRestorationCustody {
     if (!parsed.ok) {
       throw new RemoteRoomRestorationError('invalid_handoff');
     }
+    // Its expiry is the server's to judge, by its own clock: this
+    // browser's may be minutes off either way.
     const now = dependencies.now ?? Date.now;
-    let currentTime: number;
-    try {
-      currentTime = now();
-    } catch {
-      throw new RemoteRoomRestorationError('invalid_handoff');
-    }
-    if (
-      !Number.isSafeInteger(currentTime) ||
-      currentTime < 0 ||
-      parsed.value.expiresAt <= currentTime ||
-      parsed.value.expiresAt - currentTime > MAX_HANDOFF_FUTURE_MS
-    ) {
-      throw new RemoteRoomRestorationError('expired_handoff');
-    }
     this.#capability = parsed.value.capability;
     this.#saveId = parsed.value.saveId;
     this.#expiresAt = parsed.value.expiresAt;
@@ -124,19 +111,6 @@ export class RemoteRoomRestorationCustody {
     if (this.#disposed) throw new RemoteRoomRestorationError('disposed');
     if (this.#busy) {
       throw new RemoteRoomRestorationError('restore_in_progress');
-    }
-    let currentTime: number;
-    try {
-      currentTime = this.#now();
-    } catch {
-      throw new RemoteRoomRestorationError('expired_handoff');
-    }
-    if (
-      !Number.isSafeInteger(currentTime) ||
-      currentTime < 0 ||
-      this.#expiresAt <= currentTime
-    ) {
-      throw new RemoteRoomRestorationError('expired_handoff');
     }
     this.#busy = true;
     let installed: RemoteRoomBootstrapResult | undefined;
@@ -179,9 +153,26 @@ export class RemoteRoomRestorationCustody {
       return result;
     } catch (error) {
       if (installed) installed.runtime.dispose();
+      // The server didn't have it: called expired if this clock agrees.
+      if (
+        error instanceof RemoteContinuationTransportError &&
+        error.code === 'unavailable' &&
+        this.#expiredHere()
+      ) {
+        throw new RemoteRoomRestorationError('expired_handoff');
+      }
       throw error;
     } finally {
       this.#busy = false;
+    }
+  }
+
+  #expiredHere(): boolean {
+    try {
+      const now = this.#now();
+      return Number.isSafeInteger(now) && this.#expiresAt <= now;
+    } catch {
+      return false;
     }
   }
 
