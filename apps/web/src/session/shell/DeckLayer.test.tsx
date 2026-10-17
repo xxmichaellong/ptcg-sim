@@ -120,4 +120,26 @@ describe('DeckLayer', () => {
     });
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('keeps the keyboard off the table it covers, but not off overlays', async () => {
+    const after = document.createElement('button');
+    after.id = 'tableAfter';
+    document.body.append(after);
+    const overlay = document.createElement('button');
+    overlay.setAttribute('data-ptcgsim-overlay', 'menu');
+    document.body.append(overlay);
+    await render(true);
+    // Shift+Tab or Tab out of the deck screen onto the table's buttons.
+    for (const outside of [opener, after]) {
+      await act(async () => outside.focus());
+      expect(layer().contains(document.activeElement)).toBe(true);
+    }
+    // A menu the deck screen opened elsewhere keeps its focus.
+    await act(async () => overlay.focus());
+    expect(document.activeElement).toBe(overlay);
+
+    await render(false);
+    await act(async () => after.focus());
+    expect(document.activeElement).toBe(after);
+  });
 });

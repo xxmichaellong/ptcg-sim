@@ -142,8 +142,10 @@ export const isBasicEnergy = (card: DeckCard): boolean =>
     ? card.facts.energyType === 'Basic'
     : BASIC_ENERGY_NAME.test(ruleName(card)));
 
+/** A Pokémon a game can start with: a Basic, or a Baby (they play as Basics). */
 export const isBasicPokemon = (card: DeckCard): boolean =>
-  card.category === 'Pokémon' && card.facts?.stage === 'Basic';
+  card.category === 'Pokémon' &&
+  (card.facts?.stage === 'Basic' || card.facts?.stage === 'Baby');
 
 const hasTag = (card: DeckCard, tag: string): boolean =>
   card.facts?.tags?.includes(tag) ?? false;

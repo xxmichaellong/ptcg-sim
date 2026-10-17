@@ -353,6 +353,15 @@ describe('deck rules', () => {
     expect(codes(checkDeck(unknown, 'standard').errors)).not.toContain(
       'no_basic'
     );
+    // A Baby Pokémon (Skyridge's Cleffa) starts a game as a Basic does.
+    const babies = addCard(
+      list,
+      card('SK 17', 'Cleffa', 'Pokémon', { stage: 'Baby', legal: LEGAL }),
+      4
+    );
+    expect(codes(checkDeck(babies, 'standard').errors)).not.toContain(
+      'no_basic'
+    );
   });
 
   it('allows one ACE SPEC, one Radiant and one Pokémon ☆ per deck', () => {
