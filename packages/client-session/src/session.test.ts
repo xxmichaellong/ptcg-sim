@@ -1456,6 +1456,45 @@ describe('RemoteGameSession', () => {
     expect(test.scheduler.tasks.size).toBe(0);
   });
 
+  it('waits out an outage rather than reconnecting while offline', () => {
+    let online = true;
+    const factory = new FakeSocketFactory();
+    const scheduler = new FakeScheduler();
+    const session = new RemoteGameSession({
+      socketFactory: factory,
+      scheduler,
+      random: () => 0.5,
+      now: () => 1_000,
+      isOnline: () => online,
+      createCommandId: () => 'command-1',
+    });
+    session.connect({
+      url: 'wss://example.test/room',
+      buildId: 'client-build',
+      roomCode: 'ROOM',
+      displayName: 'Blue',
+      requestedRole: 'player',
+      admissionTicket: capability,
+      resumeToken: resumeCapability,
+    });
+    const socket = factory.sockets[0]!;
+    socket.serverOpen();
+    socket.serverMessage(welcome());
+    session.submit({ type: 'FlipCoin' });
+    online = false;
+    // Offline at the deadline: the connection is kept, for after.
+    scheduler.runNext();
+    scheduler.runNext();
+    expect(socket.close).not.toHaveBeenCalled();
+    expect(session.getSnapshot().phase).toBe('ready');
+    expect(scheduler.tasks.size).toBe(1);
+    // Back online and still nothing: now it is taken for dead.
+    online = true;
+    scheduler.runNext();
+    expect(socket.close).toHaveBeenCalled();
+    expect(session.getSnapshot().phase).toBe('reconnecting');
+  });
+
   it('gives up a replay the room went quiet on, so it can be asked again', () => {
     const test = setup();
     const socket = test.admit();

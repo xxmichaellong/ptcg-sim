@@ -71,6 +71,11 @@ export interface ClientSessionDependencies {
   readonly scheduler?: ClientSessionScheduler;
   readonly random?: () => number;
   readonly now?: () => number;
+  /**
+   * Whether the device has a network at all (a browser's `navigator.onLine`,
+   * which is false only when it surely hasn't). Defaults to that.
+   */
+  readonly isOnline?: () => boolean;
   readonly policy?: Partial<ClientSessionPolicy>;
   /**
    * Rewrites what a queued command refers to just before it is first sent,
@@ -195,6 +200,7 @@ export class RemoteGameSession {
   private readonly scheduler: ClientSessionScheduler;
   private readonly random: () => number;
   private readonly now: () => number;
+  private readonly isOnline: () => boolean;
   private readonly rebindCommand: ClientSessionDependencies['rebindCommand'];
   private readonly policy: ClientSessionPolicy;
   private readonly listeners = new Set<() => void>();
@@ -246,6 +252,11 @@ export class RemoteGameSession {
     this.scheduler = dependencies.scheduler ?? defaultScheduler;
     this.random = dependencies.random ?? Math.random;
     this.now = dependencies.now ?? Date.now;
+    this.isOnline =
+      dependencies.isOnline ??
+      (() =>
+        (globalThis as { navigator?: { onLine?: boolean } }).navigator
+          ?.onLine !== false);
     this.rebindCommand = dependencies.rebindCommand;
     this.policy = validPolicy({
       ...DEFAULT_CLIENT_SESSION_POLICY,
@@ -1273,6 +1284,13 @@ export class RemoteGameSession {
     this.answerTimer = this.scheduler.schedule(() => {
       this.answerTimer = undefined;
       if (!this.isCurrent(generation) || !this.awaitingRoom()) return;
+      // Offline, no other connection could open either, and this one may
+      // well carry on when the network is back (it did across a 45 s
+      // outage): it is given until then, and the deadline after.
+      if (!this.isOnline()) {
+        this.armAnswerDeadline();
+        return;
+      }
       this.reconnectTransport('The room stopped answering');
     }, this.policy.commandAnswerTimeoutMs);
   }
