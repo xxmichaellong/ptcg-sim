@@ -181,6 +181,12 @@ button.table-coin__button:focus-visible {
     ),
     linear-gradient(90deg, #8d7544, #f3dfa4 30%, #9e8040 62%, #d9be78);
   transform: rotateX(90deg);
+  /*
+   * Only seen, never pressed (the coin's button is): stood exactly on edge,
+   * WebKit can hit-test it far from where it is drawn, over the card a
+   * player meant to click (seen on the opponent's Active).
+   */
+  pointer-events: none;
 }
 
 /* The result, read at a glance below the coin, then gone. */
