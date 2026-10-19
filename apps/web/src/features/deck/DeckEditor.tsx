@@ -139,8 +139,8 @@ export const DeckEditor = ({
   );
   const onSeat = seats.slots[target].label?.deckId === deck.id;
   const detailsFacts = useMemo(
-    () => cardDetailsFacts(loaded, inspected),
-    [inspected, loaded]
+    () => cardDetailsFacts(loaded, inspected, cards),
+    [cards, inspected, loaded]
   );
 
   useEffect(() => {
@@ -563,8 +563,14 @@ export const DeckEditor = ({
         onShow={(card) => setInspected({ kind: 'catalog', card })}
         onAdd={add}
         onRemove={remove}
-        onSwapPrint={(fromId, to) => {
-          commit(replacePrinting(current(), fromId, toDeckCard(to)));
+        onSwapPrint={(fromIds, to) => {
+          const replacement = toDeckCard(to);
+          commit(
+            fromIds.reduce(
+              (list, fromId) => replacePrinting(list, fromId, replacement),
+              current()
+            )
+          );
           setInspected({ kind: 'catalog', card: to });
         }}
         onSetCover={(cardId) => {

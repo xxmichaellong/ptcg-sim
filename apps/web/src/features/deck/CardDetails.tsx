@@ -32,6 +32,12 @@ export type InspectedCard =
 export interface CardDetailsFacts {
   readonly card: CatalogCard;
   readonly prints: readonly CatalogCard[];
+  /**
+   * The deck's entries that are each print, by the print's id: its own,
+   * or a file's scan kept under its own id (an English and a German one
+   * are two entries of one print).
+   */
+  readonly inDeck: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -50,7 +56,8 @@ const printOfOwnCard = (
 /** What the catalog says about an inspected card, if it knows it. */
 export const cardDetailsFacts = (
   catalog: LoadedCatalog | undefined,
-  inspected: InspectedCard | undefined
+  inspected: InspectedCard | undefined,
+  deck: DeckList = []
 ): CardDetailsFacts | undefined => {
   if (!catalog || !inspected) return undefined;
   const card =
@@ -58,9 +65,16 @@ export const cardDetailsFacts = (
       ? inspected.card
       : (catalog.byId.get(inspected.card.id) ??
         printOfOwnCard(catalog, inspected.card));
-  return card
-    ? { card, prints: printsOf(catalog.cards, card.printGroup) }
-    : undefined;
+  if (!card) return undefined;
+  const prints = printsOf(catalog.cards, card.printGroup);
+  const inDeck = new Map<string, string[]>();
+  for (const { card: entry } of deck) {
+    const print = catalog.byId.get(entry.id) ?? printOfOwnCard(catalog, entry);
+    if (!print || !prints.some((candidate) => candidate.id === print.id))
+      continue;
+    inDeck.set(print.id, [...(inDeck.get(print.id) ?? []), entry.id]);
+  }
+  return { card, prints, inDeck };
 };
 
 export interface CardDetailsProps {
@@ -73,8 +87,8 @@ export interface CardDetailsProps {
   readonly onShow: (card: CatalogCard) => void;
   readonly onAdd: (card: CatalogCard | DeckCard) => void;
   readonly onRemove: (card: CatalogCard | DeckCard) => void;
-  /** Swaps the deck's copies of one printing for another. */
-  readonly onSwapPrint: (fromId: string, to: CatalogCard) => void;
+  /** Swaps the deck's copies of one printing (its entries) for another. */
+  readonly onSwapPrint: (fromIds: readonly string[], to: CatalogCard) => void;
   readonly onSetCover: (cardId: string) => void;
 }
 
@@ -228,8 +242,17 @@ export const CardDetails = ({
   const shownId = target?.id;
   const prints = facts?.prints ?? [];
   const count = shownId ? countOf(deck, shownId) : 0;
-  const deckPrint = prints.find((print) => countOf(deck, print.id) > 0);
-  const image = catalogCard?.image ?? inspected?.card.image ?? '';
+  const entriesOf = (printId: string): readonly string[] =>
+    facts?.inDeck.get(printId) ?? [];
+  const copiesOf = (printId: string): number =>
+    entriesOf(printId).reduce((total, id) => total + countOf(deck, id), 0);
+  const deckPrint = prints.find((print) => copiesOf(print.id) > 0);
+  // A deck's card shows its own scan (a German one stays German); the
+  // catalog's facts describe it.
+  const image =
+    inspected?.kind === 'deck'
+      ? inspected.card.image
+      : (catalogCard?.image ?? inspected?.card.image ?? '');
   const name = inspected?.card.name ?? '';
   const turns =
     resolveCardPresentation({
@@ -261,14 +284,16 @@ export const CardDetails = ({
               id="nativeDeckBuilderCardPreviewImage"
               src={image}
               fallback={
-                catalogCard
-                  ? limitlessScanOf({
-                      name,
-                      image,
-                      set: catalogCard.set.code,
-                      number: catalogCard.number,
-                    })
-                  : undefined
+                inspected.kind === 'deck'
+                  ? limitlessScanOf({ ...inspected.card, image })
+                  : catalogCard
+                    ? limitlessScanOf({
+                        name,
+                        image,
+                        set: catalogCard.set.code,
+                        number: catalogCard.number,
+                      })
+                    : undefined
               }
               alt={name}
               style={readingImageStyle(turns)}
@@ -344,7 +369,7 @@ export const CardDetails = ({
                 </h3>
                 <ul>
                   {prints.map((print) => {
-                    const inDeck = countOf(deck, print.id);
+                    const inDeck = copiesOf(print.id);
                     return (
                       <li key={print.id}>
                         <Tooltip
@@ -383,10 +408,11 @@ export const CardDetails = ({
                   <button
                     type="button"
                     className="ds-button ds-button--secondary"
-                    onClick={() => onSwapPrint(deckPrint.id, catalogCard)}
+                    onClick={() =>
+                      onSwapPrint(entriesOf(deckPrint.id), catalogCard)
+                    }
                   >
-                    Use this print for the {countOf(deck, deckPrint.id)} in the
-                    deck
+                    Use this print for the {copiesOf(deckPrint.id)} in the deck
                   </button>
                 ) : null}
               </div>

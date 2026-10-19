@@ -46,7 +46,7 @@ describe('card details controls', () => {
       root!.render(
         <CardDetails
           inspected={inspected}
-          facts={cardDetailsFacts(catalog, inspected)}
+          facts={cardDetailsFacts(catalog, inspected, deck)}
           deck={deck}
           coverId={undefined}
           onClose={vi.fn()}
@@ -73,5 +73,48 @@ describe('card details controls', () => {
         .click()
     );
     expect(onAdd).toHaveBeenCalledWith(german);
+    // Its own scan, not the catalog's English one.
+    expect(
+      document.querySelector<HTMLImageElement>(
+        '#nativeDeckBuilderCardPreviewImage'
+      )?.src
+    ).toBe(german.image);
+  });
+
+  it('offers another print for every scan of the one the deck has', async () => {
+    const english = scan('EN');
+    const german = scan('DE');
+    const deck = deckListOf([
+      { card: english, count: 1 },
+      { card: german, count: 3 },
+    ]);
+    const other = catalog.byId.get('TWM 200')!;
+    const inspected = { kind: 'catalog', card: other } as const;
+    const onSwapPrint = vi.fn();
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(
+        <CardDetails
+          inspected={inspected}
+          facts={cardDetailsFacts(catalog, inspected, deck)}
+          deck={deck}
+          coverId={undefined}
+          onClose={vi.fn()}
+          onShow={vi.fn()}
+          onAdd={vi.fn()}
+          onRemove={vi.fn()}
+          onSwapPrint={onSwapPrint}
+          onSetCover={vi.fn()}
+        />
+      )
+    );
+    const use = [...document.querySelectorAll('button')].find((button) =>
+      button.textContent?.startsWith('Use this print')
+    );
+    expect(use?.textContent).toBe('Use this print for the 4 in the deck');
+    await act(async () => use!.click());
+    expect(onSwapPrint).toHaveBeenCalledWith(['custom:EN', 'custom:DE'], other);
   });
 });
