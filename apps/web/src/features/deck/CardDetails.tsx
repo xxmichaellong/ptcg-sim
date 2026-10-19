@@ -218,7 +218,14 @@ export const CardDetails = ({
   onSetCover,
 }: CardDetailsProps) => {
   const catalogCard = facts?.card;
-  const shownId = catalogCard?.id ?? inspected?.card.id;
+  // The count, Add, Remove and cover are the inspected entry's own: two
+  // scans of one printing (an English and a German) are separate entries
+  // in a deck, sharing the catalog's facts.
+  const target: CatalogCard | DeckCard | undefined =
+    inspected?.kind === 'deck'
+      ? inspected.card
+      : (catalogCard ?? inspected?.card);
+  const shownId = target?.id;
   const prints = facts?.prints ?? [];
   const count = shownId ? countOf(deck, shownId) : 0;
   const deckPrint = prints.find((print) => countOf(deck, print.id) > 0);
@@ -232,8 +239,6 @@ export const CardDetails = ({
         ? inspected.card.presentation
         : undefined) as never,
     })?.readingQuarterTurns ?? 0;
-  const target: CatalogCard | DeckCard | undefined =
-    catalogCard ?? inspected?.card;
 
   return (
     <Sheet
