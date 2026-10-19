@@ -6,6 +6,8 @@ import type {
 } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
+import { locateViewCardActionSource } from './locateViewCardActionSource.js';
+
 /**
  * Optimistic prediction of a wire command on the recipient-safe view.
  *
@@ -894,13 +896,19 @@ const predict = (
     case 'MoveCardToDeckTop':
     case 'MoveCardToDeckBottom':
     case 'ShuffleCardIntoDeck': {
+      // The room puts it in the deck of the seat it is taken from (another
+      // player's Tool on your Pokémon goes into yours), not its owner's.
+      const seat = locateViewCardActionSource(
+        view,
+        command.cardId
+      )?.sourcePlayerId;
       const taken = takeFromSource(
         view,
         command.expectedSourceId,
         command.cardId
       );
-      if (!taken) return null;
-      const deck = ownZone(taken.view, taken.card.ownerId, 'deck');
+      if (!taken || !seat) return null;
+      const deck = ownZone(taken.view, seat as PlayerId, 'deck');
       if (!deck) return null;
       return placeInZone(
         taken.view,
@@ -1135,8 +1143,9 @@ const predict = (
       );
     }
     case 'SwapCardWithDeckTop': {
-      // The zone case only: the card goes on top of its owner's deck and the
-      // old top card takes its exact place.
+      // The zone case only: the card goes on top of the deck of the seat it
+      // is taken from, as the room has it, and the old top card takes its
+      // exact place.
       const source = view.zones[command.expectedSourceId];
       if (!source || source.kind === 'deck') return null;
       const index = source.cards.findIndex(
@@ -1144,7 +1153,7 @@ const predict = (
       );
       if (index < 0) return null;
       const card = source.cards[index]!;
-      const deck = ownZone(view, card.ownerId, 'deck');
+      const deck = ownZone(view, source.ownerId ?? card.ownerId, 'deck');
       const top = deck?.cards[0];
       if (!deck || !top) return null;
       // A top card the viewer cannot read would land face-up in a zone it
@@ -1329,8 +1338,9 @@ const resolveWorkAreaCards = (
 
 /**
  * Whether the room decides part of a command's outcome by chance (a deck
- * shuffled, a card picked at random): what the commands queued after it
- * would do can't be known until its result is published.
+ * shuffled, a card picked at random, prizes shuffled on their way under the
+ * deck): what the commands queued after it would do can't be known until
+ * its result is published.
  */
 export const isRandomizingCommand = (command: WireGameCommand): boolean => {
   switch (command.type) {
@@ -1342,6 +1352,7 @@ export const isRandomizingCommand = (command: WireGameCommand): boolean => {
     case 'ShuffleHandToDeckBottomAndDraw':
     case 'PlayRandomCardFaceDown':
     case 'SetupPlayer':
+    case 'MovePrizesToDeckBottom':
       return true;
     case 'ResolveStagedCards':
     case 'ResolveInspectionCards':

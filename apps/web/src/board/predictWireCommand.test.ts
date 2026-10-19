@@ -610,6 +610,61 @@ it('predicts nothing queued behind a shuffle until the shuffle is published', ()
   ).toBe(hand.cards.length + 1);
 });
 
+it('predicts nothing queued behind prizes returned under the deck', () => {
+  // The room shuffles them on the way: which comes up isn't known yet.
+  const draw = { command: { type: 'DrawCards' as const, count: 1 } };
+  const empty: MatchViewState = {
+    ...view,
+    zones: { ...view.zones, [deck.id]: { ...deck, cards: [] } },
+  };
+  const handSize = (next: MatchViewState) => next.zones[hand.id]!.cards.length;
+  expect(
+    handSize(
+      predictQueue(empty, [
+        { command: { type: 'MovePrizesToDeckBottom' as const } },
+        draw,
+      ])
+    )
+  ).toBe(hand.cards.length);
+});
+
+it("returns a card to the deck of the seat it's taken from, as the room does", () => {
+  // Another player's card in this seat's hand goes into this seat's deck.
+  const theirs = { ...hand.cards[0]!, ownerId: red };
+  const holding: MatchViewState = {
+    ...view,
+    zones: {
+      ...view.zones,
+      [hand.id]: { ...hand, cards: [theirs, ...hand.cards.slice(1)] },
+    },
+  };
+  for (const type of ['MoveCardToDeckTop', 'MoveCardToDeckBottom'] as const) {
+    const moved = predictWireCommand(holding, {
+      type,
+      cardId: theirs.id,
+      expectedSourceId: hand.id,
+    })!;
+    expect(cardIn(moved, theirs.id)).toBe(deck.id);
+  }
+  // A swap is shown when the top card's face is known to the seat.
+  const knownTop = { ...hand.cards[1]!, id: 'known-top' as never };
+  const swapped = predictWireCommand(
+    {
+      ...holding,
+      zones: {
+        ...holding.zones,
+        [deck.id]: { ...deck, cards: [knownTop, ...deck.cards.slice(1)] },
+      },
+    },
+    {
+      type: 'SwapCardWithDeckTop',
+      cardId: theirs.id,
+      expectedSourceId: hand.id,
+    }
+  )!;
+  expect(cardIn(swapped, theirs.id)).toBe(deck.id);
+});
+
 it('marks a Pokémon promoted to the Active as the Active', () => {
   // One Pokémon benched, then the Active benched beside it: that one moves up.
   const benched = predictWireCommand(view, {
