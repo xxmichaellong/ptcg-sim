@@ -6,6 +6,7 @@ import type {
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import { deckListOf, deckTotals, type DeckCard } from '@ptcgsim/deck-core';
+import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { act, useState } from 'react';
@@ -37,7 +38,25 @@ import type { PopularDecklistSource } from './popular-decklists.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-const view = createRendererSpikeView();
+// A fresh room's table: seats in it, no cards anywhere yet.
+const spike = createRendererSpikeView();
+const view: MatchViewState = {
+  ...spike,
+  zones: Object.fromEntries(
+    Object.entries(spike.zones).map(([id, zone]) => [
+      id,
+      { ...zone, cards: [] },
+    ])
+  ),
+  stacks: {},
+  boards: Object.fromEntries(
+    Object.entries(spike.boards).map(([id, board]) => [
+      id,
+      { ...board, activeStackId: null, benchStackIds: [] },
+    ])
+  ),
+  workAreas: {},
+};
 const ownPlayerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
 const alternatePlayerId = view.playerOrder.find(
   (playerId) => playerId !== ownPlayerId
@@ -92,6 +111,12 @@ class FakeSession implements DeckInstallSession {
     this.#emit();
     return { queued: true, commandId, clientSequence };
   };
+
+  /** The room shows this table (one with a game on it). */
+  showTable(table: MatchViewState): void {
+    this.#state = { ...this.#state, view: table };
+    this.#emit();
+  }
 
   completeLatest(
     accepted: boolean,
@@ -555,8 +580,10 @@ describe('DeckBuilderSession', () => {
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();
-    store.addCard(card());
     await renderSession({ session, store, open: true });
+    act(() => {
+      store.addCard(card());
+    });
     await Promise.resolve();
     expect(session.commands).toHaveLength(0);
 
@@ -636,6 +663,52 @@ describe('DeckBuilderSession', () => {
     await renderSession({ session, store, open: false });
     await vi.waitFor(() => expect(session.commands).toHaveLength(1));
     expect(session.commands[0]).toMatchObject({ type: 'LoadDeck' });
+  });
+
+  it('keeps the game on a seat joined by invitation, loading nothing on it by itself', async () => {
+    // A restored game, joined by its other player: their seat holds it.
+    const session = new FakeSession();
+    session.showTable(spike);
+    const deck = deckListOf([{ card: card(), count: 1 }]);
+    const store = new DeckBuilderStore({ mainDeck: deck });
+    await renderSession({
+      session,
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await Promise.resolve();
+    expect(session.commands).toHaveLength(0);
+    // A deck chosen for it now does go on.
+    act(() => {
+      store.replaceDeck('main', deck, { name: 'Chosen' }, { chosen: true });
+    });
+    await renderSession({
+      session,
+      store,
+      open: true,
+      installOnSessionAttach: true,
+    });
+    await renderSession({
+      session,
+      store,
+      open: false,
+      installOnSessionAttach: true,
+    });
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+  });
+
+  it("sets aside an edit left from before when a restored game's table attaches", async () => {
+    const session = new FakeSession();
+    session.showTable(spike);
+    // Chosen with no room, never installed.
+    const store = new DeckBuilderStore();
+    store.addCard(card());
+    await renderSession({ session, store, open: true });
+    await renderSession({ session, store, open: false });
+    await Promise.resolve();
+    expect(session.commands).toHaveLength(0);
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
   });
 
   it('makes Play close the surface, flushes the captured target, and reports retryable authority failure', async () => {

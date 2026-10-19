@@ -32,10 +32,12 @@ import {
 import {
   DeckInstallCoordinator,
   deckInstallFailureNotice,
+  defaultTargetPlayerId,
   type DeckDefinitionDigest,
   type DeckInstallCoordinatorFailure,
   type DeckInstallSession,
 } from './deck-install-adapter.js';
+import { seatStage } from '../../board/seat-stage.js';
 import { toast } from '../../ui/toast.js';
 
 const noticeInstallFailure = (failure: DeckInstallCoordinatorFailure): void => {
@@ -148,6 +150,8 @@ export const DeckBuilderSession = ({
   const cardBackFailureHandler = useRef(onCardBackInstallFailure);
   const sessionAttachHandler = useRef(onSessionAttach);
   const forgottenFor = useRef<DeckInstallSession | undefined>(undefined);
+  const alternateEnabledRef = useRef(alternateEnabled);
+  alternateEnabledRef.current = alternateEnabled;
   const wasOpen = useRef(open);
   // Without a handler of its own, a deck that doesn't reach the table says
   // why, rather than nothing happening.
@@ -171,26 +175,6 @@ export const DeckBuilderSession = ({
       cardBackCoordinator.current = undefined;
       return;
     }
-    let isNewBinding = false;
-    if (installOnSessionAttach) {
-      isNewBinding =
-        preparedBinding.current?.session !== session ||
-        preparedBinding.current.store !== store ||
-        preparedBinding.current.cardBackStore !== cardBackStore;
-      preparedBinding.current = { session, store, cardBackStore };
-      if (isNewBinding && prepareForNewSessionOnAttach) {
-        cardBackStore.prepareForNewSession();
-        store.prepareForNewSession();
-      }
-    } else {
-      preparedBinding.current = undefined;
-      // A restored game keeps its own table: nothing goes on it by itself,
-      // but a deck chosen now is installed even if the last room had it.
-      if (forgottenFor.current !== session) {
-        forgottenFor.current = session;
-        store.forgetInstalls();
-      }
-    }
     const currentCardBack = new CardBackInstallCoordinator({
       store: cardBackStore,
       session,
@@ -204,12 +188,66 @@ export const DeckBuilderSession = ({
     });
     cardBackCoordinator.current = currentCardBack;
     coordinator.current = currentDeck;
-    if (installOnSessionAttach) {
+    const keepTable = (): void => {
+      preparedBinding.current = undefined;
+      // A game the room keeps (a restored one) keeps its own table: nothing
+      // goes on it by itself, but a deck chosen now is installed even if
+      // the last room had it.
+      if (forgottenFor.current !== session) {
+        forgottenFor.current = session;
+        store.forgetInstalls();
+      }
+    };
+    const install = (): void => {
+      const isNewBinding =
+        preparedBinding.current?.session !== session ||
+        preparedBinding.current.store !== store ||
+        preparedBinding.current.cardBackStore !== cardBackStore;
+      preparedBinding.current = { session, store, cardBackStore };
+      if (isNewBinding && prepareForNewSessionOnAttach) {
+        cardBackStore.prepareForNewSession();
+        store.prepareForNewSession();
+      }
       currentCardBack.flush();
       currentDeck.flush();
       if (isNewBinding) sessionAttachHandler.current?.(session);
+    };
+    let unsubscribe: (() => void) | undefined;
+    if (installOnSessionAttach) {
+      // Decided once the room has shown its table: a seat that already
+      // holds a game (a restored one, joined by invitation) keeps it.
+      const decide = (): boolean => {
+        const state = session.getSnapshot();
+        if (state.phase !== 'ready' || !state.view) return false;
+        const view = state.view;
+        const seats = alternateEnabledRef.current
+          ? (['main', 'alternate'] as const)
+          : (['main'] as const);
+        if (
+          seats.some(
+            (target) =>
+              seatStage(view, defaultTargetPlayerId(view, target)) !== 'empty'
+          )
+        ) {
+          keepTable();
+        } else {
+          install();
+        }
+        return true;
+      };
+      if (!decide()) {
+        unsubscribe = session.subscribe(() => {
+          if (decide()) {
+            unsubscribe?.();
+            unsubscribe = undefined;
+          }
+        });
+      }
+    } else {
+      keepTable();
     }
     return () => {
+      unsubscribe?.();
       if (coordinator.current === currentDeck) coordinator.current = undefined;
       if (cardBackCoordinator.current === currentCardBack) {
         cardBackCoordinator.current = undefined;

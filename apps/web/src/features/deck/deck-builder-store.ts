@@ -181,11 +181,26 @@ export class DeckBuilderStore {
 
   /**
    * A room that keeps its own table (a restored game) attached: nothing goes
-   * on it by itself, but a deck then chosen for a seat is installed even
-   * when it is the one the last room had.
+   * on it by itself -- neither the deck a seat had nor an edit left waiting
+   * from before, which is set aside -- but a deck then chosen or edited for
+   * a seat is installed, even when it is the one the last room had.
    */
   forgetInstalls(): void {
     this.#installedElsewhere = { main: true, alternate: true };
+    for (const target of ['main', 'alternate'] as const) {
+      const slot = this.#state.slots[target];
+      if (!slot.dirty || slot.installingRevision !== undefined) continue;
+      this.#replaceSlot(
+        target,
+        createSlot(
+          slot.deck,
+          slot.revision,
+          slot.revision,
+          undefined,
+          slot.label
+        )
+      );
+    }
   }
 
   /**

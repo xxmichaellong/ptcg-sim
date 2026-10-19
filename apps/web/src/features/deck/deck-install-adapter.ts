@@ -269,7 +269,8 @@ interface SubmittedInstall {
   readonly commandId: string;
 }
 
-const defaultTargetPlayerId = (
+/** The seat a deck slot installs into: the viewer's, or Solo's other. */
+export const defaultTargetPlayerId = (
   view: MatchViewState,
   target: DeckBuilderTarget
 ): string | undefined => {
