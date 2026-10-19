@@ -249,6 +249,18 @@ describe('RemoteGameSession', () => {
     expect(maximumDelay).toBeLessThan(SESSION_RECONNECT_GRACE_MS);
   });
 
+  it('notices a dead idle connection and tries again inside the reconnect lease', () => {
+    // The room may have seen the drop at once: noticing it (the quiet
+    // while, then the answer deadline) and a first attempt must fit its grace.
+    const policy = DEFAULT_CLIENT_SESSION_POLICY;
+    const firstAttempt =
+      policy.reconnectBaseDelayMs * (1 + policy.reconnectJitterRatio) +
+      policy.connectionAttemptTimeoutMs;
+    expect(
+      policy.idleHeartbeatMs + policy.commandAnswerTimeoutMs + firstAttempt
+    ).toBeLessThan(SESSION_RECONNECT_GRACE_MS);
+  });
+
   it('admits into an immutable external-store shape without exposing capabilities', () => {
     const test = setup();
     const listener = vi.fn();

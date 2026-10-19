@@ -149,7 +149,9 @@ export interface ClientSessionPolicy {
    * How long a ready connection may go quiet, with nothing asked of the
    * room, before the session asks it for a sign of life (a Ping, held to
    * the answer deadline): an idle table otherwise never learns its
-   * connection died. 0 turns it off.
+   * connection died. With the answer deadline and a first attempt it must
+   * fit the room's reconnect grace, which may have started at the drop.
+   * 0 turns it off.
    */
   readonly idleHeartbeatMs: number;
 }
@@ -170,7 +172,7 @@ export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   reconnectJitterRatio: 0.2,
   connectionAttemptTimeoutMs: 8_000,
   commandAnswerTimeoutMs: 10_000,
-  idleHeartbeatMs: 25_000,
+  idleHeartbeatMs: 10_000,
 };
 
 /**
