@@ -233,11 +233,6 @@ export const DeckScreen = ({
   );
 
   /**
-   * An import's lifetime: a newer import, or the screen going away, ends
-   * it. It starts before a file or the clipboard is read, so nothing read
-   * after the screen has gone lands on a seat.
-   */
-  /**
    * Ends an import, unless a newer one has taken over: the controls are
    * free again however it ended (a file that didn't open included).
    */
@@ -248,6 +243,11 @@ export const DeckScreen = ({
     setImporting(false);
   }, []);
 
+  /**
+   * An import's lifetime: a newer import, or the screen going away, ends
+   * it. It starts before a file or the clipboard is read, so nothing read
+   * after the screen has gone lands on a seat.
+   */
   const beginImport = useCallback((): AbortController => {
     importAbort.current?.abort();
     const controller = new AbortController();
@@ -402,6 +402,32 @@ export const DeckScreen = ({
     }
     await runImport(text, { kind: 'paste' }, undefined, controller);
   }, [beginImport, endImport, readClipboard, runImport]);
+
+  /**
+   * A sample deck at random, tried on the seat. Its import begins before
+   * the sample is picked (the samples may still be loading), so a deck
+   * chosen for the seat meanwhile wins and the pick is dropped.
+   */
+  const surprise = useCallback(async (): Promise<boolean> => {
+    const controller = beginImport();
+    let deck: { readonly name: string; readonly decklist: string };
+    try {
+      deck = await samples.selectRandom();
+    } catch (error) {
+      endImport(controller);
+      throw error;
+    }
+    if (controller.signal.aborted || importAbort.current !== controller) {
+      endImport(controller);
+      return false;
+    }
+    return runImport(
+      deck.decklist,
+      { kind: 'classic', label: deck.name },
+      { save: false, name: deck.name },
+      controller
+    );
+  }, [beginImport, endImport, runImport, samples]);
 
   // Paste anywhere on the screen (outside a text field) imports the list.
   useEffect(() => {
@@ -705,6 +731,7 @@ export const DeckScreen = ({
             onTryList={(name, text, kind) =>
               runImport(text, { kind, label: name }, { save: false, name })
             }
+            onSurprise={surprise}
             onEditList={(name, text, kind) =>
               runImport(text, { kind, label: name }, { save: true, name })
             }

@@ -474,6 +474,8 @@ export interface DeckHomeProps {
     text: string,
     kind: 'meta' | 'classic'
   ) => Promise<boolean>;
+  /** A sample deck at random, tried on the seat. */
+  readonly onSurprise: () => Promise<boolean>;
   readonly onEditList: (
     name: string,
     text: string,
@@ -501,6 +503,7 @@ export const DeckHome = ({
   onImportClipboard,
   onOpenFile,
   onTryList,
+  onSurprise,
   onEditList,
   onSaveSeatDeck,
   onEditSeatDeck,
@@ -599,8 +602,7 @@ export const DeckHome = ({
   const surprise = async (): Promise<void> => {
     setSurprising(true);
     try {
-      const deck = await samples.selectRandom();
-      await onTryList(deck.name, deck.decklist, 'classic');
+      await onSurprise();
     } catch {
       toast({ title: "Couldn't pick a deck", tone: 'warning' });
     } finally {

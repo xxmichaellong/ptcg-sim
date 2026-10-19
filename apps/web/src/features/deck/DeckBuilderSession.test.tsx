@@ -316,6 +316,41 @@ describe('DeckBuilderSession', () => {
     expect(session.commands).toHaveLength(0);
   });
 
+  it('keeps a deck chosen while Surprise me was still picking', async () => {
+    const store = new DeckBuilderStore();
+    const saved = library.create({
+      name: 'Pikachu Box',
+      format: 'standard',
+      cards: deckListOf([{ card: card('Pikachu'), count: 2 }]),
+    });
+    let pick!: (deck: { name: string; decklist: string }) => void;
+    vi.mocked(samples.selectRandom).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          pick = resolve;
+        })
+    );
+    await renderSession({ session: new FakeSession(), store, open: true });
+    // The samples are still loading when a saved deck is chosen.
+    await click('#deckSurpriseButton');
+    await click('button[aria-label="Pikachu Box: put on P1"]');
+    await act(async () => {
+      pick({
+        name: 'Surprise',
+        decklist:
+          'QTY,Name,Type,URL\n4,Pikachu,Pokémon,custom+unsafe://player-host/Pikachu',
+      });
+    });
+    // A CSV import doesn't wait for the catalog; give it its turns.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(store.getSnapshot().slots.main.label).toMatchObject({
+      deckId: saved.id,
+    });
+    expect(deckTotals(store.getSnapshot().slots.main.deck).total).toBe(2);
+  });
+
   it('moves a seat with edits made here, never with changes from elsewhere', async () => {
     const store = new DeckBuilderStore();
     const saved = library.create({
