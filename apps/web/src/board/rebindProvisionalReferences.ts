@@ -1,7 +1,10 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
-import { predictWireCommand } from './predictWireCommand.js';
+import {
+  isRandomizingCommand,
+  predictWireCommand,
+} from './predictWireCommand.js';
 
 /**
  * The IDs predictWireCommand gives what a predicted command creates, until
@@ -117,8 +120,13 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     const predicted = predictWireCommand(view, command);
     if (!predicted) return;
     // Any command that puts its card on a deck's edge: the shortcuts, or
-    // the card dragged onto the pile.
-    const cardId = 'cardId' in command ? command.cardId : undefined;
+    // the card dragged onto the pile. Never one the room shuffles in: where
+    // it lands is chance, and a card found there by its place would be
+    // another card.
+    const cardId =
+      'cardId' in command && !isRandomizingCommand(command)
+        ? command.cardId
+        : undefined;
     const deck =
       cardId === undefined
         ? undefined

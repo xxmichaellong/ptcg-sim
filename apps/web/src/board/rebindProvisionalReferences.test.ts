@@ -627,6 +627,49 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: 'drawn' });
   });
 
+  it('never takes a card shuffled into the deck for the one at its edge', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const card = hand.cards[0]!;
+    rebind(
+      {
+        type: 'ShuffleCardIntoDeck',
+        cardId: card.id,
+        expectedSourceId: hand.id,
+      },
+      view
+    );
+    // Shuffled in: some other card now lies at either edge, new names all.
+    const shuffled: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+        [deck.id]: {
+          ...deck,
+          cards: [...deck.cards, card].map((entry, index) => ({
+            ...entry,
+            id: `shuffled-${index}` as never,
+          })),
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: deck.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        shuffled
+      )
+    ).toMatchObject({ cardId: card.id });
+  });
+
   it('names a card moved within the hand as the hand has it after the move', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
