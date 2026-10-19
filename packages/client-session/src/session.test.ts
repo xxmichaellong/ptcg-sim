@@ -192,7 +192,9 @@ const setup = (
     now: () => now,
     isOnline: () => online,
     createCommandId: () => `command-${++commandId}`,
-    policy,
+    // The idle heartbeat has its own tests; elsewhere it would only add a
+    // timer to every ready session.
+    policy: { idleHeartbeatMs: 0, ...policy },
     ...(rebindCommand ? { rebindCommand } : {}),
   });
   const connect = () => {
@@ -1472,6 +1474,7 @@ describe('RemoteGameSession', () => {
       now: () => 1_000,
       isOnline: () => online,
       createCommandId: () => 'command-1',
+      policy: { idleHeartbeatMs: 0 },
     });
     session.connect({
       url: 'wss://example.test/room',
@@ -1605,6 +1608,42 @@ describe('RemoteGameSession', () => {
       admissionTicket: capability,
       resumeToken: resumeCapability,
     });
+  });
+
+  it('asks a quiet, idle connection for a sign of life, and resumes a dead one', () => {
+    const test = setup({ idleHeartbeatMs: 25_000 });
+    const socket = test.admit();
+    // Nothing asked of the room: in a while, a Ping.
+    expect([...test.scheduler.tasks.values()]).toEqual([
+      expect.objectContaining({ delayMs: 25_000 }),
+    ]);
+    test.scheduler.runNext();
+    const ping = clientFrame(socket, socket.sent.length - 1);
+    expect(ping).toMatchObject({ type: 'Ping' });
+    // Answered: alive, and asked again only after another quiet while.
+    socket.serverMessage({
+      type: 'Pong',
+      protocolVersion: PROTOCOL_VERSION,
+      id: (ping as Extract<ClientMessage, { type: 'Ping' }>).id,
+    });
+    expect([...test.scheduler.tasks.values()]).toEqual([
+      expect.objectContaining({ delayMs: 25_000 }),
+    ]);
+    expect(test.session.getSnapshot().phase).toBe('ready');
+    // Unanswered: taken for dead, and resumed.
+    test.scheduler.runNext();
+    const deadline = [...test.scheduler.tasks.values()].find(
+      (task) => task.delayMs === 10_000
+    );
+    expect(deadline).toBeDefined();
+    for (const [id, task] of test.scheduler.tasks) {
+      if (task === deadline) {
+        test.scheduler.tasks.delete(id);
+        task.callback();
+      }
+    }
+    expect(socket.close).toHaveBeenCalled();
+    expect(test.session.getSnapshot().phase).toBe('reconnecting');
   });
 
   it('never retries a failure the game caused', () => {

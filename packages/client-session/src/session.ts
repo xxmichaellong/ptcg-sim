@@ -242,6 +242,10 @@ export class RemoteGameSession {
   private attemptTimer?: unknown;
   /** The deadline for the room to answer the command in flight. */
   private answerTimer?: unknown;
+  /** When a quiet, idle connection is next asked for a sign of life. */
+  private heartbeatTimer?: unknown;
+  /** A heartbeat Ping sent and nothing heard since. */
+  private heartbeatOutstanding = false;
   /** When an admitted session lost its transport: the grace runs from here. */
   private reconnectingSince?: number;
   private reconnectAttempts = 0;
@@ -285,6 +289,7 @@ export class RemoteGameSession {
     this.closeSocket(1000, 'Session replaced');
     this.cancelAttemptDeadline();
     this.cancelAnswerDeadline();
+    this.stopHeartbeat();
     this.reconnectingSince = undefined;
     this.pending.length = 0;
     this.ownRevisions.clear();
@@ -493,6 +498,7 @@ export class RemoteGameSession {
     this.socketGeneration += 1;
     this.cancelAttemptDeadline();
     this.cancelAnswerDeadline();
+    this.stopHeartbeat();
     this.closeSocket(1000, 'Client left room');
     this.clearCapabilities();
     this.updateState({
@@ -548,10 +554,11 @@ export class RemoteGameSession {
         message: (frame) => {
           if (!this.isCurrent(generation)) return;
           this.handleFrame(frame);
+          if (!this.isCurrent(generation)) return;
           // Anything from the room shows the connection is alive.
-          if (this.answerTimer !== undefined && this.isCurrent(generation)) {
-            this.armAnswerDeadline();
-          }
+          this.heartbeatOutstanding = false;
+          this.armHeartbeat();
+          if (this.answerTimer !== undefined) this.armAnswerDeadline();
         },
         close: (event) => {
           if (this.isCurrent(generation)) this.handleClose(event);
@@ -729,6 +736,7 @@ export class RemoteGameSession {
         this.manualClose = true;
         this.cancelReconnect();
         this.cancelAnswerDeadline();
+        this.stopHeartbeat();
         this.socketGeneration += 1;
         this.closeSocket(4409, 'Session superseded');
         this.clearCapabilities();
@@ -1253,6 +1261,7 @@ export class RemoteGameSession {
   private handleClose(event: SessionSocketCloseEvent): void {
     this.cancelAttemptDeadline();
     this.cancelAnswerDeadline();
+    this.stopHeartbeat();
     this.socket = undefined;
     this.replayTransfer = undefined;
     this.socketGeneration += 1;
@@ -1334,15 +1343,52 @@ export class RemoteGameSession {
     }, this.policy.commandAnswerTimeoutMs);
   }
 
-  /** The room owes an answer: the head command's, or a replay's. */
+  /** The room owes an answer: the head command's, a replay's, a Pong. */
   private awaitingRoom(): boolean {
     const status = this.pending[0]?.status;
     return (
       this.state.phase === 'ready' &&
       (status === 'in_flight' ||
         status === 'awaiting_publication' ||
-        this.state.replayLoading)
+        this.state.replayLoading ||
+        this.heartbeatOutstanding)
     );
+  }
+
+  /**
+   * A ready connection quiet for a while, with nothing asked of the room,
+   * is asked for a sign of life; the answer deadline then judges it like a
+   * command's. A spectator, or a player waiting on the other, would
+   * otherwise sit on a dead connection showing a stale table.
+   */
+  private armHeartbeat(): void {
+    this.clearHeartbeatTimer();
+    if (this.state.phase !== 'ready' || this.policy.idleHeartbeatMs === 0) {
+      return;
+    }
+    const generation = this.socketGeneration;
+    this.heartbeatTimer = this.scheduler.schedule(() => {
+      this.heartbeatTimer = undefined;
+      if (!this.isCurrent(generation) || this.state.phase !== 'ready') return;
+      // Something already awaits the room, under its own deadline.
+      if (!this.awaitingRoom() && this.ping() !== undefined) {
+        this.heartbeatOutstanding = true;
+        this.armAnswerDeadline();
+      }
+      if (this.isCurrent(generation)) this.armHeartbeat();
+    }, this.policy.idleHeartbeatMs);
+  }
+
+  private clearHeartbeatTimer(): void {
+    if (this.heartbeatTimer === undefined) return;
+    this.scheduler.cancel(this.heartbeatTimer);
+    this.heartbeatTimer = undefined;
+  }
+
+  /** The connection is over: no more heartbeats, and none awaited. */
+  private stopHeartbeat(): void {
+    this.heartbeatOutstanding = false;
+    this.clearHeartbeatTimer();
   }
 
   private cancelAnswerDeadline(): void {
@@ -1354,6 +1400,7 @@ export class RemoteGameSession {
   private scheduleReconnect(): void {
     this.cancelAttemptDeadline();
     this.cancelAnswerDeadline();
+    this.stopHeartbeat();
     if (this.sessionId !== undefined && this.reconnectingSince === undefined) {
       this.reconnectingSince = this.now();
     }
@@ -1453,6 +1500,7 @@ export class RemoteGameSession {
     this.cancelReconnect();
     this.cancelAttemptDeadline();
     this.cancelAnswerDeadline();
+    this.stopHeartbeat();
     this.socketGeneration += 1;
     this.closeSocket(4400, failure.code);
     if (failure.retryable) {
