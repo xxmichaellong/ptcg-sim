@@ -13,6 +13,7 @@ import {
   currentBrowserOrigin,
   normalizeHttpOrigin,
   readBoundedJsonResponse,
+  withRequestDeadline,
 } from './browser-json.js';
 
 const MAX_CONTINUATION_RESPONSE_BYTES = 4_096;
@@ -43,6 +44,8 @@ export class RemoteContinuationTransportError extends Error {
 export interface RemoteContinuationTransportDependencies {
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
+  /** How long a request may take, its answer read in full (ROOM_REQUEST_TIMEOUT_MS). */
+  readonly requestTimeoutMs?: number;
 }
 
 export interface RemoteContinuationCreationInput {
@@ -119,7 +122,8 @@ const requestContext = (
 const requestOptions = (
   method: 'POST' | 'DELETE',
   body: Record<string, unknown>,
-  signal?: AbortSignal
+  signal: AbortSignal | undefined,
+  dependencies: RemoteContinuationTransportDependencies
 ): RequestInit => ({
   method,
   headers: { 'Content-Type': 'application/json' },
@@ -128,7 +132,9 @@ const requestOptions = (
   credentials: 'omit',
   redirect: 'error',
   referrerPolicy: 'no-referrer',
-  ...(signal ? { signal } : {}),
+  // A save or restore whose answer stalls is given up, not waited on with
+  // both controls disabled.
+  signal: withRequestDeadline(signal, dependencies.requestTimeoutMs),
 });
 
 const performRequest = async (
@@ -197,7 +203,7 @@ export const createRemoteContinuation = async (
       `/v2/rooms/${encodeURIComponent(roomCode)}/continuations`,
       context.origin
     ),
-    requestOptions('POST', body, input.signal)
+    requestOptions('POST', body, input.signal, dependencies)
   );
   if (response.status !== 201) throwForCreationStatus(response.status);
   const responseBody = await readBoundedJsonResponse(
@@ -242,7 +248,7 @@ export const restoreRemoteContinuation = async (
       `/v2/continuations/${encodeURIComponent(saveId)}/restore`,
       context.origin
     ),
-    requestOptions('POST', body, input.signal)
+    requestOptions('POST', body, input.signal, dependencies)
   );
   if (response.status !== 201) throwForRestoreStatus(response.status);
   const responseBody = await readBoundedJsonResponse(
@@ -291,7 +297,7 @@ export const revokeRemoteContinuation = async (
   const response = await performRequest(
     context.fetch,
     new URL(`/v2/continuations/${encodeURIComponent(saveId)}`, context.origin),
-    requestOptions('DELETE', body, input.signal)
+    requestOptions('DELETE', body, input.signal, dependencies)
   );
   if (response.status === 204) return;
   if (response.status === 429) {

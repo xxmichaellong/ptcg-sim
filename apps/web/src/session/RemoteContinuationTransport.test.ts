@@ -279,6 +279,77 @@ describe('remote continuation HTTP transport', () => {
     expect(restored.opponentInvitation.invitation).toBe(opponentInvitation);
   });
 
+  it(
+    'gives up a save, restore or revocation whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      // Its answer never comes, or stops partway, until the request's
+      // signal gives it up, as a browser's fetch does.
+      const stalled =
+        (stall: 'headers' | 'body'): typeof fetch =>
+        async (_request, init) => {
+          const signal = init?.signal;
+          if (!signal) return new Promise<never>(() => undefined);
+          if (stall === 'headers') {
+            return new Promise<never>((_, reject) =>
+              signal.addEventListener('abort', () => reject(signal.reason), {
+                once: true,
+              })
+            );
+          }
+          return new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('{"save'));
+                signal.addEventListener(
+                  'abort',
+                  () => controller.error(signal.reason),
+                  { once: true }
+                );
+              },
+            }),
+            { status: 201, headers: { 'Content-Type': 'application/json' } }
+          );
+        };
+      const quick = (stall: 'headers' | 'body') => ({
+        ...dependencies(stalled(stall)),
+        requestTimeoutMs: 20,
+      });
+      await expectCode(
+        createRemoteContinuation(
+          { roomCode, resumeToken, operationId },
+          quick('headers')
+        ),
+        'request_failed'
+      );
+      await expectCode(
+        createRemoteContinuation(
+          { roomCode, resumeToken, operationId },
+          quick('body')
+        ),
+        'invalid_response'
+      );
+      await expectCode(
+        restoreRemoteContinuation(
+          { capability, operationId: restoreOperationId },
+          quick('headers')
+        ),
+        'request_failed'
+      );
+      await expectCode(
+        restoreRemoteContinuation(
+          { capability, operationId: restoreOperationId },
+          quick('body')
+        ),
+        'invalid_response'
+      );
+      await expectCode(
+        revokeRemoteContinuation({ capability }, quick('headers')),
+        'request_failed'
+      );
+    }
+  );
+
   it('revokes with an exact same-origin DELETE and accepts only 204', async () => {
     const fetchImplementation = vi.fn(
       async () => new Response(null, { status: 204 })
