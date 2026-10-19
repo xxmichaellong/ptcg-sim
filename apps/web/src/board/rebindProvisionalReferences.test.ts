@@ -387,6 +387,119 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: 'back-in-hand' });
   });
 
+  it('names a prize taken face down into the hand as the hand has it', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const prizes = view.zones[`zone:${playerId}:prizes`]!;
+    const prize = {
+      kind: 'concealed',
+      id: 'prize-alias',
+      ownerId: playerId,
+      cardBackUrl: '/v2/assets/cardback.png',
+      publiclyRevealed: false,
+    } as const;
+    const before: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [prizes.id]: { ...prizes, cards: [prize as never] },
+      },
+    };
+    rebind(
+      {
+        type: 'MoveCard',
+        cardId: 'prize-alias',
+        expectedSourceZoneId: prizes.id,
+        destinationZoneId: hand.id,
+      },
+      before
+    );
+    const landed: MatchViewState = {
+      ...before,
+      zones: {
+        ...before.zones,
+        [prizes.id]: { ...prizes, cards: [] },
+        [hand.id]: {
+          ...hand,
+          cards: [
+            ...hand.cards,
+            { ...hand.cards[0]!, id: 'prize-in-hand' as never },
+          ],
+        },
+      },
+    };
+    const playIt = {
+      type: 'MoveCard',
+      cardId: 'prize-alias',
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: `zone:${playerId}:discard`,
+    } as const satisfies WireGameCommand;
+    expect(rebind(playIt, landed)).toMatchObject({
+      cardId: 'prize-in-hand',
+    });
+  });
+
+  it('never guesses which new card a face-down arrival became', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const prizes = view.zones[`zone:${playerId}:prizes`]!;
+    const prize = {
+      kind: 'concealed',
+      id: 'prize-alias',
+      ownerId: playerId,
+      cardBackUrl: '/v2/assets/cardback.png',
+      publiclyRevealed: false,
+    } as const;
+    const before: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [prizes.id]: { ...prizes, cards: [prize as never] },
+      },
+    };
+    rebind(
+      {
+        type: 'MoveCard',
+        cardId: 'prize-alias',
+        expectedSourceZoneId: prizes.id,
+        destinationZoneId: hand.id,
+      },
+      before
+    );
+    // Two new cards for one taken face down (another came meanwhile):
+    // which is which can't be told, so the move goes as it was made.
+    const landed: MatchViewState = {
+      ...before,
+      zones: {
+        ...before.zones,
+        [prizes.id]: { ...prizes, cards: [] },
+        [hand.id]: {
+          ...hand,
+          cards: [
+            ...hand.cards,
+            { ...hand.cards[0]!, id: 'new-one' as never },
+            { ...hand.cards[0]!, id: 'new-two' as never },
+          ],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: 'prize-alias',
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        landed
+      )
+    ).toMatchObject({ cardId: 'prize-alias' });
+  });
+
   it('names a card moved within the hand as the hand has it after the move', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();

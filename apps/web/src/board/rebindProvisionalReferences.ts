@@ -85,14 +85,17 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
    * the room renames too so the other player can't follow it): the hand
    * gets them under new aliases, so a move made on one before then names
    * the old. Each is matched by its definition among the hand's new cards
-   * at the next send, once the command has landed.
+   * at the next send, once the command has landed; one that came face
+   * down (a prize, a draw for Solo's other seat) by its place among the
+   * new cards left, when as many came as were sent for.
    */
   let arrivals: {
     readonly zoneId: string;
     readonly before: ReadonlySet<string>;
     readonly cards: readonly {
       readonly alias: string;
-      readonly definitionId: string;
+      /** Absent for a card that came face down. */
+      readonly definitionId?: string;
     }[];
     /** The command, as sent, that would bring them. */
     readonly command: WireGameCommand;
@@ -107,8 +110,12 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         (view.zones[zone.id]?.cards ?? []).map((card) => card.id)
       );
       const cards = zone.cards.flatMap((card) =>
-        card.kind === 'known' && (!before.has(card.id) || card.id === moved)
-          ? [{ alias: card.id, definitionId: card.definitionId }]
+        !before.has(card.id) || card.id === moved
+          ? [
+              card.kind === 'known'
+                ? { alias: card.id, definitionId: card.definitionId }
+                : { alias: card.id },
+            ]
           : []
       );
       if (cards.length > 0) {
@@ -120,17 +127,27 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     for (const arrival of arrivals) {
       const hand = view.zones[arrival.zoneId]?.cards ?? [];
       const present = new Set<string>(hand.map((card) => card.id));
-      const fresh = hand.filter(
-        (card) => card.kind === 'known' && !arrival.before.has(card.id)
-      );
+      const fresh = hand.filter((card) => !arrival.before.has(card.id));
+      const faceDown: string[] = [];
       for (const { alias, definitionId } of arrival.cards) {
         if (present.has(alias)) continue;
+        if (definitionId === undefined) {
+          faceDown.push(alias);
+          continue;
+        }
         const index = fresh.findIndex(
           (card) => card.kind === 'known' && card.definitionId === definitionId
         );
         if (index < 0) continue;
         remember(cards, alias, fresh[index]!.id);
         fresh.splice(index, 1);
+      }
+      // Face down, a card can only be told by where it came in: taken only
+      // when the new cards left are exactly as many, never guessed at.
+      if (faceDown.length > 0 && faceDown.length === fresh.length) {
+        faceDown.forEach((alias, index) => {
+          remember(cards, alias, fresh[index]!.id);
+        });
       }
     }
     arrivals = [];
