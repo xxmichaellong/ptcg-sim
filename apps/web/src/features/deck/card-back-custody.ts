@@ -1,6 +1,7 @@
-import type {
-  ClientSessionState,
-  SubmitCommandResult,
+import {
+  isSessionFinished,
+  type ClientSessionState,
+  type SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
@@ -302,10 +303,9 @@ const defaultTargetPlayerId = (
   return view.playerOrder.find((playerId) => playerId !== viewerPlayerId);
 };
 
-const terminalSession = (state: ClientSessionState): boolean =>
-  state.phase === 'closed' ||
-  state.phase === 'failed' ||
-  state.phase === 'superseded';
+// A connection that failed may be retried, and the command waiting on it
+// land: only a session that won't come back ends an install.
+const terminalSession = isSessionFinished;
 
 /** Serializes retained card backs through the acknowledged room command lane. */
 export class CardBackInstallCoordinator {

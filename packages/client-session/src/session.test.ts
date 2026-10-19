@@ -9,7 +9,7 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 import { RemoteGameSession, type ClientSessionScheduler } from './session.js';
-import { DEFAULT_CLIENT_SESSION_POLICY } from './model.js';
+import { DEFAULT_CLIENT_SESSION_POLICY, isSessionFinished } from './model.js';
 import type {
   SessionSocket,
   SessionSocketCloseEvent,
@@ -1566,6 +1566,24 @@ describe('RemoteGameSession', () => {
       type: 'Command',
       commandId: 'command-1',
     });
+  });
+
+  it('counts a session finished only when it cannot come back', () => {
+    const base = setup().session.getSnapshot();
+    const failure = (retryable: boolean) => ({
+      ...base,
+      phase: 'failed' as const,
+      failure: {
+        code: 'reconnect_exhausted' as const,
+        message: 'lost',
+        ...(retryable ? { retryable: true as const } : {}),
+      },
+    });
+    expect(isSessionFinished({ ...base, phase: 'closed' })).toBe(true);
+    expect(isSessionFinished({ ...base, phase: 'superseded' })).toBe(true);
+    expect(isSessionFinished(failure(false))).toBe(true);
+    expect(isSessionFinished(failure(true))).toBe(false);
+    expect(isSessionFinished({ ...base, phase: 'reconnecting' })).toBe(false);
   });
 
   it('never retries a failure the game caused', () => {

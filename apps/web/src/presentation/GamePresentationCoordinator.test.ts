@@ -559,6 +559,38 @@ describe('GamePresentationCoordinator', () => {
     runtime.dispose();
   });
 
+  it('keeps the history through a lost connection that can be retried', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const runtime = new GamePresentationRuntime({ live, replay });
+    live.publish([coin(1, 'heads')]);
+    expect(runtime.activity.getSnapshot().entries).toHaveLength(1);
+
+    const ready = live.getSnapshot();
+    live.publishState({
+      ...ready,
+      phase: 'failed',
+      failure: {
+        code: 'reconnect_exhausted',
+        message: 'The session exceeded its bounded reconnect budget',
+        retryable: true,
+      },
+    });
+    // The same game may come back on Reconnect: its log stays.
+    expect(runtime.activity.getSnapshot().entries).toHaveLength(1);
+    live.publishState(ready);
+    expect(runtime.activity.getSnapshot().entries).toHaveLength(1);
+
+    // A failure that won't come back ends it, as a close does.
+    live.publishState({
+      ...ready,
+      phase: 'failed',
+      failure: { code: 'invalid_server_frame', message: 'bad frame' },
+    });
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+    runtime.dispose();
+  });
+
   it('owns and tears down optional presentation consumers after stopping producers', () => {
     const live = new FakeLiveSource();
     const replay = new FakeReplaySource();

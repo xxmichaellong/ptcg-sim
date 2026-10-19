@@ -102,8 +102,12 @@ class FakeSession implements DeckInstallSession {
     this.#emit();
   }
 
-  setPhase(phase: ClientSessionState['phase']): void {
-    this.#state = { ...this.#state, phase };
+  setPhase(
+    phase: ClientSessionState['phase'],
+    failure?: ClientSessionState['failure']
+  ): void {
+    const { failure: _failure, ...state } = this.#state;
+    this.#state = { ...state, phase, ...(failure ? { failure } : {}) };
     this.#emit();
   }
 
@@ -263,6 +267,31 @@ describe('CardBackInstallCoordinator', () => {
       reason: 'queue_full',
     });
     expect(store.getSnapshot().slots.main.dirty).toBe(true);
+    coordinator.dispose();
+  });
+
+  it('keeps a card back waiting through a lost connection that is retried', () => {
+    const store = new CardBackCustodyStore();
+    store.replace('main', '/main.png');
+    const session = new FakeSession();
+    const failures: CardBackInstallFailure[] = [];
+    const coordinator = new CardBackInstallCoordinator({
+      store,
+      session,
+      onFailure: (failure) => failures.push(failure),
+    });
+    coordinator.flush();
+    expect(session.commands).toHaveLength(1);
+    session.setPhase('failed', {
+      code: 'reconnect_exhausted',
+      message: 'The session exceeded its bounded reconnect budget',
+      retryable: true,
+    });
+    expect(failures).toEqual([]);
+    session.setPhase('ready');
+    session.completeLatest(true);
+    expect(store.getSnapshot().hasDirtyCardBacks).toBe(false);
+    expect(failures).toEqual([]);
     coordinator.dispose();
   });
 

@@ -164,3 +164,13 @@ export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   connectionAttemptTimeoutMs: 8_000,
   commandAnswerTimeoutMs: 10_000,
 };
+
+/**
+ * A session that won't come back, by itself or by `retry()`: closed,
+ * superseded, or failed for a reason other than its connection. A
+ * retryable failure is not finished -- what it was doing may yet land.
+ */
+export const isSessionFinished = (state: ClientSessionState): boolean =>
+  state.phase === 'closed' ||
+  state.phase === 'superseded' ||
+  (state.phase === 'failed' && !state.failure?.retryable);

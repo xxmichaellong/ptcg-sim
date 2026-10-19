@@ -1,3 +1,4 @@
+import { isSessionFinished } from '@ptcgsim/client-session';
 import type { PresentationEvent } from '@ptcgsim/protocol';
 
 import {
@@ -148,13 +149,9 @@ export class GamePresentationCoordinator {
 
     const presentationIdentity = (): string | undefined => {
       const session = live.getSnapshot();
-      if (
-        session.phase === 'closed' ||
-        session.phase === 'failed' ||
-        session.phase === 'superseded' ||
-        !session.view
-      )
-        return undefined;
+      // A connection that failed may be retried into the same game: its
+      // history stays until the session won't come back.
+      if (isSessionFinished(session) || !session.view) return undefined;
       const viewer =
         session.view.viewer.kind === 'player'
           ? `player:${session.view.viewer.playerId}`

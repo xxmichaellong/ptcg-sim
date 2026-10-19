@@ -1,7 +1,8 @@
-import type {
-  ClientSessionState,
-  RemoteGameSession,
-  SubmitCommandResult,
+import {
+  isSessionFinished,
+  type ClientSessionState,
+  type RemoteGameSession,
+  type SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import type { DeckList } from '@ptcgsim/deck-core';
 import {
@@ -278,10 +279,9 @@ const defaultTargetPlayerId = (
   return view.playerOrder.find((playerId) => playerId !== viewerPlayerId);
 };
 
-const terminalSession = (state: ClientSessionState): boolean =>
-  state.phase === 'closed' ||
-  state.phase === 'failed' ||
-  state.phase === 'superseded';
+// A connection that failed may be retried, and the command waiting on it
+// land: only a session that won't come back ends an install.
+const terminalSession = isSessionFinished;
 
 /**
  * Drains store receipts through the acknowledged remote command stream. It

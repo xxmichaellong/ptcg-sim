@@ -159,6 +159,27 @@ class FakeInstallSession implements DeckInstallSession {
     this.#emit();
   }
 
+  /** The connection failed, but the session can be retried. */
+  loseConnection(): void {
+    this.#state = {
+      ...this.#state,
+      phase: 'failed',
+      failure: {
+        code: 'reconnect_exhausted',
+        message: 'The session exceeded its bounded reconnect budget',
+        retryable: true,
+      },
+    };
+    this.#emit();
+  }
+
+  /** Retried: back in the room, its outbox as it was. */
+  retried(): void {
+    const { failure: _failure, ...state } = this.#state;
+    this.#state = { ...state, phase: 'ready' };
+    this.#emit();
+  }
+
   listenerCount(): number {
     return this.#listeners.size;
   }
@@ -526,6 +547,30 @@ describe('DeckInstallCoordinator', () => {
     resolveDigest?.('a'.repeat(64));
     await Promise.resolve();
     expect(session.commands).toHaveLength(0);
+    coordinator.dispose();
+  });
+
+  it('keeps an install through a lost connection that is retried', async () => {
+    const store = new DeckBuilderStore();
+    store.addCard(card('Pikachu'));
+    const session = new FakeInstallSession();
+    const failures: DeckInstallCoordinatorFailure[] = [];
+    const coordinator = new DeckInstallCoordinator({
+      store,
+      session,
+      digest: deterministicDigest,
+      onFailure: (failure) => failures.push(failure),
+    });
+    coordinator.flush();
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+    session.loseConnection();
+    // Not ended: the LoadDeck waiting may still land once retried.
+    expect(failures).toEqual([]);
+    expect(store.getSnapshot().slots.main.installingRevision).toBeDefined();
+    session.retried();
+    session.completeLatest(true);
+    expect(store.getSnapshot().hasDirtyDecks).toBe(false);
+    expect(failures).toEqual([]);
     coordinator.dispose();
   });
 

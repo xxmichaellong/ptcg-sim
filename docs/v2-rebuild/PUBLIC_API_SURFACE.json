@@ -74,6 +74,10 @@
               "kind": "type-value"
             },
             {
+              "name": "isSessionFinished",
+              "kind": "value"
+            },
+            {
               "name": "MAX_PROJECTED_REPLAY_FILE_BYTES",
               "kind": "value"
             },
