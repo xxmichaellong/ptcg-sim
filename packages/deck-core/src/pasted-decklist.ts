@@ -357,7 +357,10 @@ const detectFormat = (rows: readonly ParsedRow[]): PastedDecklistFormat => {
 };
 
 const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
-  let value = sourceLine.replace(/[[\]()]/gu, '');
+  // PTCGO's export bullets each card line (`* 4 Arceus V BRS 122`), which
+  // v1 read past; its header lines (`****** ... ******`, `##Pokémon - 13`)
+  // still read as no card.
+  let value = sourceLine.replace(/^\s*\*\s+/u, '').replace(/[[\]()]/gu, '');
   value = value.replace(/(?!PR-|P-A)(\w{2,3})-(\w{2,3}) (\d+)/gu, '$1 $2$3');
   value = value.replace(/xy5-5 /gu, 'DCR ');
   value = value.replace(/ DPP /gu, ' PR-DPP ');
