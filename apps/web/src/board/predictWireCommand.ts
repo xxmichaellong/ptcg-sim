@@ -53,13 +53,36 @@ const hiddenFromViewer = (zone: Zone, viewerId: PlayerId): boolean =>
   zone.kind === 'prizes' ||
   ((zone.kind === 'hand' || zone.kind === 'deck') && zone.ownerId !== viewerId);
 
+/**
+ * A card as the room settles it in a zone (game-core's normalizeCardForZone):
+ * on the loose board face up with its ability unused; anywhere else back to
+ * its own category and upright too, so a card retyped in play is itself
+ * again in the hand.
+ */
+const settledIn = (
+  view: MatchViewState,
+  zone: Zone,
+  card: ViewCard
+): ViewCard => {
+  if (card.kind !== 'known') return card;
+  if (zone.kind === 'board') return { ...card, face: 'up', abilityUsed: false };
+  return {
+    ...card,
+    category: view.definitions[card.definitionId]?.category ?? card.category,
+    face: 'up',
+    orientationQuarterTurns: 0,
+    abilityUsed: false,
+  };
+};
+
 /** A card entering a zone the viewer cannot read is shown as its back. */
 const asPlacedIn = (
   view: MatchViewState,
   viewerId: PlayerId,
   zone: Zone,
-  card: ViewCard
+  placed: ViewCard
 ): ViewCard => {
+  const card = settledIn(view, zone, placed);
   if (!hiddenFromViewer(zone, viewerId) || card.kind === 'concealed') {
     return card;
   }
@@ -1046,11 +1069,15 @@ const predict = (
         card.kind === 'known' ? { ...card, abilityUsed: command.used } : card
       );
     case 'ChangeCardCategory': {
-      // The room moves the card to the end of the player's loose board --
-      // out of whatever held it, as any departure does (a Pokémon's cards
-      // under it staged) -- then names its category and sets it upright.
-      // A move made on it next names it there.
-      const board = ownZone(view, viewerId, 'board');
+      // The room moves the card to the end of the loose board of the seat
+      // it is taken from -- out of whatever held it, as any departure does
+      // (a Pokémon's cards under it staged) -- then names its category and
+      // sets it upright. A move made on it next names it there.
+      const seat = locateViewCardActionSource(
+        view,
+        command.cardId
+      )?.sourcePlayerId;
+      const board = seat ? ownZone(view, seat as PlayerId, 'board') : undefined;
       if (!board) return null;
       const taken = takeFromSource(
         view,

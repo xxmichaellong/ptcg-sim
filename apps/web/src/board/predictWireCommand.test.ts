@@ -665,6 +665,53 @@ it("returns a card to the deck of the seat it's taken from, as the room does", (
   expect(cardIn(swapped, theirs.id)).toBe(deck.id);
 });
 
+it("retypes a card on the board of the seat it's taken from", () => {
+  const theirDiscard = view.zones[`zone:${red}:discard`]!;
+  const theirs = { ...hand.cards[0]!, id: 'their-card' as never, ownerId: red };
+  const holding: MatchViewState = {
+    ...view,
+    zones: {
+      ...view.zones,
+      [theirDiscard.id]: { ...theirDiscard, cards: [theirs] },
+    },
+  };
+  const retyped = predictWireCommand(holding, {
+    type: 'ChangeCardCategory',
+    cardId: theirs.id,
+    expectedSourceId: theirDiscard.id,
+    category: 'Energy',
+  })!;
+  expect(cardIn(retyped, theirs.id)).toBe(`zone:${red}:board`);
+});
+
+it('gives a retyped card back its own category when it returns to the hand', () => {
+  const board = view.zones[`zone:${blue}:board`]!;
+  const own = hand.cards[0]!;
+  if (own.kind !== 'known') throw new Error('Expected a known hand card');
+  const category = view.definitions[own.definitionId]!.category;
+  const retyped = {
+    ...own,
+    id: 'retyped' as never,
+    category: category === 'Energy' ? 'Trainer' : 'Energy',
+    orientationQuarterTurns: 1,
+  } as const;
+  const onBoard: MatchViewState = {
+    ...view,
+    zones: { ...view.zones, [board.id]: { ...board, cards: [retyped] } },
+  };
+  const back = predictWireCommand(onBoard, {
+    type: 'MoveCard',
+    cardId: retyped.id,
+    expectedSourceZoneId: board.id,
+    destinationZoneId: hand.id,
+  })!;
+  expect(back.zones[hand.id]!.cards.at(-1)).toMatchObject({
+    id: retyped.id,
+    category,
+    orientationQuarterTurns: 0,
+  });
+});
+
 it('marks a Pokémon promoted to the Active as the Active', () => {
   // One Pokémon benched, then the Active benched beside it: that one moves up.
   const benched = predictWireCommand(view, {
