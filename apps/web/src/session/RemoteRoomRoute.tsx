@@ -1,5 +1,6 @@
 import {
   serializeProjectedReplayFile,
+  type ClientSessionFailure,
   type ProjectedReplayArtifact,
 } from '@ptcgsim/client-session';
 import {
@@ -108,6 +109,11 @@ export interface RemoteRoomRouteProps {
   ) => void;
   readonly onLeave?: () => void;
   /**
+   * A fresh Solo table in place of one whose room was lost: what a failed
+   * Solo session offers instead of leaving.
+   */
+  readonly onNewSoloTable?: () => void;
+  /**
    * Whether the table is ready to be seen: the board has painted (or
    * failed), or the room has a failure to show over it. The lobby lifts the
    * loading screen on it (table-curtain.ts).
@@ -157,6 +163,14 @@ export interface RemoteRoomRouteProps {
 type RouteSheet = 'deck' | 'settings' | 'online';
 
 /** A failure the room must show is reason enough to show the table. */
+/** What a failed session says over the table, in the player's terms. */
+const failureText = (failure: ClientSessionFailure): string =>
+  failure.retryable
+    ? 'Lost the connection to the room.'
+    : failure.code === 'admission_rejected'
+      ? 'The room no longer has this seat.'
+      : 'This table fell out of step with the room.';
+
 const SettledByFailure = ({
   onSettledChange,
 }: {
@@ -191,6 +205,7 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  onNewSoloTable,
   onTableSettledChange,
   onResumeSavedGame,
   continuationAvailable = false,
@@ -241,6 +256,13 @@ export const RemoteRoomRoute = ({
     boardViewSettings().getSnapshot
   );
   const hideOpponentHand = boardView.hideOpponentHand;
+  // The live session's own failure (the replay state only passes on its
+  // message): whether the connection failed, so the seat can be asked for
+  // again.
+  const sessionFailure = useSyncExternalStore(
+    runtime.session.subscribe,
+    () => runtime.session.getSnapshot().failure
+  );
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
@@ -650,7 +672,47 @@ export const RemoteRoomRoute = ({
           >
             {state.failure ? (
               <>
-                <TableBanner>{state.failure.message}</TableBanner>
+                <TableBanner
+                  action={
+                    <>
+                      {sessionFailure?.retryable ? (
+                        <button
+                          id="roomReconnectButton"
+                          type="button"
+                          className="ds-button ds-button--secondary"
+                          onClick={() => runtime.session.retry()}
+                        >
+                          Reconnect
+                        </button>
+                      ) : null}
+                      {solo && onNewSoloTable ? (
+                        <button
+                          id="roomNewTableButton"
+                          type="button"
+                          className="ds-button ds-button--secondary"
+                          onClick={onNewSoloTable}
+                        >
+                          New table
+                        </button>
+                      ) : !solo && onLeave ? (
+                        <button
+                          id="roomLeaveButton"
+                          type="button"
+                          className="ds-button ds-button--secondary"
+                          onClick={onLeave}
+                        >
+                          Leave room
+                        </button>
+                      ) : null}
+                    </>
+                  }
+                >
+                  <span title={state.failure.message}>
+                    {sessionFailure
+                      ? failureText(sessionFailure)
+                      : state.failure.message}
+                  </span>
+                </TableBanner>
                 <SettledByFailure onSettledChange={onTableSettledChange} />
               </>
             ) : null}

@@ -767,8 +767,15 @@ const installFrame = (
   }
 
   // A terminal route cannot be revived by a later callback. Rejoin creates a
-  // fresh route owner and therefore a fresh controller.
-  if (terminalPhase(state.sessionPhase)) return rejected(state);
+  // fresh route owner and therefore a fresh controller. A failed session
+  // the player asked to try again is the one exception: it comes back
+  // through connecting, and its table with it.
+  if (
+    terminalPhase(state.sessionPhase) &&
+    !(state.sessionPhase === 'failed' && frame.sessionPhase === 'connecting')
+  ) {
+    return rejected(state);
+  }
 
   if (!frame.view) {
     if (state.source && !sameSourceTimeline(state.source, frame.source)) {

@@ -403,6 +403,9 @@ export class ReplaySessionCoordinator {
       this.publish(sessionState);
       return;
     }
+    // A failed session asked to try again (its retry) is live once more:
+    // its failure no longer stands.
+    if (this.failure?.code === 'session_failed') this.failure = undefined;
 
     if (
       this.replayImport &&

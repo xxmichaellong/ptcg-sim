@@ -1214,6 +1214,7 @@ export const RemoteRoomLobby = ({
             preparedDeckSessions.current.add(connected.runtime.session)
           }
           onLeave={handleLeave}
+          onNewSoloTable={() => void handleSolo()}
           onTableSettledChange={handleGameTableSettled}
           continuationAvailable={continuationAvailable ?? false}
           onResumeSavedGame={handleResumeSavedGame}

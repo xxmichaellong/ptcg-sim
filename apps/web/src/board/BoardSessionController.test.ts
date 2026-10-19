@@ -2836,6 +2836,34 @@ describe('headless board session controller', () => {
     expect(resurrection.outcome).toBe('rejected');
   });
 
+  it('brings a failed table back once its session is tried again', () => {
+    const base = createRendererSpikeView();
+    const state = install(initialFrame(base));
+    const failed = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, undefined, { sessionPhase: 'failed' }),
+    });
+    expect(failed.state.scene).toBeUndefined();
+    // Nothing but a retry revives it: a stale callback still can't.
+    expect(
+      apply(failed.state, {
+        kind: 'FrameReceived',
+        frame: liveFrame(3, base, { boundary: 'resync' }),
+      }).outcome
+    ).toBe('rejected');
+    const retrying = apply(failed.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(3, undefined, { sessionPhase: 'connecting' }),
+    });
+    expect(retrying.outcome).toBe('accepted');
+    const back = apply(retrying.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(4, base, { boundary: 'resync' }),
+    });
+    expect(back.outcome).toBe('accepted');
+    expect(back.state.scene).toBeDefined();
+  });
+
   it('rejects invalid cursors, boundaries, and scenes with unknown aliases', () => {
     const view = createRendererSpikeView();
     const invalid = [

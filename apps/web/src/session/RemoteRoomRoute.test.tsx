@@ -260,6 +260,14 @@ class FakeSocket implements SessionSocket {
     this.handlers.message(frame);
   }
 
+  serverClose(): void {
+    this.handlers.close({
+      code: 1006,
+      reason: 'network lost',
+      wasClean: false,
+    });
+  }
+
   commands(): readonly WireGameCommand[] {
     return this.sent
       .map((frame) => JSON.parse(frame) as { readonly type: string })
@@ -344,6 +352,53 @@ const createRuntime = (
         }
       : {}),
   });
+
+/**
+ * A runtime whose session runs its timers on demand and gives up after one
+ * reconnect, so a lost connection fails quickly.
+ */
+const createLosingRuntime = (
+  socketFactory: FakeSocketFactory
+): { readonly runtime: RemoteRoomRuntime; readonly runTimers: () => void } => {
+  const timers: (() => void)[] = [];
+  const runtime = new RemoteRoomRuntime({
+    connection: {
+      url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
+      buildId: 'route-screen-client',
+      roomCode: 'ABCDEFGH2345',
+      displayName: 'Blue',
+      requestedRole: 'player',
+      admissionTicket,
+      resumeToken,
+    },
+    session: {
+      socketFactory,
+      scheduler: {
+        schedule: (callback) => timers.push(callback),
+        cancel: () => undefined,
+      },
+      isOnline: () => true,
+      policy: { maximumReconnectAttempts: 1 },
+    },
+  });
+  return {
+    runtime,
+    runTimers: () => {
+      for (const timer of timers.splice(0)) timer();
+    },
+  };
+};
+
+const loseConnection = async (
+  socketFactory: FakeSocketFactory,
+  runTimers: () => void
+): Promise<void> => {
+  await act(async () => {
+    socketFactory.socket!.serverClose();
+    runTimers();
+    socketFactory.socket!.serverClose();
+  });
+};
 
 const connect = async (
   socketFactory: FakeSocketFactory,
@@ -1653,9 +1708,16 @@ describe('RemoteRoomRoute', () => {
     });
 
     expect(runtime.session.getSnapshot().phase).toBe('failed');
+    // Said in the player's terms; the detail is kept for whoever asks.
     expect(get('#roomHeaderText').textContent).toBe(
+      'This table fell out of step with the room.'
+    );
+    expect(get('#roomHeaderText span').title).toBe(
       'Server frame rejected: invalid_json'
     );
+    // Nothing to resume after that: the Solo table offers only a new one,
+    // here not wired.
+    expect(find('#roomReconnectButton')).toBeNull();
     expect(get('#roomHeader').getAttribute('role')).toBe('status');
     expect(document.body.innerHTML).not.toContain(admissionTicket);
     expect(socket.close).toHaveBeenCalledWith(4400, 'invalid_server_frame');
@@ -1663,6 +1725,67 @@ describe('RemoteRoomRoute', () => {
     await act(async () => root.unmount());
     runtime.dispose();
     expect(runtime.session.getSnapshot().phase).toBe('closed');
+  });
+
+  it('offers to reconnect a room whose connection was lost, or to leave it', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const { runtime, runTimers } = createLosingRuntime(socketFactory);
+    const onLeave = vi.fn();
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="multiplayer"
+        onLeave={onLeave}
+      />
+    );
+    await connect(socketFactory);
+    await loseConnection(socketFactory, runTimers);
+    expect(runtime.session.getSnapshot().phase).toBe('failed');
+    expect(get('#roomHeaderText').textContent).toBe(
+      'Lost the connection to the room.'
+    );
+    expect(find('#roomNewTableButton')).toBeNull();
+
+    // Leaving needs no question: the room is already gone from here.
+    await click('#roomLeaveButton');
+    expect(onLeave).toHaveBeenCalledOnce();
+
+    // Reconnecting asks the room for the seat again.
+    const lost = socketFactory.socket;
+    await click('#roomReconnectButton');
+    expect(socketFactory.socket).not.toBe(lost);
+    expect(runtime.session.getSnapshot().phase).toBe('connecting');
+    expect(find('#roomHeaderText')).toBeNull();
+    await connect(socketFactory);
+    expect(runtime.session.getSnapshot().phase).toBe('ready');
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
+  it('offers a lost Solo table a new one instead of leaving', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const { runtime, runTimers } = createLosingRuntime(socketFactory);
+    const onNewSoloTable = vi.fn();
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="solo"
+        onLeave={vi.fn()}
+        onNewSoloTable={onNewSoloTable}
+      />
+    );
+    await connect(socketFactory);
+    await loseConnection(socketFactory, runTimers);
+    expect(find('#roomReconnectButton')).not.toBeNull();
+    expect(find('#roomLeaveButton')).toBeNull();
+    await click('#roomNewTableButton');
+    expect(onNewSoloTable).toHaveBeenCalledOnce();
+
+    await act(async () => root.unmount());
+    runtime.dispose();
   });
 
   it('tells its owner when the table is ready to be seen: the board painted, or a failure to say', async () => {
