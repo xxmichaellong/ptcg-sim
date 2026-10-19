@@ -500,6 +500,68 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: 'prize-alias' });
   });
 
+  it('follows a card put on the deck, drawn back and played, to its name', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const card = hand.cards[0]!;
+    rebind(
+      {
+        type: 'MoveCardToDeckTop',
+        cardId: card.id,
+        expectedSourceId: hand.id,
+      },
+      view
+    );
+    // Published: on top of the deck, face down under a new alias.
+    const onDeck: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+        [deck.id]: {
+          ...deck,
+          cards: [
+            {
+              kind: 'concealed',
+              id: 'on-deck' as never,
+              ownerId: playerId,
+              cardBackUrl: '/v2/assets/cardback.png',
+              publiclyRevealed: false,
+            },
+            ...deck.cards,
+          ],
+        },
+      },
+    };
+    rebind({ type: 'DrawCards', count: 1 }, onDeck);
+    // Drawn back: in the hand under another.
+    const drawn: MatchViewState = {
+      ...onDeck,
+      zones: {
+        ...onDeck.zones,
+        [deck.id]: deck,
+        [hand.id]: {
+          ...hand,
+          cards: [...hand.cards.slice(1), { ...card, id: 'drawn' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        drawn
+      )
+    ).toMatchObject({ cardId: 'drawn' });
+  });
+
   it('names a card moved within the hand as the hand has it after the move', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();

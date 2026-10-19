@@ -100,9 +100,50 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     /** The command, as sent, that would bring them. */
     readonly command: WireGameCommand;
   }[] = [];
+  /**
+   * Cards a sent command puts on top of a deck or at its bottom: the deck
+   * takes them face down under new aliases, so a move queued on one (drawn
+   * back, then played) names the old. Each is matched by its place at the
+   * next send; a draw's arrival then follows it on into the hand.
+   */
+  let deckEdges: {
+    readonly zoneId: string;
+    readonly edge: 'top' | 'bottom';
+    readonly alias: string;
+    readonly before: ReadonlySet<string>;
+    readonly command: WireGameCommand;
+  }[] = [];
   const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
     const predicted = predictWireCommand(view, command);
     if (!predicted) return;
+    if (
+      command.type === 'MoveCardToDeckTop' ||
+      command.type === 'MoveCardToDeckBottom' ||
+      command.type === 'SwapCardWithDeckTop'
+    ) {
+      const deck = Object.values(predicted.zones).find(
+        (zone) =>
+          zone.kind === 'deck' &&
+          zone.cards.some((card) => card.id === command.cardId)
+      );
+      const edge =
+        deck?.cards[0]?.id === command.cardId
+          ? 'top'
+          : deck?.cards.at(-1)?.id === command.cardId
+            ? 'bottom'
+            : undefined;
+      if (deck && edge) {
+        deckEdges.push({
+          zoneId: deck.id,
+          edge,
+          alias: command.cardId,
+          before: new Set(
+            (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
+          ),
+          command,
+        });
+      }
+    }
     const moved = command.type === 'MoveCard' ? command.cardId : undefined;
     for (const zone of Object.values(predicted.zones)) {
       if (zone.kind !== 'hand') continue;
@@ -124,6 +165,15 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     }
   };
   const settleArrivals = (view: MatchViewState) => {
+    for (const entry of deckEdges) {
+      if (cardInView(entry.alias, view)) continue;
+      const deck = view.zones[entry.zoneId]?.cards ?? [];
+      const landed = entry.edge === 'top' ? deck[0] : deck.at(-1);
+      if (landed && !entry.before.has(landed.id)) {
+        remember(cards, entry.alias, landed.id);
+      }
+    }
+    deckEdges = [];
     for (const arrival of arrivals) {
       const hand = view.zones[arrival.zoneId]?.cards ?? [];
       const present = new Set<string>(hand.map((card) => card.id));
@@ -313,6 +363,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       // Nor did it bring anything into a hand: a new card there with the
       // same face is someone else's.
       arrivals = arrivals.filter((arrival) => arrival.command !== command);
+      deckEdges = deckEdges.filter((entry) => entry.command !== command);
       const placed = placementOf.get(command);
       if (placed === undefined) return;
       placements.delete(placed);
