@@ -1586,6 +1586,27 @@ describe('RemoteGameSession', () => {
     expect(isSessionFinished({ ...base, phase: 'reconnecting' })).toBe(false);
   });
 
+  it('retries a first admission with its ticket, the room not having it yet', () => {
+    const test = setup({ maximumReconnectAttempts: 1 });
+    // The first attempt never opens, nor the one after.
+    test.connect();
+    test.factory.sockets[0]!.serverClose();
+    test.scheduler.runNext();
+    test.factory.sockets[1]!.serverClose();
+    expect(test.session.getSnapshot().failure).toMatchObject({
+      code: 'reconnect_exhausted',
+      retryable: true,
+    });
+    expect(test.session.retry()).toBe(true);
+    const again = test.factory.sockets[2]!;
+    again.serverOpen();
+    expect(clientFrame(again, 0)).toMatchObject({
+      type: 'Hello',
+      admissionTicket: capability,
+      resumeToken: resumeCapability,
+    });
+  });
+
   it('never retries a failure the game caused', () => {
     const test = setup();
     const socket = test.connect();

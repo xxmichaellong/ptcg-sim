@@ -1456,8 +1456,9 @@ export class RemoteGameSession {
     this.socketGeneration += 1;
     this.closeSocket(4400, failure.code);
     if (failure.retryable) {
-      // The seat's resume is kept for retry(); nothing else is.
-      this.admissionTicket = undefined;
+      // What retry() needs is kept: the seat's resume, and the admission
+      // ticket of a session the room hasn't yet admitted (a Welcome clears
+      // it), which a resume alone can't stand in for.
       this.replayTransfer = undefined;
     } else {
       this.clearCapabilities();
