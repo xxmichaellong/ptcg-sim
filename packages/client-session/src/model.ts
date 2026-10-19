@@ -57,6 +57,11 @@ export interface ClientSessionFailure {
     | 'command_retry_exhausted'
     | 'reconnect_exhausted';
   readonly message: string;
+  /**
+   * The connection failed, not the game: the session kept what it needs to
+   * resume this seat, and `retry()` asks the room for it again.
+   */
+  readonly retryable?: true;
 }
 
 export interface ProjectedReplayFrame {

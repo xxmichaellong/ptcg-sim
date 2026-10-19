@@ -133,6 +133,9 @@ const defaultScheduler: ClientSessionScheduler = {
 
 const defaultCommandId = (): string => globalThis.crypto.randomUUID();
 
+/** How often a session offline looks for the network again. */
+const OFFLINE_RECHECK_MS = 1_000;
+
 const appendBounded = <Value>(
   values: readonly Value[],
   value: Value,
@@ -445,6 +448,39 @@ export class RemoteGameSession {
       return undefined;
     }
     return id;
+  }
+
+  /**
+   * Asks the room for this seat again after the connection failed (its
+   * reconnects or a command's retries ran out): the room takes it back
+   * unless it has given the seat up meanwhile. Whether it is trying.
+   */
+  retry(): boolean {
+    if (
+      this.state.phase !== 'failed' ||
+      !this.state.failure?.retryable ||
+      !this.resumeToken ||
+      !this.options
+    ) {
+      return false;
+    }
+    this.manualClose = false;
+    this.reconnectAttempts = 0;
+    this.reconnectingSince = undefined;
+    const generation = this.socketGeneration;
+    this.updateState({
+      phase: 'connecting',
+      failure: undefined,
+      reconnectAttempt: 0,
+    });
+    if (
+      !this.isCurrent(generation) ||
+      this.getSnapshot().phase !== 'connecting'
+    ) {
+      return false;
+    }
+    this.openSocket();
+    return true;
   }
 
   disconnect(): void {
@@ -1179,6 +1215,7 @@ export class RemoteGameSession {
       this.fail({
         code: 'command_retry_exhausted',
         message: 'The in-flight command exceeded its bounded retry budget',
+        retryable: true,
       });
       return;
     }
@@ -1250,7 +1287,9 @@ export class RemoteGameSession {
     if (this.reconnectingSince !== undefined) {
       const left =
         SESSION_RECONNECT_GRACE_MS - (this.now() - this.reconnectingSince);
-      timeout = Math.max(1, Math.min(timeout, left));
+      // Past the grace by this clock (an outage waited out), the room may
+      // never have seen the drop: the attempt gets its whole time.
+      if (left > 0) timeout = Math.min(timeout, left);
     }
     this.attemptTimer = this.scheduler.schedule(() => {
       this.attemptTimer = undefined;
@@ -1318,10 +1357,17 @@ export class RemoteGameSession {
     if (this.sessionId !== undefined && this.reconnectingSince === undefined) {
       this.reconnectingSince = this.now();
     }
+    // Offline, no attempt could open: the network is waited for, and the
+    // budget is kept for when it is back.
+    if (!this.isOnline()) {
+      this.awaitNetwork();
+      return;
+    }
     if (this.reconnectAttempts >= this.policy.maximumReconnectAttempts) {
       this.fail({
         code: 'reconnect_exhausted',
         message: 'The session exceeded its bounded reconnect budget',
+        retryable: true,
       });
       return;
     }
@@ -1363,6 +1409,27 @@ export class RemoteGameSession {
     }, delay);
   }
 
+  private awaitNetwork(): void {
+    this.cancelReconnect();
+    const generation = this.socketGeneration;
+    if (this.state.phase !== 'reconnecting') {
+      this.updateState({ phase: 'reconnecting', replayLoading: false });
+      if (
+        !this.isCurrent(generation) ||
+        this.getSnapshot().phase !== 'reconnecting'
+      ) {
+        return;
+      }
+    }
+    this.reconnectTimer = this.scheduler.schedule(() => {
+      this.reconnectTimer = undefined;
+      if (!this.isCurrent(generation) || this.state.phase !== 'reconnecting') {
+        return;
+      }
+      this.scheduleReconnect();
+    }, OFFLINE_RECHECK_MS);
+  }
+
   private reconnectTransport(reason: string): void {
     this.socketGeneration += 1;
     // 1012 (service restart) in the range a browser lets a page close with:
@@ -1388,7 +1455,13 @@ export class RemoteGameSession {
     this.cancelAnswerDeadline();
     this.socketGeneration += 1;
     this.closeSocket(4400, failure.code);
-    this.clearCapabilities();
+    if (failure.retryable) {
+      // The seat's resume is kept for retry(); nothing else is.
+      this.admissionTicket = undefined;
+      this.replayTransfer = undefined;
+    } else {
+      this.clearCapabilities();
+    }
     this.updateState({ phase: 'failed', replayLoading: false, failure });
   }
 

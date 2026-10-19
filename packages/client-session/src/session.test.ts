@@ -184,11 +184,13 @@ const setup = (
   const scheduler = new FakeScheduler();
   let commandId = 0;
   let now = 1_000;
+  let online = true;
   const session = new RemoteGameSession({
     socketFactory: factory,
     scheduler,
     random: () => 0.5,
     now: () => now,
+    isOnline: () => online,
     createCommandId: () => `command-${++commandId}`,
     policy,
     ...(rebindCommand ? { rebindCommand } : {}),
@@ -220,6 +222,9 @@ const setup = (
     admit,
     advance: (milliseconds: number) => {
       now += milliseconds;
+    },
+    setOnline: (value: boolean) => {
+      online = value;
     },
   };
 };
@@ -1493,6 +1498,86 @@ describe('RemoteGameSession', () => {
     scheduler.runNext();
     expect(socket.close).toHaveBeenCalled();
     expect(session.getSnapshot().phase).toBe('reconnecting');
+  });
+
+  it('waits for the network rather than spending reconnects offline', () => {
+    const test = setup({ maximumReconnectAttempts: 2 });
+    const socket = test.admit();
+    test.setOnline(false);
+    socket.serverClose();
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 0,
+    });
+    // However long it lasts, no attempt is spent on it.
+    for (let check = 0; check < 60; check += 1) {
+      expect([...test.scheduler.tasks.values()]).toEqual([
+        expect.objectContaining({ delayMs: 1_000 }),
+      ]);
+      test.scheduler.runNext();
+    }
+    expect(test.factory.sockets).toHaveLength(1);
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 0,
+    });
+    // Back online, the room is tried as usual -- with its whole time, the
+    // grace being past by this clock.
+    test.advance(60_000);
+    test.setOnline(true);
+    test.scheduler.runNext();
+    expect(test.session.getSnapshot().reconnectAttempt).toBe(1);
+    test.scheduler.runNext();
+    const resumed = test.factory.sockets[1]!;
+    expect([...test.scheduler.tasks.values()][0]?.delayMs).toBe(8_000);
+    resumed.serverOpen();
+    resumed.serverMessage(welcome());
+    expect(test.session.getSnapshot().phase).toBe('ready');
+  });
+
+  it('asks the room for the seat again once its reconnects have run out', () => {
+    const test = setup({ maximumReconnectAttempts: 1 });
+    const socket = test.admit();
+    test.session.submit({ type: 'FlipCoin' });
+    socket.serverClose();
+    test.scheduler.runNext();
+    test.factory.sockets[1]!.serverClose();
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'reconnect_exhausted', retryable: true },
+    });
+    expect(test.scheduler.tasks.size).toBe(0);
+
+    expect(test.session.retry()).toBe(true);
+    expect(test.session.getSnapshot()).toMatchObject({ phase: 'connecting' });
+    expect(test.session.getSnapshot().failure).toBeUndefined();
+    const again = test.factory.sockets[2]!;
+    again.serverOpen();
+    const hello = clientFrame(again, 0);
+    expect(hello).toMatchObject({
+      type: 'Hello',
+      resumeToken: resumeCapability,
+    });
+    expect(hello).not.toHaveProperty('admissionTicket');
+    again.serverMessage(welcome());
+    expect(test.session.getSnapshot().phase).toBe('ready');
+    // The move that was waiting goes with it.
+    expect(clientFrame(again, 1)).toMatchObject({
+      type: 'Command',
+      commandId: 'command-1',
+    });
+  });
+
+  it('never retries a failure the game caused', () => {
+    const test = setup();
+    const socket = test.connect();
+    socket.serverMessage('{broken');
+    expect(test.session.getSnapshot().failure).toMatchObject({
+      code: 'invalid_server_frame',
+    });
+    expect(test.session.getSnapshot().failure).not.toHaveProperty('retryable');
+    expect(test.session.retry()).toBe(false);
+    expect(test.factory.sockets).toHaveLength(1);
   });
 
   it('gives up a replay the room went quiet on, so it can be asked again', () => {
