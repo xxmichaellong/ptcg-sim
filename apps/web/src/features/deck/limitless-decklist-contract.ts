@@ -13,6 +13,9 @@ const DEFAULT_LIMITS = {
   responseCards: 200,
   responseErrors: 200,
   errorCodeUnits: 512,
+  // A lookup that stalls is given up so the import finishes with what the
+  // catalog found, the rest taken as their lines say.
+  requestTimeoutMs: 10_000,
   // V1 assigns every deck image in one pass. The 200-row import ceiling keeps
   // that source-parity fan-out finite while leaving browser scheduling intact.
 } as const;
@@ -24,6 +27,8 @@ export interface LimitlessDecklistLimits {
   readonly responseCards?: number;
   readonly responseErrors?: number;
   readonly errorCodeUnits?: number;
+  /** How long the lookup may take, its answer read in full. */
+  readonly requestTimeoutMs?: number;
 }
 
 export interface ResolvedLimitlessDecklistLimits {
@@ -33,6 +38,7 @@ export interface ResolvedLimitlessDecklistLimits {
   readonly responseCards: number;
   readonly responseErrors: number;
   readonly errorCodeUnits: number;
+  readonly requestTimeoutMs: number;
 }
 
 const positiveInteger = (
@@ -66,6 +72,10 @@ export const resolveLimitlessDecklistLimits = (
   errorCodeUnits: positiveInteger(
     limits.errorCodeUnits,
     DEFAULT_LIMITS.errorCodeUnits
+  ),
+  requestTimeoutMs: positiveInteger(
+    limits.requestTimeoutMs,
+    DEFAULT_LIMITS.requestTimeoutMs
   ),
 });
 

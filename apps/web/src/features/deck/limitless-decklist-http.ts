@@ -98,6 +98,10 @@ export const requestLimitlessDecklistJson = async (
     );
   }
 
+  // The caller's signal cancels; this one also gives up a lookup that
+  // stalls (its headers or its body), which then fails like any other.
+  const deadline = AbortSignal.timeout(limits.requestTimeoutMs);
+  const requestSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
   let response: Response;
   try {
     response = await fetchRequest(endpoint, {
@@ -109,7 +113,7 @@ export const requestLimitlessDecklistJson = async (
       body,
       credentials: 'omit',
       mode: 'cors',
-      signal,
+      signal: requestSignal,
     });
   } catch (error) {
     throwIfAborted(signal);

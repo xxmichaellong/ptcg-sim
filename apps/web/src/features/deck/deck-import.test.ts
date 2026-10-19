@@ -253,6 +253,37 @@ describe('importing a decklist', () => {
     });
   });
 
+  it(
+    'finishes the import when Limitless stalls',
+    { timeout: 2_000 },
+    async () => {
+      // Its answer never comes until the request's signal gives it up, as a
+      // browser's fetch does.
+      const stalled = vi.fn<typeof fetch>(
+        async (_request, init) =>
+          await new Promise<never>((_, reject) => {
+            const signal = init?.signal;
+            signal?.addEventListener('abort', () => reject(signal.reason), {
+              once: true,
+            });
+          })
+      );
+      const result = await importDeckText('2 Arceus V BRS 122\n1 Who Knows', {
+        fetch: stalled,
+        limits: { requestTimeoutMs: 20 },
+      });
+      expect(stalled).toHaveBeenCalled();
+      expect(result).toMatchObject({
+        ok: true,
+        missing: [{ quantity: 1, name: 'Who Knows' }],
+      });
+      expect(result.ok && result.cards[0]!.card).toMatchObject({
+        id: 'BRS 122',
+        name: 'Arceus V',
+      });
+    }
+  );
+
   it('reads simulator CSV files, getting catalogued cards their facts back', async () => {
     const csv =
       'QTY,Name,Type,URL\n4,Dreepy,Pokémon,https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN.png\n1,Homemade,Trainer,https://example.com/x.png';
