@@ -565,6 +565,24 @@ describe('continuation cross-object restore coordinator', () => {
     expect(target).toHaveBeenCalledTimes(completedTargetCalls);
   });
 
+  it("never recovers a completed restore whose opponent can't get back in", async () => {
+    const harness = await createHarness();
+    const completed = await coordinateContinuationRestore(
+      restoreInput(harness.capability),
+      harness.dependencies
+    );
+    const expiresAt = completed!.opponentInvitation.expiresAt;
+    const retryAt = (now: number) =>
+      coordinateContinuationRestore(restoreInput(harness.capability), {
+        ...harness.dependencies,
+        clock: { now: () => now },
+      });
+    // Just before the invitation expires, the receipt is still good.
+    await expect(retryAt(expiresAt - 1)).resolves.toEqual(completed);
+    // From then on the other player couldn't join what it brings back.
+    await expect(retryAt(expiresAt)).resolves.toBeUndefined();
+  });
+
   it('fails closed on mismatched room acknowledgements and completion receipts', async () => {
     const acknowledgementHarness = await createHarness();
     const acknowledgeWrongRoom: ContinuationRestoreCoordinatorDependencies = {

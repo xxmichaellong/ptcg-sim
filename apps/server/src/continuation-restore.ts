@@ -106,6 +106,13 @@ export const coordinateContinuationRestore = async (
         'Continuation restore retry receipt does not match its request'
       );
     }
+    // Its opponent invitation is the only way the other player gets back
+    // in, and nothing renews it: past its expiry the receipt brings back a
+    // game they can't join, so it is past recovery -- as the save refuses
+    // to complete a restore past that same expiry.
+    if (reservedAt >= reservation.result.opponentInvitation.expiresAt) {
+      return undefined;
+    }
     return reservation.result;
   }
 
