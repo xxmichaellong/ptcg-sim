@@ -233,14 +233,21 @@ export const arrangementOffsets = (
 /**
  * Over a benched Pokémon, a benched Pokémon being carried is being put in
  * a new place on the bench, not swapped with that one: its bench, or null.
+ * A card lifted off its Pokémon alone (`detached`, by a long press) is not
+ * that Pokémon: it goes onto the one it is dropped on.
  */
 export const benchRearrangementTarget = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
-  hitCard: CardSceneNode
+  hitCard: CardSceneNode,
+  detached = false
 ): string | null => {
   const source = scene.cards.find((card) => card.id === sourceCardId);
-  if (source?.role !== 'stackEvolution' || !STACK_ROLES.has(hitCard.role))
+  if (
+    detached ||
+    source?.role !== 'stackEvolution' ||
+    !STACK_ROLES.has(hitCard.role)
+  )
     return null;
   const bench = scene.zones.find(
     (zone) =>

@@ -1402,8 +1402,12 @@ export const BoardSurface = ({
           (u * source.bounds.width * Math.sin(turn) +
             v * source.bounds.height * Math.cos(turn)),
       };
-      const hit = depth.drop(point, source.id, (card) =>
-        card.renderKey ? director.depth.current(card.renderKey) : undefined
+      const hit = depth.drop(
+        point,
+        source.id,
+        (card) =>
+          card.renderKey ? director.depth.current(card.renderKey) : undefined,
+        dragRef.current?.detached === true
       );
       return {
         pointerId: event.pointerId,

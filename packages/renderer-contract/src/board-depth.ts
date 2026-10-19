@@ -542,7 +542,9 @@ export class BoardDepthProjection {
   drop(
     point: TablePoint,
     sourceId: ViewCardId,
-    paintedPose?: (card: CardSceneNode) => TableCardPose | undefined
+    paintedPose?: (card: CardSceneNode) => TableCardPose | undefined,
+    /** Only the card, lifted off its Pokémon by a long press. */
+    detached = false
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
     for (const card of this.painted) {
@@ -583,7 +585,12 @@ export class BoardDepthProjection {
       };
       if (card.clipBounds && !containsPoint(card.clipBounds, local.x, local.y))
         continue;
-      const bench = benchRearrangementTarget(this.scene, sourceId, card);
+      const bench = benchRearrangementTarget(
+        this.scene,
+        sourceId,
+        card,
+        detached
+      );
       if (bench) return { point: this.boardPoint(point), targetId: bench };
       return { point: local, targetId: card.parentId };
     }

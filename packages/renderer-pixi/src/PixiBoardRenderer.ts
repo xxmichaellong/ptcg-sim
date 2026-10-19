@@ -1777,10 +1777,14 @@ export class PixiBoardRenderer implements BoardRenderer {
           plane: 1,
           elevation: base.elevation + this.depth.liftFor(base.bounds.width),
         });
-      const hit = this.depth.drop(point, card.id, (target) =>
-        target.renderKey
-          ? this.cardViews.get(target.renderKey)?.paintedPose
-          : undefined
+      const hit = this.depth.drop(
+        point,
+        card.id,
+        (target) =>
+          target.renderKey
+            ? this.cardViews.get(target.renderKey)?.paintedPose
+            : undefined,
+        this.presentation?.drag?.detached === true
       );
       return {
         pointerId: event.pointerId,

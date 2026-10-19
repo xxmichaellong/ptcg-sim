@@ -153,7 +153,8 @@ export const resolveBoardDropTarget = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
   x: number,
-  y: number
+  y: number,
+  detached = false
 ): string | null => {
   const card = topmostFirst(scene.cards).find(
     (candidate) =>
@@ -167,7 +168,10 @@ export const resolveBoardDropTarget = (
       )
   );
   if (card)
-    return benchRearrangementTarget(scene, sourceCardId, card) ?? card.parentId;
+    return (
+      benchRearrangementTarget(scene, sourceCardId, card, detached) ??
+      card.parentId
+    );
   return zoneDropTargetAt(scene, x, y);
 };
 
@@ -254,7 +258,8 @@ export class BoardDragController {
           scene,
           gesture.cardId,
           x - gesture.centerOffsetX,
-          y - gesture.centerOffsetY
+          y - gesture.centerOffsetY,
+          true
         ),
         detached: true,
       },
@@ -296,7 +301,13 @@ export class BoardDragController {
     const targetId =
       input.targetId !== undefined
         ? input.targetId
-        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+        : resolveBoardDropTarget(
+            scene,
+            gesture.cardId,
+            input.x,
+            input.y,
+            gesture.detached
+          );
     const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.adapters.emitPresentationUpdate({
       kind: 'DragChanged',
@@ -340,7 +351,13 @@ export class BoardDragController {
     const targetId =
       input.targetId !== undefined
         ? input.targetId
-        : resolveBoardDropTarget(scene, gesture.cardId, input.x, input.y);
+        : resolveBoardDropTarget(
+            scene,
+            gesture.cardId,
+            input.x,
+            input.y,
+            gesture.detached
+          );
     const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.suppressClickOf(gesture);
     this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });

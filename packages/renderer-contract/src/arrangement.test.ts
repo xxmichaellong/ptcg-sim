@@ -8,6 +8,7 @@ import {
   benchRearrangementTarget,
 } from './arrangement.js';
 import { DEFAULT_BOARD_PRESENTATION } from './defaults.js';
+import { resolveBoardDropTarget } from './drag.js';
 import {
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
@@ -145,6 +146,18 @@ describe('free arrangement', () => {
     // not swapped; a card from the hand still joins the Pokémon it is over.
     expect(benchRearrangementTarget(scene, last!.id, first!)).toBe(bench.id);
     expect(benchRearrangementTarget(scene, fromHand.id, first!)).toBeNull();
+    // Lifted off its Pokémon alone, a card goes onto the one it is over.
+    expect(benchRearrangementTarget(scene, last!.id, first!, true)).toBeNull();
+    const over = {
+      x: first!.bounds.x + first!.bounds.width / 2,
+      y: first!.bounds.y + first!.bounds.height / 2,
+    };
+    expect(resolveBoardDropTarget(scene, last!.id, over.x, over.y)).toBe(
+      bench.id
+    );
+    expect(resolveBoardDropTarget(scene, last!.id, over.x, over.y, true)).toBe(
+      first!.parentId
+    );
   });
 
   it('opens the gap the card will fill: the hand laid out as it will be', () => {
