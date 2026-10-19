@@ -116,33 +116,34 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
     const predicted = predictWireCommand(view, command);
     if (!predicted) return;
-    if (
-      command.type === 'MoveCardToDeckTop' ||
-      command.type === 'MoveCardToDeckBottom' ||
-      command.type === 'SwapCardWithDeckTop'
-    ) {
-      const deck = Object.values(predicted.zones).find(
-        (zone) =>
-          zone.kind === 'deck' &&
-          zone.cards.some((card) => card.id === command.cardId)
-      );
-      const edge =
-        deck?.cards[0]?.id === command.cardId
-          ? 'top'
-          : deck?.cards.at(-1)?.id === command.cardId
-            ? 'bottom'
-            : undefined;
-      if (deck && edge) {
-        deckEdges.push({
-          zoneId: deck.id,
-          edge,
-          alias: command.cardId,
-          before: new Set(
-            (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
-          ),
-          command,
-        });
-      }
+    // Any command that puts its card on a deck's edge: the shortcuts, or
+    // the card dragged onto the pile.
+    const cardId = 'cardId' in command ? command.cardId : undefined;
+    const deck =
+      cardId === undefined
+        ? undefined
+        : Object.values(predicted.zones).find(
+            (zone) =>
+              zone.kind === 'deck' &&
+              zone.cards.some((card) => card.id === cardId) &&
+              !view.zones[zone.id]?.cards.some((card) => card.id === cardId)
+          );
+    const edge =
+      deck?.cards[0]?.id === cardId
+        ? 'top'
+        : deck?.cards.at(-1)?.id === cardId
+          ? 'bottom'
+          : undefined;
+    if (cardId !== undefined && deck && edge) {
+      deckEdges.push({
+        zoneId: deck.id,
+        edge,
+        alias: cardId,
+        before: new Set(
+          (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
+        ),
+        command,
+      });
     }
     const moved = command.type === 'MoveCard' ? command.cardId : undefined;
     for (const zone of Object.values(predicted.zones)) {

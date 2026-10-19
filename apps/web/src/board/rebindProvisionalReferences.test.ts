@@ -562,6 +562,71 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: 'drawn' });
   });
 
+  it('follows a card dragged onto an empty deck, drawn back and played', () => {
+    const rebind = createProvisionalRebinder();
+    const base = createRendererSpikeView();
+    const playerId = base.playerOrder[0]!;
+    const hand = base.zones[`zone:${playerId}:hand`]!;
+    const deck = { ...base.zones[`zone:${playerId}:deck`]!, cards: [] };
+    const view: MatchViewState = {
+      ...base,
+      zones: { ...base.zones, [deck.id]: deck },
+    };
+    const card = hand.cards[0]!;
+    // Dragged onto the pile: a plain move, not a deck shortcut.
+    rebind(
+      {
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: deck.id,
+      },
+      view
+    );
+    const onDeck: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+        [deck.id]: {
+          ...deck,
+          cards: [
+            {
+              kind: 'concealed',
+              id: 'on-deck' as never,
+              ownerId: playerId,
+              cardBackUrl: '/v2/assets/cardback.png',
+              publiclyRevealed: false,
+            },
+          ],
+        },
+      },
+    };
+    rebind({ type: 'DrawCards', count: 1 }, onDeck);
+    const drawn: MatchViewState = {
+      ...onDeck,
+      zones: {
+        ...onDeck.zones,
+        [deck.id]: deck,
+        [hand.id]: {
+          ...hand,
+          cards: [...hand.cards.slice(1), { ...card, id: 'drawn' as never }],
+        },
+      },
+    };
+    expect(
+      rebind(
+        {
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:${playerId}:discard`,
+        },
+        drawn
+      )
+    ).toMatchObject({ cardId: 'drawn' });
+  });
+
   it('names a card moved within the hand as the hand has it after the move', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
