@@ -68,6 +68,29 @@ describe('TablePoseMotion', () => {
     expect(frames.at(-1)!.elevation).toBe(1);
   });
 
+  it('hands a move on to the key a card is painted under now, on the same clock', () => {
+    const motion = new TablePoseMotion();
+    motion.set('card:predicted', pose(0, 1), 0);
+    motion.set('card:predicted', pose(300, 1), 0, 400, undefined, 0, 30);
+    const unanswered = new TablePoseMotion();
+    unanswered.set('card', pose(0, 1), 0);
+    unanswered.set('card', pose(300, 1), 0, 400, undefined, 0, 30);
+    motion.sample('card:predicted', 100);
+    motion.carry('card:predicted', 'card:answered');
+    expect(motion.has('card:predicted')).toBe(false);
+    for (const at of [150, 250, 399])
+      expect(motion.sample('card:answered', at)).toEqual(
+        unanswered.sample('card', at)
+      );
+    expect(motion.sample('card:answered', 400)).toEqual(pose(300, 1));
+    // A key that is already a card keeps its own.
+    motion.set('card:other', pose(50, 1), 400);
+    motion.set('card:mine', pose(0, 1), 400);
+    motion.set('card:mine', pose(300, 1), 400, 400);
+    motion.carry('card:mine', 'card:other');
+    expect(motion.target('card:other')).toEqual(pose(50, 1));
+  });
+
   it('sets a pile cover off from where the card put on it was, and lands it as the pile', () => {
     const motion = new TablePoseMotion();
     // The cover lies on its pile; the card put on it was across the table.

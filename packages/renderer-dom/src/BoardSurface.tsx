@@ -1084,8 +1084,16 @@ export const BoardSurface = ({
   useLayoutEffect(() => {
     setLiftHost(surfaceRef.current?.parentElement ?? null);
   }, []);
+  // A card flying out of a viewer is lifted over the windows too.
+  const [overWindows, setOverWindows] = useState(false);
+  useLayoutEffect(() => {
+    director.depth.onOverWindows = setOverWindows;
+    return () => {
+      director.depth.onOverWindows = null;
+    };
+  }, [director]);
   const lifting =
-    presentation.drag !== null &&
+    (presentation.drag !== null || overWindows) &&
     (presentation.openedZoneId !== null ||
       installedScene.zones.some(
         (zone) =>

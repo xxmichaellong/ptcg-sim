@@ -10,6 +10,8 @@
  * the original, which stays where it is (it holds the pointer) but unseen.
  * The copy carries no identity -- no card id, role or label -- so the table
  * still has one card, and assistive technology and tests read the original.
+ * A card flying out of a viewer (`data-over-windows`) is shown there too
+ * until it lands, or its whole flight would pass under the viewer.
  */
 
 /** Attributes a copy never takes from its original. */
@@ -93,7 +95,7 @@ export const liftHeldCards = (
     const held = new Set(
       Array.from(
         surface.querySelectorAll<HTMLElement>(
-          '.ptcgsim-card[data-held="drag"]:not([data-lift-copy])'
+          '.ptcgsim-card[data-held="drag"]:not([data-lift-copy]), .ptcgsim-card[data-over-windows]:not([data-lift-copy])'
         )
       )
     );

@@ -1077,3 +1077,188 @@ it('lets a card flying into a deck land before the deck is riffled', () => {
   expect(director.active).toBe(false);
   director.destroy();
 });
+
+/** Gives an element a place on screen, as a browser's layout would. */
+const placeAt = (element: Element, x: number, y: number, w = 0, h = 0) => {
+  element.getBoundingClientRect = () =>
+    ({
+      left: x,
+      top: y,
+      x,
+      y,
+      width: w,
+      height: h,
+      right: x + w,
+      bottom: y + h,
+    }) as DOMRect;
+};
+
+it('flies a card taken out of a viewer from where the viewer showed it, above the windows until it lands', () => {
+  const { advance } = stubClock();
+  const { view, cardsIn, withZones, project, elementsFor } = tableOf();
+  const discard = cardsIn(view, 'discard');
+  // A card under the discard's top, shown in the discard's viewer, taken
+  // into the hand.
+  const taken = discard[0]!;
+  const moved = withZones(view, {
+    discard: discard.slice(1),
+    hand: [...cardsIn(view, 'hand'), taken],
+  });
+  const first = project(view);
+  const landing = project(moved);
+  const elements = elementsFor(first, landing);
+  const table = document.createElement('div');
+  document.body.append(table);
+  placeAt(table, 0, 0);
+  const director = new TableDepthDirector(elements);
+  const lifted: boolean[] = [];
+  director.onOverWindows = (flying) => lifted.push(flying);
+  director.attach(table, document.createElement('div'));
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  // The viewer shows it here when the player presses the key; by the time
+  // the table hears of the move the viewer has let it go.
+  const shown = document.createElement('button');
+  shown.dataset.motionOrigin = String(taken.id);
+  placeAt(shown, 300, 120, 168, 234);
+  document.body.append(shown);
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'h' }));
+  shown.remove();
+  director.commit(
+    first.scene,
+    landing,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'predict' },
+    false,
+    1
+  );
+  const key = `card:${String(taken.id)}`;
+  // It sets off flat where the viewer showed it, not from the pile.
+  const start = director.current(key)!;
+  expect(start.plane).toBe(0);
+  expect(start.bounds).toEqual({ x: 300, y: 120, width: 168, height: 234 });
+  // Above the windows while it flies...
+  expect(elements.get(key)!.dataset.overWindows).toBe('');
+  expect(lifted).toEqual([true]);
+  for (let at = 16; at <= 1200; at += 16) advance(at);
+  // ...and among the table's own cards once it has landed in the hand.
+  expect(director.current(key)).toEqual(
+    landing.pose(landing.scene.cards.find((card) => card.renderKey === key)!)
+  );
+  expect(elements.get(key)!.dataset.overWindows).toBeUndefined();
+  expect(lifted).toEqual([true, false]);
+  director.destroy();
+  table.remove();
+});
+
+it('begins a move with the first frame that shows it, however slow that frame was', () => {
+  const { advance } = stubClock();
+  const { view, cardsIn, withZones, project, elementsFor } = tableOf();
+  const board = cardsIn(view, 'board');
+  const moved = withZones(view, {
+    board: board.slice(1),
+    hand: [...cardsIn(view, 'hand'), board[0]!],
+  });
+  const first = project(view);
+  const landing = project(moved);
+  const director = new TableDepthDirector(elementsFor(first, landing));
+  director.attach(document.createElement('div'), document.createElement('div'));
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  director.commit(
+    first.scene,
+    landing,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  const key = `card:${String(board[0]!.id)}`;
+  const start = director.current(key)!;
+  const end = landing.pose(
+    landing.scene.cards.find((card) => card.renderKey === key)!
+  );
+  const along = () =>
+    Math.hypot(
+      director.current(key)!.bounds.x - start.bounds.x,
+      director.current(key)!.bounds.y - start.bounds.y
+    ) /
+    Math.hypot(end.bounds.x - start.bounds.x, end.bounds.y - start.bounds.y);
+  // The first frame came 150 ms late (a new face decoded, a row laid out):
+  // the card is a frame along, not most of the way there already.
+  advance(150);
+  expect(along()).toBeLessThan(0.05);
+  // From then on it moves as it would have, and lands.
+  advance(166);
+  expect(along()).toBeGreaterThan(0);
+  for (let at = 182; at <= 1400; at += 16) advance(at);
+  expect(director.current(key)).toEqual(end);
+  expect(director.active).toBe(false);
+  director.destroy();
+});
+
+it('carries on a move the room re-aliases mid-flight, on its own clock', () => {
+  const { advance } = stubClock();
+  const { view, cardsIn, withZones, project, elementsFor } = tableOf();
+  const board = cardsIn(view, 'board');
+  // Predicted: a card goes from the board to the hand under its own alias.
+  // The room answers with the alias the hand knows it by.
+  const predicted = withZones(view, {
+    board: board.slice(1),
+    hand: [...cardsIn(view, 'hand'), board[0]!],
+  });
+  const answered = withZones(predicted, {
+    hand: [
+      ...cardsIn(view, 'hand'),
+      { ...board[0]!, id: asViewCardId('answered') } as ViewCard,
+    ],
+  });
+  const first = project(view);
+  const sent = project(predicted);
+  const answer = project(answered);
+  // The same move twice: answered mid-flight, and not answered at all.
+  const run = () => {
+    const elements = elementsFor(first, sent, answer);
+    const director = new TableDepthDirector(elements);
+    director.attach(
+      document.createElement('div'),
+      document.createElement('div')
+    );
+    director.commit(
+      null,
+      first,
+      DEFAULT_BOARD_PRESENTATION,
+      undefined,
+      false,
+      1
+    );
+    director.commit(
+      first.scene,
+      sent,
+      DEFAULT_BOARD_PRESENTATION,
+      { cause: 'predict' },
+      false,
+      1
+    );
+    return director;
+  };
+  const answeredRun = run();
+  const unanswered = run();
+  advance(96);
+  answeredRun.commit(
+    sent.scene,
+    answer,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  for (let at = 112; at <= 320; at += 16) {
+    advance(at);
+    // Where it is at each moment is where it would have been unanswered.
+    const carried = answeredRun.current('card:answered')!;
+    const alone = unanswered.current(`card:${String(board[0]!.id)}`)!;
+    expect(carried.bounds.x).toBeCloseTo(alone.bounds.x, 6);
+    expect(carried.bounds.y).toBeCloseTo(alone.bounds.y, 6);
+  }
+  answeredRun.destroy();
+  unanswered.destroy();
+});

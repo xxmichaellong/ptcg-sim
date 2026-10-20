@@ -192,6 +192,32 @@ export class TablePoseMotion {
     this.travel.delete(key);
     this.poses.delete(key);
   }
+  /**
+   * Holds back by `by` every move set off at or after `since` (a commit's
+   * moves, whose first frame came late): each begins where it is seen to,
+   * rather than most of the way along already.
+   */
+  postpone(since: number, by: number) {
+    if (by <= 0) return;
+    for (const [key, travel] of this.travel)
+      if (travel.start >= since)
+        this.travel.set(key, { ...travel, start: travel.start + by });
+  }
+  /**
+   * Hands a card's move on to the key it is painted under now (the room
+   * answering a predicted move under a new alias): the move goes on as it
+   * was, on its own clock, rather than setting off again from where the
+   * card is. A key that already has a card keeps its own.
+   */
+  carry(from: string, to: string) {
+    if (from === to || this.poses.has(to)) return;
+    const travel = this.travel.get(from);
+    const pose = this.poses.get(from);
+    if (travel) this.travel.set(to, travel);
+    if (pose) this.poses.set(to, pose);
+    this.travel.delete(from);
+    this.poses.delete(from);
+  }
   finish() {
     for (const [key, travel] of this.travel)
       this.poses.set(key, travel.becomes ?? travel.to);

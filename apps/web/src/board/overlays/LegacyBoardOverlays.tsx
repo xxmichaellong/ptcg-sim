@@ -1725,6 +1725,7 @@ const Preview = ({
           type="button"
           className="ptcgsim-legacy-stack-preview-card"
           data-stack-preview-card-id={card.id}
+          data-motion-origin={card.id}
           aria-label={`Preview ${card.label}`}
           // Keep focus on the stack view itself (its keyboard boundary and
           // Escape handling live there, and v1's stack view has no tab stops);
@@ -2148,6 +2149,7 @@ const ZoneBrowser = ({
               key={card.id}
               className="ptcgsim-zone-card"
               data-overlay-card-id={card.id}
+              data-motion-origin={card.id}
               data-copy-stack={count > 1 ? count : undefined}
               data-armed={drag.armedCardId === card.id ? 'true' : undefined}
               aria-label={
@@ -2355,6 +2357,7 @@ const WorkAreaPanel = ({
             key={card.id}
             className="ptcgsim-legacy-work-area-card"
             data-work-area-card-id={card.id}
+            data-motion-origin={card.id}
             aria-label={card.label}
             aria-pressed={state.presentation.selectedCardId === card.id}
             data-armed={drag.armedCardId === card.id ? 'true' : undefined}

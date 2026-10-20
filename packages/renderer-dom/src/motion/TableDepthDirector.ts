@@ -40,6 +40,19 @@ const HOVER_RAISE_MS = 140;
 const RIFFLE_MS = 900;
 /** A card turned over by hand, from flat to flat again. */
 const TURN_MS = 420;
+/** One frame, at sixty a second. */
+const FRAME_MS = 16;
+/**
+ * At most this much is held back for a slow first frame: more is no slow
+ * frame but a page out of sight (a tab in the background), where what went
+ * on meanwhile is over by the time it is seen again.
+ */
+const POSTPONE_MAX_MS = 250;
+/**
+ * How long after a press where viewer cards were still counts as where a
+ * card that left one set off.
+ */
+const ORIGIN_FRESH_MS = 1_500;
 /** A stand-in turns over from this share of its trip, over this share. */
 const GHOST_TURN_FROM = 0.1;
 const GHOST_TURN_FOR = 0.75;
@@ -177,6 +190,53 @@ export class TableDepthDirector {
   private layer: HTMLElement | null = null;
   private surface: HTMLElement | null = null;
   onActivity: (() => void) | null = null;
+  /**
+   * Told when cards start or stop flying out of a viewer open over the
+   * table, so whoever draws the table shows them above its windows (which
+   * would otherwise hide the whole flight).
+   */
+  onOverWindows: ((flying: boolean) => void) | null = null;
+  /** Cards flying out of a viewer, marked `data-over-windows`. */
+  private readonly overWindows = new Set<string>();
+  /**
+   * Where the cards shown in viewers over the table (`data-motion-origin`,
+   * by card id) were when the player last pressed a key or the pointer, in
+   * the table's own coordinates. By the time the table hears that a card
+   * moved it has gone from its viewer, so where it was shown is kept from
+   * then: it flies from there, not from the pile under the viewer.
+   */
+  private origins: {
+    readonly at: number;
+    readonly rects: Map<string, Rect>;
+  } | null = null;
+  private listening: Window | null = null;
+  /** When the last commit that set anything off was, until its first frame. */
+  private committedAt: number | null = null;
+  private readonly recordOrigins = (): void => {
+    const table = this.surface;
+    if (!table) return;
+    const shown = table.ownerDocument.querySelectorAll<HTMLElement>(
+      '[data-motion-origin]'
+    );
+    if (shown.length === 0) {
+      this.origins = null;
+      return;
+    }
+    const base = table.getBoundingClientRect();
+    const rects = new Map<string, Rect>();
+    for (const element of Array.from(shown)) {
+      const id = element.dataset.motionOrigin;
+      const box = element.getBoundingClientRect();
+      if (!id || box.width === 0 || box.height === 0) continue;
+      rects.set(id, {
+        x: box.left - base.left,
+        y: box.top - base.top,
+        width: box.width,
+        height: box.height,
+      });
+    }
+    this.origins = { at: timestamp(), rects };
+  };
 
   constructor(private readonly elements: ReadonlyMap<string, HTMLElement>) {}
   get active() {
@@ -284,6 +344,46 @@ export class TableDepthDirector {
   attach(surface: HTMLElement | null, layer: HTMLElement | null) {
     this.surface = surface;
     this.layer = layer;
+    const view = surface?.ownerDocument.defaultView ?? null;
+    if (view === this.listening) return;
+    this.listening?.removeEventListener('keydown', this.recordOrigins, true);
+    this.listening?.removeEventListener(
+      'pointerdown',
+      this.recordOrigins,
+      true
+    );
+    // On the window, capturing: before anything acts on the press, while
+    // the card is still in its viewer.
+    view?.addEventListener('keydown', this.recordOrigins, true);
+    view?.addEventListener('pointerdown', this.recordOrigins, true);
+    this.listening = view;
+  }
+
+  /**
+   * Where viewers showed cards at the player's last press, if that was just
+   * now. (Whether a viewer still shows a card says nothing yet: the viewers
+   * may draw after the table does.)
+   */
+  private viewed(at: number): ReadonlyMap<string, Rect> {
+    const origins = this.origins;
+    return origins && at - origins.at <= ORIGIN_FRESH_MS
+      ? origins.rects
+      : new Map();
+  }
+
+  /** Shows a card flying out of a viewer above the table's windows, or not. */
+  private liftOverWindows(key: string, over: boolean) {
+    const before = this.overWindows.size > 0;
+    const element = this.elements.get(key);
+    if (over) {
+      this.overWindows.add(key);
+      if (element) element.dataset.overWindows = '';
+    } else {
+      this.overWindows.delete(key);
+      if (element) delete element.dataset.overWindows;
+    }
+    const after = this.overWindows.size > 0;
+    if (before !== after) this.onOverWindows?.(after);
   }
 
   commit(
@@ -320,6 +420,25 @@ export class TableDepthDirector {
     this.cards.clear();
     for (const card of next.cards)
       if (card.renderKey !== null) this.cards.set(card.renderKey, card);
+    // Cards out of a viewer fly from where it showed them; one re-aliased
+    // on its way (the room answering) carries on above the windows.
+    const viewed = plan ? this.viewed(at) : new Map<string, Rect>();
+    const overWindows = new Set(this.overWindows);
+    // A card re-aliased mid-move carries on the move its old node had under
+    // way, on the same clock: set off again from where it was last painted,
+    // it would stall there before gathering speed.
+    for (const flight of plan?.flights ?? [])
+      if (
+        flight.fromRenderKey !== undefined &&
+        !this.cards.has(flight.fromRenderKey) &&
+        this.motion.has(flight.fromRenderKey)
+      ) {
+        if (this.airborne.has(flight.fromRenderKey))
+          this.airborne.add(flight.renderKey);
+        this.motion.carry(flight.fromRenderKey, flight.renderKey);
+      }
+    for (const key of overWindows)
+      if (!this.cards.has(key)) this.liftOverWindows(key, false);
     for (const key of this.motion.poses.keys())
       if (!this.cards.has(key) && !this.ghosts.has(key)) {
         this.shuffles.delete(key);
@@ -399,14 +518,39 @@ export class TableDepthDirector {
         oldPose &&
         (oldPose.bounds.x !== oldCard.bounds.x ||
           oldPose.bounds.y !== oldCard.bounds.y);
-      const source = flight
-        ? this.sourcePose(
-            flight.from,
-            flight.fromRotationQuarterTurns,
-            oldProjection,
-            target
-          )
+      // Taken out of a viewer over the table: it sets off flat, face up,
+      // where the viewer showed it, not from the pile under the viewer. Only
+      // a card that went somewhere else: one a viewer showed that stayed
+      // where it was (a Pokémon whose Energy left, a card put back on top of
+      // the pile its viewer shows) is not one.
+      const inViewer = flight ? viewed.get(String(card.id)) : undefined;
+      const was = inViewer
+        ? oldProjection?.scene.cards.find((old) => old.id === card.id)
         : undefined;
+      const shownAt =
+        inViewer && was && was.parentId !== card.parentId
+          ? inViewer
+          : undefined;
+      if (shownAt) this.origins?.rects.delete(String(card.id));
+      const source = shownAt
+        ? {
+            bounds: shownAt,
+            turns: 0,
+            elevation: 0,
+            thickness:
+              shownAt.width *
+              TABLE_CARD_THICKNESS *
+              projection.settings.strength,
+            plane: 0,
+          }
+        : flight
+          ? this.sourcePose(
+              flight.from,
+              flight.fromRotationQuarterTurns,
+              oldProjection,
+              target
+            )
+          : undefined;
       // The node now shows a card that was somewhere else: a pile's cover
       // taking the card put on it. It sets off from where that card was,
       // not from the pile it already covers.
@@ -415,8 +559,14 @@ export class TableDepthDirector {
         source !== undefined &&
         oldCard !== undefined &&
         oldPose !== undefined &&
-        (Math.abs(flight.from.x - oldCard.bounds.x) > 0.5 ||
+        (shownAt !== undefined ||
+          Math.abs(flight.from.x - oldCard.bounds.x) > 0.5 ||
           Math.abs(flight.from.y - oldCard.bounds.y) > 0.5);
+      // The face it sets off showing: a viewer shows every card face up.
+      const fromImageUrl = shownAt ? was?.imageUrl : flight?.fromImageUrl;
+      const turnsOver =
+        fromImageUrl !== undefined &&
+        fromImageUrl !== (card.tableImageUrl ?? card.imageUrl);
       const onlyHeight =
         !fromElsewhere &&
         before &&
@@ -507,7 +657,7 @@ export class TableDepthDirector {
         arc,
         settles,
         {
-          restart: fromElsewhere,
+          restart: fromElsewhere || shownAt !== undefined,
           ...(ontoPile ? { becomes: target } : {}),
         }
       );
@@ -526,13 +676,28 @@ export class TableDepthDirector {
           this.airborne.add(key);
         else this.airborne.delete(key);
       }
-      if (flight?.fromImageUrl && (duration > 0 || this.durationScale === 0))
+      // Out of a viewer, it flies above the windows over the table; carried
+      // on under a new alias, it stays above them.
+      if (
+        duration > 0 &&
+        (shownAt !== undefined ||
+          (flight?.fromRenderKey !== undefined &&
+            overWindows.has(flight.fromRenderKey)))
+      )
+        this.liftOverWindows(key, true);
+      else if (this.overWindows.has(key) && !this.motion.has(key))
+        this.liftOverWindows(key, false);
+      if (
+        fromImageUrl !== undefined &&
+        turnsOver &&
+        (duration > 0 || this.durationScale === 0)
+      )
         // Turned over by hand during the move: it sets off showing its old
         // face and turns over a little way into the trip. Onto a pile it is
         // over before it lands, as it is the whole pile from then on.
         this.flipFace(
           key,
-          flight.fromImageUrl,
+          fromImageUrl,
           at + delay + duration * (ontoPile ? 0.1 : 0.2),
           ontoPile
             ? Math.min(TURN_MS * this.durationScale, duration * 0.8)
@@ -640,6 +805,8 @@ export class TableDepthDirector {
         }
       }
     }
+    // Whatever this set off starts with the first frame that shows it.
+    if (this.active && this.durationScale > 0) this.committedAt = at;
     this.schedule();
     this.onActivity?.();
   }
@@ -955,6 +1122,22 @@ export class TableDepthDirector {
     if (!this.lifted(key)) delete element.dataset.flying;
   }
 
+  /** Holds back by `by` everything set off at or after `since`. */
+  private postpone(since: number, by: number) {
+    if (by <= 0) return;
+    this.motion.postpone(since, by);
+    for (const flip of this.flips.values())
+      if (flip.start >= since && Number.isFinite(flip.start)) flip.start += by;
+    for (const ghost of this.ghosts.values())
+      if (ghost.start >= since) {
+        ghost.start += by;
+        ghost.expires += by;
+      }
+    for (const [key, riffle] of this.riffles)
+      if (riffle.start >= since)
+        this.riffles.set(key, { ...riffle, start: riffle.start + by });
+  }
+
   /**
    * A card's pose as far through its turn over as it is at `at`: a card
    * repainted mid-turn (the room answering) stays turned, not flat for a
@@ -1163,6 +1346,15 @@ export class TableDepthDirector {
 
   private readonly tick = (at: number) => {
     this.frame = null;
+    // The first frame after a commit: what it set off begins now, a frame
+    // along, not as far along as the commit and a slow frame (a new face
+    // decoded, a row laid out) took -- it would jump there.
+    const since = this.committedAt;
+    this.committedAt = null;
+    if (since !== null) {
+      const late = at - since - FRAME_MS;
+      if (late <= POSTPONE_MAX_MS) this.postpone(since, late);
+    }
     const sampled = this.motion.sampleAll(at);
     for (const [key, pose] of sampled) this.paint(key, pose, at);
     for (const key of new Set([...this.lifts.keys(), ...this.raises.keys()])) {
@@ -1170,6 +1362,10 @@ export class TableDepthDirector {
       const pose = this.motion.poses.get(key);
       if (pose) this.paint(key, pose, at);
     }
+    // Landed out of a viewer, a card is back among the table's own.
+    for (const key of [...this.overWindows])
+      if (!this.motion.has(key) && !this.flips.has(key))
+        this.liftOverWindows(key, false);
     // Cards that landed earlier keep their lift until their group has landed.
     for (const [key, element] of this.elements) {
       if (element.dataset.flying !== undefined && !this.lifted(key)) {
@@ -1300,6 +1496,7 @@ export class TableDepthDirector {
     this.released.clear();
     this.airborne.clear();
     this.raises.clear();
+    for (const key of [...this.overWindows]) this.liftOverWindows(key, false);
     this.hovered = null;
     this.onActivity?.();
   }
@@ -1312,5 +1509,13 @@ export class TableDepthDirector {
     this.markers.clear();
     this.projection = null;
     this.context = '';
+    this.origins = null;
+    this.listening?.removeEventListener('keydown', this.recordOrigins, true);
+    this.listening?.removeEventListener(
+      'pointerdown',
+      this.recordOrigins,
+      true
+    );
+    this.listening = null;
   }
 }

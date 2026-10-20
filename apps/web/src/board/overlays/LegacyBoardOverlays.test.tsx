@@ -1681,6 +1681,8 @@ describe('legacy board overlays', () => {
       `[data-overlay-card-id="${discardCards[0]!.id}"]`
     )!;
     expect(source.getAttribute('draggable')).toBe('false');
+    // Moved out of the viewer, the card flies from here.
+    expect(source.dataset.motionOrigin).toBe(String(discardCards[0]!.id));
     vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
       x: 20,
       y: 20,
@@ -1857,6 +1859,8 @@ describe('legacy board overlays', () => {
     const source = host.querySelector<HTMLElement>(
       `[data-stack-preview-card-id="${top.id}"]`
     )!;
+    // Moved out of the preview, the card flies from here.
+    expect(source.dataset.motionOrigin).toBe(String(top.id));
     vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
       x: 100,
       y: 100,
@@ -2570,6 +2574,11 @@ describe('legacy board overlays', () => {
       ...panel.querySelectorAll<HTMLButtonElement>('[data-work-area-card-id]'),
     ];
     expect(cards.map((card) => card.dataset.workAreaCardId)).toEqual([
+      first.id,
+      second.id,
+    ]);
+    // Moved out of the window, each flies from where it is shown.
+    expect(cards.map((card) => card.dataset.motionOrigin)).toEqual([
       first.id,
       second.id,
     ]);
