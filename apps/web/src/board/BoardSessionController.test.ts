@@ -309,6 +309,43 @@ describe('headless board session controller', () => {
     ).toEqual({ cardId, x: 5, y: 6, targetId: null });
   });
 
+  it('marks the Active sent to a bench of one as a swap, as its Pokémon comes up', () => {
+    const state = install();
+    const cardId = cardIn(state.scene!, ':hand');
+    const benched = (expectedBenchStackIds: string[]) =>
+      apply(
+        state,
+        {
+          kind: 'RendererPresentationUpdated',
+          update: {
+            kind: 'DragChanged',
+            drag: { cardId, x: 5, y: 6, targetId: 'zone:spike-blue:discard' },
+          },
+        },
+        {
+          ...dependencies,
+          resolveDrop: () => ({
+            ok: true,
+            command: {
+              type: 'MovePlayStack',
+              stackId: 'stack:active',
+              expectedSourceSlot: 'active',
+              expectedActiveStackId: 'stack:active',
+              expectedBenchStackIds,
+              destinationSlot: 'bench',
+            } as never,
+          }),
+        }
+      ).state.presentation.drag?.action;
+    expect(benched(['stack:lone'])).toEqual({
+      kind: 'swap',
+      stackId: 'stack:lone',
+    });
+    // With two or none benched, it is benched and nothing comes up.
+    expect(benched(['stack:one', 'stack:two'])).toBeUndefined();
+    expect(benched([])).toBeUndefined();
+  });
+
   it('cancels reconnect gestures without reinstalling a phase-only scene', () => {
     let state = install();
     const cardId = cardIn(state.scene!, ':hand');

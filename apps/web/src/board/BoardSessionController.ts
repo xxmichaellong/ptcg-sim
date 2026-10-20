@@ -1507,8 +1507,9 @@ const dropOutcome = (
 
 /**
  * A drop that trades two Pokémon's places (onto another of the player's
- * Pokémon, or a Benched one onto the occupied Active): the table marks the
- * one it would swap with.
+ * Pokémon, a Benched one onto the occupied Active, or the Active onto a
+ * bench of one, whose Pokémon comes up in its place as in v1): the table
+ * marks the one it would swap with.
  */
 const swapAction = (
   command: WireGameCommand | null
@@ -1522,6 +1523,15 @@ const swapAction = (
     command.expectedActiveStackId !== command.stackId
   ) {
     return { kind: 'swap', stackId: command.expectedActiveStackId };
+  }
+  const [lone, ...others] = command.expectedBenchStackIds;
+  if (
+    command.destinationSlot === 'bench' &&
+    command.expectedSourceSlot === 'active' &&
+    lone !== undefined &&
+    others.length === 0
+  ) {
+    return { kind: 'swap', stackId: lone };
   }
   return undefined;
 };
