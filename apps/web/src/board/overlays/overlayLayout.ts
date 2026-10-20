@@ -97,9 +97,9 @@ const runLength = (count: number, size: number): number =>
  * fits in two rows, and at the compact size beyond that. The panel shrinks
  * to that content and grows to the whole board less a margin, scrolling
  * past that. `zoom` scales only the cards (1 draws them as fitted), never
- * smaller than a card is worth drawing nor larger than one card fits the
- * panel: the panel keeps its size and place while they grow or shrink, so
- * dragging the size slider never moves it.
+ * smaller than a card is worth drawing nor larger than one fits the board:
+ * the panel keeps its size and place while they grow or shrink, scrolling
+ * when they outgrow it, so dragging the size slider never moves it.
  */
 export const zoneBrowserLayout = (
   board: OverlayBoardSize,
@@ -147,11 +147,15 @@ export const zoneBrowserLayout = (
     Math.min(chromeHeight + fittedHeight, maxHeight),
     maxHeight
   );
+  // Zoomed past what the panel shows, the cards scroll inside it.
   const scale = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
   const cardHeight = clamp(
     fittedHeight * scale,
     OVERLAY_CARD_MIN_HEIGHT,
-    Math.min(height - chromeHeight, (width - chromeWidth) / CARD_ASPECT_RATIO)
+    Math.min(
+      maxHeight - chromeHeight,
+      (width - chromeWidth) / CARD_ASPECT_RATIO
+    )
   );
   return {
     left: (board.width - width) / 2,

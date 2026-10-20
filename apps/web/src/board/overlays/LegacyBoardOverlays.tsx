@@ -129,7 +129,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
-import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -1206,26 +1206,22 @@ export const zoneCopyCounts = (
 };
 
 /**
- * An overlay's way out: an X in the red a close button usually is, its
- * word and key in the tooltip.
+ * An overlay's way out: an X in the red a close button usually is. It has
+ * no tooltip: the window puts focus on it as it opens, and a tooltip opened
+ * by that focus would take the first Esc meant for the window.
  */
 const OverlayCloseButton = ({
   className,
-  side = 'bottom',
   ...props
-}: {
-  readonly side?: 'top' | 'bottom';
-} & Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'type'>) => (
-  <Tooltip content={withKeyHint('Close', 'Esc')} side={side}>
-    <button
-      type="button"
-      aria-label="Close"
-      {...props}
-      className={`ptcgsim-overlay-button ptcgsim-overlay-close${className ? ` ${className}` : ''}`}
-    >
-      <XIcon aria-hidden="true" weight="bold" />
-    </button>
-  </Tooltip>
+}: Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'type'>) => (
+  <button
+    type="button"
+    aria-label="Close"
+    {...props}
+    className={`ptcgsim-overlay-button ptcgsim-overlay-close${className ? ` ${className}` : ''}`}
+  >
+    <XIcon aria-hidden="true" weight="bold" />
+  </button>
 );
 
 /**
@@ -1544,11 +1540,7 @@ const Preview = ({
           className="ptcgsim-preview-controls"
           onClick={(event) => event.stopPropagation()}
         >
-          <OverlayCloseButton
-            data-preview-tabbable="true"
-            side="top"
-            onClick={dismiss}
-          />
+          <OverlayCloseButton data-preview-tabbable="true" onClick={dismiss} />
           <button
             type="button"
             className="ptcgsim-overlay-button"
@@ -1621,7 +1613,6 @@ const Preview = ({
         <OverlayCloseButton
           data-preview-tabbable="true"
           aria-label="Close card preview"
-          side="top"
           onClick={dismiss}
         />
         {canModify &&
@@ -1712,11 +1703,7 @@ const Preview = ({
           >
             View assembled card
           </button>
-          <OverlayCloseButton
-            data-preview-tabbable="true"
-            side="top"
-            onClick={dismiss}
-          />
+          <OverlayCloseButton data-preview-tabbable="true" onClick={dismiss} />
         </div>
       ) : null}
       {cards.map((card) => (
@@ -2166,12 +2153,12 @@ const ZoneBrowser = ({
                 // A second click that opened this panel belongs to the pile,
                 // not to the card that just appeared under the pointer; one
                 // that opens a preview leaves the selection as it was.
-                if (event.detail > 1) return;
-                firstClickCard.current = card.id;
+                if (event.detail === 2) return;
+                if (event.detail <= 1) firstClickCard.current = card.id;
                 actions.emitOpenedZoneCardIntent({
                   kind: 'CardSelected',
                   cardId: card.id,
-                  toggle: true,
+                  ...(event.detail > 2 ? {} : { toggle: true }),
                 });
               }}
               onDoubleClick={(event) => {
@@ -2369,9 +2356,13 @@ const WorkAreaPanel = ({
                 firstClickCard.current = null;
                 return;
               }
-              if (event.detail > 1) return;
-              firstClickCard.current = card.id;
-              emit?.({ kind: 'CardSelected', cardId: card.id, toggle: true });
+              if (event.detail === 2) return;
+              if (event.detail <= 1) firstClickCard.current = card.id;
+              emit?.({
+                kind: 'CardSelected',
+                cardId: card.id,
+                ...(event.detail > 2 ? {} : { toggle: true }),
+              });
             }}
             onDoubleClick={(event) => {
               if (event.detail === 0 || firstClickCard.current === card.id)

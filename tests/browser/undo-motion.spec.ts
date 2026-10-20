@@ -110,9 +110,12 @@ const watchTable = (page: Page) =>
       for (const record of records) {
         if (record.type === 'childList') {
           for (const node of record.addedNodes) {
+            // A pile's stand-in, holding its old top while a card lands
+            // on it, is the pile, not a ghost.
             if (
               node instanceof HTMLElement &&
-              node.parentElement?.closest('.ptcgsim-ghost-layer')
+              node.parentElement?.closest('.ptcgsim-ghost-layer') &&
+              node.dataset['ghost'] !== 'pile'
             )
               ghosts += 1;
           }

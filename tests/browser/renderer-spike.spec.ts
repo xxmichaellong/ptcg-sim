@@ -764,7 +764,12 @@ test('native and shared input follow center-rotated card paint in both candidate
     await page.mouse.click(185, 150);
     await expect
       .poll(async () => JSON.parse((await host.getAttribute('data-intents'))!))
-      .toContainEqual({ kind: 'CardSelected', cardId: 'rotation-target' });
+      .toContainEqual(
+        expect.objectContaining({
+          kind: 'CardSelected',
+          cardId: 'rotation-target',
+        })
+      );
 
     await host.evaluate((element) => {
       if (!(element instanceof HTMLElement)) return;

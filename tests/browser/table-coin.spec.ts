@@ -112,9 +112,19 @@ test('the coin lies on the tilted table and a press tosses it onto the room’s 
   await page.mouse.move(5, 5);
   await flipAndLand(page, 'local', () => page.keyboard.press('f'));
   await openActivity(page);
-  await expect(
-    page.locator('#activitySheet').getByText(/flipped (heads|tails)$/u)
-  ).toHaveCount(2);
+  // Two flips: two lines, or one with a count when both came up the same.
+  await expect
+    .poll(() =>
+      page
+        .locator('#activitySheet p[data-event-type="CoinFlipped"]')
+        .evaluateAll((rows) =>
+          rows.reduce(
+            (sum, row) => sum + Number(row.getAttribute('data-repeat') ?? 1),
+            0
+          )
+        )
+    )
+    .toBe(2);
 });
 
 test('Solo flips the far coin for the other seat', async ({ page }) => {

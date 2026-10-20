@@ -101,7 +101,21 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   await stack.click();
   await expect(cards).toHaveCount(47);
   // Card size is a linear zoom on the fitted size, inside a panel that
-  // keeps its size and place.
+  // keeps its size and place. It eases to a new size: read it once there.
+  const settledSize = () =>
+    browser.evaluate((element) => {
+      const style = (element as HTMLElement).style;
+      return (
+        Math.abs(
+          parseFloat(
+            getComputedStyle(element).getPropertyValue(
+              '--ptcgsim-zone-card-height'
+            )
+          ) - parseFloat(style.getPropertyValue('--ptcgsim-zone-card-height'))
+        ) < 0.5
+      );
+    });
+  await expect.poll(settledSize).toBe(true);
   const initialHeight = (await cards.first().boundingBox())!.height;
   const panel = await browser.boundingBox();
   const larger = browser.getByRole('button', { name: 'Larger cards' });

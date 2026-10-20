@@ -595,9 +595,14 @@ const CardNode = memo(
         return;
       }
       // The second click of a double click opens the preview; it leaves the
-      // selection the first one made.
-      if (clicks > 1) return;
-      emitIntent({ kind: 'CardSelected', cardId: card.id, toggle: true });
+      // selection the first one made. Clicks past that keep the card
+      // selected, as v1's rapid clicks did.
+      if (clicks === 2) return;
+      emitIntent({
+        kind: 'CardSelected',
+        cardId: card.id,
+        ...(clicks > 2 ? {} : { toggle: true }),
+      });
     };
     useLayoutEffect(() => {
       const image = imageRef.current;

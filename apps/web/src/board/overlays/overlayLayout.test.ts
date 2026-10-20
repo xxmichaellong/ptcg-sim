@@ -106,7 +106,7 @@ describe('overlay layout', () => {
     // Never larger than one card fits the panel, never below the minimum.
     const huge = zoneBrowserLayout(LAPTOP, 3, 2);
     expectOnBoard(huge, LAPTOP);
-    expect(huge.cardHeight).toBeLessThanOrEqual(huge.height);
+    expect(huge.cardHeight).toBeLessThan(LAPTOP.height);
     expect(zoneBrowserLayout(SMALL, 3, 0.01).cardHeight).toBe(
       OVERLAY_CARD_MIN_HEIGHT
     );
@@ -125,8 +125,9 @@ describe('overlay layout', () => {
             zoomed.width,
             zoomed.height,
           ]).toEqual([box.left, box.top, box.width, box.height]);
-          // The cards grow inside it, never past what it shows.
-          expect(zoomed.cardHeight).toBeLessThan(box.height);
+          // The cards grow inside it, never wider than it nor taller than
+          // the board.
+          expect(zoomed.cardHeight).toBeLessThan(board.height);
           expect(zoomed.cardHeight * CARD_ASPECT_RATIO).toBeLessThan(box.width);
         }
       }

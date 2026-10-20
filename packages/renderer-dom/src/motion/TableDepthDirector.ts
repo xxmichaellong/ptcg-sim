@@ -1007,6 +1007,7 @@ export class TableDepthDirector {
     element.dataset.depthCard = 'true';
     if (options?.bands !== undefined) {
       // A stand-in pile shows its edges and shadows like the real one.
+      element.dataset.ghost = 'pile';
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('class', 'ptcgsim-card__depth');
       svg.setAttribute('aria-hidden', 'true');

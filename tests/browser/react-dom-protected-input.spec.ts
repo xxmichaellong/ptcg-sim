@@ -1496,8 +1496,11 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
   );
   const sourceCard = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
   const selectCard = async (card: Locator, cardId: string): Promise<void> => {
-    const point = await exposedCardPoint(card);
-    await page.mouse.click(point.x, point.y);
+    // Pressing the selected card lets it go: press it only to select it.
+    if ((await evidence(page)).presentation.selectedCardId !== cardId) {
+      const point = await exposedCardPoint(card);
+      await page.mouse.click(point.x, point.y);
+    }
     await expect
       .poll(async () => (await evidence(page)).presentation.selectedCardId)
       .toBe(cardId);
