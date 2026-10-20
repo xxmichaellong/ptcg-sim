@@ -8,6 +8,7 @@ import {
   tablePoseQuad,
 } from './board-depth.js';
 import { TablePoseMotion } from './table-pose-motion.js';
+import { projectTablePoint } from './table-camera.js';
 import { createBoardScene } from './scene.js';
 import {
   createTableLayoutSnapshot,
@@ -72,8 +73,9 @@ describe('live board depth', () => {
       const pose = askew.pose(card);
       expect(again.pose(card)).toEqual(pose);
       expect(tidy.pose(card).turns).toBe(card.rotationQuarterTurns);
-      expect(tidy.pose(card).bounds).toEqual(card.bounds);
       const kind = zones.get(card.parentId)?.kind;
+      // A hand comes in to meet the tilted mat (below); the rest lie true.
+      if (kind !== 'hand') expect(tidy.pose(card).bounds).toEqual(card.bounds);
       const yaw = Math.abs(pose.turns - card.rotationQuarterTurns) * 90;
       if (
         pose.plane === 0 ||
@@ -90,6 +92,57 @@ describe('live board depth', () => {
       if (yaw > 0) moved += 1;
     }
     expect(moved).toBeGreaterThan(0);
+  });
+
+  it('brings each flat hand in to meet the tilted mat, and leaves a flat table alone', () => {
+    const scene = fixture();
+    const table = new BoardDepthProjection(scene, preferences);
+    const flat = new BoardDepthProjection(scene, {
+      ...preferences,
+      depth: { ...preferences.depth!, mode: 'flat' },
+    });
+    const centre = scene.viewport.height / 2;
+    let checked = 0;
+    for (const zone of scene.zones.filter((zone) => zone.kind === 'hand')) {
+      const cards = scene.cards.filter(
+        (card) => card.parentId === zone.id && card.renderKey !== null
+      );
+      if (cards.length === 0) continue;
+      checked += 1;
+      const strip = zone.bounds;
+      const near = strip.y + strip.height / 2 >= centre;
+      const inner = near ? strip.y : strip.y + strip.height;
+      const edge = projectTablePoint(table.camera, {
+        x: strip.x + strip.width / 2,
+        y: inner,
+        z: 0,
+      }).y;
+      const reach = Math.abs(inner - edge) - 6;
+      expect(reach).toBeGreaterThan(10);
+      const poses = cards.map((card) => table.pose(card).bounds);
+      // Its cards reach in to the mat's edge, a hair short of it...
+      const reached = near
+        ? Math.min(...poses.map((pose) => pose.y))
+        : Math.max(...poses.map((pose) => pose.y + pose.height));
+      const laid = near
+        ? Math.min(...cards.map((card) => card.bounds.y))
+        : Math.max(...cards.map((card) => card.bounds.y + card.bounds.height));
+      expect(Math.abs(reached - laid)).toBeGreaterThan(reach * 0.9);
+      cards.forEach((card, index) => {
+        const pose = poses[index]!;
+        // ...grown by the strip's share, still in their strip across.
+        expect(pose.height / card.bounds.height).toBeCloseTo(
+          Math.min(1.4, (strip.height + reach) / strip.height),
+          6
+        );
+        expect(pose.x).toBeGreaterThanOrEqual(strip.x - 0.5);
+        expect(pose.x + pose.width).toBeLessThanOrEqual(
+          strip.x + strip.width + 0.5
+        );
+        expect(flat.pose(card).bounds).toEqual(card.bounds);
+      });
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   it('lays a marker on its card, a hair above it, and carries it with the card', () => {
@@ -424,7 +477,9 @@ describe('a flat card turned over', () => {
     // the other.
     const middle = bounds.x + bounds.width / 2;
     expect(b!.x - a!.x).toBeLessThan(bounds.width * 0.75);
-    expect((a!.x + b!.x) / 2).toBeCloseTo(middle, -1);
+    expect(Math.abs((a!.x + b!.x) / 2 - middle)).toBeLessThan(
+      bounds.width * 0.05
+    );
     expect(Math.abs(c!.y - b!.y - (d!.y - a!.y))).toBeGreaterThan(
       bounds.height * 0.05
     );

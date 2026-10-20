@@ -63,6 +63,11 @@ export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
  */
 const FLAT_TURN_DISTANCE = 3;
 
+/** The felt left showing between a tilted mat's near edge and a hand. */
+const HAND_EDGE_GAP_PX = 6;
+/** The most a hand grows to meet a tilted mat. */
+const HAND_GROWTH_MAXIMUM = 1.4;
+
 /** A number in [0, 1) that a key always gives, for a card's resting lie. */
 const keyedUnit = (key: string, salt: number): number => {
   let hash = 2166136261 ^ salt;
@@ -424,9 +429,76 @@ export class BoardDepthProjection {
     // With reduced motion it is still raised, only without moving there.
     this.liftRatio =
       this.enabled && this.settings.lift ? 0.45 * this.settings.strength : 0;
-    this.hands = scene.zones
-      .filter((zone) => zone.kind === 'hand')
-      .map((zone) => zone.bounds);
+    // Tilted, the mat is foreshortened: between a flat hand and the mat's
+    // near edge lies a band of bare felt. Each hand comes in to meet the
+    // mat's edge, growing by the same share so it still runs off the
+    // screen's edge as before; its cards spread no wider than their strip.
+    const handFits = new Map<string, (rect: Rect) => Rect>();
+    const handReach = new Map<string, Rect>();
+    if (this.enabled && this.settings.mode === 'table') {
+      for (const zone of handStrips) {
+        const strip = zone.bounds;
+        if (strip.height <= 0) continue;
+        const near = strip.y + strip.height / 2 >= centre;
+        const inner = near ? strip.y : strip.y + strip.height;
+        const middle = strip.x + strip.width / 2;
+        const edge = projectTablePoint(this.camera, {
+          x: middle,
+          y: inner,
+          z: 0,
+        }).y;
+        const reach = (near ? inner - edge : edge - inner) - HAND_EDGE_GAP_PX;
+        if (!(reach > 1)) continue;
+        // Its inner edge meets the mat's; it grows as far as running off
+        // the screen's edge as before asks, within reason (a tilted phone).
+        const grow = Math.min(
+          HAND_GROWTH_MAXIMUM,
+          (strip.height + reach) / strip.height
+        );
+        const reached = near ? inner - reach : inner + reach;
+        const cards = scene.cards.filter((card) => card.parentId === zone.id);
+        const spread = Math.max(
+          1,
+          ...cards.map((card) =>
+            Math.abs(card.bounds.x + card.bounds.width / 2 - middle)
+          )
+        );
+        const across = Math.max(
+          1,
+          Math.min(
+            grow,
+            (strip.width / 2 -
+              (Math.max(0, ...cards.map((card) => card.bounds.width)) * grow) /
+                2) /
+              spread
+          )
+        );
+        handFits.set(zone.id, (rect) => {
+          const centreX = middle + (rect.x + rect.width / 2 - middle) * across;
+          // Measured from the strip's inner edge, which lands on the mat's.
+          const fromInner = near
+            ? rect.y - inner
+            : rect.y + rect.height - inner;
+          const y = reached + fromInner * grow;
+          return {
+            x: centreX - (rect.width * grow) / 2,
+            y: near ? y : y - rect.height * grow,
+            width: rect.width * grow,
+            height: rect.height * grow,
+          };
+        });
+        handReach.set(zone.id, {
+          ...strip,
+          y: Math.min(strip.y, reached),
+          height:
+            Math.max(strip.y + strip.height, reached) -
+            Math.min(strip.y, reached),
+        });
+      }
+    }
+    this.hands = handStrips.map(
+      (zone) => handReach.get(zone.id) ?? zone.bounds
+    );
     this.painted = scene.cards
       .filter((card) => card.renderKey !== null)
       .sort((a, b) => b.zIndex - a.zIndex);
@@ -490,7 +562,7 @@ export class BoardDepthProjection {
               x: card.bounds.x + (keyedUnit(key, 1) - 0.5) * 2 * spread,
               y: card.bounds.y + (keyedUnit(key, 2) - 0.5) * 2 * spread,
             }
-          : card.bounds,
+          : (handFits.get(card.parentId)?.(card.bounds) ?? card.bounds),
         turns:
           card.rotationQuarterTurns +
           (scattered ? ((keyedUnit(key, 3) - 0.5) * 2 * degrees) / 90 : 0),
