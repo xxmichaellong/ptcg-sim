@@ -32,7 +32,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react": "6.1.1",
-    "vite": "8.2.2"
+    "vite": "8.2.4"
   },
   "imports": {
     "#lingui-react": "./src/i18n/react.tsx"
