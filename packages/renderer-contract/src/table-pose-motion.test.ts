@@ -67,4 +67,37 @@ describe('TablePoseMotion', () => {
     expect(frames.at(-1)!.bounds.x).toBe(300);
     expect(frames.at(-1)!.elevation).toBe(1);
   });
+
+  it('sets a pile cover off from where the card put on it was, and lands it as the pile', () => {
+    const motion = new TablePoseMotion();
+    // The cover lies on its pile; the card put on it was across the table.
+    const pile = { ...pose(500, 20), thickness: 20 };
+    motion.set('cover', pile, 0);
+    const card = pose(0, 1);
+    const onTop = { ...pose(500, 20.5), thickness: 0.5 };
+    const grown = { ...pose(500, 20.5), thickness: 20.5 };
+    motion.set('cover', onTop, 0, 400, card, 0, 0, false, {
+      restart: true,
+      becomes: grown,
+    });
+    // It sets off from the card, not from the pile it already covered.
+    expect(motion.sample('cover', 0)!.bounds.x).toBe(0);
+    // It travels as one card...
+    const midway = motion.sample('cover', 200)!;
+    expect(midway.bounds.x).toBeGreaterThan(0);
+    expect(midway.bounds.x).toBeLessThan(500);
+    expect(midway.thickness).toBe(0.5);
+    // ...is going to be the pile, as far as a newer move can tell...
+    expect(motion.target('cover')).toEqual(grown);
+    // ...and is the pile once it lands.
+    expect(motion.sample('cover', 400)).toEqual(grown);
+    expect(motion.active).toBe(false);
+    // Finished early, it is the pile too.
+    motion.set('cover', onTop, 400, 400, card, 0, 0, false, {
+      restart: true,
+      becomes: grown,
+    });
+    motion.finish();
+    expect(motion.poses.get('cover')).toEqual(grown);
+  });
 });

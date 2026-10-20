@@ -40,9 +40,33 @@ const HOVER_RAISE_MS = 140;
 const RIFFLE_MS = 900;
 /** A card turned over by hand, from flat to flat again. */
 const TURN_MS = 420;
+/** A stand-in turns over from this share of its trip, over this share. */
+const GHOST_TURN_FROM = 0.1;
+const GHOST_TURN_FOR = 0.75;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
 const easeInOut = (t: number): number =>
   t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+/**
+ * A card `progress` of the way through being turned over: on its edge
+ * halfway, where its faces change.
+ */
+const turnedOver = (base: TableCardPose, progress: number): TableCardPose => {
+  const turn = easeInOut(progress);
+  const angle =
+    progress >= 1 ? 0 : turn < 0.5 ? turn * Math.PI : (turn - 1) * Math.PI;
+  return {
+    ...base,
+    flip: angle,
+    // Turned about its middle, a card on the table rises by half its width
+    // so its edge never dips under the cloth, and a little more, as a card
+    // is tossed over.
+    elevation:
+      base.elevation +
+      base.plane *
+        base.bounds.width *
+        (0.5 * Math.abs(Math.sin(angle)) + 0.06 * Math.sin(Math.PI * progress)),
+  };
+};
 interface Ghost {
   element: HTMLElement;
   expires: number;
@@ -67,6 +91,13 @@ interface Flip {
   readonly duration: number;
   stopWaiting?: () => void;
 }
+/** How far through its turn a card is at `at`, from 0 to 1. */
+const turnProgress = (flip: Flip, at: number): number =>
+  flip.duration > 0
+    ? Math.max(0, Math.min(1, (at - flip.start) / flip.duration))
+    : at >= flip.start
+      ? 1
+      : 0;
 interface Shuffle {
   key: string;
   base: TableCardPose;
@@ -355,16 +386,14 @@ export class TableDepthDirector {
       }
       const flight = flights.get(key);
       const before = this.motion.target(key);
-      const onlyHeight =
-        before &&
-        before.bounds.x === target.bounds.x &&
-        before.bounds.y === target.bounds.y &&
-        before.bounds.width === target.bounds.width &&
-        before.turns === target.turns;
       const oldCard = oldCards.get(key);
       const oldPose = this.sourcePainted.get(key);
+      // A pile whose top was carried off by hand now shows the card under
+      // it, in its place at once. Only a top that was held: one still flying
+      // in onto the pile is the same card, re-aliased by the room.
       const replacedHeldPile =
         card.primaryAction &&
+        releasedAt !== undefined &&
         oldCard &&
         oldCard.id !== card.id &&
         oldPose &&
@@ -378,6 +407,29 @@ export class TableDepthDirector {
             target
           )
         : undefined;
+      // The node now shows a card that was somewhere else: a pile's cover
+      // taking the card put on it. It sets off from where that card was,
+      // not from the pile it already covers.
+      const fromElsewhere =
+        flight !== undefined &&
+        source !== undefined &&
+        oldCard !== undefined &&
+        oldPose !== undefined &&
+        (Math.abs(flight.from.x - oldCard.bounds.x) > 0.5 ||
+          Math.abs(flight.from.y - oldCard.bounds.y) > 0.5);
+      const onlyHeight =
+        !fromElsewhere &&
+        before &&
+        before.bounds.x === target.bounds.x &&
+        before.bounds.y === target.bounds.y &&
+        before.bounds.width === target.bounds.width &&
+        before.turns === target.turns;
+      // Let go of over the pile it now covers: it settles onto it, as any
+      // card put down does, rather than being carried there.
+      const letGo =
+        fromElsewhere &&
+        flight?.fromRenderKey !== undefined &&
+        this.held.has(flight.fromRenderKey);
       // A card carried across the table takes longer the further it goes,
       // and arcs above its path as a hand would carry it.
       const distance = source
@@ -395,6 +447,7 @@ export class TableDepthDirector {
         held ||
         discontinuity ||
         (!cause && previous !== next);
+      const settles = landing || letGo;
       const duration = still
         ? 0
         : this.durationScale *
@@ -402,7 +455,7 @@ export class TableDepthDirector {
             ? projection.settings.animate
               ? LANDING_DESCENT_MS
               : 0
-            : landing
+            : settles
               ? // Put down by hand: it slides the last of the way into its
                 // place, quickly, as a card pushed square on the table does.
                 Math.min(300, Math.max(180, 160 + 0.15 * distance))
@@ -413,12 +466,21 @@ export class TableDepthDirector {
                     MAKE_ROOM_MS
                   : 420);
       const arc =
-        source && duration > 0 && target.plane === 1 && !landing
+        source && duration > 0 && target.plane === 1 && !settles
           ? Math.min(
               target.bounds.width,
               Math.max(0.25 * target.bounds.width, 0.2 * distance)
             ) * projection.settings.strength
           : 0;
+      // A card flown onto a pile travels as the one card it is, onto the
+      // pile as it was (its old top holds it, see planBoardMotion), and is
+      // the whole pile once it lands.
+      const single =
+        target.bounds.width *
+        TABLE_CARD_THICKNESS *
+        projection.settings.strength;
+      const ontoPile =
+        fromElsewhere && duration > 0 && target.thickness > single;
       // In its place now: the next move of it is an ordinary one.
       if (landing && !onlyHeight && duration > 0) this.released.delete(key);
       const from = source
@@ -432,15 +494,22 @@ export class TableDepthDirector {
             ),
           }
         : undefined;
+      const delay = settles
+        ? 0
+        : (flight?.delay ?? 0) * 1000 * this.durationScale;
       this.motion.set(
         key,
-        target,
+        ontoPile ? { ...target, thickness: single } : target,
         at,
         duration,
         from,
-        landing ? 0 : (flight?.delay ?? 0) * 1000 * this.durationScale,
+        delay,
         arc,
-        landing
+        settles,
+        {
+          restart: fromElsewhere,
+          ...(ontoPile ? { becomes: target } : {}),
+        }
       );
       // A travel that carries on to the same place keeps its kind. A card
       // that stays in its zone only slides along the row (a hand taking a
@@ -452,19 +521,22 @@ export class TableDepthDirector {
       if (!continues) {
         if (
           duration > 0 &&
-          (landing || onlyHeight || (source !== undefined && !slides))
+          (settles || onlyHeight || (source !== undefined && !slides))
         )
           this.airborne.add(key);
         else this.airborne.delete(key);
       }
       if (flight?.fromImageUrl && (duration > 0 || this.durationScale === 0))
         // Turned over by hand during the move: it sets off showing its old
-        // face and turns over a little way into the trip.
+        // face and turns over a little way into the trip. Onto a pile it is
+        // over before it lands, as it is the whole pile from then on.
         this.flipFace(
           key,
           flight.fromImageUrl,
-          at + flight.delay * 1000 * this.durationScale + duration * 0.2,
-          TURN_MS * this.durationScale
+          at + delay + duration * (ontoPile ? 0.1 : 0.2),
+          ontoPile
+            ? Math.min(TURN_MS * this.durationScale, duration * 0.8)
+            : TURN_MS * this.durationScale
         );
       else if (flight?.fromRenderKey) this.carryFlip(flight.fromRenderKey, key);
       if (held) {
@@ -473,11 +545,16 @@ export class TableDepthDirector {
       }
       const pose = this.motion.poses.get(key) ?? target;
       // Still cards keep their existing transforms and edge paths. Repaint a
-      // changed descriptor as React may have restored its target transform.
+      // changed descriptor, or a card given a new place, as React has drawn
+      // it there already: left as React drew it, it would flash in its new
+      // place for a frame before setting off (a row making room for a held
+      // card).
       if (
         discontinuity ||
         !oldCard ||
         !oldPose ||
+        !before ||
+        !sameTablePose(before, target) ||
         depthPaintKey(oldCard) !== depthPaintKey(card) ||
         oldProjection?.pileCounts.get(oldCard.id) !==
           projection.pileCounts.get(card.id) ||
@@ -485,8 +562,12 @@ export class TableDepthDirector {
         (this.elements.get(key)?.dataset.flying !== undefined) !==
           this.lifted(key)
       )
-        this.paint(key, pose, at);
+        this.paint(key, this.turning(key, pose, at), at);
     }
+    // A card that was held and is gone from the table (put into a pile,
+    // its cover taking over) is held no more.
+    for (const key of this.held)
+      if (!this.cards.has(key)) this.held.delete(key);
     // Who is lifted is settled once every travel of this commit is known: a
     // card looked at before its stack-mate's flight was set would otherwise
     // sit at the wrong height in the order for a frame or two.
@@ -511,6 +592,12 @@ export class TableDepthDirector {
           oldProjection,
           target
         );
+        // The old top holding a pile stands in for the whole pile as it
+        // was, its edges and all, under the card flying onto it.
+        const holder = ghost.holdFor ? oldCards.get(ghost.holdFor) : undefined;
+        const bands = holder
+          ? (oldProjection?.pileCounts.get(holder.id) ?? 1)
+          : undefined;
         this.addGhost(
           ghost.imageUrl,
           from,
@@ -518,7 +605,11 @@ export class TableDepthDirector {
           at,
           ghost.delay * 1000 * this.durationScale,
           ghost.holdFor,
-          ghost.toImageUrl
+          ghost.toImageUrl,
+          bands === undefined
+            ? undefined
+            : // It lasts until that card has landed, however late it set off.
+              { bands, lasts: this.landsIn(ghost.holdFor!) + TURN_MS }
         );
       }
       for (const shuffle of plan.shuffles) {
@@ -588,9 +679,10 @@ export class TableDepthDirector {
     rect: Rect,
     turns: number,
     image: string,
-    start: number,
+    requestedStart: number,
     projection: BoardDepthProjection
   ) {
+    let start = requestedStart;
     const cover = projection.scene.cards.find(
       (card) =>
         card.renderKey !== null &&
@@ -602,6 +694,20 @@ export class TableDepthDirector {
       ? projection.pose(cover)
       : this.sourcePose(rect, turns, projection);
     if (base.thickness <= 0) return;
+    // Cards still flying into the pile (sent off before the room answered
+    // with the shuffle) land on it before it is riffled.
+    for (const key of [...this.ghosts.keys(), cover?.renderKey]) {
+      if (!key || this.ghosts.get(key)?.holdFor) continue;
+      const end = this.motion.endsAt(key);
+      const to = this.motion.target(key);
+      if (
+        end !== null &&
+        to &&
+        Math.abs(to.bounds.x - rect.x) < 1 &&
+        Math.abs(to.bounds.y - rect.y) < 1
+      )
+        start = Math.max(start, end);
+    }
     const duration = RIFFLE_MS * this.durationScale;
     const lasts = start - timestamp() + duration;
     const half = {
@@ -849,6 +955,18 @@ export class TableDepthDirector {
     if (!this.lifted(key)) delete element.dataset.flying;
   }
 
+  /**
+   * A card's pose as far through its turn over as it is at `at`: a card
+   * repainted mid-turn (the room answering) stays turned, not flat for a
+   * frame.
+   */
+  private turning(key: string, pose: TableCardPose, at: number): TableCardPose {
+    const flip = this.flips.get(key);
+    return flip && flip.duration > 0
+      ? turnedOver(pose, turnProgress(flip, at))
+      : pose;
+  }
+
   /** A card's height with its hover raise and the lift it is rising through. */
   private height(key: string, target: TableCardPose, now: number): number {
     const elevation = target.elevation + Math.max(0, this.raiseAt(key, now));
@@ -1059,43 +1177,14 @@ export class TableDepthDirector {
       }
     }
     for (const [key, flip] of this.flips) {
-      const progress =
-        flip.duration > 0
-          ? Math.max(0, Math.min(1, (at - flip.start) / flip.duration))
-          : at >= flip.start
-            ? 1
-            : 0;
+      const progress = turnProgress(flip, at);
       if (progress >= 0.5) {
         flip.image?.remove();
         flip.image = null;
       }
       const base = this.motion.poses.get(key) ?? this.painted.get(key);
-      if (base && flip.duration > 0) {
-        const turn = easeInOut(progress);
-        const angle =
-          progress >= 1
-            ? 0
-            : turn < 0.5
-              ? turn * Math.PI
-              : (turn - 1) * Math.PI;
-        this.paint(
-          key,
-          {
-            ...base,
-            flip: angle,
-            // Turned about its middle, a card on the table rises by half its
-            // width so its edge never dips under the cloth, and a little
-            // more, as a card is tossed over.
-            elevation:
-              base.elevation +
-              base.plane *
-                base.bounds.width *
-                (0.5 * Math.abs(Math.sin(angle)) +
-                  0.06 * Math.sin(Math.PI * progress)),
-          },
-          at
-        );
-      }
+      if (base && flip.duration > 0)
+        this.paint(key, turnedOver(base, progress), at);
       if (progress === 1) this.clearFlip(key);
     }
     for (const [key, shuffle] of this.shuffles) {
@@ -1129,9 +1218,28 @@ export class TableDepthDirector {
     for (const [key, riffle] of this.riffles)
       if (this.paintRiffle(riffle, at)) this.riffles.delete(key);
     for (const [key, ghost] of this.ghosts) {
-      if (ghost.toImage && at >= ghost.start + ghost.duration * 0.5) {
-        const img = ghost.element.querySelector('img');
-        if (img && img.src !== ghost.toImage) img.src = ghost.toImage;
+      if (ghost.toImage) {
+        // Turned over on the way, as the card it stands in for would be:
+        // its faces change on its edge, halfway through the turn.
+        const progress =
+          ghost.duration > 0
+            ? Math.max(
+                0,
+                Math.min(
+                  1,
+                  (at - ghost.start - GHOST_TURN_FROM * ghost.duration) /
+                    (GHOST_TURN_FOR * ghost.duration)
+                )
+              )
+            : 1;
+        if (progress >= 0.5) {
+          const img = ghost.element.querySelector('img');
+          if (img && img.getAttribute('src') !== ghost.toImage)
+            img.src = ghost.toImage;
+        }
+        const base = this.motion.poses.get(key);
+        if (base && progress > 0 && progress < 1)
+          this.paint(key, turnedOver(base, progress), at);
       }
       if (
         at >= ghost.expires ||

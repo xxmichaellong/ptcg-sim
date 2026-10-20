@@ -10,6 +10,7 @@ import { DEFAULT_BOARD_PRESENTATION } from './defaults.js';
 import { withHeldCards } from './held-cards.js';
 import { planBoardMotion } from './motion-plan.js';
 import { createBoardSceneForViewport } from './scene.js';
+import type { CardSceneNode } from './model.js';
 import { createRendererSpikeView } from './spike-fixture.js';
 
 const blue = 'spike-blue';
@@ -570,6 +571,79 @@ describe('planBoardMotion', () => {
       });
       // The deck's stand-in cover is no card: nothing else flies or fades.
       expect(plan.ghosts.map((ghost) => ghost.holdFor)).toEqual([discardKey]);
+    });
+  });
+
+  describe('a card put into a deck', () => {
+    const hand = cardsOf(base, zoneId(blue, 'hand'));
+    const deck = cardsOf(base, zoneId(blue, 'deck'));
+    const before = sceneOf(base);
+    const deckKey = `cover:${zoneId(blue, 'deck')}`;
+    const put = hand[0]!;
+    const source = before.cards.find((card) => card.id === put.id)!;
+    const oldTop = before.cards.find((card) => card.renderKey === deckKey)!;
+    const painted = (card: CardSceneNode) =>
+      card.tableImageUrl ?? card.imageUrl;
+
+    it('flies it onto the top while the old top holds the pile, though both show the back', () => {
+      // Predicted, it keeps its alias; the deck's cover shows its back.
+      const after = sceneOf(
+        withZones(base, {
+          [zoneId(blue, 'hand')]: hand.slice(1),
+          [zoneId(blue, 'deck')]: [put, ...deck],
+        })
+      );
+      const cover = after.cards.find((card) => card.renderKey === deckKey)!;
+      expect(painted(cover)).toBe(painted(oldTop));
+      const plan = planBoardMotion(before, after, 'predict');
+      expect(
+        plan.flights.find((flight) => flight.renderKey === deckKey)
+      ).toMatchObject({
+        from: source.bounds,
+        fromImageUrl: painted(source),
+      });
+      expect(
+        plan.ghosts.find((ghost) => ghost.holdFor === deckKey)
+      ).toMatchObject({
+        imageUrl: painted(oldTop),
+        from: oldTop.bounds,
+        to: oldTop.bounds,
+      });
+    });
+
+    it('does the same for an opponent card the room puts on their deck under a new alias', () => {
+      const board = cardsOf(base, zoneId(red, 'board'));
+      const redDeck = cardsOf(base, zoneId(red, 'deck'));
+      const redKey = `cover:${zoneId(red, 'deck')}`;
+      const after = sceneOf(
+        withZones(base, {
+          [zoneId(red, 'board')]: board.slice(1),
+          [zoneId(red, 'deck')]: [freshConcealed(red, 'red-put'), ...redDeck],
+        })
+      );
+      const left = before.cards.find((card) => card.id === board[0]!.id)!;
+      const plan = planBoardMotion(before, after, 'advance');
+      expect(
+        plan.flights.find((flight) => flight.renderKey === redKey)
+      ).toMatchObject({ kind: 'enter', from: left.bounds });
+      expect(plan.ghosts.map((ghost) => ghost.holdFor)).toEqual([redKey]);
+    });
+
+    it('turns it face down on its way under the top', () => {
+      const after = sceneOf(
+        withZones(base, {
+          [zoneId(blue, 'hand')]: hand.slice(1),
+          [zoneId(blue, 'deck')]: [...deck, put],
+        })
+      );
+      const plan = planBoardMotion(before, after, 'predict');
+      expect(plan.ghosts).toEqual([
+        expect.objectContaining({
+          imageUrl: painted(source),
+          from: source.bounds,
+          toImageUrl: painted(oldTop),
+        }),
+      ]);
     });
   });
 

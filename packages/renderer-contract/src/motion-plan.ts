@@ -368,6 +368,34 @@ export const planBoardMotion = (
   const movedIn = new Map<string, number>();
   const tally = (counts: Map<string, number>, containerId: string) =>
     counts.set(containerId, (counts.get(containerId) ?? 0) + 1);
+  /**
+   * A painted node that now shows a card arriving from elsewhere, where it
+   * showed one that is still there beneath it: a pile's cover taking the
+   * card put on it. The card that was on top keeps the pile covered until
+   * the new one lands, whether or not the two look alike (two card backs
+   * on a deck): the cover itself flies in from where the card was.
+   */
+  const holdOldTop = (card: CardSceneNode, from: Rect): void => {
+    const key = card.renderKey!;
+    const before = previousByKey.get(key);
+    if (
+      !before ||
+      before.id === card.id ||
+      !nextById.has(String(before.id)) ||
+      sameRect(from, card.bounds)
+    )
+      return;
+    ghosts.push({
+      key: `hold:${key}:${String(next.revision)}`,
+      imageUrl: paintedImage(before),
+      from: before.bounds,
+      fromRotationQuarterTurns: before.rotationQuarterTurns,
+      to: before.bounds,
+      toRotationQuarterTurns: before.rotationQuarterTurns,
+      delay: 0,
+      holdFor: key,
+    });
+  };
 
   for (const card of nextPainted) {
     const key = card.renderKey!;
@@ -415,24 +443,7 @@ export const planBoardMotion = (
           delay: 0,
           kind: sameNode ? 'move' : 'enter',
         });
-        // A pile cover now shows the incoming card while it is still on its
-        // way; the card that was on top keeps the pile covered until then.
-        if (
-          sameNode &&
-          nextById.has(String(sameNode.id)) &&
-          paintedImage(sameNode) !== paintedImage(card)
-        ) {
-          ghosts.push({
-            key: `hold:${key}:${String(next.revision)}`,
-            imageUrl: paintedImage(sameNode),
-            from: sameNode.bounds,
-            fromRotationQuarterTurns: sameNode.rotationQuarterTurns,
-            to: sameNode.bounds,
-            toRotationQuarterTurns: sameNode.rotationQuarterTurns,
-            delay: 0,
-            holdFor: key,
-          });
-        }
+        holdOldTop(card, sameCard.bounds);
       }
       continue;
     }
@@ -448,11 +459,18 @@ export const planBoardMotion = (
     if (isPileStandIn(card)) continue;
     const stillThere = nextById.get(String(card.id));
     if (stillThere) {
-      // Now hidden inside a pile (no longer its top): it slides under.
+      // Now hidden inside a pile (no longer its top): it slides under. Into
+      // a deck it goes face down, as the deck's cover shows it.
       if (
         !sameRect(card.bounds, stillThere.bounds) ||
         card.rotationQuarterTurns !== stillThere.rotationQuarterTurns
       ) {
+        const deck = next.zones.some(
+          (zone) => zone.id === stillThere.parentId && zone.kind === 'deck'
+        )
+          ? pileFace(next, stillThere.parentId)
+          : undefined;
+        const toImageUrl = deck ? paintedImage(deck) : undefined;
         ghosts.push({
           key: `ghost:${card.renderKey!}:${String(next.revision)}`,
           imageUrl: paintedImage(card),
@@ -460,6 +478,9 @@ export const planBoardMotion = (
           fromRotationQuarterTurns: card.rotationQuarterTurns,
           to: stillThere.bounds,
           toRotationQuarterTurns: stillThere.rotationQuarterTurns,
+          ...(toImageUrl && toImageUrl !== paintedImage(card)
+            ? { toImageUrl }
+            : {}),
           delay: 0,
         });
       }
@@ -574,6 +595,7 @@ export const planBoardMotion = (
           delay: stagger(source.containerId),
           kind: 'enter',
         });
+        holdOldTop(card, source.rect);
       } else {
         flights.push({
           renderKey: card.renderKey!,

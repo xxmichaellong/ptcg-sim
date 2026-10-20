@@ -48,6 +48,8 @@ interface Travel {
    * decelerating motion, with no spring past its place.
    */
   landing: boolean;
+  /** What it is once it arrives, when that is not what travelled: see set. */
+  becomes?: TableCardPose;
 }
 
 /** Decelerating to rest, never past it. */
@@ -86,13 +88,23 @@ export class TablePoseMotion {
     return this.travel.has(key);
   }
   target(key: string) {
-    return this.travel.get(key)?.to ?? this.poses.get(key);
+    const travel = this.travel.get(key);
+    return travel ? (travel.becomes ?? travel.to) : this.poses.get(key);
   }
   /** When the card's current move ends, on the clock it was set with. */
   endsAt(key: string): number | null {
     const travel = this.travel.get(key);
     return travel ? travel.start + travel.delay + travel.duration : null;
   }
+  /**
+   * Moves a card to `target` over `duration`, from wherever it is now (or
+   * from `from`, if it is nowhere yet). `restart` sets it off from `from`
+   * even so: the painted node now shows a card that was somewhere else (a
+   * pile's cover taking the card put on it). `becomes` is the pose it takes
+   * on arrival, when that is not the one it travels to: a card flown onto a
+   * pile travels as one card and, landed, is the pile's cover again, as
+   * thick as the pile.
+   */
   set(
     key: string,
     target: TableCardPose,
@@ -101,14 +113,26 @@ export class TablePoseMotion {
     from?: TableCardPose,
     delay = 0,
     arc = 0,
-    landing = false
+    landing = false,
+    {
+      restart = false,
+      becomes,
+    }: { readonly restart?: boolean; readonly becomes?: TableCardPose } = {}
   ) {
+    const arrival = becomes ?? target;
     const oldTarget = this.target(key);
-    if (duration > 0 && oldTarget && sameTablePose(oldTarget, target)) return;
-    const current = this.sample(key, now) ?? from ?? target;
+    if (
+      duration > 0 &&
+      !restart &&
+      oldTarget &&
+      sameTablePose(oldTarget, arrival)
+    )
+      return;
+    const current =
+      (restart && from ? from : this.sample(key, now)) ?? from ?? target;
     this.travel.delete(key);
     if (duration <= 0 || sameTablePose(current, target)) {
-      this.poses.set(key, target);
+      this.poses.set(key, arrival);
       return;
     }
     this.poses.set(key, current);
@@ -120,6 +144,7 @@ export class TablePoseMotion {
       delay,
       arc: Math.max(0, arc),
       landing,
+      ...(becomes ? { becomes } : {}),
     });
   }
   sample(key: string, now: number): TableCardPose | undefined {
@@ -130,9 +155,10 @@ export class TablePoseMotion {
       (now - travel.start - travel.delay) / travel.duration
     );
     if (progress >= 1) {
+      const arrived = travel.becomes ?? travel.to;
       this.travel.delete(key);
-      this.poses.set(key, travel.to);
-      return travel.to;
+      this.poses.set(key, arrived);
+      return arrived;
     }
     // Neither easing passes its mark: a card overshooting would come down
     // past its place, or sink into the table, and bob back.
@@ -167,7 +193,8 @@ export class TablePoseMotion {
     this.poses.delete(key);
   }
   finish() {
-    for (const [key, travel] of this.travel) this.poses.set(key, travel.to);
+    for (const [key, travel] of this.travel)
+      this.poses.set(key, travel.becomes ?? travel.to);
     this.travel.clear();
   }
   clear() {

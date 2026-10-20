@@ -10,9 +10,16 @@ import {
   createRendererSpikeView,
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
+  sameTablePose,
+  TABLE_CARD_THICKNESS,
   tablePoseMatrix,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type ViewCard,
+} from '@ptcgsim/game-core';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -802,5 +809,271 @@ it('lifts only what is carried through the air; a hand making room or taking a n
     expect.arrayContaining([pokemon.renderKey, energy.renderKey])
   );
   expect(lifted()).not.toContain(hand[0]!.renderKey);
+  director.destroy();
+});
+
+/** A clock the tests drive frame by frame. */
+const stubClock = () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let serial = 0;
+  let now = 0;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frames.set(++serial, callback);
+    return serial;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+  return {
+    advance: (at: number) => {
+      now = at;
+      for (const [id, frame] of [...frames]) {
+        frames.delete(id);
+        frame(now);
+      }
+    },
+  };
+};
+
+/** The table's scenes for views of the spike match, and edits of them. */
+const tableOf = () => {
+  const view = createRendererSpikeView();
+  const blue = view.playerOrder[0]!;
+  const layout = createTableLayoutSnapshot({
+    viewport: { width: 1280, height: 900, devicePixelRatio: 1 },
+    playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+    bottomPlayerId: blue,
+    shellMode: 'fullscreen',
+    geometryVersion: 2,
+    vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+  });
+  const zone = (kind: string) => `zone:${blue}:${kind}`;
+  const cardsIn = (state: MatchViewState, kind: string) =>
+    state.zones[zone(kind)]!.cards;
+  const withZones = (
+    state: MatchViewState,
+    zones: Record<string, readonly ViewCard[]>
+  ): MatchViewState => ({
+    ...state,
+    revision: state.revision + 1,
+    zones: {
+      ...state.zones,
+      ...Object.fromEntries(
+        Object.entries(zones).map(([kind, cards]) => [
+          zone(kind),
+          { ...state.zones[zone(kind)]!, cards },
+        ])
+      ),
+    },
+  });
+  const concealed = (alias: string): ViewCard => ({
+    kind: 'concealed',
+    id: asViewCardId(alias),
+    ownerId: blue,
+    cardBackUrl: view.players[blue]!.cardBackUrl,
+    publiclyRevealed: false,
+  });
+  const preferences = {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
+  };
+  const project = (state: MatchViewState) =>
+    new BoardDepthProjection(createBoardScene(state, layout), preferences);
+  /** One painted element per render key the scenes have, with a face. */
+  const elementsFor = (...projections: BoardDepthProjection[]) =>
+    new Map(
+      projections
+        .flatMap((projection) => projection.scene.cards)
+        .filter((card) => card.renderKey !== null)
+        .map((card) => {
+          const element = document.createElement('button');
+          const face = document.createElement('span');
+          face.className = 'ptcgsim-card__face';
+          element.append(face);
+          return [card.renderKey!, element] as const;
+        })
+    );
+  return { view, zone, cardsIn, withZones, concealed, project, elementsFor };
+};
+
+it('flies a card put on a pile from where it was, as one card over the pile as it was, and lands as the pile', () => {
+  const { advance } = stubClock();
+  const { view, zone, cardsIn, withZones, concealed, project, elementsFor } =
+    tableOf();
+  const put = cardsIn(view, 'board')[0]!;
+  const deck = cardsIn(view, 'deck');
+  // Predicted: the card keeps its alias on top of the deck. The room then
+  // answers with the alias the owner sees it by there.
+  const predicted = withZones(view, {
+    board: cardsIn(view, 'board').slice(1),
+    deck: [put, ...deck],
+  });
+  const answered = withZones(predicted, {
+    deck: [concealed('answered'), ...deck],
+  });
+  const first = project(view);
+  const landing = project(predicted);
+  const answer = project(answered);
+  const elements = elementsFor(first, landing, answer);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  const key = `cover:${zone('deck')}`;
+  const start = first.pose(first.scene.cards.find((c) => c.id === put.id)!);
+  director.commit(
+    first.scene,
+    landing,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'predict' },
+    false,
+    1
+  );
+  // It sets off from where the card lay, not from the deck it covers...
+  expect(director.current(key)!.bounds.x).toBeCloseTo(start.bounds.x, 6);
+  expect(director.current(key)!.bounds.y).toBeCloseTo(start.bounds.y, 6);
+  // ...while the deck as it was stays put under it, edges and all.
+  expect(
+    layer.querySelector('.ptcgsim-card-ghost [data-depth-side]')
+  ).not.toBeNull();
+  advance(150);
+  const target = answer.pose(
+    answer.scene.cards.find((card) => card.renderKey === key)!
+  );
+  const midway = director.current(key)!;
+  expect(midway.bounds.x).not.toBeCloseTo(start.bounds.x, 0);
+  expect(midway.bounds.x).not.toBeCloseTo(target.bounds.x, 0);
+  // One card in the air, not the whole deck.
+  expect(midway.thickness).toBeLessThanOrEqual(
+    midway.bounds.width * TABLE_CARD_THICKNESS + 1e-9
+  );
+  // The room's answer re-aliases it mid-flight: it carries on.
+  director.commit(
+    landing.scene,
+    answer,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  expect(director.current(key)).toEqual(midway);
+  for (let at = 166; at <= 1600; at += 16) advance(at);
+  // Landed, it is the whole deck again, and the stand-in is gone.
+  expect(director.current(key)).toEqual(target);
+  expect(layer.childElementCount).toBe(0);
+  expect(director.active).toBe(false);
+  director.destroy();
+});
+
+it('repaints a card React has drawn in its new place, so it never flashes there before setting off', () => {
+  stubClock();
+  const { view, zone, project, elementsFor } = tableOf();
+  const projection = project(view);
+  const elements = elementsFor(projection);
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), document.createElement('div'));
+  director.commit(
+    null,
+    projection,
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  const hand = projection.scene.cards
+    .filter((card) => card.parentId === zone('hand'))
+    .sort((left, right) => left.bounds.x - right.bounds.x);
+  const held = hand.at(-1)!;
+  elements.get(held.renderKey!)!.dataset.held = 'drag';
+  const holding = {
+    ...DEFAULT_BOARD_PRESENTATION,
+    drag: {
+      cardId: held.id,
+      x: hand[0]!.bounds.x,
+      y: hand[0]!.bounds.y + 20,
+      targetId: zone('hand'),
+      index: 0,
+    },
+  };
+  const making = hand.filter(
+    (card) =>
+      card !== held &&
+      !sameTablePose(
+        projection.pose(card, holding),
+        projection.pose(card, DEFAULT_BOARD_PRESENTATION)
+      )
+  );
+  expect(making.length).toBeGreaterThan(0);
+  const before = new Map(
+    making.map((card) => [
+      card.renderKey!,
+      elements.get(card.renderKey!)!.style.transform,
+    ])
+  );
+  // React draws the row where it is going before the director hears of it.
+  for (const card of making)
+    elements.get(card.renderKey!)!.style.transform =
+      `matrix3d(${tablePoseMatrix(
+        projection.camera,
+        projection.pose(card, holding)
+      ).join(',')})`;
+  director.commit(projection.scene, projection, holding, undefined, false, 1);
+  // Each is drawn where it sets off from, as it was.
+  for (const card of making)
+    expect(elements.get(card.renderKey!)!.style.transform).toBe(
+      before.get(card.renderKey!)
+    );
+  director.destroy();
+});
+
+it('lets a card flying into a deck land before the deck is riffled', () => {
+  const { advance } = stubClock();
+  const { view, zone, cardsIn, withZones, concealed, project, elementsFor } =
+    tableOf();
+  const put = cardsIn(view, 'hand')[0]!;
+  const deck = cardsIn(view, 'deck');
+  // Predicted: the card goes under the deck. The room answers that it was
+  // shuffled in: every card of the deck has a new alias.
+  const predicted = withZones(view, {
+    hand: cardsIn(view, 'hand').slice(1),
+    deck: [...deck, put],
+  });
+  const shuffled = withZones(predicted, {
+    deck: [...deck, put].map((_, index) => concealed(`shuffled-${index}`)),
+  });
+  const first = project(view);
+  const sent = project(predicted);
+  const riffled = project(shuffled);
+  const elements = elementsFor(first, sent, riffled);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  director.commit(
+    first.scene,
+    sent,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'predict' },
+    false,
+    1
+  );
+  advance(100);
+  director.commit(
+    sent.scene,
+    riffled,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'advance' },
+    false,
+    1
+  );
+  const pile = elements.get(`cover:${zone('deck')}`)!;
+  // The card is still on its way: the deck is not riffled under it.
+  advance(250);
+  expect(pile.style.opacity).not.toBe('0');
+  // Landed, the deck is riffled.
+  for (let at = 266; at <= 700; at += 16) advance(at);
+  expect(pile.style.opacity).toBe('0');
+  for (let at = 716; at <= 2400; at += 16) advance(at);
+  expect(pile.style.opacity).toBe('');
+  expect(director.active).toBe(false);
   director.destroy();
 });
