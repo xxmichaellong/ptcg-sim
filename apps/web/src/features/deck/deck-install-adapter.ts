@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import {
   isSessionFinished,
   type ClientSessionState,
@@ -518,21 +519,21 @@ export const deckInstallFailureNotice = (
         case 'aborted':
           return undefined;
         case 'too_many_cards':
-          return `The table takes at most ${String(MAX_DECK_CARDS)} cards.`;
+          return t`The table takes at most ${{ max: MAX_DECK_CARDS }} cards.`;
         case 'too_many_entries':
-          return `The table takes at most ${String(MAX_DECK_ENTRIES)} different cards.`;
+          return t`The table takes at most ${{ max: MAX_DECK_ENTRIES }} different cards.`;
         case 'missing_image':
-          return 'A card in it has no picture.';
+          return t`A card in it has no picture.`;
         case 'url_too_long':
-          return "A card's picture address is too long.";
+          return t`A card's picture address is too long.`;
         case 'name_too_long':
-          return "A card's name is too long.";
+          return t`A card's name is too long.`;
         default:
-          return "Its cards couldn't be read.";
+          return t`Its cards couldn't be read.`;
       }
     case 'session':
       return undefined;
     default:
-      return "The room didn't take it. Try again.";
+      return t`The room didn't take it. Try again.`;
   }
 };

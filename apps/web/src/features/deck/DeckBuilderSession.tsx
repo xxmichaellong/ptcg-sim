@@ -37,6 +37,7 @@ import {
   type DeckInstallCoordinatorFailure,
   type DeckInstallSession,
 } from './deck-install-adapter.js';
+import { t } from '@lingui/core/macro';
 import { seatStage } from '../../board/seat-stage.js';
 import { toast } from '../../ui/toast.js';
 
@@ -45,7 +46,7 @@ const noticeInstallFailure = (failure: DeckInstallCoordinatorFailure): void => {
   if (body) {
     toast({
       id: 'deck-install-failed',
-      title: "The deck didn't go on the table",
+      title: t`The deck didn't go on the table`,
       body,
       tone: 'warning',
     });

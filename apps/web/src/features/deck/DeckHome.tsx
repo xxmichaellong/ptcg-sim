@@ -13,6 +13,9 @@ import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { i18n } from '@lingui/core';
+import { plural, t as translate } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   catalogIndex,
   checkDeck,
@@ -21,7 +24,6 @@ import {
   deckCardFromCatalog,
   deckListOf,
   deckTotals,
-  DECK_FORMATS,
   formatDecklistText,
   PASTED_DECKLIST_LANGUAGES,
   parsePastedDecklist,
@@ -57,7 +59,12 @@ import {
   type DeckLibrarySnapshot,
   type SavedDeck,
 } from './deck-library.js';
-import { copyText, downloadDeck, SEAT_NAMES } from './deck-screen-shared.js';
+import { formatName } from './deck-labels.js';
+import {
+  copyDecklist,
+  downloadDeck,
+  SEAT_NAMES,
+} from './deck-screen-shared.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import type {
   PopularDecklistCollection,
@@ -70,13 +77,25 @@ const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
 const relativeTime = (time: number, now = Date.now()): string => {
   const minutes = Math.round((now - time) / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return translate`just now`;
+  if (minutes < 60)
+    return translate({
+      message: `${minutes} min ago`,
+      comment: 'When a deck was last changed, in minutes; keep it short.',
+    });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24)
+    return translate({
+      message: `${hours} h ago`,
+      comment: 'When a deck was last changed, in hours; keep it short.',
+    });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days} d ago`;
-  return new Date(time).toLocaleDateString(undefined, {
+  if (days < 7)
+    return translate({
+      message: `${days} d ago`,
+      comment: 'When a deck was last changed, in days; keep it short.',
+    });
+  return new Date(time).toLocaleDateString(i18n.locale, {
     month: 'short',
     day: 'numeric',
   });
@@ -127,15 +146,20 @@ const SeatBadges = ({
           (target === 'main' || seats.alternateEnabled) &&
           seats.slots[target].label?.deckId === deckId
       )
-      .map((target) => (
-        <span
-          key={target}
-          className="deck-tile__seat"
-          data-seat={target === 'main' ? 'self' : 'opponent'}
-        >
-          On {SEAT_NAMES[target]}
-        </span>
-      ))}
+      .map((target) => {
+        const seat = SEAT_NAMES[target];
+        return (
+          <span
+            key={target}
+            className="deck-tile__seat"
+            data-seat={target === 'main' ? 'self' : 'opponent'}
+          >
+            <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
+              On {seat}
+            </Trans>
+          </span>
+        );
+      })}
   </>
 );
 
@@ -157,7 +181,10 @@ const SavedDeckTile = ({
   readonly onEdit: () => void;
   readonly library: DeckLibraryActions;
 }) => {
+  const { t } = useLingui();
   const check = useMemo(() => checkDeck(deck.cards, deck.format), [deck]);
+  const deckName = deck.name;
+  const seat = SEAT_NAMES[seats.target];
   const cover = useMemo(
     () =>
       deck.cards.find((entry) => entry.card.id === deck.coverId)?.card ??
@@ -166,24 +193,25 @@ const SavedDeckTile = ({
   );
   const rename = async (): Promise<void> => {
     const name = await promptValue({
-      title: 'Rename deck',
-      label: 'Deck name',
+      title: t`Rename deck`,
+      label: t`Deck name`,
       defaultValue: deck.name,
-      submitLabel: 'Rename',
+      submitLabel: t({ message: 'Rename', context: 'button' }),
       validate: (value) =>
         !value.trim()
-          ? 'A deck needs a name.'
+          ? t`A deck needs a name.`
           : value.trim().length > MAX_DECK_NAME_LENGTH
-            ? `Keep it to ${MAX_DECK_NAME_LENGTH} characters.`
+            ? t`Keep it to ${{ max: MAX_DECK_NAME_LENGTH }} characters.`
             : undefined,
     });
     if (name?.trim()) library.update(deck.id, { name });
   };
+  const when = relativeTime(deck.updatedAt);
   const remove = async (): Promise<void> => {
     const confirmed = await confirmAction({
-      title: `Delete ${deck.name}?`,
-      body: 'The deck is removed from this device. Decks already on a seat stay there.',
-      confirmLabel: 'Delete deck',
+      title: t`Delete ${deckName}?`,
+      body: t`The deck is removed from this device. Decks already on a seat stay there.`,
+      confirmLabel: t`Delete deck`,
       tone: 'danger',
     });
     if (confirmed) library.remove(deck.id);
@@ -198,7 +226,7 @@ const SavedDeckTile = ({
         type="button"
         className="deck-tile__choose"
         aria-pressed={current}
-        aria-label={`${deck.name}: put on ${SEAT_NAMES[seats.target]}`}
+        aria-label={t`${deckName}: put on ${seat}`}
         onClick={onChoose}
         onDoubleClick={onEdit}
       >
@@ -206,9 +234,7 @@ const SavedDeckTile = ({
         <span className="deck-tile__text">
           <span className="deck-tile__name">{deck.name}</span>
           <span className="deck-tile__meta">
-            <span className="deck-tile__format">
-              {DECK_FORMATS[deck.format].name}
-            </span>
+            <span className="deck-tile__format">{formatName(deck.format)}</span>
             <span
               className="deck-tile__count ds-number"
               data-valid={check.valid ? 'true' : 'false'}
@@ -221,69 +247,73 @@ const SavedDeckTile = ({
               {check.total}/{check.format.deckSize}
             </span>
             <span className="deck-tile__time">
-              {lastUsed ? 'Played last · ' : ''}
-              {relativeTime(deck.updatedAt)}
+              {lastUsed
+                ? t({
+                    message: `Played last · ${when}`,
+                    comment:
+                      'The deck this seat played last, and when it was changed',
+                  })
+                : when}
             </span>
           </span>
         </span>
         <SeatBadges seats={seats} deckId={deck.id} />
       </button>
       <div className="deck-tile__actions">
-        <Tooltip content="Edit deck">
+        <Tooltip content={t`Edit deck`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={`Edit ${deck.name}`}
+            aria-label={t`Edit ${deckName}`}
             onClick={onEdit}
           >
             <PencilSimpleIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
         <ActionMenu
-          label={`${deck.name} actions`}
-          tooltip="Rename, copy, export or delete"
+          label={t`${deckName} actions`}
+          tooltip={t`Rename, copy, export or delete`}
           side="bottom"
           align="end"
           trigger={
             <button
               type="button"
               className="deck-icon-button"
-              aria-label={`More for ${deck.name}`}
+              aria-label={t`More for ${deckName}`}
             >
               <DotsThreeIcon {...decorative} weight="bold" />
             </button>
           }
           entries={[
             {
-              label: 'Rename',
+              label: t({ message: 'Rename', context: 'menu item' }),
               icon: PencilSimpleIcon,
               onSelect: () => void rename(),
             },
             {
-              label: 'Duplicate',
+              label: t({ message: 'Duplicate', context: 'menu item' }),
               icon: CopyIcon,
               onSelect: () => library.duplicate(deck.id),
             },
             { kind: 'separator' },
             {
-              label: 'Copy list',
+              label: t`Copy list`,
               icon: ClipboardTextIcon,
-              onSelect: () =>
-                void copyText(formatDecklistText(deck.cards), 'Decklist'),
+              onSelect: () => void copyDecklist(formatDecklistText(deck.cards)),
             },
             {
-              label: 'Download list (.txt)',
+              label: t`Download list (.txt)`,
               icon: DownloadSimpleIcon,
               onSelect: () => downloadDeck(deck, 'text'),
             },
             {
-              label: 'Download simulator file (.csv)',
+              label: t`Download simulator file (.csv)`,
               icon: DownloadSimpleIcon,
               onSelect: () => downloadDeck(deck, 'csv'),
             },
             { kind: 'separator' },
             {
-              label: 'Delete',
+              label: t({ message: 'Delete', context: 'menu item' }),
               icon: TrashIcon,
               danger: true,
               onSelect: () => void remove(),
@@ -309,57 +339,65 @@ const UnsavedSeatTile = ({
   readonly onEdit: () => void;
   readonly onClear: () => void;
 }) => {
+  const { t } = useLingui();
   const slot = seats.slots[target];
   const total = deckTotals(slot.deck).total;
-  const name = slot.label?.name ?? 'Unsaved deck';
+  const name = slot.label?.name ?? t`Unsaved deck`;
+  const seat = SEAT_NAMES[target];
   return (
     <li className="deck-tile" data-current="true" data-unsaved="true">
       <div
         className="deck-tile__choose"
         role="group"
-        aria-label={`${name} on ${SEAT_NAMES[target]}`}
+        aria-label={t`${name} on ${seat}`}
       >
         <DeckCover card={coverCardOf(slot.deck, name)} name={name} />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{name}</span>
           <span className="deck-tile__meta">
-            <span className="deck-tile__format">Not saved</span>
-            <span className="deck-tile__count ds-number">{total} cards</span>
+            <span className="deck-tile__format">
+              <Trans>Not saved</Trans>
+            </span>
+            <span className="deck-tile__count ds-number">
+              {t`${plural(total, { one: '# card', other: '# cards' })}`}
+            </span>
           </span>
         </span>
         <span
           className="deck-tile__seat"
           data-seat={target === 'main' ? 'self' : 'opponent'}
         >
-          On {SEAT_NAMES[target]}
+          <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
+            On {seat}
+          </Trans>
         </span>
       </div>
       <div className="deck-tile__actions">
-        <Tooltip content="Save to your decks">
+        <Tooltip content={t`Save to your decks`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={`Save ${name}`}
+            aria-label={t`Save ${name}`}
             onClick={onSave}
           >
             <DownloadSimpleIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
-        <Tooltip content="Save a copy and edit it">
+        <Tooltip content={t`Save a copy and edit it`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={`Edit ${name}`}
+            aria-label={t`Edit ${name}`}
             onClick={onEdit}
           >
             <PencilSimpleIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
-        <Tooltip content={`Take it off ${SEAT_NAMES[target]}`}>
+        <Tooltip content={t`Take it off ${seat}`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={`Remove ${name} from ${SEAT_NAMES[target]}`}
+            aria-label={t`Remove ${name} from ${seat}`}
             onClick={onClear}
           >
             <XIcon {...decorative} weight="bold" />
@@ -411,6 +449,7 @@ const ListDeckTile = ({
   readonly onTry: () => void;
   readonly onEdit: () => void;
 }) => {
+  const { t } = useLingui();
   const [title, finish] = splitFinish(name);
   return (
     <li
@@ -421,7 +460,7 @@ const ListDeckTile = ({
         type="button"
         className="deck-tile__choose"
         aria-pressed={current}
-        aria-label={`${name}: try it`}
+        aria-label={t`${name}: try it`}
         onClick={onTry}
       >
         <DeckCover card={cover} name={title} />
@@ -440,11 +479,11 @@ const ListDeckTile = ({
         </span>
       </button>
       <div className="deck-tile__actions">
-        <Tooltip content="Save a copy and edit it">
+        <Tooltip content={t`Save a copy and edit it`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={`Save and edit ${title}`}
+            aria-label={t`Save and edit ${title}`}
             onClick={onEdit}
           >
             <PencilSimpleIcon {...decorative} weight="bold" />
@@ -509,6 +548,7 @@ export const DeckHome = ({
   onEditSeatDeck,
   onClearSeat,
 }: DeckHomeProps) => {
+  const { t } = useLingui();
   const catalogState = useCardCatalog(catalog, open);
   const { language, lastDeckIds } = usePreference(DECK_SCREEN_PREFERENCES);
   const loadedCatalog =
@@ -563,10 +603,20 @@ export const DeckHome = ({
   const meta: PopularDecklistGroup | undefined = metaGroups[0];
   const classic =
     classicGroups.find((group) => group.name === season) ?? classicGroups[0];
+  const metaSource = meta?.source;
+  const metaCount = meta?.decks.length ?? 0;
+  const sourceName = metaSource?.name ?? '';
+  const updated = metaSource
+    ? new Date(metaSource.fetchedAt).toLocaleDateString(i18n.locale, {
+        month: 'short',
+        day: 'numeric',
+      })
+    : '';
   const metaShown = useMemo(
     () => (showAllMeta ? meta?.decks : meta?.decks.slice(0, 12)),
     [meta, showAllMeta]
   );
+  const classicName = classic?.name ?? '';
   const seatListName = seats.slots[target].label?.deckId
     ? undefined
     : seats.slots[target].label?.name;
@@ -604,7 +654,7 @@ export const DeckHome = ({
     try {
       await onSurprise();
     } catch {
-      toast({ title: "Couldn't pick a deck", tone: 'warning' });
+      toast({ title: t`Couldn't pick a deck`, tone: 'warning' });
     } finally {
       setSurprising(false);
     }
@@ -614,7 +664,7 @@ export const DeckHome = ({
     <div className="deck-home">
       <section className="deck-home__import" aria-labelledby="deckImportTitle">
         <h2 id="deckImportTitle" className="deck-section-title">
-          Import a deck
+          <Trans>Import a deck</Trans>
         </h2>
         <div
           className="deck-paste"
@@ -624,10 +674,10 @@ export const DeckHome = ({
             ref={pasteRef}
             id="deckPasteInput"
             className="deck-paste__input"
-            aria-label="Decklist to import"
+            aria-label={t`Decklist to import`}
             spellCheck={false}
             rows={paste.includes('\n') ? 6 : 1}
-            placeholder="Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen"
+            placeholder={t`Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen`}
             value={paste}
             onChange={(event) => setPaste(event.target.value)}
             onKeyDown={onPasteKeyDown}
@@ -647,9 +697,9 @@ export const DeckHome = ({
                   className="ds-spin"
                 />
               ) : null}
-              Import
+              <Trans context="button">Import</Trans>
             </button>
-            <Tooltip content="Import the list on your clipboard">
+            <Tooltip content={t`Import the list on your clipboard`}>
               <button
                 id="deckClipboardButton"
                 type="button"
@@ -658,12 +708,16 @@ export const DeckHome = ({
                 onClick={() => void onImportClipboard()}
               >
                 <ClipboardTextIcon {...decorative} weight="bold" />
-                From clipboard
+                <Trans>From clipboard</Trans>
               </button>
             </Tooltip>
-            <Tooltip content="Card images in this language, where Limitless has them">
+            <Tooltip
+              content={t`Card images in this language, where Limitless has them`}
+            >
               <label className="deck-language">
-                <span className="ds-visually-hidden">Card language</span>
+                <span className="ds-visually-hidden">
+                  <Trans>Card language</Trans>
+                </span>
                 <select
                   id="deckLanguageSelect"
                   className="ds-select"
@@ -682,7 +736,9 @@ export const DeckHome = ({
                 </select>
               </label>
             </Tooltip>
-            <Tooltip content="Open a decklist (.txt) or simulator file (.csv). You can also drop one here.">
+            <Tooltip
+              content={t`Open a decklist (.txt) or simulator file (.csv). You can also drop one here.`}
+            >
               <button
                 id="nativeDeckBuilderImportCsvLabel"
                 type="button"
@@ -691,7 +747,7 @@ export const DeckHome = ({
                 onClick={onOpenFile}
               >
                 <FileArrowUpIcon {...decorative} weight="bold" />
-                Open file
+                <Trans>Open file</Trans>
               </button>
             </Tooltip>
           </div>
@@ -704,7 +760,7 @@ export const DeckHome = ({
       >
         <div className="deck-section-head">
           <h2 id="deckLibraryTitle" className="deck-section-title">
-            Your decks
+            <Trans>Your decks</Trans>
             {libraryState.decks.length > 0 ? (
               <span className="deck-section-count ds-number">
                 {libraryState.decks.length}
@@ -718,8 +774,8 @@ export const DeckHome = ({
                 <input
                   type="search"
                   className="ds-input"
-                  placeholder="Find a deck"
-                  aria-label="Find one of your decks"
+                  placeholder={t`Find a deck`}
+                  aria-label={t`Find one of your decks`}
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
                 />
@@ -732,15 +788,17 @@ export const DeckHome = ({
               onClick={onNewDeck}
             >
               <PlusIcon {...decorative} weight="bold" />
-              New deck
+              <Trans>New deck</Trans>
             </button>
           </div>
         </div>
         {libraryState.status === 'memory' ? (
           <p className="deck-notice" role="status">
             <WarningCircleIcon {...decorative} weight="bold" />
-            This browser isn&apos;t keeping site data, so decks saved now last
-            until you close the page.
+            <Trans>
+              This browser isn&apos;t keeping site data, so decks saved now last
+              until you close the page.
+            </Trans>
           </p>
         ) : null}
         {libraryState.status === 'loading' ? (
@@ -750,16 +808,18 @@ export const DeckHome = ({
               weight="bold"
               className="ds-spin"
             />{' '}
-            Opening your decks…
+            <Trans>Opening your decks…</Trans>
           </p>
         ) : unsavedSeats.length === 0 && libraryState.decks.length === 0 ? (
           <p className="deck-empty">
-            No saved decks yet. Paste a list above, start a new deck, or try one
-            of the decks below — anything you import or build is saved here
-            automatically.
+            <Trans>
+              No saved decks yet. Paste a list above, start a new deck, or try
+              one of the decks below — anything you import or build is saved
+              here automatically.
+            </Trans>
           </p>
         ) : (
-          <ul className="deck-grid" aria-label="Your decks">
+          <ul className="deck-grid" aria-label={t`Your decks`}>
             {unsavedSeats.map((slotTarget) => (
               <UnsavedSeatTile
                 key={`seat-${slotTarget}`}
@@ -789,10 +849,10 @@ export const DeckHome = ({
       <section className="deck-home__section" aria-labelledby="deckMetaTitle">
         <div className="deck-section-head">
           <h2 id="deckMetaTitle" className="deck-section-title">
-            Decks winning now
+            <Trans>Decks winning now</Trans>
           </h2>
           <div className="deck-section-tools">
-            <Tooltip content="Put a random deck on your seat">
+            <Tooltip content={t`Put a random deck on your seat`}>
               <button
                 id="deckSurpriseButton"
                 type="button"
@@ -801,29 +861,31 @@ export const DeckHome = ({
                 onClick={() => void surprise()}
               >
                 <MagicWandIcon {...decorative} weight="bold" />
-                Surprise me
+                <Trans>Surprise me</Trans>
               </button>
             </Tooltip>
           </div>
         </div>
-        {meta?.source ? (
+        {metaSource ? (
           <p className="deck-section-note">
-            Best top-8 finish of each archetype from{' '}
-            <a href={meta.source.url} target="_blank" rel="noopener noreferrer">
-              {meta.source.name}
-            </a>{' '}
-            online tournaments in the last two weeks, updated{' '}
-            {new Date(meta.source.fetchedAt).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-            })}
-            . Choosing one puts it on your seat without saving it.
+            <Trans comment="sourceName is a tournament site (Limitless); updated is a short date">
+              Best top-8 finish of each archetype from{' '}
+              <a
+                href={metaSource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {sourceName}
+              </a>{' '}
+              online tournaments in the last two weeks, updated {updated}.
+              Choosing one puts it on your seat without saving it.
+            </Trans>
           </p>
         ) : null}
         {!collection ? (
           <p className="deck-empty">
             {collectionFailed ? (
-              "The deck lists didn't load."
+              <Trans>The deck lists didn&apos;t load.</Trans>
             ) : (
               <>
                 <CircleNotchIcon
@@ -831,7 +893,7 @@ export const DeckHome = ({
                   weight="bold"
                   className="ds-spin"
                 />{' '}
-                Loading decks…
+                <Trans>Loading decks…</Trans>
               </>
             )}
           </p>
@@ -857,12 +919,14 @@ export const DeckHome = ({
                 className="ds-button ds-button--ghost deck-show-more"
                 onClick={() => setShowAllMeta(true)}
               >
-                Show all {meta.decks.length}
+                <Trans>Show all {metaCount}</Trans>
               </button>
             ) : null}
           </>
         ) : (
-          <p className="deck-empty">No current tournament decks right now.</p>
+          <p className="deck-empty">
+            <Trans>No current tournament decks right now.</Trans>
+          </p>
         )}
       </section>
 
@@ -873,11 +937,13 @@ export const DeckHome = ({
         >
           <div className="deck-section-head">
             <h2 id="deckClassicTitle" className="deck-section-title">
-              Classic decks
+              <Trans>Classic decks</Trans>
             </h2>
             <div className="deck-section-tools">
               <label className="deck-select">
-                <span className="ds-visually-hidden">Season</span>
+                <span className="ds-visually-hidden">
+                  <Trans>Season</Trans>
+                </span>
                 <select
                   id="deckClassicSeason"
                   className="ds-select"
@@ -895,7 +961,7 @@ export const DeckHome = ({
           </div>
           <ul
             className="deck-grid deck-grid--lists"
-            aria-label={`${classic.name} decks`}
+            aria-label={t`${classicName} decks`}
           >
             {classic.decks.map((deck) => (
               <ListDeckTile

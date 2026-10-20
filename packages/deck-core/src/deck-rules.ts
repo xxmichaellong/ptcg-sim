@@ -1,3 +1,5 @@
+import { plural, t } from '@lingui/core/macro';
+
 import {
   deckTotals,
   ruleName,
@@ -296,35 +298,61 @@ const cardNames = (list: DeckList, cardIds: readonly string[]): string => {
       )
     ),
   ];
-  return names.length <= 3
-    ? names.join(', ')
-    : `${names.slice(0, 3).join(', ')} and ${names.length - 3} more`;
+  if (names.length <= 3) return names.join(', ');
+  const shown = names.slice(0, 3).join(', ');
+  const more = names.length - 3;
+  return t({
+    message: `${shown} and ${more} more`,
+    comment: 'shown is a list of card names; more counts the rest',
+  });
 };
 
-/** One plain sentence per issue, for the deck's checklist. */
+/**
+ * One plain sentence per issue, for the deck's checklist, in the page's
+ * language (ADR-034). Card names stay as the deck has them.
+ */
 export const describeDeckIssue = (list: DeckList, issue: DeckIssue): string => {
   switch (issue.code) {
-    case 'size':
-      return issue.count < issue.required
-        ? `${issue.required - issue.count} more card${issue.required - issue.count === 1 ? '' : 's'} needed (${issue.count}/${issue.required}).`
-        : `${issue.count - issue.required} card${issue.count - issue.required === 1 ? '' : 's'} too many (${issue.count}/${issue.required}).`;
+    case 'size': {
+      const { count, required } = issue;
+      if (count < required) {
+        const short = required - count;
+        return t`${plural(short, { one: `# more card needed (${count}/${required}).`, other: `# more cards needed (${count}/${required}).` })}`;
+      }
+      const over = count - required;
+      return t`${plural(over, { one: `# card too many (${count}/${required}).`, other: `# cards too many (${count}/${required}).` })}`;
+    }
     case 'no_basic':
-      return 'Needs at least one Basic Pokémon.';
-    case 'copies':
-      return `${issue.count} copies of ${issue.name}; the limit is ${issue.limit}.`;
-    case 'one_per_deck':
+      return t`Needs at least one Basic Pokémon.`;
+    case 'copies': {
+      const { count, name, limit } = issue;
+      return t`${plural(count, { one: `# copy of ${name}; the limit is ${limit}.`, other: `# copies of ${name}; the limit is ${limit}.` })}`;
+    }
+    case 'one_per_deck': {
+      const { count } = issue;
       return issue.kind === 'Star'
-        ? `${issue.count} Pokémon ☆ cards; a deck may have only one.`
-        : `${issue.count} ${issue.kind} cards; a deck may have only one.`;
-    case 'prism_star':
-      return `${issue.count} copies of ${issue.name}; a Prism Star card is one per deck.`;
-    case 'not_legal':
-      return `Not legal in this format: ${cardNames(list, issue.cardIds)}.`;
-    case 'wrong_pool':
-      return `From the other card pool (TCG and Pocket don't mix): ${cardNames(list, issue.cardIds)}.`;
+        ? t`${plural(count, { one: '# Pokémon ☆ card; a deck may have only one.', other: '# Pokémon ☆ cards; a deck may have only one.' })}`
+        : issue.kind === 'Radiant'
+          ? t`${plural(count, { one: '# Radiant card; a deck may have only one.', other: '# Radiant cards; a deck may have only one.' })}`
+          : t`${plural(count, { one: '# ACE SPEC card; a deck may have only one.', other: '# ACE SPEC cards; a deck may have only one.' })}`;
+    }
+    case 'prism_star': {
+      const { count, name } = issue;
+      return t`${plural(count, { one: `# copy of ${name}; a Prism Star card is one per deck.`, other: `# copies of ${name}; a Prism Star card is one per deck.` })}`;
+    }
+    case 'not_legal': {
+      const cards = cardNames(list, issue.cardIds);
+      return t`Not legal in this format: ${cards}.`;
+    }
+    case 'wrong_pool': {
+      const cards = cardNames(list, issue.cardIds);
+      return t`From the other card pool (TCG and Pocket don't mix): ${cards}.`;
+    }
     case 'energy_in_pocket':
-      return 'Pocket decks have no Energy cards.';
-    case 'unchecked':
-      return `Legality not checked for cards added by hand: ${cardNames(list, issue.cardIds)}.`;
+      return t`Pocket decks have no Energy cards.`;
+    case 'unchecked': {
+      const cards = cardNames(list, issue.cardIds);
+      return t`Legality not checked for cards added by hand: ${cards}.`;
+    }
   }
 };

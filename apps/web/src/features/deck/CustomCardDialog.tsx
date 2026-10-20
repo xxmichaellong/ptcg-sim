@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   customCardId,
   type CardCategory,
@@ -8,6 +9,7 @@ import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 import { useEffect, useRef, useState } from 'react';
 
 import { trapFocus } from '../../ui/focus.js';
+import { categoryName } from './deck-labels.js';
 
 const CUSTOM_CARD_QUANTITY_MAX = 99;
 const CUSTOM_CARD_NAME_MAX = 256;
@@ -28,6 +30,7 @@ export const CustomCardDialog = ({
   readonly onClose: () => void;
   readonly onAdd: (card: DeckCard, quantity: number) => void;
 }) => {
+  const { t } = useLingui();
   const [quantity, setQuantity] = useState('1');
   const [name, setName] = useState('');
   const [category, setCategory] = useState<CardCategory>('Pokémon');
@@ -69,11 +72,13 @@ export const CustomCardDialog = ({
     const normalizedName = name.trim();
     const parsedQuantity = Number(quantity);
     if (!normalizedName) {
-      setError('Card Name is required.');
+      setError(t`Card Name is required.`);
       return;
     }
     if (normalizedName.length > CUSTOM_CARD_NAME_MAX) {
-      setError(`Card Name must be ${CUSTOM_CARD_NAME_MAX} characters or less.`);
+      setError(
+        t`Card Name must be ${{ max: CUSTOM_CARD_NAME_MAX }} characters or less.`
+      );
       return;
     }
     if (
@@ -81,21 +86,23 @@ export const CustomCardDialog = ({
       parsedQuantity < 1 ||
       parsedQuantity > CUSTOM_CARD_QUANTITY_MAX
     ) {
-      setError(`Quantity must be between 1 and ${CUSTOM_CARD_QUANTITY_MAX}.`);
+      setError(
+        t`Quantity must be between 1 and ${{ max: CUSTOM_CARD_QUANTITY_MAX }}.`
+      );
       return;
     }
     if (!normalizedImage) {
-      setError('Image URL is required.');
+      setError(t`Image URL is required.`);
       return;
     }
     if (normalizedImage.length > MAX_IMAGE_URL_CODE_UNITS) {
       setError(
-        `Image URL must be ${MAX_IMAGE_URL_CODE_UNITS} characters or less.`
+        t`Image URL must be ${{ max: MAX_IMAGE_URL_CODE_UNITS }} characters or less.`
       );
       return;
     }
     if (imageState !== 'loaded') {
-      setError('Image URL must point to a loadable image.');
+      setError(t`Image URL must point to a loadable image.`);
       return;
     }
     const grid =
@@ -162,13 +169,13 @@ export const CustomCardDialog = ({
 
   const previewText =
     imageState === 'empty'
-      ? 'No image'
+      ? t`No image`
       : imageState === 'loading'
-        ? 'Loading…'
+        ? t`Loading…`
         : imageState === 'failed'
-          ? 'Image not found'
+          ? t`Image not found`
           : imageState === 'too_long'
-            ? 'Image URL too long'
+            ? t`Image URL too long`
             : '';
 
   return (
@@ -195,12 +202,12 @@ export const CustomCardDialog = ({
           id="nativeCustomCardTitle"
           className="native-deck-builder-modal-title"
         >
-          Add Custom Card
+          <Trans>Add Custom Card</Trans>
         </div>
         <div className="native-deck-builder-modal-body">
           <div className="native-deck-builder-modal-fields">
             <label className="native-deck-builder-modal-label">
-              Quantity
+              <Trans>Quantity</Trans>
               <input
                 id="nativeCustomCardQty"
                 className="native-deck-builder-modal-input ds-input"
@@ -212,20 +219,20 @@ export const CustomCardDialog = ({
               />
             </label>
             <label className="native-deck-builder-modal-label">
-              Card Name
+              <Trans>Card Name</Trans>
               <input
                 ref={nameRef}
                 id="nativeCustomCardName"
                 className="native-deck-builder-modal-input ds-input"
                 type="text"
                 maxLength={CUSTOM_CARD_NAME_MAX}
-                placeholder="e.g. Charizard"
+                placeholder={t`e.g. Charizard`}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
             <label className="native-deck-builder-modal-label">
-              Card Type
+              <Trans>Card Type</Trans>
               <select
                 id="nativeCustomCardType"
                 className="native-deck-builder-modal-input ds-select"
@@ -234,13 +241,13 @@ export const CustomCardDialog = ({
                   setCategory(event.target.value as CardCategory)
                 }
               >
-                <option value="Pokémon">Pokémon</option>
-                <option value="Trainer">Trainer</option>
-                <option value="Energy">Energy</option>
+                <option value="Pokémon">{categoryName('Pokémon')}</option>
+                <option value="Trainer">{categoryName('Trainer')}</option>
+                <option value="Energy">{categoryName('Energy')}</option>
               </select>
             </label>
             <label className="native-deck-builder-modal-label">
-              Image URL
+              <Trans>Image URL</Trans>
               <input
                 id="nativeCustomCardImageUrl"
                 className="native-deck-builder-modal-input ds-input"
@@ -251,9 +258,11 @@ export const CustomCardDialog = ({
               />
             </label>
             <details className="native-custom-card-layout">
-              <summary>Card layout (optional)</summary>
+              <summary>
+                <Trans>Card layout (optional)</Trans>
+              </summary>
               <label className="native-deck-builder-modal-label">
-                Layout
+                <Trans context="card layout">Layout</Trans>
                 <select
                   className="ds-select"
                   value={cardLayout}
@@ -262,35 +271,39 @@ export const CustomCardDialog = ({
                     setPiece('0');
                   }}
                 >
-                  <option value="auto">Recognize known card formats</option>
-                  <option value="portrait">Ordinary portrait card</option>
+                  <option value="auto">{t`Recognize known card formats`}</option>
+                  <option value="portrait">{t`Ordinary portrait card`}</option>
                   <option value="landscape">
-                    Sideways scan · rotate to read
+                    {t`Sideways scan · rotate to read`}
                   </option>
-                  <option value="break">Upper-half overlay · BREAK</option>
-                  <option value="legend">Two landscape halves · LEGEND</option>
+                  <option value="break">{t`Upper-half overlay · BREAK`}</option>
+                  <option value="legend">
+                    {t`Two landscape halves · LEGEND`}
+                  </option>
                   <option value="pair">
-                    Two side-by-side pieces · Stadium
+                    {t`Two side-by-side pieces · Stadium`}
                   </option>
-                  <option value="trio">Three side-by-side pieces</option>
-                  <option value="union">Four-piece grid · V-UNION</option>
+                  <option value="trio">{t`Three side-by-side pieces`}</option>
+                  <option value="union">{t`Four-piece grid · V-UNION`}</option>
                 </select>
               </label>
               {['legend', 'pair', 'trio', 'union'].includes(cardLayout) ? (
                 <>
                   <label className="native-deck-builder-modal-label">
-                    Artwork group
+                    <Trans>Artwork group</Trans>
                     <input
                       className="ds-input"
                       maxLength={128}
-                      placeholder="Same group for each piece"
+                      placeholder={t`Same group for each piece`}
                       value={artworkGroup}
                       onChange={(event) => setArtworkGroup(event.target.value)}
                     />
                   </label>
                   {/* Two to four places: all out at once (PX-044). */}
                   <div className="native-deck-builder-modal-label">
-                    <span id="nativeCustomCardPieceLabel">Piece position</span>
+                    <span id="nativeCustomCardPieceLabel">
+                      <Trans>Piece position</Trans>
+                    </span>
                     <div
                       className="ptcgsim-segmented-control"
                       role="radiogroup"
@@ -298,16 +311,44 @@ export const CustomCardDialog = ({
                     >
                       {(cardLayout === 'union'
                         ? [
-                            'Top left',
-                            'Top right',
-                            'Bottom left',
-                            'Bottom right',
+                            t`Top left`,
+                            t`Top right`,
+                            t`Bottom left`,
+                            t`Bottom right`,
                           ]
                         : cardLayout === 'legend'
-                          ? ['Top', 'Bottom']
+                          ? [
+                              t({ message: 'Top', context: 'piece position' }),
+                              t({
+                                message: 'Bottom',
+                                context: 'piece position',
+                              }),
+                            ]
                           : cardLayout === 'trio'
-                            ? ['Left', 'Middle', 'Right']
-                            : ['Left', 'Right']
+                            ? [
+                                t({
+                                  message: 'Left',
+                                  context: 'piece position',
+                                }),
+                                t({
+                                  message: 'Middle',
+                                  context: 'piece position',
+                                }),
+                                t({
+                                  message: 'Right',
+                                  context: 'piece position',
+                                }),
+                              ]
+                            : [
+                                t({
+                                  message: 'Left',
+                                  context: 'piece position',
+                                }),
+                                t({
+                                  message: 'Right',
+                                  context: 'piece position',
+                                }),
+                              ]
                       ).map((label, index) => (
                         <span
                           key={label}
@@ -329,47 +370,53 @@ export const CustomCardDialog = ({
                     </div>
                   </div>
                   <p>
-                    Use the same group for pieces from one illustration. Place
-                    Pokémon pieces in one stack, or Stadium pieces in the
-                    Stadium area.
+                    <Trans>
+                      Use the same group for pieces from one illustration. Place
+                      Pokémon pieces in one stack, or Stadium pieces in the
+                      Stadium area.
+                    </Trans>
                   </p>
                 </>
               ) : null}
             </details>
             <details className="native-custom-card-finish">
-              <summary>Card finish (optional)</summary>
+              <summary>
+                <Trans>Card finish (optional)</Trans>
+              </summary>
               <label className="native-deck-builder-modal-label">
-                Finish
+                <Trans context="card surface">Finish</Trans>
                 <select
                   id="nativeCustomCardFinish"
                   className="ds-select"
                   value={finish}
                   onChange={(event) => setFinish(event.target.value)}
                 >
-                  <option value="auto">Automatic treatment</option>
-                  <option value="matte">Matte</option>
-                  <option value="sheen">Sleeve sheen</option>
-                  <option value="holo">Holographic</option>
-                  <option value="rainbow">Rainbow foil</option>
+                  <option value="auto">{t`Automatic treatment`}</option>
+                  <option value="matte">{t`Matte`}</option>
+                  <option value="sheen">{t`Sleeve sheen`}</option>
+                  <option value="holo">{t`Holographic`}</option>
+                  <option value="rainbow">{t`Rainbow foil`}</option>
                 </select>
               </label>
               <label className="native-deck-builder-modal-label">
-                Foil coverage
+                <Trans>Foil coverage</Trans>
                 <select
                   id="nativeCustomCardFoilRegion"
                   className="ds-select"
                   value={foilRegion}
                   onChange={(event) => setFoilRegion(event.target.value)}
                 >
-                  <option value="auto">Match finish</option>
-                  <option value="artwork">Artwork window</option>
-                  <option value="full">Full card</option>
-                  <option value="none">No foil</option>
+                  <option value="auto">{t`Match finish`}</option>
+                  <option value="artwork">{t`Artwork window`}</option>
+                  <option value="full">{t`Full card`}</option>
+                  <option value="none">{t`No foil`}</option>
                 </select>
               </label>
               <p>
-                Applies to this printing. Reading mode always removes
-                reflections.
+                <Trans>
+                  Applies to this printing. Reading mode always removes
+                  reflections.
+                </Trans>
               </p>
             </details>
           </div>
@@ -382,7 +429,7 @@ export const CustomCardDialog = ({
               normalizedImage
                 ? { src: normalizedImage }
                 : {})}
-              alt="Card preview"
+              alt={t`Card preview`}
               style={{ display: imageState === 'loaded' ? '' : 'none' }}
               onLoad={() => setImageState('loaded')}
               onError={() => setImageState('failed')}
@@ -410,7 +457,7 @@ export const CustomCardDialog = ({
             className="ds-button ds-button--secondary"
             onClick={onClose}
           >
-            Cancel
+            <Trans>Cancel</Trans>
           </button>
           <button
             id="nativeCustomCardSubmit"
@@ -418,7 +465,7 @@ export const CustomCardDialog = ({
             className="ds-button ds-button--primary"
             onClick={submit}
           >
-            Add to Deck
+            <Trans>Add to Deck</Trans>
           </button>
         </div>
       </div>

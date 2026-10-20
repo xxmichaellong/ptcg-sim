@@ -8,6 +8,7 @@ import {
 
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
+import { Trans } from '@lingui/react/macro';
 
 import type { DeckBuilderSession } from './DeckBuilderSession.js';
 
@@ -25,11 +26,11 @@ const Loading = ({ onClose }: { readonly onClose: () => void }) => (
       onClick={onClose}
     >
       <ArrowLeftIcon aria-hidden="true" weight="bold" />
-      Table
+      <Trans context="go back to the table">Table</Trans>
     </button>
     <p>
       <CircleNotchIcon aria-hidden="true" weight="bold" className="ds-spin" />
-      Opening your decks…
+      <Trans>Opening your decks…</Trans>
     </p>
   </div>
 );
@@ -57,15 +58,17 @@ class LoadBoundary extends Component<
     return (
       <div className="ptcgsim-deck-layer__unavailable" role="alert">
         <p>
-          The deck screen didn&apos;t load, so decks can&apos;t be changed right
-          now. Your game carries on.
+          <Trans>
+            The deck screen didn&apos;t load, so decks can&apos;t be changed
+            right now. Your game carries on.
+          </Trans>
         </p>
         <button
           type="button"
           className="ds-button ds-button--primary"
           onClick={this.props.onClose}
         >
-          Back to the table
+          <Trans>Back to the table</Trans>
         </button>
       </div>
     );

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import {
   catalogIndex,
   cardCategoryOf,
@@ -108,7 +109,8 @@ export const suggestDeckName = (
       : main.card.name;
   }
   const top = [...pokemon].sort((left, right) => right.count - left.count)[0];
-  return top ? `${top.card.name} deck` : 'Imported deck';
+  const topName = top?.card.name;
+  return topName ? t`${topName} deck` : t`Imported deck`;
 };
 
 /** "### Dragapult" or "Name: Dragapult" at the top of a list names it. */
@@ -227,7 +229,7 @@ const finish = (
     ? {
         ok: false,
         reason: 'empty',
-        message: 'There are no cards in that list.',
+        message: t`There are no cards in that list.`,
       }
     : {
         ok: true,
@@ -248,7 +250,7 @@ export const importDeckText = async (
     return {
       ok: false,
       reason: 'empty',
-      message: 'There is no list to import.',
+      message: t`There is no list to import.`,
     };
   }
   if (isCsv(text)) return importCsv(text, options);
@@ -270,7 +272,10 @@ export const importDeckText = async (
     return {
       ok: false,
       reason: 'empty',
-      message: 'No card lines found. Lines look like "4 Iono PAL 185".',
+      message: t({
+        message: 'No card lines found. Lines look like "4 Iono PAL 185".',
+        comment: 'Keep the example line "4 Iono PAL 185" as it is.',
+      }),
     };
   }
 

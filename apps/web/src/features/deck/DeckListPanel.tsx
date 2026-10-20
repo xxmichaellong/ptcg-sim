@@ -7,6 +7,9 @@ import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { i18n } from '@lingui/core';
+import { plural } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   deckStats,
   describeDeckIssue,
@@ -27,24 +30,29 @@ import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
 import type { DeckImportLine } from './deck-import.js';
+import {
+  categoryName,
+  formatName,
+  trainerTypeName,
+  trainerTypePlural,
+} from './deck-labels.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import type { ZoomCard } from './useHoverZoom.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
-const GROUPS: readonly {
-  readonly category: CardCategory;
-  readonly label: string;
-}[] = [
-  { category: 'Pokémon', label: 'Pokémon' },
-  { category: 'Trainer', label: 'Trainer' },
-  { category: 'Energy', label: 'Energy' },
-];
+const GROUPS: readonly CardCategory[] = ['Pokémon', 'Trainer', 'Energy'];
 
 const TRAINER_SUBGROUPS = ['Supporter', 'Item', 'Tool', 'Stadium'];
 
-const percent = (value: number): string =>
-  `${(value * 100).toFixed(value < 0.1 ? 1 : 0)}%`;
+const percent = (value: number): string => {
+  const digits = value < 0.1 ? 1 : 0;
+  return new Intl.NumberFormat(i18n.locale, {
+    style: 'percent',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+};
 
 const issueCards = (issue: DeckIssue): readonly string[] =>
   'cardIds' in issue ? issue.cardIds : [];
@@ -76,6 +84,7 @@ export const DeckListPanel = ({
   onZoom,
   onZoomEnd,
 }: DeckListPanelProps) => {
+  const { t } = useLingui();
   const { deckView } = usePreference(DECK_SCREEN_PREFERENCES);
   const [highlight, setHighlight] = useState<ReadonlySet<string>>(new Set());
   const sorted = useMemo(() => sortDeckList(cards), [cards]);
@@ -87,6 +96,18 @@ export const DeckListPanel = ({
   const size = check.format.deckSize;
   const fill = Math.min(1, check.total / size);
   const issues = [...check.errors, ...check.warnings];
+  const format = formatName(check.format.id);
+  const errorCount = check.errors.length;
+  const total = check.total;
+  const missingLines = missing.length;
+  const basics = stats.basics;
+  const mulligan = percent(stats.mulligan);
+  const groupCardsLabel = (category: CardCategory): string =>
+    category === 'Pokémon'
+      ? t`Pokémon cards`
+      : category === 'Trainer'
+        ? t`Trainer cards`
+        : t`Energy cards`;
 
   const groupTotals: Readonly<Record<CardCategory, number>> = {
     Pokémon: stats.pokemon,
@@ -111,7 +132,10 @@ export const DeckListPanel = ({
   );
 
   return (
-    <section className="deck-panel" aria-label="Deck">
+    <section
+      className="deck-panel"
+      aria-label={t({ message: 'Deck', context: 'the deck being built' })}
+    >
       <div
         id="deckCheckPanel"
         className="deck-check"
@@ -128,28 +152,44 @@ export const DeckListPanel = ({
             {check.valid ? (
               <>
                 <CheckCircleIcon {...decorative} weight="fill" />
-                Ready for {check.format.name}
+                <Trans comment="format is a deck format: Standard, Expanded…">
+                  Ready for {format}
+                </Trans>
               </>
             ) : (
               <>
                 <WarningCircleIcon {...decorative} weight="fill" />
-                {check.errors.length}{' '}
-                {check.errors.length === 1 ? 'thing' : 'things'} to fix for{' '}
-                {check.format.name}
+                {t({
+                  message: plural(errorCount, {
+                    one: `# thing to fix for ${format}`,
+                    other: `# things to fix for ${format}`,
+                  }),
+                  comment: 'format is a deck format: Standard, Expanded…',
+                })}
               </>
             )}
           </span>
           <div
             className="deck-panel__view ptcgsim-segmented-control"
             role="radiogroup"
-            aria-label="Show the deck as"
+            aria-label={t`Show the deck as`}
           >
             {(
               [
-                ['list', 'List', ListIcon],
-                ['images', 'Images', SquaresFourIcon],
+                [
+                  'list',
+                  t({ message: 'List', context: 'show the deck as' }),
+                  t`Show the deck as list`,
+                  ListIcon,
+                ],
+                [
+                  'images',
+                  t({ message: 'Images', context: 'show the deck as' }),
+                  t`Show the deck as images`,
+                  SquaresFourIcon,
+                ],
               ] as const
-            ).map(([value, label, Icon]) => (
+            ).map(([value, label, tooltip, Icon]) => (
               <span key={value} className="ptcgsim-segmented-control__option">
                 <input
                   type="radio"
@@ -162,7 +202,7 @@ export const DeckListPanel = ({
                     })
                   }
                 />
-                <Tooltip content={`Show the deck as ${label.toLowerCase()}`}>
+                <Tooltip content={tooltip}>
                   <label htmlFor={`deckView-${value}`} aria-label={label}>
                     <Icon {...decorative} weight="bold" />
                   </label>
@@ -174,21 +214,19 @@ export const DeckListPanel = ({
         <div
           className="deck-check__meter"
           role="progressbar"
-          aria-label="Cards in deck"
+          aria-label={t`Cards in deck`}
           aria-valuemin={0}
           aria-valuemax={size}
           aria-valuenow={Math.min(check.total, size)}
-          aria-valuetext={`${check.total} of ${size} cards`}
+          aria-valuetext={t`${total} of ${size} cards`}
         >
           <span style={{ inlineSize: `${(fill * 100).toFixed(2)}%` }} />
         </div>
         <ul className="deck-check__split">
-          {GROUPS.map((group) => (
-            <li key={group.category} data-group={group.category}>
-              {group.label}{' '}
-              <strong className="ds-number">
-                {groupTotals[group.category]}
-              </strong>
+          {GROUPS.map((category) => (
+            <li key={category} data-group={category}>
+              {categoryName(category)}{' '}
+              <strong className="ds-number">{groupTotals[category]}</strong>
             </li>
           ))}
         </ul>
@@ -250,14 +288,16 @@ export const DeckListPanel = ({
           <div className="deck-missing__head">
             <WarningCircleIcon {...decorative} weight="bold" />
             <strong>
-              {missing.length} line{missing.length === 1 ? '' : 's'} from the
-              list couldn&apos;t be found
+              {t`${plural(missingLines, {
+                one: "# line from the list couldn't be found",
+                other: "# lines from the list couldn't be found",
+              })}`}
             </strong>
-            <Tooltip content="Dismiss">
+            <Tooltip content={t`Dismiss`}>
               <button
                 type="button"
                 className="ds-icon-button"
-                aria-label="Dismiss"
+                aria-label={t`Dismiss`}
                 onClick={onDismissMissing}
               >
                 <XIcon {...decorative} weight="bold" />
@@ -277,7 +317,7 @@ export const DeckListPanel = ({
                   onClick={() => onSearchFor(line.name)}
                 >
                   <MagnifyingGlassIcon {...decorative} weight="bold" />
-                  Find it
+                  <Trans>Find it</Trans>
                 </button>
               </li>
             ))}
@@ -291,16 +331,18 @@ export const DeckListPanel = ({
       >
         {sorted.length === 0 ? (
           <p className="deck-panel__empty">
-            No cards yet. A whole list can be pasted anywhere on this screen.
+            <Trans>
+              No cards yet. A whole list can be pasted anywhere on this screen.
+            </Trans>
           </p>
         ) : (
-          GROUPS.map((group) => {
+          GROUPS.map((category) => {
             const entries = sorted.filter(
-              (entry) => entry.card.category === group.category
+              (entry) => entry.card.category === category
             );
             if (entries.length === 0) return null;
             const subgroups =
-              group.category === 'Trainer' && deckView === 'list'
+              category === 'Trainer' && deckView === 'list'
                 ? [
                     ...TRAINER_SUBGROUPS.map((kind) => ({
                       kind,
@@ -321,21 +363,19 @@ export const DeckListPanel = ({
                 : undefined;
             return (
               <section
-                key={group.category}
+                key={category}
                 className="deck-group"
-                aria-label={`${group.label} cards`}
+                aria-label={groupCardsLabel(category)}
               >
                 <h3 className="deck-group__title">
-                  {group.label}{' '}
-                  <span className="ds-number">
-                    {groupTotals[group.category]}
-                  </span>
+                  {categoryName(category)}{' '}
+                  <span className="ds-number">{groupTotals[category]}</span>
                 </h3>
                 {subgroups && subgroups.length > 1 ? (
                   subgroups.map((subgroup) => (
                     <div key={subgroup.kind} className="deck-subgroup">
                       <h4 className="deck-subgroup__title">
-                        {subgroup.kind}{' '}
+                        {trainerTypeName(subgroup.kind)}{' '}
                         <span className="ds-number">
                           {subgroup.entries.reduce(
                             (sum, entry) => sum + entry.count,
@@ -361,33 +401,42 @@ export const DeckListPanel = ({
       {check.total > 0 && !check.format.pocket ? (
         <details className="deck-stats">
           <summary>
-            Opening hand · {stats.basics} Basic Pokémon ·{' '}
-            {percent(stats.mulligan)} mulligan
+            <Trans>
+              Opening hand · {basics} Basic Pokémon · {mulligan} mulligan
+            </Trans>
           </summary>
           <dl>
             <div>
-              <dt>No Basic in the opening 7 (mulligan)</dt>
-              <dd className="ds-number">{percent(stats.mulligan)}</dd>
+              <dt>
+                <Trans>No Basic in the opening 7 (mulligan)</Trans>
+              </dt>
+              <dd className="ds-number">{mulligan}</dd>
             </div>
             <div>
-              <dt>Exactly one Basic (it has to start)</dt>
+              <dt>
+                <Trans>Exactly one Basic (it has to start)</Trans>
+              </dt>
               <dd className="ds-number">{percent(stats.oneBasic)}</dd>
             </div>
             {Object.entries(stats.byTrainerType).map(([kind, count]) => (
               <div key={kind}>
-                <dt>{kind === 'Other' ? 'Other Trainers' : `${kind}s`}</dt>
+                <dt>{trainerTypePlural(kind)}</dt>
                 <dd className="ds-number">{count}</dd>
               </div>
             ))}
             <div>
-              <dt>Basic / Special Energy</dt>
+              <dt>
+                <Trans>Basic / Special Energy</Trans>
+              </dt>
               <dd className="ds-number">
                 {stats.basicEnergy} / {stats.specialEnergy}
               </dd>
             </div>
             {stats.unknownPokemon > 0 ? (
               <div>
-                <dt>Pokémon added by hand (stage unknown)</dt>
+                <dt>
+                  <Trans>Pokémon added by hand (stage unknown)</Trans>
+                </dt>
                 <dd className="ds-number">{stats.unknownPokemon}</dd>
               </div>
             ) : null}
@@ -401,6 +450,7 @@ export const DeckListPanel = ({
 
 /** Seven cards and six Prizes off the top of a shuffle, dealt again on request. */
 const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
+  const { t } = useLingui();
   const [deal, setDeal] = useState(0);
   const opening = useMemo(
     () => (deal === 0 ? undefined : sampleOpening(cards)),
@@ -415,17 +465,16 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
         className="ds-button ds-button--secondary"
         onClick={() => setDeal((current) => current + 1)}
       >
-        {opening ? 'Deal again' : 'Deal a sample hand'}
+        {opening ? t`Deal again` : t`Deal a sample hand`}
       </button>
       {opening ? (
         <div className="deck-sample__deal">
           <p className="deck-sample__label">
-            Hand
             {opening.hand.some(isBasicPokemon)
-              ? ''
-              : ' · no Basic Pokémon: a mulligan'}
+              ? t({ message: 'Hand', context: 'a sample opening hand' })
+              : t`Hand · no Basic Pokémon: a mulligan`}
           </p>
-          <ul className="deck-sample__cards" aria-label="Sample hand">
+          <ul className="deck-sample__cards" aria-label={t`Sample hand`}>
             {opening.hand.map((card, index) => (
               <li key={`${card.id}-${index}`}>
                 <CardImage
@@ -436,10 +485,12 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
               </li>
             ))}
           </ul>
-          <p className="deck-sample__label">Prizes</p>
+          <p className="deck-sample__label">
+            <Trans context="Prize cards">Prizes</Trans>
+          </p>
           <ul
             className="deck-sample__cards deck-sample__cards--prizes"
-            aria-label="Sample Prizes"
+            aria-label={t`Sample Prizes`}
           >
             {opening.prizes.map((card, index) => (
               <li key={`${card.id}-${index}`}>
@@ -480,20 +531,24 @@ const DeckRow = ({
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
 }) => {
+  const { t } = useLingui();
   const { card, count } = entry;
+  const cardName = card.name;
   const stop = (event: MouseEvent, run: () => void): void => {
     event.stopPropagation();
     run();
   };
   const print =
-    card.set && card.number ? `${card.set} ${card.number}` : 'Added by hand';
+    card.set && card.number ? `${card.set} ${card.number}` : t`Added by hand`;
+  const removeOne = t`Remove one ${cardName}`;
+  const addOne = t`Add one ${cardName}`;
   const stepper = (
     <span className="deck-row__stepper">
-      <Tooltip content={`Remove one ${card.name}`}>
+      <Tooltip content={removeOne}>
         <button
           type="button"
           className="deck-row__step"
-          aria-label={`Remove one ${card.name}`}
+          aria-label={removeOne}
           onClick={(event) => stop(event, () => onRemove(card))}
         >
           <MinusIcon {...decorative} weight="bold" />
@@ -502,11 +557,11 @@ const DeckRow = ({
       <span className="deck-row__count ds-number" aria-hidden="true">
         {count}
       </span>
-      <Tooltip content={`Add one ${card.name}`}>
+      <Tooltip content={addOne}>
         <button
           type="button"
           className="deck-row__step"
-          aria-label={`Add one ${card.name}`}
+          aria-label={addOne}
           onClick={(event) => stop(event, () => onAdd(card))}
         >
           <PlusIcon {...decorative} weight="bold" />
@@ -524,7 +579,10 @@ const DeckRow = ({
       <button
         type="button"
         className="deck-row__card"
-        aria-label={`${count} × ${card.name} (${print}). Details`}
+        aria-label={t({
+          message: `${count} × ${cardName} (${print}). Details`,
+          comment: 'A deck row: copies × card name (set and number)',
+        })}
         onClick={() => onInspect(card)}
         onPointerEnter={(event) => {
           if (event.pointerType === 'mouse') onZoom(card, event.currentTarget);
@@ -548,7 +606,12 @@ const DeckRow = ({
           <span className="deck-row__text">
             <span className="deck-row__name">
               {card.name}
-              {cover ? <span className="deck-row__cover"> · cover</span> : null}
+              {cover ? (
+                <span className="deck-row__cover">
+                  {' '}
+                  · <Trans context="the deck's cover card">cover</Trans>
+                </span>
+              ) : null}
             </span>
             <span className="deck-row__print">{print}</span>
           </span>

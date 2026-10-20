@@ -2,6 +2,8 @@ import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
 import { ImageSquareIcon } from '@phosphor-icons/react/dist/csr/ImageSquare';
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
+import { plural } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   deckTotals,
   withCatalogFacts,
@@ -96,6 +98,7 @@ export const DeckScreen = ({
   onChangeCardBack,
   readClipboard = browserClipboard,
 }: DeckScreenProps) => {
+  const { t } = useLingui();
   const seats = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
@@ -300,8 +303,8 @@ export const DeckScreen = ({
           toast({
             title:
               result.reason === 'empty'
-                ? 'Nothing to import'
-                : "That list didn't read",
+                ? t`Nothing to import`
+                : t`That list didn't read`,
             body: result.message,
             tone: 'warning',
           });
@@ -331,14 +334,18 @@ export const DeckScreen = ({
         } else {
           placeOnSeat(result.cards, { name, format: result.format });
         }
+        const seat = SEAT_NAMES[target];
+        const missingLines = result.missing.length;
         toast({
           id: 'deck-import',
-          title: `${name} is on ${SEAT_NAMES[target]}`,
+          title: t`${name} is on ${seat}`,
           body:
-            result.missing.length > 0
-              ? `${total} cards. ${result.missing.length} line${result.missing.length === 1 ? '' : 's'} couldn't be found.`
-              : `${total} cards${options.save ? ', saved to your decks' : ''}.`,
-          tone: result.missing.length > 0 ? 'warning' : 'success',
+            missingLines > 0
+              ? t`${plural(total, { one: '# card.', other: '# cards.' })} ${plural(missingLines, { one: "# line couldn't be found.", other: "# lines couldn't be found." })}`
+              : options.save
+                ? t`${plural(total, { one: '# card, saved to your decks.', other: '# cards, saved to your decks.' })}`
+                : t`${plural(total, { one: '# card.', other: '# cards.' })}`,
+          tone: missingLines > 0 ? 'warning' : 'success',
         });
         return true;
       } finally {
@@ -352,6 +359,7 @@ export const DeckScreen = ({
       library,
       placeOnSeat,
       screenPreferences.language,
+      t,
       target,
     ]
   );
@@ -363,11 +371,11 @@ export const DeckScreen = ({
       if (!read.ok) {
         if (read.reason !== 'aborted') {
           toast({
-            title: "That file didn't open",
+            title: t`That file didn't open`,
             body:
               read.reason === 'file_too_large'
-                ? 'It is too large to be a deck.'
-                : 'It could not be read.',
+                ? t`It is too large to be a deck.`
+                : t`It could not be read.`,
             tone: 'warning',
           });
         }
@@ -381,7 +389,7 @@ export const DeckScreen = ({
         controller
       );
     },
-    [beginImport, endImport, runImport]
+    [beginImport, endImport, runImport, t]
   );
 
   const importClipboard = useCallback(async () => {
@@ -392,8 +400,8 @@ export const DeckScreen = ({
     } catch {
       if (!controller.signal.aborted) {
         toast({
-          title: "The clipboard can't be read here",
-          body: 'Paste the list with Ctrl+V (⌘V on a Mac) instead.',
+          title: t`The clipboard can't be read here`,
+          body: t`Paste the list with Ctrl+V (⌘V on a Mac) instead.`,
           tone: 'warning',
         });
       }
@@ -401,7 +409,7 @@ export const DeckScreen = ({
       return;
     }
     await runImport(text, { kind: 'paste' }, undefined, controller);
-  }, [beginImport, endImport, readClipboard, runImport]);
+  }, [beginImport, endImport, readClipboard, runImport, t]);
 
   /**
    * A sample deck at random, tried on the seat. Its import begins before
@@ -448,14 +456,14 @@ export const DeckScreen = ({
   const newDeck = useCallback(
     (format: DeckFormatId = 'standard') => {
       const deck = library.create({
-        name: 'Untitled deck',
+        name: t`Untitled deck`,
         format,
         cards: [],
         source: { kind: 'new' },
       });
       setView({ kind: 'edit', deckId: deck.id });
     },
-    [library]
+    [library, t]
   );
 
   /** Saves the seat's unsaved deck (a list picked to try) and edits it. */
@@ -463,7 +471,7 @@ export const DeckScreen = ({
     (slotTarget: DeckBuilderTarget, edit: boolean) => {
       const slot = store.getSnapshot().slots[slotTarget];
       const saved = library.create({
-        name: slot.label?.name ?? 'My deck',
+        name: slot.label?.name ?? t`My deck`,
         format: slot.label?.format ?? 'standard',
         cards: slot.deck,
         source: {
@@ -481,7 +489,7 @@ export const DeckScreen = ({
       if (edit) setView({ kind: 'edit', deckId: saved.id });
       return saved;
     },
-    [library, placeOnSeat, store]
+    [library, placeOnSeat, store, t]
   );
 
   const leaveEditor = useCallback(() => {
@@ -492,13 +500,13 @@ export const DeckScreen = ({
         deck &&
         deck.cards.length === 0 &&
         deck.source?.kind === 'new' &&
-        deck.name === 'Untitled deck'
+        deck.name === t`Untitled deck`
       ) {
         decks.remove(deck.id);
       }
     }
     setView({ kind: 'home' });
-  }, [decks, library, view]);
+  }, [decks, library, t, view]);
 
   useEffect(() => {
     if (
@@ -534,8 +542,13 @@ export const DeckScreen = ({
   const editingDeck =
     view.kind === 'edit' ? library.get(view.deckId) : undefined;
   const seatLabel =
-    seat.label?.name ?? (seatTotal > 0 ? 'Unsaved deck' : 'No deck');
-  const playLabel = anySeatDeck ? 'Play' : 'Choose a deck to play';
+    seat.label?.name ?? (seatTotal > 0 ? t`Unsaved deck` : t`No deck`);
+  const playLabel = anySeatDeck
+    ? t({ message: 'Play', context: 'take the decks to the table' })
+    : t`Choose a deck to play`;
+  const targetSeat = SEAT_NAMES[target];
+  const reloadingSeats = reloading.map((slotTarget) => SEAT_NAMES[slotTarget]);
+  const [firstReloading, secondReloading] = reloadingSeats;
   const seatTargets = useMemo(
     () =>
       seats.alternateEnabled
@@ -566,24 +579,27 @@ export const DeckScreen = ({
           onClick={onClose}
         >
           <ArrowLeftIcon {...decorative} weight="bold" />
-          Table
+          <Trans context="go back to the table">Table</Trans>
         </button>
         <div
           className="deck-screen__seats"
           role="group"
-          aria-label="Deck for each seat"
+          aria-label={t`Deck for each seat`}
         >
           {seatTargets.map((slotTarget) => {
             const slot = seats.slots[slotTarget];
             const total = deckTotals(slot.deck).total;
             const selected = slotTarget === target;
+            const slotSeat = SEAT_NAMES[slotTarget];
             return (
               <Tooltip
                 key={slotTarget}
                 content={
                   seats.alternateEnabled
-                    ? `Choose the deck for ${SEAT_NAMES[slotTarget]}${slotTarget === 'main' ? ' (you)' : ''}`
-                    : 'Your deck'
+                    ? slotTarget === 'main'
+                      ? t`Choose the deck for ${slotSeat} (you)`
+                      : t`Choose the deck for ${slotSeat}`
+                    : t`Your deck`
                 }
                 side="bottom"
               >
@@ -604,7 +620,7 @@ export const DeckScreen = ({
                   </span>
                   <span className="deck-screen__seat-name">
                     {slot.label?.name ??
-                      (total > 0 ? 'Unsaved deck' : 'No deck yet')}
+                      (total > 0 ? t`Unsaved deck` : t`No deck yet`)}
                   </span>
                   <span
                     className="deck-screen__seat-count ds-number"
@@ -623,12 +639,15 @@ export const DeckScreen = ({
           data-card-count={seatTotal}
           aria-live="polite"
         >
-          {SEAT_NAMES[target]}: {seatLabel}, {seatTotal} cards
+          {t({
+            message: `${targetSeat}: ${seatLabel}, ${plural(seatTotal, { one: '# card', other: '# cards' })}`,
+            comment: 'Read out on a seat change: the seat, its deck, its size',
+          })}
         </span>
         <div className="deck-screen__bar-actions">
           {reloading.length > 0 ? (
             <Tooltip
-              content="The table gets the changed deck when you go back to it, and that side starts over."
+              content={t`The table gets the changed deck when you go back to it, and that side starts over.`}
               side="bottom"
             >
               <span
@@ -638,23 +657,19 @@ export const DeckScreen = ({
               >
                 <WarningCircleIcon {...decorative} weight="bold" />
                 <span className="deck-screen__reload-text">
-                  {reloading
-                    .map((slotTarget) => SEAT_NAMES[slotTarget])
-                    .join(' and ')}{' '}
-                  will reload
+                  {secondReloading
+                    ? t`${firstReloading} and ${secondReloading} will reload`
+                    : t`${firstReloading} will reload`}
                 </span>
               </span>
             </Tooltip>
           ) : null}
-          <Tooltip
-            content={`Card back for ${SEAT_NAMES[target]}`}
-            side="bottom"
-          >
+          <Tooltip content={t`Card back for ${targetSeat}`} side="bottom">
             <button
               id="changeCardBackButton"
               type="button"
               className="ds-button ds-button--ghost ds-button--icon"
-              aria-label={`Change card back for ${SEAT_NAMES[target]}`}
+              aria-label={t`Change card back for ${targetSeat}`}
               onClick={() => onChangeCardBack(target)}
             >
               <ImageSquareIcon {...decorative} weight="bold" />
@@ -663,8 +678,8 @@ export const DeckScreen = ({
           <Tooltip
             content={
               anySeatDeck
-                ? 'Take the decks to the table'
-                : 'Choose a deck first'
+                ? t`Take the decks to the table`
+                : t`Choose a deck first`
             }
             side="bottom"
           >
@@ -677,7 +692,7 @@ export const DeckScreen = ({
               onClick={onPlay}
             >
               <PlayIcon {...decorative} weight="fill" />
-              Play
+              <Trans context="take the decks to the table">Play</Trans>
             </button>
           </Tooltip>
         </div>
@@ -688,7 +703,7 @@ export const DeckScreen = ({
         type="file"
         accept=".csv,.txt,text/csv,text/plain"
         tabIndex={-1}
-        aria-label="Open a deck file"
+        aria-label={t`Open a deck file`}
         hidden
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
@@ -753,7 +768,7 @@ export const DeckScreen = ({
       </main>
       {dragging ? (
         <div className="deck-screen__drop" aria-hidden="true">
-          Drop a decklist or deck file to import it
+          <Trans>Drop a decklist or deck file to import it</Trans>
         </div>
       ) : null}
     </div>

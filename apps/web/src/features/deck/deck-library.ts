@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import {
   CARD_CATEGORIES,
   deckListOf,
@@ -360,7 +361,7 @@ export class DeckLibrary {
     const now = this.#now();
     const deck = Object.freeze({
       id: this.#createId(),
-      name: cleanDeckName(draft.name) || 'Untitled deck',
+      name: cleanDeckName(draft.name) || t`Untitled deck`,
       format: isDeckFormatId(draft.format) ? draft.format : 'standard',
       cards: draft.cards,
       ...(draft.coverId ? { coverId: draft.coverId } : {}),
@@ -411,8 +412,12 @@ export class DeckLibrary {
   duplicate(id: string): SavedDeck | undefined {
     const current = this.#decks.get(id);
     if (!current) return undefined;
+    const name = current.name;
     return this.create({
-      name: `${current.name} (copy)`,
+      name: t({
+        message: `${name} (copy)`,
+        comment: 'The name of a duplicated deck',
+      }),
       format: current.format,
       cards: current.cards,
       ...(current.coverId ? { coverId: current.coverId } : {}),

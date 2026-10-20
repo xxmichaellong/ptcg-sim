@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 import {
   customCardId,
   deckListOf,
@@ -138,7 +140,7 @@ const parseCsvRows = (source: string): ParsedCsv => {
         issues.push({
           code: 'unexpected_quote',
           row: rows.length + 1,
-          message: `Row ${rows.length + 1} contains an unexpected quote.`,
+          message: t`Row ${{ row: rows.length + 1 }} contains an unexpected quote.`,
         });
         cell += character;
       }
@@ -153,7 +155,7 @@ const parseCsvRows = (source: string): ParsedCsv => {
       issues.push({
         code: 'unexpected_quote',
         row: rows.length + 1,
-        message: `Row ${rows.length + 1} has text after a closing quote.`,
+        message: t`Row ${{ row: rows.length + 1 }} has text after a closing quote.`,
       });
       cell += character;
     } else {
@@ -165,7 +167,7 @@ const parseCsvRows = (source: string): ParsedCsv => {
     issues.push({
       code: 'unterminated_quote',
       row: rows.length + 1,
-      message: `Row ${rows.length + 1} contains an unterminated quote.`,
+      message: t`Row ${{ row: rows.length + 1 }} contains an unterminated quote.`,
     });
   }
   if (cell.length > 0 || row.length > 0 || closedQuote) finishRow();
@@ -183,7 +185,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues: [
         {
           code: 'csv_too_large',
-          message: `Deck CSV exceeds ${MAX_DECK_CSV_CODE_UNITS} code units.`,
+          message: t`Deck CSV exceeds ${{ max: MAX_DECK_CSV_CODE_UNITS }} code units.`,
         },
       ],
     };
@@ -195,7 +197,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
   if (rows.length > MAX_DECK_CSV_ROWS + 1) {
     issues.push({
       code: 'too_many_rows',
-      message: `Deck CSV contains more than ${MAX_DECK_CSV_ROWS} card rows.`,
+      message: t`Deck CSV contains more than ${{ max: MAX_DECK_CSV_ROWS }} card rows.`,
     });
   }
 
@@ -212,7 +214,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
     issues.push({
       code: 'invalid_header',
       row: 1,
-      message: `Deck CSV must start with ${SIM_CSV_HEADER}.`,
+      message: t`Deck CSV must start with ${{ header: SIM_CSV_HEADER }}.`,
     });
   }
 
@@ -230,7 +232,9 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'invalid_column_count',
         row: rowNumber,
-        message: `Row ${rowNumber} must contain exactly ${hasPresentation ? 'five' : 'four'} columns.`,
+        message: hasPresentation
+          ? t`Row ${rowNumber} must contain exactly five columns.`
+          : t`Row ${rowNumber} must contain exactly four columns.`,
       });
       continue;
     }
@@ -250,7 +254,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
         issues.push({
           code: 'invalid_presentation',
           row: rowNumber,
-          message: `Row ${rowNumber} has invalid presentation JSON.`,
+          message: t`Row ${rowNumber} has invalid presentation JSON.`,
         });
         continue;
       }
@@ -271,7 +275,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'invalid_quantity',
         row: rowNumber,
-        message: `Row ${rowNumber} quantity must be an integer from 1 to ${MAX_DECK_CARD_QUANTITY}.`,
+        message: t`Row ${rowNumber} quantity must be an integer from 1 to ${{ max: MAX_DECK_CARD_QUANTITY }}.`,
       });
       rowValid = false;
     }
@@ -279,14 +283,14 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'missing_name',
         row: rowNumber,
-        message: `Row ${rowNumber} is missing a card name.`,
+        message: t`Row ${rowNumber} is missing a card name.`,
       });
       rowValid = false;
     } else if (name.length > MAX_DECK_CARD_NAME_CODE_UNITS) {
       issues.push({
         code: 'name_too_long',
         row: rowNumber,
-        message: `Row ${rowNumber} card name exceeds ${MAX_DECK_CARD_NAME_CODE_UNITS} code units.`,
+        message: t`Row ${rowNumber} card name exceeds ${{ max: MAX_DECK_CARD_NAME_CODE_UNITS }} code units.`,
       });
       rowValid = false;
     }
@@ -294,21 +298,21 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'missing_type',
         row: rowNumber,
-        message: `Row ${rowNumber} is missing a card type.`,
+        message: t`Row ${rowNumber} is missing a card type.`,
       });
       rowValid = false;
     } else if (supertype.length > MAX_DECK_CARD_TYPE_CODE_UNITS) {
       issues.push({
         code: 'type_too_long',
         row: rowNumber,
-        message: `Row ${rowNumber} card type exceeds ${MAX_DECK_CARD_TYPE_CODE_UNITS} code units.`,
+        message: t`Row ${rowNumber} card type exceeds ${{ max: MAX_DECK_CARD_TYPE_CODE_UNITS }} code units.`,
       });
       rowValid = false;
     } else if (!cardCategoryOf(supertype)) {
       issues.push({
         code: 'invalid_type',
         row: rowNumber,
-        message: `Row ${rowNumber} card type must be Pokémon, Trainer or Energy.`,
+        message: t`Row ${rowNumber} card type must be Pokémon, Trainer or Energy.`,
       });
       rowValid = false;
     }
@@ -316,14 +320,14 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'missing_url',
         row: rowNumber,
-        message: `Row ${rowNumber} is missing an image URL.`,
+        message: t`Row ${rowNumber} is missing an image URL.`,
       });
       rowValid = false;
     } else if (image.length > MAX_DECK_IMAGE_URL_CODE_UNITS) {
       issues.push({
         code: 'url_too_long',
         row: rowNumber,
-        message: `Row ${rowNumber} image URL exceeds ${MAX_DECK_IMAGE_URL_CODE_UNITS} code units.`,
+        message: t`Row ${rowNumber} image URL exceeds ${{ max: MAX_DECK_IMAGE_URL_CODE_UNITS }} code units.`,
       });
       rowValid = false;
     }
@@ -334,7 +338,7 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'deck_too_large',
         row: rowNumber,
-        message: `Deck contains more than ${MAX_DECK_TOTAL_CARDS} cards.`,
+        message: t`Deck contains more than ${{ max: MAX_DECK_TOTAL_CARDS }} cards.`,
       });
       continue;
     }

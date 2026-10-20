@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 import {
   MAX_DECK_CARD_NAME_CODE_UNITS,
   MAX_DECK_CARD_QUANTITY,
@@ -566,7 +568,7 @@ export const parsePastedDecklist = (
       issues: [
         issue(
           'input_too_large',
-          `Decklist exceeds ${MAX_PASTED_DECKLIST_CODE_UNITS} code units.`
+          t`Decklist exceeds ${{ max: MAX_PASTED_DECKLIST_CODE_UNITS }} code units.`
         ),
       ],
     };
@@ -578,7 +580,7 @@ export const parsePastedDecklist = (
       issues: [
         issue(
           'too_many_lines',
-          `Decklist contains more than ${MAX_PASTED_DECKLIST_LINES} lines.`
+          t`Decklist contains more than ${{ max: MAX_PASTED_DECKLIST_LINES }} lines.`
         ),
       ],
     };
@@ -594,7 +596,7 @@ export const parsePastedDecklist = (
       issues: [
         issue(
           'line_too_long',
-          `Line ${line} exceeds ${MAX_PASTED_DECKLIST_LINE_CODE_UNITS} code units.`,
+          t`Line ${line} exceeds ${{ max: MAX_PASTED_DECKLIST_LINE_CODE_UNITS }} code units.`,
           line
         ),
       ],
@@ -616,7 +618,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'invalid_quantity',
-          `Line ${row.line} quantity must be an integer from 1 to ${MAX_DECK_CARD_QUANTITY}.`,
+          t`Line ${{ line: row.line }} quantity must be an integer from 1 to ${{ max: MAX_DECK_CARD_QUANTITY }}.`,
           row.line
         )
       );
@@ -627,7 +629,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'name_too_long',
-          `Line ${row.line} card name exceeds ${MAX_DECK_CARD_NAME_CODE_UNITS} code units.`,
+          t`Line ${{ line: row.line }} card name exceeds ${{ max: MAX_DECK_CARD_NAME_CODE_UNITS }} code units.`,
           row.line
         )
       );
@@ -637,7 +639,7 @@ export const parsePastedDecklist = (
         issues.push(
           issue(
             'token_too_long',
-            `Line ${row.line} set or card identifier exceeds ${MAX_PASTED_DECKLIST_TOKEN_CODE_UNITS} code units.`,
+            t`Line ${{ line: row.line }} set or card identifier exceeds ${{ max: MAX_PASTED_DECKLIST_TOKEN_CODE_UNITS }} code units.`,
             row.line
           )
         );
@@ -649,7 +651,7 @@ export const parsePastedDecklist = (
     issues.push(
       issue(
         'deck_too_large',
-        `Decklist contains more than ${MAX_DECK_TOTAL_CARDS} cards.`
+        t`Decklist contains more than ${{ max: MAX_DECK_TOTAL_CARDS }} cards.`
       )
     );
   }
@@ -671,7 +673,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'url_too_long',
-          `Line ${row.line} image URL exceeds ${MAX_DECK_IMAGE_URL_CODE_UNITS} code units.`,
+          t`Line ${{ line: row.line }} image URL exceeds ${{ max: MAX_DECK_IMAGE_URL_CODE_UNITS }} code units.`,
           row.line
         )
       );

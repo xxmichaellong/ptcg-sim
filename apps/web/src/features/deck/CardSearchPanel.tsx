@@ -6,9 +6,11 @@ import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { QuestionIcon } from '@phosphor-icons/react/dist/csr/Question';
 import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { i18n, type MessageDescriptor } from '@lingui/core';
+import { msg, plural } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   CATALOG_SORTS,
-  DECK_FORMATS,
   ENERGY_TYPES,
   parseCardQuery,
   ruleName,
@@ -37,6 +39,16 @@ import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
+import {
+  categoryName,
+  energyKindName,
+  energyTypeName,
+  formatName,
+  sortName,
+  stageName,
+  tagName,
+  trainerTypeName,
+} from './deck-labels.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import type { ZoomCard } from './useHoverZoom.js';
@@ -58,15 +70,6 @@ export const ENERGY_LETTER: Readonly<Record<EnergyType, string>> = {
   Fairy: 'Y',
   Dragon: 'N',
   Colorless: 'C',
-};
-
-const SORT_LABELS: Readonly<Record<CatalogSort, string>> = {
-  newest: 'Newest',
-  oldest: 'Oldest',
-  name: 'Name',
-  hp: 'HP',
-  type: 'Type',
-  set: 'Set & number',
 };
 
 type Kind = 'Pokémon' | 'Trainer' | 'Energy';
@@ -288,19 +291,23 @@ export const EnergySymbol = ({ type }: { readonly type: EnergyType }) => (
   </span>
 );
 
-const SYNTAX_HELP: readonly (readonly [string, string])[] = [
-  ['charizard', 'Name contains the words'],
-  ['"boss’s orders"', 'Name contains the phrase'],
-  ['t:fire s:basic', 'Fire type, Basic'],
-  ['is:ex,v', 'ex or V (comma = or)'],
-  ['-is:ex', 'not ex (minus = not)'],
-  ['hp>=200 rc<=1', 'HP and retreat'],
-  ['ac<=cc', 'An attack payable with two Energy'],
-  ['text:draw_3_cards', 'Exact phrase in the rules text'],
-  ['has:ability w:none', 'Has an Ability, no Weakness'],
-  ['reg>=h f:standard', 'Regulation mark, format'],
-  ['e:PAL a:"5ban"', 'Set code, illustrator'],
-  ['o:hp u:prints', 'Sort by HP, show every print'],
+/**
+ * Example queries and what they find. The queries are Limitless's search
+ * syntax and stay as typed; only their meanings are translated.
+ */
+const SYNTAX_HELP: readonly (readonly [string, MessageDescriptor])[] = [
+  ['charizard', msg`Name contains the words`],
+  ['"boss’s orders"', msg`Name contains the phrase`],
+  ['t:fire s:basic', msg`Fire type, Basic`],
+  ['is:ex,v', msg`ex or V (comma = or)`],
+  ['-is:ex', msg`not ex (minus = not)`],
+  ['hp>=200 rc<=1', msg`HP and retreat`],
+  ['ac<=cc', msg`An attack payable with two Energy`],
+  ['text:draw_3_cards', msg`Exact phrase in the rules text`],
+  ['has:ability w:none', msg`Has an Ability, no Weakness`],
+  ['reg>=h f:standard', msg`Regulation mark, format`],
+  ['e:PAL a:"5ban"', msg`Set code, illustrator`],
+  ['o:hp u:prints', msg`Sort by HP, show every print`],
 ];
 
 export interface CardSearchPanelProps {
@@ -330,6 +337,7 @@ export const CardSearchPanel = ({
   onZoomEnd,
   onScroll,
 }: CardSearchPanelProps) => {
+  const { t } = useLingui();
   const catalogState = useCardCatalog(catalog);
   const screenPreferences = usePreference(DECK_SCREEN_PREFERENCES);
   const [text, setText] = useState('');
@@ -511,16 +519,23 @@ export const CardSearchPanel = ({
     }
   };
 
+  const formatLabel = formatName(format);
   const summary = (() => {
     if (!result) return '';
-    const parts: string[] = [];
-    if (legality) parts.push(`legal in ${DECK_FORMATS[legality].name}`);
     const count = result.cards.length;
-    return `${count.toLocaleString()} ${screenPreferences.allPrints ? 'print' : 'card'}${count === 1 ? '' : 's'}${parts.length > 0 ? ` · ${parts.join(' · ')}` : ''}`;
+    if (legality) {
+      const legalIn = formatName(legality);
+      return screenPreferences.allPrints
+        ? t`${plural(count, { one: `# print · legal in ${legalIn}`, other: `# prints · legal in ${legalIn}` })}`
+        : t`${plural(count, { one: `# card · legal in ${legalIn}`, other: `# cards · legal in ${legalIn}` })}`;
+    }
+    return screenPreferences.allPrints
+      ? t`${plural(count, { one: '# print', other: '# prints' })}`
+      : t`${plural(count, { one: '# card', other: '# cards' })}`;
   })();
 
   return (
-    <section className="card-search" aria-label="Find cards">
+    <section className="card-search" aria-label={t`Find cards`}>
       <div className="card-search__controls">
         <div className="card-search__row">
           <label className="card-search__field">
@@ -532,28 +547,30 @@ export const CardSearchPanel = ({
               type="search"
               autoComplete="off"
               spellCheck={false}
-              aria-label="Search cards"
+              aria-label={t`Search cards`}
               aria-describedby="cardSearchHint"
-              placeholder="Search cards — try “t:fire hp>=100” or “is:ex”"
+              placeholder={t`Search cards — try “t:fire hp>=100” or “is:ex”`}
               value={text}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={onSearchKeyDown}
             />
           </label>
-          <Tooltip content="Search syntax">
+          <Tooltip content={t`Search syntax`}>
             <button
               type="button"
               className="ds-icon-button"
-              aria-label="Search syntax"
+              aria-label={t`Search syntax`}
               aria-expanded={showHelp}
               onClick={() => setShowHelp((current) => !current)}
             >
               <QuestionIcon {...decorative} weight="bold" />
             </button>
           </Tooltip>
-          <Tooltip content="Sort results">
+          <Tooltip content={t`Sort results`}>
             <label className="card-search__sort">
-              <span className="ds-visually-hidden">Sort by</span>
+              <span className="ds-visually-hidden">
+                <Trans>Sort by</Trans>
+              </span>
               <select
                 id="nativeDeckBuilderSortBy"
                 className="ds-select"
@@ -566,7 +583,7 @@ export const CardSearchPanel = ({
               >
                 {CATALOG_SORTS.map((sort) => (
                   <option key={sort} value={sort}>
-                    {SORT_LABELS[sort]}
+                    {sortName(sort)}
                   </option>
                 ))}
               </select>
@@ -575,14 +592,14 @@ export const CardSearchPanel = ({
           <Tooltip
             content={
               screenPreferences.allPrints
-                ? 'Showing every print; show one per card'
-                : 'Show every print of each card'
+                ? t`Showing every print; show one per card`
+                : t`Show every print of each card`
             }
           >
             <button
               type="button"
               className="ds-icon-button"
-              aria-label="Show every print"
+              aria-label={t`Show every print`}
               aria-pressed={screenPreferences.allPrints}
               onClick={() =>
                 preferences().patch(DECK_SCREEN_PREFERENCES, {
@@ -593,11 +610,11 @@ export const CardSearchPanel = ({
               <StackIcon {...decorative} weight="bold" />
             </button>
           </Tooltip>
-          <Tooltip content="More filters">
+          <Tooltip content={t`More filters`}>
             <button
               type="button"
               className="ds-icon-button card-search__more"
-              aria-label="More filters"
+              aria-label={t`More filters`}
               aria-expanded={showAdvanced}
               data-active={advancedCount(advanced) > 0 ? 'true' : undefined}
               onClick={() => setShowAdvanced((current) => !current)}
@@ -614,8 +631,10 @@ export const CardSearchPanel = ({
         {showHelp ? (
           <div className="card-search__help" role="note">
             <p>
-              Type words to search names, or combine filters — Limitless
-              TCG&apos;s search syntax works here.
+              <Trans>
+                Type words to search names, or combine filters — Limitless
+                TCG&apos;s search syntax works here.
+              </Trans>
             </p>
             <dl>
               {SYNTAX_HELP.map(([example, meaning]) => (
@@ -629,17 +648,21 @@ export const CardSearchPanel = ({
                       {example}
                     </button>
                   </dt>
-                  <dd>{meaning}</dd>
+                  <dd>{i18n._(meaning)}</dd>
                 </div>
               ))}
             </dl>
           </div>
         ) : null}
-        <div className="card-search__chips" role="group" aria-label="Filters">
+        <div
+          className="card-search__chips"
+          role="group"
+          aria-label={t`Filters`}
+        >
           {(['Pokémon', 'Trainer', 'Energy'] as const).map((kind) => (
             <Chip
               key={kind}
-              label={kind}
+              label={categoryName(kind)}
               pressed={kinds.includes(kind)}
               onToggle={() => setKind(kind)}
             />
@@ -650,7 +673,7 @@ export const CardSearchPanel = ({
               {POKEMON_STAGES.map((stage) => (
                 <Chip
                   key={stage}
-                  label={stage}
+                  label={stageName(stage)}
                   pressed={chips.stages.includes(stage)}
                   onToggle={() =>
                     setChips((current) => ({
@@ -664,7 +687,7 @@ export const CardSearchPanel = ({
               {POKEMON_TAGS.map((tag) => (
                 <Chip
                   key={tag}
-                  label={tag}
+                  label={tagName(tag)}
                   pressed={chips.tags.includes(tag)}
                   onToggle={() =>
                     setChips((current) => ({
@@ -682,7 +705,7 @@ export const CardSearchPanel = ({
               {TRAINER_TYPES.map((kind) => (
                 <Chip
                   key={kind}
-                  label={kind}
+                  label={trainerTypeName(kind)}
                   pressed={chips.trainerTypes.includes(kind)}
                   onToggle={() =>
                     setChips((current) => ({
@@ -707,10 +730,10 @@ export const CardSearchPanel = ({
           {only('Energy') ? (
             <>
               <span className="card-search__divider" aria-hidden="true" />
-              {['Basic', 'Special'].map((kind) => (
+              {(['Basic', 'Special'] as const).map((kind) => (
                 <Chip
                   key={kind}
-                  label={kind}
+                  label={energyKindName(kind)}
                   pressed={chips.energyKinds.includes(kind)}
                   onToggle={() =>
                     setChips((current) => ({
@@ -723,12 +746,16 @@ export const CardSearchPanel = ({
             </>
           ) : null}
         </div>
-        <div className="card-search__types" role="group" aria-label="Type">
+        <div
+          className="card-search__types"
+          role="group"
+          aria-label={t({ message: 'Type', context: 'Pokémon type' })}
+        >
           {ENERGY_TYPES.map((type) => (
             <Chip
               key={type}
-              label={type}
-              title={type}
+              label={energyTypeName(type)}
+              title={energyTypeName(type)}
               className="deck-chip--energy"
               pressed={chips.types.includes(type)}
               onToggle={() =>
@@ -764,7 +791,9 @@ export const CardSearchPanel = ({
               checked={legalOnly}
               onChange={(event) => setLegalOnly(event.target.checked)}
             />
-            Only {DECK_FORMATS[format].name}-legal
+            <Trans comment="formatLabel is a deck format: Standard, Expanded…">
+              Only {formatLabel}-legal
+            </Trans>
           </label>
           {filterCount > 0 ? (
             <button
@@ -773,10 +802,12 @@ export const CardSearchPanel = ({
               onClick={clearFilters}
             >
               <XIcon {...decorative} weight="bold" />
-              Clear filters
+              <Trans>Clear filters</Trans>
             </button>
           ) : null}
-          <Tooltip content="A card that isn't in the list: a name and an image address">
+          <Tooltip
+            content={t`A card that isn't in the list: a name and an image address`}
+          >
             <button
               id="nativeDeckBuilderAddCustomCard"
               type="button"
@@ -784,7 +815,7 @@ export const CardSearchPanel = ({
               onClick={onCustomCard}
             >
               <PlusIcon {...decorative} weight="bold" />
-              Custom card
+              <Trans>Custom card</Trans>
             </button>
           </Tooltip>
         </div>
@@ -799,7 +830,7 @@ export const CardSearchPanel = ({
         {catalogState.status === 'ready' && result ? (
           result.cards.length === 0 ? (
             <div className="card-search__empty">
-              <p>No cards match{text ? ` “${text}”` : ''}.</p>
+              <p>{text ? t`No cards match “${text}”.` : t`No cards match.`}</p>
               <div className="card-search__empty-actions">
                 {legalOnly ? (
                   <button
@@ -807,7 +838,7 @@ export const CardSearchPanel = ({
                     className="ds-button ds-button--secondary"
                     onClick={() => setLegalOnly(false)}
                   >
-                    Search every format
+                    <Trans>Search every format</Trans>
                   </button>
                 ) : null}
                 {filterCount > 0 ? (
@@ -816,7 +847,7 @@ export const CardSearchPanel = ({
                     className="ds-button ds-button--secondary"
                     onClick={clearFilters}
                   >
-                    Clear filters
+                    <Trans>Clear filters</Trans>
                   </button>
                 ) : null}
                 <button
@@ -825,13 +856,13 @@ export const CardSearchPanel = ({
                   onClick={onCustomCard}
                 >
                   <PlusIcon {...decorative} weight="bold" />
-                  Make a custom card
+                  <Trans>Make a custom card</Trans>
                 </button>
               </div>
             </div>
           ) : (
             <>
-              <ul className="card-search__grid" aria-label="Cards found">
+              <ul className="card-search__grid" aria-label={t`Cards found`}>
                 {result.cards.slice(0, shown).map((card) => (
                   <CardResult
                     key={card.id}
@@ -851,8 +882,10 @@ export const CardSearchPanel = ({
                 <div ref={sentinel} className="card-search__sentinel" />
               ) : null}
               <p className="card-search__footer">
-                Shift+click removes one · Right-click for details · Enter in the
-                search adds the first card
+                <Trans>
+                  Shift+click removes one · Right-click for details · Enter in
+                  the search adds the first card
+                </Trans>
               </p>
             </>
           )
@@ -877,7 +910,9 @@ const CatalogStatus = ({
   state === 'failed' ? (
     <div className="card-search__empty" role="alert">
       <p>
-        The card list didn&apos;t load. Check your connection and try again.
+        <Trans>
+          The card list didn&apos;t load. Check your connection and try again.
+        </Trans>
       </p>
       <button
         type="button"
@@ -885,13 +920,13 @@ const CatalogStatus = ({
         onClick={onRetry}
       >
         <ArrowClockwiseIcon {...decorative} weight="bold" />
-        Try again
+        <Trans>Try again</Trans>
       </button>
     </div>
   ) : (
     <div className="card-search__loading" role="status">
       <CircleNotchIcon {...decorative} weight="bold" className="ds-spin" />
-      Getting every card ready…
+      <Trans>Getting every card ready…</Trans>
       <div className="card-search__skeleton" aria-hidden="true">
         {Array.from({ length: 12 }, (_, index) => (
           <span key={index} />
@@ -921,17 +956,30 @@ const CardResult = ({
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
 }) => {
+  const { t } = useLingui();
   const onClick = (event: MouseEvent<HTMLButtonElement>): void => {
     if (event.shiftKey) onRemove(card);
     else onAdd(card);
   };
+  const cardName = card.name;
+  const print = `${card.set.name} ${card.number}`;
   return (
     <li className="card-result-cell">
       <button
         type="button"
         className="card-result"
         data-in-deck={inDeck > 0 ? 'true' : undefined}
-        aria-label={`${card.name}, ${card.set.name} ${card.number}${inDeck > 0 ? `, ${inDeck} in deck` : ''}. Add one.`}
+        aria-label={
+          inDeck > 0
+            ? t({
+                message: `${cardName}, ${print}, ${inDeck} in deck. Add one.`,
+                comment: 'A search result: card name, set and number',
+              })
+            : t({
+                message: `${cardName}, ${print}. Add one.`,
+                comment: 'A search result: card name, set and number',
+              })
+        }
         onClick={onClick}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -973,7 +1021,10 @@ const CardResult = ({
         <span className="card-result__set">
           {card.set.code ?? card.set.id} {card.number}
           {showPrints && prints > 1 ? (
-            <span className="card-result__prints"> · {prints} prints</span>
+            <span className="card-result__prints">
+              {' '}
+              · {t`${plural(prints, { one: '# print', other: '# prints' })}`}
+            </span>
           ) : null}
         </span>
       </button>
@@ -990,6 +1041,7 @@ const AdvancedFilters = ({
   readonly onChange: (value: Advanced) => void;
   readonly onClose: () => void;
 }) => {
+  const { t } = useLingui();
   const field = <Key extends keyof Advanced>(
     key: Key,
     next: Advanced[Key]
@@ -1019,11 +1071,15 @@ const AdvancedFilters = ({
         value={value[key]}
         onChange={(event) => field(key, event.target.value as never)}
       >
-        <option value="">Any</option>
-        {key === 'resistance' ? <option value="none">None</option> : null}
+        <option value="">{t({ message: 'Any', context: 'filter' })}</option>
+        {key === 'resistance' ? (
+          <option value="none">
+            {t({ message: 'None', context: 'no Resistance' })}
+          </option>
+        ) : null}
         {ENERGY_TYPES.filter((type) => type !== 'Colorless').map((type) => (
           <option key={type} value={type}>
-            {type}
+            {energyTypeName(type)}
           </option>
         ))}
       </select>
@@ -1035,9 +1091,9 @@ const AdvancedFilters = ({
       <div className="ptcgsim-segmented-control">
         {(
           [
-            ['', 'Any'],
-            ['yes', 'Yes'],
-            ['no', 'No'],
+            ['', t({ message: 'Any', context: 'filter' })],
+            ['yes', t({ message: 'Yes', context: 'filter' })],
+            ['no', t({ message: 'No', context: 'filter' })],
           ] as const
         ).map(([option, optionLabel]) => (
           <span key={option} className="ptcgsim-segmented-control__option">
@@ -1060,23 +1116,34 @@ const AdvancedFilters = ({
     <div
       className="card-search__advanced"
       role="group"
-      aria-label="More filters"
+      aria-label={t`More filters`}
     >
       <div className="card-search__advanced-grid">
-        {text('hpMin', 'HP at least', '0', 'numeric')}
-        {text('hpMax', 'HP at most', '400', 'numeric')}
-        {text('retreatMax', 'Retreat at most', '4', 'numeric')}
-        {text('damageMin', 'Damage at least', '0', 'numeric')}
-        {text('payWith', 'Attack payable with', 'e.g. CC or LL')}
-        {typeSelect('weakness', 'Weakness')}
-        {typeSelect('resistance', 'Resistance')}
-        {triState('ability', 'Ability')}
-        {triState('ruleBox', 'Rule Box')}
-        {text('marks', 'Regulation marks', 'e.g. HIJ')}
-        {text('set', 'Set', 'code or name')}
-        {text('rarity', 'Rarity', 'e.g. illustration')}
-        {text('artist', 'Illustrator')}
-        {text('evolvesFrom', 'Evolves from')}
+        {text('hpMin', t`HP at least`, '0', 'numeric')}
+        {text('hpMax', t`HP at most`, '400', 'numeric')}
+        {text('retreatMax', t`Retreat at most`, '4', 'numeric')}
+        {text('damageMin', t`Damage at least`, '0', 'numeric')}
+        {text(
+          'payWith',
+          t`Attack payable with`,
+          t({
+            message: 'e.g. CC or LL',
+            comment: 'Energy letters (C, L…) stay as they are',
+          })
+        )}
+        {typeSelect('weakness', t`Weakness`)}
+        {typeSelect('resistance', t`Resistance`)}
+        {triState('ability', t({ message: 'Ability', context: 'card filter' }))}
+        {triState('ruleBox', t`Rule Box`)}
+        {text('marks', t`Regulation marks`, t`e.g. HIJ`)}
+        {text(
+          'set',
+          t({ message: 'Set', context: 'card set' }),
+          t`code or name`
+        )}
+        {text('rarity', t`Rarity`, t`e.g. illustration`)}
+        {text('artist', t`Illustrator`)}
+        {text('evolvesFrom', t`Evolves from`)}
       </div>
       <div className="card-search__advanced-actions">
         <button
@@ -1084,14 +1151,14 @@ const AdvancedFilters = ({
           className="ds-button ds-button--ghost"
           onClick={() => onChange(NO_ADVANCED)}
         >
-          Reset
+          <Trans context="clear the filters">Reset</Trans>
         </button>
         <button
           type="button"
           className="ds-button ds-button--secondary"
           onClick={onClose}
         >
-          Done
+          <Trans>Done</Trans>
         </button>
       </div>
     </div>

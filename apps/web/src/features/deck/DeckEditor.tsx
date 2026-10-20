@@ -8,12 +8,12 @@ import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimpl
 import { ExportIcon } from '@phosphor-icons/react/dist/csr/Export';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   addCard,
   checkDeck,
   countOf,
   DECK_FORMAT_IDS,
-  DECK_FORMATS,
   deckCardFromCatalog,
   deckTotals,
   formatDecklistText,
@@ -58,8 +58,13 @@ import {
   type DeckLibraryActions,
   type SavedDeck,
 } from './deck-library.js';
+import { formatName } from './deck-labels.js';
 import { DeckListPanel } from './DeckListPanel.js';
-import { copyText, downloadDeck, SEAT_NAMES } from './deck-screen-shared.js';
+import {
+  copyDecklist,
+  downloadDeck,
+  SEAT_NAMES,
+} from './deck-screen-shared.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import { useHoverZoom } from './useHoverZoom.js';
@@ -105,6 +110,7 @@ export const DeckEditor = ({
   onBack,
   onUseOnSeat,
 }: DeckEditorProps) => {
+  const { t } = useLingui();
   const seats = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
@@ -291,10 +297,11 @@ export const DeckEditor = ({
   };
 
   const deleteDeck = async (): Promise<void> => {
+    const deckName = deck.name;
     const confirmed = await confirmAction({
-      title: `Delete ${deck.name}?`,
-      body: 'The deck is removed from this device. A deck already on a seat stays there.',
-      confirmLabel: 'Delete deck',
+      title: t`Delete ${deckName}?`,
+      body: t`The deck is removed from this device. A deck already on a seat stays there.`,
+      confirmLabel: t`Delete deck`,
       tone: 'danger',
     });
     if (confirmed) {
@@ -317,6 +324,7 @@ export const DeckEditor = ({
   };
 
   const total = deckTotals(cards).total;
+  const seat = SEAT_NAMES[target];
   const canUndo = history.current.undo.length > 0;
   const canRedo = history.current.redo.length > 0;
 
@@ -328,20 +336,24 @@ export const DeckEditor = ({
       onKeyDown={onKeyDown}
     >
       <div className="deck-editor__head">
-        <Tooltip content="Back to your decks">
+        <Tooltip content={t`Back to your decks`}>
           <button
             id="deckEditorBackButton"
             type="button"
-            aria-label="Back to your decks"
+            aria-label={t`Back to your decks`}
             className="ds-button ds-button--ghost deck-editor__back"
             onClick={onBack}
           >
             <CaretLeftIcon {...decorative} weight="bold" />
-            <span className="deck-editor__back-label">Decks</span>
+            <span className="deck-editor__back-label">
+              <Trans context="go back to the saved decks">Decks</Trans>
+            </span>
           </button>
         </Tooltip>
         <label className="deck-editor__name">
-          <span className="ds-visually-hidden">Deck name</span>
+          <span className="ds-visually-hidden">
+            <Trans>Deck name</Trans>
+          </span>
           <input
             id="deckNameInput"
             className="ds-input"
@@ -370,7 +382,7 @@ export const DeckEditor = ({
         <div
           className="deck-editor__format ptcgsim-segmented-control"
           role="radiogroup"
-          aria-label="Format"
+          aria-label={t({ message: 'Format', context: 'deck format' })}
         >
           {DECK_FORMAT_IDS.map((format) => (
             <span key={format} className="ptcgsim-segmented-control__option">
@@ -382,7 +394,7 @@ export const DeckEditor = ({
                 onChange={() => setFormat(format)}
               />
               <label htmlFor={`deckFormat-${format}`}>
-                {DECK_FORMATS[format].name}
+                {formatName(format)}
               </label>
             </span>
           ))}
@@ -395,32 +407,33 @@ export const DeckEditor = ({
         >
           {unsaved ? (
             <>
-              <WarningCircleIcon {...decorative} weight="bold" /> Saved for this
-              visit only
+              <WarningCircleIcon {...decorative} weight="bold" />{' '}
+              <Trans>Saved for this visit only</Trans>
             </>
           ) : saved ? (
             <>
-              <CheckIcon {...decorative} weight="bold" /> Saved
+              <CheckIcon {...decorative} weight="bold" />{' '}
+              <Trans context="the deck's changes are kept">Saved</Trans>
             </>
           ) : null}
         </span>
         <div className="deck-editor__tools">
-          <Tooltip content="Undo (Ctrl+Z)">
+          <Tooltip content={t`Undo (Ctrl+Z)`}>
             <button
               type="button"
               className="ds-icon-button"
-              aria-label="Undo"
+              aria-label={t`Undo`}
               disabled={!canUndo}
               onClick={undo}
             >
               <ArrowArcLeftIcon {...decorative} weight="bold" />
             </button>
           </Tooltip>
-          <Tooltip content="Redo (Ctrl+Shift+Z)">
+          <Tooltip content={t`Redo (Ctrl+Shift+Z)`}>
             <button
               type="button"
               className="ds-icon-button"
-              aria-label="Redo"
+              aria-label={t`Redo`}
               disabled={!canRedo}
               onClick={redo}
             >
@@ -428,8 +441,8 @@ export const DeckEditor = ({
             </button>
           </Tooltip>
           <ActionMenu
-            label="Share or export"
-            tooltip="Copy or download the list"
+            label={t`Share or export`}
+            tooltip={t`Copy or download the list`}
             tooltipSide="bottom"
             side="bottom"
             align="end"
@@ -438,37 +451,38 @@ export const DeckEditor = ({
                 id="nativeDeckBuilderExportCsv"
                 type="button"
                 className="ds-button ds-button--secondary"
-                aria-label="Export"
+                aria-label={t`Export`}
               >
                 <ExportIcon {...decorative} weight="bold" />
-                <span className="deck-editor__export-label">Export</span>
+                <span className="deck-editor__export-label">
+                  <Trans>Export</Trans>
+                </span>
               </button>
             }
             entries={[
               {
-                label: 'Copy list (Pokémon TCG Live)',
+                label: t`Copy list (Pokémon TCG Live)`,
                 icon: ClipboardTextIcon,
-                onSelect: () =>
-                  void copyText(formatDecklistText(cards), 'Decklist'),
+                onSelect: () => void copyDecklist(formatDecklistText(cards)),
               },
               {
-                label: 'Download list (.txt)',
+                label: t`Download list (.txt)`,
                 icon: DownloadSimpleIcon,
                 onSelect: () => downloadDeck(deck, 'text'),
               },
               {
-                label: 'Download simulator file (.csv)',
+                label: t`Download simulator file (.csv)`,
                 icon: DownloadSimpleIcon,
                 onSelect: () => downloadDeck(deck, 'csv'),
               },
               { kind: 'separator' },
               {
-                label: 'Duplicate deck',
+                label: t`Duplicate deck`,
                 icon: CopyIcon,
                 onSelect: () => library.duplicate(deck.id),
               },
               {
-                label: 'Delete deck',
+                label: t`Delete deck`,
                 icon: TrashIcon,
                 danger: true,
                 onSelect: () => void deleteDeck(),
@@ -480,31 +494,37 @@ export const DeckEditor = ({
               className="deck-editor__on-seat"
               data-seat={target === 'main' ? 'self' : 'opponent'}
             >
-              <CheckIcon {...decorative} weight="bold" /> On{' '}
-              {SEAT_NAMES[target]}
+              <CheckIcon {...decorative} weight="bold" />{' '}
+              <Trans comment="The deck is on this seat (P1, P2)">
+                On {seat}
+              </Trans>
             </span>
           ) : (
-            <Tooltip content={`Play this deck as ${SEAT_NAMES[target]}`}>
+            <Tooltip content={t`Play this deck as ${seat}`}>
               <button
                 id="deckUseOnSeatButton"
                 type="button"
                 className="ds-button ds-button--secondary"
                 onClick={onUseOnSeat}
               >
-                Use on {SEAT_NAMES[target]}
+                <Trans>Use on {seat}</Trans>
               </button>
             </Tooltip>
           )}
         </div>
       </div>
-      <div className="deck-editor__tabs" role="tablist" aria-label="Show">
+      <div
+        className="deck-editor__tabs"
+        role="tablist"
+        aria-label={t({ message: 'Show', context: 'which pane to show' })}
+      >
         <button
           type="button"
           role="tab"
           aria-selected={tab === 'search'}
           onClick={() => setTab('search')}
         >
-          Find cards
+          <Trans>Find cards</Trans>
         </button>
         <button
           type="button"
@@ -512,7 +532,8 @@ export const DeckEditor = ({
           aria-selected={tab === 'deck'}
           onClick={() => setTab('deck')}
         >
-          Deck <span className="ds-number">{total}</span>
+          <Trans context="the deck being built">Deck</Trans>{' '}
+          <span className="ds-number">{total}</span>
         </button>
       </div>
       <div className="deck-editor__panes">

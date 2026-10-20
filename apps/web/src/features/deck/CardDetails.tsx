@@ -3,6 +3,8 @@ import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { StarIcon } from '@phosphor-icons/react/dist/csr/Star';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { plural } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   countOf,
   findCatalogPrint,
@@ -20,6 +22,15 @@ import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
 import { EnergySymbol } from './CardSearchPanel.js';
+import {
+  categoryName,
+  energyCardName,
+  energyTypeName,
+  formatName,
+  stageName,
+  tagName,
+  trainerTypeName,
+} from './deck-labels.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -120,104 +131,127 @@ const RulesText = ({ text }: { readonly text: string }) => (
   </>
 );
 
-const Legality = ({ card }: { readonly card: CatalogCard }) => (
-  <ul className="deck-card-details__legality" aria-label="Legality">
-    {(
-      [
-        ['Standard', card.legal.standard],
-        ['Expanded', card.legal.expanded],
-        ['Unlimited', !card.set.pocket],
-      ] as const
-    ).map(([format, legal]) => (
-      <li key={format} data-legal={legal ? 'true' : 'false'}>
-        {legal ? (
-          <CheckIcon {...decorative} weight="bold" />
-        ) : (
-          <XIcon {...decorative} weight="bold" />
-        )}
-        {format}
-      </li>
-    ))}
-  </ul>
-);
+const Legality = ({ card }: { readonly card: CatalogCard }) => {
+  const { t } = useLingui();
+  return (
+    <ul className="deck-card-details__legality" aria-label={t`Legality`}>
+      {(
+        [
+          ['standard', card.legal.standard],
+          ['expanded', card.legal.expanded],
+          ['unlimited', !card.set.pocket],
+        ] as const
+      ).map(([format, legal]) => (
+        <li key={format} data-legal={legal ? 'true' : 'false'}>
+          {legal ? (
+            <CheckIcon {...decorative} weight="bold" />
+          ) : (
+            <XIcon {...decorative} weight="bold" />
+          )}
+          {formatName(format)}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
-const CardText = ({ card }: { readonly card: CatalogCard }) => (
-  <div className="deck-card-details__text">
-    <p className="deck-card-details__kind">
-      {[
-        card.category,
-        card.stage,
-        card.trainerType,
-        card.energyType ? `${card.energyType} Energy` : undefined,
-        ...card.tags.filter((tag) => tag !== card.stage),
-      ]
-        .filter(Boolean)
-        .join(' · ')}
-      {card.hp ? (
-        <span className="deck-card-details__hp"> · {card.hp} HP</span>
-      ) : null}
-    </p>
-    {card.evolvesFrom ? (
-      <p className="deck-card-details__muted">
-        Evolves from {card.evolvesFrom}
-      </p>
-    ) : null}
-    {card.abilities.map((ability) => (
-      <div key={ability.name} className="deck-card-details__move">
-        <p>
-          <span className="deck-card-details__ability">{ability.kind}</span>{' '}
-          <strong>{ability.name}</strong>
-        </p>
-        <p>
-          <RulesText text={ability.text} />
-        </p>
-      </div>
-    ))}
-    {card.attacks.map((attack) => (
-      <div
-        key={`${attack.name}-${attack.damage}`}
-        className="deck-card-details__move"
-      >
-        <p className="deck-card-details__attack">
-          <span className="deck-card-details__cost">
-            {attack.cost.map((type, index) => (
-              <EnergySymbol key={`${type}-${index}`} type={type} />
-            ))}
-          </span>
-          <strong>{attack.name}</strong>
-          {attack.damage ? (
-            <span className="deck-card-details__damage ds-number">
-              {attack.damage}
-            </span>
-          ) : null}
-        </p>
-        {attack.text ? (
-          <p>
-            <RulesText text={attack.text} />
-          </p>
+const CardText = ({ card }: { readonly card: CatalogCard }) => {
+  const { t } = useLingui();
+  const hp = card.hp;
+  const evolvesFrom = card.evolvesFrom;
+  const weakness = card.weakness ? energyTypeName(card.weakness) : '—';
+  const resistance = card.resistance ? energyTypeName(card.resistance) : '—';
+  const retreat = card.retreat ?? 0;
+  const mark = card.regulationMark;
+  const illustrator = card.illustrator;
+  return (
+    <div className="deck-card-details__text">
+      <p className="deck-card-details__kind">
+        {[
+          categoryName(card.category),
+          card.stage ? stageName(card.stage) : undefined,
+          card.trainerType ? trainerTypeName(card.trainerType) : undefined,
+          card.energyType ? energyCardName(card.energyType) : undefined,
+          ...card.tags.filter((tag) => tag !== card.stage).map(tagName),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        {hp ? (
+          <span className="deck-card-details__hp"> · {t`${hp} HP`}</span>
         ) : null}
-      </div>
-    ))}
-    {card.text ? (
-      <p className="deck-card-details__effect">
-        <RulesText text={card.text} />
       </p>
-    ) : null}
-    {card.category === 'Pokémon' ? (
-      <p className="deck-card-details__stats">
-        <span>Weakness {card.weakness ?? '—'}</span>
-        <span>Resistance {card.resistance ?? '—'}</span>
-        <span>Retreat {card.retreat ?? 0}</span>
+      {evolvesFrom ? (
+        <p className="deck-card-details__muted">
+          <Trans>Evolves from {evolvesFrom}</Trans>
+        </p>
+      ) : null}
+      {card.abilities.map((ability) => (
+        <div key={ability.name} className="deck-card-details__move">
+          <p>
+            <span className="deck-card-details__ability">{ability.kind}</span>{' '}
+            <strong>{ability.name}</strong>
+          </p>
+          <p>
+            <RulesText text={ability.text} />
+          </p>
+        </div>
+      ))}
+      {card.attacks.map((attack) => (
+        <div
+          key={`${attack.name}-${attack.damage}`}
+          className="deck-card-details__move"
+        >
+          <p className="deck-card-details__attack">
+            <span className="deck-card-details__cost">
+              {attack.cost.map((type, index) => (
+                <EnergySymbol key={`${type}-${index}`} type={type} />
+              ))}
+            </span>
+            <strong>{attack.name}</strong>
+            {attack.damage ? (
+              <span className="deck-card-details__damage ds-number">
+                {attack.damage}
+              </span>
+            ) : null}
+          </p>
+          {attack.text ? (
+            <p>
+              <RulesText text={attack.text} />
+            </p>
+          ) : null}
+        </div>
+      ))}
+      {card.text ? (
+        <p className="deck-card-details__effect">
+          <RulesText text={card.text} />
+        </p>
+      ) : null}
+      {card.category === 'Pokémon' ? (
+        <p className="deck-card-details__stats">
+          <span>
+            <Trans>Weakness {weakness}</Trans>
+          </span>
+          <span>
+            <Trans>Resistance {resistance}</Trans>
+          </span>
+          <span>
+            <Trans>Retreat {retreat}</Trans>
+          </span>
+        </p>
+      ) : null}
+      <p className="deck-card-details__muted">
+        {card.set.name} · {card.set.code ?? card.set.id} {card.number}
+        {card.rarity ? ` · ${card.rarity}` : ''}
+        {mark
+          ? ` · ${t({ message: `Mark ${mark}`, comment: "A card's regulation mark" })}`
+          : ''}
+        {illustrator
+          ? ` · ${t({ message: `Illus. ${illustrator}`, comment: "The card's illustrator, abbreviated" })}`
+          : ''}
       </p>
-    ) : null}
-    <p className="deck-card-details__muted">
-      {card.set.name} · {card.set.code ?? card.set.id} {card.number}
-      {card.rarity ? ` · ${card.rarity}` : ''}
-      {card.regulationMark ? ` · Mark ${card.regulationMark}` : ''}
-      {card.illustrator ? ` · Illus. ${card.illustrator}` : ''}
-    </p>
-  </div>
-);
+    </div>
+  );
+};
 
 export const CardDetails = ({
   inspected,
@@ -231,6 +265,7 @@ export const CardDetails = ({
   onSwapPrint,
   onSetCover,
 }: CardDetailsProps) => {
+  const { t } = useLingui();
   const catalogCard = facts?.card;
   // The count, Add, Remove and cover are the inspected entry's own: two
   // scans of one printing (an English and a German) are separate entries
@@ -247,6 +282,8 @@ export const CardDetails = ({
   const copiesOf = (printId: string): number =>
     entriesOf(printId).reduce((total, id) => total + countOf(deck, id), 0);
   const deckPrint = prints.find((print) => copiesOf(print.id) > 0);
+  const deckCopies = deckPrint ? copiesOf(deckPrint.id) : 0;
+  const printCount = prints.length;
   // A deck's card shows its own scan (a German one stays German); the
   // catalog's facts describe it.
   const image =
@@ -302,11 +339,11 @@ export const CardDetails = ({
           <div className="deck-card-details__side">
             <div className="deck-card-details__actions">
               <span className="deck-row__stepper deck-card-details__stepper">
-                <Tooltip content="Remove one">
+                <Tooltip content={t`Remove one`}>
                   <button
                     type="button"
                     className="deck-row__step"
-                    aria-label={`Remove one ${name}`}
+                    aria-label={t`Remove one ${name}`}
                     disabled={count === 0}
                     onClick={() => onRemove(target)}
                   >
@@ -315,24 +352,28 @@ export const CardDetails = ({
                 </Tooltip>
                 <span
                   className="deck-row__count ds-number"
-                  aria-label={`${count} in deck`}
+                  aria-label={t`${count} in deck`}
                 >
                   {count}
                 </span>
-                <Tooltip content="Add one">
+                <Tooltip content={t`Add one`}>
                   <button
                     type="button"
                     className="deck-row__step"
-                    aria-label={`Add one ${name}`}
+                    aria-label={t`Add one ${name}`}
                     onClick={() => onAdd(target)}
                   >
                     <PlusIcon {...decorative} weight="bold" />
                   </button>
                 </Tooltip>
               </span>
-              <span className="deck-card-details__in-deck">in deck</span>
+              <span className="deck-card-details__in-deck">
+                <Trans comment="After the number of copies in the deck">
+                  in deck
+                </Trans>
+              </span>
               {count > 0 && shownId ? (
-                <Tooltip content="Picture the deck with this card">
+                <Tooltip content={t`Picture the deck with this card`}>
                   <button
                     type="button"
                     className="ds-button ds-button--ghost"
@@ -343,7 +384,7 @@ export const CardDetails = ({
                       {...decorative}
                       weight={coverId === shownId ? 'fill' : 'bold'}
                     />
-                    {coverId === shownId ? 'Deck cover' : 'Make cover'}
+                    {coverId === shownId ? t`Deck cover` : t`Make cover`}
                   </button>
                 </Tooltip>
               ) : null}
@@ -355,31 +396,37 @@ export const CardDetails = ({
               </>
             ) : (
               <p className="deck-card-details__muted">
-                Added by hand: the catalog doesn&apos;t know this card, so its
-                legality isn&apos;t checked.
+                <Trans>
+                  Added by hand: the catalog doesn&apos;t know this card, so its
+                  legality isn&apos;t checked.
+                </Trans>
               </p>
             )}
             {prints.length > 1 ? (
               <div className="deck-card-details__prints">
                 <h3>
-                  {prints.length} prints
                   {deckPrint && catalogCard && deckPrint.id !== catalogCard.id
-                    ? ' · the deck has another one'
-                    : ''}
+                    ? t`${plural(printCount, { one: '# print · the deck has another one', other: '# prints · the deck has another one' })}`
+                    : t`${plural(printCount, { one: '# print', other: '# prints' })}`}
                 </h3>
                 <ul>
                   {prints.map((print) => {
                     const inDeck = copiesOf(print.id);
+                    const printName = `${print.set.name} ${print.number}`;
                     return (
                       <li key={print.id}>
                         <Tooltip
-                          content={`${print.set.name} ${print.number}${print.rarity ? ` · ${print.rarity}` : ''}`}
+                          content={`${printName}${print.rarity ? ` · ${print.rarity}` : ''}`}
                         >
                           <button
                             type="button"
                             className="deck-card-details__print"
                             aria-pressed={print.id === catalogCard?.id}
-                            aria-label={`${print.set.name} ${print.number}${inDeck > 0 ? `, ${inDeck} in deck` : ''}`}
+                            aria-label={
+                              inDeck > 0
+                                ? t`${printName}, ${inDeck} in deck`
+                                : printName
+                            }
                             onClick={() => onShow(print)}
                           >
                             <CardImage
@@ -412,7 +459,7 @@ export const CardDetails = ({
                       onSwapPrint(entriesOf(deckPrint.id), catalogCard)
                     }
                   >
-                    Use this print for the {copiesOf(deckPrint.id)} in the deck
+                    {t`Use this print for the ${deckCopies} in the deck`}
                   </button>
                 ) : null}
               </div>
