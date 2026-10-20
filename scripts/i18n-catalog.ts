@@ -162,7 +162,9 @@ export const looksGarbled = (
     if (!source.includes(escape)) return true;
   const own = LOCALE_SCRIPTS[locale];
   const writesLatin = !own || ALSO_WRITES_LATIN.has(locale);
-  for (const letter of text.match(/\p{L}/gu) ?? []) {
+  // Pokémon is written so in every language, its accent included.
+  const letters = text.replace(/Pokémon/gu, '').match(/\p{L}/gu) ?? [];
+  for (const letter of letters) {
     if (
       source.includes(letter) ||
       /[\p{Script=Common}\p{Script=Inherited}]/u.test(letter)

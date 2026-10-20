@@ -4,3 +4,6 @@ apps/*/lib/
 apps/*/dist/
 apps/server/worker-configuration.d.ts
 client/src/assets/
+# Written by lingui extract and scripts/translate.ts in their own shape;
+# `lingui check sync` (check:i18n:v2) compares them byte for byte.
+apps/web/src/locales/

@@ -90,6 +90,7 @@ describe('translationProblem', () => {
     assert.equal(looksGarbled('Spielerâ€™s Zug', 'de'), true);
     assert.equal(looksGarbled('Ã©tÃ©', 'fr'), true);
     assert.equal(looksGarbled('Зона', 'sr'), false);
+    assert.equal(looksGarbled('Pokémon النشط', 'ar'), false);
   });
 });
 

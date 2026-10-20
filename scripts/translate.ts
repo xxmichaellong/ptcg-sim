@@ -274,6 +274,8 @@ const translateLocale = async (
     ...(await readCatalog(locale)),
   };
   let requests = pending(source, catalog, locale, options.force);
+  // Why each message's last answer was turned down, for the report.
+  const problems = new Map<string, string>();
   console.log(`${locale}: ${requests.length} to translate`);
   if (options.dryRun || requests.length === 0) return requests.length;
   // Two rounds: whatever the first gets wrong is asked again, alone with
@@ -298,6 +300,10 @@ const translateLocale = async (
               locale
             );
             if (problem || translation === undefined) {
+              problems.set(
+                request.id,
+                `${problem ?? 'missing'}: ${JSON.stringify(translation)}`
+              );
               failed.push(request);
               continue;
             }
@@ -314,7 +320,9 @@ const translateLocale = async (
     requests = failed;
   }
   for (const request of requests)
-    console.error(`${locale}: still untranslated: ${request.message}`);
+    console.error(
+      `${locale}: still untranslated: ${request.message}\n  (${problems.get(request.id) ?? 'no answer'})`
+    );
   return requests.length;
 };
 
