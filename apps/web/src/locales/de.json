@@ -1,85 +1,85 @@
 {
   "d3fmj9": {
     "message": "Animation speed",
-    "translation": ""
+    "translation": "Animationsgeschwindigkeit"
   },
   "aAIQg2": {
     "message": "Appearance",
-    "translation": ""
+    "translation": "Darstellung"
   },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
-    "translation": ""
+    "translation": "Browsersprache ({browser})"
   },
   "sIpTuZ": {
     "message": "Change background",
-    "translation": ""
+    "translation": "Hintergrund ändern"
   },
   "yB1YpA": {
     "message": "Dark mode",
-    "translation": ""
+    "translation": "Dunkelmodus"
   },
   "G31vv6": {
     "message": "Fast",
     "context": "animation speed",
-    "translation": ""
+    "translation": "Schnell"
   },
   "U31bsH": {
     "message": "Instant",
     "context": "animation speed",
-    "translation": ""
+    "translation": "Sofort"
   },
   "N9_ykp": {
     "message": "Instant keeps every action immediate, with no movement.",
-    "translation": ""
+    "translation": "Bei „Sofort“ erfolgt jede Aktion unmittelbar, ganz ohne Bewegung."
   },
   "vXIe7J": {
     "message": "Language",
-    "translation": ""
+    "translation": "Sprache"
   },
   "itfxKl": {
     "message": "Motion",
-    "translation": ""
+    "translation": "Bewegung"
   },
   "NfqnuJ": {
     "message": "Normal",
     "context": "animation speed",
-    "translation": ""
+    "translation": "Normal"
   },
   "gEGSTP": {
     "message": "Off",
     "context": "setting",
-    "translation": ""
+    "translation": "Aus"
   },
   "TjCu_Q": {
     "message": "On",
     "context": "setting",
-    "translation": ""
+    "translation": "An"
   },
   "NKamZr": {
     "message": "Reduce motion",
-    "translation": ""
+    "translation": "Bewegung reduzieren"
   },
   "SOnu64": {
     "message": "Relaxed",
     "context": "animation speed",
-    "translation": ""
+    "translation": "Gemächlich"
   },
   "Tz0i8g": {
     "message": "Settings",
-    "translation": ""
+    "translation": "Einstellungen"
   },
   "VeOzUg": {
     "message": "System",
     "context": "reduce motion setting",
-    "translation": ""
+    "translation": "System"
   },
   "4hJhzz": {
     "message": "Table",
-    "translation": ""
+    "translation": "Tisch"
   },
   "kqaF8V": {
     "message": "Use default",
-    "translation": ""
+    "translation": "Standard verwenden"
   }
 }

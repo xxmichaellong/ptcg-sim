@@ -43,14 +43,15 @@ Settings, and has its server send codes that the client words.
    language lacks shows in English. CI fails when the catalogs are not up
    to date with the source or a translation is missing or broken
    (`corepack pnpm run check:i18n:v2`).
-5. **Translations** come from `scripts/translate.ts`: it sends each
-   language's missing or changed messages to Claude in batches with a
-   glossary of the game's official terms, checks that every placeholder,
-   plural and tag survives, and records an MD5 of each English message in
-   `apps/web/src/locales/translate.lock.json`, so changed English is
-   translated again. It uses `ANTHROPIC_API_KEY` when set and Claude Code
-   (`claude -p`) otherwise. The first catalogs were translated in the
-   session that built this.
+5. **Translations** come from `corepack pnpm run i18n:translate`
+   (`scripts/translate.ts`): it sends each language's missing or broken
+   messages to Claude in batches with the language's guide and the game's
+   official terms (`scripts/translate-glossary.ts`), and keeps only answers
+   that keep every placeholder, plural, select case and tag, in the
+   language's own script. A message id is a hash of its English, so changed
+   English is simply missing again; no lock file is needed. It uses
+   `ANTHROPIC_API_KEY` when set and Claude Code (`claude -p`, on the
+   developer's plan) otherwise.
 6. **The server sends codes.** Refusals and notices from the room arrive
    as codes with values, and the app words them. Chat, names and deck
    names are never translated.
