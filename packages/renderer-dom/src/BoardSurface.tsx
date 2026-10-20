@@ -737,10 +737,12 @@ const CardNode = memo(
         }}
         onContextMenu={context}
       >
-        {camera && pose ? (
-          <CardDepthGeometry camera={camera} pose={pose} bands={bands} />
-        ) : null}
         <span className="ptcgsim-card__body" data-card-body="">
+          {/* The edges and shadows sit in the body, so a held card's swing
+              turns them with the face in the same frame. */}
+          {camera && pose ? (
+            <CardDepthGeometry camera={camera} pose={pose} bands={bands} />
+          ) : null}
           <span
             className="ptcgsim-card__face card-material"
             data-finish={paintsBack(card) ? 'sheen' : (card.finish ?? 'sheen')}

@@ -109,10 +109,15 @@ export const BOARD_SURFACE_CSS = `
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card {
   background: transparent;
   -webkit-tap-highlight-color: transparent;
-  outline-offset: 3px;
 }
+/* The focus ring is drawn on the body, so it stays on the card as it lifts
+   in the hand or swings while held. */
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card:focus-visible {
+  outline: none;
+}
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card:focus-visible > .ptcgsim-card__body {
   outline: 2px solid var(--ptcgsim-focus-ring, rgb(120 160 255));
+  outline-offset: 3px;
 }
 .ptcgsim-card__body {
   position: absolute;

@@ -6,6 +6,7 @@ import {
   createBoardLayoutSnapshot,
   createBoardSceneLayout,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  DEFAULT_BOARD_DEPTH,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
@@ -1499,6 +1500,38 @@ describe('React DOM board renderer', () => {
     const card = host.querySelector<HTMLElement>('[data-card-id]');
     expect(card).not.toBeNull();
     expect(card?.getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
+  it('turns the edges and shadows with the face, so a swinging held card keeps them', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' },
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    expect(card.dataset.depthCard).toBe('true');
+    // DragSwing turns the body; the geometry must be inside it, or the
+    // shadow stays put while the face swings off it.
+    const geometry = card.querySelector('.ptcgsim-card__depth')!;
+    expect(geometry.parentElement?.classList).toContain('ptcgsim-card__body');
+    expect(geometry.querySelector('[data-depth-shadow]')).not.toBeNull();
+    expect(geometry.querySelector('[data-depth-contact]')).not.toBeNull();
+    // It is painted under the face.
+    expect(geometry.nextElementSibling?.classList).toContain(
+      'ptcgsim-card__face'
+    );
 
     await act(async () => {
       renderer.destroy();
