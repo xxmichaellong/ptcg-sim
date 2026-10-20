@@ -12,6 +12,7 @@ import {
   CoinFlipController,
 } from './CoinFlipController.js';
 import { LegacyGamePresentationRuntime } from './LegacyGamePresentationRuntime.js';
+import { presentationText } from './presentation-message.js';
 import type {
   PresentationStateSource,
   QueuedPresentationAnimation,
@@ -264,7 +265,9 @@ describe('LegacyGamePresentationRuntime coin', () => {
     });
     // The log line is untouched by the toss.
     expect(
-      runtime.activityFeed.getSnapshot().items.map((item) => item.message)
+      runtime.activityFeed
+        .getSnapshot()
+        .items.map((item) => presentationText(item.message))
     ).toEqual(['Red flipped tails']);
 
     // Switching motion off mid-toss re-presents the same flip as a result.

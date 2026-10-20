@@ -1,5 +1,12 @@
+import type { MessageDescriptor } from '@lingui/core';
+import { msg, plural, select } from '@lingui/core/macro';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { PresentationEvent, ServerMessage } from '@ptcgsim/protocol';
+
+import type {
+  PresentationMessage,
+  PresentationValue,
+} from './presentation-message.js';
 
 export type ChatMessage = Extract<ServerMessage, { type: 'ChatMessage' }>;
 export type PresenceMessage = Extract<ServerMessage, { type: 'Presence' }>;
@@ -15,14 +22,16 @@ interface PresentationEffectBase {
 export interface ActivityPresentationEffect extends PresentationEffectBase {
   readonly kind: 'activity';
   readonly category: 'player' | 'announcement' | 'message' | 'spectator';
-  readonly message: string;
+  /** Worded when shown (presentationText), in the page's language then. */
+  readonly message: PresentationMessage;
   /** Used only for existing blue/red visual treatment, never message content. */
   readonly playerId?: string;
 }
 
 export interface AccessibilityPresentationEffect extends PresentationEffectBase {
   readonly kind: 'accessibility';
-  readonly message: string;
+  /** Worded when announced. */
+  readonly message: PresentationMessage;
   readonly politeness: 'polite';
 }
 
@@ -71,57 +80,65 @@ export type PresentationEventSink = (event: PresentationEvent) => void;
 
 export type PresentationView = Pick<MatchViewState, 'players'>;
 
-type PresentationCardSource = Extract<
-  PresentationEvent,
-  { readonly type: 'PublicCardsRevealed' }
->['source'];
+/** A macro's descriptor, whose values are the names, counts and keys put in. */
+const line = (message: MessageDescriptor): PresentationMessage =>
+  message as PresentationMessage;
 
+/**
+ * A player's projected name, or the word for a player when the name is
+ * blank. Opaque player IDs are routing metadata, never a label.
+ */
 const playerName = (
   view: PresentationView | undefined,
   playerId: string
-): string => {
+): PresentationValue => {
   const displayName = view?.players[playerId]?.displayName.trim();
-  // Opaque player IDs are routing metadata, not safe fallback UI labels.
-  return displayName ? displayName : 'Player';
-};
-
-const cardSourceName = (source: PresentationCardSource): string => {
-  switch (source) {
-    case 'lostZone':
-      return 'lost zone';
-    case 'attachmentResolution':
-      return 'attached cards';
-    case 'deck':
-    case 'hand':
-    case 'prizes':
-    case 'discard':
-    case 'board':
-    case 'stadium':
-    case 'active':
-    case 'bench':
-    case 'inspection':
-      return source;
-  }
-  const unhandled: never = source;
-  return unhandled;
+  return displayName
+    ? displayName
+    : line(
+        msg({
+          message: 'Player',
+          context: 'a player with no name',
+          comment:
+            "Stands in a Log line for a player's name when they have none.",
+        })
+      );
 };
 
 /**
- * v1 names the deck-viewer popup "deck" in its messages (`convertZoneName`
- * maps `viewCards` to `deck`); the inspection work area is its counterpart.
+ * A card's public name, or the word v1 prints for a card the reader may not
+ * see ("moved card from hand to deck").
  */
-const narratedSourceName = (source: PresentationCardSource): string =>
-  source === 'inspection' ? 'deck' : cardSourceName(source);
+const narratedCardName = (cardName: string | undefined): PresentationValue =>
+  cardName ??
+  line(
+    msg({
+      message: 'card',
+      context: 'a hidden card in a Log line',
+      comment:
+        'Stands in a Log line for a card\'s name when the reader may not see the card, as in "Ash moved card from hand to deck". Lowercase, no article.',
+    })
+  );
 
-const cardsPhrase = (count: number): string => `${count} card(s)`;
-
-const narratedCardName = (cardName: string | undefined): string =>
-  cardName ?? 'card';
+/** The four card kinds, as select keys (ICU keys are plain words). */
+const categoryKey = (
+  category: Extract<
+    PresentationEvent,
+    { readonly type: 'CardCategoryChanged' }
+  >['category']
+): 'energy' | 'pokemon' | 'trainer' | 'unknown' =>
+  category === 'Energy'
+    ? 'energy'
+    : category === 'Pokémon'
+      ? 'pokemon'
+      : category === 'Trainer'
+        ? 'trainer'
+        : 'unknown';
 
 const playerEffects = (
   event: PresentationEvent,
   playerId: string,
-  message: string
+  message: MessageDescriptor
 ): readonly PresentationEffect[] => [
   activity(event, 'player', message, playerId),
   accessibility(event, message),
@@ -130,174 +147,539 @@ const playerEffects = (
 const activity = (
   event: PresentationEvent,
   category: ActivityPresentationEffect['category'],
-  message: string,
+  message: MessageDescriptor,
   playerId?: string
 ): ActivityPresentationEffect => ({
   kind: 'activity',
   revision: event.revision,
   eventType: event.type,
   category,
-  message,
+  message: line(message),
   ...(playerId ? { playerId } : {}),
 });
 
 const accessibility = (
   event: PresentationEvent,
-  message: string
+  message: MessageDescriptor
 ): AccessibilityPresentationEffect => ({
   kind: 'accessibility',
   revision: event.revision,
   eventType: event.type,
-  message,
+  message: line(message),
   politeness: 'polite',
 });
 
 /**
+ * The lines for one card moving (v1's grammar). `source` and `target` are
+ * zone keys worded by each message's select, so a language can give each
+ * zone the form its sentence needs; `inspection` (the deck viewer) and an
+ * unnamed destination read as the deck, as in v1.
+ */
+const cardMovedMessage = (
+  event: Extract<PresentationEvent, { readonly type: 'CardMoved' }>,
+  view: PresentationView | undefined
+): MessageDescriptor => {
+  const actor = playerName(view, event.playerId);
+  const card = narratedCardName(event.cardName);
+  const source = event.source;
+  const target = event.destination ?? 'deck';
+  const targetCard = event.targetCardName;
+  switch (event.verb) {
+    case 'moved':
+      return targetCard !== undefined
+        ? msg({
+            message: `${actor} moved ${card} from ${select(source, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })} to ${targetCard}`,
+            comment:
+              "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left.",
+          })
+        : msg({
+            message: `${actor} moved ${card} from ${select(source, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })} to ${select(target, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })}`,
+            comment:
+              "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to.",
+          });
+    case 'attached':
+      return targetCard !== undefined
+        ? msg({
+            message: `${actor} attached ${card} from ${select(source, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })} to ${targetCard}`,
+            comment:
+              "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from.",
+          })
+        : msg({
+            message: `${actor} attached ${card} from ${select(source, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })} to ${select(target, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })}`,
+            comment:
+              "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went.",
+          });
+    case 'evolved':
+      return targetCard !== undefined
+        ? msg({
+            message: `${actor} evolved ${targetCard} into ${card}`,
+            comment:
+              "Log line. {actor} is a player's name; {targetCard} is the Pokémon that evolved and {card} what it evolved into.",
+          })
+        : msg({
+            message: `${actor} evolved ${select(target, {
+              hand: 'hand',
+              prizes: 'prizes',
+              discard: 'discard',
+              board: 'board',
+              stadium: 'stadium',
+              active: 'active',
+              bench: 'bench',
+              lostZone: 'lost zone',
+              attachmentResolution: 'attached cards',
+              other: 'deck',
+            })} into ${card}`,
+            comment:
+              "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden.",
+          });
+    case 'shuffledIntoDeck':
+      return msg({
+        message: `${actor} shuffled ${card} from ${select(source, {
+          hand: 'hand',
+          prizes: 'prizes',
+          discard: 'discard',
+          board: 'board',
+          stadium: 'stadium',
+          active: 'active',
+          bench: 'bench',
+          lostZone: 'lost zone',
+          attachmentResolution: 'attached cards',
+          other: 'deck',
+        })} into deck`,
+        comment:
+          "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left.",
+      });
+    case 'movedToDeckTop':
+      return msg({
+        message: `${actor} moved ${card} from ${select(source, {
+          hand: 'hand',
+          prizes: 'prizes',
+          discard: 'discard',
+          board: 'board',
+          stadium: 'stadium',
+          active: 'active',
+          bench: 'bench',
+          lostZone: 'lost zone',
+          attachmentResolution: 'attached cards',
+          other: 'deck',
+        })} to top of deck`,
+        comment:
+          "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left.",
+      });
+    case 'movedToDeckBottom':
+      return msg({
+        message: `${actor} moved ${card} from ${select(source, {
+          hand: 'hand',
+          prizes: 'prizes',
+          discard: 'discard',
+          board: 'board',
+          stadium: 'stadium',
+          active: 'active',
+          bench: 'bench',
+          lostZone: 'lost zone',
+          attachmentResolution: 'attached cards',
+          other: 'deck',
+        })} to bottom of deck`,
+        comment:
+          "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left.",
+      });
+    case 'switchedWithDeckTop':
+      return msg({
+        message: `${actor} switched ${card} from ${select(source, {
+          hand: 'hand',
+          prizes: 'prizes',
+          discard: 'discard',
+          board: 'board',
+          stadium: 'stadium',
+          active: 'active',
+          bench: 'bench',
+          lostZone: 'lost zone',
+          attachmentResolution: 'attached cards',
+          other: 'deck',
+        })} with top of deck`,
+        comment:
+          "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place.",
+      });
+  }
+};
+
+/** The line for several cards moving at once ("moved 3 card(s) from …"). */
+const cardsResolvedMessage = (
+  event: Extract<PresentationEvent, { readonly type: 'CardsResolved' }>,
+  view: PresentationView | undefined
+): MessageDescriptor => {
+  const actor = playerName(view, event.playerId);
+  const count = event.cardCount;
+  const source = event.source;
+  const destination = event.destination;
+  switch (event.verb) {
+    case 'left':
+      return msg({
+        message: `${actor} left ${plural(count, {
+          one: '# attached card(s)',
+          other: '# attached card(s)',
+        })} in play`,
+        comment:
+          "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards.",
+      });
+    case 'discarded':
+      return source === 'attachmentResolution'
+        ? msg({
+            message: `${actor} discarded ${plural(count, {
+              one: '# attached card(s)',
+              other: '# attached card(s)',
+            })}`,
+            comment:
+              "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards.",
+          })
+        : msg({
+            message: `${actor} discarded ${plural(count, {
+              one: '# card(s)',
+              other: '# card(s)',
+            })}`,
+            comment:
+              "Log line. {actor} is a player's name, {count} how many cards.",
+          });
+    case 'shuffled':
+      if (destination === 'deckBottom') {
+        return source === 'prizes'
+          ? msg({
+              message: `${actor} shuffled prizes to bottom of deck`,
+              comment: "Log line. {actor} is a player's name.",
+            })
+          : msg({
+              message: `${actor} shuffled ${plural(count, {
+                one: '# card(s)',
+                other: '# card(s)',
+              })} to bottom of deck`,
+              comment:
+                "Log line. {actor} is a player's name, {count} how many cards.",
+            });
+      }
+      return source === 'discard'
+        ? msg({
+            message: `${actor} shuffled discard into deck`,
+            comment:
+              "Log line: a player shuffled their discard pile into their deck. {actor} is a player's name.",
+          })
+        : source === 'attachmentResolution'
+          ? msg({
+              message: `${actor} shuffled ${plural(count, {
+                one: '# attached card(s)',
+                other: '# attached card(s)',
+              })} into deck`,
+              comment:
+                "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards.",
+            })
+          : source === 'board'
+            ? msg({
+                message: `${actor} shuffled ${plural(count, {
+                  one: '# card(s)',
+                  other: '# card(s)',
+                })} from board to deck`,
+                comment:
+                  "Log line. {actor} is a player's name, {count} how many cards.",
+              })
+            : msg({
+                message: `${actor} shuffled ${plural(count, {
+                  one: '# card(s)',
+                  other: '# card(s)',
+                })} into deck`,
+                comment:
+                  "Log line. {actor} is a player's name, {count} how many cards.",
+              });
+    case 'moved':
+      return msg({
+        message: `${actor} moved ${plural(count, {
+          one: '# card(s)',
+          other: '# card(s)',
+        })} from ${select(source, {
+          hand: 'hand',
+          prizes: 'prizes',
+          discard: 'discard',
+          board: 'board',
+          stadium: 'stadium',
+          active: 'active',
+          bench: 'bench',
+          lostZone: 'lost zone',
+          attachmentResolution: 'attached cards',
+          other: 'deck',
+        })} to ${select(destination, {
+          hand: 'hand',
+          discard: 'discard',
+          lostZone: 'lost zone',
+          deckBottom: 'bottom of deck',
+          play: 'play',
+          other: 'deck',
+        })}`,
+        comment:
+          "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table).",
+      });
+  }
+};
+
+/** A player's whole hand going away, and what they drew instead. */
+const handReplacedMessage = (
+  event: Extract<PresentationEvent, { readonly type: 'HandReplaced' }>,
+  view: PresentationView | undefined
+): MessageDescriptor => {
+  const actor = playerName(view, event.playerId);
+  const count = event.drawCount;
+  const drew = count > 0;
+  switch (event.mode) {
+    case 'discard':
+      return drew
+        ? msg({
+            message: `${actor} discarded hand and drew ${plural(count, {
+              one: '# card(s)',
+              other: '# card(s)',
+            })}`,
+            comment:
+              "Log line. {actor} is a player's name, {count} how many cards they drew.",
+          })
+        : msg({
+            message: `${actor} discarded hand`,
+            comment: "Log line. {actor} is a player's name.",
+          });
+    case 'shuffleIntoDeck':
+      return drew
+        ? msg({
+            message: `${actor} shuffled hand into deck and drew ${plural(
+              count,
+              { one: '# card(s)', other: '# card(s)' }
+            )}`,
+            comment:
+              "Log line. {actor} is a player's name, {count} how many cards they drew.",
+          })
+        : msg({
+            message: `${actor} shuffled hand into deck`,
+            comment: "Log line. {actor} is a player's name.",
+          });
+    case 'shuffleToDeckBottom':
+      return drew
+        ? msg({
+            message: `${actor} shuffled hand to bottom of deck and drew ${plural(
+              count,
+              { one: '# card(s)', other: '# card(s)' }
+            )}`,
+            comment:
+              "Log line. {actor} is a player's name, {count} how many cards they drew.",
+          })
+        : msg({
+            message: `${actor} shuffled hand to bottom of deck`,
+            comment: "Log line. {actor} is a player's name.",
+          });
+  }
+};
+
+/**
  * Pure exhaustive mapping from a recipient-safe fact to local-only UI effects.
- * Messages use projected display names and never fall back to opaque IDs.
+ * Lines are messages, worded when shown; they use projected display names
+ * and never fall back to opaque IDs.
  */
 export const presentationEffectsForEvent = (
   event: PresentationEvent,
   view?: PresentationView
 ): readonly PresentationEffect[] => {
   switch (event.type) {
-    case 'CardMoved': {
-      const actor = playerName(view, event.playerId);
-      const card = narratedCardName(event.cardName);
-      const source = narratedSourceName(event.source);
-      const target =
-        event.targetCardName ??
-        (event.destination ? narratedSourceName(event.destination) : 'deck');
-      const message = (() => {
-        switch (event.verb) {
-          case 'moved':
-            return `${actor} moved ${card} from ${source} to ${target}`;
-          case 'attached':
-            return `${actor} attached ${card} from ${source} to ${target}`;
-          case 'evolved':
-            return `${actor} evolved ${target} into ${card}`;
-          case 'shuffledIntoDeck':
-            return `${actor} shuffled ${card} from ${source} into deck`;
-          case 'movedToDeckTop':
-            return `${actor} moved ${card} from ${source} to top of deck`;
-          case 'movedToDeckBottom':
-            return `${actor} moved ${card} from ${source} to bottom of deck`;
-          case 'switchedWithDeckTop':
-            return `${actor} switched ${card} from ${source} with top of deck`;
-        }
-      })();
-      return playerEffects(event, event.playerId, message);
-    }
-    case 'CardsDrawn':
+    case 'CardMoved':
       return playerEffects(
         event,
         event.playerId,
-        event.cardCount === 1
-          ? `${playerName(view, event.playerId)} drew a card`
-          : `${playerName(view, event.playerId)} drew ${event.cardCount} cards`
+        cardMovedMessage(event, view)
       );
-    case 'ZoneShuffled':
+    case 'CardsDrawn': {
+      const name = playerName(view, event.playerId);
+      const count = event.cardCount;
       return playerEffects(
         event,
         event.playerId,
-        `${playerName(view, event.playerId)} shuffled ${narratedSourceName(
-          event.source
-        )}`
-      );
-    case 'DeckCardsLooked':
-      return playerEffects(
-        event,
-        event.playerId,
-        `${playerName(view, event.playerId)} looked at ${event.edge} ${cardsPhrase(
-          event.cardCount
-        )} of deck`
-      );
-    case 'CardsResolved': {
-      const actor = playerName(view, event.playerId);
-      const count = cardsPhrase(event.cardCount);
-      const source = narratedSourceName(event.source);
-      const message = (() => {
-        switch (event.verb) {
-          case 'left':
-            return `${actor} left ${event.cardCount} attached card(s) in play`;
-          case 'discarded':
-            return event.source === 'attachmentResolution'
-              ? `${actor} discarded ${event.cardCount} attached card(s)`
-              : `${actor} discarded ${count}`;
-          case 'shuffled':
-            if (event.destination === 'deckBottom') {
-              return event.source === 'prizes'
-                ? `${actor} shuffled prizes to bottom of deck`
-                : `${actor} shuffled ${count} to bottom of deck`;
-            }
-            return event.source === 'discard'
-              ? `${actor} shuffled discard into deck`
-              : event.source === 'attachmentResolution'
-                ? `${actor} shuffled ${event.cardCount} attached card(s) into deck`
-                : event.source === 'board'
-                  ? `${actor} shuffled ${count} from board to deck`
-                  : `${actor} shuffled ${count} into deck`;
-          case 'moved': {
-            const destination =
-              event.destination === 'lostZone'
-                ? 'lost zone'
-                : event.destination === 'deckBottom'
-                  ? 'bottom of deck'
-                  : event.destination;
-            return `${actor} moved ${count} from ${source} to ${destination}`;
-          }
-        }
-      })();
-      return playerEffects(event, event.playerId, message);
-    }
-    case 'HandReplaced': {
-      const actor = playerName(view, event.playerId);
-      const base =
-        event.mode === 'discard'
-          ? `${actor} discarded hand`
-          : event.mode === 'shuffleIntoDeck'
-            ? `${actor} shuffled hand into deck`
-            : `${actor} shuffled hand to bottom of deck`;
-      return playerEffects(
-        event,
-        event.playerId,
-        event.drawCount > 0
-          ? `${base} and drew ${cardsPhrase(event.drawCount)}`
-          : base
+        msg({
+          message: `${name} drew ${plural(count, {
+            one: 'a card',
+            other: '# cards',
+          })}`,
+          comment:
+            "Log line. {name} is a player's name, {count} how many cards they drew.",
+        })
       );
     }
+    case 'ZoneShuffled': {
+      const name = playerName(view, event.playerId);
+      const source = event.source;
+      return playerEffects(
+        event,
+        event.playerId,
+        msg({
+          message: `${name} shuffled ${select(source, {
+            hand: 'hand',
+            prizes: 'prizes',
+            discard: 'discard',
+            board: 'board',
+            stadium: 'stadium',
+            active: 'active',
+            bench: 'bench',
+            lostZone: 'lost zone',
+            attachmentResolution: 'attached cards',
+            other: 'deck',
+          })}`,
+          comment:
+            "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck.",
+        })
+      );
+    }
+    case 'DeckCardsLooked': {
+      const name = playerName(view, event.playerId);
+      const count = event.cardCount;
+      return playerEffects(
+        event,
+        event.playerId,
+        event.edge === 'top'
+          ? msg({
+              message: `${name} looked at top ${plural(count, {
+                one: '# card(s)',
+                other: '# card(s)',
+              })} of deck`,
+              comment:
+                "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at.",
+            })
+          : msg({
+              message: `${name} looked at bottom ${plural(count, {
+                one: '# card(s)',
+                other: '# card(s)',
+              })} of deck`,
+              comment:
+                "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at.",
+            })
+      );
+    }
+    case 'CardsResolved':
+      return playerEffects(
+        event,
+        event.playerId,
+        cardsResolvedMessage(event, view)
+      );
+    case 'HandReplaced':
+      return playerEffects(
+        event,
+        event.playerId,
+        handReplacedMessage(event, view)
+      );
     case 'CardCategoryChanged': {
-      const typeName =
-        event.category === 'Energy'
-          ? 'an energy'
-          : event.category === 'Pokémon'
-            ? 'a Pokémon'
-            : event.category === 'Trainer'
-              ? 'a tool'
-              : 'an unknown type';
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const category = categoryKey(event.category);
       return playerEffects(
         event,
         event.playerId,
-        `${playerName(view, event.playerId)} changed ${narratedCardName(
-          event.cardName
-        )} into ${typeName}`
+        msg({
+          message: `${name} changed ${card} into ${select(category, {
+            energy: 'an energy',
+            pokemon: 'a Pokémon',
+            trainer: 'a tool',
+            other: 'an unknown type',
+          })}`,
+          comment:
+            "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as.",
+        })
       );
     }
-    case 'AbilityUsed':
+    case 'AbilityUsed': {
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
       return playerEffects(
         event,
         event.playerId,
         event.source === 'stadium'
-          ? `${playerName(view, event.playerId)} used ${narratedCardName(
-              event.cardName
-            )}`
-          : `${playerName(view, event.playerId)} used ${narratedCardName(
-              event.cardName
-            )}'s ability`
+          ? msg({
+              message: `${name} used ${card}`,
+              comment:
+                "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name.",
+            })
+          : msg({
+              message: `${name} used ${card}'s ability`,
+              comment:
+                "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name.",
+            })
       );
+    }
     case 'CoinFlipped': {
       const name = playerName(view, event.playerId);
-      const message = `${name} flipped ${event.result}`;
+      const result = event.result;
+      const message = msg({
+        message: `${name} flipped ${select(result, {
+          heads: 'heads',
+          other: 'tails',
+        })}`,
+        comment:
+          "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails.",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
@@ -314,47 +696,62 @@ export const presentationEffectsForEvent = (
       ];
     }
     case 'PlayerReset': {
-      const message = `${playerName(view, event.playerId)} reset`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} reset`,
+        comment:
+          "Log line: a player cleared their side of the table. {name} is a player's name.",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
       ];
     }
     case 'DeckLoaded': {
-      const message = `${playerName(view, event.playerId)} loaded deck`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} loaded deck`,
+        comment: "Log line. {name} is a player's name.",
+      });
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
       ];
     }
     case 'PlayerSetup': {
+      const name = playerName(view, event.playerId);
       // Set Up with no deck loaded still resets the board, but there is
       // nothing to draw. v1 announces that ("has an invalid deck!") rather
       // than claiming a hand was drawn.
       if (event.handCount === 0 && event.prizeCount === 0) {
-        const message = `${playerName(view, event.playerId)} has no deck loaded`;
+        const message = msg({
+          message: `${name} has no deck loaded`,
+          comment:
+            "Log line: a player pressed Set up without a deck. {name} is a player's name.",
+        });
         return [
           activity(event, 'announcement', message),
           accessibility(event, message),
         ];
       }
-      const message = `${playerName(
-        view,
-        event.playerId
-      )} drew starting hand and set prizes`;
+      const message = msg({
+        message: `${name} drew starting hand and set prizes`,
+        comment:
+          "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name.",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
       ];
     }
     case 'RandomCardPlayedFaceDown': {
-      const message = `${playerName(
-        view,
-        event.actorPlayerId
-      )} moved a random card from ${playerName(
-        view,
-        event.targetPlayerId
-      )}'s hand to board`;
+      const actor = playerName(view, event.actorPlayerId);
+      const target = playerName(view, event.targetPlayerId);
+      const message = msg({
+        message: `${actor} moved a random card from ${target}'s hand to board`,
+        comment:
+          'Log line. {actor} is the player who moved the card, {target} the player whose hand it came from.',
+      });
       return [
         activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
@@ -362,31 +759,67 @@ export const presentationEffectsForEvent = (
     }
     case 'TurnStarted': {
       const name = playerName(view, event.playerId);
+      const turn = event.turnNumber;
       return [
-        activity(event, 'announcement', `Turn ${event.turnNumber}`),
-        activity(event, 'player', `${name} drew for turn`, event.playerId),
-        accessibility(event, `${name} started turn ${event.turnNumber}`),
+        activity(
+          event,
+          'announcement',
+          msg({
+            message: `Turn ${turn}`,
+            comment:
+              'The Log\'s divider at the start of a turn. {turn} is the turn number, as in "Turn 3".',
+          })
+        ),
+        activity(
+          event,
+          'player',
+          msg({
+            message: `${name} drew for turn`,
+            comment:
+              "Log line: the player whose turn begins drew their card for the turn. {name} is a player's name.",
+          }),
+          event.playerId
+        ),
+        accessibility(
+          event,
+          msg({
+            message: `${name} started turn ${turn}`,
+            comment:
+              "Read aloud by screen readers. {name} is a player's name, {turn} the turn number.",
+          })
+        ),
       ];
     }
     case 'TurnStartFailedNoDeck': {
-      const message = `${playerName(
-        view,
-        event.playerId
-      )} has no cards left to draw`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} has no cards left to draw`,
+        comment:
+          "Log line: a turn began and the player's deck was empty. {name} is a player's name.",
+      });
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
       ];
     }
     case 'AttackDeclared': {
-      const message = `${playerName(view, event.playerId)} attacked`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} attacked`,
+        comment: "Log line. {name} is a player's name.",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
       ];
     }
     case 'PassDeclared': {
-      const message = `${playerName(view, event.playerId)} passed`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} passed`,
+        comment:
+          "Log line: a player ended their turn without attacking. {name} is a player's name.",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
@@ -395,11 +828,47 @@ export const presentationEffectsForEvent = (
     case 'PublicCardsRevealed': {
       const actor = playerName(view, event.actorPlayerId);
       const owner = playerName(view, event.playerId);
-      const source = cardSourceName(event.source);
+      const card = narratedCardName(event.cardName);
+      const source = event.source;
       const message =
         event.scope === 'zone'
-          ? `${actor} revealed ${owner}'s ${source}`
-          : `${actor} revealed ${event.cardName ?? 'card'} in ${owner}'s ${source}`;
+          ? msg({
+              message: `${actor} revealed ${owner}'s ${select(source, {
+                hand: 'hand',
+                prizes: 'prizes',
+                discard: 'discard',
+                board: 'board',
+                stadium: 'stadium',
+                active: 'active',
+                bench: 'bench',
+                lostZone: 'lost zone',
+                attachmentResolution: 'attached cards',
+                inspection: 'inspection',
+                other: 'deck',
+              })}`,
+              comment:
+                'Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone.',
+            })
+          : msg({
+              message: `${actor} revealed ${card} in ${owner}'s ${select(
+                source,
+                {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                }
+              )}`,
+              comment:
+                "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in.",
+            });
       return [
         activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
@@ -408,11 +877,43 @@ export const presentationEffectsForEvent = (
     case 'PublicCardsHidden': {
       const actor = playerName(view, event.actorPlayerId);
       const owner = playerName(view, event.playerId);
-      const source = cardSourceName(event.source);
+      const source = event.source;
       const message =
         event.scope === 'zone'
-          ? `${actor} hid ${owner}'s ${source}`
-          : `${actor} hid card in ${owner}'s ${source}`;
+          ? msg({
+              message: `${actor} hid ${owner}'s ${select(source, {
+                hand: 'hand',
+                prizes: 'prizes',
+                discard: 'discard',
+                board: 'board',
+                stadium: 'stadium',
+                active: 'active',
+                bench: 'bench',
+                lostZone: 'lost zone',
+                attachmentResolution: 'attached cards',
+                inspection: 'inspection',
+                other: 'deck',
+              })}`,
+              comment:
+                'Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone.',
+            })
+          : msg({
+              message: `${actor} hid card in ${owner}'s ${select(source, {
+                hand: 'hand',
+                prizes: 'prizes',
+                discard: 'discard',
+                board: 'board',
+                stadium: 'stadium',
+                active: 'active',
+                bench: 'bench',
+                lostZone: 'lost zone',
+                attachmentResolution: 'attached cards',
+                inspection: 'inspection',
+                other: 'deck',
+              })}`,
+              comment:
+                'Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in.',
+            });
       return [
         activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
@@ -421,11 +922,46 @@ export const presentationEffectsForEvent = (
     case 'PrivateInspectionStarted': {
       const viewer = playerName(view, event.viewerPlayerId);
       const owner = playerName(view, event.sourcePlayerId);
-      const source = cardSourceName(event.source);
+      const source = event.source;
       const message =
         event.scope === 'zone'
-          ? `${viewer} looked at ${owner}'s ${source}`
-          : `${viewer} looked at card in ${owner}'s ${source}`;
+          ? msg({
+              message: `${viewer} looked at ${owner}'s ${select(source, {
+                hand: 'hand',
+                prizes: 'prizes',
+                discard: 'discard',
+                board: 'board',
+                stadium: 'stadium',
+                active: 'active',
+                bench: 'bench',
+                lostZone: 'lost zone',
+                attachmentResolution: 'attached cards',
+                inspection: 'inspection',
+                other: 'deck',
+              })}`,
+              comment:
+                'Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone.',
+            })
+          : msg({
+              message: `${viewer} looked at card in ${owner}'s ${select(
+                source,
+                {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                }
+              )}`,
+              comment:
+                'Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in.',
+            });
       return [
         activity(event, 'player', message, event.viewerPlayerId),
         accessibility(event, message),
@@ -434,40 +970,100 @@ export const presentationEffectsForEvent = (
     case 'PrivateInspectionEnded': {
       const viewer = playerName(view, event.viewerPlayerId);
       const owner = playerName(view, event.sourcePlayerId);
-      const source = cardSourceName(event.source);
+      const source = event.source;
       const message =
         event.scope === 'zone'
-          ? `${viewer} stopped looking at ${owner}'s ${source}`
-          : `${viewer} stopped looking at card in ${owner}'s ${source}`;
+          ? msg({
+              message: `${viewer} stopped looking at ${owner}'s ${select(
+                source,
+                {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                }
+              )}`,
+              comment:
+                'Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone.',
+            })
+          : msg({
+              message: `${viewer} stopped looking at card in ${owner}'s ${select(
+                source,
+                {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                }
+              )}`,
+              comment:
+                'Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in.',
+            });
       return [
         activity(event, 'player', message, event.viewerPlayerId),
         accessibility(event, message),
       ];
     }
     case 'UndoApplied': {
-      const actorName = playerName(view, event.actorPlayerId);
-      const targetName = playerName(view, event.targetPlayerId);
+      const actor = playerName(view, event.actorPlayerId);
+      const target = playerName(view, event.targetPlayerId);
       const message =
         event.actorPlayerId === event.targetPlayerId
-          ? `${targetName} took back their last move`
-          : `${actorName} took back ${targetName}'s last move`;
+          ? msg({
+              message: `${target} took back their last move`,
+              comment:
+                "Log line: a player undid their own last move. {target} is the player's name.",
+            })
+          : msg({
+              message: `${actor} took back ${target}'s last move`,
+              comment:
+                "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was.",
+            });
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
       ];
     }
     case 'OncePerGameMarkerSet': {
+      const name = playerName(view, event.playerId);
       const marker = event.marker === 'gx' ? 'GX' : 'VSTAR';
       const message = event.used
-        ? `${playerName(view, event.playerId)} used their ${marker}`
-        : `${playerName(view, event.playerId)} reset their ${marker}`;
+        ? msg({
+            message: `${name} used their ${marker}`,
+            comment:
+              "Log line: a player used their once-per-game power. {name} is a player's name; {marker} is GX or VSTAR (keep as is).",
+          })
+        : msg({
+            message: `${name} reset their ${marker}`,
+            comment:
+              "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is).",
+          });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
       ];
     }
     case 'MulliganDeclared': {
-      const message = `${playerName(view, event.playerId)} mulligans`;
+      const name = playerName(view, event.playerId);
+      const message = msg({
+        message: `${name} mulligans`,
+        comment:
+          "Log line: a player had no Basic Pokémon in their opening hand and redraws. {name} is a player's name.",
+      });
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
@@ -475,7 +1071,11 @@ export const presentationEffectsForEvent = (
     }
     case 'DeckViewDeclared': {
       const name = playerName(view, event.playerId);
-      const message = `${name} is looking through ${name}'s deck`;
+      const message = msg({
+        message: `${name} is looking through ${name}'s deck`,
+        comment:
+          "Log line: a player is searching their own deck. {name} is the player's name (both times).",
+      });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
@@ -498,12 +1098,23 @@ export const activityPresentationEffectsForEvents = (
     )
   );
 
-/** Maps authenticated ephemeral chat into the same bounded local feed. */
+/**
+ * Maps authenticated ephemeral chat into the same bounded local feed. What
+ * was said is a value: it is shown as written, in any language.
+ */
 export const presentationEffectsForChatMessage = (
   message: ChatMessage,
   observedRevision = 0
 ): readonly PresentationEffect[] => {
-  const visibleMessage = `${message.displayName}: ${message.message}`;
+  const speaker = message.displayName;
+  const text = message.message;
+  const visibleMessage = line(
+    msg({
+      message: `${speaker}: ${text}`,
+      comment:
+        'A chat line in the Log. {speaker} is who wrote it, {text} what they wrote (shown as written).',
+    })
+  );
   return [
     {
       kind: 'activity',
@@ -528,14 +1139,31 @@ export const presentationEffectsForPresence = (
   presence: PresenceMessage,
   observedRevision = 0
 ): readonly PresentationEffect[] => {
-  const message =
+  const name = presence.displayName;
+  const message = line(
     presence.status === 'joined'
-      ? `${presence.displayName} joined`
+      ? msg({
+          message: `${name} joined`,
+          comment:
+            'Log line: someone came into the room. {name} is their name.',
+        })
       : presence.status === 'disconnected'
-        ? `${presence.displayName} disconnected`
+        ? msg({
+            message: `${name} disconnected`,
+            comment:
+              "Log line: someone's connection to the room dropped. {name} is their name.",
+          })
         : presence.status === 'reconnected'
-          ? `${presence.displayName} reconnected`
-          : `${presence.displayName} left the room`;
+          ? msg({
+              message: `${name} reconnected`,
+              comment:
+                'Log line: someone came back after their connection dropped. {name} is their name.',
+            })
+          : msg({
+              message: `${name} left the room`,
+              comment: 'Log line. {name} is their name.',
+            })
+  );
   return [
     {
       kind: 'activity',

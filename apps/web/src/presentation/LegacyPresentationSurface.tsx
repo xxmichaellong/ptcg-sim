@@ -1,8 +1,13 @@
+import { useLingui } from '@lingui/react/macro';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import type { ActivityFeedItem } from './ActivityFeedModel.js';
 import type { LegacyGamePresentationRuntime } from './LegacyGamePresentationRuntime.js';
+import {
+  presentationText,
+  samePresentationMessage,
+} from './presentation-message.js';
 import { usePresentationState } from './usePresentationRuntime.js';
 
 export type LegacyActivityClassName =
@@ -73,8 +78,9 @@ interface ActivityRow {
 
 /**
  * The feed's rows: the same game line said again and again (Undo pressed
- * twelve times) is one row with a count. What people say in chat is never
- * folded.
+ * twelve times) is one row with a count. Lines are the same when their
+ * message and values are, in any language. What people say in chat is
+ * never folded.
  */
 export const activityRows = (
   items: readonly ActivityFeedItem[]
@@ -88,7 +94,7 @@ export const activityRows = (
       last.item.category === item.category &&
       last.item.eventType === item.eventType &&
       last.item.playerId === item.playerId &&
-      last.item.message === item.message
+      samePresentationMessage(last.item.message, item.message)
     ) {
       rows[rows.length - 1] = { ...last, item, count: last.count + 1 };
     } else {
@@ -129,6 +135,9 @@ export const LegacyPresentationSurface = ({
   intro,
   announcer = true,
 }: LegacyPresentationSurfaceProps) => {
+  // Re-renders on a language change, so every line already in the Log is
+  // worded again.
+  const { t, i18n } = useLingui();
   const feed = usePresentationState(runtime.activityFeed);
   const feedElement = useRef<HTMLDivElement>(null);
   const heldEntries = useRef(false);
@@ -153,7 +162,7 @@ export const LegacyPresentationSurface = ({
           feedId === 'p2Chatbox' ? ' legacy-activity-feed--multiplayer' : ''
         }`}
         role="log"
-        aria-label="Log"
+        aria-label={t`Log`}
         aria-live="off"
       >
         {intro !== undefined && !introCleared && (
@@ -169,7 +178,7 @@ export const LegacyPresentationSurface = ({
             data-revision={item.revision}
             {...(count > 1 ? { 'data-repeat': count } : {})}
           >
-            {item.message}
+            {presentationText(item.message, i18n)}
             {count > 1 ? (
               <span className="legacy-activity-repeat">×{count}</span>
             ) : null}

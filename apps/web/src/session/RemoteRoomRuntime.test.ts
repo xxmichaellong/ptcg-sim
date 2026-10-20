@@ -13,6 +13,7 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { LegacyAnnouncementScheduler } from '../presentation/LegacyGamePresentationRuntime.js';
+import { presentationText } from '../presentation/presentation-message.js';
 import {
   RemoteContinuationCustodyError,
   type RemoteContinuationPort,
@@ -142,7 +143,9 @@ describe('RemoteRoomRuntime', () => {
     });
     await flushConsumers();
     expect(
-      runtime.presentation.activityFeed.getSnapshot().items[0]?.message
+      presentationText(
+        runtime.presentation.activityFeed.getSnapshot().items[0]!.message
+      )
     ).toBe('Blue flipped heads');
     expect(
       runtime.presentation.liveRegion.getSnapshot().announcement?.message

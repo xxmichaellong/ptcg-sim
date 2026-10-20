@@ -8,6 +8,7 @@ import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispa
 import { GamePresentationCoordinator } from './GamePresentationCoordinator.js';
 import { GamePresentationRuntime } from './GamePresentationRuntime.js';
 import type { ChatMessage, PresenceMessage } from './PresentationEffects.js';
+import { presentationText } from './presentation-message.js';
 import type { SessionPresentationSource } from './SessionPresentationDispatcher.js';
 
 const coin = (
@@ -194,9 +195,13 @@ describe('GamePresentationCoordinator', () => {
       replay,
       adapters: {
         appendActivity: (effect) =>
-          activity.push(`${effect.revision}:${effect.message}`),
+          activity.push(
+            `${effect.revision}:${presentationText(effect.message)}`
+          ),
         announceAccessibility: (effect) =>
-          accessibility.push(`${effect.revision}:${effect.message}`),
+          accessibility.push(
+            `${effect.revision}:${presentationText(effect.message)}`
+          ),
         presentAnimation: (effect) =>
           animations.push(`${effect.revision}:${effect.animation.result}`),
       },
@@ -247,7 +252,10 @@ describe('GamePresentationCoordinator', () => {
     expect(
       runtime.activity
         .getSnapshot()
-        .entries.map((entry) => [entry.effect.category, entry.effect.message])
+        .entries.map((entry) => [
+          entry.effect.category,
+          presentationText(entry.effect.message),
+        ])
     ).toEqual([['message', 'Blue: Message 1']]);
 
     replay.publish(coordinatorState(1, 'replay'));
@@ -260,7 +268,7 @@ describe('GamePresentationCoordinator', () => {
     expect(
       runtime.activity
         .getSnapshot()
-        .entries.map((entry) => entry.effect.message)
+        .entries.map((entry) => presentationText(entry.effect.message))
     ).toEqual(['Red: Message 3']);
     expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
 
@@ -281,7 +289,7 @@ describe('GamePresentationCoordinator', () => {
     expect(
       runtime.activity
         .getSnapshot()
-        .entries.map((entry) => entry.effect.message)
+        .entries.map((entry) => presentationText(entry.effect.message))
     ).toEqual(['Watcher joined']);
 
     replay.publish(coordinatorState(1, 'replay'));
@@ -294,7 +302,7 @@ describe('GamePresentationCoordinator', () => {
     expect(
       runtime.activity
         .getSnapshot()
-        .entries.map((entry) => entry.effect.message)
+        .entries.map((entry) => presentationText(entry.effect.message))
     ).toEqual(['Watcher reconnected']);
     expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
 

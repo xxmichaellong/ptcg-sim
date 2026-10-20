@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { i18n } from '@lingui/core';
 import type { ClientSessionState } from '@ptcgsim/client-session';
 import type { PresentationEvent } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
@@ -19,6 +20,7 @@ import {
   legacyActivityClassName,
   LegacyPresentationSurface,
 } from './LegacyPresentationSurface.js';
+import { presentationText } from './presentation-message.js';
 import type { SessionPresentationSource } from './SessionPresentationDispatcher.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -421,7 +423,11 @@ describe('LegacyPresentationSurface', () => {
     expect(reportConsumerFailure).toHaveBeenCalledWith(failure, {
       channel: 'accessibility',
       entry: expect.objectContaining({
-        effect: expect.objectContaining({ message: 'Blue flipped heads' }),
+        effect: expect.objectContaining({
+          message: expect.objectContaining({
+            values: { name: 'Blue', result: 'heads' },
+          }),
+        }),
       }),
     });
     runtime.dispose();
@@ -473,8 +479,9 @@ describe('LegacyPresentationSurface', () => {
 
 describe('activity rows', () => {
   let next = 0;
+  // A line's message by its English (as a test catalog id), with no values.
   const line = (
-    message: string,
+    text: string,
     category: ActivityFeedItem['category'] = 'player',
     playerId: string | undefined = 'spike-blue',
     eventType: ActivityFeedItem['eventType'] = 'UndoApplied'
@@ -483,7 +490,7 @@ describe('activity rows', () => {
     revision: next,
     eventType,
     category,
-    message,
+    message: { id: text, message: text },
     ...(playerId ? { playerId } : {}),
   });
 
@@ -505,7 +512,9 @@ describe('activity rows', () => {
       line('Draw', 'player', 'spike-red', 'CardsMoved'),
     ];
     const rows = activityRows(items);
-    expect(rows.map(({ item, count }) => [item.message, count])).toEqual([
+    expect(
+      rows.map(({ item, count }) => [presentationText(item.message), count])
+    ).toEqual([
       ['Blue passed', 1],
       ['Blue took back their last move', 3],
       ['Blue passed', 1],
@@ -519,5 +528,87 @@ describe('activity rows', () => {
     // and carries its newest line's revision.
     expect(rows[1]!.first).toBe(items[1]);
     expect(rows[1]!.item).toBe(items[3]);
+  });
+
+  it('folds by message and values, never by the words shown', () => {
+    const drew = (name: string, count: number): ActivityFeedItem => ({
+      id: (next += 1),
+      revision: next,
+      eventType: 'CardsDrawn',
+      category: 'player',
+      playerId: 'spike-blue',
+      message: {
+        id: 'drew',
+        message: '{name} drew {count, plural, one {a card} other {# cards}}',
+        values: { name, count },
+      },
+    });
+    expect(
+      activityRows([
+        drew('Blue', 2),
+        drew('Blue', 2),
+        drew('Blue', 3),
+        drew('Red', 3),
+      ]).map(({ item, count }) => [presentationText(item.message), count])
+    ).toEqual([
+      ['Blue drew 2 cards', 2],
+      ['Blue drew 3 cards', 1],
+      ['Red drew 3 cards', 1],
+    ]);
+  });
+});
+
+describe('a language change', () => {
+  beforeEach(() => document.body.replaceChildren());
+
+  it('re-words the lines already in the Log', async () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const runtime = new LegacyGamePresentationRuntime({
+      live,
+      replay,
+      scheduleAnnouncementClear: () => () => undefined,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <LegacyPresentationSurface
+          runtime={runtime}
+          perspective={view}
+          announcer={false}
+        />
+      )
+    );
+    await act(async () => {
+      live.publish([coin(2, 'spike-blue', 'heads')]);
+      await flushConsumers();
+    });
+    const feed = host.querySelector('#chatbox') as HTMLDivElement;
+    expect(feed.textContent).toBe('Blue flipped heads');
+    const [item] = runtime.activityFeed.getSnapshot().items;
+
+    try {
+      await act(async () =>
+        i18n.loadAndActivate({
+          locale: 'xx',
+          messages: {
+            [item!.message.id]:
+              '{name} a obtenu {result, select, heads {face} other {pile}}',
+          },
+        })
+      );
+      // No new line: the one already there is worded again.
+      expect(feed.textContent).toBe('Blue a obtenu face');
+      expect(runtime.activityFeed.getSnapshot().items).toHaveLength(1);
+    } finally {
+      await act(async () =>
+        i18n.loadAndActivate({ locale: 'en', messages: {} })
+      );
+    }
+    expect(feed.textContent).toBe('Blue flipped heads');
+    await act(async () => root.unmount());
+    runtime.dispose();
   });
 });

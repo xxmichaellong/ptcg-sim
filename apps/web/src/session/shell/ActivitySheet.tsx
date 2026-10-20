@@ -3,6 +3,8 @@ import { ChatCircleTextIcon } from '@phosphor-icons/react/dist/csr/ChatCircleTex
 import { DotsThreeIcon } from '@phosphor-icons/react/dist/csr/DotsThree';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { plural } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   useEffect,
   useRef,
@@ -19,6 +21,7 @@ import {
   type LegacyActivityPerspective,
 } from '../../presentation/LegacyPresentationSurface.js';
 import type { LegacyGamePresentationRuntime } from '../../presentation/LegacyGamePresentationRuntime.js';
+import { presentationText } from '../../presentation/presentation-message.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from '../../ui/overlay-surface.js';
 import { Sheet } from '../../ui/Sheet.js';
@@ -65,11 +68,12 @@ const LogMenu = ({
   onExportLog,
   onClearLog,
 }: Pick<ActivityPanelProps, 'onExportLog' | 'onClearLog'>) => {
+  const { t } = useLingui();
   const entries: ActionMenuEntry[] = [];
   if (onExportLog) {
     entries.push({
       id: 'exportLog',
-      label: 'Download log',
+      label: t`Download log`,
       icon: DownloadSimpleIcon,
       onSelect: onExportLog,
     });
@@ -77,7 +81,7 @@ const LogMenu = ({
   if (onClearLog) {
     entries.push({
       id: 'clearLog',
-      label: 'Clear log',
+      label: t`Clear log`,
       icon: BroomIcon,
       onSelect: onClearLog,
     });
@@ -85,18 +89,22 @@ const LogMenu = ({
   if (entries.length === 0) return null;
   return (
     <ActionMenu
-      label="Log"
+      label={t({
+        message: 'Log',
+        comment:
+          'The Log: the list of everything that happens at the table, and the chat.',
+      })}
       side="bottom"
       align="end"
       entries={entries}
-      tooltip="Log options"
+      tooltip={t`Log options`}
       tooltipSide="bottom"
       trigger={
         <button
           id="activityLogMenuButton"
           type="button"
           className="ds-icon-button"
-          aria-label="Log options"
+          aria-label={t`Log options`}
         >
           <DotsThreeIcon aria-hidden="true" weight="bold" />
         </button>
@@ -165,6 +173,7 @@ export const ActivityPanel = ({
   onClearLog,
   ...body
 }: ActivityPanelProps) => {
+  const { t } = useLingui();
   const headerActions = (
     <>
       {extraActions}
@@ -180,18 +189,18 @@ export const ActivityPanel = ({
         <header className="ptcgsim-sheet__header">
           <div className="ptcgsim-sheet__heading">
             <h2 id="activityDockTitle" className="ptcgsim-sheet__title">
-              Log
+              <Trans>Log</Trans>
             </h2>
             {status ? (
               <p className="ptcgsim-sheet__description">{status}</p>
             ) : null}
           </div>
           <div className="ptcgsim-sheet__actions">{headerActions}</div>
-          <Tooltip content="Close log" side="bottom">
+          <Tooltip content={t`Close log`} side="bottom">
             <button
               type="button"
               className="ptcgsim-sheet__close"
-              aria-label="Close log"
+              aria-label={t`Close log`}
               onClick={() => onOpenChange(false)}
             >
               <XIcon aria-hidden="true" />
@@ -208,7 +217,7 @@ export const ActivityPanel = ({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Log"
+      title={t`Log`}
       {...(status ? { description: status } : {})}
       headerActions={headerActions}
       placement="side"
@@ -279,6 +288,7 @@ export const ActivityLauncher = ({
   readonly ownSeat: string | undefined;
   readonly solo: boolean;
 }) => {
+  const { t, i18n } = useLingui();
   const feed = useSyncExternalStore(
     presentation.activityFeed.subscribe,
     presentation.activityFeed.getSnapshot
@@ -334,19 +344,31 @@ export const ActivityLauncher = ({
               key={item.id}
               className={`ptcgsim-activity-ticker__line ${legacyActivityClassName(item, perspective)}`}
             >
-              <span>{item.message}</span>
+              <span>{presentationText(item.message, i18n)}</span>
             </li>
           ))}
         </ol>
       ) : null}
       {/* Beside the button: the newest lines rise above it. */}
-      <Tooltip content={open ? 'Hide log' : 'Log'} side="left">
+      <Tooltip content={open ? t`Hide log` : t`Log`} side="left">
         <RailButton
           id="activityButton"
           icon={ChatCircleTextIcon}
-          label="Log"
+          label={t`Log`}
           iconOnly
           badge={unread}
+          {...(unread > 0
+            ? {
+                'aria-label': t({
+                  message: `Log, ${plural(unread, {
+                    one: '# new',
+                    other: '# new',
+                  })}`,
+                  comment:
+                    "The Log button's name while it has lines not yet read. {unread} is how many.",
+                }),
+              }
+            : {})}
           aria-expanded={open}
           aria-controls={open ? 'activitySheet' : undefined}
           onClick={onToggle}

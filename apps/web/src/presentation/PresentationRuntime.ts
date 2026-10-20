@@ -4,6 +4,7 @@ import type {
   AnimationPresentationEffect,
   PresentationEffectAdapters,
 } from './PresentationEffects.js';
+import { samePresentationMessage } from './presentation-message.js';
 
 export const MAX_PRESENTATION_RUNTIME_ENTRIES = 1_000;
 
@@ -113,7 +114,7 @@ const sameActivityEffect = (
   left.revision === right.revision &&
   left.eventType === right.eventType &&
   left.category === right.category &&
-  left.message === right.message &&
+  samePresentationMessage(left.message, right.message) &&
   left.playerId === right.playerId;
 
 const sameActivityTimeline = (

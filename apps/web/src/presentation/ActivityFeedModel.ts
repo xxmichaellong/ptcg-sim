@@ -1,3 +1,4 @@
+import type { PresentationMessage } from './presentation-message.js';
 import type {
   ActivityPresentationSnapshot,
   PresentationStateSource,
@@ -9,7 +10,8 @@ export interface ActivityFeedItem {
   readonly revision: number;
   readonly eventType: ActivityPresentationSnapshot['entries'][number]['effect']['eventType'];
   readonly category: ActivityPresentationSnapshot['entries'][number]['effect']['category'];
-  readonly message: string;
+  /** Worded when shown, so a language change re-words the whole Log. */
+  readonly message: PresentationMessage;
   /** Styling metadata only. It must never be interpolated into visible text. */
   readonly playerId?: string;
 }

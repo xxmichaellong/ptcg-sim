@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import type { PresentationEvent } from '@ptcgsim/protocol';
 import { describe, expect, it, vi } from 'vitest';
@@ -12,6 +13,7 @@ import {
   presentationEffectsForPresence,
   type PresentationEffect,
 } from './PresentationEffects.js';
+import { presentationText } from './presentation-message.js';
 
 const events: readonly PresentationEvent[] = [
   {
@@ -139,9 +141,17 @@ const messages = (effects: readonly PresentationEffect[]) =>
     .filter((effect) => effect.kind !== 'animation')
     .map((effect) =>
       effect.kind === 'activity'
-        ? `${effect.category}:${effect.message}`
-        : `accessibility:${effect.message}`
+        ? `${effect.category}:${presentationText(effect.message)}`
+        : `accessibility:${presentationText(effect.message)}`
     );
+
+/** The effects with their lines worded (the tests run in English). */
+const worded = (effects: readonly PresentationEffect[]) =>
+  effects.map((effect) =>
+    effect.kind === 'animation'
+      ? effect
+      : { ...effect, message: presentationText(effect.message) }
+  );
 
 describe('presentationEffectsForEvent', () => {
   it('maps authenticated player and spectator chat without a replay fact', () => {
@@ -154,7 +164,7 @@ describe('presentationEffectsForEvent', () => {
       message: '<safe text>',
       createdAtMs: 1_000,
     };
-    expect(presentationEffectsForChatMessage(player, 14)).toEqual([
+    expect(worded(presentationEffectsForChatMessage(player, 14))).toEqual([
       {
         kind: 'activity',
         revision: 14,
@@ -172,14 +182,16 @@ describe('presentationEffectsForEvent', () => {
       },
     ]);
     expect(
-      presentationEffectsForChatMessage({
-        type: 'ChatMessage',
-        protocolVersion: 2,
-        messageId: 'chat-spectator',
-        displayName: 'Watcher',
-        message: '<safe text>',
-        createdAtMs: 1_000,
-      })
+      worded(
+        presentationEffectsForChatMessage({
+          type: 'ChatMessage',
+          protocolVersion: 2,
+          messageId: 'chat-spectator',
+          displayName: 'Watcher',
+          message: '<safe text>',
+          createdAtMs: 1_000,
+        })
+      )
     ).toEqual([
       expect.objectContaining({
         kind: 'activity',
@@ -195,8 +207,22 @@ describe('presentationEffectsForEvent', () => {
     ]);
     // v1's flower button is gone (PX-032), so a lone flower is a named line.
     expect(
-      presentationEffectsForChatMessage({ ...player, message: '🌺' }, 15)[0]
+      worded(
+        presentationEffectsForChatMessage({ ...player, message: '🌺' }, 15)
+      )[0]
     ).toMatchObject({ category: 'message', message: 'Blue: 🌺' });
+    // What was said is shown as written, braces and all: it is a value,
+    // never read as a message.
+    expect(
+      worded(
+        presentationEffectsForChatMessage(
+          { ...player, message: "{count, plural, one {#} other {'#'}}" },
+          16
+        )
+      )[0]
+    ).toMatchObject({
+      message: "Blue: {count, plural, one {#} other {'#'}}",
+    });
   });
 
   it('gates chat delivery and isolates effect failures', () => {
@@ -244,14 +270,16 @@ describe('presentationEffectsForEvent', () => {
     ] as const;
     for (const [status, visible] of variants) {
       expect(
-        presentationEffectsForPresence(
-          {
-            type: 'Presence',
-            protocolVersion: 2,
-            displayName: 'Viewer',
-            status,
-          },
-          14
+        worded(
+          presentationEffectsForPresence(
+            {
+              type: 'Presence',
+              protocolVersion: 2,
+              displayName: 'Viewer',
+              status,
+            },
+            14
+          )
         )
       ).toEqual([
         {
@@ -592,12 +620,42 @@ describe('presentationEffectsForEvent', () => {
       createRendererSpikeView()
     );
 
-    expect(effects.map((effect) => effect.message)).toEqual([
+    expect(effects.map((effect) => presentationText(effect.message))).toEqual([
       'Blue flipped heads',
       'Turn 3',
       'Blue drew for turn',
     ]);
     expect(effects.every((effect) => effect.kind === 'activity')).toBe(true);
+  });
+
+  it('keeps lines as messages, worded in whatever language is up', () => {
+    const view = createRendererSpikeView();
+    const [line] = activityPresentationEffectsForEvents(
+      [
+        {
+          type: 'CardsDrawn',
+          revision: 2,
+          playerId: 'spike-blue',
+          cardCount: 3,
+        },
+      ],
+      view
+    );
+    // Names and counts are values; the sentence is the catalog's.
+    expect(line!.message.values).toEqual({ name: 'Blue', count: 3 });
+    expect(presentationText(line!.message)).toBe('Blue drew 3 cards');
+    try {
+      i18n.loadAndActivate({
+        locale: 'xx',
+        messages: {
+          [line!.message.id]:
+            '{name} a pioché {count, plural, one {une carte} other {# cartes}}',
+        },
+      });
+      expect(presentationText(line!.message)).toBe('Blue a pioché 3 cartes');
+    } finally {
+      i18n.loadAndActivate({ locale: 'en', messages: {} });
+    }
   });
 });
 

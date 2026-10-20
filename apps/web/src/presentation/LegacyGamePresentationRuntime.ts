@@ -1,3 +1,4 @@
+import { presentationText } from './presentation-message.js';
 import type {
   AccessibilityPresentationAnnouncement,
   PresentationStateSource,
@@ -16,6 +17,7 @@ import {
 
 export interface LegacyLiveRegionAnnouncement {
   readonly id: number;
+  /** Worded when announced, in the page's language then. */
   readonly message: string;
   readonly politeness: 'polite';
 }
@@ -84,7 +86,7 @@ class LegacyLiveRegionController implements PresentationStateSource<LegacyLiveRe
     this.publish({
       announcement: {
         id: entry.id,
-        message: entry.effect.message,
+        message: presentationText(entry.effect.message),
         politeness: entry.effect.politeness,
       },
     });

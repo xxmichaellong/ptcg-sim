@@ -2,13 +2,18 @@ import { t } from '@lingui/core/macro';
 import { useSyncExternalStore } from 'react';
 
 import type { ActivityFeedItem } from '../presentation/ActivityFeedModel.js';
+import { presentationText } from '../presentation/presentation-message.js';
 import type { ToastOptions } from '../ui/toast.js';
 
+/** The Log as text, worded in the page's language. */
 export const serializeBattleLog = (
   items: readonly Pick<ActivityFeedItem, 'message'>[]
 ): string =>
   items
-    .map((item, index) => `${index + 1}: ${item.message.trim()}\n\n`)
+    .map(
+      (item, index) =>
+        `${index + 1}: ${presentationText(item.message).trim()}\n\n`
+    )
     .join('');
 
 /** Downloads recipient-safe presentation text without retaining an object URL. */
