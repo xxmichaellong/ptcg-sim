@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+import { i18n } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import {
   RemoteGameSession,
   type ClientSessionScheduler,
@@ -566,6 +568,62 @@ describe('opt-in React DOM board session runtime', () => {
     presentation.dispose();
     expect(live.listenerCount()).toBe(0);
     expect(replay.listenerCount()).toBe(0);
+  });
+
+  it('rewords the scene and the board when the language changes', async () => {
+    const live = new MutableLiveSource(readyState(atRevision(1)));
+    const replay = new MutableReplaySource(live.getSnapshot());
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+
+    const discardOf = () =>
+      runtime
+        .getBoardSnapshot()!
+        .scene!.zones.find((zone) => zone.id.endsWith(':discard'))!;
+    const before = discardOf();
+    const name = before.label.replace(/ discard$/u, '');
+    expect(before.label).toBe(`${name} discard`);
+    const element = () =>
+      host.querySelector<HTMLElement>(`[data-zone-id="${before.id}"]`)!;
+    expect(element().getAttribute('aria-label')).toMatch(
+      new RegExp(`^${name} discard, \\d+ cards?$`, 'u')
+    );
+
+    // The same message as the scene's: its id is the English and context.
+    const discard = msg({
+      message: `${name} discard`,
+      comment: "A zone's name for screen readers; name is its player.",
+    });
+    try {
+      await act(async () => {
+        i18n.loadAndActivate({
+          locale: 'xx',
+          messages: { [discard.id]: 'Défausse de {name}' },
+        });
+      });
+      expect(discardOf().label).toBe(`Défausse de ${name}`);
+      expect(element().getAttribute('aria-label')).toMatch(
+        new RegExp(`^Défausse de ${name}, \\d+ cards?$`, 'u')
+      );
+    } finally {
+      await act(async () => {
+        i18n.loadAndActivate({ locale: 'en', messages: {} });
+      });
+    }
+    expect(discardOf().label).toBe(`${name} discard`);
+
+    await act(async () => {
+      runtime.dispose();
+      await Promise.resolve();
+    });
+    // A disposed runtime no longer follows the language.
+    i18n.loadAndActivate({ locale: 'en', messages: {} });
   });
 
   it('reprojects route-local policy and preferences on one observed renderer', async () => {

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import { useEffect, useRef, useState } from 'react';
 
@@ -6,7 +7,9 @@ import './TurnBanner.css';
 
 interface Announcement {
   readonly key: number;
-  readonly title: string;
+  /** Whose turn: the viewer's own, or the named player's. */
+  readonly ownTurn: boolean;
+  readonly name: string | undefined;
   readonly turnNumber: number;
   readonly side: 'local' | 'opponent';
 }
@@ -31,6 +34,7 @@ const FALLBACK_VISIBLE_MS = 2_500;
  * view and any jump backwards (undo, a replay seek) announce nothing.
  */
 export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
+  const { t } = useLingui();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const lastRef = useRef<{ matchId: string; turnNumber: number } | null>(null);
   const turnNumber = view?.turn.number;
@@ -52,7 +56,8 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
       view.viewer.playerId === currentPlayerId;
     setAnnouncement({
       key: Date.now(),
-      title: ownTurn ? 'Your turn' : `${player?.displayName ?? 'Next'}'s turn`,
+      ownTurn,
+      name: player?.displayName,
       turnNumber,
       // In the seat's own colour, as its name is, however the board is
       // turned.
@@ -67,6 +72,15 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
   }, [matchId, turnNumber]);
 
   if (!announcement) return null;
+  const { name, turnNumber: number } = announcement;
+  const title = announcement.ownTurn
+    ? t`Your turn`
+    : name === undefined
+      ? t`Next player's turn`
+      : t({
+          message: `${name}'s turn`,
+          comment: 'Shown across the table when a player starts their turn.',
+        });
   return (
     <div
       key={announcement.key}
@@ -78,8 +92,10 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
         if (event.target === event.currentTarget) setAnnouncement(null);
       }}
     >
-      <span className="turn-banner__title">{announcement.title}</span>
-      <span className="turn-banner__turn">Turn {announcement.turnNumber}</span>
+      <span className="turn-banner__title">{title}</span>
+      <span className="turn-banner__turn">
+        <Trans context="the turn's number">Turn {number}</Trans>
+      </span>
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import { i18n, type MessageDescriptor } from '@lingui/core';
+import { msg, plural, t } from '@lingui/core/macro';
 import {
   arrangementHold,
   arrangementIndexAt,
@@ -40,6 +42,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -67,7 +70,15 @@ import {
   type QuarterTurn,
 } from './motion/HoverTilt.js';
 
-const FACE_DOWN_LABEL = 'Face-down card';
+/** A card painted face down, whatever it is: worded at render. */
+const faceDownLabel = (): string => t`Face-down card`;
+
+/**
+ * The page's language, so memoized nodes whose own props did not change
+ * (a known card painted face down) are worded again when it changes.
+ */
+const subscribeLocale = (listener: () => void) => i18n.on('change', listener);
+const readLocale = () => i18n.locale;
 
 /**
  * Bases for lifted cards, each added to the card's own scene z-index so the
@@ -305,16 +316,46 @@ const handDividerFor = (
 };
 
 /** What the play mat prints in each zone (geometry v2). */
-const TABLE_ZONE_LABELS: Partial<Record<ZoneSceneNode['kind'], string>> = {
-  board: 'Board',
-  active: 'Active',
-  bench: 'Bench',
-  prizes: 'Prizes',
-  deck: 'Deck',
-  discard: 'Discard',
-  lostZone: 'Lost Zone',
-  stadium: 'Stadium',
+/** What an empty zone shows when the pointer rests on it. */
+const TABLE_ZONE_LABELS: Partial<
+  Record<ZoneSceneNode['kind'], MessageDescriptor>
+> = {
+  board: msg({ message: 'Board', context: 'zone on the table' }),
+  active: msg({
+    message: 'Active',
+    context: 'zone on the table',
+    comment: 'The Active Spot.',
+  }),
+  bench: msg({ message: 'Bench', context: 'zone on the table' }),
+  prizes: msg({
+    message: 'Prizes',
+    context: 'zone on the table',
+    comment: 'The Prize cards.',
+  }),
+  deck: msg({ message: 'Deck', context: 'zone on the table' }),
+  discard: msg({
+    message: 'Discard',
+    context: 'zone on the table',
+    comment: 'The discard pile.',
+  }),
+  lostZone: msg({ message: 'Lost Zone', context: 'zone on the table' }),
+  stadium: msg({ message: 'Stadium', context: 'zone on the table' }),
 };
+
+const tableZoneLabel = (kind: ZoneSceneNode['kind']): string | undefined => {
+  const label = TABLE_ZONE_LABELS[kind];
+  return label ? i18n._(label) : undefined;
+};
+
+/** A zone's name and count for assistive tech: "Red discard, 3 cards". */
+const zoneName = (label: string, count: number): string =>
+  t({
+    message: plural(count, {
+      one: `${label}, # card`,
+      other: `${label}, # cards`,
+    }),
+    comment: 'label is the zone\'s name, e.g. "Red discard".',
+  });
 
 const ZoneNode = memo(function ZoneNode({
   zone,
@@ -377,14 +418,14 @@ const ZoneNode = memo(function ZoneNode({
       data-zone-id={zone.id}
       data-zone-side={zone.side}
       data-zone-outline={table && showOutline ? 'true' : undefined}
-      data-zone-label={table ? TABLE_ZONE_LABELS[zone.kind] : undefined}
+      data-zone-label={table ? tableZoneLabel(zone.kind) : undefined}
       data-zone-empty={table && zone.count === 0 ? 'true' : undefined}
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       data-drop-target={dropTarget ? 'true' : undefined}
       data-zone-scroll-axis={zone.scroll?.axis}
       data-zone-scroll-length={zone.scroll?.contentLength}
-      aria-label={`${zone.label}, ${zone.count} cards`}
+      aria-label={zoneName(zone.label, zone.count)}
       aria-haspopup={zone.interactive ? 'dialog' : undefined}
       role={zone.interactive ? 'button' : undefined}
       tabIndex={zone.interactive ? 0 : undefined}
@@ -513,6 +554,8 @@ const CardNode = memo(
     asideX = 0,
     asideY = 0,
   }: {
+    /** The page's language; only compared, so a change repaints the words. */
+    readonly locale?: string;
     readonly card: CardSceneNode;
     readonly selected: boolean;
     readonly targetable: boolean;
@@ -635,7 +678,7 @@ const CardNode = memo(
             ? 'true'
             : undefined
         }
-        aria-label={paintsBack(card) ? FACE_DOWN_LABEL : card.label}
+        aria-label={paintsBack(card) ? faceDownLabel() : card.label}
         aria-haspopup={
           card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
         }
@@ -759,6 +802,7 @@ const CardNode = memo(
       depthPaintKey(before.card) === depthPaintKey(after.card) &&
       depthPaintKey(before.camera) === depthPaintKey(after.camera) &&
       before.bands === after.bands &&
+      before.locale === after.locale &&
       before.pose !== undefined &&
       after.pose !== undefined &&
       sameTablePose(before.pose, after.pose) &&
@@ -944,6 +988,7 @@ export const BoardSurface = ({
   readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const locale = useSyncExternalStore(subscribeLocale, readLocale, readLocale);
   // A card in the hand that the table does not draw (picked out of a pile's
   // viewer) is painted while it is held and settling, so it moves like any
   // other (held-cards.ts). Keyed by which cards those are, so the scene stays
@@ -1794,6 +1839,7 @@ export const BoardSurface = ({
           .map((card) => (
             <CardNode
               key={card.renderKey}
+              locale={locale}
               card={card}
               selected={presentation.selectedCardId === card.id}
               targetable={presentation.targetableCardIds.includes(card.id)}

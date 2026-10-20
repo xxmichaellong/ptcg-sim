@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import { TABLE_CONTROL_CORNER_HEIGHT_PX } from '@ptcgsim/renderer-contract';
@@ -30,7 +32,7 @@ const BOTH_MARKERS: readonly OncePerGameMarker[] = ['vstar', 'gx'];
 
 /** What the hand's Sort toggle's tooltip says, off and on. */
 export const handSortTooltip = (sorted: boolean): string =>
-  sorted ? 'Stop sorting hand' : 'Sort hand in decklist order';
+  sorted ? t`Stop sorting hand` : t`Sort hand in decklist order`;
 
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
@@ -97,6 +99,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   /** Sort lives in the hand's count pill (TableHandPill), not here. */
   readonly sortInPill?: boolean;
 }) {
+  // Re-rendered when the language changes: the tooltips and labels below.
+  const { t } = useLingui();
   // v1's `#handLabel`: `left: 0; bottom: 29.5%` of the player container with
   // the text flipped back upright on the rotated opponent frame. The label
   // box is `font-size: 5vh` of the container, which sets the space between
@@ -121,7 +125,8 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
       marker === 'gx'
         ? player.oncePerGame.gxUsed
         : player.oncePerGame.vstarUsed;
-    const label = marker === 'gx' ? 'GX' : 'VSTAR';
+    const markerName = marker === 'gx' ? 'GX' : 'VSTAR';
+    const playerName = player.displayName;
     return (
       <Tooltip
         content={oncePerGameTooltip(marker, used)}
@@ -135,7 +140,10 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
           data-once-per-game-marker={marker}
           data-player-id={frame.playerId}
           data-player-side={playerSide}
-          aria-label={`${player.displayName} ${label}`}
+          aria-label={t({
+            message: `${playerName} ${markerName}`,
+            comment: "A player's once-per-game marker, e.g. 'Red VSTAR'.",
+          })}
           aria-pressed={used}
           style={{
             height: tileHeight + ONCE_PER_GAME_TILE_PADDING * 2,
@@ -206,7 +214,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
                   frame.rotationQuarterTurns === 2 ? 'opp-text' : 'self-text'
                 }`}
               >
-                Sort
+                <Trans context="sort the hand">Sort</Trans>
               </span>
             </label>
           </Tooltip>
@@ -245,7 +253,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
               ...(darkMode ? { color: 'rgb(149, 149, 149)' } : {}),
             }}
           >
-            Sort
+            <Trans context="sort the hand">Sort</Trans>
           </span>
         </label>
       )}
@@ -278,6 +286,7 @@ const TableHandPill = memo(function TableHandPill({
   readonly sorted: boolean;
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
 }) {
+  const { t } = useLingui();
   const { node, playerId } = count;
   // Anchored exactly as the board anchors its count badges.
   const horizontal =
@@ -355,7 +364,9 @@ const TableHandPill = memo(function TableHandPill({
       </span>
       {onToggleHandSort ? (
         <Tooltip
-          content={handSortTooltip(sorted)}
+          content={
+            sorted ? t`Stop sorting hand` : t`Sort hand in decklist order`
+          }
           side={playerSide === 'local' ? 'top' : 'bottom'}
         >
           <label
@@ -373,7 +384,9 @@ const TableHandPill = memo(function TableHandPill({
               }
             />
             <SortAscendingIcon aria-hidden="true" weight="bold" />
-            <span className="ds-visually-hidden">Sort</span>
+            <span className="ds-visually-hidden">
+              <Trans context="sort the hand">Sort</Trans>
+            </span>
           </label>
         </Tooltip>
       ) : null}

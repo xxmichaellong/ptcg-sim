@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createLayoutSnapshotFor,
@@ -163,6 +164,8 @@ export class BoardSessionRuntime {
   private rendererFailureStatusReported = false;
   private attached = false;
   private disposed = false;
+  /** Stops rewording the scene when the language changes. */
+  private stopFollowingLanguage: (() => void) | null = null;
   private readonly layoutListeners = new Set<() => void>();
   private readonly abortedMountError = new Error(
     'Board runtime mount was aborted by disposal'
@@ -213,6 +216,16 @@ export class BoardSessionRuntime {
         },
       });
       this.adapter = this.createAdapter();
+      // The scene's labels (zone and card names for assistive tech) are
+      // worded when it is built, so a new language builds it again.
+      this.stopFollowingLanguage = i18n.on('change', () => {
+        if (this.disposed) return;
+        try {
+          this.adapter?.refreshScene();
+        } catch (error) {
+          this.reportError(error);
+        }
+      });
       await this.whenSettled();
       if (this.disposed) throw this.abortedMountError;
       if (this.rendererMountError) throw this.rendererMountError;
@@ -557,6 +570,8 @@ export class BoardSessionRuntime {
     this.desiredPresentation = DEFAULT_BOARD_PRESENTATION;
     this.rendererReady = false;
     this.layoutListeners.clear();
+    this.stopFollowingLanguage?.();
+    this.stopFollowingLanguage = null;
     try {
       adapter?.dispose();
     } catch (error) {

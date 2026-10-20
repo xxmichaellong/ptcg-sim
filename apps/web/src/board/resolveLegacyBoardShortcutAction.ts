@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
@@ -60,10 +61,10 @@ export interface LegacyBoardShortcutCountPrompt {
   readonly action: LegacyOwnHandShortcutAction;
   readonly playerId: string;
   readonly zoneId: string;
-  readonly message: 'Draw how many cards?';
+  readonly message: string;
   readonly initialValue: '0';
   readonly minimum: 0;
-  readonly invalidMessage: 'Please enter a valid number for the draw amount.';
+  readonly invalidMessage: string;
 }
 
 const isLegacyLooseBoardShortcutDestination = (
@@ -395,10 +396,10 @@ export const resolveLegacyBoardShortcutAction = (
             action: request.action,
             playerId: viewerId,
             zoneId: hand.id,
-            message: 'Draw how many cards?',
+            message: t`Draw how many cards?`,
             initialValue: '0',
             minimum: 0,
-            invalidMessage: 'Please enter a valid number for the draw amount.',
+            invalidMessage: t`Please enter a valid number for the draw amount.`,
           },
           dismissSelection: false,
         };

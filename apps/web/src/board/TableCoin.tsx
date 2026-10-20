@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { PlayerId } from '@ptcgsim/game-core';
 import type {
   BoardDepthProjection,
@@ -212,6 +213,7 @@ const TableCoin = ({
   hint,
   covered,
 }: TableCoinProps) => {
+  const { t } = useLingui();
   const coinRef = useRef<HTMLSpanElement>(null);
   const tossRef = useRef<HTMLSpanElement>(null);
   const shadowRef = useRef<HTMLSpanElement>(null);
@@ -430,7 +432,9 @@ const TableCoin = ({
           aria-hidden="true"
           style={{ left: chip.x, top: chip.y }}
         >
-          {result === 'heads' ? 'Heads' : 'Tails'}
+          {result === 'heads'
+            ? t({ message: 'Heads', context: 'coin flip' })
+            : t({ message: 'Tails', context: 'coin flip' })}
         </span>
       ) : null}
     </>
@@ -481,6 +485,7 @@ export const TableCoins = ({
   names,
   covered = false,
 }: TableCoinsProps) => {
+  const { t } = useLingui();
   const { flip } = useSyncExternalStore(
     source.subscribe,
     source.getSnapshot,
@@ -578,7 +583,12 @@ export const TableCoins = ({
                 : undefined
             }
             label={
-              spot.own || !name ? 'Flip a coin' : `Flip a coin for ${name}`
+              spot.own || !name
+                ? t`Flip a coin`
+                : t({
+                    message: `Flip a coin for ${name}`,
+                    comment: 'name is the player the coin is flipped for.',
+                  })
             }
             hint={spot.own ? flipControl?.hint : undefined}
             covered={covered}

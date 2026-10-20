@@ -1,3 +1,5 @@
+import { i18n, type MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import type {
   MatchViewState,
   PlayerId,
@@ -171,6 +173,20 @@ export type LegacyBoardWorkAreaActionId =
   | 'toHand'
   | 'leaveInPlay';
 
+/**
+ * A work-area button whose label is worded when read, so a panel drawn
+ * after a language change shows the new language.
+ */
+const workAreaAction = (
+  id: LegacyBoardWorkAreaActionId,
+  label: MessageDescriptor
+): { readonly id: LegacyBoardWorkAreaActionId; readonly label: string } => ({
+  id,
+  get label() {
+    return i18n._(label);
+  },
+});
+
 export const LEGACY_BOARD_WORK_AREA_ACTIONS: Readonly<
   Record<
     LegacyBoardWorkAreaSource,
@@ -181,18 +197,18 @@ export const LEGACY_BOARD_WORK_AREA_ACTIONS: Readonly<
   >
 > = {
   inspection: [
-    { id: 'discardAll', label: 'Discard all' },
-    { id: 'shuffleAll', label: 'Shuffle all' },
-    { id: 'shuffleBottom', label: 'Shuffle to bottom' },
-    { id: 'lostZoneAll', label: 'Lost Zone all' },
-    { id: 'toHand', label: 'To Hand' },
+    workAreaAction('discardAll', msg`Discard all`),
+    workAreaAction('shuffleAll', msg`Shuffle all`),
+    workAreaAction('shuffleBottom', msg`Shuffle to bottom`),
+    workAreaAction('lostZoneAll', msg`Lost Zone all`),
+    workAreaAction('toHand', msg`To Hand`),
   ],
   staged: [
-    { id: 'discardAll', label: 'Discard all' },
-    { id: 'shuffleAll', label: 'Shuffle all' },
-    { id: 'lostZoneAll', label: 'Lost Zone all' },
-    { id: 'toHand', label: 'To Hand' },
-    { id: 'leaveInPlay', label: 'Leave in play' },
+    workAreaAction('discardAll', msg`Discard all`),
+    workAreaAction('shuffleAll', msg`Shuffle all`),
+    workAreaAction('lostZoneAll', msg`Lost Zone all`),
+    workAreaAction('toHand', msg`To Hand`),
+    workAreaAction('leaveInPlay', msg`Leave in play`),
   ],
 };
 

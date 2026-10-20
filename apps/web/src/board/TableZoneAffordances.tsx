@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import type {
   BoardDepthProjection,
@@ -102,6 +103,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
   markers,
   covered = false,
 }: TableZoneAffordancesProps) {
+  const { t } = useLingui();
   const bottom = layout.players.find(
     (frame) => frame.playerId === layout.bottomPlayerId && !frame.hidden
   );
@@ -124,7 +126,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
           const deck = region(frame, 'deck');
           if (!deck) return [];
           const own = frame.playerId === layout.bottomPlayerId;
-          const label = own ? 'Load a deck' : "Load the other side's deck";
+          const label = own ? t`Load a deck` : t`Load the other side's deck`;
           return [
             <div
               key={`deck-${frame.playerId}`}
@@ -165,12 +167,12 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         className="table-zone-affordance table-zone-affordance--lost-zone-hide"
         style={boxStyle(onScreen(bottomLostZone.physicalDeclaredBounds, depth))}
       >
-        <Tooltip content="Put the empty Lost Zone away" side="left">
+        <Tooltip content={t`Put the empty Lost Zone away`} side="left">
           <button
             id="hideLostZoneButton"
             type="button"
             className="table-zone-chip table-zone-chip--icon"
-            aria-label="Put the Lost Zone away"
+            aria-label={t`Put the Lost Zone away`}
             onClick={() => lostZone.onShownChange(false)}
           >
             <EyeSlashIcon {...decorative} weight="bold" />
@@ -180,6 +182,11 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
     );
   }
 
+  const markerLabel = (markerName: string) =>
+    t({
+      message: `${markerName} marker`,
+      comment: 'markerName is VSTAR or GX.',
+    });
   // The viewer's own `+` for the optional pieces, in their staging area.
   const extrasRect = bottom?.extras?.control;
   const pieceEntry = (
@@ -193,11 +200,31 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
     label: (
       <>
         {label}
-        <span className="ds-visually-hidden">{shown ? ', on' : ', off'}</span>
+        <span className="ds-visually-hidden">
+          {shown
+            ? t({
+                message: ', on',
+                comment:
+                  'Read after a table piece\'s name by screen readers: "Lost Zone, on".',
+              })
+            : t({
+                message: ', off',
+                comment:
+                  'Read after a table piece\'s name by screen readers: "Lost Zone, off".',
+              })}
+        </span>
       </>
     ),
     icon: shown ? CheckSquareIcon : SquareIcon,
-    ...(inUse ? { hint: 'In use', disabled: true } : {}),
+    ...(inUse
+      ? {
+          hint: t({
+            message: 'In use',
+            context: 'a table piece holding cards',
+          }),
+          disabled: true,
+        }
+      : {}),
     onSelect,
   });
   const extrasControl =
@@ -207,17 +234,17 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         style={boxStyle(onScreen(extrasRect, depth))}
       >
         <ActionMenu
-          label="On the table"
+          label={t`On the table`}
           side="top"
           align="start"
-          tooltip="Lost Zone, VSTAR and GX markers"
+          tooltip={t`Lost Zone, VSTAR and GX markers`}
           entries={[
-            { kind: 'label', label: 'On the table' },
+            { kind: 'label', label: t`On the table` },
             ...(lostZone
               ? [
                   pieceEntry(
                     'lostZoneToggle',
-                    'Lost Zone',
+                    t`Lost Zone`,
                     lostZone.shown || bottomLostZoneInUse,
                     () => lostZone.onShownChange(!lostZone.shown),
                     bottomLostZoneInUse
@@ -228,7 +255,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
               ? (['vstar', 'gx'] as const).map((marker) =>
                   pieceEntry(
                     `${marker}MarkerToggle`,
-                    `${MARKER_LABEL[marker]} marker`,
+                    markerLabel(MARKER_LABEL[marker]),
                     markers[marker],
                     () => markers.onShownChange(marker, !markers[marker])
                   )
@@ -240,7 +267,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
               id="tableExtrasButton"
               type="button"
               className="table-zone-extras"
-              aria-label="Add to the table"
+              aria-label={t`Add to the table`}
             >
               <PlusIcon {...decorative} weight="bold" />
             </button>
@@ -278,6 +305,8 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
                 marker === 'gx'
                   ? player.oncePerGame.gxUsed
                   : player.oncePerGame.vstarUsed;
+              const playerName = player.displayName;
+              const markerName = MARKER_LABEL[marker];
               return (
                 <Tooltip
                   key={marker}
@@ -291,7 +320,11 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
                     data-once-per-game-marker={marker}
                     data-player-id={frame.playerId}
                     data-player-side={own ? 'local' : 'opponent'}
-                    aria-label={`${player.displayName} ${MARKER_LABEL[marker]}`}
+                    aria-label={t({
+                      message: `${playerName} ${markerName}`,
+                      comment:
+                        "A player's once-per-game marker, e.g. 'Red VSTAR'.",
+                    })}
                     aria-pressed={used}
                     style={
                       {

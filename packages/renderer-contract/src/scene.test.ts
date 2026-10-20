@@ -573,7 +573,7 @@ describe('renderer-neutral board scene', () => {
       horizontalAlign: 'right',
       verticalAlign: 'bottom',
       color: 'rgba(90, 110, 188, 0.864)',
-      label: '1 cards',
+      label: '1 card',
     });
     // Same numbers the layout module pins against the v1 runtime: the hand
     // count hangs from the frame's right edge (2%) just above the hand (30%).

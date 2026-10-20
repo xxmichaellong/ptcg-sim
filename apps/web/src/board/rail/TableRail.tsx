@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import type { Icon } from '@phosphor-icons/react';
 import { DotsThreeIcon } from '@phosphor-icons/react/dist/csr/DotsThree';
 import type { Rect } from '@ptcgsim/renderer-contract';
@@ -69,6 +70,7 @@ export const RailButton = forwardRef<
   },
   ref
 ) {
+  const { t } = useLingui();
   return (
     <button
       ref={ref}
@@ -79,7 +81,13 @@ export const RailButton = forwardRef<
       data-control-pending={pending ? 'true' : undefined}
       aria-busy={pending || undefined}
       aria-label={
-        badge !== undefined && badge > 0 ? `${label}, ${badge} new` : label
+        badge !== undefined && badge > 0
+          ? t({
+              message: `${label}, ${badge} new`,
+              comment:
+                'A button with a count of unread lines, e.g. "Log, 3 new".',
+            })
+          : label
       }
       {...props}
     >
@@ -235,6 +243,7 @@ export const TableRail = memo(function TableRail({
   covered = false,
   seat = 'you',
 }: TableRailProps) {
+  const { t } = useLingui();
   const straddles =
     avoid !== undefined &&
     avoid.y < anchor.y + anchor.height &&
@@ -290,7 +299,7 @@ export const TableRail = memo(function TableRail({
           id="boardButtonContainer"
           className="ptcgsim-table-rail__actions"
           role="toolbar"
-          aria-label="Game actions"
+          aria-label={t`Game actions`}
           data-board-controls="true"
           data-covered={covered ? 'true' : undefined}
           // Icons only: the tooltips carry the words and the keys.
@@ -332,16 +341,16 @@ export const TableRail = memo(function TableRail({
           ))}
           {fitted.more.length > 0 ? (
             <ActionMenu
-              label="More game actions"
+              label={t`More game actions`}
               entries={fitted.more}
               side="top"
               align="start"
-              tooltip="More game actions"
+              tooltip={t`More game actions`}
               trigger={
                 <RailButton
                   id="moreActionsButton"
                   icon={DotsThreeIcon}
-                  label="More"
+                  label={t({ message: 'More', context: 'more actions' })}
                   iconOnly
                 />
               }

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import type { CommandFailureCode } from '@ptcgsim/client-session';
 
 import type { ToastOptions } from '../ui/toast.js';
@@ -30,29 +31,29 @@ export const refusalNotice = (
     case 'precondition_failed':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That move didn't go through",
-        body: 'The table changed before it arrived, so the card went back.',
+        title: t`That move didn't go through`,
+        body: t`The table changed before it arrived, so the card went back.`,
         tone: 'warning',
       };
     case 'rate_limited':
       return {
         id: REFUSAL_TOAST_ID,
-        title: 'Slow down a moment',
-        body: 'Too many moves at once. That one was skipped.',
+        title: t`Slow down a moment`,
+        body: t`Too many moves at once. That one was skipped.`,
         tone: 'warning',
       };
     case 'unauthorized':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That move isn't yours to make",
-        body: 'The card went back.',
+        title: t`That move isn't yours to make`,
+        body: t`The card went back.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That move didn't go through",
-        body: 'The card went back. Try it again.',
+        title: t`That move didn't go through`,
+        body: t`The card went back. Try it again.`,
         tone: 'warning',
       };
   }
@@ -77,36 +78,36 @@ export const unsentNotice = (
         ? undefined
         : {
             id: REFUSAL_TOAST_ID,
-            title: 'One moment',
-            body: 'The last move is still on its way.',
+            title: t`One moment`,
+            body: t`The last move is still on its way.`,
             tone: 'warning',
           };
     case 'queue_full':
       return {
         id: REFUSAL_TOAST_ID,
-        title: 'Slow down a moment',
-        body: 'Moves are still on their way. Try again in a moment.',
+        title: t`Slow down a moment`,
+        body: t`Moves are still on their way. Try again in a moment.`,
         tone: 'warning',
       };
     case 'spectator':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "You're watching this table",
-        body: 'Only the players can change it.',
+        title: t`You're watching this table`,
+        body: t`Only the players can change it.`,
         tone: 'warning',
       };
     case 'too_large':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That's too much at once",
-        body: 'Try it with fewer cards.',
+        title: t`That's too much at once`,
+        body: t`Try it with fewer cards.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: 'Not connected right now',
-        body: 'The table is reconnecting. Try again in a moment.',
+        title: t`Not connected right now`,
+        body: t`The table is reconnecting. Try again in a moment.`,
         tone: 'warning',
       };
   }
@@ -121,29 +122,29 @@ const tableActionNotice = (
     case 'precondition_failed':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That didn't go through",
-        body: 'The table changed before it arrived. Try it again.',
+        title: t`That didn't go through`,
+        body: t`The table changed before it arrived. Try it again.`,
         tone: 'warning',
       };
     case 'rate_limited':
       return {
         id: REFUSAL_TOAST_ID,
-        title: 'Slow down a moment',
-        body: 'Too many actions at once. That one was skipped.',
+        title: t`Slow down a moment`,
+        body: t`Too many actions at once. That one was skipped.`,
         tone: 'warning',
       };
     case 'unauthorized':
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That isn't yours to do",
-        body: 'Only the player in that seat can.',
+        title: t`That isn't yours to do`,
+        body: t`Only the player in that seat can.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: "That didn't go through",
-        body: 'Try it again.',
+        title: t`That didn't go through`,
+        body: t`Try it again.`,
         tone: 'warning',
       };
   }

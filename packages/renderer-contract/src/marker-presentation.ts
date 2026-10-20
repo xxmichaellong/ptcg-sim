@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import type { MarkerSceneNode } from './model.js';
 
 /**
@@ -218,7 +219,13 @@ export const markerFace = (
       ? { ...CONDITION_FACES[kind], label: '' }
       : { ...CONDITION_FACES['condition-note'], label: marker.value.trim() };
   }
-  return { ...ABILITY_FACE, label: 'Ability' };
+  return {
+    ...ABILITY_FACE,
+    label: t({
+      message: 'Ability',
+      comment: 'Printed on the marker of a Pokémon whose Ability was used.',
+    }),
+  };
 };
 
 /**

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { TABLE_SPLIT, TABLE_TILT_MAXIMUM } from '@ptcgsim/renderer-contract';
 import { useSyncExternalStore } from 'react';
 
@@ -17,25 +18,55 @@ import {
   type BoardShowChoice,
 } from './board-view-settings.js';
 
-const SHOW_CHOICES: readonly SegmentedChoice<BoardShowChoice>[] = [
-  { value: 'both', id: 'boardShowBoth', label: 'Both' },
-  { value: 'mine', id: 'boardShowMine', label: 'Mine' },
-  { value: 'theirs', id: 'boardShowTheirs', label: 'Theirs' },
-];
-
-const DEPTH_CHOICES: readonly SegmentedChoice<TableDepthMode>[] = [
-  { value: 'auto', id: 'tableViewAuto', label: 'Auto' },
-  { value: 'flat', id: 'tableViewFlat', label: 'Flat' },
-  { value: 'depth', id: 'tableViewDepth', label: 'Raised' },
-  { value: 'table', id: 'tableViewTable', label: 'Tabletop' },
-];
-
 /**
  * How the table is shown to this player (the Table section of Settings):
  * which halves, how the height splits, its depth, and the smaller display
  * choices. Changes apply live and stay on this device.
  */
 export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
+  const { t } = useLingui();
+  const showChoices: readonly SegmentedChoice<BoardShowChoice>[] = [
+    {
+      value: 'both',
+      id: 'boardShowBoth',
+      label: t({ message: 'Both', context: 'show both halves of the table' }),
+    },
+    {
+      value: 'mine',
+      id: 'boardShowMine',
+      label: t({ message: 'Mine', context: 'my half of the table' }),
+    },
+    {
+      value: 'theirs',
+      id: 'boardShowTheirs',
+      label: t({
+        message: 'Theirs',
+        context: "the opponent's half of the table",
+      }),
+    },
+  ];
+  const depthChoices: readonly SegmentedChoice<TableDepthMode>[] = [
+    {
+      value: 'auto',
+      id: 'tableViewAuto',
+      label: t({ message: 'Auto', context: 'table depth setting' }),
+    },
+    {
+      value: 'flat',
+      id: 'tableViewFlat',
+      label: t({ message: 'Flat', context: 'table depth setting' }),
+    },
+    {
+      value: 'depth',
+      id: 'tableViewDepth',
+      label: t({ message: 'Raised', context: 'table depth setting' }),
+    },
+    {
+      value: 'table',
+      id: 'tableViewTable',
+      label: t({ message: 'Tabletop', context: 'table depth setting' }),
+    },
+  ];
   const viewStore = boardViewSettings();
   const view = useSyncExternalStore(viewStore.subscribe, viewStore.getSnapshot);
   const depthStore = depthSettings();
@@ -44,47 +75,56 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
     depthStore.getSnapshot
   );
   const percent = Math.round(view.split * 100);
+  const theirs = 100 - percent;
   return (
     <>
       <SegmentedControl
         name="boardShow"
-        legend="Show"
-        choices={SHOW_CHOICES}
+        legend={t({ message: 'Show', context: 'which halves of the table' })}
+        choices={showChoices}
         value={view.show}
         onChange={(show) => viewStore.update({ show })}
       />
       <RangeRow
         id="boardSplitRange"
-        label="Split"
+        label={t({ message: 'Split', context: 'the table between the halves' })}
         valueText={
           view.show === 'both'
-            ? `Theirs ${String(100 - percent)}% · Mine ${String(percent)}%`
-            : 'One half fills the table'
+            ? t({
+                message: `Theirs ${theirs}% · Mine ${percent}%`,
+                comment: "How the table's height is shared between the halves.",
+              })
+            : t`One half fills the table`
         }
         min={Math.round(TABLE_SPLIT.minimumLowerShare * 100)}
         max={Math.round(TABLE_SPLIT.maximumLowerShare * 100)}
         value={percent}
         disabled={view.show !== 'both'}
-        ariaValueText={`My half ${String(percent)}% of the table`}
-        ends={['Theirs', 'Mine']}
+        ariaValueText={t`My half ${percent}% of the table`}
+        ends={[
+          t({ message: 'Theirs', context: "the opponent's half of the table" }),
+          t({ message: 'Mine', context: 'my half of the table' }),
+        ]}
         onChange={(value) => viewStore.update({ split: value / 100 })}
       />
       <SegmentedControl
         name="tableView"
-        legend="Depth"
-        choices={DEPTH_CHOICES}
+        legend={t({ message: 'Depth', context: 'how 3D the table looks' })}
+        choices={depthChoices}
         value={depth.mode}
         onChange={(mode) => depthStore.update({ mode })}
       >
         {depth.mode === 'auto' ? (
           <span className="ptcgsim-form-hint">
-            A tilted tabletop on a wide screen, flat on an upright phone.
+            <Trans>
+              A tilted tabletop on a wide screen, flat on an upright phone.
+            </Trans>
           </span>
         ) : null}
         {depth.mode === 'table' || depth.mode === 'auto' ? (
           <RangeRow
             id="tableTiltRange"
-            label="Table angle"
+            label={t`Table angle`}
             valueText={`${String(depth.tilt)}°`}
             min={0}
             max={TABLE_TILT_MAXIMUM}
@@ -96,7 +136,7 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
           <>
             <RangeRow
               id="tableThicknessRange"
-              label="Card thickness"
+              label={t`Card thickness`}
               valueText={`${depth.strength.toFixed(1)}×`}
               min={0}
               max={2}
@@ -106,26 +146,26 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
             />
             <SwitchRow
               id="tableLiftCheckbox"
-              label="Lift cards while dragging"
+              label={t`Lift cards while dragging`}
               checked={depth.lift}
               onChange={(lift) => depthStore.update({ lift })}
             />
             <SwitchRow
               id="tableHeightMotionCheckbox"
-              label="Animate stack height"
+              label={t`Animate stack height`}
               checked={depth.animate}
               onChange={(animate) => depthStore.update({ animate })}
             />
             <SwitchRow
               id="tableScatterCheckbox"
-              label="Natural card placement"
-              hint="Cards rest a touch askew, as on a real table."
+              label={t`Natural card placement`}
+              hint={t`Cards rest a touch askew, as on a real table.`}
               checked={depth.scatter !== false}
               onChange={(scatter) => depthStore.update({ scatter })}
             />
             <SwitchRow
               id="tableParallaxCheckbox"
-              label="Subtle pointer parallax"
+              label={t`Subtle pointer parallax`}
               checked={depth.parallax === true}
               onChange={(parallax) => depthStore.update({ parallax })}
             />
@@ -134,29 +174,29 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       </SegmentedControl>
       <SwitchRow
         id="lostZoneCheckbox"
-        label="Lost Zone"
-        hint="Off by default: few formats use it. A Lost Zone with cards always shows."
+        label={t`Lost Zone`}
+        hint={t`Off by default: few formats use it. A Lost Zone with cards always shows.`}
         checked={view.lostZone}
         onChange={(lostZone) => viewStore.update({ lostZone })}
       />
       <SwitchRow
         id="vstarMarkerCheckbox"
-        label="VSTAR marker"
-        hint="Beside each player's prizes, for formats with VSTAR Powers."
+        label={t`VSTAR marker`}
+        hint={t`Beside each player's prizes, for formats with VSTAR Powers.`}
         checked={view.vstarMarker}
         onChange={(vstarMarker) => viewStore.update({ vstarMarker })}
       />
       <SwitchRow
         id="gxMarkerCheckbox"
-        label="GX marker"
-        hint="Beside each player's prizes, for formats with GX attacks."
+        label={t`GX marker`}
+        hint={t`Beside each player's prizes, for formats with GX attacks.`}
         checked={view.gxMarker}
         onChange={(gxMarker) => viewStore.update({ gxMarker })}
       />
       <SwitchRow
         id="opponentUprightCheckbox"
-        label="Opponent's cards face me"
-        hint="Their cards read the right way up for you. Off, they face their owner, as across a real table."
+        label={t`Opponent's cards face me`}
+        hint={t`Their cards read the right way up for you. Off, they face their owner, as across a real table.`}
         checked={view.opponentCardsUpright}
         onChange={(opponentCardsUpright) =>
           viewStore.update({ opponentCardsUpright })
@@ -164,14 +204,14 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       />
       <SwitchRow
         id="zoneOutlinesCheckbox"
-        label="Zone outlines"
+        label={t`Zone outlines`}
         checked={view.zoneOutlines}
         onChange={(zoneOutlines) => viewStore.update({ zoneOutlines })}
       />
       {solo ? (
         <SwitchRow
           id="hideHandCheckbox"
-          label="Hide opponent's hand"
+          label={t`Hide opponent's hand`}
           checked={view.hideOpponentHand}
           onChange={(hideOpponentHand) =>
             viewStore.update({ hideOpponentHand })
@@ -180,8 +220,8 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       ) : null}
       <SwitchRow
         id="hoverPreviewCheckbox"
-        label="Large card preview on hover"
-        hint="A big copy of the card under the pointer, beside the table."
+        label={t`Large card preview on hover`}
+        hint={t`A big copy of the card under the pointer, beside the table.`}
         checked={view.hoverPreview}
         onChange={(hoverPreview) => viewStore.update({ hoverPreview })}
       />
@@ -194,7 +234,7 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
           depthStore.update(DEFAULT_TABLE_DEPTH);
         }}
       >
-        Reset table view
+        <Trans>Reset table view</Trans>
       </button>
     </>
   );

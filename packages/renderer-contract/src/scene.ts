@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import type {
   MatchViewState,
   PlayerId,
@@ -84,17 +85,75 @@ const legacyCountColor = (
       ? 'rgba(90, 110, 188, 0.864)'
       : 'rgba(188, 90, 113, 0.864)';
 
+/**
+ * A zone's name for assistive tech: whose it is and what it is ("Red
+ * discard"). Worded when the scene is built, in the language of the moment;
+ * the app rebuilds the scene when the language changes.
+ */
 const zoneLabel = (
-  kind: MatchViewState['zones'][string]['kind'],
+  kind: MatchViewState['zones'][string]['kind'] | 'active' | 'bench',
   playerName: string | undefined
-): string =>
-  kind === 'stadium' ? 'Stadium' : `${playerName ?? 'Player'} ${kind}`;
+): string => {
+  if (kind === 'stadium') return t({ message: 'Stadium', context: 'zone' });
+  const name = playerName ?? t({ message: 'Player', context: 'unnamed seat' });
+  switch (kind) {
+    case 'deck':
+      return t({
+        message: `${name} deck`,
+        comment: "A zone's name for screen readers; name is its player.",
+      });
+    case 'hand':
+      return t({
+        message: `${name} hand`,
+        comment: "A zone's name for screen readers; name is its player.",
+      });
+    case 'prizes':
+      return t({
+        message: `${name} prizes`,
+        comment:
+          "A zone's name for screen readers; name is its player. The Prize cards.",
+      });
+    case 'discard':
+      return t({
+        message: `${name} discard`,
+        comment:
+          "A zone's name for screen readers; name is its player. The discard pile.",
+      });
+    case 'lostZone':
+      return t({
+        message: `${name} Lost Zone`,
+        comment: "A zone's name for screen readers; name is its player.",
+      });
+    case 'board':
+      return t({
+        message: `${name} board`,
+        comment:
+          "A zone's name for screen readers; name is its player. The open play area.",
+      });
+    case 'active':
+      return t({
+        message: `${name} active`,
+        comment:
+          "A zone's name for screen readers; name is its player. The Active Spot.",
+      });
+    case 'bench':
+      return t({
+        message: `${name} bench`,
+        comment:
+          "A zone's name for screen readers; name is its player. The Bench.",
+      });
+  }
+};
 
 const cardLabel = (view: MatchViewState, card: ViewCard): string => {
-  if (card.kind === 'concealed') return 'Face-down card';
+  if (card.kind === 'concealed') return t`Face-down card`;
   const definition = view.definitions[card.definitionId];
-  return definition?.name ?? 'Unknown card';
+  return definition?.name ?? t`Unknown card`;
 };
+
+/** A pile's count for assistive tech: "47 cards". */
+const cardCountLabel = (count: number): string =>
+  t`${plural(count, { one: '# card', other: '# cards' })}`;
 
 const cardImageUrl = (view: MatchViewState, card: ViewCard): string => {
   if (card.kind === 'concealed') return card.cardBackUrl;
@@ -860,7 +919,7 @@ export const createBoardScene = (
         fontSizePx: region.countLabel.fontSizePx,
         color: legacyCountColor(zone.kind, zone.ownerId === ownPlayerId),
         zIndex: 15,
-        label: `${zone.cards.length} cards`,
+        label: cardCountLabel(zone.cards.length),
       });
     }
     const pileTopIndex = pile
@@ -990,7 +1049,7 @@ export const createBoardScene = (
         surface: slotRegions.active.surface,
         count: board.activeStackId ? 1 : 0,
         zIndex: 20,
-        label: `${view.players[playerId]?.displayName ?? 'Player'} active`,
+        label: zoneLabel('active', view.players[playerId]?.displayName),
         interactive: true,
       },
       {
@@ -1003,7 +1062,7 @@ export const createBoardScene = (
         surface: slotRegions.bench.surface,
         count: board.benchStackIds.length,
         zIndex: 20,
-        label: `${view.players[playerId]?.displayName ?? 'Player'} bench`,
+        label: zoneLabel('bench', view.players[playerId]?.displayName),
         interactive: true,
       }
     );
@@ -1173,8 +1232,8 @@ export const createBoardScene = (
         zIndex: 900,
         label:
           kind === 'inspection'
-            ? 'Cards being inspected'
-            : 'Attached cards being moved',
+            ? t`Cards being inspected`
+            : t`Attached cards being moved`,
         interactive: true,
       });
       const rects = layoutLegacyWorkAreaCards(

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useId, type CSSProperties, type SVGProps } from 'react';
 
 /** Inline SVG ids must be unique on the page; React's ids carry punctuation. */
@@ -163,5 +164,13 @@ export const oncePerGameTooltip = (
   used: boolean
 ): string => {
   const name = marker === 'gx' ? 'GX' : 'VSTAR';
-  return used ? `${name} used: press to undo` : `Mark ${name} used`;
+  return used
+    ? t({
+        message: `${name} used: press to undo`,
+        comment: 'name is GX or VSTAR, the once-per-game marker.',
+      })
+    : t({
+        message: `Mark ${name} used`,
+        comment: 'name is GX or VSTAR, the once-per-game marker.',
+      });
 };

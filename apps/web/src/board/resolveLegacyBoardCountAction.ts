@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
@@ -35,10 +36,11 @@ export type LegacyBoardCountActionResolution =
         'not_player' | 'stale_card' | 'unsupported_target' | 'invalid_value';
     };
 
-const DRAW_PROMPT = 'Draw how many cards?';
-const VIEW_PROMPT = 'How many cards do you want to look at?';
-const INVALID_DRAW = 'Please enter a valid number for the draw amount.';
-const INVALID_VIEW = 'Please enter a valid number for the view amount.';
+// Worded when asked, in the language of the moment.
+const drawPrompt = () => t`Draw how many cards?`;
+const viewPrompt = () => t`How many cards do you want to look at?`;
+const invalidDraw = () => t`Please enter a valid number for the draw amount.`;
+const invalidView = () => t`Please enter a valid number for the view amount.`;
 const MAX_WIRE_COUNT = 200;
 
 export const isLegacyBoardCountActionId = (
@@ -72,10 +74,10 @@ const promptFor = (
     action,
     cardId,
     zoneId,
-    message: viewAction ? VIEW_PROMPT : DRAW_PROMPT,
+    message: viewAction ? viewPrompt() : drawPrompt(),
     initialValue: handAction ? '0' : '1',
     minimum: handAction ? 0 : 1,
-    invalidMessage: viewAction ? INVALID_VIEW : INVALID_DRAW,
+    invalidMessage: viewAction ? invalidView() : invalidDraw(),
   };
 };
 

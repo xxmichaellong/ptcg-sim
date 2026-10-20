@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { ViewCardId } from '@ptcgsim/game-core';
 import type {
   BoardDepthProjection,
@@ -41,8 +42,10 @@ export const TouchCardBar = memo(function TouchCardBar({
   readonly onActions: () => void;
   readonly onDismiss: () => void;
 }) {
+  const { t } = useLingui();
   const card = scene.cards.find((candidate) => candidate.id === cardId);
   if (!card) return null;
+  const cardLabel = card.label;
   const bounds = depth ? depth.bounds(card) : card.bounds;
   // Above the card where there is room (the hand is at the bottom edge),
   // below it otherwise; never past the window's edges.
@@ -61,7 +64,14 @@ export const TouchCardBar = memo(function TouchCardBar({
     <div
       className="touch-card-bar"
       role="toolbar"
-      aria-label={card.label ? `${card.label}: actions` : 'Card actions'}
+      aria-label={
+        cardLabel
+          ? t({
+              message: `${cardLabel}: actions`,
+              comment: 'The touch toolbar for a card, e.g. "Pikachu: actions".',
+            })
+          : t`Card actions`
+      }
       data-touch-card-bar="true"
       data-placement={above ? 'above' : 'below'}
       style={{ left, top, width: BAR_WIDTH_PX, height: BAR_HEIGHT_PX }}
@@ -73,7 +83,7 @@ export const TouchCardBar = memo(function TouchCardBar({
         onClick={onRead}
       >
         <MagnifyingGlassPlusIcon {...decorative} weight="bold" />
-        Read
+        <Trans context="read a card up close">Read</Trans>
       </button>
       <button
         id="touchCardActionsButton"
@@ -83,12 +93,12 @@ export const TouchCardBar = memo(function TouchCardBar({
         onClick={onActions}
       >
         <DotsThreeCircleIcon {...decorative} weight="bold" />
-        Actions
+        <Trans context="a card's actions">Actions</Trans>
       </button>
       <button
         type="button"
         className="touch-card-bar__button touch-card-bar__button--icon"
-        aria-label="Deselect"
+        aria-label={t`Deselect`}
         onClick={onDismiss}
       >
         <XIcon {...decorative} weight="bold" />
