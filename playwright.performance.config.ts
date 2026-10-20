@@ -17,6 +17,9 @@ const stableChrome = {
  * the harness and produces diagnostic, never release, evidence.
  */
 export default defineConfig({
+  // Maps Lingui's macros to English stand-ins for the app code specs load
+  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
+  tsconfig: './tsconfig.playwright.json',
   testDir: './tests/browser',
   testMatch: 'renderer-spike.spec.ts',
   grep: /records controlled 120-card reconciliation and idle evidence/u,

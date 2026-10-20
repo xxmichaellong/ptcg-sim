@@ -51,6 +51,9 @@ const freshServerState = join(
 );
 
 export default defineConfig({
+  // Maps Lingui's macros to English stand-ins for the app code specs load
+  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
+  tsconfig: './tsconfig.playwright.json',
   testDir: './tests/browser',
   testMatch: 'continuation-full-stack.spec.ts',
   fullyParallel: false,

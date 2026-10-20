@@ -6,6 +6,9 @@ const productionPreviewUrl =
   externalProductionPreviewUrl || LOCAL_PRODUCTION_PREVIEW_URL;
 
 export default defineConfig({
+  // Maps Lingui's macros to English stand-ins for the app code specs load
+  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
+  tsconfig: './tsconfig.playwright.json',
   testDir: './tests/browser',
   testMatch: 'production-topology.spec.ts',
   fullyParallel: false,

@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  // Maps Lingui's macros to English stand-ins for the app code specs load
+  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
+  tsconfig: './tsconfig.playwright.json',
   testDir: './tests/browser',
   testIgnore: [
     'continuation-full-stack.spec.ts',
