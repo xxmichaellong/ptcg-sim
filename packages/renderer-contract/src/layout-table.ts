@@ -292,12 +292,12 @@ const layoutHalf = (
     height: active,
   };
   // Beside the prizes, toward the centre line, the optional pieces the
-  // viewer keeps on the table: the Lost Zone pile (the Tournament Handbook
-  // keeps it directly above the prizes) and the VSTAR/GX markers, which
-  // players keep by their prizes. The staging area (v1's loose board) takes
-  // the rest of the row up to the Active. Where that would leave it less
-  // than a card wide, the pieces keep their old places instead: the Lost
-  // Zone at the end of the outer column, the markers by the hand.
+  // viewer keeps on the table: the VSTAR/GX markers, which players keep by
+  // their prizes, then the Lost Zone pile. The staging area (v1's loose
+  // board) takes the rest of the row up to the Active. Where that would
+  // leave it less than a card wide, the pieces keep their old places
+  // instead: the Lost Zone at the end of the outer column, the markers by
+  // the hand.
   // Kept clear of the Stadium where that leaves the staging area at least a
   // card wide; a narrow table keeps it whole, under the Stadium's edge.
   const reserve = options.boardEndReservePx ?? 0;
@@ -315,15 +315,6 @@ const layoutHalf = (
   let boardLeft = middleLeft;
   let lostZone = pileAt(2);
   let markers: Rect | undefined;
-  if (besidePrizes && options.lostZoneBeside) {
-    lostZone = {
-      x: boardLeft,
-      y: activeTop,
-      width: pileWidth,
-      height: Math.min(pileHeight, active),
-    };
-    boardLeft += pileWidth + gap;
-  }
   if (besidePrizes && markerCount > 0) {
     markers = {
       x: boardLeft,
@@ -332,6 +323,15 @@ const layoutHalf = (
       height: markerCount * (markerWidth / 2) + (markerCount - 1) * (gap / 2),
     };
     boardLeft += markerWidth + gap;
+  }
+  if (besidePrizes && options.lostZoneBeside) {
+    lostZone = {
+      x: boardLeft,
+      y: activeTop,
+      width: pileWidth,
+      height: Math.min(pileHeight, active),
+    };
+    boardLeft += pileWidth + gap;
   }
   const boardRect: Rect = {
     x: boardLeft,

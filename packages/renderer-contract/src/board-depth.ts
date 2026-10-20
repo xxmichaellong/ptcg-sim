@@ -6,7 +6,7 @@ import {
   arrangementOffsets,
   benchRearrangementTarget,
 } from './arrangement.js';
-import { zoneDropTargetAt } from './drag.js';
+import { heldCentreCardTarget, zoneDropTargetAt } from './drag.js';
 import type {
   BoardPreferences,
   BoardDepthPreferences,
@@ -605,7 +605,9 @@ export class BoardDepthProjection {
     sourceId: ViewCardId,
     paintedPose?: (card: CardSceneNode) => TableCardPose | undefined,
     /** Only the card, lifted off its Pokémon by a long press. */
-    detached = false
+    detached = false,
+    /** The held card's centre on the table, which aims too over bare felt. */
+    centre?: TablePoint
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
     for (const card of this.painted) {
@@ -656,9 +658,13 @@ export class BoardDepthProjection {
       return { point: local, targetId: card.parentId };
     }
     const local = this.boardPoint(point);
+    const held =
+      centre &&
+      heldCentreCardTarget(this.scene, sourceId, local, centre, detached);
+    if (held) return { point: centre, targetId: held };
     return {
       point: local,
-      targetId: zoneDropTargetAt(this.scene, local.x, local.y),
+      targetId: zoneDropTargetAt(this.scene, local.x, local.y, centre),
     };
   }
 

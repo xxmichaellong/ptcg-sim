@@ -66,4 +66,21 @@ describe('TurnBanner', () => {
     expect(host.querySelector('[data-turn-banner]')).toBeNull();
     await act(async () => root.unmount());
   });
+
+  it("tints a turn in its seat's colour on a board turned around", async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    // Solo turned so Red sits at the bottom: Red's turn is still red.
+    const render = (view: MatchViewState) =>
+      act(async () =>
+        root.render(<TurnBanner view={view} bottomPlayerId="spike-red" />)
+      );
+    await render(atTurn(4, 'spike-blue'));
+    await render(atTurn(5, 'spike-red'));
+    const banner = host.querySelector<HTMLElement>('[data-turn-banner]')!;
+    expect(banner.textContent).toContain("Red's turn");
+    expect(banner.dataset.side).toBe('opponent');
+    await act(async () => root.unmount());
+  });
 });

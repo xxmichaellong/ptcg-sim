@@ -1862,6 +1862,10 @@
               "kind": "value"
             },
             {
+              "name": "heldCentreCardTarget",
+              "kind": "value"
+            },
+            {
               "name": "hitTestBoardScene",
               "kind": "value"
             },

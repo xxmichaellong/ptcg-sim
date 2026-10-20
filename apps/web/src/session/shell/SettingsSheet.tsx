@@ -85,7 +85,6 @@ export const SettingsSheet = ({
     open={open}
     onOpenChange={onOpenChange}
     title="Settings"
-    description="Kept on this device."
     placement="side"
     size="sm"
     id="settings"

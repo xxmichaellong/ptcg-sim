@@ -106,6 +106,19 @@
   font-size: 18px;
 }
 
+/* In the red a close button usually is, filled when pointed at. */
+.ds-icon-button.ptcgsim-shortcuts__close {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+@media (hover: hover) {
+  .ds-icon-button.ptcgsim-shortcuts__close:hover {
+    background: var(--color-danger-fill);
+    color: var(--color-text-on-accent);
+  }
+}
+
 .ptcgsim-shortcuts__body {
   grid-area: body;
   display: flex;
@@ -462,8 +475,6 @@
   color: var(--color-text);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
 }
 
 .ptcgsim-shortcut-group h3 svg {

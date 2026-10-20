@@ -304,7 +304,12 @@ export interface BoardScene {
 }
 
 export type BoardIntent =
-  | { readonly kind: 'CardSelected'; readonly cardId: ViewCardId }
+  | {
+      readonly kind: 'CardSelected';
+      readonly cardId: ViewCardId;
+      /** A press on the card: pressing the selected card again lets it go. */
+      readonly toggle?: boolean;
+    }
   | { readonly kind: 'BoardBackgroundPressed' }
   | {
       readonly kind: 'CardDropRequested';

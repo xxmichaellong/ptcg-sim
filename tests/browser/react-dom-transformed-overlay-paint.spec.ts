@@ -700,12 +700,8 @@ test('transformed stack and zone overlays keep real-v1 content and protected sem
     '[data-zone-action="shuffleDiscardToDeck"]'
   );
   // The trap holds; the order is the panel's reading order (ADR-027): Close
-  // ends the header, search and size precede the cards, and Tab wraps to the
+  // ends the header, the card size precedes the cards, and Tab wraps to the
   // header's first action, then Sort.
-  await page.keyboard.press('Tab');
-  await expect(
-    zone.getByRole('searchbox', { name: 'Search cards' })
-  ).toBeFocused();
   for (const size of [
     zone.getByRole('button', { name: 'Smaller cards' }),
     zone.getByRole('slider', { name: 'Card size' }),

@@ -100,8 +100,10 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   expect(await cards.count()).toBeLessThan(47);
   await stack.click();
   await expect(cards).toHaveCount(47);
-  // Card size is a linear zoom on the fitted size.
+  // Card size is a linear zoom on the fitted size, inside a panel that
+  // keeps its size and place.
   const initialHeight = (await cards.first().boundingBox())!.height;
+  const panel = await browser.boundingBox();
   const larger = browser.getByRole('button', { name: 'Larger cards' });
   for (let step = 0; step < 4; step += 1) await larger.click();
   await expect(
@@ -110,25 +112,14 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   await expect
     .poll(async () => (await cards.first().boundingBox())!.height)
     .toBeGreaterThan(initialHeight * 1.3);
-  const search = page.getByRole('searchbox', { name: 'Search cards' });
-  await search.fill('ember');
-  expect(await cards.count()).toBeGreaterThan(0);
-  expect(
-    await cards.evaluateAll((es) =>
-      es.every((e) => e.getAttribute('aria-label') === 'Ember ex')
-    )
-  ).toBe(true);
+  expect(await browser.boundingBox()).toEqual(panel);
   expect(
     await page.evaluate(() =>
       window.__PTCG_RENDERER_SPIKE__!.scene.cards.map((c) => c.id)
     )
   ).toEqual(order);
-  await search.press('Escape');
-  await expect(browser).toBeVisible();
-  await expect(search).toHaveValue('');
   await expect(cards).toHaveCount(47);
-  await search.fill('ember');
-  await cards.first().dblclick();
+  await browser.locator('button[aria-label="Ember ex"]').first().dblclick();
   const preview = page.locator('[data-preview-kind="card"]');
   const close = preview.getByRole('button', { name: 'Close card preview' });
   await expect(preview).toBeVisible();

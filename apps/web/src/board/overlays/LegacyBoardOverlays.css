@@ -182,8 +182,6 @@
   cursor: default;
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
 }
 
 .ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-empty {
@@ -1008,6 +1006,13 @@ button.ptcgsim-overlay-toggle:focus-visible {
 }
 
 /* ---- Zone browser ----------------------------------------------------- */
+/* Registered so a change of card size eases instead of jumping. */
+@property --ptcgsim-zone-card-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 200px;
+}
+
 /* A modal panel over most of the board; overlayLayout.ts places it and sizes
    its cards (--ptcgsim-zone-card-height) from the board area. */
 .ptcgsim-legacy-zone-browser {
@@ -1037,7 +1042,9 @@ button.ptcgsim-overlay-toggle:focus-visible {
     opacity var(--overlay-exit-duration) var(--ease-out),
     background-color var(--duration-fast) ease,
     border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease;
+    box-shadow var(--duration-fast) ease,
+    --ptcgsim-zone-card-height
+      calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
 }
 
 .ptcgsim-legacy-zone-browser:focus-visible {
@@ -1196,6 +1203,7 @@ button.ptcgsim-overlay-toggle:focus-visible {
   z-index: 5;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
   box-sizing: border-box;
   height: 48px;
@@ -1205,45 +1213,6 @@ button.ptcgsim-overlay-toggle:focus-visible {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   transition: opacity var(--duration-fast) var(--ease-out);
-}
-
-.ptcgsim-browser-search {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex: 1;
-  min-width: 100px;
-  height: var(--control-height-compact);
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-sunken);
-}
-
-.ptcgsim-browser-search:focus-within {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
-}
-
-.ptcgsim-browser-search > svg {
-  flex: none;
-  width: 16px;
-  height: 16px;
-}
-
-.ptcgsim-browser-search input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-sm);
-  outline: none;
-}
-
-.ptcgsim-browser-search input::placeholder {
-  color: var(--color-text-faint);
 }
 
 /* Card size: a linear zoom, stepped by the buttons or slid. */
@@ -1308,16 +1277,6 @@ button.ptcgsim-overlay-toggle:focus-visible {
 
 @media (max-width: 600px) {
   .ptcgsim-browser-zoom-slider {
-    display: none;
-  }
-}
-
-.ptcgsim-browser-results {
-  white-space: nowrap;
-}
-
-@media (max-width: 1100px) {
-  .ptcgsim-browser-results {
     display: none;
   }
 }
@@ -1623,4 +1582,22 @@ button.ptcgsim-overlay-toggle:focus-visible {
 .ptcgsim-legacy-work-area.is-showing-board .ptcgsim-legacy-work-area-buttons,
 .ptcgsim-legacy-work-area.is-showing-board .ptcgsim-overlay-heading {
   opacity: 0;
+}
+
+/* An overlay's close: an X, in the red a close button usually is, filled
+   when pointed at or focused. */
+.ptcgsim-overlay-button.ptcgsim-overlay-close {
+  width: var(--control-height);
+  padding: 0;
+  border-color: transparent;
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.ptcgsim-overlay-button.ptcgsim-overlay-close:is(:hover, :focus-visible):not(
+    :disabled
+  ) {
+  background-color: var(--color-danger-fill);
+  background-image: none;
+  color: var(--color-text-on-accent);
 }

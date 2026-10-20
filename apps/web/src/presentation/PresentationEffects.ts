@@ -329,10 +329,10 @@ export const presentationEffectsForEvent = (
     }
     case 'PlayerSetup': {
       // Set Up with no deck loaded still resets the board, but there is
-      // nothing to draw. v1 announces that as an invalid deck rather than
-      // claiming a hand was drawn.
+      // nothing to draw. v1 announces that ("has an invalid deck!") rather
+      // than claiming a hand was drawn.
       if (event.handCount === 0 && event.prizeCount === 0) {
-        const message = `${playerName(view, event.playerId)} has an invalid deck!`;
+        const message = `${playerName(view, event.playerId)} has no deck loaded`;
         return [
           activity(event, 'announcement', message),
           accessibility(event, message),
@@ -372,7 +372,7 @@ export const presentationEffectsForEvent = (
       const message = `${playerName(
         view,
         event.playerId
-      )} has no more cards in deck!`;
+      )} has no cards left to draw`;
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
@@ -449,8 +449,8 @@ export const presentationEffectsForEvent = (
       const targetName = playerName(view, event.targetPlayerId);
       const message =
         event.actorPlayerId === event.targetPlayerId
-          ? `${targetName} took back their last move!`
-          : `${actorName} took back ${targetName}'s last move!`;
+          ? `${targetName} took back their last move`
+          : `${actorName} took back ${targetName}'s last move`;
       return [
         activity(event, 'announcement', message),
         accessibility(event, message),
@@ -459,7 +459,7 @@ export const presentationEffectsForEvent = (
     case 'OncePerGameMarkerSet': {
       const marker = event.marker === 'gx' ? 'GX' : 'VSTAR';
       const message = event.used
-        ? `${playerName(view, event.playerId)} used their ${marker}!`
+        ? `${playerName(view, event.playerId)} used their ${marker}`
         : `${playerName(view, event.playerId)} reset their ${marker}`;
       return [
         activity(event, 'player', message, event.playerId),
@@ -534,7 +534,7 @@ export const presentationEffectsForPresence = (
       : presence.status === 'disconnected'
         ? `${presence.displayName} disconnected`
         : presence.status === 'reconnected'
-          ? `${presence.displayName} reconnected!`
+          ? `${presence.displayName} reconnected`
           : `${presence.displayName} left the room`;
   return [
     {

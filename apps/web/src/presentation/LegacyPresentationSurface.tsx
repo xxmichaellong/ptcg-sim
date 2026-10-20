@@ -64,6 +64,40 @@ export interface LegacyPresentationSurfaceProps {
   readonly announcer?: boolean;
 }
 
+/** A row of the feed: a line, and how many times in a row it was said. */
+interface ActivityRow {
+  readonly item: ActivityFeedItem;
+  readonly first: ActivityFeedItem;
+  readonly count: number;
+}
+
+/**
+ * The feed's rows: the same game line said again and again (Undo pressed
+ * twelve times) is one row with a count. What people say in chat is never
+ * folded.
+ */
+export const activityRows = (
+  items: readonly ActivityFeedItem[]
+): readonly ActivityRow[] => {
+  const rows: ActivityRow[] = [];
+  for (const item of items) {
+    const last = rows.at(-1);
+    if (
+      last &&
+      (item.category === 'player' || item.category === 'announcement') &&
+      last.item.category === item.category &&
+      last.item.eventType === item.eventType &&
+      last.item.playerId === item.playerId &&
+      last.item.message === item.message
+    ) {
+      rows[rows.length - 1] = { ...last, item, count: last.count + 1 };
+    } else {
+      rows.push({ item, first: item, count: 1 });
+    }
+  }
+  return rows;
+};
+
 /** The polite live region alone: what the table says to assistive tech. */
 export const PresentationAnnouncer = ({
   runtime,
@@ -119,7 +153,7 @@ export const LegacyPresentationSurface = ({
           feedId === 'p2Chatbox' ? ' legacy-activity-feed--multiplayer' : ''
         }`}
         role="log"
-        aria-label="Game activity"
+        aria-label="Log"
         aria-live="off"
       >
         {intro !== undefined && !introCleared && (
@@ -127,14 +161,18 @@ export const LegacyPresentationSurface = ({
             {intro}
           </div>
         )}
-        {feed.items.map((item) => (
+        {activityRows(feed.items).map(({ item, first, count }) => (
           <p
-            key={item.id}
+            key={first.id}
             className={legacyActivityClassName(item, perspective)}
             data-event-type={item.eventType}
             data-revision={item.revision}
+            {...(count > 1 ? { 'data-repeat': count } : {})}
           >
             {item.message}
+            {count > 1 ? (
+              <span className="legacy-activity-repeat">×{count}</span>
+            ) : null}
           </p>
         ))}
       </div>

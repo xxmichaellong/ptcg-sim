@@ -35,7 +35,6 @@ import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
 import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
 import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
-import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { MagnifyingGlassMinusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassMinus';
 import { MagnifyingGlassPlusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassPlus';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/csr/PawPrint';
@@ -58,12 +57,13 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type ComponentPropsWithoutRef,
   type CSSProperties,
   type RefObject,
 } from 'react';
 
 import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
-import { actingPlayerIdOf } from '../acting-seat.js';
+import { actingPlayerIdOf, seatToneOf } from '../acting-seat.js';
 import { locateViewCardActionSource } from '../locateViewCardActionSource.js';
 import type {
   BoardPresentationDismissScope,
@@ -129,7 +129,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
-import { Tooltip } from '../../ui/Tooltip.js';
+import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -1206,7 +1206,30 @@ export const zoneCopyCounts = (
 };
 
 /**
- * "Show board": one click puts a big panel aside so the table can be read
+ * An overlay's way out: an X in the red a close button usually is, its
+ * word and key in the tooltip.
+ */
+const OverlayCloseButton = ({
+  className,
+  side = 'bottom',
+  ...props
+}: {
+  readonly side?: 'top' | 'bottom';
+} & Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'type'>) => (
+  <Tooltip content={withKeyHint('Close', 'Esc')} side={side}>
+    <button
+      type="button"
+      aria-label="Close"
+      {...props}
+      className={`ptcgsim-overlay-button ptcgsim-overlay-close${className ? ` ${className}` : ''}`}
+    >
+      <XIcon aria-hidden="true" weight="bold" />
+    </button>
+  </Tooltip>
+);
+
+/**
+ * "Board": one click puts a big panel aside so the table can be read
  * (and played) without closing it. The button stays where it was and turns
  * into the way back, named for the panel; Esc goes back too.
  */
@@ -1220,8 +1243,8 @@ const ShowBoardButton = ({
   readonly panelName: string;
   readonly onShowingBoardChange: (showingBoard: boolean) => void;
 }) => (
-  // "Show board" could read as the Board pile; the tooltip says what it
-  // does. The way back names itself.
+  // The eye says what "Board" does, and the tooltip says it in full. The
+  // way back names itself.
   <Tooltip
     content="See the table without closing this"
     side="bottom"
@@ -1241,7 +1264,7 @@ const ShowBoardButton = ({
       ) : (
         <>
           <EyeIcon aria-hidden="true" />
-          Show board
+          Board
         </>
       )}
     </button>
@@ -1521,14 +1544,11 @@ const Preview = ({
           className="ptcgsim-preview-controls"
           onClick={(event) => event.stopPropagation()}
         >
-          <button
-            type="button"
-            className="ptcgsim-overlay-button"
+          <OverlayCloseButton
             data-preview-tabbable="true"
+            side="top"
             onClick={dismiss}
-          >
-            <XIcon aria-hidden="true" /> Close <kbd>Esc</kbd>
-          </button>
+          />
           <button
             type="button"
             className="ptcgsim-overlay-button"
@@ -1598,15 +1618,12 @@ const Preview = ({
         className="ptcgsim-preview-controls"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          className="ptcgsim-overlay-button"
+        <OverlayCloseButton
           data-preview-tabbable="true"
           aria-label="Close card preview"
+          side="top"
           onClick={dismiss}
-        >
-          <XIcon aria-hidden="true" /> Close <kbd>Esc</kbd>
-        </button>
+        />
         {canModify &&
         readingCard &&
         actions.separateCard &&
@@ -1695,14 +1712,11 @@ const Preview = ({
           >
             View assembled card
           </button>
-          <button
-            type="button"
-            className="ptcgsim-overlay-button"
+          <OverlayCloseButton
             data-preview-tabbable="true"
+            side="top"
             onClick={dismiss}
-          >
-            Close
-          </button>
+          />
         </div>
       ) : null}
       {cards.map((card) => (
@@ -1840,7 +1854,6 @@ const ZoneBrowser = ({
   const scrim = useRef<HTMLDivElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
-  const [query, setQuery] = useState('');
   const [showingBoard, setShowingBoard] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
@@ -1895,16 +1908,10 @@ const ZoneBrowser = ({
   useOverlayExit(container, 'panel');
   useOverlayExit(scrim, 'scrim');
   const primary = zoneAction(zone);
-  const renderedCards = useMemo(() => {
-    const ordered = sortEnabled ? sortRecipientSafeZoneCards(cards) : cards;
-    const search = query.trim().toLocaleLowerCase();
-    return search
-      ? ordered.filter(
-          (card) =>
-            !card.concealed && card.label.toLocaleLowerCase().includes(search)
-        )
-      : ordered;
-  }, [cards, sortEnabled, query]);
+  const renderedCards = useMemo(
+    () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
+    [cards, sortEnabled]
+  );
   const copies = useMemo(() => zoneCopyCounts(cards), [cards]);
   const browserPreferences = usePreference(ZONE_BROWSER_PREFERENCES);
   const { zoom } = browserPreferences;
@@ -1916,7 +1923,7 @@ const ZoneBrowser = ({
   // Piles stack copies of a card by default; the hand shows each one.
   const stackKey = zoneBrowserStackKey(zone.kind);
   const stackCopies = browserPreferences[stackKey];
-  // Sized for the whole pile as it is tiled, so a search never resizes it.
+  // Sized for the whole pile as it is tiled.
   const tileCount = useMemo(
     () => zoneBrowserTiles(cards, stackCopies).length,
     [cards, stackCopies]
@@ -1927,6 +1934,9 @@ const ZoneBrowser = ({
     zone.playerId !== null
       ? state.view?.players[zone.playerId]?.displayName
       : undefined;
+  // In the owner's colour, as their name and their log lines are, wherever
+  // the board has been turned to put them.
+  const tone = seatToneOf(state.view, zone.playerId) ?? zone.side;
   const abilityMarkedCardIds = useMemo(() => {
     if (zone.kind !== 'discard') return new Set<ViewCardId>();
     const viewZone = state.view?.zones[zone.id];
@@ -1960,7 +1970,7 @@ const ZoneBrowser = ({
       />
       <section
         ref={container}
-        className={`ptcgsim-legacy-zone-browser is-${zone.side}${showingBoard ? ' is-showing-board' : ''}`}
+        className={`ptcgsim-legacy-zone-browser is-${tone}${showingBoard ? ' is-showing-board' : ''}`}
         data-legacy-zone-browser="true"
         data-zone-browser-id={zone.id}
         data-zone-browser-kind={zone.kind}
@@ -1996,9 +2006,7 @@ const ZoneBrowser = ({
               {zone.count} {zone.count === 1 ? 'card' : 'cards'}
             </span>
             {owner ? (
-              <span className={`ptcgsim-overlay-seat is-${zone.side}`}>
-                {owner}
-              </span>
+              <span className={`ptcgsim-overlay-seat is-${tone}`}>{owner}</span>
             ) : null}
           </div>
           <div className="ptcgsim-overlay-actions">
@@ -2066,38 +2074,14 @@ const ZoneBrowser = ({
               panelName={zone.kind === 'board' ? 'board cards' : title}
               onShowingBoardChange={setShowingBoard}
             />
-            <button
-              type="button"
-              className="ptcgsim-overlay-button is-primary ptcgsim-legacy-zone-button"
+            <OverlayCloseButton
+              className="ptcgsim-legacy-zone-button"
               data-zone-close="true"
               onClick={dismiss}
-            >
-              <XIcon aria-hidden="true" />
-              Close
-            </button>
+            />
           </div>
         </header>
         <div className="ptcgsim-browser-tools">
-          <label className="ptcgsim-browser-search">
-            <MagnifyingGlassIcon aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Search cards"
-              placeholder="Find a card…"
-              value={query}
-              onChange={(event) => setQuery(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape' && query) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setQuery('');
-                }
-              }}
-            />
-          </label>
-          <span className="ptcgsim-browser-results" role="status">
-            {query.trim() ? `${renderedCards.length} of ${cards.length}` : ''}
-          </span>
           <div
             className="ptcgsim-browser-zoom"
             role="group"
@@ -2156,9 +2140,7 @@ const ZoneBrowser = ({
         </div>
         <div className="ptcgsim-legacy-zone-cards">
           {renderedCards.length === 0 ? (
-            <p className="ptcgsim-overlay-empty">
-              {cards.length > 0 ? 'No matching cards' : 'No cards here'}
-            </p>
+            <p className="ptcgsim-overlay-empty">No cards here</p>
           ) : null}
           {tiles.map(({ card, count }) => (
             <button
@@ -2180,11 +2162,14 @@ const ZoneBrowser = ({
                   return;
                 }
                 // A second click that opened this panel belongs to the pile,
-                // not to the card that just appeared under the pointer.
-                if (event.detail <= 1) firstClickCard.current = card.id;
+                // not to the card that just appeared under the pointer; one
+                // that opens a preview leaves the selection as it was.
+                if (event.detail > 1) return;
+                firstClickCard.current = card.id;
                 actions.emitOpenedZoneCardIntent({
                   kind: 'CardSelected',
                   cardId: card.id,
+                  toggle: true,
                 });
               }}
               onDoubleClick={(event) => {
@@ -2337,7 +2322,7 @@ const WorkAreaPanel = ({
   return (
     <section
       ref={container}
-      className={`ptcgsim-legacy-work-area is-${zone.side}${showingBoard ? ' is-showing-board' : ''}`}
+      className={`ptcgsim-legacy-work-area is-${seatToneOf(state.view, zone.playerId) ?? zone.side}${showingBoard ? ' is-showing-board' : ''}`}
       data-legacy-work-area={source}
       data-work-area-id={zone.id}
       data-overlay-side={zone.side}
@@ -2381,8 +2366,9 @@ const WorkAreaPanel = ({
                 firstClickCard.current = null;
                 return;
               }
-              if (event.detail <= 1) firstClickCard.current = card.id;
-              emit?.({ kind: 'CardSelected', cardId: card.id });
+              if (event.detail > 1) return;
+              firstClickCard.current = card.id;
+              emit?.({ kind: 'CardSelected', cardId: card.id, toggle: true });
             }}
             onDoubleClick={(event) => {
               if (event.detail === 0 || firstClickCard.current === card.id)

@@ -332,6 +332,49 @@ describe('renderer-neutral drag controller', () => {
     expect(zoneDropTargetAt(scene(), 395, 150)).toBeNull();
   });
 
+  it('lets the held card aim where the pointer is over bare felt', () => {
+    const table: BoardScene = {
+      ...scene(),
+      layout: { ...layout, geometryVersion: 2 },
+    };
+    // The pointer is above the bench, out of its reach; the card it holds
+    // by its top hangs over the bench.
+    expect(zoneDropTargetAt(table, 400, 60)).not.toBe('target-zone');
+    expect(zoneDropTargetAt(table, 400, 60, { x: 435, y: 111 })).toBe(
+      'target-zone'
+    );
+    // Over a Pokémon, it joins it.
+    expect(
+      resolveBoardDropTarget(table, sourceId, 400, 60, false, {
+        x: 540,
+        y: 190,
+      })
+    ).toBe('target-stack');
+    // A pointer over a zone still means that zone.
+    expect(
+      resolveBoardDropTarget(table, sourceId, 100, 500, false, {
+        x: 540,
+        y: 190,
+      })
+    ).toBe('source-zone');
+    // v1's own board aims with the pointer alone.
+    expect(zoneDropTargetAt(scene(), 400, 60, { x: 435, y: 111 })).toBeNull();
+
+    // Held by its top-left corner, dropped with the pointer just above the
+    // bench: the card lands on the bench it hangs over.
+    const intents: BoardIntent[] = [];
+    const controller = new BoardDragController({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: () => undefined,
+    });
+    controller.pointerDown(table, sourceId, input(25, 435));
+    controller.pointerMove(table, input(400, 60));
+    controller.pointerUp(table, input(400, 60));
+    expect(intents).toMatchObject([
+      { kind: 'CardDropRequested', cardId: sourceId, targetId: 'target-zone' },
+    ]);
+  });
+
   it('cancels active presentation when the pointer or card is invalidated', () => {
     const emitPresentationUpdate = vi.fn();
     const emitIntent = vi.fn();

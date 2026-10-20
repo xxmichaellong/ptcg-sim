@@ -1149,7 +1149,7 @@ describe('legacy board overlays', () => {
     });
   });
 
-  it('opens a pile large enough to read, with its count, copy badges and a Show board hold', async () => {
+  it('opens a pile large enough to read, with its count, copy badges and a Board hold', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:discard`
@@ -1234,7 +1234,7 @@ describe('legacy board overlays', () => {
     const showBoard = browser.querySelector<HTMLButtonElement>(
       '.ptcgsim-show-board-button'
     )!;
-    expect(showBoard.textContent).toBe('Show board');
+    expect(showBoard.textContent).toBe('Board');
     // One click puts the panel aside; no holding.
     await act(async () => showBoard.click());
     expect(browser.classList).toContain('is-showing-board');
@@ -1245,7 +1245,7 @@ describe('legacy board overlays', () => {
     await act(async () => showBoard.click());
     expect(browser.classList).not.toContain('is-showing-board');
     expect(scrim.classList).not.toContain('is-hidden');
-    expect(showBoard.textContent).toBe('Show board');
+    expect(showBoard.textContent).toBe('Board');
 
     // From the board, Esc steps back to the panel; a second Esc closes it.
     await act(async () => showBoard.click());
@@ -2595,6 +2595,7 @@ describe('legacy board overlays', () => {
     expect(callbacks.emitCardIntent).toHaveBeenCalledExactlyOnceWith({
       kind: 'CardSelected',
       cardId: second.id,
+      toggle: true,
     });
     await act(async () => {
       panel
@@ -2629,7 +2630,7 @@ describe('legacy board overlays', () => {
       host.querySelector<HTMLButtonElement>('[data-work-area-card-id]')
         ?.disabled
     ).toBe(true);
-    // Read-only, the panel says whose cards these are and keeps Show board.
+    // Read-only, the panel says whose cards these are and keeps Board.
     const readOnly = host.querySelector<HTMLElement>(
       '[data-legacy-work-area]'
     )!;

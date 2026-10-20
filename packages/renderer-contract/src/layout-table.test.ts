@@ -264,7 +264,7 @@ describe('table layout (geometry v2)', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('keeps the Lost Zone and the markers beside the prizes, toward the centre line', () => {
+  it('keeps the markers and then the Lost Zone beside the prizes, toward the centre line', () => {
     for (const [width, height] of [
       [1280, 720],
       [1440, 900],
@@ -310,6 +310,15 @@ describe('table layout (geometry v2)', () => {
           else {
             expect(markerRect, label).toBeDefined();
             expect(overlaps(markerRect!, lost), label).toBe(false);
+            // The markers come first from the prizes, the Lost Zone after.
+            expect(
+              between(
+                markerRect!.x + markerRect!.width / 2,
+                prizes.x + prizes.width / 2,
+                lost.x + lost.width / 2
+              ),
+              label
+            ).toBe(true);
             for (const candidate of player.regions) {
               expect(
                 overlaps(markerRect!, candidate.physicalDeclaredBounds),

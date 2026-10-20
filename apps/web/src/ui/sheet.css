@@ -212,10 +212,14 @@
   padding: 0;
   border: 0;
   border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-muted);
+  /* In the red a close button usually is, filled when pointed at. */
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
   font-size: 20px;
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 
 .ptcgsim-sheet__close:focus-visible {
@@ -225,8 +229,8 @@
 
 @media (hover: hover) {
   .ptcgsim-sheet__close:hover {
-    background: var(--color-surface-hover);
-    color: var(--color-text);
+    background: var(--color-danger-fill);
+    color: var(--color-text-on-accent);
   }
 }
 

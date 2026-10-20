@@ -239,7 +239,7 @@ describe('presentationEffectsForEvent', () => {
     const variants = [
       ['joined', 'Viewer joined'],
       ['disconnected', 'Viewer disconnected'],
-      ['reconnected', 'Viewer reconnected!'],
+      ['reconnected', 'Viewer reconnected'],
       ['left', 'Viewer left the room'],
     ] as const;
     for (const [status, visible] of variants) {
@@ -313,8 +313,8 @@ describe('presentationEffectsForEvent', () => {
         'accessibility:Blue started turn 3',
       ],
       [
-        'announcement:Red has no more cards in deck!',
-        'accessibility:Red has no more cards in deck!',
+        'announcement:Red has no cards left to draw',
+        'accessibility:Red has no cards left to draw',
       ],
       ['player:Blue attacked', 'accessibility:Blue attacked'],
       ['player:Red passed', 'accessibility:Red passed'],
@@ -332,15 +332,15 @@ describe('presentationEffectsForEvent', () => {
         "accessibility:Red stopped looking at card in Blue's prizes",
       ],
       [
-        'announcement:Blue took back their last move!',
-        'accessibility:Blue took back their last move!',
+        'announcement:Blue took back their last move',
+        'accessibility:Blue took back their last move',
       ],
       ['announcement:Red mulligans', 'accessibility:Red mulligans'],
       [
         "player:Blue is looking through Blue's deck",
         "accessibility:Blue is looking through Blue's deck",
       ],
-      ['player:Red used their VSTAR!', 'accessibility:Red used their VSTAR!'],
+      ['player:Red used their VSTAR', 'accessibility:Red used their VSTAR'],
       ['player:Blue reset their GX', 'accessibility:Blue reset their GX'],
     ]);
 
@@ -549,8 +549,8 @@ describe('presentationEffectsForEvent', () => {
         )
       )
     ).toEqual([
-      'announcement:Blue has an invalid deck!',
-      'accessibility:Blue has an invalid deck!',
+      'announcement:Blue has no deck loaded',
+      'accessibility:Blue has no deck loaded',
     ]);
   });
 
@@ -566,8 +566,8 @@ describe('presentationEffectsForEvent', () => {
     expect(
       messages(presentationEffectsForEvent(crossPlayerUndo, view))
     ).toEqual([
-      "announcement:Blue took back Red's last move!",
-      "accessibility:Blue took back Red's last move!",
+      "announcement:Blue took back Red's last move",
+      "accessibility:Blue took back Red's last move",
     ]);
 
     const missingPlayer: PresentationEvent = {

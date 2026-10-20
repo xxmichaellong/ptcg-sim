@@ -347,10 +347,10 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(
     page.locator('#chatbox [data-event-type="OncePerGameMarkerSet"]')
   ).toHaveText([
-    'Blue used their VSTAR!',
-    'Blue used their GX!',
-    'Red used their VSTAR!',
-    'Red used their GX!',
+    'Blue used their VSTAR',
+    'Blue used their GX',
+    'Red used their VSTAR',
+    'Red used their GX',
     'Blue reset their VSTAR',
     'Red reset their GX',
   ]);
@@ -442,7 +442,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await page.locator('#undoButton').click();
   await expect(
     page.locator('#chatbox [data-event-type="UndoApplied"]')
-  ).toHaveText('Blue took back their last move!');
+  ).toHaveText('Blue took back their last move');
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
   expect(errors).toEqual([]);
 });

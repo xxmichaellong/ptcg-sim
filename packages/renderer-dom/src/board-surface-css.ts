@@ -336,18 +336,47 @@ export const BOARD_SURFACE_CSS = `
   outline: 1.5px dashed var(--color-felt-line, rgb(255 255 255 / 0.14));
   outline-offset: -1.5px;
 }
+/* The mat prints no names. An empty spot says what it is for while the
+   pointer rests on it: its name eases in and the spot lightens a touch. */
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label]::after {
   content: attr(data-zone-label);
   position: absolute;
   left: 8px;
   top: 6px;
   color: var(--color-felt-label, rgb(255 255 255 / 0.45));
-  /* Printed on the mat in the card game's own typeface, like a real mat. */
+  /* In the card game's own typeface, like a real mat. */
   font: 600 11px/1 var(--font-display, sans-serif);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0;
+  translate: 0 3px;
+  transition:
+    opacity 240ms var(--ease-out, ease-out),
+    translate 240ms var(--ease-out, ease-out);
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty] {
+  transition:
+    background-color 240ms var(--ease-out, ease-out),
+    box-shadow 240ms var(--ease-out, ease-out),
+    outline-color 240ms var(--ease-out, ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty]:not([data-drop-target]):hover {
+    background-color: oklch(1 0 0 / 0.045);
+    box-shadow: inset 0 0 0 1.5px oklch(1 0 0 / 0.2);
+  }
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone-board[data-zone-outline='true'][data-zone-empty]:not([data-drop-target]):hover {
+    box-shadow: none;
+    outline-color: oklch(1 0 0 / 0.24);
+  }
+  .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty][data-zone-label]:not([data-drop-target]):hover::after {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='true'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty],
+.ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='true'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label]::after {
+  transition: none;
 }
 /* Piles print their name under the card spot, centred, as on the mat. */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label]::after {
@@ -388,7 +417,6 @@ export const BOARD_SURFACE_CSS = `
     top: auto;
     bottom: 6px;
     font-size: 7.5px;
-    letter-spacing: 0.02em;
   }
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-hand {

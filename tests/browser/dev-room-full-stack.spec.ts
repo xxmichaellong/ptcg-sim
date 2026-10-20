@@ -547,7 +547,7 @@ test('development route reaches and resumes a real durable room through the same
     },
   });
   const resumedPresenceRow = page.locator('#p2Chatbox p.announcement').last();
-  await expect(resumedPresenceRow).toHaveText('Transport Smoke reconnected!');
+  await expect(resumedPresenceRow).toHaveText('Transport Smoke reconnected');
   await expect(resumedPresenceRow).toHaveAttribute(
     'data-event-type',
     'Presence'

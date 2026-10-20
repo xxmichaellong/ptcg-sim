@@ -113,6 +113,26 @@ describe('overlay layout', () => {
     expect(zoneBrowserLayout(LAPTOP, 47, Number.NaN).cardHeight).toBe(fitted);
   });
 
+  it('keeps the panel where it is, the same size, at every zoom', () => {
+    for (const board of [LAPTOP, SMALL]) {
+      for (const count of [1, 3, 12, 47]) {
+        const box = zoneBrowserLayout(board, count);
+        for (const zoom of [0.5, 0.8, 1.3, 1.7, 2]) {
+          const zoomed = zoneBrowserLayout(board, count, zoom);
+          expect([
+            zoomed.left,
+            zoomed.top,
+            zoomed.width,
+            zoomed.height,
+          ]).toEqual([box.left, box.top, box.width, box.height]);
+          // The cards grow inside it, never past what it shows.
+          expect(zoomed.cardHeight).toBeLessThan(box.height);
+          expect(zoomed.cardHeight * CARD_ASPECT_RATIO).toBeLessThan(box.width);
+        }
+      }
+    }
+  });
+
   it('grows a work area around the scene box it covers, on the board', () => {
     // Where the v1 geometry puts "Looking at cards..." on the lower half.
     const zone = { x: 141.5, y: 492.75, width: 792, height: 380 };

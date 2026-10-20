@@ -65,7 +65,7 @@ test('icon controls name themselves, with their keys, on hover', async ({
     await hover(page, '[data-load-deck-player][aria-label="Load a deck"]')
   ).toHaveText('Load a deck');
 
-  // The rail's ends: the app toolbar (with a key) and the activity log.
+  // The rail's ends: the app toolbar (with a key) and the log.
   await openToolbar(page);
   await expect(await hover(page, '#shortcutsButton')).toHaveText(
     'Keyboard shortcuts ?'
@@ -73,9 +73,7 @@ test('icon controls name themselves, with their keys, on hover', async ({
   await expect(
     tooltip(page).locator('kbd.ptcgsim-ui-tooltip__hint')
   ).toHaveText('?');
-  await expect(await hover(page, '#activityButton')).toHaveText(
-    'Battle log and chat'
-  );
+  await expect(await hover(page, '#activityButton')).toHaveText('Log');
 
   // A menu's button: named while closed, quiet while its menu is open.
   const more = await hover(page, '#appMoreButton');

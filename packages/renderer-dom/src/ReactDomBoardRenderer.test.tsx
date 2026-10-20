@@ -292,9 +292,9 @@ describe('React DOM board renderer', () => {
         key: ' ',
       })
     );
+    // The second click of the double click leaves the selection alone.
     expect(intents).toEqual([
-      { kind: 'CardSelected', cardId },
-      { kind: 'CardSelected', cardId },
+      { kind: 'CardSelected', cardId, toggle: true },
       { kind: 'CardPreviewRequested', cardId },
       { kind: 'CardContextRequested', cardId },
       { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
@@ -328,7 +328,7 @@ describe('React DOM board renderer', () => {
         key: 'Enter',
       })
     );
-    expect(intents).toHaveLength(7);
+    expect(intents).toHaveLength(6);
     expect(statuses).toEqual([
       { kind: 'mounting' },
       { kind: 'ready', generation: 1 },
@@ -607,6 +607,7 @@ describe('React DOM board renderer', () => {
     expect(emitIntent).toHaveBeenCalledWith({
       kind: 'CardSelected',
       cardId,
+      toggle: true,
     });
 
     const recovered = createScene(2);

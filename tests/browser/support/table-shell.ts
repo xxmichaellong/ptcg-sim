@@ -92,7 +92,7 @@ export const closeDeck = async (page: Page): Promise<void> => {
   ).toBeAttached();
 };
 
-/** Opens the activity log (battle log and chat) if it is not open. */
+/** Opens the log (what happened, and the chat) if it is not open. */
 export const openActivity = async (page: Page): Promise<void> => {
   const button = page.locator('#activityButton');
   if ((await button.getAttribute('aria-expanded')) !== 'true') {
@@ -101,7 +101,7 @@ export const openActivity = async (page: Page): Promise<void> => {
   await expect(page.locator('#activitySheet')).toBeVisible();
 };
 
-/** One of the battle log's own actions: `exportLog`, `clearLog`. */
+/** One of the log's own actions: `exportLog`, `clearLog`. */
 export const chooseLogAction = async (
   page: Page,
   id: string

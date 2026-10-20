@@ -378,6 +378,7 @@ const ZoneNode = memo(function ZoneNode({
       data-zone-side={zone.side}
       data-zone-outline={table && showOutline ? 'true' : undefined}
       data-zone-label={table ? TABLE_ZONE_LABELS[zone.kind] : undefined}
+      data-zone-empty={table && zone.count === 0 ? 'true' : undefined}
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       data-drop-target={dropTarget ? 'true' : undefined}
@@ -588,12 +589,15 @@ const CardNode = memo(
       event.preventDefault();
       emitIntent({ kind: 'CardContextRequested', cardId: card.id });
     };
-    const activate = () => {
+    const activate = (clicks: number) => {
       if (card.primaryAction?.kind === 'openZone') {
         emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
         return;
       }
-      emitIntent({ kind: 'CardSelected', cardId: card.id });
+      // The second click of a double click opens the preview; it leaves the
+      // selection the first one made.
+      if (clicks > 1) return;
+      emitIntent({ kind: 'CardSelected', cardId: card.id, toggle: true });
     };
     useLayoutEffect(() => {
       const image = imageRef.current;
@@ -675,7 +679,7 @@ const CardNode = memo(
             !consumeSuppressedClick(card.id, card.renderKey) ||
             event.detail === 0
           ) {
-            activate();
+            activate(event.detail);
           }
         }}
         onDoubleClick={() => {
@@ -1407,7 +1411,8 @@ export const BoardSurface = ({
         source.id,
         (card) =>
           card.renderKey ? director.depth.current(card.renderKey) : undefined,
-        dragRef.current?.detached === true
+        dragRef.current?.detached === true,
+        centre
       );
       return {
         pointerId: event.pointerId,

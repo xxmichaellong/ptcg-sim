@@ -1258,6 +1258,22 @@ const handleIntent = (
           return accepted(cleared, effects);
         }
       }
+      if (
+        intent.toggle &&
+        state.presentation.selectedCardId === intent.cardId
+      ) {
+        return installPresentation(
+          state,
+          {
+            ...state.presentation,
+            selectedCardId: null,
+            targetableCardIds: [],
+            drag: null,
+          },
+          emptyOverlays(),
+          null
+        );
+      }
       const retainOpenedZone =
         state.presentation.openedZoneId === card.parentId
           ? state.presentation.openedZoneId

@@ -15,6 +15,7 @@ import {
   type LegacyAnnouncementScheduler,
 } from './LegacyGamePresentationRuntime.js';
 import {
+  activityRows,
   legacyActivityClassName,
   LegacyPresentationSurface,
 } from './LegacyPresentationSurface.js';
@@ -467,5 +468,56 @@ describe('LegacyPresentationSurface', () => {
         view
       )
     ).toBe('spectator-message');
+  });
+});
+
+describe('activity rows', () => {
+  let next = 0;
+  const line = (
+    message: string,
+    category: ActivityFeedItem['category'] = 'player',
+    playerId: string | undefined = 'spike-blue',
+    eventType: ActivityFeedItem['eventType'] = 'UndoApplied'
+  ): ActivityFeedItem => ({
+    id: (next += 1),
+    revision: next,
+    eventType,
+    category,
+    message,
+    ...(playerId ? { playerId } : {}),
+  });
+
+  it('folds the same game line said again and again into one row with a count', () => {
+    const undo = () =>
+      line('Blue took back their last move', 'announcement', undefined);
+    const items = [
+      line('Blue passed', 'player', 'spike-blue', 'PassDeclared'),
+      undo(),
+      undo(),
+      undo(),
+      line('Blue passed', 'player', 'spike-blue', 'PassDeclared'),
+      undo(),
+      // Chat is what someone said each time, so it is never folded.
+      line('Blue: gg', 'message', 'spike-blue', 'ChatMessage'),
+      line('Blue: gg', 'message', 'spike-blue', 'ChatMessage'),
+      // The same words from the other seat are another line.
+      line('Draw', 'player', 'spike-blue', 'CardsMoved'),
+      line('Draw', 'player', 'spike-red', 'CardsMoved'),
+    ];
+    const rows = activityRows(items);
+    expect(rows.map(({ item, count }) => [item.message, count])).toEqual([
+      ['Blue passed', 1],
+      ['Blue took back their last move', 3],
+      ['Blue passed', 1],
+      ['Blue took back their last move', 1],
+      ['Blue: gg', 1],
+      ['Blue: gg', 1],
+      ['Draw', 1],
+      ['Draw', 1],
+    ]);
+    // A row keeps its first line's identity, so it stays put as it grows,
+    // and carries its newest line's revision.
+    expect(rows[1]!.first).toBe(items[1]);
+    expect(rows[1]!.item).toBe(items[3]);
   });
 });

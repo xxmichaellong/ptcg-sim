@@ -94,11 +94,12 @@ const runLength = (count: number, size: number): number =>
 /**
  * The zone browser (deck, discard, Lost Zone, prizes, ...): a wrapping grid
  * centred on the board. Cards are fitted at the large size while the pile
- * fits in two rows, and at the compact size beyond that; `zoom` scales that
- * fitted size linearly (1 draws it as fitted), never smaller than a card is
- * worth drawing nor larger than one card fits the panel. The panel shrinks
- * to its content and grows to the whole board less a margin, scrolling past
- * that.
+ * fits in two rows, and at the compact size beyond that. The panel shrinks
+ * to that content and grows to the whole board less a margin, scrolling
+ * past that. `zoom` scales only the cards (1 draws them as fitted), never
+ * smaller than a card is worth drawing nor larger than one card fits the
+ * panel: the panel keeps its size and place while they grow or shrink, so
+ * dragging the size slider never moves it.
  */
 export const zoneBrowserLayout = (
   board: OverlayBoardSize,
@@ -125,26 +126,32 @@ export const zoneBrowserLayout = (
     count <= columnsFor(maxContentWidth, large) * 2
       ? large
       : Math.min(large, overlayCompactCardHeight(board));
-  const scale = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
-  const cardHeight = clamp(
-    fitted * scale,
+  // The panel is laid out for the cards as fitted, whatever the zoom.
+  const fittedHeight = clamp(
+    fitted,
     OVERLAY_CARD_MIN_HEIGHT,
     Math.min(maxHeight - chromeHeight, maxContentWidth / CARD_ASPECT_RATIO)
   );
   const columns = Math.min(
     Math.max(1, count),
-    columnsFor(maxContentWidth, cardHeight)
+    columnsFor(maxContentWidth, fittedHeight)
   );
   const rows = Math.max(1, Math.ceil(count / columns));
   const width = clamp(
-    runLength(columns, cardWidthFor(cardHeight)) + chromeWidth,
+    runLength(columns, cardWidthFor(fittedHeight)) + chromeWidth,
     Math.min(OVERLAY_PANEL_MIN_WIDTH, maxWidth),
     maxWidth
   );
   const height = clamp(
-    chromeHeight + runLength(rows, cardHeight),
-    Math.min(chromeHeight + cardHeight, maxHeight),
+    chromeHeight + runLength(rows, fittedHeight),
+    Math.min(chromeHeight + fittedHeight, maxHeight),
     maxHeight
+  );
+  const scale = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  const cardHeight = clamp(
+    fittedHeight * scale,
+    OVERLAY_CARD_MIN_HEIGHT,
+    Math.min(height - chromeHeight, (width - chromeWidth) / CARD_ASPECT_RATIO)
   );
   return {
     left: (board.width - width) / 2,

@@ -99,12 +99,13 @@ export const looseBoardTargetAt = (
 
 /**
  * How far past its edge a zone still takes a card on the table: a card held
- * just over a pile's or the bench's border plainly means that zone, not the
- * loose board beside it.
+ * near a pile's or the bench's border plainly means that zone, not the
+ * loose board beside it. Generous: a drop that looks as if it will land
+ * should land.
  */
 export const dropReachFor = (scene: BoardScene): number =>
   scene.layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
-    ? Math.max(12, Math.min(32, scene.viewport.width * 0.016))
+    ? Math.max(20, Math.min(56, scene.viewport.width * 0.03))
     : 0;
 
 const distanceToRect = (
@@ -117,25 +118,38 @@ const distanceToRect = (
     Math.max(rect.y - y, 0, y - (rect.y + rect.height))
   );
 
+/** The topmost zone that takes cards under a point, if any. */
+const zoneUnder = (scene: BoardScene, x: number, y: number) =>
+  topmostFirst(scene.zones).find(
+    (zone) => zone.interactive && containsPoint(zone.bounds, x, y)
+  );
+
 /**
  * The zone a card dropped at (x, y) lands in: the topmost zone under the
- * point; else, on the table, the nearest zone within reach of it (the
- * loose board excepted, which is the felt itself); else the loose board of
- * the half it is over.
+ * point; else, on the table, the one under the held card's centre (a card
+ * held by its top hangs its face over the pile meant); else the nearest
+ * zone within reach of either (the loose board excepted, which is the felt
+ * itself); else the loose board of the half it is over.
  */
 export const zoneDropTargetAt = (
   scene: BoardScene,
   x: number,
-  y: number
+  y: number,
+  centre?: { readonly x: number; readonly y: number }
 ): string | null => {
-  const zones = topmostFirst(scene.zones).filter((zone) => zone.interactive);
-  const under = zones.find((zone) => containsPoint(zone.bounds, x, y));
+  const under = zoneUnder(scene, x, y);
   if (under) return under.id;
+  const table = scene.layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION;
+  const held = table && centre ? zoneUnder(scene, centre.x, centre.y) : null;
+  if (held) return held.id;
   const reach = dropReachFor(scene);
+  const points = table && centre ? [{ x, y }, centre] : [{ x, y }];
   let nearest: { readonly id: string; readonly distance: number } | null = null;
-  for (const zone of zones) {
-    if (zone.kind === 'board') continue;
-    const distance = distanceToRect(zone.bounds, x, y);
+  for (const zone of topmostFirst(scene.zones)) {
+    if (!zone.interactive || zone.kind === 'board') continue;
+    const distance = Math.min(
+      ...points.map((point) => distanceToRect(zone.bounds, point.x, point.y))
+    );
     if (distance <= reach && (!nearest || distance < nearest.distance)) {
       nearest = { id: zone.id, distance };
     }
@@ -144,17 +158,59 @@ export const zoneDropTargetAt = (
 };
 
 /**
+ * The card under a held card's centre that it would join, when the
+ * pointer itself is over bare felt: never the held card, nor a card of the
+ * Pokémon it is part of, which travel with it.
+ */
+export const heldCentreCardTarget = (
+  scene: BoardScene,
+  sourceCardId: ViewCardId,
+  pointer: { readonly x: number; readonly y: number },
+  centre: { readonly x: number; readonly y: number },
+  detached = false
+): string | null => {
+  if (
+    scene.layout.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION ||
+    zoneUnder(scene, pointer.x, pointer.y)
+  )
+    return null;
+  const source = cardAt(scene, sourceCardId);
+  const card = topmostFirst(scene.cards).find(
+    (candidate) =>
+      candidate.id !== sourceCardId &&
+      candidate.interactive &&
+      !(
+        source?.role === 'stackEvolution' &&
+        !detached &&
+        candidate.parentId === source.parentId
+      ) &&
+      containsPointInRotatedRect(
+        candidate.bounds,
+        candidate.rotationQuarterTurns,
+        centre.x,
+        centre.y
+      )
+  );
+  if (!card) return null;
+  return (
+    benchRearrangementTarget(scene, sourceCardId, card, detached) ??
+    card.parentId
+  );
+};
+
+/**
  * What a card dropped with the pointer at (x, y) lands on: the topmost card
  * under the pointer (its stack, to join it), else a zone. Players aim with
  * the pointer: a hand card is gripped by its visible top, its face hanging
- * below.
+ * below. Over bare felt, the held card's `centre` aims too.
  */
 export const resolveBoardDropTarget = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
   x: number,
   y: number,
-  detached = false
+  detached = false,
+  centre?: { readonly x: number; readonly y: number }
 ): string | null => {
   const card = topmostFirst(scene.cards).find(
     (candidate) =>
@@ -172,7 +228,11 @@ export const resolveBoardDropTarget = (
       benchRearrangementTarget(scene, sourceCardId, card, detached) ??
       card.parentId
     );
-  return zoneDropTargetAt(scene, x, y);
+  return (
+    (centre &&
+      heldCentreCardTarget(scene, sourceCardId, { x, y }, centre, detached)) ||
+    zoneDropTargetAt(scene, x, y, centre)
+  );
 };
 
 /** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */
@@ -306,7 +366,11 @@ export class BoardDragController {
             gesture.cardId,
             input.x,
             input.y,
-            gesture.detached
+            gesture.detached,
+            {
+              x: input.x + gesture.centerOffsetX,
+              y: input.y + gesture.centerOffsetY,
+            }
           );
     const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.adapters.emitPresentationUpdate({
@@ -356,7 +420,8 @@ export class BoardDragController {
             gesture.cardId,
             input.x,
             input.y,
-            gesture.detached
+            gesture.detached,
+            { x: centreX, y: centreY }
           );
     const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
     this.suppressClickOf(gesture);

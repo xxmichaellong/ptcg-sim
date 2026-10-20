@@ -151,7 +151,7 @@ describe('ActivityLauncher', () => {
       )
     );
 
-  it('counts what others did and said and who came since the log was last open', async () => {
+  it('counts every line the log gained since it was last open, the player own too', async () => {
     const source = feedSource([chat(OTHER, 'already read')]);
     const onToggle = vi.fn();
     await renderLauncher(source, { onToggle });
@@ -167,10 +167,10 @@ describe('ActivityLauncher', () => {
         presence('Red joined')
       )
     );
-    // Their line, their move and their arrival; not the player's own.
-    expect(badge()).toBe('3');
+    // Both players' lines and moves, and the arrival.
+    expect(badge()).toBe('5');
     const button = host.querySelector<HTMLButtonElement>('#activityButton')!;
-    expect(button.getAttribute('aria-label')).toBe('Activity, 3 new');
+    expect(button.getAttribute('aria-label')).toBe('Log, 5 new');
     expect(button.getAttribute('aria-expanded')).toBe('false');
     await act(async () => button.click());
     expect(onToggle).toHaveBeenCalledOnce();
@@ -184,23 +184,22 @@ describe('ActivityLauncher', () => {
     expect(badge()).toBe('1');
   });
 
-  it('counts only announcements and arrivals at a Solo table, where every move is the player own', async () => {
+  it('counts the player own moves at a Solo table, a coin flip too', async () => {
     const source = feedSource();
     await renderLauncher(source, { solo: true });
     await act(async () =>
-      source.push(
-        chat(OTHER, 'a note'),
-        chat(OWN, 'another'),
-        move(OTHER, 'Red drew a card')
-      )
+      source.push(item('CoinFlipped', 'player', 'Blue flipped heads', OWN))
     );
-    expect(badge()).toBeNull();
-    await act(async () => source.push(presence('Spectator joined')));
     expect(badge()).toBe('1');
     await act(async () =>
-      source.push(item('DeckLoaded', 'announcement', 'Red loaded deck'))
+      source.push(
+        chat(OTHER, 'a note'),
+        move(OTHER, 'Red drew a card'),
+        presence('Spectator joined'),
+        item('DeckLoaded', 'announcement', 'Red loaded deck')
+      )
     );
-    expect(badge()).toBe('2');
+    expect(badge()).toBe('5');
   });
 
   it("flashes the other side's lines over the table while the log is closed", async () => {
@@ -212,15 +211,11 @@ describe('ActivityLauncher', () => {
         move(OWN, 'Blue drew a card'),
         move(OTHER, 'Red played Boss'),
         chat(OTHER, 'gg'),
-        presence('Red reconnected!')
+        presence('Red reconnected')
       )
     );
     // The player's own moves are already in front of them.
-    expect(tickerLines()).toEqual([
-      'Red played Boss',
-      'gg',
-      'Red reconnected!',
-    ]);
+    expect(tickerLines()).toEqual(['Red played Boss', 'gg', 'Red reconnected']);
     const ticker = host.querySelector('.ptcgsim-activity-ticker')!;
     expect(ticker.getAttribute('aria-hidden')).toBe('true');
     expect(host.querySelector('.opp-text')?.textContent).toBe(
@@ -230,7 +225,7 @@ describe('ActivityLauncher', () => {
     await act(async () => source.push(move(OTHER, 'Red attached Energy')));
     expect(tickerLines()).toEqual([
       'gg',
-      'Red reconnected!',
+      'Red reconnected',
       'Red attached Energy',
     ]);
 
@@ -260,7 +255,7 @@ describe('ActivityLauncher', () => {
     expect(tickerLines()).toEqual(['Blue loaded deck']);
   });
 
-  it("says the player's own Attack and Pass over the table, the buttons' only answer, without counting them", async () => {
+  it("says the player's own Attack and Pass over the table, the buttons' only answer", async () => {
     for (const solo of [true, false]) {
       await act(async () => root.unmount());
       root = createRoot(host);
@@ -274,7 +269,7 @@ describe('ActivityLauncher', () => {
         )
       );
       expect(tickerLines()).toEqual(['Blue attacked', 'Blue passed']);
-      expect(badge()).toBeNull();
+      expect(badge()).toBe('3');
     }
   });
 });
@@ -311,7 +306,7 @@ describe('ActivityPanel', () => {
     await renderPanel({ onOpenChange, controls });
     const dock = document.querySelector<HTMLElement>('aside#activitySheet')!;
     expect(dock.classList.contains('ptcgsim-activity-dock')).toBe(true);
-    expect(dock.textContent).toContain('Activity');
+    expect(dock.textContent).toContain('Log');
     expect(dock.textContent).toContain('Solo table');
     // Keys typed in the log are never the table's.
     expect(dock.hasAttribute('data-ptcgsim-overlay')).toBe(true);
@@ -323,9 +318,7 @@ describe('ActivityPanel', () => {
     expect(dock.querySelector('[role="status"]')).toBeNull();
 
     await act(async () =>
-      dock
-        .querySelector<HTMLButtonElement>('[aria-label="Close activity"]')!
-        .click()
+      dock.querySelector<HTMLButtonElement>('[aria-label="Close log"]')!.click()
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
 

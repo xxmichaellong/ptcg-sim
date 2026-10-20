@@ -1,6 +1,7 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import { useEffect, useRef, useState } from 'react';
 
+import { seatToneOf } from '../acting-seat.js';
 import './TurnBanner.css';
 
 interface Announcement {
@@ -53,7 +54,11 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
       key: Date.now(),
       title: ownTurn ? 'Your turn' : `${player?.displayName ?? 'Next'}'s turn`,
       turnNumber,
-      side: currentPlayerId === bottomPlayerId ? 'local' : 'opponent',
+      // In the seat's own colour, as its name is, however the board is
+      // turned.
+      side:
+        seatToneOf(view, currentPlayerId) ??
+        (currentPlayerId === bottomPlayerId ? 'local' : 'opponent'),
     });
     const timer = setTimeout(() => setAnnouncement(null), FALLBACK_VISIBLE_MS);
     return () => clearTimeout(timer);

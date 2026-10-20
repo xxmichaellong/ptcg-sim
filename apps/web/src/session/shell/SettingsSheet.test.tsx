@@ -83,7 +83,7 @@ describe('SettingsSheet', () => {
     await render();
     const sheet = document.querySelector<HTMLElement>('#settings')!;
     expect(sheet.dataset.variant).toBe('side');
-    expect(sheet.textContent).toContain('Kept on this device.');
+    expect(sheet.textContent).not.toContain('this device');
     expect(
       [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
         (title) => title.textContent

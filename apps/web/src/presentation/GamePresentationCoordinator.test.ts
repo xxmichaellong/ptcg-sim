@@ -295,7 +295,7 @@ describe('GamePresentationCoordinator', () => {
       runtime.activity
         .getSnapshot()
         .entries.map((entry) => entry.effect.message)
-    ).toEqual(['Watcher reconnected!']);
+    ).toEqual(['Watcher reconnected']);
     expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
 
     runtime.dispose();

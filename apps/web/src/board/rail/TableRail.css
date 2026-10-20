@@ -141,9 +141,10 @@
   background: var(--color-opponent);
 }
 
-/* The coin: only the room rolls it, so the button waits rather than guess. */
+/* The coin: only the room rolls it, so the button waits rather than guess,
+   showing it in its icon rather than the pointer. */
 .ptcgsim-rail-button[data-control-pending='true'] {
-  cursor: progress;
+  cursor: default;
 }
 
 .ptcgsim-rail-button[data-control-pending='true'] .ptcgsim-rail-button__icon {

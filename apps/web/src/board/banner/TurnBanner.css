@@ -42,8 +42,6 @@
   font: 600 var(--text-md) / 1 var(--font-ui);
   font-variant-numeric: tabular-nums;
   opacity: 0.85;
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
 }
 @keyframes turn-banner {
   0% {

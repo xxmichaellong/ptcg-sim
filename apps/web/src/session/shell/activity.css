@@ -108,10 +108,21 @@
   }
 }
 
-.ptcgsim-activity-content .legacy-activity-feed > .self-text,
-.ptcgsim-activity-content .legacy-activity-feed > .opp-text {
-  border-left: 3px solid var(--color-you);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+/* What happens at the table reads as one column: every line starts at the
+   same inset, a player's behind a bar in their seat's colour, the table's
+   own (a deck loaded, a move taken back) quieter, with no bar. */
+.ptcgsim-activity-content
+  .legacy-activity-feed
+  > :is(.self-text, .opp-text, .announcement) {
+  width: 100%;
+  margin-top: 1px;
+  padding: 3px var(--space-2);
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+
+.ptcgsim-activity-content .legacy-activity-feed > .self-text {
+  border-left-color: var(--color-you);
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .opp-text {
@@ -119,12 +130,54 @@
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .announcement {
-  width: auto;
+  color: var(--color-text-muted);
+}
+
+/* A new turn divides the log. */
+.ptcgsim-activity-content
+  .legacy-activity-feed
+  > .announcement[data-event-type='TurnStarted'] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-1);
+  padding: 0;
+  border-left: 0;
   color: var(--color-text-faint);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-caps);
-  text-align: center;
-  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.ptcgsim-activity-content
+  .legacy-activity-feed
+  > .announcement[data-event-type='TurnStarted']::before,
+.ptcgsim-activity-content
+  .legacy-activity-feed
+  > .announcement[data-event-type='TurnStarted']::after {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  content: '';
+}
+
+.ptcgsim-activity-content
+  .legacy-activity-feed
+  > .announcement[data-event-type='TurnStarted']:first-child {
+  margin-top: 0;
+}
+
+/* The same line said again and again: how many times. */
+.legacy-activity-repeat {
+  display: inline-block;
+  margin-left: var(--space-1-5);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  vertical-align: 1px;
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .self-message,

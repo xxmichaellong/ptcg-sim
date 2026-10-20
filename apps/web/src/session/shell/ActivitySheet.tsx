@@ -69,7 +69,7 @@ const LogMenu = ({
   if (onExportLog) {
     entries.push({
       id: 'exportLog',
-      label: 'Download battle log',
+      label: 'Download log',
       icon: DownloadSimpleIcon,
       onSelect: onExportLog,
     });
@@ -77,7 +77,7 @@ const LogMenu = ({
   if (onClearLog) {
     entries.push({
       id: 'clearLog',
-      label: 'Clear battle log',
+      label: 'Clear log',
       icon: BroomIcon,
       onSelect: onClearLog,
     });
@@ -85,18 +85,18 @@ const LogMenu = ({
   if (entries.length === 0) return null;
   return (
     <ActionMenu
-      label="Battle log"
+      label="Log"
       side="bottom"
       align="end"
       entries={entries}
-      tooltip="Battle log options"
+      tooltip="Log options"
       tooltipSide="bottom"
       trigger={
         <button
           id="activityLogMenuButton"
           type="button"
           className="ds-icon-button"
-          aria-label="Battle log options"
+          aria-label="Log options"
         >
           <DotsThreeIcon aria-hidden="true" weight="bold" />
         </button>
@@ -149,7 +149,7 @@ const ActivityDock = ({
 };
 
 /**
- * The battle log and chat (ADR-030). Docked beside the table on a wide
+ * The log: what happens at the table, and the chat (ADR-030). Docked beside the table on a wide
  * screen, so play goes on with it open; over the table on a smaller one,
  * and from the bottom on a phone. Its feed keeps v1's ids (`#chatbox`,
  * `#p2Chatbox`).
@@ -180,18 +180,18 @@ export const ActivityPanel = ({
         <header className="ptcgsim-sheet__header">
           <div className="ptcgsim-sheet__heading">
             <h2 id="activityDockTitle" className="ptcgsim-sheet__title">
-              Activity
+              Log
             </h2>
             {status ? (
               <p className="ptcgsim-sheet__description">{status}</p>
             ) : null}
           </div>
           <div className="ptcgsim-sheet__actions">{headerActions}</div>
-          <Tooltip content="Close activity" side="bottom">
+          <Tooltip content="Close log" side="bottom">
             <button
               type="button"
               className="ptcgsim-sheet__close"
-              aria-label="Close activity"
+              aria-label="Close log"
               onClick={() => onOpenChange(false)}
             >
               <XIcon aria-hidden="true" />
@@ -208,7 +208,7 @@ export const ActivityPanel = ({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Activity"
+      title="Log"
       {...(status ? { description: status } : {})}
       headerActions={headerActions}
       placement="side"
@@ -260,20 +260,9 @@ const worthTicking = (
   newsToPlayer(item, ownSeat, solo) || DECLARATIONS.has(item.eventType);
 
 /**
- * What counts toward the unread badge: what the player would not otherwise
- * know, and who came and went.
- */
-const worthCounting = (
-  item: ActivityFeedItem,
-  ownSeat: string | undefined,
-  solo: boolean
-): boolean =>
-  item.eventType === 'Presence' || newsToPlayer(item, ownSeat, solo);
-
-/**
- * The rail's Activity button: a count of what others did and said since
- * the log was last open, and, while it is closed, their newest lines over
- * the table for a few seconds.
+ * The rail's Log button: a count of every line the log gained since it was
+ * last open, the player's own moves too, and, while it is closed, the
+ * other side's newest lines over the table for a few seconds.
  */
 export const ActivityLauncher = ({
   presentation,
@@ -303,9 +292,7 @@ export const ActivityLauncher = ({
   const tickedThrough = useRef(feed.newestItemId ?? -1);
   const unread = open
     ? 0
-    : feed.items.filter(
-        (item) => item.id > seenThrough && worthCounting(item, ownSeat, solo)
-      ).length;
+    : feed.items.filter((item) => item.id > seenThrough).length;
 
   const [ticker, setTicker] = useState<
     readonly { readonly item: ActivityFeedItem; readonly until: number }[]
@@ -353,14 +340,11 @@ export const ActivityLauncher = ({
         </ol>
       ) : null}
       {/* Beside the button: the newest lines rise above it. */}
-      <Tooltip
-        content={open ? 'Hide battle log and chat' : 'Battle log and chat'}
-        side="left"
-      >
+      <Tooltip content={open ? 'Hide log' : 'Log'} side="left">
         <RailButton
           id="activityButton"
           icon={ChatCircleTextIcon}
-          label="Activity"
+          label="Log"
           iconOnly
           badge={unread}
           aria-expanded={open}

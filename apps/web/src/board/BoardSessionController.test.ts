@@ -1230,6 +1230,26 @@ describe('headless board session controller', () => {
     }
   });
 
+  it('lets go of the selected card when it is pressed again, and only then', () => {
+    const state = install();
+    const hand = cardIn(state.scene!, ':hand');
+    const press = (from: BoardSessionControllerState, cardId: ViewCardId) =>
+      apply(from, {
+        kind: 'RendererIntent',
+        intent: { kind: 'CardSelected', cardId, toggle: true },
+      }).state;
+    const selected = press(state, hand);
+    expect(selected.presentation.selectedCardId).toBe(hand);
+    expect(press(selected, hand).presentation.selectedCardId).toBeNull();
+    // Selecting it from code (before an action on it) keeps it selected.
+    expect(select(selected, hand).presentation.selectedCardId).toBe(hand);
+    // Pressing another card moves the selection to it.
+    const other = state.scene!.cards.find(
+      (card) => card.parentId.endsWith(':hand') && card.id !== hand
+    )!.id;
+    expect(press(selected, other).presentation.selectedCardId).toBe(other);
+  });
+
   it('submits a parameterless authority-owned coin flip without clearing selection', () => {
     let state = install();
     const selectedCardId = state.scene?.cards[0]?.id;

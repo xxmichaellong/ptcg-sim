@@ -1534,7 +1534,7 @@ describe('RemoteRoomRoute', () => {
     expect(get('main').dataset.activityDocked).toBe('true');
     // Kept open for the next visit on this device.
     expect(preferences().get(SHELL_PREFERENCES).activityDocked).toBe(true);
-    await click('[aria-label="Close activity"]');
+    await click('[aria-label="Close log"]');
     expect(find('#activitySheet')).toBeNull();
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(get('main').dataset.activityDocked).toBeUndefined();

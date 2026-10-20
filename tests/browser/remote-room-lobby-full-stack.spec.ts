@@ -424,7 +424,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       await expect(
         page
           .locator('#p2Chatbox')
-          .getByText('Red took back their last move!', { exact: true })
+          .getByText('Red took back their last move', { exact: true })
       ).toBeVisible();
     }
     await expect(
