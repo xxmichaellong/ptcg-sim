@@ -1,5 +1,6 @@
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { Drawer } from '@base-ui/react/drawer';
+import { useLingui } from '@lingui/react/macro';
 import { useContext, type ReactNode, type RefObject } from 'react';
 
 import { useCompactLayout } from './breakpoints.js';
@@ -56,6 +57,7 @@ export const Sheet = ({
   id,
   children,
 }: SheetProps) => {
+  const { t } = useLingui();
   const container = useContext(OverlayContainerContext);
   const compact = useCompactLayout();
   const variant = compact ? 'bottom' : placement;
@@ -107,10 +109,16 @@ export const Sheet = ({
               {headerActions ? (
                 <div className="ptcgsim-sheet__actions">{headerActions}</div>
               ) : null}
-              <Tooltip content={withKeyHint('Close', 'Esc')} side="bottom">
+              <Tooltip
+                content={withKeyHint(
+                  t`Close`,
+                  t({ message: 'Esc', context: 'keyboard key' })
+                )}
+                side="bottom"
+              >
                 <Drawer.Close
                   className="ptcgsim-sheet__close"
-                  aria-label="Close"
+                  aria-label={t`Close`}
                 >
                   <XIcon aria-hidden="true" />
                 </Drawer.Close>

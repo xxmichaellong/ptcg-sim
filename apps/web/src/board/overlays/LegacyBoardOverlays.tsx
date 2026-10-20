@@ -18,6 +18,9 @@ import {
   type ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
 import type { Icon } from '@phosphor-icons/react';
+import type { MessageDescriptor } from '@lingui/core';
+import { msg, plural, t } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
 import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
@@ -116,6 +119,7 @@ import {
 } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
 import { useOverlayCardDrag } from './useOverlayCardDrag.js';
+import { ZONE_NAMES } from './zone-names.js';
 import {
   clampZoneBrowserZoom,
   ZONE_BROWSER_PREFERENCES,
@@ -270,17 +274,17 @@ export const selectLegacyContextEntries = (
     if (!permitsReplayDisclosure) return [];
     if (location.kind === 'prizes') {
       return [
-        header('prizes', 'Prizes'),
-        action('revealPrizes', 'Reveal/hide prizes'),
-        action('togglePrizes', 'Look/cover prizes'),
-        action('revealCard', 'Reveal/hide card'),
+        header('prizes', t({ message: 'Prizes', context: 'zone' })),
+        action('revealPrizes', t`Reveal/hide prizes`),
+        action('togglePrizes', t`Look/cover prizes`),
+        action('revealCard', t`Reveal/hide card`),
       ];
     }
     if (location.kind === 'hand' && opponent) {
       return [
-        header('hand', 'Hand'),
-        action('toggleOpponentHand', 'Look/cover hand'),
-        action('revealCard', 'Reveal/hide card'),
+        header('hand', t({ message: 'Hand', context: 'zone' })),
+        action('toggleOpponentHand', t`Look/cover hand`),
+        action('revealCard', t`Reveal/hide card`),
       ];
     }
     return [];
@@ -293,66 +297,69 @@ export const selectLegacyContextEntries = (
     location.kind === 'stadium' ||
     location.kind === 'discard'
   ) {
-    entries.push(action('toggleAbility', 'Toggle ability/effect'));
+    entries.push(action('toggleAbility', t`Toggle ability/effect`));
   }
   if (location.kind === 'active' || location.kind === 'bench') {
-    entries.push(action('setDamage', 'Damage counter'));
+    entries.push(action('setDamage', t`Damage counter`));
   }
   if (location.kind === 'active') {
-    entries.push(action('setSpecialCondition', 'Special condition'));
+    entries.push(action('setSpecialCondition', t`Special condition`));
   }
   if (location.kind === 'prizes') {
-    entries.push(header('prizes', 'Prizes'));
-    if (own) entries.push(action('shufflePrizes', 'Shuffle prizes'));
+    entries.push(header('prizes', t({ message: 'Prizes', context: 'zone' })));
+    if (own) entries.push(action('shufflePrizes', t`Shuffle prizes`));
     entries.push(
-      action('revealPrizes', 'Reveal/hide prizes'),
-      action('togglePrizes', 'Look/cover prizes')
+      action('revealPrizes', t`Reveal/hide prizes`),
+      action('togglePrizes', t`Look/cover prizes`)
     );
     if (own) {
       entries.push(
-        action('shufflePrizesToDeckBottom', 'Shuffle to deck (bottom)')
+        action('shufflePrizesToDeckBottom', t`Shuffle to deck (bottom)`)
       );
     }
   }
   if (location.kind === 'hand') {
-    entries.push(header('hand', 'Hand'));
+    entries.push(header('hand', t({ message: 'Hand', context: 'zone' })));
     if (own) {
       entries.push(
-        action('discardHand', 'Discard hand'),
-        action('shuffleHandToDeck', 'Shuffle hand to deck'),
-        action('shuffleHandToDeckBottom', 'Shuffle hand to bottom')
+        action('discardHand', t`Discard hand`),
+        action('shuffleHandToDeck', t`Shuffle hand to deck`),
+        action('shuffleHandToDeckBottom', t`Shuffle hand to bottom`)
       );
     } else if (opponent) {
       entries.push(
-        action('toggleOpponentHand', 'Look/cover hand'),
-        action('randomOpponentHandCard', 'Pick random card')
+        action('toggleOpponentHand', t`Look/cover hand`),
+        action('randomOpponentHandCard', t`Pick random card`)
       );
     }
   }
   if (location.kind === 'deck') {
-    entries.push(header('deck', 'Deck'), action('shuffleDeck', 'Shuffle deck'));
-    if (own) entries.push(action('drawCards', 'Draw card(s)'));
     entries.push(
-      action('viewDeckTop', 'View top card(s)'),
-      action('viewDeckBottom', 'View bottom card(s)')
+      header('deck', t({ message: 'Deck', context: 'zone' })),
+      action('shuffleDeck', t`Shuffle deck`)
+    );
+    if (own) entries.push(action('drawCards', t`Draw card(s)`));
+    entries.push(
+      action('viewDeckTop', t`View top card(s)`),
+      action('viewDeckBottom', t`View bottom card(s)`)
     );
   }
   if (location.kind === 'board') {
     entries.push(
-      header('board', 'Playboard'),
-      action('discardBoard', 'Discard all'),
-      action('moveBoardToHand', 'Move all to hand'),
-      action('shuffleBoardToDeck', 'Shuffle all to deck'),
-      action('moveBoardToLostZone', 'Lost Zone all')
+      header('board', t({ message: 'Playboard', context: 'zone' })),
+      action('discardBoard', t`Discard all`),
+      action('moveBoardToHand', t`Move all to hand`),
+      action('shuffleBoardToDeck', t`Shuffle all to deck`),
+      action('moveBoardToLostZone', t`Lost Zone all`)
     );
   }
 
   entries.push(
-    action('moveCard', 'Move card...', true),
-    action('revealCard', 'Reveal/hide card')
+    action('moveCard', t`Move card...`, true),
+    action('revealCard', t`Reveal/hide card`)
   );
   if (location.kind === 'active' || location.kind === 'bench') {
-    entries.push(action('changeCardType', 'Change type...'));
+    entries.push(action('changeCardType', t`Change type...`));
   }
   return entries;
 };
@@ -569,7 +576,7 @@ const contextActionHint = (
 
 interface ContextSubmenuChoice<Value extends string> {
   readonly value: Value;
-  readonly label: string;
+  readonly label: MessageDescriptor;
   readonly icon: Icon;
   /** The shortcut its keyboard hint shows. */
   readonly shortcut: HotkeyActionId;
@@ -600,9 +607,18 @@ const CATEGORY_CHOICE_ICONS = {
   Pokémon: PawPrintIcon,
 } as const satisfies Readonly<Record<LegacyBoardCategoryChoice, Icon>>;
 
+/** "Change type..." turns the card into one of these. */
+const CATEGORY_CHOICE_LABELS = {
+  Energy: msg({ message: 'to Energy', context: 'change a card into' }),
+  Trainer: msg({ message: 'to Tool', context: 'change a card into' }),
+  Pokémon: msg({ message: 'to Pokémon', context: 'change a card into' }),
+} as const satisfies Readonly<
+  Record<LegacyBoardCategoryChoice, MessageDescriptor>
+>;
+
 const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategoryChoice>[] =
   LEGACY_BOARD_CATEGORY_CHOICES.map((category) => {
-    const label = category === 'Trainer' ? 'to Tool' : `to ${category}`;
+    const label = CATEGORY_CHOICE_LABELS[category];
     return {
       value: category,
       label,
@@ -612,12 +628,16 @@ const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategor
   });
 
 const MOVE_CHOICE_LABELS = {
-  board: 'to Board',
-  deckTop: 'to Deck (top)',
-  deckBottom: 'to Deck (bottom)',
-  deckSwitch: 'to Deck (switch)',
-  deckShuffle: 'to Deck (shuffle)',
-} as const satisfies Readonly<Record<LegacyBoardMoveChoice, string>>;
+  board: msg({ message: 'to Board', context: 'move a card' }),
+  deckTop: msg({ message: 'to Deck (top)', context: 'move a card' }),
+  deckBottom: msg({ message: 'to Deck (bottom)', context: 'move a card' }),
+  deckSwitch: msg({
+    message: 'to Deck (switch)',
+    context: 'move a card',
+    comment: 'Swaps the card with the top card of the deck.',
+  }),
+  deckShuffle: msg({ message: 'to Deck (shuffle)', context: 'move a card' }),
+} as const satisfies Readonly<Record<LegacyBoardMoveChoice, MessageDescriptor>>;
 
 const MOVE_CHOICE_SHORTCUTS = {
   board: 'card.toBoard',
@@ -690,6 +710,7 @@ const ContextSubmenu = <Value extends string>({
   readonly onOpenChange: (open: boolean) => void;
   readonly onSelect: (value: Value) => void;
 }) => {
+  const { i18n } = useLingui();
   const trigger = useRef<HTMLButtonElement>(null);
   const submenu = useRef<HTMLUListElement>(null);
   const [placement, setPlacement] = useState<SubmenuPlacement>({
@@ -824,7 +845,10 @@ const ContextSubmenu = <Value extends string>({
               data-menu-hint={choice.hint}
               onClick={() => onSelect(choice.value)}
             >
-              <MenuItemContent icon={choice.icon} label={choice.label} />
+              <MenuItemContent
+                icon={choice.icon}
+                label={i18n._(choice.label)}
+              />
             </button>
           </li>
         ))}
@@ -925,6 +949,7 @@ const ContextMenu = ({
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  const { t, i18n } = useLingui();
   const container = useRef<HTMLDivElement>(null);
   const keymap = useKeymap();
   const [openSubmenu, setOpenSubmenu] = useState<
@@ -933,9 +958,11 @@ const ContextMenu = ({
   const dismiss = useCallback(() => actions.dismiss('context'), [actions]);
   const entries = useMemo(
     () => selectLegacyContextEntries(state, card),
-    [card, state]
+    // Worded in the language shown.
+    [card, state, i18n.locale]
   );
   const own = isOwnLocation(state, card);
+  const cardName = card.label;
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'menu');
@@ -1030,7 +1057,7 @@ const ContextMenu = ({
       data-legacy-card-context-menu="true"
       data-context-card-id={card.id}
       role="menu"
-      aria-label={`Actions for ${card.label}`}
+      aria-label={t`Actions for ${cardName}`}
       tabIndex={-1}
       style={position}
       onContextMenu={(event) => event.preventDefault()}
@@ -1063,14 +1090,14 @@ const ContextMenu = ({
             >
               <MenuItemContent
                 icon={CardsIcon}
-                label="Assemble / attach to a card…"
+                label={t`Assemble / attach to a card…`}
               />
             </button>
           </li>
         ) : null}
         {entries.length === 0 ? (
           <li className="ptcgsim-legacy-context-empty" role="none">
-            No actions available
+            <Trans>No actions available</Trans>
           </li>
         ) : (
           entries.map((entry) =>
@@ -1087,7 +1114,7 @@ const ContextMenu = ({
                 key={entry.id}
                 entry={entry}
                 open={openSubmenu === 'moveCard'}
-                ariaLabel="Move card"
+                ariaLabel={t`Move card`}
                 choiceKind="move"
                 choices={withHints(MOVE_SUBMENU_CHOICES, keymap)}
                 onOpenChange={(open) =>
@@ -1102,7 +1129,7 @@ const ContextMenu = ({
                 key={entry.id}
                 entry={entry}
                 open={openSubmenu === 'changeCardType'}
-                ariaLabel="Change card type"
+                ariaLabel={t`Change card type`}
                 choiceKind="category"
                 choices={withHints(CATEGORY_SUBMENU_CHOICES, keymap)}
                 onOpenChange={(open) =>
@@ -1171,14 +1198,16 @@ export const stackPreviewFrameStyle = (
   );
 
 /** The zone browser's visible title for each kind of pile. */
-const ZONE_BROWSER_TITLES: Partial<Record<ZoneSceneNode['kind'], string>> = {
-  deck: 'Deck',
-  discard: 'Discard pile',
-  prizes: 'Prizes',
-  lostZone: 'Lost Zone',
-  hand: 'Hand',
-  board: 'Board',
-  stadium: 'Stadium',
+const ZONE_BROWSER_TITLES: Partial<
+  Record<ZoneSceneNode['kind'], MessageDescriptor>
+> = {
+  deck: ZONE_NAMES.deck,
+  discard: ZONE_NAMES.discard,
+  prizes: ZONE_NAMES.prizes,
+  lostZone: ZONE_NAMES.lostZone,
+  hand: ZONE_NAMES.hand,
+  board: ZONE_NAMES.board,
+  stadium: ZONE_NAMES.stadium,
 };
 
 /**
@@ -1213,16 +1242,19 @@ export const zoneCopyCounts = (
 const OverlayCloseButton = ({
   className,
   ...props
-}: Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'type'>) => (
-  <button
-    type="button"
-    aria-label="Close"
-    {...props}
-    className={`ptcgsim-overlay-button ptcgsim-overlay-close${className ? ` ${className}` : ''}`}
-  >
-    <XIcon aria-hidden="true" weight="bold" />
-  </button>
-);
+}: Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'type'>) => {
+  const { t } = useLingui();
+  return (
+    <button
+      type="button"
+      aria-label={t`Close`}
+      {...props}
+      className={`ptcgsim-overlay-button ptcgsim-overlay-close${className ? ` ${className}` : ''}`}
+    >
+      <XIcon aria-hidden="true" weight="bold" />
+    </button>
+  );
+};
 
 /**
  * "Board": one click puts a big panel aside so the table can be read
@@ -1238,34 +1270,43 @@ const ShowBoardButton = ({
   /** What the way back returns to: "Deck", "Looking at cards". */
   readonly panelName: string;
   readonly onShowingBoardChange: (showingBoard: boolean) => void;
-}) => (
-  // The eye says what "Board" does, and the tooltip says it in full. The
-  // way back names itself.
-  <Tooltip
-    content="See the table without closing this"
-    side="bottom"
-    disabled={showingBoard}
-  >
-    <button
-      type="button"
-      className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
-      aria-pressed={showingBoard}
-      onClick={() => onShowingBoardChange(!showingBoard)}
+}) => {
+  const { t } = useLingui();
+  return (
+    // The eye says what "Board" does, and the tooltip says it in full. The
+    // way back names itself.
+    <Tooltip
+      content={t`See the table without closing this`}
+      side="bottom"
+      disabled={showingBoard}
     >
-      {showingBoard ? (
-        <>
-          <ArrowUUpLeftIcon aria-hidden="true" />
-          Back to {panelName}
-        </>
-      ) : (
-        <>
-          <EyeIcon aria-hidden="true" />
-          Board
-        </>
-      )}
-    </button>
-  </Tooltip>
-);
+      <button
+        type="button"
+        className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
+        aria-pressed={showingBoard}
+        onClick={() => onShowingBoardChange(!showingBoard)}
+      >
+        {showingBoard ? (
+          <>
+            <ArrowUUpLeftIcon aria-hidden="true" />
+            <Trans
+              comment={
+                '{panelName} is the window to go back to, such as "Deck" or "Looking at cards".'
+              }
+            >
+              Back to {panelName}
+            </Trans>
+          </>
+        ) : (
+          <>
+            <EyeIcon aria-hidden="true" />
+            <Trans context="see the table behind a window">Board</Trans>
+          </>
+        )}
+      </button>
+    </Tooltip>
+  );
+};
 
 const OverlayCardImage = ({
   card,
@@ -1432,6 +1473,7 @@ const Preview = ({
   readonly source: RefObject<PreviewSource | null>;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  const { t } = useLingui();
   const container = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLSpanElement>(null);
   const tiltTarget = useRef<HTMLSpanElement>(null);
@@ -1516,6 +1558,10 @@ const Preview = ({
   };
 
   if (composition && cards.length > 1 && !showPieces && !individualCardId) {
+    const compositionName = cards[0]?.label;
+    const shownPieces = artworkCards.length;
+    const join = artworkCards[0]?.presentation?.join;
+    const totalPieces = join ? join.columns * join.rows : shownPieces;
     const fitted = fitCardComposition(composition, {
       x: 0,
       y: 0,
@@ -1530,7 +1576,11 @@ const Preview = ({
         data-preview-kind="composition"
         role="dialog"
         aria-modal="true"
-        aria-label={`${cards[0]?.label ?? 'Card'} assembled preview`}
+        aria-label={
+          compositionName
+            ? t`${compositionName} assembled preview`
+            : t`Card assembled preview`
+        }
         tabIndex={-1}
         data-preview-focus="true"
         onKeyDown={onKeyDown}
@@ -1547,7 +1597,8 @@ const Preview = ({
             data-preview-tabbable="true"
             onClick={() => setShowPieces(true)}
           >
-            <SquaresFourIcon aria-hidden="true" /> View individual cards
+            <SquaresFourIcon aria-hidden="true" />{' '}
+            <Trans>View individual cards</Trans>
           </button>
         </div>
         <div
@@ -1578,9 +1629,19 @@ const Preview = ({
         </div>
         <p className="ptcgsim-composition-caption">
           {composition.kind === 'joined'
-            ? `${artworkCards.length} of ${artworkCards[0]!.presentation!.join!.columns * artworkCards[0]!.presentation!.join!.rows} pieces`
-            : 'Evolution and previous stage'}{' '}
-          · Use View individual cards to inspect each piece and its attachments.
+            ? t({
+                message: `${shownPieces} of ${plural(totalPieces, {
+                  one: '# piece',
+                  other: '# pieces',
+                })} · Use View individual cards to inspect each piece and its attachments.`,
+                comment:
+                  'A card made of several pieces (a V-UNION); "View individual cards" is a button beside it.',
+              })
+            : t({
+                message:
+                  'Evolution and previous stage · Use View individual cards to inspect each piece and its attachments.',
+                comment: '"View individual cards" is a button beside it.',
+              })}
         </p>
       </div>
     );
@@ -1594,7 +1655,7 @@ const Preview = ({
       data-preview-dragging-card={draggingCardId}
       role="dialog"
       aria-modal="true"
-      aria-label={readingCard?.label ?? 'Card preview'}
+      aria-label={readingCard?.label ?? t`Card preview`}
       tabIndex={-1}
       data-preview-focus="true"
       data-landscape={
@@ -1612,7 +1673,7 @@ const Preview = ({
       >
         <OverlayCloseButton
           data-preview-tabbable="true"
-          aria-label="Close card preview"
+          aria-label={t`Close card preview`}
           onClick={dismiss}
         />
         {canModify &&
@@ -1627,7 +1688,7 @@ const Preview = ({
             data-preview-tabbable="true"
             onClick={() => actions.separateCard?.(readingCard.id)}
           >
-            Separate this card to hand
+            <Trans>Separate this card to hand</Trans>
           </button>
         ) : null}
         {individualCardId ? (
@@ -1640,7 +1701,7 @@ const Preview = ({
               setShowPieces(false);
             }}
           >
-            View assembled card
+            <Trans>View assembled card</Trans>
           </button>
         ) : null}
       </div>
@@ -1675,7 +1736,7 @@ const Preview = ({
       data-preview-dragging-card={draggingCardId}
       role="dialog"
       aria-modal="true"
-      aria-label="Card stack preview"
+      aria-label={t`Card stack preview`}
       data-overlay-side={cards[0]?.side}
       tabIndex={-1}
       data-preview-focus="true"
@@ -1701,53 +1762,62 @@ const Preview = ({
             data-preview-tabbable="true"
             onClick={() => setShowPieces(false)}
           >
-            View assembled card
+            <Trans>View assembled card</Trans>
           </button>
           <OverlayCloseButton data-preview-tabbable="true" onClick={dismiss} />
         </div>
       ) : null}
-      {cards.map((card) => (
-        <button
-          key={card.id}
-          type="button"
-          className="ptcgsim-legacy-stack-preview-card"
-          data-stack-preview-card-id={card.id}
-          data-motion-origin={card.id}
-          aria-label={`Preview ${card.label}`}
-          // Keep focus on the stack view itself (its keyboard boundary and
-          // Escape handling live there, and v1's stack view has no tab stops);
-          // a click still opens the card.
-          tabIndex={composition ? 0 : -1}
-          data-preview-tabbable={composition ? 'true' : undefined}
-          data-armed={drag.armedCardId === card.id ? 'true' : undefined}
-          draggable={false}
-          onMouseDown={(event) => event.preventDefault()}
-          onPointerDown={(event) => drag.onPointerDown(event, card)}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (drag.consumeClick(card.id) && event.detail > 0) return;
-            if (composition) setIndividualCardId(card.id);
-            else actions.previewCard?.(card.id);
-          }}
-        >
-          <OverlayCardImage card={card} variant="stack" />
-        </button>
-      ))}
+      {cards.map((card) => {
+        const cardName = card.label;
+        return (
+          <button
+            key={card.id}
+            type="button"
+            className="ptcgsim-legacy-stack-preview-card"
+            data-stack-preview-card-id={card.id}
+            data-motion-origin={card.id}
+            aria-label={t({
+              message: `Preview ${cardName}`,
+              comment: '{cardName} is a card; the button opens it large.',
+            })}
+            // Keep focus on the stack view itself (its keyboard boundary and
+            // Escape handling live there, and v1's stack view has no tab stops);
+            // a click still opens the card.
+            tabIndex={composition ? 0 : -1}
+            data-preview-tabbable={composition ? 'true' : undefined}
+            data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+            draggable={false}
+            onMouseDown={(event) => event.preventDefault()}
+            onPointerDown={(event) => drag.onPointerDown(event, card)}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (drag.consumeClick(card.id) && event.detail > 0) return;
+              if (composition) setIndividualCardId(card.id);
+              else actions.previewCard?.(card.id);
+            }}
+          >
+            <OverlayCardImage card={card} variant="stack" />
+          </button>
+        );
+      })}
     </div>
   );
 };
 
 const zoneAction = (
   zone: ZoneSceneNode
-): { readonly id: LegacyBoardZoneActionId; readonly label: string } | null =>
+): {
+  readonly id: LegacyBoardZoneActionId;
+  readonly label: MessageDescriptor;
+} | null =>
   zone.kind === 'deck'
-    ? { id: 'shuffleDeck', label: 'Shuffle' }
+    ? {
+        id: 'shuffleDeck',
+        label: msg({ message: 'Shuffle', context: 'shuffle the deck' }),
+      }
     : zone.kind === 'discard'
-      ? { id: 'shuffleDiscardToDeck', label: 'Shuffle all to Deck' }
+      ? { id: 'shuffleDiscardToDeck', label: msg`Shuffle all to Deck` }
       : null;
-
-const DISCARD_SHUFFLE_CONFIRMATION =
-  'Are you sure you want to shuffle all cards into the deck?';
 
 /**
  * Produces a paint-only ordering from data already disclosed in the scene, in
@@ -1810,6 +1880,16 @@ export const resolveOpenedZoneDropTarget = (
   return resolveBoardDropTarget(scene, sourceCardId, point.x, point.y);
 };
 
+/** A stacked tile's name: "Pikachu, 3 copies". */
+const copiesLabel = (cardName: string, copies: number): string =>
+  t({
+    message: `${cardName}, ${plural(copies, {
+      one: '# copy',
+      other: '# copies',
+    })}`,
+    comment: '{cardName} is a card shown once for all its copies.',
+  });
+
 /**
  * A pile opened for browsing (deck, discard, Lost Zone, prizes, ...): a modal
  * panel over most of the board whose cards are drawn large enough to read,
@@ -1838,6 +1918,7 @@ const ZoneBrowser = ({
   ) => void;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  const { t, i18n } = useLingui();
   const container = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
@@ -1865,9 +1946,9 @@ const ZoneBrowser = ({
     const question = new AbortController();
     shuffleConfirmation.current = question;
     void confirmAction({
-      title: 'Shuffle all to Deck?',
-      body: DISCARD_SHUFFLE_CONFIRMATION,
-      confirmLabel: 'Shuffle',
+      title: t`Shuffle all to Deck?`,
+      body: t`Are you sure you want to shuffle all cards into the deck?`,
+      confirmLabel: t({ message: 'Shuffle', context: 'shuffle the deck' }),
       tone: 'danger',
       signal: question.signal,
       // Back to the button if the pile is still open; once the answer has
@@ -1917,7 +1998,11 @@ const ZoneBrowser = ({
     [cards, stackCopies]
   );
   const layout = zoneBrowserLayout(board, tileCount, zoom);
-  const title = ZONE_BROWSER_TITLES[zone.kind] ?? zone.label;
+  const percent = Math.round(zoom * 100);
+  const titleName = ZONE_BROWSER_TITLES[zone.kind];
+  const title = titleName ? i18n._(titleName) : zone.label;
+  const zoneName = zone.label;
+  const count = zone.count;
   const owner =
     zone.playerId !== null
       ? state.view?.players[zone.playerId]?.displayName
@@ -1967,7 +2052,13 @@ const ZoneBrowser = ({
         aria-modal={obscured ? undefined : 'true'}
         aria-hidden={obscured ? 'true' : undefined}
         inert={obscured ? true : undefined}
-        aria-label={`${zone.label}, ${zone.count} cards`}
+        aria-label={t({
+          message: `${zoneName}, ${plural(count, {
+            one: '# card',
+            other: '# cards',
+          })}`,
+          comment: '{zoneName} names a pile, such as "Your deck".',
+        })}
         data-overlay-side={zone.side}
         tabIndex={-1}
         style={panelStyle(layout, '--ptcgsim-zone-card-height')}
@@ -1991,7 +2082,7 @@ const ZoneBrowser = ({
           <div className="ptcgsim-overlay-heading">
             <h2 className="ptcgsim-overlay-title">{title}</h2>
             <span className="ptcgsim-overlay-count">
-              {zone.count} {zone.count === 1 ? 'card' : 'cards'}
+              {t`${plural(count, { one: '# card', other: '# cards' })}`}
             </span>
             {owner ? (
               <span className={`ptcgsim-overlay-seat is-${tone}`}>{owner}</span>
@@ -2007,12 +2098,12 @@ const ZoneBrowser = ({
                 onClick={() => invokePrimaryAction(primary.id)}
               >
                 <ShuffleIcon aria-hidden="true" />
-                {primary.label}
+                {i18n._(primary.label)}
               </button>
             ) : null}
             <Tooltip
               content={
-                sortEnabled ? 'Back to pile order' : 'Sort in decklist order'
+                sortEnabled ? t`Back to pile order` : t`Sort in decklist order`
               }
               side="bottom"
             >
@@ -2026,15 +2117,15 @@ const ZoneBrowser = ({
                   }
                 />
                 <SortAscendingIcon aria-hidden="true" weight="bold" />
-                Sort
+                <Trans context="sort the cards in a pile">Sort</Trans>
               </label>
             </Tooltip>
             {copies.size > 0 ? (
               <Tooltip
                 content={
                   stackCopies
-                    ? 'Show every copy on its own'
-                    : 'Stack copies of a card together'
+                    ? t`Show every copy on its own`
+                    : t`Stack copies of a card together`
                 }
                 side="bottom"
               >
@@ -2043,7 +2134,7 @@ const ZoneBrowser = ({
                   className="ptcgsim-overlay-toggle"
                   data-zone-action="stackCopies"
                   aria-pressed={stackCopies}
-                  aria-label="Stack copies"
+                  aria-label={t`Stack copies`}
                   onClick={() =>
                     preferences().set(ZONE_BROWSER_PREFERENCES, {
                       ...preferences().get(ZONE_BROWSER_PREFERENCES),
@@ -2052,14 +2143,22 @@ const ZoneBrowser = ({
                   }
                 >
                   <StackIcon aria-hidden="true" weight="bold" />
-                  Stack
+                  <Trans context="stack copies of a card">Stack</Trans>
                 </button>
               </Tooltip>
             ) : null}
             <ShowBoardButton
               showingBoard={showingBoard}
               // "Back to Board" would read as the table itself.
-              panelName={zone.kind === 'board' ? 'board cards' : title}
+              panelName={
+                zone.kind === 'board'
+                  ? t({
+                      message: 'board cards',
+                      comment:
+                        'In "Back to board cards": the cards on the board.',
+                    })
+                  : title
+              }
               onShowingBoardChange={setShowingBoard}
             />
             <OverlayCloseButton
@@ -2073,14 +2172,14 @@ const ZoneBrowser = ({
           <div
             className="ptcgsim-browser-zoom"
             role="group"
-            aria-label="Card size"
+            aria-label={t`Card size`}
           >
-            <Tooltip content="Smaller cards" side="bottom">
+            <Tooltip content={t`Smaller cards`} side="bottom">
               <button
                 type="button"
                 className="ptcgsim-browser-zoom-step"
                 data-zone-action="zoomOut"
-                aria-label="Smaller cards"
+                aria-label={t`Smaller cards`}
                 disabled={zoom <= ZONE_BROWSER_ZOOM_MIN}
                 onClick={() => setZoom(zoom - ZONE_BROWSER_ZOOM_STEP)}
               >
@@ -2091,8 +2190,8 @@ const ZoneBrowser = ({
               type="range"
               className="ptcgsim-browser-zoom-slider"
               data-zone-action="zoom"
-              aria-label="Card size"
-              aria-valuetext={`${Math.round(zoom * 100)}%`}
+              aria-label={t`Card size`}
+              aria-valuetext={`${percent}%`}
               min={ZONE_BROWSER_ZOOM_MIN * 100}
               max={ZONE_BROWSER_ZOOM_MAX * 100}
               step={ZONE_BROWSER_ZOOM_STEP * 100}
@@ -2101,24 +2200,24 @@ const ZoneBrowser = ({
                 setZoom(Number(event.currentTarget.value) / 100)
               }
             />
-            <Tooltip content="Larger cards" side="bottom">
+            <Tooltip content={t`Larger cards`} side="bottom">
               <button
                 type="button"
                 className="ptcgsim-browser-zoom-step"
                 data-zone-action="zoomIn"
-                aria-label="Larger cards"
+                aria-label={t`Larger cards`}
                 disabled={zoom >= ZONE_BROWSER_ZOOM_MAX}
                 onClick={() => setZoom(zoom + ZONE_BROWSER_ZOOM_STEP)}
               >
                 <MagnifyingGlassPlusIcon aria-hidden="true" weight="bold" />
               </button>
             </Tooltip>
-            <Tooltip content="Back to 100%" side="bottom">
+            <Tooltip content={t`Back to 100%`} side="bottom">
               <button
                 type="button"
                 className="ptcgsim-browser-zoom-value"
                 data-zone-action="zoomReset"
-                aria-label={`Card size ${Math.round(zoom * 100)}%, back to 100%`}
+                aria-label={t`Card size ${percent}%, back to 100%`}
                 onClick={() => setZoom(1)}
               >
                 {Math.round(zoom * 100)}%
@@ -2128,7 +2227,9 @@ const ZoneBrowser = ({
         </div>
         <div className="ptcgsim-legacy-zone-cards">
           {renderedCards.length === 0 ? (
-            <p className="ptcgsim-overlay-empty">No cards here</p>
+            <p className="ptcgsim-overlay-empty">
+              <Trans>No cards here</Trans>
+            </p>
           ) : null}
           {tiles.map(({ card, count }) => (
             <button
@@ -2140,7 +2241,7 @@ const ZoneBrowser = ({
               data-copy-stack={count > 1 ? count : undefined}
               data-armed={drag.armedCardId === card.id ? 'true' : undefined}
               aria-label={
-                count > 1 ? `${card.label}, ${count} copies` : card.label
+                count > 1 ? copiesLabel(card.label, count) : card.label
               }
               aria-pressed={state.presentation.selectedCardId === card.id}
               draggable={false}
@@ -2216,6 +2317,18 @@ const ZoneBrowser = ({
   );
 };
 
+/** What each work-area button says. */
+const WORK_AREA_ACTION_LABELS: Readonly<
+  Record<LegacyBoardWorkAreaActionId, MessageDescriptor>
+> = {
+  discardAll: msg`Discard all`,
+  shuffleAll: msg`Shuffle all`,
+  shuffleBottom: msg`Shuffle to bottom`,
+  lostZoneAll: msg`Lost Zone all`,
+  toHand: msg`To Hand`,
+  leaveInPlay: msg`Leave in play`,
+};
+
 /** The icon on each work-area button. */
 const WORK_AREA_ACTION_ICONS: Readonly<
   Record<LegacyBoardWorkAreaActionId, Icon>
@@ -2261,6 +2374,7 @@ const WorkAreaPanel = ({
   ) => void;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  const { t, i18n } = useLingui();
   const container = useRef<HTMLElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [showingBoard, setShowingBoard] = useState(false);
@@ -2273,12 +2387,13 @@ const WorkAreaPanel = ({
   // Solo's player works the other seat's window too: card by card as well
   // as all at once.
   const controls = own || allowOpponentResolution;
-  const heading =
+  // The way back names the panel without its trailing dots.
+  const [heading, panelName] =
     zone.kind === 'inspection'
-      ? 'Looking at cards...'
+      ? [t`Looking at cards...`, t`Looking at cards`]
       : controls
-        ? 'Move attached cards'
-        : 'Opponent moving cards...';
+        ? [t`Move attached cards`, t`Move attached cards`]
+        : [t`Opponent moving cards...`, t`Opponent moving cards`];
   const emit = actions.emitCardIntent;
   const interactive = controls && state.canSubmitCommands && emit !== undefined;
   const drag = useOverlayCardDrag({
@@ -2305,8 +2420,9 @@ const WorkAreaPanel = ({
   const hint = controls
     ? undefined
     : zone.kind === 'inspection'
-      ? 'Your opponent is looking at these cards'
-      : 'Your opponent is moving these cards';
+      ? t`Your opponent is looking at these cards`
+      : t`Your opponent is moving these cards`;
+  const count = cards.length;
 
   return (
     <section
@@ -2325,14 +2441,14 @@ const WorkAreaPanel = ({
             {heading}
           </h2>
           <span className="ptcgsim-overlay-count">
-            {cards.length} {cards.length === 1 ? 'card' : 'cards'}
+            {t`${plural(count, { one: '# card', other: '# cards' })}`}
           </span>
           {hint ? <span className="ptcgsim-overlay-hint">{hint}</span> : null}
         </div>
         <div className="ptcgsim-overlay-actions">
           <ShowBoardButton
             showingBoard={showingBoard}
-            panelName={heading.replace(/\.+$/u, '')}
+            panelName={panelName}
             onShowingBoardChange={setShowingBoard}
           />
         </div>
@@ -2400,14 +2516,15 @@ const WorkAreaPanel = ({
         <div className="ptcgsim-legacy-work-area-buttons">
           {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
             const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
+            const label = i18n._(WORK_AREA_ACTION_LABELS[button.id]);
             // A narrow panel shows only the icons; the tooltip names each.
             return (
-              <Tooltip key={button.id} content={button.label} side="top">
+              <Tooltip key={button.id} content={label} side="top">
                 <button
                   type="button"
                   className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
                   data-work-area-action={button.id}
-                  aria-label={button.label}
+                  aria-label={label}
                   onClick={() =>
                     own
                       ? actions.invokeWorkAreaAction?.(source, button.id)
@@ -2420,7 +2537,7 @@ const WorkAreaPanel = ({
                 >
                   <ActionIcon aria-hidden="true" />
                   <span className="ptcgsim-work-area-button-label">
-                    {button.label}
+                    {label}
                   </span>
                 </button>
               </Tooltip>
@@ -2503,6 +2620,7 @@ const MarkerEditor = ({
   readonly depth?: BoardDepthProjection;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
+  const { t } = useLingui();
   const input = state.overlays.input;
   const logicalMarker = markerEditorMarker(state);
   const marker =
@@ -2572,7 +2690,7 @@ const MarkerEditor = ({
       data-marker-card-id={input.cardId}
       role="textbox"
       aria-label={
-        input.kind === 'damage' ? 'Damage counter' : 'Special condition'
+        input.kind === 'damage' ? t`Damage counter` : t`Special condition`
       }
       aria-invalid={invalid}
       contentEditable
@@ -2638,8 +2756,8 @@ const MarkerEditor = ({
   // has been refused, it says what it accepts.
   const hint = invalid
     ? input.kind === 'damage'
-      ? 'A whole number, up to 9990'
-      : 'At most 16 characters'
+      ? t`A whole number, up to 9990`
+      : t`At most 16 characters`
     : undefined;
   const board = state.scene?.viewport;
   const hintCenter = marker.bounds.x + marker.bounds.width / 2;
@@ -2698,15 +2816,22 @@ const CountPrompt = ({
   }, [actions]);
   useEffect(() => {
     const question = new AbortController();
+    const view = VIEW_COUNT_ACTIONS.has(input.action);
     void promptValue({
-      title: input.message,
-      label: 'Number of cards',
+      title: view
+        ? t`How many cards do you want to look at?`
+        : t`Draw how many cards?`,
+      label: t`Number of cards`,
       defaultValue: input.initialValue,
       inputMode: 'numeric',
-      submitLabel: VIEW_COUNT_ACTIONS.has(input.action) ? 'View' : 'Draw',
+      submitLabel: view
+        ? t({ message: 'View', context: 'look at cards from the deck' })
+        : t({ message: 'Draw', context: 'draw cards' }),
       validate: (value) =>
         parseLegacyCountInput(value, input.minimum) === undefined
-          ? input.invalidMessage
+          ? view
+            ? t`Please enter a valid number for the view amount.`
+            : t`Please enter a valid number for the draw amount.`
           : null,
       signal: question.signal,
     }).then((value) => {

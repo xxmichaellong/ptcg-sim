@@ -10,6 +10,9 @@
  * always done (`event.key === 'd' || event.code === 'KeyD'`).
  */
 
+import { i18n, type MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
+
 export interface KeyChord {
   readonly key: string;
   readonly ctrl: boolean;
@@ -248,18 +251,22 @@ export const detectKeyboardPlatform = (): KeyboardPlatform => {
   return /mac|iphone|ipad|ipod/iu.test(platform) ? 'mac' : 'other';
 };
 
-const KEY_LABELS: Readonly<Record<string, string>> = {
-  space: 'Space',
-  enter: 'Enter',
-  escape: 'Esc',
-  tab: 'Tab',
-  backspace: 'Backspace',
-  delete: 'Delete',
-  insert: 'Insert',
-  home: 'Home',
-  end: 'End',
-  pageup: 'Page Up',
-  pagedown: 'Page Down',
+/**
+ * The words printed on keys, in the player's language (a German keyboard
+ * reads Leertaste and Entf). Arrows and symbols read the same everywhere.
+ */
+const KEY_LABELS: Readonly<Record<string, MessageDescriptor | string>> = {
+  space: msg({ message: 'Space', context: 'keyboard key' }),
+  enter: msg({ message: 'Enter', context: 'keyboard key' }),
+  escape: msg({ message: 'Esc', context: 'keyboard key' }),
+  tab: msg({ message: 'Tab', context: 'keyboard key' }),
+  backspace: msg({ message: 'Backspace', context: 'keyboard key' }),
+  delete: msg({ message: 'Delete', context: 'keyboard key' }),
+  insert: msg({ message: 'Insert', context: 'keyboard key' }),
+  home: msg({ message: 'Home', context: 'keyboard key' }),
+  end: msg({ message: 'End', context: 'keyboard key' }),
+  pageup: msg({ message: 'Page Up', context: 'keyboard key' }),
+  pagedown: msg({ message: 'Page Down', context: 'keyboard key' }),
   arrowup: '↑',
   arrowdown: '↓',
   arrowleft: '←',
@@ -268,18 +275,28 @@ const KEY_LABELS: Readonly<Record<string, string>> = {
 };
 
 /** The label printed on a key: `D`, `↑`, `Space`, `?`. */
-export const keyLabel = (key: string): string =>
-  KEY_LABELS[key] ?? (key.length === 1 ? key.toUpperCase() : key.toUpperCase());
-
-const MODIFIER_LABELS: Readonly<
-  Record<
-    KeyboardPlatform,
-    Readonly<Record<(typeof MODIFIER_ORDER)[number], string>>
-  >
-> = {
-  other: { ctrl: 'Ctrl', alt: 'Alt', shift: 'Shift', meta: 'Win' },
-  mac: { ctrl: '⌃ Control', alt: '⌥ Option', shift: '⇧ Shift', meta: '⌘ Cmd' },
+export const keyLabel = (key: string): string => {
+  const label = KEY_LABELS[key];
+  if (label === undefined) return key.toUpperCase();
+  return typeof label === 'string' ? label : i18n._(label);
 };
+
+/**
+ * The modifiers as a PC keyboard prints them, in the player's language
+ * (Strg on a German one). A Mac's are named as Apple prints them.
+ */
+const OTHER_MODIFIER_LABELS: Readonly<
+  Record<(typeof MODIFIER_ORDER)[number], MessageDescriptor>
+> = {
+  ctrl: msg({ message: 'Ctrl', context: 'keyboard key' }),
+  alt: msg({ message: 'Alt', context: 'keyboard key' }),
+  shift: msg({ message: 'Shift', context: 'keyboard key' }),
+  meta: msg({ message: 'Win', context: 'keyboard key (the Windows key)' }),
+};
+
+const MAC_MODIFIER_LABELS: Readonly<
+  Record<(typeof MODIFIER_ORDER)[number], string>
+> = { ctrl: '⌃ Control', alt: '⌥ Option', shift: '⇧ Shift', meta: '⌘ Cmd' };
 
 const MODIFIER_SYMBOLS: Readonly<
   Record<(typeof MODIFIER_ORDER)[number], string>
@@ -293,7 +310,10 @@ const MODIFIER_SYMBOLS: Readonly<
 export const modifierLabel = (
   modifier: (typeof MODIFIER_ORDER)[number],
   platform: KeyboardPlatform
-): string => MODIFIER_LABELS[platform][modifier];
+): string =>
+  platform === 'mac'
+    ? MAC_MODIFIER_LABELS[modifier]
+    : i18n._(OTHER_MODIFIER_LABELS[modifier]);
 
 /** The keycaps to draw for a chord, modifiers first. */
 export const chordKeycaps = (
@@ -320,7 +340,7 @@ export const chordHint = (
   return platform === 'mac'
     ? `${modifiers.map((modifier) => MODIFIER_SYMBOLS[modifier]).join('')}${keyText}`
     : [
-        ...modifiers.map((modifier) => MODIFIER_LABELS.other[modifier]),
+        ...modifiers.map((modifier) => modifierLabel(modifier, 'other')),
         keyText,
       ].join('+');
 };

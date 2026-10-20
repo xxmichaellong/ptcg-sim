@@ -11,6 +11,9 @@ import { TableIcon } from '@phosphor-icons/react/dist/csr/Table';
 import { WarningIcon } from '@phosphor-icons/react/dist/csr/Warning';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import type { Icon } from '@phosphor-icons/react';
+import { i18n, type MessageDescriptor } from '@lingui/core';
+import { msg, t } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import {
   Fragment,
   memo,
@@ -89,15 +92,15 @@ const GROUP_ICONS: Readonly<Record<HotkeyGroupId, Icon>> = {
   table: TableIcon,
 };
 
-const MODE_LABELS: Readonly<Record<HotkeyMode, string>> = {
-  card: 'Card selected',
-  table: 'Nothing selected',
+const MODE_LABELS: Readonly<Record<HotkeyMode, MessageDescriptor>> = {
+  card: msg({ message: 'Card selected', context: 'when a shortcut works' }),
+  table: msg({ message: 'Nothing selected', context: 'when a shortcut works' }),
 };
 
-const SCOPE_LABELS: Readonly<Record<HotkeyScope, string>> = {
-  card: 'Card selected',
-  table: 'Nothing selected',
-  any: 'Any time',
+const SCOPE_LABELS: Readonly<Record<HotkeyScope, MessageDescriptor>> = {
+  card: msg({ message: 'Card selected', context: 'when a shortcut works' }),
+  table: msg({ message: 'Nothing selected', context: 'when a shortcut works' }),
+  any: msg({ message: 'Any time', context: 'when a shortcut works' }),
 };
 
 /* ---- Keycaps ------------------------------------------------------------ */
@@ -129,13 +132,19 @@ export const Keycaps = ({
   </span>
 );
 
+/** "A and B", "A, B and C", in the player's language. */
+const listOf = (names: readonly string[]): string =>
+  new Intl.ListFormat(i18n.locale, { type: 'conjunction' }).format(names);
+
 /** What a screen reader hears for a shortcut: "Alt+D", "1–9", "not set". */
 const spokenChord = (
   chord: KeyChord | null,
   entry: HotkeyActionEntry,
   platform: KeyboardPlatform
 ): string =>
-  chord ? chordHint(chord, platform, keyTextFor(entry, chord)) : 'not set';
+  chord
+    ? chordHint(chord, platform, keyTextFor(entry, chord))
+    : t({ message: 'not set', context: 'a shortcut with no key' });
 
 /* ---- The keyboard map -------------------------------------------------- */
 
@@ -174,7 +183,7 @@ interface MapKey {
   /** A modifier: pressing it switches the map's layer. */
   readonly layer?: Exclude<Layer, 'plain'>;
   /** Drawn for shape only. */
-  readonly blank?: string;
+  readonly blank?: MessageDescriptor;
 }
 
 const row = (keys: string, shifted = ''): MapKey[] =>
@@ -188,11 +197,19 @@ const row = (keys: string, shifted = ''): MapKey[] =>
 const MAP_ROWS: readonly (readonly MapKey[])[] = [
   [{ key: 'escape', width: 1.25 }, ...row('1234567890-=', '!@#$%^&*()_+')],
   [
-    { key: 'tab', blank: 'Tab', width: 1.5 },
+    {
+      key: 'tab',
+      blank: msg({ message: 'Tab', context: 'keyboard key' }),
+      width: 1.5,
+    },
     ...row('qwertyuiop[]', '          {}'),
   ],
   [
-    { key: 'caps', blank: 'Caps', width: 1.75 },
+    {
+      key: 'caps',
+      blank: msg({ message: 'Caps', context: 'keyboard key (Caps Lock)' }),
+      width: 1.75,
+    },
     ...row("asdfghjkl;'", '         :"'),
     { key: 'enter', width: 2 },
   ],
@@ -261,6 +278,7 @@ const KeyboardMap = memo(function KeyboardMap({
   readonly onHover: (action: HotkeyActionId | null) => void;
   readonly onPick: (action: HotkeyActionId) => void;
 }) {
+  const { i18n } = useLingui();
   return (
     <div
       className="ptcgsim-keyboard-map"
@@ -299,7 +317,9 @@ const KeyboardMap = memo(function KeyboardMap({
                   className="ptcgsim-map-key is-blank"
                   style={style}
                 >
-                  <span className="ptcgsim-map-key__cap">{mapKey.blank}</span>
+                  <span className="ptcgsim-map-key__cap">
+                    {i18n._(mapKey.blank)}
+                  </span>
                 </span>
               );
             }
@@ -326,7 +346,7 @@ const KeyboardMap = memo(function KeyboardMap({
                 <span className="ptcgsim-map-key__cap">{cap}</span>
                 {entry ? (
                   <span className="ptcgsim-map-key__action">
-                    {damageText(mode, layer, mapKey.key) ?? entry.short}
+                    {damageText(mode, layer, mapKey.key) ?? i18n._(entry.short)}
                   </span>
                 ) : null}
               </span>
@@ -384,7 +404,13 @@ const ShortcutRow = memo(function ShortcutRow({
   onReset,
   onResolveConflict,
 }: RowProps) {
+  const { t, i18n } = useLingui();
+  const label = i18n._(entry.label);
   const chord = keymap.chord(entry.id);
+  const spoken = spokenChord(chord, entry, platform);
+  const clashNames = conflict
+    ? listOf(conflict.clashes.map((clash) => i18n._(hotkeyAction(clash).label)))
+    : '';
   const custom = !keymap.isDefault(entry.id);
   const fixed = 'fixed' in entry;
   const [held, setHeld] = useState<KeyChord | null>(null);
@@ -416,6 +442,9 @@ const ShortcutRow = memo(function ShortcutRow({
     if (next) onRecorded(entry.id, next);
   };
   const defaultChord = keymapFor(NO_HOTKEY_OVERRIDES).chord(entry.id);
+  const defaultHint = defaultChord
+    ? chordHint(defaultChord, platform)
+    : undefined;
   return (
     <li
       className="ptcgsim-shortcut-row"
@@ -428,15 +457,15 @@ const ShortcutRow = memo(function ShortcutRow({
       onPointerLeave={() => onHover(null)}
     >
       <div className="ptcgsim-shortcut-row__text">
-        <span className="ptcgsim-shortcut-row__label">{entry.label}</span>
+        <span className="ptcgsim-shortcut-row__label">{label}</span>
         {'detail' in entry || showScope ? (
           <span className="ptcgsim-shortcut-row__detail" id={describedBy}>
             {showScope ? (
               <span className="ptcgsim-shortcut-row__scope">
-                {SCOPE_LABELS[entry.scope]}
+                {i18n._(SCOPE_LABELS[entry.scope])}
               </span>
             ) : null}
-            {'detail' in entry ? entry.detail : null}
+            {entry.detail ? i18n._(entry.detail) : null}
           </span>
         ) : null}
       </div>
@@ -444,14 +473,17 @@ const ShortcutRow = memo(function ShortcutRow({
         {fixed ? (
           <span
             className="ptcgsim-shortcut-key is-fixed"
-            title="Fixed: number keys and Esc always work this way"
+            title={t`Fixed: number keys and Esc always work this way`}
           >
             {chord ? (
               <Keycaps chord={chord} entry={entry} platform={platform} />
             ) : null}
             <LockSimpleIcon {...decorative} className="ptcgsim-lock" />
             <span className="ds-visually-hidden">
-              {spokenChord(chord, entry, platform)}, fixed
+              {t({
+                message: `${spoken}, fixed`,
+                comment: '{spoken} is the shortcut\'s keys, such as "Alt+1".',
+              })}
             </span>
           </span>
         ) : (
@@ -461,8 +493,12 @@ const ShortcutRow = memo(function ShortcutRow({
             data-recording={recording ? 'true' : undefined}
             aria-label={
               recording
-                ? `Press the new keys for ${entry.label}. Escape cancels.`
-                : `${entry.label}: ${spokenChord(chord, entry, platform)}. Change`
+                ? t`Press the new keys for ${label}. Escape cancels.`
+                : t({
+                    message: `${label}: ${spoken}. Change`,
+                    comment:
+                      'A button naming a shortcut and its keys; pressing it changes the keys.',
+                  })
             }
             onClick={() => {
               setHeld(null);
@@ -492,12 +528,14 @@ const ShortcutRow = memo(function ShortcutRow({
               <span className="ptcgsim-shortcut-key__prompt">
                 {held
                   ? `${chordKeycaps(held, platform, '…').join(' + ')}`
-                  : 'Press keys…'}
+                  : t`Press keys…`}
               </span>
             ) : chord ? (
               <Keycaps chord={chord} entry={entry} platform={platform} />
             ) : (
-              <span className="ptcgsim-shortcut-key__unset">Not set</span>
+              <span className="ptcgsim-shortcut-key__unset">
+                <Trans context="a shortcut with no key">Not set</Trans>
+              </span>
             )}
           </button>
         )}
@@ -509,23 +547,31 @@ const ShortcutRow = memo(function ShortcutRow({
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => onClear(entry.id)}
           >
-            Clear
+            <Trans context="remove a shortcut's key">Clear</Trans>
           </button>
         ) : null}
         {custom && !recording ? (
           <Tooltip
             content={withKeyHint(
-              defaultChord ? 'Reset to' : 'Reset to no key',
-              defaultChord ? chordHint(defaultChord, platform) : undefined
+              defaultChord
+                ? t({
+                    message: 'Reset to',
+                    comment:
+                      'Followed by the default key drawn as a keycap, as in "Reset to Alt+D".',
+                  })
+                : t`Reset to no key`,
+              defaultHint
             )}
             side="left"
           >
             <button
               type="button"
               className="ds-icon-button ptcgsim-shortcut-row__reset"
-              aria-label={`Reset ${entry.label} to ${
-                defaultChord ? chordHint(defaultChord, platform) : 'its default'
-              }`}
+              aria-label={
+                defaultHint
+                  ? t`Reset ${label} to ${defaultHint}`
+                  : t`Reset ${label} to its default`
+              }
               onClick={() => onReset(entry.id)}
             >
               <ArrowCounterClockwiseIcon {...decorative} />
@@ -544,18 +590,18 @@ const ShortcutRow = memo(function ShortcutRow({
           <p>
             <WarningIcon {...decorative} weight="fill" />
             <span>
-              <Keycaps
-                chord={conflict.chord}
-                entry={entry}
-                platform={platform}
-              />{' '}
-              already does{' '}
-              <strong>
-                {conflict.clashes
-                  .map((clash) => hotkeyAction(clash).label)
-                  .join(' and ')}
-              </strong>
-              .
+              <Trans
+                comment={
+                  'The keys drawn as keycaps, then the names of the shortcuts already on them, as in "Alt+D already does To discard."'
+                }
+              >
+                <Keycaps
+                  chord={conflict.chord}
+                  entry={entry}
+                  platform={platform}
+                />{' '}
+                already does <strong>{clashNames}</strong>.
+              </Trans>
             </span>
           </p>
           <div className="ptcgsim-shortcut-conflict__actions">
@@ -565,7 +611,7 @@ const ShortcutRow = memo(function ShortcutRow({
                 className="ds-button ds-button--primary"
                 onClick={() => onResolveConflict('swap')}
               >
-                Swap keys
+                <Trans>Swap keys</Trans>
               </button>
             ) : null}
             <button
@@ -573,14 +619,14 @@ const ShortcutRow = memo(function ShortcutRow({
               className={`ds-button ${conflict.swappable ? 'ds-button--secondary' : 'ds-button--primary'}`}
               onClick={() => onResolveConflict('clear')}
             >
-              Use here
+              <Trans context="give the keys to this shortcut">Use here</Trans>
             </button>
             <button
               type="button"
               className="ds-button ds-button--ghost"
               onClick={() => onResolveConflict('cancel')}
             >
-              Cancel
+              <Trans>Cancel</Trans>
             </button>
           </div>
         </div>
@@ -648,12 +694,13 @@ const matchesQuery = (
   if (chord && asChord !== null && chordText(chord) === asChord) return true;
   const terms = words(query);
   if (terms.length === 0) return asChord === null;
+  const group = HOTKEY_GROUPS.find((candidate) => candidate.id === entry.group);
   const haystack = words(
     [
-      entry.label,
-      entry.short,
-      'detail' in entry ? entry.detail : '',
-      HOTKEY_GROUPS.find((group) => group.id === entry.group)?.title ?? '',
+      i18n._(entry.label),
+      i18n._(entry.short),
+      entry.detail ? i18n._(entry.detail) : '',
+      group ? i18n._(group.title) : '',
     ].join(' ')
   );
   return terms.every((term) => haystack.some((word) => word.startsWith(term)));
@@ -665,9 +712,20 @@ const reservationMessage = (
 ): string | null => {
   const reservation = reservedChord(chord, scope);
   if (!reservation) return null;
-  return reservation.kind === 'focus'
-    ? 'Tab moves between controls, so it cannot be a shortcut.'
-    : `${keyLabel(chord.key)} is kept for ${hotkeyAction(reservation.action).label.toLowerCase()}. Number keys and Esc cannot be changed.`;
+  if (reservation.kind === 'focus') {
+    return t`Tab moves between controls, so it cannot be a shortcut.`;
+  }
+  const key = keyLabel(chord.key);
+  const name = i18n._(hotkeyAction(reservation.action).label);
+  // English names the shortcut in the sentence's own case ("kept for add
+  // damage"); other languages keep its name as written (German nouns stay
+  // capitalised).
+  const action = i18n.locale === 'en' ? name.toLowerCase() : name;
+  return t({
+    message: `${key} is kept for ${action}. Number keys and Esc cannot be changed.`,
+    comment:
+      '{key} is a key ("5"); {action} is the name of the shortcut that owns it, such as "Add damage".',
+  });
 };
 
 export interface ShortcutsDialogProps {
@@ -692,6 +750,7 @@ export const ShortcutsDialog = ({
   store = pagePreferences(),
   platform = detectKeyboardPlatform(),
 }: ShortcutsDialogProps) => {
+  const { t, i18n } = useLingui();
   const overrides = usePreference(HOTKEY_PREFERENCES, store);
   const { showKeyboard } = usePreference(SHORTCUTS_DIALOG_PREFERENCES, store);
   const keymap = keymapFor(overrides);
@@ -798,7 +857,8 @@ export const ShortcutsDialog = ({
               : scopeIncludes(entry.scope, mode))
         ),
       })).filter(({ entries }) => entries.length > 0),
-    [keymap, mode, query, searching]
+    // A search matches the names in the language shown.
+    [keymap, mode, query, searching, i18n.locale]
   );
 
   const pick = (id: HotkeyActionId): void => {
@@ -825,9 +885,10 @@ export const ShortcutsDialog = ({
 
   let body: ReactNode;
   if (groups.length === 0) {
+    const search = query.trim();
     body = (
       <p className="ptcgsim-shortcuts__empty">
-        No shortcut matches “{query.trim()}”.
+        <Trans>No shortcut matches “{search}”.</Trans>
       </p>
     );
   } else {
@@ -842,7 +903,7 @@ export const ShortcutsDialog = ({
         >
           <h3 id={`shortcut-group-${group.id}`}>
             <GroupIcon {...decorative} weight="duotone" />
-            {group.title}
+            {i18n._(group.title)}
           </h3>
           <ul>
             {entries.map((entry) => (
@@ -897,22 +958,28 @@ export const ShortcutsDialog = ({
           <span className="ptcgsim-shortcuts__title-icon">
             <KeyboardIcon {...decorative} weight="duotone" />
           </span>
-          Keyboard shortcuts
+          <Trans>Keyboard shortcuts</Trans>
         </>
       }
       description={
         <>
-          Click any shortcut to change its keys.
+          <Trans>Click any shortcut to change its keys.</Trans>
           {opener ? (
             <>
               {' '}
-              Press{' '}
-              <Keycaps
-                chord={opener}
-                entry={hotkeyAction('table.shortcuts')}
-                platform={platform}
-              />{' '}
-              to open this list any time.
+              <Trans
+                comment={
+                  'The keys that open this list, drawn as keycaps (usually "?").'
+                }
+              >
+                Press{' '}
+                <Keycaps
+                  chord={opener}
+                  entry={hotkeyAction('table.shortcuts')}
+                  platform={platform}
+                />{' '}
+                to open this list any time.
+              </Trans>
             </>
           ) : null}
         </>
@@ -921,11 +988,13 @@ export const ShortcutsDialog = ({
       <div className="ptcgsim-shortcuts__tools" onKeyDown={handleDialogKeyDown}>
         <label className="ptcgsim-shortcuts__search">
           <MagnifyingGlassIcon {...decorative} />
-          <span className="ds-visually-hidden">Find a shortcut</span>
+          <span className="ds-visually-hidden">
+            <Trans>Find a shortcut</Trans>
+          </span>
           <input
             type="search"
             className="ds-input"
-            placeholder="Find a shortcut or key"
+            placeholder={t`Find a shortcut or key`}
             value={query}
             autoComplete="off"
             spellCheck={false}
@@ -939,11 +1008,14 @@ export const ShortcutsDialog = ({
             }}
           />
         </label>
-        <Tooltip content={withKeyHint('Close', 'Esc')} side="bottom">
+        <Tooltip
+          content={withKeyHint(t`Close`, keyLabel('escape'))}
+          side="bottom"
+        >
           <button
             type="button"
             className="ds-icon-button ptcgsim-shortcuts__close"
-            aria-label="Close keyboard shortcuts"
+            aria-label={t`Close keyboard shortcuts`}
             onClick={() => onOpenChange(false)}
           >
             <XIcon {...decorative} />
@@ -955,7 +1027,7 @@ export const ShortcutsDialog = ({
           <div
             className="ptcgsim-segmented"
             role="radiogroup"
-            aria-label="Show the keys for"
+            aria-label={t`Show the keys for`}
             data-disabled={searching ? 'true' : undefined}
           >
             {(['card', 'table'] as const).map((value) => (
@@ -972,7 +1044,7 @@ export const ShortcutsDialog = ({
                 ) : (
                   <TableIcon {...decorative} />
                 )}
-                {MODE_LABELS[value]}
+                {i18n._(MODE_LABELS[value])}
               </button>
             ))}
           </div>
@@ -981,7 +1053,7 @@ export const ShortcutsDialog = ({
               <div
                 className="ptcgsim-layer-switch"
                 role="radiogroup"
-                aria-label="Keyboard map layer"
+                aria-label={t`Keyboard map layer`}
               >
                 {LAYERS.map((value) => (
                   <button
@@ -993,7 +1065,10 @@ export const ShortcutsDialog = ({
                     onClick={() => setLayer(value)}
                   >
                     {value === 'plain'
-                      ? 'Keys'
+                      ? t({
+                          message: 'Keys',
+                          context: 'the keyboard map with no modifier held',
+                        })
                       : modifierLabel(value, platform)}
                   </button>
                 ))}
@@ -1010,7 +1085,7 @@ export const ShortcutsDialog = ({
               }
             >
               <KeyboardIcon {...decorative} />
-              {showKeyboard ? 'Hide keyboard' : 'Show keyboard'}
+              {showKeyboard ? t`Hide keyboard` : t`Show keyboard`}
             </button>
           </div>
         </div>
@@ -1030,7 +1105,7 @@ export const ShortcutsDialog = ({
           className="ptcgsim-shortcuts__list"
           ref={listRef}
           tabIndex={-1}
-          aria-label="Shortcuts"
+          aria-label={t`Shortcuts`}
           data-searching={searching ? 'true' : undefined}
         >
           <div className="ptcgsim-shortcuts__columns">{body}</div>
@@ -1038,19 +1113,25 @@ export const ShortcutsDialog = ({
       </div>
       <footer className="ptcgsim-shortcuts__footer">
         <p>
-          {changed > 0
-            ? `${changed} shortcut${changed === 1 ? '' : 's'} changed`
-            : null}
+          {changed > 0 ? (
+            <Plural
+              value={changed}
+              one="# shortcut changed"
+              other="# shortcuts changed"
+            />
+          ) : null}
         </p>
         {confirmingReset ? (
           <div className="ptcgsim-shortcuts__confirm" role="group">
-            <span>Put every shortcut back?</span>
+            <span>
+              <Trans>Put every shortcut back?</Trans>
+            </span>
             <button
               type="button"
               className="ds-button ds-button--ghost"
               onClick={() => setConfirmingReset(false)}
             >
-              Keep
+              <Trans context="keep the changed shortcuts">Keep</Trans>
             </button>
             <button
               type="button"
@@ -1062,7 +1143,7 @@ export const ShortcutsDialog = ({
                 setError(null);
               }}
             >
-              Reset all
+              <Trans>Reset all</Trans>
             </button>
           </div>
         ) : (
@@ -1073,7 +1154,7 @@ export const ShortcutsDialog = ({
             onClick={() => setConfirmingReset(true)}
           >
             <ArrowCounterClockwiseIcon {...decorative} />
-            Reset to defaults
+            <Trans>Reset to defaults</Trans>
           </button>
         )}
       </footer>

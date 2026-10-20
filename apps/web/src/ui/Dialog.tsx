@@ -1,5 +1,6 @@
 import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { Dialog as BaseDialog } from '@base-ui/react/dialog';
+import { useLingui } from '@lingui/react/macro';
 import {
   useContext,
   useEffect,
@@ -231,13 +232,14 @@ export const ConfirmDialog = ({
   open,
   title,
   body,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   tone = 'default',
   finalFocus,
   onResolve,
   onClosed,
 }: ConfirmDialogProps) => {
+  const { t } = useLingui();
   const confirmRef = useRef<HTMLButtonElement>(null);
   return (
     <DialogSurface
@@ -263,7 +265,7 @@ export const ConfirmDialog = ({
           data-variant="secondary"
           data-dialog-action="cancel"
         >
-          {cancelLabel}
+          {cancelLabel ?? t`Cancel`}
         </BaseDialog.Close>
         <UiButton
           ref={confirmRef}
@@ -271,14 +273,12 @@ export const ConfirmDialog = ({
           data-dialog-action="confirm"
           onClick={() => onResolve(true)}
         >
-          {confirmLabel}
+          {confirmLabel ?? t`Confirm`}
         </UiButton>
       </div>
     </DialogSurface>
   );
 };
-
-const VALIDATION_FAILED = 'That value could not be checked. Please try again.';
 
 const isPromiseLike = <T,>(value: unknown): value is PromiseLike<T> =>
   typeof value === 'object' &&
@@ -306,13 +306,15 @@ export const PromptDialog = ({
   defaultValue = '',
   placeholder,
   inputMode = 'text',
-  submitLabel = 'OK',
-  cancelLabel = 'Cancel',
+  submitLabel,
+  cancelLabel,
   validate,
   finalFocus,
   onResolve,
   onClosed,
 }: PromptDialogProps) => {
+  const { t } = useLingui();
+  const validationFailed = t`That value could not be checked. Please try again.`;
   const [value, setValue] = useState(defaultValue);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -360,13 +362,13 @@ export const PromptDialog = ({
     try {
       outcome = validate?.(submitted, { signal: controller.signal });
     } catch {
-      finish(VALIDATION_FAILED);
+      finish(validationFailed);
       return;
     }
     if (isPromiseLike<string | null | undefined>(outcome)) {
       setError(null);
       setChecking(true);
-      Promise.resolve(outcome).then(finish, () => finish(VALIDATION_FAILED));
+      Promise.resolve(outcome).then(finish, () => finish(validationFailed));
       return;
     }
     finish(outcome);
@@ -431,7 +433,7 @@ export const PromptDialog = ({
           data-variant="secondary"
           data-dialog-action="cancel"
         >
-          {cancelLabel}
+          {cancelLabel ?? t`Cancel`}
         </BaseDialog.Close>
         <UiButton
           type="submit"
@@ -440,7 +442,7 @@ export const PromptDialog = ({
           disabled={checking}
           aria-busy={checking ? true : undefined}
         >
-          {checking ? 'Checking…' : submitLabel}
+          {checking ? t`Checking…` : (submitLabel ?? t`OK`)}
         </UiButton>
       </div>
     </DialogSurface>

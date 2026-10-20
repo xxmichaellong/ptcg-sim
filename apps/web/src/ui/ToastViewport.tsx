@@ -4,6 +4,7 @@ import { WarningIcon } from '@phosphor-icons/react/dist/csr/Warning';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { Toast } from '@base-ui/react/toast';
+import { useLingui } from '@lingui/react/macro';
 import { useContext } from 'react';
 
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
@@ -36,6 +37,7 @@ const ToneIcon = ({ tone }: { readonly tone: ToastTone }) => {
 };
 
 const ToastList = () => {
+  const { t } = useLingui();
   const { toasts } = Toast.useToastManager();
   return toasts.map((entry) => {
     const tone = toneOf(entry.type);
@@ -56,7 +58,7 @@ const ToastList = () => {
           </div>
           <Toast.Close
             className="ptcgsim-ui-toast__close"
-            aria-label="Dismiss notification"
+            aria-label={t`Dismiss notification`}
           >
             <XIcon size={16} weight="bold" aria-hidden />
           </Toast.Close>

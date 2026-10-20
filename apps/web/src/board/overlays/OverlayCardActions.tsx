@@ -1,4 +1,5 @@
 import { CaretUpIcon } from '@phosphor-icons/react/dist/csr/CaretUp';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type {
   BoardScene,
   BoardZoneKind,
@@ -6,29 +7,28 @@ import type {
 } from '@ptcgsim/renderer-contract';
 import type { OpenedZoneCardIntent } from '../BoardSessionController.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
+import { ZONE_NAMES } from './zone-names.js';
 
 /**
- * Where a card can be moved, by name and in the order play reaches them.
- * Every place offered is the card owner's or shared, so the owner's name
- * would only repeat itself.
+ * Where a card can be moved, in the order play reaches them. Every place
+ * offered is the card owner's or shared, so the owner's name would only
+ * repeat itself.
  */
-const DESTINATIONS: readonly (readonly [BoardZoneKind, string])[] = [
-  ['hand', 'Hand'],
-  ['active', 'Active'],
-  ['bench', 'Bench'],
-  ['board', 'Board'],
-  ['stadium', 'Stadium'],
-  ['discard', 'Discard pile'],
-  ['lostZone', 'Lost Zone'],
-  ['prizes', 'Prizes'],
-  ['deck', 'Deck'],
+const DESTINATIONS: readonly BoardZoneKind[] = [
+  'hand',
+  'active',
+  'bench',
+  'board',
+  'stadium',
+  'discard',
+  'lostZone',
+  'prizes',
+  'deck',
 ];
 const destinationOrder = (kind: BoardZoneKind): number => {
-  const index = DESTINATIONS.findIndex(([candidate]) => candidate === kind);
+  const index = DESTINATIONS.indexOf(kind);
   return index === -1 ? DESTINATIONS.length : index;
 };
-const destinationName = (kind: BoardZoneKind, label: string): string =>
-  DESTINATIONS.find(([candidate]) => candidate === kind)?.[1] ?? label;
 
 /**
  * The selected card's actions without a drag or a right-click, for touch and
@@ -46,6 +46,7 @@ export const OverlayCardActions = ({
   readonly enabled: boolean;
   readonly emit: (intent: OpenedZoneCardIntent) => void;
 }) => {
+  const { t, i18n } = useLingui();
   const targets = scene.zones
     .filter(
       (zone) =>
@@ -60,8 +61,9 @@ export const OverlayCardActions = ({
         destinationOrder(left.kind) - destinationOrder(right.kind)
     );
   const movable = Boolean(card) && enabled && targets.length > 0;
+  const cardName = card?.label;
   return (
-    <div className="ptcgsim-card-actions" aria-label="Selected card actions">
+    <div className="ptcgsim-card-actions" aria-label={t`Selected card actions`}>
       <span className="ptcgsim-card-actions-label">{card?.label}</span>
       <button
         type="button"
@@ -71,25 +73,35 @@ export const OverlayCardActions = ({
           card && emit({ kind: 'CardContextRequested', cardId: card.id })
         }
       >
-        Actions
+        <Trans context="open the selected card's menu">Actions</Trans>
       </button>
       <ActionMenu
-        label={card ? `Move ${card.label} to` : 'Move to'}
+        label={
+          cardName
+            ? t({
+                message: `Move ${cardName} to`,
+                comment: '{cardName} is a card; a list of places follows.',
+              })
+            : t`Move to`
+        }
         side="top"
         align="end"
-        entries={targets.map((zone) => ({
-          label: destinationName(zone.kind, zone.label),
-          onSelect: () => {
-            if (!card) return;
-            emit({
-              kind: 'CardDropRequested',
-              cardId: card.id,
-              targetId: zone.id,
-              x: zone.bounds.x + zone.bounds.width / 2,
-              y: zone.bounds.y + zone.bounds.height / 2,
-            });
-          },
-        }))}
+        entries={targets.map((zone) => {
+          const name = ZONE_NAMES[zone.kind];
+          return {
+            label: name ? i18n._(name) : zone.label,
+            onSelect: () => {
+              if (!card) return;
+              emit({
+                kind: 'CardDropRequested',
+                cardId: card.id,
+                targetId: zone.id,
+                x: zone.bounds.x + zone.bounds.width / 2,
+                y: zone.bounds.y + zone.bounds.height / 2,
+              });
+            },
+          };
+        })}
         trigger={
           <button
             type="button"
@@ -97,7 +109,7 @@ export const OverlayCardActions = ({
             data-card-action="move"
             disabled={!movable}
           >
-            Move
+            <Trans context="move the selected card">Move</Trans>
             <CaretUpIcon aria-hidden="true" weight="bold" />
           </button>
         }
