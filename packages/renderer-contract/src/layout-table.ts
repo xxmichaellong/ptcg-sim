@@ -227,6 +227,13 @@ const STADIUM_CLEARANCE_PX = 8;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
+/**
+ * The clear space between the outer columns (prizes, piles) and the side
+ * of the mat: a small, steady inset, so the columns run out to its edges.
+ */
+const sideMarginFor = (width: number): number =>
+  Math.max(8, Math.min(14, width * 0.008));
+
 /** Lay out one half in its own frame, centre line at the top. */
 const layoutHalf = (
   width: number,
@@ -235,6 +242,8 @@ const layoutHalf = (
 ): HalfGeometry => {
   const proportions = HALF_PROPORTIONS;
   const margin = seamMarginFor(height, options);
+  // The outer columns run out close to the mat's edges.
+  const side = sideMarginFor(width);
   const gap = Math.max(6, height * proportions.rowGap);
   const handStrip = height * proportions.handStrip * (options.handScale ?? 1);
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
@@ -249,7 +258,7 @@ const layoutHalf = (
   const prizeHeight = Math.max(0, (active + gap + bench - 2 * prizeGap) / 3);
   const prizeWidth = prizeHeight * CARD_ASPECT_RATIO;
   const prizes: Rect = {
-    x: margin,
+    x: side,
     y: activeTop,
     width: 2 * prizeWidth + prizeGap,
     height: active + gap + bench,
@@ -267,19 +276,17 @@ const layoutHalf = (
     )
   );
   const pileWidth = pileHeight * CARD_ASPECT_RATIO;
-  const pileLeft = width - margin - pileWidth;
+  const pileLeft = width - side - pileWidth;
   const pileAt = (index: number): Rect => ({
     x: pileLeft,
     y: activeTop + index * (pileHeight + gap),
     width: pileWidth,
     height: pileHeight,
   });
-  const deck = pileAt(0);
-  const discard = pileAt(1);
 
   // Reserve equal space for the outer columns so both Actives and benches
   // share the table's centre, even though prizes are wider than a pile.
-  const middleLeft = margin + Math.max(prizes.width, pileWidth) + gap * 1.5;
+  const middleLeft = side + Math.max(prizes.width, pileWidth) + gap * 1.5;
   const middleRight = width - middleLeft;
   const middleWidth = Math.max(0, middleRight - middleLeft);
   const centre = width / 2;
@@ -347,10 +354,29 @@ const layoutHalf = (
     width: EXTRAS_CONTROL_PX,
     height: EXTRAS_CONTROL_PX,
   };
+  // With the Lost Zone beside the prizes, the deck and discard have the
+  // outer column to themselves: they grow to fill both card rows, never
+  // past the Active's size. Otherwise the column keeps a slot for it.
+  const columnPile =
+    besidePrizes && options.lostZoneBeside
+      ? Math.max(pileHeight, Math.min(active, (active + bench) / 2))
+      : pileHeight;
+  const columnWidth = columnPile * CARD_ASPECT_RATIO;
+  const columnAt = (index: number): Rect => ({
+    x: width - side - columnWidth,
+    y: activeTop + index * (columnPile + gap),
+    width: columnWidth,
+    height: columnPile,
+  });
+  const deck = columnAt(0);
+  const discard = columnAt(1);
+  if (!(besidePrizes && options.lostZoneBeside)) lostZone = columnAt(2);
+  // The bench runs from the prizes to the piles.
+  const benchRight = deck.x - gap * 1.5;
   const benchRect: Rect = {
     x: middleLeft,
     y: benchTop,
-    width: middleWidth,
+    width: Math.max(0, benchRight - middleLeft),
     height: bench,
   };
   const handLeft =
@@ -378,7 +404,7 @@ const layoutHalf = (
       { kind: 'lostZone', rect: lostZone, countAnchor: 'pile' },
     ],
     cardHeights: { active, bench },
-    middle: { left: middleLeft, right: middleRight },
+    middle: { left: middleLeft, right: Math.max(middleRight, benchRight) },
     seamMargin: margin,
     extras: { ...(markers ? { markers } : {}), control },
   };

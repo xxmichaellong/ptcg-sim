@@ -406,12 +406,16 @@ describe('a flat card turned over', () => {
     const flat = { ...projection.pose(card), plane: 0 };
     const { bounds } = flat;
     // At rest: exactly its rectangle, wherever it is on the screen.
-    expect(tablePoseQuad(projection.camera, flat)).toEqual([
+    const rectangle = [
       { x: bounds.x, y: bounds.y },
       { x: bounds.x + bounds.width, y: bounds.y },
       { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
       { x: bounds.x, y: bounds.y + bounds.height },
-    ]);
+    ];
+    tablePoseQuad(projection.camera, flat).forEach((point, index) => {
+      expect(point.x).toBeCloseTo(rectangle[index]!.x, 9);
+      expect(point.y).toBeCloseTo(rectangle[index]!.y, 9);
+    });
     const [a, b, c, d] = tablePoseQuad(projection.camera, {
       ...flat,
       flip: Math.PI / 3,

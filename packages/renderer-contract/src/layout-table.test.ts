@@ -340,6 +340,63 @@ describe('table layout (geometry v2)', () => {
     expect(narrow.players[0].extras?.markers).toBeUndefined();
   });
 
+  it('runs the zones out to the mat: the columns to its sides, the bench to the piles, the piles down both rows', () => {
+    for (const [width, height] of [
+      [1280, 720],
+      [1440, 900],
+      [1920, 1080],
+      [2560, 1440],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode: 'fullscreen' })
+      );
+      for (const player of snapshot.players) {
+        const label = `${width}x${height} ${player.side}`;
+        const rect = (kind: string) =>
+          region(snapshot, player.side, kind).physicalDeclaredBounds;
+        const frame = player.frameBounds;
+        const [prizes, deck, discard, bench, active] = [
+          'prizes',
+          'deck',
+          'discard',
+          'bench',
+          'active',
+        ].map(rect) as [Rect, Rect, Rect, Rect, Rect];
+        // The outer columns sit close to the mat's sides.
+        const outer = [prizes, deck];
+        expect(
+          Math.min(...outer.map((box) => box.x)) - frame.x,
+          label
+        ).toBeLessThanOrEqual(14.01);
+        expect(
+          frame.x +
+            frame.width -
+            Math.max(...outer.map((box) => box.x + box.width)),
+          label
+        ).toBeLessThanOrEqual(14.01);
+        // The bench reaches the piles as closely as it does the prizes.
+        const local = player.side === 'local';
+        const toPiles = local
+          ? deck.x - (bench.x + bench.width)
+          : bench.x - (deck.x + deck.width);
+        const toPrizes = local
+          ? bench.x - (prizes.x + prizes.width)
+          : prizes.x - (bench.x + bench.width);
+        expect(toPiles, label).toBeGreaterThan(0);
+        expect(toPiles, label).toBeLessThanOrEqual(toPrizes + 0.5);
+        // With the Lost Zone beside the prizes, the deck and discard fill
+        // both card rows of their column.
+        const span = (boxes: readonly Rect[]) =>
+          Math.max(...boxes.map((box) => box.y + box.height)) -
+          Math.min(...boxes.map((box) => box.y));
+        expect(span([deck, discard]), label).toBeCloseTo(
+          span([active, bench]),
+          0
+        );
+      }
+    }
+  });
+
   it('makes the cards readable at common desktop sizes', () => {
     for (const [width, height, minimum] of [
       [1440, 900, { active: 150, bench: 130, hand: 150 }],
