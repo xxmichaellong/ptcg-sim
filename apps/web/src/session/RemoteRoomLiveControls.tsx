@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 import { PaperPlaneRight } from '@phosphor-icons/react/dist/csr/PaperPlaneRight';
 import type {
   ClientSessionState,
@@ -19,7 +21,7 @@ import { resolveTableAction } from '../board/resolveTableAction.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
   downloadBrowserTextFile,
-  FULLSCREEN_REFUSED_NOTICE,
+  fullscreenRefusedNotice,
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
@@ -61,8 +63,8 @@ const ownPlayerId = (state: ClientSessionState): string | undefined =>
 
 const reportInvalidReplayFile = (): void => {
   toast({
-    title: 'Could not open the replay',
-    body: 'Error reading file. Please make sure the file is valid.',
+    title: t`Could not open the replay`,
+    body: t`Error reading file. Please make sure the file is valid.`,
     tone: 'danger',
   });
 };
@@ -71,13 +73,13 @@ const reportContinuationFailure = (action: 'save' | 'resume'): void => {
   toast(
     action === 'save'
       ? {
-          title: 'Could not save',
-          body: 'Could not save this online game. Please try again.',
+          title: t`Could not save`,
+          body: t`Could not save this online game. Please try again.`,
           tone: 'danger',
         }
       : {
-          title: 'Could not resume',
-          body: 'Could not resume this saved game. Please check the file and try again.',
+          title: t`Could not resume`,
+          body: t`Could not resume this saved game. Please check the file and try again.`,
           tone: 'danger',
         }
   );
@@ -85,8 +87,8 @@ const reportContinuationFailure = (action: 'save' | 'resume'): void => {
 
 const reportContinuationResumeSuccess = (): void => {
   toast({
-    title: 'Saved game resumed',
-    body: 'A player invitation for the restored room was copied to your clipboard.',
+    title: t`Saved game resumed`,
+    body: t`A player invitation for the restored room was copied to your clipboard.`,
     tone: 'success',
   });
 };
@@ -98,9 +100,9 @@ export type LiveRoomLeaveConfirmation = (options: {
 
 const confirmLiveRoomLeave: LiveRoomLeaveConfirmation = ({ signal }) =>
   confirmAction({
-    title: 'Leave the room?',
-    body: 'Are you sure you want to leave the room? Current game state will be lost.',
-    confirmLabel: 'Leave room',
+    title: t`Leave the room?`,
+    body: t`Are you sure you want to leave the room? Current game state will be lost.`,
+    confirmLabel: t`Leave room`,
     tone: 'danger',
     signal,
   });
@@ -468,7 +470,7 @@ export const useLiveRoomControls = ({
     presentation.clearActivity();
   };
   const fullscreen = (): void => {
-    if (!requestFullscreen()) toast(FULLSCREEN_REFUSED_NOTICE);
+    if (!requestFullscreen()) toast(fullscreenRefusedNotice());
   };
 
   /** The hidden file pickers behind "Enter replay mode" and "Resume". */
@@ -538,6 +540,7 @@ export const ChatComposer = ({
 }: {
   readonly controls: LiveRoomControls;
 }) => {
+  const { t } = useLingui();
   const id = controls.solo ? 'messageInput' : 'p2MessageInput';
   return (
     <div className="ptcgsim-chat-composer">
@@ -545,20 +548,22 @@ export const ChatComposer = ({
         id={id}
         type="text"
         className="ds-input"
-        placeholder="Message"
-        aria-label="Chat message"
+        placeholder={t({ message: 'Message', context: 'chat' })}
+        aria-label={t`Chat message`}
         maxLength={MAX_CHAT_CODE_UNITS}
         disabled={!controls.ready}
         value={controls.message}
         onChange={(event) => controls.setMessage(event.target.value)}
         onKeyDown={controls.handleMessageKeyDown}
       />
-      <Tooltip content={withKeyHint('Send', 'Enter')}>
+      <Tooltip
+        content={withKeyHint(t({ message: 'Send', context: 'chat' }), 'Enter')}
+      >
         <button
           type="button"
           className="ds-icon-button ptcgsim-chat-composer__send"
           disabled={!controls.ready || controls.message.trim().length === 0}
-          aria-label="Send message"
+          aria-label={t`Send message`}
           onClick={controls.sendMessage}
         >
           <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />

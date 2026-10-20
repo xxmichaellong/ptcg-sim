@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 /**
  * The loading screen over the table (ADR-030). index.html paints it
  * (`#tableCurtain`) in the page's first frame, before any script has
@@ -90,6 +92,12 @@ export const createTableCurtain = (
   let swaps: (() => void)[] = [];
 
   const enter = (next: TableCurtainState, durationMs = 0): void => {
+    // index.html can only say it in English; from here on it is said in
+    // the page's language, each time it covers.
+    if (next === 'covering' || next === 'arriving') {
+      const label = element.querySelector('.table-curtain__label');
+      if (label) label.textContent = t`Setting up the table…`;
+    }
     state = next;
     element.style.setProperty('--table-curtain-fade', `${durationMs}ms`);
     element.dataset.state = next;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { installLeaveGuard, LEGACY_LEAVE_MESSAGE } from './leave-guard.js';
+import { installLeaveGuard, legacyLeaveMessage } from './leave-guard.js';
 
 describe('the application leave guard', () => {
   it('asks before unload and stops asking once disposed', () => {
@@ -28,7 +28,7 @@ describe('the application leave guard', () => {
     } as unknown as BeforeUnloadEvent;
     for (const listener of listeners) listener(event);
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
-    expect(event.returnValue).toBe(LEGACY_LEAVE_MESSAGE);
+    expect(event.returnValue).toBe(legacyLeaveMessage());
 
     dispose();
     dispose();

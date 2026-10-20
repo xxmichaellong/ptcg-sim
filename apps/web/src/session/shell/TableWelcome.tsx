@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
 import { HandPointingIcon } from '@phosphor-icons/react/dist/csr/HandPointing';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
@@ -33,29 +34,32 @@ const PlayTip = () => {
   // Only what a first visit would not find on its own: dragging and
   // double-clicking are what anyone tries first.
   if (touch) {
-    return <>Tap a card for its actions; tap it again to read it.</>;
+    return <Trans>Tap a card for its actions; tap it again to read it.</Trans>;
   }
+  const keys = opener
+    ? chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
+        <kbd className="ds-kbd" key={cap}>
+          {cap}
+        </kbd>
+      ))
+    : null;
   return (
     <>
-      Right-click a card for its actions.
-      {opener ? (
+      <Trans>Right-click a card for its actions.</Trans>
+      {keys ? (
         <>
           {' '}
-          Press{' '}
-          {chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
-            <kbd className="ds-kbd" key={cap}>
-              {cap}
-            </kbd>
-          ))}{' '}
-          for{' '}
-          <button
-            type="button"
-            className="welcome-shortcuts-link"
-            onClick={() => openShortcutsDialog()}
-          >
-            shortcuts
-          </button>
-          .
+          <Trans comment="keys shows the key or keys that open the keyboard shortcuts, like ?">
+            Press {keys} for{' '}
+            <button
+              type="button"
+              className="welcome-shortcuts-link"
+              onClick={() => openShortcutsDialog()}
+            >
+              shortcuts
+            </button>
+            .
+          </Trans>
         </>
       ) : null}
     </>
@@ -75,139 +79,148 @@ export const TableWelcome = ({
   readonly onLoadDeck?: () => void;
   readonly onPlayOnline?: () => void;
   readonly onDismiss?: () => void;
-}) => (
-  <section
-    className="table-welcome"
-    aria-labelledby="tableWelcomeTitle"
-    data-table-welcome="true"
-  >
-    {onDismiss ? (
-      <Tooltip content="Hide welcome" side="bottom">
-        <button
-          type="button"
-          className="ds-icon-button table-welcome__dismiss"
-          aria-label="Hide welcome"
-          onClick={onDismiss}
-        >
-          <XIcon {...decorative} weight="bold" />
-        </button>
-      </Tooltip>
-    ) : null}
-    <header className="table-welcome__hero">
-      <img
-        className="table-welcome__logo"
-        src={LOGO_URL}
-        alt=""
-        width="48"
-        height="48"
-        decoding="async"
-      />
-      <div>
-        <h2 id="tableWelcomeTitle">Welcome to PTCG-sim</h2>
-        <Tooltip content="What's new" side="bottom">
+}) => {
+  const { t } = useLingui();
+  return (
+    <section
+      className="table-welcome"
+      aria-labelledby="tableWelcomeTitle"
+      data-table-welcome="true"
+    >
+      {onDismiss ? (
+        <Tooltip content={t`Hide welcome`} side="bottom">
           <button
-            id="changelogLink"
             type="button"
-            className="welcome-version"
-            aria-haspopup="dialog"
-            onClick={() => openHelpPage('changelog')}
+            className="ds-icon-button table-welcome__dismiss"
+            aria-label={t`Hide welcome`}
+            onClick={onDismiss}
           >
-            <SparkleIcon {...decorative} weight="fill" />
-            <span className="welcome-version-label">{RELEASE_NAME}</span>
+            <XIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
+      ) : null}
+      <header className="table-welcome__hero">
+        <img
+          className="table-welcome__logo"
+          src={LOGO_URL}
+          alt=""
+          width="48"
+          height="48"
+          decoding="async"
+        />
+        <div>
+          <h2 id="tableWelcomeTitle">
+            <Trans>Welcome to PTCG-sim</Trans>
+          </h2>
+          <Tooltip content={t`What's new`} side="bottom">
+            <button
+              id="changelogLink"
+              type="button"
+              className="welcome-version"
+              aria-haspopup="dialog"
+              onClick={() => openHelpPage('changelog')}
+            >
+              <SparkleIcon {...decorative} weight="fill" />
+              <span className="welcome-version-label">{RELEASE_NAME}</span>
+            </button>
+          </Tooltip>
+        </div>
+      </header>
+      <p className="table-welcome__lead">
+        <Trans>
+          An{' '}
+          <a
+            className="ds-link"
+            href={REPOSITORY_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            open-source
+          </a>{' '}
+          Pokémon TCG table. Practice both sides, or play a friend online.
+        </Trans>
+      </p>
+      <ol className="table-welcome__steps">
+        <li>
+          <DeckIcon {...decorative} />
+          <span>
+            <Trans>
+              Load a <strong>deck</strong>, then press <strong>Set up</strong>.
+            </Trans>
+          </span>
+        </li>
+        <li>
+          <HandPointingIcon {...decorative} />
+          <span>
+            <PlayTip />
+          </span>
+        </li>
+      </ol>
+      <div className="table-welcome__actions">
+        {onLoadDeck ? (
+          <button
+            id="welcomeLoadDeckButton"
+            type="button"
+            className="ds-button ds-button--primary"
+            onClick={onLoadDeck}
+          >
+            <DeckIcon {...decorative} weight="bold" />
+            <Trans>Load a deck</Trans>
+          </button>
+        ) : null}
+        {onPlayOnline ? (
+          <button
+            type="button"
+            className="ds-button ds-button--secondary"
+            onClick={onPlayOnline}
+          >
+            <UsersThreeIcon {...decorative} weight="bold" />
+            <Trans>Play online</Trans>
+          </button>
+        ) : null}
       </div>
-    </header>
-    <p className="table-welcome__lead">
-      An{' '}
-      <a
-        className="ds-link"
-        href={REPOSITORY_URL}
-        target="_blank"
-        rel="noreferrer"
-      >
-        open-source
-      </a>{' '}
-      Pokémon TCG table. Practice both sides, or play a friend online.
-    </p>
-    <ol className="table-welcome__steps">
-      <li>
-        <DeckIcon {...decorative} />
-        <span>
-          Load a <strong>deck</strong>, then press <strong>Set up</strong>.
-        </span>
-      </li>
-      <li>
-        <HandPointingIcon {...decorative} />
-        <span>
-          <PlayTip />
-        </span>
-      </li>
-    </ol>
-    <div className="table-welcome__actions">
-      {onLoadDeck ? (
+      <footer className="table-welcome__links">
         <button
-          id="welcomeLoadDeckButton"
+          id="tutorialButton"
           type="button"
-          className="ds-button ds-button--primary"
-          onClick={onLoadDeck}
+          className="ds-link"
+          aria-haspopup="dialog"
+          onClick={() => openHelpPage('tutorial')}
         >
-          <DeckIcon {...decorative} weight="bold" />
-          Load a deck
+          <PlayCircleIcon {...decorative} weight="bold" />
+          <Trans>Tutorial</Trans>
         </button>
-      ) : null}
-      {onPlayOnline ? (
+        <a
+          id="discordLink"
+          className="ds-link"
+          href={DISCORD_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <DiscordLogoIcon {...decorative} weight="fill" />
+          Discord
+        </a>
+        <a
+          id="twitterLink"
+          className="ds-link"
+          href={TWITTER_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <XLogoIcon {...decorative} weight="bold" />
+          {TWITTER_HANDLE}
+        </a>
         <button
+          id="donationsLink"
           type="button"
-          className="ds-button ds-button--secondary"
-          onClick={onPlayOnline}
+          className="ds-link"
+          aria-haspopup="dialog"
+          onClick={() => openHelpPage('donations')}
         >
-          <UsersThreeIcon {...decorative} weight="bold" />
-          Play online
+          <HeartIcon {...decorative} weight="fill" />
+          <Trans>Sponsors</Trans>
         </button>
-      ) : null}
-    </div>
-    <footer className="table-welcome__links">
-      <button
-        id="tutorialButton"
-        type="button"
-        className="ds-link"
-        aria-haspopup="dialog"
-        onClick={() => openHelpPage('tutorial')}
-      >
-        <PlayCircleIcon {...decorative} weight="bold" />
-        Tutorial
-      </button>
-      <a
-        id="discordLink"
-        className="ds-link"
-        href={DISCORD_URL}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <DiscordLogoIcon {...decorative} weight="fill" />
-        Discord
-      </a>
-      <a
-        id="twitterLink"
-        className="ds-link"
-        href={TWITTER_URL}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <XLogoIcon {...decorative} weight="bold" />
-        {TWITTER_HANDLE}
-      </a>
-      <button
-        id="donationsLink"
-        type="button"
-        className="ds-link"
-        aria-haspopup="dialog"
-        onClick={() => openHelpPage('donations')}
-      >
-        <HeartIcon {...decorative} weight="fill" />
-        Sponsors
-      </button>
-    </footer>
-  </section>
-);
+      </footer>
+    </section>
+  );
+};

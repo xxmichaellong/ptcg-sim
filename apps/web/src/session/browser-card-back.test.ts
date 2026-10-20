@@ -5,9 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { PromptOptions } from '../ui/dialog-requests.js';
 import {
-  CARD_BACK_PROMPT,
+  cardBackPrompt,
   DEFAULT_CARD_BACK_URL,
-  INVALID_CARD_BACK_MESSAGE,
+  invalidCardBackMessage,
   requestBrowserCardBack,
 } from './browser-card-back.js';
 
@@ -85,7 +85,7 @@ describe('browser card-back request', () => {
     ).resolves.toBeUndefined();
     expect(dialog.asked[0]).toMatchObject({
       title: 'Change card back',
-      body: CARD_BACK_PROMPT,
+      body: cardBackPrompt(),
       label: 'Image URL',
     });
     expect(harness.createImage).not.toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe('browser card-back request', () => {
       })
     ).resolves.toBeUndefined();
     expect(harness.createImage).not.toHaveBeenCalled();
-    expect(dialog.errors).toEqual([INVALID_CARD_BACK_MESSAGE]);
+    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
   });
 
   it('keeps the dialog open when the image fails, then accepts a fixed URL', async () => {
@@ -158,7 +158,7 @@ describe('browser card-back request', () => {
     await vi.waitFor(() => expect(harness.images).toHaveLength(1));
     fail(harness.images[0]!);
     await vi.waitFor(() => expect(harness.images).toHaveLength(2));
-    expect(dialog.errors).toEqual([INVALID_CARD_BACK_MESSAGE]);
+    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
     complete(harness.images[1]!);
     await expect(pending).resolves.toBe(
       'https://unlisted-images.example/found.png'
@@ -175,7 +175,7 @@ describe('browser card-back request', () => {
     await vi.waitFor(() => expect(harness.images).toHaveLength(1));
     fail(harness.images[0]!);
     await expect(pending).resolves.toBeUndefined();
-    expect(dialog.errors).toEqual([INVALID_CARD_BACK_MESSAGE]);
+    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
   });
 
   it('cancels a pending load without an error or a stale completion', async () => {

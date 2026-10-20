@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { promptValue } from '../ui/dialog-requests.js';
 import type { BrowserTextPrompt } from './browser-card-back.js';
 import {
@@ -6,10 +7,15 @@ import {
   type BrowserImageLoader,
 } from './browser-image-preload.js';
 
-export const ROOM_BACKGROUND_PROMPT =
-  "Paste your image URL, or type 'blank' or 'theme':";
-export const INVALID_ROOM_BACKGROUND_MESSAGE =
-  'Please enter a valid image URL.';
+/** What the dialog asks. `blank` and `theme` are typed as they are. */
+export const roomBackgroundPrompt = (): string =>
+  t({
+    message: "Paste your image URL, or type 'blank' or 'theme':",
+    comment:
+      "Keep 'blank' and 'theme' in English: they are what the player types",
+  });
+export const invalidRoomBackgroundMessage = (): string =>
+  t`Please enter a valid image URL.`;
 
 const THEME_BACKGROUND_URLS = Object.freeze([
   '/v2/assets/background1.jpg',
@@ -48,11 +54,15 @@ export const requestBrowserRoomBackground: BrowserRoomBackgroundRequest =
     let answer: string | null;
     try {
       answer = await ask({
-        title: 'Change background',
-        body: ROOM_BACKGROUND_PROMPT,
-        label: 'Image URL',
-        placeholder: 'https://…, blank or theme',
-        submitLabel: 'Use background',
+        title: t`Change background`,
+        body: roomBackgroundPrompt(),
+        label: t`Image URL`,
+        placeholder: t({
+          message: 'https://…, blank or theme',
+          comment:
+            "Keep 'blank' and 'theme' in English: they are what the player types",
+        }),
+        submitLabel: t`Use background`,
         validate: async (value, { signal }) => {
           accepted = undefined;
           const normalized = value.trim();
@@ -66,13 +76,13 @@ export const requestBrowserRoomBackground: BrowserRoomBackgroundRequest =
               ? (THEME_BACKGROUND_URLS[random() < 0.5 ? 0 : 1] ??
                 THEME_BACKGROUND_URLS[0])
               : normalized;
-          if (!createImage) return INVALID_ROOM_BACKGROUND_MESSAGE;
+          if (!createImage) return invalidRoomBackgroundMessage();
           const preload = await preloadBrowserImage(
             createImage,
             requestedUrl,
             signal
           );
-          if (preload.kind === 'failed') return INVALID_ROOM_BACKGROUND_MESSAGE;
+          if (preload.kind === 'failed') return invalidRoomBackgroundMessage();
           if (preload.kind === 'loaded') {
             accepted = { kind: 'image', url: preload.src || requestedUrl };
           }

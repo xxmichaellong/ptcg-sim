@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
@@ -218,30 +221,30 @@ const sanitizeRoomCodeInput = (value: string): string =>
 const safeFailureMessage = (
   operation: LobbyOperation,
   error: unknown
-): string => {
+): MessageDescriptor => {
   const code =
     typeof error === 'object' && error !== null && 'code' in error
       ? String(error.code)
       : '';
   if (operation === 'copy') {
     if (code === 'clipboard_unavailable' || code === 'clipboard_failed') {
-      return 'Clipboard access failed. Allow clipboard access and try again.';
+      return msg`Clipboard access failed. Allow clipboard access and try again.`;
     }
-    return 'Could not copy an invitation. Please try again.';
+    return msg`Could not copy an invitation. Please try again.`;
   }
   if (operation === 'join') {
     if (code === 'missing_invitation' || code === 'invalid_handoff') {
-      return 'Paste a valid invitation into Room ID before joining.';
+      return msg`Paste a valid invitation into Room ID before joining.`;
     }
     if (code === 'expired_invitation') {
-      return 'That invitation has expired. Ask the room creator to copy a new one.';
+      return msg`That invitation has expired. Ask the room creator to copy a new one.`;
     }
-    return 'Could not join the room. Please try again.';
+    return msg`Could not join the room. Please try again.`;
   }
   if (operation === 'solo') {
-    return 'Could not start Solo mode. Please try again.';
+    return msg`Could not start Solo mode. Please try again.`;
   }
-  return 'Could not generate a room. Please try again.';
+  return msg`Could not generate a room. Please try again.`;
 };
 
 const InitialCoachingConsent = ({
@@ -297,6 +300,7 @@ export const RemoteRoomLobby = ({
   readonly landing?: 'solo' | 'lobby';
   readonly dependencies?: RemoteRoomLobbyDependencies;
 }) => {
+  const { t, i18n } = useLingui();
   const emptyBoardView = useMemo(createEmptyBoardView, []);
   const ownerRef = useRef<LobbyOwner | undefined>(undefined);
   const curtain = dependencies.curtain ?? tableCurtain();
@@ -323,7 +327,8 @@ export const RemoteRoomLobby = ({
   const [spectator, setSpectator] = useState(false);
   const [receipt, setReceipt] = useState<RemoteRoomInvitationHandoffReceipt>();
   const [operation, setOperation] = useState<LobbyOperation>();
-  const [status, setStatus] = useState<string>();
+  // Kept as a message, so it reads in whatever language is up when shown.
+  const [status, setStatus] = useState<MessageDescriptor>();
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
@@ -670,7 +675,7 @@ export const RemoteRoomLobby = ({
       !creator ||
       roomCode.trim().toUpperCase() !== creator.result.invitations.roomCode
     ) {
-      setStatus('Generate a room before copying an invitation.');
+      setStatus(msg`Generate a room before copying an invitation.`);
       endOperation(active.owner);
       return;
     }
@@ -749,7 +754,7 @@ export const RemoteRoomLobby = ({
       normalizedRoomCode === creator.result.invitations.roomCode
     ) {
       if (name.trim() !== creator.displayName) {
-        setStatus('Your name changed. Generate a new room before joining.');
+        setStatus(msg`Your name changed. Generate a new room before joining.`);
         return;
       }
       await handOffTable(() => {
@@ -1000,23 +1005,28 @@ export const RemoteRoomLobby = ({
               </span>
               <div className="lobby-intro-copy">
                 <h2 id="lobbyTitle" className="lobby-intro-title">
-                  Online Multiplayer Mode
+                  <Trans>Online Multiplayer Mode</Trans>
                 </h2>
                 <p className="lobby-intro-text">
-                  Generate a room, then copy a temporary invitation for one
-                  player or spectator. They paste it into Room ID to join.
+                  <Trans>
+                    Generate a room, then copy a temporary invitation for one
+                    player or spectator. They paste it into Room ID to join.
+                  </Trans>
                 </p>
               </div>
             </header>
             <div className="ds-field">
               <label className="ds-label" htmlFor="nameInput">
-                Name
+                <Trans comment="The player's display name">Name</Trans>
               </label>
               <input
                 id="nameInput"
                 className="ds-input"
                 type="text"
-                placeholder="Name"
+                placeholder={t({
+                  message: 'Name',
+                  comment: "The player's display name",
+                })}
                 autoComplete="nickname"
                 value={name}
                 disabled={busy}
@@ -1031,12 +1041,14 @@ export const RemoteRoomLobby = ({
               </span>
               <div className="lobby-step-copy">
                 <h3 id="lobbyHostTitle" className="lobby-step-title">
-                  Host a room
+                  <Trans>Host a room</Trans>
                 </h3>
                 <p className="ds-hint">
-                  Generate a room, copy an invitation and send it to your
-                  opponent. Turn on <em>Join as spectator</em> to copy a
-                  spectator invitation instead.
+                  <Trans>
+                    Generate a room, copy an invitation and send it to your
+                    opponent. Turn on <em>Join as spectator</em> to copy a
+                    spectator invitation instead.
+                  </Trans>
                 </p>
               </div>
             </div>
@@ -1057,7 +1069,9 @@ export const RemoteRoomLobby = ({
                 ) : (
                   <PlusIcon {...decorative} weight="bold" />
                 )}
-                {operation === 'generate' ? 'Generating…' : 'Generate'}
+                {operation === 'generate'
+                  ? t({ message: 'Generating…', context: 'a room' })
+                  : t({ message: 'Generate', context: 'a room' })}
               </button>
               <button
                 id="copyButton"
@@ -1065,7 +1079,7 @@ export const RemoteRoomLobby = ({
                 className={`ds-button ds-button--secondary lobby-copy${
                   copyConfirmed ? ' copied' : ''
                 }`}
-                aria-label="Copy invitation"
+                aria-label={t`Copy invitation`}
                 disabled={busy}
                 onClick={() => void handleCopy()}
               >
@@ -1077,7 +1091,9 @@ export const RemoteRoomLobby = ({
                   )}
                 </span>
                 <span aria-hidden="true">
-                  {copyConfirmed ? 'Copied' : 'Copy invitation'}
+                  {copyConfirmed
+                    ? t({ message: 'Copied', context: 'an invitation' })
+                    : t`Copy invitation`}
                 </span>
               </button>
             </div>
@@ -1089,23 +1105,25 @@ export const RemoteRoomLobby = ({
               </span>
               <div className="lobby-step-copy">
                 <h3 id="lobbyJoinTitle" className="lobby-step-title">
-                  Join a room
+                  <Trans>Join a room</Trans>
                 </h3>
                 <p className="ds-hint">
-                  Paste the invitation you were sent, or join the room you
-                  generated.
+                  <Trans>
+                    Paste the invitation you were sent, or join the room you
+                    generated.
+                  </Trans>
                 </p>
               </div>
             </div>
             <div id="roomId" className="ds-field">
               <label className="ds-label" htmlFor="roomIdInput">
-                Room ID
+                <Trans>Room ID</Trans>
               </label>
               <input
                 id="roomIdInput"
                 className="ds-input lobby-room-input"
                 type="text"
-                placeholder="Paste an invitation"
+                placeholder={t`Paste an invitation`}
                 autoComplete="off"
                 spellCheck={false}
                 value={roomCode}
@@ -1113,7 +1131,7 @@ export const RemoteRoomLobby = ({
                 onPaste={handlePaste}
                 onDrop={(event) => {
                   event.preventDefault();
-                  setStatus('Paste a temporary invitation into Room ID.');
+                  setStatus(msg`Paste a temporary invitation into Room ID.`);
                 }}
                 onChange={(event) => handleRoomCodeChange(event.target.value)}
               />
@@ -1131,7 +1149,9 @@ export const RemoteRoomLobby = ({
                   disabled={busy || receipt?.requestedRole === 'spectator'}
                   onChange={(event) => setSpectator(event.target.checked)}
                 />{' '}
-                <label htmlFor="spectatorModeCheckbox">Join as spectator</label>
+                <label htmlFor="spectatorModeCheckbox">
+                  <Trans>Join as spectator</Trans>
+                </label>
               </div>
               <div id="coachingModeLabel" className="ds-switch-row">
                 <input
@@ -1143,7 +1163,9 @@ export const RemoteRoomLobby = ({
                   onChange={(event) => setCoachingConsent(event.target.checked)}
                 />{' '}
                 <label htmlFor="coachingModeCheckbox">
-                  Enable board flip <span>(both players must enable)</span>
+                  <Trans>
+                    Enable board flip <span>(both players must enable)</span>
+                  </Trans>
                 </label>
               </div>
             </div>
@@ -1163,7 +1185,7 @@ export const RemoteRoomLobby = ({
               ) : (
                 <SignInIcon {...decorative} weight="bold" />
               )}
-              {operation === 'join' ? 'Joining…' : 'Join Room'}
+              {operation === 'join' ? t`Joining…` : t`Join Room`}
             </button>
           </section>
         </div>
@@ -1174,7 +1196,7 @@ export const RemoteRoomLobby = ({
             aria-live="polite"
           >
             <WarningCircleIcon {...decorative} weight="bold" />
-            <span>{status}</span>
+            <span>{i18n._(status)}</span>
           </p>
         )}
       </div>
@@ -1250,7 +1272,7 @@ export const RemoteRoomLobby = ({
     setOverlay('deck');
   };
   const menu: AppMenuModel = {
-    heading: activePanel === 'lobby' ? 'Play online' : 'Solo table',
+    heading: activePanel === 'lobby' ? t`Play online` : t`Solo table`,
     ...(activePanel === 'lobby' && !busy
       ? { onPlaySolo: () => void handleSolo() }
       : {}),
@@ -1327,11 +1349,11 @@ export const RemoteRoomLobby = ({
               disabled={busy}
               onClick={() => void handleSolo()}
             >
-              Try again
+              <Trans>Try again</Trans>
             </button>
           }
         >
-          {status}
+          {i18n._(status)}
         </TableBanner>
       ) : null}
       <OnlineSheet

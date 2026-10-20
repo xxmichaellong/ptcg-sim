@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { PromptOptions } from '../ui/dialog-requests.js';
 import {
-  INVALID_ROOM_BACKGROUND_MESSAGE,
+  invalidRoomBackgroundMessage,
   requestBrowserRoomBackground,
-  ROOM_BACKGROUND_PROMPT,
+  roomBackgroundPrompt,
   roomBackgroundCssImage,
 } from './browser-room-background.js';
 
@@ -76,7 +76,7 @@ describe('browser room background', () => {
     ).resolves.toBeUndefined();
     expect(cancelled.asked[0]).toMatchObject({
       title: 'Change background',
-      body: ROOM_BACKGROUND_PROMPT,
+      body: roomBackgroundPrompt(),
       label: 'Image URL',
     });
 
@@ -150,7 +150,7 @@ describe('browser room background', () => {
       new Event('error')
     );
     await expect(pending).resolves.toBeUndefined();
-    expect(dialog.errors).toEqual([INVALID_ROOM_BACKGROUND_MESSAGE]);
+    expect(dialog.errors).toEqual([invalidRoomBackgroundMessage()]);
   });
 
   it('drops a pending result after cancellation without showing an error', async () => {

@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import {
   createContext,
   useContext,
@@ -54,6 +55,7 @@ export const TableShell = ({
   readonly board: ReactNode;
   readonly children?: ReactNode;
 }) => {
+  const { t } = useLingui();
   const reveal = useMemo(
     () => ({ docked, slide: dockSlide }),
     [docked, dockSlide]
@@ -81,7 +83,7 @@ export const TableShell = ({
       >
         <section
           className="board-column board-column--table"
-          aria-label="Game board"
+          aria-label={t`Game board`}
           data-board-shell="table"
         >
           {board}

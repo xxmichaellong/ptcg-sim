@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import type { ReactNode } from 'react';
 
@@ -27,48 +28,51 @@ export const OnlineSheet = ({
   readonly onSettings?: () => void;
   /** The lobby's panel. */
   readonly children: ReactNode;
-}) => (
-  <Sheet
-    open={open}
-    onOpenChange={onOpenChange}
-    title="Play online"
-    description="Host a room and invite a friend, or join theirs."
-    {...(onDeck || onSettings
-      ? {
-          headerActions: (
-            <>
-              {onDeck ? (
-                <button
-                  id="onlineDeckButton"
-                  type="button"
-                  className="ds-button ds-button--ghost"
-                  onClick={onDeck}
-                >
-                  <DeckIcon aria-hidden="true" weight="bold" />
-                  Deck
-                </button>
-              ) : null}
-              {onSettings ? (
-                <Tooltip content="Settings" side="bottom">
+}) => {
+  const { t } = useLingui();
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t`Play online`}
+      description={t`Host a room and invite a friend, or join theirs.`}
+      {...(onDeck || onSettings
+        ? {
+            headerActions: (
+              <>
+                {onDeck ? (
                   <button
-                    id="onlineSettingsButton"
+                    id="onlineDeckButton"
                     type="button"
-                    className="ds-icon-button"
-                    aria-label="Settings"
-                    onClick={onSettings}
+                    className="ds-button ds-button--ghost"
+                    onClick={onDeck}
                   >
-                    <GearSixIcon aria-hidden="true" weight="bold" />
+                    <DeckIcon aria-hidden="true" weight="bold" />
+                    <Trans context="the deck screen">Deck</Trans>
                   </button>
-                </Tooltip>
-              ) : null}
-            </>
-          ),
-        }
-      : {})}
-    size="md"
-    id="playOnlineSheet"
-    className="ptcgsim-online-sheet"
-  >
-    {children}
-  </Sheet>
-);
+                ) : null}
+                {onSettings ? (
+                  <Tooltip content={t`Settings`} side="bottom">
+                    <button
+                      id="onlineSettingsButton"
+                      type="button"
+                      className="ds-icon-button"
+                      aria-label={t`Settings`}
+                      onClick={onSettings}
+                    >
+                      <GearSixIcon aria-hidden="true" weight="bold" />
+                    </button>
+                  </Tooltip>
+                ) : null}
+              </>
+            ),
+          }
+        : {})}
+      size="md"
+      id="playOnlineSheet"
+      className="ptcgsim-online-sheet"
+    >
+      {children}
+    </Sheet>
+  );
+};

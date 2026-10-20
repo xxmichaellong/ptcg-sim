@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
@@ -85,6 +87,7 @@ const openOutside = (url: string): void => {
 /**
  * What the toolbar shows as buttons while it is open: where to play, the
  * deck, the keys (not on a touch screen, which has none) and Settings.
+ * Worded when the toolbar renders, in the language up then.
  */
 const primaryEntries = (
   model: AppMenuModel,
@@ -95,7 +98,7 @@ const primaryEntries = (
   if (model.onPlaySolo) {
     entries.push({
       id: 'p1Button',
-      label: 'Solo table',
+      label: t`Solo table`,
       icon: UserIcon,
       onSelect: model.onPlaySolo,
     });
@@ -103,7 +106,7 @@ const primaryEntries = (
   if (model.onDeck) {
     entries.push({
       id: 'deckImportButton',
-      label: 'Deck',
+      label: t({ message: 'Deck', context: 'the deck screen' }),
       icon: DeckIcon,
       onSelect: model.onDeck,
     });
@@ -111,7 +114,7 @@ const primaryEntries = (
   if (model.onPlayOnline) {
     entries.push({
       id: 'p2Button',
-      label: 'Play online',
+      label: t`Play online`,
       icon: UsersThreeIcon,
       onSelect: model.onPlayOnline,
     });
@@ -119,7 +122,7 @@ const primaryEntries = (
   if (!touchOnly) {
     entries.push({
       id: 'shortcutsButton',
-      label: 'Keyboard shortcuts',
+      label: t`Keyboard shortcuts`,
       icon: KeyboardIcon,
       ...(shortcutsHint ? { hint: shortcutsHint } : {}),
       onSelect: () => openShortcutsDialog(),
@@ -127,7 +130,7 @@ const primaryEntries = (
   }
   entries.push({
     id: 'settingsButton',
-    label: 'Settings',
+    label: t`Settings`,
     icon: GearSixIcon,
     onSelect: model.onSettings,
   });
@@ -147,7 +150,7 @@ const restEntries = (
     gameEntries.push({
       // The rail's Exit keeps v1's `#exitReplay`.
       id: 'exitReplayMenuItem',
-      label: 'Exit replay',
+      label: t`Exit replay`,
       icon: XCircleIcon,
       onSelect: game.onExitReplay,
     });
@@ -155,7 +158,7 @@ const restEntries = (
   if (game?.onImportReplay) {
     gameEntries.push({
       id: 'importReplay',
-      label: 'Watch a replay…',
+      label: t`Watch a replay…`,
       icon: FilmReelIcon,
       disabled: game.busy === true,
       onSelect: game.onImportReplay,
@@ -164,7 +167,7 @@ const restEntries = (
   if (game?.onSaveOnline) {
     gameEntries.push({
       id: 'saveOnlineGame',
-      label: 'Save online game',
+      label: t`Save online game`,
       icon: CloudArrowUpIcon,
       disabled: game.busy === true,
       onSelect: game.onSaveOnline,
@@ -173,7 +176,7 @@ const restEntries = (
   if (game?.onResumeSaved) {
     gameEntries.push({
       id: 'resumeSavedGame',
-      label: 'Resume a saved game…',
+      label: t`Resume a saved game…`,
       icon: FolderOpenIcon,
       disabled: game.busy === true,
       onSelect: game.onResumeSaved,
@@ -182,13 +185,19 @@ const restEntries = (
   if (game?.onExportState) {
     gameEntries.push({
       id: 'exportState',
-      label: 'Download replay',
+      label: t`Download replay`,
       icon: DownloadSimpleIcon,
       onSelect: game.onExportState,
     });
   }
   if (gameEntries.length > 0) {
-    entries.push({ kind: 'label', label: 'Game' }, ...gameEntries);
+    entries.push(
+      {
+        kind: 'label',
+        label: t({ message: 'Game', context: 'menu section heading' }),
+      },
+      ...gameEntries
+    );
   }
 
   const viewEntries: ActionMenuEntry[] = [];
@@ -198,13 +207,13 @@ const restEntries = (
       fullscreen
         ? {
             id: 'fullscreenButton',
-            label: 'Exit full screen',
+            label: t`Exit full screen`,
             icon: CornersInIcon,
             onSelect: () => exitBrowserFullscreen(),
           }
         : {
             id: 'fullscreenButton',
-            label: 'Full screen',
+            label: t`Full screen`,
             icon: CornersOutIcon,
             onSelect: model.onFullscreen,
           }
@@ -213,7 +222,7 @@ const restEntries = (
   if (model.onReloadImages) {
     viewEntries.push({
       id: 'reloadImagesButton',
-      label: 'Reload card images',
+      label: t`Reload card images`,
       icon: ArrowClockwiseIcon,
       ...(reloadHint ? { hint: reloadHint } : {}),
       onSelect: model.onReloadImages,
@@ -226,10 +235,13 @@ const restEntries = (
 
   if (entries.length > 0) entries.push({ kind: 'separator' });
   entries.push(
-    { kind: 'label', label: 'Help' },
+    {
+      kind: 'label',
+      label: t({ message: 'Help', context: 'menu section heading' }),
+    },
     {
       id: 'tutorialButton',
-      label: 'Tutorial',
+      label: t`Tutorial`,
       icon: PlayCircleIcon,
       onSelect: () => openHelpPage('tutorial'),
     },
@@ -241,13 +253,13 @@ const restEntries = (
     },
     {
       id: 'donationsButton',
-      label: 'Sponsors & Donations',
+      label: t`Sponsors & Donations`,
       icon: HeartIcon,
       onSelect: () => openHelpPage('donations'),
     },
     {
       id: 'discordButton',
-      label: 'Join our Discord',
+      label: t`Join our Discord`,
       icon: DiscordLogoIcon,
       onSelect: () => openOutside(DISCORD_URL),
     }
@@ -258,7 +270,7 @@ const restEntries = (
     if (model.onCopyInvitation) {
       entries.push({
         id: 'copyInvitationMenuItem',
-        label: 'Copy an invitation',
+        label: t`Copy an invitation`,
         icon: CopyIcon,
         onSelect: model.onCopyInvitation,
       });
@@ -266,7 +278,7 @@ const restEntries = (
     if (model.onLeave) {
       entries.push({
         id: 'leaveRoomButton',
-        label: 'Leave room',
+        label: t`Leave room`,
         icon: SignOutIcon,
         danger: true,
         onSelect: model.onLeave,
@@ -342,6 +354,7 @@ const useDrawerWidth = (
  * action and not the log lives here; the log's own actions live with it.
  */
 export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
+  const { t } = useLingui();
   const hint = useHotkeyHints();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const fullscreen = useBrowserFullscreen();
@@ -361,19 +374,19 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
     // A rail button of its own, as finger-sized as the game actions.
     return (
       <ActionMenu
-        label="Menu"
+        label={t({ message: 'Menu', context: 'the app menu' })}
         // Beside the button, centred on the seam, it has the window's whole
         // height to use.
         side="right"
         align="center"
         entries={[...primary, { kind: 'separator' }, ...rest]}
         {...(header ? { header } : {})}
-        tooltip="Menu"
+        tooltip={t({ message: 'Menu', context: 'the app menu' })}
         trigger={
           <RailButton
             id="appMenuButton"
             icon={ListIcon}
-            label="Menu"
+            label={t({ message: 'Menu', context: 'the app menu' })}
             iconOnly
           />
         }
@@ -384,15 +397,15 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
     <div
       className="ptcgsim-app-toolbar"
       role="toolbar"
-      aria-label="App"
+      aria-label={t({ message: 'App', context: 'the app toolbar' })}
       data-open={open ? 'true' : 'false'}
     >
-      <Tooltip content={open ? 'Hide toolbar' : 'Show toolbar'} side="top">
+      <Tooltip content={open ? t`Hide toolbar` : t`Show toolbar`} side="top">
         <RailButton
           id="appMenuButton"
           className="ptcgsim-app-toolbar__toggle"
           icon={ListIcon}
-          label="Menu"
+          label={t({ message: 'Menu', context: 'the app menu' })}
           iconOnly
           aria-expanded={open}
           aria-controls="appToolbarDrawer"
@@ -426,17 +439,17 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
           ))}
           <ActionMenu
             // Named for its button, as the menu itself is.
-            label="More"
+            label={t({ message: 'More', context: 'more options' })}
             side="right"
             align="center"
             entries={rest}
             {...(header ? { header } : {})}
-            tooltip="More options"
+            tooltip={t`More options`}
             trigger={
               <RailButton
                 id="appMoreButton"
                 icon={DotsThreeIcon}
-                label="More"
+                label={t({ message: 'More', context: 'more options' })}
                 iconOnly
                 style={{ '--i': primary.length } as CSSProperties}
               />

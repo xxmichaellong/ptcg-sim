@@ -1,3 +1,5 @@
+import { Trans, useLingui } from '@lingui/react/macro';
+
 import { loadBoardRenderer } from '../load-board-renderer.js';
 import { useBoardParallax } from '../motion/useBoardParallax.js';
 import type {
@@ -303,6 +305,7 @@ export const RemoteSessionBoard = ({
    */
   readonly onSettledChange?: (settled: boolean) => void;
 }) => {
+  const { t } = useLingui();
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -1050,8 +1053,8 @@ export const RemoteSessionBoard = ({
         ? {
             turn: {
               id: 'turnButton',
-              label: 'Turn',
-              title: 'Start turn',
+              label: t({ message: 'Turn', context: 'start the turn' }),
+              title: t`Start turn`,
               icon: PlayIcon,
               priority: RAIL_PRIORITY.turn,
               hint: hint('table.startTurn'),
@@ -1062,8 +1065,8 @@ export const RemoteSessionBoard = ({
               : {
                   coin: {
                     id: 'flipCoinButton',
-                    label: 'Coin',
-                    title: 'Flip a coin',
+                    label: t({ message: 'Coin', context: 'flip a coin' }),
+                    title: t`Flip a coin`,
                     icon: CoinIcon,
                     priority: RAIL_PRIORITY.coin,
                     pending: coinPending,
@@ -1073,7 +1076,7 @@ export const RemoteSessionBoard = ({
                 }),
             mulligan: {
               id: 'mulliganButton',
-              label: 'Announce mulligan',
+              label: t`Announce mulligan`,
               icon: ShuffleIcon,
               hint: hint('table.mulligan'),
               onSelect: () => {
@@ -1088,8 +1091,8 @@ export const RemoteSessionBoard = ({
         ? {
             switchSide: {
               id: 'flipBoardButton',
-              label: 'Flip',
-              title: 'Flip the table',
+              label: t({ message: 'Flip', context: 'turn the table around' }),
+              title: t`Flip the table`,
               icon: ArrowsDownUpIcon,
               priority: RAIL_PRIORITY.switchSide,
               hint: hint('table.flipBoard'),
@@ -1114,6 +1117,7 @@ export const RemoteSessionBoard = ({
     hint,
     tableActions,
     tableCoinShown,
+    t,
   ]);
 
   // Each hand's count, where the table shows it: the chrome draws it as a
@@ -1272,7 +1276,7 @@ export const RemoteSessionBoard = ({
       {revealNotice !== null && (
         <div className="custom-popup" data-legacy-popup="reveal">
           <div className="popup-content">
-            Press OK to stop revealing card to opponent
+            <Trans>Press OK to stop revealing card to opponent</Trans>
             <button
               type="button"
               className="popup-button"
@@ -1286,7 +1290,7 @@ export const RemoteSessionBoard = ({
                 setRevealNotice(null);
               }}
             >
-              OK
+              <Trans>OK</Trans>
             </button>
           </div>
         </div>

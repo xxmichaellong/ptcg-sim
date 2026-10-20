@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 
 import { promptValue, type PromptOptions } from '../ui/dialog-requests.js';
@@ -7,8 +8,14 @@ import {
   type BrowserImageLoader,
 } from './browser-image-preload.js';
 
-export const CARD_BACK_PROMPT = "Paste your image URL or type 'default':";
-export const INVALID_CARD_BACK_MESSAGE = 'Please enter a valid image URL.';
+/** What the dialog asks. `default` is typed as it is, in any language. */
+export const cardBackPrompt = (): string =>
+  t({
+    message: "Paste your image URL or type 'default':",
+    comment: "Keep 'default' in English: it is what the player types",
+  });
+export const invalidCardBackMessage = (): string =>
+  t`Please enter a valid image URL.`;
 export const DEFAULT_CARD_BACK_URL = '/v2/assets/cardback.png';
 
 /** Asks for one line of text: the overlay prompt dialog by default. */
@@ -44,29 +51,32 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
   let answer: string | null;
   try {
     answer = await ask({
-      title: 'Change card back',
-      body: CARD_BACK_PROMPT,
-      label: 'Image URL',
-      placeholder: 'https://… or default',
-      submitLabel: 'Use image',
+      title: t`Change card back`,
+      body: cardBackPrompt(),
+      label: t`Image URL`,
+      placeholder: t({
+        message: 'https://… or default',
+        comment: "Keep 'default' in English: it is what the player types",
+      }),
+      submitLabel: t`Use image`,
       validate: async (value, { signal }) => {
         accepted = undefined;
         const normalized = value.trim();
         if (normalized === '') return null;
         if (normalized.length > MAX_IMAGE_URL_CODE_UNITS) {
-          return INVALID_CARD_BACK_MESSAGE;
+          return invalidCardBackMessage();
         }
         const requestedUrl =
           normalized.toLowerCase() === 'default'
             ? DEFAULT_CARD_BACK_URL
             : normalized;
-        if (!createImage) return INVALID_CARD_BACK_MESSAGE;
+        if (!createImage) return invalidCardBackMessage();
         const preload = await preloadBrowserImage(
           createImage,
           requestedUrl,
           signal
         );
-        if (preload.kind === 'failed') return INVALID_CARD_BACK_MESSAGE;
+        if (preload.kind === 'failed') return invalidCardBackMessage();
         if (preload.kind === 'loaded') accepted = requestedUrl;
         return null;
       },

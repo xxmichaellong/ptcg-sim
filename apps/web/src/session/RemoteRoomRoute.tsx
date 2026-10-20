@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   serializeProjectedReplayFile,
   type ClientSessionFailure,
@@ -44,6 +47,7 @@ import { preferences as pagePreferences } from '../preferences/preference-store.
 import { usePreference } from '../preferences/usePreference.js';
 import { PresentationAnnouncer } from '../presentation/LegacyPresentationSurface.js';
 import { ReplayModeShell } from '../replay/ReplayModeShell.js';
+import type { ReplaySessionFailure } from '../replay/ReplaySessionCoordinator.js';
 import {
   RAIL_PRIORITY,
   RemoteSessionBoard,
@@ -64,7 +68,7 @@ import type {
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import {
   downloadBrowserTextFile,
-  FULLSCREEN_REFUSED_NOTICE,
+  fullscreenRefusedNotice,
   onFullscreenRefused,
   requestBrowserFullscreen,
   serializeBattleLog,
@@ -164,12 +168,31 @@ type RouteSheet = 'deck' | 'settings' | 'online';
 
 /** A failure the room must show is reason enough to show the table. */
 /** What a failed session says over the table, in the player's terms. */
-const failureText = (failure: ClientSessionFailure): string =>
+const failureText = (failure: ClientSessionFailure): MessageDescriptor =>
   failure.retryable
-    ? 'Lost the connection to the room.'
+    ? msg`Lost the connection to the room.`
     : failure.code === 'admission_rejected'
-      ? 'The room no longer has this seat.'
-      : 'This table fell out of step with the room.';
+      ? msg`The room no longer has this seat.`
+      : msg`This table fell out of step with the room.`;
+
+/**
+ * What a replay that failed says over the table. Its own message is a
+ * developer's, in English, and stays in the banner's tooltip.
+ */
+const replayFailureText = (
+  code: ReplaySessionFailure['code']
+): MessageDescriptor => {
+  switch (code) {
+    case 'invalid_artifact':
+      return msg`That replay file couldn't be opened.`;
+    case 'interrupted':
+      return msg`The replay was interrupted. Try it again.`;
+    case 'session_failed':
+      return msg`The table lost the room during the replay.`;
+    default:
+      return msg`Replays aren't available right now.`;
+  }
+};
 
 const SettledByFailure = ({
   onSettledChange,
@@ -222,6 +245,7 @@ export const RemoteRoomRoute = ({
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
+  const { t, i18n } = useLingui();
   const solo = roomMode === 'solo';
   const backgroundSelection = useRoomBackground({
     ...(ownedBackground ? { background: ownedBackground } : {}),
@@ -299,8 +323,8 @@ export const RemoteRoomRoute = ({
     const copied = await onCopyInvitation(role).catch(() => false);
     toast(
       copied
-        ? { title: 'Invitation copied', tone: 'success' }
-        : { title: 'Could not copy an invitation', tone: 'danger' }
+        ? { title: t`Invitation copied`, tone: 'success' }
+        : { title: t`Could not copy an invitation`, tone: 'danger' }
     );
   };
   const exportLivePerspective = (): void => {
@@ -334,7 +358,7 @@ export const RemoteRoomRoute = ({
   // A browser that takes the request and then declines it says so only
   // with an event; the player hears it too.
   useEffect(
-    () => onFullscreenRefused(() => toast(FULLSCREEN_REFUSED_NOTICE)),
+    () => onFullscreenRefused(() => toast(fullscreenRefusedNotice())),
     []
   );
   const shellPreferences = usePreference(SHELL_PREFERENCES);
@@ -367,13 +391,17 @@ export const RemoteRoomRoute = ({
           state.view?.playerOrder.some(
             (playerId) => seatStage(state.view, playerId) !== 'empty'
           ) ?? false;
+        const roomCode = runtime.roomCode;
         const roomName = replaying
-          ? 'Replay'
+          ? t({ message: 'Replay', context: 'the table is showing a replay' })
           : solo
-            ? 'Solo table'
+            ? t`Solo table`
             : state.sessionPhase === 'ready'
-              ? `Room ${runtime.roomCode}`
-              : 'Connecting…';
+              ? t({
+                  message: `Room ${roomCode}`,
+                  comment: 'roomCode is a short code like K7PQ2M',
+                })
+              : t`Connecting…`;
         const canCopy =
           !replaying &&
           onCopyInvitation !== undefined &&
@@ -409,24 +437,27 @@ export const RemoteRoomRoute = ({
               actions: [
                 {
                   id: 'setupButton',
-                  label: 'Restart',
-                  title: 'Restart replay',
+                  label: t({ message: 'Restart', context: 'replay' }),
+                  title: t`Restart replay`,
                   icon: SkipBackIcon,
                   priority: 3,
                   onSelect: handlers.restart,
                 },
                 {
                   id: 'resetButton',
-                  label: 'Back',
-                  title: 'Previous replay action',
+                  label: t({
+                    message: 'Back',
+                    context: 'replay: one step back',
+                  }),
+                  title: t`Previous replay action`,
                   icon: CaretLeftIcon,
                   priority: 1,
                   onSelect: handlers.previous,
                 },
                 {
                   id: 'setupBothButton',
-                  label: 'Next',
-                  title: 'Next replay action',
+                  label: t({ message: 'Next', context: 'replay: one step on' }),
+                  title: t`Next replay action`,
                   icon: CaretRightIcon,
                   primary: true,
                   priority: 0,
@@ -434,8 +465,11 @@ export const RemoteRoomRoute = ({
                 },
                 {
                   id: 'resetBothButton',
-                  label: 'End',
-                  title: 'Fast-forward replay',
+                  label: t({
+                    message: 'End',
+                    context: 'replay: go to the end',
+                  }),
+                  title: t`Fast-forward replay`,
                   icon: FastForwardIcon,
                   priority: 2,
                   onSelect: handlers.fastForward,
@@ -443,8 +477,8 @@ export const RemoteRoomRoute = ({
                 ...(own.switchSide ? [own.switchSide] : []),
                 {
                   id: 'exitReplay',
-                  label: 'Exit',
-                  title: 'Exit replay mode',
+                  label: t({ message: 'Exit', context: 'leave the replay' }),
+                  title: t`Exit replay mode`,
                   icon: XCircleIcon,
                   priority: 4,
                   onSelect: exitReplay,
@@ -457,8 +491,8 @@ export const RemoteRoomRoute = ({
           }
           const setup: RailAction = {
             id: ids.setup,
-            label: 'Set up',
-            title: 'Set up: shuffle, draw 7, place 6 prizes',
+            label: t({ message: 'Set up', context: 'set up the game' }),
+            title: t`Set up: shuffle, draw 7, place 6 prizes`,
             icon: StackIcon,
             hint: hint('table.setup'),
             priority: RAIL_PRIORITY.lead,
@@ -469,7 +503,7 @@ export const RemoteRoomRoute = ({
             if (chrome.visibility.deckImport) {
               actions.push({
                 id: 'loadDeckButton',
-                label: 'Load a deck',
+                label: t`Load a deck`,
                 icon: DeckIcon,
                 primary: true,
                 priority: RAIL_PRIORITY.lead,
@@ -483,15 +517,15 @@ export const RemoteRoomRoute = ({
             actions.push(
               {
                 id: ids.attack,
-                label: 'Attack',
+                label: t({ message: 'Attack', context: 'declare an attack' }),
                 icon: SwordIcon,
                 priority: RAIL_PRIORITY.attack,
                 onSelect: () => live.submitTable('attack'),
               },
               {
                 id: ids.pass,
-                label: 'Pass',
-                title: 'Pass the turn',
+                label: t({ message: 'Pass', context: 'end the turn' }),
+                title: t`Pass the turn`,
                 icon: FlagIcon,
                 priority: RAIL_PRIORITY.pass,
                 onSelect: () => live.submitTable('pass'),
@@ -502,7 +536,7 @@ export const RemoteRoomRoute = ({
           if (stage !== 'empty') {
             actions.push({
               id: ids.undo,
-              label: 'Undo',
+              label: t`Undo`,
               icon: ArrowCounterClockwiseIcon,
               priority: RAIL_PRIORITY.undo,
               hint: hint('table.undo'),
@@ -513,13 +547,13 @@ export const RemoteRoomRoute = ({
 
           const more: ActionMenuEntry[] = [];
           if (stage === 'playing') {
-            more.push({ ...setup, label: 'Set up again' });
+            more.push({ ...setup, label: t`Set up again` });
             if (own.mulligan) more.push(own.mulligan);
           }
           if (stage !== 'empty') {
             more.push({
               id: ids.reset,
-              label: 'Reset',
+              label: t({ message: 'Reset', context: 'reset the table' }),
               icon: ArrowsClockwiseIcon,
               hint: hint('table.reset'),
               onSelect: () => live.submitLifecycle('reset'),
@@ -530,13 +564,13 @@ export const RemoteRoomRoute = ({
             more.push(
               {
                 id: 'setupBothButton',
-                label: 'Set up both sides',
+                label: t`Set up both sides`,
                 icon: StackIcon,
                 onSelect: () => live.submitBothLifecycle('setup'),
               },
               {
                 id: 'resetBothButton',
-                label: 'Reset both sides',
+                label: t`Reset both sides`,
                 icon: ArrowsClockwiseIcon,
                 onSelect: () => live.submitBothLifecycle('reset'),
               }
@@ -555,12 +589,12 @@ export const RemoteRoomRoute = ({
             : {}),
           onSettings: () => setSheet('settings'),
           onFullscreen: () => {
-            if (!requestFullscreen()) toast(FULLSCREEN_REFUSED_NOTICE);
+            if (!requestFullscreen()) toast(fullscreenRefusedNotice());
           },
           onReloadImages: () => {
             boardCommands.current?.refreshImages();
             // Nothing changes on the table when every image already loaded.
-            toast({ id: 'reload-images', title: 'Reloading card images' });
+            toast({ id: 'reload-images', title: t`Reloading card images` });
           },
           ...(canCopy
             ? { onCopyInvitation: () => void copyInvitation('player') }
@@ -682,7 +716,7 @@ export const RemoteRoomRoute = ({
                           className="ds-button ds-button--secondary"
                           onClick={() => runtime.session.retry()}
                         >
-                          Reconnect
+                          <Trans>Reconnect</Trans>
                         </button>
                       ) : null}
                       {solo && onNewSoloTable ? (
@@ -692,7 +726,7 @@ export const RemoteRoomRoute = ({
                           className="ds-button ds-button--secondary"
                           onClick={onNewSoloTable}
                         >
-                          New table
+                          <Trans>New table</Trans>
                         </button>
                       ) : !solo && onLeave ? (
                         <button
@@ -701,16 +735,18 @@ export const RemoteRoomRoute = ({
                           className="ds-button ds-button--secondary"
                           onClick={onLeave}
                         >
-                          Leave room
+                          <Trans>Leave room</Trans>
                         </button>
                       ) : null}
                     </>
                   }
                 >
                   <span title={state.failure.message}>
-                    {sessionFailure
-                      ? failureText(sessionFailure)
-                      : state.failure.message}
+                    {i18n._(
+                      sessionFailure
+                        ? failureText(sessionFailure)
+                        : replayFailureText(state.failure.code)
+                    )}
                   </span>
                 </TableBanner>
                 <SettledByFailure onSettledChange={onTableSettledChange} />
@@ -747,12 +783,12 @@ export const RemoteRoomRoute = ({
               {...(canCopy
                 ? {
                     headerActions: (
-                      <Tooltip content="Copy an invitation" side="bottom">
+                      <Tooltip content={t`Copy an invitation`} side="bottom">
                         <button
                           id="roomHeaderCopyButton"
                           type="button"
                           className="ds-icon-button"
-                          aria-label="Copy an invitation"
+                          aria-label={t`Copy an invitation`}
                           onClick={() => void copyInvitation('player')}
                         >
                           <CopyIcon aria-hidden="true" weight="bold" />

@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 
 import {
@@ -33,6 +34,7 @@ export const DeckLayer = ({
   /** The deck builder session, which owns its own open state. */
   readonly children: ReactNode;
 }) => {
+  const { t } = useLingui();
   const layer = useRef<HTMLDivElement>(null);
   const returnFocus = useRef<Element | null>(null);
   useEffect(() => {
@@ -113,7 +115,7 @@ export const DeckLayer = ({
       className="ptcgsim-deck-layer"
       data-open={open ? 'true' : 'false'}
       role="region"
-      aria-label="Deck"
+      aria-label={t({ message: 'Deck', context: 'the deck screen' })}
       aria-hidden={!open}
       inert={!open}
       tabIndex={-1}

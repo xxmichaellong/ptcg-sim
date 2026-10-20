@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useSyncExternalStore } from 'react';
 
 import type { ActivityFeedItem } from '../presentation/ActivityFeedModel.js';
@@ -101,12 +102,12 @@ export const exitBrowserFullscreen = (
 };
 
 /** Said when the browser keeps the page in its window. */
-export const FULLSCREEN_REFUSED_NOTICE = {
+export const fullscreenRefusedNotice = (): ToastOptions => ({
   id: 'fullscreen-refused',
-  title: "Full screen isn't available here",
-  body: 'This browser keeps the table in its window.',
+  title: t`Full screen isn't available here`,
+  body: t`This browser keeps the table in its window.`,
   tone: 'warning',
-} as const satisfies ToastOptions;
+});
 
 /**
  * Calls `refused` whenever the browser turns a full-screen request down

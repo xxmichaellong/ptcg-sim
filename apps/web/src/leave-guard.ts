@@ -1,5 +1,8 @@
-export const LEGACY_LEAVE_MESSAGE =
-  'Are you sure you want to leave? Any unsaved game data will be lost.';
+import { t } from '@lingui/core/macro';
+
+/** v1's wording, in the page's language when it is asked. */
+export const legacyLeaveMessage = (): string =>
+  t`Are you sure you want to leave? Any unsaved game data will be lost.`;
 
 interface LeaveGuardTarget {
   addEventListener(
@@ -27,7 +30,7 @@ export const installLeaveGuard = (
   if (!target) return () => undefined;
   const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
     event.preventDefault();
-    event.returnValue = LEGACY_LEAVE_MESSAGE;
+    event.returnValue = legacyLeaveMessage();
   };
   target.addEventListener('beforeunload', handleBeforeUnload);
   let installed = true;
