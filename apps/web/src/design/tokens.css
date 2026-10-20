@@ -287,24 +287,13 @@
 }
 
 /* ---- Night table (default) ---------------------------------------- */
-/* A green cloth playmat on a walnut desk under a warm lamp; the page's
-   panels are warm paper-dark, the ink cream. One blue for the player's
-   own actions; seats in blue and red. Shadows are the desk's dark, never
-   black. */
+/* The table under a warm lamp; the page's panels are warm paper-dark, the
+   ink cream. One blue for the player's own actions; seats in blue and red.
+   Shadows are the desk's dark, never black. The desk and the playmat are
+   the chosen artwork's (table-art.css); the theme only lights them. */
 :root,
 :root[data-theme='night'] {
   --color-room: #241911;
-  --color-desk: #2f2017;
-  --color-desk-hi: #3d2a1e;
-  --color-desk-grain: rgb(14 8 4 / 0.55);
-  --color-felt: #1e4636;
-  --color-felt-deep: #143024;
-  --color-felt-thread: #14261d;
-  --color-felt-thread-hi: #2b4a3b;
-  --color-felt-rim: #0d1410;
-  --color-felt-line: rgb(232 220 192 / 0.3);
-  --color-felt-line-strong: rgb(232 220 192 / 0.46);
-  --color-felt-label: rgb(232 220 192 / 0.66);
   --color-felt-glow: rgb(255 214 160 / 0.13);
   --color-lamp: rgb(255 214 160 / 0.16);
 
@@ -360,20 +349,9 @@
 }
 
 /* ---- Day table ------------------------------------------------------ */
-/* The same mat on a light oak desk by daylight; paper-white panels. */
+/* The same table by daylight; paper-white panels. */
 :root[data-theme='day'] {
   --color-room: #b8956a;
-  --color-desk: #c4a074;
-  --color-desk-hi: #d6b88f;
-  --color-desk-grain: rgb(96 62 30 / 0.3);
-  --color-felt: #2f6b50;
-  --color-felt-deep: #24553f;
-  --color-felt-thread: #244d3a;
-  --color-felt-thread-hi: #3f7a5f;
-  --color-felt-rim: #1b2a22;
-  --color-felt-line: rgb(244 236 216 / 0.34);
-  --color-felt-line-strong: rgb(244 236 216 / 0.5);
-  --color-felt-label: rgb(244 236 216 / 0.74);
   --color-felt-glow: rgb(255 248 232 / 0.12);
   --color-lamp: rgb(255 248 232 / 0.14);
 

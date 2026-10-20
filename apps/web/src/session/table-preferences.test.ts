@@ -22,11 +22,29 @@ const memory = () => {
 };
 
 describe('table preferences', () => {
-  it('start on the Night table with the default wallpaper', () => {
+  it('start on the Night table, the Cream mat and the default wallpaper', () => {
     expect(DEFAULT_TABLE_PREFERENCES).toEqual({
       darkMode: true,
+      art: 'cream',
       background: null,
     });
+  });
+
+  it('keep a known table artwork and nothing else', () => {
+    expect(parseTablePreferences({ art: 'slate' }).art).toBe('slate');
+    expect(parseTablePreferences({ art: 'velvet' }).art).toBe('cream');
+    expect(parseTablePreferences({ art: 7 }).art).toBe('cream');
+    const storage = memory();
+    const store = new PreferenceStore({ storage });
+    store.patch(TABLE_PREFERENCES, { art: 'ocean' });
+    store.flush();
+    expect(JSON.parse(storage.data.get('ptcgsim.table.v1')!)).toEqual({
+      art: 'ocean',
+    });
+    // Back on the default, nothing is kept.
+    store.patch(TABLE_PREFERENCES, { art: 'cream' });
+    store.flush();
+    expect(storage.data.has('ptcgsim.table.v1')).toBe(false);
   });
 
   it('read what they can, field by field', () => {

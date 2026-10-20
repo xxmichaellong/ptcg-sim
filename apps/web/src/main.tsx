@@ -7,11 +7,12 @@ import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
 import { readRendererKind } from './RendererSpikeBoard.js';
-import { applySavedPageTheme } from './session/page-theme.js';
+import { applySavedPageTheme, installTableArt } from './session/page-theme.js';
 import { HelpSheetHost } from './session/shell/help-pages.js';
 import { tableCurtain } from './session/shell/table-curtain.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
+import './design/table-art.css';
 import './styles.css';
 import './design/shell.css';
 import './design/card-material.css';
@@ -65,6 +66,7 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
 installPageMotion();
 // ...and so does the saved theme, so a Day table never flashes Night.
 applySavedPageTheme();
+installTableArt();
 // The page asks before a reload or a closed tab discards the table.
 installLeaveGuard();
 // index.html opens on a loading screen that the lobby lifts once its table

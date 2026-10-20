@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useSyncExternalStore } from 'react';
 
+import { TableArtControls } from '../../board/view/TableArtControls.js';
 import { TableViewControls } from '../../board/view/TableViewControls.js';
 import {
   LANGUAGE_PREFERENCES,
@@ -166,6 +167,7 @@ export const SettingsSheet = ({
         <TableViewControls solo={solo} />
       </SettingsSection>
       <SettingsSection title={t`Appearance`}>
+        <TableArtControls />
         <SwitchRow
           id="darkModeCheckbox"
           label={t`Dark mode`}

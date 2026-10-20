@@ -53,8 +53,9 @@ textarea {
   display: none;
 }
 
-/* The desk the mat lies on: walnut by night, oak by day, under one lamp up
-   and to the left, falling off toward the window's edges. It fills the
+/* The desk the mat lies on, in the chosen artwork's wood and grain
+   (table-art.css), under one lamp up and to the left, darkening toward the
+   window's edges. It fills the
    window (ADR-030); a docked log sits over its right edge while the table
    lays itself out beside it. The mat itself is the board's (BoardSurface's
    depth mat).
@@ -65,8 +66,6 @@ textarea {
    the board: more raster work than a frame has, and the desk flashed
    through. */
 .remote-room-route .board-column {
-  --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -1.210 0 0 0 0.688'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.880 0 0 0 0.468'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
-
   inset: 0;
   width: 100%;
   background-color: var(--color-desk);
@@ -87,7 +86,7 @@ textarea {
     radial-gradient(
       ellipse 85% 80% at 47% 47%,
       transparent 45%,
-      rgb(10 6 2 / 0.42) 100%
+      var(--color-desk-vignette, rgb(10 6 2 / 0.42)) 100%
     ),
     var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
   background-size:
@@ -96,9 +95,6 @@ textarea {
     640px 360px,
     auto;
   background-color: var(--color-desk);
-}
-:root[data-theme='day'] .remote-room-route .board-column {
-  --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -0.660 0 0 0 0.375'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.480 0 0 0 0.255'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
 }
 /* Flat, there is no mat drawn: the felt itself fills the table. */
 .remote-room-route

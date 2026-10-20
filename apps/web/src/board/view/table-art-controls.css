@@ -1,0 +1,124 @@
+/*
+ * The table's artwork swatches (TableArtControls.tsx). Each preview is a
+ * small table painted from its look's own tokens (design/table-art.css):
+ * the desk, the mat with its stitched rim, two zone outlines and the
+ * centre line.
+ */
+
+.table-art-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: var(--space-2);
+}
+
+.table-art-swatch {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.table-art-swatch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.table-art-swatch label {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  justify-items: center;
+  gap: 4px;
+  padding: 4px 2px 3px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  pointer-events: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.table-art-swatch__desk {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(var(--color-desk-hi), var(--color-desk));
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.12),
+    var(--shadow-1);
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+/* The mat, its rim stitched, with two zones and the centre line printed. */
+.table-art-swatch__mat {
+  position: absolute;
+  inset: 16% 12%;
+  border-radius: 3px;
+  background:
+    linear-gradient(
+        var(--color-felt-line-strong),
+        var(--color-felt-line-strong)
+      )
+      center / 100% 1px no-repeat,
+    radial-gradient(
+      ellipse 110% 105% at 46% 46%,
+      var(--color-felt) 38%,
+      var(--color-felt-deep) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px var(--color-felt-rim),
+    inset 0 0 0 2px var(--color-felt-thread-hi),
+    0 1px 2px rgb(10 6 2 / 0.3);
+}
+.table-art-swatch__mat::before,
+.table-art-swatch__mat::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  width: 40%;
+  height: 26%;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px var(--color-felt-line);
+}
+.table-art-swatch__mat::before {
+  top: 13%;
+}
+.table-art-swatch__mat::after {
+  bottom: 13%;
+}
+
+.table-art-swatch__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-art-swatch input:hover + label {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.table-art-swatch input:checked + label {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+}
+.table-art-swatch input:checked + label .table-art-swatch__desk {
+  box-shadow:
+    0 0 0 2px var(--color-surface-sunken),
+    0 0 0 4px var(--color-accent),
+    var(--shadow-1);
+}
+
+.table-art-swatch input:focus-visible + label {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}

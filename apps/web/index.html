@@ -31,9 +31,10 @@
     />
     <link rel="shortcut icon" href="/v2/assets/favicon.ico" />
     <script>
-      // The saved theme (Night or Day) is on the page before its first
-      // paint, so the loading screen below never flashes the other one.
-      // page-theme.ts applies the same preference again once the app runs.
+      // The saved theme (Night or Day) and table artwork are on the page
+      // before its first paint, so the loading screen below never flashes
+      // another. page-theme.ts applies the same preference again once the
+      // app runs (an unknown artwork falls back to Cream there and in CSS).
       (function () {
         try {
           var table = JSON.parse(
@@ -41,6 +42,8 @@
           );
           document.documentElement.dataset.theme =
             table && table.darkMode === false ? 'day' : 'night';
+          document.documentElement.dataset.tableArt =
+            table && typeof table.art === 'string' ? table.art : 'cream';
         } catch (error) {}
       })();
     </script>
@@ -52,10 +55,12 @@
        * It is only paint: it never takes the pointer.
        */
       #tableCurtain {
-        --curtain-desk: var(--color-desk, #2f2017);
-        --curtain-desk-hi: var(--color-desk-hi, #3d2a1e);
+        /* The fallbacks are Cream's, the default artwork (table-art.css). */
+        --curtain-desk: var(--color-desk, #d6c7ac);
+        --curtain-desk-hi: var(--color-desk-hi, #e4d8c3);
+        --curtain-shade: var(--color-desk-vignette, rgb(70 50 30 / 0.24));
         --curtain-lamp: var(--color-lamp, rgb(255 214 160 / 0.16));
-        --curtain-ink: var(--color-text-muted, #c9bba6);
+        --curtain-ink: var(--color-desk-ink, #4f4337);
 
         position: fixed;
         inset: 0;
@@ -71,7 +76,7 @@
           radial-gradient(
             ellipse 85% 80% at 47% 47%,
             transparent 45%,
-            rgb(10 6 2 / 0.42) 100%
+            var(--curtain-shade) 100%
           ),
           linear-gradient(var(--curtain-desk-hi), var(--curtain-desk));
         background-color: var(--curtain-desk);
@@ -82,10 +87,7 @@
           cubic-bezier(0.2, 0.8, 0.2, 1);
       }
       :root[data-theme='day'] #tableCurtain {
-        --curtain-desk: var(--color-desk, #c4a074);
-        --curtain-desk-hi: var(--color-desk-hi, #d6b88f);
         --curtain-lamp: var(--color-lamp, rgb(255 248 232 / 0.14));
-        --curtain-ink: var(--color-text-muted, #5f554a);
       }
       #tableCurtain[hidden] {
         display: none;

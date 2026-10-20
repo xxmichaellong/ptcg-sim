@@ -36,7 +36,7 @@ export const BOARD_SURFACE_CSS = `
     inset 0 0 0 1px var(--color-felt-rim, #0d1410),
     inset 0 0 0 5px var(--color-felt-thread, #14261d),
     inset 0 0 0 6px var(--color-felt-thread-hi, #2b4a3b),
-    inset 0 0 90px rgb(10 6 2 / 0.28),
+    inset 0 0 90px var(--color-felt-vignette, rgb(10 6 2 / 0.28)),
     0 3px 0 var(--color-felt-rim, #0d1410),
     0 14px 34px rgb(10 6 2 / 0.4);
   /* Kept as painted while the table resizes; only its transform follows
@@ -304,7 +304,7 @@ export const BOARD_SURFACE_CSS = `
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'] {
   box-shadow: inset 0 0 0 1.5px var(--color-felt-line, rgb(255 255 255 / 0.14));
-  background: oklch(1 0 0 / 0.018);
+  background: var(--color-felt-zone, oklch(1 0 0 / 0.018));
 }
 .ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='false'] .ptcgsim-zone-lostZone {
   transition:
@@ -367,12 +367,12 @@ export const BOARD_SURFACE_CSS = `
 }
 @media (hover: hover) and (pointer: fine) {
   .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty]:not([data-drop-target]):hover {
-    background-color: oklch(1 0 0 / 0.045);
-    box-shadow: inset 0 0 0 1.5px oklch(1 0 0 / 0.2);
+    background-color: var(--color-felt-hover, oklch(1 0 0 / 0.045));
+    box-shadow: inset 0 0 0 1.5px var(--color-felt-hover-line, oklch(1 0 0 / 0.2));
   }
   .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone-board[data-zone-outline='true'][data-zone-empty]:not([data-drop-target]):hover {
     box-shadow: none;
-    outline-color: oklch(1 0 0 / 0.24);
+    outline-color: var(--color-felt-hover-line, oklch(1 0 0 / 0.24));
   }
   .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty][data-zone-label]:not([data-drop-target]):hover::after {
     opacity: 1;
@@ -428,10 +428,10 @@ export const BOARD_SURFACE_CSS = `
   border-radius: 0;
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-drop-target='true'] {
-  background: var(--color-accent-soft, rgb(90 110 188 / 0.25));
+  background: var(--color-felt-drop-soft, var(--color-accent-soft, rgb(90 110 188 / 0.25)));
   box-shadow:
-    inset 0 0 0 2px var(--color-accent, rgb(90 110 188)),
-    0 0 24px var(--color-accent-soft, rgb(90 110 188 / 0.3));
+    inset 0 0 0 2px var(--color-felt-drop, var(--color-accent, rgb(90 110 188))),
+    0 0 24px var(--color-felt-drop-soft, var(--color-accent-soft, rgb(90 110 188 / 0.3)));
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-side='local'] {
   background: linear-gradient(

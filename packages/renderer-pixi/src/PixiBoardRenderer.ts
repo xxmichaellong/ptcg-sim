@@ -248,7 +248,13 @@ export class PixiBoardRenderer implements BoardRenderer {
     });
     this.themeObserver.observe(host.ownerDocument.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme', 'data-contrast', 'class', 'style'],
+      attributeFilter: [
+        'data-theme',
+        'data-table-art',
+        'data-contrast',
+        'class',
+        'style',
+      ],
     });
     window.addEventListener('blur', this.suspend);
     document.addEventListener('visibilitychange', this.handleVisibility);
