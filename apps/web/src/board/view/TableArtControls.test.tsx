@@ -42,7 +42,7 @@ describe('TableArtControls', () => {
       [...host.querySelectorAll('.table-art-swatch__name')].map(
         (name) => name.textContent
       )
-    ).toEqual(TABLE_ARTS.map((look) => look.name));
+    ).toEqual(TABLE_ARTS.map((look) => look.name.message));
     expect(host.querySelector('legend')?.textContent).toBe('Table style');
     // Cream is the table for everyone who never chose.
     expect(input('tableArt-cream').checked).toBe(true);

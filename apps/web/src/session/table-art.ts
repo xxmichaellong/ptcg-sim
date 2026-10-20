@@ -8,6 +8,9 @@
  * day desk.
  */
 
+import type { MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
+
 export const TABLE_ART_IDS = [
   'cream',
   'frost',
@@ -28,20 +31,44 @@ export const DEFAULT_TABLE_ART: TableArtId = 'cream';
 
 export interface TableArt {
   readonly id: TableArtId;
-  readonly name: string;
+  /** Its name in Settings, translated where it is shown. */
+  readonly name: MessageDescriptor;
 }
 
+const look = (id: TableArtId, name: MessageDescriptor): TableArt => ({
+  id,
+  name,
+});
+
 export const TABLE_ARTS: readonly TableArt[] = [
-  { id: 'cream', name: 'Cream' },
-  { id: 'frost', name: 'Frost' },
-  { id: 'sakura', name: 'Sakura' },
-  { id: 'parchment', name: 'Parchment' },
-  { id: 'classic', name: 'Green felt' },
-  { id: 'ocean', name: 'Ocean' },
-  { id: 'slate', name: 'Slate' },
-  { id: 'midnight', name: 'Midnight' },
-  { id: 'burgundy', name: 'Burgundy' },
-  { id: 'charcoal', name: 'Charcoal' },
+  look('cream', msg({ message: 'Cream', comment: 'A table look: the colour' })),
+  look('frost', msg({ message: 'Frost', comment: 'A table look' })),
+  look(
+    'sakura',
+    msg({ message: 'Sakura', comment: 'A table look: cherry blossom pink' })
+  ),
+  look(
+    'parchment',
+    msg({ message: 'Parchment', comment: 'A table look: the colour' })
+  ),
+  look(
+    'classic',
+    msg({ message: 'Green felt', comment: 'A table look: a green cloth mat' })
+  ),
+  look('ocean', msg({ message: 'Ocean', comment: 'A table look: the colour' })),
+  look('slate', msg({ message: 'Slate', comment: 'A table look: the colour' })),
+  look(
+    'midnight',
+    msg({ message: 'Midnight', comment: 'A table look: midnight blue' })
+  ),
+  look(
+    'burgundy',
+    msg({ message: 'Burgundy', comment: 'A table look: the colour' })
+  ),
+  look(
+    'charcoal',
+    msg({ message: 'Charcoal', comment: 'A table look: the colour' })
+  ),
 ];
 
 export const isTableArtId = (value: unknown): value is TableArtId =>

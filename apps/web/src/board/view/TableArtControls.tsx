@@ -1,3 +1,5 @@
+import { Trans, useLingui } from '@lingui/react/macro';
+
 import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { TABLE_ARTS } from '../../session/table-art.js';
@@ -10,11 +12,14 @@ import './table-art-controls.css';
  * repaints the table at once and stays on this device.
  */
 export const TableArtControls = () => {
+  const { i18n } = useLingui();
   const store = preferences();
   const { art } = usePreference(TABLE_PREFERENCES, store);
   return (
     <fieldset className="ptcgsim-form-group">
-      <legend className="ptcgsim-form-label">Table style</legend>
+      <legend className="ptcgsim-form-label">
+        <Trans>Table style</Trans>
+      </legend>
       <div className="table-art-swatches">
         {TABLE_ARTS.map((look) => (
           <span key={look.id} className="table-art-swatch">
@@ -34,7 +39,9 @@ export const TableArtControls = () => {
               >
                 <span className="table-art-swatch__mat" />
               </span>
-              <span className="table-art-swatch__name">{look.name}</span>
+              <span className="table-art-swatch__name">
+                {i18n._(look.name)}
+              </span>
             </label>
           </span>
         ))}
