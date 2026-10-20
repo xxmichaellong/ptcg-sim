@@ -1,6 +1,12 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useSyncExternalStore } from 'react';
 
 import { TableViewControls } from '../../board/view/TableViewControls.js';
+import {
+  LANGUAGE_PREFERENCES,
+  type LanguageChoice,
+} from '../../i18n/language-preference.js';
+import { browserLocale, isLocale, LOCALES } from '../../i18n/locales.js';
 import {
   motionSettings,
   type AnimationSpeed,
@@ -13,44 +19,108 @@ import {
   type SegmentedChoice,
 } from '../../ui/FormControls.js';
 import { Sheet } from '../../ui/Sheet.js';
-
-const REDUCE_MOTION_CHOICES: readonly SegmentedChoice<ReduceMotionChoice>[] = [
-  { value: 'system', id: 'reduceMotionSystem', label: 'System' },
-  { value: 'reduce', id: 'reduceMotionOn', label: 'On' },
-  { value: 'full', id: 'reduceMotionOff', label: 'Off' },
-];
-
-const ANIMATION_SPEED_CHOICES: readonly SegmentedChoice<AnimationSpeed>[] = [
-  { value: 'relaxed', id: 'animationSpeedRelaxed', label: 'Relaxed' },
-  { value: 'normal', id: 'animationSpeedNormal', label: 'Normal' },
-  { value: 'fast', id: 'animationSpeedFast', label: 'Fast' },
-  { value: 'instant', id: 'animationSpeedInstant', label: 'Instant' },
-];
+import { usePreference } from '../../preferences/usePreference.js';
+import { preferences } from '../../preferences/preference-store.js';
 
 const MotionControls = () => {
+  const { t } = useLingui();
   const store = motionSettings();
   const motion = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const reduceMotionChoices: readonly SegmentedChoice<ReduceMotionChoice>[] = [
+    {
+      value: 'system',
+      id: 'reduceMotionSystem',
+      label: t({ message: 'System', context: 'reduce motion setting' }),
+    },
+    {
+      value: 'reduce',
+      id: 'reduceMotionOn',
+      label: t({ message: 'On', context: 'setting' }),
+    },
+    {
+      value: 'full',
+      id: 'reduceMotionOff',
+      label: t({ message: 'Off', context: 'setting' }),
+    },
+  ];
+  const animationSpeedChoices: readonly SegmentedChoice<AnimationSpeed>[] = [
+    {
+      value: 'relaxed',
+      id: 'animationSpeedRelaxed',
+      label: t({ message: 'Relaxed', context: 'animation speed' }),
+    },
+    {
+      value: 'normal',
+      id: 'animationSpeedNormal',
+      label: t({ message: 'Normal', context: 'animation speed' }),
+    },
+    {
+      value: 'fast',
+      id: 'animationSpeedFast',
+      label: t({ message: 'Fast', context: 'animation speed' }),
+    },
+    {
+      value: 'instant',
+      id: 'animationSpeedInstant',
+      label: t({ message: 'Instant', context: 'animation speed' }),
+    },
+  ];
   return (
     <>
       <SegmentedControl
         name="reduceMotion"
-        legend="Reduce motion"
-        choices={REDUCE_MOTION_CHOICES}
+        legend={t`Reduce motion`}
+        choices={reduceMotionChoices}
         value={motion.reduceMotion}
         onChange={(reduceMotion) => store.update({ reduceMotion })}
       />
       <SegmentedControl
         name="animationSpeed"
-        legend="Animation speed"
-        choices={ANIMATION_SPEED_CHOICES}
+        legend={t`Animation speed`}
+        choices={animationSpeedChoices}
         value={motion.animationSpeed}
         onChange={(animationSpeed) => store.update({ animationSpeed })}
       >
         <span className="ptcgsim-form-hint">
-          Instant keeps every action immediate, with no movement.
+          <Trans>Instant keeps every action immediate, with no movement.</Trans>
         </span>
       </SegmentedControl>
     </>
+  );
+};
+
+/**
+ * The page's language: the browser's, until one is chosen. Each language
+ * is named in itself, so someone who cannot read the current one can still
+ * find theirs.
+ */
+const LanguageControl = () => {
+  const { t } = useLingui();
+  const { language } = usePreference(LANGUAGE_PREFERENCES);
+  const browser =
+    LOCALES.find(({ locale }) => locale === browserLocale())?.name ?? '';
+  return (
+    <div className="ptcgsim-form-group">
+      <select
+        id="languageSelect"
+        aria-label={t`Language`}
+        className="ds-select"
+        lang={language === 'auto' ? undefined : language}
+        value={language}
+        onChange={(event) => {
+          const value = event.currentTarget.value;
+          const choice: LanguageChoice = isLocale(value) ? value : 'auto';
+          preferences().set(LANGUAGE_PREFERENCES, { language: choice });
+        }}
+      >
+        <option value="auto">{t`Browser language (${browser})`}</option>
+        {LOCALES.map(({ locale, name }) => (
+          <option key={locale} value={locale} lang={locale}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 };
 
@@ -80,49 +150,55 @@ export const SettingsSheet = ({
   onDarkModeChange,
   onChangeBackground,
   onUseDefaultBackground,
-}: SettingsSheetProps) => (
-  <Sheet
-    open={open}
-    onOpenChange={onOpenChange}
-    title="Settings"
-    placement="side"
-    size="sm"
-    id="settings"
-    className="ptcgsim-settings-sheet"
-  >
-    <SettingsSection title="Table" id="settingsTable">
-      <TableViewControls solo={solo} />
-    </SettingsSection>
-    <SettingsSection title="Appearance">
-      <SwitchRow
-        id="darkModeCheckbox"
-        label="Dark mode"
-        checked={darkMode}
-        onChange={onDarkModeChange}
-      />
-      <div className="ptcgsim-settings-actions">
-        <button
-          id="changeBackgroundButton"
-          type="button"
-          className="ds-button ds-button--secondary"
-          onClick={onChangeBackground}
-        >
-          Change background
-        </button>
-        {onUseDefaultBackground ? (
+}: SettingsSheetProps) => {
+  const { t } = useLingui();
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t`Settings`}
+      placement="side"
+      size="sm"
+      id="settings"
+      className="ptcgsim-settings-sheet"
+    >
+      <SettingsSection title={t`Table`} id="settingsTable">
+        <TableViewControls solo={solo} />
+      </SettingsSection>
+      <SettingsSection title={t`Appearance`}>
+        <SwitchRow
+          id="darkModeCheckbox"
+          label={t`Dark mode`}
+          checked={darkMode}
+          onChange={onDarkModeChange}
+        />
+        <div className="ptcgsim-settings-actions">
           <button
-            id="defaultBackgroundButton"
+            id="changeBackgroundButton"
             type="button"
-            className="ds-button ds-button--ghost"
-            onClick={onUseDefaultBackground}
+            className="ds-button ds-button--secondary"
+            onClick={onChangeBackground}
           >
-            Use default
+            <Trans>Change background</Trans>
           </button>
-        ) : null}
-      </div>
-    </SettingsSection>
-    <SettingsSection title="Motion" id="motionSettings">
-      <MotionControls />
-    </SettingsSection>
-  </Sheet>
-);
+          {onUseDefaultBackground ? (
+            <button
+              id="defaultBackgroundButton"
+              type="button"
+              className="ds-button ds-button--ghost"
+              onClick={onUseDefaultBackground}
+            >
+              <Trans>Use default</Trans>
+            </button>
+          ) : null}
+        </div>
+      </SettingsSection>
+      <SettingsSection title={t`Language`} id="languageSettings">
+        <LanguageControl />
+      </SettingsSection>
+      <SettingsSection title={t`Motion`} id="motionSettings">
+        <MotionControls />
+      </SettingsSection>
+    </Sheet>
+  );
+};

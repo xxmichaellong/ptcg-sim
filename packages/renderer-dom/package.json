@@ -14,6 +14,7 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
+    "@lingui/core": "6.10.0",
     "@ptcgsim/renderer-contract": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8"

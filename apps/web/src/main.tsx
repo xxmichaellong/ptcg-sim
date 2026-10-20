@@ -1,3 +1,5 @@
+// First, so a language is active before any other module runs.
+import { startLocalization } from './i18n/localization.js';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
@@ -73,6 +75,10 @@ if (depthLabRequested || devRoomRequested || !roomLobbyRoute) {
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');
+
+// The saved language is up before the first render, so a page in another
+// language never flashes English (the loading screen covers the wait).
+await startLocalization();
 
 // One overlay host for the whole page: the lobby, the room, the Deck panel
 // and the dev room all raise their dialogs and toasts through it.

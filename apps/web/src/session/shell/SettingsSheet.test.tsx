@@ -79,7 +79,7 @@ afterEach(async () => {
 });
 
 describe('SettingsSheet', () => {
-  it('holds settings only, by use: the table, the page, motion', async () => {
+  it('holds settings only, by use: the table, the page, language, motion', async () => {
     await render();
     const sheet = document.querySelector<HTMLElement>('#settings')!;
     expect(sheet.dataset.variant).toBe('side');
@@ -88,7 +88,7 @@ describe('SettingsSheet', () => {
       [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
         (title) => title.textContent
       )
-    ).toEqual(['Table', 'Appearance', 'Motion']);
+    ).toEqual(['Table', 'Appearance', 'Language', 'Motion']);
   });
 
   it('is not on the page while closed', async () => {

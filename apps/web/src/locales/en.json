@@ -1,0 +1,85 @@
+{
+  "d3fmj9": {
+    "message": "Animation speed",
+    "translation": "Animation speed"
+  },
+  "aAIQg2": {
+    "message": "Appearance",
+    "translation": "Appearance"
+  },
+  "FE2YBZ": {
+    "message": "Browser language ({browser})",
+    "translation": "Browser language ({browser})"
+  },
+  "sIpTuZ": {
+    "message": "Change background",
+    "translation": "Change background"
+  },
+  "yB1YpA": {
+    "message": "Dark mode",
+    "translation": "Dark mode"
+  },
+  "G31vv6": {
+    "message": "Fast",
+    "context": "animation speed",
+    "translation": "Fast"
+  },
+  "U31bsH": {
+    "message": "Instant",
+    "context": "animation speed",
+    "translation": "Instant"
+  },
+  "N9_ykp": {
+    "message": "Instant keeps every action immediate, with no movement.",
+    "translation": "Instant keeps every action immediate, with no movement."
+  },
+  "vXIe7J": {
+    "message": "Language",
+    "translation": "Language"
+  },
+  "itfxKl": {
+    "message": "Motion",
+    "translation": "Motion"
+  },
+  "NfqnuJ": {
+    "message": "Normal",
+    "context": "animation speed",
+    "translation": "Normal"
+  },
+  "gEGSTP": {
+    "message": "Off",
+    "context": "setting",
+    "translation": "Off"
+  },
+  "TjCu_Q": {
+    "message": "On",
+    "context": "setting",
+    "translation": "On"
+  },
+  "NKamZr": {
+    "message": "Reduce motion",
+    "translation": "Reduce motion"
+  },
+  "SOnu64": {
+    "message": "Relaxed",
+    "context": "animation speed",
+    "translation": "Relaxed"
+  },
+  "Tz0i8g": {
+    "message": "Settings",
+    "translation": "Settings"
+  },
+  "VeOzUg": {
+    "message": "System",
+    "context": "reduce motion setting",
+    "translation": "System"
+  },
+  "4hJhzz": {
+    "message": "Table",
+    "translation": "Table"
+  },
+  "kqaF8V": {
+    "message": "Use default",
+    "translation": "Use default"
+  }
+}

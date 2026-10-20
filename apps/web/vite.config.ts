@@ -1,3 +1,6 @@
+import { fileURLToPath } from 'node:url';
+
+import { lingui } from '@lingui/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
@@ -189,7 +192,21 @@ const v2ServerTarget =
   process.env['PTCGSIM_V2_SERVER_ORIGIN'] ?? 'http://127.0.0.1:8787';
 
 export default defineConfig({
-  plugins: [rendererCacheFixture(), rendererRedirectFixture(), react()],
+  plugins: [
+    rendererCacheFixture(),
+    rendererRedirectFixture(),
+    // Lingui's macros compile here, without Babel, and `?lingui` catalogs
+    // compile on import (ADR-034). A catalog with a broken message fails the
+    // build instead of shipping.
+    lingui({
+      configPath: fileURLToPath(
+        new URL('../../lingui.config.ts', import.meta.url)
+      ),
+      macroTransform: true,
+      failOnCompileError: true,
+    }),
+    react(),
+  ],
   // Pre-bundle the UI libraries at start-up. Discovered later, on a first
   // page load, they make the dev server re-optimise and reload the page,
   // which restarts whatever the page was doing (a second room, in a test).

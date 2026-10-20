@@ -12,5 +12,8 @@
   "scripts": {
     "test": "vitest run --root ../.. packages/deck-core",
     "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@lingui/core": "6.10.0"
   }
 }
