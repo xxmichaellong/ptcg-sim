@@ -123,23 +123,59 @@ export const tablePoseMatrix = (
         (n, index) => flat[index]! + (n - flat[index]!) * pose.plane
       );
 };
+/** Points on a face, in its own units, where a pose's matrix paints them. */
+const projectThrough = (
+  m: readonly number[],
+  points: readonly TablePoint[]
+): readonly TablePoint[] =>
+  points.map(({ x, y }) => {
+    const w = m[3]! * x + m[7]! * y + m[15]!;
+    return {
+      x: (m[0]! * x + m[4]! * y + m[12]!) / w,
+      y: (m[1]! * x + m[5]! * y + m[13]!) / w,
+    };
+  });
 export const tablePoseQuad = (
   camera: TableCamera,
   pose: TableCardPose
-): readonly TablePoint[] => {
-  const m = tablePoseMatrix(camera, pose);
+): readonly TablePoint[] =>
+  projectThrough(tablePoseMatrix(camera, pose), [
+    { x: 0, y: 0 },
+    { x: pose.bounds.width, y: 0 },
+    { x: pose.bounds.width, y: pose.bounds.height },
+    { x: 0, y: pose.bounds.height },
+  ]);
+
+/**
+ * A card's corner radius across and down, as parts of its width and
+ * height: the face's `--ptcgsim-card-radius` (4.8% / 3.4%), about 3 mm on
+ * a real card.
+ */
+const TABLE_CARD_CORNER = Object.freeze({ x: 0.048, y: 0.034 });
+/** Straight pieces each rounded corner of a card's edge is drawn with. */
+const CORNER_STEPS = 6;
+
+/**
+ * The outline of a face of this size, its corners rounded as the face's
+ * are, wound as the face is: along its top edge first, then down.
+ */
+const cardOutline = (width: number, height: number): readonly TablePoint[] => {
+  const rx = width * TABLE_CARD_CORNER.x;
+  const ry = height * TABLE_CARD_CORNER.y;
   return [
-    [0, 0],
-    [pose.bounds.width, 0],
-    [pose.bounds.width, pose.bounds.height],
-    [0, pose.bounds.height],
-  ].map(([x, y]) => {
-    const w = m[3]! * x! + m[7]! * y! + m[15]!;
-    return {
-      x: (m[0]! * x! + m[4]! * y! + m[12]!) / w,
-      y: (m[1]! * x! + m[5]! * y! + m[13]!) / w,
-    };
-  });
+    { x: width - rx, y: ry },
+    { x: width - rx, y: height - ry },
+    { x: rx, y: height - ry },
+    { x: rx, y: ry },
+  ].flatMap((centre, corner) =>
+    Array.from({ length: CORNER_STEPS + 1 }, (_, step) => {
+      const angle = ((corner - 1 + step / CORNER_STEPS) * Math.PI) / 2;
+      return {
+        x: centre.x + rx * Math.cos(angle),
+        y: centre.y + ry * Math.sin(angle),
+      };
+    })
+  );
 };
 export const quadBounds = (quad: readonly TablePoint[]): Rect => {
   const x = Math.min(...quad.map((p) => p.x));
@@ -157,8 +193,13 @@ export const tablePoseLocalPoint = (
   camera: TableCamera,
   pose: TableCardPose,
   point: TablePoint
+): TablePoint | null => localPointThrough(tablePoseMatrix(camera, pose), point);
+
+/** Where on a face, in its own units, a pose's matrix paints a point. */
+const localPointThrough = (
+  m: readonly number[],
+  point: TablePoint
 ): TablePoint | null => {
-  const m = tablePoseMatrix(camera, pose);
   const [a, b, c, d, e, f, g, h, i] = [
     m[0]!,
     m[4]!,
@@ -196,17 +237,16 @@ export const tablePoseEdges = (
   pose: TableCardPose,
   bands: number
 ) => {
-  const top = [
-    { x: 0, y: 0 },
-    { x: pose.bounds.width, y: 0 },
-    { x: pose.bounds.width, y: pose.bounds.height },
-    { x: 0, y: pose.bounds.height },
-  ];
-  const localQuad = (value: TableCardPose) =>
-    tablePoseQuad(camera, value).map(
-      (point) => tablePoseLocalPoint(camera, pose, point) ?? point
+  // The edge follows the face's rounded corners; square ones would stand
+  // out past the face at every corner of a pile.
+  const top = cardOutline(pose.bounds.width, pose.bounds.height);
+  const count = top.length;
+  const face = tablePoseMatrix(camera, pose);
+  const localOutline = (value: TableCardPose) =>
+    projectThrough(tablePoseMatrix(camera, value), top).map(
+      (point) => localPointThrough(face, point) ?? point
     );
-  const bottom = localQuad({
+  const bottom = localOutline({
     ...pose,
     elevation: pose.elevation - pose.thickness,
   });
@@ -218,25 +258,46 @@ export const tablePoseEdges = (
   const side = (index: number): readonly TablePoint[] => [
     top[index]!,
     bottom[index]!,
-    bottom[(index + 1) % 4]!,
-    top[(index + 1) % 4]!,
+    bottom[(index + 1) % count]!,
+    top[(index + 1) % count]!,
   ];
-  // Only the sides turned toward the viewer are drawn. Those wind the same
-  // way as the top face (positive area here); the far ones wind the other
-  // way, and in one filled path they would cancel the near ones where they
-  // overlap, leaving holes the mat shows through.
-  const facing = [0, 1, 2, 3].filter((index) => signedArea(side(index)) > 1e-6);
-  const sides = facing.map((index) => path(side(index))).join('');
+  // Only the pieces of edge turned toward the viewer are drawn. Those wind
+  // the same way as the top face (positive area here); the far ones wind
+  // the other way, and in one filled path they would cancel the near ones
+  // where they overlap, leaving holes the mat shows through.
+  const facing = top.map((_, index) => signedArea(side(index)) > 1e-6);
+  // Pieces that show next to each other are drawn as one band, round the
+  // corner between them, so no seam is outlined where two sides meet. Each
+  // run lists the outline's points along it.
+  const runs: number[][] = [];
+  const start = facing.indexOf(false);
+  if (start === -1) runs.push(...top.map((_, index) => [index, index + 1]));
+  else
+    for (let step = 1; step <= count; step += 1) {
+      const index = (start + step) % count;
+      if (!facing[index]) continue;
+      const after = (index + 1) % count;
+      if (facing[(index + count - 1) % count]) runs.at(-1)!.push(after);
+      else runs.push([index, after]);
+    }
+  const sides = runs
+    .map((run) =>
+      path([
+        ...run.map((index) => bottom[index % count]!),
+        ...run.map((index) => top[index % count]!).reverse(),
+      ])
+    )
+    .join('');
   const bandCount = Math.min(8, Math.max(0, bands - 1));
-  // Where the cards of a pile meet, along the sides that show.
+  // Where the cards of a pile meet, along the edge that shows.
   const lines = Array.from({ length: bandCount }, (_, band) => {
     const ratio = (band + 1) / (bandCount + 1);
     const at = (index: number): TablePoint => ({
       x: top[index]!.x + (bottom[index]!.x - top[index]!.x) * ratio,
       y: top[index]!.y + (bottom[index]!.y - top[index]!.y) * ratio,
     });
-    return facing
-      .map((index) => `M${coordinates([at(index), at((index + 1) % 4)])}`)
+    return runs
+      .map((run) => `M${coordinates(run.map((index) => at(index % count)))}`)
       .join('');
   }).join('');
   // Two shadows, as a card under a lamp has: a dark contact shadow right
@@ -245,7 +306,7 @@ export const tablePoseEdges = (
   // left, as the markers and the card glare assume.
   const above = Math.max(0, pose.elevation - pose.thickness);
   const shadow = path(
-    localQuad({
+    localOutline({
       ...pose,
       elevation: 0,
       flip: 0,
@@ -257,7 +318,7 @@ export const tablePoseEdges = (
     })
   );
   const contact = path(
-    localQuad({
+    localOutline({
       ...pose,
       elevation: 0,
       flip: 0,

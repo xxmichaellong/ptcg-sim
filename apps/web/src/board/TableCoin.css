@@ -73,9 +73,9 @@ button.table-coin__button:focus-visible {
   outline-offset: 3px;
 }
 
-/* In the air it answers no second press (the coin is busy). */
+/* In the air it answers no second press, so it stops offering one. */
 .table-coin[data-coin-in-air] button.table-coin__button {
-  cursor: progress;
+  cursor: default;
 }
 
 /* Under an open pile viewer it stays on the felt, out of reach. */

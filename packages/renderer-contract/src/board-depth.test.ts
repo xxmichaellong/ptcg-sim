@@ -293,6 +293,62 @@ describe('live board depth', () => {
       }).liftFor(100)
     ).toBe(0);
   });
+  it('rounds a pile’s edge at the corners as its face is rounded, with no seam where two sides meet', () => {
+    const scene = fixture();
+    const zone = scene.zones.find((zone) => zone.kind === 'deck')!;
+    const template = scene.cards.find((card) => card.parentId === zone.id)!;
+    const cover = {
+      ...template,
+      renderKey: `cover:${zone.id}`,
+      primaryAction: { kind: 'openZone' as const, zoneId: zone.id },
+    };
+    const projection = new BoardDepthProjection(
+      { ...scene, zones: [{ ...zone, count: 60 }], cards: [cover] },
+      preferences
+    );
+    const pose = projection.pose(cover);
+    const { width, height } = pose.bounds;
+    const [rx, ry] = [width * 0.048, height * 0.034];
+    // Where a point of the face's outline is, against its rounded corners:
+    // 1 on the curve, more outside it (a square corner is 2).
+    const corner = ({ x, y }: { x: number; y: number }) => {
+      const dx = Math.max(0, rx - x, x - (width - rx)) / rx;
+      const dy = Math.max(0, ry - y, y - (height - ry)) / ry;
+      return dx > 0 && dy > 0 ? dx * dx + dy * dy : undefined;
+    };
+    // At the table's near corners two sides of the pile show.
+    const turned = [0, projection.camera.width - width].map((x) => {
+      const edges = tablePoseEdges(
+        projection.camera,
+        { ...pose, bounds: { ...pose.bounds, x } },
+        60
+      );
+      const bands = edges.sides
+        .split('Z')
+        .filter(Boolean)
+        .map((band) =>
+          band
+            .replace('M', '')
+            .split('L')
+            .map((pair) => {
+              const [px, py] = pair.split(',').map(Number);
+              return { x: px!, y: py! };
+            })
+        );
+      return { bands, lines: edges.lines };
+    });
+    for (const { bands, lines } of turned) {
+      // One band round the corner, and one line along it per page.
+      expect(bands).toHaveLength(1);
+      expect(lines.match(/M/g)).toHaveLength(8);
+      // Its top half is the face's own outline, taken round the curve.
+      const band = bands[0]!;
+      const along = band.slice(band.length / 2).map(corner);
+      const round = along.filter((value) => value !== undefined);
+      expect(round.length).toBeGreaterThan(2);
+      for (const value of round) expect(value).toBeCloseTo(1, 3);
+    }
+  });
   it('uses screen distance for the drag threshold and the projected target for the logical drop', () => {
     const scene = fixture();
     const source = scene.cards.find(
