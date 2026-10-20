@@ -34,6 +34,15 @@ describe('translationProblem', () => {
       ),
       undefined
     );
+    // A language without ordinals may say the bare number.
+    assert.equal(
+      translationProblem(
+        '{place, selectordinal, one {#st} other {#th}} of {players}',
+        '{players}人中{place}位',
+        'ja'
+      ),
+      undefined
+    );
   });
 
   it('rejects missing, renamed or added placeholders', () => {

@@ -14,7 +14,7 @@ import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { i18n } from '@lingui/core';
-import { plural, t as translate } from '@lingui/core/macro';
+import { plural, selectOrdinal, t as translate } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   catalogIndex,
@@ -435,6 +435,50 @@ const splitFinish = (name: string): readonly [string, string | undefined] => {
   return at > 0 ? [name.slice(0, at), name.slice(at + 3)] : [name, undefined];
 };
 
+/**
+ * A current deck's finish in the page's language. The deck feed names it in
+ * English ("1st of 285", server/current-decks.ts); anything else is shown
+ * as it came.
+ */
+const wordFinish = (finish: string): string => {
+  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)$/u.exec(finish);
+  if (!placed) return finish;
+  const place = Number(placed[1]);
+  const players = Number(placed[2]);
+  return translate({
+    comment:
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285",
+    message: `${selectOrdinal(place, {
+      one: '#st',
+      two: '#nd',
+      few: '#rd',
+      other: '#th',
+    })} of ${players}`,
+  });
+};
+
+/** A card-image language (stored in English) named in the page's language. */
+const CARD_LANGUAGE_CODES: Readonly<Record<PastedDecklistLanguage, string>> = {
+  English: 'en',
+  French: 'fr',
+  German: 'de',
+  Italian: 'it',
+  Portuguese: 'pt',
+  Spanish: 'es',
+};
+
+const cardLanguageName = (language: PastedDecklistLanguage): string => {
+  try {
+    return (
+      new Intl.DisplayNames([i18n.locale], { type: 'language' }).of(
+        CARD_LANGUAGE_CODES[language]
+      ) ?? language
+    );
+  } catch {
+    return language;
+  }
+};
+
 const ListDeckTile = ({
   name,
   cover,
@@ -473,7 +517,7 @@ const ListDeckTile = ({
                 weight="fill"
                 className="deck-tile__trophy"
               />
-              {finish}
+              {wordFinish(finish)}
             </span>
           ) : null}
         </span>
@@ -730,7 +774,7 @@ export const DeckHome = ({
                 >
                   {PASTED_DECKLIST_LANGUAGES.map((entry) => (
                     <option key={entry} value={entry}>
-                      {entry}
+                      {cardLanguageName(entry)}
                     </option>
                   ))}
                 </select>

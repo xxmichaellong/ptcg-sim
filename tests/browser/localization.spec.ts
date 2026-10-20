@@ -53,6 +53,8 @@ const deckZoneName = (page: Page) =>
 test('the table speaks the language chosen in Settings, at once and after a reload', async ({
   page,
 }) => {
+  // Two tables open (before and after the reload), each up to a minute.
+  test.setTimeout(150_000);
   await openTable(page);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   const englishDeck = await deckZoneName(page);

@@ -679,6 +679,13 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {Nadmiar kart: # ({count}/{required}).} few {Nadmiar kart: # ({count}/{required}).} many {Nadmiar kart: # ({count}/{required}).} other {Nadmiar kart: # ({count}/{required}).}}"
   },
+  "2dJX8c": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
+    "comments": [
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285"
+    ],
+    "translation": "{place, selectordinal, other {#.}} miejsce z {players}"
+  },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
     "comments": [

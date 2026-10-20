@@ -679,6 +679,13 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, other {Thừa # lá bài ({count}/{required}).}}"
   },
+  "2dJX8c": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
+    "comments": [
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285"
+    ],
+    "translation": "{place, selectordinal, other {Hạng #}} trên {players}"
+  },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
     "comments": [

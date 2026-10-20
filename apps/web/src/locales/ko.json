@@ -679,6 +679,13 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {#장 초과입니다 ({count}/{required}).} other {#장 초과입니다 ({count}/{required}).}}"
   },
+  "2dJX8c": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
+    "comments": [
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285"
+    ],
+    "translation": "{players}명 중 {place, selectordinal, other {#}}위"
+  },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
     "comments": [

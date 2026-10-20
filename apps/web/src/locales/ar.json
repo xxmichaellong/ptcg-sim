@@ -679,6 +679,13 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {بطاقة واحدة زائدة ({count}/{required}).} two {بطاقتان زائدتان ({count}/{required}).} few {# بطاقات زائدة ({count}/{required}).} many {# بطاقة زائدة ({count}/{required}).} other {# بطاقة زائدة ({count}/{required}).}}"
   },
+  "2dJX8c": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
+    "comments": [
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285"
+    ],
+    "translation": "{place, selectordinal, other {المركز #}} من {players}"
+  },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
     "comments": [

@@ -209,7 +209,11 @@ export const translationProblem = (
   for (const [name, kind] of expected.arguments) {
     const translated = actual.arguments.get(name);
     if (translated === undefined) return `lost {${name}}`;
-    if (translated !== kind) return `{${name}} became ${translated}`;
+    // A language without plural or ordinal forms may say the bare number.
+    const bareNumber =
+      translated === 'value' && (kind === 'plural' || kind === 'selectordinal');
+    if (translated !== kind && !bareNumber)
+      return `{${name}} became ${translated}`;
   }
   for (const name of actual.arguments.keys())
     if (!expected.arguments.has(name)) return `added {${name}}`;
