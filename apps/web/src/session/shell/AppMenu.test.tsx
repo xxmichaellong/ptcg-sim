@@ -137,7 +137,6 @@ describe('AppMenu', () => {
       'changelogButton',
       'donationsButton',
       'discordButton',
-      'contactButton',
     ]);
     expect(
       document.querySelector('[role="menu"] #changelogButton')?.textContent

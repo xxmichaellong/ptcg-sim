@@ -1,5 +1,4 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
-import { ChatCircleDotsIcon } from '@phosphor-icons/react/dist/csr/ChatCircleDots';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
@@ -41,12 +40,7 @@ import {
 import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
-import {
-  CONTACT_URL,
-  DISCORD_URL,
-  openHelpPage,
-  RELEASE_NAME,
-} from './help-pages.js';
+import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 import { SHELL_PREFERENCES } from './shell-preferences.js';
 
 /** What the app menu can do in the current room and mode. */
@@ -256,12 +250,6 @@ const restEntries = (
       label: 'Join our Discord',
       icon: DiscordLogoIcon,
       onSelect: () => openOutside(DISCORD_URL),
-    },
-    {
-      id: 'contactButton',
-      label: 'Ideas for a better table?',
-      icon: ChatCircleDotsIcon,
-      onSelect: () => openOutside(CONTACT_URL),
     }
   );
 

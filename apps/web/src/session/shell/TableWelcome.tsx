@@ -5,6 +5,7 @@ import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import { XLogoIcon } from '@phosphor-icons/react/dist/csr/XLogo';
 
 import { chordKeycaps, detectKeyboardPlatform } from '../../hotkeys/chords.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
@@ -17,6 +18,8 @@ import {
   openHelpPage,
   RELEASE_NAME,
   REPOSITORY_URL,
+  TWITTER_HANDLE,
+  TWITTER_URL,
 } from './help-pages.js';
 import './table-welcome.css';
 
@@ -184,6 +187,16 @@ export const TableWelcome = ({
       >
         <DiscordLogoIcon {...decorative} weight="fill" />
         Discord
+      </a>
+      <a
+        id="twitterLink"
+        className="ds-link"
+        href={TWITTER_URL}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <XLogoIcon {...decorative} weight="bold" />
+        {TWITTER_HANDLE}
       </a>
       <button
         id="donationsLink"

@@ -124,6 +124,10 @@ describe('TableWelcome', () => {
     expect(host.querySelector<HTMLAnchorElement>('#discordLink')!.target).toBe(
       '_blank'
     );
+    const twitter = host.querySelector<HTMLAnchorElement>('#twitterLink')!;
+    expect(twitter.href).toBe('https://x.com/xxmichaellong');
+    expect(twitter.target).toBe('_blank');
+    expect(twitter.textContent).toBe('@xxmichaellong');
   });
 
   it('explains play for a mouse, with the shortcuts a key away', async () => {
