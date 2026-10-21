@@ -161,7 +161,7 @@
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease-out),
-    scale var(--duration-instant) var(--ease-out);
+    scale var(--control-press-timing);
 }
 
 .table-welcome .welcome-version svg {

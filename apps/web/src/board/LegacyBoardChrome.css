@@ -39,11 +39,13 @@
   --ptcgsim-resizer-seat: var(--color-opponent, rgb(188 90 113));
 }
 
-.ptcgsim-legacy-board-chrome .legacy-board-resizer:hover {
-  filter: brightness(1.12);
-  box-shadow:
-    var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.42)),
-    var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-board-chrome .legacy-board-resizer:hover {
+    filter: brightness(1.12);
+    box-shadow:
+      var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.42)),
+      var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+  }
 }
 
 .ptcgsim-legacy-board-chrome .legacy-player-frame-chrome {
@@ -88,7 +90,7 @@
   -webkit-tap-highlight-color: transparent;
   transition:
     translate var(--duration-fast, 140ms) var(--ease-out, ease-out),
-    scale var(--duration-instant, 90ms) var(--ease-out, ease-out);
+    scale var(--control-press-timing);
 }
 
 .ptcgsim-legacy-board-chrome .legacy-once-per-game-button:focus-visible {

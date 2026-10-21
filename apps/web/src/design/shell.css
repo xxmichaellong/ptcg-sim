@@ -148,8 +148,10 @@ textarea {
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
 }
-.custom-popup .popup-button:hover {
-  background: var(--color-accent-fill-hover);
+@media (hover: hover) and (pointer: fine) {
+  .custom-popup .popup-button:hover {
+    background: var(--color-accent-fill-hover);
+  }
 }
 
 /* Nothing a rule here shows may outrank the hidden attribute. */

@@ -52,7 +52,7 @@
   -webkit-tap-highlight-color: transparent;
   transition:
     translate var(--duration-fast, 120ms) var(--ease-out, ease-out),
-    scale var(--duration-instant, 80ms) var(--ease-out, ease-out);
+    scale var(--control-press-timing);
 }
 
 button.table-coin__button {

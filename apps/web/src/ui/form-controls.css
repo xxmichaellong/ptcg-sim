@@ -102,8 +102,10 @@
     color var(--duration-fast) var(--ease-out);
 }
 
-.ptcgsim-segmented-control__option input:hover + label {
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-segmented-control__option input:hover + label {
+    color: var(--color-text);
+  }
 }
 
 .ptcgsim-segmented-control__option input:checked + label {

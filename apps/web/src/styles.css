@@ -271,6 +271,8 @@ select {
   cursor: pointer;
 }
 
-.custom-popup .popup-button:hover {
-  background: #555;
+@media (hover: hover) and (pointer: fine) {
+  .custom-popup .popup-button:hover {
+    background: #555;
+  }
 }

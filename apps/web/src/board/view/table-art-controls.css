@@ -102,9 +102,11 @@
   white-space: nowrap;
 }
 
-.table-art-swatch input:hover + label {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .table-art-swatch input:hover + label {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 .table-art-swatch input:checked + label {

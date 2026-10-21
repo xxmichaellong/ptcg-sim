@@ -83,7 +83,13 @@
   /* Shared interaction geometry, used by dialogs, panels and board chrome. */
   --control-height: 36px;
   --control-height-compact: 32px;
-  --control-press-scale: 0.975;
+  /* A control under a press (after magiccircle's buttons): it gives at once
+     and, let go, springs back a little past its size. The timing follows the
+     press itself (see the :active rule below). */
+  --control-press-scale: 0.95;
+  --control-press-in: 70ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --control-press-out: 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --control-press-timing: var(--control-press-out);
   --control-hover-rise: -1px;
   --surface-blur: 20px;
 
@@ -423,6 +429,13 @@
   --ptcgsim-counter-10: #ffe100;
   --ptcgsim-counter-50: #ef7a00;
   --ptcgsim-counter-100: #e70012;
+}
+
+/* Pressed, a control gives at once; let go, it springs back. A transition
+   takes its timing from the style it changes to, so the press and the
+   release each get their own. */
+:active {
+  --control-press-timing: var(--control-press-in);
 }
 
 :root[data-motion='reduced'],

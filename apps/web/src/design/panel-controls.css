@@ -111,7 +111,7 @@
     color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out),
     opacity var(--duration-fast) var(--ease-out),
-    scale var(--duration-instant) var(--ease-out);
+    scale var(--control-press-timing);
 }
 
 .ds-button svg {
@@ -120,8 +120,14 @@
   height: 1.15em;
 }
 
-.ds-button:hover:not(:disabled, [aria-disabled='true']) {
-  background: color-mix(in oklch, var(--color-surface-3), var(--color-text) 9%);
+@media (hover: hover) and (pointer: fine) {
+  .ds-button:hover:not(:disabled, [aria-disabled='true']) {
+    background: color-mix(
+      in oklch,
+      var(--color-surface-3),
+      var(--color-text) 9%
+    );
+  }
 }
 
 .ds-button:active:not(:disabled, [aria-disabled='true']) {
@@ -150,8 +156,10 @@
   color: var(--color-text-on-accent);
 }
 
-.ds-button--primary:hover:not(:disabled, [aria-disabled='true']) {
-  background: var(--ds-primary-bg-hover);
+@media (hover: hover) and (pointer: fine) {
+  .ds-button--primary:hover:not(:disabled, [aria-disabled='true']) {
+    background: var(--ds-primary-bg-hover);
+  }
 }
 
 .ds-button--primary:active:not(:disabled, [aria-disabled='true']) {
@@ -169,8 +177,10 @@
   color: var(--ds-danger-text);
 }
 
-.ds-button--danger:hover:not(:disabled, [aria-disabled='true']) {
-  background: color-mix(in oklch, var(--color-danger) 28%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .ds-button--danger:hover:not(:disabled, [aria-disabled='true']) {
+    background: color-mix(in oklch, var(--color-danger) 28%, transparent);
+  }
 }
 
 .ds-button--ghost {
@@ -179,9 +189,11 @@
   color: var(--color-text-muted);
 }
 
-.ds-button--ghost:hover:not(:disabled, [aria-disabled='true']) {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .ds-button--ghost:hover:not(:disabled, [aria-disabled='true']) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 .ds-button--block {
@@ -204,7 +216,7 @@
   transition:
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out),
-    scale var(--duration-instant) var(--ease-out);
+    scale var(--control-press-timing);
 }
 
 .ds-icon-button svg {
@@ -212,9 +224,11 @@
   height: 18px;
 }
 
-.ds-icon-button:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .ds-icon-button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 .ds-icon-button:active:not(:disabled) {
@@ -281,14 +295,16 @@
   opacity: 1;
 }
 
-.ds-input:hover:not(:disabled, :focus),
-.ds-select:hover:not(:disabled, :focus),
-.ds-textarea:hover:not(:disabled, :focus) {
-  border-color: color-mix(
-    in oklch,
-    var(--color-border-strong),
-    var(--color-text) 18%
-  );
+@media (hover: hover) and (pointer: fine) {
+  .ds-input:hover:not(:disabled, :focus),
+  .ds-select:hover:not(:disabled, :focus),
+  .ds-textarea:hover:not(:disabled, :focus) {
+    border-color: color-mix(
+      in oklch,
+      var(--color-border-strong),
+      var(--color-text) 18%
+    );
+  }
 }
 
 .ds-input:focus-visible,
@@ -530,9 +546,11 @@
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.ds-menu-item:hover,
-.ds-menu-item[data-active='true'] {
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .ds-menu-item:hover,
+  .ds-menu-item[data-active='true'] {
+    background: var(--color-surface-hover);
+  }
 }
 
 .ds-menu-item[aria-checked='true'] {
@@ -562,8 +580,10 @@
   cursor: pointer;
 }
 
-.ds-link:hover {
-  text-decoration-color: currentcolor;
+@media (hover: hover) and (pointer: fine) {
+  .ds-link:hover {
+    text-decoration-color: currentcolor;
+  }
 }
 
 .ds-number {

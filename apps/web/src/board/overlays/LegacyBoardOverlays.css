@@ -227,11 +227,13 @@
   transition: background-color var(--duration-instant, 90ms) ease;
 }
 
-.ptcgsim-menu-item:hover,
-.ptcgsim-menu-item:focus-visible,
-.has-submenu[data-submenu-open='true'] > .ptcgsim-menu-item {
-  outline: none;
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-menu-item:hover,
+  .ptcgsim-menu-item:focus-visible,
+  .has-submenu[data-submenu-open='true'] > .ptcgsim-menu-item {
+    outline: none;
+    background: var(--color-surface-hover);
+  }
 }
 
 .ptcgsim-menu-item:active {
@@ -246,9 +248,11 @@
   color: var(--color-danger);
 }
 
-.ptcgsim-menu-item.is-danger:hover,
-.ptcgsim-menu-item.is-danger:focus-visible {
-  background: var(--color-danger-soft);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-menu-item.is-danger:hover,
+  .ptcgsim-menu-item.is-danger:focus-visible {
+    background: var(--color-danger-soft);
+  }
 }
 
 .ptcgsim-menu-icon {
@@ -326,29 +330,33 @@
   left: auto;
 }
 
-.ptcgsim-legacy-card-context-menu
-  li.has-submenu:hover
-  > .ptcgsim-legacy-card-sub-menu,
-.ptcgsim-legacy-card-context-menu
-  li.has-submenu[data-submenu-open='true']
-  > .ptcgsim-legacy-card-sub-menu {
-  display: block;
-  opacity: 1;
-  translate: 0 0;
-  pointer-events: auto;
-  transition-duration: var(--overlay-enter-duration);
-  transition-timing-function: var(--ease-snappy);
-}
-
-@starting-style {
+@media (hover: hover) and (pointer: fine) {
   .ptcgsim-legacy-card-context-menu
     li.has-submenu:hover
     > .ptcgsim-legacy-card-sub-menu,
   .ptcgsim-legacy-card-context-menu
     li.has-submenu[data-submenu-open='true']
     > .ptcgsim-legacy-card-sub-menu {
-    opacity: 0;
-    translate: var(--overlay-submenu-from-x) 0;
+    display: block;
+    opacity: 1;
+    translate: 0 0;
+    pointer-events: auto;
+    transition-duration: var(--overlay-enter-duration);
+    transition-timing-function: var(--ease-snappy);
+  }
+}
+
+@starting-style {
+  @media (hover: hover) and (pointer: fine) {
+    .ptcgsim-legacy-card-context-menu
+      li.has-submenu:hover
+      > .ptcgsim-legacy-card-sub-menu,
+    .ptcgsim-legacy-card-context-menu
+      li.has-submenu[data-submenu-open='true']
+      > .ptcgsim-legacy-card-sub-menu {
+      opacity: 0;
+      translate: var(--overlay-submenu-from-x) 0;
+    }
   }
 }
 
@@ -390,10 +398,12 @@
     box-shadow: none;
     translate: none;
   }
-  .ptcgsim-legacy-card-context-menu
-    li.has-submenu:hover:not([data-submenu-open='true'])
-    > .ptcgsim-legacy-card-sub-menu {
-    display: none;
+  @media (hover: hover) and (pointer: fine) {
+    .ptcgsim-legacy-card-context-menu
+      li.has-submenu:hover:not([data-submenu-open='true'])
+      > .ptcgsim-legacy-card-sub-menu {
+      display: none;
+    }
   }
   .ptcgsim-legacy-card-context-menu
     li.has-submenu[data-submenu-open='true']
@@ -646,18 +656,24 @@
     box-shadow var(--duration-fast) var(--ease-out);
 }
 
-.ptcgsim-legacy-stack-preview-card:hover {
-  box-shadow: var(--shadow-3);
-  translate: 0 -4px;
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-stack-preview-card:hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
 }
 
-:root[data-motion='reduced'] .ptcgsim-legacy-stack-preview-card:hover {
-  translate: none;
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-legacy-stack-preview-card:hover {
+    translate: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) .ptcgsim-legacy-stack-preview-card:hover {
-    translate: none;
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-legacy-stack-preview-card:hover {
+      translate: none;
+    }
   }
 }
 
@@ -867,7 +883,7 @@
   transition:
     background-color var(--duration-instant, 90ms) ease,
     border-color var(--duration-instant, 90ms) ease,
-    scale var(--duration-instant, 90ms) ease;
+    scale var(--control-press-timing);
 }
 
 .ptcgsim-overlay-button:disabled {
@@ -882,11 +898,13 @@
   height: 18px;
 }
 
-.ptcgsim-overlay-button:hover:not(:disabled) {
-  background-image: linear-gradient(
-    var(--color-surface-hover),
-    var(--color-surface-hover)
-  );
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button:hover:not(:disabled) {
+    background-image: linear-gradient(
+      var(--color-surface-hover),
+      var(--color-surface-hover)
+    );
+  }
 }
 
 .ptcgsim-overlay-button:active:not(:disabled) {
@@ -908,9 +926,11 @@
   color: var(--color-text-on-accent);
 }
 
-.ptcgsim-overlay-button.is-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-fill-hover);
-  background-image: none;
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.is-primary:hover:not(:disabled) {
+    background-color: var(--color-accent-fill-hover);
+    background-image: none;
+  }
 }
 
 .ptcgsim-overlay-button.is-primary:active:not(:disabled) {
@@ -925,9 +945,11 @@
   color: var(--color-text-muted);
 }
 
-.ptcgsim-overlay-button.is-quiet:hover,
-.ptcgsim-overlay-button.is-quiet[aria-pressed='true'] {
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.is-quiet:hover,
+  .ptcgsim-overlay-button.is-quiet[aria-pressed='true'] {
+    color: var(--color-text);
+  }
 }
 
 :root[data-motion='reduced'] .ptcgsim-overlay-button:active:not(:disabled) {
@@ -963,8 +985,10 @@
   transition: background-color var(--duration-instant, 90ms) ease;
 }
 
-.ptcgsim-overlay-toggle:hover {
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-toggle:hover {
+    background: var(--color-surface-hover);
+  }
 }
 
 .ptcgsim-overlay-toggle:has(input:checked),
@@ -1250,10 +1274,12 @@ button.ptcgsim-overlay-toggle:focus-visible {
   height: 16px;
 }
 
-.ptcgsim-browser-zoom-step:hover:not(:disabled),
-.ptcgsim-browser-zoom-value:hover {
-  background: var(--color-surface-3);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-browser-zoom-step:hover:not(:disabled),
+  .ptcgsim-browser-zoom-value:hover {
+    background: var(--color-surface-3);
+    color: var(--color-text);
+  }
 }
 
 .ptcgsim-browser-zoom-step:disabled {
@@ -1308,9 +1334,11 @@ button.ptcgsim-overlay-toggle:focus-visible {
     box-shadow var(--duration-fast) var(--ease-out);
 }
 
-.ptcgsim-zone-card:hover {
-  box-shadow: var(--shadow-3);
-  translate: 0 -4px;
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-zone-card:hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
 }
 
 .ptcgsim-zone-card:focus-visible {
@@ -1348,13 +1376,17 @@ button.ptcgsim-overlay-toggle:focus-visible {
     var(--shadow-3);
 }
 
-:root[data-motion='reduced'] .ptcgsim-zone-card:hover {
-  translate: none;
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-zone-card:hover {
+    translate: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) .ptcgsim-zone-card:hover {
-    translate: none;
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-zone-card:hover {
+      translate: none;
+    }
   }
 }
 
@@ -1497,9 +1529,11 @@ button.ptcgsim-overlay-toggle:focus-visible {
     box-shadow var(--duration-fast) var(--ease-out);
 }
 
-.ptcgsim-legacy-work-area-card:not(:disabled):hover {
-  box-shadow: var(--shadow-3);
-  translate: 0 -4px;
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-work-area-card:not(:disabled):hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
 }
 
 .ptcgsim-legacy-work-area-card:disabled {
@@ -1518,13 +1552,17 @@ button.ptcgsim-overlay-toggle:focus-visible {
     var(--shadow-3);
 }
 
-:root[data-motion='reduced'] .ptcgsim-legacy-work-area-card:hover {
-  translate: none;
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-legacy-work-area-card:hover {
+    translate: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) .ptcgsim-legacy-work-area-card:hover {
-    translate: none;
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-legacy-work-area-card:hover {
+      translate: none;
+    }
   }
 }
 
@@ -1594,10 +1632,12 @@ button.ptcgsim-overlay-toggle:focus-visible {
   color: var(--color-danger);
 }
 
-.ptcgsim-overlay-button.ptcgsim-overlay-close:is(:hover, :focus-visible):not(
-    :disabled
-  ) {
-  background-color: var(--color-danger-fill);
-  background-image: none;
-  color: var(--color-text-on-accent);
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.ptcgsim-overlay-close:is(:hover, :focus-visible):not(
+      :disabled
+    ) {
+    background-color: var(--color-danger-fill);
+    background-image: none;
+    color: var(--color-text-on-accent);
+  }
 }

@@ -81,8 +81,10 @@
   --seat-color: var(--color-opponent);
 }
 
-.deck-screen__seat:hover {
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .deck-screen__seat:hover {
+    background: var(--color-surface-hover);
+  }
 }
 
 .deck-screen__seat[aria-pressed='true'] {
@@ -179,9 +181,11 @@
   cursor: pointer;
 }
 
-.deck-icon-button:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .deck-icon-button:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 .deck-icon-button:focus-visible {
@@ -371,9 +375,11 @@
     transform var(--duration-fast) var(--ease-out);
 }
 
-.deck-tile:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-2);
+@media (hover: hover) and (pointer: fine) {
+  .deck-tile:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-2);
+  }
 }
 
 .deck-tile[data-current='true'] {
@@ -522,9 +528,11 @@ div.deck-tile__choose {
   transition: opacity var(--duration-fast) var(--ease-out);
 }
 
-.deck-tile:hover .deck-tile__actions,
-.deck-tile:focus-within .deck-tile__actions {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .deck-tile:hover .deck-tile__actions,
+  .deck-tile:focus-within .deck-tile__actions {
+    opacity: 1;
+  }
 }
 
 @media (hover: none) {
@@ -790,9 +798,11 @@ div.deck-tile__choose {
     border-color var(--duration-fast) var(--ease-out);
 }
 
-.deck-chip:hover {
-  border-color: var(--color-border-strong);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .deck-chip:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+  }
 }
 
 .deck-chip[aria-pressed='true'] {
@@ -995,9 +1005,11 @@ div.deck-tile__choose {
   object-fit: cover;
 }
 
-.card-result:hover .card-result__frame {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-3);
+@media (hover: hover) and (pointer: fine) {
+  .card-result:hover .card-result__frame {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+  }
 }
 
 .card-result:active .card-result__frame {
@@ -1056,10 +1068,12 @@ div.deck-tile__choose {
     transform var(--duration-fast) var(--ease-out);
 }
 
-.card-result:hover .card-result__add,
-.card-result:focus-visible .card-result__add {
-  opacity: 1;
-  transform: scale(1);
+@media (hover: hover) and (pointer: fine) {
+  .card-result:hover .card-result__add,
+  .card-result:focus-visible .card-result__add {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .card-result__name {
@@ -1286,8 +1300,10 @@ button.deck-check__issue {
   cursor: pointer;
 }
 
-button.deck-check__issue:hover {
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  button.deck-check__issue:hover {
+    background: var(--color-surface-hover);
+  }
 }
 
 .deck-check__issues [data-tone='danger'] svg {
@@ -1406,8 +1422,10 @@ button.deck-check__issue:hover {
   transition: background var(--duration-fast) var(--ease-out);
 }
 
-.deck-row:hover {
-  background: var(--color-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .deck-row:hover {
+    background: var(--color-surface-hover);
+  }
 }
 
 .deck-row[data-flagged='true'] {
@@ -1503,9 +1521,11 @@ button.deck-check__issue:hover {
   cursor: pointer;
 }
 
-.deck-row__step:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@media (hover: hover) and (pointer: fine) {
+  .deck-row__step:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 .deck-row__step:disabled {
@@ -1828,8 +1848,10 @@ button.deck-check__issue:hover {
   box-shadow: 0 0 0 2px var(--color-accent);
 }
 
-.deck-card-details__print:hover {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .deck-card-details__print:hover {
+    opacity: 1;
+  }
 }
 
 /* ---- Custom card dialog (kept from the v1 workspace) ------------------- */

@@ -442,7 +442,7 @@ describe('LegacyBoardChrome', () => {
       'var(--color-border)',
       'var(--shadow-2)',
       'var(--radius-control)',
-      'var(--duration-instant)',
+      'var(--control-press-timing)',
       'var(--rail-height, 32px)',
     ]) {
       expect(buttonRule.slice(0, buttonRule.indexOf('}')), token).toContain(
