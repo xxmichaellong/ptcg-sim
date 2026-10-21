@@ -12,6 +12,7 @@ import {
   type BoardScene,
   type BoardSceneInstallMode,
   type BoardSceneMotion,
+  type MarkerSceneNode,
   type SettlingCard,
 } from '@ptcgsim/renderer-contract';
 import {
@@ -104,15 +105,24 @@ export type BoardPreviewState =
       readonly focusCardId: ViewCardId;
     };
 
+/** A counter or chip on a card whose controls are open (MarkerControls). */
+export interface BoardMarkerControlsState {
+  /** The card it lies on: the top of a Pokémon, or a single card. */
+  readonly cardId: ViewCardId;
+  readonly kind: MarkerSceneNode['kind'];
+}
+
 export interface BoardOverlayState {
   readonly contextMenuCardId: ViewCardId | null;
   readonly preview: BoardPreviewState | null;
   readonly input:
     LegacyBoardOverlayInput | LegacyBoardShortcutCountPrompt | null;
+  /** Absent or null when no marker's controls are open. */
+  readonly marker?: BoardMarkerControlsState | null;
 }
 
 export type BoardPresentationDismissScope =
-  'all' | 'selection' | 'context' | 'preview' | 'zone' | 'input';
+  'all' | 'selection' | 'context' | 'preview' | 'zone' | 'input' | 'marker';
 
 export type OpenedZoneCardIntent =
   | Extract<BoardIntent, { readonly kind: 'CardSelected' }>
@@ -299,6 +309,11 @@ const EMPTY_OVERLAYS: BoardOverlayState = {
   input: null,
 };
 
+/** The open marker controls, as an overlay field only while they are open. */
+const markerOverlay = (
+  marker: BoardMarkerControlsState | null | undefined
+): Pick<BoardOverlayState, 'marker'> => (marker ? { marker } : {});
+
 export const createInitialBoardSessionControllerState =
   (): BoardSessionControllerState => ({
     generation: 0,
@@ -460,7 +475,8 @@ const presentationIsEmpty = (presentation: BoardPresentation): boolean =>
 const overlaysAreEmpty = (overlays: BoardOverlayState): boolean =>
   overlays.contextMenuCardId === null &&
   overlays.preview === null &&
-  overlays.input === null;
+  overlays.input === null &&
+  !overlays.marker;
 
 const sameOverlays = (
   left: BoardOverlayState,
@@ -468,7 +484,21 @@ const sameOverlays = (
 ): boolean =>
   left.contextMenuCardId === right.contextMenuCardId &&
   left.preview === right.preview &&
-  left.input === right.input;
+  left.input === right.input &&
+  (left.marker ?? null) === (right.marker ?? null);
+
+/** The marker whose controls are open, while it still lies on its card. */
+const openMarker = (
+  scene: BoardScene,
+  controls: BoardMarkerControlsState | null | undefined
+): MarkerSceneNode | null =>
+  controls
+    ? (scene.markers.find(
+        (marker) =>
+          marker.parentCardId === controls.cardId &&
+          marker.kind === controls.kind
+      ) ?? null)
+    : null;
 
 const clearLocalPresentation = (
   state: BoardSessionControllerState
@@ -634,6 +664,9 @@ const reconcilePresentation = (
       contextMenuCardId,
       preview: reconciledPreview,
       input: reconciledInput,
+      ...markerOverlay(
+        openMarker(scene, state.overlays.marker) ? state.overlays.marker : null
+      ),
     },
   };
 };
@@ -1457,6 +1490,31 @@ const handleIntent = (
         { kind: 'SubmitCommand', command: resolution.command },
       ]);
     }
+    case 'MarkerPressed': {
+      const marker = scene.markers.find(
+        (candidate) => candidate.id === intent.markerId
+      );
+      if (!marker || !hasCard(scene, marker.parentCardId))
+        return rejectIntent(state, intent, 'stale_card');
+      if (view.viewer.kind === 'spectator' || !state.canSubmitCommands)
+        return rejectIntent(state, intent, 'read_only');
+      // A second press on the same marker puts its controls away.
+      const open = openMarker(scene, state.overlays.marker);
+      return installPresentation(
+        state,
+        { ...state.presentation, drag: null },
+        {
+          contextMenuCardId: null,
+          preview: null,
+          input: null,
+          ...markerOverlay(
+            open?.id === marker.id
+              ? null
+              : { cardId: marker.parentCardId, kind: marker.kind }
+          ),
+        }
+      );
+    }
     case 'BoardResizeRequested':
       return rejectIntent(state, intent, 'unsupported_intent');
   }
@@ -1615,8 +1673,20 @@ const handleOverlayAction = (
     (submittedInputIdentity.kind !== 'count' ||
       (state.overlays.input.kind === 'count' &&
         state.overlays.input.action === submittedInputIdentity.action));
+  // A marker's open controls change that marker: its damage, its condition,
+  // or its Ability's tick. They stay open for the next press.
+  const fromMarkerControls =
+    request.kind === 'context' &&
+    state.overlays.marker?.cardId === request.cardId &&
+    openMarker(scene, state.overlays.marker) !== null &&
+    (state.overlays.marker.kind === 'damage'
+      ? request.action === 'setDamage' && 'value' in request
+      : state.overlays.marker.kind === 'specialCondition'
+        ? request.action === 'setSpecialCondition' && 'value' in request
+        : request.action === 'toggleAbility');
   if (
     request.kind === 'context' &&
+    !fromMarkerControls &&
     ((submittedInputIdentity
       ? !submittedInputMatches
       : state.overlays.contextMenuCardId !== request.cardId) ||
@@ -1706,6 +1776,7 @@ const handleOverlayAction = (
       command,
     })
   );
+  if (fromMarkerControls) return accepted(state, submissions);
   if (request.kind === 'zone') {
     const local = clearLocalPresentation(state);
     const next = nextState(state, local);
@@ -1953,6 +2024,9 @@ const dismissPresentation = (
     preview:
       scope === 'all' || scope === 'preview' ? null : state.overlays.preview,
     input: scope === 'all' || scope === 'input' ? null : state.overlays.input,
+    ...markerOverlay(
+      scope === 'all' || scope === 'marker' ? null : state.overlays.marker
+    ),
   };
   return installPresentation(
     state,

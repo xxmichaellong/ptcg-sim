@@ -418,7 +418,10 @@
 
 /* ---- Overlay card images ---------------------------------------------- */
 /* A card face: the generic card radius, the blank card colour until the
-   image arrives, then the image fading in over it. */
+   image arrives, then the image fading in over it. The picture is fitted
+   to the card exactly (a scan runs a little wider than a card): neither a
+   strip of the blank nor a sliver of its border is lost, and once it is in
+   the blank goes, so the scan's own rounded corners are the card's. */
 .ptcgsim-legacy-overlay-card-image {
   position: relative;
   display: block;
@@ -427,14 +430,19 @@
   aspect-ratio: 5 / 7;
   border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
   background: var(--ptcgsim-card-blank, var(--neutral-600));
+  transition: background-color var(--duration-fast, 140ms) ease;
 }
 
 .ptcgsim-legacy-overlay-card-image img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: fill;
   opacity: 0;
+}
+
+.ptcgsim-legacy-overlay-card-image[data-overlay-image-state='ready'] {
+  background-color: transparent;
 }
 
 .ptcgsim-legacy-overlay-card-image[data-overlay-image-state='ready'] img {
@@ -450,7 +458,6 @@
 .ptcgsim-legacy-overlay-card-image.is-zone img {
   position: absolute;
   inset: 0;
-  object-fit: cover;
   transition: opacity var(--duration-fast, 140ms) ease;
 }
 
@@ -583,7 +590,6 @@
 .ptcgsim-legacy-overlay-card-image.is-preview img {
   position: absolute;
   inset: 0;
-  object-fit: cover;
   transition: opacity var(--duration-fast, 140ms) ease;
 }
 
@@ -685,7 +691,6 @@
 .ptcgsim-legacy-overlay-card-image.is-stack img {
   position: absolute;
   inset: 0;
-  object-fit: cover;
   transition: opacity var(--duration-fast, 140ms) ease;
 }
 

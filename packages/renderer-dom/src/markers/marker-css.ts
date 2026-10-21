@@ -55,6 +55,57 @@ export const BOARD_MARKER_CSS = `
   height: 100%;
   overflow: visible;
 }
+/* The official chip art, when the app supplies it, over the stand-in. */
+.ptcgsim-marker__picture {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: none center / cover no-repeat;
+}
+.ptcgsim-marker__token[data-marker-face='poisoned'] .ptcgsim-marker__picture {
+  background-image: var(--ptcgsim-condition-poisoned, none);
+}
+.ptcgsim-marker__token[data-marker-face='burned'] .ptcgsim-marker__picture {
+  background-image: var(--ptcgsim-condition-burned, none);
+}
+.ptcgsim-marker__token[data-marker-face='asleep'] .ptcgsim-marker__picture {
+  background-image: var(--ptcgsim-condition-asleep, none);
+}
+.ptcgsim-marker__token[data-marker-face='paralyzed'] .ptcgsim-marker__picture {
+  background-image: var(--ptcgsim-condition-paralyzed, none);
+}
+.ptcgsim-marker__token[data-marker-face='confused'] .ptcgsim-marker__picture {
+  background-image: var(--ptcgsim-condition-confused, none);
+}
+/* A marker can be pressed: under a resting mouse it rises a touch. */
+.ptcgsim-marker__token,
+.ptcgsim-marker__tab {
+  transition: scale 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ptcgsim-marker__token[data-hint-hover],
+.ptcgsim-marker__tab[data-hint-hover] {
+  scale: 1.08;
+}
+.ptcgsim-board-surface[data-hint-hover] .ptcgsim-card:enabled {
+  cursor: pointer;
+}
+/* Put down, a marker settles onto the card rather than popping in. */
+@keyframes ptcgsim-marker-in {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+.ptcgsim-marker__token,
+.ptcgsim-marker__tab {
+  animation: ptcgsim-marker-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1.15)
+    backwards;
+}
+.ptcgsim-board-surface[data-reduced-motion='true']
+  :is(.ptcgsim-marker__token, .ptcgsim-marker__tab) {
+  animation: none;
+  transition: none;
+}
 .ptcgsim-marker__label {
   position: relative;
   z-index: 2;
@@ -90,35 +141,29 @@ export const BOARD_MARKER_CSS = `
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.28em;
+  gap: 0.32em;
   box-sizing: border-box;
   flex: none;
-  width: 100%;
-  height: 100%;
-  padding: 0 0.5em;
-  border: max(1px, 0.09em) solid var(--ptcgsim-marker-rim);
+  max-width: 100%;
+  padding: 0 0.3em 0 0.62em;
   border-radius: var(--radius-pill, 999px);
   background-color: var(--ptcgsim-marker-fill);
   background-image: linear-gradient(
     180deg,
-    rgb(255 255 255 / 0.26),
-    rgb(255 255 255 / 0) 46%,
-    rgb(0 0 0 / 0.28)
+    rgb(255 255 255 / 0.22),
+    rgb(255 255 255 / 0.04) 48%,
+    rgb(0 0 0 / 0.16)
   );
-  box-shadow: var(--shadow-1, 0 1px 2px rgb(0 0 0 / 0.35));
+  box-shadow:
+    0 0 0 max(1px, 0.07em) rgb(255 255 255 / 0.92),
+    inset 0 max(1px, 0.05em) 0 rgb(255 255 255 / 0.3),
+    0 0.08em 0.22em rgb(0 0 0 / 0.32),
+    0 0.2em 0.6em rgb(0 0 0 / 0.16);
   color: var(--ptcgsim-marker-ink);
-  transform: skewX(-14deg);
-}
-.ptcgsim-marker__tab > * {
-  transform: skewX(14deg);
 }
 .ptcgsim-marker__tab[data-marker-tab='compact'] {
   padding: 0;
-  border-radius: 28%;
-  transform: none;
-}
-.ptcgsim-marker__tab[data-marker-tab='compact'] > * {
-  transform: none;
+  border-radius: 50%;
 }
 .ptcgsim-marker__tab-label {
   font-family: var(--font-ui, ui-sans-serif, system-ui, sans-serif);
@@ -127,12 +172,35 @@ export const BOARD_MARKER_CSS = `
   line-height: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  text-shadow: 0 0.05em 0.08em rgb(80 0 6 / 0.6);
+  text-shadow: 0 0.04em 0.06em rgb(80 0 6 / 0.45);
+}
+/* The tick, in a white disc: "used". */
+.ptcgsim-marker__tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.12em;
+  height: 1.12em;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.96);
+  color: var(--ptcgsim-marker-fill);
+  box-shadow: 0 0.04em 0.1em rgb(80 0 6 / 0.35);
+}
+.ptcgsim-marker__tab[data-marker-tab='compact'] .ptcgsim-marker__tick {
+  width: 0.92em;
+  height: 0.92em;
+  background: none;
+  box-shadow: none;
+  color: var(--ptcgsim-marker-ink);
 }
 .ptcgsim-marker__check {
   display: block;
   flex: none;
-  width: 1em;
-  height: 1em;
+  width: 0.78em;
+  height: 0.78em;
+}
+.ptcgsim-marker__tab[data-marker-tab='compact'] .ptcgsim-marker__check {
+  width: 100%;
+  height: 100%;
 }
 `;

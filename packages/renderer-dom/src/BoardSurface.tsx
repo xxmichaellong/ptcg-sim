@@ -49,6 +49,13 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import {
+  BoardHintTimer,
+  BoardHintTooltip,
+  boardHintAt,
+  type BoardHintShowing,
+  type BoardHintTarget,
+} from './board-hints.js';
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
 import {
   scheduleCardImageRetry,
@@ -56,6 +63,7 @@ import {
   watchCardImageRetries,
 } from './card-image-retry.js';
 import { BOARD_MARKER_CSS } from './markers/marker-css.js';
+import { tableMatBounds } from './mat-bounds.js';
 import { MarkerNode } from './markers/MarkerNode.js';
 import {
   BoardMotionDirector,
@@ -132,6 +140,9 @@ const SEAM_GAP_PX = 10;
  * desk flash through the table.
  */
 const MAT_SETTLE_MS = 180;
+
+/** How far a press on a marker or badge may wander and still be a tap. */
+const HINT_TAP_SLOP_PX = 8;
 
 /** The size the mat is painted at: the table's, once it has held still. */
 const useSettledSize = (
@@ -889,6 +900,7 @@ const ZoneCountNode = memo(function ZoneCountNode({
       data-zone-count-for={node.zoneId}
       data-zone-count={node.count}
       data-zone-count-side={node.side}
+      data-board-hint={node.hint}
       aria-hidden="true"
       style={
         table
@@ -1063,6 +1075,54 @@ export const BoardSurface = ({
     window.addEventListener('pointerup', release, true);
     return () => window.removeEventListener('pointerup', release, true);
   }, []);
+  // Tooltips for the counts and markers on the table (board-hints.tsx).
+  const [hintShowing, setHintShowing] = useState<BoardHintShowing | null>(null);
+  const hintShowingRef = useRef(hintShowing);
+  hintShowingRef.current = hintShowing;
+  const hints = useMemo(() => new BoardHintTimer(setHintShowing), []);
+  useEffect(() => () => hints.dispose(), [hints]);
+  // The marker or badge a press began on, answered when it lets go in place.
+  const pressedHintRef = useRef<{
+    readonly pointerId: number;
+    readonly target: BoardHintTarget;
+    readonly x: number;
+    readonly y: number;
+  } | null>(null);
+  // The marker under a resting mouse rises a little and takes the pointer's
+  // hand cursor: it can be pressed.
+  const hoveredHintRef = useRef<HTMLElement | null>(null);
+  const hoverHint = (element: HTMLElement | null) => {
+    hints.hover(element);
+    const marker = element?.dataset.markerHintId ? element : null;
+    if (hoveredHintRef.current === marker) return;
+    hoveredHintRef.current?.removeAttribute('data-hint-hover');
+    hoveredHintRef.current = marker;
+    marker?.setAttribute('data-hint-hover', '');
+    if (marker) surfaceRef.current?.setAttribute('data-hint-hover', '');
+    else surfaceRef.current?.removeAttribute('data-hint-hover');
+  };
+  // A tooltip a tap opened goes with the next press anywhere.
+  useEffect(() => {
+    if (!hintShowing?.tapped) return;
+    const press = (event: Event) => {
+      if (
+        event.type === 'pointerdown' &&
+        event.target instanceof Node &&
+        surfaceRef.current?.contains(event.target)
+      )
+        return;
+      hints.hide();
+    };
+    document.addEventListener('pointerdown', press, true);
+    window.addEventListener('resize', press);
+    return () => {
+      document.removeEventListener('pointerdown', press, true);
+      window.removeEventListener('resize', press);
+    };
+  }, [hintShowing, hints]);
+  useEffect(() => {
+    if (presentation.drag) hints.hide();
+  }, [presentation.drag, hints]);
   const velocity = useMemo(() => new VelocityTracker(100), []);
   const previousSceneRef = useRef<BoardScene | null>(null);
   // The scene a timer started at pointer-down should act on: the latest.
@@ -1553,12 +1613,13 @@ export const BoardSurface = ({
     stadium.y + stadium.height > lower.bounds.y
       ? { left: stadium.x, right: stadium.x + stadium.width }
       : undefined;
-  // The mat as last painted, scaled onto the table's current size; what is
-  // printed on it is drawn at the current size on a layer of its own (see
-  // MAT_SETTLE_MS).
-  const matSize = useSettledSize(scene.viewport.width, scene.viewport.height);
-  const matScaleX = scene.viewport.width / matSize.width;
-  const matScaleY = scene.viewport.height / matSize.height;
+  // The mat as last painted, scaled onto its current size; what is printed
+  // on it is drawn at the current size on a layer of its own (see
+  // MAT_SETTLE_MS). It covers the spots, not the hands held over the desk.
+  const mat = useMemo(() => tableMatBounds(scene), [scene]);
+  const matSize = useSettledSize(mat.width, mat.height);
+  const matScaleX = mat.width / matSize.width;
+  const matScaleY = mat.height / matSize.height;
   const matScaled = matScaleX !== 1 || matScaleY !== 1;
   const frames = scene.layout.players
     .filter((frame) => !frame.hidden)
@@ -1628,6 +1689,25 @@ export const BoardSurface = ({
       }}
       onPointerDown={(event) => {
         director.interruptTableTurn();
+        const hint = surfaceRef.current
+          ? boardHintAt(surfaceRef.current, event.clientX, event.clientY)
+          : null;
+        pressedHintRef.current =
+          hint && event.button === 0
+            ? {
+                pointerId: event.pointerId,
+                target: hint,
+                x: event.clientX,
+                y: event.clientY,
+              }
+            : null;
+        // A tap on the badge whose tooltip a tap opened closes it (below).
+        if (
+          !hint ||
+          hint.element !== hintShowingRef.current?.element ||
+          !hintShowingRef.current.tapped
+        )
+          hints.hide();
         const target = pointerCard(event);
         if (!target) {
           adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
@@ -1701,6 +1781,13 @@ export const BoardSurface = ({
             );
           }
         } else {
+          if (event.pointerType !== 'touch' && surfaceRef.current)
+            hoverHint(
+              presentation.drag
+                ? null
+                : (boardHintAt(surfaceRef.current, event.clientX, event.clientY)
+                    ?.element ?? null)
+            );
           const rest = hoverRestRef.current;
           if (
             rest &&
@@ -1717,6 +1804,7 @@ export const BoardSurface = ({
       onPointerLeave={() => {
         restHover(null);
         clearHover();
+        hoverHint(null);
       }}
       onPointerUp={(event) => {
         cancelDetachTimer();
@@ -1735,13 +1823,41 @@ export const BoardSurface = ({
           restHover({ x: event.clientX, y: event.clientY });
           clearHover();
         }
-        if (input && dragController.pointerUp(scene, input)) {
-          event.preventDefault();
+        const pressed = grabbed.current;
+        const dropped = Boolean(
+          input && dragController.pointerUp(scene, input)
+        );
+        if (dropped) event.preventDefault();
+        // A press let go where it began, on a marker or a badge: a marker
+        // opens its controls; a finger's tap on a badge shows its tooltip.
+        // Either way the card under it does not take the click as well.
+        const hint = pressedHintRef.current;
+        pressedHintRef.current = null;
+        if (
+          hint &&
+          !dropped &&
+          hint.pointerId === event.pointerId &&
+          Math.hypot(event.clientX - hint.x, event.clientY - hint.y) <=
+            HINT_TAP_SLOP_PX &&
+          (hint.target.markerId || event.pointerType === 'touch')
+        ) {
+          if (pressed)
+            dragController.suppressClick(pressed.id, pressed.renderKey);
+          if (hint.target.markerId) {
+            hints.hide();
+            adapters.emitIntent({
+              kind: 'MarkerPressed',
+              markerId: hint.target.markerId,
+            });
+          } else {
+            hints.tap(hint.target.element);
+          }
         }
         releaseCapture(event);
         if (ownsGrab) grabbed.current = null;
       }}
       onPointerCancel={(event) => {
+        pressedHintRef.current = null;
         cancelDetachTimer();
         dragController.cancel(event.pointerId);
         if (capturedPointerRef.current?.pointerId === event.pointerId)
@@ -1772,6 +1888,7 @@ export const BoardSurface = ({
     >
       <style>{BOARD_SURFACE_CSS}</style>
       <style>{BOARD_MARKER_CSS}</style>
+      <BoardHintTooltip showing={hintShowing} layoutKey={scene} />
       <div
         ref={tableRef}
         className="ptcgsim-board-table"
@@ -1784,21 +1901,18 @@ export const BoardSurface = ({
             style={{
               width: matSize.width,
               height: matSize.height,
-              transform: `matrix3d(${tableCardMatrix(depth.camera, { x: 0, y: 0, width: scene.viewport.width, height: scene.viewport.height }, 0).join(',')})${matScaled ? ` scale(${String(matScaleX)}, ${String(matScaleY)})` : ''}`,
+              transform: `matrix3d(${tableCardMatrix(depth.camera, mat, 0).join(',')})${matScaled ? ` scale(${String(matScaleX)}, ${String(matScaleY)})` : ''}`,
             }}
           >
             {/* The halves' tints and the seam are printed on the mat, so
-                they lie on it however it is tilted. */}
+                they lie on it however it is tilted. The print keeps the
+                table's coordinates; the mat shows the part it covers. */}
             <div
               className="ptcgsim-depth-mat__print"
               style={{
                 width: scene.viewport.width,
                 height: scene.viewport.height,
-                ...(matScaled
-                  ? {
-                      transform: `scale(${String(1 / matScaleX)}, ${String(1 / matScaleY)})`,
-                    }
-                  : {}),
+                transform: `${matScaled ? `scale(${String(1 / matScaleX)}, ${String(1 / matScaleY)}) ` : ''}translate(${String(-mat.x)}px, ${String(-mat.y)}px)`,
               }}
             >
               {frames}

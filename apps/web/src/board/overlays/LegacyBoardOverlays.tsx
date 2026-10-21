@@ -1,3 +1,4 @@
+import { MarkerControls } from './MarkerControls.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
 import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
 import {
@@ -3013,6 +3014,13 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         <MarkerEditor
           {...(depth ? { depth } : {})}
           key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
+          state={state}
+          actions={actions}
+        />
+      ) : null}
+      {state.overlays.marker ? (
+        <MarkerControls
+          {...(depth ? { depth } : {})}
           state={state}
           actions={actions}
         />

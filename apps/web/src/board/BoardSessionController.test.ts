@@ -1613,6 +1613,100 @@ describe('headless board session controller', () => {
     });
   });
 
+  it("opens a marker's controls on a press and keeps them open for that marker's changes", () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    const marker = state.scene!.markers.find(
+      (candidate) =>
+        candidate.parentCardId === cardId && candidate.kind === 'damage'
+    )!;
+    const press = {
+      kind: 'RendererIntent' as const,
+      intent: { kind: 'MarkerPressed' as const, markerId: marker.id },
+    };
+    state = apply(state, press).state;
+    expect(state.overlays.marker).toEqual({ cardId, kind: 'damage' });
+
+    // A step from the controls goes to the room and leaves them open.
+    const stepped = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setDamage', cardId, value: '130' },
+    });
+    expect(stepped.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'SetDamage', stackId: activeStack.id, damage: 130 },
+      },
+    ]);
+    expect(stepped.state.overlays.marker).toEqual({ cardId, kind: 'damage' });
+
+    // Damage controls change damage only.
+    const condition = {
+      kind: 'context' as const,
+      action: 'setSpecialCondition' as const,
+      cardId,
+      value: 'burned',
+    };
+    expect(
+      apply(state, { kind: 'LegacyOverlayActionRequested', request: condition })
+        .effects
+    ).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: condition,
+        reason: 'stale_card',
+      },
+    ]);
+
+    // Pressing the marker again, or Escape, puts them away.
+    expect(apply(state, press).state.overlays.marker ?? null).toBeNull();
+    expect(
+      apply(state, { kind: 'DismissLocalPresentation', scope: 'marker' }).state
+        .overlays.marker ?? null
+    ).toBeNull();
+
+    // They go with the marker.
+    const cleared = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        2,
+        withRevision(
+          {
+            ...state.view!,
+            stacks: {
+              ...state.view!.stacks,
+              [activeStack.id]: { ...activeStack, damage: null },
+            },
+          },
+          state.view!.revision + 1
+        )
+      ),
+    });
+    expect(cleared.state.overlays.marker ?? null).toBeNull();
+  });
+
+  it("refuses a spectator a marker's controls", () => {
+    const state = install(
+      liveFrame(1, asSpectator(createRendererSpikeView()), {
+        boundary: 'resync',
+      })
+    );
+    const marker = state.scene!.markers[0]!;
+    const result = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'MarkerPressed', markerId: marker.id },
+    });
+    expect(result.state.overlays.marker ?? null).toBeNull();
+    expect(result.effects).toEqual([
+      {
+        kind: 'IntentRejected',
+        intent: { kind: 'MarkerPressed', markerId: marker.id },
+        reason: 'read_only',
+      },
+    ]);
+  });
+
   it('submits the characterized default only when opening a missing damage marker', () => {
     const view = createRendererSpikeView();
     const activeStack = view.stacks['stack:blue:active']!;

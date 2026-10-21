@@ -574,6 +574,7 @@ describe('renderer-neutral board scene', () => {
       verticalAlign: 'bottom',
       color: 'rgba(90, 110, 188, 0.864)',
       label: '1 card',
+      hint: '1 card in your hand',
     });
     // Same numbers the layout module pins against the v1 runtime: the hand
     // count hangs from the frame's right edge (2%) just above the hand (30%).
@@ -588,6 +589,8 @@ describe('renderer-neutral board scene', () => {
       horizontalAlign: 'left',
       verticalAlign: 'top',
       color: '#000',
+      // The other seat's places carry its player's name.
+      hint: "1 card in Red's deck",
     });
     // Count nodes carry the card count itself, not a card, so a concealed
     // deck still reports how many cards it hides.

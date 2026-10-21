@@ -19,6 +19,14 @@
  */
 
 :root {
+  /* The official Special Condition chips, painted by the board's markers
+     (renderer-dom marker-css.ts): the Pokémon TCG Pocket icons, the art of
+     the current physical markers. */
+  --ptcgsim-condition-poisoned: url('/v2/assets/table/condition-poisoned.png');
+  --ptcgsim-condition-burned: url('/v2/assets/table/condition-burned.png');
+  --ptcgsim-condition-asleep: url('/v2/assets/table/condition-asleep.png');
+  --ptcgsim-condition-paralyzed: url('/v2/assets/table/condition-paralyzed.png');
+  --ptcgsim-condition-confused: url('/v2/assets/table/condition-confused.png');
   /* The desk's grain: dark streaks for a dark wood, faint for a light one. */
   --desk-grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -1.210 0 0 0 0.688'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.880 0 0 0 0.468'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
   --desk-grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -0.660 0 0 0 0.375'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.480 0 0 0 0.255'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
@@ -26,28 +34,29 @@
 
 /* ---- Light mats ------------------------------------------------------ */
 
-/* Cream: an ivory cloth mat on pale ash, close to v1's white board. */
+/* Cream: a soft pastel-white cloth mat on pale ash, close to v1's white
+   board without its glare. */
 :root,
 :root[data-table-art='cream'],
 [data-table-art-swatch='cream'] {
-  --color-desk: #d6c7ac;
-  --color-desk-hi: #e4d8c3;
+  --color-desk: #d3c8b5;
+  --color-desk-hi: #e0d7c7;
   --desk-grain: var(--desk-grain-light);
-  --color-desk-vignette: rgb(70 50 30 / 0.24);
-  --color-desk-ink: #4f4337;
-  --color-felt: #f5f0e6;
-  --color-felt-deep: #e8e0d0;
-  --color-felt-thread: #ddd2bd;
-  --color-felt-thread-hi: #fbf8f2;
-  --color-felt-rim: #b3a285;
-  --color-felt-vignette: rgb(90 66 40 / 0.1);
-  --color-felt-line: rgb(96 76 52 / 0.26);
-  --color-felt-line-strong: rgb(96 76 52 / 0.36);
-  --color-felt-label: rgb(74 58 40 / 0.74);
-  --color-felt-mark: rgb(96 76 52 / 0.09);
-  --color-felt-zone: rgb(96 76 52 / 0.022);
-  --color-felt-hover: rgb(96 76 52 / 0.055);
-  --color-felt-hover-line: rgb(96 76 52 / 0.34);
+  --color-desk-vignette: rgb(66 52 36 / 0.24);
+  --color-desk-ink: #4c4339;
+  --color-felt: #ebe8e1;
+  --color-felt-deep: #dfdbd1;
+  --color-felt-thread: #d4cec1;
+  --color-felt-thread-hi: #f4f2ed;
+  --color-felt-rim: #aaa090;
+  --color-felt-vignette: rgb(80 66 48 / 0.09);
+  --color-felt-line: rgb(88 76 60 / 0.25);
+  --color-felt-line-strong: rgb(88 76 60 / 0.34);
+  --color-felt-label: rgb(70 60 46 / 0.74);
+  --color-felt-mark: rgb(88 76 60 / 0.085);
+  --color-felt-zone: rgb(88 76 60 / 0.022);
+  --color-felt-hover: rgb(88 76 60 / 0.055);
+  --color-felt-hover-line: rgb(88 76 60 / 0.32);
   --color-felt-drop: #2c64b0;
   --color-felt-drop-soft: rgb(44 100 176 / 0.14);
 }
@@ -125,6 +134,17 @@
   --color-felt-hover-line: rgb(100 74 36 / 0.36);
   --color-felt-drop: #2c64b0;
   --color-felt-drop-soft: rgb(44 100 176 / 0.14);
+}
+
+/* A light mat under the lamp's full warmth glares: it catches less of it. */
+:root:is(
+  :not([data-table-art]),
+  [data-table-art='cream'],
+  [data-table-art='frost'],
+  [data-table-art='sakura'],
+  [data-table-art='parchment']
+) {
+  --color-felt-glow: rgb(255 244 228 / 0.07);
 }
 
 /* On a light mat the gold and mint rings would wash out: deeper ones. */

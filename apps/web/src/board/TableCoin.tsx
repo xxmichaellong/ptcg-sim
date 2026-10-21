@@ -8,7 +8,6 @@ import type {
 import { tablePoseMatrix } from '@ptcgsim/renderer-contract';
 import {
   useEffect,
-  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -71,73 +70,18 @@ const tossAngleOf = (animation: Animation | null, from: number): number => {
   return from + ((time % TOSS_SPIN_PERIOD_MS) / TOSS_SPIN_PERIOD_MS) * 360;
 };
 
-const CoinFace = ({ side }: { readonly side: Face }) => {
-  const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const face = `coin-face-${id}`;
-  const rim = `coin-rim-${id}`;
-  return (
-    <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-      <defs>
-        <radialGradient id={face} cx="0.38" cy="0.32" r="0.75">
-          <stop offset="0" stopColor="#ebd392" />
-          <stop offset="0.55" stopColor="#ccac5f" />
-          <stop offset="1" stopColor="#9e8040" />
-        </radialGradient>
-        <linearGradient id={rim} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f3dfa4" />
-          <stop offset="0.5" stopColor="#8d7544" />
-          <stop offset="1" stopColor="#d9be78" />
-        </linearGradient>
-      </defs>
-      <circle cx="50" cy="50" r="49" fill={`url(#${rim})`} />
-      <circle cx="50" cy="50" r="43" fill={`url(#${face})`} />
-      <circle
-        cx="50"
-        cy="50"
-        r="40"
-        fill="none"
-        stroke="#2c241b"
-        strokeOpacity="0.55"
-        strokeWidth="1.2"
-      />
-      {side === 'heads' ? (
-        <>
-          <g
-            fill="none"
-            stroke="#2c241b"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          >
-            <circle cx="50" cy="50" r="26" />
-            <path d="M24 50H40M60 50H76" />
-            <circle cx="50" cy="50" r="9" />
-          </g>
-          <circle cx="50" cy="50" r="4" fill="#2c241b" />
-        </>
-      ) : (
-        <>
-          <g fill="none" stroke="#2c241b" strokeWidth="2" strokeOpacity="0.7">
-            <circle cx="50" cy="50" r="30" />
-            <circle cx="50" cy="50" r="22" />
-          </g>
-          <path
-            d="M50 33 54.5 45 67 45.5 57 53 60.5 65.5 50 58 39.5 65.5 43 53 33 45.5 45.5 45Z"
-            fill="#2c241b"
-            fillOpacity="0.8"
-          />
-        </>
-      )}
-      <path
-        d="M28 40A24 24 0 0 1 50 26"
-        fill="none"
-        stroke="#f6e6b4"
-        strokeOpacity="0.6"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+/**
+ * The coin is Pokémon TCG Live's standard one: its logo on red and blue for
+ * heads, the same logo on pale blue for tails.
+ */
+const COIN_FACE_URLS: Readonly<Record<Face, string>> = {
+  heads: '/v2/assets/table/coin-heads.webp',
+  tails: '/v2/assets/table/coin-tails.webp',
 };
+
+const CoinFace = ({ side }: { readonly side: Face }) => (
+  <img src={COIN_FACE_URLS[side]} alt="" draggable={false} decoding="async" />
+);
 
 /** What one coin is doing: lying still, up in the air, or a room's flip. */
 type CoinMotion =

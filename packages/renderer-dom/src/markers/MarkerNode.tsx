@@ -1,6 +1,7 @@
 import {
   legacyMarkerCssColor,
   markerFace,
+  markerHint,
   markerLabelFontSizePx,
   type MarkerFace,
 } from '@ptcgsim/renderer-contract';
@@ -33,9 +34,9 @@ const artProps = {
 } as const;
 
 /**
- * Chip artwork, drawn in a 100-unit square and clipped by the round chip.
- * Burn and Poison follow the current rulebook markers; the other three are
- * the familiar symbols for what the table does by turning the card.
+ * Chip artwork, drawn in a 100-unit square and clipped by the round chip:
+ * a stand-in for the official art, which the app supplies as
+ * `--ptcgsim-condition-<kind>` images painted over it (marker-css.ts).
  */
 const CONDITION_ART: Readonly<Record<string, ReactNode>> = {
   poisoned: (
@@ -110,6 +111,15 @@ const CheckGlyph = () => (
   </svg>
 );
 
+/**
+ * What a press or a resting pointer finds on a marker (board-hints.tsx): its
+ * tooltip, and its id, so a press opens its controls.
+ */
+const hintProps = (marker: MarkerSceneNode) => ({
+  'data-board-hint': markerHint(marker),
+  'data-marker-hint-id': marker.id,
+});
+
 /** A counter disc or condition chip, centred in the marker's box. */
 const MarkerToken = ({
   marker,
@@ -120,10 +130,12 @@ const MarkerToken = ({
 }) => {
   const diameter =
     Math.min(marker.bounds.width, marker.bounds.height) * face.scale;
+  const art = CONDITION_ART[face.face];
   return (
     <span
       className="ptcgsim-marker__token"
       data-marker-face={face.face}
+      {...hintProps(marker)}
       style={
         {
           width: diameter,
@@ -133,7 +145,8 @@ const MarkerToken = ({
         } as CSSProperties
       }
     >
-      {CONDITION_ART[face.face] ?? null}
+      {art ?? null}
+      {art ? <span className="ptcgsim-marker__picture" /> : null}
       {face.label === '' ? null : (
         <span
           className="ptcgsim-marker__label"
@@ -149,6 +162,8 @@ const MarkerToken = ({
 /**
  * The "Ability" lozenge printed on cards, ticked. A wide box (the active and
  * bench stacks) carries the word; a square one (a single card) only the tick.
+ * It is a smooth pill rather than a slanted one: a skewed box shimmers along
+ * its edges once the table tilts it.
  */
 const AbilityTab = ({
   marker,
@@ -160,22 +175,26 @@ const AbilityTab = ({
   const { width, height } = marker.bounds;
   const wide = width >= height * 2.2;
   const side = Math.min(width, height) * 0.92;
+  const pill = Math.min(height * 0.82, width / 3.6);
   return (
     <span
       className="ptcgsim-marker__tab"
       data-marker-face={face.face}
       data-marker-tab={wide ? 'wide' : 'compact'}
+      {...hintProps(marker)}
       style={{
         ...(wide
-          ? { fontSize: Math.min(height * 0.6, width / 6) }
-          : { width: side, height: side, fontSize: side * 0.72 }),
+          ? { height: pill, fontSize: pill * 0.62 }
+          : { width: side, height: side, fontSize: side * 0.62 }),
         ...faceVariables(face),
       }}
     >
       {wide ? (
         <span className="ptcgsim-marker__tab-label">{face.label}</span>
       ) : null}
-      <CheckGlyph />
+      <span className="ptcgsim-marker__tick">
+        <CheckGlyph />
+      </span>
     </span>
   );
 };

@@ -1,5 +1,13 @@
 import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip';
-import { useContext, type ReactElement, type ReactNode } from 'react';
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
 import { OverlayContainerContext } from './overlay-host-registry.js';
@@ -17,7 +25,16 @@ export interface TooltipProps {
   /** Hover delay in milliseconds. Defaults to the provider's (100 ms). */
   readonly delay?: number;
   readonly disabled?: boolean;
+  /**
+   * For something that only informs (a count), never one that acts: a
+   * finger's tap shows the tooltip too, and the next press anywhere hides
+   * it. A button's tap does what the button does, so it never shows one.
+   */
+  readonly tapToShow?: boolean;
 }
+
+/** The one tooltip a tap opened, closed when another opens. */
+let closeTapped: (() => void) | null = null;
 
 /**
  * The hover delay shared by every tooltip under one provider: short enough
@@ -43,9 +60,10 @@ export const withKeyHint = (label: ReactNode, hint?: string): ReactNode =>
 /**
  * A short label shown on hover or keyboard focus, positioned by Base UI and
  * kept on screen. It never takes focus and never hides the element it names.
- * A finger's tap never opens one (Base UI opens on a mouse's hover or a
- * keyboard's focus only), and the label itself takes no presses: whatever
- * it lies over stays in reach, and it goes as the pointer leaves.
+ * A finger's tap opens one only where `tapToShow` says the element just
+ * informs (Base UI opens on a mouse's hover or a keyboard's focus), and the
+ * label itself takes no presses: whatever it lies over stays in reach, and
+ * it goes as the pointer leaves.
  */
 export const Tooltip = ({
   content,
@@ -53,13 +71,58 @@ export const Tooltip = ({
   side = 'top',
   delay,
   disabled = false,
+  tapToShow = false,
 }: TooltipProps) => {
   const container = useContext(OverlayContainerContext);
+  const trigger = useRef<HTMLElement | null>(null);
+  const [hovered, setHovered] = useState(false);
+  const [tapped, setTapped] = useState(false);
+  useEffect(() => {
+    if (!tapped) return;
+    const close = () => setTapped(false);
+    closeTapped?.();
+    closeTapped = close;
+    const press = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        trigger.current?.contains(event.target)
+      )
+        return;
+      close();
+    };
+    document.addEventListener('pointerdown', press, true);
+    return () => {
+      document.removeEventListener('pointerdown', press, true);
+      if (closeTapped === close) closeTapped = null;
+    };
+  }, [tapped]);
   return (
-    <BaseTooltip.Root disabled={disabled} disableHoverablePopup>
+    <BaseTooltip.Root
+      disabled={disabled}
+      disableHoverablePopup
+      {...(tapToShow
+        ? {
+            open: hovered || tapped,
+            onOpenChange: (open: boolean) => {
+              setHovered(open);
+              if (!open) setTapped(false);
+            },
+          }
+        : {})}
+    >
       <BaseTooltip.Trigger
+        ref={(element: HTMLElement | null) => {
+          trigger.current = element;
+        }}
         render={children}
         {...(delay === undefined ? {} : { delay })}
+        {...(tapToShow
+          ? {
+              onPointerUp: (event: ReactPointerEvent) => {
+                if (event.pointerType === 'touch') setTapped((open) => !open);
+              },
+            }
+          : {})}
       />
       <BaseTooltip.Portal
         container={container}

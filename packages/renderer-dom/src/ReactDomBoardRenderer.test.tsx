@@ -940,13 +940,17 @@ describe('React DOM board renderer', () => {
       face: 'damage-10',
       label: '40',
     });
-    // Poison is the rulebook marker: its artwork carries the meaning.
+    // Poison is the official chip: its artwork carries the meaning, the
+    // app's picture of it over the drawn stand-in.
     expect(markerToken(conditionNode)).toMatchObject({
       face: 'poisoned',
-      fill: 'rgb(178, 120, 180)',
-      art: 'rgb(49, 48, 94)',
+      fill: 'rgb(212, 128, 177)',
+      art: 'rgb(105, 48, 141)',
       label: null,
     });
+    expect(
+      conditionNode.querySelector('.ptcgsim-marker__picture')
+    ).not.toBeNull();
     expect(markerToken(conditionNode).diameter).toBeCloseTo(30, 6);
     expect(
       conditionNode.querySelector('svg.ptcgsim-marker__art')
@@ -957,7 +961,8 @@ describe('React DOM board renderer', () => {
         '[data-marker-face="ability-used"]'
       )!;
       expect(tab.dataset.markerTab).toBe('wide');
-      expect(Number.parseFloat(tab.style.fontSize)).toBeCloseTo(10.8, 6);
+      // A pill a little lower than its box, its word 0.62 of its height.
+      expect(Number.parseFloat(tab.style.fontSize)).toBeCloseTo(9.1512, 6);
       expect(tab.style.getPropertyValue('--ptcgsim-marker-fill')).toBe(
         'rgb(200, 23, 30)'
       );

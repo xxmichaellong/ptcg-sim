@@ -239,6 +239,8 @@ export interface ZoneCountSceneNode {
   readonly color: string;
   readonly zIndex: number;
   readonly label: string;
+  /** What the badge's tooltip says: "47 cards in your deck". */
+  readonly hint: string;
 }
 
 export interface BoardScenePlayerFrame {
@@ -335,6 +337,8 @@ export type BoardIntent =
       readonly single?: boolean;
     }
   | { readonly kind: 'ZoneOpened'; readonly zoneId: string }
+  /** A press on a counter or chip lying on a card: its controls. */
+  | { readonly kind: 'MarkerPressed'; readonly markerId: string }
   | { readonly kind: 'BoardResizeRequested'; readonly splitRatio: number };
 
 export type BoardPresentationEvent =

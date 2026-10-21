@@ -1001,7 +1001,7 @@ describe('Pixi board interaction cancellation', () => {
     // The Pixi spike paints each token flat in its face colour (ADR-027).
     expectView(condition, {
       shape: 'circle',
-      color: 0xb278b4,
+      color: 0xd480b1,
       alpha: 1,
       text: 'P',
       textFill: 0x17120a,
@@ -1085,10 +1085,10 @@ describe('Pixi board interaction cancellation', () => {
     expect(release).not.toHaveBeenCalled();
 
     const palettes = [
-      ['B', 0xd3a757, 0x17120a],
-      ['A', 0x2f3f9e, 0xf4efcf],
-      ['Pa', 0x2b2b30, 0xffd60a],
-      ['C', 0x0f7c78, 0xffffff],
+      ['B', 0xf5ad54, 0x17120a],
+      ['A', 0x87cee4, 0x004a87],
+      ['Pa', 0xfaee42, 0x965c00],
+      ['C', 0xb4d580, 0x0a5a28],
       ['X', 0xf3efe4, 0x1a1814],
     ] as const;
     let revision = 204;

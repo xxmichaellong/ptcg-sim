@@ -198,11 +198,19 @@ export const BOARD_SURFACE_CSS = `
     0 0 28px 9px var(--ptcgsim-ack-glow, rgb(255 196 90 / 0.6)),
     inset 0 0 26px var(--ptcgsim-ack-wash, rgb(255 232 170 / 0.5));
 }
+/* Scans run a little wider than a card's 63 × 88 (TCGdex's are 0.727 to the
+   card's 0.716), so the picture is fitted to the card exactly: contained,
+   the blank card showed through above and below it as a second, darker
+   rim, thicker on some scans than others. */
 .ptcgsim-card__face > img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: fill;
+}
+/* Once the picture is in, its own rounded corners are the card's. */
+.ptcgsim-card__face:has(> img[data-card-image-state='ready']) {
+  background: transparent;
 }
 .ptcgsim-card__face > .ptcgsim-card__turn {
   position: absolute;

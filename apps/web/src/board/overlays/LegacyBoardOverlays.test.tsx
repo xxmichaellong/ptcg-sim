@@ -2422,9 +2422,9 @@ describe('legacy board overlays', () => {
       5
     );
     expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
-    // The draft previews its chip's colours: "Poisoned" is the orchid
-    // Poison marker.
-    expect(editor.style.background).toBe('rgb(178, 120, 180)');
+    // The draft previews its chip's colours: "Poisoned" is the pink
+    // Poison chip.
+    expect(editor.style.background).toBe('rgb(212, 128, 177)');
     expect(editor.style.color).toBe('rgb(23, 18, 10)');
 
     await act(async () => {
@@ -2432,9 +2432,9 @@ describe('legacy board overlays', () => {
       editor.textContent = 'Pa';
       editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
     });
-    // v1's "PA" is the Paralyzed chip: a yellow bolt on charcoal.
-    expect(editor.style.background).toBe('rgb(43, 43, 48)');
-    expect(editor.style.color).toBe('rgb(255, 214, 10)');
+    // v1's "PA" is the Paralyzed chip: an amber jolt on yellow.
+    expect(editor.style.background).toBe('rgb(250, 238, 66)');
+    expect(editor.style.color).toBe('rgb(150, 92, 0)');
 
     await act(async () => {
       editor.textContent = 'condition text too long';

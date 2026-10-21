@@ -7,6 +7,7 @@ import {
   legacyMarkerCssColor,
   legacyMarkerPackedColor,
   markerFace,
+  markerHint,
   markerLabelFontSizePx,
   specialConditionKind,
   type LegacyMarkerColor,
@@ -110,6 +111,19 @@ describe('marker presentation', () => {
     }
   });
 
+  it('says what each marker is in its tooltip', () => {
+    expect(markerHint({ kind: 'damage', value: '60' })).toBe('60 damage');
+    expect(markerHint({ kind: 'specialCondition', value: 'PA' })).toBe(
+      'Paralyzed'
+    );
+    expect(markerHint({ kind: 'specialCondition', value: ' Pinned ' })).toBe(
+      'Pinned'
+    );
+    expect(markerHint({ kind: 'abilityUsed', value: 'used' })).toBe(
+      'Ability used'
+    );
+  });
+
   it('lets the artwork carry a known condition and prints anything else', () => {
     const burned = markerFace({ kind: 'specialCondition', value: 'B' });
     expect(burned).toMatchObject({ face: 'burned', label: '', scale: 1 });
@@ -182,8 +196,8 @@ describe('marker presentation', () => {
     const condition = legacyMarkerAppearance(
       marker({ kind: 'specialCondition', value: 'Pa' })
     );
-    expect(legacyMarkerCssColor(condition.fill)).toBe('rgb(43, 43, 48)');
-    expect(legacyMarkerCssColor(condition.text)).toBe('rgb(255, 214, 10)');
+    expect(legacyMarkerCssColor(condition.fill)).toBe('rgb(250, 238, 66)');
+    expect(legacyMarkerCssColor(condition.text)).toBe('rgb(150, 92, 0)');
     // The typed value stays the text: the editor previews what is typed.
     expect(condition.label).toBe('Pa');
 

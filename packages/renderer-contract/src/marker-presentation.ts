@@ -4,9 +4,9 @@ import type { MarkerSceneNode } from './model.js';
 /**
  * How board markers look: the real accessories (ADR-027). Damage is a counter
  * disc in the colour of the physical counter for its band -- yellow 10,
- * orange 50, red 100 -- and special conditions are chips: the current-era
- * Burn and Poison markers, and Zzz, lightning and swirl chips for the three
- * conditions the table shows by turning the card.
+ * orange 50, red 100 -- and special conditions are the official chips: the
+ * current Burn and Poison markers' art, and the same set's Zzz, jolt and
+ * swirl for the three conditions the table shows by turning the card.
  *
  * Both board renderers read this one description. Colours are 8-bit channels
  * plus alpha, converted at the edge: CSS wants `rgb()`/`rgba()`, Pixi wants a
@@ -108,44 +108,51 @@ const DAMAGE_FACES: Readonly<
 const CONDITION_FACES: Readonly<
   Record<SpecialConditionKind | 'condition-note', Omit<MarkerFace, 'label'>>
 > = {
-  // Orchid with navy goo rising from the bottom, after the rulebook marker.
+  // The official chips (the Pokémon TCG Pocket icons, the art of the current
+  // physical markers), each with the gold rim the physical ones have. The
+  // DOM renderer paints the art itself when the app supplies it; these are
+  // the colours for anything that draws them.
+  // Pink with purple goo rising from the bottom.
   poisoned: {
     face: 'poisoned',
-    fill: rgb(178, 120, 180),
-    rim: rgb(42, 43, 85),
+    fill: rgb(212, 128, 177),
+    rim: rgb(196, 160, 82),
     ink: INK,
-    art: rgb(49, 48, 94),
+    art: rgb(105, 48, 141),
     scale: 1,
   },
-  // Tan with a crimson three-tongued flame.
+  // Orange with a red flame.
   burned: {
     face: 'burned',
-    fill: rgb(211, 167, 87),
-    rim: rgb(168, 50, 58),
+    fill: rgb(245, 173, 84),
+    rim: rgb(196, 160, 82),
     ink: INK,
-    art: rgb(163, 44, 55),
+    // A shade deeper than the art's red, to read on the orange (3:1).
+    art: rgb(190, 0, 16),
     scale: 1,
   },
+  // Sky blue, Zzz over a blue wave.
   asleep: {
     face: 'asleep',
-    fill: rgb(47, 63, 158),
-    rim: rgb(28, 38, 104),
-    ink: rgb(244, 239, 207),
+    fill: rgb(135, 206, 228),
+    rim: rgb(196, 160, 82),
+    ink: rgb(0, 74, 135),
     scale: 1,
   },
-  // Charcoal, so it never reads as a yellow 10 counter.
+  // Yellow with an amber jolt.
   paralyzed: {
     face: 'paralyzed',
-    fill: rgb(43, 43, 48),
-    rim: rgb(17, 17, 20),
-    ink: rgb(255, 214, 10),
+    fill: rgb(250, 238, 66),
+    rim: rgb(196, 160, 82),
+    ink: rgb(150, 92, 0),
     scale: 1,
   },
+  // Pale green with a green swirl.
   confused: {
     face: 'confused',
-    fill: rgb(15, 124, 120),
-    rim: rgb(11, 80, 78),
-    ink: WHITE,
+    fill: rgb(180, 213, 128),
+    rim: rgb(196, 160, 82),
+    ink: rgb(10, 90, 40),
     scale: 1,
   },
   // Whatever else a player typed, on a plain ivory chip.
@@ -226,6 +233,41 @@ export const markerFace = (
       comment: 'Printed on the marker of a Pokémon whose Ability was used.',
     }),
   };
+};
+
+/**
+ * What a marker's tooltip says: the damage on the Pokémon, the condition by
+ * name (or the note a player typed), or that its Ability was used.
+ */
+export const markerHint = (
+  marker: Pick<MarkerSceneNode, 'kind' | 'value'>
+): string => {
+  if (marker.kind === 'damage') {
+    return t({
+      message: `${marker.value} damage`,
+      comment: 'Tooltip of a damage counter on a Pokémon, e.g. "60 damage".',
+    });
+  }
+  if (marker.kind === 'abilityUsed') {
+    return t({
+      message: 'Ability used',
+      comment: 'Tooltip of the marker on a Pokémon whose Ability was used.',
+    });
+  }
+  switch (specialConditionKind(marker.value)) {
+    case 'poisoned':
+      return t({ message: 'Poisoned', context: 'special condition' });
+    case 'burned':
+      return t({ message: 'Burned', context: 'special condition' });
+    case 'asleep':
+      return t({ message: 'Asleep', context: 'special condition' });
+    case 'paralyzed':
+      return t({ message: 'Paralyzed', context: 'special condition' });
+    case 'confused':
+      return t({ message: 'Confused', context: 'special condition' });
+    case null:
+      return marker.value.trim();
+  }
 };
 
 /**

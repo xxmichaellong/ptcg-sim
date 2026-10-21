@@ -132,14 +132,16 @@ button.table-coin__button:focus-visible {
   transform: rotateX(180deg) translateZ(calc(var(--coin-thickness) / 2));
 }
 
-.table-coin__face > svg {
+.table-coin__face > img {
   display: block;
   width: 100%;
   height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* The far player's coin faces them, as their cards do. */
-.table-coin[data-coin-turned] .table-coin__face > svg {
+.table-coin[data-coin-turned] .table-coin__face > img {
   rotate: 180deg;
 }
 
@@ -164,7 +166,7 @@ button.table-coin__button:focus-visible {
     opacity var(--duration-fast, 120ms) var(--ease-out, ease-out);
 }
 
-/* Seen edge-on mid-turn, the coin is a milled gold band, not nothing. */
+/* Seen edge-on mid-turn, the coin is a milled silver band, not nothing. */
 .table-coin__edge {
   position: absolute;
   top: 50%;
@@ -179,7 +181,7 @@ button.table-coin__button:focus-visible {
       rgb(0 0 0 / 0.16) 0 1px,
       rgb(0 0 0 / 0) 1px 3px
     ),
-    linear-gradient(90deg, #8d7544, #f3dfa4 30%, #9e8040 62%, #d9be78);
+    linear-gradient(90deg, #8e949c, #f2f4f7 30%, #9aa1aa 62%, #d8dce2);
   transform: rotateX(90deg);
   /*
    * Only seen, never pressed (the coin's button is): stood exactly on edge,

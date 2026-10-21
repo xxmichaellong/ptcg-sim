@@ -359,9 +359,15 @@ const TableHandPill = memo(function TableHandPill({
         ...({ '--table-hand-tint': node.color } as CSSProperties),
       }}
     >
-      <span className="table-hand-pill__count" aria-hidden="true">
-        {node.count}
-      </span>
+      <Tooltip
+        content={node.hint}
+        side={playerSide === 'local' ? 'top' : 'bottom'}
+        tapToShow
+      >
+        <span className="table-hand-pill__count" aria-hidden="true">
+          {node.count}
+        </span>
+      </Tooltip>
       {onToggleHandSort ? (
         <Tooltip
           content={

@@ -2130,6 +2130,10 @@
               "kind": "type"
             },
             {
+              "name": "markerHint",
+              "kind": "value"
+            },
+            {
               "name": "markerLabelFontSizePx",
               "kind": "value"
             },

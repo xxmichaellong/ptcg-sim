@@ -155,6 +155,64 @@ const cardLabel = (view: MatchViewState, card: ViewCard): string => {
 const cardCountLabel = (count: number): string =>
   t`${plural(count, { one: '# card', other: '# cards' })}`;
 
+/**
+ * A count badge's tooltip: how many cards, and where. The viewer's own
+ * places are "your"; the other seat's carry its player's name.
+ */
+const cardCountHint = (
+  kind: ZoneCountSceneNode['kind'],
+  count: number,
+  playerName: string | undefined
+): string => {
+  if (playerName === undefined) {
+    switch (kind) {
+      case 'deck':
+        return plural(count, {
+          one: '# card in your deck',
+          other: '# cards in your deck',
+        });
+      case 'discard':
+        return plural(count, {
+          one: '# card in your discard pile',
+          other: '# cards in your discard pile',
+        });
+      case 'lostZone':
+        return plural(count, {
+          one: '# card in your Lost Zone',
+          other: '# cards in your Lost Zone',
+        });
+      case 'hand':
+        return plural(count, {
+          one: '# card in your hand',
+          other: '# cards in your hand',
+        });
+    }
+  }
+  const name = playerName;
+  switch (kind) {
+    case 'deck':
+      return plural(count, {
+        one: `# card in ${name}'s deck`,
+        other: `# cards in ${name}'s deck`,
+      });
+    case 'discard':
+      return plural(count, {
+        one: `# card in ${name}'s discard pile`,
+        other: `# cards in ${name}'s discard pile`,
+      });
+    case 'lostZone':
+      return plural(count, {
+        one: `# card in ${name}'s Lost Zone`,
+        other: `# cards in ${name}'s Lost Zone`,
+      });
+    case 'hand':
+      return plural(count, {
+        one: `# card in ${name}'s hand`,
+        other: `# cards in ${name}'s hand`,
+      });
+  }
+};
+
 const cardImageUrl = (view: MatchViewState, card: ViewCard): string => {
   if (card.kind === 'concealed') return card.cardBackUrl;
   if (card.face === 'down')
@@ -920,6 +978,14 @@ export const createBoardScene = (
         color: legacyCountColor(zone.kind, zone.ownerId === ownPlayerId),
         zIndex: 15,
         label: cardCountLabel(zone.cards.length),
+        hint: cardCountHint(
+          zone.kind,
+          zone.cards.length,
+          view.viewer.kind === 'player' && zone.ownerId === view.viewer.playerId
+            ? undefined
+            : (view.players[zone.ownerId]?.displayName ??
+                t({ message: 'Player', context: 'unnamed seat' }))
+        ),
       });
     }
     const pileTopIndex = pile

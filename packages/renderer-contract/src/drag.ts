@@ -489,6 +489,14 @@ export class BoardDragController {
     return true;
   }
 
+  /**
+   * Drops the click a press on this card is about to make: the press was
+   * on something lying on it (a damage counter), which answered it instead.
+   */
+  suppressClick(cardId: ViewCardId, renderKey: string | null): void {
+    this.suppressedClick = { cardId, renderKey };
+  }
+
   /** Clears one local gesture without emitting a second presentation update. */
   cancelInteraction(): number | null {
     const pointerId = this.active?.pointerId ?? null;
