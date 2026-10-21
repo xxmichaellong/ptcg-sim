@@ -1,5 +1,6 @@
 import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip';
 import {
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -75,6 +76,11 @@ export const Tooltip = ({
 }: TooltipProps) => {
   const container = useContext(OverlayContainerContext);
   const trigger = useRef<HTMLElement | null>(null);
+  // One callback for the component's life: a new one each render would
+  // detach and attach Base UI's own refs to the trigger on every render.
+  const setTrigger = useCallback((element: HTMLElement | null) => {
+    trigger.current = element;
+  }, []);
   const [hovered, setHovered] = useState(false);
   const [tapped, setTapped] = useState(false);
   const tappedAtPress = useRef(false);
@@ -118,9 +124,7 @@ export const Tooltip = ({
         : {})}
     >
       <BaseTooltip.Trigger
-        ref={(element: HTMLElement | null) => {
-          trigger.current = element;
-        }}
+        ref={setTrigger}
         render={children}
         {...(delay === undefined ? {} : { delay })}
         {...(tapToShow
