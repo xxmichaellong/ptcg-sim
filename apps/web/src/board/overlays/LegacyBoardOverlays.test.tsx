@@ -1858,6 +1858,59 @@ describe('legacy board overlays', () => {
     return dispatched;
   };
 
+  it("never lets a window's card start a native drag of its picture, which would take the gesture from the table", async () => {
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const pileCard = scene.cards.find(
+      (candidate) => candidate.parentId === discard.id
+    )!;
+    const stackId = view.boards[firstPlayer]!.activeStackId!;
+    const render = (patch: Partial<BoardSessionControllerState>) =>
+      act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state(patch),
+            darkMode: false,
+            actions: actions(),
+          })
+        );
+      });
+    const dragStartIsCancelled = (selector: string) => {
+      const picture = host.querySelector(`${selector} img`)!;
+      const event = new Event('dragstart', { bubbles: true, cancelable: true });
+      picture.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    // A pile's viewer.
+    await render({
+      presentation: {
+        ...createInitialBoardSessionControllerState().presentation,
+        openedZoneId: discard.id,
+      },
+    });
+    expect(
+      dragStartIsCancelled(`[data-overlay-card-id="${pileCard.id}"]`)
+    ).toBe(true);
+    // The stack view, and a card's own preview.
+    await render({
+      overlays: {
+        contextMenuCardId: null,
+        preview: { kind: 'stack', stackId },
+        input: null,
+      },
+    });
+    expect(dragStartIsCancelled('[data-stack-preview-card-id]')).toBe(true);
+    await render({
+      overlays: {
+        contextMenuCardId: null,
+        preview: { kind: 'card', cardId: pileCard.id },
+        input: null,
+      },
+    });
+    expect(dragStartIsCancelled('.ptcgsim-card-preview-stage')).toBe(true);
+  });
+
   it('keeps a viewer aside until the card dropped out of it has landed, and never longer than a few seconds', async () => {
     const callbacks = actions();
     const motion = new TableMotionStore();

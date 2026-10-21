@@ -15,6 +15,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type DragEvent as ReactDragEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 
@@ -346,6 +347,12 @@ export const useOverlayCardDrag = (options: Options) => {
     /** Touch: the card a held finger has just picked up. */
     armedCardId,
     consumeClick: (id: ViewCardId) => controller.consumeSuppressedClick(id),
+    /**
+     * A card pressed here is the table's to carry. WebKit can start a native
+     * drag of its picture even with draggable={false}, and that drag takes
+     * the rest of the gesture: the pointer never comes up for the table.
+     */
+    onDragStart: (event: ReactDragEvent<HTMLElement>) => event.preventDefault(),
     onPointerDown: (
       event: ReactPointerEvent<HTMLElement>,
       card: CardSceneNode

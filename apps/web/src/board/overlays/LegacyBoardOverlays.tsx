@@ -1684,6 +1684,7 @@ const Preview = ({
         data-preview-tabbable={composition ? 'true' : undefined}
         data-armed={drag.armedCardId === card.id ? 'true' : undefined}
         draggable={false}
+        onDragStart={drag.onDragStart}
         onMouseDown={(event) => event.preventDefault()}
         onPointerDown={(event) => drag.onPointerDown(event, card)}
         onClick={(event) => {
@@ -1826,6 +1827,7 @@ const Preview = ({
           data-armed={drag.armedCardId === readingCard.id ? 'true' : undefined}
           onPointerMove={tilt.onPointerMove}
           onPointerLeave={tilt.onPointerLeave}
+          onDragStart={drag.onDragStart}
           onPointerDown={(event) => drag.onPointerDown(event, readingCard)}
           onClickCapture={(event) => swallowDragClick(event, readingCard.id)}
         >
@@ -2316,6 +2318,7 @@ const ZoneBrowser = ({
               }
               aria-pressed={state.presentation.selectedCardId === card.id}
               draggable={false}
+              onDragStart={drag.onDragStart}
               onPointerDown={(event) => drag.onPointerDown(event, card)}
               onClick={(event) => {
                 if (drag.consumeClick(card.id) && event.detail > 0) {
@@ -2539,6 +2542,7 @@ const WorkAreaPanel = ({
             data-armed={drag.armedCardId === card.id ? 'true' : undefined}
             disabled={!interactive}
             draggable={false}
+            onDragStart={drag.onDragStart}
             onPointerDown={(event) => drag.onPointerDown(event, card)}
             onClick={(event) => {
               if (drag.consumeClick(card.id) && event.detail > 0) {
