@@ -5,6 +5,8 @@ import type {
   ViewCardId,
 } from '@ptcgsim/game-core';
 
+import type { SeatTone } from './seat-tone.js';
+
 export type BoardSide = 'local' | 'opponent';
 
 export interface BoardViewport {
@@ -251,7 +253,13 @@ export interface ZoneCountSceneNode {
 
 export interface BoardScenePlayerFrame {
   readonly playerId: PlayerId;
+  /** Where the seat sits on screen: the bottom half is `local`. */
   readonly side: BoardSide;
+  /**
+   * Its colour, which follows the player, not the screen: the viewer's own
+   * seat (a spectator's, the first) is `local` wherever it sits (SeatTone).
+   */
+  readonly tone: SeatTone;
   readonly physicalSide: 'lower' | 'upper';
   readonly rotationQuarterTurns: 0 | 2;
   readonly bounds: Rect;

@@ -111,6 +111,11 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
     frame: (typeof layout.players)[number],
     kind: 'deck' | 'lostZone'
   ) => frame.regions.find((candidate) => candidate.kind === kind);
+  // A seat's colour follows the player, not the half it sits in: turned
+  // around, the seat at the bottom keeps its own colour (SeatTone).
+  const toneOf = (playerId: PlayerId) =>
+    scene.layout.players.find((frame) => frame.playerId === playerId)?.tone ??
+    'opponent';
   const lostZoneHasCards = (playerId: PlayerId): boolean =>
     scene.zones.some(
       (zone) =>
@@ -132,6 +137,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
               key={`deck-${frame.playerId}`}
               className="table-zone-affordance table-zone-affordance--deck"
               data-player-side={own ? 'local' : 'opponent'}
+              data-seat-tone={toneOf(frame.playerId)}
               style={boxStyle(onScreen(deck.physicalDeclaredBounds, depth))}
             >
               <Tooltip content={label} side={own ? 'top' : 'bottom'}>

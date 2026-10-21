@@ -444,19 +444,19 @@ export const BOARD_SURFACE_CSS = `
     inset 0 0 0 2px var(--color-felt-drop, var(--color-accent, rgb(90 110 188))),
     0 0 24px var(--color-felt-drop-soft, var(--color-accent-soft, rgb(90 110 188 / 0.3)));
 }
+/* Each half glows from its outer edge in its seat's colour, which follows
+   the player: turned around, the seat at the bottom keeps its own. */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame {
+  --ptcgsim-seat-glow: var(--color-you-soft, rgb(90 110 188 / 0.18));
+}
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-tone='opponent'] {
+  --ptcgsim-seat-glow: var(--color-opponent-soft, rgb(188 90 113 / 0.18));
+}
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-side='local'] {
-  background: linear-gradient(
-    to top,
-    var(--color-you-soft, rgb(90 110 188 / 0.18)),
-    transparent 22%
-  );
+  background: linear-gradient(to top, var(--ptcgsim-seat-glow), transparent 22%);
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-player-frame[data-player-frame-side='opponent'] {
-  background: linear-gradient(
-    to bottom,
-    var(--color-opponent-soft, rgb(188 90 113 / 0.18)),
-    transparent 18%
-  );
+  background: linear-gradient(to bottom, var(--ptcgsim-seat-glow), transparent 18%);
 }
 /* The centre line, printed on the mat. It stops either side of the Stadium
    that straddles it, as a real mat's print would sit under the card. */

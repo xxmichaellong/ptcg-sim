@@ -23,16 +23,9 @@ export const actingPlayerIdOf = (
  * shows it: the viewer's own seat (a spectator's, the first) in the "you"
  * colour and the other in the opponent's. Solo's seats are named Blue and
  * Red after these colours, so turning the board around must not swap them.
+ * The scene stamps the same rule on each seat's frame (`frame.tone`).
  */
-export const seatToneOf = (
-  view: MatchViewState | undefined,
-  playerId: string | null | undefined
-): 'local' | 'opponent' | undefined => {
-  if (!view || !playerId) return undefined;
-  const own =
-    view.viewer.kind === 'player' ? view.viewer.playerId : view.playerOrder[0];
-  return playerId === own ? 'local' : 'opponent';
-};
+export { seatToneOf } from '@ptcgsim/renderer-contract';
 
 /** A target seat field only when it differs from the submitting seat. */
 export const targetSeatField = (

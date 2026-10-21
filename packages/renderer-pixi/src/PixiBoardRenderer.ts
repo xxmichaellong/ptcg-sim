@@ -1089,7 +1089,12 @@ export class PixiBoardRenderer implements BoardRenderer {
         descriptor.verticalAlign === 'top'
           ? anchor.y - margin
           : anchor.y - height + margin;
-      const tint = descriptor.side === 'local' ? palette.you : palette.opponent;
+      // The seat's colour follows the player, not the half it sits in.
+      const tone =
+        this.scene?.layout.players.find(
+          (frame) => frame.playerId === descriptor.playerId
+        )?.tone ?? descriptor.side;
+      const tint = tone === 'local' ? palette.you : palette.opponent;
       root.position.set(x, y);
       graphic
         .roundRect(0, 2, width, height, 11)

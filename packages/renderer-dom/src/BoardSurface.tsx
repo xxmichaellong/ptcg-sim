@@ -191,6 +191,7 @@ const PlayerFrameNode = memo(function PlayerFrameNode({
         className="ptcgsim-player-frame"
         data-player-frame-id={frame.playerId}
         data-player-frame-side={frame.side}
+        data-player-frame-tone={frame.tone}
         data-player-physical-side={frame.physicalSide}
         data-player-rotation={frame.rotationQuarterTurns}
         aria-hidden="true"

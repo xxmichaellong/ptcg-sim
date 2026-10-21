@@ -87,6 +87,11 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
 }: {
   readonly frame: BoardPlayerLayout;
   readonly player: MatchViewState['players'][string];
+  /**
+   * The seat's colour, which follows the player (SeatTone): the viewer's
+   * own seat is `local` wherever it sits. Where things go on screen comes
+   * from the frame's own side.
+   */
   readonly playerSide: 'local' | 'opponent';
   readonly darkMode: boolean;
   readonly onToggle: LegacyBoardChromeActions['toggleOncePerGame'];
@@ -130,7 +135,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
     return (
       <Tooltip
         content={oncePerGameTooltip(marker, used)}
-        side={playerSide === 'local' ? 'top' : 'bottom'}
+        side={frame.side === 'local' ? 'top' : 'bottom'}
       >
         <button
           type="button"
@@ -189,7 +194,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
         {onToggleHandSort && table && !sortInPill ? (
           <Tooltip
             content={handSortTooltip(handSorted)}
-            side={playerSide === 'local' ? 'top' : 'bottom'}
+            side={frame.side === 'local' ? 'top' : 'bottom'}
           >
             <label
               className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide}`}
@@ -282,6 +287,7 @@ const TableHandPill = memo(function TableHandPill({
   onToggleHandSort,
 }: {
   readonly count: TableHandCount;
+  /** The seat's colour, which follows the player (SeatTone). */
   readonly playerSide: 'local' | 'opponent';
   readonly sorted: boolean;
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
@@ -361,7 +367,7 @@ const TableHandPill = memo(function TableHandPill({
     >
       <Tooltip
         content={node.hint}
-        side={playerSide === 'local' ? 'top' : 'bottom'}
+        side={node.side === 'local' ? 'top' : 'bottom'}
         tapToShow
       >
         <span className="table-hand-pill__count" aria-hidden="true">
@@ -373,7 +379,7 @@ const TableHandPill = memo(function TableHandPill({
           content={
             sorted ? t`Stop sorting hand` : t`Sort hand in decklist order`
           }
-          side={playerSide === 'local' ? 'top' : 'bottom'}
+          side={node.side === 'local' ? 'top' : 'bottom'}
         >
           <label
             className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide} table-hand-pill__sort`}

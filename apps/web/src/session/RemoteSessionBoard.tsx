@@ -10,6 +10,7 @@ import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
   TABLE_LAYOUT_GEOMETRY_VERSION,
+  ownSeatOf,
   tableVerticalLayout,
   type BoardIntent,
   type BoardLayoutSnapshot,
@@ -224,8 +225,7 @@ const revealedOwnHandCardId = (
 /** The seat the viewer would see at the bottom before any flip. */
 const ownPlayerIdOf = (
   view: NonNullable<ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']>
-): string | undefined =>
-  view.viewer.kind === 'player' ? view.viewer.playerId : view.playerOrder[0];
+): string | undefined => ownSeatOf(view);
 
 const viewIdentity = (
   view: ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
@@ -1156,10 +1156,11 @@ export const RemoteSessionBoard = ({
             <LegacyBoardChrome
               {...(depthProjection ? { depth: depthProjection } : {})}
               layout={layout}
+              // Each seat's colour follows the player: the viewer's own
+              // (a spectator's, the first) wherever it sits (SeatTone).
               localPlayerId={
-                boardState.view?.viewer.kind === 'player'
-                  ? boardState.view.viewer.playerId
-                  : boardState.scene.bottomPlayerId
+                (boardState.view ? ownSeatOf(boardState.view) : undefined) ??
+                boardState.scene.bottomPlayerId
               }
               players={boardState.view?.players ?? {}}
               darkMode={preferences.darkMode}

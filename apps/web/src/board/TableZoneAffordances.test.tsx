@@ -145,6 +145,26 @@ describe('TableZoneAffordances', () => {
     expect(onLoad.mock.calls).toEqual([[blue], [red]]);
   });
 
+  it("colours each seat's + by the player, not the half it sits in", async () => {
+    const affordance = (playerId: string) =>
+      deckButton(playerId)!.closest<HTMLElement>('.table-zone-affordance')!
+        .dataset;
+    const loadDeck = { playerIds: [blue, red], onLoad: vi.fn() };
+    await render(createEmptyBoardView(), { loadDeck });
+    expect(affordance(blue).seatTone).toBe('local');
+    expect(affordance(red).seatTone).toBe('opponent');
+    // Turned around, Red sits at the bottom in Red's colour.
+    await render(
+      createEmptyBoardView(),
+      { loadDeck },
+      layoutState({ bottomPlayerId: red })
+    );
+    expect(affordance(red).playerSide).toBe('local');
+    expect(affordance(red).seatTone).toBe('opponent');
+    expect(affordance(blue).playerSide).toBe('opponent');
+    expect(affordance(blue).seatTone).toBe('local');
+  });
+
   it('offers the + only to listed seats that have no cards yet', async () => {
     const onLoad = vi.fn();
     await render(createEmptyBoardView(), {

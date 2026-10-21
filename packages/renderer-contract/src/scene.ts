@@ -56,6 +56,7 @@ import type {
   ZoneSceneNode,
 } from './model.js';
 import { topmostFirst } from './paint-order.js';
+import { ownSeatOf } from './seat-tone.js';
 import { finishForCard } from './card-material.js';
 import { layoutComposedPlayRow } from './composed-play-row.js';
 
@@ -227,10 +228,12 @@ const isConcealedForRendering = (card: ViewCard): boolean =>
 const copyRect = (bounds: Rect): Rect => ({ ...bounds });
 
 const projectPlayerFrame = (
-  player: BoardLayoutSnapshot['players'][number]
+  player: BoardLayoutSnapshot['players'][number],
+  ownPlayerId: string | undefined
 ): BoardSceneLayout['players'][number] => ({
   playerId: player.playerId,
   side: player.side,
+  tone: player.playerId === ownPlayerId ? 'local' : 'opponent',
   physicalSide: player.physicalSide,
   rotationQuarterTurns: player.rotationQuarterTurns,
   bounds: copyRect(player.frameBounds),
@@ -245,8 +248,14 @@ const projectResizeHandle = (
   bounds: copyRect(handle.bounds),
 });
 
+/**
+ * The scene's layout. `ownPlayerId` is the viewer's own seat (ownSeatOf),
+ * which decides each seat's colour; it defaults to the seat at the bottom,
+ * right only while the board has not been turned around.
+ */
 export const createBoardSceneLayout = (
-  snapshot: BoardLayoutSnapshot
+  snapshot: BoardLayoutSnapshot,
+  ownPlayerId: string | undefined = snapshot.bottomPlayerId
 ): BoardSceneLayout => ({
   geometryVersion: snapshot.geometryVersion,
   outerViewport: { ...snapshot.viewport },
@@ -260,8 +269,8 @@ export const createBoardSceneLayout = (
     : null,
   tabsBounds: snapshot.tabsBounds ? copyRect(snapshot.tabsBounds) : null,
   players: [
-    projectPlayerFrame(snapshot.players[0]),
-    projectPlayerFrame(snapshot.players[1]),
+    projectPlayerFrame(snapshot.players[0], ownPlayerId),
+    projectPlayerFrame(snapshot.players[1], ownPlayerId),
   ],
   resizeHandles: [
     projectResizeHandle(snapshot.resizeHandles[0]),
@@ -790,8 +799,7 @@ export const createBoardScene = (
     devicePixelRatio: layout.viewport.devicePixelRatio,
   };
   // The seat the viewer plays from (a spectator watches from the first).
-  const ownPlayerId =
-    view.viewer.kind === 'player' ? view.viewer.playerId : view.playerOrder[0];
+  const ownPlayerId = ownSeatOf(view);
   const zones: ZoneSceneNode[] = [];
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
@@ -1354,7 +1362,7 @@ export const createBoardScene = (
     revision: view.revision,
     viewport,
     bottomPlayerId: layout.bottomPlayerId,
-    layout: createBoardSceneLayout(layout),
+    layout: createBoardSceneLayout(layout, ownPlayerId),
     zones: zones
       .filter(
         (zone) => !hiddenSides.has(zone.side) && !absentZoneIds.has(zone.id)

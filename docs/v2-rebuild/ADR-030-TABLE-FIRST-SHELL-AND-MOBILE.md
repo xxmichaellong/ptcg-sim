@@ -167,6 +167,21 @@ table button are gone; their controls are the Table section.
 - **The empty table's welcome** sits in the far half, clear of the rail, and
   can be put away for good. The menu keeps the same help.
 
+### 7a. A seat keeps its colour
+
+A seat's colour follows the player, not the half of the table it sits in
+(`SeatTone`, `renderer-contract/src/seat-tone.ts`): the viewer's own seat
+is in the "you" colour (blue) and the other in the opponent's (red). A
+spectator, and a replay watched as one, takes the first seat as their own.
+Turning the board around -- Solo, or a room's coaching flip -- moves the
+seats, not their colours, as v1's flip swapped `self-color` and
+`opp-color`. The scene stamps each seat's frame with its `tone`, and
+everything painted in a seat's colour reads it (the empty deck's `+`, each
+half's glow, the hand pill and its Sort, count badges on the Pixi table,
+the pile viewers, the log and the turn banner); where a thing goes on
+screen still comes from its `side`. The rail is painted for the seat it
+acts for, the one at the bottom.
+
 ### 8. Card images retry by themselves
 
 v1's Refresh images re-assigned every image's address by hand; nothing

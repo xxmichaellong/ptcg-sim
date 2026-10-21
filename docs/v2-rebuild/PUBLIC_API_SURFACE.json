@@ -2198,6 +2198,10 @@
               "kind": "type"
             },
             {
+              "name": "ownSeatOf",
+              "kind": "value"
+            },
+            {
               "name": "paintedCardBounds",
               "kind": "value"
             },
@@ -2259,6 +2263,14 @@
             },
             {
               "name": "sameTablePose",
+              "kind": "value"
+            },
+            {
+              "name": "SeatTone",
+              "kind": "type"
+            },
+            {
+              "name": "seatToneOf",
               "kind": "value"
             },
             {

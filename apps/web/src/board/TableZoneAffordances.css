@@ -53,7 +53,7 @@
     scale var(--control-press-timing);
 }
 
-.table-zone-affordance--deck[data-player-side='opponent'] .table-zone-add {
+.table-zone-affordance--deck[data-seat-tone='opponent'] .table-zone-add {
   border-color: color-mix(in oklab, var(--color-opponent) 70%, transparent);
   background: color-mix(
     in oklab,
