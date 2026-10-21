@@ -28,7 +28,11 @@ import {
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
-import { predictQueue, predictWireCommand } from './predictWireCommand.js';
+import {
+  predictQueue,
+  predictWireCommand,
+  type PredictionOptions,
+} from './predictWireCommand.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 
@@ -73,6 +77,11 @@ export interface BoardSessionAdapterOptions {
   ) => void;
   /** Resolves a dropped card into a command (Solo widens whose windows). */
   readonly resolveDrop?: BoardSessionControllerOptions['resolveDrop'];
+  /**
+   * The viewer reads every seat's hand (Solo): predictions show a card going
+   * into the other seat's hand face up, as the room will.
+   */
+  readonly readsEveryHand?: () => boolean;
   readonly reportEffectFailure?: (
     error: unknown,
     effect: BoardSessionControllerEffect
@@ -302,7 +311,11 @@ export class BoardSessionAdapter {
     // session's queue -- whichever control submitted them (predictQueue).
     const predictedView =
       sourceView && source.kind === 'live'
-        ? predictQueue(sourceView, liveState.pendingCommands)
+        ? predictQueue(
+            sourceView,
+            liveState.pendingCommands,
+            this.predictionOptions()
+          )
         : sourceView;
     const view = predictedView
       ? (this.options.transformView?.(predictedView, source) ?? predictedView)
@@ -443,7 +456,8 @@ export class BoardSessionAdapter {
       predictWireCommand(
         this.options.live.getSnapshot().view ??
           this.controller.getSnapshot().view!,
-        effect.command
+        effect.command,
+        this.predictionOptions()
       ) !== null;
     const result = this.submitIfStillAllowed(effect.command);
     this.options.onSubmission?.(effect.command, result);
@@ -460,6 +474,10 @@ export class BoardSessionAdapter {
       this.controller.dispatch({ kind: 'SubmissionRejected' });
     }
   };
+
+  private predictionOptions(): PredictionOptions {
+    return { readsEveryHand: this.options.readsEveryHand?.() === true };
+  }
 
   private submitIfStillAllowed(command: WireGameCommand): SubmitCommandResult {
     const replay = this.options.replay.getSnapshot();

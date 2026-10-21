@@ -470,6 +470,41 @@ describe('predictWireCommand', () => {
     }
   });
 
+  it("shows a card entering the other seat's hand face up where the viewer reads every hand, as Solo's does", () => {
+    const redHand = view.zones[`zone:${red}:hand`]!;
+    const redDiscard = view.zones[`zone:${red}:discard`]!;
+    const card = redDiscard.cards[0]!;
+    expect(card.kind).toBe('known');
+    const move = {
+      type: 'MoveCard',
+      cardId: card.id,
+      expectedSourceZoneId: redDiscard.id,
+      destinationZoneId: redHand.id,
+    } as const;
+    expect(
+      predictWireCommand(view, move)!.zones[redHand.id]!.cards.at(-1)
+    ).toMatchObject({ id: card.id, kind: 'concealed' });
+    // Solo's player reads the other seat's hand: no back that then turns.
+    expect(
+      predictWireCommand(view, move, { readsEveryHand: true })!.zones[
+        redHand.id
+      ]!.cards.at(-1)
+    ).toMatchObject({ id: card.id, kind: 'known', face: 'up' });
+    // A swap whose old top lands face up there waits for the room, as it
+    // does for the viewer's own hand.
+    expect(
+      predictWireCommand(
+        view,
+        {
+          type: 'SwapCardWithDeckTop',
+          cardId: redHand.cards[0]!.id,
+          expectedSourceId: redHand.id,
+        },
+        { readsEveryHand: true }
+      )
+    ).toBeNull();
+  });
+
   it('draws from the top of the viewer own deck and updates counters', () => {
     const drawn = predictWireCommand(view, { type: 'DrawCards', count: 2 })!;
     expect(drawn.zones[hand.id]!.cards).toHaveLength(hand.cards.length + 2);

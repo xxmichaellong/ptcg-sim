@@ -609,6 +609,8 @@ export const RemoteSessionBoard = ({
             return applyHandSortDisplay(covered, policy.sortedHandPlayerIds);
           },
           onIntent: (intent) => onIntentRef.current(intent),
+          // Solo's player reads both seats' hands (the room shows them).
+          readsEveryHand: () => displayPolicyRef.current.roomMode === 'solo',
           // Solo's player moves cards out of either seat's window.
           resolveDrop: (dropView, scene, intent) =>
             resolveBoardDrop(dropView, scene, intent, {

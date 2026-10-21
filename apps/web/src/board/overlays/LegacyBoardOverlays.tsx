@@ -1286,7 +1286,8 @@ const ShowBoardButton = ({
       >
         {showingBoard ? (
           <>
-            <ArrowUUpLeftIcon aria-hidden="true" />
+            {/* The way back points back along the line: right, in Arabic. */}
+            <ArrowUUpLeftIcon className="ds-mirror-rtl" aria-hidden="true" />
             <Trans
               comment={
                 '{panelName} is the window to go back to, such as "Deck" or "Looking at cards".'

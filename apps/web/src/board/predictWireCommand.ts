@@ -36,10 +36,14 @@ import { locateViewCardActionSource } from './locateViewCardActionSource.js';
  */
 export const predictWireCommand = (
   view: MatchViewState,
-  command: WireGameCommand
+  command: WireGameCommand,
+  options: PredictionOptions = {}
 ): MatchViewState | null => {
   if (view.viewer.kind !== 'player') return null;
-  const viewerId = view.viewer.playerId;
+  const viewerId: Reader = {
+    id: view.viewer.playerId,
+    readsEveryHand: options.readsEveryHand === true,
+  };
   try {
     const next = predict(view, command, viewerId);
     return next && command.type !== 'ApplySoloUndo'
@@ -50,6 +54,22 @@ export const predictWireCommand = (
   }
 };
 
+export interface PredictionOptions {
+  /**
+   * The viewer reads every seat's hand and deck, as Solo's one player does
+   * (the room shows them the other seat's too): a card going there is
+   * predicted face up, as the room will show it, not as a back that then
+   * turns over.
+   */
+  readonly readsEveryHand?: boolean;
+}
+
+/** Whom a prediction is for, and what of the other seat they can read. */
+interface Reader {
+  readonly id: PlayerId;
+  readonly readsEveryHand: boolean;
+}
+
 type Zone = MatchViewState['zones'][string];
 type Stack = MatchViewState['stacks'][string];
 type WorkAreas = MatchViewState['workAreas'][string];
@@ -57,9 +77,11 @@ type WorkAreas = MatchViewState['workAreas'][string];
 const zoneKindOf = (view: MatchViewState, zoneId: string) =>
   view.zones[zoneId]?.kind;
 
-const hiddenFromViewer = (zone: Zone, viewerId: PlayerId): boolean =>
+const hiddenFromViewer = (zone: Zone, viewerId: Reader): boolean =>
   zone.kind === 'prizes' ||
-  ((zone.kind === 'hand' || zone.kind === 'deck') && zone.ownerId !== viewerId);
+  ((zone.kind === 'hand' || zone.kind === 'deck') &&
+    zone.ownerId !== viewerId.id &&
+    !viewerId.readsEveryHand);
 
 /**
  * A card as the room settles it in a zone (game-core's normalizeCardForZone):
@@ -86,7 +108,7 @@ const settledIn = (
 /** A card entering a zone the viewer cannot read is shown as its back. */
 const asPlacedIn = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   zone: Zone,
   placed: ViewCard
 ): ViewCard => {
@@ -171,7 +193,7 @@ const takeFromZone = (
 
 const placeInZone = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   zoneId: string,
   card: ViewCard,
   index?: number
@@ -542,7 +564,7 @@ const ownZone = (
 /** Moves every card of one zone to the end of another. */
 const moveZoneContents = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   sourceId: string,
   destinationId: string,
   index?: number
@@ -593,17 +615,17 @@ const asOutOfPlay = (card: ViewCard): ViewCard =>
 /** The seat a command acts for: the viewer unless it names another player. */
 const targetSeat = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   targetPlayerId: string | undefined
 ): PlayerId | null => {
-  if (targetPlayerId === undefined) return viewerId;
+  if (targetPlayerId === undefined) return viewerId.id;
   return view.players[targetPlayerId] ? (targetPlayerId as PlayerId) : null;
 };
 
 /** Draws from the top of a seat's deck into its hand. */
 const drawFor = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   playerId: PlayerId,
   count: number
 ): MatchViewState | null => {
@@ -676,7 +698,7 @@ const revealKnownInPlay = (view: MatchViewState): MatchViewState => {
 /** Discards one seat's loose board, which every table action does. */
 const discardLooseBoard = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   playerId: PlayerId
 ): MatchViewState => {
   const board = ownZone(view, playerId, 'board');
@@ -688,7 +710,7 @@ const discardLooseBoard = (
 const predict = (
   view: MatchViewState,
   command: WireGameCommand,
-  viewerId: PlayerId
+  viewerId: Reader
 ): MatchViewState | null => {
   switch (command.type) {
     case 'MoveCard': {
@@ -944,7 +966,7 @@ const predict = (
       return next;
     }
     case 'MoveCardToWorkArea': {
-      const areas = view.workAreas[viewerId];
+      const areas = view.workAreas[viewerId.id];
       if (!areas) return null;
       const target =
         areas.inspection?.id === command.expectedWorkAreaId
@@ -957,12 +979,12 @@ const predict = (
       if (!sourceId) return null;
       const taken = takeFromSource(view, sourceId, command.cardId);
       if (!taken) return null;
-      const nextAreas = taken.view.workAreas[viewerId];
+      const nextAreas = taken.view.workAreas[viewerId.id];
       const card = asOutOfPlay(taken.card);
       if (target === 'inspection') {
         const inspection = nextAreas?.inspection;
         if (!inspection) return null;
-        return withWorkAreas(taken.view, viewerId, {
+        return withWorkAreas(taken.view, viewerId.id, {
           ...nextAreas,
           inspection: { ...inspection, cards: [...inspection.cards, card] },
         });
@@ -972,7 +994,7 @@ const predict = (
       // The staged window files an arrival the way the room does: a Pokemon
       // joins the evolution column, anything else the attachments.
       const evolution = card.kind === 'known' && card.category === 'Pokémon';
-      return withWorkAreas(taken.view, viewerId, {
+      return withWorkAreas(taken.view, viewerId.id, {
         ...nextAreas,
         attachmentResolution: {
           ...staged,
@@ -1464,7 +1486,7 @@ const inspectionById = (view: MatchViewState, workAreaId: string) => {
  */
 const resolveWorkAreaCards = (
   view: MatchViewState,
-  viewerId: PlayerId,
+  viewerId: Reader,
   owner: PlayerId,
   cards: readonly ViewCard[],
   destination:
@@ -1533,12 +1555,13 @@ export const predictQueue = (
   queue: readonly {
     readonly command: WireGameCommand;
     readonly published?: boolean;
-  }[]
+  }[],
+  options: PredictionOptions = {}
 ): MatchViewState => {
   let current = view;
   for (const pending of queue) {
     if (pending.published) continue;
-    current = predictWireCommand(current, pending.command) ?? current;
+    current = predictWireCommand(current, pending.command, options) ?? current;
     if (isRandomizingCommand(pending.command)) break;
   }
   return current;
