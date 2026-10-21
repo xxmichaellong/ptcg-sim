@@ -2099,3 +2099,147 @@ it.each(['flat', 'table'] as const)(
     vi.unstubAllGlobals();
   }
 );
+
+describe("faces in the player's card language", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Serves every scan but `missing`, counting what is asked for. */
+  const serveScans = (missing: readonly string[], loaded: Texture) => {
+    const asked: string[] = [];
+    vi.spyOn(Assets, 'load').mockImplementation((asset: unknown) => {
+      const url =
+        typeof asset === 'string' ? asset : (asset as { src: string }).src;
+      asked.push(url);
+      return missing.includes(url)
+        ? Promise.reject(new Error(`404 ${url}`))
+        : Promise.resolve(loaded);
+    });
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    return asked;
+  };
+
+  const faceCards = (board: BoardScene) =>
+    board.cards.filter(
+      (card): card is typeof card & { readonly renderKey: string } =>
+        card.renderKey !== null && !card.concealed && !card.tableImageUrl
+    );
+
+  /** `board` with `cards` asked for at `url`, falling back to `fallback`. */
+  const translated = (
+    board: BoardScene,
+    cards: readonly BoardScene['cards'][number][],
+    url: string,
+    fallback: string,
+    revision = board.revision
+  ): BoardScene => ({
+    ...board,
+    revision,
+    cards: board.cards.map((card) =>
+      cards.some((candidate) => candidate.id === card.id)
+        ? { ...card, imageUrl: url, imageFallbackUrl: fallback }
+        : card
+    ),
+  });
+
+  it("falls back to the deck's own scan where a translation was never printed, asking for it once", async () => {
+    const french = 'https://assets.tcgdex.net/fr/dp/dp1/1/high.webp';
+    const english = 'https://assets.tcgdex.net/en/dp/dp1/1/high.webp';
+    const scan = new Texture();
+    const asked = serveScans([french], scan);
+    const reportError = vi.fn();
+    const renderer = new PixiBoardRenderer(
+      { emitIntent: vi.fn(), emitPresentationUpdate: vi.fn(), reportError },
+      { createApplication: () => fakeApplication() }
+    );
+    const base = scene();
+    const [first, second] = faceCards(base);
+    const before = translated(base, [first!], french, english);
+    await renderer.mount(
+      document.createElement('div'),
+      before,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    const internals = renderer as unknown as RendererInternals;
+    await vi.waitFor(() =>
+      expect(internals.cardViews.get(first!.renderKey)!.sprite.texture).toBe(
+        scan
+      )
+    );
+    expect(internals.cardViews.get(first!.renderKey)!.sprite.tint).toBe(
+      0xffffff
+    );
+    expect(asked.filter((url) => url === french)).toHaveLength(1);
+    expect(asked).toContain(english);
+
+    // Another copy, painted later, asks for the deck's scan straight away.
+    renderer.installScene(
+      translated(before, [first!, second!], french, english, base.revision + 1),
+      []
+    );
+    await vi.waitFor(() =>
+      expect(internals.cardViews.get(second!.renderKey)!.sprite.texture).toBe(
+        scan
+      )
+    );
+    expect(asked.filter((url) => url === french)).toHaveLength(1);
+    expect(reportError).not.toHaveBeenCalled();
+    renderer.destroy();
+  });
+
+  it('falls back for every copy waiting on the same missing translation', async () => {
+    const french = 'https://assets.tcgdex.net/fr/dp/dp3/3/high.webp';
+    const english = 'https://assets.tcgdex.net/en/dp/dp3/3/high.webp';
+    const scan = new Texture();
+    const asked = serveScans([french], scan);
+    const reportError = vi.fn();
+    const renderer = new PixiBoardRenderer(
+      { emitIntent: vi.fn(), emitPresentationUpdate: vi.fn(), reportError },
+      { createApplication: () => fakeApplication() }
+    );
+    const base = scene();
+    const copies = faceCards(base).slice(0, 3);
+    await renderer.mount(
+      document.createElement('div'),
+      translated(base, copies, french, english),
+      DEFAULT_BOARD_PRESENTATION
+    );
+    const internals = renderer as unknown as RendererInternals;
+    await vi.waitFor(() => {
+      for (const copy of copies)
+        expect(internals.cardViews.get(copy.renderKey)!.sprite.texture).toBe(
+          scan
+        );
+    });
+    expect(asked.filter((url) => url === french)).toHaveLength(1);
+    expect(reportError).not.toHaveBeenCalled();
+    renderer.destroy();
+  });
+
+  it('shows a face failed, and says so, when its fallback fails too', async () => {
+    const french = 'https://assets.tcgdex.net/fr/dp/dp2/2/high.webp';
+    const english = 'https://assets.tcgdex.net/en/dp/dp2/2/high.webp';
+    const asked = serveScans([french, english], new Texture());
+    const reportError = vi.fn();
+    const renderer = new PixiBoardRenderer(
+      { emitIntent: vi.fn(), emitPresentationUpdate: vi.fn(), reportError },
+      { createApplication: () => fakeApplication() }
+    );
+    const base = scene();
+    const [card] = faceCards(base);
+    await renderer.mount(
+      document.createElement('div'),
+      translated(base, [card!], french, english),
+      DEFAULT_BOARD_PRESENTATION
+    );
+    const internals = renderer as unknown as RendererInternals;
+    await vi.waitFor(() => expect(reportError).toHaveBeenCalledTimes(1));
+    const view = internals.cardViews.get(card!.renderKey)!;
+    expect(view.sprite.texture).toBe(Texture.WHITE);
+    expect(view.sprite.tint).toBe(0x777777);
+    expect(asked.filter((url) => url === french)).toHaveLength(1);
+    expect(asked.filter((url) => url === english)).toHaveLength(1);
+    renderer.destroy();
+  });
+});

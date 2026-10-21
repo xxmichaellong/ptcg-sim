@@ -92,9 +92,10 @@ card-image-language.ts`). Decks, definitions and the room keep the
    not translations, and stay as the deck has them. The deck screen's
    per-import "Card language" select (v1's Language button, which wrote the
    language into the deck for both players) is gone: imports store English
-   and every viewer chooses for themselves (PX-061). The Pixi renderer
-   (`?renderer=pixi`) has no such fallback yet and paints the deck's own
-   scans.
+   and every viewer chooses for themselves (PX-061). Both table renderers
+   fall back the same way: the DOM table through its images' error handlers
+   (`renderer-dom/src/card-image-retry.ts`), the Pixi table
+   (`?renderer=pixi`) through its texture loads (`PixiBoardRenderer.ts`).
 
 ## How to write text
 

@@ -595,9 +595,6 @@ export const RemoteSessionBoard = ({
             seamBandRef.current
           ),
           createRenderer,
-          // Pixi has no fallback for a missing translation yet: it paints
-          // the deck's own scans.
-          localizeCardImages: loaded.kind !== 'pixi',
           preferences: preferencesRef.current,
           transformView: (sourceView, source) => {
             const policy = displayPolicyRef.current;

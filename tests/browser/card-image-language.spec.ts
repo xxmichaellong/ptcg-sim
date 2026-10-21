@@ -11,8 +11,9 @@ import {
  * Each player sees cards in their own language: with French chosen, the
  * table asks TCGdex for the French scan; a printing never made in French
  * (here, an old set's card) shows the deck's own English scan instead and
- * loads, in a pile viewer too; and choosing English in Settings asks for the
- * English scans. The scan hosts are served here, never reached.
+ * loads, in a pile viewer and on the Pixi table too; and choosing English
+ * in Settings asks for the English scans. The scan hosts are served here,
+ * never reached.
  */
 
 const FACE_PNG = Buffer.from(
@@ -39,9 +40,16 @@ const serveScans = async (page: Page): Promise<string[]> => {
   const serve = async (route: Route) => {
     const url = route.request().url();
     asked.push(url);
+    // The Pixi table fetches its scans, so they answer as the hosts do.
+    const headers = { 'access-control-allow-origin': '*' };
     if (url.startsWith('https://assets.tcgdex.net/fr/dp/'))
-      await route.fulfill({ status: 404, body: 'Not found' });
-    else await route.fulfill({ contentType: 'image/png', body: FACE_PNG });
+      await route.fulfill({ status: 404, headers, body: 'Not found' });
+    else
+      await route.fulfill({
+        contentType: 'image/png',
+        headers,
+        body: FACE_PNG,
+      });
   };
   await page.route('https://assets.tcgdex.net/**', serve);
   await page.route(/^https:\/\/limitlesstcg\.nyc3\./u, serve);
@@ -244,11 +252,13 @@ test("a pile viewer keeps the deck's own scan once it loads, asking for a missin
     .toBe(true);
 });
 
-test("the Pixi table, which can't fall back yet, keeps the deck's own scans", async ({
+test("the Pixi table shows cards in the player's language too, falling back to the deck's own scan", async ({
   page,
 }) => {
   test.setTimeout(120_000);
-  await serveScans(page);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const asked = await serveScans(page);
   await page.addInitScript(() => {
     localStorage.setItem(
       'ptcgsim.card-images.v1',
@@ -271,22 +281,49 @@ test("the Pixi table, which can't fall back yet, keeps the deck's own scans", as
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
   ).toBeAttached();
-  const faces = () =>
+  /** The table's renderer and the faces it is given for the viewer's hand. */
+  const hand = () =>
     page.evaluate(() => {
       const spike = window.__PTCG_RENDERER_SPIKE__;
+      const zones = new Set(
+        (spike?.scene.zones ?? [])
+          .filter((zone) => zone.side === 'local' && zone.kind === 'hand')
+          .map((zone) => zone.id)
+      );
       return {
         renderer: spike?.rendererKind,
+        revision: spike?.scene.revision ?? 0,
         urls: (spike?.scene.cards ?? [])
-          .map((card) => card.imageUrl)
-          .filter((url) => url.includes('tcgdex')),
+          .filter((card) => zones.has(card.parentId))
+          .map((card) => card.imageUrl),
       };
     });
   await expect
     .poll(async () => {
-      const { renderer, urls } = await faces();
-      return renderer === 'pixi' && urls.length > 0;
+      const { renderer, revision } = await hand();
+      return renderer === 'pixi' && revision > 0;
     })
     .toBe(true);
-  const { urls } = await faces();
-  expect(urls.every((url) => url.includes('/en/'))).toBe(true);
+  await chooseMoreAction(page, 'setupBothButton');
+  // Draws until the hand holds both cards, asked for in French.
+  await expect
+    .poll(
+      async () => {
+        const { urls } = await hand();
+        if (urls.includes(NEW_FR) && urls.includes(OLD_FR)) return true;
+        await page.keyboard.press('2');
+        return false;
+      },
+      { timeout: 30_000, intervals: [500] }
+    )
+    .toBe(true);
+
+  // French where it exists; the old card's French scan, missing, is asked
+  // for once, and the deck's English scan is painted instead.
+  await expect.poll(() => asked.includes(OLD_EN)).toBe(true);
+  expect(asked).toContain(NEW_FR);
+  await page.waitForTimeout(1_000);
+  expect(asked.filter((url) => url === OLD_FR)).toHaveLength(1);
+  expect(asked).not.toContain(NEW_EN);
+  expect(errors).toEqual([]);
 });

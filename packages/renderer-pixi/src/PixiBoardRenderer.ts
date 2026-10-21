@@ -106,6 +106,31 @@ const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
 /** Pixi Assets is global, so active URL leases must also span renderers. */
 const PIXI_TEXTURE_LEASES = new TextureAssetLeaseBroker(PIXI_TEXTURE_ASSETS);
 
+/**
+ * Faces that failed to load and what was shown instead (the deck's own scan,
+ * for one asked for in the player's language that was never printed), so a
+ * copy of the card painted later asks for what loaded. Bounded: the oldest
+ * are forgotten first.
+ */
+const fallenBack = new Map<string, string>();
+const KEPT_FALLBACKS = 500;
+
+const noteFallBack = (url: string, fallbackUrl: string): void => {
+  fallenBack.delete(url);
+  fallenBack.set(url, fallbackUrl);
+  for (const stale of fallenBack.keys()) {
+    if (fallenBack.size <= KEPT_FALLBACKS) break;
+    fallenBack.delete(stale);
+  }
+};
+
+/** The address to paint a face from: what it fell back to, if it did. */
+const shownFace = (url: string): string => fallenBack.get(url) ?? url;
+
+/** What a card shows on the table: its cover, else its (shown) face. */
+const tableFaceOf = (card: CardSceneNode): string =>
+  card.tableImageUrl ?? shownFace(card.imageUrl);
+
 interface CardView {
   readonly sprite: Sprite | PerspectiveMesh;
   readonly outline: Graphics;
@@ -657,9 +682,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         const options = {
           texture:
             retainedTexture ??
-            this.textures.peek(
-              descriptor.tableImageUrl ?? descriptor.imageUrl
-            ) ??
+            this.textures.peek(tableFaceOf(descriptor)) ??
             this.textures.placeholder,
           label: renderKey,
         };
@@ -758,49 +781,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         view.descriptor = descriptor;
       }
       this.applyCardView(view);
-      const expectedUrl = descriptor.tableImageUrl ?? descriptor.imageUrl;
-      const currentUrl = (candidate: CardSceneNode): string =>
-        candidate.tableImageUrl ?? candidate.imageUrl;
-      this.textures.bind(
-        renderKey,
-        expectedUrl,
-        (texture) => {
-          const current = this.cardViews.get(renderKey);
-          if (!current || currentUrl(current.descriptor) !== expectedUrl)
-            return;
-          current.faceTexture = texture;
-          current.faceTextureUrl = expectedUrl;
-          current.faceFailed = false;
-          if (!this.faceTurns.has(renderKey)) {
-            current.sprite.texture = texture;
-            current.sprite.tint = 0xffffff;
-          }
-          this.scheduleRender();
-        },
-        (error) => {
-          const current = this.cardViews.get(renderKey);
-          if (!current || currentUrl(current.descriptor) !== expectedUrl)
-            return;
-          current.faceTexture = this.textures.placeholder;
-          current.faceTextureUrl = expectedUrl;
-          current.faceFailed = true;
-          // A card mid-turn keeps its old face up until it is on its edge.
-          if (!this.faceTurns.has(renderKey)) {
-            current.sprite.texture = this.textures.placeholder;
-            current.sprite.tint = 0x777777;
-          }
-          this.adapters.reportError(error);
-          this.scheduleRender();
-        }
-      );
-      // Already in the page (another card shows it): it is ready now.
-      const ready = this.textures.peek(expectedUrl);
-      if (ready && view.faceTextureUrl !== expectedUrl) {
-        view.faceTexture = ready;
-        view.faceTextureUrl = expectedUrl;
-        if (!this.faceTurns.has(renderKey)) view.sprite.texture = ready;
-        view.sprite.tint = 0xffffff;
-      }
+      this.bindFace(renderKey, view);
     }
 
     const nextMarkerIds = new Set(scene.markers.map((marker) => marker.id));
@@ -1488,6 +1469,69 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.scheduleDepth();
   }
 
+  /**
+   * Leases a card's face and paints it once loaded. A face asked for in the
+   * player's language that was never printed falls back to the deck's own
+   * scan (`imageFallbackUrl`), remembered so it is asked for once; only a
+   * face with nothing to fall back to is shown failed and reported.
+   */
+  private bindFace(renderKey: string, view: CardView): void {
+    const expectedUrl = tableFaceOf(view.descriptor);
+    this.textures.bind(
+      renderKey,
+      expectedUrl,
+      (texture) => {
+        const current = this.cardViews.get(renderKey);
+        if (!current || tableFaceOf(current.descriptor) !== expectedUrl) return;
+        current.faceTexture = texture;
+        current.faceTextureUrl = expectedUrl;
+        current.faceFailed = false;
+        if (!this.faceTurns.has(renderKey)) {
+          current.sprite.texture = texture;
+          current.sprite.tint = 0xffffff;
+        }
+        this.scheduleRender();
+      },
+      (error) => {
+        const current = this.cardViews.get(renderKey);
+        if (!current) return;
+        const { descriptor } = current;
+        const fallbackUrl = descriptor.imageFallbackUrl;
+        if (
+          descriptor.tableImageUrl === undefined &&
+          descriptor.imageUrl === expectedUrl &&
+          fallbackUrl !== undefined &&
+          fallbackUrl !== expectedUrl
+        )
+          noteFallBack(expectedUrl, fallbackUrl);
+        // It falls back (or another copy of it already did): it asks for
+        // the deck's scan, keeping what it shows until that loads.
+        if (tableFaceOf(descriptor) !== expectedUrl) {
+          this.bindFace(renderKey, current);
+          return;
+        }
+        current.faceTexture = this.textures.placeholder;
+        current.faceTextureUrl = expectedUrl;
+        current.faceFailed = true;
+        // A card mid-turn keeps its old face up until it is on its edge.
+        if (!this.faceTurns.has(renderKey)) {
+          current.sprite.texture = this.textures.placeholder;
+          current.sprite.tint = 0x777777;
+        }
+        this.adapters.reportError(error);
+        this.scheduleRender();
+      }
+    );
+    // Already in the page (another card shows it): it is ready now.
+    const ready = this.textures.peek(expectedUrl);
+    if (ready && view.faceTextureUrl !== expectedUrl) {
+      view.faceTexture = ready;
+      view.faceTextureUrl = expectedUrl;
+      if (!this.faceTurns.has(renderKey)) view.sprite.texture = ready;
+      view.sprite.tint = 0xffffff;
+    }
+  }
+
   private startTurn(
     key: string,
     fromImageUrl: string,
@@ -1512,13 +1556,15 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.scheduleDepth();
       this.scheduleRender();
     };
-    this.textures.bind(lease, fromImageUrl, loaded, (error) => {
+    // The old face as it was shown: the deck's scan, if it fell back.
+    const fromFace = shownFace(fromImageUrl);
+    this.textures.bind(lease, fromFace, loaded, (error) => {
       loaded(this.textures.placeholder);
       this.adapters.reportError(error);
     });
     // Its old face is in the page already (the back the pile shows): it
     // sets off showing it, not a blank.
-    const shown = this.textures.peek(fromImageUrl);
+    const shown = this.textures.peek(fromFace);
     const view = this.cardViews.get(key);
     if (shown) {
       turn.texture = shown;
@@ -1549,10 +1595,9 @@ export class PixiBoardRenderer implements BoardRenderer {
       if (turn.start === Infinity) {
         // Both faces in the page (or waited on long enough): it turns, at
         // once if that is already later than planned.
-        const faceUrl =
-          view.descriptor.tableImageUrl ?? view.descriptor.imageUrl;
         if (
-          (turn.texture !== null && view.faceTextureUrl === faceUrl) ||
+          (turn.texture !== null &&
+            view.faceTextureUrl === tableFaceOf(view.descriptor)) ||
           at - turn.created >= FACE_WAIT_LIMIT_MS
         )
           turn.start = Math.max(at, turn.plannedStart);
@@ -1657,7 +1702,7 @@ export class PixiBoardRenderer implements BoardRenderer {
           this.layers.cards.addChild(edge, sprite);
           this.textures.bind(
             key,
-            shuffle.imageUrl,
+            shownFace(shuffle.imageUrl),
             (texture) => {
               const effect = this.depthShuffles.get(key);
               if (effect) {
