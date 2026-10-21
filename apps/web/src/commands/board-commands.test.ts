@@ -295,9 +295,19 @@ describe('boardCommands', () => {
 
   it('offers a spectator only what changes nothing in the room', () => {
     const commands = boardCommands({
-      runtime: runtimeFor(stateWith({ canSubmitCommands: false })),
+      runtime: runtimeFor(
+        stateWith({
+          canSubmitCommands: false,
+          view: { ...view, viewer: { kind: 'spectator' } } as typeof view,
+        })
+      ),
       hint: () => undefined,
     });
+    // Each player's piles are their own rows.
+    const opens = commands.filter((command) =>
+      command.id.startsWith('piles.open.')
+    );
+    expect(new Set(opens.map((command) => command.id)).size).toBe(opens.length);
     expect(
       commands.filter(
         (command) => command.section === 'deck' || command.section === 'turn'

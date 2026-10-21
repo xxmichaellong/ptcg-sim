@@ -107,10 +107,11 @@ const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
 const PIXI_TEXTURE_LEASES = new TextureAssetLeaseBroker(PIXI_TEXTURE_ASSETS);
 
 /**
- * Faces that failed to load and what was shown instead (the deck's own scan,
- * for one asked for in the player's language that was never printed), so a
- * copy of the card painted later asks for what loaded. Bounded: the oldest
- * are forgotten first.
+ * Faces that failed to load (one asked for in the player's language that
+ * was never printed), so a copy of the card painted later asks for its own
+ * deck's scan at once; and the scan shown instead, for a stand-in that has
+ * only the address to go on (a turn, a shuffle). Bounded: the oldest are
+ * forgotten first.
  */
 const fallenBack = new Map<string, string>();
 const KEPT_FALLBACKS = 500;
@@ -124,12 +125,19 @@ const noteFallBack = (url: string, fallbackUrl: string): void => {
   }
 };
 
-/** The address to paint a face from: what it fell back to, if it did. */
+/** For a stand-in with only an address: what it fell back to, if it did. */
 const shownFace = (url: string): string => fallenBack.get(url) ?? url;
 
-/** What a card shows on the table: its cover, else its (shown) face. */
+/**
+ * What a card shows on the table: its cover, else its face, or its own
+ * deck's scan where that face is known to be missing (two cards asking for
+ * one missing translation may each have their own scan).
+ */
 const tableFaceOf = (card: CardSceneNode): string =>
-  card.tableImageUrl ?? shownFace(card.imageUrl);
+  card.tableImageUrl ??
+  (fallenBack.has(card.imageUrl) && card.imageFallbackUrl !== undefined
+    ? card.imageFallbackUrl
+    : card.imageUrl);
 
 interface CardView {
   readonly sprite: Sprite | PerspectiveMesh;

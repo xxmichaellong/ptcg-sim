@@ -2217,6 +2217,53 @@ describe("faces in the player's card language", () => {
     renderer.destroy();
   });
 
+  it("falls back to each card's own scan where two share one missing translation", async () => {
+    const french = 'https://assets.tcgdex.net/fr/dp/dp4/4/high.webp';
+    const scans = {
+      'https://example.test/a.png': new Texture(),
+      'https://example.test/b.png': new Texture(),
+    } as const;
+    vi.spyOn(Assets, 'load').mockImplementation((asset: unknown) => {
+      const url =
+        typeof asset === 'string' ? asset : (asset as { src: string }).src;
+      return url === french
+        ? Promise.reject(new Error(`404 ${url}`))
+        : Promise.resolve(scans[url as keyof typeof scans] ?? new Texture());
+    });
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => fakeApplication() }
+    );
+    const base = scene();
+    const [first, second] = faceCards(base);
+    const board = translated(
+      translated(base, [first!], french, 'https://example.test/a.png'),
+      [second!],
+      french,
+      'https://example.test/b.png'
+    );
+    await renderer.mount(
+      document.createElement('div'),
+      board,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    const internals = renderer as unknown as RendererInternals;
+    await vi.waitFor(() => {
+      expect(internals.cardViews.get(first!.renderKey)!.sprite.texture).toBe(
+        scans['https://example.test/a.png']
+      );
+      expect(internals.cardViews.get(second!.renderKey)!.sprite.texture).toBe(
+        scans['https://example.test/b.png']
+      );
+    });
+    renderer.destroy();
+  });
+
   it('shows a face failed, and says so, when its fallback fails too', async () => {
     const french = 'https://assets.tcgdex.net/fr/dp/dp2/2/high.webp';
     const english = 'https://assets.tcgdex.net/en/dp/dp2/2/high.webp';

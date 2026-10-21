@@ -646,7 +646,11 @@ export const boardCommands = (
     const title = pileTitle(zone, own);
     if (!title) continue;
     commands.push({
-      id: `piles.open.${own ? 'own' : 'their'}.${zone.kind}`,
+      // A spectator has no seat: each player's piles are their own rows.
+      id:
+        acting === undefined
+          ? `piles.open.${zone.playerId}.${zone.kind}`
+          : `piles.open.${own ? 'own' : 'their'}.${zone.kind}`,
       title,
       section: 'piles',
       icon: FolderOpenIcon,

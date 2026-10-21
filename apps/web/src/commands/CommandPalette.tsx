@@ -276,17 +276,24 @@ export const CommandPalette = ({
           entry,
           section: 'screen',
         }));
+    const seen = new Map<string, number>();
     return {
-      rows: ranked.map(({ entry, section }, index): Row => ({
-        ranked: entry,
-        id: `${listId}-option-${index}`,
-        key: [
+      rows: ranked.map(({ entry, section }, index): Row => {
+        const base = [
           section,
           ...entry.entry.ancestors.map((ancestor) => ancestor.id),
           entry.entry.command.id,
           entry.count ?? '',
-        ].join('\u0000'),
-      })),
+        ].join('\u0000');
+        // Two sources naming two commands alike still make two rows.
+        const repeat = seen.get(base) ?? 0;
+        seen.set(base, repeat + 1);
+        return {
+          ranked: entry,
+          id: `${listId}-option-${index}`,
+          key: repeat === 0 ? base : `${base}\u0000${repeat}`,
+        };
+      }),
       sections: grouped,
     };
   }, [root, screen, query, recent, listId]);
