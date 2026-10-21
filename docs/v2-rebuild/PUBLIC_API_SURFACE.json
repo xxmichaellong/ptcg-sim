@@ -178,12 +178,28 @@
               "kind": "value"
             },
             {
+              "name": "CARD_IMAGE_LANGUAGES",
+              "kind": "value"
+            },
+            {
               "name": "CardCategory",
               "kind": "type"
             },
             {
               "name": "cardCategoryOf",
               "kind": "value"
+            },
+            {
+              "name": "cardImageCandidates",
+              "kind": "value"
+            },
+            {
+              "name": "cardImageInLanguage",
+              "kind": "value"
+            },
+            {
+              "name": "CardImageLanguage",
+              "kind": "type"
             },
             {
               "name": "CardQuery",
@@ -402,6 +418,10 @@
               "kind": "value"
             },
             {
+              "name": "isCardImageLanguage",
+              "kind": "value"
+            },
+            {
               "name": "isDeckFormatId",
               "kind": "value"
             },
@@ -428,6 +448,10 @@
             {
               "name": "LoadedCatalog",
               "kind": "type"
+            },
+            {
+              "name": "localizeCardImageUrl",
+              "kind": "value"
             },
             {
               "name": "matchesClause",

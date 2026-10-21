@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { readingImageStyle } from '../../ui/card-artwork.js';
+import { CardImage } from './CardImage.js';
 
 /** Large enough to read rules text; kept inside the screen. */
 const ZOOM_MAX_HEIGHT = 560;
@@ -124,13 +125,19 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
         height: zoom.height,
       }}
     >
-      <img
+      <CardImage
         src={zoom.small}
+        fallback={undefined}
         alt=""
         className="deck-zoom__placeholder"
         style={readingImageStyle(zoom.turns)}
       />
-      <img src={zoom.large} alt="" style={readingImageStyle(zoom.turns)} />
+      <CardImage
+        src={zoom.large}
+        fallback={undefined}
+        alt=""
+        style={readingImageStyle(zoom.turns)}
+      />
     </div>
   ) : null;
 

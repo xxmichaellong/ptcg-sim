@@ -131,6 +131,10 @@ import {
   zoneBrowserStackKey,
   zoneBrowserTiles,
 } from './zone-browser-preferences.js';
+import {
+  localizedCardImage,
+  useCardImageLanguage,
+} from '../../i18n/card-image-language.js';
 import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
@@ -1333,10 +1337,14 @@ const OverlayCardImage = ({
 }) => {
   const [loadedImage, setLoadedImage] = useState<{
     readonly imageUrl: string;
-    readonly state: 'ready' | 'failed';
+    readonly state: 'ready' | 'failed' | 'fallback';
   } | null>(null);
-  const state =
+  const loaded =
     loadedImage?.imageUrl === card.imageUrl ? loadedImage.state : 'loading';
+  // A face asked for in the player's language that has no such printing
+  // shows the deck's own scan instead.
+  const fellBack = loaded === 'fallback' && card.imageFallbackUrl !== undefined;
+  const state = loaded === 'fallback' ? 'loading' : loaded;
   const rotation =
     variant === 'preview' ? (card.presentation?.readingQuarterTurns ?? 0) : 0;
   const landscape = rotation % 2 === 1;
@@ -1349,7 +1357,7 @@ const OverlayCardImage = ({
       aria-hidden={variant === 'zone' ? 'true' : undefined}
     >
       <img
-        src={card.imageUrl}
+        src={fellBack ? card.imageFallbackUrl : card.imageUrl}
         alt={variant === 'zone' ? '' : card.label}
         style={{
           opacity: state === 'ready' ? 1 : 0,
@@ -1361,7 +1369,13 @@ const OverlayCardImage = ({
           setLoadedImage({ imageUrl: card.imageUrl, state: 'ready' })
         }
         onError={() =>
-          setLoadedImage({ imageUrl: card.imageUrl, state: 'failed' })
+          setLoadedImage({
+            imageUrl: card.imageUrl,
+            state:
+              !fellBack && card.imageFallbackUrl !== undefined
+                ? 'fallback'
+                : 'failed',
+          })
         }
       />
     </span>
@@ -2889,6 +2903,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
 }) {
+  const cardImages = useCardImageLanguage();
   const [contextAnchor, setContextAnchor] = useState<{
     readonly cardId: ViewCardId;
     readonly zoneId: string;
@@ -2956,7 +2971,15 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       known?.kind === 'known' && known.face === 'up'
         ? state.view?.definitions[known.definitionId]?.imageUrl
         : undefined;
-    return imageUrl && !card.concealed ? { ...card, imageUrl } : card;
+    if (!imageUrl || card.concealed) return card;
+    // The full-size face, in the language the player sees cards in.
+    const { imageFallbackUrl: _small, ...rest } = card;
+    const shown = localizedCardImage(imageUrl, cardImages);
+    return {
+      ...rest,
+      imageUrl: shown.url,
+      ...(shown.fallbackUrl ? { imageFallbackUrl: shown.fallbackUrl } : {}),
+    };
   });
   const openedZone = state.presentation.openedZoneId
     ? (scene.zones.find(

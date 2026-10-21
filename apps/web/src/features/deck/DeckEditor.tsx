@@ -35,7 +35,6 @@ import {
   type KeyboardEvent,
 } from 'react';
 
-import { usePreference } from '../../preferences/usePreference.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
 import { confirmAction } from '../../ui/dialog-requests.js';
 import { Tooltip } from '../../ui/Tooltip.js';
@@ -65,7 +64,6 @@ import {
   downloadDeck,
   SEAT_NAMES,
 } from './deck-screen-shared.js';
-import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import { useHoverZoom } from './useHoverZoom.js';
 
@@ -119,7 +117,6 @@ export const DeckEditor = ({
   const catalogState = useCardCatalog(catalog);
   const loaded =
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
-  const { language } = usePreference(DECK_SCREEN_PREFERENCES);
   const [nameDraft, setNameDraft] = useState(deck.name);
   const [tab, setTab] = useState<'search' | 'deck'>('search');
   const [inspected, setInspected] = useState<InspectedCard>();
@@ -212,12 +209,9 @@ export const DeckEditor = ({
   const toDeckCard = useCallback(
     (card: CatalogCard | DeckCard): DeckCard =>
       'printGroup' in card
-        ? deckCardFromCatalog(card, {
-            language,
-            ...(loaded ? { catalog: loaded } : {}),
-          })
+        ? deckCardFromCatalog(card, loaded ? { catalog: loaded } : {})
         : card,
-    [language, loaded]
+    [loaded]
   );
 
   const add = useCallback(

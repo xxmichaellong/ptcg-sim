@@ -17,6 +17,7 @@ import {
   type Rect,
 } from '@ptcgsim/renderer-contract';
 import { depthPaintKey } from './depth-paint-key.js';
+import { shownCardImage } from '../card-image-retry.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 
 const timestamp = () => performance.now();
@@ -1024,7 +1025,7 @@ export class TableDepthDirector {
     const face = document.createElement('div');
     face.className = 'ptcgsim-card__face';
     const img = document.createElement('img');
-    img.src = image;
+    img.src = shownCardImage(image);
     img.alt = '';
     img.draggable = false;
     face.append(img);
@@ -1078,7 +1079,7 @@ export class TableDepthDirector {
     if (fromImageUrl !== null) {
       const turn = document.createElement('img');
       turn.className = 'ptcgsim-card__turn';
-      turn.src = fromImageUrl;
+      turn.src = shownCardImage(fromImageUrl);
       turn.alt = '';
       turn.draggable = false;
       face.append(turn);
@@ -1432,7 +1433,7 @@ export class TableDepthDirector {
         if (progress >= 0.5) {
           const img = ghost.element.querySelector('img');
           if (img && img.getAttribute('src') !== ghost.toImage)
-            img.src = ghost.toImage;
+            img.src = shownCardImage(ghost.toImage);
         }
         const base = this.motion.poses.get(key);
         if (base && progress > 0 && progress < 1)

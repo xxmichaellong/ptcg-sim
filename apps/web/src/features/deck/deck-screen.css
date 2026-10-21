@@ -2165,10 +2165,13 @@ button.deck-check__issue {
     grid-template-columns: 1fr 1fr;
   }
 
-  .deck-paste__actions .ds-button,
-  .deck-paste__actions .deck-language,
-  .deck-paste__actions .deck-language .ds-select {
+  .deck-paste__actions .ds-button {
     width: 100%;
+  }
+
+  /* Import across the row; the clipboard and a file share the next. */
+  .deck-paste__actions > :first-child {
+    grid-column: 1 / -1;
   }
 }
 
@@ -2188,10 +2191,6 @@ button.deck-check__issue {
   .deck-editor__tools .ds-button {
     padding-inline: var(--space-2);
   }
-}
-
-.deck-language .ds-select {
-  min-height: 36px;
 }
 
 .deck-card-details__text p .energy-symbol {

@@ -1,6 +1,8 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { BoardPresentation, BoardScene } from '@ptcgsim/renderer-contract';
 
+import { localizedCardImage } from '../i18n/card-image-language.js';
+
 /**
  * The faces of cards about to be turned up, so they are in the page before
  * they turn. A card the player knows but the table shows as a back -- the
@@ -35,7 +37,8 @@ export const facesAboutToTurn = (
           continue;
         const definition = view.definitions[card.definitionId];
         const url = definition?.imageUrlSmall ?? definition?.imageUrl;
-        if (url) urls.add(url);
+        // As the table will ask for it: in the player's card language.
+        if (url) urls.add(localizedCardImage(url).url);
       }
   return [...urls];
 };

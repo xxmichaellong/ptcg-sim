@@ -74,6 +74,25 @@ Settings, and has its server send codes that the client words.
    Write new CSS with logical properties (`margin-inline-start`,
    `inset-inline-end`, `text-align: start`) unless it places something on
    the table.
+8. **Card images in the player's language** (2026-10-21). Cards are
+   printed in six of these languages (English, Français, Deutsch,
+   Italiano, Español, Português), and the scans the decks use name theirs
+   in the address: TCGdex's `assets.tcgdex.net/{en|fr|…}/…` and
+   Limitless's international `…/tpci/…_R_{EN|FR|…}[_LG|_SM].png`. Each
+   player's page asks for the card in their own language and falls back to
+   the deck's own scan where that printing has no translation (older sets),
+   remembering for the visit which translations are missing
+   (`deck-core/src/card-image-language.ts`, `apps/web/src/i18n/
+card-image-language.ts`). Decks, definitions and the room keep the
+   address they were built with, so the two players can see one card in
+   different languages; that is a private rendering choice, like the
+   table's look. Settings → Language → Card images follows the page
+   language while cards are printed in it (else English), or keeps one.
+   Japanese, Korean and Chinese prints are other cards with other numbers,
+   not translations, and stay as the deck has them. The deck screen's
+   per-import "Card language" select (v1's Language button, which wrote the
+   language into the deck for both players) is gone: imports store English
+   and every viewer chooses for themselves (PX-061).
 
 ## How to write text
 
@@ -116,4 +135,6 @@ Settings, and has its server send codes that the client words.
 - The production bundle carries English only; each other language is one
   extra request of its own catalog.
 - Card names and text stay English until a per-language catalog (TCGdex
-  has fr, de, it, es, pt, ja, ko and zh) is built.
+  has fr, de, it, es, pt, ja, ko and zh) is built. Card _images_ follow
+  the player's language (point 7), so a French player reads French cards
+  on the table while search and the deck list stay English.

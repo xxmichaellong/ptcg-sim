@@ -1406,6 +1406,7 @@ const sameCard = (left: CardSceneNode, right: CardSceneNode): boolean =>
   left.rotationQuarterTurns === right.rotationQuarterTurns &&
   left.imageUrl === right.imageUrl &&
   left.tableImageUrl === right.tableImageUrl &&
+  left.imageFallbackUrl === right.imageFallbackUrl &&
   left.finish === right.finish &&
   sameCardPresentation(left.presentation, right.presentation) &&
   JSON.stringify(left.composition) === JSON.stringify(right.composition) &&

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { inspectCard, type CardInspection } from './card-inspection.js';
 import './CardInspector.css';
+import { CardImage } from '../../features/deck/CardImage.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 
 /**
@@ -215,9 +216,10 @@ export const CardInspector = ({
           data-finish={inspection.finish}
           data-foil-region={inspection.foilRegion}
         >
-          <img
+          <CardImage
             className="card-inspector__image"
             src={inspection.imageUrl}
+            fallback={undefined}
             style={readingImageStyle(inspection.readingQuarterTurns)}
             alt=""
             draggable={false}

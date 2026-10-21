@@ -1385,13 +1385,9 @@
     "message": "Card finish (optional)",
     "translation": "Wykończenie karty (opcjonalnie)"
   },
-  "5yJ3J9": {
-    "message": "Card images in this language, where Limitless has them",
-    "translation": "Obrazy kart w tym języku, jeśli Limitless je ma"
-  },
-  "Eyw75j": {
-    "message": "Card language",
-    "translation": "Język kart"
+  "8xaYE9": {
+    "message": "Card images",
+    "translation": "Obrazy kart"
   },
   "-gounj": {
     "message": "Card layout (optional)",
@@ -3215,6 +3211,10 @@
     "message": "Only the players can change it.",
     "translation": "Zmienić to mogą tylko gracze."
   },
+  "RqCWii": {
+    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
+    "translation": "Tylko ty widzisz ten wybór. Karta, która nie została wydrukowana w tym języku, wyświetla się tak, jak ma ją talia."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Otwórz plik z talią"
@@ -3273,6 +3273,10 @@
     "message": "Page Down",
     "context": "keyboard key",
     "translation": "Page Down"
+  },
+  "EfIP2O": {
+    "message": "Page language ({following})",
+    "translation": "Język strony ({following})"
   },
   "161eyw": {
     "message": "Page Up",

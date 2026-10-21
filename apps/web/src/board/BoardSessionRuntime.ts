@@ -24,6 +24,12 @@ import {
 } from '@ptcgsim/renderer-contract';
 
 import {
+  CARD_IMAGE_PREFERENCES,
+  localizeSceneCardImages,
+} from '../i18n/card-image-language.js';
+import { LANGUAGE_PREFERENCES } from '../i18n/language-preference.js';
+import { preferences } from '../preferences/preference-store.js';
+import {
   BoardSessionAdapter,
   type BoardSessionAdapterOptions,
   type BoardSessionLiveSource,
@@ -164,7 +170,7 @@ export class BoardSessionRuntime {
   private rendererFailureStatusReported = false;
   private attached = false;
   private disposed = false;
-  /** Stops rewording the scene when the language changes. */
+  /** Stops rebuilding the scene when the language or card images change. */
   private stopFollowingLanguage: (() => void) | null = null;
   private readonly layoutListeners = new Set<() => void>();
   private readonly abortedMountError = new Error(
@@ -218,14 +224,30 @@ export class BoardSessionRuntime {
       this.adapter = this.createAdapter();
       // The scene's labels (zone and card names for assistive tech) are
       // worded when it is built, so a new language builds it again.
-      this.stopFollowingLanguage = i18n.on('change', () => {
+      // Card faces are asked for in the language the player sees cards in,
+      // which follows the page's unless chosen.
+      const rebuild = () => {
         if (this.disposed) return;
         try {
           this.adapter?.refreshScene();
         } catch (error) {
           this.reportError(error);
         }
-      });
+      };
+      const stopWording = i18n.on('change', rebuild);
+      const stopCardImages = preferences().subscribe(
+        CARD_IMAGE_PREFERENCES,
+        rebuild
+      );
+      const stopPageLanguage = preferences().subscribe(
+        LANGUAGE_PREFERENCES,
+        rebuild
+      );
+      this.stopFollowingLanguage = () => {
+        stopWording();
+        stopCardImages();
+        stopPageLanguage();
+      };
       await this.whenSettled();
       if (this.disposed) throw this.abortedMountError;
       if (this.rendererMountError) throw this.rendererMountError;
@@ -622,7 +644,7 @@ export class BoardSessionRuntime {
         'Characterized layout player order does not match the projected view'
       );
     }
-    return createBoardScene(view, snapshot);
+    return localizeSceneCardImages(createBoardScene(view, snapshot));
   }
 
   private readonly handleBoardEffect = (

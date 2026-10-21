@@ -58,6 +58,7 @@ import {
 } from './board-hints.js';
 import { BOARD_SURFACE_CSS } from './board-surface-css.js';
 import {
+  fallBackCardImage,
   scheduleCardImageRetry,
   settleCardImage,
   watchCardImageRetries,
@@ -666,6 +667,14 @@ const CardNode = memo(
       if (!image) return;
       if (image.complete) {
         const ready = image.naturalWidth > 0;
+        if (
+          !ready &&
+          !paintsBack(card) &&
+          fallBackCardImage(image, card.imageFallbackUrl)
+        ) {
+          image.style.visibility = 'hidden';
+          return;
+        }
         image.dataset.cardImageState = ready ? 'ready' : 'failed';
         image.style.visibility = ready ? 'visible' : 'hidden';
         return;
@@ -784,8 +793,15 @@ const CardNode = memo(
                 settleCardImage(event.currentTarget);
               }}
               onError={(event) => {
-                event.currentTarget.dataset.cardImageState = 'failed';
                 event.currentTarget.style.visibility = 'hidden';
+                // A face asked for in the player's language that has no
+                // such printing shows the deck's own scan instead.
+                if (
+                  !paintsBack(card) &&
+                  fallBackCardImage(event.currentTarget, card.imageFallbackUrl)
+                )
+                  return;
+                event.currentTarget.dataset.cardImageState = 'failed';
                 scheduleCardImageRetry(event.currentTarget);
               }}
             />

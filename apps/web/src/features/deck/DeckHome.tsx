@@ -25,13 +25,11 @@ import {
   deckListOf,
   deckTotals,
   formatDecklistText,
-  PASTED_DECKLIST_LANGUAGES,
   parsePastedDecklist,
   resolveDecklistRow,
   type DeckCard,
   type DeckList,
   type LoadedCatalog,
-  type PastedDecklistLanguage,
 } from '@ptcgsim/deck-core';
 import {
   useEffect,
@@ -41,7 +39,6 @@ import {
   type KeyboardEvent,
 } from 'react';
 
-import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
@@ -457,28 +454,6 @@ const wordFinish = (finish: string): string => {
   });
 };
 
-/** A card-image language (stored in English) named in the page's language. */
-const CARD_LANGUAGE_CODES: Readonly<Record<PastedDecklistLanguage, string>> = {
-  English: 'en',
-  French: 'fr',
-  German: 'de',
-  Italian: 'it',
-  Portuguese: 'pt',
-  Spanish: 'es',
-};
-
-const cardLanguageName = (language: PastedDecklistLanguage): string => {
-  try {
-    return (
-      new Intl.DisplayNames([i18n.locale], { type: 'language' }).of(
-        CARD_LANGUAGE_CODES[language]
-      ) ?? language
-    );
-  } catch {
-    return language;
-  }
-};
-
 const ListDeckTile = ({
   name,
   cover,
@@ -594,7 +569,7 @@ export const DeckHome = ({
 }: DeckHomeProps) => {
   const { t } = useLingui();
   const catalogState = useCardCatalog(catalog, open);
-  const { language, lastDeckIds } = usePreference(DECK_SCREEN_PREFERENCES);
+  const { lastDeckIds } = usePreference(DECK_SCREEN_PREFERENCES);
   const loadedCatalog =
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
   const [paste, setPaste] = useState('');
@@ -754,31 +729,6 @@ export const DeckHome = ({
                 <ClipboardTextIcon {...decorative} weight="bold" />
                 <Trans>From clipboard</Trans>
               </button>
-            </Tooltip>
-            <Tooltip
-              content={t`Card images in this language, where Limitless has them`}
-            >
-              <label className="deck-language">
-                <span className="ds-visually-hidden">
-                  <Trans>Card language</Trans>
-                </span>
-                <select
-                  id="deckLanguageSelect"
-                  className="ds-select"
-                  value={language}
-                  onChange={(event) =>
-                    preferences().patch(DECK_SCREEN_PREFERENCES, {
-                      language: event.target.value as PastedDecklistLanguage,
-                    })
-                  }
-                >
-                  {PASTED_DECKLIST_LANGUAGES.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {cardLanguageName(entry)}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </Tooltip>
             <Tooltip
               content={t`Open a decklist (.txt) or simulator file (.csv). You can also drop one here.`}

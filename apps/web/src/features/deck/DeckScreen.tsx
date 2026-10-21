@@ -21,7 +21,6 @@ import {
 } from 'react';
 
 import { preferences } from '../../preferences/preference-store.js';
-import { usePreference } from '../../preferences/usePreference.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
@@ -109,7 +108,6 @@ export const DeckScreen = ({
     library.getSnapshot,
     library.getSnapshot
   );
-  const screenPreferences = usePreference(DECK_SCREEN_PREFERENCES);
   const [view, setView] = useState<DeckScreenView>({ kind: 'home' });
   const [importing, setImporting] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -295,7 +293,6 @@ export const DeckScreen = ({
           : await catalogWhenReady(catalog, 2_500, controller.signal);
         const result = await importDeckText(text, {
           ...(loaded ? { catalog: loaded } : {}),
-          language: screenPreferences.language,
           signal: controller.signal,
         });
         if (controller.signal.aborted) return false;
@@ -352,16 +349,7 @@ export const DeckScreen = ({
         endImport(controller);
       }
     },
-    [
-      beginImport,
-      catalog,
-      endImport,
-      library,
-      placeOnSeat,
-      screenPreferences.language,
-      t,
-      target,
-    ]
+    [beginImport, catalog, endImport, library, placeOnSeat, t, target]
   );
 
   const importFile = useCallback(

@@ -1,5 +1,6 @@
 // First, so a language is active before any other module runs.
 import { startLocalization } from './i18n/localization.js';
+import { watchCardImageFailures } from './i18n/card-image-language.js';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
@@ -69,6 +70,9 @@ applySavedPageTheme();
 installTableArt();
 // The page asks before a reload or a closed tab discards the table.
 installLeaveGuard();
+// A card scan in the player's language that does not exist is asked for
+// once a visit; every later copy shows the deck's own scan.
+watchCardImageFailures();
 // index.html opens on a loading screen that the lobby lifts once its table
 // is ready (table-curtain.ts); the developer pages have none to wait for.
 if (depthLabRequested || devRoomRequested || !roomLobbyRoute) {

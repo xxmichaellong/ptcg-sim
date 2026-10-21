@@ -1385,13 +1385,9 @@
     "message": "Card finish (optional)",
     "translation": "카드 마감 (선택)"
   },
-  "5yJ3J9": {
-    "message": "Card images in this language, where Limitless has them",
-    "translation": "이 언어의 카드 이미지 (Limitless에 있는 경우)"
-  },
-  "Eyw75j": {
-    "message": "Card language",
-    "translation": "카드 언어"
+  "8xaYE9": {
+    "message": "Card images",
+    "translation": "카드 이미지"
   },
   "-gounj": {
     "message": "Card layout (optional)",
@@ -3215,6 +3211,10 @@
     "message": "Only the players can change it.",
     "translation": "플레이어만 변경할 수 있습니다."
   },
+  "RqCWii": {
+    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
+    "translation": "이 선택은 나에게만 보입니다. 해당 언어로 인쇄되지 않은 카드는 덱에 있는 그대로 표시됩니다."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "덱 파일 열기"
@@ -3273,6 +3273,10 @@
     "message": "Page Down",
     "context": "keyboard key",
     "translation": "Page Down"
+  },
+  "EfIP2O": {
+    "message": "Page language ({following})",
+    "translation": "페이지 언어 ({following})"
   },
   "161eyw": {
     "message": "Page Up",

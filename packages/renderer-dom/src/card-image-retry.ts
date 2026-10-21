@@ -96,6 +96,42 @@ export const scheduleCardImageRetry = (image: HTMLImageElement): void => {
   }, delay);
 };
 
+/**
+ * Addresses that failed and what was shown instead, so a copy of the card
+ * made later (a card flying off the table) asks for what loaded. Bounded:
+ * the oldest are forgotten first.
+ */
+const fallenBack = new Map<string, string>();
+const KEPT_FALLBACKS = 500;
+
+/**
+ * Call from a card image's error handler before anything else: when the
+ * card has an address to fall back to (its deck's own scan, for one asked
+ * for in the player's language that may not exist), the image asks for
+ * that instead and this returns true. Retries then belong to the fallback.
+ */
+export const fallBackCardImage = (
+  image: HTMLImageElement,
+  fallbackUrl: string | undefined
+): boolean => {
+  if (!fallbackUrl) return false;
+  const current = withoutRetryMarker(image.getAttribute('src') ?? '');
+  if (current === fallbackUrl) return false;
+  fallenBack.delete(current);
+  fallenBack.set(current, fallbackUrl);
+  for (const stale of fallenBack.keys()) {
+    if (fallenBack.size <= KEPT_FALLBACKS) break;
+    fallenBack.delete(stale);
+  }
+  image.dataset.cardImageState = 'loading';
+  image.src = fallbackUrl;
+  return true;
+};
+
+/** The address to paint a card image at: what it fell back to, if it did. */
+export const shownCardImage = (url: string): string =>
+  fallenBack.get(url) ?? url;
+
 /** Call from the image's load handler. */
 export const settleCardImage = (image: HTMLImageElement): void => {
   const state = states.get(image);

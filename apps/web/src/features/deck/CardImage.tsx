@@ -4,6 +4,11 @@ import {
 } from '@ptcgsim/deck-core';
 import { useState, type ImgHTMLAttributes } from 'react';
 
+import {
+  cardImageAddresses,
+  useCardImageLanguage,
+} from '../../i18n/card-image-language.js';
+
 /**
  * The same printing's scan on Limitless's CDN, for a TCGdex image that
  * fails to load (TCGdex's image host has its bad moments).
@@ -23,7 +28,11 @@ export const limitlessScanOf = (card: {
       })
     : undefined;
 
-/** A card image that tries one fallback address before showing as broken. */
+/**
+ * A card image in the language this player sees cards in. It tries each
+ * address in turn before showing as broken: the scan in that language, the
+ * fallback source's in it, then each as given (cardImageCandidates).
+ */
 export const CardImage = ({
   src,
   fallback,
@@ -32,14 +41,21 @@ export const CardImage = ({
   readonly src: string;
   readonly fallback: string | undefined;
 }) => {
-  const [failedFor, setFailedFor] = useState<string>();
-  const useFallback = failedFor === src && fallback !== undefined;
+  const language = useCardImageLanguage();
+  const addresses = cardImageAddresses(src, fallback, language);
+  const key = addresses.join('\n');
+  const [failed, setFailed] = useState<{
+    readonly key: string;
+    readonly count: number;
+  }>();
+  const tried = failed?.key === key ? failed.count : 0;
+  const last = addresses.length - 1;
   return (
     <img
       {...rest}
-      src={useFallback ? fallback : src}
+      src={addresses[Math.min(tried, last)] ?? src}
       onError={(event) => {
-        if (failedFor !== src) setFailedFor(src);
+        if (tried < last) setFailed({ key, count: tried + 1 });
         rest.onError?.(event);
       }}
     />

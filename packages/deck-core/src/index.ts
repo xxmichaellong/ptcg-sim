@@ -101,6 +101,14 @@ export type {
   ParseSimCsvResult,
 } from './csv-adapter.js';
 export {
+  CARD_IMAGE_LANGUAGES,
+  cardImageCandidates,
+  cardImageInLanguage,
+  isCardImageLanguage,
+  localizeCardImageUrl,
+} from './card-image-language.js';
+export type { CardImageLanguage } from './card-image-language.js';
+export {
   PASTED_DECKLIST_LANGUAGES,
   isPastedDecklistPocketSet,
   parsePastedDecklist,

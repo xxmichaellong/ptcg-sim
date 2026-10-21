@@ -187,6 +187,12 @@ export interface CardSceneNode {
    * contents through the zone viewer, which keeps using `imageUrl`.
    */
   readonly tableImageUrl?: string;
+  /**
+   * What to show when `imageUrl` does not load: the deck's own scan, when
+   * the page asked for the card in its player's language and that printing
+   * may not exist in it. Renderers switch to it on the first failure.
+   */
+  readonly imageFallbackUrl?: string;
   readonly concealed: boolean;
   readonly label: string;
   /**

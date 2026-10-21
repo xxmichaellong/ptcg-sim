@@ -1385,13 +1385,9 @@
     "message": "Card finish (optional)",
     "translation": "卡牌表面效果(可选)"
   },
-  "5yJ3J9": {
-    "message": "Card images in this language, where Limitless has them",
-    "translation": "该语言的卡牌图片(Limitless 提供时)"
-  },
-  "Eyw75j": {
-    "message": "Card language",
-    "translation": "卡牌语言"
+  "8xaYE9": {
+    "message": "Card images",
+    "translation": "卡牌图片"
   },
   "-gounj": {
     "message": "Card layout (optional)",
@@ -3215,6 +3211,10 @@
     "message": "Only the players can change it.",
     "translation": "只有玩家可以更改。"
   },
+  "RqCWii": {
+    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
+    "translation": "此选项仅你自己可见。若某张卡牌没有该语言的版本,则显示牌组中使用的版本。"
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "打开牌组文件"
@@ -3273,6 +3273,10 @@
     "message": "Page Down",
     "context": "keyboard key",
     "translation": "Page Down"
+  },
+  "EfIP2O": {
+    "message": "Page language ({following})",
+    "translation": "页面语言({following})"
   },
   "161eyw": {
     "message": "Page Up",

@@ -1,8 +1,15 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
 import { useSyncExternalStore } from 'react';
 
 import { TableArtControls } from '../../board/view/TableArtControls.js';
 import { TableViewControls } from '../../board/view/TableViewControls.js';
+import {
+  CARD_IMAGE_LANGUAGE_NAMES,
+  CARD_IMAGE_PREFERENCES,
+  cardImageLanguageFor,
+  type CardImageChoice,
+} from '../../i18n/card-image-language.js';
 import {
   LANGUAGE_PREFERENCES,
   type LanguageChoice,
@@ -125,6 +132,57 @@ const LanguageControl = () => {
   );
 };
 
+/**
+ * The language card images are shown in, for this player only: the page's
+ * own while cards are printed in it, else English, or one chosen. Each is
+ * named in itself, as the page languages are.
+ */
+const CardImageLanguageControl = () => {
+  const { t } = useLingui();
+  const { cardImages } = usePreference(CARD_IMAGE_PREFERENCES);
+  const { language } = usePreference(LANGUAGE_PREFERENCES);
+  const following =
+    CARD_IMAGE_LANGUAGE_NAMES[
+      cardImageLanguageFor(
+        'app',
+        language === 'auto' ? browserLocale() : language
+      )
+    ];
+  return (
+    <div className="ptcgsim-form-group">
+      <label className="ptcgsim-form-label" htmlFor="cardImageLanguageSelect">
+        <Trans>Card images</Trans>
+      </label>
+      <select
+        id="cardImageLanguageSelect"
+        className="ds-select"
+        lang={cardImages === 'app' ? undefined : cardImages}
+        value={cardImages}
+        onChange={(event) => {
+          const value = event.currentTarget.value;
+          const choice: CardImageChoice = isCardImageLanguage(value)
+            ? value
+            : 'app';
+          preferences().set(CARD_IMAGE_PREFERENCES, { cardImages: choice });
+        }}
+      >
+        <option value="app">{t`Page language (${following})`}</option>
+        {CARD_IMAGE_LANGUAGES.map((entry) => (
+          <option key={entry} value={entry} lang={entry}>
+            {CARD_IMAGE_LANGUAGE_NAMES[entry]}
+          </option>
+        ))}
+      </select>
+      <span className="ptcgsim-form-hint">
+        <Trans>
+          Only you see this choice. A card not printed in that language shows as
+          its deck has it.
+        </Trans>
+      </span>
+    </div>
+  );
+};
+
 export interface SettingsSheetProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -197,6 +255,7 @@ export const SettingsSheet = ({
       </SettingsSection>
       <SettingsSection title={t`Language`} id="languageSettings">
         <LanguageControl />
+        <CardImageLanguageControl />
       </SettingsSection>
       <SettingsSection title={t`Motion`} id="motionSettings">
         <MotionControls />

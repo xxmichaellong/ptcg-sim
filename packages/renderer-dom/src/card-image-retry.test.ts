@@ -4,9 +4,11 @@ import { CARD_IMAGE_RETRY_EVENT } from '@ptcgsim/renderer-contract';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  fallBackCardImage,
   retryFailedCardImages,
   scheduleCardImageRetry,
   settleCardImage,
+  shownCardImage,
   watchCardImageRetries,
 } from './card-image-retry.js';
 
@@ -140,5 +142,22 @@ describe('card image retry', () => {
     failed.dataset.cardImageState = 'failed';
     document.dispatchEvent(new Event(CARD_IMAGE_RETRY_EVENT));
     expect(failed.dataset.cardImageState).toBe('failed');
+  });
+});
+
+describe('card image fallback', () => {
+  const TRANSLATED = 'https://images.example/fr/base1/4_hires.png';
+
+  it("shows the card's fallback once, then leaves failures to the retries", () => {
+    const image = failedImage(TRANSLATED);
+    expect(fallBackCardImage(image, ART)).toBe(true);
+    expect(image.getAttribute('src')).toBe(ART);
+    expect(image.dataset.cardImageState).toBe('loading');
+    // The fallback failing too is a failure like any other.
+    expect(fallBackCardImage(image, ART)).toBe(false);
+    expect(fallBackCardImage(failedImage(), undefined)).toBe(false);
+    // A copy of the card made later asks for what loaded.
+    expect(shownCardImage(TRANSLATED)).toBe(ART);
+    expect(shownCardImage(ART)).toBe(ART);
   });
 });

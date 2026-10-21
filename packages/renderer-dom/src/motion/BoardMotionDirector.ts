@@ -16,6 +16,7 @@ import {
   type BoardDepthProjection,
   type BoardPresentation,
 } from '@ptcgsim/renderer-contract';
+import { shownCardImage } from '../card-image-retry.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
@@ -618,7 +619,7 @@ export class BoardMotionDirector {
       overlay.alt = '';
       overlay.draggable = false;
       overlay.setAttribute('aria-hidden', 'true');
-      overlay.src = fromImageUrl;
+      overlay.src = shownCardImage(fromImageUrl);
       face.append(overlay);
     }
     let settle!: () => void;
@@ -759,7 +760,7 @@ export class BoardMotionDirector {
     const image = document.createElement('img');
     image.alt = '';
     image.draggable = false;
-    image.src = planned.imageUrl;
+    image.src = shownCardImage(planned.imageUrl);
     face.append(image);
     ghost.append(face);
     layer.append(ghost);
@@ -843,7 +844,7 @@ export class BoardMotionDirector {
     this.track(animation);
     if (planned.toImageUrl) {
       // Its new face first, so the turn waits for it to be ready.
-      image.src = planned.toImageUrl;
+      image.src = shownCardImage(planned.toImageUrl);
       this.turnOver(
         ghost,
         planned.imageUrl,

@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 
-import { decodeCatalog, deckListOf, type DeckCard } from '@ptcgsim/deck-core';
+import {
+  decodeCatalog,
+  deckListOf,
+  localizeCardImageUrl,
+  type DeckCard,
+} from '@ptcgsim/deck-core';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -73,12 +78,13 @@ describe('card details controls', () => {
         .click()
     );
     expect(onAdd).toHaveBeenCalledWith(german);
-    // Its own scan, not the catalog's English one.
+    // Its own scan, not the catalog's, in the language this player sees
+    // cards in (English here).
     expect(
       document.querySelector<HTMLImageElement>(
         '#nativeDeckBuilderCardPreviewImage'
       )?.src
-    ).toBe(german.image);
+    ).toBe(localizeCardImageUrl(german.image, 'en'));
   });
 
   it('offers another print for every scan of the one the deck has', async () => {

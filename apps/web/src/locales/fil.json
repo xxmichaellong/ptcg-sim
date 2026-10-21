@@ -1385,13 +1385,9 @@
     "message": "Card finish (optional)",
     "translation": "Finish ng card (opsyonal)"
   },
-  "5yJ3J9": {
-    "message": "Card images in this language, where Limitless has them",
-    "translation": "Mga larawan ng card sa wikang ito, kung meron sa Limitless"
-  },
-  "Eyw75j": {
-    "message": "Card language",
-    "translation": "Wika ng card"
+  "8xaYE9": {
+    "message": "Card images",
+    "translation": "Mga larawan ng card"
   },
   "-gounj": {
     "message": "Card layout (optional)",
@@ -3215,6 +3211,10 @@
     "message": "Only the players can change it.",
     "translation": "Ang mga player lang ang puwedeng magbago nito."
   },
+  "RqCWii": {
+    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
+    "translation": "Ikaw lang ang makakakita ng pagpiling ito. Kapag walang print ang isang card sa wikang iyon, ipapakita ito ayon sa deck."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Magbukas ng deck file"
@@ -3273,6 +3273,10 @@
     "message": "Page Down",
     "context": "keyboard key",
     "translation": "Page Down"
+  },
+  "EfIP2O": {
+    "message": "Page language ({following})",
+    "translation": "Wika ng page ({following})"
   },
   "161eyw": {
     "message": "Page Up",
