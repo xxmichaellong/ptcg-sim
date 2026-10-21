@@ -92,6 +92,8 @@ export const createCardCatalogClient = (
   const decode = options.decode ?? decodeCatalog;
 
   let state: CardCatalogState = IDLE;
+  /** Loading ahead, with no screen asking yet (`prefetch`). */
+  let ahead = false;
   let version: string | undefined;
   let timer: unknown;
   let generation = 0;
@@ -309,12 +311,16 @@ export const createCardCatalogClient = (
       later(delay, () => void run(current));
       return;
     }
-    publish(FAILED);
+    // Loaded ahead and failed: no screen has seen it, and the first one to
+    // ask starts afresh.
+    publish(ahead ? IDLE : FAILED);
+    ahead = false;
   };
 
-  const start = (): void => {
+  const start = (prefetching = false): void => {
     generation += 1;
     attempts = 0;
+    ahead = prefetching;
     publish(LOADING);
     void run(generation);
   };
@@ -328,7 +334,12 @@ export const createCardCatalogClient = (
       };
     },
     load() {
+      // A screen asking adopts a load started ahead: its failure is shown.
+      ahead = false;
       if (state.status === 'idle') start();
+    },
+    prefetch() {
+      if (state.status === 'idle') start(true);
     },
     retry() {
       if (state.status === 'failed') start();

@@ -204,6 +204,32 @@ describe('popular deck-list source', () => {
     expect(current).toHaveBeenCalledTimes(2);
   });
 
+  it('loads ahead without holding a failed fetch against the screen', async () => {
+    const current = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(
+        decodePopularDecklists({ Current: { Deck: '\n1 Deck BRS 1' } }).groups
+      );
+    const source = createPopularDecklistSource(
+      async () => smallCorpus(),
+      current
+    );
+    expect(source.peek!()).toBeUndefined();
+    expect((await source.prefetch!()).groups).toHaveLength(2);
+    // Failed ahead: nothing settled to show, and the screen asks again.
+    expect(source.peek!()).toBeUndefined();
+    const collection = await source.load();
+    expect(collection.groups.map((group) => group.name)).toEqual([
+      'Current',
+      'First',
+      'Second',
+    ]);
+    expect(current).toHaveBeenCalledTimes(2);
+    // Settled: a screen draws it at once.
+    expect(source.peek!()).toBe(collection);
+  });
+
   it('can run without current groups at all', async () => {
     const source = createPopularDecklistSource(async () => smallCorpus(), null);
     expect((await source.load()).groups).toHaveLength(2);

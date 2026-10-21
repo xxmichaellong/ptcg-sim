@@ -35,7 +35,8 @@ fast and current. The sources, measured on 2026-10-15:
 1. **The server builds the catalog; the browser searches it.** A Durable
    Object, `PtcgCardCatalog` (one instance, `tcgdex-en`), keeps every English
    card from TCGdex in a compact wire format
-   (`packages/deck-core/src/catalog-wire.ts`). The browser loads it once and
+   (`packages/deck-core/src/catalog-wire.ts`). The browser loads it once
+   (ahead of the deck screen, once the table is idle: ADR-033 §12) and
    filters it in memory, so a search is a filter over ~24,000 cards, under
    a millisecond, with the Limitless query syntax
    (`packages/deck-core/src/card-query.ts`).

@@ -431,12 +431,15 @@ export const CardDetails = ({
                           >
                             <CardImage
                               src={print.imageSmall}
-                              fallback={limitlessScanOf({
-                                name: print.name,
-                                image: print.imageSmall,
-                                set: print.set.code,
-                                number: print.number,
-                              })}
+                              fallback={limitlessScanOf(
+                                {
+                                  name: print.name,
+                                  image: print.imageSmall,
+                                  set: print.set.code,
+                                  number: print.number,
+                                },
+                                'small'
+                              )}
                               alt=""
                               loading="lazy"
                             />

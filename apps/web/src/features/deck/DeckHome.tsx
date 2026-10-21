@@ -17,19 +17,13 @@ import { i18n } from '@lingui/core';
 import { plural, selectOrdinal, t as translate } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  catalogIndex,
   checkDeck,
   coverCardOf,
   hasRuleBox,
-  deckCardFromCatalog,
-  deckListOf,
   deckTotals,
   formatDecklistText,
-  parsePastedDecklist,
-  resolveDecklistRow,
   type DeckCard,
   type DeckList,
-  type LoadedCatalog,
 } from '@ptcgsim/deck-core';
 import {
   useEffect,
@@ -45,7 +39,17 @@ import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
-import { CardImage, limitlessScanOf } from './CardImage.js';
+import { CardImage } from './CardImage.js';
+import {
+  deckCardImageOf,
+  deckImagesOf,
+  homeGroups,
+  metaShownOf,
+  resolveListCover,
+  savedDeckCover,
+  splitFinish,
+} from './deck-home-covers.js';
+import { warmCardImages } from './warm-card-images.js';
 import type {
   DeckBuilderSnapshot,
   DeckBuilderTarget,
@@ -65,7 +69,6 @@ import {
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import type {
   PopularDecklistCollection,
-  PopularDecklistGroup,
   PopularDecklistSource,
 } from './popular-decklists.js';
 import { useCardCatalog } from './useCardCatalog.js';
@@ -114,8 +117,7 @@ export const DeckCover = ({
   >
     {card ? (
       <CardImage
-        src={card.imageSmall ?? card.image}
-        fallback={limitlessScanOf(card)}
+        {...deckCardImageOf(card)}
         alt=""
         loading="lazy"
         decoding="async"
@@ -182,12 +184,7 @@ const SavedDeckTile = ({
   const check = useMemo(() => checkDeck(deck.cards, deck.format), [deck]);
   const deckName = deck.name;
   const seat = SEAT_NAMES[seats.target];
-  const cover = useMemo(
-    () =>
-      deck.cards.find((entry) => entry.card.id === deck.coverId)?.card ??
-      coverCardOf(deck.cards, deck.name),
-    [deck]
-  );
+  const cover = useMemo(() => savedDeckCover(deck), [deck]);
   const rename = async (): Promise<void> => {
     const name = await promptValue({
       title: t`Rename deck`,
@@ -218,6 +215,9 @@ const SavedDeckTile = ({
       className="deck-tile"
       data-current={current ? 'true' : undefined}
       data-valid={check.valid ? 'true' : 'false'}
+      // Pointed at or reached: its cards start loading for the editor.
+      onPointerEnter={() => void warmCardImages(deckImagesOf(deck.cards))}
+      onFocus={() => void warmCardImages(deckImagesOf(deck.cards))}
     >
       <button
         type="button"
@@ -405,33 +405,6 @@ const UnsavedSeatTile = ({
   );
 };
 
-/** A list's cards from the catalog, for its cover and count. */
-const resolveListCover = (
-  catalog: LoadedCatalog | undefined,
-  text: string,
-  name: string
-): { readonly cover?: DeckCard; readonly cards?: DeckList } => {
-  if (!catalog) return {};
-  const parsed = parsePastedDecklist(text);
-  if (!parsed.ok) return {};
-  const index = catalogIndex(catalog);
-  const cards = deckListOf(
-    parsed.rows.flatMap((row) => {
-      const resolved = resolveDecklistRow(index, row);
-      return resolved.card
-        ? [{ card: deckCardFromCatalog(resolved.card), count: row.quantity }]
-        : [];
-    })
-  );
-  const cover = coverCardOf(cards, splitFinish(name)[0]);
-  return { cards, ...(cover ? { cover } : {}) };
-};
-
-const splitFinish = (name: string): readonly [string, string | undefined] => {
-  const at = name.lastIndexOf(' — ');
-  return at > 0 ? [name.slice(0, at), name.slice(at + 3)] : [name, undefined];
-};
-
 /**
  * A current deck's finish in the page's language. The deck feed names it in
  * English ("1st of 285", server/current-decks.ts); anything else is shown
@@ -457,6 +430,7 @@ const wordFinish = (finish: string): string => {
 const ListDeckTile = ({
   name,
   cover,
+  cards,
   current,
   onTry,
   onEdit,
@@ -464,6 +438,8 @@ const ListDeckTile = ({
   readonly name: string;
   /** Its main Pokémon, once the catalog is here to find it. */
   readonly cover: DeckCard | undefined;
+  /** Its cards, once the catalog is here to find them. */
+  readonly cards: DeckList | undefined;
   readonly current: boolean;
   readonly onTry: () => void;
   readonly onEdit: () => void;
@@ -474,6 +450,14 @@ const ListDeckTile = ({
     <li
       className="deck-tile deck-tile--list"
       data-current={current ? 'true' : undefined}
+      // Pointed at or reached: its cards start loading for the seat (and the
+      // table) or the editor.
+      onPointerEnter={() => {
+        if (cards) void warmCardImages(deckImagesOf(cards));
+      }}
+      onFocus={() => {
+        if (cards) void warmCardImages(deckImagesOf(cards));
+      }}
     >
       <button
         type="button"
@@ -574,7 +558,11 @@ export const DeckHome = ({
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
   const [paste, setPaste] = useState('');
   const [filter, setFilter] = useState('');
-  const [collection, setCollection] = useState<PopularDecklistCollection>();
+  // Lists already loaded (the screen warmed up ahead, or opened before)
+  // draw with the screen's first frame.
+  const [collection, setCollection] = useState<
+    PopularDecklistCollection | undefined
+  >(() => samples.peek?.());
   const [collectionFailed, setCollectionFailed] = useState(false);
   const [season, setSeason] = useState('');
   const [showAllMeta, setShowAllMeta] = useState(false);
@@ -616,12 +604,7 @@ export const DeckHome = ({
       : libraryState.decks;
   }, [filter, libraryState.decks]);
 
-  const metaGroups = collection?.groups.filter((group) => group.source) ?? [];
-  const classicGroups =
-    collection?.groups.filter((group) => !group.source) ?? [];
-  const meta: PopularDecklistGroup | undefined = metaGroups[0];
-  const classic =
-    classicGroups.find((group) => group.name === season) ?? classicGroups[0];
+  const { meta, classicGroups, classic } = homeGroups(collection, season);
   const metaSource = meta?.source;
   const metaCount = meta?.decks.length ?? 0;
   const sourceName = metaSource?.name ?? '';
@@ -632,7 +615,7 @@ export const DeckHome = ({
       })
     : '';
   const metaShown = useMemo(
-    () => (showAllMeta ? meta?.decks : meta?.decks.slice(0, 12)),
+    () => metaShownOf(meta, showAllMeta),
     [meta, showAllMeta]
   );
   const classicName = classic?.name ?? '';
@@ -646,12 +629,12 @@ export const DeckHome = ({
     [classic, metaShown]
   );
   const covers = useMemo(() => {
-    const found = new Map<string, DeckCard | undefined>();
+    const found = new Map<string, ReturnType<typeof resolveListCover>>();
     for (const deck of shownLists) {
       if (!found.has(deck.decklist)) {
         found.set(
           deck.decklist,
-          resolveListCover(loadedCatalog, deck.decklist, deck.name).cover
+          resolveListCover(loadedCatalog, deck.decklist, deck.name)
         );
       }
     }
@@ -898,7 +881,8 @@ export const DeckHome = ({
                 <ListDeckTile
                   key={deck.name}
                   name={deck.name}
-                  cover={covers.get(deck.decklist)}
+                  cover={covers.get(deck.decklist)?.cover}
+                  cards={covers.get(deck.decklist)?.cards}
                   current={seatListName === deck.name}
                   onTry={() => void onTryList(deck.name, deck.decklist, 'meta')}
                   onEdit={() =>
@@ -961,7 +945,8 @@ export const DeckHome = ({
               <ListDeckTile
                 key={deck.name}
                 name={deck.name}
-                cover={covers.get(deck.decklist)}
+                cover={covers.get(deck.decklist)?.cover}
+                cards={covers.get(deck.decklist)?.cards}
                 current={seatListName === deck.name}
                 onTry={() =>
                   void onTryList(deck.name, deck.decklist, 'classic')

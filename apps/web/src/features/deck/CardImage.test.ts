@@ -15,4 +15,19 @@ describe('card image fallback', () => {
       'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/PHF/PHF_024a_R_EN.png'
     );
   });
+
+  it("falls a thumbnail back to Limitless's small scan, not its full one", () => {
+    const card = {
+      name: 'Dreepy',
+      image: 'https://assets.tcgdex.net/en/sv/sv06/128/low.webp',
+      set: 'TWM',
+      number: '128',
+    };
+    expect(limitlessScanOf(card, 'small')).toBe(
+      'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN_SM.png'
+    );
+    expect(limitlessScanOf(card)).toBe(
+      'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN.png'
+    );
+  });
 });

@@ -52,11 +52,26 @@ import {
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import type { ZoomCard } from './useHoverZoom.js';
+import type { WarmCardImage } from './warm-card-images.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
 /** Results drawn at a time; more as the grid scrolls. */
 const PAGE = 90;
+
+/** A result's picture as its <img> asks for it. */
+export const resultImageOf = (card: CatalogCard): WarmCardImage => ({
+  src: card.imageSmall,
+  fallback: limitlessScanOf(
+    {
+      name: card.name,
+      image: card.imageSmall,
+      set: card.set.code,
+      number: card.number,
+    },
+    'small'
+  ),
+});
 
 export const ENERGY_LETTER: Readonly<Record<EnergyType, string>> = {
   Grass: 'G',
@@ -253,6 +268,45 @@ export const searchFilterClauses = (
   return clauses;
 };
 
+/** The cards a search finds, in the order the panel shows them. */
+export const searchResults = (
+  cards: readonly CatalogCard[],
+  search: {
+    readonly query: string;
+    readonly chips: Chips;
+    readonly advanced: Advanced;
+    readonly legality: DeckFormatId | undefined;
+    readonly sort: CatalogSort;
+    readonly allPrints: boolean;
+  }
+) =>
+  searchCatalog(cards, parseCardQuery(search.query), {
+    clauses: searchFilterClauses(
+      search.chips,
+      search.advanced,
+      search.legality
+    ),
+    sort: search.sort,
+    unique: search.allPrints ? 'prints' : 'cards',
+  });
+
+/**
+ * What the panel shows before anything is searched for: the cards legal in
+ * `format`, in the player's order.
+ */
+export const openingSearchResults = (
+  cards: readonly CatalogCard[],
+  format: DeckFormatId,
+  order: { readonly sort: CatalogSort; readonly allPrints: boolean }
+) =>
+  searchResults(cards, {
+    query: '',
+    chips: NO_CHIPS,
+    advanced: NO_ADVANCED,
+    legality: format,
+    ...order,
+  });
+
 const advancedCount = (advanced: Advanced): number =>
   Object.values(advanced).filter((value) => value !== '').length;
 
@@ -359,10 +413,13 @@ export const CardSearchPanel = ({
 
   const result = useMemo(() => {
     if (!loaded) return undefined;
-    return searchCatalog(loaded.cards, parseCardQuery(query), {
-      clauses: searchFilterClauses(deferredChips, deferredAdvanced, legality),
+    return searchResults(loaded.cards, {
+      query,
+      chips: deferredChips,
+      advanced: deferredAdvanced,
+      legality,
       sort: screenPreferences.sort,
-      unique: screenPreferences.allPrints ? 'prints' : 'cards',
+      allPrints: screenPreferences.allPrints,
     });
   }, [
     deferredAdvanced,
@@ -1001,13 +1058,7 @@ const CardResult = ({
       >
         <span className="card-result__frame">
           <CardImage
-            src={card.imageSmall}
-            fallback={limitlessScanOf({
-              name: card.name,
-              image: card.imageSmall,
-              set: card.set.code,
-              number: card.number,
-            })}
+            {...resultImageOf(card)}
             alt=""
             loading="lazy"
             decoding="async"

@@ -15,6 +15,12 @@ export interface CardCatalogSource {
   subscribe(listener: () => void): () => void;
   /** Starts loading if nothing has; a no-op once loading or loaded. */
   load(): void;
+  /**
+   * Starts loading ahead of a screen that will want it. A load that fails
+   * goes back to idle rather than failed, so the screen's own `load` tries
+   * again -- unless the screen asked meanwhile.
+   */
+  prefetch?(): void;
   /** After a failure: tries again now. */
   retry(): void;
 }

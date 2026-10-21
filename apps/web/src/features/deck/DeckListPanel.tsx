@@ -28,7 +28,8 @@ import { useMemo, useState, type MouseEvent } from 'react';
 import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip } from '../../ui/Tooltip.js';
-import { CardImage, limitlessScanOf } from './CardImage.js';
+import { CardImage } from './CardImage.js';
+import { deckCardImageOf } from './deck-home-covers.js';
 import type { DeckImportLine } from './deck-import.js';
 import {
   categoryName,
@@ -477,11 +478,7 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
           <ul className="deck-sample__cards" aria-label={t`Sample hand`}>
             {opening.hand.map((card, index) => (
               <li key={`${card.id}-${index}`}>
-                <CardImage
-                  src={card.imageSmall ?? card.image}
-                  fallback={limitlessScanOf(card)}
-                  alt={card.name}
-                />
+                <CardImage {...deckCardImageOf(card)} alt={card.name} />
               </li>
             ))}
           </ul>
@@ -494,11 +491,7 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
           >
             {opening.prizes.map((card, index) => (
               <li key={`${card.id}-${index}`}>
-                <CardImage
-                  src={card.imageSmall ?? card.image}
-                  fallback={limitlessScanOf(card)}
-                  alt={card.name}
-                />
+                <CardImage {...deckCardImageOf(card)} alt={card.name} />
               </li>
             ))}
           </ul>
@@ -591,8 +584,7 @@ const DeckRow = ({
       >
         <span className="deck-row__art">
           <CardImage
-            src={card.imageSmall ?? card.image}
-            fallback={limitlessScanOf(card)}
+            {...deckCardImageOf(card)}
             alt=""
             loading="lazy"
             decoding="async"

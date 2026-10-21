@@ -62,6 +62,14 @@ export interface PopularDecklistSource {
   load(
     options?: LoadPopularDecklistsOptions
   ): Promise<PopularDecklistCollection>;
+  /**
+   * Loads ahead of a screen that will want the lists: like `load`, but a
+   * failed fetch of the current lists is not held against the screen's own
+   * ask, which tries again.
+   */
+  prefetch?(): Promise<PopularDecklistCollection>;
+  /** What `load` would give now, if it needs nothing more fetched. */
+  peek?(): PopularDecklistCollection | undefined;
   selectRandom(
     options?: SelectRandomPopularDecklistOptions
   ): Promise<PopularDecklist>;
@@ -221,12 +229,17 @@ export const createPopularDecklistSource = (
       }
     | undefined;
 
-  const loadCurrentGroups = (): Promise<readonly PopularDecklistGroup[]> => {
+  /** Whether the fetch in flight was asked for by a screen, not ahead. */
+  let currentWanted = false;
+  const loadCurrentGroups = (
+    wanted: boolean
+  ): Promise<readonly PopularDecklistGroup[]> => {
     if (!loadCurrent) return Promise.resolve([]);
     if (current) return Promise.resolve(current);
     if (Date.now() - currentFailedAt < CURRENT_RETRY_AFTER_MS) {
       return Promise.resolve([]);
     }
+    if (wanted) currentWanted = true;
     currentPending ??= Promise.resolve()
       .then(loadCurrent)
       .then((groups) => {
@@ -234,11 +247,13 @@ export const createPopularDecklistSource = (
         return groups;
       })
       .catch(() => {
-        currentFailedAt = Date.now();
+        // Fetched ahead and failed: the screen, when it opens, asks again.
+        if (currentWanted) currentFailedAt = Date.now();
         return [];
       })
       .finally(() => {
         currentPending = undefined;
+        currentWanted = false;
       });
     return currentPending;
   };
@@ -271,9 +286,12 @@ export const createPopularDecklistSource = (
     return collection;
   };
 
-  const load = async (options: LoadPopularDecklistsOptions = {}) => {
+  const load = async (
+    options: LoadPopularDecklistsOptions = {},
+    wanted = true
+  ) => {
     throwIfAborted(options.signal);
-    const currentGroups = loadCurrentGroups();
+    const currentGroups = loadCurrentGroups(wanted);
     const builtIn = await loadBuiltIn();
     const collection = withCurrent(builtIn, await currentGroups);
     throwIfAborted(options.signal);
@@ -300,7 +318,18 @@ export const createPopularDecklistSource = (
   };
 
   return Object.freeze({
-    load,
+    load: (options?: LoadPopularDecklistsOptions) => load(options),
+    prefetch: () => load({}, false),
+    // Settled only once both halves are: the built-in lists, and the current
+    // ones loaded (or there are none to fetch).
+    peek: () =>
+      cached &&
+      !currentPending &&
+      (current !== undefined ||
+        !loadCurrent ||
+        Date.now() - currentFailedAt < CURRENT_RETRY_AFTER_MS)
+        ? withCurrent(cached, current ?? [])
+        : undefined,
     async selectRandom(options: SelectRandomPopularDecklistOptions = {}) {
       const collection = await load({
         ...(options.signal ? { signal: options.signal } : {}),

@@ -142,6 +142,19 @@ specifically without blocking, and go from deck to table in one click.
     downloads it as text or a simulator file.
 11. **On a phone** the seats wrap under the header and the editor's search
     and deck take turns behind two tabs.
+12. **It opens with its pictures in place** (2026-10-21). A second after the
+    table has drawn, once the page is idle, the screen warms up
+    (`deck-screen-warmup.ts`): its script, the saved decks, the tournament
+    and classic lists and the catalog load, and the covers it opens on -- then
+    the first cards a new Standard deck's search shows -- are fetched and
+    decoded in the player's card language and held (`warm-card-images.ts`),
+    so the screen's first frame draws them. Opened sooner, it starts all of
+    that with its script rather than after its first frame. Pointing at a
+    deck's tile fetches its cards for the editor; a deck put on a seat has
+    its faces fetched as the table will ask for them, before they are dealt.
+    Thumbnails that fall back to Limitless take its small scan, a tenth of
+    the full one's bytes. Not on a connection that asks to save data. A
+    load ahead that fails is the screen's to retry when it opens.
 
 ## Consequences
 

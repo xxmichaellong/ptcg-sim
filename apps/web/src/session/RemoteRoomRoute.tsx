@@ -41,7 +41,10 @@ import type {
   DeckBuilderTarget,
 } from '../features/deck/deck-builder-store.js';
 import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js';
-import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
+import {
+  DeckScreenWarmup,
+  LazyDeckBuilderSession,
+} from '../features/deck/LazyDeckBuilderSession.js';
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
 import { preferences as pagePreferences } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
@@ -287,6 +290,7 @@ export const RemoteRoomRoute = ({
     runtime.session.subscribe,
     () => runtime.session.getSnapshot().failure
   );
+
   // Reduced motion is the player's (or the system's) choice, never stored in
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
@@ -840,6 +844,9 @@ export const RemoteRoomRoute = ({
               </DeckLayer>
             ) : null}
             {live.fileInputs}
+            {/* The deck screen opens ready: warmed up once the table has
+                drawn, never while it is still arriving. */}
+            <DeckScreenWarmup ready={state.sessionPhase === 'ready'} />
             <PresentationAnnouncer runtime={runtime.presentation} />
           </TableShell>
         );

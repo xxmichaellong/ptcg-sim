@@ -40,6 +40,7 @@ import {
 import { t } from '@lingui/core/macro';
 import { seatStage } from '../../board/seat-stage.js';
 import { toast } from '../../ui/toast.js';
+import { warmCardImages } from './warm-card-images.js';
 
 const noticeInstallFailure = (failure: DeckInstallCoordinatorFailure): void => {
   const body = deckInstallFailureNotice(failure);
@@ -56,6 +57,8 @@ import {
   popularDecklistSource,
   type PopularDecklistSource,
 } from './popular-decklists.js';
+
+export { warmDeckScreen } from './deck-screen-warmup.js';
 
 export interface DeckBuilderSessionProps {
   readonly session?: DeckInstallSession;
@@ -334,6 +337,34 @@ export const DeckBuilderSession = ({
   useEffect(() => {
     if (open && openTarget) store.selectTarget(openTarget);
   }, [open, openTarget, store]);
+
+  // The seats' decks' faces load ahead, as the table will ask for them (its
+  // card size, in the player's card language), so a card dealt, drawn or
+  // looked at in a pile shows its face at once. Only this player's own
+  // decks: nothing of the other player's is known here.
+  useEffect(() => {
+    let seen: readonly unknown[] = [];
+    const warmSeats = (): void => {
+      const { slots, alternateEnabled: both } = store.getSnapshot();
+      const decks = [slots.main.deck, ...(both ? [slots.alternate.deck] : [])];
+      if (
+        decks.length === seen.length &&
+        decks.every((deck, index) => deck === seen[index])
+      )
+        return;
+      seen = decks;
+      void warmCardImages(
+        decks.flatMap((deck) =>
+          deck.map(({ card }) => ({
+            src: card.imageSmall ?? card.image,
+            fallback: undefined,
+          }))
+        )
+      );
+    };
+    warmSeats();
+    return store.subscribe(warmSeats);
+  }, [store]);
 
   const closeAndFlush = useCallback(() => {
     flush();

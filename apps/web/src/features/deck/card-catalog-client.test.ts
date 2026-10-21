@@ -211,6 +211,45 @@ describe('loading the card catalog', () => {
     client.dispose();
   });
 
+  it('loads ahead, and a load ahead that fails leaves the screen to ask afresh', async () => {
+    const routes: Record<string, Route[]> = {};
+    const { fetch, requests } = server(routes);
+    const client = createCardCatalogClient({
+      fetch,
+      storage: memoryStorage(),
+      ...timers(),
+    });
+    const seen: string[] = [];
+    client.subscribe(() => seen.push(statusOf(client)));
+    client.prefetch();
+    expect(statusOf(client)).toBe('loading');
+    await vi.waitFor(() => expect(seen).toEqual(['loading', 'idle']));
+    expect(requests).toEqual([CARD_CATALOG_PATH]);
+
+    // The screen, opened later, asks for itself -- and gets it now.
+    routes[CARD_CATALOG_PATH] = [() => manifest()];
+    routes[bodyUrl(VERSION)] = [fixtureBody];
+    client.load();
+    await vi.waitFor(() => expect(statusOf(client)).toBe('ready'));
+    // Loaded: a load ahead asks for nothing more.
+    client.prefetch();
+    expect(requests).toHaveLength(3);
+    client.dispose();
+  });
+
+  it('shows a failed load ahead to a screen that asked while it ran', async () => {
+    const { fetch } = server({});
+    const client = createCardCatalogClient({
+      fetch,
+      storage: memoryStorage(),
+      ...timers(),
+    });
+    client.prefetch();
+    client.load();
+    await vi.waitFor(() => expect(statusOf(client)).toBe('failed'));
+    client.dispose();
+  });
+
   it('fails on a body that does not decode or a manifest it cannot trust', async () => {
     const broken = createCardCatalogClient({
       fetch: server({
