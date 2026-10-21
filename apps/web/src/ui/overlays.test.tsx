@@ -541,6 +541,51 @@ describe('Tooltip', () => {
   });
 });
 
+describe('Tooltip tapToShow', () => {
+  it("opens on a finger's tap, closes on the next tap or a press elsewhere", async () => {
+    const element = document.createElement('div');
+    document.body.append(element);
+    hosts.push(element);
+    const root = createRoot(element);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        <OverlayHost>
+          <Tooltip content="7 cards in your hand" tapToShow>
+            <span data-testid="count">7</span>
+          </Tooltip>
+          <button type="button" data-testid="elsewhere">
+            Elsewhere
+          </button>
+        </OverlayHost>
+      );
+    });
+    const count = element.querySelector<HTMLElement>('[data-testid="count"]')!;
+    const tip = () =>
+      document.querySelector(
+        '[data-ptcgsim-overlay="tooltip"]:not([data-ending-style])'
+      );
+    const tap = async (target: HTMLElement) => {
+      await act(async () => {
+        // A finger's tap, as a browser reports it: down, up, then a click.
+        for (const type of ['pointerdown', 'pointerup', 'click'])
+          target.dispatchEvent(
+            new PointerEvent(type, { bubbles: true, pointerType: 'touch' })
+          );
+      });
+      await settle();
+    };
+    await tap(count);
+    expect(tip()?.textContent).toBe('7 cards in your hand');
+    await tap(count);
+    expect(tip()).toBeNull();
+    await tap(count);
+    expect(tip()).not.toBeNull();
+    await tap(element.querySelector<HTMLElement>('[data-testid="elsewhere"]')!);
+    expect(tip()).toBeNull();
+  });
+});
+
 describe('withKeyHint', () => {
   it('puts the key after the words as a key cap, and nothing without one', async () => {
     const element = document.createElement('div');

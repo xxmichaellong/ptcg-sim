@@ -106,7 +106,18 @@ const openPile = async (page: Page, kind: string) => {
 };
 
 const centre = async (page: Page, selector: string) => {
-  const box = (await page.locator(selector).first().boundingBox())!;
+  // Measured again until it has a box: a window's card can be drawn afresh
+  // (the room answering what the client showed first) between being found
+  // and being measured, which a slow runner catches.
+  let box: { x: number; y: number; width: number; height: number } | null =
+    null;
+  await expect
+    .poll(async () => {
+      box = await page.locator(selector).first().boundingBox();
+      return box !== null;
+    })
+    .toBe(true);
+  box = box!;
   return {
     x: box.x + box.width / 2,
     y: Math.min(890, box.y + box.height / 2),

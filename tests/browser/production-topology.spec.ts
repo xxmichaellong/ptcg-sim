@@ -153,11 +153,28 @@ test('built SPA and room authority share one production-like Worker origin', asy
     CARD_BACK_SHA256
   );
   // `run_worker_first` sends all of `/v2/*` to Worker code except an explicit
-  // per-file allowlist, so a newly shipped asset under this directory would
-  // 404 in production alone unless wrangler.jsonc is updated with it. Walk the
-  // directory rather than trusting the one file pinned above.
-  const shippedAssets = await readdir(PUBLIC_V2_ASSET_DIRECTORY);
+  // allowlist, so a newly shipped asset under this directory would 404 in
+  // production alone unless wrangler.jsonc is updated with it. Walk the
+  // directory, folders included (the table's art), rather than trusting the
+  // one file pinned above.
+  const shippedAssets = (
+    await readdir(PUBLIC_V2_ASSET_DIRECTORY, {
+      recursive: true,
+      withFileTypes: true,
+    })
+  )
+    .filter((entry) => entry.isFile())
+    .map((entry) =>
+      [
+        ...entry.parentPath
+          .slice(PUBLIC_V2_ASSET_DIRECTORY.length)
+          .split(/[\\/]/u)
+          .filter(Boolean),
+        entry.name,
+      ].join('/')
+    );
   expect(shippedAssets.length).toBeGreaterThan(0);
+  expect(shippedAssets).toContain('table/coin-heads.webp');
   for (const asset of shippedAssets) {
     const shipped = await request.get(`/v2/assets/${asset}`);
     expect(

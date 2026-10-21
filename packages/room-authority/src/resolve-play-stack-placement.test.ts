@@ -242,6 +242,64 @@ describe('atomic play-stack placement authority resolution', () => {
     ).toEqual({ accepted: false, code: 'unauthorized' });
   });
 
+  it("lets a player evolve the other player's Pokémon only where the room allows acting on theirs", () => {
+    const input = fixture();
+    let state = run(input.state, {
+      type: 'LoadDeck',
+      playerId: p2,
+      entries: [
+        {
+          definition: {
+            id: asCardDefinitionId('place-authority-their-pokemon'),
+            name: 'Their Pokémon',
+            category: 'Pokémon',
+            imageUrl: '/theirs.png',
+          },
+          count: 1,
+        },
+      ],
+    });
+    const theirDeck = playerZoneId(p2, 'deck');
+    const theirDiscard = playerZoneId(p2, 'discard');
+    const theirs = state.zones[theirDeck]!.cardIds[0]!;
+    state = run(state, {
+      type: 'MoveCard',
+      cardId: theirs,
+      expectedSourceZoneId: theirDeck,
+      destinationZoneId: theirDiscard,
+    });
+    const identities = aliasState(state, [
+      { alias: 'their-pokemon', cardId: theirs, viewerId: p2 },
+      { alias: 'owner-top', cardId: input.baseId, viewerId: p2 },
+    ]);
+    const wire = {
+      type: 'PlaceCardOnPlayStack',
+      cardId: 'their-pokemon',
+      expectedSourceId: theirDiscard,
+      targetStackId: input.stackId,
+      expectedTargetTopCardId: 'owner-top',
+      mode: 'evolution',
+    } as const;
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        session(p2),
+        wire,
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toMatchObject({
+      accepted: true,
+      command: { playerId: p2, cardId: theirs, mode: 'evolution' },
+    });
+    expect(
+      resolveWireCommand(state, identities, session(p2), wire, {
+        ...DEFAULT_AUTHORITY_POLICY,
+        allowOpponentPublicInteraction: false,
+      })
+    ).toEqual({ accepted: false, code: 'unauthorized' });
+  });
+
   it('resolves a known lower evolution for an independent stack departure', () => {
     const input = fixture();
     const state = run(input.state, {

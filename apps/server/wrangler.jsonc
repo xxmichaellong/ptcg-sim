@@ -17,6 +17,7 @@
       "!/v2/assets/blank-logo.png",
       "!/v2/assets/background1.jpg",
       "!/v2/assets/background2.webp",
+      "!/v2/assets/table/*",
     ],
   },
   "durable_objects": {

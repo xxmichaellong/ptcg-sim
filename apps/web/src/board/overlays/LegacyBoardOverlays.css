@@ -228,12 +228,15 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptcgsim-menu-item:hover,
-  .ptcgsim-menu-item:focus-visible,
-  .has-submenu[data-submenu-open='true'] > .ptcgsim-menu-item {
+  .ptcgsim-menu-item:hover {
     outline: none;
     background: var(--color-surface-hover);
   }
+}
+.ptcgsim-menu-item:focus-visible,
+.has-submenu[data-submenu-open='true'] > .ptcgsim-menu-item {
+  outline: none;
+  background: var(--color-surface-hover);
 }
 
 .ptcgsim-menu-item:active {
@@ -249,10 +252,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptcgsim-menu-item.is-danger:hover,
-  .ptcgsim-menu-item.is-danger:focus-visible {
+  .ptcgsim-menu-item.is-danger:hover {
     background: var(--color-danger-soft);
   }
+}
+.ptcgsim-menu-item.is-danger:focus-visible {
+  background: var(--color-danger-soft);
 }
 
 .ptcgsim-menu-icon {
@@ -333,9 +338,6 @@
 @media (hover: hover) and (pointer: fine) {
   .ptcgsim-legacy-card-context-menu
     li.has-submenu:hover
-    > .ptcgsim-legacy-card-sub-menu,
-  .ptcgsim-legacy-card-context-menu
-    li.has-submenu[data-submenu-open='true']
     > .ptcgsim-legacy-card-sub-menu {
     display: block;
     opacity: 1;
@@ -345,18 +347,31 @@
     transition-timing-function: var(--ease-snappy);
   }
 }
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu[data-submenu-open='true']
+  > .ptcgsim-legacy-card-sub-menu {
+  display: block;
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition-duration: var(--overlay-enter-duration);
+  transition-timing-function: var(--ease-snappy);
+}
 
 @starting-style {
   @media (hover: hover) and (pointer: fine) {
     .ptcgsim-legacy-card-context-menu
       li.has-submenu:hover
-      > .ptcgsim-legacy-card-sub-menu,
-    .ptcgsim-legacy-card-context-menu
-      li.has-submenu[data-submenu-open='true']
       > .ptcgsim-legacy-card-sub-menu {
       opacity: 0;
       translate: var(--overlay-submenu-from-x) 0;
     }
+  }
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu[data-submenu-open='true']
+    > .ptcgsim-legacy-card-sub-menu {
+    opacity: 0;
+    translate: var(--overlay-submenu-from-x) 0;
   }
 }
 
@@ -951,10 +966,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptcgsim-overlay-button.is-quiet:hover,
-  .ptcgsim-overlay-button.is-quiet[aria-pressed='true'] {
+  .ptcgsim-overlay-button.is-quiet:hover {
     color: var(--color-text);
   }
+}
+.ptcgsim-overlay-button.is-quiet[aria-pressed='true'] {
+  color: var(--color-text);
 }
 
 :root[data-motion='reduced'] .ptcgsim-overlay-button:active:not(:disabled) {
@@ -1638,11 +1655,14 @@ button.ptcgsim-overlay-toggle:focus-visible {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptcgsim-overlay-button.ptcgsim-overlay-close:is(:hover, :focus-visible):not(
-      :disabled
-    ) {
+  .ptcgsim-overlay-button.ptcgsim-overlay-close:hover:not(:disabled) {
     background-color: var(--color-danger-fill);
     background-image: none;
     color: var(--color-text-on-accent);
   }
+}
+.ptcgsim-overlay-button.ptcgsim-overlay-close:focus-visible:not(:disabled) {
+  background-color: var(--color-danger-fill);
+  background-image: none;
+  color: var(--color-text-on-accent);
 }

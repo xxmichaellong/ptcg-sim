@@ -529,10 +529,12 @@ div.deck-tile__choose {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .deck-tile:hover .deck-tile__actions,
-  .deck-tile:focus-within .deck-tile__actions {
+  .deck-tile:hover .deck-tile__actions {
     opacity: 1;
   }
+}
+.deck-tile:focus-within .deck-tile__actions {
+  opacity: 1;
 }
 
 @media (hover: none) {
@@ -1069,11 +1071,14 @@ div.deck-tile__choose {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card-result:hover .card-result__add,
-  .card-result:focus-visible .card-result__add {
+  .card-result:hover .card-result__add {
     opacity: 1;
     transform: scale(1);
   }
+}
+.card-result:focus-visible .card-result__add {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .card-result__name {

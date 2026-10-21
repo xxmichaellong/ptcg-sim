@@ -378,6 +378,17 @@ export const resolveWireCommand = (
             : 'attachment';
       }
       if (derivedMode !== wire.mode) return rejected('stale_reference');
+      // A Pokémon evolving one on the other player's board changes their
+      // Pokémon: a room that keeps players to their own cards refuses it.
+      // (Attaching, a Tool such as Head Ringer included, is the game's own.)
+      if (
+        derivedMode === 'evolution' &&
+        target.boardPlayerId !== sourcePlayerId &&
+        !controlsSeat(target.boardPlayerId) &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
 
       return {
         accepted: true,

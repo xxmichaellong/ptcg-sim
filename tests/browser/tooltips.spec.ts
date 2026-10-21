@@ -5,8 +5,8 @@ import { dismissWelcome, openToolbar } from './support/table-shell.js';
 /**
  * Every icon-only control names itself in a tooltip on a mouse's hover (or
  * a keyboard's focus), with its key where it has one. The tooltip never
- * takes the control's id or name, never lies over an open menu, and never
- * opens for a finger's tap.
+ * takes the control's id or name, never lies over an open menu, and opens
+ * for a finger's tap only on a count, which just informs.
  */
 
 const openSoloTable = async (page: Page): Promise<void> => {
@@ -104,6 +104,34 @@ test('icon controls name themselves, with their keys, on hover', async ({
 
 test.describe('on a touch screen', () => {
   test.use({ hasTouch: true });
+
+  test('a tap on a count shows how many cards and where; the next tap anywhere hides it', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await openSoloTable(page);
+    const shown = page.locator(
+      '[data-ptcgsim-overlay="tooltip"]:not([data-ending-style]), .ptcgsim-board-hint [role="tooltip"]'
+    );
+    const handCount = page.locator(
+      '.table-hand-pill--local .table-hand-pill__count'
+    );
+    await handCount.tap();
+    await expect(shown).toHaveText('0 cards in your hand');
+    await handCount.tap();
+    await expect(shown).toHaveCount(0);
+    // A pile's badge on the table, found by where it is.
+    const badge = await page
+      .locator('.ptcgsim-zone-count-deck[data-zone-count-side="local"]')
+      .boundingBox();
+    await page.touchscreen.tap(
+      badge!.x + badge!.width / 2,
+      badge!.y + badge!.height / 2
+    );
+    await expect(shown).toHaveText('0 cards in your deck');
+    await page.touchscreen.tap(8, 400);
+    await expect(shown).toHaveCount(0);
+  });
 
   test('a tap never opens a tooltip', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });

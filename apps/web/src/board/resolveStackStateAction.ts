@@ -1,5 +1,6 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import { specialConditionKind } from '@ptcgsim/renderer-contract';
 
 export type StackStateAction =
   | { readonly type: 'setDamage'; readonly damage: number | null }
@@ -74,6 +75,17 @@ const damageTarget = (
 
 const conditionCycle = ['P', 'B', 'Pa', 'C', 'A'] as const;
 
+/**
+ * Where a condition stands in the cycle, whichever way it was written: v1's
+ * letters or the words (a marker's controls, or typed). -1 for a note.
+ */
+const cycleIndex = (condition: string): number => {
+  const kind = specialConditionKind(condition);
+  return kind === null
+    ? -1
+    : conditionCycle.findIndex((code) => specialConditionKind(code) === kind);
+};
+
 const conditionTarget = (
   stack: ViewStack,
   action: Extract<
@@ -83,10 +95,7 @@ const conditionTarget = (
 ): string | null | undefined => {
   if (action.type === 'cycleSpecialCondition') {
     if (stack.specialCondition === null) return conditionCycle[0];
-    const currentIndex = conditionCycle.findIndex(
-      (condition) =>
-        condition.toUpperCase() === stack.specialCondition?.toUpperCase()
-    );
+    const currentIndex = cycleIndex(stack.specialCondition);
     return currentIndex < 0
       ? undefined
       : conditionCycle[(currentIndex + 1) % conditionCycle.length];
@@ -139,10 +148,7 @@ export const resolveStackStateAction = (
       if (
         action.type === 'cycleSpecialCondition' &&
         stack.specialCondition !== null &&
-        !conditionCycle.some(
-          (condition) =>
-            condition.toUpperCase() === stack.specialCondition?.toUpperCase()
-        )
+        cycleIndex(stack.specialCondition) < 0
       ) {
         return { ok: false, reason: 'no_op' };
       }

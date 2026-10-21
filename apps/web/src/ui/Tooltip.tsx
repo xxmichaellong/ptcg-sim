@@ -77,6 +77,7 @@ export const Tooltip = ({
   const trigger = useRef<HTMLElement | null>(null);
   const [hovered, setHovered] = useState(false);
   const [tapped, setTapped] = useState(false);
+  const tappedAtPress = useRef(false);
   useEffect(() => {
     if (!tapped) return;
     const close = () => setTapped(false);
@@ -90,9 +91,14 @@ export const Tooltip = ({
         return;
       close();
     };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+    };
     document.addEventListener('pointerdown', press, true);
+    document.addEventListener('keydown', key, true);
     return () => {
       document.removeEventListener('pointerdown', press, true);
+      document.removeEventListener('keydown', key, true);
       if (closeTapped === close) closeTapped = null;
     };
   }, [tapped]);
@@ -103,10 +109,11 @@ export const Tooltip = ({
       {...(tapToShow
         ? {
             open: hovered || tapped,
-            onOpenChange: (open: boolean) => {
-              setHovered(open);
-              if (!open) setTapped(false);
-            },
+            // Base UI's own opening and closing is the mouse's and the
+            // keyboard's; a tap's stays until the next tap, a press
+            // elsewhere or Escape (above) -- the finger lifting reads to it
+            // as the pointer leaving.
+            onOpenChange: (open: boolean) => setHovered(open),
           }
         : {})}
     >
@@ -118,8 +125,18 @@ export const Tooltip = ({
         {...(delay === undefined ? {} : { delay })}
         {...(tapToShow
           ? {
+              // The tap's own click must not close what it opened.
+              closeOnClick: false,
+              // Whether it showed is read as the finger comes down: a press
+              // can close it on the way (Base UI's), and the tap that ends
+              // should then leave it closed, not open it again.
+              onPointerDown: (event: ReactPointerEvent) => {
+                if (event.pointerType === 'touch')
+                  tappedAtPress.current = tapped;
+              },
               onPointerUp: (event: ReactPointerEvent) => {
-                if (event.pointerType === 'touch') setTapped((open) => !open);
+                if (event.pointerType === 'touch')
+                  setTapped(!tappedAtPress.current);
               },
             }
           : {})}

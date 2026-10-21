@@ -69,6 +69,9 @@ describe('stack-state application actions', () => {
       ['Pa', 'C'],
       ['C', 'A'],
       ['A', 'P'],
+      // Written as words (typed, or by older controls), the cycle goes on.
+      ['burned', 'Pa'],
+      ['Asleep', 'P'],
     ] as const) {
       const conditioned: MatchViewState = {
         ...view,

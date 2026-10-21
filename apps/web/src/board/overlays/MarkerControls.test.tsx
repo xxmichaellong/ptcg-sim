@@ -108,8 +108,9 @@ describe('MarkerControls', () => {
     expect(button('Burned').getAttribute('aria-pressed')).toBe('false');
     act(() => button('Burned').click());
     act(() => button('Remove the Special Condition').click());
+    // Written as v1's letters, which the keys' cycle reads too.
     expect(actions.submitSpecialConditionInput.mock.calls).toEqual([
-      [cardId, 'burned'],
+      [cardId, 'B'],
       [cardId, ''],
     ]);
   });

@@ -54,6 +54,18 @@ const CONDITIONS: readonly SpecialConditionKind[] = [
   'poisoned',
 ];
 
+/**
+ * What a chosen condition is written as: v1's letters, as the keys' cycle
+ * and the typed editor write it.
+ */
+const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
+  asleep: 'A',
+  burned: 'B',
+  confused: 'C',
+  paralyzed: 'Pa',
+  poisoned: 'P',
+};
+
 const conditionArt = (kind: SpecialConditionKind): string =>
   `/v2/assets/table/condition-${kind}.png`;
 
@@ -234,7 +246,10 @@ export const MarkerControls = ({
               className="is-condition"
               pressed={current === condition}
               onPress={() =>
-                actions.submitSpecialConditionInput(cardId, condition)
+                actions.submitSpecialConditionInput(
+                  cardId,
+                  CONDITION_CODES[condition]
+                )
               }
             >
               <img src={conditionArt(condition)} alt="" draggable={false} />

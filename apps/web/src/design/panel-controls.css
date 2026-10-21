@@ -547,10 +547,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ds-menu-item:hover,
-  .ds-menu-item[data-active='true'] {
+  .ds-menu-item:hover {
     background: var(--color-surface-hover);
   }
+}
+.ds-menu-item[data-active='true'] {
+  background: var(--color-surface-hover);
 }
 
 .ds-menu-item[aria-checked='true'] {
