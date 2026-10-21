@@ -341,4 +341,65 @@ describe('a lone Benched Pokémon', () => {
     expect(undone.boards[p1]).toEqual(checkpoint.boards[p1]);
     expect(undone.boards[p1]!.activeStackId).toBeNull();
   });
+
+  it('waits while the Active, taken apart, joins a window already open for a Benched one', () => {
+    const commandContext = context();
+    let state = createEmptyMatch(asMatchId('lone-shared-window'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    state = run(
+      state,
+      { type: 'LoadDeck', playerId: p1, entries: entries(p1) },
+      commandContext
+    ).state;
+    const deckId = playerZoneId(p1, 'deck');
+    const playTop = (slot: PlaySlot, targetStackId?: StackId) => {
+      state = run(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: state.zones[deckId]!.cardIds[0]!,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot,
+          ...(targetStackId ? { targetStackId } : {}),
+        },
+        commandContext
+      ).state;
+    };
+    // An evolved Active, an evolved Benched one, and a lone basic beside it.
+    playTop('active');
+    playTop('active', state.boards[p1]!.activeStackId!);
+    playTop('bench');
+    playTop('bench', state.boards[p1]!.benchStackIds[0]!);
+    playTop('bench');
+    const active = state.boards[p1]!.activeStackId!;
+    const [evolved, lone] = state.boards[p1]!.benchStackIds;
+    const takeApart = (stackId: StackId) => {
+      state = run(
+        state,
+        {
+          type: 'MoveCardFromStack',
+          cardId: state.stacks[stackId]!.evolutionCardIds.at(-1)!,
+          expectedStackId: stackId,
+          destinationZoneId: playerZoneId(p1, 'discard'),
+        },
+        commandContext
+      ).state;
+    };
+    takeApart(evolved!);
+    expect(state.workAreas[p1]!.attachmentResolution?.sourceStackId).toBe(
+      evolved
+    );
+    // The Active's remains join that window: it is still being dealt with.
+    takeApart(active);
+    expect(state.workAreas[p1]!.attachmentResolution?.sourceStackId).toBe(
+      evolved
+    );
+    expect(state.boards[p1]).toEqual({
+      activeStackId: null,
+      benchStackIds: [lone],
+    });
+  });
 });

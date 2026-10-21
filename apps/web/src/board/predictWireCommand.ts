@@ -435,14 +435,28 @@ const withLoneBenchedPromoted = (
   for (const { boardPlayerId, stackId } of loneBenchedPromotions(
     view.boards,
     next.boards,
-    (playerId) =>
-      activeWentAway(
+    (playerId) => {
+      const activeStackId = view.boards[playerId]?.activeStackId ?? null;
+      const active = activeStackId ? view.stacks[activeStackId] : undefined;
+      const window = (areas: WorkAreas | undefined) => {
+        const area = areas?.attachmentResolution;
+        return area
+          ? { ...area, cardIds: area.cards.map((card) => card.id) }
+          : null;
+      };
+      return activeWentAway(
         {
-          activeStackId: view.boards[playerId]?.activeStackId ?? null,
-          window: view.workAreas[playerId]?.attachmentResolution ?? null,
+          activeStackId,
+          activeCardIds: active
+            ? [...active.evolutionCards, ...active.attachmentCards].map(
+                (card) => card.id
+              )
+            : [],
+          window: window(view.workAreas[playerId]),
         },
-        { window: next.workAreas[playerId]?.attachmentResolution ?? null }
-      )
+        { window: window(next.workAreas[playerId]) }
+      );
+    }
   )) {
     promoted = withBoardsRehomed(promoted, [
       {

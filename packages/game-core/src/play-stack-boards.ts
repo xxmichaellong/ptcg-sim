@@ -98,26 +98,32 @@ export const loneBenchedPromotions = <Id extends string>(
 
 /**
  * Whether a board's Active went away in a command, for
- * loneBenchedPromotions: it left the Active Spot without waiting, taken
- * apart, in its attached-card window; or that window, opened when the
- * Active was taken apart, closed. Works on the room's state and the
- * client's view alike.
+ * loneBenchedPromotions: it left the Active Spot without any of its cards
+ * waiting in an attached-card window (taken apart, they wait there, in a
+ * window of their own or one already open); or that window, opened when the
+ * Active was taken apart, closed. Works on the room's state and the client's
+ * view alike.
  */
 export const activeWentAway = (
   before: {
     readonly activeStackId: string | null;
+    /** Every card of the Active's stack, before the command. */
+    readonly activeCardIds: readonly string[];
     readonly window: ActiveWindow | null;
   },
   after: { readonly window: ActiveWindow | null }
 ): boolean =>
   before.activeStackId !== null
-    ? after.window?.sourceStackId !== before.activeStackId
+    ? !(
+        after.window?.cardIds.some((id) => before.activeCardIds.includes(id)) ??
+        false
+      )
     : before.window?.suggestedSlot === 'active' &&
       after.window?.id !== before.window.id;
 
 /** What activeWentAway reads of a player's attached-card window. */
 export interface ActiveWindow {
   readonly id: string;
-  readonly sourceStackId: string;
   readonly suggestedSlot: PlaySlot;
+  readonly cardIds: readonly string[];
 }

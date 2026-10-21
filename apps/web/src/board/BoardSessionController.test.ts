@@ -1952,6 +1952,30 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it("opens the Special Condition chips on the Pokémon's top card from any of its cards", () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const topCardId = activeStack.evolutionCards.at(-1)!.id;
+    const lowerCardId = activeStack.evolutionCards[0]!.id;
+    expect(lowerCardId).not.toBe(topCardId);
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId: lowerCardId },
+    }).state;
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId: lowerCardId,
+      },
+    });
+    expect(opened.state.overlays.marker).toEqual({
+      cardId: topCardId,
+      kind: 'specialCondition',
+    });
+  });
+
   it('binds each category submenu choice to the exact open stack card', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

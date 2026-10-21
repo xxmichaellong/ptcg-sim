@@ -1642,6 +1642,21 @@ const handlePresentationUpdate = (
   return ignored(state);
 };
 
+/** The top card of the Pokémon a card in play belongs to. */
+const topCardOfStackHolding = (
+  view: MatchViewState,
+  cardId: ViewCardId
+): ViewCardId | undefined => {
+  for (const stack of Object.values(view.stacks)) {
+    if (
+      stack.evolutionCards.some((card) => card.id === cardId) ||
+      stack.attachmentCards.some((card) => card.id === cardId)
+    )
+      return stack.evolutionCards.at(-1)?.id;
+  }
+  return undefined;
+};
+
 const rejectOverlayAction = (
   state: BoardSessionControllerState,
   request: LegacyBoardOverlayActionRequest,
@@ -1764,17 +1779,21 @@ const handleOverlayAction = (
     const local = clearLocalPresentation(state);
     // A Special Condition is chosen from the chips beside its marker (put on
     // as Poisoned when there was none, as v1's editor started), not typed.
-    const chips = resolution.input.kind === 'specialCondition';
+    // The marker lies on the Pokémon's top card, whichever of its cards (an
+    // Energy, a lower Stage) the menu was opened on.
+    const chipsFor =
+      resolution.input.kind === 'specialCondition'
+        ? (topCardOfStackHolding(view, resolution.input.cardId) ??
+          resolution.input.cardId)
+        : null;
     const next = nextState(state, {
       ...local,
       overlays: {
         contextMenuCardId: null,
         preview: null,
-        input: chips ? null : resolution.input,
+        input: chipsFor ? null : resolution.input,
         ...markerOverlay(
-          chips
-            ? { cardId: resolution.input.cardId, kind: 'specialCondition' }
-            : null
+          chipsFor ? { cardId: chipsFor, kind: 'specialCondition' } : null
         ),
       },
     });

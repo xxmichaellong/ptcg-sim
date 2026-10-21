@@ -63,15 +63,20 @@ const promotionsAfter = (
   state: MatchState,
   next: MatchState
 ): readonly DomainEvent[] =>
-  loneBenchedPromotions(state.boards, next.boards, (playerId) =>
-    activeWentAway(
+  loneBenchedPromotions(state.boards, next.boards, (playerId) => {
+    const activeStackId = state.boards[playerId]?.activeStackId ?? null;
+    const active = activeStackId ? state.stacks[activeStackId] : undefined;
+    return activeWentAway(
       {
-        activeStackId: state.boards[playerId]?.activeStackId ?? null,
+        activeStackId,
+        activeCardIds: active
+          ? [...active.evolutionCardIds, ...active.attachmentCardIds]
+          : [],
         window: state.workAreas[playerId]?.attachmentResolution ?? null,
       },
       { window: next.workAreas[playerId]?.attachmentResolution ?? null }
-    )
-  ).map(({ boardPlayerId, stackId }) => ({
+    );
+  }).map(({ boardPlayerId, stackId }) => ({
     type: 'PlayStackLayoutSet',
     boardPlayerId: boardPlayerId as PlayerId,
     expectedActiveStackId: null,
