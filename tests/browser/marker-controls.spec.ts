@@ -141,6 +141,37 @@ test("a double press on a counter opens its controls, not the card's preview", a
   await expect(controls(page)).toBeVisible();
 });
 
+test("the card menu's Special condition hands the keyboard to the chips, and Escape gives it back", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const cardId = await activeWithDamage(page);
+  const card = page.locator(`[data-card-id="${cardId}"]`);
+  await card.focus();
+  await card.press('Shift+F10');
+  await page
+    .getByRole('menuitem', { name: /Special condition/u })
+    .press('Enter');
+  const chips = page.locator(
+    '.ptcgsim-marker-controls[data-marker-controls="specialCondition"]'
+  );
+  await expect(chips).toBeVisible();
+  // Put on as Poisoned, the current choice has the focus.
+  await expect(chips.getByRole('button', { name: 'Poisoned' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.activeElement?.closest('.ptcgsim-marker-controls') !== null
+      )
+    )
+    .toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(chips).toHaveCount(0);
+  await expect(card).toBeFocused();
+});
+
 test.describe('on a touch screen', () => {
   test.use({ hasTouch: true });
 

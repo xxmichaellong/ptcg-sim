@@ -1814,6 +1814,7 @@ describe('headless board session controller', () => {
     expect(opened.state.overlays.marker).toEqual({
       cardId,
       kind: 'specialCondition',
+      takesFocus: true,
     });
 
     // The chips change only the condition, and stay open for the next.
@@ -1868,6 +1869,7 @@ describe('headless board session controller', () => {
     expect(chosen.state.overlays.marker).toEqual({
       cardId,
       kind: 'specialCondition',
+      takesFocus: true,
     });
     expect(chosen.effects).toEqual([
       {
@@ -1935,6 +1937,7 @@ describe('headless board session controller', () => {
     expect(created.state.overlays.marker).toEqual({
       cardId,
       kind: 'specialCondition',
+      takesFocus: true,
     });
     expect(created.effects).toEqual([
       {
@@ -1973,6 +1976,7 @@ describe('headless board session controller', () => {
     expect(opened.state.overlays.marker).toEqual({
       cardId: topCardId,
       kind: 'specialCondition',
+      takesFocus: true,
     });
   });
 

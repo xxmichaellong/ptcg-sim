@@ -110,6 +110,11 @@ export interface BoardMarkerControlsState {
   /** The card it lies on: the top of a Pokémon, or a single card. */
   readonly cardId: ViewCardId;
   readonly kind: MarkerSceneNode['kind'];
+  /**
+   * Opened from a card's menu, which may be worked from the keyboard: the
+   * controls take the focus, and give it back when they close.
+   */
+  readonly takesFocus?: true;
 }
 
 export interface BoardOverlayState {
@@ -1793,7 +1798,9 @@ const handleOverlayAction = (
         preview: null,
         input: chipsFor ? null : resolution.input,
         ...markerOverlay(
-          chipsFor ? { cardId: chipsFor, kind: 'specialCondition' } : null
+          chipsFor
+            ? { cardId: chipsFor, kind: 'specialCondition', takesFocus: true }
+            : null
         ),
       },
     });

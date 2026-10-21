@@ -350,11 +350,19 @@ test('a lone Benched Pokémon comes up when the Active goes to the discard pile;
     await exposedPoint(page, third!),
     await zoneCentre(page, 'bench', 'local')
   );
-  await drag(
-    page,
-    await exposedPoint(page, (await handPokemon(page, 1))[0]!),
-    await zoneCentre(page, 'bench', 'local')
-  );
+  // Beside the one benched, not on it (which would evolve it).
+  const bench = (await page
+    .locator('[data-zone-kind="bench"][data-zone-side="local"]')
+    .first()
+    .boundingBox())!;
+  const fourth = (await handPokemon(page, 1))[0]!;
+  await drag(page, await exposedPoint(page, fourth), {
+    x: bench.x + bench.width * 0.9,
+    y: bench.y + bench.height / 2,
+  });
+  await expect
+    .poll(() => placement(page, fourth))
+    .toMatchObject({ side: 'local', slot: 'bench' });
   await drag(
     page,
     await exposedPoint(page, second!),

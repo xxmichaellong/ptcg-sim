@@ -21,6 +21,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
+import { visualCardBounds } from './card-bounds.js';
 import './MarkerControls.css';
 
 /** What the controls do: the overlays' own actions (LegacyBoardOverlays). */
@@ -197,6 +198,37 @@ export const MarkerControls = ({
         : { width: measured.width, height: measured.height }
     );
   }, [markerId, kind, marker?.value]);
+  // Opened from a card's menu (perhaps from the keyboard), they take the
+  // focus -- the current choice, else the first -- once the menu has given
+  // it back to the card, and return it there when they close.
+  const takesFocus = state.overlays.marker?.takesFocus === true;
+  useEffect(() => {
+    if (!markerId || !takesFocus) return;
+    let opener: HTMLElement | null = null;
+    let element: HTMLElement | null = null;
+    const frame = requestAnimationFrame(() => {
+      element = panel.current;
+      if (!element) return;
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && !element.contains(focused))
+        opener = focused;
+      (
+        element.querySelector<HTMLElement>('button[aria-pressed="true"]') ??
+        element.querySelector<HTMLElement>('button')
+      )?.focus({ preventScroll: true });
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      const focused = document.activeElement;
+      if (
+        opener?.isConnected &&
+        (focused === null ||
+          focused === document.body ||
+          element?.contains(focused) === true)
+      )
+        opener.focus({ preventScroll: true });
+    };
+  }, [markerId, takesFocus]);
   // Escape, or a press anywhere but here, puts them away. A press on the
   // marker itself is the table's to answer: it toggles them.
   useEffect(() => {
@@ -236,7 +268,7 @@ export const MarkerControls = ({
   );
   if (!card) return null;
   const { left, top, side } = placeBeside(
-    depth ? depth.bounds(card) : card.bounds,
+    visualCardBounds(card, depth),
     depth ? depth.marker(marker).bounds : marker.bounds,
     size ?? { width: 0, height: 0 },
     state.scene.viewport

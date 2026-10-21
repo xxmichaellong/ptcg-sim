@@ -1,4 +1,5 @@
 import { MarkerControls } from './MarkerControls.js';
+import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
 import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
 import {
@@ -873,22 +874,6 @@ const ContextSubmenu = <Value extends string>({
       </ul>
     </li>
   );
-};
-
-const visualCardBounds = (
-  card: CardSceneNode,
-  depth?: BoardDepthProjection
-) => {
-  if (depth) return depth.bounds(card);
-  if (card.rotationQuarterTurns % 2 === 0) return card.bounds;
-  const centerX = card.bounds.x + card.bounds.width / 2;
-  const centerY = card.bounds.y + card.bounds.height / 2;
-  return {
-    x: centerX - card.bounds.height / 2,
-    y: centerY - card.bounds.width / 2,
-    width: card.bounds.height,
-    height: card.bounds.width,
-  };
 };
 
 /**

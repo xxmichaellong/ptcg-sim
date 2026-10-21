@@ -342,7 +342,7 @@ describe('a lone Benched Pokémon', () => {
     expect(undone.boards[p1]!.activeStackId).toBeNull();
   });
 
-  it('waits while the Active, taken apart, joins a window already open for a Benched one', () => {
+  it('waits while the Active, taken apart, joins a window already open for a Benched one, and comes up once it is cleared', () => {
     const commandContext = context();
     let state = createEmptyMatch(asMatchId('lone-shared-window'), [
       { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
@@ -400,6 +400,21 @@ describe('a lone Benched Pokémon', () => {
     expect(state.boards[p1]).toEqual({
       activeStackId: null,
       benchStackIds: [lone],
+    });
+    // Cleared, the window holds nothing of it any more: the lone one comes up.
+    state = run(
+      state,
+      {
+        type: 'ResolveStagedCards',
+        playerId: p1,
+        expectedWorkAreaId: state.workAreas[p1]!.attachmentResolution!.id,
+        destination: 'discard',
+      },
+      commandContext
+    ).state;
+    expect(state.boards[p1]).toEqual({
+      activeStackId: lone,
+      benchStackIds: [],
     });
   });
 });

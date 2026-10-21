@@ -32,7 +32,10 @@ const marker = (
   label: `${kind}: ${value}`,
 });
 
-const stateWith = (node: MarkerSceneNode): BoardSessionControllerState =>
+const stateWith = (
+  node: MarkerSceneNode,
+  rotationQuarterTurns = 0
+): BoardSessionControllerState =>
   ({
     scene: {
       viewport: { width: 1000, height: 700 },
@@ -41,6 +44,7 @@ const stateWith = (node: MarkerSceneNode): BoardSessionControllerState =>
         {
           id: cardId,
           bounds: { x: 380, y: 280, width: 90, height: 126 },
+          rotationQuarterTurns,
         },
       ],
     },
@@ -76,17 +80,27 @@ describe('MarkerControls', () => {
     host.remove();
   });
 
-  const render = (node: MarkerSceneNode) =>
+  const render = (node: MarkerSceneNode, rotationQuarterTurns = 0) =>
     act(() =>
       root.render(
         <MarkerControls
-          state={stateWith(node)}
+          state={stateWith(node, rotationQuarterTurns)}
           actions={actions as unknown as MarkerControlsActions}
         />
       )
     );
   const button = (label: string) =>
     host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
+
+  it('sits beside a sideways card as it is painted, not its upright box', () => {
+    render(marker('damage', '60'));
+    const panel = () =>
+      host.querySelector<HTMLElement>('.ptcgsim-marker-controls')!;
+    expect(panel().style.left).toBe('480px');
+    // Turned a quarter, the 90 x 126 card is 126 wide about the same centre.
+    render(marker('damage', '60'), 1);
+    expect(panel().style.left).toBe('498px');
+  });
 
   it('steps damage by 10 either way and takes it off', () => {
     render(marker('damage', '60'));
