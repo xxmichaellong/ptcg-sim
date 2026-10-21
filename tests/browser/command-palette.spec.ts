@@ -238,5 +238,16 @@ test.describe('on a phone', () => {
     expect(box.width).toBeGreaterThan(360);
     // No key hints where there are no keys.
     await expect(palette(page).locator('kbd')).toHaveCount(0);
+    // Asked for a line, the field keeps room beside its breadcrumb, and a
+    // button answers where the keyboard has no Enter.
+    await field(page).fill('say');
+    await rows(page).first().tap();
+    await expect(
+      palette(page).locator('.ptcgsim-command-palette__crumb')
+    ).toBeVisible();
+    expect((await field(page).boundingBox())!.width).toBeGreaterThan(100);
+    await expect(
+      palette(page).locator('.ptcgsim-command-palette__submit')
+    ).toBeVisible();
   });
 });

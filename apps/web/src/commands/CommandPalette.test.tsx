@@ -309,6 +309,20 @@ describe('CommandPalette', () => {
     expect(counted).not.toHaveBeenCalled();
   });
 
+  it('answers with its button too, for a number pad with no Enter', async () => {
+    await open();
+    await type('draw cards');
+    await press({ key: 'Enter' });
+    await type('5');
+    const done = document.querySelector<HTMLButtonElement>(
+      '.ptcgsim-command-palette__submit'
+    )!;
+    expect(done.textContent).toBe('Done');
+    await act(async () => done.click());
+    expect(counted).toHaveBeenCalledWith(5);
+    expect(isCommandPaletteOpen()).toBe(false);
+  });
+
   it('asks for text, and sends nothing empty', async () => {
     await open();
     await type('say');

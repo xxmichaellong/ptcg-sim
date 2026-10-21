@@ -80,7 +80,8 @@
 }
 
 .ptcgsim-command-palette__crumb {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 3ch;
   max-width: 40%;
   overflow: hidden;
   margin: 0;
@@ -98,8 +99,9 @@
 }
 
 .ptcgsim-command-palette__field {
-  flex: 1;
-  min-width: 0;
+  /* Whatever the breadcrumbs, the field keeps room to read and tap. */
+  flex: 1 0 7rem;
+  min-width: 7rem;
   height: 44px;
   margin: 0;
   padding: 0;
@@ -109,6 +111,21 @@
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-lg, 18px);
+}
+
+.ptcgsim-command-palette__submit {
+  flex: none;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold, 600);
+  cursor: pointer;
 }
 
 .ptcgsim-command-palette__field::placeholder {
@@ -172,6 +189,19 @@
 .ptcgsim-command__icon > svg {
   width: 16px;
   height: 16px;
+}
+
+/* A card's own face, small enough to sit in a row. */
+.ptcgsim-command__icon--card {
+  background: none;
+}
+
+.ptcgsim-command__icon--card > img {
+  width: 20px;
+  height: 28px;
+  border-radius: 2px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--color-border);
 }
 
 .ptcgsim-command[aria-selected='true'] .ptcgsim-command__icon {
@@ -338,5 +368,14 @@
 
   .ptcgsim-command__path {
     display: none;
+  }
+
+  /* Only the screen that is open; the ones above it are a tap back. */
+  .ptcgsim-command-palette__crumb:has(+ .ptcgsim-command-palette__crumb) {
+    display: none;
+  }
+
+  .ptcgsim-command-palette__submit {
+    min-height: 40px;
   }
 }

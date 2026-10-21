@@ -563,23 +563,30 @@ export const boardCommands = (
       (card.role === 'stackAttachment' ? 0.5 : 0)
     );
   };
+  // Copies are the same card (one definition), not just one name: two
+  // prints of a Pokémon each keep a row, told apart by their pictures.
+  const definitionOf = (card: CardSceneNode): string | undefined => {
+    const known = view.zones[card.parentId]?.cards.find(
+      (candidate) => candidate.id === card.id
+    );
+    return known?.kind === 'known' ? known.definitionId : undefined;
+  };
+  const copyKey = (card: CardSceneNode): string =>
+    view.stacks[card.parentId] !== undefined
+      ? card.id
+      : `${definitionOf(card) ?? card.id}\u0000${card.parentId}`;
   const copies = new Map<string, number>();
   const rows: CardSceneNode[] = [];
   for (const card of [...findable].sort(
     (left, right) => placeRank(left) - placeRank(right)
   )) {
-    const inPlay = view.stacks[card.parentId] !== undefined;
-    const key = inPlay ? card.id : `${card.label}\u0000${card.parentId}`;
+    const key = copyKey(card);
     const seen = copies.get(key);
     copies.set(key, (seen ?? 0) + 1);
     if (seen === undefined) rows.push(card);
   }
   const copiesOf = (card: CardSceneNode): number =>
-    copies.get(
-      view.stacks[card.parentId] !== undefined
-        ? card.id
-        : `${card.label}\u0000${card.parentId}`
-    ) ?? 1;
+    copies.get(copyKey(card)) ?? 1;
   if (rows.length > 0) {
     commands.push({
       id: 'cards.find',
@@ -599,6 +606,12 @@ export const boardCommands = (
               : placeOf(card),
           section: 'cards',
           icon: StackIcon,
+          image: {
+            src: card.imageUrl,
+            ...(card.imageFallbackUrl
+              ? { fallback: card.imageFallbackUrl }
+              : {}),
+          },
           nestedSearch: false,
           submenu: () => ({
             breadcrumb: card.label,

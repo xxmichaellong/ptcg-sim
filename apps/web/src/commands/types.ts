@@ -61,6 +61,8 @@ export interface PaletteCommand {
    */
   readonly keywords?: readonly string[];
   readonly icon?: Icon;
+  /** A picture in the icon's place: a card's own face. */
+  readonly image?: { readonly src: string; readonly fallback?: string };
   /** What it acts on, read after the title: a card's name, a seat. */
   readonly detail?: string;
   /** The key that does the same, from the player's keymap. */

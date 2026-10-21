@@ -203,6 +203,68 @@ describe('boardCommands', () => {
     expect(first.detail).toMatch(/^Your/u);
   });
 
+  it('keeps two prints of one name apart, and copies of one card together', () => {
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === bottom
+    )!;
+    const known = hand.cards.filter((card) => card.kind === 'known');
+    expect(known.length).toBeGreaterThanOrEqual(3);
+    const [first, second, third] = known as [
+      (typeof known)[number] & { kind: 'known' },
+      (typeof known)[number] & { kind: 'known' },
+      (typeof known)[number] & { kind: 'known' },
+    ];
+    const twinView = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        'def:twin-a': {
+          ...view.definitions[first.definitionId]!,
+          id: 'def:twin-a',
+          name: 'Twin',
+        },
+        'def:twin-b': {
+          ...view.definitions[first.definitionId]!,
+          id: 'def:twin-b',
+          name: 'Twin',
+        },
+      },
+      zones: {
+        ...view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.map((card) =>
+            card.id === first.id || card.id === third.id
+              ? { ...card, definitionId: 'def:twin-a' }
+              : card.id === second.id
+                ? { ...card, definitionId: 'def:twin-b' }
+                : card
+          ),
+        },
+      },
+    } as typeof view;
+    const twinScene = createBoardSceneForViewport(twinView, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: bottom,
+      splitRatio: 0.5,
+    });
+    const cards = find(
+      boardCommands({
+        runtime: runtimeFor(stateWith({ view: twinView, scene: twinScene })),
+        hint: () => undefined,
+      }),
+      'cards.find'
+    ).submenu!().commands.filter((card) => card.title === 'Twin');
+    expect(cards).toHaveLength(2);
+    expect(cards.map((card) => card.detail)).toEqual([
+      'Your hand (2)',
+      'Your hand',
+    ]);
+    // Each shows its own face.
+    expect(cards.every((card) => card.image?.src)).toBe(true);
+  });
+
   it("shows a closed pile's buried card over its pile, opened for it", () => {
     const state = stateWith();
     const runtime = runtimeFor(state);

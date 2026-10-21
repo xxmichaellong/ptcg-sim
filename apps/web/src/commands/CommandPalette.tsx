@@ -558,9 +558,31 @@ export const CommandPalette = ({
           field.current?.focus({ preventScroll: true });
         }}
       >
-        <span className="ptcgsim-command__icon" aria-hidden="true">
-          <Icon weight="bold" />
-        </span>
+        {command.image ? (
+          <span
+            className="ptcgsim-command__icon ptcgsim-command__icon--card"
+            aria-hidden="true"
+          >
+            <img
+              src={command.image.src}
+              alt=""
+              draggable={false}
+              decoding="async"
+              onError={(event) => {
+                const fallback = command.image?.fallback;
+                if (
+                  fallback &&
+                  event.currentTarget.getAttribute('src') !== fallback
+                )
+                  event.currentTarget.src = fallback;
+              }}
+            />
+          </span>
+        ) : (
+          <span className="ptcgsim-command__icon" aria-hidden="true">
+            <Icon weight="bold" />
+          </span>
+        )}
         <span className="ptcgsim-command__text">
           {entry.path.length > 0 ? (
             <span className="ptcgsim-command__path">
@@ -723,6 +745,21 @@ export const CommandPalette = ({
             }}
             onKeyDown={onKeyDown}
           />
+          {asking ? (
+            // A number pad has no Enter: the answer is given here too.
+            <button
+              type="button"
+              className="ptcgsim-command-palette__submit"
+              onClick={() => {
+                answer();
+                field.current?.focus({ preventScroll: true });
+              }}
+            >
+              {asking.kind === 'text'
+                ? t({ message: 'Send', context: 'chat' })
+                : t`Done`}
+            </button>
+          ) : null}
         </div>
         <div
           ref={list}
