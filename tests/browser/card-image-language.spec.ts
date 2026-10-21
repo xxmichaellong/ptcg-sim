@@ -305,12 +305,18 @@ test("the Pixi table shows cards in the player's language too, falling back to t
     })
     .toBe(true);
   await chooseMoreAction(page, 'setupBothButton');
-  // Draws until the hand holds both cards, asked for in French.
+  // Draws until the hand holds both cards: the new one asked for in French;
+  // the old one in French, or straight from the deck's scan once the deck
+  // screen's warm-up has found it was never printed in French.
   await expect
     .poll(
       async () => {
         const { urls } = await hand();
-        if (urls.includes(NEW_FR) && urls.includes(OLD_FR)) return true;
+        if (
+          urls.includes(NEW_FR) &&
+          (urls.includes(OLD_FR) || urls.includes(OLD_EN))
+        )
+          return true;
         await page.keyboard.press('2');
         return false;
       },
