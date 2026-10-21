@@ -1118,6 +1118,33 @@ export const BoardSurface = ({
     if (marker) surfaceRef.current?.setAttribute('data-hint-hover', '');
     else surfaceRef.current?.removeAttribute('data-hint-hover');
   };
+  // Where a resting mouse is, read once a frame: finding a hint measures
+  // the markers and badges, which a move per event would do many times over.
+  const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const hintFrameRef = useRef<number | null>(null);
+  const scheduleHintHover = (x: number, y: number) => {
+    hintPointerRef.current = { x, y };
+    if (hintFrameRef.current !== null) return;
+    if (typeof requestAnimationFrame !== 'function') {
+      const surface = surfaceRef.current;
+      hoverHint(surface ? (boardHintAt(surface, x, y)?.element ?? null) : null);
+      return;
+    }
+    hintFrameRef.current = requestAnimationFrame(() => {
+      hintFrameRef.current = null;
+      const point = hintPointerRef.current;
+      const surface = surfaceRef.current;
+      if (!point || !surface) return;
+      hoverHint(boardHintAt(surface, point.x, point.y)?.element ?? null);
+    });
+  };
+  useEffect(
+    () => () => {
+      if (hintFrameRef.current !== null)
+        cancelAnimationFrame(hintFrameRef.current);
+    },
+    []
+  );
   // A tooltip a tap opened goes with the next press anywhere.
   useEffect(() => {
     if (!hintShowing?.tapped) return;
@@ -1799,13 +1826,10 @@ export const BoardSurface = ({
             );
           }
         } else {
-          if (event.pointerType !== 'touch' && surfaceRef.current)
-            hoverHint(
-              presentation.drag
-                ? null
-                : (boardHintAt(surfaceRef.current, event.clientX, event.clientY)
-                    ?.element ?? null)
-            );
+          if (event.pointerType !== 'touch') {
+            if (presentation.drag) hoverHint(null);
+            else scheduleHintHover(event.clientX, event.clientY);
+          }
           const rest = hoverRestRef.current;
           if (
             rest &&
@@ -1822,6 +1846,7 @@ export const BoardSurface = ({
       onPointerLeave={() => {
         restHover(null);
         clearHover();
+        hintPointerRef.current = null;
         hoverHint(null);
       }}
       onPointerUp={(event) => {

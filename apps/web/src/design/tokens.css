@@ -434,7 +434,9 @@
 /* Pressed, a control gives at once; let go, it springs back. A transition
    takes its timing from the style it changes to, so the press and the
    release each get their own. */
-:active {
+/* Only on the control itself: on :root (which a press makes :active too)
+   the change would restyle the whole page twice a click. */
+:where(button, [role='button'], [role='menuitem'], label):active {
   --control-press-timing: var(--control-press-in);
 }
 

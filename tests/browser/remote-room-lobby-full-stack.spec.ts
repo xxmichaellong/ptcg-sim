@@ -103,7 +103,8 @@ const joinReadyRoom = async (page: Page): Promise<void> => {
 test('visible v2 lobby creates, copies, pastes, and joins through private invitation custody', async ({
   browser,
 }) => {
-  test.setTimeout(60_000);
+  // Four pages on one table: CI's software renderer takes 40-60 s of it.
+  test.setTimeout(120_000);
   const options = {
     baseURL: 'http://127.0.0.1:4173',
     permissions: ['clipboard-read', 'clipboard-write'],
