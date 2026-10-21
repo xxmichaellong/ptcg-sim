@@ -36,7 +36,8 @@ export interface RankedSection {
 export const splitTrailingCount = (
   query: string
 ): { readonly text: string; readonly count?: number } => {
-  const match = /^(.*\S)\s+(\d{1,3})$/u.exec(query.trim());
+  // Up to five digits: damage goes to 9990; each command holds its own range.
+  const match = /^(.*\S)\s+(\d{1,5})$/u.exec(query.trim());
   return match
     ? { text: match[1]!, count: Number(match[2]) }
     : { text: query.trim() };

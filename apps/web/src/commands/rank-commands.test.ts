@@ -159,5 +159,10 @@ describe('splitTrailingCount', () => {
     });
     expect(splitTrailingCount('3')).toEqual({ text: '3' });
     expect(splitTrailingCount('draw')).toEqual({ text: 'draw' });
+    // Damage runs to four digits.
+    expect(splitTrailingCount('set damage 9990')).toEqual({
+      text: 'set damage',
+      count: 9990,
+    });
   });
 });
