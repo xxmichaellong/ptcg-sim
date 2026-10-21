@@ -31,7 +31,10 @@ export const NO_HOTKEY_OVERRIDES: HotkeyOverrides = Object.freeze({});
 
 const isDigit = (key: string): boolean => /^\d$/u.test(key);
 
-/** Number keys carry counts and Esc closes everything; Tab moves focus. */
+/**
+ * Number keys carry counts, Esc closes everything and Ctrl+K (⌘K) opens the
+ * command palette; Tab moves focus.
+ */
 export type HotkeyReservation =
   | { readonly kind: 'fixed'; readonly action: HotkeyActionId }
   | { readonly kind: 'focus' };
@@ -63,6 +66,14 @@ export const reservedChord = (
     return { kind: 'fixed', action: 'table.closePopups' };
   }
   if (chord.key === 'tab') return { kind: 'focus' };
+  // Ctrl+K and ⌘K always open the command palette, besides its own key.
+  if (
+    chord.key === 'k' &&
+    (chord.ctrl || chord.meta) &&
+    !chord.alt &&
+    !chord.shift
+  )
+    return { kind: 'fixed', action: 'table.commands' };
   return null;
 };
 

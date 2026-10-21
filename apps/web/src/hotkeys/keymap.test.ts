@@ -126,7 +126,7 @@ describe('the keymap', () => {
 
   it('keeps ? from falling back to / once the list has moved', () => {
     const keymap = keymapFor(
-      parseHotkeyOverrides({ 'table.shortcuts': 'ctrl+k' })
+      parseHotkeyOverrides({ 'table.shortcuts': 'ctrl+j' })
     );
     const question = press('?', 'Slash', { shiftKey: true });
     expect(keymap.resolve(question, 'table')).toBeNull();
@@ -153,6 +153,19 @@ describe('the keymap', () => {
     expect(reservedChord(chord('ctrl+escape'))?.kind).toBe('fixed');
     expect(reservedChord(chord('tab'))).toEqual({ kind: 'focus' });
     expect(reservedChord(chord('!'))).toBeNull();
+  });
+
+  it('keeps Ctrl+K and ⌘K for the command palette, dropping one stored for another', () => {
+    for (const text of ['ctrl+k', 'meta+k'])
+      expect(reservedChord(chord(text))).toEqual({
+        kind: 'fixed',
+        action: 'table.commands',
+      });
+    expect(reservedChord(chord('k'))).toBeNull();
+    expect(reservedChord(chord('ctrl+shift+k'))).toBeNull();
+    expect(parseHotkeyOverrides({ 'card.toHand': 'ctrl+k' })).toBe(
+      NO_HOTKEY_OVERRIDES
+    );
   });
 });
 

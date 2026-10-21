@@ -717,7 +717,11 @@ const reservationMessage = (
   if (reservation.kind === 'focus') {
     return t`Tab can't be a shortcut.`;
   }
-  const key = keyLabel(chord.key);
+  // A plain key by its name ("5"); one held with Ctrl or ⌘ in full.
+  const key =
+    chord.ctrl || chord.meta || chord.alt
+      ? chordHint(chord, detectKeyboardPlatform())
+      : keyLabel(chord.key);
   const name = i18n._(hotkeyAction(reservation.action).label);
   // English names the shortcut in the sentence's own case ("kept for add
   // damage"); other languages keep its name as written (German nouns stay

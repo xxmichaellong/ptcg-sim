@@ -1155,7 +1155,7 @@ describe('legacy board keyboard shortcut bridge', () => {
       parseHotkeyOverrides({
         'card.toDiscard': 'k',
         'table.undo': 'shift+j',
-        'table.shortcuts': 'ctrl+k',
+        'table.shortcuts': 'ctrl+j',
       })
     );
     const render = (selectedCardId: string | null) =>
@@ -1217,7 +1217,7 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(press({ key: '?', code: 'Slash', shiftKey: true })).toBe(true);
     expect(onRequest).not.toHaveBeenCalled();
     expect(onToggleShortcuts).not.toHaveBeenCalled();
-    expect(press({ key: 'k', code: 'KeyK', ctrlKey: true })).toBe(false);
+    expect(press({ key: 'j', code: 'KeyJ', ctrlKey: true })).toBe(false);
     expect(onToggleShortcuts).toHaveBeenCalledExactlyOnceWith('table');
   });
 

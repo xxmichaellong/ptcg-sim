@@ -18,9 +18,14 @@ interface Meaning {
   readonly dangerous?: boolean;
 }
 
-/** "p2AttackButton" → "attack": one id for either seat's button. */
+/**
+ * "p2AttackButton" → "attack": one id for either seat's button. Play
+ * online's "p2Button" keeps its name ("p2").
+ */
 const commandId = (id: string): string => {
-  const bare = id.replace(/^p2/u, '').replace(/(Button|MenuItem)$/u, '');
+  const bare = id
+    .replace(/(Button|MenuItem)$/u, '')
+    .replace(/^p2(?=[A-Z])/u, '');
   return bare.charAt(0).toLowerCase() + bare.slice(1);
 };
 
