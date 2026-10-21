@@ -40,10 +40,63 @@ export interface MarkerControlsActions {
 /** The most damage a Pokémon can carry (the room's limit). */
 const DAMAGE_MAXIMUM = 9_990;
 const DAMAGE_STEP = 10;
-/** Room between the controls and the marker they belong to. */
+/** Room between the controls and the card they belong to. */
 const GAP_PX = 10;
 /** The controls keep this far inside the table's edges. */
 const EDGE_PX = 8;
+
+interface Box {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Where the controls go: beside the card, level with the marker, so they
+ * cover neither -- to its right, else its left; where neither side has the
+ * room (a narrow table), above the card, else below it. Always inside the
+ * table.
+ */
+export const placeBeside = (
+  card: Box,
+  marker: Box,
+  size: { readonly width: number; readonly height: number },
+  board: { readonly width: number; readonly height: number }
+): {
+  readonly left: number;
+  readonly top: number;
+  readonly side: 'right' | 'left' | 'above' | 'below';
+} => {
+  const clamp = (value: number, room: number, length: number) =>
+    Math.min(
+      Math.max(value, EDGE_PX),
+      Math.max(EDGE_PX, room - EDGE_PX - length)
+    );
+  const level = clamp(
+    marker.y + marker.height / 2 - size.height / 2,
+    board.height,
+    size.height
+  );
+  const right = card.x + card.width + GAP_PX;
+  if (right + size.width <= board.width - EDGE_PX)
+    return { left: right, top: level, side: 'right' };
+  const left = card.x - GAP_PX - size.width;
+  if (left >= EDGE_PX) return { left, top: level, side: 'left' };
+  const centred = clamp(
+    card.x + card.width / 2 - size.width / 2,
+    board.width,
+    size.width
+  );
+  const above = card.y - GAP_PX - size.height;
+  return above >= EDGE_PX
+    ? { left: centred, top: above, side: 'above' }
+    : {
+        left: centred,
+        top: clamp(card.y + card.height + GAP_PX, board.height, size.height),
+        side: 'below',
+      };
+};
 
 /** The five Special Conditions, in the rulebook's order, with their chips. */
 const CONDITIONS: readonly SpecialConditionKind[] = [
@@ -112,9 +165,9 @@ const ControlButton = ({
 /**
  * A marker's controls, opened by pressing it on the table: a damage counter
  * steps by 10 either way or comes off, a condition chip changes to another
- * condition or comes off, and an Ability's tick comes off. They sit just
- * above the marker (below it near the table's top edge) and stay open for
- * the next press, until a press elsewhere, Escape, or the marker going.
+ * condition or comes off, and an Ability's tick comes off. They sit beside
+ * the card (placeBeside) and stay open for the next press, until a press
+ * elsewhere, Escape, or the marker going.
  */
 export const MarkerControls = ({
   state,
@@ -178,18 +231,16 @@ export const MarkerControls = ({
     };
   }, [markerId, actions]);
   if (!marker || !state.scene) return null;
-  const board = state.scene.viewport;
-  const placed = depth ? depth.marker(marker) : marker;
-  const centre = placed.bounds.x + placed.bounds.width / 2;
-  const width = size?.width ?? 0;
-  const height = size?.height ?? 0;
-  const left = Math.min(
-    Math.max(centre - width / 2, EDGE_PX),
-    Math.max(EDGE_PX, board.width - EDGE_PX - width)
+  const card = state.scene.cards.find(
+    (candidate) => candidate.id === marker.parentCardId
   );
-  const above = placed.bounds.y - GAP_PX - height;
-  const top =
-    above >= EDGE_PX ? above : placed.bounds.y + placed.bounds.height + GAP_PX;
+  if (!card) return null;
+  const { left, top, side } = placeBeside(
+    depth ? depth.bounds(card) : card.bounds,
+    depth ? depth.marker(marker).bounds : marker.bounds,
+    size ?? { width: 0, height: 0 },
+    state.scene.viewport
+  );
   const cardId = marker.parentCardId;
 
   let controls: ReactNode;
@@ -294,6 +345,7 @@ export const MarkerControls = ({
       data-marker-controls-for={marker.id}
       role="group"
       aria-label={markerHint(marker)}
+      data-side={side}
       style={{
         left,
         top,

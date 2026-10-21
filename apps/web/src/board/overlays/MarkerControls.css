@@ -1,6 +1,6 @@
 /*
- * A marker's controls (MarkerControls.tsx): a small bar just above the
- * counter or chip that was pressed. Buttons answer a press at once and
+ * A marker's controls (MarkerControls.tsx): a small bar beside the card
+ * whose counter or chip was pressed, level with it. Buttons answer a press at once and
  * spring back when let go; a mouse's hover only lightens them, and a finger
  * gets a larger target.
  */
@@ -25,12 +25,25 @@
     var(--ease-out, ease-out) backwards;
 }
 
+/* It comes out of the card's side. */
 @keyframes ptcgsim-marker-controls-in {
   from {
     opacity: 0;
-    translate: 0 4px;
+    translate: var(--marker-controls-from, 0 4px);
     scale: 0.96;
   }
+}
+
+.ptcgsim-marker-controls[data-side='right'] {
+  --marker-controls-from: -6px 0;
+}
+
+.ptcgsim-marker-controls[data-side='left'] {
+  --marker-controls-from: 6px 0;
+}
+
+.ptcgsim-marker-controls[data-side='below'] {
+  --marker-controls-from: 0 -4px;
 }
 
 .ptcgsim-marker-controls__button {

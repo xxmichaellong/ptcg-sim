@@ -1791,7 +1791,7 @@ describe('headless board session controller', () => {
     ]);
   });
 
-  it('owns special-condition editor identity and its default active marker', () => {
+  it('opens the Special Condition chips beside its marker, putting Poisoned on when there was none', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;
@@ -1810,13 +1810,14 @@ describe('headless board session controller', () => {
         presentation: DEFAULT_BOARD_PRESENTATION,
       },
     ]);
-    expect(opened.state.overlays.input).toEqual({
-      kind: 'specialCondition',
+    expect(opened.state.overlays.input).toBeNull();
+    expect(opened.state.overlays.marker).toEqual({
       cardId,
-      initialValue: 'Poisoned',
+      kind: 'specialCondition',
     });
 
-    const wrongEditor = apply(opened.state, {
+    // The chips change only the condition, and stay open for the next.
+    const wrongMarker = apply(opened.state, {
       kind: 'LegacyOverlayActionRequested',
       request: {
         kind: 'context',
@@ -1825,8 +1826,8 @@ describe('headless board session controller', () => {
         value: '70',
       },
     });
-    expect(wrongEditor.state).toBe(opened.state);
-    expect(wrongEditor.effects).toEqual([
+    expect(wrongMarker.state).toBe(opened.state);
+    expect(wrongMarker.effects).toEqual([
       {
         kind: 'OverlayActionRejected',
         request: {
@@ -1855,6 +1856,31 @@ describe('headless board session controller', () => {
       reason: 'invalid_value',
     });
 
+    const chosen = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value: 'Pa',
+      },
+    });
+    expect(chosen.state.overlays.marker).toEqual({
+      cardId,
+      kind: 'specialCondition',
+    });
+    expect(chosen.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetSpecialCondition',
+          stackId: activeStack.id,
+          condition: 'Pa',
+        },
+      },
+    ]);
+
+    // Benched, the Pokémon loses its condition, and the chips go with it.
     const movedView = withRevision(
       opened.state.view!,
       opened.state.view!.revision + 1
@@ -1876,35 +1902,18 @@ describe('headless board session controller', () => {
       },
       stacks: {
         ...movedView.stacks,
-        [activeStack.id]: { ...activeStack, slot: 'bench' },
+        [activeStack.id]: {
+          ...activeStack,
+          slot: 'bench',
+          specialCondition: null,
+        },
       },
     };
     const reconciled = apply(opened.state, {
       kind: 'FrameReceived',
       frame: liveFrame(2, noLongerActive),
     });
-    expect(reconciled.state.overlays.input).toBeNull();
-
-    const submitted = apply(opened.state, {
-      kind: 'LegacyOverlayActionRequested',
-      request: {
-        kind: 'context',
-        action: 'setSpecialCondition',
-        cardId,
-        value: ' Pa ',
-      },
-    });
-    expect(submitted.state.overlays.input).toBeNull();
-    expect(submitted.effects).toEqual([
-      {
-        kind: 'SubmitCommand',
-        command: {
-          type: 'SetSpecialCondition',
-          stackId: activeStack.id,
-          condition: 'Pa',
-        },
-      },
-    ]);
+    expect(reconciled.state.overlays.marker).toBeUndefined();
 
     const withoutCondition: MatchViewState = {
       ...opened.state.view!,
@@ -1922,10 +1931,10 @@ describe('headless board session controller', () => {
       kind: 'LegacyOverlayActionRequested',
       request: { kind: 'context', action: 'setSpecialCondition', cardId },
     });
-    expect(created.state.overlays.input).toEqual({
-      kind: 'specialCondition',
+    expect(created.state.overlays.input).toBeNull();
+    expect(created.state.overlays.marker).toEqual({
       cardId,
-      initialValue: 'P',
+      kind: 'specialCondition',
     });
     expect(created.effects).toEqual([
       {

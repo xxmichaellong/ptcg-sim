@@ -1576,7 +1576,7 @@ const swapAction = (
   if (command.targetStackId)
     return { kind: 'swap', stackId: command.targetStackId };
   // Onto the other player's board: only their Active, pushed to their Bench,
-  // gives way; nothing comes up on the board it left.
+  // gives way, and nothing of theirs comes across.
   const across = command.destinationBoard;
   if (across) {
     return command.destinationSlot === 'active' &&
@@ -1762,12 +1762,20 @@ const handleOverlayAction = (
   }
   if ('input' in resolution) {
     const local = clearLocalPresentation(state);
+    // A Special Condition is chosen from the chips beside its marker (put on
+    // as Poisoned when there was none, as v1's editor started), not typed.
+    const chips = resolution.input.kind === 'specialCondition';
     const next = nextState(state, {
       ...local,
       overlays: {
         contextMenuCardId: null,
         preview: null,
-        input: resolution.input,
+        input: chips ? null : resolution.input,
+        ...markerOverlay(
+          chips
+            ? { cardId: resolution.input.cardId, kind: 'specialCondition' }
+            : null
+        ),
       },
     });
     return accepted(next, [

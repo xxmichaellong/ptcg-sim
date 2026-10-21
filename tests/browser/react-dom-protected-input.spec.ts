@@ -1036,57 +1036,32 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
   await expect(menu).toBeVisible();
   await menu.locator('[data-context-action="setSpecialCondition"]').click();
-  const conditionEditor = host.locator(
-    '[data-legacy-marker-editor="specialCondition"]'
+  // The menu's Special condition opens the chips beside the card, the one
+  // it has (Poisoned) pressed; nothing is typed.
+  const chips = host.locator(
+    '.ptcgsim-marker-controls[data-marker-controls="specialCondition"]'
   );
-  await expect(conditionEditor).toBeVisible();
-  await expect(conditionEditor).toHaveText('Poisoned');
+  await expect(chips).toBeVisible();
+  await expect(
+    host.locator('[data-legacy-marker-editor="specialCondition"]')
+  ).toHaveCount(0);
+  await expect(chips.locator('[aria-pressed="true"]')).toHaveAccessibleName(
+    'Poisoned'
+  );
   const renderedCondition = host.locator(
     `[data-marker-id="${fixture.activeTopCardId}:specialCondition"]`
   );
   await expect(renderedCondition).toBeVisible();
-  expect(await conditionEditor.boundingBox()).toEqual(
-    await renderedCondition.boundingBox()
-  );
+  const chipsBox = (await chips.boundingBox())!;
+  const markerBox = (await renderedCondition.boundingBox())!;
+  // Beside the card, level with the marker: never over the marker itself.
   expect(
-    await conditionEditor.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        backgroundColor: style.backgroundColor,
-        color: style.color,
-        borderRadius: style.borderRadius,
-      };
-    })
-  ).toEqual(
-    // The editor previews the token it edits: the counter or chip painted
-    // inside the marker box (ADR-027), in its colours.
-    await renderedCondition
-      .locator('[data-marker-face]')
-      .evaluate((element) => {
-        const style = getComputedStyle(element);
-        return {
-          backgroundColor: style.backgroundColor,
-          color: style.color,
-          borderRadius: style.borderRadius,
-        };
-      })
-  );
-  await conditionEditor.fill('condition text too long');
-  await conditionEditor.press('Enter');
-  await expect(conditionEditor).toHaveAttribute('aria-invalid', 'true');
-  await expect(conditionEditor).toBeFocused();
-  expect((await evidence(page)).submissions).toEqual([]);
-  expect((await evidence(page)).overlayActions).toHaveLength(1);
-
-  await conditionEditor.fill('Pa');
-  // v1's "PA" previews the Paralyzed chip: an amber jolt on yellow.
-  await expect(conditionEditor).toHaveCSS(
-    'background-color',
-    'rgb(250, 238, 66)'
-  );
-  await expect(conditionEditor).toHaveCSS('color', 'rgb(150, 92, 0)');
-  await conditionEditor.press('Enter');
-  await expect(conditionEditor).toHaveCount(0);
+    chipsBox.x >= markerBox.x + markerBox.width ||
+      chipsBox.x + chipsBox.width <= markerBox.x ||
+      chipsBox.y >= markerBox.y + markerBox.height ||
+      chipsBox.y + chipsBox.height <= markerBox.y
+  ).toBe(true);
+  await chips.getByRole('button', { name: 'Paralyzed' }).click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
     .toEqual([
@@ -1120,11 +1095,12 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(conditionEvidence.overlayRejections).toEqual([]);
   expect(conditionEvidence.reportedErrors).toEqual([]);
 
+  // They stay open for the next choice: taking the condition off.
   await clearEvidence(page);
-  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
-  await menu.locator('[data-context-action="setSpecialCondition"]').click();
-  await conditionEditor.fill('0');
-  await conditionEditor.press('Enter');
+  await expect(chips).toBeVisible();
+  await chips
+    .getByRole('button', { name: 'Remove the Special Condition' })
+    .click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
     .toEqual([
@@ -1141,6 +1117,8 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       clientSequence: 4,
     },
   ]);
+  await page.keyboard.press('Escape');
+  await expect(chips).toHaveCount(0);
 
   await clearEvidence(page);
   await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });

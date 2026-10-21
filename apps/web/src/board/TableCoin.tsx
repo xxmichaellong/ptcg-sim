@@ -71,8 +71,8 @@ const tossAngleOf = (animation: Animation | null, from: number): number => {
 };
 
 /**
- * The coin is Pokémon TCG Live's standard one: its logo on red and blue for
- * heads, the same logo on pale blue for tails.
+ * The coin is Pokémon TCG Pocket's starting Poké Ball coin: the red and
+ * white ball for heads, the same ball struck in silver for tails.
  */
 const COIN_FACE_URLS: Readonly<Record<Face, string>> = {
   heads: '/v2/assets/table/coin-heads.webp',
@@ -326,6 +326,8 @@ const TableCoin = ({
     <>
       <div
         className="table-coin"
+        // A card carried over the coin is drawn over it (renderer-dom's lift).
+        data-over-board=""
         data-table-coin={own ? 'local' : 'opponent'}
         data-coin-player-id={playerId}
         data-coin-phase={phase}

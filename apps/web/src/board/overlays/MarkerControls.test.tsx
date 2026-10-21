@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
 import {
   MarkerControls,
+  placeBeside,
   type MarkerControlsActions,
 } from './MarkerControls.js';
 
@@ -33,7 +34,16 @@ const marker = (
 
 const stateWith = (node: MarkerSceneNode): BoardSessionControllerState =>
   ({
-    scene: { viewport: { width: 1000, height: 700 }, markers: [node] },
+    scene: {
+      viewport: { width: 1000, height: 700 },
+      markers: [node],
+      cards: [
+        {
+          id: cardId,
+          bounds: { x: 380, y: 280, width: 90, height: 126 },
+        },
+      ],
+    },
     overlays: {
       contextMenuCardId: null,
       preview: null,
@@ -130,5 +140,44 @@ describe('MarkerControls', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     });
     expect(actions.dismiss).toHaveBeenCalledWith('marker');
+  });
+});
+
+describe('placeBeside', () => {
+  const card = { x: 400, y: 300, width: 90, height: 126 };
+  const marker = { x: 450, y: 310, width: 30, height: 30 };
+  const size = { width: 200, height: 40 };
+
+  it('sits right of the card, level with the marker', () => {
+    expect(
+      placeBeside(card, marker, size, { width: 1000, height: 700 })
+    ).toEqual({ left: 500, top: 305, side: 'right' });
+  });
+
+  it('goes left of the card where the right has no room', () => {
+    expect(
+      placeBeside(card, marker, size, { width: 700, height: 700 })
+    ).toEqual({ left: 190, top: 305, side: 'left' });
+  });
+
+  it('goes above the card on a table too narrow for either side, else below, inside the table', () => {
+    const narrow = { width: 390, height: 700 };
+    const onLeft = { ...card, x: 150 };
+    expect(placeBeside(onLeft, marker, size, narrow)).toEqual({
+      left: 95,
+      top: 250,
+      side: 'above',
+    });
+    expect(placeBeside({ ...onLeft, y: 20 }, marker, size, narrow)).toEqual({
+      left: 95,
+      top: 156,
+      side: 'below',
+    });
+    expect(
+      placeBeside({ ...onLeft, x: 0 }, marker, size, {
+        width: 250,
+        height: 700,
+      }).left
+    ).toBe(8);
   });
 });

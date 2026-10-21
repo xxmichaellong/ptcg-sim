@@ -1248,9 +1248,41 @@ export const BoardSurface = ({
       director.depth.onOverWindows = null;
     };
   }, [director]);
+  // A card carried over a piece the page draws above the board (a coin,
+  // marked `data-over-board`) is lifted over it the same way, or it would
+  // pass under the piece.
+  const [overPiece, setOverPiece] = useState(false);
+  const dragging = presentation.drag !== null;
+  useLayoutEffect(() => {
+    const surface = surfaceRef.current;
+    const pieces = dragging
+      ? Array.from(
+          surface?.ownerDocument.querySelectorAll('[data-over-board]') ?? []
+        )
+      : [];
+    const held =
+      pieces.length > 0
+        ? surface?.querySelector('.ptcgsim-card[data-held="drag"]')
+        : null;
+    const box = held?.getBoundingClientRect();
+    setOverPiece(
+      box !== undefined &&
+        pieces.some((piece) => {
+          const at = piece.getBoundingClientRect();
+          return (
+            at.width > 0 &&
+            box.left < at.right &&
+            at.left < box.right &&
+            box.top < at.bottom &&
+            at.top < box.bottom
+          );
+        })
+    );
+  }, [dragging, presentation.drag]);
   const lifting =
     (presentation.drag !== null || overWindows) &&
-    (presentation.openedZoneId !== null ||
+    (overPiece ||
+      presentation.openedZoneId !== null ||
       installedScene.zones.some(
         (zone) =>
           (zone.kind === 'inspection' ||
@@ -1945,14 +1977,16 @@ export const BoardSurface = ({
         className="ptcgsim-board-table"
         style={{ position: 'absolute', inset: 0 }}
       >
-        {depth ? (
+        {/* The play mat (geometry v2), tilted with the table or flat on
+            it, as far as the benches; the hands are held over the desk. */}
+        {depth || table ? (
           <div
             className="ptcgsim-depth-mat"
             aria-hidden="true"
             style={{
               width: matSize.width,
               height: matSize.height,
-              transform: `matrix3d(${tableCardMatrix(depth.camera, mat, 0).join(',')})${matScaled ? ` scale(${String(matScaleX)}, ${String(matScaleY)})` : ''}`,
+              transform: `${depth ? `matrix3d(${tableCardMatrix(depth.camera, mat, 0).join(',')})` : `translate(${String(mat.x)}px, ${String(mat.y)}px)`}${matScaled ? ` scale(${String(matScaleX)}, ${String(matScaleY)})` : ''}`,
             }}
           >
             {/* The halves' tints and the seam are printed on the mat, so

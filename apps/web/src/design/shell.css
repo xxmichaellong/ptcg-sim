@@ -96,26 +96,6 @@ textarea {
     auto;
   background-color: var(--color-desk);
 }
-/* Flat, there is no mat drawn: the felt itself fills the table. */
-.remote-room-route
-  .board-column:has(.ptcgsim-board-surface[data-table-view='flat']) {
-  background-color: var(--color-felt);
-}
-.remote-room-route
-  .board-column:has(.ptcgsim-board-surface[data-table-view='flat'])::before {
-  background:
-    radial-gradient(
-      ellipse 70% 60% at 46% 46%,
-      var(--color-felt-glow),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 120% 95% at 50% 50%,
-      var(--color-felt) 40%,
-      var(--color-felt-deep) 100%
-    );
-  background-color: var(--color-felt);
-}
 /* A chosen background becomes the play mat, dimmed so cards stay legible. */
 .remote-room-route[data-room-background='image'] .board-column,
 .remote-room-route[data-room-background='color'] .board-column {

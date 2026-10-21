@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import {
+  chooseMoreAction,
   closeActivity,
   dismissWelcome,
   openActivity,
+  openDeck,
   useFlatTable,
 } from './support/table-shell.js';
 
@@ -175,4 +177,67 @@ test('a phone keeps both coins on the table and a tap flips', async ({
   await flipAndLand(page, 'local', () =>
     page.locator('#flipCoinButton').click()
   );
+});
+
+test('a card carried over a coin is drawn over it, and settles back under nothing', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openSolo(page);
+  await openDeck(page);
+  await page.locator('#nativeDeckBuilderTargetMain').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'main.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      [
+        'QTY,Name,Type,URL',
+        '60,Main Mon,Pokémon,/v2/assets/cardback.png?main-mon',
+      ].join('\n')
+    ),
+  });
+  await page.locator('#nativeDeckBuilderPlayButton').click();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+  const surface = page.locator('.ptcgsim-board-surface');
+  const revision = () => surface.getAttribute('data-revision').then(Number);
+  await expect.poll(revision).toBeGreaterThan(0);
+  const loaded = await revision();
+  await chooseMoreAction(page, 'setupBothButton');
+  await expect.poll(revision).toBeGreaterThan(loaded);
+  await expect(
+    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+  ).toHaveCount(1);
+  const card = page
+    .locator('[data-in-hand][data-card-side="local"]')
+    .filter({ has: page.locator('img') })
+    .first();
+  const cardId = (await card.getAttribute('data-card-id'))!;
+  const from = (await card.boundingBox())!;
+  const at = (await coin(page, 'local').boundingBox())!;
+  const target = { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+  await page.mouse.move(from.x + from.width / 2, from.y + 30);
+  await page.mouse.down();
+  for (let step = 1; step <= 12; step += 1)
+    await page.mouse.move(
+      from.x +
+        from.width / 2 +
+        ((target.x - from.x - from.width / 2) * step) / 12,
+      from.y + 30 + ((target.y - from.y - 30) * step) / 12
+    );
+  // Over the coin, the card is shown on the lift layer, above it.
+  const original = page.locator(`[data-card-id="${cardId}"]`);
+  await expect(original).toHaveAttribute('data-lifted', '');
+  await expect(
+    page.locator('.ptcgsim-board-lift [data-lift-copy]')
+  ).toHaveCount(1);
+  // Carried away from it again, it is drawn where it is.
+  await page.mouse.move(700, 330, { steps: 6 });
+  await expect(original).not.toHaveAttribute('data-lifted', '');
+  await page.mouse.up();
+  await expect(
+    page.locator('.ptcgsim-board-lift [data-lift-copy]')
+  ).toHaveCount(0);
 });
