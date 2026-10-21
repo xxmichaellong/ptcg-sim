@@ -13,6 +13,10 @@
     ],
     "translation": ", укључено"
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, one {# Radiant карта; шпил може имати само једну.} few {# Radiant карте; шпил може имати само једну.} other {# Radiant карата; шпил може имати само једну.}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, one {Одбаци руку и повуци # карту} few {Одбаци руку и повуци # карте} other {Одбаци руку и повуци # карата}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, one {Повуци # карту} few {Повуци # карте} other {Повуци # карата}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, one {Погледај доњу карту њиховог шпила} few {Погледај доње # карте њиховог шпила} other {Погледај доњих # карата њиховог шпила}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, one {Погледај доњу карту свог шпила} few {Погледај доње # карте свог шпила} other {Погледај доњих # карата свог шпила}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, one {Погледај горњу карту њиховог шпила} few {Погледај горње # карте њиховог шпила} other {Погледај горњих # карата њиховог шпила}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, one {Погледај горњу карту свог шпила} few {Погледај горње # карте свог шпила} other {Погледај горњих # карата свог шпила}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, one {Стави руку на дно шпила и повуци # карту} few {Стави руку на дно шпила и повуци # карте} other {Стави руку на дно шпила и повуци # карата}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, one {Умешај руку у шпил и повуци # карту} few {Умешај руку у шпил и повуци # карте} other {Умешај руку у шпил и повуци # карата}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "Нагнут сто на широком екрану, раван на усправном телефону."
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "Цео број од {0} до {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "Цео број, до 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "Приступ раном бета тестирању."
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "Радње"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "Активни"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "Додај {count} штете"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Додај још један део стадиона"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Додај штету"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "Додај штету…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "Брзина анимације"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "Брзина анимације…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "Прикачене карте које се премештају"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "Причвршћено на {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "Беба"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "Назад"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "Завршна обрада карте (опционо)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "Језик слика карата…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Слике карата"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "Врста карте"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "Карте"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "Провера…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "Изабери"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "Прво изабери шпил"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "Обриши дневник"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "Обриши дневник"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "Кликни на било коју пречицу да јој промениш тастере."
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "Затвори"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "Затвори искачуће прозоре"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "Затвори дневник"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "шифра или име"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "Безбојни"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "Команде"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "Команде"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "Команде"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "Тренутно"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Прилагођена карта"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "Бројач штете"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "Штета на Pokémon-у"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "Одбаци све"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "Одбаци све са своје табле"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "Одбаци руку"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Отпад"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "Одбаци руку и повуци…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "Радије преузми списак."
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "Преузми дневник"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "Повуци"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "Повуци карту"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "Повуци карте"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Повуци карте"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "Повуци карте…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "Унеси број, па притисни Enter."
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "Филтери"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "Пронађи карту…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "Пронађи шпил"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "Баци новчић"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "Баци новчић другог седишта"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "Веза за Github Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "Иди на самостални сто"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "Колико карата желиш да погледаш?"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "Колико карата?"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "Колико штете?"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "Језик"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "Језик…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "Велики приказ карте при преласку мишем"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "Погледај или покриј (само ти)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "Погледај или покриј њихову руку"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "Погледај или покриј њихове Награде"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "Погледај или покриј своје Награде"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "Погледај доње карте"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "Погледај дно њиховог шпила…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "Погледај дно свог шпила…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Погледај горње карте"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "Погледај врх њиховог шпила…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "Погледај врх свог шпила…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Означи као неискоришћено"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "Означи GX напад као неискоришћен"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "Означи VSTAR моћ као неискоришћену"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "Премести карту..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "Премести све са свог стола у руку"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "Нема доступних радњи"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "Ниједна радња не одговара"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "Нема Basic Pokémona у почетних 7 карата (mulligan)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Ниједна пречица не одговара упиту „{search}“."
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "Без посебног стања"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "Отвори датотеку"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "Отвори подешавања"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "Отвори екран са шпилом"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "Отвори дневник"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "Отвори њихов шпил"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "Отвори њихову гомилу одбачених карата"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "Отвори њихову Lost Zone"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "Отвори њихове Награде"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "Отвори свој шпил"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "Отвори своју гомилу одбачених карата"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "Отвори своју Lost Zone"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "Отвори своје Награде"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "PayPal линк за донацију"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "Извуци насумичну карту из њихове руке"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "Изабери насумичну карту"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "Притисни <0/> да у сваком тренутку отвориш ову листу."
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "Притисни поново за потврду"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "Притисни Enter поново за потврду"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Притисни тастере…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "Вратити све пречице на подразумеване?"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "Стави све са свог стола у Lost Zone"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "Склони празну Lost Zone"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "Склони Lost Zone"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "Стави руку на дно шпила и вуци…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "Стави своје Награде на дно шпила"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "Смањи кретање"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "Смањи кретање…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "Откриј (оба играча)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "Откриј или сакриј њихове Награде"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "Откриј или сакриј своје Награде"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "Откриј/сакриј карту"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Rule Box"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "Покрени"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "Сачувана игра је настављена"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "Реци…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Претражи карте"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "Претражи све формате"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "Потражи радњу"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "Потражи радњу…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "Потражи било коју радњу и покрени је (такође Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Синтакса претраге"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "Претражи карте на столу…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "Претражи свој шпил"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "Код сета, илустратор"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "Постави штету на {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "Постави штету…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Помена у следећем запису промена."
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "Прикажи"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "Прикажи сва издања сваке карте"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "Прикажи половине…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Прикажи тастатуру"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "Прикажи карту"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "Промешај шпил"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "Промешај све са свог стола у шпил"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Промешај руку у шпил"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Стави у шпил (на дно)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "Промешај свој шпил"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "Промешај руку у шпил и вуци…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "Промешај своје награде"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "Сортирај резултате"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "Сортирај њихову руку"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "Сортирај своју руку"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "Специјално стање"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "Посебно стање"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "Посебно стање…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "Стил стола"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "Стил стола…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "Приказ стола"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "Приказ стола…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "Скини са: {seat}"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "Уклони {count} оштећења"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "Скини оштећење"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "Уклони оштећења…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "Сто прима највише {max} различитих карата."
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "Његово активно место"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "Његова клупа"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "Њихове карте су за тебе окренуте исправно. Када је искључено, окренуте су ка свом власнику, као преко правог стола."
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "Његов шпил"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "Његова одбачена гомила"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "Његова рука"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "Његова Lost Zone"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "Његова табла за игру"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "Његове награде"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Затим повуци"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "Колико карата затим вучеш?"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "Покушај са мање карата."
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "Пробај друге речи или притисни Escape да се вратиш."
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "Окрени лицем надоле (оба играча)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "Окрени сто"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "Тип"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "Упиши поруку, па притисни Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "Прво нешто упиши"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "Укуцај речи за претрагу по имену или комбинуј филтере — овде ради синтакса претраге Limitless TCG-а."
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "Упиши, па притисни Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "Користи на {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "Искористи GX напад"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "Користи исту групу за делове једне илустрације. Постави делове Pokémon карте у једну гомилу, а делове Стадиона у зону Стадиона."
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "Искористи VSTAR моћ"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "Добродошао у PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "Шта да уради {0}?"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "Шта је ново"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "Гледаш овај сто"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "Твоје активно место"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "Твоја клупа"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "Твоји шпилови"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "Твоја одбачена гомила"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "Твоја рука"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "Твоја Lost Zone"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "Твоје име је промењено. Направи нову собу пре придруживања."
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "Твој противник премешта ове карте"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "Твоја табла за игру"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "Твоје награде"
   },
   "yuM-lV": {
     "message": "Your turn",

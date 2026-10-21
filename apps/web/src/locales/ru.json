@@ -13,6 +13,10 @@
     ],
     "translation": ", вкл."
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, one {# карта Radiant; в колоде может быть только одна.} few {# карты Radiant; в колоде может быть только одна.} many {# карт Radiant; в колоде может быть только одна.} other {# карты Radiant; в колоде может быть только одна.}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, one {Сбросить руку и взять # карту} few {Сбросить руку и взять # карты} many {Сбросить руку и взять # карт} other {Сбросить руку и взять # карты}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, one {Взять # карту} few {Взять # карты} many {Взять # карт} other {Взять # карты}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, one {Посмотреть нижнюю карту их колоды} few {Посмотреть нижние # карты их колоды} many {Посмотреть нижние # карт их колоды} other {Посмотреть нижние # карты их колоды}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, one {Посмотреть нижнюю карту твоей колоды} few {Посмотреть нижние # карты твоей колоды} many {Посмотреть нижние # карт твоей колоды} other {Посмотреть нижние # карты твоей колоды}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, one {Посмотреть верхнюю карту их колоды} few {Посмотреть верхние # карты их колоды} many {Посмотреть верхние # карт их колоды} other {Посмотреть верхние # карты их колоды}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, one {Посмотреть верхнюю карту твоей колоды} few {Посмотреть верхние # карты твоей колоды} many {Посмотреть верхние # карт твоей колоды} other {Посмотреть верхние # карты твоей колоды}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, one {Положить руку вниз колоды и взять # карту} few {Положить руку вниз колоды и взять # карты} many {Положить руку вниз колоды и взять # карт} other {Положить руку вниз колоды и взять # карты}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, one {Замешать руку в колоду и взять # карту} few {Замешать руку в колоду и взять # карты} many {Замешать руку в колоду и взять # карт} other {Замешать руку в колоду и взять # карты}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "Наклонённый стол на широком экране, плоский — на телефоне в вертикальной ориентации."
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "Целое число от {0} до {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "Целое число до 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "Доступ к раннему бета-тестированию."
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "Действия"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "Активная позиция"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "Добавить урон: {count}"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Добавить ещё одну часть стадиона"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Добавить урон"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "Добавить урон…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "Скорость анимации"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "Скорость анимации…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "Перемещаются прикреплённые карты"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "Прикреплено к: {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "Малыш"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "Назад"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "Покрытие карты (необязательно)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "Язык изображений карт…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Изображения карт"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "Тип карты"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "Карты"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "Проверка…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "Выбрать"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "Сначала выбери колоду"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "Очистить журнал"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "Очистить журнал"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "Нажми на любое сочетание, чтобы изменить клавиши."
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "Закрыть"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "Закрыть всплывающие окна"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "Закрыть журнал"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "код или название"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "Бесцветный"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "Команды"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "Команды"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "Команды"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "Текущее"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Своя карта"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "Жетон урона"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "Урон на Pokémon"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "Сбросить всё"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "Сбросить всё с игрового поля"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "Сбросить руку"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Стопка сброса"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "Сбросить руку и взять…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "Скачай список вместо этого."
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "Скачать журнал"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "Взять"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "Взять карту"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "Взять карты"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Взять карты"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "Взять карты…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "Введи число и нажми Enter."
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "Фильтры"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "Найти карту…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "Найти колоду"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "Подбросить монетку"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "Подбросить монету другого места"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "Ссылка на GitHub Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "Перейти к одиночному столу"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "Сколько карт ты хочешь посмотреть?"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "Сколько карт?"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "Сколько урона?"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "Язык"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "Язык…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "Крупный просмотр карты при наведении"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "Посмотреть или закрыть (только ты)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "Посмотреть или закрыть их руку"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "Посмотреть или закрыть их призовые карты"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "Посмотреть призовые карты или закрыть их"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "Посмотреть нижние карты"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "Посмотреть низ его колоды…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "Посмотреть низ твоей колоды…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Посмотреть верхние карты"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "Посмотреть верх его колоды…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "Посмотреть верх твоей колоды…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Отметить как неиспользованную"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "Отметить GX-атаку неиспользованной"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "Отметить VSTAR-способность неиспользованной"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "Переместить карту..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "Переместить всё с твоего игрового поля в руку"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "Нет доступных действий"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "Подходящих действий нет"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "Нет Базового Покемона в первых 7 картах (муллиган)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Нет сочетаний клавиш, подходящих к «{search}»."
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "Нет особых состояний"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "Открыть файл"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "Открыть настройки"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "Открыть экран колоды"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "Открыть журнал"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "Открыть его колоду"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "Открыть его сброс"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "Открыть его Lost Zone"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "Открыть его призовые карты"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "Открыть колоду"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "Открыть твой сброс"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "Открыть твою Lost Zone"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "Открыть твои призовые карты"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "Ссылка для пожертвований через PayPal"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "Выбрать случайную карту из его руки"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "Выбрать случайную карту"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "Нажми <0/>, чтобы открыть этот список в любой момент."
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "Нажми ещё раз для подтверждения"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "Нажми Enter ещё раз для подтверждения"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Нажми клавиши…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "Вернуть все горячие клавиши по умолчанию?"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "Отправить всё с твоего игрового поля в Lost Zone"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "Убрать пустую Lost Zone"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "Убрать Lost Zone"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "Положить руку под низ колоды и взять карты…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "Положить твои призовые карты под низ колоды"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "Уменьшить анимацию"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "Уменьшить анимацию…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "Показать (обоим игрокам)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "Показать или скрыть его призовые карты"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "Показать или скрыть твои призовые карты"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "Показать/скрыть карту"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Rule Box"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "Выполнить"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "Сохранённая игра возобновлена"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "Сказать…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Поиск карт"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "Искать во всех форматах"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "Поиск действия"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "Поиск действия…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "Найди любое действие и выполни его (также Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Синтаксис поиска"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "Поиск карт на столе…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "Искать в твоей колоде"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "Код сета, иллюстратор"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "Установить повреждения: {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "Установить повреждения…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Благодарность в следующем списке изменений."
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "Показать"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "Показывать все издания каждой карты"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "Показать половины…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Показать клавиатуру"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "Показать карту"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "Перемешать колоду"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "Перетасовать всё с твоего игрового поля в колоду"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Перемешать руку в колоду"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Перемешать в колоду (вниз)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "Перемешать колоду"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "Замешать руку в колоду и взять…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "Перемешать призовые карты"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "Сортировка результатов"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "Отсортировать его руку"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "Отсортировать свою руку"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "Особое состояние"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "Особое состояние"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "Особое состояние…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "Стиль стола"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "Стиль стола…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "Вид стола"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "Вид стола…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "Снять у {seat}"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "Убрать урон: {count}"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "Убрать урон"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "Убрать урон…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "На столе может быть не больше {max} разных карт."
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "Активная позиция соперника"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "Скамейка соперника"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "Их карты повёрнуты к тебе правильной стороной. Если выключить, они повернуты к владельцу, как за настоящим столом."
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "Колода соперника"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "Сброс соперника"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "Рука соперника"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "Lost Zone соперника"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "Игровое поле соперника"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "Призовые карты соперника"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Затем возьми карту"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "Сколько карт взять потом?"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "Попробуй с меньшим числом карт."
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "Попробуй другие слова или нажми Escape, чтобы вернуться."
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "Перевернуть рубашкой вверх (у обоих игроков)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "Повернуть стол"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "Тип"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "Введи сообщение и нажми Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "Сначала что-нибудь введи"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "Введи слова для поиска по названиям или комбинируй фильтры — здесь работает синтаксис поиска Limitless TCG."
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "Введи текст и нажми Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "Использовать для места {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "Использовать GX-атаку"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "Используй одну группу для частей одной иллюстрации. Размещай части Pokémon в одной стопке, а части Стадиона — в зоне Стадиона."
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "Использовать VSTAR-способность"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "Добро пожаловать в PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "Что должен сделать {0}?"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "Что нового"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "Ты наблюдаешь за этим столом"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "Твоя активная позиция"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "Твоя скамейка"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "Твои колоды"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "Твой сброс"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "Твоя рука"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "Твоя Lost Zone"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "Твоё имя изменилось. Создай новую комнату, прежде чем присоединяться."
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "Твой соперник перемещает эти карты"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "Твоё игровое поле"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "Твои призовые карты"
   },
   "yuM-lV": {
     "message": "Your turn",

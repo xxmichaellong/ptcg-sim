@@ -1,5 +1,6 @@
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
@@ -30,6 +31,7 @@ import {
 
 import { RailButton, useRailWidth } from '../../board/rail/TableRail.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
+import { openCommandPalette } from '../../commands/palette-state.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { DeckIcon } from '../../ui/DeckIcon.js';
@@ -87,10 +89,11 @@ const openOutside = (url: string): void => {
  * deck, the keys (not on a touch screen, which has none) and Settings.
  * Worded when the toolbar renders, in the language up then.
  */
-const primaryEntries = (
+export const primaryEntries = (
   model: AppMenuModel,
   shortcutsHint: string | undefined,
-  touchOnly: boolean
+  touchOnly: boolean,
+  commandsHint?: string
 ): ToolbarEntry[] => {
   const entries: ToolbarEntry[] = [];
   if (model.onPlaySolo) {
@@ -117,6 +120,14 @@ const primaryEntries = (
       onSelect: model.onPlayOnline,
     });
   }
+  // Every action, searched for: the command palette (ADR-035).
+  entries.push({
+    id: 'commandsButton',
+    label: t({ message: 'Commands', context: 'the command palette' }),
+    icon: MagnifyingGlassIcon,
+    ...(commandsHint ? { hint: commandsHint } : {}),
+    onSelect: openCommandPalette,
+  });
   if (!touchOnly) {
     entries.push({
       id: 'shortcutsButton',
@@ -136,7 +147,7 @@ const primaryEntries = (
 };
 
 /** Everything else, behind the toolbar's last button (More). */
-const restEntries = (
+export const restEntries = (
   model: AppMenuModel,
   fullscreen: boolean
 ): ActionMenuEntry[] => {
@@ -354,7 +365,12 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
   const drawer = useRef<HTMLDivElement>(null);
   const items = useRef<HTMLDivElement>(null);
   useDrawerWidth(drawer, items, open);
-  const primary = primaryEntries(model, hint('table.shortcuts'), touchOnly);
+  const primary = primaryEntries(
+    model,
+    hint('table.shortcuts'),
+    touchOnly,
+    hint('table.commands')
+  );
   const rest = restEntries(model, fullscreen);
   const header = model.heading ? (
     <div className="ptcgsim-app-menu-heading">{model.heading}</div>

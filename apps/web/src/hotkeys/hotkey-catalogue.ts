@@ -453,6 +453,14 @@ export const HOTKEY_ACTIONS = [
     scope: 'any',
     defaultChord: '?',
   }),
+  action('table.commands', {
+    group: 'table',
+    label: msg`Commands`,
+    short: msg({ message: 'Commands', context: 'shortcut key caption' }),
+    detail: msg`Search for any action and run it (also Ctrl+K)`,
+    scope: 'any',
+    defaultChord: '`',
+  }),
 ] as const;
 
 export type HotkeyActionEntry = (typeof HOTKEY_ACTIONS)[number];

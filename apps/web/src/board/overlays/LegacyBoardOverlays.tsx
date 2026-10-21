@@ -196,7 +196,7 @@ export interface LegacyBoardOverlayActions {
   ) => void;
 }
 
-type ContextEntry =
+export type ContextEntry =
   | {
       readonly kind: 'header';
       readonly id: string;

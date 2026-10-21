@@ -115,7 +115,7 @@ const KEY_EVENT_FIELDS: Readonly<
 };
 
 /** A stand-in key press for a default chord. */
-const inputForChord = (chord: KeyChord): KeyInput => {
+export const inputForChord = (chord: KeyChord): KeyInput => {
   const fields = KEY_EVENT_FIELDS[chord.key] ?? {
     key: chord.shift ? chord.key.toUpperCase() : chord.key,
     code: /^[a-z]$/u.test(chord.key) ? `Key${chord.key.toUpperCase()}` : '',

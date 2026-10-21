@@ -72,6 +72,12 @@ const isLegacyLooseBoardShortcutDestination = (
 ): value is LegacyLooseBoardShortcutDestination =>
   value === 'discard' || value === 'hand' || value === 'shuffleIntoDeck';
 
+/**
+ * The most cards one draw or look takes: the number keys say 1-9, the
+ * command palette any number (ADR-035), up to the room's own limit.
+ */
+const MAX_SHORTCUT_COUNT = 200;
+
 export type LegacyBoardShortcutActionRequest =
   | {
       readonly action: 'resolveOwnLooseBoard';
@@ -265,7 +271,7 @@ export const resolveLegacyBoardShortcutAction = (
         request.action !== 'shuffleOwnDeck' &&
         (!Number.isSafeInteger(request.count) ||
           request.count < 1 ||
-          request.count > 9)
+          request.count > MAX_SHORTCUT_COUNT)
       ) {
         return { ok: false, reason: 'invalid_value' };
       }

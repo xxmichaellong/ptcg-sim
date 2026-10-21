@@ -616,6 +616,7 @@ describe('RemoteRoomRoute', () => {
       'appMenuButton',
       'deckImportButton',
       'p2Button',
+      'commandsButton',
       'shortcutsButton',
       'settingsButton',
       'appMoreButton',

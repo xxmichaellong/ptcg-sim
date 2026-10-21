@@ -18,6 +18,7 @@ import type {
 } from '../replay/ReplaySessionCoordinator.js';
 import {
   BoardSessionController,
+  type BoardActionOrigin,
   type BoardProjectionBoundary,
   type BoardProjectionFrame,
   type BoardProjectionSource,
@@ -204,17 +205,25 @@ export class BoardSessionAdapter {
     return this.controller.dispatch({ kind: 'OpenedZoneCardIntent', intent });
   }
 
-  emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
+  emitLegacyOverlayAction(
+    request: LegacyBoardOverlayActionRequest,
+    origin?: BoardActionOrigin
+  ): boolean {
     return this.controller.dispatch({
       kind: 'LegacyOverlayActionRequested',
       request,
+      ...(origin ? { origin } : {}),
     });
   }
 
-  emitLegacyShortcutAction(request: LegacyBoardShortcutActionRequest): boolean {
+  emitLegacyShortcutAction(
+    request: LegacyBoardShortcutActionRequest,
+    origin?: BoardActionOrigin
+  ): boolean {
     return this.controller.dispatch({
       kind: 'LegacyShortcutActionRequested',
       request,
+      ...(origin ? { origin } : {}),
     });
   }
 

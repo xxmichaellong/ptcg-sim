@@ -105,6 +105,14 @@ export type BoardPreviewState =
       readonly focusCardId: ViewCardId;
     };
 
+/**
+ * Where an action comes from. The command palette names its card, pile and
+ * value outright (ADR-035): it does not need the card selected, its menu or
+ * pile open, or a prompt open, as a press or a key does. Everything else --
+ * the card on the table, the seat, the value -- is checked as usual.
+ */
+export type BoardActionOrigin = 'palette';
+
 /** A counter or chip on a card whose controls are open (MarkerControls). */
 export interface BoardMarkerControlsState {
   /** The card it lies on: the top of a Pokémon, or a single card. */
@@ -173,10 +181,12 @@ export type BoardSessionControllerAction =
   | {
       readonly kind: 'LegacyOverlayActionRequested';
       readonly request: LegacyBoardOverlayActionRequest;
+      readonly origin?: BoardActionOrigin;
     }
   | {
       readonly kind: 'LegacyShortcutActionRequested';
       readonly request: LegacyBoardShortcutActionRequest;
+      readonly origin?: BoardActionOrigin;
     }
   | {
       readonly kind: 'OncePerGameActionRequested';
@@ -1691,7 +1701,8 @@ const rejectOverlayAction = (
 const handleOverlayAction = (
   state: BoardSessionControllerState,
   request: LegacyBoardOverlayActionRequest,
-  dependencies: BoardSessionControllerDependencies
+  dependencies: BoardSessionControllerDependencies,
+  direct = false
 ): BoardSessionControllerReduction => {
   const view = state.view;
   const scene = state.scene;
@@ -1734,17 +1745,18 @@ const handleOverlayAction = (
         : request.action === 'toggleAbility');
   if (
     request.kind === 'context' &&
-    !fromMarkerControls &&
-    ((submittedInputIdentity
-      ? !submittedInputMatches
-      : state.overlays.contextMenuCardId !== request.cardId) ||
+    ((!fromMarkerControls &&
+      !direct &&
+      (submittedInputIdentity
+        ? !submittedInputMatches
+        : state.overlays.contextMenuCardId !== request.cardId)) ||
       !scene.cards.some((card) => card.id === request.cardId))
   ) {
     return rejectOverlayAction(state, request, 'stale_card');
   }
   if (
     request.kind === 'zone' &&
-    (state.presentation.openedZoneId !== request.zoneId ||
+    ((!direct && state.presentation.openedZoneId !== request.zoneId) ||
       !scene.zones.some((zone) => zone.id === request.zoneId))
   ) {
     return rejectOverlayAction(state, request, 'stale_zone');
@@ -1877,7 +1889,8 @@ const rejectShortcutAction = (
 const handleShortcutAction = (
   state: BoardSessionControllerState,
   request: LegacyBoardShortcutActionRequest,
-  dependencies: BoardSessionControllerDependencies
+  dependencies: BoardSessionControllerDependencies,
+  direct = false
 ): BoardSessionControllerReduction => {
   const view = state.view;
   const scene = state.scene;
@@ -1892,7 +1905,7 @@ const handleShortcutAction = (
   }
   if ('cardId' in request) {
     if (
-      state.presentation.selectedCardId !== request.cardId ||
+      (!direct && state.presentation.selectedCardId !== request.cardId) ||
       (!hasCard(scene, request.cardId) &&
         !hasOpenedZoneCard(state, scene, request.cardId))
     ) {
@@ -1905,6 +1918,7 @@ const handleShortcutAction = (
     request.value !== undefined;
   if (
     submittedCountInput &&
+    !direct &&
     (state.overlays.input?.kind !== 'shortcutCount' ||
       state.overlays.input.action !== request.action)
   ) {
@@ -1951,11 +1965,12 @@ const handleShortcutAction = (
     });
     return accepted(next, [{ kind: 'InstallPresentation', presentation }]);
   }
-  const stateAfterInput = submittedCountInput
-    ? nextState(state, {
-        overlays: { ...state.overlays, input: null },
-      })
-    : state;
+  const stateAfterInput =
+    submittedCountInput && state.overlays.input?.kind === 'shortcutCount'
+      ? nextState(state, {
+          overlays: { ...state.overlays, input: null },
+        })
+      : state;
   if (!resolution.dismissSelection) {
     return accepted(stateAfterInput, [
       { kind: 'SubmitCommand', command: resolution.command },
@@ -2115,9 +2130,19 @@ export const reduceBoardSessionController = (
     case 'OpenedZoneCardIntent':
       return handleIntent(state, action.intent, dependencies, true);
     case 'LegacyOverlayActionRequested':
-      return handleOverlayAction(state, action.request, dependencies);
+      return handleOverlayAction(
+        state,
+        action.request,
+        dependencies,
+        action.origin === 'palette'
+      );
     case 'LegacyShortcutActionRequested':
-      return handleShortcutAction(state, action.request, dependencies);
+      return handleShortcutAction(
+        state,
+        action.request,
+        dependencies,
+        action.origin === 'palette'
+      );
     case 'OncePerGameActionRequested':
       return handleOncePerGameAction(
         state,

@@ -108,13 +108,14 @@ const toggle = (): HTMLButtonElement =>
   document.querySelector<HTMLButtonElement>('#appMenuButton')!;
 
 describe('AppMenu', () => {
-  it('opens along the rail: the deck, where to play, the keys, Settings and More', async () => {
+  it('opens along the rail: the deck, where to play, Commands, the keys, Settings and More', async () => {
     const menu = model();
     await render(menu);
     expect(toolbarIds()).toEqual([
       'appMenuButton',
       'deckImportButton',
       'p2Button',
+      'commandsButton',
       'shortcutsButton',
       'settingsButton',
       'appMoreButton',
@@ -193,9 +194,10 @@ describe('AppMenu', () => {
     expect(document.querySelector('.ptcgsim-app-toolbar')).toBeNull();
     expect(document.querySelector('#appMenuButton')).not.toBeNull();
     const all = await openMenu('#appMenuButton');
-    expect(all.slice(0, 4)).toEqual([
+    expect(all.slice(0, 5)).toEqual([
       'deckImportButton',
       'p2Button',
+      'commandsButton',
       'shortcutsButton',
       'settingsButton',
     ]);

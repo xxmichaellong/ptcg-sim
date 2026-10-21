@@ -13,6 +13,10 @@
     ],
     "translation": ", เปิด"
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, other {การ์ด Radiant # ใบ; เด็คมีได้เพียงใบเดียว}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, other {ทิ้งการ์ดบนมือแล้วจั่ว # ใบ}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, other {จั่ว # ใบ}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, other {ดูการ์ดล่างสุด # ใบของเด็คฝ่ายตรงข้าม}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, other {ดูการ์ดล่างสุด # ใบของเด็คคุณ}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, other {ดูการ์ดบนสุด # ใบของเด็คฝ่ายตรงข้าม}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, other {ดูการ์ดบนสุด # ใบของเด็คคุณ}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, other {วางการ์ดบนมือไว้ใต้เด็คแล้วจั่ว # ใบ}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, other {สับการ์ดบนมือกลับเข้าเด็คแล้วจั่ว # ใบ}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "โต๊ะเอียงบนจอกว้าง และวางราบบนโทรศัพท์แนวตั้ง"
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "จำนวนเต็มตั้งแต่ {0} ถึง {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "จำนวนเต็ม สูงสุด 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "เข้าร่วมทดสอบเบต้าก่อนใคร"
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "การดำเนินการ"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "แอคทีฟ"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "เพิ่มความเสียหาย {count}"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "เพิ่มชิ้นส่วนสเตเดียมอีกชิ้น"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "เพิ่มดาเมจ"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "เพิ่มความเสียหาย…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "ความเร็วแอนิเมชัน"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "ความเร็วแอนิเมชัน…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "การ์ดที่แนบซึ่งกำลังถูกย้าย"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "แนบกับ {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "เบบี้"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "กลับ"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "พื้นผิวการ์ด (ไม่บังคับ)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "ภาษาของภาพการ์ด…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "ภาพการ์ด"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "ประเภทการ์ด"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "การ์ด"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "กำลังตรวจสอบ…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "เลือก"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "เลือกเด็คก่อน"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "ล้างบันทึก"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "ล้างบันทึก"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "คลิกที่ทางลัดใดก็ได้เพื่อเปลี่ยนปุ่ม"
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "ปิด"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "ปิดป๊อปอัป"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "ปิดบันทึก"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "รหัสหรือชื่อ"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "ไร้สี"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "คำสั่ง"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "คำสั่ง"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "คำสั่ง"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "ปัจจุบัน"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "การ์ดกำหนดเอง"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "เคาน์เตอร์ดาเมจ"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "ความเสียหายบนโปเกมอน"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "ทิ้งทั้งหมด"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "ทิ้งทุกอย่างบนเพลย์บอร์ดของคุณ"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "ทิ้งการ์ดในมือ"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "กองทิ้ง"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "ทิ้งการ์ดบนมือแล้วจั่ว…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "ดาวน์โหลดรายการแทน"
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "ดาวน์โหลดบันทึก"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "จั่ว"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "จั่วการ์ด 1 ใบ"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "จั่วการ์ด"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "จั่วการ์ด"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "จั่วการ์ด…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "ใส่ตัวเลข แล้วกด Enter"
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "ตัวกรอง"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "ค้นหาการ์ด…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "ค้นหาเด็ค"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "โยนเหรียญ"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "โยนเหรียญของที่นั่งอื่น"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "ลิงก์ Github Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "ไปที่โต๊ะ Solo"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "ต้องการดูการ์ดกี่ใบ"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "กี่ใบ"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "ความเสียหายเท่าไร"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "ภาษา"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "ภาษา…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "แสดงตัวอย่างการ์ดขนาดใหญ่เมื่อวางเมาส์"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "ดูหรือคว่ำการ์ด (เฉพาะคุณ)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "ดูหรือซ่อนการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "ดูหรือซ่อนการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "ดูหรือคว่ำการ์ดรางวัลของคุณ"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "ดูการ์ดด้านล่างสุด"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "ดูด้านล่างของเด็คของเขา…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "ดูด้านล่างของเด็คของคุณ…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "ดูการ์ดด้านบนสุด"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "ดูด้านบนของเด็คของเขา…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "ดูด้านบนของเด็คของคุณ…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "ทำเครื่องหมายว่ายังไม่ได้ใช้"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "ทำเครื่องหมายว่ายังไม่ได้ใช้พลัง GX"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "ทำเครื่องหมายว่ายังไม่ได้ใช้พลัง VSTAR"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "ย้ายการ์ด..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "ย้ายทุกอย่างบนสนามของคุณไปที่มือ"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "ไม่มีการกระทำที่ใช้ได้"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "ไม่พบการกระทำที่ตรงกัน"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "ไม่มี Basic ในมือเปิด 7 ใบ (มัลลิแกน)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "ไม่มีปุ่มลัดที่ตรงกับ “{search}”"
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "ไม่มีสภาวะพิเศษ"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "เปิดไฟล์"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "เปิดการตั้งค่า"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "เปิดหน้าจอเด็ค"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "เปิดบันทึกเกม"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "เปิดเด็คของเขา"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "เปิดกองทิ้งของเขา"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "เปิดโซนที่หายไปของเขา"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "เปิดการ์ดรางวัลของเขา"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "เปิดเด็คของคุณ"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "เปิดกองทิ้งของคุณ"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "เปิดโซนที่หายไปของคุณ"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "เปิดการ์ดรางวัลของคุณ"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "ลิงก์บริจาค PayPal"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "สุ่มการ์ดจากมือของเขา"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "สุ่มการ์ด"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "กด <0/> เพื่อเปิดรายการนี้ได้ทุกเมื่อ"
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "กดอีกครั้งเพื่อยืนยัน"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "กด Enter อีกครั้งเพื่อยืนยัน"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "กดปุ่ม…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "คืนค่าปุ่มลัดทั้งหมดหรือไม่"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "ใส่ทุกอย่างบนสนามของคุณลงในโซนที่หายไป"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "เก็บ Lost Zone ที่ว่างเปล่า"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "เก็บ Lost Zone"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "ใส่มือของคุณไว้ใต้เด็คแล้วจั่ว…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "ใส่การ์ดรางวัลของคุณไว้ใต้เด็ค"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "ลดการเคลื่อนไหว"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "ลดการเคลื่อนไหว…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "เปิดเผย (ผู้เล่นทั้งสองฝ่าย)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "เปิดหรือซ่อนการ์ดรางวัลของเขา"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "เปิดหรือซ่อนการ์ดรางวัลของคุณ"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "เปิดเผย/ซ่อนการ์ด"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Rule Box"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "เรียกใช้"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "เล่นเกมที่บันทึกไว้ต่อแล้ว"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "พูด…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "ค้นหาการ์ด"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "ค้นหาทุกฟอร์แมต"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "ค้นหาการกระทำ"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "ค้นหาการกระทำ…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "ค้นหาการกระทำใดก็ได้แล้วเรียกใช้ (หรือกด Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "ไวยากรณ์การค้นหา"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "ค้นหาการ์ดบนโต๊ะ…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "ค้นหาในเด็คของคุณ"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "รหัสชุด, นักวาดภาพประกอบ"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "ตั้งค่าความเสียหายเป็น {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "ตั้งค่าความเสียหาย…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "ขอบคุณพิเศษในบันทึกการเปลี่ยนแปลงครั้งถัดไป"
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "แสดง"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "แสดงทุกพิมพ์ของการ์ดแต่ละใบ"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "แสดงครึ่งเด็ค…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "แสดงคีย์บอร์ด"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "แสดงการ์ด"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "สับเด็ค"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "สลับทุกอย่างบนสนามของคุณเข้าเด็ค"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "สับการ์ดในมือเข้าเด็ค"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "สับเข้าเด็ค (ไว้ใต้เด็ค)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "สับเด็คของคุณ"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "สับการ์ดในมือเข้าเด็คแล้วจั่ว…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "สับการ์ดรางวัลของคุณ"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "เรียงผลลัพธ์"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "เรียงการ์ดในมือของคู่ต่อสู้"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "เรียงการ์ดในมือของคุณ"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "สถานะพิเศษ"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "สถานะพิเศษ"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "สถานะพิเศษ…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "สไตล์โต๊ะ"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "สไตล์โต๊ะ…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "มุมมองโต๊ะ"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "มุมมองโต๊ะ…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "นำออกจาก {seat}"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "เอาความเสียหายออก {count}"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "เอาดาเมจออก"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "เอาความเสียหายออก…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "โต๊ะรับการ์ดที่ต่างกันได้สูงสุด {max} ใบ"
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "ตำแหน่งแอคทีฟของคู่ต่อสู้"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "เบนช์ของคู่ต่อสู้"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "การ์ดของอีกฝ่ายจะอ่านได้ถูกทิศสำหรับคุณ เมื่อปิด การ์ดจะหันเข้าหาเจ้าของ เหมือนบนโต๊ะจริง"
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "เด็คของคู่ต่อสู้"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "กองทิ้งของคู่ต่อสู้"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "มือของคู่ต่อสู้"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "โลสต์โซนของคู่ต่อสู้"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "สนามของคู่ต่อสู้"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "การ์ดรางวัลของคู่ต่อสู้"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "แล้วจั่ว"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "จากนั้นจั่วกี่ใบ"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "ลองใช้การ์ดจำนวนน้อยลง"
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "ลองใช้คำอื่น หรือกด Escape เพื่อย้อนกลับ"
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "หงายหน้าลง (ทั้งสองผู้เล่น)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "หมุนโต๊ะ"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "ประเภท"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "พิมพ์ข้อความ แล้วกด Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "พิมพ์ข้อความก่อน"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "พิมพ์คำเพื่อค้นหาชื่อ หรือรวมตัวกรองเข้าด้วยกัน — ใช้ไวยากรณ์การค้นหาของ Limitless TCG ได้ที่นี่"
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "พิมพ์ แล้วกด Enter"
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "ใช้กับ {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "ใช้พลัง GX"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "ใช้กลุ่มเดียวกันสำหรับชิ้นส่วนจากภาพประกอบเดียวกัน วางชิ้นส่วนโปเกมอนในกองเดียวกัน หรือวางชิ้นส่วนสเตเดียมในพื้นที่สเตเดียม"
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "ใช้พลัง VSTAR"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "ยินดีต้อนรับสู่ PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "จะให้ {0} ทำอะไร"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "มีอะไรใหม่"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "คุณกำลังดูโต๊ะนี้อยู่"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "ตำแหน่งแอคทีฟของคุณ"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "เบนช์ของคุณ"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "เด็คของคุณ"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "กองทิ้งของคุณ"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "มือของคุณ"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "โลสต์โซนของคุณ"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "ชื่อของคุณเปลี่ยนแล้ว โปรดสร้างห้องใหม่ก่อนเข้าร่วม"
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "คู่ต่อสู้กำลังย้ายการ์ดเหล่านี้"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "สนามของคุณ"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "การ์ดรางวัลของคุณ"
   },
   "yuM-lV": {
     "message": "Your turn",

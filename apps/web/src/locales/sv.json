@@ -13,6 +13,10 @@
     ],
     "translation": ", på"
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, one {# Radiant-kort; en lek får bara ha ett.} other {# Radiant-kort; en lek får bara ha ett.}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, one {Släng din hand och dra # kort} other {Släng din hand och dra # kort}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, one {Dra # kort} other {Dra # kort}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, one {Titta på det understa kortet i deras lek} other {Titta på de understa # korten i deras lek}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, one {Titta på det understa kortet i din lek} other {Titta på de understa # korten i din lek}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, one {Titta på det översta kortet i deras lek} other {Titta på de översta # korten i deras lek}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, one {Titta på det översta kortet i din lek} other {Titta på de översta # korten i din lek}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, one {Lägg din hand underst och dra # kort} other {Lägg din hand underst och dra # kort}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, one {Blanda in din hand och dra # kort} other {Blanda in din hand och dra # kort}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "Ett lutande bord på bred skärm, platt på en stående mobil."
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "Ett heltal från {0} till {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "Ett heltal, upp till 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "Tillgång till tidig betatestning."
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "Åtgärder"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "Aktiv"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "Lägg till {count} skada"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Lägg till en stadiumdel till"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Lägg till skada"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "Lägg till skada…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "Animationshastighet"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "Animationshastighet…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "Fästa kort som flyttas"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "Fäst vid {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "Baby"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "Tillbaka"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "Kortfinish (valfritt)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "Språk för kortbilder…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Kortbilder"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "Korttyp"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "Kort"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "Kontrollerar…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "Välj"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "Välj en lek först"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "Rensa loggen"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "Rensa loggen"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "Klicka på en genväg för att ändra dess tangenter."
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "Stäng"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "Stäng popup-fönster"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "Stäng loggen"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "kod eller namn"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "Färglös"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "Kommandon"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "Kommandon"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "Kommandon"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "Nuvarande"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Eget kort"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "Skademarkör"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "Skada på Pokémonen"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "Kasta alla"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "Släng allt på din spelplan"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "Kasta handen"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Kasthög"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "Släng din hand och dra…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "Ladda ner listan i stället."
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "Ladda ner loggen"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "Dra"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "Dra ett kort"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "Dra kort"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Dra kort"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "Dra kort…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "Ange ett tal och tryck sedan på Enter."
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "Filter"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "Hitta ett kort…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "Hitta en lek"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "Singla slant"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "Singla den andra platsens mynt"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "Länk till Github Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "Gå till solobordet"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "Hur många kort vill du titta på?"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "Hur många kort?"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "Hur mycket skada?"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "Språk"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "Språk…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "Stor kortförhandsvisning vid hovring"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "Titta på eller täck över (bara du)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "Titta på eller dölj deras hand"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "Titta på eller dölj deras Prizes"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "Titta på eller täck över dina priskort"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "Titta på de understa korten"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "Titta på botten av deras lek…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "Titta på botten av din lek…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Titta på de översta korten"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "Titta på toppen av deras lek…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "Titta på toppen av din lek…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Markera som oanvänd"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "Markera GX-attacken som oanvänd"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "Markera VSTAR-kraften som oanvänd"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "Flytta kort..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "Flytta allt på din spelplan till din hand"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "Inga tillgängliga handlingar"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "Inga åtgärder matchar"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "Ingen Basic i starthanden på 7 (mulligan)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Ingen genväg matchar “{search}”."
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "Inget specialtillstånd"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "Öppna fil"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "Öppna inställningar"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "Öppna leksidan"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "Öppna loggen"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "Öppna deras lek"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "Öppna deras kasthög"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "Öppna deras Lost Zone"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "Öppna deras priskort"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "Öppna din deck"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "Öppna din kasthög"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "Öppna din Lost Zone"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "Öppna dina priskort"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "Länk för PayPal-donation"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "Dra ett slumpmässigt kort från deras hand"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "Välj slumpat kort"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "Tryck på <0/> när som helst för att öppna den här listan."
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "Tryck igen för att bekräfta"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "Tryck på Enter igen för att bekräfta"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Tryck på tangenter…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "Återställa alla kortkommandon?"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "Lägg allt på din spelplan i Lost Zone"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "Lägg undan den tomma Lost Zone"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "Lägg undan Lost Zone"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "Lägg din hand under din lek och dra…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "Lägg dina priskort under din lek"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "Minska rörelse"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "Minska rörelse…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "Visa (båda spelarna)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "Visa eller dölj deras priskort"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "Visa eller dölj dina priskort"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "Visa/dölj kort"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Regelruta"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "Kör"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "Sparat spel återupptaget"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "Säg…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Sök kort"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "Sök i alla format"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "Sök efter en åtgärd"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "Sök efter en åtgärd…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "Sök efter valfri åtgärd och kör den (även Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Söksyntax"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "Sök bland korten på bordet…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "Sök i din lek"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "Setkod, illustratör"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "Sätt skada till {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "Sätt skada…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Shoutout i nästa ändringslogg."
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "Visa"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "Visa alla tryck av varje kort"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "Visa halvor…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Visa tangentbord"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "Visa kortet"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "Blanda leken"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "Blanda in allt på din spelplan i din lek"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Blanda in handen i leken"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Blanda in i leken (längst ner)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "Blanda din lek"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "Blanda in din hand i leken och dra…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "Blanda dina Prizes"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "Sortera resultat"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "Sortera deras hand"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "Sortera din hand"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "Speciellt tillstånd"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "Särskilt tillstånd"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "Särskilt tillstånd…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "Bordsstil"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "Bordsstil…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "Bordsvy"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "Bordsvy…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "Ta bort från {seat}"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "Ta bort {count} skada"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "Ta bort skada"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "Ta bort skada…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "Bordet tar högst {max} olika kort."
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "Deras Active Spot"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "Deras Bench"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "Deras kort läses rättvända för dig. Av vänds de mot sin ägare, som över ett riktigt bord."
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "Deras lek"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "Deras kasthög"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "Deras hand"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "Deras Lost Zone"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "Deras spelplan"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "Deras Prizes"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Dra sedan"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "Hur många kort ska du sedan dra?"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "Försök med färre kort."
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "Prova andra ord eller tryck på Escape för att gå tillbaka."
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "Vänd med framsidan nedåt (båda spelarna)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "Vänd på bordet"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "Typ"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "Skriv ett meddelande och tryck på Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "Skriv något först"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "Skriv ord för att söka på namn, eller kombinera filter – Limitless TCG:s söksyntax fungerar här."
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "Skriv och tryck på Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "Använd på {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "Använd GX-attacken"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "Använd samma grupp för delar från en och samma illustration. Lägg Pokémon-delar i en och samma hög, eller Stadium-delar i Stadium-området."
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "Använd VSTAR-kraften"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "Välkommen till PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "Vad ska {0} göra?"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "Nyheter"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "Du tittar på det här bordet"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "Din Active Spot"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "Din Bench"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "Dina lekar"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "Din kasthög"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "Din hand"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "Din Lost Zone"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "Ditt namn har ändrats. Skapa ett nytt rum innan du går med."
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "Din motståndare flyttar de här korten"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "Din spelplan"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "Dina Prizes"
   },
   "yuM-lV": {
     "message": "Your turn",

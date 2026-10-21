@@ -13,6 +13,10 @@
     ],
     "translation": ", naka-on"
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, one {# Radiant card; isa lang ang puwede sa deck.} other {# Radiant cards; isa lang ang puwede sa deck.}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, one {I-discard ang hand mo at mag-draw ng # card} other {I-discard ang hand mo at mag-draw ng # card}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, one {Mag-draw ng # card} other {Mag-draw ng # card}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, one {Tingnan ang pinakailalim na card ng deck nila} other {Tingnan ang pinakailalim na # card ng deck nila}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, one {Tingnan ang pinakailalim na card ng deck mo} other {Tingnan ang pinakailalim na # card ng deck mo}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, one {Tingnan ang pinakaitaas na card ng deck nila} other {Tingnan ang pinakaitaas na # card ng deck nila}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, one {Tingnan ang pinakaitaas na card ng deck mo} other {Tingnan ang pinakaitaas na # card ng deck mo}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, one {Ilagay sa ilalim ang hand mo at mag-draw ng # card} other {Ilagay sa ilalim ang hand mo at mag-draw ng # card}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, one {I-shuffle ang hand mo sa deck at mag-draw ng # card} other {I-shuffle ang hand mo sa deck at mag-draw ng # card}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "Nakahilig na tabletop sa malapad na screen, patag sa nakatayong phone."
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "Isang buong numero mula {0} hanggang {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "Buong numero, hanggang 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "Access sa maagang beta testing."
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "Mga aksyon"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "Active"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "Magdagdag ng {count} damage"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Magdagdag ng isa pang piraso ng stadium"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Magdagdag ng damage"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "Magdagdag ng damage…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "Bilis ng animation"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "Bilis ng animation…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "Mga attached card na inililipat"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "Naka-attach sa {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "Baby"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "Bumalik"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "Finish ng card (opsyonal)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "Wika ng larawan ng card…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Mga larawan ng card"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "Card Type"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "Mga card"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "Sinusuri…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "Pumili"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "Pumili muna ng deck"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "I-clear ang log"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "I-clear ang log"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "Mag-click sa anumang shortcut para palitan ang mga key nito."
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "Isara"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "Isara ang mga popup"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "Isara ang Log"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "code o pangalan"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "Colorless"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "Mga command"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "Mga command"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "Mga command"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "Kasalukuyan"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Custom na card"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "Damage counter"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "Damage sa Pokémon"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "I-discard lahat"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "I-discard ang lahat sa playboard mo"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "I-discard ang hand"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Discard pile"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "I-discard ang hand mo at mag-draw…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "I-download na lang ang listahan."
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "I-download ang log"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "Draw"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "Mag-draw ng card"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "Mag-draw ng card"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Mag-draw ng cards"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "Mag-draw ng mga card…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "Maglagay ng numero, tapos pindutin ang Enter."
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "Mga filter"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "Maghanap ng card…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "Maghanap ng deck"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "Mag-flip ng coin"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "I-flip ang coin ng kabilang upuan"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "Link ng Github Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "Pumunta sa Solo table"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "Ilang card ang gusto mong tingnan?"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "Ilang card?"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "Gaano karaming damage?"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "Wika"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "Wika…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "Malaking preview ng card kapag naka-hover"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "Tingnan o takpan (ikaw lang)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "Tingnan o takpan ang hand nila"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "Tingnan o takpan ang Prizes nila"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "Tingnan o takpan ang Prizes mo"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "Tingnan ang mga card sa ilalim"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "Tingnan ang ilalim ng deck nila…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "Tingnan ang ilalim ng deck mo…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Tingnan ang mga card sa itaas"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "Tingnan ang ibabaw ng deck nila…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "Tingnan ang ibabaw ng deck mo…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Markahang hindi pa nagamit"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "Markahan na hindi pa nagagamit ang GX attack"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "Markahan na hindi pa nagagamit ang VSTAR Power"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "Ilipat ang card..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "Ilipat sa kamay mo ang lahat ng nasa playboard mo"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "Walang magagamit na action"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "Walang tugmang aksyon"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "Walang Basic sa unang 7 (mulligan)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Walang shortcut na tugma sa “{search}”."
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "Walang Special Condition"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "Buksan ang file"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "Buksan ang Settings"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "Buksan ang deck screen"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "Buksan ang Log"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "Buksan ang deck nila"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "Buksan ang discard pile nila"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "Buksan ang Lost Zone nila"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "Buksan ang Prizes nila"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "Buksan ang deck mo"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "Buksan ang discard pile mo"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "Buksan ang Lost Zone mo"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "Buksan ang Prizes mo"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "Link ng Paypal Donation"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "Pumili ng random na card mula sa kamay nila"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "Pumili ng random na card"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "Pindutin ang <0/> anumang oras para buksan ang listahang ito."
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "Pindutin ulit para kumpirmahin"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "Pindutin ulit ang Enter para kumpirmahin"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Pindutin ang mga key…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "Ibalik ang lahat ng shortcut?"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "Ilagay sa Lost Zone ang lahat ng nasa playboard mo"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "Itabi ang walang lamang Lost Zone"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "Itabi ang Lost Zone"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "Ilagay ang kamay mo sa ilalim ng deck mo at mag-draw…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "Ilagay ang Prizes mo sa ilalim ng deck mo"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "Bawasan ang galaw"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "Bawasan ang galaw…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "Ipakita (sa parehong manlalaro)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "Ipakita o itago ang Prizes nila"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "Ipakita o itago ang Prizes mo"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "Ipakita/itago ang card"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Rule Box"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "Patakbuhin"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "Itinuloy ang na-save na laro"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "Sabihin…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Maghanap ng card"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "Hanapin sa lahat ng format"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "Maghanap ng aksyon"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "Maghanap ng aksyon…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "Maghanap ng kahit anong aksyon at patakbuhin ito (pwede rin ang Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Syntax ng paghahanap"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "Hanapin ang mga card sa table…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "Hanapin sa deck mo"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "Set code, illustrator"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "Itakda ang damage sa {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "Itakda ang damage…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Shoutout sa susunod na changelog."
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "Ipakita"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "Ipakita ang bawat print ng bawat card"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "Ipakita ang kalahati…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Ipakita ang keyboard"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "Ipakita ang card"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "I-shuffle ang deck"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "I-shuffle sa deck mo ang lahat ng nasa playboard mo"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "I-shuffle ang hand sa deck"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "I-shuffle sa deck (ilalim)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "I-shuffle ang deck mo"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "I-shuffle ang hand mo sa deck mo at mag-draw ng…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "I-shuffle ang Prizes mo"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "I-sort ang mga resulta"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "I-sort ang hand nila"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "I-sort ang hand mo"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "Special condition"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "Special Condition"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "Special Condition…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "Estilo ng table"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "Istilo ng mesa…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "Tanaw ng mesa"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "Tanaw ng mesa…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "Alisin kay {seat}"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "Tanggalin ang {count} damage"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "Alisin ang damage"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "Tanggalin ang damage…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "Hanggang {max} magkakaibang card lang ang kaya ng table."
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "Active Spot nila"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "Bench nila"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "Nakaharap sa iyo nang tama ang basa ng mga card nila. Kapag naka-off, nakaharap sila sa may-ari, gaya sa totoong table."
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "Deck nila"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "Discard pile nila"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "Hand nila"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "Lost Zone nila"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "Playboard nila"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "Prizes nila"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Pagkatapos, mag-draw"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "Ilang card ang ido-draw pagkatapos?"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "Subukan ito nang mas kaunting card."
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "Sumubok ng ibang salita, o pindutin ang Escape para bumalik."
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "Ihara nang nakataob (parehong manlalaro)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "I-ikot ang mesa"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "Type"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "Mag-type ng mensahe, tapos pindutin ang Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "Mag-type muna ng kahit ano"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "Mag-type ng mga salita para maghanap ng pangalan, o pagsamahin ang mga filter — gumagana rito ang search syntax ng Limitless TCG."
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "Mag-type, tapos pindutin ang Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "Gamitin sa {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "Gamitin ang GX attack"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "Gamitin ang parehong grupo para sa mga piraso ng iisang illustration. Ilagay ang mga piraso ng Pokémon sa iisang stack, o ang mga piraso ng Stadium sa Stadium area."
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "Gamitin ang VSTAR Power"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "Maligayang pagdating sa PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "Ano ang gagawin ni {0}?"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "Ano'ng bago"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "Pinapanood mo ang table na ito"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "Active Spot mo"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "Bench mo"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "Ang mga deck mo"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "Discard pile mo"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "Hand mo"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "Lost Zone mo"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "Nagbago ang pangalan mo. Gumawa ng bagong room bago sumali."
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "Inililipat ng kalaban mo ang mga card na ito"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "Playboard mo"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "Prizes mo"
   },
   "yuM-lV": {
     "message": "Your turn",

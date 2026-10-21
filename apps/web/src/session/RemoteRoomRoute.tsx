@@ -91,6 +91,8 @@ import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { DeckIcon } from '../ui/DeckIcon.js';
 import { toast } from '../ui/toast.js';
 import { Tooltip } from '../ui/Tooltip.js';
+import { CommandSourceRegistration } from '../commands/registry.js';
+import { roomCommands } from '../commands/room-commands.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
@@ -770,6 +772,23 @@ export const RemoteRoomRoute = ({
                 />
               </TableCentre>
             ) : null}
+            <CommandSourceRegistration
+              list={() =>
+                roomCommands({
+                  menu,
+                  shortcutsHint: hint('table.shortcuts'),
+                  log: {
+                    open: activity.open,
+                    setOpen: activity.setOpen,
+                    download: replaying ? exportBattleLog : live.exportLog,
+                    ...(replaying ? {} : { clear: live.clearLog }),
+                  },
+                  ...(!replaying && live.ready ? { say: live.say } : {}),
+                  deckOpen,
+                  closeDeck: closeSheet,
+                })
+              }
+            />
             <ActivityPanel
               open={activity.open}
               onOpenChange={activity.setOpen}

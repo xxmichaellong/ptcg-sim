@@ -37,6 +37,7 @@ import {
   type BoardSessionReplaySource,
 } from './BoardSessionAdapter.js';
 import type {
+  BoardActionOrigin,
   BoardPresentationDismissScope,
   BoardSessionControllerState,
   OpenedZoneCardIntent,
@@ -320,19 +321,25 @@ export class BoardSessionRuntime {
   }
 
   /** Resolves route-owned overlay controls through the installed safe view. */
-  emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
+  emitLegacyOverlayAction(
+    request: LegacyBoardOverlayActionRequest,
+    origin?: BoardActionOrigin
+  ): boolean {
     this.assertUsable();
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
-    return adapter.emitLegacyOverlayAction(request);
+    return adapter.emitLegacyOverlayAction(request, origin);
   }
 
   /** Resolves selected-card shortcuts through the same protected controller. */
-  emitLegacyShortcutAction(request: LegacyBoardShortcutActionRequest): boolean {
+  emitLegacyShortcutAction(
+    request: LegacyBoardShortcutActionRequest,
+    origin?: BoardActionOrigin
+  ): boolean {
     this.assertUsable();
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
-    return adapter.emitLegacyShortcutAction(request);
+    return adapter.emitLegacyShortcutAction(request, origin);
   }
 
   /** Resolves a player-frame GX/VSTAR control against the installed safe view. */

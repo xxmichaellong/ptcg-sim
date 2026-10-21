@@ -346,7 +346,8 @@ describe('legacy board shortcut action resolver', () => {
       dismissSelection: false,
     });
 
-    for (const count of [0, 10, Number.NaN]) {
+    // The palette asks for any number up to 200; the keys, 1-9.
+    for (const count of [0, 201, Number.NaN]) {
       expect(
         resolveLegacyBoardShortcutAction(view, {
           action: 'drawOwnDeck',

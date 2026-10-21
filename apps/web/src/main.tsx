@@ -4,6 +4,7 @@ import { watchCardImageFailures } from './i18n/card-image-language.js';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App, type AppRoute } from './App.js';
+import { CommandPaletteHost } from './commands/CommandPalette.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
@@ -111,6 +112,7 @@ createRoot(root).render(
         <App {...(roomLobbyRoute ? { route: roomLobbyRoute } : {})} />
       )}
       <ShortcutsDialogHost />
+      <CommandPaletteHost />
       <HelpSheetHost />
     </OverlayHost>
   </StrictMode>

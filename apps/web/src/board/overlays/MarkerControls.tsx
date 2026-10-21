@@ -102,7 +102,7 @@ export const placeBeside = (
 };
 
 /** The five Special Conditions, in the rulebook's order, with their chips. */
-const CONDITIONS: readonly SpecialConditionKind[] = [
+export const CONDITIONS: readonly SpecialConditionKind[] = [
   'asleep',
   'burned',
   'confused',
@@ -114,7 +114,7 @@ const CONDITIONS: readonly SpecialConditionKind[] = [
  * What a chosen condition is written as: v1's letters, as the keys' cycle
  * and the typed editor write it.
  */
-const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
+export const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
   asleep: 'A',
   burned: 'B',
   confused: 'C',

@@ -87,6 +87,11 @@ import type { DockSlide } from './shell/dock-slide.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import { toast } from '../ui/toast.js';
+import { boardCommands } from '../commands/board-commands.js';
+import { useCommandSource } from '../commands/registry.js';
+import type { PaletteCommand } from '../commands/types.js';
+import { boardViewCommands } from '../commands/settings-commands.js';
+import { railCommands } from '../commands/ui-commands.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
 
@@ -1124,6 +1129,83 @@ export const RemoteSessionBoard = ({
     tableCoinShown,
     t,
   ]);
+
+  // The command palette's table commands (ADR-035): the cards, piles,
+  // deck and hand, the rail's actions and the view switches, while the
+  // table has the keyboard (not under the deck screen).
+  useCommandSource(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime || keysSuspended) return [];
+    const acting = displayPolicyRef.current.actingPlayerId;
+    const seat =
+      roomMode === 'solo' && acting ? playerNames[acting] : undefined;
+    // The rail's first: its lead action (Load a deck, Set up) is the
+    // table's next step.
+    return [
+      ...(chromeRail
+        ? railCommands(chromeRail, {
+            replaying: boardState?.source?.kind === 'replay',
+            ...(seat ? { seat } : {}),
+            skip: new Set(['flipCoin']),
+          })
+        : []),
+      ...boardCommands({ runtime, hint }),
+      ...seatPieceCommands(),
+      ...boardViewCommands({ solo: roomMode === 'solo' }),
+    ];
+  });
+  /** The hand's Sort and the VSTAR/GX markers, for the seats that have them. */
+  const seatPieceCommands = (): PaletteCommand[] => {
+    const state = runtimeRef.current?.getBoardSnapshot();
+    const view = state?.view;
+    if (!view || !state.canSubmitCommands || view.viewer.kind !== 'player')
+      return [];
+    const acting = displayPolicyRef.current.actingPlayerId;
+    const commands: PaletteCommand[] = [];
+    for (const playerId of view.playerOrder) {
+      const own = playerId === acting;
+      const name = playerNames[playerId];
+      const detail = name ? { detail: name } : {};
+      if (own || roomMode === 'solo') {
+        const sorted = sortedHandPlayerIds.has(playerId);
+        commands.push({
+          id: own ? 'piles.sortHand' : 'piles.sortOtherHand',
+          title: own ? t`Sort your hand` : t`Sort their hand`,
+          section: 'piles',
+          ...detail,
+          status: sorted
+            ? t({ message: 'On', context: 'setting' })
+            : t({ message: 'Off', context: 'setting' }),
+          keepOpen: true,
+          keywords: ['sort', 'order', 'hand'],
+          run: () => chromeActions.toggleHandSort(playerId, !sorted),
+        });
+      }
+      if (!own && roomMode !== 'solo') continue;
+      const markers = view.players[playerId]?.oncePerGame;
+      for (const marker of ['vstar', 'gx'] as const) {
+        if (!(marker === 'vstar' ? boardView.vstarMarker : boardView.gxMarker))
+          continue;
+        const used = marker === 'vstar' ? markers?.vstarUsed : markers?.gxUsed;
+        commands.push({
+          id: `turn.${marker}${own ? '' : 'Other'}`,
+          title:
+            marker === 'vstar'
+              ? used
+                ? t`Mark the VSTAR Power unused`
+                : t`Use the VSTAR Power`
+              : used
+                ? t`Mark the GX attack unused`
+                : t`Use the GX attack`,
+          section: 'turn',
+          ...detail,
+          keywords: [marker, 'once per game', 'marker'],
+          run: () => chromeActions.toggleOncePerGame(playerId, marker),
+        });
+      }
+    }
+    return commands;
+  };
 
   // Each hand's count, where the table shows it: the chrome draws it as a
   // pill with that hand's Sort.

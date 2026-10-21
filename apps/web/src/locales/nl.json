@@ -13,6 +13,10 @@
     ],
     "translation": ", aan"
   },
+  "yW-SAQ": {
+    "message": "{0} ({1})",
+    "translation": "{0} ({1})"
+  },
   "yqY7T3": {
     "message": "{0} damage",
     "comments": [
@@ -365,6 +369,38 @@
   "wfGt__": {
     "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
     "translation": "{count, plural, one {# Radiant-kaart; een deck mag er maar één hebben.} other {# Radiant-kaarten; een deck mag er maar één hebben.}}"
+  },
+  "JOORX1": {
+    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
+    "translation": "{count, plural, one {Leg je hand af en trek # kaart} other {Leg je hand af en trek # kaarten}}"
+  },
+  "0ZvQu6": {
+    "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
+    "translation": "{count, plural, one {Trek # kaart} other {Trek # kaarten}}"
+  },
+  "THq5XP": {
+    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
+    "translation": "{count, plural, one {Bekijk de onderste kaart van hun deck} other {Bekijk de onderste # kaarten van hun deck}}"
+  },
+  "zwThBB": {
+    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
+    "translation": "{count, plural, one {Bekijk de onderste kaart van je deck} other {Bekijk de onderste # kaarten van je deck}}"
+  },
+  "TlYUk-": {
+    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
+    "translation": "{count, plural, one {Bekijk de bovenste kaart van hun deck} other {Bekijk de bovenste # kaarten van hun deck}}"
+  },
+  "rQTxpl": {
+    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
+    "translation": "{count, plural, one {Bekijk de bovenste kaart van je deck} other {Bekijk de bovenste # kaarten van je deck}}"
+  },
+  "lxhla5": {
+    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
+    "translation": "{count, plural, one {Leg je hand onderop en trek # kaart} other {Leg je hand onderop en trek # kaarten}}"
+  },
+  "e7Cj3g": {
+    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
+    "translation": "{count, plural, one {Schud je hand erin en trek # kaart} other {Schud je hand erin en trek # kaarten}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -956,6 +992,10 @@
     "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
     "translation": "Een gekantelde tafel op een breed scherm, plat op een staande telefoon."
   },
+  "qLI-h5": {
+    "message": "A whole number from {0} to {1}",
+    "translation": "Een geheel getal van {0} tot {1}"
+  },
   "YbCAQH": {
     "message": "A whole number, up to 9990",
     "translation": "Een geheel getal, tot 9990"
@@ -992,6 +1032,10 @@
     "message": "Access to early beta testing.",
     "translation": "Toegang tot vroege bètatests."
   },
+  "7L01XJ": {
+    "message": "Actions",
+    "translation": "Acties"
+  },
   "xFCqNv": {
     "message": "Actions",
     "context": "a card's actions",
@@ -1024,6 +1068,10 @@
     ],
     "translation": "Actief"
   },
+  "ZQALG9": {
+    "message": "Add {count} damage",
+    "translation": "{count} schade toevoegen"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Nog een stadiumstuk toevoegen"
@@ -1035,6 +1083,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Schade toevoegen"
+  },
+  "mOz7te": {
+    "message": "Add damage…",
+    "translation": "Schade toevoegen…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1103,6 +1155,10 @@
   "d3fmj9": {
     "message": "Animation speed",
     "translation": "Animatiesnelheid"
+  },
+  "vaiuUS": {
+    "message": "Animation speed…",
+    "translation": "Animatiesnelheid…"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1173,6 +1229,10 @@
     "message": "Attached cards being moved",
     "translation": "Gehechte kaarten die worden verplaatst"
   },
+  "QUMrFI": {
+    "message": "Attached to {0}",
+    "translation": "Verbonden aan {0}"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
@@ -1195,6 +1255,13 @@
     "message": "Baby",
     "context": "Pokémon stage",
     "translation": "Baby"
+  },
+  "iH8pgl": {
+    "message": "Back",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
+    "translation": "Terug"
   },
   "0J6DxY": {
     "message": "Back",
@@ -1381,6 +1448,10 @@
     "message": "Card finish (optional)",
     "translation": "Kaartafwerking (optioneel)"
   },
+  "tii3sv": {
+    "message": "Card image language…",
+    "translation": "Taal van kaartafbeeldingen…"
+  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Kaartafbeeldingen"
@@ -1429,6 +1500,10 @@
   "oZar_q": {
     "message": "Card Type",
     "translation": "Kaarttype"
+  },
+  "Ccpbzh": {
+    "message": "Cards",
+    "translation": "Kaarten"
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
@@ -1493,6 +1568,13 @@
     "message": "Checking…",
     "translation": "Controleren…"
   },
+  "mQr73T": {
+    "message": "Choose",
+    "comments": [
+      "Command palette footer: arrow keys."
+    ],
+    "translation": "Kiezen"
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "Kies eerst een deck"
@@ -1535,6 +1617,10 @@
     "message": "Clear log",
     "translation": "Log wissen"
   },
+  "CE38Hc": {
+    "message": "Clear the log",
+    "translation": "Het logboek wissen"
+  },
   "5HJTkJ": {
     "message": "Click any shortcut to change its keys.",
     "translation": "Klik op een sneltoets om de toetsen te wijzigen."
@@ -1545,6 +1631,9 @@
   },
   "yz7wBu": {
     "message": "Close",
+    "comments": [
+      "Command palette footer: Escape key."
+    ],
     "translation": "Sluiten"
   },
   "Qtgr_b": {
@@ -1568,6 +1657,10 @@
     "message": "Close popups",
     "translation": "Pop-ups sluiten"
   },
+  "1e8UrT": {
+    "message": "Close the Log",
+    "translation": "Het logboek sluiten"
+  },
   "HLSSB8": {
     "message": "code or name",
     "translation": "code of naam"
@@ -1586,6 +1679,20 @@
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "Kleurloos"
+  },
+  "45MZFs": {
+    "message": "Commands",
+    "translation": "Commando's"
+  },
+  "GJ_m-8": {
+    "message": "Commands",
+    "context": "shortcut key caption",
+    "translation": "Commando's"
+  },
+  "gaJeip": {
+    "message": "Commands",
+    "context": "the command palette",
+    "translation": "Commando's"
   },
   "7VpPHA": {
     "message": "Confirm",
@@ -1686,6 +1793,10 @@
     "context": "keyboard key",
     "translation": "Ctrl"
   },
+  "Hp1l6f": {
+    "message": "Current",
+    "translation": "Huidig"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Eigen kaart"
@@ -1701,6 +1812,10 @@
   "68zbbm": {
     "message": "Damage counter",
     "translation": "Schadeteller"
+  },
+  "-BtPPD": {
+    "message": "Damage on the Pokémon",
+    "translation": "Schade op de Pokémon"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1869,6 +1984,10 @@
     "context": "shortcut key caption",
     "translation": "Alles afleggen"
   },
+  "p-Tj30": {
+    "message": "Discard everything on your playboard",
+    "translation": "Alles op je speelbord afleggen"
+  },
   "mKMb1d": {
     "message": "Discard hand",
     "translation": "Hand afleggen"
@@ -1882,6 +2001,10 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Ablegstapel"
+  },
+  "nV_lSY": {
+    "message": "Discard your hand and draw…",
+    "translation": "Leg je hand af en trek…"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -1915,6 +2038,10 @@
     "message": "Download the list instead.",
     "translation": "Download in plaats daarvan de lijst."
   },
+  "-P1EvR": {
+    "message": "Download the log",
+    "translation": "Het logboek downloaden"
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -1930,6 +2057,10 @@
     "context": "shortcut key caption",
     "translation": "Trekken"
   },
+  "yUNMoP": {
+    "message": "Draw a card",
+    "translation": "Een kaart trekken"
+  },
   "to34yF": {
     "message": "Draw card(s)",
     "translation": "Kaart(en) trekken"
@@ -1937,6 +2068,10 @@
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Kaarten trekken"
+  },
+  "PlxFxl": {
+    "message": "Draw cards…",
+    "translation": "Kaarten trekken…"
   },
   "SAb30P": {
     "message": "Draw how many cards?",
@@ -2018,6 +2153,10 @@
     "message": "Enter",
     "context": "keyboard key",
     "translation": "Enter"
+  },
+  "-cj58y": {
+    "message": "Enter a number, then press Enter.",
+    "translation": "Voer een getal in en druk op Enter."
   },
   "6EaZBW": {
     "message": "Error reading file. Please make sure the file is valid.",
@@ -2117,6 +2256,10 @@
     "message": "Filters",
     "translation": "Filters"
   },
+  "Vv3U3O": {
+    "message": "Find a card…",
+    "translation": "Een kaart zoeken…"
+  },
   "4-P8eH": {
     "message": "Find a deck",
     "translation": "Een deck zoeken"
@@ -2188,6 +2331,10 @@
   "9Bomz3": {
     "message": "Flip coin",
     "translation": "Munt opgooien"
+  },
+  "ogz86X": {
+    "message": "Flip the other seat's coin",
+    "translation": "De munt van de andere stoel opgooien"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2296,6 +2443,10 @@
   "kbTnWg": {
     "message": "Github Sponsors Link",
     "translation": "Link naar GitHub Sponsors"
+  },
+  "0qq_sj": {
+    "message": "Go to the Solo table",
+    "translation": "Naar de solotafel gaan"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2413,6 +2564,14 @@
   "_W9GYQ": {
     "message": "How many cards do you want to look at?",
     "translation": "Hoeveel kaarten wil je bekijken?"
+  },
+  "_vIqw9": {
+    "message": "How many cards?",
+    "translation": "Hoeveel kaarten?"
+  },
+  "dB9f8y": {
+    "message": "How much damage?",
+    "translation": "Hoeveel schade?"
   },
   "OGUMes": {
     "message": "How to play on PTCG-sim",
@@ -2623,6 +2782,10 @@
     "message": "Language",
     "translation": "Taal"
   },
+  "2S2hKS": {
+    "message": "Language…",
+    "translation": "Taal…"
+  },
   "pOmqOF": {
     "message": "Large card preview on hover",
     "translation": "Grote kaartvoorvertoning bij aanwijzen"
@@ -2747,13 +2910,41 @@
     "message": "Look at or cover (only you)",
     "translation": "Bekijken of afdekken (alleen jij)"
   },
+  "nZyxDJ": {
+    "message": "Look at or cover their hand",
+    "translation": "Hun hand bekijken of afdekken"
+  },
+  "qJ_tx1": {
+    "message": "Look at or cover their Prizes",
+    "translation": "Hun Prizes bekijken of afdekken"
+  },
+  "bQF9w4": {
+    "message": "Look at or cover your Prizes",
+    "translation": "Bekijk of bedek je Prizes"
+  },
   "I7Daes": {
     "message": "Look at the bottom cards",
     "translation": "Bekijk de onderste kaarten"
   },
+  "A-bTC5": {
+    "message": "Look at the bottom of their deck…",
+    "translation": "Bekijk de onderkant van hun deck…"
+  },
+  "HlUAnV": {
+    "message": "Look at the bottom of your deck…",
+    "translation": "Bekijk de onderkant van je deck…"
+  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Bekijk de bovenste kaarten"
+  },
+  "HgXGgm": {
+    "message": "Look at the top of their deck…",
+    "translation": "Bekijk de bovenkant van hun deck…"
+  },
+  "Iwo9SE": {
+    "message": "Look at the top of your deck…",
+    "translation": "Bekijk de bovenkant van je deck…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2830,6 +3021,14 @@
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Markeren als ongebruikt"
+  },
+  "Z4ljQt": {
+    "message": "Mark the GX attack unused",
+    "translation": "GX-aanval als ongebruikt markeren"
+  },
+  "JQW_WK": {
+    "message": "Mark the VSTAR Power unused",
+    "translation": "VSTAR-kracht als ongebruikt markeren"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -2939,6 +3138,10 @@
     "message": "Move card...",
     "translation": "Kaart verplaatsen..."
   },
+  "iwWOBz": {
+    "message": "Move everything on your playboard to your hand",
+    "translation": "Verplaats alles op je speelveld naar je hand"
+  },
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
@@ -3033,6 +3236,10 @@
     "message": "No actions available",
     "translation": "Geen acties beschikbaar"
   },
+  "hwpgik": {
+    "message": "No actions match",
+    "translation": "Geen acties gevonden"
+  },
   "-iSsDL": {
     "message": "No Basic in the opening 7 (mulligan)",
     "translation": "Geen Basic in de eerste 7 (mulligan)"
@@ -3087,6 +3294,10 @@
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Geen sneltoets gevonden voor “{search}”."
+  },
+  "Psi2LF": {
+    "message": "No Special Condition",
+    "translation": "Geen Special Condition"
   },
   "6psMRl": {
     "message": "None",
@@ -3223,9 +3434,49 @@
     "message": "Open file",
     "translation": "Bestand openen"
   },
+  "F37c1s": {
+    "message": "Open Settings",
+    "translation": "Instellingen openen"
+  },
+  "0FO0f7": {
+    "message": "Open the deck screen",
+    "translation": "Deckscherm openen"
+  },
+  "FzvzJz": {
+    "message": "Open the Log",
+    "translation": "Log openen"
+  },
+  "cCMcAY": {
+    "message": "Open their deck",
+    "translation": "Open hun deck"
+  },
+  "tfdDUV": {
+    "message": "Open their discard pile",
+    "translation": "Open hun aflegstapel"
+  },
+  "QUoj0T": {
+    "message": "Open their Lost Zone",
+    "translation": "Open hun Lost Zone"
+  },
+  "52seef": {
+    "message": "Open their Prizes",
+    "translation": "Open hun Prizes"
+  },
   "aiCxFx": {
     "message": "Open your deck",
     "translation": "Open je deck"
+  },
+  "mr-o_0": {
+    "message": "Open your discard pile",
+    "translation": "Open je aflegstapel"
+  },
+  "eZJMWk": {
+    "message": "Open your Lost Zone",
+    "translation": "Open je Lost Zone"
+  },
+  "o1JZRd": {
+    "message": "Open your Prizes",
+    "translation": "Open je Prizes"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3342,6 +3593,10 @@
     "message": "Paypal Donation Link",
     "translation": "PayPal-donatielink"
   },
+  "2EfntA": {
+    "message": "Pick a random card from their hand",
+    "translation": "Kies een willekeurige kaart uit hun hand"
+  },
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "Willekeurige kaart kiezen"
@@ -3445,6 +3700,14 @@
     ],
     "translation": "Druk op <0/> om deze lijst op elk moment te openen."
   },
+  "1-TFM2": {
+    "message": "Press again to confirm",
+    "translation": "Druk nogmaals om te bevestigen"
+  },
+  "iM-hRS": {
+    "message": "Press Enter again to confirm",
+    "translation": "Druk nogmaals op Enter om te bevestigen"
+  },
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Druk op toetsen…"
@@ -3517,6 +3780,10 @@
     "message": "Put every shortcut back?",
     "translation": "Alle sneltoetsen terugzetten?"
   },
+  "rFCOSV": {
+    "message": "Put everything on your playboard in the Lost Zone",
+    "translation": "Leg alles op je speelveld in de Lost Zone"
+  },
   "Je1OLM": {
     "message": "Put the empty Lost Zone away",
     "translation": "Leg de lege Lost Zone weg"
@@ -3524,6 +3791,14 @@
   "Pep1YD": {
     "message": "Put the Lost Zone away",
     "translation": "Leg de Lost Zone weg"
+  },
+  "eAnTYw": {
+    "message": "Put your hand on the bottom of your deck and draw…",
+    "translation": "Leg je hand onderop je deck en trek…"
+  },
+  "YrhlVT": {
+    "message": "Put your Prizes on the bottom of your deck",
+    "translation": "Leg je Prizes onderop je deck"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -3591,6 +3866,10 @@
   "NKamZr": {
     "message": "Reduce motion",
     "translation": "Minder beweging"
+  },
+  "f5mjnD": {
+    "message": "Reduce motion…",
+    "translation": "Minder beweging…"
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
@@ -3757,6 +4036,14 @@
     "message": "Reveal (both players)",
     "translation": "Onthullen (beide spelers)"
   },
+  "MFV2V6": {
+    "message": "Reveal or hide their Prizes",
+    "translation": "Toon of verberg hun Prizes"
+  },
+  "FnwG7O": {
+    "message": "Reveal or hide your Prizes",
+    "translation": "Toon of verberg je Prizes"
+  },
   "p7M2KL": {
     "message": "Reveal/hide card",
     "translation": "Kaart onthullen/verbergen"
@@ -3858,6 +4145,13 @@
     "message": "Rule Box",
     "translation": "Regelkader"
   },
+  "3JjdaA": {
+    "message": "Run",
+    "comments": [
+      "Command palette footer: Enter key."
+    ],
+    "translation": "Uitvoeren"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -3910,6 +4204,10 @@
     "message": "Saved game resumed",
     "translation": "Opgeslagen spel hervat"
   },
+  "pHxB6X": {
+    "message": "Say…",
+    "translation": "Zeg…"
+  },
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Kaarten zoeken"
@@ -3922,9 +4220,29 @@
     "message": "Search every format",
     "translation": "Alle formaten doorzoeken"
   },
+  "5a_B16": {
+    "message": "Search for an action",
+    "translation": "Zoek een actie"
+  },
+  "FO-u3J": {
+    "message": "Search for an action…",
+    "translation": "Zoek een actie…"
+  },
+  "RxiDMT": {
+    "message": "Search for any action and run it (also Ctrl+K)",
+    "translation": "Zoek een actie en voer die uit (ook Ctrl+K)"
+  },
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Zoeksyntaxis"
+  },
+  "qucaF4": {
+    "message": "Search the cards on the table…",
+    "translation": "Zoek in de kaarten op tafel…"
+  },
+  "RtNLs_": {
+    "message": "Search your deck",
+    "translation": "Doorzoek je deck"
   },
   "xcUq3U": {
     "message": "Season",
@@ -3973,6 +4291,14 @@
   "SdUOXJ": {
     "message": "Set code, illustrator",
     "translation": "Setcode, illustrator"
+  },
+  "L7_73L": {
+    "message": "Set damage to {count}",
+    "translation": "Zet schade op {count}"
+  },
+  "hsdxJE": {
+    "message": "Set damage…",
+    "translation": "Zet schade…"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4045,6 +4371,10 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Een shoutout in de volgende changelog."
   },
+  "8vETh9": {
+    "message": "Show",
+    "translation": "Tonen"
+  },
   "qTlQOF": {
     "message": "Show",
     "context": "which halves of the table",
@@ -4071,9 +4401,17 @@
     "message": "Show every print of each card",
     "translation": "Toon elke uitgave van elke kaart"
   },
+  "UXsj50": {
+    "message": "Show halves…",
+    "translation": "Toon helften…"
+  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Toetsenbord tonen"
+  },
+  "etmouI": {
+    "message": "Show the card",
+    "translation": "Toon de kaart"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4133,6 +4471,10 @@
     "message": "Shuffle deck",
     "translation": "Deck schudden"
   },
+  "cEnSTR": {
+    "message": "Shuffle everything on your playboard into your deck",
+    "translation": "Schud alles op je speelveld in je deck"
+  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Hand in de deck schudden"
@@ -4169,6 +4511,18 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Naar de deck schudden (onderop)"
+  },
+  "HeR1Qt": {
+    "message": "Shuffle your deck",
+    "translation": "Schud je deck"
+  },
+  "KRFctr": {
+    "message": "Shuffle your hand into your deck and draw…",
+    "translation": "Schud je hand in je deck en trek…"
+  },
+  "aIML6N": {
+    "message": "Shuffle your Prizes",
+    "translation": "Schud je Prijskaarten"
   },
   "4p1iGZ": {
     "message": "Sideways scan · rotate to read",
@@ -4232,6 +4586,14 @@
     "message": "Sort results",
     "translation": "Resultaten sorteren"
   },
+  "vjM07C": {
+    "message": "Sort their hand",
+    "translation": "Hand van tegenstander sorteren"
+  },
+  "b2twVe": {
+    "message": "Sort your hand",
+    "translation": "Je hand sorteren"
+  },
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
@@ -4245,6 +4607,14 @@
   "tNhbGC": {
     "message": "Special condition",
     "translation": "Speciale toestand"
+  },
+  "1MpxsD": {
+    "message": "Special Condition",
+    "translation": "Speciale conditie"
+  },
+  "3cLm8v": {
+    "message": "Special Condition…",
+    "translation": "Speciale conditie…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4400,6 +4770,18 @@
     "message": "Table style",
     "translation": "Tafelstijl"
   },
+  "Z3nJeW": {
+    "message": "Table style…",
+    "translation": "Tafelstijl…"
+  },
+  "f9jgd2": {
+    "message": "Table view",
+    "translation": "Tafelweergave"
+  },
+  "cHwqmY": {
+    "message": "Table view…",
+    "translation": "Tafelweergave…"
+  },
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
@@ -4414,9 +4796,17 @@
     "message": "Take it off {seat}",
     "translation": "Haal het van {seat} af"
   },
+  "2g01hc": {
+    "message": "Take off {count} damage",
+    "translation": "Haal {count} schade weg"
+  },
   "siil7J": {
     "message": "Take off damage",
     "translation": "Schade weghalen"
+  },
+  "rQdoKU": {
+    "message": "Take off damage…",
+    "translation": "Haal schade weg…"
   },
   "nzF90T": {
     "message": "Take the decks to the table",
@@ -4572,9 +4962,41 @@
     "message": "The table takes at most {max} different cards.",
     "translation": "Er passen maximaal {max} verschillende kaarten op de tafel."
   },
+  "4IfVI6": {
+    "message": "Their Active Spot",
+    "translation": "Zijn Actieve Plek"
+  },
+  "x36RVi": {
+    "message": "Their Bench",
+    "translation": "Zijn Bank"
+  },
   "zLpI2X": {
     "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
     "translation": "Hun kaarten staan voor jou rechtop leesbaar. Uit staan ze naar hun eigenaar gekeerd, zoals aan een echte tafel."
+  },
+  "BBfq5L": {
+    "message": "Their deck",
+    "translation": "Zijn deck"
+  },
+  "NdIyvu": {
+    "message": "Their discard pile",
+    "translation": "Zijn aflegstapel"
+  },
+  "H2nezS": {
+    "message": "Their hand",
+    "translation": "Zijn hand"
+  },
+  "OF7OJ7": {
+    "message": "Their Lost Zone",
+    "translation": "Zijn Lost Zone"
+  },
+  "M9c-bJ": {
+    "message": "Their playboard",
+    "translation": "Zijn speelveld"
+  },
+  "EO0v0p": {
+    "message": "Their Prizes",
+    "translation": "Zijn Prijskaarten"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -4591,6 +5013,10 @@
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Trek daarna"
+  },
+  "hpAko0": {
+    "message": "Then draw how many cards?",
+    "translation": "Hoeveel kaarten trek je daarna?"
   },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
@@ -4780,6 +5206,10 @@
     "message": "Try it with fewer cards.",
     "translation": "Probeer het met minder kaarten."
   },
+  "JaA9mI": {
+    "message": "Try other words, or press Escape to go back.",
+    "translation": "Probeer andere woorden of druk op Escape om terug te gaan."
+  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -4805,6 +5235,10 @@
   "fijiP5": {
     "message": "Turn face down (both players)",
     "translation": "Met de afbeelding naar beneden draaien (beide spelers)"
+  },
+  "ccavW6": {
+    "message": "Turn the table around",
+    "translation": "Draai de tafel om"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -4832,9 +5266,21 @@
     "context": "sort cards by",
     "translation": "Type"
   },
+  "GgWUew": {
+    "message": "Type a message, then press Enter",
+    "translation": "Typ een bericht en druk op Enter"
+  },
+  "Bq_7Gn": {
+    "message": "Type something first",
+    "translation": "Typ eerst iets"
+  },
   "1OX68x": {
     "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
     "translation": "Typ woorden om op naam te zoeken, of combineer filters — de zoeksyntaxis van Limitless TCG werkt hier."
+  },
+  "gu8i-0": {
+    "message": "Type, then press Enter.",
+    "translation": "Typ en druk op Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -4891,9 +5337,17 @@
     "message": "Use on {seat}",
     "translation": "Gebruiken op {seat}"
   },
+  "yyidsc": {
+    "message": "Use the GX attack",
+    "translation": "GX-aanval gebruiken"
+  },
   "U9oALH": {
     "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
     "translation": "Gebruik dezelfde groep voor stukken van één illustratie. Plaats Pokémon-stukken in één stapel, of Stadium-stukken in het Stadium-gebied."
+  },
+  "nG8vJk": {
+    "message": "Use the VSTAR Power",
+    "translation": "VSTAR-kracht gebruiken"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -4954,6 +5408,10 @@
     "message": "Welcome to PTCG-sim",
     "translation": "Welkom bij PTCG-sim"
   },
+  "aEcdbE": {
+    "message": "What should {0} do?",
+    "translation": "Wat moet {0} doen?"
+  },
   "3ePd3I": {
     "message": "What's new",
     "translation": "Wat is er nieuw"
@@ -4972,6 +5430,14 @@
     "message": "You're watching this table",
     "translation": "Je kijkt mee aan deze tafel"
   },
+  "wkv3p1": {
+    "message": "Your Active Spot",
+    "translation": "Je Actieve Plek"
+  },
+  "rrV20L": {
+    "message": "Your Bench",
+    "translation": "Je Bank"
+  },
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
@@ -4985,6 +5451,18 @@
     "message": "Your decks",
     "translation": "Jouw decks"
   },
+  "S7YY4L": {
+    "message": "Your discard pile",
+    "translation": "Je aflegstapel"
+  },
+  "gUPT1q": {
+    "message": "Your hand",
+    "translation": "Je hand"
+  },
+  "BHcJOF": {
+    "message": "Your Lost Zone",
+    "translation": "Je Lost Zone"
+  },
   "w1h7J8": {
     "message": "Your name changed. Generate a new room before joining.",
     "translation": "Je naam is veranderd. Genereer een nieuwe kamer voordat je meedoet."
@@ -4996,6 +5474,14 @@
   "UTxtTT": {
     "message": "Your opponent is moving these cards",
     "translation": "Je tegenstander verplaatst deze kaarten"
+  },
+  "Oi-Qz3": {
+    "message": "Your playboard",
+    "translation": "Je speelveld"
+  },
+  "XzwcHS": {
+    "message": "Your Prizes",
+    "translation": "Je Prijskaarten"
   },
   "yuM-lV": {
     "message": "Your turn",

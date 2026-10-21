@@ -452,6 +452,18 @@ export const useLiveRoomControls = ({
     // flipped board moves to the other seat.
     if (session.sendChat(normalized, playerId)) setMessage('');
   };
+  /** Sends a line typed elsewhere: the command palette's "Say…". */
+  const say = (text: string): boolean => {
+    const normalized = text.trim();
+    if (
+      !ready ||
+      normalized.length === 0 ||
+      normalized.length > MAX_CHAT_CODE_UNITS
+    ) {
+      return false;
+    }
+    return session.sendChat(normalized, playerId);
+  };
   const handleMessageKeyDown = (
     event: KeyboardEvent<HTMLInputElement>
   ): void => {
@@ -512,6 +524,7 @@ export const useLiveRoomControls = ({
     message,
     setMessage,
     sendMessage,
+    say,
     handleMessageKeyDown,
     submitTable,
     submitLifecycle,
