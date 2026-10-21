@@ -16,8 +16,9 @@ const rendererCacheFixtureBody = (index: number): string => {
 };
 
 /**
- * Lists the deck screen's built files (its script, the scripts it imports
- * and its styles) in `deck-screen-files.json`, so the table can fetch them
+ * Lists the deck screen's built files (its script, the scripts it imports,
+ * at once or later, and its styles) in `deck-screen-files.json`, so the
+ * table can fetch them
  * ahead before importing the screen (ADR-033 §12). A fetch that fails can
  * simply be tried again; an import that fails is remembered by the page.
  */
@@ -44,6 +45,8 @@ const deckScreenFiles = (): Plugin => ({
       files.add(fileName);
       for (const css of chunk.viteMetadata?.importedCss ?? []) files.add(css);
       for (const imported of chunk.imports) visit(imported);
+      // The warm-up's own (popular-decklists' data, current-decklists).
+      for (const imported of chunk.dynamicImports) visit(imported);
     };
     visit(entry.fileName);
     this.emitFile({

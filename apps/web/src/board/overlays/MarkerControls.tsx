@@ -252,8 +252,12 @@ const DamageControls = ({
     return true;
   };
   useEffect(() => {
+    // What was typed is set, or forgotten if it is no number.
     commitRef.current = () => {
-      commit();
+      if (!commit()) {
+        setDraft(null);
+        setInvalid(false);
+      }
     };
     return () => {
       commitRef.current = null;
@@ -288,18 +292,6 @@ const DamageControls = ({
         onChange={(event) => {
           setDraft(event.currentTarget.value);
           setInvalid(false);
-        }}
-        onBlur={(event) => {
-          // Moving to a button here leaves it to the button.
-          if (
-            event.relatedTarget instanceof Node &&
-            event.currentTarget.parentElement?.contains(event.relatedTarget)
-          )
-            return;
-          if (!commit()) {
-            setDraft(null);
-            setInvalid(false);
-          }
         }}
         onKeyDown={(event) => {
           // Typing is not a table shortcut.
@@ -532,6 +524,16 @@ export const MarkerControls = ({
   return (
     <div
       ref={panel}
+      // Leaving the controls (Tab past the buttons, a press elsewhere) sets
+      // what was typed; moving between them leaves it to the button pressed.
+      onBlur={(event) => {
+        if (
+          event.relatedTarget instanceof Node &&
+          panel.current?.contains(event.relatedTarget)
+        )
+          return;
+        commitTyped.current?.();
+      }}
       className="ptcgsim-marker-controls"
       data-marker-controls={marker.kind}
       data-marker-controls-for={marker.id}

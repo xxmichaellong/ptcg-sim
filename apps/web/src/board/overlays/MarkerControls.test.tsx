@@ -173,6 +173,21 @@ describe('MarkerControls', () => {
     ]);
   });
 
+  it('sets what was typed when the focus leaves them, past their buttons', () => {
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    render(marker('damage', '50'));
+    act(() => field().focus());
+    type('100');
+    // Onto a step button: nothing yet, the button would step from it.
+    act(() => button('10 more damage').focus());
+    expect(actions.submitDamageInput).not.toHaveBeenCalled();
+    // Out of the controls: what was typed is set.
+    act(() => outside.focus());
+    expect(actions.submitDamageInput.mock.calls).toEqual([[cardId, '100']]);
+    outside.remove();
+  });
+
   it('sets what was typed when a press elsewhere puts them away', () => {
     render(marker('damage', '60'));
     type('30');
