@@ -13,6 +13,13 @@
     ],
     "translation": ", açık"
   },
+  "yqY7T3": {
+    "message": "{0} damage",
+    "comments": [
+      "Tooltip of a damage counter on a Pokémon, e.g. \"60 damage\"."
+    ],
+    "translation": "{0} hasar"
+  },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -89,6 +96,13 @@
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor} {count, plural, one {# bağlı kartı} other {# bağlı kartı}} oyunda bıraktı"
+  },
+  "c5qeZl": {
+    "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
+    "comments": [
+      "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
+    ],
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {masadan} stadium {stadyumdan} active {aktif Pokémon'dan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {ekli kartlardan} other {desteden}} {boardOwner} oyuncusunun {target, select, hand {eline} prizes {ödül kartlarına} discard {atık yığınına} board {masasına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {ekli kartlarına} other {destesine}} taşıdı"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -291,6 +305,38 @@
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
     "translation": "{count, plural, one {# kart · {legalIn} için geçerli} other {# kart · {legalIn} için geçerli}}"
+  },
+  "U9iP6d": {
+    "message": "{count, plural, one {# card in {name}'s deck} other {# cards in {name}'s deck}}",
+    "translation": "{count, plural, one {{name} oyuncusunun destesinde # kart} other {{name} oyuncusunun destesinde # kart}}"
+  },
+  "myosK5": {
+    "message": "{count, plural, one {# card in {name}'s discard pile} other {# cards in {name}'s discard pile}}",
+    "translation": "{count, plural, one {{name} oyuncusunun atık yığınında # kart} other {{name} oyuncusunun atık yığınında # kart}}"
+  },
+  "vxYrmH": {
+    "message": "{count, plural, one {# card in {name}'s hand} other {# cards in {name}'s hand}}",
+    "translation": "{count, plural, one {{name} oyuncusunun elinde # kart} other {{name} oyuncusunun elinde # kart}}"
+  },
+  "Qk1aGi": {
+    "message": "{count, plural, one {# card in {name}'s Lost Zone} other {# cards in {name}'s Lost Zone}}",
+    "translation": "{count, plural, one {{name} oyuncusunun Lost Zone'unda # kart} other {{name} oyuncusunun Lost Zone'unda # kart}}"
+  },
+  "iwx6si": {
+    "message": "{count, plural, one {# card in your deck} other {# cards in your deck}}",
+    "translation": "{count, plural, one {Destende # kart} other {Destende # kart}}"
+  },
+  "fv6r42": {
+    "message": "{count, plural, one {# card in your discard pile} other {# cards in your discard pile}}",
+    "translation": "{count, plural, one {Atık yığınında # kart} other {Atık yığınında # kart}}"
+  },
+  "MEWSr2": {
+    "message": "{count, plural, one {# card in your hand} other {# cards in your hand}}",
+    "translation": "{count, plural, one {Elinde # kart} other {Elinde # kart}}"
+  },
+  "N3SvzU": {
+    "message": "{count, plural, one {# card in your Lost Zone} other {# cards in your Lost Zone}}",
+    "translation": "{count, plural, one {Lost Zone'unda # kart} other {Lost Zone'unda # kart}}"
   },
   "bM4Wv5": {
     "message": "{count, plural, one {# card} other {# cards}}",
@@ -863,6 +909,14 @@
     ],
     "translation": "1 tuşu 10, 9 tuşu 90 ekler"
   },
+  "ngBvCd": {
+    "message": "10 less damage",
+    "translation": "10 hasar daha az"
+  },
+  "AHfGsB": {
+    "message": "10 more damage",
+    "translation": "10 hasar daha fazla"
+  },
   "c224Tl": {
     "message": "3 draws three",
     "comments": [
@@ -922,6 +976,13 @@
     "message": "Ability",
     "context": "shortcut key caption",
     "translation": "Yetenek"
+  },
+  "uFV0XA": {
+    "message": "Ability used",
+    "comments": [
+      "Tooltip of the marker on a Pokémon whose Ability was used."
+    ],
+    "translation": "Yetenek kullanıldı"
   },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
@@ -1089,6 +1150,11 @@
   "2uaWnn": {
     "message": "Artwork window",
     "translation": "İllüstrasyon penceresi"
+  },
+  "eiQJaM": {
+    "message": "Asleep",
+    "context": "special condition",
+    "translation": "Uykuda"
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
@@ -1280,6 +1346,11 @@
       "A table look: the colour"
     ],
     "translation": "Bordo"
+  },
+  "fC9HUg": {
+    "message": "Burned",
+    "context": "special condition",
+    "translation": "Yanık"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -1527,6 +1598,11 @@
   "7VpPHA": {
     "message": "Confirm",
     "translation": "Onayla"
+  },
+  "DcpzXY": {
+    "message": "Confused",
+    "context": "special condition",
+    "translation": "Şaşkın"
   },
   "JrFTcr": {
     "message": "Connecting…",
@@ -2756,6 +2832,13 @@
     ],
     "translation": "{name} kullanıldı olarak işaretle"
   },
+  "386rEt": {
+    "message": "Mark as unused",
+    "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon."
+    ],
+    "translation": "Kullanılmadı olarak işaretle"
+  },
   "42K-4o": {
     "message": "Match finish",
     "translation": "Maç sonu"
@@ -3196,6 +3279,11 @@
     "context": "keyboard key",
     "translation": "Page Up"
   },
+  "xun4kD": {
+    "message": "Paralyzed",
+    "context": "special condition",
+    "translation": "Felçli"
+  },
   "l3RHbc": {
     "message": "Parchment",
     "comments": [
@@ -3319,6 +3407,11 @@
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket destelerinde Enerji kartı yoktur."
+  },
+  "95vGpJ": {
+    "message": "Poisoned",
+    "context": "special condition",
+    "translation": "Zehirli"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -3529,6 +3622,10 @@
     "message": "Remove {name} from {seat}",
     "translation": "{name} kartını {seat} konumundan kaldır"
   },
+  "-cND-P": {
+    "message": "Remove all damage",
+    "translation": "Tüm hasarı kaldır"
+  },
   "MS9-fZ": {
     "message": "Remove one",
     "translation": "Birini kaldır"
@@ -3543,6 +3640,10 @@
   },
   "5qTkf-": {
     "message": "Remove special condition",
+    "translation": "Özel durumu kaldır"
+  },
+  "cqopk0": {
+    "message": "Remove the Special Condition",
     "translation": "Özel durumu kaldır"
   },
   "XsrZAv": {

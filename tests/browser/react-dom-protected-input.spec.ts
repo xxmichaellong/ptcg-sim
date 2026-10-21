@@ -1079,12 +1079,12 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect((await evidence(page)).overlayActions).toHaveLength(1);
 
   await conditionEditor.fill('Pa');
-  // v1's "PA" previews the Paralyzed chip: a yellow bolt on charcoal.
+  // v1's "PA" previews the Paralyzed chip: an amber jolt on yellow.
   await expect(conditionEditor).toHaveCSS(
     'background-color',
-    'rgb(43, 43, 48)'
+    'rgb(250, 238, 66)'
   );
-  await expect(conditionEditor).toHaveCSS('color', 'rgb(255, 214, 10)');
+  await expect(conditionEditor).toHaveCSS('color', 'rgb(150, 92, 0)');
   await conditionEditor.press('Enter');
   await expect(conditionEditor).toHaveCount(0);
   await expect

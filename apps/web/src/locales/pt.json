@@ -13,6 +13,13 @@
     ],
     "translation": ", ligado"
   },
+  "yqY7T3": {
+    "message": "{0} damage",
+    "comments": [
+      "Tooltip of a damage counter on a Pokémon, e.g. \"60 damage\"."
+    ],
+    "translation": "{0} de dano"
+  },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -89,6 +96,13 @@
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor} deixou {count, plural, one {# carta anexada} many {# de cartas anexadas} other {# cartas anexadas}} em jogo"
+  },
+  "c5qeZl": {
+    "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
+    "comments": [
+      "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
+    ],
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {mesa} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {a mesa} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} other {o baralho}} de {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -291,6 +305,38 @@
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
     "translation": "{count, plural, one {# carta · legal em {legalIn}} many {# de cartas · legais em {legalIn}} other {# cartas · legais em {legalIn}}}"
+  },
+  "U9iP6d": {
+    "message": "{count, plural, one {# card in {name}'s deck} other {# cards in {name}'s deck}}",
+    "translation": "{count, plural, one {# carta no baralho de {name}} many {# de cartas no baralho de {name}} other {# cartas no baralho de {name}}}"
+  },
+  "myosK5": {
+    "message": "{count, plural, one {# card in {name}'s discard pile} other {# cards in {name}'s discard pile}}",
+    "translation": "{count, plural, one {# carta na pilha de descarte de {name}} many {# de cartas na pilha de descarte de {name}} other {# cartas na pilha de descarte de {name}}}"
+  },
+  "vxYrmH": {
+    "message": "{count, plural, one {# card in {name}'s hand} other {# cards in {name}'s hand}}",
+    "translation": "{count, plural, one {# carta na mão de {name}} many {# de cartas na mão de {name}} other {# cartas na mão de {name}}}"
+  },
+  "Qk1aGi": {
+    "message": "{count, plural, one {# card in {name}'s Lost Zone} other {# cards in {name}'s Lost Zone}}",
+    "translation": "{count, plural, one {# carta na Zona Perdida de {name}} many {# de cartas na Zona Perdida de {name}} other {# cartas na Zona Perdida de {name}}}"
+  },
+  "iwx6si": {
+    "message": "{count, plural, one {# card in your deck} other {# cards in your deck}}",
+    "translation": "{count, plural, one {# carta no seu baralho} many {# de cartas no seu baralho} other {# cartas no seu baralho}}"
+  },
+  "fv6r42": {
+    "message": "{count, plural, one {# card in your discard pile} other {# cards in your discard pile}}",
+    "translation": "{count, plural, one {# carta na sua pilha de descarte} many {# de cartas na sua pilha de descarte} other {# cartas na sua pilha de descarte}}"
+  },
+  "MEWSr2": {
+    "message": "{count, plural, one {# card in your hand} other {# cards in your hand}}",
+    "translation": "{count, plural, one {# carta na sua mão} many {# de cartas na sua mão} other {# cartas na sua mão}}"
+  },
+  "N3SvzU": {
+    "message": "{count, plural, one {# card in your Lost Zone} other {# cards in your Lost Zone}}",
+    "translation": "{count, plural, one {# carta na sua Zona Perdida} many {# de cartas na sua Zona Perdida} other {# cartas na sua Zona Perdida}}"
   },
   "bM4Wv5": {
     "message": "{count, plural, one {# card} other {# cards}}",
@@ -863,6 +909,14 @@
     ],
     "translation": "1 adiciona 10, 9 adiciona 90"
   },
+  "ngBvCd": {
+    "message": "10 less damage",
+    "translation": "10 de dano a menos"
+  },
+  "AHfGsB": {
+    "message": "10 more damage",
+    "translation": "10 de dano a mais"
+  },
   "c224Tl": {
     "message": "3 draws three",
     "comments": [
@@ -922,6 +976,13 @@
     "message": "Ability",
     "context": "shortcut key caption",
     "translation": "Habilidade"
+  },
+  "uFV0XA": {
+    "message": "Ability used",
+    "comments": [
+      "Tooltip of the marker on a Pokémon whose Ability was used."
+    ],
+    "translation": "Habilidade usada"
   },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
@@ -1089,6 +1150,11 @@
   "2uaWnn": {
     "message": "Artwork window",
     "translation": "Janela de ilustração"
+  },
+  "eiQJaM": {
+    "message": "Asleep",
+    "context": "special condition",
+    "translation": "Adormecido"
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
@@ -1280,6 +1346,11 @@
       "A table look: the colour"
     ],
     "translation": "Bordô"
+  },
+  "fC9HUg": {
+    "message": "Burned",
+    "context": "special condition",
+    "translation": "Queimado"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -1527,6 +1598,11 @@
   "7VpPHA": {
     "message": "Confirm",
     "translation": "Confirmar"
+  },
+  "DcpzXY": {
+    "message": "Confused",
+    "context": "special condition",
+    "translation": "Confuso"
   },
   "JrFTcr": {
     "message": "Connecting…",
@@ -2756,6 +2832,13 @@
     ],
     "translation": "Marcar {name} como usado"
   },
+  "386rEt": {
+    "message": "Mark as unused",
+    "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon."
+    ],
+    "translation": "Marcar como não usada"
+  },
   "42K-4o": {
     "message": "Match finish",
     "translation": "Fim da partida"
@@ -3196,6 +3279,11 @@
     "context": "keyboard key",
     "translation": "Page Up"
   },
+  "xun4kD": {
+    "message": "Paralyzed",
+    "context": "special condition",
+    "translation": "Paralisado"
+  },
   "l3RHbc": {
     "message": "Parchment",
     "comments": [
@@ -3319,6 +3407,11 @@
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
     "translation": "Baralhos Pocket não têm cartas de Energia."
+  },
+  "95vGpJ": {
+    "message": "Poisoned",
+    "context": "special condition",
+    "translation": "Envenenado"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -3529,6 +3622,10 @@
     "message": "Remove {name} from {seat}",
     "translation": "Remover {name} de {seat}"
   },
+  "-cND-P": {
+    "message": "Remove all damage",
+    "translation": "Remover todo o dano"
+  },
   "MS9-fZ": {
     "message": "Remove one",
     "translation": "Remover uma"
@@ -3544,6 +3641,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Remover condição especial"
+  },
+  "cqopk0": {
+    "message": "Remove the Special Condition",
+    "translation": "Remover a condição especial"
   },
   "XsrZAv": {
     "message": "Rename",
