@@ -1280,7 +1280,11 @@ export const decideCommand = (
         expectedSourceZoneId: source.id,
         destinationZoneId: destination.id,
         destinationIndex,
-        concealIdentity: isConcealedZone(destination),
+        // A Prize put in another cell of its grid is only reordered: who can
+        // see it is unchanged. (Within a deck, the order is the secret.)
+        concealIdentity:
+          !(source.id === destination.id && destination.kind === 'prizes') &&
+          isConcealedZone(destination),
       });
       return { accepted: true, events };
     }

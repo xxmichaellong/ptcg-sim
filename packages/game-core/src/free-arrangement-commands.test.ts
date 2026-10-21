@@ -159,6 +159,60 @@ describe('free arrangement', () => {
     }
   });
 
+  it('reorders a Prize within its grid without hiding it again or changing its alias', () => {
+    const { commandContext, deckId } = table(0);
+    let state = table(0).state;
+    const prizesId = playerZoneId(p1, 'prizes');
+    for (let index = 0; index < 3; index += 1) {
+      state = accepted(
+        state,
+        {
+          type: 'MoveCard',
+          cardId: state.zones[deckId]!.cardIds[0]!,
+          expectedSourceZoneId: deckId,
+          destinationZoneId: prizesId,
+        },
+        commandContext
+      );
+    }
+    const [first, second, third] = state.zones[prizesId]!.cardIds;
+    state = accepted(
+      state,
+      {
+        type: 'SetPublicReveal',
+        actorPlayerId: p1,
+        playerId: p1,
+        cardId: third!,
+        expectedSourceId: prizesId,
+        revealed: true,
+      },
+      commandContext
+    );
+    const generations = Object.fromEntries(
+      [first!, second!, third!].map((id) => [
+        id,
+        state.cards[id]!.visibilityGeneration,
+      ])
+    );
+    const reordered = accepted(
+      state,
+      {
+        type: 'MoveCard',
+        cardId: third!,
+        expectedSourceZoneId: prizesId,
+        destinationZoneId: prizesId,
+        destinationIndex: 0,
+      },
+      commandContext
+    );
+    expect(reordered.zones[prizesId]!.cardIds).toEqual([third, first, second]);
+    // Still face up for everyone, and still the same card to every viewer.
+    expect(reordered.visibility.publicCardIds).toContain(third);
+    for (const id of [first!, second!, third!]) {
+      expect(reordered.cards[id]!.visibilityGeneration).toBe(generations[id]);
+    }
+  });
+
   it('puts a card anywhere in the hand, from the hand or from elsewhere', () => {
     const { commandContext, deckId } = table(0);
     let state = table(0).state;

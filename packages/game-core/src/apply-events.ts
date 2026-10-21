@@ -973,11 +973,16 @@ const applyEventInternal = (
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||
-        !eventConcealmentMatchesDestination(
+        (!eventConcealmentMatchesDestination(
           event,
           destination,
           deferredConcealment
-        ) ||
+        ) &&
+          !(
+            source.id === destination.id &&
+            destination.kind === 'prizes' &&
+            !event.concealIdentity
+          )) ||
         (destination.kind === 'stadium' &&
           source.id !== destination.id &&
           destination.cardIds.length >= 4)
@@ -995,6 +1000,21 @@ const applyEventInternal = (
       destinationCards.splice(destinationIndex, 0, event.cardId);
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
+      // A Prize reordered within its grid (logs before this concealed it):
+      // the card and who can see it stay as they were.
+      if (
+        source.id === destination.id &&
+        destination.kind === 'prizes' &&
+        !event.concealIdentity
+      ) {
+        return {
+          ...state,
+          zones: {
+            ...state.zones,
+            [source.id]: { ...source, cardIds: destinationCards },
+          },
+        };
+      }
       const normalizedCard = normalizeCardForZone(card, destination);
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
