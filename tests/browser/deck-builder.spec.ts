@@ -177,9 +177,7 @@ test('the builder searches, filters, checks the rules, undoes and renames', asyn
   await expect(results).toHaveCount(2);
   await results.first().getByRole('button').click();
   await results.first().getByRole('button').click();
-  await expect(check).toContainText(
-    '5 copies of Dragapult ex; the limit is 4.'
-  );
+  await expect(check).toContainText('5 copies of Dragapult ex (max 4).');
 
   // Renaming saves; the deck is on the decks list under its new name.
   await page.locator('#deckNameInput').fill('Phantom Dive');
@@ -207,9 +205,7 @@ test('lines the catalog cannot place are listed, and the rest imports', async ({
     .fill('4 Dreepy TWM 128\n2 Not A Real Card');
   await page.locator('#deckPasteImportButton').click();
   await expect(seatCount(page)).toHaveAttribute('data-card-count', '4');
-  await expect(page.locator('.deck-missing')).toContainText(
-    "1 line from the list couldn't be found"
-  );
+  await expect(page.locator('.deck-missing')).toContainText('1 line not found');
   await expect(page.locator('.deck-missing')).toContainText('Not A Real Card');
 });
 
