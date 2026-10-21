@@ -153,11 +153,14 @@ specifically without blocking, and go from deck to table in one click.
     deck's tile fetches its cards for the editor; a deck put on a seat has
     its faces fetched as the table will ask for them, before they are dealt.
     Thumbnails that fall back to Limitless take its small scan, a tenth of
-    the full one's bytes. Not on a connection that asks to save data. The
-    page remembers a script whose fetch failed and won't fetch it again, so
-    the script is fetched ahead only while the browser is online and the
-    server answers (`/v2/health`); otherwise the screen loads it when it
-    opens, as before.
+    the full one's bytes. Not on a connection that asks to save data, nor
+    offline. The page remembers a script whose import failed and won't fetch
+    it again, so the warm-up first fetches the screen's built files (listed
+    at build time in `deck-screen-files.json`), which can fail harmlessly,
+    and imports the screen only once all have arrived; Vite's
+    content-hashed files are cached for good (`public/_headers`), so that
+    import makes no request that could fail. Otherwise the screen loads its
+    script when it opens, as before.
 
 ## Consequences
 

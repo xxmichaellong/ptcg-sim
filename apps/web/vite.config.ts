@@ -15,6 +15,45 @@ const rendererCacheFixtureBody = (index: number): string => {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="63" height="88" viewBox="0 0 63 88" data-index="${id}"><rect width="63" height="88" fill="hsl(${hue} 70% 45%)"/><circle cx="31.5" cy="36" r="${10 + (index % 9)}" fill="hsl(${(hue + 120) % 360} 80% 75%)"/><path d="M8 72h${12 + (index % 35)}v6H8z" fill="hsl(${(hue + 240) % 360} 65% 20%)"/></svg>`;
 };
 
+/**
+ * Lists the deck screen's built files (its script, the scripts it imports
+ * and its styles) in `deck-screen-files.json`, so the table can fetch them
+ * ahead before importing the screen (ADR-033 §12). A fetch that fails can
+ * simply be tried again; an import that fails is remembered by the page.
+ */
+const deckScreenFiles = (): Plugin => ({
+  name: 'ptcgsim-deck-screen-files',
+  apply: 'build',
+  generateBundle(_options, bundle) {
+    const chunks = Object.values(bundle).filter(
+      (output) => output.type === 'chunk'
+    );
+    const entry = chunks.find((chunk) =>
+      /\/features\/deck\/DeckBuilderSession\.tsx$/u.test(
+        chunk.facadeModuleId ?? ''
+      )
+    );
+    if (!entry) {
+      this.error('The deck screen has no chunk of its own to list.');
+    }
+    const files = new Set<string>();
+    const visit = (fileName: string): void => {
+      if (files.has(fileName)) return;
+      const chunk = chunks.find((candidate) => candidate.fileName === fileName);
+      if (!chunk) return;
+      files.add(fileName);
+      for (const css of chunk.viteMetadata?.importedCss ?? []) files.add(css);
+      for (const imported of chunk.imports) visit(imported);
+    };
+    visit(entry.fileName);
+    this.emitFile({
+      type: 'asset',
+      fileName: 'deck-screen-files.json',
+      source: JSON.stringify([...files]),
+    });
+  },
+});
+
 const rendererCacheFixture = (): Plugin => {
   const requestCounts = Array.from(
     { length: rendererCacheFixtureCount },
@@ -193,6 +232,7 @@ const v2ServerTarget =
 
 export default defineConfig({
   plugins: [
+    deckScreenFiles(),
     rendererCacheFixture(),
     rendererRedirectFixture(),
     // Lingui's macros compile here, without Babel, and `?lingui` catalogs

@@ -44,8 +44,47 @@ const DeckBuilder = lazy(async () => ({
  */
 const WARMUP_DELAY_MS = 1_000;
 const WARMUP_IDLE_TIMEOUT_MS = 2_000;
-/** Asked first: the warm-up runs only while the server answers. */
-const REACHABLE_URL = '/v2/health';
+/**
+ * Fetches the deck screen's built files (listed at build time) into the
+ * browser's cache; true once every one arrived. A development server
+ * builds nothing ahead and lists no files: there the warm-up only asks
+ * that the server answers.
+ */
+export const deckScreenFilesArrived = async (
+  base: string = import.meta.env.BASE_URL,
+  development: boolean = import.meta.env.DEV
+): Promise<boolean> => {
+  const arrives = (url: string, init?: RequestInit): Promise<Response | null> =>
+    fetch(url, init).then(
+      (response) => (response.ok ? response : null),
+      () => null
+    );
+  if (development)
+    return (await arrives('/v2/health', { cache: 'no-store' })) !== null;
+  const listed = await arrives(`${base}deck-screen-files.json`, {
+    cache: 'no-cache',
+  });
+  const files: unknown = await listed?.json().catch(() => null);
+  if (
+    !Array.isArray(files) ||
+    files.length === 0 ||
+    !files.every((file): file is string => typeof file === 'string')
+  )
+    return false;
+  // Read through, so each lands in the cache whole.
+  const fetched = await Promise.all(
+    files.map(async (file) => {
+      const response = await arrives(`${base}${file}`);
+      return response
+        ? response.arrayBuffer().then(
+            () => true,
+            () => false
+          )
+        : false;
+    })
+  );
+  return fetched.every(Boolean);
+};
 
 let warming: Promise<void> | undefined;
 
@@ -90,17 +129,15 @@ export const scheduleDeckScreenWarmup = (): (() => void) => {
   if (typeof window === 'undefined' || sparesData()) return () => undefined;
   // The page remembers a script whose fetch failed under its address, and
   // won't fetch it again: a warm-up that met a dropped connection would
-  // keep the screen from opening until a reload. So the script is fetched
-  // ahead only while the connection answers; otherwise the screen loads it
+  // keep the screen from opening until a reload. So the screen's files are
+  // fetched first, which can fail harmlessly, and it is imported only once
+  // they are all here (cached for good, `_headers`); otherwise it loads
   // when it opens, as it always did.
   const run = (): void => {
     if (navigator.onLine === false) return;
-    void fetch(REACHABLE_URL, { cache: 'no-store' }).then(
-      (response) => {
-        if (response.ok) void preloadDeckScreen();
-      },
-      () => undefined
-    );
+    void deckScreenFilesArrived().then((arrived) => {
+      if (arrived) void preloadDeckScreen();
+    });
   };
   let idle: number | undefined;
   const timer = window.setTimeout(() => {
