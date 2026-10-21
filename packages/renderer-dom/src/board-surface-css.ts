@@ -355,12 +355,15 @@ export const BOARD_SURFACE_CSS = `
   content: attr(data-zone-label);
   position: absolute;
   left: 8px;
+  right: 8px;
   top: 6px;
   color: var(--color-felt-label, rgb(255 255 255 / 0.45));
   /* In the card game's own typeface, like a real mat. */
-  font: 600 11px/1 var(--font-display, sans-serif);
+  font: 600 11px/1.15 var(--font-display, sans-serif);
   pointer-events: none;
-  white-space: nowrap;
+  /* A long name (a translation, a narrow spot on a phone) wraps inside the
+     spot rather than running out of it. */
+  overflow-wrap: anywhere;
   opacity: 0;
   translate: 0 3px;
   transition:
@@ -419,7 +422,8 @@ export const BOARD_SURFACE_CSS = `
   bottom: auto;
 }
 /* A pile as small as a phone's keeps its name inside it: smaller type,
-   edge to edge, under the card spot on either side. */
+   edge to edge, under the card spot on either side, above the count badge
+   on its corner (a long name wraps upward). */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium) {
   container-type: inline-size;
 }
@@ -428,7 +432,7 @@ export const BOARD_SURFACE_CSS = `
     left: 2px;
     right: 2px;
     top: auto;
-    bottom: 6px;
+    bottom: 14px;
     font-size: 7.5px;
   }
 }
