@@ -1019,10 +1019,12 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
     });
   /**
    * Exit copies of closed overlays live at most 450ms, so ghosts are counted
-   * at 600ms. A short fade still finishing on a slow runner (the rail
-   * coming back from dim after a viewer closes) is not residue: running
-   * animations get up to 2s more to end, and any still running then is
-   * named. An animation that never ends, or keeps restarting, still fails.
+   * at 600ms. A short fade still finishing on a slow runner (the rail and
+   * the + coming back from dim after a viewer closes, which CI's soak
+   * runner, busy for eleven minutes, has been seen to take past 2s over)
+   * is not residue: running animations get up to 5s more to end, and any
+   * still running then is named. An animation that never ends, or keeps
+   * restarting, still fails.
    */
   const settledResidue = async () => {
     await page.waitForTimeout(600);
@@ -1030,7 +1032,7 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
     let settled = atGhostDeadline;
     for (
       let waited = 0;
-      settled.animations > 0 && waited < 2_000;
+      settled.animations > 0 && waited < 5_000;
       waited += 100
     ) {
       await page.waitForTimeout(100);

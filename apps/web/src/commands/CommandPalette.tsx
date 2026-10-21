@@ -207,7 +207,8 @@ export const CommandPalette = ({
   const [query, setQuery] = useState('');
   /** Ids of the commands whose screens are open, outermost first. */
   const [path, setPath] = useState<readonly string[]>([]);
-  const [selected, setSelected] = useState(0);
+  /** The chosen row, by what it is: a list that changes keeps it chosen. */
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [asking, setAsking] = useState<Asking | null>(null);
   const [draft, setDraft] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -252,14 +253,21 @@ export const CommandPalette = ({
       searchesInto
     );
     const grouped = screen ? null : rankCommands(entries, query, recent);
+    // A command listed twice (under Recent and its own section) is two rows.
     const ranked = grouped
-      ? grouped.flatMap((section) => section.entries)
-      : rankScreen(entries, query);
+      ? grouped.flatMap((section) =>
+          section.entries.map((entry) => ({ entry, section: section.section }))
+        )
+      : rankScreen(entries, query).map((entry) => ({
+          entry,
+          section: 'screen',
+        }));
     return {
-      rows: ranked.map((entry, index): Row => ({
+      rows: ranked.map(({ entry, section }, index): Row => ({
         ranked: entry,
         id: `${listId}-option-${index}`,
         key: [
+          section,
           ...entry.entry.ancestors.map((ancestor) => ancestor.id),
           entry.entry.command.id,
           entry.count ?? '',
@@ -268,11 +276,14 @@ export const CommandPalette = ({
       sections: grouped,
     };
   }, [root, screen, query, recent, listId]);
-  const current = Math.min(selected, Math.max(0, rows.length - 1));
+  const current = Math.max(
+    0,
+    rows.findIndex((row) => row.key === selectedKey)
+  );
 
   // The selection starts at the top of every new list.
   useEffect(() => {
-    setSelected(0);
+    setSelectedKey(null);
     setArmed(null);
   }, [query, path]);
   useEffect(() => {
@@ -327,6 +338,8 @@ export const CommandPalette = ({
   ): void => {
     recordCommandRun(remembered(entry));
     if (command.keepOpen) {
+      // Kept chosen as Recent takes it in, for the next Enter to repeat.
+      setSelectedKey(rowKey);
       setFlashed(rowKey);
       return;
     }
@@ -438,7 +451,7 @@ export const CommandPalette = ({
         if (asking || rows.length === 0) return;
         event.preventDefault();
         const step = event.key === 'ArrowDown' ? 1 : -1;
-        setSelected((current + step + rows.length) % rows.length);
+        setSelectedKey(rows[(current + step + rows.length) % rows.length]!.key);
         setArmed(null);
         return;
       }
@@ -447,7 +460,7 @@ export const CommandPalette = ({
         if (asking || rows.length === 0 || event.currentTarget.value !== '')
           return;
         event.preventDefault();
-        setSelected(event.key === 'Home' ? 0 : rows.length - 1);
+        setSelectedKey(rows[event.key === 'Home' ? 0 : rows.length - 1]!.key);
         return;
       case 'Tab':
         // The field keeps the focus: the list is read through it.
@@ -489,12 +502,12 @@ export const CommandPalette = ({
         data-danger={command.dangerous ? '' : undefined}
         onMouseMove={() => {
           if (index !== current) {
-            setSelected(index);
+            setSelectedKey(row.key);
             setArmed(null);
           }
         }}
         onClick={() => {
-          setSelected(index);
+          setSelectedKey(row.key);
           run(row);
           field.current?.focus({ preventScroll: true });
         }}

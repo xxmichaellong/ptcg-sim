@@ -202,52 +202,55 @@ export const boardCommands = (
         run: shortcut(request),
       });
     }
-    // Damage by any amount; v1's number keys step it by tens.
+    // Damage by any amount; v1's number keys step it by tens. Taking off
+    // sets what is left, so it never reaches v1's Alt+number quirk of
+    // putting the amount on a Pokémon that had none.
+    const damage = view.stacks[card.parentId]?.damage ?? 0;
     if (accepts({ action: 'adjustDamage', cardId: card.id, delta: 10 })) {
-      commands.push(
-        {
-          id: `${prefix}.addDamage`,
-          title: t`Add damage…`,
-          section,
-          detail,
-          icon: HeartBreakIcon,
-          keywords: ['damage', 'counter', 'hp'],
-          count: {
-            label: t`How much damage?`,
-            min: 10,
-            max: MAX_DAMAGE,
-            initial: 10,
-            title: (count) => t`Add ${count} damage`,
-          },
-          run: ({ count = 10 }) =>
-            shortcut({
-              action: 'adjustDamage',
-              cardId: card.id,
-              delta: count,
-            })(),
+      commands.push({
+        id: `${prefix}.addDamage`,
+        title: t`Add damage…`,
+        section,
+        detail,
+        icon: HeartBreakIcon,
+        keywords: ['damage', 'counter', 'hp'],
+        count: {
+          label: t`How much damage?`,
+          min: 10,
+          max: MAX_DAMAGE,
+          initial: 10,
+          title: (count) => t`Add ${count} damage`,
         },
-        {
-          id: `${prefix}.removeDamage`,
-          title: t`Take off damage…`,
-          section,
-          detail,
-          icon: FirstAidIcon,
-          keywords: ['heal', 'damage', 'remove'],
-          count: {
-            label: t`How much damage?`,
-            min: 10,
-            max: MAX_DAMAGE,
-            initial: 10,
-            title: (count) => t`Take off ${count} damage`,
-          },
-          run: ({ count = 10 }) =>
-            shortcut({
-              action: 'adjustDamage',
-              cardId: card.id,
-              delta: -count,
-            })(),
-        }
-      );
+        run: ({ count = 10 }) =>
+          shortcut({ action: 'adjustDamage', cardId: card.id, delta: count })(),
+      });
+    }
+    const setsDamage = selectLegacyContextEntries(state, card).some(
+      (entry) => entry.kind === 'action' && entry.action === 'setDamage'
+    );
+    if (damage > 0 && setsDamage) {
+      commands.push({
+        id: `${prefix}.removeDamage`,
+        title: t`Take off damage…`,
+        section,
+        detail,
+        icon: FirstAidIcon,
+        keywords: ['heal', 'damage', 'remove'],
+        count: {
+          label: t`How much damage?`,
+          min: 1,
+          max: damage,
+          initial: Math.min(10, damage),
+          title: (count) => t`Take off ${count} damage`,
+        },
+        run: ({ count = 10 }) =>
+          overlay({
+            kind: 'context',
+            action: 'setDamage',
+            cardId: card.id,
+            value: String(Math.max(0, damage - count)),
+          })(),
+      });
     }
     const menu = new Set(
       selectLegacyContextEntries(state, card).flatMap((entry) =>

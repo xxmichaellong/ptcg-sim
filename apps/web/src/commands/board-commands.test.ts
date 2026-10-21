@@ -123,6 +123,44 @@ describe('boardCommands', () => {
     );
   });
 
+  it('takes damage off by setting what is left, and offers it only where there is some', () => {
+    const active = view.stacks[view.boards[bottom]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const presentation = {
+      ...createInitialBoardSessionControllerState().presentation,
+      selectedCardId: cardId,
+    };
+    const damaged = stateWith({
+      view: {
+        ...view,
+        stacks: { ...view.stacks, [active.id]: { ...active, damage: 120 } },
+      },
+      presentation,
+    });
+    const runtime = runtimeFor(damaged);
+    const commands = boardCommands({ runtime, hint: () => undefined });
+    const remove = find(commands, 'selected.removeDamage');
+    expect(remove.count?.max).toBe(120);
+    remove.run!({ count: 50 });
+    expect(runtime.emitLegacyOverlayAction).toHaveBeenCalledWith(
+      { kind: 'context', action: 'setDamage', cardId, value: '70' },
+      'palette'
+    );
+    // None to take off: v1's Alt+number would put it on instead.
+    const undamaged = stateWith({
+      view: {
+        ...view,
+        stacks: { ...view.stacks, [active.id]: { ...active, damage: null } },
+      },
+      presentation,
+    });
+    expect(
+      ids(
+        boardCommands({ runtime: runtimeFor(undamaged), hint: () => undefined })
+      )
+    ).not.toContain('selected.removeDamage');
+  });
+
   it('finds face-up cards, yours first, never a face-down pile', () => {
     const commands = boardCommands({
       runtime: runtimeFor(stateWith()),

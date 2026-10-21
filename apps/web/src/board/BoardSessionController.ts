@@ -1904,10 +1904,15 @@ const handleShortcutAction = (
     return rejectShortcutAction(state, request, 'read_only');
   }
   if ('cardId' in request) {
+    // The palette names any card the table has, a closed pile's buried
+    // ones too; a press or key, only one it can reach.
+    const reachable = direct
+      ? scene.cards.some((card) => card.id === request.cardId)
+      : hasCard(scene, request.cardId) ||
+        hasOpenedZoneCard(state, scene, request.cardId);
     if (
       (!direct && state.presentation.selectedCardId !== request.cardId) ||
-      (!hasCard(scene, request.cardId) &&
-        !hasOpenedZoneCard(state, scene, request.cardId))
+      !reachable
     ) {
       return rejectShortcutAction(state, request, 'stale_card');
     }

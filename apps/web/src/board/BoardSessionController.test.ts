@@ -1667,6 +1667,35 @@ describe('headless board session controller', () => {
     });
   });
 
+  it("acts from the palette on a closed pile's buried card, which a key can't reach", () => {
+    const state = install();
+    const buried = state.scene!.cards.find(
+      (card) =>
+        !card.interactive &&
+        !card.concealed &&
+        state.view!.zones[card.parentId]?.kind === 'discard'
+    )!;
+    expect(buried).toBeDefined();
+    const request = {
+      action: 'moveCardToZone' as const,
+      destination: 'hand' as const,
+      cardId: buried.id,
+    };
+    expect(
+      apply(state, { kind: 'LegacyShortcutActionRequested', request }).effects
+    ).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'stale_card' },
+    ]);
+    const fromPalette = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+      origin: 'palette',
+    });
+    expect(fromPalette.effects).toContainEqual(
+      expect.objectContaining({ kind: 'SubmitCommand' })
+    );
+  });
+
   it("opens a marker's controls on a press and keeps them open for that marker's changes", () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

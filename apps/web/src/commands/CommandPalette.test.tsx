@@ -176,6 +176,27 @@ describe('CommandPalette', () => {
     expect(selected()?.textContent).toContain('Pass the turn');
   });
 
+  it('keeps a repeated step chosen while Recent takes it in', async () => {
+    await open();
+    for (
+      let step = 0;
+      step < 20 && !selected()?.textContent?.includes('Draw a card');
+      step += 1
+    )
+      await press({ key: 'ArrowDown' });
+    expect(selected()?.textContent).toContain('Draw a card');
+    expect(
+      selected()
+        ?.closest('[role="group"]')
+        ?.querySelector('.ptcgsim-command-palette__heading')?.textContent
+    ).toBe('Deck and hand');
+    await press({ key: 'Enter' });
+    // Now under Recent as well; the same row stays chosen.
+    expect(selected()?.textContent).toContain('Draw a card');
+    await press({ key: 'Enter' });
+    expect(ran).toEqual(['drawOne', 'drawOne']);
+  });
+
   it('keeps open for a step taken again', async () => {
     await open();
     await type('draw a card');
