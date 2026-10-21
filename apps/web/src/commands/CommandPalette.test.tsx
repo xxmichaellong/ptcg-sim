@@ -173,6 +173,17 @@ describe('CommandPalette', () => {
     dialog.remove();
   });
 
+  it("stays shut over the table's own windows, which keep their keys", async () => {
+    const overlays = document.createElement('div');
+    overlays.setAttribute('data-legacy-board-overlays', '');
+    const preview = document.createElement('button');
+    overlays.append(preview);
+    document.body.append(overlays);
+    await press({ key: '`', code: 'Backquote' }, preview);
+    expect(isCommandPaletteOpen()).toBe(false);
+    overlays.remove();
+  });
+
   it('types ~ (Shift+`) rather than closing', async () => {
     await open();
     await press({ key: '~', code: 'Backquote', shiftKey: true });

@@ -153,8 +153,11 @@ specifically without blocking, and go from deck to table in one click.
     deck's tile fetches its cards for the editor; a deck put on a seat has
     its faces fetched as the table will ask for them, before they are dealt.
     Thumbnails that fall back to Limitless take its small scan, a tenth of
-    the full one's bytes. Not on a connection that asks to save data. A
-    load ahead that fails is the screen's to retry when it opens.
+    the full one's bytes. Not on a connection that asks to save data. The
+    page remembers a script whose fetch failed and won't fetch it again, so
+    the script is fetched ahead only while the browser is online and the
+    server answers (`/v2/health`); otherwise the screen loads it when it
+    opens, as before.
 
 ## Consequences
 

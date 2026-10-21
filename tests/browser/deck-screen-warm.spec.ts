@@ -169,3 +169,23 @@ test('a deck put on a seat has its faces loaded before they are dealt', async ({
     await page.locator('[data-in-hand][data-card-side="local"]').count()
   ).toBe(0);
 });
+
+test('a connection that drops as the deck screen warms up does not keep it from opening', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  // Offline while the warm-up would fetch the screen's script.
+  await context.setOffline(true);
+  await page.waitForTimeout(4_000);
+  await context.setOffline(false);
+  await openDeck(page);
+  await expect(page.locator('#nativeDeckBuilderPlayButton')).toBeVisible({
+    timeout: 30_000,
+  });
+});

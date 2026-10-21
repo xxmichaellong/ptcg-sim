@@ -62,6 +62,15 @@ const ARMED_MS = 5_000;
 const searchesInto = (command: PaletteCommand): boolean =>
   command.nestedSearch !== false;
 
+/**
+ * A key pressed in one of the table's own windows (a card's preview, a
+ * pile, a menu), which keep the keyboard to themselves as they do from the
+ * table's keys.
+ */
+const inBoardWindow = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest('[data-legacy-board-overlays]') !== null;
+
 /** A key pressed on the deck screen itself, not in a dialog over it. */
 const inDeckScreenOnly = (target: EventTarget | null): boolean =>
   target instanceof Element &&
@@ -115,7 +124,8 @@ const useCommandPaletteKeys = (): void => {
       // over the table, is not one.
       if (
         isEditable(event.target) ||
-        (isOverlayKeyTarget(event.target) && !inDeckScreenOnly(event.target))
+        (isOverlayKeyTarget(event.target) && !inDeckScreenOnly(event.target)) ||
+        inBoardWindow(event.target)
       )
         return;
       event.preventDefault();

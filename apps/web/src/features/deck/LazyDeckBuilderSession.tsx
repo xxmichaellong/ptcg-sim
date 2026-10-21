@@ -44,6 +44,8 @@ const DeckBuilder = lazy(async () => ({
  */
 const WARMUP_DELAY_MS = 1_000;
 const WARMUP_IDLE_TIMEOUT_MS = 2_000;
+/** Asked first: the warm-up runs only while the server answers. */
+const REACHABLE_URL = '/v2/health';
 
 let warming: Promise<void> | undefined;
 
@@ -86,7 +88,20 @@ const sparesData = (): boolean => {
  */
 export const scheduleDeckScreenWarmup = (): (() => void) => {
   if (typeof window === 'undefined' || sparesData()) return () => undefined;
-  const run = (): void => void preloadDeckScreen();
+  // The page remembers a script whose fetch failed under its address, and
+  // won't fetch it again: a warm-up that met a dropped connection would
+  // keep the screen from opening until a reload. So the script is fetched
+  // ahead only while the connection answers; otherwise the screen loads it
+  // when it opens, as it always did.
+  const run = (): void => {
+    if (navigator.onLine === false) return;
+    void fetch(REACHABLE_URL, { cache: 'no-store' }).then(
+      (response) => {
+        if (response.ok) void preloadDeckScreen();
+      },
+      () => undefined
+    );
+  };
   let idle: number | undefined;
   const timer = window.setTimeout(() => {
     // A browser that can't say when it is idle warms up now.
