@@ -1337,14 +1337,16 @@ const OverlayCardImage = ({
 }) => {
   const [loadedImage, setLoadedImage] = useState<{
     readonly imageUrl: string;
-    readonly state: 'ready' | 'failed' | 'fallback';
+    readonly state: 'loading' | 'ready' | 'failed';
+    /** Showing the deck's own scan, the translated one being missing. */
+    readonly fellBack: boolean;
   } | null>(null);
-  const loaded =
-    loadedImage?.imageUrl === card.imageUrl ? loadedImage.state : 'loading';
+  const current = loadedImage?.imageUrl === card.imageUrl ? loadedImage : null;
   // A face asked for in the player's language that has no such printing
-  // shows the deck's own scan instead.
-  const fellBack = loaded === 'fallback' && card.imageFallbackUrl !== undefined;
-  const state = loaded === 'fallback' ? 'loading' : loaded;
+  // shows the deck's own scan instead, and keeps showing it once it loads.
+  const fellBack =
+    current?.fellBack === true && card.imageFallbackUrl !== undefined;
+  const state = current?.state ?? 'loading';
   const rotation =
     variant === 'preview' ? (card.presentation?.readingQuarterTurns ?? 0) : 0;
   const landscape = rotation % 2 === 1;
@@ -1366,16 +1368,14 @@ const OverlayCardImage = ({
         data-overlay-card-id={variant === 'zone' ? undefined : card.id}
         draggable={false}
         onLoad={() =>
-          setLoadedImage({ imageUrl: card.imageUrl, state: 'ready' })
+          setLoadedImage({ imageUrl: card.imageUrl, state: 'ready', fellBack })
         }
         onError={() =>
-          setLoadedImage({
-            imageUrl: card.imageUrl,
-            state:
-              !fellBack && card.imageFallbackUrl !== undefined
-                ? 'fallback'
-                : 'failed',
-          })
+          setLoadedImage(
+            !fellBack && card.imageFallbackUrl !== undefined
+              ? { imageUrl: card.imageUrl, state: 'loading', fellBack: true }
+              : { imageUrl: card.imageUrl, state: 'failed', fellBack }
+          )
         }
       />
     </span>

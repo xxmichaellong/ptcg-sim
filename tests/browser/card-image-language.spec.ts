@@ -11,8 +11,8 @@ import {
  * Each player sees cards in their own language: with French chosen, the
  * table asks TCGdex for the French scan; a printing never made in French
  * (here, an old set's card) shows the deck's own English scan instead and
- * loads; and choosing English in Settings asks for the English scans. The
- * scan hosts are served here, never reached.
+ * loads, in a pile viewer too; and choosing English in Settings asks for the
+ * English scans. The scan hosts are served here, never reached.
  */
 
 const FACE_PNG = Buffer.from(
@@ -150,4 +150,79 @@ test("the table shows cards in the player's language, falling back to the deck's
     .toBe(true);
   expect(asked).toContain(NEW_EN);
   expect(errors).toEqual([]);
+});
+
+test("a pile viewer keeps the deck's own scan once it loads, asking for a missing translation once", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const asked = await serveScans(page);
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ptcgsim.card-images.v1',
+      JSON.stringify({ cardImages: 'fr' })
+    );
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  await openDeck(page);
+  await page.locator('#nativeDeckBuilderTargetMain').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'main.csv',
+    mimeType: 'text/csv',
+    buffer: deckCsv,
+  });
+  await page.locator('#nativeDeckBuilderPlayButton').click();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+  await expect
+    .poll(() =>
+      page
+        .locator('.ptcgsim-board-surface')
+        .getAttribute('data-revision')
+        .then(Number)
+    )
+    .toBeGreaterThan(0);
+  // The deck's cards, never yet shown on the table, first seen in its viewer.
+  const deckId = await page.evaluate(
+    () =>
+      window.__PTCG_RENDERER_SPIKE__!.scene.zones.find(
+        (zone) => zone.side === 'local' && zone.kind === 'deck'
+      )!.id
+  );
+  await page.locator(`[data-zone-id="${deckId}"]`).focus();
+  await page.keyboard.press('Enter');
+  const browser = page.locator('[data-legacy-zone-browser]');
+  await expect(browser).toBeVisible();
+  const oldFaces = () =>
+    browser.locator('.ptcgsim-legacy-overlay-card-image').evaluateAll((faces) =>
+      faces
+        .map((face) => ({
+          state: face.getAttribute('data-overlay-image-state'),
+          src: face.querySelector('img')?.getAttribute('src') ?? '',
+        }))
+        .filter((face) => face.src.includes('/dp/dp1/'))
+    );
+  await expect
+    .poll(async () => {
+      const faces = await oldFaces();
+      return (
+        faces.length > 0 &&
+        faces.every((face) => face.state === 'ready' && face.src === OLD_EN)
+      );
+    })
+    .toBe(true);
+  const oldFrench = () => asked.filter((url) => url === OLD_FR).length;
+  const settled = oldFrench();
+  await page.waitForTimeout(1_000);
+  expect(oldFrench()).toBe(settled);
+  expect(
+    (await oldFaces()).every(
+      (face) => face.state === 'ready' && face.src === OLD_EN
+    )
+  ).toBe(true);
 });

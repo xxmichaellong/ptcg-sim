@@ -26,6 +26,44 @@ export type PresentationValue = string | number | PresentationMessage;
  */
 const isolated = (value: string): string => `\u2068${value}\u2069`;
 
+type CompiledToken =
+  string | readonly [name: string, type?: string, format?: unknown];
+
+/**
+ * The values a message chooses its words by (`select`, `plural`,
+ * `selectordinal`) rather than prints: they must reach Lingui exactly as
+ * given, or a choice matches nothing and falls to `other`. Read from the
+ * message as the catalog holds it (compiled), or from its source text.
+ */
+const choiceNames = (
+  message: PresentationMessage,
+  i18n: I18n
+): ReadonlySet<string> => {
+  const names = new Set<string>();
+  const held: unknown = i18n.messages[message.id] ?? message.message;
+  if (typeof held === 'string') {
+    for (const match of held.matchAll(
+      /\{\s*([\w$]+)\s*,\s*(?:select|plural|selectordinal)\s*,/gu
+    ))
+      names.add(match[1]!);
+    return names;
+  }
+  const walk = (tokens: unknown): void => {
+    if (!Array.isArray(tokens)) return;
+    for (const token of tokens as readonly CompiledToken[]) {
+      if (typeof token === 'string') continue;
+      const [name, type, format] = token;
+      if (type === 'select' || type === 'plural' || type === 'selectordinal') {
+        names.add(name);
+        if (format && typeof format === 'object')
+          for (const choice of Object.values(format)) walk(choice);
+      }
+    }
+  };
+  walk(held);
+  return names;
+};
+
 /** The message in the page's language (or `i18n`'s). */
 export const presentationText = (
   message: PresentationMessage,
@@ -34,12 +72,13 @@ export const presentationText = (
   const { values } = message;
   if (!values) return i18n._(message);
   const rightToLeft = textDirection(i18n.locale) === 'rtl';
+  const choices = rightToLeft ? choiceNames(message, i18n) : new Set();
   const worded: Record<string, string | number> = {};
   for (const [name, value] of Object.entries(values)) {
     worded[name] =
       typeof value === 'object'
         ? presentationText(value, i18n)
-        : rightToLeft && typeof value === 'string'
+        : rightToLeft && typeof value === 'string' && !choices.has(name)
           ? isolated(value)
           : value;
   }
