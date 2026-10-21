@@ -12,9 +12,10 @@
   --sheet-pad: var(--space-4);
 
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  /* Beside the table at the end of the line: the right, or the left in a
+     right-to-left language, where the table moves over (TableShell.tsx). */
+  inset-block: 0;
+  inset-inline-end: 0;
   z-index: var(--layer-panel);
   display: flex;
   flex-direction: column;
@@ -22,11 +23,15 @@
   width: var(--rail-width);
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  border-left: 1px solid var(--color-border);
+  border-inline-start: 1px solid var(--color-border);
   background: var(--color-rail);
   box-shadow: -12px 0 32px oklch(0 0 0 / 0.25);
   color: var(--color-text);
   font-family: var(--font-ui);
+}
+
+:root[dir='rtl'] .ptcgsim-activity-dock {
+  box-shadow: 12px 0 32px oklch(0 0 0 / 0.25);
 }
 
 /* The log's last frame, sliding out after it closed (dock-slide.ts). */

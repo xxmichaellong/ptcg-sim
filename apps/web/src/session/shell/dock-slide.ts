@@ -131,9 +131,15 @@ export const createDockSlide = (
   };
 };
 
-/** The log's offset from its column, as a share of its own width. */
-const offset = (slide: DockSlide): string =>
-  `${String((1 - slide.value()) * 100)}% 0`;
+const rightToLeft = (element: HTMLElement): boolean =>
+  element.closest('[dir]')?.getAttribute('dir') === 'rtl';
+
+/**
+ * The log's offset from its column, as a share of its own width: out to
+ * the right, or to the left where a right-to-left page docks it.
+ */
+const offset = (slide: DockSlide, element: HTMLElement): string =>
+  `${String((1 - slide.value()) * (rightToLeft(element) ? -100 : 100))}% 0`;
 
 /**
  * Moves the docked log with `slide`. When the log is put away it leaves at
@@ -149,7 +155,7 @@ export const useDockSlide = (
     const element = ref.current;
     if (!element || !slide) return;
     const paint = (): void => {
-      element.style.translate = offset(slide);
+      element.style.translate = offset(slide, element);
     };
     paint();
     const unsubscribe = slide.subscribe(paint);
@@ -184,7 +190,7 @@ export const useDockSlide = (
             ghost.remove();
             return;
           }
-          ghost.style.translate = offset(slide);
+          ghost.style.translate = offset(slide, ghost);
         };
         const stopMoving = slide.subscribe(move);
         move();

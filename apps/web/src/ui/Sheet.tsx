@@ -3,6 +3,7 @@ import { Drawer } from '@base-ui/react/drawer';
 import { useLingui } from '@lingui/react/macro';
 import { useContext, type ReactNode, type RefObject } from 'react';
 
+import { usePageDirection } from '../i18n/direction.js';
 import { useCompactLayout } from './breakpoints.js';
 import { OverlayContainerContext } from './overlay-host-registry.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
@@ -62,11 +63,14 @@ export const Sheet = ({
   const compact = useCompactLayout();
   const variant = compact ? 'bottom' : placement;
   const isModal = compact || modal;
+  // A side sheet opens at the end of the line, with the docked log: from
+  // the right, or the left in a right-to-left language (ADR-034).
+  const sideEdge = usePageDirection() === 'rtl' ? 'left' : 'right';
   return (
     <Drawer.Root
       open={open}
       onOpenChange={(next) => onOpenChange(next)}
-      swipeDirection={variant === 'side' ? 'right' : 'down'}
+      swipeDirection={variant === 'side' ? sideEdge : 'down'}
       modal={isModal}
       {...(isModal ? {} : { disablePointerDismissal: true })}
     >

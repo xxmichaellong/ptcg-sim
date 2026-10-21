@@ -14,6 +14,11 @@ export type ActionMenuEntry =
       readonly id?: string;
       readonly label: ReactNode;
       readonly icon?: Icon;
+      /**
+       * The icon points the way the line reads (leaving, going back): it
+       * turns round in a right-to-left language (`ds-mirror-rtl`).
+       */
+      readonly mirrored?: boolean;
       /** A key hint shown at the end of the row: `M`, `Alt+R`. */
       readonly hint?: string | undefined;
       readonly danger?: boolean;
@@ -126,7 +131,14 @@ export const ActionMenu = ({
                   onClick={entry.onSelect}
                 >
                   <span className="ptcgsim-action-menu__icon">
-                    {ItemIcon ? <ItemIcon {...decorative} /> : null}
+                    {ItemIcon ? (
+                      <ItemIcon
+                        {...decorative}
+                        {...(entry.mirrored
+                          ? { className: 'ds-mirror-rtl' }
+                          : {})}
+                      />
+                    ) : null}
                   </span>
                   <span className="ptcgsim-action-menu__text">
                     {entry.label}

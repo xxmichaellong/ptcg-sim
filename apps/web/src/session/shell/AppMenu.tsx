@@ -268,6 +268,7 @@ const restEntries = (
         id: 'leaveRoomButton',
         label: t`Leave room`,
         icon: SignOutIcon,
+        mirrored: true,
         danger: true,
         onSelect: model.onLeave,
       });

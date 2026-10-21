@@ -62,15 +62,23 @@ Settings, and has its server send codes that the client words.
    mirrors: sheets', dialogs' and the log's headings and rows, menus
    (a submenu opens to the left), the deck screen, toasts, switches and
    icons that point the way the line reads (`ds-mirror-rtl`: back, send,
-   undo). The table is laid out in the world, not in a language, so
-   `.board-spike-host` stays `dir="ltr"`: the board, its rail, coins and
-   overlays' card rows keep their places, the log still docks at the
-   right beside the table (the table's geometry reserves that column),
-   and the side sheets keep to the right with it. What the table raises
-   to be read -- a card's menu, a panel's heading -- sets the page's
-   direction again (`usePageDirection`). Keys always read left to right
-   (Alt + N), the keyboard map is a keyboard, and a name inside an
-   Arabic Log line is isolated (U+2068/2069) so it keeps its own order.
+   undo, leaving a room, the way back to a window). The log docks at
+   the left, the start of the line, and the side sheets (Settings, the
+   log as a drawer) open there with it; the deck screen's zoom opens to
+   a card's left. The table is laid out in the world, not in a language,
+   so `.board-spike-host` stays `dir="ltr"`: the board, its rail, coins
+   and overlays' card rows keep their places. Its geometry still leaves
+   the log's column at its right, so beside a docked log the whole table
+   moves over by that column, frame by frame as the log slides
+   (`TableShell.tsx`), and plays exactly as it does in English. The
+   rail's ends stay where they are (the menu at its left, the log's
+   button at its right), and so do the replay's step and play buttons:
+   they run left to right along the rail, and media controls are not
+   mirrored. What the table raises to be read -- a card's menu, a
+   panel's heading -- sets the page's direction again
+   (`usePageDirection`). Keys always read left to right (Alt + N), the
+   keyboard map is a keyboard, and a name inside an Arabic Log line is
+   isolated (U+2068/2069) so it keeps its own order.
    Write new CSS with logical properties (`margin-inline-start`,
    `inset-inline-end`, `text-align: start`) unless it places something on
    the table.

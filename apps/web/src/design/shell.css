@@ -57,8 +57,9 @@ textarea {
    (table-art.css), under one lamp up and to the left, darkening toward the
    window's edges. It fills the
    window (ADR-030); a docked log sits over its right edge while the table
-   lays itself out beside it. The mat itself is the board's (BoardSurface's
-   depth mat).
+   lays itself out beside it (in a right-to-left language the log docks at
+   the left and the whole column moves over, TableShell.tsx). The mat
+   itself is the board's (BoardSurface's depth mat).
 
    The grain and the lamp light are painted on a layer of their own
    (::before) that never changes size. Painted on the column itself, every

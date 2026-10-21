@@ -1,7 +1,8 @@
 /*
  * The page around the table (TableShell.tsx, ADR-030). The table fills the
- * window; a docked activity log takes the right-hand column and the table
- * lays itself out beside it. Banners and the welcome sit over the table.
+ * window; a docked activity log takes the right-hand column (the left-hand
+ * one in a right-to-left language) and the table lays itself out beside it.
+ * Banners and the welcome sit over the table.
  */
 
 /* ---- A banner the table keeps until it is resolved -------------------- */
@@ -42,8 +43,9 @@
 .ptcgsim-table-centre {
   position: fixed;
   inset: 0;
-  /* Clear of a docked log, as far as it has slid in (TableShell.tsx). */
-  right: calc(var(--rail-width) * var(--activity-reveal, 0));
+  /* Clear of a docked log, as far as it has slid in (TableShell.tsx): at
+     the right, or the left in a right-to-left language. */
+  inset-inline-end: calc(var(--rail-width) * var(--activity-reveal, 0));
   z-index: var(--layer-chrome);
   display: grid;
   place-items: center;

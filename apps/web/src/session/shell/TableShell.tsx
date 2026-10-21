@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { tableRailWidth } from '@ptcgsim/renderer-contract';
 import {
   createContext,
   useContext,
@@ -7,12 +8,14 @@ import {
   useRef,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from 'react';
 
 import {
   roomBackgroundCssImage,
   type RoomBackground,
 } from '../browser-room-background.js';
+import { usePageDirection } from '../../i18n/direction.js';
 import '../../design/panel-controls.css';
 import type { DockSlide } from './dock-slide.js';
 import { useExitGhost } from './exit-ghost.js';
@@ -27,6 +30,43 @@ const DockRevealContext = createContext<{
   readonly docked: boolean;
   readonly slide: DockSlide | undefined;
 }>({ docked: false, slide: undefined });
+
+/**
+ * In a right-to-left language the log docks at the left (ADR-034), but the
+ * table lays itself out as it always does, leaving the log's column at its
+ * right. So the table moves over by that column, as far as the log has slid
+ * in, and the room it leaves at the right is the log's at the left. A
+ * transform, not a restyle: every frame of a slide moves it.
+ */
+const useTableBesideStartDock = (
+  column: RefObject<HTMLElement | null>,
+  direction: 'ltr' | 'rtl',
+  docked: boolean,
+  slide: DockSlide | undefined
+): void => {
+  useLayoutEffect(() => {
+    const element = column.current;
+    if (!element) return;
+    if (direction !== 'rtl') {
+      element.style.translate = '';
+      return;
+    }
+    const paint = (): void => {
+      const shown = slide ? slide.value() : docked ? 1 : 0;
+      // The same width the table's layout leaves (layout-table.ts).
+      const width = tableRailWidth(Math.max(1, window.innerWidth)) * shown;
+      element.style.translate = width > 0 ? `${String(width)}px 0` : '';
+    };
+    paint();
+    const unsubscribe = slide?.subscribe(paint);
+    window.addEventListener('resize', paint);
+    return () => {
+      unsubscribe?.();
+      window.removeEventListener('resize', paint);
+      element.style.translate = '';
+    };
+  }, [column, direction, docked, slide]);
+};
 
 /**
  * The page around the table (ADR-030): the table fills the window, and
@@ -48,7 +88,10 @@ export const TableShell = ({
   readonly darkMode: boolean;
   readonly background?: RoomBackground;
   readonly sessionPhase?: string;
-  /** The activity log is docked at the right, and the table beside it. */
+  /**
+   * The activity log is docked beside the table: at the right, or at the
+   * left in a right-to-left language.
+   */
   readonly docked?: boolean;
   /** How far the docked log has slid in; what sits over the table follows. */
   readonly dockSlide?: DockSlide;
@@ -60,6 +103,8 @@ export const TableShell = ({
     () => ({ docked, slide: dockSlide }),
     [docked, dockSlide]
   );
+  const column = useRef<HTMLElement>(null);
+  useTableBesideStartDock(column, usePageDirection(), docked, dockSlide);
   return (
     <DockRevealContext.Provider value={reveal}>
       <main
@@ -82,6 +127,7 @@ export const TableShell = ({
         }
       >
         <section
+          ref={column}
           className="board-column board-column--table"
           aria-label={t`Game board`}
           data-board-shell="table"

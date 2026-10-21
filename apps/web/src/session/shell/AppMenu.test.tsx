@@ -144,6 +144,19 @@ describe('AppMenu', () => {
     expect(document.querySelector('#changelog')).not.toBeNull();
   });
 
+  it('turns the way out round in a right-to-left language, and nothing else', async () => {
+    await render(model({ onLeave: vi.fn(), onCopyInvitation: vi.fn() }));
+    await openMenu('#appMoreButton');
+    // Leaving points the way the line reads (ds-mirror-rtl: it turns round
+    // only under dir="rtl"); a copy, a screen or a heart has no direction.
+    const mirrored = [
+      ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
+    ]
+      .filter((item) => item.querySelector('svg.ds-mirror-rtl'))
+      .map((item) => item.id);
+    expect(mirrored).toEqual(['leaveRoomButton']);
+  });
+
   it('has no keys to offer on a touch screen', async () => {
     touchOnly = true;
     await render(model());

@@ -34,6 +34,32 @@ interface ZoomPlacement {
 }
 
 /**
+ * Where the zoom's left edge goes: beside the card on the side the line
+ * reads towards -- its right, or its left in a right-to-left language --
+ * else the other side when that one has no room; never off the screen's
+ * left.
+ */
+const zoomLeft = (
+  card: { readonly left: number; readonly right: number },
+  width: number,
+  right: number,
+  rightToLeft: boolean
+): number => {
+  const toRight = card.right + ZOOM_GAP;
+  const toLeft = card.left - ZOOM_GAP - width;
+  const fitsRight = toRight + width <= right - ZOOM_MARGIN;
+  const fitsLeft = toLeft >= ZOOM_MARGIN;
+  const left = rightToLeft
+    ? fitsLeft || !fitsRight
+      ? toLeft
+      : toRight
+    : fitsRight
+      ? toRight
+      : toLeft;
+  return Math.max(ZOOM_MARGIN, left);
+};
+
+/**
  * A card shown large beside the one the mouse rests on (or keyboard focus
  * reaches), so its text can be read without opening it. Moving from card
  * to card swaps the zoom without closing it; a fresh hover waits a beat so
@@ -95,11 +121,12 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
           (right - 2 * ZOOM_MARGIN) / aspect
         );
         const width = height * aspect;
-        let left = rect.right + ZOOM_GAP;
-        if (left + width > right - ZOOM_MARGIN) {
-          left = rect.left - ZOOM_GAP - width;
-        }
-        left = Math.max(ZOOM_MARGIN, left);
+        const left = zoomLeft(
+          rect,
+          width,
+          right,
+          getComputedStyle(element).direction === 'rtl'
+        );
         const top = Math.min(
           Math.max(ZOOM_MARGIN, rect.top + rect.height / 2 - height / 2),
           Math.max(ZOOM_MARGIN, bottom - height - ZOOM_MARGIN)
