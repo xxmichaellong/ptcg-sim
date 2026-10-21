@@ -1575,6 +1575,15 @@ const swapAction = (
   if (command?.type !== 'MovePlayStack') return undefined;
   if (command.targetStackId)
     return { kind: 'swap', stackId: command.targetStackId };
+  // Onto the other player's board: only their Active, pushed to their Bench,
+  // gives way; nothing comes up on the board it left.
+  const across = command.destinationBoard;
+  if (across) {
+    return command.destinationSlot === 'active' &&
+      across.expectedActiveStackId !== null
+      ? { kind: 'swap', stackId: across.expectedActiveStackId }
+      : undefined;
+  }
   if (
     command.destinationSlot === 'active' &&
     command.expectedActiveStackId !== null &&

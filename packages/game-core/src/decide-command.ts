@@ -47,6 +47,7 @@ import {
   publicVisibilityFace,
 } from './public-visibility.js';
 import { isConcealedZone } from './concealed-zone.js';
+import { layOutPlayStackAcrossBoards } from './play-stack-boards.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
 import { stableHash } from './stable-hash.js';
@@ -704,14 +705,8 @@ const decidePlaceCardOnPlayStack = (
   const source = resolveCardActionSource(state, command);
   if (!source.accepted) return source;
   const target = state.stacks[command.targetStackId];
-  if (
-    !target ||
-    (command.mode === 'evolution' && target.boardPlayerId !== command.playerId)
-  ) {
-    return reject(
-      'stale_reference',
-      'Target play stack is no longer on the source board'
-    );
+  if (!target) {
+    return reject('stale_reference', 'Target play stack no longer exists');
   }
   if (target.evolutionCardIds.at(-1) !== command.expectedTargetTopCardId) {
     return reject('stale_reference', 'Target play stack top changed');
@@ -1524,6 +1519,62 @@ export const decideCommand = (
       if (command.targetStackId && !target) {
         return reject('stale_reference', 'Target play stack no longer exists');
       }
+      const across = command.destinationBoard;
+      if (across && across.boardPlayerId !== stack.boardPlayerId) {
+        // Onto the other player's board, the whole Pokémon with it.
+        const destination = state.boards[across.boardPlayerId];
+        if (!destination) {
+          return reject('not_found', 'Destination board does not exist');
+        }
+        if (
+          destination.activeStackId !== across.expectedActiveStackId ||
+          !sameOrder(destination.benchStackIds, across.expectedBenchStackIds)
+        ) {
+          return reject('stale_reference', 'Destination board layout changed');
+        }
+        if (
+          target &&
+          (target.boardPlayerId !== across.boardPlayerId ||
+            target.slot !== command.destinationSlot)
+        ) {
+          return reject(
+            'stale_reference',
+            'Target play stack placement changed'
+          );
+        }
+        const layout = layOutPlayStackAcrossBoards({
+          stackId: stack.id,
+          source: board,
+          destination,
+          destinationSlot: command.destinationSlot,
+          ...(target ? { targetStackId: target.id } : {}),
+          ...(command.benchIndex === undefined
+            ? {}
+            : { benchIndex: command.benchIndex }),
+        });
+        if (!layout) {
+          return reject('invalid_command', 'Play stack move does not fit');
+        }
+        return accept({
+          type: 'PlayStacksRehomed',
+          boards: [
+            {
+              boardPlayerId: stack.boardPlayerId,
+              expectedActiveStackId: board.activeStackId,
+              expectedBenchStackIds: [...board.benchStackIds],
+              activeStackId: layout.source.activeStackId,
+              benchStackIds: [...layout.source.benchStackIds],
+            },
+            {
+              boardPlayerId: across.boardPlayerId,
+              expectedActiveStackId: destination.activeStackId,
+              expectedBenchStackIds: [...destination.benchStackIds],
+              activeStackId: layout.destination.activeStackId,
+              benchStackIds: [...layout.destination.benchStackIds],
+            },
+          ],
+        });
+      }
       if (
         target &&
         (target.id === stack.id ||
@@ -1792,9 +1843,15 @@ export const decideCommand = (
       }
       const board = state.boards[command.playerId];
       if (!board) return reject('not_found', 'Player board does not exist');
+      const destinationPlayerId =
+        command.destinationBoardPlayerId ?? command.playerId;
+      const destination = state.boards[destinationPlayerId];
+      if (!destination) {
+        return reject('not_found', 'Destination board does not exist');
+      }
       if (
-        board.activeStackId !== command.expectedActiveStackId ||
-        !sameOrder(board.benchStackIds, command.expectedBenchStackIds)
+        destination.activeStackId !== command.expectedActiveStackId ||
+        !sameOrder(destination.benchStackIds, command.expectedBenchStackIds)
       ) {
         return reject('stale_reference', 'Player board layout changed');
       }
@@ -1805,6 +1862,65 @@ export const decideCommand = (
           `Stack ID factory returned duplicate ${stackId}`
         );
       }
+      const attachmentCardIds = normalizeAttachmentCardIdsV1(
+        state.cards,
+        resolution.attachmentCardIds
+      );
+      if (destinationPlayerId !== command.playerId) {
+        // Onto the other player's board: back together at the end of the
+        // player's own Bench, then moved across as a whole Pokémon is.
+        const restoredBench = [...board.benchStackIds, stackId];
+        const layout = layOutPlayStackAcrossBoards({
+          stackId,
+          source: {
+            activeStackId: board.activeStackId,
+            benchStackIds: restoredBench,
+          },
+          destination,
+          destinationSlot: command.destinationSlot,
+          ...(command.benchIndex === undefined
+            ? {}
+            : { benchIndex: command.benchIndex }),
+        });
+        if (!layout) {
+          return reject('invalid_command', 'Play stack move does not fit');
+        }
+        return accept(
+          {
+            type: 'StagedStackRestoredToPlayStack',
+            playerId: command.playerId,
+            expectedWorkAreaId: resolution.id,
+            expectedEvolutionCardIds: [...resolution.evolutionCardIds],
+            expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+            attachmentOrderVersion: 1,
+            attachmentCardIds,
+            expectedActiveStackId: board.activeStackId,
+            expectedBenchStackIds: [...board.benchStackIds],
+            stackId,
+            destinationSlot: 'bench',
+            benchIndex: board.benchStackIds.length,
+          },
+          {
+            type: 'PlayStacksRehomed',
+            boards: [
+              {
+                boardPlayerId: command.playerId,
+                expectedActiveStackId: board.activeStackId,
+                expectedBenchStackIds: restoredBench,
+                activeStackId: layout.source.activeStackId,
+                benchStackIds: [...layout.source.benchStackIds],
+              },
+              {
+                boardPlayerId: destinationPlayerId,
+                expectedActiveStackId: destination.activeStackId,
+                expectedBenchStackIds: [...destination.benchStackIds],
+                activeStackId: layout.destination.activeStackId,
+                benchStackIds: [...layout.destination.benchStackIds],
+              },
+            ],
+          }
+        );
+      }
       return accept({
         type: 'StagedStackRestoredToPlayStack',
         playerId: command.playerId,
@@ -1812,10 +1928,7 @@ export const decideCommand = (
         expectedEvolutionCardIds: [...resolution.evolutionCardIds],
         expectedAttachmentCardIds: [...resolution.attachmentCardIds],
         attachmentOrderVersion: 1,
-        attachmentCardIds: normalizeAttachmentCardIdsV1(
-          state.cards,
-          resolution.attachmentCardIds
-        ),
+        attachmentCardIds,
         expectedActiveStackId: board.activeStackId,
         expectedBenchStackIds: [...board.benchStackIds],
         stackId,

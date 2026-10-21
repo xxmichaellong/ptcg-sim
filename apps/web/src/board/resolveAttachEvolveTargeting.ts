@@ -58,7 +58,14 @@ const rejectedPlacement = (
  */
 export const resolveAttachEvolveTargeting = (
   view: MatchViewState,
-  cardId: ViewCardId
+  cardId: ViewCardId,
+  options: {
+    /**
+     * A Pokémon may evolve one on either board, as a drop puts it anywhere.
+     * Q/E's targets keep to its own board, where it evolves every time.
+     */
+    readonly evolveOnEitherBoard?: boolean;
+  } = {}
 ): AttachEvolveTargetingResolution => {
   if (view.viewer.kind !== 'player') return rejectedTargeting('not_player');
   const source = locateViewCardActionSource(view, cardId);
@@ -83,7 +90,9 @@ export const resolveAttachEvolveTargeting = (
   }
 
   const boardIds =
-    mode === 'attachment' ? view.playerOrder : [source.sourcePlayerId];
+    mode === 'attachment' || options.evolveOnEitherBoard === true
+      ? view.playerOrder
+      : [source.sourcePlayerId];
   const targets = boardIds.flatMap((playerId) => {
     const board = view.boards[playerId];
     if (!board) return [];

@@ -247,6 +247,22 @@ export type DomainEvent =
       readonly benchStackIds: readonly StackId[];
     }
   | {
+      /**
+       * Pokémon moved whole between boards: each board's layout after, the
+       * same Pokémon among them as before. One that changed boards keeps its
+       * cards' owners and its damage; benched, it loses its Special Condition
+       * as on its own board.
+       */
+      readonly type: 'PlayStacksRehomed';
+      readonly boards: readonly {
+        readonly boardPlayerId: PlayerId;
+        readonly expectedActiveStackId: StackId | null;
+        readonly expectedBenchStackIds: readonly StackId[];
+        readonly activeStackId: StackId | null;
+        readonly benchStackIds: readonly StackId[];
+      }[];
+    }
+  | {
       readonly type: 'InspectedCardMoved';
       readonly playerId: PlayerId;
       readonly inspectionId: InspectionId;

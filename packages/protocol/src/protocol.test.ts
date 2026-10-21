@@ -1168,6 +1168,19 @@ describe('client protocol ingress', () => {
         expectedBenchStackIds,
         destinationSlot: 'active',
       },
+      {
+        type: 'MovePlayStack',
+        stackId: 'source-stack',
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: 'active-stack',
+        expectedBenchStackIds: [],
+        destinationSlot: 'active',
+        destinationBoard: {
+          boardPlayerId: 'other-player',
+          expectedActiveStackId: null,
+          expectedBenchStackIds,
+        },
+      },
     ]) {
       const result = parseClientFrame(
         JSON.stringify({
@@ -1181,6 +1194,46 @@ describe('client protocol ingress', () => {
         })
       );
       expect(result.ok).toBe(false);
+    }
+  });
+
+  it("accepts a Pokémon moved onto the other player's board", () => {
+    for (const command of [
+      {
+        type: 'MovePlayStack',
+        stackId: 'source-stack',
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: 'source-stack',
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+        benchIndex: 0,
+        destinationBoard: {
+          boardPlayerId: 'other-player',
+          expectedActiveStackId: null,
+          expectedBenchStackIds: ['other-bench'],
+        },
+      },
+      {
+        type: 'RestoreStagedStack',
+        expectedWorkAreaId: 'work-area',
+        expectedActiveStackId: null,
+        expectedBenchStackIds: [],
+        destinationSlot: 'active',
+        destinationBoardPlayerId: 'other-player',
+      },
+    ]) {
+      const result = parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+      expect(result.ok && result.value).toMatchObject({ command });
     }
   });
 

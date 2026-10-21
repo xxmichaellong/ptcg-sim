@@ -115,6 +115,16 @@ export type GameCommand =
        * absent, at the end. Only for a bench destination with no target.
        */
       readonly benchIndex?: number;
+      /**
+       * The other player's board, as last seen, for a Pokémon moved across
+       * the table (layOutPlayStackAcrossBoards); absent, its own board. The
+       * target, if any, is then one of that board's Pokémon.
+       */
+      readonly destinationBoard?: {
+        readonly boardPlayerId: PlayerId;
+        readonly expectedActiveStackId: StackId | null;
+        readonly expectedBenchStackIds: readonly StackId[];
+      };
     }
   | {
       readonly type: 'MoveInspectedCard';
@@ -156,10 +166,13 @@ export type GameCommand =
       readonly type: 'RestoreStagedStack';
       readonly playerId: PlayerId;
       readonly expectedWorkAreaId: WorkAreaId;
+      /** The board it is restored onto, as last seen. */
       readonly expectedActiveStackId: StackId | null;
       readonly expectedBenchStackIds: readonly StackId[];
       readonly destinationSlot: PlaySlot;
       readonly benchIndex?: number;
+      /** Restored onto the other player's board; absent, the player's own. */
+      readonly destinationBoardPlayerId?: PlayerId;
     }
   | {
       readonly type: 'ResolveStagedCards';

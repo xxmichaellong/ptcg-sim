@@ -91,6 +91,75 @@ describe('predictWireCommand', () => {
     ]);
   });
 
+  it("moves a Pokémon onto the other player's board and back, as the room will", () => {
+    const redActive = view.stacks['stack:red:active']!;
+    const across = (
+      current: MatchViewState,
+      stackId: string,
+      to: typeof blue,
+      destinationSlot: 'active' | 'bench',
+      place: { readonly targetStackId?: string } = {}
+    ) => {
+      const stack = current.stacks[stackId]!;
+      const board = current.boards[stack.boardPlayerId]!;
+      const destination = current.boards[to]!;
+      return predictWireCommand(current, {
+        type: 'MovePlayStack',
+        stackId,
+        expectedSourceSlot: stack.slot,
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot,
+        ...place,
+        destinationBoard: {
+          boardPlayerId: to,
+          expectedActiveStackId: destination.activeStackId,
+          expectedBenchStackIds: [...destination.benchStackIds],
+        },
+      });
+    };
+    // Onto the opponent's Bench: nothing comes up behind it.
+    const benched = across(view, active.id, red, 'bench')!;
+    expect(benched.boards[blue]).toEqual({
+      activeStackId: null,
+      benchStackIds: [],
+    });
+    expect(benched.boards[red]!.benchStackIds).toEqual([active.id]);
+    expect(benched.stacks[active.id]).toMatchObject({
+      boardPlayerId: red,
+      slot: 'bench',
+    });
+    // Onto their Active, the two trading places; then home again.
+    const swapped = across(view, active.id, red, 'active', {
+      targetStackId: redActive.id,
+    })!;
+    expect(swapped.boards[red]!.activeStackId).toBe(active.id);
+    expect(swapped.boards[blue]!.activeStackId).toBe(redActive.id);
+    expect(swapped.stacks[redActive.id]).toMatchObject({
+      boardPlayerId: blue,
+      slot: 'active',
+    });
+    const home = across(swapped, active.id, blue, 'bench')!;
+    expect(home.boards[blue]!.benchStackIds).toEqual([active.id]);
+    expect(home.boards[red]!.activeStackId).toBeNull();
+    // A board that changed since is not predicted.
+    expect(
+      predictWireCommand(view, {
+        type: 'MovePlayStack',
+        stackId: active.id,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: active.id,
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+        destinationBoard: {
+          boardPlayerId: red,
+          expectedActiveStackId: null,
+          expectedBenchStackIds: [],
+        },
+      })
+    ).toBeNull();
+  });
+
   it('moves a card between zones and refuses when the card is not where the command says', () => {
     const card = hand.cards[0]!;
     const predicted = predictWireCommand(view, {

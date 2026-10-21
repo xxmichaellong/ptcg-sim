@@ -1,3 +1,4 @@
+import { layOutPlayStackAcrossBoards } from '@ptcgsim/game-core';
 import type {
   ConcealedViewCard,
   MatchViewState,
@@ -381,6 +382,40 @@ const placeNewStack = (
   });
 };
 
+/**
+ * Boards laid out again with Pokémon moved between them (game-core's
+ * PlayStacksRehomed): each one placed takes its board and slot, and a
+ * benched one loses its Special Condition.
+ */
+const withBoardsRehomed = (
+  view: MatchViewState,
+  boards: readonly {
+    readonly playerId: PlayerId;
+    readonly board: MatchViewState['boards'][string];
+  }[]
+): MatchViewState | null => {
+  let next = view;
+  for (const { playerId, board } of boards) {
+    next = withBoard(next, playerId, board);
+    for (const id of [
+      ...(board.activeStackId ? [board.activeStackId] : []),
+      ...board.benchStackIds,
+    ]) {
+      const placed = next.stacks[id];
+      if (!placed) return null;
+      const slot = board.activeStackId === id ? 'active' : 'bench';
+      if (placed.slot !== slot || placed.boardPlayerId !== playerId)
+        next = withStack(next, {
+          ...placed,
+          boardPlayerId: playerId,
+          slot,
+          ...(slot === 'bench' ? { specialCondition: null } : {}),
+        });
+    }
+  }
+  return next;
+};
+
 const emptyStack = (
   id: string,
   boardPlayerId: PlayerId,
@@ -757,6 +792,35 @@ const predict = (
         ? view.stacks[command.targetStackId]
         : undefined;
       if (command.targetStackId && !target) return null;
+      const across = command.destinationBoard;
+      if (across && across.boardPlayerId !== stack.boardPlayerId) {
+        const destinationPlayerId = across.boardPlayerId as PlayerId;
+        const destination = view.boards[destinationPlayerId];
+        if (
+          !destination ||
+          destination.activeStackId !== across.expectedActiveStackId ||
+          destination.benchStackIds.join('\u0000') !==
+            across.expectedBenchStackIds.join('\u0000')
+        ) {
+          return null;
+        }
+        const layout = layOutPlayStackAcrossBoards({
+          stackId: stack.id,
+          source: board,
+          destination,
+          destinationSlot: command.destinationSlot,
+          ...(target ? { targetStackId: target.id } : {}),
+          ...(command.benchIndex === undefined
+            ? {}
+            : { benchIndex: command.benchIndex }),
+        });
+        return layout
+          ? withBoardsRehomed(view, [
+              { playerId: stack.boardPlayerId, board: layout.source },
+              { playerId: destinationPlayerId, board: layout.destination },
+            ])
+          : null;
+      }
       let activeStackId = board.activeStackId;
       const benchStackIds = [...board.benchStackIds];
       const sourceBenchIndex = benchStackIds.indexOf(stack.id);
@@ -889,7 +953,9 @@ const predict = (
       if (!entry) return null;
       const [playerId, areas] = entry;
       const staged = areas.attachmentResolution!;
-      const board = view.boards[playerId as PlayerId];
+      const destinationPlayerId = (command.destinationBoardPlayerId ??
+        playerId) as PlayerId;
+      const board = view.boards[destinationPlayerId];
       if (
         !board ||
         staged.evolutionCards.length === 0 ||
@@ -903,11 +969,13 @@ const predict = (
         ...areas,
         attachmentResolution: null,
       });
+      // Onto either board. The room puts it back together on its own Bench
+      // and moves it across; it lands where a new Pokémon played there does.
       return placeNewStack(
         cleared,
         emptyStack(
           `predicted-stack:${staged.evolutionCards[0]!.id}`,
-          playerId as PlayerId,
+          destinationPlayerId,
           command.destinationSlot,
           staged.evolutionCards,
           staged.attachmentCards

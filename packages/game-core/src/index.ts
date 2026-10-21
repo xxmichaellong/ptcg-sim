@@ -11,6 +11,7 @@ export * from './invariants.js';
 export * from './lifecycle-reset.js';
 export * from './location.js';
 export * from './model.js';
+export * from './play-stack-boards.js';
 export * from './projection.js';
 export * from './public-visibility.js';
 export * from './stable-hash.js';

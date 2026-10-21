@@ -346,6 +346,52 @@ describe('headless board session controller', () => {
     expect(benched([])).toBeUndefined();
   });
 
+  it("marks only the other player's Active giving way when a Pokémon goes across", () => {
+    const state = install();
+    const cardId = cardIn(state.scene!, ':hand');
+    const across = (
+      destinationSlot: 'active' | 'bench',
+      expectedActiveStackId: string | null
+    ) =>
+      apply(
+        state,
+        {
+          kind: 'RendererPresentationUpdated',
+          update: {
+            kind: 'DragChanged',
+            drag: { cardId, x: 5, y: 6, targetId: 'zone:spike-blue:discard' },
+          },
+        },
+        {
+          ...dependencies,
+          resolveDrop: () => ({
+            ok: true,
+            command: {
+              type: 'MovePlayStack',
+              stackId: 'stack:active',
+              expectedSourceSlot: 'active',
+              expectedActiveStackId: 'stack:active',
+              expectedBenchStackIds: ['stack:lone'],
+              destinationSlot,
+              destinationBoard: {
+                boardPlayerId: 'spike-red',
+                expectedActiveStackId,
+                expectedBenchStackIds: [],
+              },
+            } as never,
+          }),
+        }
+      ).state.presentation.drag?.action;
+    expect(across('active', 'stack:red')).toEqual({
+      kind: 'swap',
+      stackId: 'stack:red',
+    });
+    // Nothing comes up on the board it left, and an empty spot gives way to
+    // nothing.
+    expect(across('bench', 'stack:red')).toBeUndefined();
+    expect(across('active', null)).toBeUndefined();
+  });
+
   it('cancels reconnect gestures without reinstalling a phase-only scene', () => {
     let state = install();
     const cardId = cardIn(state.scene!, ':hand');

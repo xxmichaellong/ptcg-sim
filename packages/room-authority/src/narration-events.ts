@@ -262,6 +262,7 @@ const moved = (
   source: CardSource,
   fields: {
     readonly destination?: CardSource;
+    readonly destinationPlayerId?: PlayerId;
     readonly cardName?: string;
     readonly targetCardName?: string;
   }
@@ -273,6 +274,9 @@ const moved = (
     verb,
     source,
     ...(fields.destination ? { destination: fields.destination } : {}),
+    ...(fields.destinationPlayerId
+      ? { destinationPlayerId: fields.destinationPlayerId }
+      : {}),
     ...(fields.cardName ? { cardName: fields.cardName } : {}),
     ...(fields.targetCardName ? { targetCardName: fields.targetCardName } : {}),
   }) satisfies Narration;
@@ -417,6 +421,35 @@ const narrate = (
         }),
       ];
     }
+    case 'PlayStacksRehomed':
+      // A Pokémon that changed boards, one line each, naming whose board
+      // it went to; one only shuffled about its own board is not news.
+      return event.boards.flatMap((layout) =>
+        [
+          ...(layout.activeStackId ? [layout.activeStackId] : []),
+          ...layout.benchStackIds,
+        ].flatMap((stackId) => {
+          const before = previousState.stacks[stackId];
+          const after = state.stacks[stackId];
+          const top = after?.evolutionCardIds.at(-1);
+          if (
+            !before ||
+            !after ||
+            !top ||
+            before.boardPlayerId === after.boardPlayerId
+          )
+            return [];
+          const playerId = ownerOf(state, previousState, top);
+          if (!playerId) return [];
+          return [
+            moved(revision, playerId, 'moved', before.slot, {
+              destination: after.slot,
+              destinationPlayerId: after.boardPlayerId,
+              cardName: publicName(state, previousState, top),
+            }),
+          ];
+        })
+      );
     case 'CardMovedToWorkArea': {
       // v1 logs the arrival with the same grammar as any other move; its
       // popups are named "deck" and "attached cards" in the battle log.

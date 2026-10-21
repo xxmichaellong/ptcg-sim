@@ -234,13 +234,55 @@ describe('board drop command resolution', () => {
         destinationSlot: 'bench',
       },
     });
+    // Onto the other player's Active: the two trade places across the table.
     expect(
       resolveBoardDrop(input.view, input.scene, {
         kind: 'CardDropRequested',
         cardId: stackCard.id,
         targetId: 'stack:red:active',
       })
-    ).toEqual({ ok: false, reason: 'unsupported_target' });
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId: stack.id,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: stack.id,
+        expectedBenchStackIds: [],
+        destinationSlot: 'active',
+        targetStackId: 'stack:red:active',
+        destinationBoard: {
+          boardPlayerId: 'spike-red',
+          expectedActiveStackId: 'stack:red:active',
+          expectedBenchStackIds: [],
+        },
+      },
+    });
+    // Onto their empty Bench: it goes there, at the place pointed to.
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: stackCard.id,
+        targetId: 'slot:spike-red:bench',
+        index: 0,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId: stack.id,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: stack.id,
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+        benchIndex: 0,
+        destinationBoard: {
+          boardPlayerId: 'spike-red',
+          expectedActiveStackId: 'stack:red:active',
+          expectedBenchStackIds: [],
+        },
+      },
+    });
     expect(
       resolveBoardDrop(input.view, input.scene, {
         kind: 'CardDropRequested',
@@ -486,10 +528,16 @@ describe('board drop command resolution', () => {
         mode: 'attachment',
       }),
     });
-    // Evolving the opponent's Pokémon is not offered.
+    // A drop may evolve the opponent's Pokémon too (Q/E's targets keep to
+    // the card's own board).
     expect(drop(pokemon.id, red.id)).toEqual({
-      ok: false,
-      reason: 'unsupported_target',
+      ok: true,
+      command: expect.objectContaining({
+        type: 'PlaceCardOnPlayStack',
+        cardId: pokemon.id,
+        targetStackId: red.id,
+        mode: 'evolution',
+      }),
     });
   });
 
@@ -772,6 +820,74 @@ describe('board drop command resolution', () => {
         expectedBenchStackIds: [],
         destinationSlot: 'bench',
       },
+    });
+    // Or back together on the other player's Bench, their board as seen.
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: viewCard.id,
+        targetId: 'slot:spike-red:bench',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'RestoreStagedStack',
+        expectedWorkAreaId: 'staged-work-area',
+        expectedActiveStackId: 'stack:red:active',
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+        destinationBoardPlayerId: 'spike-red',
+      },
+    });
+  });
+
+  it("puts a Pokémon among the other player's Benched ones where it is dropped", () => {
+    const input = fixture();
+    // Red's Active benched, so a Pokémon of Blue's lands on a Bench of one.
+    const red = input.view.boards['spike-red']!;
+    const view: MatchViewState = {
+      ...input.view,
+      boards: {
+        ...input.view.boards,
+        'spike-red': {
+          activeStackId: null,
+          benchStackIds: [red.activeStackId!],
+        },
+      },
+      stacks: {
+        ...input.view.stacks,
+        [red.activeStackId!]: {
+          ...input.view.stacks[red.activeStackId!]!,
+          slot: 'bench',
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: view.playerOrder[0]!,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const blue = view.stacks['stack:blue:active']!;
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: blue.evolutionCards.at(-1)!.id,
+        targetId: red.activeStackId!,
+      })
+    ).toEqual({
+      ok: true,
+      command: expect.objectContaining({
+        type: 'MovePlayStack',
+        stackId: blue.id,
+        destinationSlot: 'bench',
+        benchIndex: 0,
+        destinationBoard: {
+          boardPlayerId: 'spike-red',
+          expectedActiveStackId: null,
+          expectedBenchStackIds: [red.activeStackId],
+        },
+      }),
     });
   });
 

@@ -32,6 +32,7 @@ import type {
   CardZone,
   InspectionWorkArea,
   MatchState,
+  PlaySlot,
   PlayStack,
 } from './model.js';
 import {
@@ -1607,8 +1608,6 @@ const applyEventInternal = (
         source.id !== event.expectedSourceId ||
         source.playerId !== event.playerId ||
         !target ||
-        (event.mode === 'evolution' &&
-          target.boardPlayerId !== event.playerId) ||
         target.evolutionCardIds.at(-1) !== event.expectedTargetTopCardId ||
         !sameCardOrder(
           target.evolutionCardIds,
@@ -2096,6 +2095,79 @@ const applyEventInternal = (
           },
         },
         stacks,
+      };
+    }
+    case 'PlayStacksRehomed': {
+      const playerIds = event.boards.map((layout) => layout.boardPlayerId);
+      if (
+        playerIds.length === 0 ||
+        new Set(playerIds).size !== playerIds.length
+      ) {
+        throw new Error('Play stack boards are malformed');
+      }
+      const placed = (board: {
+        readonly activeStackId: StackId | null;
+        readonly benchStackIds: readonly StackId[];
+      }): StackId[] => [
+        ...(board.activeStackId ? [board.activeStackId] : []),
+        ...board.benchStackIds,
+      ];
+      const before: StackId[] = [];
+      const after: StackId[] = [];
+      for (const layout of event.boards) {
+        const board = state.boards[layout.boardPlayerId];
+        if (!board) throw new Error(`Missing board ${layout.boardPlayerId}`);
+        if (
+          board.activeStackId !== layout.expectedActiveStackId ||
+          !sameCardOrder(board.benchStackIds, layout.expectedBenchStackIds)
+        ) {
+          throw new Error(
+            'Play stack layout does not match expected placement'
+          );
+        }
+        before.push(...placed(board));
+        after.push(...placed(layout));
+      }
+      if (
+        new Set(after).size !== after.length ||
+        !sameCardOrder([...before].sort(), [...after].sort())
+      ) {
+        throw new Error('Play stack boards change the set of stacks in play');
+      }
+      const stacks = { ...state.stacks };
+      const boards = { ...state.boards };
+      // A Pokémon's cards seen privately were seen where it was: those
+      // looks end as it changes boards.
+      const rehomedCardIds = new Set<CardInstanceId>();
+      for (const layout of event.boards) {
+        const place = (stackId: StackId, slot: PlaySlot): void => {
+          const stack = requireStack(state, stackId);
+          if (stack.boardPlayerId !== layout.boardPlayerId) {
+            for (const cardId of [
+              ...stack.evolutionCardIds,
+              ...stack.attachmentCardIds,
+            ])
+              rehomedCardIds.add(cardId);
+          }
+          stacks[stackId] = {
+            ...stack,
+            boardPlayerId: layout.boardPlayerId,
+            slot,
+            ...(slot === 'bench' ? { specialCondition: null } : {}),
+          };
+        };
+        if (layout.activeStackId) place(layout.activeStackId, 'active');
+        for (const stackId of layout.benchStackIds) place(stackId, 'bench');
+        boards[layout.boardPlayerId] = {
+          activeStackId: layout.activeStackId,
+          benchStackIds: [...layout.benchStackIds],
+        };
+      }
+      return {
+        ...state,
+        boards,
+        stacks,
+        visibility: retireVisibility(state, new Set(), rehomedCardIds),
       };
     }
     case 'InspectedCardMoved': {

@@ -307,6 +307,17 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationSlot: v.picklist(['active', 'bench'] as const),
     targetStackId: v.optional(IdentifierSchema),
     benchIndex: v.optional(NonNegativeIntegerSchema),
+    // Onto the other player's board, as last seen: a Pokémon moved across.
+    destinationBoard: v.optional(
+      v.object({
+        boardPlayerId: IdentifierSchema,
+        expectedActiveStackId: v.nullable(IdentifierSchema),
+        expectedBenchStackIds: v.pipe(
+          v.array(IdentifierSchema),
+          v.maxLength(200)
+        ),
+      })
+    ),
   }),
   v.object({
     type: v.literal('MoveInspectedCard'),
@@ -342,10 +353,12 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('RestoreStagedStack'),
     targetPlayerId: v.optional(IdentifierSchema),
     expectedWorkAreaId: IdentifierSchema,
+    // The board it is restored onto: the player's own, or this one's.
     expectedActiveStackId: v.nullable(IdentifierSchema),
     expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
     destinationSlot: v.picklist(['active', 'bench'] as const),
     benchIndex: v.optional(NonNegativeIntegerSchema),
+    destinationBoardPlayerId: v.optional(IdentifierSchema),
   }),
   v.object({
     type: v.literal('ResolveStagedCards'),
@@ -848,6 +861,8 @@ const CardMovedPresentationEventSchema = v.object({
   ] as const),
   source: PresentationCardSourceSchema,
   destination: v.optional(PresentationCardSourceSchema),
+  /** Whose board it went to, for a Pokémon that changed boards. */
+  destinationPlayerId: v.optional(IdentifierSchema),
   cardName: v.optional(boundedString(256)),
   targetCardName: v.optional(boundedString(256)),
 });

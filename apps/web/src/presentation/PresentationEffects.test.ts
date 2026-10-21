@@ -404,6 +404,17 @@ describe('presentationEffectsForEvent', () => {
         type: 'CardMoved',
         ...at,
         verb: 'moved',
+        source: 'active',
+        destination: 'bench',
+        destinationPlayerId: 'spike-red',
+        cardName: 'Pikachu',
+      })
+    ).toBe("player:Blue moved Pikachu from active to Red's bench");
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
         source: 'hand',
         destination: 'deck',
       })

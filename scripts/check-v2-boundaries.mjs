@@ -22,6 +22,10 @@ const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   // Bounded physical-artwork metadata and print recognition only. This module
   // has no runtime dependencies on canonical state, reducers, or authority.
   'packages/game-core/src/card-presentation.ts',
+  // Pure arithmetic over two boards' stack ids for a Pokémon moved between
+  // them, shared by the room and the client's prediction. It reads no
+  // canonical state and imports nothing at runtime.
+  'packages/game-core/src/play-stack-boards.ts',
 ]);
 
 const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([

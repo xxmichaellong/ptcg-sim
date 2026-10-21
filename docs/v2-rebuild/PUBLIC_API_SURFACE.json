@@ -830,6 +830,10 @@
               "kind": "type"
             },
             {
+              "name": "layOutPlayStackAcrossBoards",
+              "kind": "value"
+            },
+            {
               "name": "LooseBoardCardsDestination",
               "kind": "type"
             },
@@ -915,6 +919,10 @@
             },
             {
               "name": "PlayStack",
+              "kind": "type"
+            },
+            {
+              "name": "PlayStackBoardLayout",
               "kind": "type"
             },
             {

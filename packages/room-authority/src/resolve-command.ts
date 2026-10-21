@@ -355,8 +355,6 @@ export const resolveWireCommand = (
       const target = state.stacks[wire.targetStackId];
       if (
         !target ||
-        (wire.mode === 'evolution' &&
-          target.boardPlayerId !== sourcePlayerId) ||
         target.evolutionCardIds.at(-1) !== expectedTargetTop.cardId
       ) {
         return rejected('stale_reference');
@@ -493,13 +491,34 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
+      // Onto the other player's board: the Pokémon traded with or pushed
+      // aside there, and the board itself, are theirs.
+      const across =
+        wire.destinationBoard &&
+        wire.destinationBoard.boardPlayerId !== stack.boardPlayerId
+          ? wire.destinationBoard
+          : undefined;
+      const destinationPlayerId = across
+        ? asPlayerId(across.boardPlayerId)
+        : stack.boardPlayerId;
+      if (across) {
+        if (!state.boards[destinationPlayerId]) {
+          return rejected('stale_reference');
+        }
+        if (
+          !controlsSeat(destinationPlayerId) &&
+          !policy.allowOpponentPublicInteraction
+        ) {
+          return rejected('unauthorized');
+        }
+      }
       const target = wire.targetStackId
         ? state.stacks[wire.targetStackId]
         : undefined;
       if (
         (wire.targetStackId && !target) ||
         (target &&
-          (target.boardPlayerId !== stack.boardPlayerId ||
+          (target.boardPlayerId !== destinationPlayerId ||
             target.slot !== wire.destinationSlot))
       ) {
         return rejected('stale_reference');
@@ -521,6 +540,18 @@ export const resolveWireCommand = (
           ...(wire.benchIndex === undefined
             ? {}
             : { benchIndex: wire.benchIndex }),
+          ...(across
+            ? {
+                destinationBoard: {
+                  boardPlayerId: destinationPlayerId,
+                  expectedActiveStackId: across.expectedActiveStackId
+                    ? asStackId(across.expectedActiveStackId)
+                    : null,
+                  expectedBenchStackIds:
+                    across.expectedBenchStackIds.map(asStackId),
+                },
+              }
+            : {}),
         },
       };
     }
@@ -687,15 +718,27 @@ export const resolveWireCommand = (
       if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
         return rejected('unauthorized');
       const resolution = state.workAreas[targetPlayerId]?.attachmentResolution;
-      const board = state.boards[targetPlayerId];
+      const destinationPlayerId = wire.destinationBoardPlayerId
+        ? asPlayerId(wire.destinationBoardPlayerId)
+        : targetPlayerId;
+      const board = state.boards[destinationPlayerId];
       if (!resolution || resolution.id !== wire.expectedWorkAreaId || !board) {
         return rejected('stale_reference');
+      }
+      if (
+        !controlsSeat(destinationPlayerId) &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
       }
       return {
         accepted: true,
         command: {
           type: 'RestoreStagedStack',
           playerId: targetPlayerId,
+          ...(destinationPlayerId === targetPlayerId
+            ? {}
+            : { destinationBoardPlayerId: destinationPlayerId }),
           expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           expectedActiveStackId: wire.expectedActiveStackId
             ? asStackId(wire.expectedActiveStackId)

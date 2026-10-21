@@ -470,7 +470,7 @@ describe('atomic card placement on an existing play stack', () => {
     assertMatchInvariants(final.state);
   });
 
-  it('rejects top, stale source, stale target, cross-board, and forged mode', () => {
+  it('rejects top, stale source, stale target, a forged player, and forged mode', () => {
     const input = fixture();
     const base = {
       type: 'PlaceCardOnPlayStack',

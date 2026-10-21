@@ -2,6 +2,7 @@ import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import { resolveAttachEvolveTargeting } from './resolveAttachEvolveTargeting.js';
 import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import { arrangementIndexAt } from '@ptcgsim/renderer-contract';
 import type {
   BoardIntent,
   BoardScene,
@@ -32,16 +33,18 @@ const rejected = (
 /**
  * A card that is not a whole Pokémon (an attached Energy or Tool, a card
  * under the top, or one in a Looking-at-cards or attached-card window)
- * dropped on a Pokémon joins it, exactly as the Q/E keys place it: v1's
- * drop does the same. Sharing the keys' rules keeps the two from drifting
- * on who may target which board and whether a card attaches or evolves.
+ * dropped on a Pokémon joins it, as the Q/E keys place it: v1's drop does
+ * the same. Sharing the keys' rules keeps the two from drifting on whether
+ * a card attaches or evolves; a drop may evolve a Pokémon on either board.
  */
 const placeOnPokemon = (
   view: BoardDropView,
   cardId: ViewCardId,
   targetStackId: string
 ): BoardDropResolution => {
-  const targeting = resolveAttachEvolveTargeting(view, cardId);
+  const targeting = resolveAttachEvolveTargeting(view, cardId, {
+    evolveOnEitherBoard: true,
+  });
   if (!targeting.ok) {
     return rejected(
       targeting.reason === 'stale_source' ? 'stale_card' : targeting.reason
@@ -98,6 +101,67 @@ const placeIn = (
   index !== undefined && ARRANGED_ZONE_KINDS.has(kind)
     ? { destinationIndex: index }
     : {};
+
+type ViewStack = BoardDropView['stacks'][string];
+
+/**
+ * A whole Pokémon moved onto the other player's board (game-core's
+ * layOutPlayStackAcrossBoards), with both boards as last seen.
+ */
+const moveStackAcross = (
+  view: BoardDropView,
+  stack: ViewStack,
+  destinationPlayerId: string,
+  destinationSlot: 'active' | 'bench',
+  place: { readonly targetStackId?: string; readonly benchIndex?: number }
+): BoardDropResolution => {
+  const source = view.boards[stack.boardPlayerId];
+  const destination = view.boards[destinationPlayerId];
+  if (!source || !destination) return rejected('stale_target');
+  return {
+    ok: true,
+    command: {
+      type: 'MovePlayStack',
+      stackId: stack.id,
+      expectedSourceSlot: stack.slot,
+      expectedActiveStackId: source.activeStackId,
+      expectedBenchStackIds: [...source.benchStackIds],
+      destinationSlot,
+      ...(place.targetStackId ? { targetStackId: place.targetStackId } : {}),
+      ...(place.benchIndex === undefined
+        ? {}
+        : { benchIndex: place.benchIndex }),
+      destinationBoard: {
+        boardPlayerId: destinationPlayerId,
+        expectedActiveStackId: destination.activeStackId,
+        expectedBenchStackIds: [...destination.benchStackIds],
+      },
+    },
+  };
+};
+
+/**
+ * Where on its Bench a Pokémon dropped over a Benched one of the other
+ * player's goes: the side of it the pointer is on, as over their Bench.
+ */
+const benchPlaceOver = (
+  view: BoardDropView,
+  scene: BoardScene,
+  intent: DropIntent,
+  target: ViewStack
+): number | undefined => {
+  const bench = scene.zones.find(
+    (zone) => zone.kind === 'bench' && zone.playerId === target.boardPlayerId
+  );
+  const pointed = bench
+    ? arrangementIndexAt(scene, intent.cardId, bench.id, intent.x, intent.y)
+    : null;
+  if (pointed !== null) return pointed;
+  const at = view.boards[target.boardPlayerId]?.benchStackIds.indexOf(
+    target.id
+  );
+  return at === undefined || at < 0 ? undefined : at;
+};
 
 /** Converts one renderer-safe drop into an explicit, preconditioned command. */
 export interface BoardDropOptions {
@@ -281,7 +345,21 @@ export const resolveBoardDrop = (
       }
       if (sourceStack.id === targetStack.id) return rejected('no_op');
       if (sourceStack.boardPlayerId !== targetStack.boardPlayerId) {
-        return rejected('unsupported_target');
+        // Onto the other player's Pokémon: the Active trades places with
+        // it; a Benched one makes room, as their Bench does for a drop.
+        const destination = targetStack.boardPlayerId;
+        if (targetStack.slot === 'active')
+          return moveStackAcross(view, sourceStack, destination, 'active', {
+            targetStackId: targetStack.id,
+          });
+        const benchIndex = benchPlaceOver(view, scene, intent, targetStack);
+        return moveStackAcross(
+          view,
+          sourceStack,
+          destination,
+          'bench',
+          benchIndex === undefined ? {} : { benchIndex }
+        );
       }
       return {
         ok: true,
@@ -363,10 +441,8 @@ export const resolveBoardDrop = (
       ) {
         return rejected('unsupported_source');
       }
-      if (slot.playerId !== sourceStagedPlayerId) {
-        return rejected('unsupported_target');
-      }
-      const board = view.boards[sourceStagedPlayerId];
+      // Back together on either board: the one it is put on.
+      const board = view.boards[slot.playerId];
       if (!board) return rejected('stale_target');
       return {
         ok: true,
@@ -380,13 +456,22 @@ export const resolveBoardDrop = (
           expectedBenchStackIds: [...board.benchStackIds],
           destinationSlot,
           ...benchPlace,
+          ...(slot.playerId === sourceStagedPlayerId
+            ? {}
+            : { destinationBoardPlayerId: slot.playerId }),
         },
       };
     }
     if (sourceStack) {
       if (!sourceMovesWholeStack) return rejected('unsupported_source');
       if (sourceStack.boardPlayerId !== slot.playerId) {
-        return rejected('unsupported_target');
+        return moveStackAcross(
+          view,
+          sourceStack,
+          slot.playerId,
+          destinationSlot,
+          benchPlace
+        );
       }
       if (sourceStack.slot === 'active' && destinationSlot === 'active') {
         return rejected('no_op');

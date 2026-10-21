@@ -186,6 +186,37 @@ const cardMovedMessage = (
   const targetCard = event.targetCardName;
   switch (event.verb) {
     case 'moved':
+      // A Pokémon that changed boards: whose board it went to.
+      if (event.destinationPlayerId !== undefined && targetCard === undefined) {
+        const boardOwner = playerName(view, event.destinationPlayerId);
+        return msg({
+          message: `${actor} moved ${card} from ${select(source, {
+            hand: 'hand',
+            prizes: 'prizes',
+            discard: 'discard',
+            board: 'board',
+            stadium: 'stadium',
+            active: 'active',
+            bench: 'bench',
+            lostZone: 'lost zone',
+            attachmentResolution: 'attached cards',
+            other: 'deck',
+          })} to ${boardOwner}'s ${select(target, {
+            hand: 'hand',
+            prizes: 'prizes',
+            discard: 'discard',
+            board: 'board',
+            stadium: 'stadium',
+            active: 'active',
+            bench: 'bench',
+            lostZone: 'lost zone',
+            attachmentResolution: 'attached cards',
+            other: 'deck',
+          })}`,
+          comment:
+            "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to.",
+        });
+      }
       return targetCard !== undefined
         ? msg({
             message: `${actor} moved ${card} from ${select(source, {

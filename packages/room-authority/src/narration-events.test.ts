@@ -135,6 +135,74 @@ describe('battle-log narration', () => {
     expect(JSON.stringify(hidden.narration)).not.toContain('Secret');
   });
 
+  it('says whose board a Pokémon moved onto, and nothing for one moved about its own', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const pokemon = hand.cardIds.filter(
+      (cardId) => state.cards[cardId]!.currentCategory === 'Pokémon'
+    );
+    let current = state;
+    for (const [index, cardId] of pokemon.slice(0, 2).entries())
+      current = step(
+        current,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: hand.id,
+          boardPlayerId: p1,
+          slot: index === 0 ? 'active' : 'bench',
+        },
+        context
+      ).state;
+    const board = current.boards[p1]!;
+    const active = board.activeStackId!;
+    const name =
+      current.definitions[current.cards[pokemon[0]!]!.definitionId]!.name;
+    const swapped = step(
+      current,
+      {
+        type: 'MovePlayStack',
+        stackId: active,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: active,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: 'bench',
+        targetStackId: board.benchStackIds[0]!,
+      },
+      context
+    );
+    expect(swapped.narration).toEqual([]);
+    const moved = step(
+      current,
+      {
+        type: 'MovePlayStack',
+        stackId: active,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: active,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: 'bench',
+        destinationBoard: {
+          boardPlayerId: p2,
+          expectedActiveStackId: null,
+          expectedBenchStackIds: [],
+        },
+      },
+      context
+    );
+    expect(moved.narration).toEqual([
+      {
+        type: 'CardMoved',
+        revision: moved.state.revision,
+        playerId: p1,
+        verb: 'moved',
+        source: 'active',
+        destination: 'bench',
+        destinationPlayerId: p2,
+        cardName: name,
+      },
+    ]);
+  });
+
   it('logs nothing for a hand rearranged, and keeps its cards private', () => {
     const { state, context } = table();
     const hand = state.zones[playerZoneId(p1, 'hand')]!;
