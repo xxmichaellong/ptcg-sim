@@ -485,9 +485,12 @@ export const CardSearchPanel = ({
           (target.getBoundingClientRect().width || 1)
       )
     );
+    // Right to left, the grid fills from the right: the arrow pointing that
+    // way goes on to the next card.
+    const forward = getComputedStyle(target).direction === 'rtl' ? -1 : 1;
     const step: Record<string, number> = {
-      ArrowRight: 1,
-      ArrowLeft: -1,
+      ArrowRight: forward,
+      ArrowLeft: -forward,
       ArrowDown: columns,
       ArrowUp: -columns,
     };

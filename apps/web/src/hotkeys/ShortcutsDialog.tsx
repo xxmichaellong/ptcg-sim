@@ -284,6 +284,8 @@ const KeyboardMap = memo(function KeyboardMap({
       className="ptcgsim-keyboard-map"
       data-layer={layer}
       aria-hidden="true"
+      // A keyboard is the same way round in every language.
+      dir="ltr"
       onPointerLeave={() => onHover(null)}
     >
       {MAP_ROWS.map((keys, rowIndex) => (
@@ -562,7 +564,7 @@ const ShortcutRow = memo(function ShortcutRow({
                 : t`Reset to no key`,
               defaultHint
             )}
-            side="left"
+            side="inline-start"
           >
             <button
               type="button"

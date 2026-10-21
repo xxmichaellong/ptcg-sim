@@ -344,7 +344,11 @@ export const DeckEditor = ({
             className="ds-button ds-button--ghost deck-editor__back"
             onClick={onBack}
           >
-            <CaretLeftIcon {...decorative} weight="bold" />
+            <CaretLeftIcon
+              {...decorative}
+              weight="bold"
+              className="ds-mirror-rtl"
+            />
             <span className="deck-editor__back-label">
               <Trans context="go back to the saved decks">Decks</Trans>
             </span>
@@ -426,7 +430,11 @@ export const DeckEditor = ({
               disabled={!canUndo}
               onClick={undo}
             >
-              <ArrowArcLeftIcon {...decorative} weight="bold" />
+              <ArrowArcLeftIcon
+                {...decorative}
+                weight="bold"
+                className="ds-mirror-rtl"
+              />
             </button>
           </Tooltip>
           <Tooltip content={t`Redo (Ctrl+Shift+Z)`}>
@@ -437,7 +445,11 @@ export const DeckEditor = ({
               disabled={!canRedo}
               onClick={redo}
             >
-              <ArrowArcRightIcon {...decorative} weight="bold" />
+              <ArrowArcRightIcon
+                {...decorative}
+                weight="bold"
+                className="ds-mirror-rtl"
+              />
             </button>
           </Tooltip>
           <ActionMenu

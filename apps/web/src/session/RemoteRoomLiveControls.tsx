@@ -566,7 +566,12 @@ export const ChatComposer = ({
           aria-label={t`Send message`}
           onClick={controls.sendMessage}
         >
-          <PaperPlaneRight size={20} weight="fill" aria-hidden="true" />
+          <PaperPlaneRight
+            size={20}
+            weight="fill"
+            aria-hidden="true"
+            className="ds-mirror-rtl"
+          />
         </button>
       </Tooltip>
     </div>

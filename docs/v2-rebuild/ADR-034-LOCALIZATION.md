@@ -28,8 +28,8 @@ Settings, and has its server send codes that the client words.
    Türkçe, Русский, Српски, العربية, 日本語, 简体中文, 한국어, ไทย, Tiếng
    Việt, Bahasa Indonesia and Filipino — magiccircle.gg's list. Chinese is
    Simplified only (the owner's choice); a `zh-TW` browser gets it.
-   Arabic is translated but the layout stays left to right, as on
-   magiccircle.gg; a mirrored table is a separate decision.
+   Arabic is written right to left (2026-10-21, the owner asked for it):
+   see 7.
 3. **The language is a preference** (`ptcgsim.language.v1`): `auto`
    follows the browser's languages, else English; Settings → Language
    chooses one, each named in itself. English is compiled into the page and
@@ -55,6 +55,25 @@ Settings, and has its server send codes that the client words.
 6. **The server sends codes.** Refusals and notices from the room arrive
    as codes with values, and the app words them. Chat, names and deck
    names are never translated.
+7. **Right to left: the chrome mirrors, the table does not.** In Arabic
+   (`textDirection` in `locales.ts`) `<html dir="rtl">` is set with the
+   language, and Base UI's menus, popups and sliders follow it
+   (`DirectionProvider` in `OverlayHost`). Everything that is read
+   mirrors: sheets', dialogs' and the log's headings and rows, menus
+   (a submenu opens to the left), the deck screen, toasts, switches and
+   icons that point the way the line reads (`ds-mirror-rtl`: back, send,
+   undo). The table is laid out in the world, not in a language, so
+   `.board-spike-host` stays `dir="ltr"`: the board, its rail, coins and
+   overlays' card rows keep their places, the log still docks at the
+   right beside the table (the table's geometry reserves that column),
+   and the side sheets keep to the right with it. What the table raises
+   to be read -- a card's menu, a panel's heading -- sets the page's
+   direction again (`usePageDirection`). Keys always read left to right
+   (Alt + N), the keyboard map is a keyboard, and a name inside an
+   Arabic Log line is isolated (U+2068/2069) so it keeps its own order.
+   Write new CSS with logical properties (`margin-inline-start`,
+   `inset-inline-end`, `text-align: start`) unless it places something on
+   the table.
 
 ## How to write text
 

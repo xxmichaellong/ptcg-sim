@@ -51,7 +51,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding-left: var(--space-6);
+  padding-inline-start: var(--space-6);
   font-family: var(--font-display);
   font-size: var(--text-xl);
   letter-spacing: 0.01em;
@@ -70,7 +70,7 @@
 
 .ptcgsim-shortcuts > .ptcgsim-ui-dialog__description {
   grid-area: desc;
-  padding-left: calc(var(--space-6) + 36px + var(--space-3));
+  padding-inline-start: calc(var(--space-6) + 36px + var(--space-3));
   font-size: var(--text-sm);
 }
 
@@ -80,7 +80,7 @@
   align-items: center;
   align-self: start;
   gap: var(--space-2);
-  padding-right: var(--space-5);
+  padding-inline-end: var(--space-5);
 }
 
 .ptcgsim-shortcuts__search {
@@ -92,14 +92,14 @@
 
 .ptcgsim-shortcuts__search > svg {
   position: absolute;
-  left: 11px;
+  inset-inline-start: 11px;
   font-size: 16px;
   pointer-events: none;
 }
 
 .ptcgsim-shortcuts__search .ds-input {
   width: min(300px, 32vw);
-  padding-left: 34px;
+  padding-inline-start: 34px;
 }
 
 .ptcgsim-shortcuts__close {
@@ -253,6 +253,9 @@
   align-items: center;
   gap: 3px;
   vertical-align: middle;
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .ptcgsim-keycaps__plus {
@@ -421,6 +424,12 @@
   line-clamp: 2;
 }
 
+/* What a key does reads the page's way, inside a keyboard that does not. */
+:root[dir='rtl'] .ptcgsim-map-key__action {
+  direction: rtl;
+  text-align: right;
+}
+
 @media (hover: hover) {
   .ptcgsim-map-key[data-group]:hover {
     translate: 0 -1px;
@@ -497,7 +506,8 @@
   align-items: center;
   gap: var(--space-1) var(--space-3);
   min-height: 38px;
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3) var(--space-2);
   border-radius: var(--radius-sm);
   transition: background-color var(--duration-fast) var(--ease-out);
 }
@@ -507,7 +517,7 @@
   position: absolute;
   top: 10px;
   bottom: 10px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 3px;
   border-radius: 2px;
   background: var(--tone);
@@ -556,7 +566,7 @@
 }
 
 .ptcgsim-shortcut-row__scope {
-  margin-right: var(--space-1-5);
+  margin-inline-end: var(--space-1-5);
   padding: 0 var(--space-1-5);
   border-radius: var(--radius-pill);
   background: var(--color-surface-3);
@@ -776,7 +786,7 @@
   }
 
   .ptcgsim-shortcuts > .ptcgsim-ui-dialog__title {
-    padding-left: var(--space-4);
+    padding-inline-start: var(--space-4);
   }
 
   .ptcgsim-shortcuts > .ptcgsim-ui-dialog__description {
@@ -784,7 +794,7 @@
   }
 
   .ptcgsim-shortcuts__tools {
-    padding-right: var(--space-3);
+    padding-inline-end: var(--space-3);
   }
 
   .ptcgsim-shortcuts__search .ds-input {

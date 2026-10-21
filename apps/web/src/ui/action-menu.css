@@ -101,6 +101,9 @@
 
 .ptcgsim-action-menu__hint {
   flex: none;
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
   padding: 1px 6px;
   border: 1px solid var(--color-border-strong);
   border-bottom-width: 2px;

@@ -9,6 +9,12 @@
  * motion keeps the fade and drops the travel.
  */
 
+/* An icon that points the way the line reads (back, send, undo) turns
+   round in a right-to-left language. */
+.ds-mirror-rtl:dir(rtl) {
+  scale: -1 1;
+}
+
 :root {
   --ds-control-height: var(--control-height);
   --ds-primary-bg: var(--color-accent-fill);
@@ -324,7 +330,7 @@
 }
 
 .ds-select {
-  padding-right: 30px;
+  padding-inline-end: 30px;
   appearance: none;
   background-image:
     linear-gradient(45deg, transparent 50%, currentcolor 50%),
@@ -336,6 +342,13 @@
   background-size: 5px 5px;
   cursor: pointer;
   text-overflow: ellipsis;
+}
+
+/* Right to left, the caret is at the start of the line's other end. */
+.ds-select:dir(rtl) {
+  background-position:
+    left 10px center,
+    left 15px center;
 }
 
 .ds-select option {
@@ -365,7 +378,7 @@
   content: '';
   position: absolute;
   top: 2px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -385,6 +398,11 @@
 .ds-switch:checked::before {
   background: var(--color-text-on-accent);
   translate: 16px 0;
+}
+
+/* On is towards the end of the line, whichever way it reads. */
+.ds-switch:dir(rtl):checked::before {
+  translate: -16px 0;
 }
 
 .ds-switch:disabled {
@@ -541,7 +559,7 @@
   color: inherit;
   font-family: var(--font-ui);
   font-size: var(--text-md);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-out);
 }
@@ -598,6 +616,9 @@
 .ds-kbd {
   display: inline-block;
   min-width: 1.6em;
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
   padding: 1px 6px;
   border: 1px solid var(--color-border-strong);
   border-bottom-width: 2px;

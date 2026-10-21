@@ -578,7 +578,11 @@ export const DeckScreen = ({
           className="ds-button ds-button--ghost deck-screen__back"
           onClick={onClose}
         >
-          <ArrowLeftIcon {...decorative} weight="bold" />
+          <ArrowLeftIcon
+            {...decorative}
+            weight="bold"
+            className="ds-mirror-rtl"
+          />
           <Trans context="go back to the table">Table</Trans>
         </button>
         <div

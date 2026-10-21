@@ -21,6 +21,7 @@ import {
   type LegacyActivityPerspective,
 } from '../../presentation/LegacyPresentationSurface.js';
 import type { LegacyGamePresentationRuntime } from '../../presentation/LegacyGamePresentationRuntime.js';
+import { usePageDirection } from '../../i18n/direction.js';
 import { presentationText } from '../../presentation/presentation-message.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from '../../ui/overlay-surface.js';
@@ -289,6 +290,7 @@ export const ActivityLauncher = ({
   readonly solo: boolean;
 }) => {
   const { t, i18n } = useLingui();
+  const direction = usePageDirection();
   const feed = useSyncExternalStore(
     presentation.activityFeed.subscribe,
     presentation.activityFeed.getSnapshot
@@ -343,6 +345,9 @@ export const ActivityLauncher = ({
             <li
               key={item.id}
               className={`ptcgsim-activity-ticker__line ${legacyActivityClassName(item, perspective)}`}
+              // Read in the page's direction, though the rail it rises from
+              // is the table's and stays left to right.
+              dir={direction}
             >
               <span>{presentationText(item.message, i18n)}</span>
             </li>

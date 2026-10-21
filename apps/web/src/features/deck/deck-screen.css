@@ -64,7 +64,8 @@
   min-width: 0;
   max-width: 320px;
   min-height: 40px;
-  padding: 0 var(--space-3) 0 var(--space-1-5);
+  padding-block: 0;
+  padding-inline: var(--space-1-5) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface-1);
@@ -404,7 +405,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -502,7 +503,7 @@ div.deck-tile__choose {
 .deck-tile__seat {
   position: absolute;
   top: -8px;
-  left: var(--space-3);
+  inset-inline-start: var(--space-3);
   padding: 1px 7px;
   border-radius: var(--radius-pill);
   background: var(--color-you);
@@ -512,8 +513,8 @@ div.deck-tile__choose {
 }
 
 .deck-tile__seat[data-seat='opponent'] {
-  left: auto;
-  right: var(--space-3);
+  inset-inline-start: auto;
+  inset-inline-end: var(--space-3);
   background: var(--color-opponent);
 }
 
@@ -602,7 +603,7 @@ div.deck-tile__choose {
   display: flex;
   align-items: center;
   gap: var(--space-1-5);
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .deck-editor__tools .ds-button {
@@ -641,7 +642,7 @@ div.deck-tile__choose {
 }
 
 .deck-editor__pane--deck {
-  border-left: 1px solid var(--color-border);
+  border-inline-start: 1px solid var(--color-border);
   background: color-mix(
     in oklab,
     var(--color-surface-1) 55%,
@@ -682,7 +683,7 @@ div.deck-tile__choose {
 
 .card-search__field > svg {
   position: absolute;
-  left: 12px;
+  inset-inline-start: 12px;
   color: var(--color-text-faint);
   pointer-events: none;
 }
@@ -690,7 +691,7 @@ div.deck-tile__choose {
 .card-search__input {
   width: 100%;
   min-height: 40px;
-  padding-left: 36px;
+  padding-inline-start: 36px;
   font-size: var(--text-md);
 }
 
@@ -711,7 +712,7 @@ div.deck-tile__choose {
 .card-search__badge {
   position: absolute;
   top: -4px;
-  right: -4px;
+  inset-inline-end: -4px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
@@ -941,7 +942,7 @@ div.deck-tile__choose {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  margin-left: auto;
+  margin-inline-start: auto;
   cursor: pointer;
 }
 
@@ -983,7 +984,7 @@ div.deck-tile__choose {
   background: transparent;
   color: inherit;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -1036,7 +1037,7 @@ div.deck-tile__choose {
 .card-result__count {
   position: absolute;
   top: 6px;
-  right: 6px;
+  inset-inline-end: 6px;
   min-width: 24px;
   height: 24px;
   padding: 0 6px;
@@ -1053,7 +1054,7 @@ div.deck-tile__choose {
 
 .card-result__add {
   position: absolute;
-  right: 6px;
+  inset-inline-end: 6px;
   bottom: 6px;
   display: grid;
   place-items: center;
@@ -1298,7 +1299,7 @@ div.deck-tile__choose {
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-xs);
-  text-align: left;
+  text-align: start;
 }
 
 button.deck-check__issue {
@@ -1364,7 +1365,7 @@ button.deck-check__issue {
 
 .deck-missing .ds-button {
   min-height: 28px;
-  margin-left: auto;
+  margin-inline-start: auto;
   gap: var(--space-1);
 }
 
@@ -1437,6 +1438,10 @@ button.deck-check__issue {
   box-shadow: inset 2px 0 0 var(--color-danger);
 }
 
+.deck-row[data-flagged='true']:dir(rtl) {
+  box-shadow: inset -2px 0 0 var(--color-danger);
+}
+
 .deck-row[data-highlighted='true'],
 .deck-tile-card[data-highlighted='true'] {
   background: color-mix(in oklab, var(--color-danger) 16%, transparent);
@@ -1453,7 +1458,7 @@ button.deck-check__issue {
   background: none;
   color: inherit;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -1493,6 +1498,20 @@ button.deck-check__issue {
   font-weight: var(--weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Right to left, a name (most are English) still runs its own way, so a
+   long one is cut at its own end, but it lines up with the page's text. */
+:root[dir='rtl']
+  :is(
+    .deck-screen__seat-name,
+    .deck-tile__name,
+    .card-result__name,
+    .card-result__set,
+    .deck-row__name
+  ) {
+  unicode-bidi: plaintext;
+  text-align: right;
 }
 
 .deck-row__cover {
@@ -1580,7 +1599,7 @@ button.deck-check__issue {
 .deck-row__badge {
   position: absolute;
   top: 4px;
-  left: 4px;
+  inset-inline-start: 4px;
   min-width: 22px;
   height: 22px;
   padding: 0 5px;
@@ -1784,7 +1803,7 @@ button.deck-check__issue {
 }
 
 .deck-card-details__damage {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: var(--weight-bold);
@@ -2004,7 +2023,7 @@ button.deck-check__issue {
   }
 
   .deck-screen__bar-actions {
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   /* Back, name and tools on one row; the format under them. */
@@ -2034,7 +2053,7 @@ button.deck-check__issue {
     grid-row: 1;
     grid-column: 3;
     gap: 2px;
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 
   .deck-editor__format {
@@ -2057,7 +2076,7 @@ button.deck-check__issue {
   }
 
   .card-search__sort {
-    margin-right: auto;
+    margin-inline-end: auto;
   }
 
   .deck-chip--energy {
@@ -2103,7 +2122,7 @@ button.deck-check__issue {
   }
 
   .deck-editor__pane--deck {
-    border-left: 0;
+    border-inline-start: 0;
   }
 
   .card-search__grid {
@@ -2115,7 +2134,7 @@ button.deck-check__issue {
   }
 
   .card-search__legal {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 
   .deck-rows {

@@ -292,6 +292,17 @@
   color-scheme: dark;
 }
 
+/* Inter and Jost have no Arabic letters: name faces drawn for them before
+   the system's own fallback, which can be a calligraphic one. */
+:root:lang(ar) {
+  --font-ui:
+    'Inter Variable', 'Inter', 'Segoe UI', 'Geeza Pro', 'Noto Sans Arabic',
+    Tahoma, ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Jost Variable', 'Jost', 'Segoe UI', 'Geeza Pro', 'Noto Sans Arabic',
+    Tahoma, ui-sans-serif, sans-serif;
+}
+
 /* ---- Night table (default) ---------------------------------------- */
 /* The table under a warm lamp; the page's panels are warm paper-dark, the
    ink cream. One blue for the player's own actions; seats in blue and red.

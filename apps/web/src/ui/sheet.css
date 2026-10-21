@@ -46,6 +46,13 @@
   padding: var(--space-3);
 }
 
+/* A side sheet keeps to the right in every language, where the log docks
+   beside the table (the table does not mirror, ADR-034); it slides and
+   swipes that way too. Its content reads the page's way. */
+:root[dir='rtl'] .ptcgsim-sheet-viewport[data-variant='side'] {
+  justify-content: flex-start;
+}
+
 .ptcgsim-sheet-viewport[data-variant='bottom'] {
   align-items: flex-end;
   justify-content: center;
@@ -208,7 +215,8 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  margin: -4px -6px 0 0;
+  margin-block: -4px 0;
+  margin-inline: 0 -6px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-pill);

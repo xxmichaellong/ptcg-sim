@@ -22,7 +22,13 @@ export interface TooltipProps {
    * button, or a component that forwards them).
    */
   readonly children: ReactElement;
-  readonly side?: 'top' | 'bottom' | 'left' | 'right';
+  /**
+   * Where it opens. `left` and `right` are the screen's (for the table's
+   * controls); `inline-start` and `inline-end` follow the language's
+   * direction (for the page's).
+   */
+  readonly side?:
+    'top' | 'bottom' | 'left' | 'right' | 'inline-start' | 'inline-end';
   /** Hover delay in milliseconds. Defaults to the provider's (100 ms). */
   readonly delay?: number;
   readonly disabled?: boolean;

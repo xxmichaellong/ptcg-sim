@@ -100,6 +100,7 @@ import type {
 } from '../resolveLegacyBoardShortcutAction.js';
 import { shortcutHint } from '../shortcutCatalogue.js';
 import type { HotkeyActionId } from '../../hotkeys/hotkey-catalogue.js';
+import { usePageDirection } from '../../i18n/direction.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import type { Keymap } from '../../hotkeys/keymap.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
@@ -712,12 +713,15 @@ const ContextSubmenu = <Value extends string>({
   readonly onSelect: (value: Value) => void;
 }) => {
   const { i18n } = useLingui();
+  // It opens the way the page's language reads, and the arrow key pointing
+  // that way opens it.
+  const rtl = usePageDirection() === 'rtl';
   const trigger = useRef<HTMLButtonElement>(null);
   const submenu = useRef<HTMLUListElement>(null);
-  const [placement, setPlacement] = useState<SubmenuPlacement>({
-    side: 'right',
+  const [placement, setPlacement] = useState<SubmenuPlacement>(() => ({
+    side: rtl ? 'left' : 'right',
     shiftY: 0,
-  });
+  }));
   // A submenu opens on the side with room for it, and moves up rather than
   // running off the bottom of the board.
   useLayoutEffect(() => {
@@ -736,7 +740,13 @@ const ContextSubmenu = <Value extends string>({
     const gap = SUBMENU_GAP_PX * scale;
     const fitsRight = rowRect.right + gap + listRect.width <= rootRect.right;
     const fitsLeft = rowRect.left - gap - listRect.width >= rootRect.left;
-    const side = fitsRight || !fitsLeft ? 'right' : 'left';
+    const side = rtl
+      ? fitsLeft || !fitsRight
+        ? 'left'
+        : 'right'
+      : fitsRight || !fitsLeft
+        ? 'right'
+        : 'left';
     const bottom =
       rowRect.top + SUBMENU_TOP_OFFSET_PX * scale + listRect.height;
     const overflow = bottom - (rootRect.bottom - 8 * scale);
@@ -749,7 +759,7 @@ const ContextSubmenu = <Value extends string>({
         ? current
         : { side, shiftY }
     );
-  }, [open]);
+  }, [open, rtl]);
   return (
     <li
       className={`has-submenu${entry.boundary ? ' is-boundary' : ''}${placement.side === 'left' ? ' opens-left' : ''}`}
@@ -782,7 +792,7 @@ const ContextSubmenu = <Value extends string>({
         data-context-action={entry.action}
         onClick={() => onOpenChange(true)}
         onKeyDown={(event) => {
-          if (event.key !== 'ArrowRight') return;
+          if (event.key !== (rtl ? 'ArrowLeft' : 'ArrowRight')) return;
           event.preventDefault();
           event.stopPropagation();
           onOpenChange(true);
@@ -811,7 +821,10 @@ const ContextSubmenu = <Value extends string>({
             : { top: SUBMENU_TOP_OFFSET_PX + placement.shiftY }
         }
         onKeyDown={(event) => {
-          if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+          if (
+            event.key === 'Escape' ||
+            event.key === (rtl ? 'ArrowRight' : 'ArrowLeft')
+          ) {
             event.preventDefault();
             event.stopPropagation();
             onOpenChange(false);
@@ -951,6 +964,7 @@ const ContextMenu = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const { t, i18n } = useLingui();
+  const direction = usePageDirection();
   const container = useRef<HTMLDivElement>(null);
   const keymap = useKeymap();
   const [openSubmenu, setOpenSubmenu] = useState<
@@ -1057,6 +1071,7 @@ const ContextMenu = ({
       className={`ptcgsim-legacy-card-context-menu${darkMode ? ' is-dark' : ''}`}
       data-legacy-card-context-menu="true"
       data-context-card-id={card.id}
+      dir={direction}
       role="menu"
       aria-label={t`Actions for ${cardName}`}
       tabIndex={-1}
@@ -1475,6 +1490,7 @@ const Preview = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const { t } = useLingui();
+  const direction = usePageDirection();
   const container = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLSpanElement>(null);
   const tiltTarget = useRef<HTMLSpanElement>(null);
@@ -1628,7 +1644,7 @@ const Preview = ({
             );
           })}
         </div>
-        <p className="ptcgsim-composition-caption">
+        <p className="ptcgsim-composition-caption" dir={direction}>
           {composition.kind === 'joined'
             ? t({
                 message: `${shownPieces} of ${plural(totalPieces, {
@@ -1920,6 +1936,7 @@ const ZoneBrowser = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const { t, i18n } = useLingui();
+  const direction = usePageDirection();
   const container = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
@@ -2079,7 +2096,10 @@ const ZoneBrowser = ({
           }
         }}
       >
-        <header className="ptcgsim-overlay-header ptcgsim-legacy-zone-toolbar">
+        <header
+          className="ptcgsim-overlay-header ptcgsim-legacy-zone-toolbar"
+          dir={direction}
+        >
           <div className="ptcgsim-overlay-heading">
             <h2 className="ptcgsim-overlay-title">{title}</h2>
             <span className="ptcgsim-overlay-count">
@@ -2376,6 +2396,7 @@ const WorkAreaPanel = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const { t, i18n } = useLingui();
+  const direction = usePageDirection();
   const container = useRef<HTMLElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [showingBoard, setShowingBoard] = useState(false);
@@ -2436,7 +2457,7 @@ const WorkAreaPanel = ({
       aria-label={heading}
       style={panelStyle(layout, '--ptcgsim-work-card-height')}
     >
-      <header className="ptcgsim-overlay-header">
+      <header className="ptcgsim-overlay-header" dir={direction}>
         <div className="ptcgsim-overlay-heading">
           <h2 className="ptcgsim-overlay-title ptcgsim-legacy-work-area-header">
             {heading}

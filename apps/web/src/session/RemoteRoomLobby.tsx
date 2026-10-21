@@ -1183,7 +1183,11 @@ export const RemoteRoomLobby = ({
                   className="ds-spin"
                 />
               ) : (
-                <SignInIcon {...decorative} weight="bold" />
+                <SignInIcon
+                  {...decorative}
+                  weight="bold"
+                  className="ds-mirror-rtl"
+                />
               )}
               {operation === 'join' ? t`Joining…` : t`Join Room`}
             </button>

@@ -1,3 +1,4 @@
+import { DirectionProvider } from '@base-ui/react/direction-provider';
 import { Toast } from '@base-ui/react/toast';
 import {
   useEffect,
@@ -6,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { usePageDirection } from '../i18n/direction.js';
 import { DialogHost } from './DialogHost.js';
 import {
   activeOverlayHost,
@@ -66,10 +68,15 @@ export const OverlayHost = ({ container, children }: OverlayHostProps) => {
     () => activeOverlayHost() === token,
     () => false
   );
+  // Base UI's menus, popups and sliders read the page's direction from
+  // here: a submenu opens on the side the language reads towards.
+  const direction = usePageDirection();
   return (
-    <TooltipProvider>
-      {children}
-      {active ? <ActiveOverlays container={container} /> : null}
-    </TooltipProvider>
+    <DirectionProvider direction={direction}>
+      <TooltipProvider>
+        {children}
+        {active ? <ActiveOverlays container={container} /> : null}
+      </TooltipProvider>
+    </DirectionProvider>
   );
 };

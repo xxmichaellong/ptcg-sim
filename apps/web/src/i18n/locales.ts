@@ -38,6 +38,16 @@ const SUPPORTED: ReadonlySet<string> = new Set(
 export const isLocale = (value: unknown): value is Locale =>
   typeof value === 'string' && SUPPORTED.has(value);
 
+/** The languages written right to left. */
+const RIGHT_TO_LEFT: ReadonlySet<string> = new Set<Locale>(['ar']);
+
+/**
+ * Which way a language is written. The page's chrome follows it; the table
+ * never does (ADR-034).
+ */
+export const textDirection = (locale: string): 'ltr' | 'rtl' =>
+  RIGHT_TO_LEFT.has(locale) ? 'rtl' : 'ltr';
+
 /** Tags whose language subtag is not the one the app uses for them. */
 const ALIASES: Readonly<Record<string, Locale>> = {
   tl: 'fil',

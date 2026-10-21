@@ -1,5 +1,7 @@
 import { i18n as pageI18n, type I18n } from '@lingui/core';
 
+import { textDirection } from '../i18n/locales.js';
+
 /**
  * A line the table says (a Log line, an announcement), kept as a Lingui
  * message and its values rather than as finished text, so it is worded in
@@ -17,6 +19,13 @@ export interface PresentationMessage {
 
 export type PresentationValue = string | number | PresentationMessage;
 
+/**
+ * A name set apart from the sentence around it (Unicode's first-strong
+ * isolate), so a Latin name in Arabic keeps its own order and does not
+ * pull the words or punctuation beside it round.
+ */
+const isolated = (value: string): string => `\u2068${value}\u2069`;
+
 /** The message in the page's language (or `i18n`'s). */
 export const presentationText = (
   message: PresentationMessage,
@@ -24,10 +33,15 @@ export const presentationText = (
 ): string => {
   const { values } = message;
   if (!values) return i18n._(message);
+  const rightToLeft = textDirection(i18n.locale) === 'rtl';
   const worded: Record<string, string | number> = {};
   for (const [name, value] of Object.entries(values)) {
     worded[name] =
-      typeof value === 'object' ? presentationText(value, i18n) : value;
+      typeof value === 'object'
+        ? presentationText(value, i18n)
+        : rightToLeft && typeof value === 'string'
+          ? isolated(value)
+          : value;
   }
   return i18n._({ ...message, values: worded });
 };

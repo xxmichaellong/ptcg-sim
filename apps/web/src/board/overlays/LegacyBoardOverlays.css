@@ -214,7 +214,8 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2) var(--space-3);
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -222,7 +223,7 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--text-md);
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
   transition: background-color var(--duration-instant, 90ms) ease;
 }
@@ -280,7 +281,10 @@
    the alternative text keeps it out of the item's accessible name. */
 .ptcgsim-menu-item[data-menu-hint]::after {
   flex: none;
-  padding-left: var(--space-4);
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
+  padding-inline-start: var(--space-4);
   color: var(--color-text-faint);
   content: attr(data-menu-hint);
   content: attr(data-menu-hint) / '';
@@ -303,8 +307,13 @@
   flex: none;
   width: 14px;
   height: 14px;
-  margin-left: var(--space-3);
+  margin-inline-start: var(--space-3);
   color: var(--color-text-faint);
+}
+
+/* It points the way the submenu opens, which is the way the language reads. */
+.ptcgsim-menu-chevron:dir(rtl) {
+  scale: -1 1;
 }
 
 /* ---- Submenus: slide in from their side ------------------------------- */

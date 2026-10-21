@@ -31,7 +31,7 @@
 .table-welcome__dismiss {
   position: absolute;
   top: var(--space-2);
-  right: var(--space-2);
+  inset-inline-end: var(--space-2);
 }
 
 .table-welcome__hero {

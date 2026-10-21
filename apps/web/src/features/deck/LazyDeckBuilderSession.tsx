@@ -25,7 +25,11 @@ const Loading = ({ onClose }: { readonly onClose: () => void }) => (
       className="ds-button ds-button--ghost"
       onClick={onClose}
     >
-      <ArrowLeftIcon aria-hidden="true" weight="bold" />
+      <ArrowLeftIcon
+        aria-hidden="true"
+        weight="bold"
+        className="ds-mirror-rtl"
+      />
       <Trans context="go back to the table">Table</Trans>
     </button>
     <p>

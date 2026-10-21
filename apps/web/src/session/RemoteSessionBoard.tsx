@@ -1151,7 +1151,15 @@ export const RemoteSessionBoard = ({
   }, [boardState?.scene]);
 
   return (
-    <div className="board-spike-host" data-geometry={layout?.geometryVersion}>
+    // The table is laid out in the world, not in the page's language: it
+    // stays left to right in Arabic too (ADR-034). What it raises to be
+    // read -- menus, prompts, the headings of its panels -- sets the
+    // page's direction again.
+    <div
+      className="board-spike-host"
+      data-geometry={layout?.geometryVersion}
+      dir="ltr"
+    >
       <div className="renderer-surface-host" ref={hostRef} />
       {showBoardComposition && boardState?.scene ? (
         <>

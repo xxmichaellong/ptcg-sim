@@ -6,7 +6,12 @@ import {
   type PreferenceStore,
 } from '../preferences/preference-store.js';
 import { LANGUAGE_PREFERENCES } from './language-preference.js';
-import { browserLocale, SOURCE_LOCALE, type Locale } from './locales.js';
+import {
+  browserLocale,
+  SOURCE_LOCALE,
+  textDirection,
+  type Locale,
+} from './locales.js';
 
 /**
  * The page's language (ADR-034). English is compiled into the page and
@@ -78,6 +83,7 @@ export const activateLocale = async (locale: Locale): Promise<void> => {
     if (i18n.locale !== locale || i18n.messages !== messages)
       i18n.loadAndActivate({ locale, messages });
     document.documentElement.lang = locale;
+    document.documentElement.dir = textDirection(locale);
   } catch (error) {
     console.error(`The ${locale} catalog did not load`, error);
   }

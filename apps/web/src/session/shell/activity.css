@@ -96,7 +96,7 @@
   color: var(--color-text);
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
-  text-align: left;
+  text-align: start;
   animation: ptcgsim-activity-row-in
     calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
 }
@@ -117,16 +117,16 @@
   width: 100%;
   margin-top: 1px;
   padding: 3px var(--space-2);
-  border-left: 2px solid transparent;
+  border-inline-start: 2px solid transparent;
   border-radius: 0;
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .self-text {
-  border-left-color: var(--color-you);
+  border-inline-start-color: var(--color-you);
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .opp-text {
-  border-left-color: var(--color-opponent);
+  border-inline-start-color: var(--color-opponent);
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .announcement {
@@ -142,7 +142,7 @@
   gap: var(--space-2);
   margin: var(--space-3) 0 var(--space-1);
   padding: 0;
-  border-left: 0;
+  border-inline-start: 0;
   color: var(--color-text-faint);
   font-size: var(--text-xs);
   font-weight: 600;
@@ -169,7 +169,7 @@
 /* The same line said again and again: how many times. */
 .legacy-activity-repeat {
   display: inline-block;
-  margin-left: var(--space-1-5);
+  margin-inline-start: var(--space-1-5);
   padding: 0 6px;
   border-radius: var(--radius-pill);
   background: var(--color-surface-3);
@@ -192,19 +192,19 @@
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .self-message {
-  margin-left: auto;
-  border-bottom-right-radius: var(--radius-xs);
+  margin-inline-start: auto;
+  border-end-end-radius: var(--radius-xs);
   background: var(--color-accent-fill);
   color: var(--color-text-on-accent);
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .opp-message {
-  border-bottom-left-radius: var(--radius-xs);
+  border-end-start-radius: var(--radius-xs);
   background: var(--color-surface-3);
 }
 
 .ptcgsim-activity-content .legacy-activity-feed > .spectator-message {
-  border-bottom-left-radius: var(--radius-xs);
+  border-end-start-radius: var(--radius-xs);
   background: color-mix(
     in oklab,
     var(--color-gold) 22%,
@@ -305,7 +305,8 @@
   gap: var(--space-2);
   box-sizing: border-box;
   max-width: 100%;
-  padding: 5px var(--space-3) 5px var(--space-2-5, 10px);
+  padding-block: 5px;
+  padding-inline: var(--space-2-5, 10px) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
