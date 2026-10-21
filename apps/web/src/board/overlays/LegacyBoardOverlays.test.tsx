@@ -2278,184 +2278,67 @@ describe('legacy board overlays', () => {
     expect(document.activeElement).toBe(opener);
   });
 
-  it('anchors a bounded temporary damage editor without mutating scene markers', async () => {
+  it("opens a Pokémon's damage controls where its first counter will lie, the number taking the keys", async () => {
     const callbacks = actions();
     const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
     const cardId = active.evolutionCards.at(-1)!.id;
-    const marker = scene.markers.find(
-      (candidate) =>
-        candidate.parentCardId === cardId && candidate.kind === 'damage'
-    )!;
-    const markerSnapshot = JSON.stringify(scene.markers);
+    // A Pokémon with no damage yet: no counter to open them from.
+    const undamaged = {
+      ...scene,
+      markers: scene.markers.filter(
+        (marker) =>
+          !(marker.parentCardId === cardId && marker.kind === 'damage')
+      ),
+    };
+    const markerSnapshot = JSON.stringify(undamaged.markers);
     await act(async () => {
       root.render(
         createElement(LegacyBoardOverlays, {
           state: state({
+            scene: undamaged,
             overlays: {
               contextMenuCardId: null,
               preview: null,
-              input: { kind: 'damage', cardId, initialValue: '120' },
+              input: null,
+              marker: { cardId, kind: 'damage', takesFocus: true },
             },
           }),
           darkMode: false,
           actions: callbacks,
         })
       );
+      await new Promise((resolve) => requestAnimationFrame(resolve));
     });
-
-    const editor = host.querySelector<HTMLDivElement>(
-      '[data-legacy-marker-editor="damage"]'
+    const panel = host.querySelector<HTMLElement>(
+      '.ptcgsim-marker-controls[data-marker-controls="damage"]'
     )!;
-    expect(editor.textContent).toBe('120');
-    expect(editor.getAttribute('role')).toBe('textbox');
-    expect(editor.getAttribute('aria-label')).toBe('Damage counter');
-    const hint = () =>
-      host.querySelector<HTMLElement>('.ptcgsim-marker-editor-hint');
-    // Nothing to say until a value is refused: Enter and Esc are a given.
-    expect(hint()).toBeNull();
-    // The ring is the stylesheet's: the field's own box stays the counter's.
-    expect(editor.style.outline).toBe('');
-    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
-      marker.bounds.x,
-      5
-    );
-    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
-    expect(Number.parseFloat(editor.style.width)).toBeCloseTo(
-      marker.bounds.width,
-      5
-    );
-    expect(Number.parseFloat(editor.style.height)).toBeCloseTo(
-      marker.bounds.height,
-      5
-    );
-
+    expect(panel.getAttribute('aria-label')).toBe('0 damage');
+    const field = panel.querySelector<HTMLInputElement>('input')!;
+    expect(field.value).toBe('');
+    expect(field.placeholder).toBe('0');
+    expect(document.activeElement).toBe(field);
     await act(async () => {
-      editor.focus();
-      editor.blur();
-    });
-    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
-    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
-    vi.mocked(callbacks.dismiss).mockClear();
-
-    await act(async () => {
-      editor.focus();
-      editor.textContent = '70.5';
-      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-      editor.blur();
-    });
-    expect(editor.getAttribute('aria-invalid')).toBe('true');
-    expect(document.activeElement).toBe(editor);
-    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
-    expect(hint()?.textContent).toBe('A whole number, up to 9990');
-    expect(hint()?.classList).toContain('is-invalid');
-
-    await act(async () => {
-      editor.textContent = '70';
-      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-      editor.blur();
-    });
-    expect(callbacks.submitDamageInput).toHaveBeenCalledExactlyOnceWith(
-      cardId,
-      '70'
-    );
-    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
-    expect(JSON.stringify(scene.markers)).toBe(markerSnapshot);
-
-    vi.mocked(callbacks.submitDamageInput).mockClear();
-    await act(async () => {
-      editor.dispatchEvent(
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(field, '120');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(
         new KeyboardEvent('keydown', {
-          key: 'Escape',
+          key: 'Enter',
           bubbles: true,
           cancelable: true,
         })
       );
     });
-    expect(callbacks.dismiss).toHaveBeenCalledWith('input');
-    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
-  });
-
-  it('anchors the active condition editor and previews the draft chip palette', async () => {
-    const callbacks = actions();
-    const legacyScene = createBoardSceneForViewport(view, {
-      geometryVersion: 1,
-      viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
-      bottomPlayerId: firstPlayer,
-      splitRatio: 0.5,
-    });
-    const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
-    const cardId = active.evolutionCards.at(-1)!.id;
-    const marker = legacyScene.markers.find(
-      (candidate) =>
-        candidate.parentCardId === cardId &&
-        candidate.kind === 'specialCondition'
-    )!;
-    const markerSnapshot = JSON.stringify(legacyScene.markers);
-    await act(async () => {
-      root.render(
-        createElement(LegacyBoardOverlays, {
-          state: state({
-            scene: legacyScene,
-            overlays: {
-              contextMenuCardId: null,
-              preview: null,
-              input: {
-                kind: 'specialCondition',
-                cardId,
-                initialValue: 'Poisoned',
-              },
-            },
-          }),
-          darkMode: false,
-          actions: callbacks,
-        })
-      );
-    });
-
-    const editor = host.querySelector<HTMLDivElement>(
-      '[data-legacy-marker-editor="specialCondition"]'
-    )!;
-    expect(editor.textContent).toBe('Poisoned');
-    expect(editor.getAttribute('aria-label')).toBe('Special condition');
-    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
-      marker.bounds.x,
-      5
+    expect(callbacks.submitDamageInput).toHaveBeenCalledExactlyOnceWith(
+      cardId,
+      '120'
     );
-    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
-    // The draft previews its chip's colours: "Poisoned" is the pink
-    // Poison chip.
-    expect(editor.style.background).toBe('rgb(212, 128, 177)');
-    expect(editor.style.color).toBe('rgb(23, 18, 10)');
-
-    await act(async () => {
-      editor.focus();
-      editor.textContent = 'Pa';
-      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-    });
-    // v1's "PA" is the Paralyzed chip: an amber jolt on yellow.
-    expect(editor.style.background).toBe('rgb(250, 238, 66)');
-    expect(editor.style.color).toBe('rgb(150, 92, 0)');
-
-    await act(async () => {
-      editor.textContent = 'condition text too long';
-      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-      editor.blur();
-    });
-    expect(editor.getAttribute('aria-invalid')).toBe('true');
-    expect(document.activeElement).toBe(editor);
-    expect(callbacks.submitSpecialConditionInput).not.toHaveBeenCalled();
-
-    await act(async () => {
-      editor.textContent = ' B ';
-      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-      editor.blur();
-    });
-    expect(
-      callbacks.submitSpecialConditionInput
-    ).toHaveBeenCalledExactlyOnceWith(cardId, ' B ');
-    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
-    expect(JSON.stringify(legacyScene.markers)).toBe(markerSnapshot);
+    expect(callbacks.dismiss).toHaveBeenCalledWith('marker');
+    expect(JSON.stringify(undamaged.markers)).toBe(markerSnapshot);
   });
+
   it('paints the source work-area popup with its cards and bulk buttons', async () => {
     // Move two of the fixture's hand cards into a "Looking at cards..."
     // inspection; the scene lays them out where v1's popup images sit and

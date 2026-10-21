@@ -98,7 +98,6 @@ export interface ReactDomProtectedInputEvidence {
   readonly mulliganDeclarations: number;
   readonly deckViewDeclarations: number;
   readonly boardFlips: number;
-  readonly sceneRefreshes: number;
   readonly presentationDismissals: number;
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
@@ -316,7 +315,6 @@ export const mountReactDomProtectedInputHarness = async (
   let mulliganDeclarations = 0;
   let deckViewDeclarations = 0;
   let boardFlips = 0;
-  let sceneRefreshes = 0;
   let presentationDismissals = 0;
   const reportedErrors: string[] = [];
   let clientSequence = 0;
@@ -720,10 +718,6 @@ export const mountReactDomProtectedInputHarness = async (
                   presentationDismissals += 1;
                   runtime.dismissLocalPresentation();
                 },
-                onRefreshScene: () => {
-                  sceneRefreshes += 1;
-                  runtime.refreshScene();
-                },
               }),
               createElement(ShortcutsDialogHost)
             )
@@ -756,7 +750,6 @@ export const mountReactDomProtectedInputHarness = async (
         mulliganDeclarations,
         deckViewDeclarations,
         boardFlips,
-        sceneRefreshes,
         presentationDismissals,
         presentation: current.presentation,
         overlays: current.overlays,
@@ -782,7 +775,6 @@ export const mountReactDomProtectedInputHarness = async (
       mulliganDeclarations = 0;
       deckViewDeclarations = 0;
       boardFlips = 0;
-      sceneRefreshes = 0;
       presentationDismissals = 0;
       reportedErrors.length = 0;
     },

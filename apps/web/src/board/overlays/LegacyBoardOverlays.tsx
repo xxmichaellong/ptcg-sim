@@ -3,19 +3,14 @@ import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
 import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
 import {
-  isLegacyMarkerPresentation,
   composeCardArtwork,
   fitCardComposition,
-  layoutLegacyActiveQ0Markers,
-  legacyMarkerAppearance,
-  legacyMarkerCssColor,
   resolveBoardDropTarget,
   type BoardDepthProjection,
   type BoardPresentation,
   type BoardScene,
   type BoardScenePlayerFrame,
   type CardSceneNode,
-  type MarkerSceneNode,
   type Rect,
   type ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
@@ -85,8 +80,6 @@ import {
   LEGACY_BOARD_CATEGORY_CHOICES,
   LEGACY_BOARD_MOVE_CHOICES,
   LEGACY_BOARD_WORK_AREA_ACTIONS,
-  parseLegacyDamageInput,
-  parseLegacySpecialConditionInput,
   type LegacyBoardWorkAreaActionId,
   type LegacyBoardWorkAreaSource,
 } from '../resolveLegacyBoardOverlayAction.js';
@@ -2568,243 +2561,6 @@ const WorkAreaPanel = ({
   );
 };
 
-const markerEditorMarker = (
-  state: BoardSessionControllerState
-): MarkerSceneNode | null => {
-  const input = state.overlays.input;
-  const scene = state.scene;
-  const view = state.view;
-  if (
-    !input ||
-    input.kind === 'count' ||
-    input.kind === 'shortcutCount' ||
-    !scene ||
-    !view
-  ) {
-    return null;
-  }
-  const selected = scene.cards.find((card) => card.id === input.cardId);
-  const stack = selected ? view.stacks[selected.parentId] : undefined;
-  const topCardId = stack?.evolutionCards.at(-1)?.id;
-  const topCard = topCardId
-    ? scene.cards.find((card) => card.id === topCardId)
-    : undefined;
-  if (!stack || !topCard || topCard.side === 'shared') return null;
-  const existing = scene.markers.find(
-    (marker) => marker.parentCardId === topCard.id && marker.kind === input.kind
-  );
-  if (existing) return existing;
-  // A counter being created sits exactly where the scene will paint it: v1
-  // measures every counter from the host image's painted (rotated) box.
-  const presentation =
-    stack.slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0';
-  const painted =
-    topCard.rotationQuarterTurns % 2 === 0
-      ? topCard.bounds
-      : {
-          x:
-            topCard.bounds.x +
-            topCard.bounds.width / 2 -
-            topCard.bounds.height / 2,
-          y:
-            topCard.bounds.y +
-            topCard.bounds.height / 2 -
-            topCard.bounds.width / 2,
-          width: topCard.bounds.height,
-          height: topCard.bounds.width,
-        };
-  const item = layoutLegacyActiveQ0Markers(painted, topCard.side)[input.kind];
-  return {
-    id: `${topCard.id}:${input.kind}-editor`,
-    parentCardId: topCard.id,
-    side: topCard.side,
-    kind: input.kind,
-    presentation,
-    value: input.initialValue,
-    bounds: item.bounds,
-    zIndex: topCard.zIndex + item.sourceZIndex,
-    label: `${input.kind}: ${input.initialValue}`,
-  };
-};
-
-/** Half the widest marker hint, to keep it on the board near an edge. */
-const MARKER_HINT_HALF_WIDTH_PX = 96;
-
-const MarkerEditor = ({
-  state,
-  depth,
-  actions,
-}: {
-  readonly state: BoardSessionControllerState;
-  readonly depth?: BoardDepthProjection;
-  readonly actions: LegacyBoardOverlayActions;
-}) => {
-  const { t } = useLingui();
-  const input = state.overlays.input;
-  const logicalMarker = markerEditorMarker(state);
-  const marker =
-    logicalMarker && depth ? depth.marker(logicalMarker) : logicalMarker;
-  const editor = useRef<HTMLDivElement>(null);
-  const cancelled = useRef(false);
-  const [invalid, setInvalid] = useState(false);
-  const [draft, setDraft] = useState(input?.initialValue ?? '');
-  const [edited, setEdited] = useState(false);
-  useLayoutEffect(() => {
-    if (
-      editor.current &&
-      input &&
-      input.kind !== 'count' &&
-      input.kind !== 'shortcutCount'
-    ) {
-      editor.current.textContent = input.initialValue;
-    }
-  }, [input]);
-  if (
-    !input ||
-    input.kind === 'count' ||
-    input.kind === 'shortcutCount' ||
-    !marker
-  ) {
-    return null;
-  }
-  const legacy = isLegacyMarkerPresentation(marker.presentation);
-  const markerWasPresent = state.scene?.markers.some(
-    (candidate) =>
-      candidate.parentCardId === marker.parentCardId &&
-      candidate.kind === input.kind
-  );
-  const appearance =
-    legacy ||
-    (input.kind === 'specialCondition' && (edited || !markerWasPresent))
-      ? legacyMarkerAppearance({ ...marker, value: draft })
-      : null;
-  const submit = (element: HTMLDivElement): void => {
-    if (cancelled.current) return;
-    const value = element.textContent ?? '';
-    if (value === input.initialValue) {
-      actions.dismiss('input');
-      return;
-    }
-    const parsed =
-      input.kind === 'damage'
-        ? parseLegacyDamageInput(value)
-        : parseLegacySpecialConditionInput(value);
-    if (parsed === undefined) {
-      setInvalid(true);
-      element.focus();
-      return;
-    }
-    if (input.kind === 'damage') {
-      actions.submitDamageInput(input.cardId, value);
-    } else {
-      actions.submitSpecialConditionInput(input.cardId, value);
-    }
-  };
-
-  const field = (
-    <div
-      ref={editor}
-      className="ptcgsim-legacy-marker-editor"
-      data-legacy-marker-editor={input.kind}
-      data-marker-card-id={input.cardId}
-      role="textbox"
-      aria-label={
-        input.kind === 'damage' ? t`Damage counter` : t`Special condition`
-      }
-      aria-invalid={invalid}
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck={false}
-      inputMode={input.kind === 'damage' ? 'numeric' : 'text'}
-      onInput={(event) => {
-        setDraft(event.currentTarget.textContent ?? '');
-        setEdited(true);
-        setInvalid(false);
-      }}
-      onBlur={(event) => submit(event.currentTarget)}
-      onKeyDown={(event) => {
-        event.stopPropagation();
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          event.currentTarget.blur();
-        } else if (event.key === 'Escape') {
-          event.preventDefault();
-          cancelled.current = true;
-          actions.dismiss('input');
-        }
-      }}
-      style={{
-        position: 'absolute',
-        // Over the other viewers, not at the marker's place on the table:
-        // its board z-index means nothing among them (tokens.css, Layers).
-        zIndex: 'var(--viewer-layer-editor)',
-        left: marker.bounds.x,
-        top: marker.bounds.y,
-        width: marker.bounds.width,
-        height: marker.bounds.height,
-        display: legacy ? 'block' : 'grid',
-        placeItems: legacy ? undefined : 'center',
-        overflow: 'hidden',
-        borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
-        background: appearance
-          ? legacyMarkerCssColor(appearance.fill)
-          : input.kind === 'damage'
-            ? '#e64242'
-            : '#efefef',
-        color: appearance
-          ? legacyMarkerCssColor(appearance.text)
-          : input.kind === 'damage'
-            ? '#fff'
-            : '#111',
-        fontSize:
-          appearance?.fontSizePx ?? Math.max(10, marker.bounds.height * 0.42),
-        // The same face as the counter it edits (`--font-display` is Jost).
-        fontFamily:
-          "var(--font-display, 'Jost Variable', 'Jost', 'Futura', sans-serif)",
-        fontWeight: 800,
-        fontVariantNumeric: 'tabular-nums',
-        // The counter's own shadow is drawn by the stylesheet, under the ring
-        // that says it is being edited.
-        lineHeight: legacy ? `${marker.bounds.width}px` : undefined,
-        textAlign: 'center',
-        pointerEvents: 'auto',
-      }}
-    />
-  );
-  // A counter being edited wears a ring (see the stylesheet); once a value
-  // has been refused, it says what it accepts.
-  const hint = invalid
-    ? input.kind === 'damage'
-      ? t`A whole number, up to 9990`
-      : t`At most 16 characters`
-    : undefined;
-  const board = state.scene?.viewport;
-  const hintCenter = marker.bounds.x + marker.bounds.width / 2;
-  return (
-    <>
-      {field}
-      {hint ? (
-        <span
-          className="ptcgsim-marker-editor-hint is-invalid"
-          aria-hidden="true"
-          style={{
-            left: board
-              ? Math.min(
-                  Math.max(hintCenter, MARKER_HINT_HALF_WIDTH_PX),
-                  board.width - MARKER_HINT_HALF_WIDTH_PX
-                )
-              : hintCenter,
-            top: marker.bounds.y + marker.bounds.height + 8,
-            zIndex: marker.zIndex,
-          }}
-        >
-          {hint}
-        </span>
-      ) : null}
-    </>
-  );
-};
-
 type LegacyBoardCountInput =
   LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
 
@@ -3035,13 +2791,6 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         <CountPrompt
           key={`${state.overlays.input.kind}:${state.overlays.input.action}:${state.overlays.input.zoneId}`}
           input={state.overlays.input}
-          actions={actions}
-        />
-      ) : state.overlays.input ? (
-        <MarkerEditor
-          {...(depth ? { depth } : {})}
-          key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
-          state={state}
           actions={actions}
         />
       ) : null}

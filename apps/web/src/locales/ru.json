@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Собрать / прикрепить к карте…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Не более 16 символов"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Прикрепить"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Неспешная"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Перезагрузить изображения карт"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Перезагрузить изображения"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Перезагрузка изображений карт"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

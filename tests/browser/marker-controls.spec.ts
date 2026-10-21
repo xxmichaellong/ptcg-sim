@@ -114,7 +114,7 @@ test('a damage counter names itself, and its controls step it by 10 or take it o
   await controls(page).getByRole('button', { name: '10 less damage' }).click();
   await controls(page).getByRole('button', { name: '10 less damage' }).click();
   await expect(damage(page)).toHaveAttribute('data-board-hint', '50 damage');
-  await expect(controls(page).locator('output')).toHaveText('50');
+  await expect(controls(page).locator('input')).toHaveValue('50');
   // The card under the counter was not selected by those presses.
   await expect(page.locator('.ptcgsim-card[aria-pressed="true"]')).toHaveCount(
     0
@@ -170,6 +170,53 @@ test("the card menu's Special condition hands the keyboard to the chips, and Esc
   await page.keyboard.press('Escape');
   await expect(chips).toHaveCount(0);
   await expect(card).toBeFocused();
+});
+
+test("the card menu's Damage opens the controls with the number to type, beside the steps by 10", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const cardId = await activeWithDamage(page);
+  const card = page.locator(`[data-card-id="${cardId}"]`);
+  await card.focus();
+  await card.press('Shift+F10');
+  await page.getByRole('menuitem', { name: /Damage counter/u }).press('Enter');
+  const number = controls(page).locator('input');
+  await expect(number).toBeFocused();
+  await expect(number).toHaveValue('60');
+  // Typed over at once (it is selected), as v1's editor was.
+  await page.keyboard.type('120');
+  await page.keyboard.press('Enter');
+  await expect(damage(page)).toHaveAttribute('data-board-hint', '120 damage');
+  await expect(controls(page)).toHaveCount(0);
+  await expect(card).toBeFocused();
+  await idle(page);
+
+  // Pressed open, typed into, then stepped: from what was typed.
+  const at = await centre(page);
+  await page.mouse.click(at.x, at.y);
+  await number.click();
+  await number.fill('30');
+  await controls(page).getByRole('button', { name: '10 more damage' }).click();
+  await expect(damage(page)).toHaveAttribute('data-board-hint', '40 damage');
+  // Stepped down to none, they stay open for the next step.
+  for (let step = 0; step < 4; step += 1)
+    await controls(page)
+      .getByRole('button', { name: '10 less damage' })
+      .click();
+  await expect(damage(page)).toHaveCount(0);
+  await expect(controls(page)).toBeVisible();
+  await expect(number).toHaveValue('');
+  await controls(page).getByRole('button', { name: '10 more damage' }).click();
+  await expect(damage(page)).toHaveAttribute('data-board-hint', '10 damage');
+  // A press elsewhere sets what was typed and puts them away.
+  await number.fill('90');
+  await page.mouse.click(700, 120);
+  await expect(controls(page)).toHaveCount(0);
+  await expect(damage(page)).toHaveAttribute('data-board-hint', '90 damage');
+  expect(errors).toEqual([]);
 });
 
 test.describe('on a touch screen', () => {

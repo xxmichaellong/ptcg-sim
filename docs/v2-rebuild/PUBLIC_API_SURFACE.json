@@ -1758,10 +1758,6 @@
               "kind": "value"
             },
             {
-              "name": "CARD_IMAGE_RETRY_EVENT",
-              "kind": "value"
-            },
-            {
               "name": "CardComposition",
               "kind": "type"
             },

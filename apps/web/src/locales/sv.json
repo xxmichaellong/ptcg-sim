@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Sätt ihop / fäst vid ett kort…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Högst 16 tecken"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Fäst"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Avslappnad"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Ladda om kortbilder"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Ladda om bilder"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Laddar om kortbilder"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

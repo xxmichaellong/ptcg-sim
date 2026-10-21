@@ -94,8 +94,8 @@ way back to the defaults.
    bottom cards) and Esc cannot be moved, and no shortcut may take them. Tab
    stays focus navigation. Shift+1 types `!`, which is free.
 4. **Clashes are per situation.** Two shortcuts may share a key only if they
-   never work at the same moment: R rotates a selected card and otherwise
-   refreshes images. Taking a key that is in use asks whether to swap keys,
+   never work at the same moment: V shows a selected card and otherwise
+   the deck. Taking a key that is in use asks whether to swap keys,
    take the key and leave the other shortcut unset, or cancel.
 5. **The dialog** opens from `?`, the keyboard button in the sidebar, the
    Settings panel or the welcome card. It opens on the keys for the current

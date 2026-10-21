@@ -9,7 +9,6 @@ import type {
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
-  CARD_IMAGE_RETRY_EVENT,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   tableVerticalLayout,
   type BoardIntent,
@@ -24,7 +23,6 @@ import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import {
-  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -183,8 +181,6 @@ export interface BoardRailModel {
 
 /** What a route's menu can ask of the table. */
 export interface BoardCommands {
-  /** Retry every card image that has not loaded. */
-  readonly refreshImages: () => void;
   readonly flipBoard: () => void;
   /** Whether turning the table around is allowed here. */
   readonly canFlipBoard: () => boolean;
@@ -869,11 +865,6 @@ export const RemoteSessionBoard = ({
     }),
     []
   );
-  // Card art retries by itself when it fails (the renderer's own retry);
-  // this asks every failed image to try again now.
-  const refreshImages = useCallback((): void => {
-    document.dispatchEvent(new Event(CARD_IMAGE_RETRY_EVENT));
-  }, []);
   const keyboardActions = useMemo(
     () => ({
       onRequest: (request: LegacyBoardShortcutActionRequest): void => {
@@ -881,9 +872,6 @@ export const RemoteSessionBoard = ({
       },
       onLocalIntent: (intent: BoardIntent): void => {
         runtimeRef.current?.emitBoardIntent(intent);
-      },
-      onRefreshScene: (): void => {
-        refreshImages();
       },
       onFlipBoard: (): void => {
         runtimeRef.current?.flipBoard();
@@ -903,7 +891,7 @@ export const RemoteSessionBoard = ({
         );
       },
     }),
-    [refreshImages]
+    []
   );
   const chromeActions = useMemo(
     () => ({
@@ -963,11 +951,10 @@ export const RemoteSessionBoard = ({
   useImperativeHandle(
     commandsRef,
     (): BoardCommands => ({
-      refreshImages,
       flipBoard: tableActions.flipBoard,
       canFlipBoard: () => flipAllowedRef.current,
     }),
-    [refreshImages, tableActions]
+    [tableActions]
   );
   const visibleStatus =
     identity && replayState.sessionPhase === 'ready'

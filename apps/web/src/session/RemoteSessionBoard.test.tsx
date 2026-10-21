@@ -8,7 +8,6 @@ import type {
 import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
-  CARD_IMAGE_RETRY_EVENT,
   createEmptyBoardView,
   createRendererSpikeView,
   type BoardPreferences,
@@ -511,13 +510,11 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
-  it('puts the board-owned actions on the rail the route composes, and reaches the table from its menu', async () => {
+  it('puts the board-owned actions on the rail the route composes, and reaches the table from its menu and keys', async () => {
     const session = new FakeRemoteBoardSession();
     const replay = new ReplaySessionCoordinator(session);
     const commands = createRef<BoardCommands>();
     const owned: BoardOwnRailActions[] = [];
-    const retries = vi.fn();
-    document.addEventListener(CARD_IMAGE_RETRY_EVENT, retries);
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -622,31 +619,28 @@ describe('RemoteSessionBoard replay binding', () => {
       'spike-blue'
     );
 
-    // Reload card images (menu or R) asks the renderer to retry what
-    // failed; it neither commands the room nor remounts the renderer.
+    // The table's keys reach the table, without remounting the renderer.
     const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
-    await act(async () => commands.current?.refreshImages());
-    expect(retries).toHaveBeenCalledTimes(1);
-    const pressR = () =>
+    const pressM = () =>
       act(async () =>
         document.dispatchEvent(
           new KeyboardEvent('keydown', {
-            key: 'r',
-            code: 'KeyR',
+            key: 'm',
+            code: 'KeyM',
             bubbles: true,
             cancelable: true,
           })
         )
       );
-    await pressR();
-    expect(retries).toHaveBeenCalledTimes(2);
+    await pressM();
+    expect(session.declareMulligan).toHaveBeenCalledTimes(2);
     // While the deck screen owns the keyboard, the table takes no keys.
     await render('multiplayer', { keysSuspended: true });
-    await pressR();
-    expect(retries).toHaveBeenCalledTimes(2);
+    await pressM();
+    expect(session.declareMulligan).toHaveBeenCalledTimes(2);
     await render('multiplayer');
-    await pressR();
-    expect(retries).toHaveBeenCalledTimes(3);
+    await pressM();
+    expect(session.declareMulligan).toHaveBeenCalledTimes(3);
     expect(session.submit).toHaveBeenCalledTimes(4);
     expect(window.__PTCG_RENDERER_SPIKE__?.renderer).toBe(renderer);
 
@@ -703,7 +697,6 @@ describe('RemoteSessionBoard replay binding', () => {
     });
     expect(session.submit).toHaveBeenCalledTimes(4);
 
-    document.removeEventListener(CARD_IMAGE_RETRY_EVENT, retries);
     await act(async () => root.unmount());
     replay.dispose();
   });

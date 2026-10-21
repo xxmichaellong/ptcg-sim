@@ -61,7 +61,6 @@ interface ProtectedInputEvidence {
   readonly mulliganDeclarations: number;
   readonly deckViewDeclarations: number;
   readonly boardFlips: number;
-  readonly sceneRefreshes: number;
   readonly presentationDismissals: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
@@ -102,6 +101,11 @@ interface ProtectedInputEvidence {
           readonly invalidMessage: string;
         }
       | null;
+    readonly marker?: {
+      readonly cardId: string;
+      readonly kind: string;
+      readonly takesFocus?: true;
+    } | null;
     readonly preview:
       | { readonly kind: 'card'; readonly cardId: string }
       | {
@@ -915,37 +919,38 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
   await expect(menu).toBeVisible();
   await menu.locator('[data-context-action="setDamage"]').click();
-  const damageEditor = host.locator('[data-legacy-marker-editor="damage"]');
-  await expect(damageEditor).toBeVisible();
-  await expect(damageEditor).toHaveText('120');
+  // The menu's Damage opens the damage controls beside the card, its number
+  // taking the keys (selected, as v1's editor was) next to the steps by 10.
+  const damageControls = host.locator(
+    '.ptcgsim-marker-controls[data-marker-controls="damage"]'
+  );
+  const damageEditor = damageControls.locator(
+    '.ptcgsim-marker-controls__value'
+  );
+  await expect(damageControls).toBeVisible();
+  await expect(damageEditor).toHaveValue('120');
+  await expect(damageEditor).toBeFocused();
+  expect(
+    await damageEditor.evaluate(
+      (element: HTMLInputElement) =>
+        element.selectionEnd! - element.selectionStart!
+    )
+  ).toBe(3);
+  await expect(
+    damageControls.getByRole('button', { name: '10 more damage' })
+  ).toBeVisible();
   const renderedDamage = host.locator(
     `[data-marker-id="${fixture.activeTopCardId}:damage"]`
   );
   await expect(renderedDamage).toBeVisible();
-  expect(await damageEditor.boundingBox()).toEqual(
-    await renderedDamage.boundingBox()
-  );
+  const controlsBox = (await damageControls.boundingBox())!;
+  const counterBox = (await renderedDamage.boundingBox())!;
   expect(
-    await damageEditor.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        backgroundColor: style.backgroundColor,
-        color: style.color,
-        borderRadius: style.borderRadius,
-      };
-    })
-  ).toEqual(
-    // The editor previews the token it edits: the counter or chip painted
-    // inside the marker box (ADR-027), in its colours.
-    await renderedDamage.locator('[data-marker-face]').evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        backgroundColor: style.backgroundColor,
-        color: style.color,
-        borderRadius: style.borderRadius,
-      };
-    })
-  );
+    controlsBox.x >= counterBox.x + counterBox.width ||
+      controlsBox.x + controlsBox.width <= counterBox.x ||
+      controlsBox.y >= counterBox.y + counterBox.height ||
+      controlsBox.y + controlsBox.height <= counterBox.y
+  ).toBe(true);
   await expect
     .poll(() => evidence(page))
     .toMatchObject({
@@ -960,10 +965,11 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       ],
       overlays: {
         contextMenuCardId: null,
-        input: {
-          kind: 'damage',
+        input: null,
+        marker: {
           cardId: fixture.activeTopCardId,
-          initialValue: '120',
+          kind: 'damage',
+          takesFocus: true,
         },
       },
     });
@@ -976,7 +982,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
 
   await damageEditor.fill('70');
   await damageEditor.press('Enter');
-  await expect(damageEditor).toHaveCount(0);
+  await expect(damageControls).toHaveCount(0);
   await expect
     .poll(async () => (await evidence(page)).submissions)
     .toEqual([
@@ -2238,9 +2244,6 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     ]);
     expect(current.shortcutActions).toEqual([scenario.action]);
     expect(current.shortcutRejections).toEqual([]);
-    expect(current.sceneRefreshes).toBe(
-      scenario.action.action === 'resetOwnPlayer' ? 1 : 0
-    );
     expect(current.presentation.selectedCardId).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
@@ -2304,9 +2307,6 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     current = await evidence(page);
     expect(current.submissions).toEqual([]);
     expect(current.shortcutActions).toEqual([scenario.action]);
-    expect(current.sceneRefreshes).toBe(
-      scenario.action.action === 'resetOwnPlayer' ? 1 : 0
-    );
     expect(current.presentation.selectedCardId).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
@@ -2708,7 +2708,7 @@ test('M emits only ephemeral live-player mulligan declarations and preserves pro
   expect(errors).toEqual([]);
 });
 
-test('R separates local scene refresh from protected group and single-card rotation', async ({
+test('R turns a selected Pokémon or a single card, and does nothing with none selected', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -2730,7 +2730,7 @@ test('R separates local scene refresh from protected group and single-card rotat
       new KeyboardEvent('keydown', { ...init, key: 'R', shiftKey: true })
     );
   });
-  await expect.poll(async () => (await evidence(page)).sceneRefreshes).toBe(3);
+  // v1 refreshed the table here; card images retry by themselves instead.
   let current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
@@ -2748,7 +2748,6 @@ test('R separates local scene refresh from protected group and single-card rotat
   await page.keyboard.press('KeyR');
   await page.keyboard.press('Alt+KeyR');
   current = await evidence(page);
-  expect(current.sceneRefreshes).toBe(0);
   expect(current.shortcutActions).toEqual([
     {
       action: 'rotateSelectedCard',
@@ -2784,7 +2783,6 @@ test('R separates local scene refresh from protected group and single-card rotat
   await page.keyboard.press('KeyR');
   await page.keyboard.press('Alt+KeyR');
   current = await evidence(page);
-  expect(current.sceneRefreshes).toBe(0);
   expect(current.shortcutActions).toEqual([]);
   expect(current.submissions).toEqual([]);
 
@@ -2797,7 +2795,6 @@ test('R separates local scene refresh from protected group and single-card rotat
   });
   await page.keyboard.press('KeyR');
   current = await evidence(page);
-  expect(current.sceneRefreshes).toBe(0);
   expect(current.shortcutActions).toEqual([]);
   await expect(page.locator('[data-rotation-shortcut-editor]')).toHaveValue(
     'r'
@@ -2821,7 +2818,6 @@ test('R separates local scene refresh from protected group and single-card rotat
   await clearEvidence(page);
   await page.keyboard.press('KeyR');
   current = await evidence(page);
-  expect(current.sceneRefreshes).toBe(0);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([
     {

@@ -176,10 +176,10 @@ describe('changing shortcuts', () => {
   });
 
   it('only counts clashes that could be pressed at the same moment', () => {
-    // R rotates a selected card and refreshes images otherwise.
-    expect(
-      hotkeyConflicts(DEFAULT_KEYMAP, 'table.refreshImages', chord('r'))
-    ).toEqual([]);
+    // V shows a selected card and the deck otherwise.
+    expect(hotkeyConflicts(DEFAULT_KEYMAP, 'deck.view', chord('v'))).toEqual(
+      []
+    );
     expect(
       ids(hotkeyConflicts(DEFAULT_KEYMAP, 'card.toHand', chord('f')))
     ).toEqual(['table.flipCoin']);
@@ -210,10 +210,11 @@ describe('changing shortcuts', () => {
   });
 
   it('clears instead of swapping when the old key would clash elsewhere', () => {
-    // Flip coin works everywhere; R would clash with Refresh images.
+    // Flip coin works everywhere; V would clash with showing a selected
+    // card.
     expect(
-      assignHotkey(NO_HOTKEY_OVERRIDES, 'card.rotate', chord('f'), 'swap')
-    ).toEqual({ 'card.rotate': 'f', 'table.flipCoin': null });
+      assignHotkey(NO_HOTKEY_OVERRIDES, 'deck.view', chord('f'), 'swap')
+    ).toEqual({ 'deck.view': 'f', 'table.flipCoin': null });
   });
 
   it("resets one shortcut to v1's key, taking it back from whoever had it", () => {

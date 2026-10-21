@@ -1553,7 +1553,7 @@ describe('headless board session controller', () => {
     expect(resolveShortcutAction).not.toHaveBeenCalled();
   });
 
-  it('owns damage-editor identity from context open through bounded submit', () => {
+  it('opens the damage controls beside the counter from the menu, taking typed and stepped damage until they close', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;
@@ -1575,7 +1575,8 @@ describe('headless board session controller', () => {
     expect(opened.state.overlays).toEqual({
       contextMenuCardId: null,
       preview: null,
-      input: { kind: 'damage', cardId, initialValue: '120' },
+      input: null,
+      marker: { cardId, kind: 'damage', takesFocus: true },
     });
 
     const contextDismissed = apply(opened.state, {
@@ -1583,8 +1584,8 @@ describe('headless board session controller', () => {
       scope: 'context',
     });
     expect(contextDismissed.outcome).toBe('ignored');
-    expect(contextDismissed.state.overlays.input).toEqual(
-      opened.state.overlays.input
+    expect(contextDismissed.state.overlays.marker).toEqual(
+      opened.state.overlays.marker
     );
 
     const invalidRequest = {
@@ -1606,6 +1607,7 @@ describe('headless board session controller', () => {
       },
     ]);
 
+    // Typed or stepped, each change goes to the room; they stay open.
     const submitted = apply(opened.state, {
       kind: 'LegacyOverlayActionRequested',
       request: {
@@ -1615,7 +1617,9 @@ describe('headless board session controller', () => {
         value: '70',
       },
     });
-    expect(submitted.state.overlays.input).toBeNull();
+    expect(submitted.state.overlays.marker).toEqual(
+      opened.state.overlays.marker
+    );
     expect(submitted.effects).toEqual([
       {
         kind: 'SubmitCommand',
@@ -1623,7 +1627,11 @@ describe('headless board session controller', () => {
       },
     ]);
 
-    const forged = apply(submitted.state, {
+    const closed = apply(submitted.state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'marker',
+    }).state;
+    const forged = apply(closed, {
       kind: 'LegacyOverlayActionRequested',
       request: {
         kind: 'context',
@@ -1651,7 +1659,7 @@ describe('headless board session controller', () => {
         sessionPhase: 'reconnecting',
       }),
     });
-    expect(reconnect.state.overlays.input).toBeNull();
+    expect(reconnect.state.overlays.marker ?? null).toBeNull();
     expect(reconnect.state.canSubmitCommands).toBe(false);
     expect(reconnect.effects).toContainEqual({
       kind: 'CancelRendererInteraction',
@@ -1712,7 +1720,8 @@ describe('headless board session controller', () => {
         .overlays.marker ?? null
     ).toBeNull();
 
-    // They go with the marker.
+    // A Pokémon's damage controls outlast its counter, stepped down to
+    // none: the next step puts one back.
     const cleared = apply(state, {
       kind: 'FrameReceived',
       frame: liveFrame(
@@ -1729,7 +1738,7 @@ describe('headless board session controller', () => {
         )
       ),
     });
-    expect(cleared.state.overlays.marker ?? null).toBeNull();
+    expect(cleared.state.overlays.marker).toEqual({ cardId, kind: 'damage' });
   });
 
   it("refuses a spectator a marker's controls", () => {
@@ -1774,10 +1783,11 @@ describe('headless board session controller', () => {
       request: { kind: 'context', action: 'setDamage', cardId },
     });
 
-    expect(result.state.overlays.input).toEqual({
-      kind: 'damage',
+    expect(result.state.overlays.input).toBeNull();
+    expect(result.state.overlays.marker).toEqual({
       cardId,
-      initialValue: '10',
+      kind: 'damage',
+      takesFocus: true,
     });
     expect(result.effects).toEqual([
       {
@@ -1789,6 +1799,69 @@ describe('headless board session controller', () => {
         command: { type: 'SetDamage', stackId: activeStack.id, damage: 10 },
       },
     ]);
+
+    // With no counter on the Pokémon (before the first lands, or stepped
+    // back to none), the damage controls stay open and still set damage.
+    const settledResult = apply(result.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        2,
+        withRevision(withoutDamage, withoutDamage.revision + 1)
+      ),
+    });
+    expect(settledResult.outcome).toBe('accepted');
+    const settled = settledResult.state;
+    expect(settled.view!.revision).toBe(withoutDamage.revision + 1);
+    expect(
+      settled.scene!.markers.some(
+        (marker) => marker.parentCardId === cardId && marker.kind === 'damage'
+      )
+    ).toBe(false);
+    expect(settled.overlays.marker).toEqual(result.state.overlays.marker);
+    expect(
+      apply(settled, {
+        kind: 'LegacyOverlayActionRequested',
+        request: { kind: 'context', action: 'setDamage', cardId, value: '20' },
+      }).effects
+    ).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'SetDamage', stackId: activeStack.id, damage: 20 },
+      },
+    ]);
+  });
+
+  it('closes the Special Condition chips once their chip is gone', () => {
+    const view = createRendererSpikeView();
+    const activeStack = view.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    let state = install();
+    const chip = state.scene!.markers.find(
+      (marker) =>
+        marker.parentCardId === cardId && marker.kind === 'specialCondition'
+    )!;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'MarkerPressed', markerId: chip.id },
+    }).state;
+    expect(state.overlays.marker).toEqual({ cardId, kind: 'specialCondition' });
+    const cleared = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        2,
+        withRevision(
+          {
+            ...state.view!,
+            stacks: {
+              ...state.view!.stacks,
+              [activeStack.id]: { ...activeStack, specialCondition: null },
+            },
+          },
+          state.view!.revision + 1
+        )
+      ),
+    }).state;
+    expect(cleared.overlays.marker ?? null).toBeNull();
   });
 
   it('opens the Special Condition chips beside its marker, putting Poisoned on when there was none', () => {

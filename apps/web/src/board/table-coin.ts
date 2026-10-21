@@ -10,10 +10,17 @@ export interface TableCoinSpot {
   readonly rect: Rect;
 }
 
-/** A coin is a little under half an Active card tall, within these bounds. */
-const COIN_SHARE_OF_ACTIVE = 0.42;
+/** A coin is about a third of an Active card tall, within these bounds. */
+const COIN_SHARE_OF_ACTIVE = 0.34;
 export const TABLE_COIN_MIN_PX = 34;
-export const TABLE_COIN_MAX_PX = 80;
+export const TABLE_COIN_MAX_PX = 64;
+/**
+ * Where in the Active's row the coin lies, given the room: a quarter of the
+ * way down it from the middle of the table, and three quarters of the way
+ * along the clear felt toward the player's own right.
+ */
+const COIN_ROW_HEIGHT = 0.25;
+const COIN_ROW_ALONG = 0.75;
 /** The least felt kept between the coin and anything else on the table. */
 const COIN_CLEARANCE_PX = 10;
 
@@ -39,12 +46,12 @@ const freeSpans = (span: Span, taken: readonly Span[]): Span[] => {
 
 /**
  * Each player's coin, on the felt beside their Active Pokémon on their own
- * right as they sit at the table (the far half is turned around): in the
- * widest clear stretch of that row, level with the Active where it can be
- * or just clear of whatever reaches into the row (on a phone the Stadium
- * does), so it never lies on a zone, a pile, the Stadium or the optional
- * pieces. A half the viewer has hidden has no coin, and neither has a half
- * too cramped for one.
+ * right as they sit at the table (the far half is turned around): toward
+ * the middle of the table and out toward their right (COIN_ROW_HEIGHT,
+ * COIN_ROW_ALONG) where the row is clear, or just clear of whatever reaches
+ * into it (on a phone the Stadium does), so it never lies on a zone, a
+ * pile, the Stadium or the optional pieces. A half the viewer has hidden
+ * has no coin, and neither has a half too cramped for one.
  */
 export const tableCoinSpots = (
   layout: BoardLayoutSnapshot
@@ -80,11 +87,21 @@ export const tableCoinSpots = (
     );
     const top = active.y + wanted / 2;
     const bottom = active.y + active.height - wanted / 2;
-    const middle = active.y + active.height / 2;
+    // The near half's middle of the table is above its Active; the far
+    // half's, below.
+    const nearHalf = active.y + active.height / 2 > play.y + play.height / 2;
+    const aim = Math.min(
+      bottom,
+      Math.max(
+        top,
+        active.y +
+          active.height * (nearHalf ? COIN_ROW_HEIGHT : 1 - COIN_ROW_HEIGHT)
+      )
+    );
     const others = obstacles.filter((rect) => rect !== active);
-    // Level with the Active, or just above or below anything in the row.
+    // Where it aims, or just above or below anything in the row.
     const heights = [
-      middle,
+      aim,
       ...others.flatMap((rect) => [
         rect.y + rect.height + COIN_CLEARANCE_PX + wanted / 2,
         rect.y - COIN_CLEARANCE_PX - wanted / 2,
@@ -112,17 +129,23 @@ export const tableCoinSpots = (
       for (const span of freeSpans(row, taken)) {
         const width = span.to - span.from;
         const size = Math.min(wanted, width);
-        // The biggest coin; then the one level with the Active; then the
+        // The biggest coin; then the one nearest where it aims; then the
         // one with the most felt around it.
         const better =
           !best ||
           size > best.size + 0.01 ||
           (size > best.size - 0.01 &&
-            (Math.abs(y - middle) < Math.abs(best.y - middle) - 0.01 ||
-              (Math.abs(Math.abs(y - middle) - Math.abs(best.y - middle)) <=
-                0.01 &&
+            (Math.abs(y - aim) < Math.abs(best.y - aim) - 0.01 ||
+              (Math.abs(Math.abs(y - aim) - Math.abs(best.y - aim)) <= 0.01 &&
                 width > best.width)));
-        if (better) best = { x: (span.from + span.to) / 2, y, size, width };
+        const along = ownRight ? COIN_ROW_ALONG : 1 - COIN_ROW_ALONG;
+        if (better)
+          best = {
+            x: span.from + size / 2 + (width - size) * along,
+            y,
+            size,
+            width,
+          };
       }
     }
     if (!best || best.size < TABLE_COIN_MIN_PX) return [];

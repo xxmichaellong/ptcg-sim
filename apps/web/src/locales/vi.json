@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Ghép / gắn vào một thẻ…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Tối đa 16 ký tự"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Gắn"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Thong thả"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Tải lại ảnh thẻ bài"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Tải lại ảnh"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Đang tải lại ảnh thẻ bài"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

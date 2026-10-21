@@ -676,9 +676,8 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(onRequest).not.toHaveBeenCalled();
   });
 
-  it('separates unselected R refresh from selected group/single rotation and suppresses full preview', async () => {
+  it('leaves unselected R alone, rotates the selected group or single card with it, and suppresses full preview', async () => {
     const onRequest = vi.fn();
-    const onRefreshScene = vi.fn();
     const state = createInitialBoardSessionControllerState();
     const dispatch = (init: KeyboardEventInit = {}) =>
       document.dispatchEvent(
@@ -696,7 +695,6 @@ describe('legacy board keyboard shortcut bridge', () => {
         createElement(LegacyBoardKeyboardShortcuts, {
           state,
           onRequest,
-          onRefreshScene,
         })
       );
     });
@@ -704,16 +702,13 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(dispatch({ ctrlKey: true })).toBe(true);
     expect(dispatch({ key: 'R', shiftKey: true })).toBe(true);
     expect(dispatch({ altKey: true })).toBe(true);
-    expect(onRefreshScene).toHaveBeenCalledTimes(4);
+    // v1 refreshed the table on R; card images retry by themselves now.
+    // Alt-R still resets.
     expect(onRequest).toHaveBeenCalledExactlyOnceWith({
       action: 'resetOwnPlayer',
     });
-    expect(onRefreshScene.mock.invocationCallOrder[3]).toBeLessThan(
-      onRequest.mock.invocationCallOrder[0]!
-    );
 
     onRequest.mockClear();
-    onRefreshScene.mockClear();
     await act(async () => {
       root.render(
         createElement(LegacyBoardKeyboardShortcuts, {
@@ -725,7 +720,6 @@ describe('legacy board keyboard shortcut bridge', () => {
             },
           },
           onRequest,
-          onRefreshScene,
         })
       );
     });
@@ -743,7 +737,6 @@ describe('legacy board keyboard shortcut bridge', () => {
         single: true,
       },
     ]);
-    expect(onRefreshScene).not.toHaveBeenCalled();
 
     onRequest.mockClear();
     await act(async () => {
@@ -757,14 +750,12 @@ describe('legacy board keyboard shortcut bridge', () => {
             },
           },
           onRequest,
-          onRefreshScene,
         })
       );
     });
     expect(dispatch()).toBe(false);
     expect(dispatch({ altKey: true })).toBe(false);
     expect(onRequest).not.toHaveBeenCalled();
-    expect(onRefreshScene).not.toHaveBeenCalled();
 
     await act(async () => {
       root.render(
@@ -781,13 +772,11 @@ describe('legacy board keyboard shortcut bridge', () => {
             },
           },
           onRequest,
-          onRefreshScene,
         })
       );
     });
     expect(dispatch()).toBe(true);
     expect(onRequest).not.toHaveBeenCalled();
-    expect(onRefreshScene).not.toHaveBeenCalled();
   });
 
   it('routes Alt-F only through an eligible local board-flip seam', async () => {

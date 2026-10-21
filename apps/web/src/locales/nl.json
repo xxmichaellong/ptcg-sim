@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Samenvoegen / aan een kaart hechten…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Maximaal 16 tekens"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Hechten"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Rustig"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Kaartafbeeldingen opnieuw laden"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Afbeeldingen herladen"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Kaartafbeeldingen worden opnieuw geladen"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

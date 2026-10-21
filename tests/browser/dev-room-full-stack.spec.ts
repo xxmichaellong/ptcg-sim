@@ -8,7 +8,6 @@ import {
 
 import { openBoardView } from './support/board-view.js';
 import {
-  chooseMenuItem,
   closeActivity,
   openActivity,
   openAppMenu,
@@ -286,18 +285,6 @@ test('development route reaches and resumes a real durable room through the same
     page.locator('.ptcgsim-app-toolbar #settingsButton')
   ).toBeFocused();
 
-  // Reload card images retries what failed, in place: same renderer.
-  const routeRenderer = await page.evaluateHandle(
-    () => window.__PTCG_RENDERER_SPIKE__?.renderer
-  );
-  await chooseMenuItem(page, 'reloadImagesButton');
-  expect(
-    await page.evaluate(
-      (renderer) => window.__PTCG_RENDERER_SPIKE__?.renderer === renderer,
-      routeRenderer
-    )
-  ).toBe(true);
-  await routeRenderer.dispose();
   // The table has the window (ADR-030); the docked log takes the right
   // column while it is open, and gives it back when it closes.
   await expect(page.locator('.board-column')).toHaveAttribute(
@@ -769,7 +756,6 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   // Replay's transport takes the rail; view controls stay in the menu.
   await expect(page.locator('#boardButtonContainer #exitReplay')).toBeVisible();
   await openAppMenu(page);
-  await expect(page.locator('#reloadImagesButton')).toBeVisible();
   await expect(page.locator('#fullscreenButton')).toBeVisible();
   await page.keyboard.press('Escape');
 

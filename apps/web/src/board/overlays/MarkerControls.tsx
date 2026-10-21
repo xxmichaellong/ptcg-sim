@@ -3,6 +3,7 @@ import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import {
+  layoutLegacyActiveQ0Markers,
   markerHint,
   specialConditionKind,
   type BoardDepthProjection,
@@ -21,6 +22,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
+import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
 import { visualCardBounds } from './card-bounds.js';
 import './MarkerControls.css';
 
@@ -123,18 +125,52 @@ const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
 const conditionArt = (kind: SpecialConditionKind): string =>
   `/v2/assets/table/condition-${kind}.png`;
 
-/** The marker whose controls are open, while it still lies on its card. */
+/**
+ * The marker whose controls are open, while it lies on its card; for a
+ * Pokémon's damage with no counter yet (the menu's Damage opens them), a
+ * stand-in exactly where the scene will paint its first counter: v1
+ * measures every counter from the card's painted (rotated) box.
+ */
 export const markerControlsMarker = (
   state: BoardSessionControllerState
 ): MarkerSceneNode | null => {
   const controls = state.overlays.marker;
-  if (!controls || !state.scene) return null;
-  return (
-    state.scene.markers.find(
-      (marker) =>
-        marker.parentCardId === controls.cardId && marker.kind === controls.kind
-    ) ?? null
+  const scene = state.scene;
+  if (!controls || !scene) return null;
+  const lying = scene.markers.find(
+    (marker) =>
+      marker.parentCardId === controls.cardId && marker.kind === controls.kind
   );
+  if (lying) return lying;
+  if (controls.kind !== 'damage' || !state.view) return null;
+  const stack = Object.values(state.view.stacks).find(
+    (candidate) => candidate.evolutionCards.at(-1)?.id === controls.cardId
+  );
+  const card = scene.cards.find(
+    (candidate) => candidate.id === controls.cardId
+  );
+  if (!stack || !card || card.side === 'shared') return null;
+  const painted =
+    card.rotationQuarterTurns % 2 === 0
+      ? card.bounds
+      : {
+          x: card.bounds.x + card.bounds.width / 2 - card.bounds.height / 2,
+          y: card.bounds.y + card.bounds.height / 2 - card.bounds.width / 2,
+          width: card.bounds.height,
+          height: card.bounds.width,
+        };
+  const item = layoutLegacyActiveQ0Markers(painted, card.side).damage;
+  return {
+    id: `${card.id}:damage-controls`,
+    parentCardId: card.id,
+    side: card.side,
+    kind: 'damage',
+    presentation: stack.slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0',
+    value: '0',
+    bounds: item.bounds,
+    zIndex: card.zIndex + item.sourceZIndex,
+    label: markerHint({ kind: 'damage', value: '0' }),
+  };
 };
 
 const ControlButton = ({
@@ -162,6 +198,147 @@ const ControlButton = ({
     </button>
   </Tooltip>
 );
+
+/**
+ * A Pokémon's damage: typed into its number (Enter sets it and puts the
+ * controls away, as v1's editor did; leaving the number sets it too), or
+ * stepped by 10 with the buttons or the arrow keys.
+ */
+const DamageControls = ({
+  marker,
+  takesFocus,
+  actions,
+  commitRef,
+}: {
+  readonly marker: MarkerSceneNode;
+  readonly takesFocus: boolean;
+  readonly actions: MarkerControlsActions;
+  /** Sets what has been typed, if anything: called before they go away. */
+  readonly commitRef: { current: (() => void) | null };
+}) => {
+  const { t } = useLingui();
+  const cardId = marker.parentCardId;
+  const damage = Number.parseInt(marker.value, 10) || 0;
+  const shown = damage > 0 ? String(damage) : '';
+  const [draft, setDraft] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+  const field = useRef<HTMLInputElement>(null);
+  const setDamage = (value: number) => {
+    setDraft(null);
+    setInvalid(false);
+    actions.submitDamageInput(
+      cardId,
+      value <= 0 ? '' : String(Math.min(DAMAGE_MAXIMUM, value))
+    );
+  };
+  /** What is typed, as damage: undefined while it is no number. */
+  const typed = (): number | undefined => {
+    if (draft === null) return damage;
+    const parsed = parseLegacyDamageInput(draft);
+    return parsed === undefined ? undefined : (parsed ?? 0);
+  };
+  const commit = (): boolean => {
+    if (draft === null) return true;
+    const value = typed();
+    if (value === undefined) {
+      setInvalid(true);
+      return false;
+    }
+    if (value === damage) {
+      setDraft(null);
+      return true;
+    }
+    setDamage(value);
+    return true;
+  };
+  useEffect(() => {
+    commitRef.current = () => {
+      commit();
+    };
+    return () => {
+      commitRef.current = null;
+    };
+  });
+  const step = (by: number) => {
+    // Stepping from what is typed, when it is a number.
+    setDamage((typed() ?? damage) + by);
+  };
+  return (
+    <>
+      <ControlButton
+        label={t`10 less damage`}
+        onPress={() => step(-DAMAGE_STEP)}
+      >
+        <MinusIcon weight="bold" aria-hidden="true" />
+      </ControlButton>
+      <input
+        ref={field}
+        className="ptcgsim-marker-controls__value"
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        spellCheck={false}
+        maxLength={16}
+        placeholder="0"
+        aria-label={t`Damage counter`}
+        aria-invalid={invalid}
+        {...(takesFocus ? { 'data-takes-focus': '' } : {})}
+        value={draft ?? shown}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => {
+          setDraft(event.currentTarget.value);
+          setInvalid(false);
+        }}
+        onBlur={(event) => {
+          // Moving to a button here leaves it to the button.
+          if (
+            event.relatedTarget instanceof Node &&
+            event.currentTarget.parentElement?.contains(event.relatedTarget)
+          )
+            return;
+          if (!commit()) {
+            setDraft(null);
+            setInvalid(false);
+          }
+        }}
+        onKeyDown={(event) => {
+          // Typing is not a table shortcut.
+          if (event.key !== 'Escape') event.stopPropagation();
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            if (commit()) actions.dismiss('marker');
+            else field.current?.select();
+          } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            event.preventDefault();
+            step(event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP);
+          }
+        }}
+      />
+      <ControlButton
+        label={t`10 more damage`}
+        onPress={() => step(DAMAGE_STEP)}
+      >
+        <PlusIcon weight="bold" aria-hidden="true" />
+      </ControlButton>
+      <span className="ptcgsim-marker-controls__divider" aria-hidden="true" />
+      <ControlButton
+        label={t`Remove all damage`}
+        className="is-remove"
+        onPress={() => {
+          setDamage(0);
+          actions.dismiss('marker');
+        }}
+      >
+        <TrashIcon weight="bold" aria-hidden="true" />
+      </ControlButton>
+      {invalid ? (
+        <span className="ptcgsim-marker-controls__hint" role="alert">
+          {t`A whole number, up to 9990`}
+        </span>
+      ) : null}
+    </>
+  );
+};
 
 /**
  * A marker's controls, opened by pressing it on the table: a damage counter
@@ -202,8 +379,14 @@ export const MarkerControls = ({
   // focus -- the current choice, else the first -- once the menu has given
   // it back to the card, and return it there when they close.
   const takesFocus = state.overlays.marker?.takesFocus === true;
+  // The same controls while the first counter goes on (its stand-in gives
+  // way to it): the focus stays where it is.
+  const opened = state.overlays.marker
+    ? `${state.overlays.marker.cardId}:${state.overlays.marker.kind}`
+    : null;
+  const shown = markerId !== null;
   useEffect(() => {
-    if (!markerId || !takesFocus) return;
+    if (!opened || !shown || !takesFocus) return;
     let opener: HTMLElement | null = null;
     let element: HTMLElement | null = null;
     const frame = requestAnimationFrame(() => {
@@ -213,6 +396,7 @@ export const MarkerControls = ({
       if (focused instanceof HTMLElement && !element.contains(focused))
         opener = focused;
       (
+        element.querySelector<HTMLElement>('[data-takes-focus]') ??
         element.querySelector<HTMLElement>('button[aria-pressed="true"]') ??
         element.querySelector<HTMLElement>('button')
       )?.focus({ preventScroll: true });
@@ -228,9 +412,11 @@ export const MarkerControls = ({
       )
         opener.focus({ preventScroll: true });
     };
-  }, [markerId, takesFocus]);
-  // Escape, or a press anywhere but here, puts them away. A press on the
-  // marker itself is the table's to answer: it toggles them.
+  }, [opened, shown, takesFocus]);
+  // Escape, or a press anywhere but here, puts them away; a press sets
+  // what was typed first, as leaving v1's editor did. A press on the marker
+  // itself is the table's to answer: it toggles them.
+  const commitTyped = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!markerId) return;
     const key = (event: KeyboardEvent) => {
@@ -253,6 +439,7 @@ export const MarkerControls = ({
         event.clientY <= rect.bottom
       )
         return;
+      commitTyped.current?.();
       actions.dismiss('marker');
     };
     document.addEventListener('keydown', key, true);
@@ -277,41 +464,14 @@ export const MarkerControls = ({
 
   let controls: ReactNode;
   if (marker.kind === 'damage') {
-    const damage = Number.parseInt(marker.value, 10) || 0;
-    const setDamage = (value: number) =>
-      actions.submitDamageInput(
-        cardId,
-        value <= 0 ? '' : String(Math.min(DAMAGE_MAXIMUM, value))
-      );
     controls = (
-      <>
-        <ControlButton
-          label={t`10 less damage`}
-          onPress={() => setDamage(damage - DAMAGE_STEP)}
-        >
-          <MinusIcon weight="bold" aria-hidden="true" />
-        </ControlButton>
-        <output
-          className="ptcgsim-marker-controls__value"
-          aria-label={markerHint(marker)}
-        >
-          {marker.value}
-        </output>
-        <ControlButton
-          label={t`10 more damage`}
-          onPress={() => setDamage(damage + DAMAGE_STEP)}
-        >
-          <PlusIcon weight="bold" aria-hidden="true" />
-        </ControlButton>
-        <span className="ptcgsim-marker-controls__divider" aria-hidden="true" />
-        <ControlButton
-          label={t`Remove all damage`}
-          className="is-remove"
-          onPress={() => setDamage(0)}
-        >
-          <TrashIcon weight="bold" aria-hidden="true" />
-        </ControlButton>
-      </>
+      <DamageControls
+        key={marker.parentCardId}
+        marker={marker}
+        takesFocus={takesFocus}
+        actions={actions}
+        commitRef={commitTyped}
+      />
     );
   } else if (marker.kind === 'specialCondition') {
     const current = specialConditionKind(marker.value);

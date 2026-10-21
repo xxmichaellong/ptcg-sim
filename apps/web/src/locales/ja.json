@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "組み立て / カードにつける…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "16文字以内"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "つける"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "ゆっくり"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "カード画像を再読み込み"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "画像を再読み込み"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "カード画像を再読み込み中"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

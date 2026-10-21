@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "ประกอบ / แนบกับการ์ด…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "ไม่เกิน 16 ตัวอักษร"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "แนบ"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "ช้า"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "โหลดภาพการ์ดใหม่"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "โหลดภาพใหม่"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "กำลังโหลดภาพการ์ดใหม่"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

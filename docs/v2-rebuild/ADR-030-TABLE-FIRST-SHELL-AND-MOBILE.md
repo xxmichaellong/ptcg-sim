@@ -85,7 +85,7 @@ ABC123", "Replay"):
 
 - Game: Exit replay, Watch a replay…, Save online game, Resume a saved
   game…, Download replay;
-- Full screen (Exit full screen while full screen), Reload card images;
+- Full screen (Exit full screen while full screen);
 - Help: Tutorial, the release notes (named by the release, `v1.6`),
   Sponsors & Donations, Discord, contact;
 - Copy an invitation, Leave room (in a room).
@@ -171,11 +171,12 @@ table button are gone; their controls are the Table section.
 
 v1's Refresh images re-assigned every image's address by hand; nothing
 retried automatically. Now a card image that fails retries by itself after
-1.5, 4, 10 and 30 seconds, with a marker in the address so a cached failure
-is not reused, and at once when the browser comes back online
-(`renderer-dom/src/card-image-retry.ts`). The toolbar button is gone; R and
-the menu's **Reload card images** retry every failed image now, without
-cancelling a drag or re-installing the scene.
+1.5, 4, 10 and 30 seconds and then once a minute for as long as it is on the
+table, with a marker in the address so a cached failure is not reused, and
+at once when the browser comes back online or the player comes back to the
+tab (`renderer-dom/src/card-image-retry.ts`). Nothing is left for a button
+to do, so there is none: the toolbar button, the menu's Reload card images
+and R's refresh (2026-10-21) are gone.
 
 ### 9. Phones and touch are first-class
 

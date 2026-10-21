@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "I-assemble / i-attach sa isang card…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Hanggang 16 na character lang"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "I-attach"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Relaxed"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "I-reload ang mga larawan ng card"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "I-reload ang mga larawan"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Nire-reload ang mga larawan ng card"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

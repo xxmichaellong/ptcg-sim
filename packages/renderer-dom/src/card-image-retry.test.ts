@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 
-import { CARD_IMAGE_RETRY_EVENT } from '@ptcgsim/renderer-contract';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -33,11 +32,10 @@ afterEach(() => {
 });
 
 describe('card image retry', () => {
-  it('tries a failed image again after a growing wait, then waits to be asked', () => {
+  it('tries a failed image again after a growing wait, then once a minute for good', () => {
     const image = failedImage();
     const waits: number[] = [];
-    let last = 0;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
+    for (let attempt = 1; attempt <= 7; attempt += 1) {
       scheduleCardImageRetry(image);
       const before = image.getAttribute('src');
       let waited = 0;
@@ -49,12 +47,12 @@ describe('card image retry', () => {
       expect(image.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=${attempt}`);
       expect(image.dataset.cardImageState).toBe('loading');
       image.dataset.cardImageState = 'failed';
-      last = attempt;
     }
-    expect(waits).toEqual([1_500, 4_000, 10_000, 30_000]);
-    scheduleCardImageRetry(image);
-    vi.advanceTimersByTime(120_000);
-    expect(image.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=${last}`);
+    // A host down for longer than the first few tries is asked again until
+    // it is back: there is no button to ask for it.
+    expect(waits).toEqual([
+      1_500, 4_000, 10_000, 30_000, 60_000, 60_000, 60_000,
+    ]);
   });
 
   it('asks for an address with a query of its own again exactly, so a signed link still works', () => {
@@ -116,7 +114,7 @@ describe('card image retry', () => {
     );
   });
 
-  it('retries every failed image at once when asked or back online', () => {
+  it('retries every failed image at once when back online or back on the tab', () => {
     const root = document.createElement('div');
     document.body.append(root);
     const failed = failedImage();
@@ -132,16 +130,24 @@ describe('card image retry', () => {
     expect(inline.getAttribute('src')).toBe('data:image/png;base64,AAAA');
 
     const stop = watchCardImageRetries(root);
+    const visibility = vi.spyOn(document, 'visibilityState', 'get');
+    visibility.mockReturnValue('hidden');
     failed.dataset.cardImageState = 'failed';
-    document.dispatchEvent(new Event(CARD_IMAGE_RETRY_EVENT));
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(failed.dataset.cardImageState).toBe('failed');
+    visibility.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(failed.dataset.cardImageState).toBe('loading');
     expect(failed.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=1`);
     failed.dataset.cardImageState = 'failed';
     window.dispatchEvent(new Event('online'));
-    expect(failed.getAttribute('src')).toBe(`${ART}?ptcgsim-retry=1`);
+    expect(failed.dataset.cardImageState).toBe('loading');
     stop();
     failed.dataset.cardImageState = 'failed';
-    document.dispatchEvent(new Event(CARD_IMAGE_RETRY_EVENT));
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('online'));
     expect(failed.dataset.cardImageState).toBe('failed');
+    visibility.mockRestore();
   });
 });
 

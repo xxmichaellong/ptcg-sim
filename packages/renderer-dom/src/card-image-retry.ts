@@ -1,15 +1,15 @@
-import { CARD_IMAGE_RETRY_EVENT } from '@ptcgsim/renderer-contract';
-
 /**
  * Card art comes from other people's servers, which sometimes drop a
- * request. A card image that fails tries again by itself, a little later
- * each time, and at once when the browser comes back online or the player
- * asks (`CARD_IMAGE_RETRY_EVENT`). This replaces v1's Refresh images
- * button, which re-assigned every image's address by hand.
+ * request or go down for a while. A card image that fails tries again by
+ * itself, a little later each time and then once a minute for as long as it
+ * is on the page, and at once when the browser comes back online or the
+ * player comes back to the tab. This replaces v1's Refresh images button
+ * (and its R), which re-assigned every image's address by hand.
  */
 
-/** Waits before each retry; after the last the image waits to be asked. */
+/** Waits before each retry; after the last, LATER_RETRY_MS each time. */
 const RETRY_DELAYS_MS = [1_500, 4_000, 10_000, 30_000] as const;
+const LATER_RETRY_MS = 60_000;
 const RETRY_PARAMETER = 'ptcgsim-retry';
 
 interface RetryState {
@@ -85,8 +85,7 @@ export const scheduleCardImageRetry = (image: HTMLImageElement): void => {
   const state = stateFor(image);
   if (!state) return;
   if (state.timer !== undefined) clearTimeout(state.timer);
-  const delay = RETRY_DELAYS_MS[state.attempt];
-  if (delay === undefined) return;
+  const delay = RETRY_DELAYS_MS[state.attempt] ?? LATER_RETRY_MS;
   // Held weakly: a card taken off the table is not kept, with its whole
   // detached subtree, until its next attempt is due.
   const held = new WeakRef(image);
@@ -157,9 +156,9 @@ export const retryFailedCardImages = (root: ParentNode): number => {
 };
 
 /**
- * Retries a board surface's failed images when the player asks (the event
- * on its document) and when the browser comes back online. Returns the
- * cleanup.
+ * Retries a board surface's failed images at once when the browser comes
+ * back online and when the player comes back to the tab (a host that was
+ * down may be back). Returns the cleanup.
  */
 export const watchCardImageRetries = (root: HTMLElement): (() => void) => {
   const retryAll = (): void => {
@@ -167,10 +166,13 @@ export const watchCardImageRetries = (root: HTMLElement): (() => void) => {
   };
   const document = root.ownerDocument;
   const window = document.defaultView;
-  document.addEventListener(CARD_IMAGE_RETRY_EVENT, retryAll);
+  const shown = (): void => {
+    if (document.visibilityState === 'visible') retryAll();
+  };
+  document.addEventListener('visibilitychange', shown);
   window?.addEventListener('online', retryAll);
   return () => {
-    document.removeEventListener(CARD_IMAGE_RETRY_EVENT, retryAll);
+    document.removeEventListener('visibilitychange', shown);
     window?.removeEventListener('online', retryAll);
   };
 };

@@ -102,9 +102,26 @@ describe('MarkerControls', () => {
     expect(panel().style.left).toBe('498px');
   });
 
+  const field = () =>
+    host.querySelector<HTMLInputElement>('.ptcgsim-marker-controls__value')!;
+  const type = (value: string) =>
+    act(() => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(field(), value);
+      field().dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  const press = (key: string) =>
+    act(() => {
+      field().dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+      );
+    });
+
   it('steps damage by 10 either way and takes it off', () => {
     render(marker('damage', '60'));
-    expect(host.querySelector('output')?.textContent).toBe('60');
+    expect(field().value).toBe('60');
     act(() => button('10 more damage').click());
     act(() => button('10 less damage').click());
     act(() => button('Remove all damage').click());
@@ -113,6 +130,72 @@ describe('MarkerControls', () => {
       [cardId, '50'],
       [cardId, ''],
     ]);
+    // Taking it all off puts them away, as the counter goes.
+    expect(actions.dismiss).toHaveBeenCalledExactlyOnceWith('marker');
+  });
+
+  it('takes damage typed into its number: Enter sets it and puts them away', () => {
+    render(marker('damage', '60'));
+    expect(field().getAttribute('aria-label')).toBe('Damage counter');
+    type('120');
+    expect(field().value).toBe('120');
+    press('Enter');
+    expect(actions.submitDamageInput.mock.calls).toEqual([[cardId, '120']]);
+    expect(actions.dismiss).toHaveBeenCalledExactlyOnceWith('marker');
+  });
+
+  it('says what the number takes when something else is typed, and sets nothing', () => {
+    render(marker('damage', '60'));
+    type('70.5');
+    press('Enter');
+    expect(field().getAttribute('aria-invalid')).toBe('true');
+    expect(
+      host.querySelector('.ptcgsim-marker-controls__hint')?.textContent
+    ).toBe('A whole number, up to 9990');
+    expect(actions.submitDamageInput).not.toHaveBeenCalled();
+    expect(actions.dismiss).not.toHaveBeenCalled();
+    type('70');
+    expect(host.querySelector('.ptcgsim-marker-controls__hint')).toBeNull();
+    press('Enter');
+    expect(actions.submitDamageInput.mock.calls).toEqual([[cardId, '70']]);
+  });
+
+  it('steps with the arrow keys, and from what is typed', () => {
+    render(marker('damage', '60'));
+    press('ArrowUp');
+    press('ArrowDown');
+    type('100');
+    act(() => button('10 more damage').click());
+    expect(actions.submitDamageInput.mock.calls).toEqual([
+      [cardId, '70'],
+      [cardId, '50'],
+      [cardId, '110'],
+    ]);
+  });
+
+  it('sets what was typed when a press elsewhere puts them away', () => {
+    render(marker('damage', '60'));
+    type('30');
+    act(() => {
+      document.body.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true })
+      );
+    });
+    expect(actions.submitDamageInput.mock.calls).toEqual([[cardId, '30']]);
+    expect(actions.dismiss).toHaveBeenCalledWith('marker');
+  });
+
+  it('keeps typed keys from the table; Escape puts them away', () => {
+    render(marker('damage', '60'));
+    const heard: string[] = [];
+    const listen = (event: KeyboardEvent) => heard.push(event.key);
+    document.addEventListener('keydown', listen);
+    press('2');
+    expect(heard).toEqual([]);
+    expect(actions.dismiss).not.toHaveBeenCalled();
+    press('Escape');
+    document.removeEventListener('keydown', listen);
+    expect(actions.dismiss).toHaveBeenCalledWith('marker');
   });
 
   it('never steps damage below nothing or past the limit', () => {

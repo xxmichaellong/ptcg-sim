@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Assembler / attacher à une carte…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "16 caractères maximum"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Attacher"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Tranquille"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Recharger les images des cartes"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Recharger les images"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Rechargement des images des cartes"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

@@ -196,7 +196,8 @@ consumes the live fact without delivery. This preserves the existing row and
 keeps the shortcut independent from the separately authenticated general-chat
 stream.
 `R` retains its context-sensitive source contract without putting refresh state
-in either renderer. Unselected plain/Control/Shift `R` asks the runtime to
+in either renderer. (Superseded 2026-10-21: unselected `R` no longer refreshes;
+card images retry by themselves, ADR-030 §8.) Unselected plain/Control/Shift `R` asks the runtime to
 reinstall a scene from its current recipient-safe view; unselected Alt-`R` does
 that first and then takes the existing reset path. Selected `R`/Alt-`R` instead
 resolve stable card identity to existing stack/per-card target-value commands.

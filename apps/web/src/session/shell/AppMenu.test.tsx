@@ -132,7 +132,6 @@ describe('AppMenu', () => {
     const rest = await openMenu('#appMoreButton');
     expect(rest).toEqual([
       'fullscreenButton',
-      'reloadImagesButton',
       'tutorialButton',
       'changelogButton',
       'donationsButton',

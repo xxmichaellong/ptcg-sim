@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "组合/附着到卡牌…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "最多16个字符"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "附着"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "舒缓"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "重新加载卡牌图片"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "重载图片"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "正在重新加载卡牌图片"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "تجميع / إرفاق ببطاقة…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "16 حرفًا كحد أقصى"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "إرفاق"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "مريح"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "إعادة تحميل صور البطاقات"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "إعادة تحميل الصور"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "جارٍ إعادة تحميل صور البطاقات"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

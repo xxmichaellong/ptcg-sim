@@ -505,6 +505,23 @@ const openMarker = (
       ) ?? null)
     : null;
 
+/**
+ * Whether a marker's controls stay open: while the marker lies on its card;
+ * a Pokémon's damage controls, while it is in play with or without a counter
+ * (they put the first one on, and stepping down to none leaves them open).
+ */
+const markerControlsStayOpen = (
+  view: MatchViewState,
+  scene: BoardScene,
+  controls: BoardMarkerControlsState | null | undefined
+): boolean =>
+  openMarker(scene, controls) !== null ||
+  (controls?.kind === 'damage' &&
+    hasCard(scene, controls.cardId) &&
+    Object.values(view.stacks).some(
+      (stack) => stack.evolutionCards.at(-1)?.id === controls.cardId
+    ));
+
 const clearLocalPresentation = (
   state: BoardSessionControllerState
 ): Pick<
@@ -670,7 +687,9 @@ const reconcilePresentation = (
       preview: reconciledPreview,
       input: reconciledInput,
       ...markerOverlay(
-        openMarker(scene, state.overlays.marker) ? state.overlays.marker : null
+        markerControlsStayOpen(view, scene, state.overlays.marker)
+          ? state.overlays.marker
+          : null
       ),
     },
   };
@@ -1707,7 +1726,7 @@ const handleOverlayAction = (
   const fromMarkerControls =
     request.kind === 'context' &&
     state.overlays.marker?.cardId === request.cardId &&
-    openMarker(scene, state.overlays.marker) !== null &&
+    markerControlsStayOpen(view, scene, state.overlays.marker) &&
     (state.overlays.marker.kind === 'damage'
       ? request.action === 'setDamage' && 'value' in request
       : state.overlays.marker.kind === 'specialCondition'
@@ -1782,26 +1801,28 @@ const handleOverlayAction = (
   }
   if ('input' in resolution) {
     const local = clearLocalPresentation(state);
-    // A Special Condition is chosen from the chips beside its marker (put on
-    // as Poisoned when there was none, as v1's editor started), not typed.
-    // The marker lies on the Pokémon's top card, whichever of its cards (an
-    // Energy, a lower Stage) the menu was opened on.
-    const chipsFor =
-      resolution.input.kind === 'specialCondition'
-        ? (topCardOfStackHolding(view, resolution.input.cardId) ??
-          resolution.input.cardId)
+    // Damage and a Special Condition are set with the controls beside their
+    // marker: damage typed into its number (selected, as v1's editor was)
+    // or stepped by 10, a condition picked from the chips (put on as
+    // Poisoned when there was none, as v1's editor started). The marker
+    // lies on the Pokémon's top card, whichever of its cards (an Energy, a
+    // lower Stage) the menu was opened on.
+    const input = resolution.input;
+    const controlsFor =
+      input.kind === 'specialCondition' || input.kind === 'damage'
+        ? {
+            cardId: topCardOfStackHolding(view, input.cardId) ?? input.cardId,
+            kind: input.kind,
+            takesFocus: true as const,
+          }
         : null;
     const next = nextState(state, {
       ...local,
       overlays: {
         contextMenuCardId: null,
         preview: null,
-        input: chipsFor ? null : resolution.input,
-        ...markerOverlay(
-          chipsFor
-            ? { cardId: chipsFor, kind: 'specialCondition', takesFocus: true }
-            : null
-        ),
+        input: controlsFor ? null : input,
+        ...markerOverlay(controlsFor),
       },
     });
     return accepted(next, [

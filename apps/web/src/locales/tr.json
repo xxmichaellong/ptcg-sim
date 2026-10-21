@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Bir karta birleştir / ekle…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "En fazla 16 karakter"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Ekle"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Rahat"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Kart görsellerini yeniden yükle"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Görselleri yenile"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Kart görselleri yeniden yükleniyor"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

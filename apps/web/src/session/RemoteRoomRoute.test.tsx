@@ -47,7 +47,6 @@ const boardHarness = vi.hoisted(() => ({
   props: undefined as BoardProps | undefined,
   revision: undefined as number | undefined,
   replaying: false,
-  refreshImages: 0,
   /** Whether the board would offer Flip (Solo, spectators, coaching). */
   switchSide: false,
   pressed: [] as string[],
@@ -109,9 +108,6 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
       React.useImperativeHandle(
         props.commandsRef,
         () => ({
-          refreshImages: () => {
-            boardHarness.refreshImages += 1;
-          },
           flipBoard: () => undefined,
           canFlipBoard: () => boardHarness.switchSide,
         }),
@@ -564,7 +560,6 @@ describe('RemoteRoomRoute', () => {
     boardHarness.props = undefined;
     boardHarness.revision = undefined;
     boardHarness.replaying = false;
-    boardHarness.refreshImages = 0;
     boardHarness.switchSide = false;
     boardHarness.pressed = [];
     boardViewSettings().reset();
@@ -632,7 +627,6 @@ describe('RemoteRoomRoute', () => {
         'importReplay',
         'exportState',
         'fullscreenButton',
-        'reloadImagesButton',
       ])
     );
     // Solo has no room to leave and nothing to save online.
@@ -648,10 +642,6 @@ describe('RemoteRoomRoute', () => {
     await closeMenu();
     await click('#p2Button');
     expect(onMultiplayerNavigate).toHaveBeenCalledOnce();
-
-    // The menu reaches the table's own commands.
-    await chooseMenuItem('reloadImagesButton');
-    expect(boardHarness.refreshImages).toBe(1);
     expect(socket.commands()).toEqual([]);
 
     await act(async () => root.unmount());

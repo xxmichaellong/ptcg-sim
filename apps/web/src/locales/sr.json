@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "Састави / прикачи на карту…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "Највише 16 знакова"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Прикачи"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Опуштено"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "Поново учитај слике карата"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "Поново учитај слике"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "Слике карата се поново учитавају"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",

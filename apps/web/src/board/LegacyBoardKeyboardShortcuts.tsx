@@ -25,8 +25,6 @@ export interface LegacyBoardKeyboardShortcutsProps {
       { readonly kind: 'CardPreviewRequested' | 'ZoneOpened' }
     >
   ) => void;
-  /** Local renderer reconstruction; it never enters the command reducer. */
-  readonly onRefreshScene?: () => void;
   /** Local board-perspective swap; it never enters the command reducer. */
   readonly onFlipBoard?: () => void;
   /** Local presentation dismissal; it never enters the command reducer. */
@@ -125,7 +123,6 @@ export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
   onLocalIntent,
-  onRefreshScene,
   onFlipBoard,
   onDismissPresentation,
   onDeclareMulligan,
@@ -213,16 +210,14 @@ export const LegacyBoardKeyboardShortcuts = ({
         if (boardFlipEnabled || isSpectator) onFlipBoard?.();
         return;
       }
-      const refreshesScene =
-        input.key.toLowerCase() === 'r' || input.code === 'KeyR';
+      // R turns a selected card; v1 also refreshed the table with it, which
+      // card images retrying by themselves made unneeded.
+      const pressesR = input.key.toLowerCase() === 'r' || input.code === 'KeyR';
       const viewsDeckOrCard =
         input.key.toLowerCase() === 'v' || input.code === 'KeyV';
       // V1 keeps selectingCard true for a full view and consumes subsequent
       // player keys without reopening the deck or mutating the selected card.
-      if (
-        (refreshesScene || viewsDeckOrCard) &&
-        state.overlays.preview !== null
-      ) {
+      if ((pressesR || viewsDeckOrCard) && state.overlays.preview !== null) {
         if (!isSpectator && event.cancelable) event.preventDefault();
         return;
       }
@@ -268,9 +263,6 @@ export const LegacyBoardKeyboardShortcuts = ({
           ? null
           : resolveLegacyBoardGlobalShortcutKey(input)) ??
         (selectedCardId === null ? enabledUnselectedRequest : null);
-      if (selectedCardId === null && refreshesScene) {
-        onRefreshScene?.();
-      }
       if (!request) {
         if (
           selectedCardId !== null &&
@@ -305,7 +297,6 @@ export const LegacyBoardKeyboardShortcuts = ({
     onDismissPresentation,
     onLocalIntent,
     onFlipBoard,
-    onRefreshScene,
     onRequest,
     deckViewZoneId,
     isSpectator,

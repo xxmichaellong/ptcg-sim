@@ -591,11 +591,6 @@ export const RemoteRoomRoute = ({
           onFullscreen: () => {
             if (!requestFullscreen()) toast(fullscreenRefusedNotice());
           },
-          onReloadImages: () => {
-            boardCommands.current?.refreshImages();
-            // Nothing changes on the table when every image already loaded.
-            toast({ id: 'reload-images', title: t`Reloading card images` });
-          },
           ...(canCopy
             ? { onCopyInvitation: () => void copyInvitation('player') }
             : {}),

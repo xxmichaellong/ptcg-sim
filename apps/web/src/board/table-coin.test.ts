@@ -119,17 +119,34 @@ describe('tableCoinSpots', () => {
     }
   });
 
-  it('keeps the coin level with the Active where the row is clear', () => {
+  it('lays the coin toward the middle of the table and out to the player’s right where the row is clear', () => {
     const layout = layoutAt(1440, 900);
-    const [own] = tableCoinSpots(layout);
-    const activeRect = active(layout, blue);
-    expect(centre(own!.rect).y).toBeCloseTo(
-      activeRect.y + activeRect.height / 2,
-      6
-    );
-    // Past the Stadium, in the felt the far player's staging area mirrors.
+    const [own, theirs] = tableCoinSpots(layout);
+    const mine = active(layout, blue);
+    expect(centre(own!.rect).y).toBeCloseTo(mine.y + mine.height * 0.25, 6);
+    // Past the Stadium, nearer the piles than the Active.
     const stadium = layout.shared.stadium.physicalDeclaredBounds;
     expect(own!.rect.x).toBeGreaterThan(stadium.x + stadium.width);
+    const piles = layout.players
+      .find((frame) => frame.playerId === blue)!
+      .regions.filter(
+        (region) =>
+          region.physicalDeclaredBounds.x > mine.x + mine.width &&
+          region.physicalDeclaredBounds.y < mine.y + mine.height &&
+          region.physicalDeclaredBounds.y +
+            region.physicalDeclaredBounds.height >
+            mine.y
+      )
+      .map((region) => region.physicalDeclaredBounds.x);
+    const rowEnd = Math.min(...piles);
+    expect(centre(own!.rect).x - (mine.x + mine.width)).toBeGreaterThan(
+      rowEnd - centre(own!.rect).x
+    );
+    // The far half is turned around: toward the middle is down, and their
+    // right is the viewer's left.
+    const far = active(layout, red);
+    expect(centre(theirs!.rect).y).toBeCloseTo(far.y + far.height * 0.75, 6);
+    expect(theirs!.rect.width).toBeCloseTo(own!.rect.width, 0);
   });
 
   it('drops below the Stadium where it reaches into a phone’s row', () => {

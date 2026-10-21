@@ -350,16 +350,23 @@ export const BOARD_SURFACE_CSS = `
   outline-offset: -1.5px;
 }
 /* The mat prints no names. An empty spot says what it is for while the
-   pointer rests on it: its name eases in and the spot lightens a touch. */
+   pointer rests on it: its name eases in, large and faint across the middle
+   of the spot as a mat prints it, and the spot lightens a touch. */
+.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label] {
+  container-type: inline-size;
+}
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label]::after {
   content: attr(data-zone-label);
   position: absolute;
-  left: 8px;
-  right: 8px;
-  top: 6px;
+  inset: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-felt-label, rgb(255 255 255 / 0.45));
   /* In the card game's own typeface, like a real mat. */
-  font: 600 11px/1.15 var(--font-display, sans-serif);
+  font: 600 clamp(13px, 11cqi, 26px)/1.1 var(--font-display, sans-serif);
+  letter-spacing: 0.01em;
+  text-align: center;
   pointer-events: none;
   /* A long name (a translation, a narrow spot on a phone) wraps inside the
      spot rather than running out of it. */
@@ -386,7 +393,8 @@ export const BOARD_SURFACE_CSS = `
     outline-color: var(--color-felt-hover-line, oklch(1 0 0 / 0.24));
   }
   .ptcgsim-board-surface[data-geometry='2'][data-dragging='false'] .ptcgsim-zone[data-zone-outline='true'][data-zone-empty][data-zone-label]:not([data-drop-target]):hover::after {
-    opacity: 1;
+    /* Faint: it says what the spot is for without standing out. */
+    opacity: 0.55;
     translate: 0 0;
   }
 }
@@ -396,25 +404,16 @@ export const BOARD_SURFACE_CSS = `
 }
 /* Piles print their name under the card spot, centred, as on the mat. */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label]::after {
-  left: 4px;
-  right: 4px;
-  top: auto;
-  bottom: 8px;
-  font-size: 9px;
-  text-align: center;
+  inset: auto 4px 8px;
+  display: block;
+  font-size: clamp(9px, 14cqi, 13px);
   white-space: normal;
 }
 /* Counted piles keep their name clear of the badge on the near corner. */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='local']::after {
   right: 16px;
 }
-/* The opponent's mat is turned round: its labels sit at the far corner. */
-.ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
-  left: auto;
-  top: auto;
-  right: 8px;
-  bottom: 6px;
-}
+/* The opponent's mat is turned round: a pile's name sits at its far end. */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
   left: 16px;
   right: 4px;

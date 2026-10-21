@@ -437,13 +437,6 @@ export const HOTKEY_ACTIONS = [
     scope: 'table',
     defaultChord: 'u',
   }),
-  action('table.refreshImages', {
-    group: 'table',
-    label: msg`Reload card images`,
-    short: msg({ message: 'Reload images', context: 'shortcut key caption' }),
-    scope: 'table',
-    defaultChord: 'r',
-  }),
   action('table.closePopups', {
     group: 'table',
     label: msg`Close popups`,

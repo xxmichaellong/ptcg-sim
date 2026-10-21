@@ -1,6 +1,5 @@
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
@@ -54,7 +53,6 @@ export interface AppMenuModel {
   readonly onPlayOnline?: () => void;
   readonly onDeck?: () => void;
   readonly onSettings: () => void;
-  readonly onReloadImages?: () => void;
   readonly onCopyInvitation?: () => void;
   readonly onFullscreen?: () => void;
   /** Saves and replays; each present only where it applies. */
@@ -140,7 +138,6 @@ const primaryEntries = (
 /** Everything else, behind the toolbar's last button (More). */
 const restEntries = (
   model: AppMenuModel,
-  reloadHint: string | undefined,
   fullscreen: boolean
 ): ActionMenuEntry[] => {
   const entries: ActionMenuEntry[] = [];
@@ -218,15 +215,6 @@ const restEntries = (
             onSelect: model.onFullscreen,
           }
     );
-  }
-  if (model.onReloadImages) {
-    viewEntries.push({
-      id: 'reloadImagesButton',
-      label: t`Reload card images`,
-      icon: ArrowClockwiseIcon,
-      ...(reloadHint ? { hint: reloadHint } : {}),
-      onSelect: model.onReloadImages,
-    });
   }
   if (viewEntries.length > 0) {
     if (entries.length > 0) entries.push({ kind: 'separator' });
@@ -366,7 +354,7 @@ export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
   const items = useRef<HTMLDivElement>(null);
   useDrawerWidth(drawer, items, open);
   const primary = primaryEntries(model, hint('table.shortcuts'), touchOnly);
-  const rest = restEntries(model, hint('table.refreshImages'), fullscreen);
+  const rest = restEntries(model, fullscreen);
   const header = model.heading ? (
     <div className="ptcgsim-app-menu-heading">{model.heading}</div>
   ) : undefined;

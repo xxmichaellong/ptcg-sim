@@ -1160,10 +1160,6 @@
     "message": "Assemble / attach to a card…",
     "translation": "카드에 조립 / 붙이기…"
   },
-  "M8trPI": {
-    "message": "At most 16 characters",
-    "translation": "최대 16자"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "붙이기"
@@ -3608,19 +3604,6 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "느긋하게"
-  },
-  "_69oQs": {
-    "message": "Reload card images",
-    "translation": "카드 이미지 다시 불러오기"
-  },
-  "AAkPQs": {
-    "message": "Reload images",
-    "context": "shortcut key caption",
-    "translation": "이미지 다시 불러오기"
-  },
-  "v-RmnY": {
-    "message": "Reloading card images",
-    "translation": "카드 이미지를 다시 불러오는 중"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
