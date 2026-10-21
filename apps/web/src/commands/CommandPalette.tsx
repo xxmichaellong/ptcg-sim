@@ -62,6 +62,13 @@ const ARMED_MS = 5_000;
 const searchesInto = (command: PaletteCommand): boolean =>
   command.nestedSearch !== false;
 
+/** A key pressed on the deck screen itself, not in a dialog over it. */
+const inDeckScreenOnly = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target
+    .closest(`[${OVERLAY_SURFACE_ATTRIBUTE}]`)
+    ?.classList.contains('ptcgsim-deck-layer') === true;
+
 const isEditable = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable ||
@@ -87,13 +94,14 @@ const useCommandPaletteKeys = (): void => {
         (event.key.toLowerCase() === 'k' || event.code === 'KeyK');
       const open = isCommandPaletteOpen();
       if (open) {
-        // Only keys that type nothing in the search close it from inside.
+        // Only keys that type nothing close it from inside (Shift+` types ~).
         if (
           chordK ||
           (event.code === 'Backquote' &&
             !event.ctrlKey &&
             !event.metaKey &&
-            !event.altKey)
+            !event.altKey &&
+            !event.shiftKey)
         ) {
           event.preventDefault();
           event.stopPropagation();
@@ -103,7 +111,13 @@ const useCommandPaletteKeys = (): void => {
       }
       const bound = latest.current.resolve(event, 'table') === 'table.commands';
       if (!chordK && !bound) return;
-      if (isEditable(event.target) || isOverlayKeyTarget(event.target)) return;
+      // Not while typing, nor from a dialog; the deck screen, a whole page
+      // over the table, is not one.
+      if (
+        isEditable(event.target) ||
+        (isOverlayKeyTarget(event.target) && !inDeckScreenOnly(event.target))
+      )
+        return;
       event.preventDefault();
       event.stopPropagation();
       openCommandPalette();
@@ -297,6 +311,26 @@ export const CommandPalette = ({
     return () => clearTimeout(timer);
   }, [flashed]);
 
+  // Escape is the palette's while it is open, before anything under it
+  // listening on the document (a marker's controls) can take it.
+  const layer = useRef<HTMLDivElement>(null);
+  const backRef = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    const escape = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape' || event.isComposing) return;
+      if (
+        !(event.target instanceof Node) ||
+        !layer.current?.contains(event.target)
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      backRef.current();
+    };
+    window.addEventListener('keydown', escape, true);
+    return () => window.removeEventListener('keydown', escape, true);
+  }, []);
+
   // Focus: the field while open; back where it was when closed.
   useLayoutEffect(() => {
     opener.current = document.activeElement;
@@ -430,6 +464,8 @@ export const CommandPalette = ({
     else if (path.length > 0) setPath(path.slice(0, -1));
     else onClose();
   };
+
+  backRef.current = back;
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>): void => {
     // Typing in the palette is never a table shortcut.
@@ -611,6 +647,7 @@ export const CommandPalette = ({
 
   return (
     <div
+      ref={layer}
       className="ptcgsim-command-palette-layer"
       {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'dialog' }}
     >

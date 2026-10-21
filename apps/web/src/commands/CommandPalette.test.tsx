@@ -154,6 +154,47 @@ describe('CommandPalette', () => {
     expect(isCommandPaletteOpen()).toBe(false);
   });
 
+  it('opens from the deck screen, though not from a dialog', async () => {
+    const deckScreen = document.createElement('div');
+    deckScreen.className = 'ptcgsim-deck-layer';
+    deckScreen.setAttribute('data-ptcgsim-overlay', 'dialog');
+    const deckButton = document.createElement('button');
+    deckScreen.append(deckButton);
+    const dialog = document.createElement('div');
+    dialog.setAttribute('data-ptcgsim-overlay', 'dialog');
+    const dialogButton = document.createElement('button');
+    dialog.append(dialogButton);
+    document.body.append(deckScreen, dialog);
+    await press({ key: '`', code: 'Backquote' }, dialogButton);
+    expect(isCommandPaletteOpen()).toBe(false);
+    await press({ key: '`', code: 'Backquote' }, deckButton);
+    expect(isCommandPaletteOpen()).toBe(true);
+    deckScreen.remove();
+    dialog.remove();
+  });
+
+  it('types ~ (Shift+`) rather than closing', async () => {
+    await open();
+    await press({ key: '~', code: 'Backquote', shiftKey: true });
+    expect(isCommandPaletteOpen()).toBe(true);
+  });
+
+  it('takes Escape before anything under it listening on the document', async () => {
+    const underneath = vi.fn((event: KeyboardEvent) => {
+      if (event.key === 'Escape') event.stopPropagation();
+    });
+    document.addEventListener('keydown', underneath, true);
+    await open();
+    await type('attack');
+    await press({ key: 'Escape' });
+    document.removeEventListener('keydown', underneath, true);
+    expect(field()?.value).toBe('');
+    expect(isCommandPaletteOpen()).toBe(true);
+    expect(
+      underneath.mock.calls.some(([event]) => event.key === 'Escape')
+    ).toBe(false);
+  });
+
   it('runs the chosen command with Enter, after moving with the arrows', async () => {
     await open();
     expect(selected()?.textContent).toContain('Attack');
