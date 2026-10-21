@@ -26,6 +26,7 @@ import {
 import type {
   BoardActionOrigin,
   BoardSessionControllerState,
+  OpenedZoneCardIntent,
 } from '../board/BoardSessionController.js';
 import { actingPlayerIdOf } from '../board/acting-seat.js';
 import { selectLegacyContextEntries } from '../board/overlays/LegacyBoardOverlays.js';
@@ -54,6 +55,8 @@ import type { CommandSection, PaletteCommand } from './types.js';
 export interface BoardCommandRuntime {
   readonly getBoardSnapshot: () => BoardSessionControllerState | undefined;
   readonly emitIntent: (intent: BoardIntent) => unknown;
+  /** For a card in the pile that is open. */
+  readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => unknown;
   readonly emitLegacyShortcutAction: (
     request: LegacyBoardShortcutActionRequest,
     origin?: BoardActionOrigin
@@ -165,18 +168,37 @@ export const boardCommands = (
   ): PaletteCommand[] => {
     const commands: PaletteCommand[] = [];
     const detail = card.label;
-    commands.push({
-      id: `${prefix}.view`,
-      title: t`Show the card`,
-      section,
-      detail,
-      icon: EyeIcon,
-      hint: hint('card.view'),
-      keywords: ['view', 'preview', 'zoom', 'read'],
-      run: () => {
-        runtime.emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
-      },
-    });
+    // A closed pile's buried card is shown over its pile, opened for it.
+    const pile = card.interactive
+      ? undefined
+      : scene.zones.find(
+          (zone) => zone.id === card.parentId && zone.interactive
+        );
+    if (card.interactive || pile) {
+      commands.push({
+        id: `${prefix}.view`,
+        title: t`Show the card`,
+        section,
+        detail,
+        icon: EyeIcon,
+        hint: hint('card.view'),
+        keywords: ['view', 'preview', 'zoom', 'read'],
+        run: () => {
+          if (!pile) {
+            runtime.emitIntent({
+              kind: 'CardPreviewRequested',
+              cardId: card.id,
+            });
+            return;
+          }
+          runtime.emitIntent({ kind: 'ZoneOpened', zoneId: pile.id });
+          runtime.emitOpenedZoneCardIntent({
+            kind: 'CardPreviewRequested',
+            cardId: card.id,
+          });
+        },
+      });
+    }
     if (!live || card.concealed) return commands;
     for (const entry of HOTKEY_ACTIONS) {
       if (
@@ -243,13 +265,19 @@ export const boardCommands = (
           initial: Math.min(10, damage),
           title: (count) => t`Take off ${count} damage`,
         },
-        run: ({ count = 10 }) =>
+        run: ({ count = 10 }) => {
+          // What is on it now: it may have changed while the number was
+          // being typed.
+          const now =
+            runtime.getBoardSnapshot()?.view?.stacks[card.parentId]?.damage;
+          if (!now) return;
           overlay({
             kind: 'context',
             action: 'setDamage',
             cardId: card.id,
-            value: String(Math.max(0, damage - count)),
-          })(),
+            value: String(Math.max(0, now - count)),
+          })();
+        },
       });
     }
     const menu = new Set(

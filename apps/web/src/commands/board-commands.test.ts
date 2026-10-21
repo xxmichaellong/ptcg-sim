@@ -34,14 +34,22 @@ const stateWith = (
 });
 
 const runtimeFor = (state: BoardSessionControllerState) => {
-  const runtime = {
+  const runtime: BoardCommandRuntime & {
+    getBoardSnapshot: () => BoardSessionControllerState | undefined;
+  } = {
     getBoardSnapshot: () => state,
     emitIntent: vi.fn(),
+    emitOpenedZoneCardIntent: vi.fn(),
     emitLegacyShortcutAction: vi.fn(() => true),
     emitLegacyOverlayAction: vi.fn(() => true),
     declareDeckView: vi.fn(),
-  } satisfies BoardCommandRuntime;
-  return runtime;
+  };
+  return runtime as typeof runtime & {
+    emitIntent: ReturnType<typeof vi.fn>;
+    emitOpenedZoneCardIntent: ReturnType<typeof vi.fn>;
+    emitLegacyShortcutAction: ReturnType<typeof vi.fn>;
+    emitLegacyOverlayAction: ReturnType<typeof vi.fn>;
+  };
 };
 
 const ids = (commands: readonly PaletteCommand[]) =>
@@ -146,6 +154,19 @@ describe('boardCommands', () => {
       { kind: 'context', action: 'setDamage', cardId, value: '70' },
       'palette'
     );
+    // Changed while the number was typed: taken off what is there now.
+    runtime.getBoardSnapshot = () => ({
+      ...damaged,
+      view: {
+        ...damaged.view!,
+        stacks: { ...view.stacks, [active.id]: { ...active, damage: 150 } },
+      },
+    });
+    remove.run!({ count: 50 });
+    expect(runtime.emitLegacyOverlayAction).toHaveBeenLastCalledWith(
+      { kind: 'context', action: 'setDamage', cardId, value: '100' },
+      'palette'
+    );
     // None to take off: v1's Alt+number would put it on instead.
     const undamaged = stateWith({
       view: {
@@ -180,6 +201,34 @@ describe('boardCommands', () => {
     ).toBe(true);
     const first = cards[0]!;
     expect(first.detail).toMatch(/^Your/u);
+  });
+
+  it("shows a closed pile's buried card over its pile, opened for it", () => {
+    const state = stateWith();
+    const runtime = runtimeFor(state);
+    const buried = scene.cards.find(
+      (card) =>
+        !card.interactive &&
+        !card.concealed &&
+        view.zones[card.parentId]?.kind === 'discard'
+    )!;
+    const cards = find(
+      boardCommands({ runtime, hint: () => undefined }),
+      'cards.find'
+    ).submenu!().commands;
+    const row = cards.find((card) => card.id === `cards.card.${buried.id}`);
+    // Copies lying together are one row: act on whichever stands for them.
+    const actions = (row ?? cards.find((card) => card.title === buried.label)!)
+      .submenu!().commands;
+    const show = actions.find((command) => command.id.endsWith('.view'))!;
+    show.run!({});
+    expect(runtime.emitIntent).toHaveBeenCalledWith({
+      kind: 'ZoneOpened',
+      zoneId: buried.parentId,
+    });
+    expect(runtime.emitOpenedZoneCardIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'CardPreviewRequested' })
+    );
   });
 
   it('offers a spectator only what changes nothing in the room', () => {

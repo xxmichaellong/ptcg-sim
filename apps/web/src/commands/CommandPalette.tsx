@@ -381,7 +381,17 @@ export const CommandPalette = ({
 
   const answer = (): void => {
     if (!asking) return;
-    const { command } = asking;
+    // The command as the table has it now: one that changed while its
+    // number was typed runs as it is now; one that is gone runs nothing.
+    const command = flattenCommands(
+      screen ? screen.commands : root,
+      searchesInto
+    ).find((entry) => entry.command.id === asking.command.id)?.command;
+    if (!command) {
+      setAsking(null);
+      setProblem(null);
+      return;
+    }
     if (asking.kind === 'count' && command.count) {
       const value = draft.trim();
       const count = /^\d+$/u.test(value) ? Number(value) : Number.NaN;

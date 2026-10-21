@@ -237,6 +237,37 @@ describe('CommandPalette', () => {
     expect(isCommandPaletteOpen()).toBe(false);
   });
 
+  it('runs the command as it is when the number is given, not as it was asked', async () => {
+    await open();
+    await type('draw cards');
+    await press({ key: 'Enter' });
+    const later = vi.fn();
+    const replace = registerCommandSource({
+      commands: () => [
+        {
+          id: 'deck.draw',
+          title: 'Draw cards…',
+          section: 'deck',
+          count: {
+            label: 'How many?',
+            min: 1,
+            max: 9,
+            title: (n) => `Draw ${n}`,
+          },
+          run: ({ count }) => later(count),
+        },
+      ],
+    });
+    unregister();
+    await act(async () => undefined);
+    await type('2');
+    await press({ key: 'Enter' });
+    replace();
+    unregister = registerCommandSource({ commands: () => commands });
+    expect(later).toHaveBeenCalledWith(2);
+    expect(counted).not.toHaveBeenCalled();
+  });
+
   it('asks for text, and sends nothing empty', async () => {
     await open();
     await type('say');
