@@ -119,6 +119,16 @@ const zoneCentre = async (
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 };
 
+/** The middle of a card as drawn. */
+const cardCentre = async (
+  page: Page,
+  cardId: string
+): Promise<{ readonly x: number; readonly y: number }> => {
+  const box = await page.locator(`[data-card-id="${cardId}"]`).boundingBox();
+  if (!box) throw new Error(`Missing card ${cardId}`);
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+};
+
 /** Presses, carries the card over in steps, and lets go once the table says so. */
 const drag = async (
   page: Page,
@@ -239,5 +249,53 @@ test("a whole Pokémon moves onto the other player's Bench and Active, and back"
   await expect(page.locator('#chatbox')).toContainText(
     /moved Main Mon from active to .+'s bench/u
   );
+  expect(errors).toEqual([]);
+});
+
+test("held over one of the other player's Benched Pokémon, a Pokémon joins their Bench there", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await openSoloTable(page);
+  const [first, second] = await handPokemon(page, 2);
+  await drag(
+    page,
+    await exposedPoint(page, first!),
+    await zoneCentre(page, 'active', 'local')
+  );
+  await drag(
+    page,
+    await exposedPoint(page, second!),
+    await zoneCentre(page, 'bench', 'opponent')
+  );
+  const theirs = await placement(page, second!);
+  expect(theirs).toMatchObject({ side: 'opponent', slot: 'bench' });
+  const active = await placement(page, first!);
+
+  // Held centre over centre on their Benched one, their Bench opens a
+  // place; nothing is swapped.
+  await drag(
+    page,
+    await cardCentre(page, first!),
+    await cardCentre(page, second!),
+    async () => {
+      await expect(
+        page.locator(
+          '.ptcgsim-zone[data-zone-kind="bench"][data-zone-side="opponent"][data-drop-target="true"]'
+        )
+      ).toHaveCount(1);
+      await expect(
+        page.locator(`[data-card-id="${first!}"] [data-drop-action="swap"]`)
+      ).toHaveCount(0);
+    }
+  );
+  await expect
+    .poll(() => placement(page, first!))
+    .toEqual({ stackId: active.stackId, side: 'opponent', slot: 'bench' });
+  await expect
+    .poll(() => placement(page, second!))
+    .toEqual({ stackId: theirs.stackId, side: 'opponent', slot: 'bench' });
   expect(errors).toEqual([]);
 });

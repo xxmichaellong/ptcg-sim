@@ -161,6 +161,55 @@ describe('free arrangement', () => {
     );
   });
 
+  it("places a Pokémon from the other board among that Bench's, and swaps on its own", () => {
+    const view = withBench();
+    const theirs = ['stack:blue:bench-1', 'stack:blue:bench-2'];
+    const crossed = {
+      ...view,
+      boards: {
+        ...view.boards,
+        [blue]: {
+          ...view.boards[blue]!,
+          benchStackIds: ['stack:blue:bench-0'],
+        },
+        [red]: { ...view.boards[red]!, benchStackIds: theirs },
+      },
+      stacks: {
+        ...view.stacks,
+        ...Object.fromEntries(
+          theirs.map((id) => [id, { ...view.stacks[id]!, boardPlayerId: red }])
+        ),
+      },
+    } as MatchViewState;
+    const scene = sceneOf(crossed);
+    const top = (stackId: string) =>
+      scene.cards.find(
+        (card) => card.parentId === stackId && card.role === 'stackEvolution'
+      )!;
+    const redBench = zoneOf(scene, 'bench', red);
+    const theirBenched = top(theirs[0]!);
+    // From Blue's Bench or Blue's Active, onto one of Red's Benched Pokémon:
+    // it joins Red's Bench where it is put.
+    expect(
+      benchRearrangementTarget(
+        scene,
+        top('stack:blue:bench-0').id,
+        theirBenched
+      )
+    ).toBe(redBench.id);
+    expect(
+      benchRearrangementTarget(scene, top('stack:blue:active').id, theirBenched)
+    ).toBe(redBench.id);
+    // On its own board the Active still trades places with a Benched one.
+    expect(
+      benchRearrangementTarget(
+        scene,
+        top('stack:blue:active').id,
+        top('stack:blue:bench-0')
+      )
+    ).toBeNull();
+  });
+
   it('opens the gap the card will fill: the hand laid out as it will be', () => {
     const scene = sceneOf(base);
     const hand = inZone(scene, handId);

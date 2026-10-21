@@ -328,8 +328,25 @@ export const benchRearrangementTarget = (
     (zone) =>
       zone.kind === 'bench' &&
       zone.interactive &&
-      benchItems(scene, zone).some((item) => item.key === hitCard.parentId) &&
-      benchItems(scene, zone).some((item) => item.key === source.parentId)
+      benchItems(scene, zone).some((item) => item.key === hitCard.parentId)
   );
-  return bench?.id ?? null;
+  if (!bench) return null;
+  if (benchItems(scene, bench).some((item) => item.key === source.parentId))
+    return bench.id;
+  // From the other board, a Pokémon joins this Bench where it is put, as
+  // the room places it, rather than trading places with the one under it.
+  const sourceCards = scene.cards.filter(
+    (card) => card.parentId === source.parentId && STACK_ROLES.has(card.role)
+  );
+  const home = unionRect(sourceCards.map((card) => card.bounds));
+  const homeZone = scene.zones.find(
+    (zone) =>
+      (zone.kind === 'active' || zone.kind === 'bench') &&
+      containsPoint(zone.bounds, centreX(home), home.y + home.height / 2)
+  );
+  return homeZone?.playerId &&
+    bench.playerId &&
+    homeZone.playerId !== bench.playerId
+    ? bench.id
+    : null;
 };
