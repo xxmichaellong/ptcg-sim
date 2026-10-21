@@ -203,6 +203,68 @@ describe('boardCommands', () => {
     expect(first.detail).toMatch(/^Your/u);
   });
 
+  it('offers taking a Special Condition off only where there is one, and takes it off', () => {
+    const active = view.stacks[view.boards[bottom]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const presentation = {
+      ...createInitialBoardSessionControllerState().presentation,
+      selectedCardId: cardId,
+    };
+    const withCondition = (specialCondition: string | null) =>
+      stateWith({
+        view: {
+          ...view,
+          stacks: {
+            ...view.stacks,
+            [active.id]: { ...active, specialCondition },
+          },
+        },
+        presentation,
+      });
+    // None on it: Alt+Y's v1 behaviour would put Poisoned on instead.
+    expect(
+      ids(
+        boardCommands({
+          runtime: runtimeFor(withCondition(null)),
+          hint: () => undefined,
+        })
+      )
+    ).not.toContain('selected.removeCondition');
+    const runtime = runtimeFor(withCondition('P'));
+    find(
+      boardCommands({ runtime, hint: () => undefined }),
+      'selected.removeCondition'
+    ).run!({});
+    expect(runtime.emitLegacyOverlayAction).toHaveBeenCalledWith(
+      { kind: 'context', action: 'setSpecialCondition', cardId, value: '' },
+      'palette'
+    );
+    expect(runtime.emitLegacyShortcutAction).not.toHaveBeenCalled();
+  });
+
+  it('lets a selected face-down Prize do what its keys would, without showing its face', () => {
+    const prize = scene.cards.find(
+      (card) =>
+        card.concealed &&
+        view.zones[card.parentId]?.kind === 'prizes' &&
+        view.zones[card.parentId]?.ownerId === bottom
+    )!;
+    expect(prize).toBeDefined();
+    const commands = boardCommands({
+      runtime: runtimeFor(
+        stateWith({
+          presentation: {
+            ...createInitialBoardSessionControllerState().presentation,
+            selectedCardId: prize.id,
+          },
+        })
+      ),
+      hint: () => undefined,
+    }).filter((command) => command.section === 'selected');
+    expect(ids(commands)).toContain('selected.toHand');
+    expect(ids(commands)).not.toContain('selected.view');
+  });
+
   it('keeps two prints of one name apart, and copies of one card together', () => {
     const hand = Object.values(view.zones).find(
       (zone) => zone.kind === 'hand' && zone.ownerId === bottom

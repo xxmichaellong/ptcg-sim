@@ -174,7 +174,8 @@ export const boardCommands = (
       : scene.zones.find(
           (zone) => zone.id === card.parentId && zone.interactive
         );
-    if (card.interactive || pile) {
+    // A face-down card's own face is not the viewer's to see.
+    if (!card.concealed && (card.interactive || pile)) {
       commands.push({
         id: `${prefix}.view`,
         title: t`Show the card`,
@@ -199,12 +200,17 @@ export const boardCommands = (
         },
       });
     }
-    if (!live || card.concealed) return commands;
+    if (!live) return commands;
+    // A card picked out by the player (a face-down Prize, selected) does
+    // what its keys would: the resolver says which. Taking a condition off
+    // is offered below, only where there is one: Alt+Y alone puts Poisoned
+    // on a Pokémon with none, as v1's does.
     for (const entry of HOTKEY_ACTIONS) {
       if (
         entry.scope !== 'card' ||
         'digits' in entry ||
-        entry.id === 'card.view'
+        entry.id === 'card.view' ||
+        entry.id === 'card.removeCondition'
       )
         continue;
       const chord = parseChord(entry.defaultChord);
@@ -307,6 +313,24 @@ export const boardCommands = (
             cardId: card.id,
             value: String(count),
           })(),
+      });
+    }
+    const condition = view.stacks[card.parentId]?.specialCondition;
+    if (menu.has('setSpecialCondition') && condition) {
+      commands.push({
+        id: `${prefix}.removeCondition`,
+        title: t`Remove condition`,
+        section,
+        detail,
+        icon: SparkleIcon,
+        hint: hint('card.removeCondition'),
+        keywords: ['condition', 'cure', 'heal', 'remove'],
+        run: overlay({
+          kind: 'context',
+          action: 'setSpecialCondition',
+          cardId: card.id,
+          value: '',
+        }),
       });
     }
     if (menu.has('setSpecialCondition')) {
