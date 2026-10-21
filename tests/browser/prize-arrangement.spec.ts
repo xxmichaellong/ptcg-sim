@@ -229,11 +229,17 @@ const rearrange = async (
   await expect(
     page.locator(`[data-zone-id="${prizes}"][data-drop-target="true"]`)
   ).toHaveCount(1);
-  const held = await paintedAll(page, staying);
-  staying.forEach((id, index) => {
-    const cell = cells[expected.indexOf(id)]!;
-    expect(near(held[index]!, cell), `${id} while held`).toBe(true);
-  });
+  // They slide there; a slow runner reads them on the way.
+  await expect
+    .poll(async () => {
+      const held = await paintedAll(page, staying);
+      return staying
+        .filter(
+          (id, index) => !near(held[index]!, cells[expected.indexOf(id)]!)
+        )
+        .join(' ');
+    })
+    .toBe('');
   await watchZone(page, prizes);
   await putDown(page);
   const frames = await zoneFrames(page);
