@@ -20,6 +20,7 @@ import {
   type MatchViewState,
   type ViewCard,
 } from '@ptcgsim/game-core';
+import { fallBackCardImage } from '../card-image-retry.js';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -1261,4 +1262,64 @@ it('carries on a move the room re-aliases mid-flight, on its own clock', () => {
   }
   answeredRun.destroy();
   unanswered.destroy();
+});
+
+it("turns a stand-in over to the face its card shows, set once, the deck's own scan when the translation was missing", () => {
+  const { advance } = stubClock();
+  const { view, project, elementsFor } = tableOf();
+  const projection = project(view);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elementsFor(projection));
+  director.attach(document.createElement('div'), layer);
+  director.commit(
+    null,
+    projection,
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  // The new face's French scan was missing: the table shows the English.
+  const french = 'https://assets.tcgdex.net/fr/sv/sv06/130/high.webp';
+  const english = 'https://assets.tcgdex.net/en/sv/sv06/130/high.webp';
+  const missing = document.createElement('img');
+  missing.setAttribute('src', french);
+  fallBackCardImage(missing, english);
+  const pose = projection.pose(
+    projection.scene.cards.find((card) => card.renderKey !== null)!
+  );
+  const stand = director as unknown as {
+    addGhost: (
+      image: string,
+      from: typeof pose,
+      to: typeof pose,
+      at: number,
+      delay: number,
+      holdFor?: string,
+      toImage?: string
+    ) => string | null;
+    schedule: () => void;
+  };
+  stand.addGhost(
+    '/v2/assets/cardback.png',
+    pose,
+    pose,
+    0,
+    0,
+    undefined,
+    french
+  );
+  stand.schedule();
+  const img = layer.querySelector<HTMLImageElement>('.ptcgsim-card-ghost img')!;
+  const set: string[] = [];
+  Object.defineProperty(img, 'src', {
+    get: () => img.getAttribute('src') ?? '',
+    set: (value: string) => {
+      set.push(value);
+      img.setAttribute('src', value);
+    },
+  });
+  for (let at = 16; at <= 1600; at += 16) advance(at);
+  expect(set).toEqual([english]);
+  director.destroy();
 });

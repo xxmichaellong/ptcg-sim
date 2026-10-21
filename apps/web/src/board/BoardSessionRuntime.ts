@@ -50,6 +50,12 @@ export interface BoardSessionRuntimeOptions {
   readonly replay: BoardSessionReplaySource;
   readonly layout: BoardLayoutState;
   readonly createRenderer: (adapters: BoardRendererAdapters) => BoardRenderer;
+  /**
+   * Ask for card faces in the player's card language, for a renderer that
+   * falls back to the deck's own scan (`imageFallbackUrl`) where a
+   * translation is missing. Off, faces are the deck's own scans.
+   */
+  readonly localizeCardImages?: boolean;
   readonly transformView?: BoardSessionAdapterOptions['transformView'];
   readonly preferences?: BoardPreferences;
   /** Optional route observer; controller policy remains authoritative. */
@@ -151,6 +157,7 @@ const sameZoneScroll = (
  * parity and recovery evidence.
  */
 export class BoardSessionRuntime {
+  private readonly localizeCardImages: boolean;
   private readonly createRenderer: (
     adapters: BoardRendererAdapters
   ) => BoardRenderer;
@@ -181,6 +188,7 @@ export class BoardSessionRuntime {
     this.layoutState = retainLayoutState(options.layout);
     this.layoutSnapshot = retainLayoutSnapshot(this.layoutState);
     this.createRenderer = options.createRenderer;
+    this.localizeCardImages = options.localizeCardImages ?? true;
     this.preferences = options.preferences;
   }
 
@@ -644,7 +652,8 @@ export class BoardSessionRuntime {
         'Characterized layout player order does not match the projected view'
       );
     }
-    return localizeSceneCardImages(createBoardScene(view, snapshot));
+    const scene = createBoardScene(view, snapshot);
+    return this.localizeCardImages ? localizeSceneCardImages(scene) : scene;
   }
 
   private readonly handleBoardEffect = (

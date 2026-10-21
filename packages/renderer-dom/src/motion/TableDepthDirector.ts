@@ -1431,9 +1431,11 @@ export class TableDepthDirector {
               )
             : 1;
         if (progress >= 0.5) {
+          // What the card shows: the deck's own scan if its translation
+          // was missing. Set once; asked again, an image loads again.
           const img = ghost.element.querySelector('img');
-          if (img && img.getAttribute('src') !== ghost.toImage)
-            img.src = shownCardImage(ghost.toImage);
+          const shown = shownCardImage(ghost.toImage);
+          if (img && img.getAttribute('src') !== shown) img.src = shown;
         }
         const base = this.motion.poses.get(key);
         if (base && progress > 0 && progress < 1)

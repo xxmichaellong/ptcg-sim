@@ -243,3 +243,50 @@ test("a pile viewer keeps the deck's own scan once it loads, asking for a missin
     })
     .toBe(true);
 });
+
+test("the Pixi table, which can't fall back yet, keeps the deck's own scans", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await serveScans(page);
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ptcgsim.card-images.v1',
+      JSON.stringify({ cardImages: 'fr' })
+    );
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?renderer=pixi');
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  await openDeck(page);
+  await page.locator('#nativeDeckBuilderTargetMain').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'main.csv',
+    mimeType: 'text/csv',
+    buffer: deckCsv,
+  });
+  await page.locator('#nativeDeckBuilderPlayButton').click();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+  const faces = () =>
+    page.evaluate(() => {
+      const spike = window.__PTCG_RENDERER_SPIKE__;
+      return {
+        renderer: spike?.rendererKind,
+        urls: (spike?.scene.cards ?? [])
+          .map((card) => card.imageUrl)
+          .filter((url) => url.includes('tcgdex')),
+      };
+    });
+  await expect
+    .poll(async () => {
+      const { renderer, urls } = await faces();
+      return renderer === 'pixi' && urls.length > 0;
+    })
+    .toBe(true);
+  const { urls } = await faces();
+  expect(urls.every((url) => url.includes('/en/'))).toBe(true);
+});
