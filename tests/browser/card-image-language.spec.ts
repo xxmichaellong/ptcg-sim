@@ -204,6 +204,7 @@ test("a pile viewer keeps the deck's own scan once it loads, asking for a missin
         .map((face) => ({
           state: face.getAttribute('data-overlay-image-state'),
           src: face.querySelector('img')?.getAttribute('src') ?? '',
+          shown: face.querySelector('img')?.style.opacity === '1',
         }))
         .filter((face) => face.src.includes('/dp/dp1/'))
     );
@@ -222,7 +223,23 @@ test("a pile viewer keeps the deck's own scan once it loads, asking for a missin
   expect(oldFrench()).toBe(settled);
   expect(
     (await oldFaces()).every(
-      (face) => face.state === 'ready' && face.src === OLD_EN
+      (face) => face.state === 'ready' && face.src === OLD_EN && face.shown
     )
   ).toBe(true);
+
+  // Built again (the window resized), the table asks for the deck's scan
+  // itself; what has loaded stays shown.
+  await page.setViewportSize({ width: 1400, height: 880 });
+  await page.waitForTimeout(500);
+  await expect
+    .poll(async () => {
+      const faces = await oldFaces();
+      return (
+        faces.length > 0 &&
+        faces.every(
+          (face) => face.state === 'ready' && face.src === OLD_EN && face.shown
+        )
+      );
+    })
+    .toBe(true);
 });
