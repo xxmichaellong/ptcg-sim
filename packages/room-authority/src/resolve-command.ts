@@ -496,6 +496,13 @@ export const resolveWireCommand = (
     case 'MovePlayStack': {
       const stack = state.stacks[wire.stackId];
       if (!stack) return rejected('stale_reference');
+      // Moved to the other board since it was seen: a stale move.
+      if (
+        wire.expectedSourceBoardPlayerId !== undefined &&
+        wire.expectedSourceBoardPlayerId !== stack.boardPlayerId
+      ) {
+        return rejected('stale_reference');
+      }
       if (
         !ownsStack(state, actorId, wire.stackId) &&
         !policy.allowOpponentPublicInteraction
@@ -539,6 +546,13 @@ export const resolveWireCommand = (
         command: {
           type: 'MovePlayStack',
           stackId: asStackId(wire.stackId),
+          ...(wire.expectedSourceBoardPlayerId === undefined
+            ? {}
+            : {
+                expectedSourceBoardPlayerId: asPlayerId(
+                  wire.expectedSourceBoardPlayerId
+                ),
+              }),
           expectedSourceSlot: wire.expectedSourceSlot,
           expectedActiveStackId: wire.expectedActiveStackId
             ? asStackId(wire.expectedActiveStackId)

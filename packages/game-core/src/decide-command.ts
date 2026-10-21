@@ -1496,6 +1496,12 @@ export const decideCommand = (
       if (stack.slot !== command.expectedSourceSlot) {
         return reject('stale_reference', 'Play stack source slot changed');
       }
+      if (
+        command.expectedSourceBoardPlayerId !== undefined &&
+        stack.boardPlayerId !== command.expectedSourceBoardPlayerId
+      ) {
+        return reject('stale_reference', 'Play stack changed boards');
+      }
       const board = state.boards[stack.boardPlayerId];
       if (!board) {
         return reject('not_found', 'Play stack board does not exist');

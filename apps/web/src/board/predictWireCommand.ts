@@ -778,7 +778,13 @@ const predict = (
     }
     case 'MovePlayStack': {
       const stack = view.stacks[command.stackId];
-      if (!stack || stack.slot !== command.expectedSourceSlot) return null;
+      if (
+        !stack ||
+        stack.slot !== command.expectedSourceSlot ||
+        (command.expectedSourceBoardPlayerId !== undefined &&
+          stack.boardPlayerId !== command.expectedSourceBoardPlayerId)
+      )
+        return null;
       const board = view.boards[stack.boardPlayerId];
       if (
         !board ||

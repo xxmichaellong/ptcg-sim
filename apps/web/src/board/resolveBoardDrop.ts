@@ -123,6 +123,7 @@ const moveStackAcross = (
     command: {
       type: 'MovePlayStack',
       stackId: stack.id,
+      expectedSourceBoardPlayerId: stack.boardPlayerId,
       expectedSourceSlot: stack.slot,
       expectedActiveStackId: source.activeStackId,
       expectedBenchStackIds: [...source.benchStackIds],
@@ -366,6 +367,7 @@ export const resolveBoardDrop = (
         command: {
           type: 'MovePlayStack',
           stackId: sourceStack.id,
+          expectedSourceBoardPlayerId: sourceStack.boardPlayerId,
           expectedSourceSlot: sourceStack.slot,
           expectedActiveStackId:
             view.boards[sourceStack.boardPlayerId]?.activeStackId ?? null,
@@ -490,6 +492,7 @@ export const resolveBoardDrop = (
         command: {
           type: 'MovePlayStack',
           stackId: sourceStack.id,
+          expectedSourceBoardPlayerId: sourceStack.boardPlayerId,
           expectedSourceSlot: sourceStack.slot,
           expectedActiveStackId:
             view.boards[sourceStack.boardPlayerId]?.activeStackId ?? null,

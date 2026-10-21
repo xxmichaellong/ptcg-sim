@@ -400,6 +400,19 @@ export const RemoteSessionBoard = ({
           readonly y: number;
         }
       | undefined;
+    // The table's markers and counts carry `data-board-hint` and take no
+    // pointer (renderer-dom board-hints.tsx): found by where they are.
+    const onBoardHint = (root: Element, x: number, y: number): boolean =>
+      Array.from(root.querySelectorAll('[data-board-hint]')).some((element) => {
+        const rect = element.getBoundingClientRect();
+        return (
+          rect.width > 0 &&
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom
+        );
+      });
     const cardIdAt = (target: EventTarget | null): string | undefined =>
       target instanceof Element
         ? (target.closest<HTMLElement>('[data-card-id]')?.dataset.cardId ??
@@ -410,6 +423,9 @@ export const RemoteSessionBoard = ({
       setTouchInput(touch);
       tap = undefined;
       if (!touch) return;
+      // A tap on a marker or a count lying on the card answers itself (its
+      // controls, its tooltip), not with the card's preview.
+      if (onBoardHint(host, event.clientX, event.clientY)) return;
       const cardId = cardIdAt(event.target);
       if (!cardId) return;
       tap = {

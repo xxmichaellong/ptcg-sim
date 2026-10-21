@@ -105,6 +105,12 @@ export type GameCommand =
   | {
       readonly type: 'MovePlayStack';
       readonly stackId: StackId;
+      /**
+       * The board the Pokémon was seen on. A Pokémon can change boards
+       * without changing id, and the other board may look just like the one
+       * a stale move was meant for; absent (older logs), not checked.
+       */
+      readonly expectedSourceBoardPlayerId?: PlayerId;
       readonly expectedSourceSlot: PlaySlot;
       readonly expectedActiveStackId: StackId | null;
       readonly expectedBenchStackIds: readonly StackId[];

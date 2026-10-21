@@ -45,6 +45,7 @@ describe('selected-card play placement', () => {
       command: {
         type: 'MovePlayStack',
         stackId: active.id,
+        expectedSourceBoardPlayerId: active.boardPlayerId,
         expectedSourceSlot: 'active',
         expectedActiveStackId: active.id,
         expectedBenchStackIds: [],

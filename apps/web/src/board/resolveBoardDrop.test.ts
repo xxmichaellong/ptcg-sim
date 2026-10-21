@@ -228,6 +228,8 @@ describe('board drop command resolution', () => {
       command: {
         type: 'MovePlayStack',
         stackId: stack.id,
+        // The board it was seen on: a Pokémon can change boards.
+        expectedSourceBoardPlayerId: stack.boardPlayerId,
         expectedSourceSlot: 'active',
         expectedActiveStackId: stack.id,
         expectedBenchStackIds: [],
@@ -246,6 +248,7 @@ describe('board drop command resolution', () => {
       command: {
         type: 'MovePlayStack',
         stackId: stack.id,
+        expectedSourceBoardPlayerId: stack.boardPlayerId,
         expectedSourceSlot: 'active',
         expectedActiveStackId: stack.id,
         expectedBenchStackIds: [],
@@ -271,6 +274,7 @@ describe('board drop command resolution', () => {
       command: {
         type: 'MovePlayStack',
         stackId: stack.id,
+        expectedSourceBoardPlayerId: stack.boardPlayerId,
         expectedSourceSlot: 'active',
         expectedActiveStackId: stack.id,
         expectedBenchStackIds: [],

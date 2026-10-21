@@ -112,6 +112,7 @@ export const resolveCardPlayMoveAction = (
       command: {
         type: 'MovePlayStack',
         stackId: sourceStack.id,
+        expectedSourceBoardPlayerId: sourceStack.boardPlayerId,
         expectedSourceSlot: sourceStack.slot,
         expectedActiveStackId: board.activeStackId,
         expectedBenchStackIds: [...board.benchStackIds],

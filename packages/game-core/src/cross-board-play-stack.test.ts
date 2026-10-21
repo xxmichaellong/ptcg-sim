@@ -298,6 +298,58 @@ describe('a Pokémon moved onto the other board', () => {
     expect(stableSerialize(state)).toBe(before);
   });
 
+  it('refuses a move queued on the board a Pokémon has since left, though the other looks the same', () => {
+    const commandContext = context();
+    let state = createEmptyMatch(asMatchId('across-stale'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    state = accepted(
+      state,
+      { type: 'LoadDeck', playerId: p1, entries: entries(p1) },
+      commandContext
+    );
+    const deckId = playerZoneId(p1, 'deck');
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: state.zones[deckId]!.cardIds[0]!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      commandContext
+    );
+    // Blue's lone Active, to be benched on Blue's board...
+    const lone = state.boards[p1]!.activeStackId!;
+    const benching = {
+      type: 'MovePlayStack',
+      stackId: lone,
+      expectedSourceBoardPlayerId: p1,
+      expectedSourceSlot: 'active',
+      expectedActiveStackId: lone,
+      expectedBenchStackIds: [],
+      destinationSlot: 'bench',
+    } as const satisfies GameCommand;
+    // ...is first moved into Red's empty Active Spot, where Red's board now
+    // reads exactly as Blue's did.
+    const moved = accepted(
+      state,
+      moveAcross(state, lone, p2, 'active'),
+      commandContext
+    );
+    expect(moved.boards[p2]).toEqual({
+      activeStackId: lone,
+      benchStackIds: [],
+    });
+    const stale = executeCommand(moved, benching, commandContext);
+    expect(stale.accepted).toBe(false);
+    // An older command, without the board, cannot tell.
+    const { expectedSourceBoardPlayerId: _board, ...legacy } = benching;
+    expect(executeCommand(moved, legacy, commandContext).accepted).toBe(true);
+  });
+
   it('puts an attached-card window back together on the other board', () => {
     const { state, commandContext } = table();
     const blueActive = state.boards[p1]!.activeStackId!;

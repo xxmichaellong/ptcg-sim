@@ -301,6 +301,8 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('MovePlayStack'),
     stackId: IdentifierSchema,
+    // The board it was seen on: a Pokémon can now change boards.
+    expectedSourceBoardPlayerId: v.optional(IdentifierSchema),
     expectedSourceSlot: v.picklist(['active', 'bench'] as const),
     expectedActiveStackId: v.nullable(IdentifierSchema),
     expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
