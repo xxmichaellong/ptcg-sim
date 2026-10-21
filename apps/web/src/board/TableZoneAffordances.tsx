@@ -173,12 +173,12 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         className="table-zone-affordance table-zone-affordance--lost-zone-hide"
         style={boxStyle(onScreen(bottomLostZone.physicalDeclaredBounds, depth))}
       >
-        <Tooltip content={t`Put the empty Lost Zone away`} side="left">
+        <Tooltip content={t`Hide Lost Zone`} side="left">
           <button
             id="hideLostZoneButton"
             type="button"
             className="table-zone-chip table-zone-chip--icon"
-            aria-label={t`Put the Lost Zone away`}
+            aria-label={t`Hide Lost Zone`}
             onClick={() => lostZone.onShownChange(false)}
           >
             <EyeSlashIcon {...decorative} weight="bold" />
@@ -240,12 +240,11 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         style={boxStyle(onScreen(extrasRect, depth))}
       >
         <ActionMenu
-          label={t`On the table`}
+          label={t`Lost Zone and markers`}
           side="top"
           align="start"
-          tooltip={t`Lost Zone, VSTAR and GX markers`}
+          tooltip={t`Lost Zone and markers`}
           entries={[
-            { kind: 'label', label: t`On the table` },
             ...(lostZone
               ? [
                   pieceEntry(

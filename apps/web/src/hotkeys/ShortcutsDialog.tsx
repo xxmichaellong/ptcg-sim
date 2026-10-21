@@ -475,7 +475,7 @@ const ShortcutRow = memo(function ShortcutRow({
         {fixed ? (
           <span
             className="ptcgsim-shortcut-key is-fixed"
-            title={t`Fixed: number keys and Esc always work this way`}
+            title={t`Can't be changed`}
           >
             {chord ? (
               <Keycaps chord={chord} entry={entry} platform={platform} />
@@ -715,7 +715,7 @@ const reservationMessage = (
   const reservation = reservedChord(chord, scope);
   if (!reservation) return null;
   if (reservation.kind === 'focus') {
-    return t`Tab moves between controls, so it cannot be a shortcut.`;
+    return t`Tab can't be a shortcut.`;
   }
   const key = keyLabel(chord.key);
   const name = i18n._(hotkeyAction(reservation.action).label);
@@ -724,7 +724,7 @@ const reservationMessage = (
   // capitalised).
   const action = i18n.locale === 'en' ? name.toLowerCase() : name;
   return t({
-    message: `${key} is kept for ${action}. Number keys and Esc cannot be changed.`,
+    message: `${key} is reserved for ${action}.`,
     comment:
       '{key} is a key ("5"); {action} is the name of the shortcut that owns it, such as "Add damage".',
   });
@@ -965,7 +965,7 @@ export const ShortcutsDialog = ({
       }
       description={
         <>
-          <Trans>Click any shortcut to change its keys.</Trans>
+          <Trans>Click a shortcut to change it.</Trans>
           {opener ? (
             <>
               {' '}
@@ -974,13 +974,12 @@ export const ShortcutsDialog = ({
                   'The keys that open this list, drawn as keycaps (usually "?").'
                 }
               >
-                Press{' '}
                 <Keycaps
                   chord={opener}
                   entry={hotkeyAction('table.shortcuts')}
                   platform={platform}
                 />{' '}
-                to open this list any time.
+                opens this list.
               </Trans>
             </>
           ) : null}
@@ -1126,7 +1125,7 @@ export const ShortcutsDialog = ({
         {confirmingReset ? (
           <div className="ptcgsim-shortcuts__confirm" role="group">
             <span>
-              <Trans>Put every shortcut back?</Trans>
+              <Trans>Reset all shortcuts?</Trans>
             </span>
             <button
               type="button"

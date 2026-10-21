@@ -326,19 +326,19 @@ export const describeDeckIssue = (list: DeckList, issue: DeckIssue): string => {
       return t`Needs at least one Basic Pokémon.`;
     case 'copies': {
       const { count, name, limit } = issue;
-      return t`${plural(count, { one: `# copy of ${name}; the limit is ${limit}.`, other: `# copies of ${name}; the limit is ${limit}.` })}`;
+      return t`${plural(count, { one: `# copy of ${name} (max ${limit}).`, other: `# copies of ${name} (max ${limit}).` })}`;
     }
     case 'one_per_deck': {
       const { count } = issue;
       return issue.kind === 'Star'
-        ? t`${plural(count, { one: '# Pokémon ☆ card; a deck may have only one.', other: '# Pokémon ☆ cards; a deck may have only one.' })}`
+        ? t`${plural(count, { one: '# Pokémon ☆ card (max 1).', other: '# Pokémon ☆ cards (max 1).' })}`
         : issue.kind === 'Radiant'
-          ? t`${plural(count, { one: '# Radiant card; a deck may have only one.', other: '# Radiant cards; a deck may have only one.' })}`
-          : t`${plural(count, { one: '# ACE SPEC card; a deck may have only one.', other: '# ACE SPEC cards; a deck may have only one.' })}`;
+          ? t`${plural(count, { one: '# Radiant card (max 1).', other: '# Radiant cards (max 1).' })}`
+          : t`${plural(count, { one: '# ACE SPEC card (max 1).', other: '# ACE SPEC cards (max 1).' })}`;
     }
     case 'prism_star': {
       const { count, name } = issue;
-      return t`${plural(count, { one: `# copy of ${name}; a Prism Star card is one per deck.`, other: `# copies of ${name}; a Prism Star card is one per deck.` })}`;
+      return t`${plural(count, { one: `# copy of ${name} (Prism Star: max 1).`, other: `# copies of ${name} (Prism Star: max 1).` })}`;
     }
     case 'not_legal': {
       const cards = cardNames(list, issue.cardIds);
@@ -346,7 +346,7 @@ export const describeDeckIssue = (list: DeckList, issue: DeckIssue): string => {
     }
     case 'wrong_pool': {
       const cards = cardNames(list, issue.cardIds);
-      return t`From the other card pool (TCG and Pocket don't mix): ${cards}.`;
+      return t`TCG and Pocket cards don't mix: ${cards}.`;
     }
     case 'energy_in_pocket':
       return t`Pocket decks have no Energy cards.`;

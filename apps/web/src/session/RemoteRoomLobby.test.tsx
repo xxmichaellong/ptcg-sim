@@ -767,7 +767,7 @@ describe('remote room lobby wiring', () => {
     await settle();
 
     expect(element('#roomHeaderText').textContent).toBe(
-      'Could not start Solo mode. Please try again.'
+      "Couldn't start Solo mode. Try again."
     );
     expect(document.body.textContent).not.toContain('internal detail');
     await act(async () => {
@@ -843,7 +843,7 @@ describe('remote room lobby wiring', () => {
     await settle();
     // What went wrong is said over the empty table, which is now the page.
     expect(element('#roomHeaderText').textContent).toBe(
-      'Could not start Solo mode. Please try again.'
+      "Couldn't start Solo mode. Try again."
     );
     expect(curtain.value.reveal).toHaveBeenCalled();
 
@@ -1413,7 +1413,7 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
     expect(document.body.textContent).toContain(
-      'Paste a valid invitation into Room ID before joining.'
+      'Paste a valid invitation into Room ID.'
     );
     expect(spectator.disabled).toBe(false);
 
@@ -1467,7 +1467,7 @@ describe('remote room lobby wiring', () => {
 
     expect(invitation.bootstrap).toHaveBeenCalledOnce();
     expect(document.body.textContent).toContain(
-      'Paste a valid invitation into Room ID before joining.'
+      'Paste a valid invitation into Room ID.'
     );
     const safeInput = element<HTMLInputElement>('#roomIdInput').value;
     expect(safeInput).toMatch(/^[A-HJ-NP-Z2-9]{0,12}$/u);

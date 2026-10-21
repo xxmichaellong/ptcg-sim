@@ -11,11 +11,10 @@ import {
 /** What the dialog asks. `default` is typed as it is, in any language. */
 export const cardBackPrompt = (): string =>
   t({
-    message: "Paste your image URL or type 'default':",
+    message: "An image URL, or 'default'.",
     comment: "Keep 'default' in English: it is what the player types",
   });
-export const invalidCardBackMessage = (): string =>
-  t`Please enter a valid image URL.`;
+export const invalidCardBackMessage = (): string => t`Enter a valid image URL.`;
 export const DEFAULT_CARD_BACK_URL = '/v2/assets/cardback.png';
 
 /** Asks for one line of text: the overlay prompt dialog by default. */

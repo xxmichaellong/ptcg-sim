@@ -1104,9 +1104,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   // They stay open for the next choice: taking the condition off.
   await clearEvidence(page);
   await expect(chips).toBeVisible();
-  await chips
-    .getByRole('button', { name: 'Remove the Special Condition' })
-    .click();
+  await chips.getByRole('button', { name: 'Remove condition' }).click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
     .toEqual([
@@ -1203,7 +1201,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.ownDeckCardId,
       action: 'viewDeckTop',
       value: '2',
-      message: 'How many cards do you want to look at?',
+      message: 'Look at how many cards?',
       defaultValue: '1',
       command: {
         type: 'ExtractDeckCardsForInspection',
@@ -1217,7 +1215,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.opponentDeckCardId,
       action: 'viewDeckBottom',
       value: '999',
-      message: 'How many cards do you want to look at?',
+      message: 'Look at how many cards?',
       defaultValue: '1',
       command: {
         type: 'ExtractDeckCardsForInspection',
@@ -2388,9 +2386,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
     .poll(async () => (await evidence(page)).overlays.input)
     .toBeNull();
   await expect(openOverlayDialogs(page)).toHaveCount(0);
-  await expect(
-    overlayToast(page, 'Please enter a valid number for the draw amount.')
-  ).toHaveCount(0);
+  await expect(overlayToast(page, 'Enter a number')).toHaveCount(0);
   let current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([
@@ -2411,9 +2407,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
   await expect(invalidField).toHaveValue('0');
   await invalidField.fill('invalid');
   await invalidField.press('Enter');
-  await expect(invalidPrompt.getByRole('alert')).toHaveText(
-    'Please enter a valid number for the draw amount.'
-  );
+  await expect(invalidPrompt.getByRole('alert')).toHaveText('Enter a number');
   await expect(invalidPrompt).toBeVisible();
   current = await evidence(page);
   expect(current.submissions).toEqual([]);

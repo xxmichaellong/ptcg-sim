@@ -58,8 +58,8 @@ describe('legacy board count action resolver', () => {
       ['shuffleHandToDeck', 'Draw how many cards?', '0', 0],
       ['shuffleHandToDeckBottom', 'Draw how many cards?', '0', 0],
       ['drawCards', 'Draw how many cards?', '1', 1],
-      ['viewDeckTop', 'How many cards do you want to look at?', '1', 1],
-      ['viewDeckBottom', 'How many cards do you want to look at?', '1', 1],
+      ['viewDeckTop', 'Look at how many cards?', '1', 1],
+      ['viewDeckBottom', 'Look at how many cards?', '1', 1],
     ];
     for (const [action, message, initialValue, minimum] of actions) {
       const target =
@@ -67,8 +67,8 @@ describe('legacy board count action resolver', () => {
           ? hand
           : deck;
       const invalidMessage = action.startsWith('viewDeck')
-        ? 'Please enter a valid number for the view amount.'
-        : 'Please enter a valid number for the draw amount.';
+        ? 'Enter a number'
+        : 'Enter a number';
       expect(
         resolveLegacyBoardCountAction(view, action, target.cards[0]!.id)
       ).toMatchObject({

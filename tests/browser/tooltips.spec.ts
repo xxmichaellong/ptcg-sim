@@ -90,7 +90,7 @@ test('icon controls name themselves, with their keys, on hover', async ({
 
   // The table's own `+` for the optional pieces.
   await expect(await hover(page, '#tableExtrasButton')).toHaveText(
-    'Lost Zone, VSTAR and GX markers'
+    'Lost Zone and markers'
   );
   await expect(page.locator('#tableExtrasButton')).toHaveAttribute(
     'aria-label',

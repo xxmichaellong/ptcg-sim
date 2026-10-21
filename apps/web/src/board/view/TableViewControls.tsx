@@ -116,9 +116,7 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       >
         {depth.mode === 'auto' ? (
           <span className="ptcgsim-form-hint">
-            <Trans>
-              A tilted tabletop on a wide screen, flat on an upright phone.
-            </Trans>
+            <Trans>Tilted on wide screens, flat on phones.</Trans>
           </span>
         ) : null}
         {depth.mode === 'table' || depth.mode === 'auto' ? (
@@ -159,13 +157,12 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
             <SwitchRow
               id="tableScatterCheckbox"
               label={t`Natural card placement`}
-              hint={t`Cards rest a touch askew, as on a real table.`}
               checked={depth.scatter !== false}
               onChange={(scatter) => depthStore.update({ scatter })}
             />
             <SwitchRow
               id="tableParallaxCheckbox"
-              label={t`Subtle pointer parallax`}
+              label={t`Pointer parallax`}
               checked={depth.parallax === true}
               onChange={(parallax) => depthStore.update({ parallax })}
             />
@@ -175,28 +172,25 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       <SwitchRow
         id="lostZoneCheckbox"
         label={t`Lost Zone`}
-        hint={t`Off by default: few formats use it. A Lost Zone with cards always shows.`}
+        hint={t`Always shown while it holds cards.`}
         checked={view.lostZone}
         onChange={(lostZone) => viewStore.update({ lostZone })}
       />
       <SwitchRow
         id="vstarMarkerCheckbox"
         label={t`VSTAR marker`}
-        hint={t`Beside each player's prizes, for formats with VSTAR Powers.`}
         checked={view.vstarMarker}
         onChange={(vstarMarker) => viewStore.update({ vstarMarker })}
       />
       <SwitchRow
         id="gxMarkerCheckbox"
         label={t`GX marker`}
-        hint={t`Beside each player's prizes, for formats with GX attacks.`}
         checked={view.gxMarker}
         onChange={(gxMarker) => viewStore.update({ gxMarker })}
       />
       <SwitchRow
         id="opponentUprightCheckbox"
         label={t`Opponent's cards face me`}
-        hint={t`Their cards read the right way up for you. Off, they face their owner, as across a real table.`}
         checked={view.opponentCardsUpright}
         onChange={(opponentCardsUpright) =>
           viewStore.update({ opponentCardsUpright })
@@ -221,7 +215,6 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
       <SwitchRow
         id="hoverPreviewCheckbox"
         label={t`Large card preview on hover`}
-        hint={t`A big copy of the card under the pointer, beside the table.`}
         checked={view.hoverPreview}
         onChange={(hoverPreview) => viewStore.update({ hoverPreview })}
       />

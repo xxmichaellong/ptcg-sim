@@ -148,7 +148,7 @@ test('a control the room refuses says why, without speaking of a card', async ({
 
   await page.locator('#attackButton').click();
   const notice = page.locator('.ptcgsim-ui-toast[data-tone="warning"]');
-  await expect(notice).toContainText("That didn't go through");
+  await expect(notice).toContainText("Didn't go through");
   await expect(notice).toContainText('The table changed before it arrived');
   await expect(notice).not.toContainText('card');
   expect(refused).toBe(true);

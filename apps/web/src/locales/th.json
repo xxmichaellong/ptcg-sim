@@ -302,9 +302,9 @@
     ],
     "translation": "{count, plural, other {{label} # ใบ}}"
   },
-  "nlnwHS": {
-    "message": "{count, plural, one {# ACE SPEC card; a deck may have only one.} other {# ACE SPEC cards; a deck may have only one.}}",
-    "translation": "{count, plural, other {การ์ด ACE SPEC # ใบ; เด็คมีได้เพียงใบเดียว}}"
+  "DXRXaL": {
+    "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
+    "translation": "{count, plural, other {การ์ด ACE SPEC # ใบ (สูงสุด 1 ใบ)}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -346,17 +346,17 @@
     "message": "{count, plural, one {# card} other {# cards}}",
     "translation": "{count, plural, other {# ใบ}}"
   },
-  "bbkfGq": {
-    "message": "{count, plural, one {# copy of {name}; a Prism Star card is one per deck.} other {# copies of {name}; a Prism Star card is one per deck.}}",
-    "translation": "{count, plural, other {{name} # ใบ; การ์ด Prism Star ใส่ได้เพียงใบเดียวต่อเด็ค}}"
+  "0Sz1PW": {
+    "message": "{count, plural, one {# copy of {name} (max {limit}).} other {# copies of {name} (max {limit}).}}",
+    "translation": "{count, plural, other {{name} # ใบ (สูงสุด {limit} ใบ)}}"
   },
-  "aXq32o": {
-    "message": "{count, plural, one {# copy of {name}; the limit is {limit}.} other {# copies of {name}; the limit is {limit}.}}",
-    "translation": "{count, plural, other {{name} # ใบ; ใส่ได้สูงสุด {limit} ใบ}}"
+  "gSD0Y4": {
+    "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
+    "translation": "{count, plural, other {{name} # ใบ (Prism Star: สูงสุด 1 ใบ)}}"
   },
-  "vyKAKc": {
-    "message": "{count, plural, one {# Pokémon ☆ card; a deck may have only one.} other {# Pokémon ☆ cards; a deck may have only one.}}",
-    "translation": "{count, plural, other {การ์ดโปเกมอน ☆ # ใบ; เด็คมีได้เพียงใบเดียว}}"
+  "eFRg1z": {
+    "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
+    "translation": "{count, plural, other {การ์ดโปเกมอน ☆ # ใบ (สูงสุด 1 ใบ)}}"
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
@@ -366,9 +366,9 @@
     "message": "{count, plural, one {# print} other {# prints}}",
     "translation": "{count, plural, other {# พิมพ์}}"
   },
-  "wfGt__": {
-    "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
-    "translation": "{count, plural, other {การ์ด Radiant # ใบ; เด็คมีได้เพียงใบเดียว}}"
+  "AC9Ruq": {
+    "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
+    "translation": "{count, plural, other {การ์ด Radiant # ใบ (สูงสุด 1 ใบ)}}"
   },
   "JOORX1": {
     "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
@@ -454,12 +454,12 @@
     "message": "{hp} HP",
     "translation": "HP {hp}"
   },
-  "oPZoSX": {
-    "message": "{key} is kept for {action}. Number keys and Esc cannot be changed.",
+  "BwX3jA": {
+    "message": "{key} is reserved for {action}.",
     "comments": [
       "{key} is a key (\"5\"); {action} is the name of the shortcut that owns it, such as \"Add damage\"."
     ],
-    "translation": "{key} ถูกใช้สำหรับ {action} ไม่สามารถเปลี่ยนปุ่มตัวเลขและ Esc ได้"
+    "translation": "{key} ถูกใช้สำหรับ {action} แล้ว"
   },
   "AIjjJ1": {
     "message": "{label}, {badge} new",
@@ -489,9 +489,9 @@
     ],
     "translation": "{minutes} นาทีที่แล้ว"
   },
-  "tio4ij": {
-    "message": "{missingLines, plural, one {# line from the list couldn't be found} other {# lines from the list couldn't be found}}",
-    "translation": "{missingLines, plural, other {ไม่พบ # บรรทัดจากรายการ}}"
+  "b3xCW_": {
+    "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{missingLines, plural, other {ไม่พบ # บรรทัด}}"
   },
   "-man8P": {
     "message": "{name} (copy)",
@@ -817,12 +817,12 @@
     ],
     "translation": "{shown} และอีก {more} รายการ"
   },
-  "tJTbpm": {
-    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}} · Use View individual cards to inspect each piece and its attachments.",
+  "nzGgxO": {
+    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}}",
     "comments": [
-      "A card made of several pieces (a V-UNION); \"View individual cards\" is a button beside it."
+      "A card made of several pieces (a V-UNION)."
     ],
-    "translation": "{shownPieces} จาก {totalPieces, plural, other {# ชิ้น}} · ใช้ \"ดูการ์ดทีละใบ\" เพื่อตรวจแต่ละชิ้นและการ์ดที่แนบ"
+    "translation": "{shownPieces} จาก {totalPieces, plural, other {# ชิ้น}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -856,21 +856,17 @@
     "message": "{topName} deck",
     "translation": "เด็ค {topName}"
   },
-  "yt1NXK": {
-    "message": "{total, plural, one {# card, saved to your decks.} other {# cards, saved to your decks.}}",
-    "translation": "{total, plural, other {# ใบ บันทึกในเด็คของคุณแล้ว}}"
-  },
-  "Yh3l8T": {
-    "message": "{total, plural, one {# card.} other {# cards.}}",
-    "translation": "{total, plural, other {# ใบ}}"
-  },
-  "HYXNQr": {
-    "message": "{total, plural, one {# card.} other {# cards.}} {missingLines, plural, one {# line couldn't be found.} other {# lines couldn't be found.}}",
-    "translation": "{total, plural, other {# ใบ}} {missingLines, plural, other {ไม่พบ # บรรทัด}}"
+  "kJJvy7": {
+    "message": "{total, plural, one {# card · saved} other {# cards · saved}}",
+    "translation": "{total, plural, other {# ใบ · บันทึกแล้ว}}"
   },
   "uaR_cz": {
     "message": "{total, plural, one {# card} other {# cards}}",
     "translation": "{total, plural, other {# ใบ}}"
+  },
+  "E7ddLG": {
+    "message": "{total, plural, one {# card} other {# cards}} · {missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{total, plural, other {# ใบ}} · {missingLines, plural, other {ไม่พบ # บรรทัด}}"
   },
   "OzYiNM": {
     "message": "{total} of {size} cards",
@@ -928,6 +924,13 @@
     ],
     "translation": "<0/> ใช้กับ <1>{clashNames}</1> อยู่แล้ว"
   },
+  "bD8iYt": {
+    "message": "<0/> opens this list.",
+    "comments": [
+      "The keys that open this list, drawn as keycaps (usually \"?\")."
+    ],
+    "translation": "กด <0/> เพื่อเปิดรายการนี้"
+  },
   "C0rMdv": {
     "message": "− Damage",
     "context": "shortcut key caption",
@@ -937,6 +940,10 @@
     "message": "− Status",
     "context": "shortcut key caption",
     "translation": "− สถานะ"
+  },
+  "hfU12_": {
+    "message": "0 to 9990",
+    "translation": "0 ถึง 9990"
   },
   "T0P06R": {
     "message": "1 adds 10, 9 adds 90",
@@ -960,17 +967,17 @@
     ],
     "translation": "3 จั่วสามใบ"
   },
-  "on4KUL": {
-    "message": "A big copy of the card under the pointer, beside the table.",
-    "translation": "สำเนาขนาดใหญ่ของการ์ดใต้ตัวชี้ แสดงข้างโต๊ะ"
+  "eYUTBA": {
+    "message": "3 pieces in a row",
+    "translation": "3 ชิ้นเรียงกัน"
+  },
+  "9bANS5": {
+    "message": "A .txt or .csv deck file",
+    "translation": "ไฟล์เด็ค .txt หรือ .csv"
   },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "มีการ์ดในนั้นที่ไม่มีรูป"
-  },
-  "Fx5vYF": {
-    "message": "A card that isn't in the list: a name and an image address",
-    "translation": "การ์ดที่ไม่อยู่ในรายการ: ชื่อและที่อยู่รูปภาพ"
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
@@ -984,21 +991,9 @@
     "message": "A deck needs a name.",
     "translation": "เด็คต้องมีชื่อ"
   },
-  "MoaF8K": {
-    "message": "A player invitation for the restored room was copied to your clipboard.",
-    "translation": "คัดลอกคำเชิญผู้เล่นสำหรับห้องที่กู้คืนไว้ในคลิปบอร์ดแล้ว"
-  },
-  "8QR4GU": {
-    "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
-    "translation": "โต๊ะเอียงบนจอกว้าง และวางราบบนโทรศัพท์แนวตั้ง"
-  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "จำนวนเต็มตั้งแต่ {0} ถึง {1}"
-  },
-  "YbCAQH": {
-    "message": "A whole number, up to 9990",
-    "translation": "จำนวนเต็ม สูงสุด 9990"
   },
   "Eaq0OT": {
     "message": "Ability",
@@ -1072,13 +1067,13 @@
     "message": "Add {count} damage",
     "translation": "เพิ่มความเสียหาย {count}"
   },
+  "T-qRMv": {
+    "message": "Add a card that isn't listed",
+    "translation": "เพิ่มการ์ดที่ไม่อยู่ในรายการ"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "เพิ่มชิ้นส่วนสเตเดียมอีกชิ้น"
-  },
-  "6qzNwA": {
-    "message": "Add Custom Card",
-    "translation": "เพิ่มการ์ดกำหนดเอง"
   },
   "vz22MV": {
     "message": "Add damage",
@@ -1104,9 +1099,9 @@
     "message": "Add or switch special condition",
     "translation": "เพิ่มหรือสลับสถานะพิเศษ"
   },
-  "rAfNc2": {
-    "message": "Add to Deck",
-    "translation": "เพิ่มในเด็ค"
+  "ZVI875": {
+    "message": "Add to deck",
+    "translation": "เพิ่มลงในเด็ค"
   },
   "V-b1Vx": {
     "message": "Add to the table",
@@ -1116,9 +1111,9 @@
     "message": "Added by hand",
     "translation": "เพิ่มด้วยตนเอง"
   },
-  "3TvVDg": {
-    "message": "Added by hand: the catalog doesn't know this card, so its legality isn't checked.",
-    "translation": "เพิ่มด้วยตนเอง: แคตตาล็อกไม่รู้จักการ์ดใบนี้ จึงไม่ได้ตรวจสอบความถูกต้องตามกติกา"
+  "sVftpX": {
+    "message": "Added by hand · legality not checked",
+    "translation": "เพิ่มด้วยตนเอง · ไม่ได้ตรวจสอบความถูกต้อง"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1130,18 +1125,40 @@
     "context": "shortcut key caption",
     "translation": "ทั้งหมดขึ้นมือ"
   },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "อนุญาตให้พลิกกระดาน <0>(ผู้เล่นทั้งสองฝ่าย)</0>"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "kL-cR8": {
-    "message": "An <0>open-source</0> Pokémon TCG table. Practice both sides, or play a friend online.",
-    "translation": "โต๊ะเล่น Pokémon TCG แบบ<0>โอเพนซอร์ส</0> ฝึกเล่นทั้งสองฝั่ง หรือเล่นกับเพื่อนออนไลน์"
+  "JxKdEp": {
+    "message": "Always shown while it holds cards.",
+    "translation": "แสดงตลอดเมื่อมีการ์ดอยู่"
+  },
+  "Uu-7-8": {
+    "message": "An <0>open-source</0> Pokémon TCG table.",
+    "translation": "โต๊ะเล่น Pokémon TCG <0>โอเพนซอร์ส</0>"
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
     "translation": "ท่าโจมตีที่จ่ายด้วยพลังงานสองดวง"
+  },
+  "bK6Mfx": {
+    "message": "An image URL, 'blank' or 'theme'.",
+    "comments": [
+      "Keep 'blank' and 'theme' in English: they are what the player types"
+    ],
+    "translation": "URL ของรูปภาพ, 'blank' หรือ 'theme'"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL ของรูปภาพ หรือ 'default'"
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1183,21 +1200,9 @@
     "message": "Appearance",
     "translation": "การแสดงผล"
   },
-  "o53iks": {
-    "message": "Applies to this printing. Reading mode always removes reflections.",
-    "translation": "ใช้กับการพิมพ์นี้ โหมดอ่านจะลบแสงสะท้อนเสมอ"
-  },
-  "y-bSg4": {
-    "message": "Are you sure you want to leave the room? Current game state will be lost.",
-    "translation": "ต้องการออกจากห้องหรือไม่ สถานะเกมปัจจุบันจะหายไป"
-  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "ต้องการออกหรือไม่ ข้อมูลเกมที่ยังไม่ได้บันทึกจะหายไป"
-  },
-  "tljOLu": {
-    "message": "Are you sure you want to shuffle all cards into the deck?",
-    "translation": "ต้องการสับการ์ดทั้งหมดเข้าเด็คหรือไม่"
   },
   "8zanjC": {
     "message": "Artwork group",
@@ -1247,9 +1252,9 @@
     "context": "table depth setting",
     "translation": "อัตโนมัติ"
   },
-  "p69dsN": {
-    "message": "Automatic treatment",
-    "translation": "การจัดการอัตโนมัติ"
+  "Dnn2XG": {
+    "message": "Automatic",
+    "translation": "อัตโนมัติ"
   },
   "USi6Js": {
     "message": "Baby",
@@ -1329,21 +1334,6 @@
     "context": "zone on the table",
     "translation": "ม้านั่งสำรอง"
   },
-  "rHEH25": {
-    "message": "Beside each player's prizes, for formats with GX attacks.",
-    "translation": "ข้างรางวัลของผู้เล่นแต่ละคน สำหรับฟอร์แมตที่มีท่า GX"
-  },
-  "ok5NOi": {
-    "message": "Beside each player's prizes, for formats with VSTAR Powers.",
-    "translation": "ข้างรางวัลของผู้เล่นแต่ละคน สำหรับฟอร์แมตที่มี VSTAR Power"
-  },
-  "bjriEy": {
-    "message": "Best top-8 finish of each archetype from <0>{sourceName}</0> online tournaments in the last two weeks, updated {updated}. Choosing one puts it on your seat without saving it.",
-    "comments": [
-      "sourceName is a tournament site (Limitless); updated is a short date"
-    ],
-    "translation": "ผลงาน 8 อันดับแรกที่ดีที่สุดของแต่ละอาร์คีไทป์จากทัวร์นาเมนต์ออนไลน์ของ <0>{sourceName}</0> ในสองสัปดาห์ที่ผ่านมา อัปเดต {updated} เมื่อเลือกแล้วเด็คจะถูกวางที่นั่งของคุณโดยไม่บันทึก"
-  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -1394,6 +1384,10 @@
     "message": "Bottom right",
     "translation": "ขวาล่าง"
   },
+  "HLZuSl": {
+    "message": "BREAK",
+    "translation": "BREAK"
+  },
   "zcJuqD": {
     "message": "BREAK",
     "context": "shortcut key caption",
@@ -1414,6 +1408,14 @@
     "message": "Burned",
     "context": "special condition",
     "translation": "ติดไฟ"
+  },
+  "2lorx9": {
+    "message": "Can't be changed",
+    "translation": "ไม่สามารถเปลี่ยนแปลงได้"
+  },
+  "Sq35G-": {
+    "message": "Can't read the clipboard",
+    "translation": "ไม่สามารถอ่านคลิปบอร์ดได้"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -1444,10 +1446,6 @@
     "message": "Card back for {targetSeat}",
     "translation": "ด้านหลังการ์ดสำหรับ {targetSeat}"
   },
-  "lx0Lsc": {
-    "message": "Card finish (optional)",
-    "translation": "พื้นผิวการ์ด (ไม่บังคับ)"
-  },
   "tii3sv": {
     "message": "Card image language…",
     "translation": "ภาษาของภาพการ์ด…"
@@ -1455,22 +1453,6 @@
   "8xaYE9": {
     "message": "Card images",
     "translation": "ภาพการ์ด"
-  },
-  "-gounj": {
-    "message": "Card layout (optional)",
-    "translation": "เลย์เอาต์การ์ด (ไม่บังคับ)"
-  },
-  "0jQ5fa": {
-    "message": "Card Name",
-    "translation": "ชื่อการ์ด"
-  },
-  "qiQZCD": {
-    "message": "Card Name is required.",
-    "translation": "ต้องระบุชื่อการ์ด"
-  },
-  "ME0Zmz": {
-    "message": "Card Name must be {max} characters or less.",
-    "translation": "ชื่อการ์ดต้องไม่เกิน {max} อักขระ"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1497,10 +1479,6 @@
     "message": "Card thickness",
     "translation": "ความหนาของการ์ด"
   },
-  "oZar_q": {
-    "message": "Card Type",
-    "translation": "ประเภทการ์ด"
-  },
   "Ccpbzh": {
     "message": "Cards",
     "translation": "การ์ด"
@@ -1509,6 +1487,10 @@
     "message": "Cards being inspected",
     "translation": "การ์ดที่กำลังตรวจดู"
   },
+  "DvicXZ": {
+    "message": "Cards didn't load.",
+    "translation": "โหลดการ์ดไม่สำเร็จ"
+  },
   "7oASui": {
     "message": "Cards found",
     "translation": "การ์ดที่พบ"
@@ -1516,10 +1498,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "การ์ดในเด็ค"
-  },
-  "xo_FAN": {
-    "message": "Cards rest a touch askew, as on a real table.",
-    "translation": "การ์ดวางเอียงเล็กน้อยเหมือนบนโต๊ะจริง"
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1563,6 +1541,14 @@
   "TEzuJ6": {
     "message": "Chat message",
     "translation": "ข้อความแชท"
+  },
+  "0EVs3J": {
+    "message": "Check that it's a replay file.",
+    "translation": "ตรวจสอบว่าเป็นไฟล์รีเพลย์"
+  },
+  "X2MPyW": {
+    "message": "Check the file and try again.",
+    "translation": "ตรวจสอบไฟล์แล้วลองอีกครั้ง"
   },
   "RLe7Vk": {
     "message": "Checking…",
@@ -1621,13 +1607,9 @@
     "message": "Clear the log",
     "translation": "ล้างบันทึก"
   },
-  "5HJTkJ": {
-    "message": "Click any shortcut to change its keys.",
-    "translation": "คลิกที่ทางลัดใดก็ได้เพื่อเปลี่ยนปุ่ม"
-  },
-  "XA9wiW": {
-    "message": "Clipboard access failed. Allow clipboard access and try again.",
-    "translation": "เข้าถึงคลิปบอร์ดไม่สำเร็จ โปรดอนุญาตการเข้าถึงคลิปบอร์ดแล้วลองอีกครั้ง"
+  "MO489z": {
+    "message": "Click a shortcut to change it.",
+    "translation": "คลิกทางลัดเพื่อเปลี่ยน"
   },
   "yz7wBu": {
     "message": "Close",
@@ -1707,6 +1689,10 @@
     "message": "Connecting…",
     "translation": "กำลังเชื่อมต่อ…"
   },
+  "-MkffR": {
+    "message": "Connection lost.",
+    "translation": "การเชื่อมต่อขาดหาย"
+  },
   "c0_6W9": {
     "message": "Copied",
     "context": "an invitation",
@@ -1728,53 +1714,57 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "คัดลอกรายการ (Pokémon TCG Live)"
   },
-  "GUyeZd": {
-    "message": "Copy or download the list",
-    "translation": "คัดลอกหรือดาวน์โหลดรายการ"
+  "7WsLH4": {
+    "message": "Couldn't check that. Try again.",
+    "translation": "ตรวจสอบไม่สำเร็จ ลองอีกครั้ง"
   },
-  "cID6FV": {
-    "message": "Could not copy an invitation",
-    "translation": "ไม่สามารถคัดลอกคำเชิญได้"
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "คัดลอกคำเชิญไม่สำเร็จ"
   },
-  "z7b9Z8": {
-    "message": "Could not copy an invitation. Please try again.",
-    "translation": "ไม่สามารถคัดลอกคำเชิญได้ โปรดลองอีกครั้ง"
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "คัดลอกคำเชิญไม่สำเร็จ ลองอีกครั้ง"
   },
-  "_wTzvW": {
-    "message": "Could not generate a room. Please try again.",
-    "translation": "ไม่สามารถสร้างห้องได้ โปรดลองอีกครั้ง"
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
   },
-  "raqyCE": {
-    "message": "Could not join the room. Please try again.",
-    "translation": "ไม่สามารถเข้าร่วมห้องได้ โปรดลองอีกครั้ง"
+  "Glz9_Y": {
+    "message": "Couldn't join the room. Try again.",
+    "translation": "เข้าร่วมห้องไม่สำเร็จ ลองอีกครั้ง"
   },
-  "gYv4uD": {
-    "message": "Could not open the replay",
-    "translation": "ไม่สามารถเปิดรีเพลย์ได้"
+  "w--GsN": {
+    "message": "Couldn't open that file",
+    "translation": "เปิดไฟล์นั้นไม่สำเร็จ"
   },
-  "uVu3aq": {
-    "message": "Could not resume",
-    "translation": "ไม่สามารถเล่นต่อได้"
-  },
-  "ZHbeNW": {
-    "message": "Could not resume this saved game. Please check the file and try again.",
-    "translation": "ไม่สามารถเล่นเกมที่บันทึกไว้นี้ต่อได้ โปรดตรวจสอบไฟล์แล้วลองอีกครั้ง"
-  },
-  "nx4kaN": {
-    "message": "Could not save",
-    "translation": "ไม่สามารถบันทึกได้"
-  },
-  "PafxzI": {
-    "message": "Could not save this online game. Please try again.",
-    "translation": "ไม่สามารถบันทึกเกมออนไลน์นี้ได้ โปรดลองอีกครั้ง"
-  },
-  "GvBw53": {
-    "message": "Could not start Solo mode. Please try again.",
-    "translation": "ไม่สามารถเริ่มโหมดเล่นคนเดียวได้ โปรดลองอีกครั้ง"
+  "D_pHKD": {
+    "message": "Couldn't open the replay",
+    "translation": "เปิดรีเพลย์ไม่สำเร็จ"
   },
   "p0WUR8": {
     "message": "Couldn't pick a deck",
     "translation": "ไม่สามารถเลือกเด็คได้"
+  },
+  "iaCnbQ": {
+    "message": "Couldn't read that list",
+    "translation": "อ่านรายการนั้นไม่สำเร็จ"
+  },
+  "heYM3E": {
+    "message": "Couldn't resume the game",
+    "translation": "เล่นเกมต่อไม่สำเร็จ"
+  },
+  "ETE6Wl": {
+    "message": "Couldn't save the game",
+    "translation": "บันทึกเกมไม่ได้"
+  },
+  "hCQkU8": {
+    "message": "Couldn't start Solo mode. Try again.",
+    "translation": "เริ่มโหมดเล่นคนเดียวไม่ได้ โปรดลองอีกครั้ง"
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "ใช้คลิปบอร์ดไม่ได้ โปรดอนุญาตการเข้าถึงแล้วลองอีกครั้ง"
   },
   "U9OFiD": {
     "message": "cover",
@@ -1869,25 +1859,9 @@
     "context": "shortcut key caption",
     "translation": "ล่างเด็ค"
   },
-  "S_1qto": {
-    "message": "Deck contains more than {max} cards.",
-    "translation": "เด็คมีการ์ดเกิน {max} ใบ"
-  },
   "sUVFl2": {
     "message": "Deck cover",
     "translation": "ปกเด็ค"
-  },
-  "ggH9-D": {
-    "message": "Deck CSV contains more than {max} card rows.",
-    "translation": "CSV ของเด็คมีแถวการ์ดเกิน {max} แถว"
-  },
-  "V9Fr7P": {
-    "message": "Deck CSV exceeds {max} code units.",
-    "translation": "CSV ของเด็คยาวเกิน {max} หน่วยรหัส"
-  },
-  "Qcg_ZU": {
-    "message": "Deck CSV must start with {header}.",
-    "translation": "CSV ของเด็คต้องขึ้นต้นด้วย {header}"
   },
   "kemNRk": {
     "message": "Deck for each seat",
@@ -1902,21 +1876,9 @@
     "context": "shortcut key caption",
     "translation": "บนเด็ค"
   },
-  "fbC8eT": {
-    "message": "Decklist contains more than {max} cards.",
-    "translation": "เด็คลิสต์มีการ์ดเกิน {max} ใบ"
-  },
-  "4NYLfk": {
-    "message": "Decklist contains more than {max} lines.",
-    "translation": "เด็คลิสต์มีเกิน {max} บรรทัด"
-  },
   "9NwCxt": {
     "message": "Decklist copied",
     "translation": "คัดลอกเด็คลิสต์แล้ว"
-  },
-  "nb-LxT": {
-    "message": "Decklist exceeds {max} code units.",
-    "translation": "เด็คลิสต์ยาวเกิน {max} หน่วยรหัส"
   },
   "vUTt1I": {
     "message": "Decklist to import",
@@ -1957,6 +1919,10 @@
   "HlKgQk": {
     "message": "Deselect",
     "translation": "ยกเลิกการเลือก"
+  },
+  "cCCVzA": {
+    "message": "Didn't go through",
+    "translation": "ดำเนินการไม่สำเร็จ"
   },
   "95U7jt": {
     "message": "Direct access to me (I will give you my phone number).",
@@ -2005,6 +1971,10 @@
   "nV_lSY": {
     "message": "Discard your hand and draw…",
     "translation": "ทิ้งการ์ดบนมือแล้วจั่ว…"
+  },
+  "OdPOhy": {
+    "message": "Discord",
+    "translation": "Discord"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -2077,9 +2047,9 @@
     "message": "Draw how many cards?",
     "translation": "จั่วกี่ใบ?"
   },
-  "lFsCcN": {
-    "message": "Drop a decklist or deck file to import it",
-    "translation": "วางเด็คลิสต์หรือไฟล์เด็คเพื่อนำเข้า"
+  "IsvGW6": {
+    "message": "Drop to import",
+    "translation": "วางเพื่อนำเข้า"
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2117,13 +2087,13 @@
     "message": "Edit {name}",
     "translation": "แก้ไข {name}"
   },
+  "rFL-yb": {
+    "message": "Edit a copy",
+    "translation": "แก้ไขสำเนา"
+  },
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "แก้ไขเด็ค"
-  },
-  "NgsKSL": {
-    "message": "Enable board flip <0>(both players must enable)</0>",
-    "translation": "เปิดใช้การพลิกกระดาน <0>(ผู้เล่นทั้งสองฝ่ายต้องเปิดใช้)</0>"
   },
   "1PBKgv": {
     "message": "End",
@@ -2154,25 +2124,37 @@
     "context": "keyboard key",
     "translation": "Enter"
   },
+  "KmFagX": {
+    "message": "Enter a name.",
+    "translation": "กรุณาใส่ชื่อ"
+  },
+  "u2fAme": {
+    "message": "Enter a number",
+    "translation": "กรุณาใส่ตัวเลข"
+  },
   "-cj58y": {
     "message": "Enter a number, then press Enter.",
     "translation": "ใส่ตัวเลข แล้วกด Enter"
   },
-  "6EaZBW": {
-    "message": "Error reading file. Please make sure the file is valid.",
-    "translation": "อ่านไฟล์ไม่สำเร็จ โปรดตรวจสอบว่าไฟล์ถูกต้อง"
+  "0jl-i6": {
+    "message": "Enter a valid image URL.",
+    "translation": "กรุณาใส่ URL รูปภาพที่ถูกต้อง"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "กรุณาใส่ URL รูปภาพ"
   },
   "eVVWyt": {
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "FRlHpf": {
-    "message": "Evolution and previous stage · Use View individual cards to inspect each piece and its attachments.",
+  "yJW_id": {
+    "message": "Evolution and previous stage",
     "comments": [
-      "\"View individual cards\" is a button beside it."
+      "A BREAK card laid over the Pokémon it evolved from."
     ],
-    "translation": "วิวัฒนาการและร่างก่อนหน้า · ใช้ดูการ์ดทีละใบเพื่อตรวจแต่ละใบและการ์ดที่ติดอยู่"
+    "translation": "วิวัฒนาการและการ์ดขั้นก่อนหน้า"
   },
   "-J6iIV": {
     "message": "Evolve",
@@ -2199,9 +2181,9 @@
     "message": "Exact phrase in the rules text",
     "translation": "วลีที่ตรงกันในข้อความกติกา"
   },
-  "cTmZ2_": {
-    "message": "Exactly one Basic (it has to start)",
-    "translation": "Basic เพียงหนึ่งใบ (ต้องเป็นใบเริ่มต้น)"
+  "HenzVD": {
+    "message": "Exactly one Basic",
+    "translation": "เบสิกเพียงใบเดียว"
   },
   "bMQxzZ": {
     "message": "Exit",
@@ -2289,6 +2271,10 @@
     "context": "card surface",
     "translation": "พื้นผิวการ์ด"
   },
+  "mDOjMG": {
+    "message": "Finish (optional)",
+    "translation": "ตกแต่งเพิ่มเติม (ไม่บังคับ)"
+  },
   "SN6Ocg": {
     "message": "Fire",
     "context": "Pokémon type",
@@ -2297,10 +2283,6 @@
   "RCEX87": {
     "message": "Fire type, Basic",
     "translation": "ธาตุไฟ, Basic"
-  },
-  "L9TsVi": {
-    "message": "Fixed: number keys and Esc always work this way",
-    "translation": "คงที่: ปุ่มตัวเลขและ Esc ทำงานแบบนี้เสมอ"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2356,17 +2338,9 @@
     "context": "deck format",
     "translation": "รูปแบบ"
   },
-  "kxDsuf": {
-    "message": "Four-piece grid · V-UNION",
-    "translation": "กริดสี่ชิ้น · V-UNION"
-  },
   "N80CjQ": {
     "message": "From clipboard",
     "translation": "จากคลิปบอร์ด"
-  },
-  "QI8Idk": {
-    "message": "From the other card pool (TCG and Pocket don't mix): {cards}.",
-    "translation": "จากคลังการ์ดอื่น (TCG และ Pocket ใช้ร่วมกันไม่ได้): {cards}"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2397,11 +2371,6 @@
     "context": "Pokémon card mechanic",
     "translation": "Future"
   },
-  "726EAW": {
-    "message": "Game",
-    "context": "menu section heading",
-    "translation": "เกม"
-  },
   "iDs75z": {
     "message": "Game actions",
     "translation": "การดำเนินการในเกม"
@@ -2410,22 +2379,26 @@
     "message": "Game board",
     "translation": "กระดานเกม"
   },
+  "h8FbrQ": {
+    "message": "Game resumed",
+    "translation": "เล่นเกมต่อแล้ว"
+  },
   "oP3kz7": {
     "message": "Generate",
     "context": "a room",
     "translation": "สร้าง"
   },
-  "B8xvzk": {
-    "message": "Generate a room before copying an invitation.",
-    "translation": "สร้างห้องก่อนคัดลอกคำเชิญ"
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "สร้างห้องแล้วส่งคำเชิญ หากเปิด <0>เข้าร่วมในฐานะผู้ชม</0> จะเป็นการเชิญผู้ชม"
   },
-  "4L_sa2": {
-    "message": "Generate a room, copy an invitation and send it to your opponent. Turn on <0>Join as spectator</0> to copy a spectator invitation instead.",
-    "translation": "สร้างห้อง คัดลอกคำเชิญ แล้วส่งให้คู่ต่อสู้ เปิด <0>เข้าร่วมในฐานะผู้ชม</0> เพื่อคัดลอกคำเชิญสำหรับผู้ชมแทน"
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "กรุณาสร้างห้องก่อน"
   },
-  "VIzorr": {
-    "message": "Generate a room, then copy a temporary invitation for one player or spectator. They paste it into Room ID to join.",
-    "translation": "สร้างห้อง แล้วคัดลอกคำเชิญชั่วคราวสำหรับผู้เล่นหรือผู้ชมหนึ่งคน ผู้รับนำไปวางในช่องรหัสห้องเพื่อเข้าร่วม"
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "สร้างห้อง แล้วส่งคำเชิญ"
   },
   "fQq7dv": {
     "message": "Generating…",
@@ -2435,10 +2408,6 @@
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "รับป้ายผู้สนับสนุนบนโปรไฟล์ GitHub ของคุณ (เฉพาะการสนับสนุนผ่าน GitHub ไม่รวมผู้สนับสนุนผ่าน PayPal ขณะนี้กำลังขออนุมัติหน้า GH sponsor อยู่ 😛)"
-  },
-  "X-I9hi": {
-    "message": "Getting every card ready…",
-    "translation": "กำลังเตรียมการ์ดทุกใบ…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2484,9 +2453,9 @@
     "context": "zone",
     "translation": "มือ"
   },
-  "74pFdB": {
-    "message": "Hand · no Basic Pokémon: a mulligan",
-    "translation": "มือ · ไม่มีโปเกมอนพื้นฐาน: มัลลิแกน"
+  "wkJJTf": {
+    "message": "Hand · mulligan",
+    "translation": "การ์ดบนมือ · มัลลิแกน"
   },
   "MMu3F-": {
     "message": "Hand to bottom",
@@ -2507,11 +2476,6 @@
     "context": "coin flip",
     "translation": "หัว"
   },
-  "maRDnk": {
-    "message": "Help",
-    "context": "menu section heading",
-    "translation": "ช่วยเหลือ"
-  },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
     "comments": [
@@ -2524,6 +2488,11 @@
     "context": "shortcut key caption",
     "translation": "ซ่อน"
   },
+  "WEOf-a": {
+    "message": "Hide",
+    "context": "stop revealing a card",
+    "translation": "ซ่อน"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "ซ่อนคีย์บอร์ด"
@@ -2531,6 +2500,10 @@
   "o1ytqy": {
     "message": "Hide log",
     "translation": "ซ่อนบันทึกเกม"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "ซ่อนโซนที่หายไป"
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
@@ -2556,14 +2529,6 @@
   "geXprQ": {
     "message": "Host a room",
     "translation": "สร้างห้อง"
-  },
-  "DDMiDe": {
-    "message": "Host a room and invite a friend, or join theirs.",
-    "translation": "สร้างห้องแล้วเชิญเพื่อน หรือเข้าร่วมห้องของเพื่อน"
-  },
-  "_W9GYQ": {
-    "message": "How many cards do you want to look at?",
-    "translation": "ต้องการดูการ์ดกี่ใบ"
   },
   "_vIqw9": {
     "message": "How many cards?",
@@ -2638,21 +2603,13 @@
     "message": "Image URL",
     "translation": "URL รูปภาพ"
   },
-  "ahLxtd": {
-    "message": "Image URL is required.",
-    "translation": "ต้องระบุ URL รูปภาพ"
-  },
-  "X-Qb30": {
-    "message": "Image URL must be {max} characters or less.",
-    "translation": "URL รูปภาพต้องมีไม่เกิน {max} อักขระ"
-  },
-  "BsLWkA": {
-    "message": "Image URL must point to a loadable image.",
-    "translation": "URL รูปภาพต้องชี้ไปยังรูปภาพที่โหลดได้"
-  },
   "15ARIE": {
     "message": "Image URL too long",
     "translation": "URL รูปภาพยาวเกินไป"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL รูปภาพ: ไม่เกิน {max} ตัวอักษร"
   },
   "EUsCHg": {
     "message": "Images",
@@ -2667,10 +2624,6 @@
   "EEh2f0": {
     "message": "Import a deck",
     "translation": "นำเข้าเด็ค"
-  },
-  "wxDVVg": {
-    "message": "Import the list on your clipboard",
-    "translation": "นำเข้ารายการจากคลิปบอร์ดของคุณ"
   },
   "aWU0gR": {
     "message": "Imported deck",
@@ -2698,21 +2651,13 @@
     "context": "animation speed",
     "translation": "ทันที"
   },
-  "N9_ykp": {
-    "message": "Instant keeps every action immediate, with no movement.",
-    "translation": "ทันทีจะทำทุกการกระทำในทันที โดยไม่มีการเคลื่อนไหว"
-  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "คัดลอกคำเชิญแล้ว"
   },
-  "jP3hdw": {
-    "message": "It could not be read.",
-    "translation": "ไม่สามารถอ่านได้"
-  },
-  "HDd931": {
-    "message": "It is too large to be a deck.",
-    "translation": "ใหญ่เกินกว่าจะเป็นเด็คได้"
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "คัดลอกคำเชิญไปยังคลิปบอร์ดแล้ว"
   },
   "5kNRW8": {
     "message": "Item",
@@ -2736,12 +2681,8 @@
     "message": "Join as spectator",
     "translation": "เข้าร่วมเป็นผู้ชม"
   },
-  "31TuIx": {
-    "message": "Join our Discord",
-    "translation": "เข้าร่วม Discord ของเรา"
-  },
-  "xiRZec": {
-    "message": "Join Room",
+  "t5uRiA": {
+    "message": "Join room",
     "translation": "เข้าร่วมห้อง"
   },
   "t8Lc2X": {
@@ -2799,6 +2740,10 @@
     "context": "card layout",
     "translation": "เลย์เอาต์"
   },
+  "iZqrTt": {
+    "message": "Layout (optional)",
+    "translation": "เลย์เอาต์ (ไม่บังคับ)"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "คงไว้ในสนาม"
@@ -2824,6 +2769,10 @@
     "message": "Legality not checked for cards added by hand: {cards}.",
     "translation": "ไม่ได้ตรวจสอบความถูกต้องตามกติกาของการ์ดที่เพิ่มด้วยตนเอง: {cards}"
   },
+  "xXagjO": {
+    "message": "LEGEND · 2 halves",
+    "translation": "LEGEND · 2 ส่วน"
+  },
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
@@ -2838,25 +2787,25 @@
     "context": "Pokémon type",
     "translation": "สายฟ้า"
   },
-  "L8YVpL": {
-    "message": "Line {line} card name exceeds {max} code units.",
-    "translation": "ชื่อการ์ดในบรรทัดที่ {line} เกิน {max} หน่วยรหัส"
+  "BvrzrK": {
+    "message": "Line {line} is too long.",
+    "translation": "บรรทัดที่ {line} ยาวเกินไป"
   },
-  "qGY357": {
-    "message": "Line {line} exceeds {max} code units.",
-    "translation": "บรรทัดที่ {line} เกิน {max} หน่วยรหัส"
+  "P7ovJ4": {
+    "message": "Line {line}: card name too long.",
+    "translation": "บรรทัดที่ {line}: ชื่อการ์ดยาวเกินไป"
   },
-  "uUu0lO": {
-    "message": "Line {line} image URL exceeds {max} code units.",
-    "translation": "URL รูปภาพในบรรทัดที่ {line} เกิน {max} หน่วยรหัส"
+  "jZ7Cmx": {
+    "message": "Line {line}: image URL too long.",
+    "translation": "บรรทัดที่ {line}: URL รูปภาพยาวเกินไป"
   },
-  "WBB3Uk": {
-    "message": "Line {line} quantity must be an integer from 1 to {max}.",
-    "translation": "จำนวนในบรรทัดที่ {line} ต้องเป็นจำนวนเต็มตั้งแต่ 1 ถึง {max}"
+  "emtXNu": {
+    "message": "Line {line}: quantity must be 1 to {max}.",
+    "translation": "บรรทัดที่ {line}: จำนวนต้องอยู่ระหว่าง 1 ถึง {max}"
   },
-  "9r7EQl": {
-    "message": "Line {line} set or card identifier exceeds {max} code units.",
-    "translation": "ตัวระบุเซ็ตหรือการ์ดในบรรทัดที่ {line} เกิน {max} หน่วยรหัส"
+  "jleG-m": {
+    "message": "Line {line}: set code too long.",
+    "translation": "บรรทัดที่ {line}: รหัสชุดยาวเกินไป"
   },
   "Q8pDHq": {
     "message": "List",
@@ -2874,6 +2823,10 @@
   "GLOf7w": {
     "message": "Load the other side's deck",
     "translation": "โหลดเด็คของอีกฝั่ง"
+  },
+  "g7taAS": {
+    "message": "Loading cards…",
+    "translation": "กำลังโหลดการ์ด…"
   },
   "f55wdH": {
     "message": "Loading decks…",
@@ -2905,6 +2858,10 @@
     "message": "Look",
     "context": "shortcut key caption",
     "translation": "ดู"
+  },
+  "Q1s-WM": {
+    "message": "Look at how many cards?",
+    "translation": "ดูการ์ดกี่ใบ"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
@@ -2958,13 +2915,9 @@
     "message": "Looking at cards",
     "translation": "กำลังดูการ์ด"
   },
-  "08hCRK": {
-    "message": "Looking at cards...",
-    "translation": "กำลังดูการ์ด..."
-  },
-  "8-pQrF": {
-    "message": "Lost the connection to the room.",
-    "translation": "ขาดการเชื่อมต่อกับห้อง"
+  "cGgbAH": {
+    "message": "Lost the room during the replay.",
+    "translation": "ห้องหายไประหว่างการเล่นซ้ำ"
   },
   "JgsnP-": {
     "message": "Lost Zone",
@@ -2989,9 +2942,9 @@
     "message": "Lost Zone all",
     "translation": "ส่งทั้งหมดไป Lost Zone"
   },
-  "IHNoPs": {
-    "message": "Lost Zone, VSTAR and GX markers",
-    "translation": "มาร์กเกอร์ Lost Zone, VSTAR และ GX"
+  "eyE6CV": {
+    "message": "Lost Zone and markers",
+    "translation": "โซนที่หายไปและมาร์กเกอร์"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -3080,6 +3033,10 @@
     "context": "my half of the table",
     "translation": "ของฉัน"
   },
+  "2FYpfJ": {
+    "message": "More",
+    "translation": "เพิ่มเติม"
+  },
   "bnmSJm": {
     "message": "More",
     "context": "more actions",
@@ -3138,6 +3095,10 @@
     "message": "Move card...",
     "translation": "ย้ายการ์ด..."
   },
+  "TvEhJE": {
+    "message": "Move didn't go through",
+    "translation": "ย้ายไม่สำเร็จ"
+  },
   "iwWOBz": {
     "message": "Move everything on your playboard to your hand",
     "translation": "ย้ายทุกอย่างบนสนามของคุณไปที่มือ"
@@ -3151,14 +3112,18 @@
     "message": "Move to",
     "translation": "ย้ายไปที่"
   },
-  "MlzKTm": {
-    "message": "Moves are still on their way. Try again in a moment.",
-    "translation": "การย้ายยังอยู่ระหว่างดำเนินการ โปรดลองอีกครั้งในอีกสักครู่"
+  "rzLbnt": {
+    "message": "Move to hand",
+    "translation": "ย้ายไปที่มือ"
   },
   "mP7YPE": {
     "message": "Mulligan",
     "context": "shortcut key caption",
     "translation": "มัลลิแกน"
+  },
+  "8GMjXa": {
+    "message": "Mulligan (no Basic in 7)",
+    "translation": "มัลลิแกน (ไม่มีเบสิกใน 7 ใบ)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3192,6 +3157,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "ชื่อมีคำเหล่านี้"
+  },
+  "4jBgrs": {
+    "message": "Name: up to {max} characters.",
+    "translation": "ชื่อ: ไม่เกิน {max} ตัวอักษร"
   },
   "OzETXo": {
     "message": "Natural card placement",
@@ -3240,20 +3209,20 @@
     "message": "No actions match",
     "translation": "ไม่พบการกระทำที่ตรงกัน"
   },
-  "-iSsDL": {
-    "message": "No Basic in the opening 7 (mulligan)",
-    "translation": "ไม่มี Basic ในมือเปิด 7 ใบ (มัลลิแกน)"
-  },
-  "np6nz2": {
-    "message": "No card lines found. Lines look like \"4 Iono PAL 185\".",
+  "6n5psS": {
+    "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
-    "translation": "ไม่พบบรรทัดการ์ด บรรทัดควรมีลักษณะเช่น \"4 Iono PAL 185\""
+    "translation": "ไม่พบบรรทัดการ์ด ลองใช้รูปแบบอย่าง \"4 Iono PAL 185\""
   },
   "7Kn8aC": {
     "message": "No cards here",
     "translation": "ไม่มีการ์ดที่นี่"
+  },
+  "7rmH0G": {
+    "message": "No cards in that list.",
+    "translation": "ไม่มีการ์ดในรายการนั้น"
   },
   "r1U_Vc": {
     "message": "No cards match “{text}”.",
@@ -3263,13 +3232,9 @@
     "message": "No cards match.",
     "translation": "ไม่มีการ์ดที่ตรงกัน"
   },
-  "ITmqK8": {
-    "message": "No cards yet. A whole list can be pasted anywhere on this screen.",
-    "translation": "ยังไม่มีการ์ด สามารถวางรายการทั้งหมดที่ใดก็ได้บนหน้าจอนี้"
-  },
-  "i13fcW": {
-    "message": "No current tournament decks right now.",
-    "translation": "ขณะนี้ไม่มีเด็คทัวร์นาเมนต์ปัจจุบัน"
+  "bYysi5": {
+    "message": "No cards yet. Paste a list anywhere here.",
+    "translation": "ยังไม่มีการ์ด วางรายการได้ทุกที่ในหน้านี้"
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -3287,9 +3252,9 @@
     "message": "No image",
     "translation": "ไม่มีรูปภาพ"
   },
-  "NX9V6M": {
-    "message": "No saved decks yet. Paste a list above, start a new deck, or try one of the decks below — anything you import or build is saved here automatically.",
-    "translation": "ยังไม่มีเด็คที่บันทึกไว้ วางรายการด้านบน เริ่มเด็คใหม่ หรือลองใช้เด็คด้านล่าง — ทุกอย่างที่นำเข้าหรือสร้างจะถูกบันทึกไว้ที่นี่โดยอัตโนมัติ"
+  "f5zBYV": {
+    "message": "No saved decks yet. Decks you import or build are saved here.",
+    "translation": "ยังไม่มีเด็คที่บันทึกไว้ เด็คที่นำเข้าหรือสร้างจะถูกบันทึกไว้ที่นี่"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3298,6 +3263,10 @@
   "Psi2LF": {
     "message": "No Special Condition",
     "translation": "ไม่มีสภาวะพิเศษ"
+  },
+  "lChsa8": {
+    "message": "No tournament decks right now.",
+    "translation": "ขณะนี้ไม่มีเด็คทัวร์นาเมนต์"
   },
   "6psMRl": {
     "message": "None",
@@ -3309,9 +3278,9 @@
     "context": "animation speed",
     "translation": "ปกติ"
   },
-  "2ZdbIi": {
-    "message": "Not connected right now",
-    "translation": "ขณะนี้ไม่ได้เชื่อมต่อ"
+  "S33tz3": {
+    "message": "Not connected",
+    "translation": "ไม่ได้เชื่อมต่อ"
   },
   "aGy2Td": {
     "message": "not ex (minus = not)",
@@ -3334,6 +3303,14 @@
     "message": "Not set",
     "context": "a shortcut with no key",
     "translation": "ยังไม่ได้ตั้งค่า"
+  },
+  "6rbhdt": {
+    "message": "Not your move",
+    "translation": "ยังไม่ถึงตาคุณ"
+  },
+  "W8zlv3": {
+    "message": "Not yours to do",
+    "translation": "คุณไม่มีสิทธิ์ทำสิ่งนี้"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -3360,10 +3337,6 @@
     "context": "setting",
     "translation": "ปิด"
   },
-  "KQpYbt": {
-    "message": "Off by default: few formats use it. A Lost Zone with cards always shows.",
-    "translation": "ปิดไว้เป็นค่าเริ่มต้น เพราะมีไม่กี่ฟอร์แมตที่ใช้ ลอสต์โซนที่มีการ์ดจะแสดงเสมอ"
-  },
   "zga9sT": {
     "message": "OK",
     "translation": "ตกลง"
@@ -3387,10 +3360,6 @@
     ],
     "translation": "อยู่ที่ {seat}"
   },
-  "u-Fx9C": {
-    "message": "On the table",
-    "translation": "บนโต๊ะ"
-  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "ครึ่งหนึ่งเต็มโต๊ะ"
@@ -3399,10 +3368,6 @@
     "message": "One moment",
     "translation": "รอสักครู่"
   },
-  "Rz4QTI": {
-    "message": "Online Multiplayer Mode",
-    "translation": "โหมดผู้เล่นหลายคนออนไลน์"
-  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -3410,25 +3375,21 @@
     ],
     "translation": "เฉพาะที่ใช้ได้ใน {formatLabel}"
   },
-  "ycEBgW": {
-    "message": "Only the player in that seat can.",
-    "translation": "เฉพาะผู้เล่นที่นั่งนั้นเท่านั้นที่ทำได้"
+  "XXBK3z": {
+    "message": "Only players can change the table.",
+    "translation": "เฉพาะผู้เล่นเท่านั้นที่เปลี่ยนโต๊ะได้"
   },
-  "kpTM9V": {
-    "message": "Only the players can change it.",
-    "translation": "เฉพาะผู้เล่นเท่านั้นที่เปลี่ยนได้"
+  "kQ0v6x": {
+    "message": "Only that seat's player can.",
+    "translation": "เฉพาะผู้เล่นที่นั่งตรงนั้นเท่านั้นที่ทำได้"
   },
-  "RqCWii": {
-    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
-    "translation": "เฉพาะคุณเท่านั้นที่เห็นตัวเลือกนี้ การ์ดที่ไม่มีฉบับพิมพ์ในภาษานั้นจะแสดงตามที่เด็คกำหนดไว้"
+  "gbBPE1": {
+    "message": "Only you see this. Cards without that printing keep the deck's scan.",
+    "translation": "มีเพียงคุณที่เห็นสิ่งนี้ การ์ดที่ไม่มีเวอร์ชันพิมพ์นั้นจะใช้ภาพสแกนของเด็คตามเดิม"
   },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "เปิดไฟล์เด็ค"
-  },
-  "w-3h5f": {
-    "message": "Open a decklist (.txt) or simulator file (.csv). You can also drop one here.",
-    "translation": "เปิดเด็คลิสต์ (.txt) หรือไฟล์ซิมูเลเตอร์ (.csv) หรือจะวางไฟล์ลงที่นี่ก็ได้"
   },
   "9npOH9": {
     "message": "Open file",
@@ -3490,21 +3451,17 @@
     "message": "Opens this list",
     "translation": "เปิดรายการนี้"
   },
+  "WOApxE": {
+    "message": "Opponent is looking",
+    "translation": "คู่ต่อสู้กำลังดูอยู่"
+  },
   "g88DaC": {
     "message": "Opponent moving cards",
     "translation": "ฝ่ายตรงข้ามกำลังย้ายการ์ด"
   },
-  "sDZaPr": {
-    "message": "Opponent moving cards...",
-    "translation": "ฝ่ายตรงข้ามกำลังย้ายการ์ด..."
-  },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
     "translation": "การ์ดของฝ่ายตรงข้ามหันมาทางฉัน"
-  },
-  "jmKDRE": {
-    "message": "Ordinary portrait card",
-    "translation": "การ์ดแนวตั้งแบบปกติ"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3515,6 +3472,10 @@
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
     "translation": "เทรนเนอร์อื่น ๆ"
+  },
+  "zsicOH": {
+    "message": "Out of sync with the room.",
+    "translation": "ไม่ซิงค์กับห้อง"
   },
   "SFwfHx": {
     "message": "Page Down",
@@ -3551,43 +3512,33 @@
     "message": "Pass the turn",
     "translation": "จบเทิร์น"
   },
-  "Y2Lyu8": {
-    "message": "Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen",
-    "translation": "วางเด็คลิสต์จาก Pokémon TCG Live, Limitless หรือที่ไหนก็ได้ หรือกด Ctrl+V บนหน้านี้"
+  "BRnJkz": {
+    "message": "Paste a decklist first.",
+    "translation": "วางเด็คลิสต์ก่อน"
   },
-  "XBx43W": {
-    "message": "Paste a temporary invitation into Room ID.",
-    "translation": "วางคำเชิญชั่วคราวในช่องรหัสห้อง"
+  "WXUbKm": {
+    "message": "Paste a decklist, or press Ctrl+V anywhere",
+    "translation": "วางเด็คลิสต์ หรือกด Ctrl+V ที่ใดก็ได้"
   },
-  "i85ksQ": {
-    "message": "Paste a valid invitation into Room ID before joining.",
-    "translation": "วางคำเชิญที่ถูกต้องในช่องรหัสห้องก่อนเข้าร่วม"
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "วางคำเชิญที่ถูกต้องลงในรหัสห้อง"
   },
   "pJRgD4": {
     "message": "Paste an invitation",
     "translation": "วางคำเชิญ"
   },
-  "IiTL4Z": {
-    "message": "Paste the invitation you were sent, or join the room you generated.",
-    "translation": "วางคำเชิญที่คุณได้รับ หรือเข้าร่วมห้องที่คุณสร้างไว้"
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "วางคำเชิญ หรือเข้าห้องของคุณเอง"
   },
-  "pdondR": {
-    "message": "Paste the list with Ctrl+V (⌘V on a Mac) instead.",
-    "translation": "ให้วางรายการด้วย Ctrl+V (⌘V บน Mac) แทน"
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "วางคำเชิญลงในรหัสห้อง"
   },
-  "wialHB": {
-    "message": "Paste your image URL or type 'default':",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "วาง URL รูปภาพของคุณ หรือพิมพ์ 'default':"
-  },
-  "m1XBv-": {
-    "message": "Paste your image URL, or type 'blank' or 'theme':",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "วาง URL รูปภาพของคุณ หรือพิมพ์ 'blank' หรือ 'theme':"
+  "MfH2NF": {
+    "message": "Paste with Ctrl+V (⌘V) instead",
+    "translation": "ให้วางด้วย Ctrl+V (⌘V) แทน"
   },
   "cfCrKd": {
     "message": "Paypal Donation Link",
@@ -3601,10 +3552,6 @@
     "message": "Pick random card",
     "translation": "สุ่มการ์ด"
   },
-  "YTYMMV": {
-    "message": "Picture the deck with this card",
-    "translation": "ดูภาพเด็คที่มีการ์ดใบนี้"
-  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "ตำแหน่งชิ้นส่วน"
@@ -3614,18 +3561,17 @@
     "context": "take the decks to the table",
     "translation": "เล่น"
   },
+  "7LIRc6": {
+    "message": "Play a random deck",
+    "translation": "เล่นเด็คแบบสุ่ม"
+  },
   "VCIZc8": {
     "message": "Play online",
     "translation": "เล่นออนไลน์"
   },
-  "-tOpDV": {
-    "message": "Play this deck as {seat}",
-    "translation": "เล่นเด็คนี้เป็น {seat}"
-  },
-  "RNRv6e": {
-    "message": "Playboard",
-    "context": "zone",
-    "translation": "สนามเล่น"
+  "hrmat7": {
+    "message": "Play these decks",
+    "translation": "เล่นเด็คเหล่านี้"
   },
   "3Nh5cA": {
     "message": "Played last · {when}",
@@ -3647,21 +3593,13 @@
     "context": "unnamed seat",
     "translation": "ผู้เล่น"
   },
-  "NgXTKK": {
-    "message": "Please enter a valid image URL.",
-    "translation": "โปรดป้อน URL รูปภาพที่ถูกต้อง"
-  },
-  "3uFKp3": {
-    "message": "Please enter a valid number for the draw amount.",
-    "translation": "โปรดป้อนตัวเลขที่ถูกต้องสำหรับจำนวนการจั่ว"
-  },
-  "gUhl4O": {
-    "message": "Please enter a valid number for the view amount.",
-    "translation": "โปรดป้อนตัวเลขที่ถูกต้องสำหรับจำนวนการดู"
-  },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
     "translation": "เด็ค Pocket ไม่มีการ์ดพลังงาน"
+  },
+  "S-nXVo": {
+    "message": "Pointer parallax",
+    "translation": "พารัลแลกซ์ตามตัวชี้"
   },
   "95vGpJ": {
     "message": "Poisoned",
@@ -3678,9 +3616,9 @@
     "context": "shortcut key caption",
     "translation": "โปเกมอน"
   },
-  "sKDCDc": {
-    "message": "Pokémon added by hand (stage unknown)",
-    "translation": "โปเกมอนที่เพิ่มด้วยมือ (ไม่ทราบขั้น)"
+  "CA11_N": {
+    "message": "Pokémon added by hand",
+    "translation": "โปเกมอนที่เพิ่มด้วยมือ"
   },
   "RNaprm": {
     "message": "Pokémon cards",
@@ -3693,13 +3631,6 @@
     ],
     "translation": "กด {keys} เพื่อดู<0>ปุ่มลัด</0>"
   },
-  "WNZF5E": {
-    "message": "Press <0/> to open this list any time.",
-    "comments": [
-      "The keys that open this list, drawn as keycaps (usually \"?\")."
-    ],
-    "translation": "กด <0/> เพื่อเปิดรายการนี้ได้ทุกเมื่อ"
-  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "กดอีกครั้งเพื่อยืนยัน"
@@ -3711,10 +3642,6 @@
   "drY1M6": {
     "message": "Press keys…",
     "translation": "กดปุ่ม…"
-  },
-  "g9wm8H": {
-    "message": "Press OK to stop revealing card to opponent",
-    "translation": "กด ตกลง เพื่อหยุดเปิดเผยการ์ดให้ฝ่ายตรงข้าม"
   },
   "wCMulM": {
     "message": "Press the new keys for {label}. Escape cancels.",
@@ -3772,25 +3699,13 @@
     "message": "PTCG-sim tutorial",
     "translation": "บทสอนใช้งาน PTCG-sim"
   },
-  "3celTG": {
-    "message": "Put a random deck on your seat",
-    "translation": "วางเด็คสุ่มที่ที่นั่งของคุณ"
-  },
-  "wfCdi6": {
-    "message": "Put every shortcut back?",
-    "translation": "คืนค่าปุ่มลัดทั้งหมดหรือไม่"
-  },
   "rFCOSV": {
     "message": "Put everything on your playboard in the Lost Zone",
     "translation": "ใส่ทุกอย่างบนสนามของคุณลงในโซนที่หายไป"
   },
-  "Je1OLM": {
-    "message": "Put the empty Lost Zone away",
-    "translation": "เก็บ Lost Zone ที่ว่างเปล่า"
-  },
-  "Pep1YD": {
-    "message": "Put the Lost Zone away",
-    "translation": "เก็บ Lost Zone"
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "รวมชิ้นส่วนโปเกมอนไว้ในกองเดียว และชิ้นส่วนสเตเดียมไว้ในสเตเดียม"
   },
   "eAnTYw": {
     "message": "Put your hand on the bottom of your deck and draw…",
@@ -3804,9 +3719,9 @@
     "message": "Quantity",
     "translation": "จำนวน"
   },
-  "ILC8sM": {
-    "message": "Quantity must be between 1 and {max}.",
-    "translation": "จำนวนต้องอยู่ระหว่าง 1 ถึง {max}"
+  "8cBiju": {
+    "message": "Quantity: 1 to {max}.",
+    "translation": "จำนวน: 1 ถึง {max}"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -3847,13 +3762,13 @@
     "message": "Receive all of the benefits of the previous tiers.",
     "translation": "รับสิทธิประโยชน์ทั้งหมดของระดับก่อนหน้า"
   },
-  "WKLnhx": {
-    "message": "Recognize known card formats",
-    "translation": "จดจำรูปแบบการ์ดที่รู้จัก"
-  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "เชื่อมต่อใหม่"
+  },
+  "MO2S6n": {
+    "message": "Reconnecting. Try again in a moment.",
+    "translation": "กำลังเชื่อมต่อใหม่ ลองอีกครั้งในอีกสักครู่"
   },
   "H3oH0g": {
     "message": "Redo",
@@ -3892,6 +3807,14 @@
     "message": "Remove all damage",
     "translation": "ลบความเสียหายทั้งหมด"
   },
+  "sR6lTH": {
+    "message": "Remove condition",
+    "translation": "ลบสถานะ"
+  },
+  "8IMRlK": {
+    "message": "Remove from {seat}",
+    "translation": "ลบออกจาก {seat}"
+  },
   "MS9-fZ": {
     "message": "Remove one",
     "translation": "นำออกหนึ่งใบ"
@@ -3908,10 +3831,6 @@
     "message": "Remove special condition",
     "translation": "นำสถานะพิเศษออก"
   },
-  "cqopk0": {
-    "message": "Remove the Special Condition",
-    "translation": "ลบสภาวะพิเศษ"
-  },
   "XsrZAv": {
     "message": "Rename",
     "context": "button",
@@ -3926,14 +3845,14 @@
     "message": "Rename deck",
     "translation": "เปลี่ยนชื่อสำรับ"
   },
-  "nBPH-e": {
-    "message": "Rename, copy, export or delete",
-    "translation": "เปลี่ยนชื่อ คัดลอก ส่งออก หรือลบ"
-  },
   "cDnZvG": {
     "message": "Replay",
     "context": "the table is showing a replay",
     "translation": "รีเพลย์"
+  },
+  "3hz5zq": {
+    "message": "Replay interrupted. Try again.",
+    "translation": "การเล่นซ้ำถูกขัดจังหวะ ลองอีกครั้ง"
   },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
@@ -3969,6 +3888,10 @@
   "5FOB1h": {
     "message": "Reset all",
     "translation": "รีเซ็ตทั้งหมด"
+  },
+  "dNFlsv": {
+    "message": "Reset all shortcuts?",
+    "translation": "รีเซ็ตทางลัดทั้งหมดหรือไม่"
   },
   "JLLA3V": {
     "message": "Reset both sides",
@@ -4052,13 +3975,17 @@
     "message": "Reveal/hide prizes",
     "translation": "เปิดเผย/ซ่อนการ์ดรางวัล"
   },
+  "fa6wL6": {
+    "message": "Revealed to your opponent",
+    "translation": "เปิดเผยให้คู่ต่อสู้แล้ว"
+  },
   "XGMYSt": {
     "message": "Right",
     "context": "piece position",
     "translation": "ขวา"
   },
-  "c3QPLj": {
-    "message": "Right-click a card for its actions.",
+  "gTK8h8": {
+    "message": "Right-click a card for actions.",
     "translation": "คลิกขวาที่การ์ดเพื่อดูการดำเนินการ"
   },
   "euMx3W": {
@@ -4085,61 +4012,61 @@
     "message": "Rotate card(s)",
     "translation": "หมุนการ์ด"
   },
-  "JAKwbT": {
-    "message": "Row {row} contains an unexpected quote.",
-    "translation": "แถวที่ {row} มีเครื่องหมายคำพูดที่ไม่คาดคิด"
+  "JRfxmI": {
+    "message": "Row {row}: text after a closing quote.",
+    "translation": "แถว {row}: มีข้อความหลังเครื่องหมายคำพูดปิด"
   },
-  "EHZjbS": {
-    "message": "Row {row} contains an unterminated quote.",
-    "translation": "แถวที่ {row} มีเครื่องหมายคำพูดที่ไม่ปิด"
+  "nmg9gB": {
+    "message": "Row {row}: unexpected quote.",
+    "translation": "แถว {row}: เครื่องหมายคำพูดที่ไม่คาดคิด"
   },
-  "qDnJ2U": {
-    "message": "Row {row} has text after a closing quote.",
-    "translation": "แถวที่ {row} มีข้อความหลังเครื่องหมายคำพูดปิด"
+  "GF2_ew": {
+    "message": "Row {row}: unterminated quote.",
+    "translation": "แถว {row}: เครื่องหมายคำพูดไม่ปิด"
   },
-  "_Enj3q": {
-    "message": "Row {rowNumber} card name exceeds {max} code units.",
-    "translation": "ชื่อการ์ดในแถวที่ {rowNumber} เกิน {max} code unit"
+  "FxnMec": {
+    "message": "Row {rowNumber}: card name too long.",
+    "translation": "แถว {rowNumber}: ชื่อการ์ดยาวเกินไป"
   },
-  "2ugzfk": {
-    "message": "Row {rowNumber} card type exceeds {max} code units.",
-    "translation": "ประเภทการ์ดในแถวที่ {rowNumber} เกิน {max} code unit"
+  "QfafSg": {
+    "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "translation": "แถว {rowNumber}: ประเภทการ์ดต้องเป็นโปเกมอน เทรนเนอร์ หรือพลังงาน"
   },
-  "RUenSk": {
-    "message": "Row {rowNumber} card type must be Pokémon, Trainer or Energy.",
-    "translation": "ประเภทการ์ดในแถวที่ {rowNumber} ต้องเป็นโปเกมอน เทรนเนอร์ หรือพลังงาน"
+  "jtuoO2": {
+    "message": "Row {rowNumber}: card type too long.",
+    "translation": "แถว {rowNumber}: ประเภทการ์ดยาวเกินไป"
   },
-  "TxaPVN": {
-    "message": "Row {rowNumber} has invalid presentation JSON.",
-    "translation": "แถวที่ {rowNumber} มี JSON การแสดงผลที่ไม่ถูกต้อง"
+  "gojF1j": {
+    "message": "Row {rowNumber}: image URL too long.",
+    "translation": "แถว {rowNumber}: URL รูปภาพยาวเกินไป"
   },
-  "YPNZeK": {
-    "message": "Row {rowNumber} image URL exceeds {max} code units.",
-    "translation": "URL รูปภาพในแถวที่ {rowNumber} เกิน {max} code unit"
+  "DCuDdI": {
+    "message": "Row {rowNumber}: invalid presentation JSON.",
+    "translation": "แถว {rowNumber}: JSON การแสดงผลไม่ถูกต้อง"
   },
-  "nuW_Tl": {
-    "message": "Row {rowNumber} is missing a card name.",
-    "translation": "แถวที่ {rowNumber} ไม่มีชื่อการ์ด"
+  "tqYUyB": {
+    "message": "Row {rowNumber}: needs exactly five columns.",
+    "translation": "แถว {rowNumber}: ต้องมี 5 คอลัมน์พอดี"
   },
-  "Fa0pEa": {
-    "message": "Row {rowNumber} is missing a card type.",
-    "translation": "แถวที่ {rowNumber} ไม่มีประเภทการ์ด"
+  "GTr4h_": {
+    "message": "Row {rowNumber}: needs exactly four columns.",
+    "translation": "แถว {rowNumber}: ต้องมี 4 คอลัมน์พอดี"
   },
-  "RM5M7g": {
-    "message": "Row {rowNumber} is missing an image URL.",
-    "translation": "แถวที่ {rowNumber} ไม่มี URL รูปภาพ"
+  "uC4XeA": {
+    "message": "Row {rowNumber}: no card name.",
+    "translation": "แถว {rowNumber}: ไม่มีชื่อการ์ด"
   },
-  "GT_DsB": {
-    "message": "Row {rowNumber} must contain exactly five columns.",
-    "translation": "แถวที่ {rowNumber} ต้องมีห้าคอลัมน์พอดี"
+  "2DgRWI": {
+    "message": "Row {rowNumber}: no card type.",
+    "translation": "แถว {rowNumber}: ไม่มีประเภทการ์ด"
   },
-  "ppjGSa": {
-    "message": "Row {rowNumber} must contain exactly four columns.",
-    "translation": "แถวที่ {rowNumber} ต้องมีสี่คอลัมน์พอดี"
+  "X-Ve84": {
+    "message": "Row {rowNumber}: no image URL.",
+    "translation": "แถว {rowNumber}: ไม่มี URL รูปภาพ"
   },
-  "g-Sgq0": {
-    "message": "Row {rowNumber} quantity must be an integer from 1 to {max}.",
-    "translation": "จำนวนในแถวที่ {rowNumber} ต้องเป็นจำนวนเต็มตั้งแต่ 1 ถึง {max}"
+  "JjTFWo": {
+    "message": "Row {rowNumber}: quantity must be 1 to {max}.",
+    "translation": "แถว {rowNumber}: จำนวนต้องอยู่ระหว่าง 1 ถึง {max}"
   },
   "duDNyy": {
     "message": "Rule Box",
@@ -4171,13 +4098,13 @@
     "message": "Sample Prizes",
     "translation": "การ์ดรางวัลตัวอย่าง"
   },
+  "tfDRzk": {
+    "message": "Save",
+    "translation": "บันทึก"
+  },
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "บันทึก {name}"
-  },
-  "CE18C8": {
-    "message": "Save a copy and edit it",
-    "translation": "บันทึกสำเนาและแก้ไข"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
@@ -4186,10 +4113,6 @@
   "4ibQSn": {
     "message": "Save online game",
     "translation": "บันทึกเกมออนไลน์"
-  },
-  "DiYfve": {
-    "message": "Save to your decks",
-    "translation": "บันทึกในเด็คของคุณ"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -4200,10 +4123,6 @@
     "message": "Saved for this visit only",
     "translation": "บันทึกไว้สำหรับการเข้าชมครั้งนี้เท่านั้น"
   },
-  "MIgYaM": {
-    "message": "Saved game resumed",
-    "translation": "เล่นเกมที่บันทึกไว้ต่อแล้ว"
-  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "พูด…"
@@ -4211,10 +4130,6 @@
   "JTYvAw": {
     "message": "Search cards",
     "translation": "ค้นหาการ์ด"
-  },
-  "LLBZnG": {
-    "message": "Search cards — try “t:fire hp>=100” or “is:ex”",
-    "translation": "ค้นหาการ์ด — ลอง “t:fire hp>=100” หรือ “is:ex”"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4248,10 +4163,6 @@
     "message": "Season",
     "translation": "ซีซัน"
   },
-  "p2nsKf": {
-    "message": "See the table without closing this",
-    "translation": "ดูโต๊ะโดยไม่ต้องปิดหน้านี้"
-  },
   "gspMtn": {
     "message": "Selected card",
     "context": "shortcut group",
@@ -4269,10 +4180,6 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "ส่งข้อความ"
-  },
-  "5FsIcI": {
-    "message": "Separate this card to hand",
-    "translation": "แยกการ์ดใบนี้ไปไว้บนมือ"
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -4322,10 +4229,6 @@
     "message": "Set up both sides",
     "translation": "จัดเตรียมทั้งสองฝั่ง"
   },
-  "KZqu6_": {
-    "message": "Set up: shuffle, draw 7, place 6 prizes",
-    "translation": "จัดเตรียม: สับเด็ค จั่ว 7 ใบ วางการ์ดรางวัล 6 ใบ"
-  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "กำลังจัดเตรียมโต๊ะ…"
@@ -4334,18 +4237,14 @@
     "message": "Settings",
     "translation": "การตั้งค่า"
   },
-  "oiLXI5": {
-    "message": "Share or export",
-    "translation": "แชร์หรือส่งออก"
-  },
   "2D-NYE": {
     "message": "Shift",
     "context": "keyboard key",
     "translation": "Shift"
   },
-  "s0BhfF": {
-    "message": "Shift+click removes one · Right-click for details · Enter in the search adds the first card",
-    "translation": "Shift+คลิกเพื่อลบทีละใบ · คลิกขวาเพื่อดูรายละเอียด · กด Enter ในช่องค้นหาเพื่อเพิ่มการ์ดใบแรก"
+  "2ORd-n": {
+    "message": "Shift+click removes one · Right-click for details · Enter adds the top result",
+    "translation": "Shift+คลิกเพื่อเอาออกหนึ่งใบ · คลิกขวาเพื่อดูรายละเอียด · Enter เพื่อเพิ่มผลลัพธ์แรก"
   },
   "CTqTgr": {
     "message": "Shortcuts",
@@ -4389,17 +4288,9 @@
     "message": "Show all {metaCount}",
     "translation": "แสดงทั้งหมด {metaCount}"
   },
-  "SRR-Zw": {
-    "message": "Show every copy on its own",
-    "translation": "แสดงทุกใบแยกกัน"
-  },
   "wo4rGx": {
     "message": "Show every print",
     "translation": "แสดงทุกพิมพ์"
-  },
-  "UsDaAh": {
-    "message": "Show every print of each card",
-    "translation": "แสดงทุกพิมพ์ของการ์ดแต่ละใบ"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4408,6 +4299,10 @@
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "แสดงคีย์บอร์ด"
+  },
+  "FBwNsr": {
+    "message": "Show one per card",
+    "translation": "แสดงอย่างละหนึ่งใบ"
   },
   "etmouI": {
     "message": "Show the card",
@@ -4429,13 +4324,17 @@
     "message": "Show the keys for",
     "translation": "แสดงปุ่มลัดสำหรับ"
   },
+  "YtzfVy": {
+    "message": "Show the table",
+    "translation": "แสดงโต๊ะ"
+  },
+  "UwltxX": {
+    "message": "Show this card on the deck",
+    "translation": "แสดงการ์ดใบนี้ในเด็ค"
+  },
   "D_Orlv": {
     "message": "Show toolbar",
     "translation": "แสดงแถบเครื่องมือ"
-  },
-  "5uIbgt": {
-    "message": "Showing every print; show one per card",
-    "translation": "แสดงทุกพิมพ์ กดเพื่อแสดงการ์ดละหนึ่งใบ"
   },
   "sf2cQK": {
     "message": "Shuffle",
@@ -4455,17 +4354,13 @@
     "message": "Shuffle all into deck",
     "translation": "สับทั้งหมดเข้าเด็ค"
   },
+  "Fnz7SK": {
+    "message": "Shuffle all into the deck?",
+    "translation": "สับทั้งหมดเข้าเด็คหรือไม่"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "สับทั้งหมดเข้าเด็ค"
-  },
-  "0SEYuR": {
-    "message": "Shuffle all to Deck",
-    "translation": "สับทั้งหมดเข้าเด็ค"
-  },
-  "FmM1KF": {
-    "message": "Shuffle all to Deck?",
-    "translation": "สับทั้งหมดเข้าเด็คหรือไม่"
   },
   "eFbm-5": {
     "message": "Shuffle deck",
@@ -4524,9 +4419,13 @@
     "message": "Shuffle your Prizes",
     "translation": "สับการ์ดรางวัลของคุณ"
   },
-  "4p1iGZ": {
-    "message": "Sideways scan · rotate to read",
-    "translation": "สแกนแนวนอน · หมุนเพื่ออ่าน"
+  "7cboVh": {
+    "message": "Shuffle, draw 7, set 6 prizes",
+    "translation": "สับเด็ค จั่ว 7 ใบ วางการ์ดรางวัล 6 ใบ"
+  },
+  "lzdYF4": {
+    "message": "Sideways scan",
+    "translation": "สแกนแนวนอน"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -4543,10 +4442,6 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "ความเงาของซองการ์ด"
-  },
-  "OoIo6S": {
-    "message": "Slow down a moment",
-    "translation": "ช้าลงสักนิด"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -4646,10 +4541,6 @@
     "message": "Stack copies",
     "translation": "ซ้อนสำเนา"
   },
-  "Q1I0pL": {
-    "message": "Stack copies of a card together",
-    "translation": "ซ้อนสำเนาของการ์ดใบเดียวกันเข้าด้วยกัน"
-  },
   "GtR_fA": {
     "message": "Stadium",
     "context": "shortcut key caption",
@@ -4669,6 +4560,10 @@
     "message": "Stadium",
     "context": "zone on the table",
     "translation": "สเตเดียม"
+  },
+  "1TzAdj": {
+    "message": "Stadium · 2 pieces",
+    "translation": "สเตเดียม · 2 ชิ้น"
   },
   "ikMMp4": {
     "message": "Stadiums",
@@ -4690,6 +4585,10 @@
     "context": "deck format",
     "translation": "สแตนดาร์ด"
   },
+  "Tg13WJ": {
+    "message": "Standard card",
+    "translation": "การ์ดมาตรฐาน"
+  },
   "7GpLGd": {
     "message": "Start turn",
     "translation": "เริ่มเทิร์น"
@@ -4702,10 +4601,6 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "หยุดเรียงการ์ดในมือ"
-  },
-  "T7TOfh": {
-    "message": "Subtle pointer parallax",
-    "translation": "เอฟเฟกต์พารัลแลกซ์เบา ๆ ตามตัวชี้"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -4744,9 +4639,9 @@
     "context": "keyboard key",
     "translation": "Tab"
   },
-  "J_Ogyy": {
-    "message": "Tab moves between controls, so it cannot be a shortcut.",
-    "translation": "Tab ใช้เลื่อนระหว่างตัวควบคุม จึงตั้งเป็นปุ่มลัดไม่ได้"
+  "bVbH4f": {
+    "message": "Tab can't be a shortcut.",
+    "translation": "ไม่สามารถใช้ Tab เป็นปุ่มลัดได้"
   },
   "4hJhzz": {
     "message": "Table",
@@ -4792,10 +4687,6 @@
     "context": "coin flip",
     "translation": "ก้อย"
   },
-  "iyPm84": {
-    "message": "Take it off {seat}",
-    "translation": "นำออกจาก {seat}"
-  },
   "2g01hc": {
     "message": "Take off {count} damage",
     "translation": "เอาความเสียหายออก {count}"
@@ -4808,13 +4699,13 @@
     "message": "Take off damage…",
     "translation": "เอาความเสียหายออก…"
   },
-  "nzF90T": {
-    "message": "Take the decks to the table",
-    "translation": "นำเด็คไปที่โต๊ะ"
+  "EyHJlN": {
+    "message": "Tap a card for actions; tap again to read it.",
+    "translation": "แตะการ์ดเพื่อดูการทำงาน แตะอีกครั้งเพื่ออ่าน"
   },
-  "3XeWNU": {
-    "message": "Tap a card for its actions; tap it again to read it.",
-    "translation": "แตะการ์ดเพื่อดูการทำงาน แตะอีกครั้งเพื่ออ่านการ์ด"
+  "pYu8i-": {
+    "message": "TCG and Pocket cards don't mix: {cards}.",
+    "translation": "การ์ด TCG และ Pocket ใช้ร่วมกันไม่ได้: {cards}"
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -4834,61 +4725,29 @@
     "context": "Trainer cards by kind",
     "translation": "เทคนิคัลแมชชีน"
   },
-  "Ii4b4s": {
-    "message": "That didn't go through",
-    "translation": "ดำเนินการไม่สำเร็จ"
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "โหลดรูปภาพนั้นไม่สำเร็จ"
   },
-  "nwCqoF": {
-    "message": "That file didn't open",
-    "translation": "เปิดไฟล์ไม่ได้"
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "คำเชิญนั้นหมดอายุแล้ว โปรดขอคำเชิญใหม่"
   },
-  "1_JXO-": {
-    "message": "That invitation has expired. Ask the room creator to copy a new one.",
-    "translation": "คำเชิญนี้หมดอายุแล้ว โปรดขอให้ผู้สร้างห้องคัดลอกคำเชิญใหม่"
-  },
-  "yrmUxD": {
-    "message": "That isn't yours to do",
-    "translation": "คุณไม่มีสิทธิ์ทำสิ่งนี้"
-  },
-  "z_e3P2": {
-    "message": "That list didn't read",
-    "translation": "อ่านรายการนั้นไม่ได้"
-  },
-  "BYaTJ7": {
-    "message": "That move didn't go through",
-    "translation": "การเคลื่อนไหวนั้นไม่สำเร็จ"
-  },
-  "-w9ceH": {
-    "message": "That move isn't yours to make",
-    "translation": "ไม่ใช่ตาของคุณที่จะเคลื่อนไหว"
+  "B4ZAXF": {
+    "message": "That one was skipped.",
+    "translation": "ข้ามรายการนั้นแล้ว"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "เปิดไฟล์รีเพลย์นั้นไม่ได้"
   },
-  "HgwclR": {
-    "message": "That value could not be checked. Please try again.",
-    "translation": "ตรวจสอบค่านั้นไม่ได้ โปรดลองอีกครั้ง"
-  },
-  "l8VEIw": {
-    "message": "That's too much at once",
-    "translation": "มากเกินไปในคราวเดียว"
-  },
-  "GDqK1T": {
-    "message": "The card list didn't load. Check your connection and try again.",
-    "translation": "โหลดรายการการ์ดไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+  "6Z1wXH": {
+    "message": "That side starts over with the new deck",
+    "translation": "ฝั่งนั้นจะเริ่มใหม่พร้อมเด็คใหม่"
   },
   "hPwR-j": {
     "message": "The card went back.",
     "translation": "การ์ดถูกส่งกลับแล้ว"
-  },
-  "7f_XSS": {
-    "message": "The card went back. Try it again.",
-    "translation": "การ์ดถูกส่งกลับแล้ว โปรดลองอีกครั้ง"
-  },
-  "n-Z0Nm": {
-    "message": "The clipboard can't be read here",
-    "translation": "อ่านคลิปบอร์ดที่นี่ไม่ได้"
   },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
@@ -4898,33 +4757,49 @@
     "message": "The deck didn't go on the table",
     "translation": "วางเด็คลงบนโต๊ะไม่สำเร็จ"
   },
-  "H4nLW9": {
-    "message": "The deck is removed from this device. A deck already on a seat stays there.",
-    "translation": "เด็คจะถูกลบออกจากอุปกรณ์นี้ เด็คที่อยู่บนที่นั่งแล้วจะยังคงอยู่"
+  "BUcC-2": {
+    "message": "The deck file has more than {max} rows.",
+    "translation": "ไฟล์เด็คมีมากกว่า {max} แถว"
   },
-  "HThhKj": {
-    "message": "The deck is removed from this device. Decks already on a seat stay there.",
-    "translation": "เด็คจะถูกลบออกจากอุปกรณ์นี้ เด็คที่อยู่บนที่นั่งแล้วจะยังคงอยู่"
+  "sPLZ6Z": {
+    "message": "The deck file is too long.",
+    "translation": "ไฟล์เด็คยาวเกินไป"
+  },
+  "1zmjOY": {
+    "message": "The deck file must start with {header}.",
+    "translation": "ไฟล์เด็คต้องขึ้นต้นด้วย {header}"
+  },
+  "fYn5Mi": {
+    "message": "The deck has more than {max} cards.",
+    "translation": "เด็คมีการ์ดมากกว่า {max} ใบ"
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
     "translation": "โหลดรายการเด็คไม่สำเร็จ"
   },
-  "E72uMQ": {
-    "message": "The deck screen didn't load, so decks can't be changed right now. Your game carries on.",
-    "translation": "โหลดหน้าจอเด็คไม่สำเร็จ จึงยังแก้ไขเด็คไม่ได้ในตอนนี้ เกมของคุณดำเนินต่อไป"
+  "kuSCwh": {
+    "message": "The deck screen didn't load. Your game carries on.",
+    "translation": "โหลดหน้าเด็คไม่สำเร็จ เกมของคุณยังดำเนินต่อไป"
+  },
+  "qDcPIt": {
+    "message": "The decklist has more than {max} cards.",
+    "translation": "เด็คลิสต์มีการ์ดมากกว่า {max} ใบ"
+  },
+  "9vVu1I": {
+    "message": "The decklist has more than {max} lines.",
+    "translation": "เด็คลิสต์มีมากกว่า {max} บรรทัด"
+  },
+  "SHzPH9": {
+    "message": "The decklist is too long.",
+    "translation": "เด็คลิสต์ยาวเกินไป"
   },
   "K85iXe": {
     "message": "The file couldn't be saved",
     "translation": "บันทึกไฟล์ไม่สำเร็จ"
   },
-  "GL-rhF": {
-    "message": "The last move is still on its way.",
-    "translation": "การเคลื่อนไหวล่าสุดกำลังส่งไป"
-  },
-  "0WnzUW": {
-    "message": "The replay was interrupted. Try it again.",
-    "translation": "รีเพลย์ถูกขัดจังหวะ โปรดลองอีกครั้ง"
+  "lom6tE": {
+    "message": "The last move is still sending.",
+    "translation": "การเดินล่าสุดยังส่งไม่เสร็จ"
   },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
@@ -4934,25 +4809,13 @@
     "message": "The room no longer has this seat.",
     "translation": "ห้องไม่มีที่นั่งนี้แล้ว"
   },
-  "p93vUT": {
-    "message": "The table changed before it arrived, so the card went back.",
-    "translation": "โต๊ะเปลี่ยนไปก่อนที่การ์ดจะไปถึง การ์ดจึงถูกส่งกลับ"
+  "m6ooXP": {
+    "message": "The table changed, so the card went back.",
+    "translation": "โต๊ะมีการเปลี่ยนแปลง การ์ดจึงกลับที่เดิม"
   },
-  "jMsjAg": {
-    "message": "The table changed before it arrived. Try it again.",
-    "translation": "โต๊ะเปลี่ยนไปก่อนที่จะไปถึง โปรดลองอีกครั้ง"
-  },
-  "aCAWXn": {
-    "message": "The table gets the changed deck when you go back to it, and that side starts over.",
-    "translation": "โต๊ะจะได้รับเด็คที่แก้ไขเมื่อคุณกลับไป และฝั่งนั้นจะเริ่มใหม่"
-  },
-  "Dw1tmp": {
-    "message": "The table is reconnecting. Try again in a moment.",
-    "translation": "โต๊ะกำลังเชื่อมต่อใหม่ โปรดลองอีกครั้งในอีกสักครู่"
-  },
-  "_knf_O": {
-    "message": "The table lost the room during the replay.",
-    "translation": "โต๊ะขาดการเชื่อมต่อกับห้องระหว่างรีเพลย์"
+  "u1UbSB": {
+    "message": "The table changed. Try again.",
+    "translation": "โต๊ะมีการเปลี่ยนแปลง โปรดลองอีกครั้ง"
   },
   "8vgo35": {
     "message": "The table takes at most {max} cards.",
@@ -4969,10 +4832,6 @@
   "x36RVi": {
     "message": "Their Bench",
     "translation": "เบนช์ของคู่ต่อสู้"
-  },
-  "zLpI2X": {
-    "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
-    "translation": "การ์ดของอีกฝ่ายจะอ่านได้ถูกทิศสำหรับคุณ เมื่อปิด การ์ดจะหันเข้าหาเจ้าของ เหมือนบนโต๊ะจริง"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5025,29 +4884,17 @@
     ],
     "translation": "จากนั้นกด To active เพื่อเล่นแบบคว่ำหน้า"
   },
-  "mldgBW": {
-    "message": "There are no cards in that list.",
-    "translation": "ไม่มีการ์ดในรายการนั้น"
+  "WsAkgd": {
+    "message": "This browser won't keep your decks after you close the page.",
+    "translation": "เบราว์เซอร์นี้จะไม่เก็บเด็คของคุณไว้หลังปิดหน้านี้"
   },
-  "aJCmnr": {
-    "message": "There is no list to import.",
-    "translation": "ไม่มีรายการให้นำเข้า"
+  "5PdIYU": {
+    "message": "This game will be lost.",
+    "translation": "เกมนี้จะหายไป"
   },
-  "tBciWT": {
-    "message": "This browser isn't keeping site data, so decks saved now last until you close the page.",
-    "translation": "เบราว์เซอร์นี้ไม่เก็บข้อมูลเว็บไซต์ เด็คที่บันทึกตอนนี้จะอยู่จนกว่าคุณจะปิดหน้านี้"
-  },
-  "FFbU_V": {
-    "message": "This browser keeps the table in its window.",
-    "translation": "เบราว์เซอร์นี้เก็บโต๊ะไว้ในหน้าต่างของมัน"
-  },
-  "bdOrGj": {
-    "message": "This table fell out of step with the room.",
-    "translation": "โต๊ะนี้ไม่ซิงก์กับห้อง"
-  },
-  "AxFQH0": {
-    "message": "Three side-by-side pieces",
-    "translation": "สามชิ้นเรียงข้างกัน"
+  "YcMvP7": {
+    "message": "Tilted on wide screens, flat on phones.",
+    "translation": "เอียงบนจอกว้าง แบนราบบนโทรศัพท์"
   },
   "dPBKWL": {
     "message": "To active",
@@ -5144,13 +4991,21 @@
     "message": "Toggle ability/effect",
     "translation": "สลับอะบิลิตี้/เอฟเฟกต์"
   },
-  "D5f6Or": {
-    "message": "Too many actions at once. That one was skipped.",
-    "translation": "ดำเนินการพร้อมกันมากเกินไป ข้ามการดำเนินการนั้นแล้ว"
+  "6QCyrU": {
+    "message": "Too large for a deck",
+    "translation": "ใหญ่เกินไปสำหรับเด็ค"
   },
-  "e41oD8": {
-    "message": "Too many moves at once. That one was skipped.",
-    "translation": "ย้ายพร้อมกันมากเกินไป ข้ามการย้ายนั้นแล้ว"
+  "ssfbci": {
+    "message": "Too many actions",
+    "translation": "มีการดำเนินการมากเกินไป"
+  },
+  "4PUG0e": {
+    "message": "Too many cards at once",
+    "translation": "การ์ดมากเกินไปในครั้งเดียว"
+  },
+  "B3I8F_": {
+    "message": "Too many moves",
+    "translation": "ย้ายมากเกินไป"
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -5177,6 +5032,13 @@
     "context": "shortcut key caption",
     "translation": "บนสุด"
   },
+  "20pFu_": {
+    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+    "comments": [
+      "sourceName is a tournament site (Limitless); updated is a short date"
+    ],
+    "translation": "ผลงานยอดเยี่ยมจากทัวร์นาเมนต์ออนไลน์ของ <0>{sourceName}</0> ในช่วงสองสัปดาห์ที่ผ่านมา · อัปเดต {updated}"
+  },
   "qssK_n": {
     "message": "Top left",
     "translation": "บนซ้าย"
@@ -5194,17 +5056,25 @@
     "message": "Trainer cards",
     "translation": "การ์ดเทรนเนอร์"
   },
+  "JmQewY": {
+    "message": "Try a .txt or .csv file",
+    "translation": "ลองใช้ไฟล์ .txt หรือ .csv"
+  },
   "KDw4GX": {
     "message": "Try again",
     "translation": "ลองอีกครั้ง"
   },
-  "iJ3n6j": {
-    "message": "Try it again.",
+  "u62wQ4": {
+    "message": "Try again in a moment.",
+    "translation": "โปรดลองอีกครั้งในอีกสักครู่"
+  },
+  "v2Mz8J": {
+    "message": "Try again.",
     "translation": "โปรดลองอีกครั้ง"
   },
-  "HOE-Jw": {
-    "message": "Try it with fewer cards.",
-    "translation": "ลองใช้การ์ดจำนวนน้อยลง"
+  "x-E_50": {
+    "message": "Try fewer cards.",
+    "translation": "ลองใช้การ์ดให้น้อยลง"
   },
   "JaA9mI": {
     "message": "Try other words, or press Escape to go back.",
@@ -5248,13 +5118,9 @@
     "message": "Tutorial",
     "translation": "บทสอนเล่น"
   },
-  "U-xsTc": {
-    "message": "Two landscape halves · LEGEND",
-    "translation": "สองครึ่งแนวนอน · LEGEND"
-  },
-  "NgMCkj": {
-    "message": "Two side-by-side pieces · Stadium",
-    "translation": "สองชิ้นวางคู่กัน · สเตเดียม"
+  "-zy2Nq": {
+    "message": "Type",
+    "translation": "ประเภท"
   },
   "vnRpA8": {
     "message": "Type",
@@ -5273,10 +5139,6 @@
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "พิมพ์ข้อความก่อน"
-  },
-  "1OX68x": {
-    "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
-    "translation": "พิมพ์คำเพื่อค้นหาชื่อ หรือรวมตัวกรองเข้าด้วยกัน — ใช้ไวยากรณ์การค้นหาของ Limitless TCG ได้ที่นี่"
   },
   "gu8i-0": {
     "message": "Type, then press Enter.",
@@ -5308,13 +5170,13 @@
     "message": "Unsaved deck",
     "translation": "เด็คที่ยังไม่ได้บันทึก"
   },
+  "5Gx011": {
+    "message": "Unstack copies",
+    "translation": "แยกการ์ดที่ซ้อนกัน"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "เด็คไม่มีชื่อ"
-  },
-  "YcRCYR": {
-    "message": "Upper-half overlay · BREAK",
-    "translation": "การ์ดซ้อนทับครึ่งบน · BREAK"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -5341,10 +5203,6 @@
     "message": "Use the GX attack",
     "translation": "ใช้พลัง GX"
   },
-  "U9oALH": {
-    "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
-    "translation": "ใช้กลุ่มเดียวกันสำหรับชิ้นส่วนจากภาพประกอบเดียวกัน วางชิ้นส่วนโปเกมอนในกองเดียวกัน หรือวางชิ้นส่วนสเตเดียมในพื้นที่สเตเดียม"
-  },
   "nG8vJk": {
     "message": "Use the VSTAR Power",
     "translation": "ใช้พลัง VSTAR"
@@ -5352,6 +5210,14 @@
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "ใช้การพิมพ์นี้กับ {deckCopies} ในเด็ค"
+  },
+  "ZpWtmQ": {
+    "message": "Uses Limitless TCG's search syntax.",
+    "translation": "ใช้ไวยากรณ์การค้นหาของ Limitless TCG"
+  },
+  "uCehvK": {
+    "message": "V-UNION · 4 pieces",
+    "translation": "V-UNION · 4 ชิ้น"
   },
   "VO6wBK": {
     "message": "View",
@@ -5363,10 +5229,6 @@
     "context": "shortcut key caption",
     "translation": "ดู"
   },
-  "GTDWZr": {
-    "message": "View assembled card",
-    "translation": "ดูการ์ดที่ประกอบแล้ว"
-  },
   "BqYI8B": {
     "message": "View bottom card(s)",
     "translation": "ดูการ์ดล่างสุด"
@@ -5375,13 +5237,17 @@
     "message": "View card",
     "translation": "ดูการ์ด"
   },
-  "C92-rQ": {
-    "message": "View individual cards",
+  "w3eDyf": {
+    "message": "View each card",
     "translation": "ดูการ์ดทีละใบ"
   },
   "VKXHWy": {
     "message": "View top card(s)",
     "translation": "ดูการ์ดบนสุด"
+  },
+  "s3cHPo": {
+    "message": "View whole card",
+    "translation": "ดูการ์ดทั้งใบ"
   },
   "RVlHmr": {
     "message": "VSTAR marker",
@@ -5426,9 +5292,9 @@
     "context": "filter",
     "translation": "ใช่"
   },
-  "16IAB8": {
-    "message": "You're watching this table",
-    "translation": "คุณกำลังดูโต๊ะนี้อยู่"
+  "VvkF_g": {
+    "message": "You're watching",
+    "translation": "คุณกำลังรับชม"
   },
   "wkv3p1": {
     "message": "Your Active Spot",
@@ -5463,17 +5329,9 @@
     "message": "Your Lost Zone",
     "translation": "โลสต์โซนของคุณ"
   },
-  "w1h7J8": {
-    "message": "Your name changed. Generate a new room before joining.",
-    "translation": "ชื่อของคุณเปลี่ยนแล้ว โปรดสร้างห้องใหม่ก่อนเข้าร่วม"
-  },
-  "KQe92X": {
-    "message": "Your opponent is looking at these cards",
-    "translation": "คู่ต่อสู้กำลังดูการ์ดเหล่านี้"
-  },
-  "UTxtTT": {
-    "message": "Your opponent is moving these cards",
-    "translation": "คู่ต่อสู้กำลังย้ายการ์ดเหล่านี้"
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "ชื่อของคุณเปลี่ยนแล้ว สร้างห้องใหม่"
   },
   "Oi-Qz3": {
     "message": "Your playboard",

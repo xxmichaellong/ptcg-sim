@@ -204,7 +204,6 @@ const SavedDeckTile = ({
   const remove = async (): Promise<void> => {
     const confirmed = await confirmAction({
       title: t`Delete ${deckName}?`,
-      body: t`The deck is removed from this device. Decks already on a seat stay there.`,
       confirmLabel: t`Delete deck`,
       tone: 'danger',
     });
@@ -269,7 +268,7 @@ const SavedDeckTile = ({
         </Tooltip>
         <ActionMenu
           label={t`${deckName} actions`}
-          tooltip={t`Rename, copy, export or delete`}
+          tooltip={t`More`}
           side="bottom"
           align="end"
           trigger={
@@ -370,7 +369,7 @@ const UnsavedSeatTile = ({
         </span>
       </div>
       <div className="deck-tile__actions">
-        <Tooltip content={t`Save to your decks`}>
+        <Tooltip content={t`Save`}>
           <button
             type="button"
             className="deck-icon-button"
@@ -380,7 +379,7 @@ const UnsavedSeatTile = ({
             <DownloadSimpleIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
-        <Tooltip content={t`Save a copy and edit it`}>
+        <Tooltip content={t`Edit a copy`}>
           <button
             type="button"
             className="deck-icon-button"
@@ -390,7 +389,7 @@ const UnsavedSeatTile = ({
             <PencilSimpleIcon {...decorative} weight="bold" />
           </button>
         </Tooltip>
-        <Tooltip content={t`Take it off ${seat}`}>
+        <Tooltip content={t`Remove from ${seat}`}>
           <button
             type="button"
             className="deck-icon-button"
@@ -482,7 +481,7 @@ const ListDeckTile = ({
         </span>
       </button>
       <div className="deck-tile__actions">
-        <Tooltip content={t`Save a copy and edit it`}>
+        <Tooltip content={t`Edit a copy`}>
           <button
             type="button"
             className="deck-icon-button"
@@ -679,7 +678,7 @@ export const DeckHome = ({
             aria-label={t`Decklist to import`}
             spellCheck={false}
             rows={paste.includes('\n') ? 6 : 1}
-            placeholder={t`Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen`}
+            placeholder={t`Paste a decklist, or press Ctrl+V anywhere`}
             value={paste}
             onChange={(event) => setPaste(event.target.value)}
             onKeyDown={onPasteKeyDown}
@@ -701,21 +700,17 @@ export const DeckHome = ({
               ) : null}
               <Trans context="button">Import</Trans>
             </button>
-            <Tooltip content={t`Import the list on your clipboard`}>
-              <button
-                id="deckClipboardButton"
-                type="button"
-                className="ds-button ds-button--secondary"
-                disabled={importing}
-                onClick={() => void onImportClipboard()}
-              >
-                <ClipboardTextIcon {...decorative} weight="bold" />
-                <Trans>From clipboard</Trans>
-              </button>
-            </Tooltip>
-            <Tooltip
-              content={t`Open a decklist (.txt) or simulator file (.csv). You can also drop one here.`}
+            <button
+              id="deckClipboardButton"
+              type="button"
+              className="ds-button ds-button--secondary"
+              disabled={importing}
+              onClick={() => void onImportClipboard()}
             >
+              <ClipboardTextIcon {...decorative} weight="bold" />
+              <Trans>From clipboard</Trans>
+            </button>
+            <Tooltip content={t`A .txt or .csv deck file`}>
               <button
                 id="nativeDeckBuilderImportCsvLabel"
                 type="button"
@@ -773,8 +768,7 @@ export const DeckHome = ({
           <p className="deck-notice" role="status">
             <WarningCircleIcon {...decorative} weight="bold" />
             <Trans>
-              This browser isn&apos;t keeping site data, so decks saved now last
-              until you close the page.
+              This browser won&apos;t keep your decks after you close the page.
             </Trans>
           </p>
         ) : null}
@@ -790,9 +784,7 @@ export const DeckHome = ({
         ) : unsavedSeats.length === 0 && libraryState.decks.length === 0 ? (
           <p className="deck-empty">
             <Trans>
-              No saved decks yet. Paste a list above, start a new deck, or try
-              one of the decks below — anything you import or build is saved
-              here automatically.
+              No saved decks yet. Decks you import or build are saved here.
             </Trans>
           </p>
         ) : (
@@ -829,7 +821,7 @@ export const DeckHome = ({
             <Trans>Decks winning now</Trans>
           </h2>
           <div className="deck-section-tools">
-            <Tooltip content={t`Put a random deck on your seat`}>
+            <Tooltip content={t`Play a random deck`}>
               <button
                 id="deckSurpriseButton"
                 type="button"
@@ -846,7 +838,7 @@ export const DeckHome = ({
         {metaSource ? (
           <p className="deck-section-note">
             <Trans comment="sourceName is a tournament site (Limitless); updated is a short date">
-              Best top-8 finish of each archetype from{' '}
+              Top finishes from{' '}
               <a
                 href={metaSource.url}
                 target="_blank"
@@ -854,8 +846,7 @@ export const DeckHome = ({
               >
                 {sourceName}
               </a>{' '}
-              online tournaments in the last two weeks, updated {updated}.
-              Choosing one puts it on your seat without saving it.
+              online tournaments, last two weeks · updated {updated}
             </Trans>
           </p>
         ) : null}
@@ -903,7 +894,7 @@ export const DeckHome = ({
           </>
         ) : (
           <p className="deck-empty">
-            <Trans>No current tournament decks right now.</Trans>
+            <Trans>No tournament decks right now.</Trans>
           </p>
         )}
       </section>

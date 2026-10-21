@@ -34,7 +34,7 @@ const PlayTip = () => {
   // Only what a first visit would not find on its own: dragging and
   // double-clicking are what anyone tries first.
   if (touch) {
-    return <Trans>Tap a card for its actions; tap it again to read it.</Trans>;
+    return <Trans>Tap a card for actions; tap again to read it.</Trans>;
   }
   const keys = opener
     ? chordKeycaps(opener, detectKeyboardPlatform()).map((cap) => (
@@ -45,7 +45,7 @@ const PlayTip = () => {
     : null;
   return (
     <>
-      <Trans>Right-click a card for its actions.</Trans>
+      <Trans>Right-click a card for actions.</Trans>
       {keys ? (
         <>
           {' '}
@@ -137,7 +137,7 @@ export const TableWelcome = ({
           >
             open-source
           </a>{' '}
-          Pokémon TCG table. Practice both sides, or play a friend online.
+          Pokémon TCG table.
         </Trans>
       </p>
       <ol className="table-welcome__steps">

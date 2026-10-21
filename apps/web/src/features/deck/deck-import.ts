@@ -229,7 +229,7 @@ const finish = (
     ? {
         ok: false,
         reason: 'empty',
-        message: t`There are no cards in that list.`,
+        message: t`No cards in that list.`,
       }
     : {
         ok: true,
@@ -250,7 +250,7 @@ export const importDeckText = async (
     return {
       ok: false,
       reason: 'empty',
-      message: t`There is no list to import.`,
+      message: t`Paste a decklist first.`,
     };
   }
   if (isCsv(text)) return importCsv(text, options);
@@ -273,7 +273,7 @@ export const importDeckText = async (
       ok: false,
       reason: 'empty',
       message: t({
-        message: 'No card lines found. Lines look like "4 Iono PAL 185".',
+        message: 'No card lines found. Try lines like "4 Iono PAL 185".',
         comment: 'Keep the example line "4 Iono PAL 185" as it is.',
       }),
     };

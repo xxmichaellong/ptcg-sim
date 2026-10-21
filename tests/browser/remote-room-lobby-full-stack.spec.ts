@@ -203,7 +203,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     expect(initialChrome.hasRemoteCopyImage).toBe(false);
     await expect(creator.page.locator('#coachingModeLabel')).toContainText(
-      'Enable board flip (both players must enable)'
+      'Allow board flip (both players)'
     );
     await expect(creator.page.locator('#spectatorModeLabel')).toHaveText(
       'Join as spectator'
@@ -275,7 +275,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await rotatedGuest.page.locator('#joinRoomButton').click();
     await expect(rotatedGuest.page.locator('.lobby-status')).toHaveText(
-      'Could not join the room. Please try again.'
+      "Couldn't join the room. Try again."
     );
     await expect(
       rotatedGuest.page.locator('[data-app-route="remote-room-lobby"]')
@@ -633,8 +633,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await chooseMenuItem(playerTwo.page, 'leaveRoomButton');
     expect(await declinedLeave).toEqual({
       type: 'confirm',
-      message:
-        'Are you sure you want to leave the room? Current game state will be lost.',
+      message: 'This game will be lost.',
     });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room"]')
@@ -644,8 +643,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await chooseMenuItem(playerTwo.page, 'leaveRoomButton');
     expect(await sidebarLeave).toEqual({
       type: 'confirm',
-      message:
-        'Are you sure you want to leave the room? Current game state will be lost.',
+      message: 'This game will be lost.',
     });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')

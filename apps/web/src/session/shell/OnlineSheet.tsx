@@ -35,7 +35,6 @@ export const OnlineSheet = ({
       open={open}
       onOpenChange={onOpenChange}
       title={t`Play online`}
-      description={t`Host a room and invite a friend, or join theirs.`}
       {...(onDeck || onSettings
         ? {
             headerActions: (

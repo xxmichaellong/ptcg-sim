@@ -1377,7 +1377,7 @@ export const RemoteSessionBoard = ({
       {revealNotice !== null && (
         <div className="custom-popup" data-legacy-popup="reveal">
           <div className="popup-content">
-            <Trans>Press OK to stop revealing card to opponent</Trans>
+            <Trans>Revealed to your opponent</Trans>
             <button
               type="button"
               className="popup-button"
@@ -1391,7 +1391,7 @@ export const RemoteSessionBoard = ({
                 setRevealNotice(null);
               }}
             >
-              <Trans>OK</Trans>
+              <Trans context="stop revealing a card">Hide</Trans>
             </button>
           </div>
         </div>

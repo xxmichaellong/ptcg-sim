@@ -38,9 +38,9 @@ export type LegacyBoardCountActionResolution =
 
 // Worded when asked, in the language of the moment.
 const drawPrompt = () => t`Draw how many cards?`;
-const viewPrompt = () => t`How many cards do you want to look at?`;
-const invalidDraw = () => t`Please enter a valid number for the draw amount.`;
-const invalidView = () => t`Please enter a valid number for the view amount.`;
+const viewPrompt = () => t`Look at how many cards?`;
+const invalidDraw = () => t`Enter a number`;
+const invalidView = () => t`Enter a number`;
 const MAX_WIRE_COUNT = 200;
 
 export const isLegacyBoardCountActionId = (

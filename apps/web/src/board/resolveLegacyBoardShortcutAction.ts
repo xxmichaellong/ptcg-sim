@@ -405,7 +405,7 @@ export const resolveLegacyBoardShortcutAction = (
             message: t`Draw how many cards?`,
             initialValue: '0',
             minimum: 0,
-            invalidMessage: t`Please enter a valid number for the draw amount.`,
+            invalidMessage: t`Enter a number`,
           },
           dismissSelection: false,
         };

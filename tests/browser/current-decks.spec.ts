@@ -88,9 +88,7 @@ test('the deck screen keeps its classic decks when current lists are unavailable
     route.fulfill({ json: { available: false } })
   );
   await openDeckScreen(page);
-  await expect(
-    page.getByText('No current tournament decks right now.')
-  ).toBeVisible();
+  await expect(page.getByText('No tournament decks right now.')).toBeVisible();
   const seasons = page.locator('#deckClassicSeason option');
   await expect(seasons).toHaveCount(22);
   await expect(seasons.first()).toHaveText('2023-2024 S&V');

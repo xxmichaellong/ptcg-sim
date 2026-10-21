@@ -851,7 +851,7 @@ describe('legacy board overlays', () => {
       message: 'Draw how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Please enter a valid number for the draw amount.',
+      invalidMessage: 'Enter a number',
     });
     // StrictMode replays the effect; the player still sees one question.
     expect(openDialogs()).toHaveLength(1);
@@ -872,17 +872,17 @@ describe('legacy board overlays', () => {
       action: 'viewDeckTop',
       cardId: card.id,
       zoneId: card.parentId,
-      message: 'How many cards do you want to look at?',
+      message: 'Look at how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Please enter a valid number for the view amount.',
+      invalidMessage: 'Enter a number',
     });
     expect(dialogButton('submit').textContent).toBe('View');
     // An invalid count keeps the question open with the source's message.
     await typeAndSubmit('2.5');
     expect(openDialogs()).toHaveLength(1);
     expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-      'Please enter a valid number for the view amount.'
+      'Enter a number'
     );
     expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
     expect(callbacks.dismiss).not.toHaveBeenCalled();
@@ -901,7 +901,7 @@ describe('legacy board overlays', () => {
       message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Please enter a valid number for the draw amount.',
+      invalidMessage: 'Enter a number',
     });
     expect(dialogField().value).toBe('0');
     await act(async () => dialogButton('cancel').click());
@@ -919,7 +919,7 @@ describe('legacy board overlays', () => {
       message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Please enter a valid number for the draw amount.',
+      invalidMessage: 'Enter a number',
     });
     await typeAndSubmit('2');
     expect(callbacks.submitShortcutCountInput).toHaveBeenCalledExactlyOnceWith(
@@ -958,7 +958,7 @@ describe('legacy board overlays', () => {
       message: 'Draw how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Please enter a valid number for the draw amount.',
+      invalidMessage: 'Enter a number',
     });
     expect(openDialogs()).toHaveLength(1);
 
@@ -1012,7 +1012,7 @@ describe('legacy board overlays', () => {
       [...host.querySelectorAll<HTMLButtonElement>('button')].find((button) =>
         button.textContent?.includes(label)
       )!;
-    await act(async () => control('View individual cards').click());
+    await act(async () => control('View each card').click());
     // A window of its own, named for the card, the pieces in reading order
     // and then what is attached to them.
     const pieces = host.querySelector('.ptcgsim-legacy-stack-preview')!;
@@ -1055,7 +1055,7 @@ describe('legacy board overlays', () => {
     expect(
       preview.querySelector('.card-material')?.getAttribute('data-finish')
     ).toBe('holo');
-    await act(async () => control('View assembled card').click());
+    await act(async () => control('View whole card').click());
     expect(
       host.querySelectorAll(
         '[data-preview-kind="composition"] .ptcgsim-composition-piece'
@@ -2238,9 +2238,7 @@ describe('legacy board overlays', () => {
     await settleDialogs();
     const question = openDialogs()[0];
     expect(question?.getAttribute('role')).toBe('alertdialog');
-    expect(question?.textContent).toContain(
-      'Are you sure you want to shuffle all cards into the deck?'
-    );
+    expect(question?.textContent).toContain('Shuffle all into the deck?');
     expect(dialogButton('confirm').dataset.variant).toBe('danger');
     // Asking twice while the question is open asks once.
     await act(async () => discardAction().click());
@@ -2570,7 +2568,7 @@ describe('legacy board overlays', () => {
     );
     expect(
       panel.querySelector('.ptcgsim-legacy-work-area-header')?.textContent
-    ).toBe('Looking at cards...');
+    ).toBe('Looking at cards');
     expect(panel.querySelector('.ptcgsim-overlay-count')?.textContent).toBe(
       '2 cards'
     );
@@ -2660,7 +2658,7 @@ describe('legacy board overlays', () => {
       '[data-legacy-work-area]'
     )!;
     expect(readOnly.querySelector('.ptcgsim-overlay-hint')?.textContent).toBe(
-      'Your opponent is looking at these cards'
+      'Opponent is looking'
     );
     expect(readOnly.querySelector('.ptcgsim-show-board-button')).not.toBeNull();
   });

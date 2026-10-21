@@ -255,7 +255,7 @@ describe('TableZoneAffordances', () => {
       lostZone: { shown: true, onShownChange },
     });
     const hide = host.querySelector<HTMLButtonElement>('#hideLostZoneButton')!;
-    expect(hide.getAttribute('aria-label')).toBe('Put the Lost Zone away');
+    expect(hide.getAttribute('aria-label')).toBe('Hide Lost Zone');
     await act(async () => hide.click());
     expect(onShownChange).toHaveBeenCalledExactlyOnceWith(false);
 

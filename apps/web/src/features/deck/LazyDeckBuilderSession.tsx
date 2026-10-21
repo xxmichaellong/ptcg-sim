@@ -154,10 +154,7 @@ class LoadBoundary extends Component<
     return (
       <div className="ptcgsim-deck-layer__unavailable" role="alert">
         <p>
-          <Trans>
-            The deck screen didn&apos;t load, so decks can&apos;t be changed
-            right now. Your game carries on.
-          </Trans>
+          <Trans>The deck screen didn&apos;t load. Your game carries on.</Trans>
         </p>
         <button
           type="button"

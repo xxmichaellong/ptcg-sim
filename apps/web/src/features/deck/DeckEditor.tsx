@@ -294,7 +294,6 @@ export const DeckEditor = ({
     const deckName = deck.name;
     const confirmed = await confirmAction({
       title: t`Delete ${deckName}?`,
-      body: t`The deck is removed from this device. A deck already on a seat stays there.`,
       confirmLabel: t`Delete deck`,
       tone: 'danger',
     });
@@ -447,8 +446,8 @@ export const DeckEditor = ({
             </button>
           </Tooltip>
           <ActionMenu
-            label={t`Share or export`}
-            tooltip={t`Copy or download the list`}
+            label={t`Export`}
+            tooltip={t`Export`}
             tooltipSide="bottom"
             side="bottom"
             align="end"
@@ -506,16 +505,14 @@ export const DeckEditor = ({
               </Trans>
             </span>
           ) : (
-            <Tooltip content={t`Play this deck as ${seat}`}>
-              <button
-                id="deckUseOnSeatButton"
-                type="button"
-                className="ds-button ds-button--secondary"
-                onClick={onUseOnSeat}
-              >
-                <Trans>Use on {seat}</Trans>
-              </button>
-            </Tooltip>
+            <button
+              id="deckUseOnSeatButton"
+              type="button"
+              className="ds-button ds-button--secondary"
+              onClick={onUseOnSeat}
+            >
+              <Trans>Use on {seat}</Trans>
+            </button>
           )}
         </div>
       </div>

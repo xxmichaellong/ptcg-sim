@@ -175,10 +175,10 @@ type RouteSheet = 'deck' | 'settings' | 'online';
 /** What a failed session says over the table, in the player's terms. */
 const failureText = (failure: ClientSessionFailure): MessageDescriptor =>
   failure.retryable
-    ? msg`Lost the connection to the room.`
+    ? msg`Connection lost.`
     : failure.code === 'admission_rejected'
       ? msg`The room no longer has this seat.`
-      : msg`This table fell out of step with the room.`;
+      : msg`Out of sync with the room.`;
 
 /**
  * What a replay that failed says over the table. Its own message is a
@@ -191,9 +191,9 @@ const replayFailureText = (
     case 'invalid_artifact':
       return msg`That replay file couldn't be opened.`;
     case 'interrupted':
-      return msg`The replay was interrupted. Try it again.`;
+      return msg`Replay interrupted. Try again.`;
     case 'session_failed':
-      return msg`The table lost the room during the replay.`;
+      return msg`Lost the room during the replay.`;
     default:
       return msg`Replays aren't available right now.`;
   }
@@ -330,7 +330,7 @@ export const RemoteRoomRoute = ({
     toast(
       copied
         ? { title: t`Invitation copied`, tone: 'success' }
-        : { title: t`Could not copy an invitation`, tone: 'danger' }
+        : { title: t`Couldn't copy the invitation`, tone: 'danger' }
     );
   };
   const exportLivePerspective = (): void => {
@@ -498,7 +498,7 @@ export const RemoteRoomRoute = ({
           const setup: RailAction = {
             id: ids.setup,
             label: t({ message: 'Set up', context: 'set up the game' }),
-            title: t`Set up: shuffle, draw 7, place 6 prizes`,
+            title: t`Shuffle, draw 7, set 6 prizes`,
             icon: StackIcon,
             hint: hint('table.setup'),
             priority: RAIL_PRIORITY.lead,

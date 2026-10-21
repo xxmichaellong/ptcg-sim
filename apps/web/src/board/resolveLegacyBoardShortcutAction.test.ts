@@ -626,7 +626,7 @@ describe('legacy board shortcut action resolver', () => {
         message: 'Draw how many cards?',
         initialValue: '0',
         minimum: 0,
-        invalidMessage: 'Please enter a valid number for the draw amount.',
+        invalidMessage: 'Enter a number',
       },
       dismissSelection: false,
     });

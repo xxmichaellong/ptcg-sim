@@ -266,9 +266,7 @@ for (const mode of ['flat', 'table'] as const)
       await expect(preview.locator('.ptcgsim-composition-piece')).toHaveCount(
         4
       );
-      await preview
-        .getByRole('button', { name: 'View individual cards' })
-        .click();
+      await preview.getByRole('button', { name: 'View each card' }).click();
       await expect(page.locator('[data-stack-preview-card-id]')).toHaveCount(4);
       await page.locator(`[data-stack-preview-card-id="${first.id}"]`).click();
       await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
@@ -369,11 +367,9 @@ for (const mode of ['flat', 'table'] as const)
       await exitReplay.click();
       const piece = await sceneCard(page, 'union-0');
       await page.locator(`[data-card-id="${piece.id}"]`).dblclick();
-      await page.getByRole('button', { name: 'View individual cards' }).click();
+      await page.getByRole('button', { name: 'View each card' }).click();
       await page.locator(`[data-stack-preview-card-id="${piece.id}"]`).click();
-      await page
-        .getByRole('button', { name: 'Separate this card to hand' })
-        .click();
+      await page.getByRole('button', { name: 'Move to hand' }).click();
       await expect
         .poll(async () =>
           (await sceneCard(page, 'union-0')).parentId.endsWith(':hand')
@@ -414,7 +410,7 @@ for (const mode of ['flat', 'table'] as const)
           '.ptcgsim-composition-artwork[data-card-composition="overlay"]'
         )
       ).toBeVisible();
-      await page.getByRole('button', { name: 'View individual cards' }).click();
+      await page.getByRole('button', { name: 'View each card' }).click();
       await page.locator(`[data-stack-preview-card-id="${breakId}"]`).click();
       await expect(page.locator('[data-preview-kind="card"]')).toHaveAttribute(
         'data-landscape',

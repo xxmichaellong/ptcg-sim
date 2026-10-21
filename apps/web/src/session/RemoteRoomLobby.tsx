@@ -228,23 +228,23 @@ const safeFailureMessage = (
       : '';
   if (operation === 'copy') {
     if (code === 'clipboard_unavailable' || code === 'clipboard_failed') {
-      return msg`Clipboard access failed. Allow clipboard access and try again.`;
+      return msg`Couldn't use the clipboard. Allow access and try again.`;
     }
-    return msg`Could not copy an invitation. Please try again.`;
+    return msg`Couldn't copy the invitation. Try again.`;
   }
   if (operation === 'join') {
     if (code === 'missing_invitation' || code === 'invalid_handoff') {
-      return msg`Paste a valid invitation into Room ID before joining.`;
+      return msg`Paste a valid invitation into Room ID.`;
     }
     if (code === 'expired_invitation') {
-      return msg`That invitation has expired. Ask the room creator to copy a new one.`;
+      return msg`That invitation expired. Ask for a new one.`;
     }
-    return msg`Could not join the room. Please try again.`;
+    return msg`Couldn't join the room. Try again.`;
   }
   if (operation === 'solo') {
-    return msg`Could not start Solo mode. Please try again.`;
+    return msg`Couldn't start Solo mode. Try again.`;
   }
-  return msg`Could not generate a room. Please try again.`;
+  return msg`Couldn't generate a room. Try again.`;
 };
 
 const InitialCoachingConsent = ({
@@ -675,7 +675,7 @@ export const RemoteRoomLobby = ({
       !creator ||
       roomCode.trim().toUpperCase() !== creator.result.invitations.roomCode
     ) {
-      setStatus(msg`Generate a room before copying an invitation.`);
+      setStatus(msg`Generate a room first.`);
       endOperation(active.owner);
       return;
     }
@@ -754,7 +754,7 @@ export const RemoteRoomLobby = ({
       normalizedRoomCode === creator.result.invitations.roomCode
     ) {
       if (name.trim() !== creator.displayName) {
-        setStatus(msg`Your name changed. Generate a new room before joining.`);
+        setStatus(msg`Your name changed. Generate a new room.`);
         return;
       }
       await handOffTable(() => {
@@ -1005,13 +1005,10 @@ export const RemoteRoomLobby = ({
               </span>
               <div className="lobby-intro-copy">
                 <h2 id="lobbyTitle" className="lobby-intro-title">
-                  <Trans>Online Multiplayer Mode</Trans>
+                  <Trans>Play online</Trans>
                 </h2>
                 <p className="lobby-intro-text">
-                  <Trans>
-                    Generate a room, then copy a temporary invitation for one
-                    player or spectator. They paste it into Room ID to join.
-                  </Trans>
+                  <Trans>Generate a room, then send the invitation.</Trans>
                 </p>
               </div>
             </header>
@@ -1045,9 +1042,8 @@ export const RemoteRoomLobby = ({
                 </h3>
                 <p className="ds-hint">
                   <Trans>
-                    Generate a room, copy an invitation and send it to your
-                    opponent. Turn on <em>Join as spectator</em> to copy a
-                    spectator invitation instead.
+                    Generate a room and send the invitation. With{' '}
+                    <em>Join as spectator</em> on, it invites a spectator.
                   </Trans>
                 </p>
               </div>
@@ -1108,10 +1104,7 @@ export const RemoteRoomLobby = ({
                   <Trans>Join a room</Trans>
                 </h3>
                 <p className="ds-hint">
-                  <Trans>
-                    Paste the invitation you were sent, or join the room you
-                    generated.
-                  </Trans>
+                  <Trans>Paste an invitation, or join your own room.</Trans>
                 </p>
               </div>
             </div>
@@ -1131,7 +1124,7 @@ export const RemoteRoomLobby = ({
                 onPaste={handlePaste}
                 onDrop={(event) => {
                   event.preventDefault();
-                  setStatus(msg`Paste a temporary invitation into Room ID.`);
+                  setStatus(msg`Paste the invitation into Room ID.`);
                 }}
                 onChange={(event) => handleRoomCodeChange(event.target.value)}
               />
@@ -1164,7 +1157,7 @@ export const RemoteRoomLobby = ({
                 />{' '}
                 <label htmlFor="coachingModeCheckbox">
                   <Trans>
-                    Enable board flip <span>(both players must enable)</span>
+                    Allow board flip <span>(both players)</span>
                   </Trans>
                 </label>
               </div>
@@ -1189,7 +1182,7 @@ export const RemoteRoomLobby = ({
                   className="ds-mirror-rtl"
                 />
               )}
-              {operation === 'join' ? t`Joining…` : t`Join Room`}
+              {operation === 'join' ? t`Joining…` : t`Join room`}
             </button>
           </section>
         </div>

@@ -8,9 +8,9 @@ import {
 import { openActivity } from './support/table-shell.js';
 
 export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
-export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Saved game resumed';
+export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Game resumed';
 export const CONTINUATION_RESTORE_SUCCESS_MESSAGE =
-  'A player invitation for the restored room was copied to your clipboard.';
+  'Invitation copied to your clipboard.';
 export const EXPECTED_REVOKED_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 

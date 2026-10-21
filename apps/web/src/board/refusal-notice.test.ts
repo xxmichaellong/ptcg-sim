@@ -11,15 +11,13 @@ describe('refusalNotice', () => {
     const stale = refusalNotice('stale_reference');
     expect(stale).toMatchObject({
       id: REFUSAL_TOAST_ID,
-      title: "That move didn't go through",
+      title: "Move didn't go through",
       tone: 'warning',
     });
     expect(stale.body).toMatch(/table changed/u);
     expect(refusalNotice('precondition_failed')).toEqual(stale);
-    expect(refusalNotice('rate_limited').title).toBe('Slow down a moment');
-    expect(refusalNotice('unauthorized').title).toBe(
-      "That move isn't yours to make"
-    );
+    expect(refusalNotice('rate_limited').title).toBe('Too many moves');
+    expect(refusalNotice('unauthorized').title).toBe('Not your move');
     for (const code of [
       undefined,
       'internal_retryable',
@@ -58,16 +56,16 @@ describe('refusalNotice', () => {
       }
     }
     expect(refusalNotice('precondition_failed', 'SetupPlayer').title).toBe(
-      "That didn't go through"
+      "Didn't go through"
     );
   });
 });
 
 describe('unsentNotice', () => {
   it('answers every press the client could not send, but a repeated Undo', () => {
-    expect(unsentNotice('not_ready')?.title).toBe('Not connected right now');
-    expect(unsentNotice('queue_full')?.title).toBe('Slow down a moment');
-    expect(unsentNotice('spectator')?.title).toBe("You're watching this table");
+    expect(unsentNotice('not_ready')?.title).toBe('Not connected');
+    expect(unsentNotice('queue_full')?.title).toBe('Too many moves');
+    expect(unsentNotice('spectator')?.title).toBe("You're watching");
     expect(unsentNotice('too_large')?.body).toMatch(/fewer cards/u);
     expect(unsentNotice('command_pending', 'ApplySoloUndo')).toBeUndefined();
     expect(unsentNotice('command_pending', 'SetupPlayer')?.id).toBe(

@@ -420,12 +420,10 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     buffer: Buffer.from('{'),
   });
   // The failure is reported in a danger toast (it was a native alert).
-  const replayFailure = overlayToast(page, 'Could not open the replay');
+  const replayFailure = overlayToast(page, "Couldn't open the replay");
   await expect(replayFailure).toBeVisible();
   await expect(replayFailure).toHaveAttribute('data-tone', 'danger');
-  await expect(replayFailure).toContainText(
-    'Error reading file. Please make sure the file is valid.'
-  );
+  await expect(replayFailure).toContainText("Check that it's a replay file.");
   await expect(page.locator('#boardButtonContainer #exitReplay')).toHaveCount(
     0
   );

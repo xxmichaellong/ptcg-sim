@@ -262,9 +262,7 @@ describe('useLiveRoomControls', () => {
       expect(document.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);
       expect(
         document.querySelector('[role="alertdialog"]')?.textContent
-      ).toContain(
-        'Are you sure you want to leave the room? Current game state will be lost.'
-      );
+      ).toContain('This game will be lost.');
       expect(button('confirm').dataset.variant).toBe('danger');
       await act(async () => button('cancel').click());
       await settleOverlays();
@@ -336,9 +334,7 @@ describe('useLiveRoomControls', () => {
         '[data-ptcgsim-overlay="toast"]'
       );
       expect(notice?.dataset.tone).toBe('danger');
-      expect(notice?.textContent).toContain(
-        'Error reading file. Please make sure the file is valid.'
-      );
+      expect(notice?.textContent).toContain("Check that it's a replay file.");
       expect(alert).not.toHaveBeenCalled();
       await act(async () => root.unmount());
     } finally {

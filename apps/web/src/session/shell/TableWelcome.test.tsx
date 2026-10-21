@@ -132,7 +132,7 @@ describe('TableWelcome', () => {
 
   it('explains play for a mouse, with the shortcuts a key away', async () => {
     await render({});
-    expect(host.textContent).toContain('Right-click a card for its actions.');
+    expect(host.textContent).toContain('Right-click a card for actions.');
     // Dragging and double-clicking are what anyone tries first.
     expect(host.textContent).not.toContain('Double-click');
     expect(host.textContent).not.toContain('Drag to play');
@@ -148,7 +148,7 @@ describe('TableWelcome', () => {
     mockPointer(true);
     await render({});
     expect(host.textContent).toContain(
-      'Tap a card for its actions; tap it again to read it.'
+      'Tap a card for actions; tap again to read it.'
     );
     expect(host.querySelector('.welcome-shortcuts-link')).toBeNull();
     expect(host.textContent).not.toContain('Right-click');

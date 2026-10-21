@@ -198,15 +198,7 @@ export const restEntries = (
       onSelect: game.onExportState,
     });
   }
-  if (gameEntries.length > 0) {
-    entries.push(
-      {
-        kind: 'label',
-        label: t({ message: 'Game', context: 'menu section heading' }),
-      },
-      ...gameEntries
-    );
-  }
+  entries.push(...gameEntries);
 
   const viewEntries: ActionMenuEntry[] = [];
   if (model.onFullscreen) {
@@ -235,10 +227,6 @@ export const restEntries = (
   if (entries.length > 0) entries.push({ kind: 'separator' });
   entries.push(
     {
-      kind: 'label',
-      label: t({ message: 'Help', context: 'menu section heading' }),
-    },
-    {
       id: 'tutorialButton',
       label: t`Tutorial`,
       icon: PlayCircleIcon,
@@ -252,13 +240,13 @@ export const restEntries = (
     },
     {
       id: 'donationsButton',
-      label: t`Sponsors & Donations`,
+      label: t`Sponsors`,
       icon: HeartIcon,
       onSelect: () => openHelpPage('donations'),
     },
     {
       id: 'discordButton',
-      label: t`Join our Discord`,
+      label: t`Discord`,
       icon: DiscordLogoIcon,
       onSelect: () => openOutside(DISCORD_URL),
     }

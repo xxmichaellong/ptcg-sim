@@ -302,9 +302,9 @@
     ],
     "translation": "{count, plural, one {{label}, # card} other {{label}, # cards}}"
   },
-  "nlnwHS": {
-    "message": "{count, plural, one {# ACE SPEC card; a deck may have only one.} other {# ACE SPEC cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# ACE SPEC card; isa lang ang puwede sa deck.} other {# ACE SPEC cards; isa lang ang puwede sa deck.}}"
+  "DXRXaL": {
+    "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
+    "translation": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC card (max 1).}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -346,17 +346,17 @@
     "message": "{count, plural, one {# card} other {# cards}}",
     "translation": "{count, plural, one {# card} other {# cards}}"
   },
-  "bbkfGq": {
-    "message": "{count, plural, one {# copy of {name}; a Prism Star card is one per deck.} other {# copies of {name}; a Prism Star card is one per deck.}}",
-    "translation": "{count, plural, one {# kopya ng {name}; isa lang ang Prism Star card kada deck.} other {# kopya ng {name}; isa lang ang Prism Star card kada deck.}}"
+  "0Sz1PW": {
+    "message": "{count, plural, one {# copy of {name} (max {limit}).} other {# copies of {name} (max {limit}).}}",
+    "translation": "{count, plural, one {# kopya ng {name} (max {limit}).} other {# kopya ng {name} (max {limit}).}}"
   },
-  "aXq32o": {
-    "message": "{count, plural, one {# copy of {name}; the limit is {limit}.} other {# copies of {name}; the limit is {limit}.}}",
-    "translation": "{count, plural, one {# kopya ng {name}; ang limitasyon ay {limit}.} other {# kopya ng {name}; ang limitasyon ay {limit}.}}"
+  "gSD0Y4": {
+    "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
+    "translation": "{count, plural, one {# kopya ng {name} (Prism Star: max 1).} other {# kopya ng {name} (Prism Star: max 1).}}"
   },
-  "vyKAKc": {
-    "message": "{count, plural, one {# Pokémon ☆ card; a deck may have only one.} other {# Pokémon ☆ cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# Pokémon ☆ card; isa lang ang puwede sa deck.} other {# Pokémon ☆ cards; isa lang ang puwede sa deck.}}"
+  "eFRg1z": {
+    "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
+    "translation": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ card (max 1).}}"
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
@@ -366,9 +366,9 @@
     "message": "{count, plural, one {# print} other {# prints}}",
     "translation": "{count, plural, one {# print} other {# prints}}"
   },
-  "wfGt__": {
-    "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# Radiant card; isa lang ang puwede sa deck.} other {# Radiant cards; isa lang ang puwede sa deck.}}"
+  "AC9Ruq": {
+    "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
+    "translation": "{count, plural, one {# Radiant card (max 1).} other {# Radiant card (max 1).}}"
   },
   "JOORX1": {
     "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
@@ -454,12 +454,12 @@
     "message": "{hp} HP",
     "translation": "{hp} HP"
   },
-  "oPZoSX": {
-    "message": "{key} is kept for {action}. Number keys and Esc cannot be changed.",
+  "BwX3jA": {
+    "message": "{key} is reserved for {action}.",
     "comments": [
       "{key} is a key (\"5\"); {action} is the name of the shortcut that owns it, such as \"Add damage\"."
     ],
-    "translation": "Nakalaan ang {key} para sa {action}. Hindi puwedeng palitan ang mga number key at Esc."
+    "translation": "Nakalaan ang {key} para sa {action}."
   },
   "AIjjJ1": {
     "message": "{label}, {badge} new",
@@ -489,9 +489,9 @@
     ],
     "translation": "{minutes} min ang nakalipas"
   },
-  "tio4ij": {
-    "message": "{missingLines, plural, one {# line from the list couldn't be found} other {# lines from the list couldn't be found}}",
-    "translation": "{missingLines, plural, one {# linya mula sa listahan ang hindi makita} other {# linya mula sa listahan ang hindi makita}}"
+  "b3xCW_": {
+    "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{missingLines, plural, one {# linya ang hindi nahanap} other {# linya ang hindi nahanap}}"
   },
   "-man8P": {
     "message": "{name} (copy)",
@@ -817,12 +817,12 @@
     ],
     "translation": "{shown} at {more} pa"
   },
-  "tJTbpm": {
-    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}} · Use View individual cards to inspect each piece and its attachments.",
+  "nzGgxO": {
+    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}}",
     "comments": [
-      "A card made of several pieces (a V-UNION); \"View individual cards\" is a button beside it."
+      "A card made of several pieces (a V-UNION)."
     ],
-    "translation": "{shownPieces} sa {totalPieces, plural, one {# piraso} other {# piraso}} · Gamitin ang View individual cards para tingnan ang bawat piraso at ang mga naka-attach dito."
+    "translation": "{shownPieces} sa {totalPieces, plural, one {# piraso} other {# piraso}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -856,21 +856,17 @@
     "message": "{topName} deck",
     "translation": "Deck ni {topName}"
   },
-  "yt1NXK": {
-    "message": "{total, plural, one {# card, saved to your decks.} other {# cards, saved to your decks.}}",
-    "translation": "{total, plural, one {# card, na-save sa mga deck mo.} other {# card, na-save sa mga deck mo.}}"
-  },
-  "Yh3l8T": {
-    "message": "{total, plural, one {# card.} other {# cards.}}",
-    "translation": "{total, plural, one {# card.} other {# card.}}"
-  },
-  "HYXNQr": {
-    "message": "{total, plural, one {# card.} other {# cards.}} {missingLines, plural, one {# line couldn't be found.} other {# lines couldn't be found.}}",
-    "translation": "{total, plural, one {# card.} other {# card.}} {missingLines, plural, one {# linya ang hindi mahanap.} other {# linya ang hindi mahanap.}}"
+  "kJJvy7": {
+    "message": "{total, plural, one {# card · saved} other {# cards · saved}}",
+    "translation": "{total, plural, one {# card · na-save} other {# card · na-save}}"
   },
   "uaR_cz": {
     "message": "{total, plural, one {# card} other {# cards}}",
     "translation": "{total, plural, one {# card} other {# card}}"
+  },
+  "E7ddLG": {
+    "message": "{total, plural, one {# card} other {# cards}} · {missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{total, plural, one {# card} other {# card}} · {missingLines, plural, one {# linya ang hindi nahanap} other {# linya ang hindi nahanap}}"
   },
   "OzYiNM": {
     "message": "{total} of {size} cards",
@@ -928,6 +924,13 @@
     ],
     "translation": "Ginagawa na ng <0/> ang <1>{clashNames}</1>."
   },
+  "bD8iYt": {
+    "message": "<0/> opens this list.",
+    "comments": [
+      "The keys that open this list, drawn as keycaps (usually \"?\")."
+    ],
+    "translation": "Binubuksan ng <0/> ang listahang ito."
+  },
   "C0rMdv": {
     "message": "− Damage",
     "context": "shortcut key caption",
@@ -937,6 +940,10 @@
     "message": "− Status",
     "context": "shortcut key caption",
     "translation": "− Status"
+  },
+  "hfU12_": {
+    "message": "0 to 9990",
+    "translation": "0 hanggang 9990"
   },
   "T0P06R": {
     "message": "1 adds 10, 9 adds 90",
@@ -960,17 +967,17 @@
     ],
     "translation": "Ang 3 ay mag-d-draw ng tatlo"
   },
-  "on4KUL": {
-    "message": "A big copy of the card under the pointer, beside the table.",
-    "translation": "Malaking kopya ng card sa ilalim ng pointer, sa tabi ng table."
+  "eYUTBA": {
+    "message": "3 pieces in a row",
+    "translation": "3 piraso nang magkakasunod"
+  },
+  "9bANS5": {
+    "message": "A .txt or .csv deck file",
+    "translation": "Isang .txt o .csv na deck file"
   },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "May card dito na walang larawan."
-  },
-  "Fx5vYF": {
-    "message": "A card that isn't in the list: a name and an image address",
-    "translation": "Card na wala sa listahan: pangalan at address ng larawan"
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
@@ -984,21 +991,9 @@
     "message": "A deck needs a name.",
     "translation": "Kailangan ng pangalan ang deck."
   },
-  "MoaF8K": {
-    "message": "A player invitation for the restored room was copied to your clipboard.",
-    "translation": "Nakopya sa clipboard mo ang imbitasyon ng manlalaro para sa naibalik na room."
-  },
-  "8QR4GU": {
-    "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
-    "translation": "Nakahilig na tabletop sa malapad na screen, patag sa nakatayong phone."
-  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "Isang buong numero mula {0} hanggang {1}"
-  },
-  "YbCAQH": {
-    "message": "A whole number, up to 9990",
-    "translation": "Buong numero, hanggang 9990"
   },
   "Eaq0OT": {
     "message": "Ability",
@@ -1072,13 +1067,13 @@
     "message": "Add {count} damage",
     "translation": "Magdagdag ng {count} damage"
   },
+  "T-qRMv": {
+    "message": "Add a card that isn't listed",
+    "translation": "Magdagdag ng card na wala sa listahan"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Magdagdag ng isa pang piraso ng stadium"
-  },
-  "6qzNwA": {
-    "message": "Add Custom Card",
-    "translation": "Magdagdag ng custom card"
   },
   "vz22MV": {
     "message": "Add damage",
@@ -1104,8 +1099,8 @@
     "message": "Add or switch special condition",
     "translation": "Magdagdag o magpalit ng special condition"
   },
-  "rAfNc2": {
-    "message": "Add to Deck",
+  "ZVI875": {
+    "message": "Add to deck",
     "translation": "Idagdag sa deck"
   },
   "V-b1Vx": {
@@ -1116,9 +1111,9 @@
     "message": "Added by hand",
     "translation": "Manu-manong idinagdag"
   },
-  "3TvVDg": {
-    "message": "Added by hand: the catalog doesn't know this card, so its legality isn't checked.",
-    "translation": "Manu-manong idinagdag: hindi kilala ng catalog ang card na ito, kaya hindi nasusuri ang legality nito."
+  "sVftpX": {
+    "message": "Added by hand · legality not checked",
+    "translation": "Manu-manong idinagdag · hindi sinuri ang legality"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1130,18 +1125,40 @@
     "context": "shortcut key caption",
     "translation": "Lahat sa hand"
   },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Payagan ang board flip <0>(parehong player)</0>"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "kL-cR8": {
-    "message": "An <0>open-source</0> Pokémon TCG table. Practice both sides, or play a friend online.",
-    "translation": "Isang <0>open-source</0> na Pokémon TCG table. Mag-practice sa magkabilang panig, o makipaglaro sa kaibigan online."
+  "JxKdEp": {
+    "message": "Always shown while it holds cards.",
+    "translation": "Laging nakikita habang may laman na card."
+  },
+  "Uu-7-8": {
+    "message": "An <0>open-source</0> Pokémon TCG table.",
+    "translation": "Isang <0>open-source</0> na Pokémon TCG table."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
     "translation": "Isang attack na mababayaran ng dalawang Energy"
+  },
+  "bK6Mfx": {
+    "message": "An image URL, 'blank' or 'theme'.",
+    "comments": [
+      "Keep 'blank' and 'theme' in English: they are what the player types"
+    ],
+    "translation": "Isang image URL, 'blank' o 'theme'."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Isang image URL, o 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1183,21 +1200,9 @@
     "message": "Appearance",
     "translation": "Itsura"
   },
-  "o53iks": {
-    "message": "Applies to this printing. Reading mode always removes reflections.",
-    "translation": "Para sa printing na ito. Laging inaalis ng reading mode ang mga reflection."
-  },
-  "y-bSg4": {
-    "message": "Are you sure you want to leave the room? Current game state will be lost.",
-    "translation": "Sigurado ka bang gusto mong umalis sa room? Mawawala ang kasalukuyang game state."
-  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Sigurado ka bang gusto mong umalis? Mawawala ang anumang hindi na-save na data ng laro."
-  },
-  "tljOLu": {
-    "message": "Are you sure you want to shuffle all cards into the deck?",
-    "translation": "Sigurado ka bang gusto mong i-shuffle ang lahat ng card sa deck?"
   },
   "8zanjC": {
     "message": "Artwork group",
@@ -1247,9 +1252,9 @@
     "context": "table depth setting",
     "translation": "Auto"
   },
-  "p69dsN": {
-    "message": "Automatic treatment",
-    "translation": "Awtomatikong treatment"
+  "Dnn2XG": {
+    "message": "Automatic",
+    "translation": "Awtomatiko"
   },
   "USi6Js": {
     "message": "Baby",
@@ -1329,21 +1334,6 @@
     "context": "zone on the table",
     "translation": "Bench"
   },
-  "rHEH25": {
-    "message": "Beside each player's prizes, for formats with GX attacks.",
-    "translation": "Katabi ng mga prize ng bawat player, para sa mga format na may GX attack."
-  },
-  "ok5NOi": {
-    "message": "Beside each player's prizes, for formats with VSTAR Powers.",
-    "translation": "Katabi ng mga prize ng bawat player, para sa mga format na may VSTAR Power."
-  },
-  "bjriEy": {
-    "message": "Best top-8 finish of each archetype from <0>{sourceName}</0> online tournaments in the last two weeks, updated {updated}. Choosing one puts it on your seat without saving it.",
-    "comments": [
-      "sourceName is a tournament site (Limitless); updated is a short date"
-    ],
-    "translation": "Pinakamataas na top-8 finish ng bawat archetype mula sa mga online tournament ng <0>{sourceName}</0> nitong nakaraang dalawang linggo, na-update noong {updated}. Kapag pumili ka, ilalagay ito sa upuan mo nang hindi sine-save."
-  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -1394,6 +1384,10 @@
     "message": "Bottom right",
     "translation": "Kanang ibaba"
   },
+  "HLZuSl": {
+    "message": "BREAK",
+    "translation": "BREAK"
+  },
   "zcJuqD": {
     "message": "BREAK",
     "context": "shortcut key caption",
@@ -1414,6 +1408,14 @@
     "message": "Burned",
     "context": "special condition",
     "translation": "Burned"
+  },
+  "2lorx9": {
+    "message": "Can't be changed",
+    "translation": "Hindi mababago"
+  },
+  "Sq35G-": {
+    "message": "Can't read the clipboard",
+    "translation": "Hindi mabasa ang clipboard"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -1444,10 +1446,6 @@
     "message": "Card back for {targetSeat}",
     "translation": "Card back para kay {targetSeat}"
   },
-  "lx0Lsc": {
-    "message": "Card finish (optional)",
-    "translation": "Finish ng card (opsyonal)"
-  },
   "tii3sv": {
     "message": "Card image language…",
     "translation": "Wika ng larawan ng card…"
@@ -1455,22 +1453,6 @@
   "8xaYE9": {
     "message": "Card images",
     "translation": "Mga larawan ng card"
-  },
-  "-gounj": {
-    "message": "Card layout (optional)",
-    "translation": "Layout ng card (opsyonal)"
-  },
-  "0jQ5fa": {
-    "message": "Card Name",
-    "translation": "Pangalan ng card"
-  },
-  "qiQZCD": {
-    "message": "Card Name is required.",
-    "translation": "Kailangan ang Card Name."
-  },
-  "ME0Zmz": {
-    "message": "Card Name must be {max} characters or less.",
-    "translation": "Dapat {max} karakter o mas kaunti ang Card Name."
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1497,10 +1479,6 @@
     "message": "Card thickness",
     "translation": "Kapal ng card"
   },
-  "oZar_q": {
-    "message": "Card Type",
-    "translation": "Card Type"
-  },
   "Ccpbzh": {
     "message": "Cards",
     "translation": "Mga card"
@@ -1509,6 +1487,10 @@
     "message": "Cards being inspected",
     "translation": "Mga card na sinisilip"
   },
+  "DvicXZ": {
+    "message": "Cards didn't load.",
+    "translation": "Hindi na-load ang mga card."
+  },
   "7oASui": {
     "message": "Cards found",
     "translation": "Mga card na nahanap"
@@ -1516,10 +1498,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Mga card sa deck"
-  },
-  "xo_FAN": {
-    "message": "Cards rest a touch askew, as on a real table.",
-    "translation": "Bahagyang nakatabingi ang mga card, tulad sa totoong mesa."
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1563,6 +1541,14 @@
   "TEzuJ6": {
     "message": "Chat message",
     "translation": "Mensahe sa chat"
+  },
+  "0EVs3J": {
+    "message": "Check that it's a replay file.",
+    "translation": "Tiyaking replay file ito."
+  },
+  "X2MPyW": {
+    "message": "Check the file and try again.",
+    "translation": "Suriin ang file at subukan ulit."
   },
   "RLe7Vk": {
     "message": "Checking…",
@@ -1621,13 +1607,9 @@
     "message": "Clear the log",
     "translation": "I-clear ang log"
   },
-  "5HJTkJ": {
-    "message": "Click any shortcut to change its keys.",
-    "translation": "Mag-click sa anumang shortcut para palitan ang mga key nito."
-  },
-  "XA9wiW": {
-    "message": "Clipboard access failed. Allow clipboard access and try again.",
-    "translation": "Hindi gumana ang access sa clipboard. Payagan ang access sa clipboard at subukan ulit."
+  "MO489z": {
+    "message": "Click a shortcut to change it.",
+    "translation": "Mag-click sa shortcut para baguhin ito."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1707,6 +1689,10 @@
     "message": "Connecting…",
     "translation": "Kumokonekta…"
   },
+  "-MkffR": {
+    "message": "Connection lost.",
+    "translation": "Nawala ang koneksyon."
+  },
   "c0_6W9": {
     "message": "Copied",
     "context": "an invitation",
@@ -1728,53 +1714,57 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "Kopyahin ang listahan (Pokémon TCG Live)"
   },
-  "GUyeZd": {
-    "message": "Copy or download the list",
-    "translation": "Kopyahin o i-download ang listahan"
+  "7WsLH4": {
+    "message": "Couldn't check that. Try again.",
+    "translation": "Hindi ito nasuri. Subukan ulit."
   },
-  "cID6FV": {
-    "message": "Could not copy an invitation",
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
     "translation": "Hindi makopya ang imbitasyon"
   },
-  "z7b9Z8": {
-    "message": "Could not copy an invitation. Please try again.",
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
     "translation": "Hindi makopya ang imbitasyon. Subukan ulit."
   },
-  "_wTzvW": {
-    "message": "Could not generate a room. Please try again.",
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
     "translation": "Hindi makagawa ng room. Subukan ulit."
   },
-  "raqyCE": {
-    "message": "Could not join the room. Please try again.",
+  "Glz9_Y": {
+    "message": "Couldn't join the room. Try again.",
     "translation": "Hindi makasali sa room. Subukan ulit."
   },
-  "gYv4uD": {
-    "message": "Could not open the replay",
+  "w--GsN": {
+    "message": "Couldn't open that file",
+    "translation": "Hindi mabuksan ang file na iyon"
+  },
+  "D_pHKD": {
+    "message": "Couldn't open the replay",
     "translation": "Hindi mabuksan ang replay"
-  },
-  "uVu3aq": {
-    "message": "Could not resume",
-    "translation": "Hindi maituloy"
-  },
-  "ZHbeNW": {
-    "message": "Could not resume this saved game. Please check the file and try again.",
-    "translation": "Hindi maituloy ang naka-save na larong ito. Suriin ang file at subukan ulit."
-  },
-  "nx4kaN": {
-    "message": "Could not save",
-    "translation": "Hindi ma-save"
-  },
-  "PafxzI": {
-    "message": "Could not save this online game. Please try again.",
-    "translation": "Hindi ma-save ang online na larong ito. Subukan ulit."
-  },
-  "GvBw53": {
-    "message": "Could not start Solo mode. Please try again.",
-    "translation": "Hindi masimulan ang Solo mode. Subukan ulit."
   },
   "p0WUR8": {
     "message": "Couldn't pick a deck",
     "translation": "Hindi nakapili ng deck"
+  },
+  "iaCnbQ": {
+    "message": "Couldn't read that list",
+    "translation": "Hindi mabasa ang listahang iyon"
+  },
+  "heYM3E": {
+    "message": "Couldn't resume the game",
+    "translation": "Hindi maipagpatuloy ang laro"
+  },
+  "ETE6Wl": {
+    "message": "Couldn't save the game",
+    "translation": "Hindi na-save ang laro"
+  },
+  "hCQkU8": {
+    "message": "Couldn't start Solo mode. Try again.",
+    "translation": "Hindi masimulan ang Solo mode. Subukan ulit."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Hindi magamit ang clipboard. Payagan ang access at subukan ulit."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1869,25 +1859,9 @@
     "context": "shortcut key caption",
     "translation": "Ilalim ng deck"
   },
-  "S_1qto": {
-    "message": "Deck contains more than {max} cards.",
-    "translation": "Lampas sa {max} ang card sa deck."
-  },
   "sUVFl2": {
     "message": "Deck cover",
     "translation": "Cover ng deck"
-  },
-  "ggH9-D": {
-    "message": "Deck CSV contains more than {max} card rows.",
-    "translation": "Lampas sa {max} ang card row sa Deck CSV."
-  },
-  "V9Fr7P": {
-    "message": "Deck CSV exceeds {max} code units.",
-    "translation": "Lampas sa {max} code unit ang Deck CSV."
-  },
-  "Qcg_ZU": {
-    "message": "Deck CSV must start with {header}.",
-    "translation": "Dapat magsimula sa {header} ang Deck CSV."
   },
   "kemNRk": {
     "message": "Deck for each seat",
@@ -1902,21 +1876,9 @@
     "context": "shortcut key caption",
     "translation": "Itaas ng deck"
   },
-  "fbC8eT": {
-    "message": "Decklist contains more than {max} cards.",
-    "translation": "Lampas sa {max} ang card sa decklist."
-  },
-  "4NYLfk": {
-    "message": "Decklist contains more than {max} lines.",
-    "translation": "Lampas sa {max} ang linya sa decklist."
-  },
   "9NwCxt": {
     "message": "Decklist copied",
     "translation": "Nakopya ang decklist"
-  },
-  "nb-LxT": {
-    "message": "Decklist exceeds {max} code units.",
-    "translation": "Lampas sa {max} code unit ang decklist."
   },
   "vUTt1I": {
     "message": "Decklist to import",
@@ -1957,6 +1919,10 @@
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Alisin sa pagkapili"
+  },
+  "cCCVzA": {
+    "message": "Didn't go through",
+    "translation": "Hindi natuloy"
   },
   "95U7jt": {
     "message": "Direct access to me (I will give you my phone number).",
@@ -2005,6 +1971,10 @@
   "nV_lSY": {
     "message": "Discard your hand and draw…",
     "translation": "I-discard ang hand mo at mag-draw…"
+  },
+  "OdPOhy": {
+    "message": "Discord",
+    "translation": "Discord"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -2077,9 +2047,9 @@
     "message": "Draw how many cards?",
     "translation": "Ilang card ang idadraw?"
   },
-  "lFsCcN": {
-    "message": "Drop a decklist or deck file to import it",
-    "translation": "I-drop ang decklist o deck file para i-import"
+  "IsvGW6": {
+    "message": "Drop to import",
+    "translation": "I-drop para i-import"
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2117,13 +2087,13 @@
     "message": "Edit {name}",
     "translation": "I-edit ang {name}"
   },
+  "rFL-yb": {
+    "message": "Edit a copy",
+    "translation": "Mag-edit ng kopya"
+  },
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "I-edit ang deck"
-  },
-  "NgsKSL": {
-    "message": "Enable board flip <0>(both players must enable)</0>",
-    "translation": "I-enable ang board flip <0>(dapat i-enable ng dalawang player)</0>"
   },
   "1PBKgv": {
     "message": "End",
@@ -2154,25 +2124,37 @@
     "context": "keyboard key",
     "translation": "Enter"
   },
+  "KmFagX": {
+    "message": "Enter a name.",
+    "translation": "Maglagay ng pangalan."
+  },
+  "u2fAme": {
+    "message": "Enter a number",
+    "translation": "Maglagay ng numero"
+  },
   "-cj58y": {
     "message": "Enter a number, then press Enter.",
     "translation": "Maglagay ng numero, tapos pindutin ang Enter."
   },
-  "6EaZBW": {
-    "message": "Error reading file. Please make sure the file is valid.",
-    "translation": "May error sa pagbasa ng file. Tiyaking valid ang file."
+  "0jl-i6": {
+    "message": "Enter a valid image URL.",
+    "translation": "Maglagay ng valid na image URL."
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Maglagay ng image URL."
   },
   "eVVWyt": {
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "FRlHpf": {
-    "message": "Evolution and previous stage · Use View individual cards to inspect each piece and its attachments.",
+  "yJW_id": {
+    "message": "Evolution and previous stage",
     "comments": [
-      "\"View individual cards\" is a button beside it."
+      "A BREAK card laid over the Pokémon it evolved from."
     ],
-    "translation": "Evolution at naunang stage · Gamitin ang View individual cards para suriin ang bawat piraso at ang mga naka-attach dito."
+    "translation": "Evolution at naunang stage"
   },
   "-J6iIV": {
     "message": "Evolve",
@@ -2199,9 +2181,9 @@
     "message": "Exact phrase in the rules text",
     "translation": "Eksaktong parirala sa rules text"
   },
-  "cTmZ2_": {
-    "message": "Exactly one Basic (it has to start)",
-    "translation": "Eksaktong isang Basic (ito ang kailangang mag-start)"
+  "HenzVD": {
+    "message": "Exactly one Basic",
+    "translation": "Eksaktong isang Basic"
   },
   "bMQxzZ": {
     "message": "Exit",
@@ -2289,6 +2271,10 @@
     "context": "card surface",
     "translation": "Tapusin"
   },
+  "mDOjMG": {
+    "message": "Finish (optional)",
+    "translation": "Finish (opsyonal)"
+  },
   "SN6Ocg": {
     "message": "Fire",
     "context": "Pokémon type",
@@ -2297,10 +2283,6 @@
   "RCEX87": {
     "message": "Fire type, Basic",
     "translation": "Fire type, Basic"
-  },
-  "L9TsVi": {
-    "message": "Fixed: number keys and Esc always work this way",
-    "translation": "Fixed: laging ganito gumagana ang mga number key at Esc"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2356,17 +2338,9 @@
     "context": "deck format",
     "translation": "Format"
   },
-  "kxDsuf": {
-    "message": "Four-piece grid · V-UNION",
-    "translation": "Four-piece grid · V-UNION"
-  },
   "N80CjQ": {
     "message": "From clipboard",
     "translation": "Mula sa clipboard"
-  },
-  "QI8Idk": {
-    "message": "From the other card pool (TCG and Pocket don't mix): {cards}.",
-    "translation": "Galing sa kabilang card pool (hindi pwedeng pagsamahin ang TCG at Pocket): {cards}."
   },
   "qIodFG": {
     "message": "Frost",
@@ -2397,11 +2371,6 @@
     "context": "Pokémon card mechanic",
     "translation": "Future"
   },
-  "726EAW": {
-    "message": "Game",
-    "context": "menu section heading",
-    "translation": "Laro"
-  },
   "iDs75z": {
     "message": "Game actions",
     "translation": "Mga aksyon sa laro"
@@ -2410,22 +2379,26 @@
     "message": "Game board",
     "translation": "Game board"
   },
+  "h8FbrQ": {
+    "message": "Game resumed",
+    "translation": "Nagpatuloy ang laro"
+  },
   "oP3kz7": {
     "message": "Generate",
     "context": "a room",
     "translation": "Gumawa"
   },
-  "B8xvzk": {
-    "message": "Generate a room before copying an invitation.",
-    "translation": "Gumawa muna ng room bago kumopya ng imbitasyon."
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Gumawa ng room at ipadala ang imbitasyon. Kapag naka-on ang <0>Sumali bilang spectator</0>, spectator ang iimbitahan."
   },
-  "4L_sa2": {
-    "message": "Generate a room, copy an invitation and send it to your opponent. Turn on <0>Join as spectator</0> to copy a spectator invitation instead.",
-    "translation": "Gumawa ng room, kopyahin ang imbitasyon at ipadala sa kalaban mo. I-on ang <0>Sumali bilang spectator</0> para spectator invitation ang makopya."
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Gumawa muna ng room."
   },
-  "VIzorr": {
-    "message": "Generate a room, then copy a temporary invitation for one player or spectator. They paste it into Room ID to join.",
-    "translation": "Gumawa ng room, tapos kopyahin ang pansamantalang imbitasyon para sa isang manlalaro o manonood. I-paste nila ito sa Room ID para sumali."
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Gumawa ng room, tapos ipadala ang imbitasyon."
   },
   "fQq7dv": {
     "message": "Generating…",
@@ -2435,10 +2408,6 @@
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Makakuha ng sponsor tag sa GitHub profile mo (kung sa GitHub ka magso-sponsor; hindi ito para sa mga sponsor sa PayPal. Inaayos pa ang pag-apruba ng GH sponsor page ko 😛)."
-  },
-  "X-I9hi": {
-    "message": "Getting every card ready…",
-    "translation": "Inihahanda ang lahat ng card…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2484,9 +2453,9 @@
     "context": "zone",
     "translation": "Hand"
   },
-  "74pFdB": {
-    "message": "Hand · no Basic Pokémon: a mulligan",
-    "translation": "Hand · walang Basic Pokémon: mulligan"
+  "wkJJTf": {
+    "message": "Hand · mulligan",
+    "translation": "Hand · mulligan"
   },
   "MMu3F-": {
     "message": "Hand to bottom",
@@ -2507,11 +2476,6 @@
     "context": "coin flip",
     "translation": "Heads"
   },
-  "maRDnk": {
-    "message": "Help",
-    "context": "menu section heading",
-    "translation": "Tulong"
-  },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
     "comments": [
@@ -2524,6 +2488,11 @@
     "context": "shortcut key caption",
     "translation": "Itago"
   },
+  "WEOf-a": {
+    "message": "Hide",
+    "context": "stop revealing a card",
+    "translation": "Itago"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "Itago ang keyboard"
@@ -2531,6 +2500,10 @@
   "o1ytqy": {
     "message": "Hide log",
     "translation": "Itago ang log"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Itago ang Lost Zone"
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
@@ -2556,14 +2529,6 @@
   "geXprQ": {
     "message": "Host a room",
     "translation": "Mag-host ng room"
-  },
-  "DDMiDe": {
-    "message": "Host a room and invite a friend, or join theirs.",
-    "translation": "Mag-host ng room at mag-imbita ng kaibigan, o sumali sa room nila."
-  },
-  "_W9GYQ": {
-    "message": "How many cards do you want to look at?",
-    "translation": "Ilang card ang gusto mong tingnan?"
   },
   "_vIqw9": {
     "message": "How many cards?",
@@ -2638,21 +2603,13 @@
     "message": "Image URL",
     "translation": "URL ng larawan"
   },
-  "ahLxtd": {
-    "message": "Image URL is required.",
-    "translation": "Kailangan ang URL ng larawan."
-  },
-  "X-Qb30": {
-    "message": "Image URL must be {max} characters or less.",
-    "translation": "Dapat hindi hihigit sa {max} character ang URL ng larawan."
-  },
-  "BsLWkA": {
-    "message": "Image URL must point to a loadable image.",
-    "translation": "Dapat tumuro ang URL ng larawan sa larawang mailo-load."
-  },
   "15ARIE": {
     "message": "Image URL too long",
     "translation": "Masyadong mahaba ang URL ng larawan"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "Image URL: hanggang {max} character."
   },
   "EUsCHg": {
     "message": "Images",
@@ -2667,10 +2624,6 @@
   "EEh2f0": {
     "message": "Import a deck",
     "translation": "Mag-import ng deck"
-  },
-  "wxDVVg": {
-    "message": "Import the list on your clipboard",
-    "translation": "I-import ang listahan sa clipboard mo"
   },
   "aWU0gR": {
     "message": "Imported deck",
@@ -2698,21 +2651,13 @@
     "context": "animation speed",
     "translation": "Instant"
   },
-  "N9_ykp": {
-    "message": "Instant keeps every action immediate, with no movement.",
-    "translation": "Ginagawang agad ng Instant ang bawat aksyon, walang galaw."
-  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "Nakopya ang imbitasyon"
   },
-  "jP3hdw": {
-    "message": "It could not be read.",
-    "translation": "Hindi ito mabasa."
-  },
-  "HDd931": {
-    "message": "It is too large to be a deck.",
-    "translation": "Masyado itong malaki para maging deck."
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Nakopya sa clipboard ang imbitasyon."
   },
   "5kNRW8": {
     "message": "Item",
@@ -2736,12 +2681,8 @@
     "message": "Join as spectator",
     "translation": "Sumali bilang manonood"
   },
-  "31TuIx": {
-    "message": "Join our Discord",
-    "translation": "Sumali sa Discord namin"
-  },
-  "xiRZec": {
-    "message": "Join Room",
+  "t5uRiA": {
+    "message": "Join room",
     "translation": "Sumali sa room"
   },
   "t8Lc2X": {
@@ -2799,6 +2740,10 @@
     "context": "card layout",
     "translation": "Layout"
   },
+  "iZqrTt": {
+    "message": "Layout (optional)",
+    "translation": "Layout (opsyonal)"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Iwan sa play"
@@ -2824,6 +2769,10 @@
     "message": "Legality not checked for cards added by hand: {cards}.",
     "translation": "Hindi nasuri ang legality ng mga card na manu-manong idinagdag: {cards}."
   },
+  "xXagjO": {
+    "message": "LEGEND · 2 halves",
+    "translation": "LEGEND · 2 halves"
+  },
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
@@ -2838,25 +2787,25 @@
     "context": "Pokémon type",
     "translation": "Lightning"
   },
-  "L8YVpL": {
-    "message": "Line {line} card name exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang pangalan ng card sa linya {line}."
+  "BvrzrK": {
+    "message": "Line {line} is too long.",
+    "translation": "Masyadong mahaba ang linya {line}."
   },
-  "qGY357": {
-    "message": "Line {line} exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang linya {line}."
+  "P7ovJ4": {
+    "message": "Line {line}: card name too long.",
+    "translation": "Linya {line}: masyadong mahaba ang pangalan ng card."
   },
-  "uUu0lO": {
-    "message": "Line {line} image URL exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang image URL sa linya {line}."
+  "jZ7Cmx": {
+    "message": "Line {line}: image URL too long.",
+    "translation": "Linya {line}: masyadong mahaba ang image URL."
   },
-  "WBB3Uk": {
-    "message": "Line {line} quantity must be an integer from 1 to {max}.",
-    "translation": "Dapat ay buong numero mula 1 hanggang {max} ang dami sa linya {line}."
+  "emtXNu": {
+    "message": "Line {line}: quantity must be 1 to {max}.",
+    "translation": "Linya {line}: dapat 1 hanggang {max} ang dami."
   },
-  "9r7EQl": {
-    "message": "Line {line} set or card identifier exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang set o card identifier sa linya {line}."
+  "jleG-m": {
+    "message": "Line {line}: set code too long.",
+    "translation": "Linya {line}: masyadong mahaba ang set code."
   },
   "Q8pDHq": {
     "message": "List",
@@ -2874,6 +2823,10 @@
   "GLOf7w": {
     "message": "Load the other side's deck",
     "translation": "I-load ang deck ng kabila"
+  },
+  "g7taAS": {
+    "message": "Loading cards…",
+    "translation": "Naglo-load ng mga card…"
   },
   "f55wdH": {
     "message": "Loading decks…",
@@ -2905,6 +2858,10 @@
     "message": "Look",
     "context": "shortcut key caption",
     "translation": "Tingnan"
+  },
+  "Q1s-WM": {
+    "message": "Look at how many cards?",
+    "translation": "Ilang card ang titingnan?"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
@@ -2958,13 +2915,9 @@
     "message": "Looking at cards",
     "translation": "Tumitingin ng mga card"
   },
-  "08hCRK": {
-    "message": "Looking at cards...",
-    "translation": "Tumitingin ng mga card..."
-  },
-  "8-pQrF": {
-    "message": "Lost the connection to the room.",
-    "translation": "Nawala ang koneksyon sa room."
+  "cGgbAH": {
+    "message": "Lost the room during the replay.",
+    "translation": "Nawala ang room habang nagre-replay."
   },
   "JgsnP-": {
     "message": "Lost Zone",
@@ -2989,9 +2942,9 @@
     "message": "Lost Zone all",
     "translation": "Ilagay lahat sa Lost Zone"
   },
-  "IHNoPs": {
-    "message": "Lost Zone, VSTAR and GX markers",
-    "translation": "Mga marker ng Lost Zone, VSTAR at GX"
+  "eyE6CV": {
+    "message": "Lost Zone and markers",
+    "translation": "Lost Zone at mga marker"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -3080,6 +3033,10 @@
     "context": "my half of the table",
     "translation": "Akin"
   },
+  "2FYpfJ": {
+    "message": "More",
+    "translation": "Higit pa"
+  },
   "bnmSJm": {
     "message": "More",
     "context": "more actions",
@@ -3138,6 +3095,10 @@
     "message": "Move card...",
     "translation": "Ilipat ang card..."
   },
+  "TvEhJE": {
+    "message": "Move didn't go through",
+    "translation": "Hindi natuloy ang galaw"
+  },
   "iwWOBz": {
     "message": "Move everything on your playboard to your hand",
     "translation": "Ilipat sa kamay mo ang lahat ng nasa playboard mo"
@@ -3151,14 +3112,18 @@
     "message": "Move to",
     "translation": "Ilipat sa"
   },
-  "MlzKTm": {
-    "message": "Moves are still on their way. Try again in a moment.",
-    "translation": "Papunta pa lang ang mga galaw. Subukan ulit sa sandali."
+  "rzLbnt": {
+    "message": "Move to hand",
+    "translation": "Ilipat sa hand"
   },
   "mP7YPE": {
     "message": "Mulligan",
     "context": "shortcut key caption",
     "translation": "Mulligan"
+  },
+  "8GMjXa": {
+    "message": "Mulligan (no Basic in 7)",
+    "translation": "Mulligan (walang Basic sa 7)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3192,6 +3157,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "Naglalaman ang pangalan ng mga salita"
+  },
+  "4jBgrs": {
+    "message": "Name: up to {max} characters.",
+    "translation": "Pangalan: hanggang {max} character."
   },
   "OzETXo": {
     "message": "Natural card placement",
@@ -3240,20 +3209,20 @@
     "message": "No actions match",
     "translation": "Walang tugmang aksyon"
   },
-  "-iSsDL": {
-    "message": "No Basic in the opening 7 (mulligan)",
-    "translation": "Walang Basic sa unang 7 (mulligan)"
-  },
-  "np6nz2": {
-    "message": "No card lines found. Lines look like \"4 Iono PAL 185\".",
+  "6n5psS": {
+    "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
-    "translation": "Walang nahanap na linya ng card. Ganito ang itsura ng mga linya: \"4 Iono PAL 185\"."
+    "translation": "Walang nahanap na linya ng card. Subukan ang mga linyang tulad ng \"4 Iono PAL 185\"."
   },
   "7Kn8aC": {
     "message": "No cards here",
     "translation": "Walang card dito"
+  },
+  "7rmH0G": {
+    "message": "No cards in that list.",
+    "translation": "Walang card sa listahang iyon."
   },
   "r1U_Vc": {
     "message": "No cards match “{text}”.",
@@ -3263,13 +3232,9 @@
     "message": "No cards match.",
     "translation": "Walang card na tugma."
   },
-  "ITmqK8": {
-    "message": "No cards yet. A whole list can be pasted anywhere on this screen.",
-    "translation": "Wala pang card. Puwedeng i-paste ang buong listahan kahit saan sa screen na ito."
-  },
-  "i13fcW": {
-    "message": "No current tournament decks right now.",
-    "translation": "Walang kasalukuyang tournament deck sa ngayon."
+  "bYysi5": {
+    "message": "No cards yet. Paste a list anywhere here.",
+    "translation": "Wala pang card. Mag-paste ng listahan kahit saan dito."
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -3287,9 +3252,9 @@
     "message": "No image",
     "translation": "Walang image"
   },
-  "NX9V6M": {
-    "message": "No saved decks yet. Paste a list above, start a new deck, or try one of the decks below — anything you import or build is saved here automatically.",
-    "translation": "Wala pang naka-save na deck. Mag-paste ng listahan sa itaas, gumawa ng bagong deck, o subukan ang isa sa mga deck sa ibaba — awtomatikong nase-save dito ang anumang i-import o buuin mo."
+  "f5zBYV": {
+    "message": "No saved decks yet. Decks you import or build are saved here.",
+    "translation": "Wala pang naka-save na deck. Dito mase-save ang mga deck na ini-import o binuo mo."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3298,6 +3263,10 @@
   "Psi2LF": {
     "message": "No Special Condition",
     "translation": "Walang Special Condition"
+  },
+  "lChsa8": {
+    "message": "No tournament decks right now.",
+    "translation": "Walang tournament deck ngayon."
   },
   "6psMRl": {
     "message": "None",
@@ -3309,9 +3278,9 @@
     "context": "animation speed",
     "translation": "Normal"
   },
-  "2ZdbIi": {
-    "message": "Not connected right now",
-    "translation": "Hindi nakakonekta ngayon"
+  "S33tz3": {
+    "message": "Not connected",
+    "translation": "Hindi nakakonekta"
   },
   "aGy2Td": {
     "message": "not ex (minus = not)",
@@ -3334,6 +3303,14 @@
     "message": "Not set",
     "context": "a shortcut with no key",
     "translation": "Walang naka-set"
+  },
+  "6rbhdt": {
+    "message": "Not your move",
+    "translation": "Hindi mo turn"
+  },
+  "W8zlv3": {
+    "message": "Not yours to do",
+    "translation": "Hindi ito sa iyo"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -3360,10 +3337,6 @@
     "context": "setting",
     "translation": "Naka-off"
   },
-  "KQpYbt": {
-    "message": "Off by default: few formats use it. A Lost Zone with cards always shows.",
-    "translation": "Naka-off bilang default: kakaunting format ang gumagamit nito. Laging lumalabas ang Lost Zone kapag may card ito."
-  },
   "zga9sT": {
     "message": "OK",
     "translation": "OK"
@@ -3387,10 +3360,6 @@
     ],
     "translation": "Nasa {seat}"
   },
-  "u-Fx9C": {
-    "message": "On the table",
-    "translation": "Nasa table"
-  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "Isang kalahati ang pumupuno sa table"
@@ -3399,10 +3368,6 @@
     "message": "One moment",
     "translation": "Sandali lang"
   },
-  "Rz4QTI": {
-    "message": "Online Multiplayer Mode",
-    "translation": "Online Multiplayer Mode"
-  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -3410,25 +3375,21 @@
     ],
     "translation": "Mga {formatLabel}-legal lang"
   },
-  "ycEBgW": {
-    "message": "Only the player in that seat can.",
-    "translation": "Ang player lang sa upuang iyon ang puwede."
+  "XXBK3z": {
+    "message": "Only players can change the table.",
+    "translation": "Mga player lang ang puwedeng magbago ng table."
   },
-  "kpTM9V": {
-    "message": "Only the players can change it.",
-    "translation": "Ang mga player lang ang puwedeng magbago nito."
+  "kQ0v6x": {
+    "message": "Only that seat's player can.",
+    "translation": "Player lang ng upuang iyon ang puwede."
   },
-  "RqCWii": {
-    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
-    "translation": "Ikaw lang ang makakakita ng pagpiling ito. Kapag walang print ang isang card sa wikang iyon, ipapakita ito ayon sa deck."
+  "gbBPE1": {
+    "message": "Only you see this. Cards without that printing keep the deck's scan.",
+    "translation": "Ikaw lang ang nakakakita nito. Ang mga card na walang ganoong printing ay gagamit ng scan ng deck."
   },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Magbukas ng deck file"
-  },
-  "w-3h5f": {
-    "message": "Open a decklist (.txt) or simulator file (.csv). You can also drop one here.",
-    "translation": "Magbukas ng decklist (.txt) o simulator file (.csv). Puwede mo ring i-drop dito."
   },
   "9npOH9": {
     "message": "Open file",
@@ -3490,21 +3451,17 @@
     "message": "Opens this list",
     "translation": "Binubuksan ang listahang ito"
   },
+  "WOApxE": {
+    "message": "Opponent is looking",
+    "translation": "Tumitingin ang kalaban"
+  },
   "g88DaC": {
     "message": "Opponent moving cards",
     "translation": "Gumagalaw ng card ang kalaban"
   },
-  "sDZaPr": {
-    "message": "Opponent moving cards...",
-    "translation": "Gumagalaw ng card ang kalaban..."
-  },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
     "translation": "Nakaharap sa akin ang mga card ng kalaban"
-  },
-  "jmKDRE": {
-    "message": "Ordinary portrait card",
-    "translation": "Karaniwang portrait na card"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3515,6 +3472,10 @@
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
     "translation": "Iba pang Trainer"
+  },
+  "zsicOH": {
+    "message": "Out of sync with the room.",
+    "translation": "Hindi naka-sync sa room."
   },
   "SFwfHx": {
     "message": "Page Down",
@@ -3551,43 +3512,33 @@
     "message": "Pass the turn",
     "translation": "I-pass ang turn"
   },
-  "Y2Lyu8": {
-    "message": "Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen",
-    "translation": "Mag-paste ng decklist mula sa Pokémon TCG Live, Limitless, o kahit saan — o pindutin lang ang Ctrl+V sa screen na ito"
+  "BRnJkz": {
+    "message": "Paste a decklist first.",
+    "translation": "Mag-paste muna ng decklist."
   },
-  "XBx43W": {
-    "message": "Paste a temporary invitation into Room ID.",
-    "translation": "Mag-paste ng pansamantalang imbitasyon sa Room ID."
+  "WXUbKm": {
+    "message": "Paste a decklist, or press Ctrl+V anywhere",
+    "translation": "Mag-paste ng decklist, o pindutin ang Ctrl+V kahit saan"
   },
-  "i85ksQ": {
-    "message": "Paste a valid invitation into Room ID before joining.",
-    "translation": "Mag-paste ng valid na imbitasyon sa Room ID bago sumali."
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Mag-paste ng valid na imbitasyon sa Room ID."
   },
   "pJRgD4": {
     "message": "Paste an invitation",
     "translation": "Mag-paste ng imbitasyon"
   },
-  "IiTL4Z": {
-    "message": "Paste the invitation you were sent, or join the room you generated.",
-    "translation": "I-paste ang imbitasyong ipinadala sa iyo, o sumali sa room na ginawa mo."
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Mag-paste ng imbitasyon, o sumali sa sarili mong room."
   },
-  "pdondR": {
-    "message": "Paste the list with Ctrl+V (⌘V on a Mac) instead.",
-    "translation": "I-paste na lang ang listahan gamit ang Ctrl+V (⌘V sa Mac)."
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "I-paste ang imbitasyon sa Room ID."
   },
-  "wialHB": {
-    "message": "Paste your image URL or type 'default':",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "I-paste ang URL ng image mo o i-type ang 'default':"
-  },
-  "m1XBv-": {
-    "message": "Paste your image URL, or type 'blank' or 'theme':",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "I-paste ang URL ng image mo, o i-type ang 'blank' o 'theme':"
+  "MfH2NF": {
+    "message": "Paste with Ctrl+V (⌘V) instead",
+    "translation": "Mag-paste gamit ang Ctrl+V (⌘V)"
   },
   "cfCrKd": {
     "message": "Paypal Donation Link",
@@ -3601,10 +3552,6 @@
     "message": "Pick random card",
     "translation": "Pumili ng random na card"
   },
-  "YTYMMV": {
-    "message": "Picture the deck with this card",
-    "translation": "Ilarawan ang deck gamit ang card na ito"
-  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Posisyon ng piece"
@@ -3614,18 +3561,17 @@
     "context": "take the decks to the table",
     "translation": "Laro"
   },
+  "7LIRc6": {
+    "message": "Play a random deck",
+    "translation": "Maglaro ng random na deck"
+  },
   "VCIZc8": {
     "message": "Play online",
     "translation": "Maglaro online"
   },
-  "-tOpDV": {
-    "message": "Play this deck as {seat}",
-    "translation": "Laruin ang deck na ito bilang {seat}"
-  },
-  "RNRv6e": {
-    "message": "Playboard",
-    "context": "zone",
-    "translation": "Playboard"
+  "hrmat7": {
+    "message": "Play these decks",
+    "translation": "Laruin ang mga deck na ito"
   },
   "3Nh5cA": {
     "message": "Played last · {when}",
@@ -3647,21 +3593,13 @@
     "context": "unnamed seat",
     "translation": "Player"
   },
-  "NgXTKK": {
-    "message": "Please enter a valid image URL.",
-    "translation": "Maglagay ng wastong URL ng larawan."
-  },
-  "3uFKp3": {
-    "message": "Please enter a valid number for the draw amount.",
-    "translation": "Maglagay ng wastong numero para sa dami ng ita-draw."
-  },
-  "gUhl4O": {
-    "message": "Please enter a valid number for the view amount.",
-    "translation": "Maglagay ng wastong numero para sa dami ng titingnan."
-  },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
     "translation": "Walang Energy card ang mga Pocket deck."
+  },
+  "S-nXVo": {
+    "message": "Pointer parallax",
+    "translation": "Pointer parallax"
   },
   "95vGpJ": {
     "message": "Poisoned",
@@ -3678,9 +3616,9 @@
     "context": "shortcut key caption",
     "translation": "Pokémon"
   },
-  "sKDCDc": {
-    "message": "Pokémon added by hand (stage unknown)",
-    "translation": "Pokémon na idinagdag nang mano-mano (hindi alam ang stage)"
+  "CA11_N": {
+    "message": "Pokémon added by hand",
+    "translation": "Mga Pokémon na idinagdag nang mano-mano"
   },
   "RNaprm": {
     "message": "Pokémon cards",
@@ -3693,13 +3631,6 @@
     ],
     "translation": "Pindutin ang {keys} para sa <0>mga shortcut</0>."
   },
-  "WNZF5E": {
-    "message": "Press <0/> to open this list any time.",
-    "comments": [
-      "The keys that open this list, drawn as keycaps (usually \"?\")."
-    ],
-    "translation": "Pindutin ang <0/> anumang oras para buksan ang listahang ito."
-  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "Pindutin ulit para kumpirmahin"
@@ -3711,10 +3642,6 @@
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Pindutin ang mga key…"
-  },
-  "g9wm8H": {
-    "message": "Press OK to stop revealing card to opponent",
-    "translation": "Pindutin ang OK para ihinto ang pagpapakita ng card sa kalaban"
   },
   "wCMulM": {
     "message": "Press the new keys for {label}. Escape cancels.",
@@ -3772,25 +3699,13 @@
     "message": "PTCG-sim tutorial",
     "translation": "Tutorial ng PTCG-sim"
   },
-  "3celTG": {
-    "message": "Put a random deck on your seat",
-    "translation": "Maglagay ng random na deck sa upuan mo"
-  },
-  "wfCdi6": {
-    "message": "Put every shortcut back?",
-    "translation": "Ibalik ang lahat ng shortcut?"
-  },
   "rFCOSV": {
     "message": "Put everything on your playboard in the Lost Zone",
     "translation": "Ilagay sa Lost Zone ang lahat ng nasa playboard mo"
   },
-  "Je1OLM": {
-    "message": "Put the empty Lost Zone away",
-    "translation": "Itabi ang walang lamang Lost Zone"
-  },
-  "Pep1YD": {
-    "message": "Put the Lost Zone away",
-    "translation": "Itabi ang Lost Zone"
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Ilagay ang mga piece ng Pokémon sa iisang stack, at ang mga piece ng Stadium sa Stadium."
   },
   "eAnTYw": {
     "message": "Put your hand on the bottom of your deck and draw…",
@@ -3804,9 +3719,9 @@
     "message": "Quantity",
     "translation": "Dami"
   },
-  "ILC8sM": {
-    "message": "Quantity must be between 1 and {max}.",
-    "translation": "Dapat nasa pagitan ng 1 at {max} ang dami."
+  "8cBiju": {
+    "message": "Quantity: 1 to {max}.",
+    "translation": "Dami: 1 hanggang {max}."
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -3847,13 +3762,13 @@
     "message": "Receive all of the benefits of the previous tiers.",
     "translation": "Makuha ang lahat ng benepisyo ng mga nakaraang tier."
   },
-  "WKLnhx": {
-    "message": "Recognize known card formats",
-    "translation": "Kilalanin ang mga kilalang format ng card"
-  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Kumonekta ulit"
+  },
+  "MO2S6n": {
+    "message": "Reconnecting. Try again in a moment.",
+    "translation": "Muling kumokonekta. Subukan ulit sa sandali."
   },
   "H3oH0g": {
     "message": "Redo",
@@ -3892,6 +3807,14 @@
     "message": "Remove all damage",
     "translation": "Alisin ang lahat ng damage"
   },
+  "sR6lTH": {
+    "message": "Remove condition",
+    "translation": "Alisin ang condition"
+  },
+  "8IMRlK": {
+    "message": "Remove from {seat}",
+    "translation": "Alisin sa {seat}"
+  },
   "MS9-fZ": {
     "message": "Remove one",
     "translation": "Mag-alis ng isa"
@@ -3908,10 +3831,6 @@
     "message": "Remove special condition",
     "translation": "Alisin ang special condition"
   },
-  "cqopk0": {
-    "message": "Remove the Special Condition",
-    "translation": "Alisin ang Special Condition"
-  },
   "XsrZAv": {
     "message": "Rename",
     "context": "button",
@@ -3926,14 +3845,14 @@
     "message": "Rename deck",
     "translation": "Palitan ang pangalan ng deck"
   },
-  "nBPH-e": {
-    "message": "Rename, copy, export or delete",
-    "translation": "Palitan ang pangalan, kopyahin, i-export o burahin"
-  },
   "cDnZvG": {
     "message": "Replay",
     "context": "the table is showing a replay",
     "translation": "Replay"
+  },
+  "3hz5zq": {
+    "message": "Replay interrupted. Try again.",
+    "translation": "Naputol ang replay. Subukan ulit."
   },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
@@ -3969,6 +3888,10 @@
   "5FOB1h": {
     "message": "Reset all",
     "translation": "I-reset lahat"
+  },
+  "dNFlsv": {
+    "message": "Reset all shortcuts?",
+    "translation": "I-reset ang lahat ng shortcut?"
   },
   "JLLA3V": {
     "message": "Reset both sides",
@@ -4052,14 +3975,18 @@
     "message": "Reveal/hide prizes",
     "translation": "Ipakita/itago ang mga prize"
   },
+  "fa6wL6": {
+    "message": "Revealed to your opponent",
+    "translation": "Ipinakita sa kalaban mo"
+  },
   "XGMYSt": {
     "message": "Right",
     "context": "piece position",
     "translation": "Kanan"
   },
-  "c3QPLj": {
-    "message": "Right-click a card for its actions.",
-    "translation": "I-right-click ang card para sa mga aksyon nito."
+  "gTK8h8": {
+    "message": "Right-click a card for actions.",
+    "translation": "I-right-click ang card para sa mga aksyon."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4085,61 +4012,61 @@
     "message": "Rotate card(s)",
     "translation": "I-rotate ang card"
   },
-  "JAKwbT": {
-    "message": "Row {row} contains an unexpected quote.",
-    "translation": "May hindi inaasahang quote sa row {row}."
+  "JRfxmI": {
+    "message": "Row {row}: text after a closing quote.",
+    "translation": "Row {row}: may text pagkatapos ng closing quote."
   },
-  "EHZjbS": {
-    "message": "Row {row} contains an unterminated quote.",
-    "translation": "May quote na hindi naisara sa row {row}."
+  "nmg9gB": {
+    "message": "Row {row}: unexpected quote.",
+    "translation": "Row {row}: hindi inaasahang quote."
   },
-  "qDnJ2U": {
-    "message": "Row {row} has text after a closing quote.",
-    "translation": "May text pagkatapos ng closing quote sa row {row}."
+  "GF2_ew": {
+    "message": "Row {row}: unterminated quote.",
+    "translation": "Row {row}: hindi nasarhan ang quote."
   },
-  "_Enj3q": {
-    "message": "Row {rowNumber} card name exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang pangalan ng card sa row {rowNumber}."
+  "FxnMec": {
+    "message": "Row {rowNumber}: card name too long.",
+    "translation": "Row {rowNumber}: masyadong mahaba ang pangalan ng card."
   },
-  "2ugzfk": {
-    "message": "Row {rowNumber} card type exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang uri ng card sa row {rowNumber}."
+  "QfafSg": {
+    "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "translation": "Row {rowNumber}: dapat Pokémon, Trainer, o Energy ang uri ng card."
   },
-  "RUenSk": {
-    "message": "Row {rowNumber} card type must be Pokémon, Trainer or Energy.",
-    "translation": "Dapat Pokémon, Trainer, o Energy ang uri ng card sa row {rowNumber}."
+  "jtuoO2": {
+    "message": "Row {rowNumber}: card type too long.",
+    "translation": "Row {rowNumber}: masyadong mahaba ang uri ng card."
   },
-  "TxaPVN": {
-    "message": "Row {rowNumber} has invalid presentation JSON.",
-    "translation": "Di-wasto ang presentation JSON sa row {rowNumber}."
+  "gojF1j": {
+    "message": "Row {rowNumber}: image URL too long.",
+    "translation": "Row {rowNumber}: masyadong mahaba ang image URL."
   },
-  "YPNZeK": {
-    "message": "Row {rowNumber} image URL exceeds {max} code units.",
-    "translation": "Lumampas sa {max} code unit ang image URL sa row {rowNumber}."
+  "DCuDdI": {
+    "message": "Row {rowNumber}: invalid presentation JSON.",
+    "translation": "Row {rowNumber}: di-valid na presentation JSON."
   },
-  "nuW_Tl": {
-    "message": "Row {rowNumber} is missing a card name.",
-    "translation": "Walang pangalan ng card sa row {rowNumber}."
+  "tqYUyB": {
+    "message": "Row {rowNumber}: needs exactly five columns.",
+    "translation": "Row {rowNumber}: dapat eksaktong limang column."
   },
-  "Fa0pEa": {
-    "message": "Row {rowNumber} is missing a card type.",
-    "translation": "Walang uri ng card sa row {rowNumber}."
+  "GTr4h_": {
+    "message": "Row {rowNumber}: needs exactly four columns.",
+    "translation": "Row {rowNumber}: dapat eksaktong apat na column."
   },
-  "RM5M7g": {
-    "message": "Row {rowNumber} is missing an image URL.",
-    "translation": "Walang image URL sa row {rowNumber}."
+  "uC4XeA": {
+    "message": "Row {rowNumber}: no card name.",
+    "translation": "Row {rowNumber}: walang pangalan ng card."
   },
-  "GT_DsB": {
-    "message": "Row {rowNumber} must contain exactly five columns.",
-    "translation": "Dapat eksaktong limang column ang row {rowNumber}."
+  "2DgRWI": {
+    "message": "Row {rowNumber}: no card type.",
+    "translation": "Row {rowNumber}: walang uri ng card."
   },
-  "ppjGSa": {
-    "message": "Row {rowNumber} must contain exactly four columns.",
-    "translation": "Dapat eksaktong apat na column ang row {rowNumber}."
+  "X-Ve84": {
+    "message": "Row {rowNumber}: no image URL.",
+    "translation": "Row {rowNumber}: walang image URL."
   },
-  "g-Sgq0": {
-    "message": "Row {rowNumber} quantity must be an integer from 1 to {max}.",
-    "translation": "Dapat buong numero mula 1 hanggang {max} ang dami sa row {rowNumber}."
+  "JjTFWo": {
+    "message": "Row {rowNumber}: quantity must be 1 to {max}.",
+    "translation": "Row {rowNumber}: ang dami ay dapat 1 hanggang {max}."
   },
   "duDNyy": {
     "message": "Rule Box",
@@ -4171,13 +4098,13 @@
     "message": "Sample Prizes",
     "translation": "Sample na Prize"
   },
+  "tfDRzk": {
+    "message": "Save",
+    "translation": "I-save"
+  },
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "I-save ang {name}"
-  },
-  "CE18C8": {
-    "message": "Save a copy and edit it",
-    "translation": "Mag-save ng kopya at i-edit ito"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
@@ -4186,10 +4113,6 @@
   "4ibQSn": {
     "message": "Save online game",
     "translation": "I-save ang online na laro"
-  },
-  "DiYfve": {
-    "message": "Save to your decks",
-    "translation": "I-save sa mga deck mo"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -4200,10 +4123,6 @@
     "message": "Saved for this visit only",
     "translation": "Na-save para sa pagbisitang ito lang"
   },
-  "MIgYaM": {
-    "message": "Saved game resumed",
-    "translation": "Itinuloy ang na-save na laro"
-  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Sabihin…"
@@ -4211,10 +4130,6 @@
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Maghanap ng card"
-  },
-  "LLBZnG": {
-    "message": "Search cards — try “t:fire hp>=100” or “is:ex”",
-    "translation": "Maghanap ng card — subukan ang “t:fire hp>=100” o “is:ex”"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4248,10 +4163,6 @@
     "message": "Season",
     "translation": "Season"
   },
-  "p2nsKf": {
-    "message": "See the table without closing this",
-    "translation": "Tingnan ang table nang hindi isinasara ito"
-  },
   "gspMtn": {
     "message": "Selected card",
     "context": "shortcut group",
@@ -4269,10 +4180,6 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Magpadala ng mensahe"
-  },
-  "5FsIcI": {
-    "message": "Separate this card to hand",
-    "translation": "Ihiwalay ang card na ito papunta sa hand"
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -4322,10 +4229,6 @@
     "message": "Set up both sides",
     "translation": "I-set up ang magkabilang panig"
   },
-  "KZqu6_": {
-    "message": "Set up: shuffle, draw 7, place 6 prizes",
-    "translation": "Set up: i-shuffle, mag-draw ng 7, maglagay ng 6 na prize"
-  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Inihahanda ang table…"
@@ -4334,18 +4237,14 @@
     "message": "Settings",
     "translation": "Mga setting"
   },
-  "oiLXI5": {
-    "message": "Share or export",
-    "translation": "I-share o i-export"
-  },
   "2D-NYE": {
     "message": "Shift",
     "context": "keyboard key",
     "translation": "Shift"
   },
-  "s0BhfF": {
-    "message": "Shift+click removes one · Right-click for details · Enter in the search adds the first card",
-    "translation": "Shift+click para magtanggal ng isa · Right-click para sa detalye · Enter sa search para idagdag ang unang card"
+  "2ORd-n": {
+    "message": "Shift+click removes one · Right-click for details · Enter adds the top result",
+    "translation": "Shift+click para magtanggal ng isa · Right-click para sa detalye · Enter para idagdag ang top result"
   },
   "CTqTgr": {
     "message": "Shortcuts",
@@ -4389,17 +4288,9 @@
     "message": "Show all {metaCount}",
     "translation": "Ipakita lahat ng {metaCount}"
   },
-  "SRR-Zw": {
-    "message": "Show every copy on its own",
-    "translation": "Ipakita ang bawat kopya nang hiwalay"
-  },
   "wo4rGx": {
     "message": "Show every print",
     "translation": "Ipakita ang bawat print"
-  },
-  "UsDaAh": {
-    "message": "Show every print of each card",
-    "translation": "Ipakita ang bawat print ng bawat card"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4408,6 +4299,10 @@
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Ipakita ang keyboard"
+  },
+  "FBwNsr": {
+    "message": "Show one per card",
+    "translation": "Isa lang kada card"
   },
   "etmouI": {
     "message": "Show the card",
@@ -4429,13 +4324,17 @@
     "message": "Show the keys for",
     "translation": "Ipakita ang mga key para sa"
   },
+  "YtzfVy": {
+    "message": "Show the table",
+    "translation": "Ipakita ang table"
+  },
+  "UwltxX": {
+    "message": "Show this card on the deck",
+    "translation": "Ipakita ang card na ito sa deck"
+  },
   "D_Orlv": {
     "message": "Show toolbar",
     "translation": "Ipakita ang toolbar"
-  },
-  "5uIbgt": {
-    "message": "Showing every print; show one per card",
-    "translation": "Ipinapakita ang bawat print; ipakita ang isa kada card"
   },
   "sf2cQK": {
     "message": "Shuffle",
@@ -4455,17 +4354,13 @@
     "message": "Shuffle all into deck",
     "translation": "I-shuffle lahat sa deck"
   },
+  "Fnz7SK": {
+    "message": "Shuffle all into the deck?",
+    "translation": "I-shuffle lahat sa deck?"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "I-shuffle lahat sa deck"
-  },
-  "0SEYuR": {
-    "message": "Shuffle all to Deck",
-    "translation": "I-shuffle lahat sa Deck"
-  },
-  "FmM1KF": {
-    "message": "Shuffle all to Deck?",
-    "translation": "I-shuffle lahat sa Deck?"
   },
   "eFbm-5": {
     "message": "Shuffle deck",
@@ -4524,9 +4419,13 @@
     "message": "Shuffle your Prizes",
     "translation": "I-shuffle ang Prizes mo"
   },
-  "4p1iGZ": {
-    "message": "Sideways scan · rotate to read",
-    "translation": "Pahigang scan · i-rotate para mabasa"
+  "7cboVh": {
+    "message": "Shuffle, draw 7, set 6 prizes",
+    "translation": "Mag-shuffle, mag-draw ng 7, mag-set ng 6 prize"
+  },
+  "lzdYF4": {
+    "message": "Sideways scan",
+    "translation": "Pahigang scan"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -4543,10 +4442,6 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Kintab ng sleeve"
-  },
-  "OoIo6S": {
-    "message": "Slow down a moment",
-    "translation": "Dahan-dahan muna"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -4646,10 +4541,6 @@
     "message": "Stack copies",
     "translation": "I-stack ang mga kopya"
   },
-  "Q1I0pL": {
-    "message": "Stack copies of a card together",
-    "translation": "I-stack nang magkakasama ang mga kopya ng isang card"
-  },
   "GtR_fA": {
     "message": "Stadium",
     "context": "shortcut key caption",
@@ -4669,6 +4560,10 @@
     "message": "Stadium",
     "context": "zone on the table",
     "translation": "Stadium"
+  },
+  "1TzAdj": {
+    "message": "Stadium · 2 pieces",
+    "translation": "Stadium · 2 piraso"
   },
   "ikMMp4": {
     "message": "Stadiums",
@@ -4690,6 +4585,10 @@
     "context": "deck format",
     "translation": "Standard"
   },
+  "Tg13WJ": {
+    "message": "Standard card",
+    "translation": "Karaniwang card"
+  },
   "7GpLGd": {
     "message": "Start turn",
     "translation": "Simulan ang turn"
@@ -4702,10 +4601,6 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Ihinto ang pag-sort ng hand"
-  },
-  "T7TOfh": {
-    "message": "Subtle pointer parallax",
-    "translation": "Banayad na pointer parallax"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -4744,9 +4639,9 @@
     "context": "keyboard key",
     "translation": "Tab"
   },
-  "J_Ogyy": {
-    "message": "Tab moves between controls, so it cannot be a shortcut.",
-    "translation": "Ang Tab ay panlipat sa pagitan ng mga control, kaya hindi ito puwedeng maging shortcut."
+  "bVbH4f": {
+    "message": "Tab can't be a shortcut.",
+    "translation": "Hindi puwedeng gawing shortcut ang Tab."
   },
   "4hJhzz": {
     "message": "Table",
@@ -4792,10 +4687,6 @@
     "context": "coin flip",
     "translation": "Tails"
   },
-  "iyPm84": {
-    "message": "Take it off {seat}",
-    "translation": "Alisin kay {seat}"
-  },
   "2g01hc": {
     "message": "Take off {count} damage",
     "translation": "Tanggalin ang {count} damage"
@@ -4808,13 +4699,13 @@
     "message": "Take off damage…",
     "translation": "Tanggalin ang damage…"
   },
-  "nzF90T": {
-    "message": "Take the decks to the table",
-    "translation": "Dalhin ang mga deck sa table"
+  "EyHJlN": {
+    "message": "Tap a card for actions; tap again to read it.",
+    "translation": "I-tap ang card para sa mga aksyon; i-tap ulit para basahin."
   },
-  "3XeWNU": {
-    "message": "Tap a card for its actions; tap it again to read it.",
-    "translation": "I-tap ang card para sa mga action nito; i-tap ulit para basahin."
+  "pYu8i-": {
+    "message": "TCG and Pocket cards don't mix: {cards}.",
+    "translation": "Hindi puwedeng pagsamahin ang TCG at Pocket cards: {cards}."
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -4834,61 +4725,29 @@
     "context": "Trainer cards by kind",
     "translation": "Mga Technical Machine"
   },
-  "Ii4b4s": {
-    "message": "That didn't go through",
-    "translation": "Hindi natuloy iyon"
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Hindi nag-load ang image na iyon."
   },
-  "nwCqoF": {
-    "message": "That file didn't open",
-    "translation": "Hindi nabuksan ang file"
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Expired na ang imbitasyong iyon. Humingi ng bago."
   },
-  "1_JXO-": {
-    "message": "That invitation has expired. Ask the room creator to copy a new one.",
-    "translation": "Nag-expire na ang imbitasyong iyon. Humingi ng bago sa gumawa ng room."
-  },
-  "yrmUxD": {
-    "message": "That isn't yours to do",
-    "translation": "Hindi mo magagawa iyon"
-  },
-  "z_e3P2": {
-    "message": "That list didn't read",
-    "translation": "Hindi nabasa ang listahang iyon"
-  },
-  "BYaTJ7": {
-    "message": "That move didn't go through",
-    "translation": "Hindi natuloy ang galaw na iyon"
-  },
-  "-w9ceH": {
-    "message": "That move isn't yours to make",
-    "translation": "Hindi mo galaw iyon"
+  "B4ZAXF": {
+    "message": "That one was skipped.",
+    "translation": "Nilaktawan ang isang iyon."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "Hindi mabuksan ang replay file na iyon."
   },
-  "HgwclR": {
-    "message": "That value could not be checked. Please try again.",
-    "translation": "Hindi masuri ang value na iyon. Subukan ulit."
-  },
-  "l8VEIw": {
-    "message": "That's too much at once",
-    "translation": "Sobrang dami nito nang sabay-sabay"
-  },
-  "GDqK1T": {
-    "message": "The card list didn't load. Check your connection and try again.",
-    "translation": "Hindi na-load ang listahan ng card. Tingnan ang koneksyon mo at subukan ulit."
+  "6Z1wXH": {
+    "message": "That side starts over with the new deck",
+    "translation": "Magsisimula ulit ang side na iyon kasama ang bagong deck"
   },
   "hPwR-j": {
     "message": "The card went back.",
     "translation": "Bumalik ang card."
-  },
-  "7f_XSS": {
-    "message": "The card went back. Try it again.",
-    "translation": "Bumalik ang card. Subukan ulit."
-  },
-  "n-Z0Nm": {
-    "message": "The clipboard can't be read here",
-    "translation": "Hindi mababasa ang clipboard dito"
   },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
@@ -4898,33 +4757,49 @@
     "message": "The deck didn't go on the table",
     "translation": "Hindi nailagay ang deck sa table"
   },
-  "H4nLW9": {
-    "message": "The deck is removed from this device. A deck already on a seat stays there.",
-    "translation": "Natanggal ang deck sa device na ito. Mananatili ang deck na nasa upuan na."
+  "BUcC-2": {
+    "message": "The deck file has more than {max} rows.",
+    "translation": "Mahigit {max} ang row ng deck file."
   },
-  "HThhKj": {
-    "message": "The deck is removed from this device. Decks already on a seat stay there.",
-    "translation": "Natanggal ang deck sa device na ito. Mananatili ang mga deck na nasa upuan na."
+  "sPLZ6Z": {
+    "message": "The deck file is too long.",
+    "translation": "Masyadong mahaba ang deck file."
+  },
+  "1zmjOY": {
+    "message": "The deck file must start with {header}.",
+    "translation": "Dapat magsimula ang deck file sa {header}."
+  },
+  "fYn5Mi": {
+    "message": "The deck has more than {max} cards.",
+    "translation": "Mahigit {max} ang card sa deck."
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
     "translation": "Hindi na-load ang mga deck list."
   },
-  "E72uMQ": {
-    "message": "The deck screen didn't load, so decks can't be changed right now. Your game carries on.",
-    "translation": "Hindi na-load ang deck screen, kaya hindi muna mababago ang mga deck. Tuloy pa rin ang laro mo."
+  "kuSCwh": {
+    "message": "The deck screen didn't load. Your game carries on.",
+    "translation": "Hindi nag-load ang deck screen. Tuloy pa rin ang laro mo."
+  },
+  "qDcPIt": {
+    "message": "The decklist has more than {max} cards.",
+    "translation": "Mahigit {max} ang card sa decklist."
+  },
+  "9vVu1I": {
+    "message": "The decklist has more than {max} lines.",
+    "translation": "Mahigit {max} ang linya ng decklist."
+  },
+  "SHzPH9": {
+    "message": "The decklist is too long.",
+    "translation": "Masyadong mahaba ang decklist."
   },
   "K85iXe": {
     "message": "The file couldn't be saved",
     "translation": "Hindi na-save ang file"
   },
-  "GL-rhF": {
-    "message": "The last move is still on its way.",
-    "translation": "Papunta pa lang ang huling galaw."
-  },
-  "0WnzUW": {
-    "message": "The replay was interrupted. Try it again.",
-    "translation": "Naputol ang replay. Subukan ulit."
+  "lom6tE": {
+    "message": "The last move is still sending.",
+    "translation": "Ipinapadala pa ang huling galaw."
   },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
@@ -4934,25 +4809,13 @@
     "message": "The room no longer has this seat.",
     "translation": "Wala na sa room ang upuang ito."
   },
-  "p93vUT": {
-    "message": "The table changed before it arrived, so the card went back.",
-    "translation": "Nagbago ang table bago ito dumating, kaya bumalik ang card."
+  "m6ooXP": {
+    "message": "The table changed, so the card went back.",
+    "translation": "Nagbago ang table, kaya bumalik ang card."
   },
-  "jMsjAg": {
-    "message": "The table changed before it arrived. Try it again.",
-    "translation": "Nagbago ang table bago ito dumating. Subukan ulit."
-  },
-  "aCAWXn": {
-    "message": "The table gets the changed deck when you go back to it, and that side starts over.",
-    "translation": "Makukuha ng table ang binagong deck pagbalik mo, at magsisimula ulit ang side na iyon."
-  },
-  "Dw1tmp": {
-    "message": "The table is reconnecting. Try again in a moment.",
-    "translation": "Nagre-reconnect ang table. Subukan ulit sa ilang saglit."
-  },
-  "_knf_O": {
-    "message": "The table lost the room during the replay.",
-    "translation": "Nawala sa table ang room habang nagre-replay."
+  "u1UbSB": {
+    "message": "The table changed. Try again.",
+    "translation": "Nagbago ang table. Subukan ulit."
   },
   "8vgo35": {
     "message": "The table takes at most {max} cards.",
@@ -4969,10 +4832,6 @@
   "x36RVi": {
     "message": "Their Bench",
     "translation": "Bench nila"
-  },
-  "zLpI2X": {
-    "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
-    "translation": "Nakaharap sa iyo nang tama ang basa ng mga card nila. Kapag naka-off, nakaharap sila sa may-ari, gaya sa totoong table."
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5025,29 +4884,17 @@
     ],
     "translation": "Pagkatapos, pindutin ang To active para ilaro ito nang nakataob"
   },
-  "mldgBW": {
-    "message": "There are no cards in that list.",
-    "translation": "Walang card sa listahang iyon."
+  "WsAkgd": {
+    "message": "This browser won't keep your decks after you close the page.",
+    "translation": "Hindi itatago ng browser na ito ang mga deck mo pagkasara ng page."
   },
-  "aJCmnr": {
-    "message": "There is no list to import.",
-    "translation": "Walang listahang ii-import."
+  "5PdIYU": {
+    "message": "This game will be lost.",
+    "translation": "Mawawala ang larong ito."
   },
-  "tBciWT": {
-    "message": "This browser isn't keeping site data, so decks saved now last until you close the page.",
-    "translation": "Hindi nagtatago ng site data ang browser na ito, kaya ang mga deck na sine-save ngayon ay tatagal hanggang isara mo ang page."
-  },
-  "FFbU_V": {
-    "message": "This browser keeps the table in its window.",
-    "translation": "Itinatago ng browser na ito ang table sa window nito."
-  },
-  "bdOrGj": {
-    "message": "This table fell out of step with the room.",
-    "translation": "Nawala sa sync ng room ang table na ito."
-  },
-  "AxFQH0": {
-    "message": "Three side-by-side pieces",
-    "translation": "Tatlong magkakatabing piraso"
+  "YcMvP7": {
+    "message": "Tilted on wide screens, flat on phones.",
+    "translation": "Nakatagilid sa malalapad na screen, patag sa phone."
   },
   "dPBKWL": {
     "message": "To active",
@@ -5144,13 +4991,21 @@
     "message": "Toggle ability/effect",
     "translation": "I-toggle ang ability/effect"
   },
-  "D5f6Or": {
-    "message": "Too many actions at once. That one was skipped.",
-    "translation": "Sobrang daming aksyon nang sabay-sabay. Nilaktawan ang isang iyon."
+  "6QCyrU": {
+    "message": "Too large for a deck",
+    "translation": "Masyadong malaki para sa deck"
   },
-  "e41oD8": {
-    "message": "Too many moves at once. That one was skipped.",
-    "translation": "Sobrang daming galaw nang sabay-sabay. Nilaktawan ang isang iyon."
+  "ssfbci": {
+    "message": "Too many actions",
+    "translation": "Masyadong maraming aksyon"
+  },
+  "4PUG0e": {
+    "message": "Too many cards at once",
+    "translation": "Masyadong maraming card nang sabay"
+  },
+  "B3I8F_": {
+    "message": "Too many moves",
+    "translation": "Sobrang dami ng moves"
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -5177,6 +5032,13 @@
     "context": "shortcut key caption",
     "translation": "Itaas"
   },
+  "20pFu_": {
+    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+    "comments": [
+      "sourceName is a tournament site (Limitless); updated is a short date"
+    ],
+    "translation": "Mga nangungunang resulta mula sa mga online tournament ng <0>{sourceName}</0>, nakaraang dalawang linggo · na-update {updated}"
+  },
   "qssK_n": {
     "message": "Top left",
     "translation": "Itaas na kaliwa"
@@ -5194,17 +5056,25 @@
     "message": "Trainer cards",
     "translation": "Mga Trainer card"
   },
+  "JmQewY": {
+    "message": "Try a .txt or .csv file",
+    "translation": "Subukan ang .txt o .csv na file"
+  },
   "KDw4GX": {
     "message": "Try again",
     "translation": "Subukan ulit"
   },
-  "iJ3n6j": {
-    "message": "Try it again.",
+  "u62wQ4": {
+    "message": "Try again in a moment.",
+    "translation": "Subukan ulit sa ilang sandali."
+  },
+  "v2Mz8J": {
+    "message": "Try again.",
     "translation": "Subukan ulit."
   },
-  "HOE-Jw": {
-    "message": "Try it with fewer cards.",
-    "translation": "Subukan ito nang mas kaunting card."
+  "x-E_50": {
+    "message": "Try fewer cards.",
+    "translation": "Subukan ang mas kaunting card."
   },
   "JaA9mI": {
     "message": "Try other words, or press Escape to go back.",
@@ -5248,13 +5118,9 @@
     "message": "Tutorial",
     "translation": "Tutorial"
   },
-  "U-xsTc": {
-    "message": "Two landscape halves · LEGEND",
-    "translation": "Dalawang landscape na kalahati · LEGEND"
-  },
-  "NgMCkj": {
-    "message": "Two side-by-side pieces · Stadium",
-    "translation": "Dalawang magkatabing piraso · Stadium"
+  "-zy2Nq": {
+    "message": "Type",
+    "translation": "Uri"
   },
   "vnRpA8": {
     "message": "Type",
@@ -5273,10 +5139,6 @@
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "Mag-type muna ng kahit ano"
-  },
-  "1OX68x": {
-    "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
-    "translation": "Mag-type ng mga salita para maghanap ng pangalan, o pagsamahin ang mga filter — gumagana rito ang search syntax ng Limitless TCG."
   },
   "gu8i-0": {
     "message": "Type, then press Enter.",
@@ -5308,13 +5170,13 @@
     "message": "Unsaved deck",
     "translation": "Hindi pa na-save na deck"
   },
+  "5Gx011": {
+    "message": "Unstack copies",
+    "translation": "I-unstack ang mga kopya"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "Walang pamagat na deck"
-  },
-  "YcRCYR": {
-    "message": "Upper-half overlay · BREAK",
-    "translation": "Overlay sa itaas na kalahati · BREAK"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -5341,10 +5203,6 @@
     "message": "Use the GX attack",
     "translation": "Gamitin ang GX attack"
   },
-  "U9oALH": {
-    "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
-    "translation": "Gamitin ang parehong grupo para sa mga piraso ng iisang illustration. Ilagay ang mga piraso ng Pokémon sa iisang stack, o ang mga piraso ng Stadium sa Stadium area."
-  },
   "nG8vJk": {
     "message": "Use the VSTAR Power",
     "translation": "Gamitin ang VSTAR Power"
@@ -5352,6 +5210,14 @@
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Gamitin ang print na ito para sa {deckCopies} sa deck"
+  },
+  "ZpWtmQ": {
+    "message": "Uses Limitless TCG's search syntax.",
+    "translation": "Gumagamit ng search syntax ng Limitless TCG."
+  },
+  "uCehvK": {
+    "message": "V-UNION · 4 pieces",
+    "translation": "V-UNION · 4 na piraso"
   },
   "VO6wBK": {
     "message": "View",
@@ -5363,10 +5229,6 @@
     "context": "shortcut key caption",
     "translation": "Tingnan"
   },
-  "GTDWZr": {
-    "message": "View assembled card",
-    "translation": "Tingnan ang buong card"
-  },
   "BqYI8B": {
     "message": "View bottom card(s)",
     "translation": "Tingnan ang card(s) sa ilalim"
@@ -5375,13 +5237,17 @@
     "message": "View card",
     "translation": "Tingnan ang card"
   },
-  "C92-rQ": {
-    "message": "View individual cards",
+  "w3eDyf": {
+    "message": "View each card",
     "translation": "Tingnan ang bawat card"
   },
   "VKXHWy": {
     "message": "View top card(s)",
     "translation": "Tingnan ang card(s) sa itaas"
+  },
+  "s3cHPo": {
+    "message": "View whole card",
+    "translation": "Tingnan ang buong card"
   },
   "RVlHmr": {
     "message": "VSTAR marker",
@@ -5426,9 +5292,9 @@
     "context": "filter",
     "translation": "Oo"
   },
-  "16IAB8": {
-    "message": "You're watching this table",
-    "translation": "Pinapanood mo ang table na ito"
+  "VvkF_g": {
+    "message": "You're watching",
+    "translation": "Nanonood ka"
   },
   "wkv3p1": {
     "message": "Your Active Spot",
@@ -5463,17 +5329,9 @@
     "message": "Your Lost Zone",
     "translation": "Lost Zone mo"
   },
-  "w1h7J8": {
-    "message": "Your name changed. Generate a new room before joining.",
-    "translation": "Nagbago ang pangalan mo. Gumawa ng bagong room bago sumali."
-  },
-  "KQe92X": {
-    "message": "Your opponent is looking at these cards",
-    "translation": "Tinitingnan ng kalaban mo ang mga card na ito"
-  },
-  "UTxtTT": {
-    "message": "Your opponent is moving these cards",
-    "translation": "Inililipat ng kalaban mo ang mga card na ito"
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Nagbago ang pangalan mo. Gumawa ng bagong room."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

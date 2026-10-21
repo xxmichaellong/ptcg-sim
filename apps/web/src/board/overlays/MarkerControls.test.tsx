@@ -151,7 +151,7 @@ describe('MarkerControls', () => {
     expect(field().getAttribute('aria-invalid')).toBe('true');
     expect(
       host.querySelector('.ptcgsim-marker-controls__hint')?.textContent
-    ).toBe('A whole number, up to 9990');
+    ).toBe('0 to 9990');
     expect(actions.submitDamageInput).not.toHaveBeenCalled();
     expect(actions.dismiss).not.toHaveBeenCalled();
     type('70');
@@ -214,7 +214,7 @@ describe('MarkerControls', () => {
     expect(button('Poisoned').getAttribute('aria-pressed')).toBe('true');
     expect(button('Burned').getAttribute('aria-pressed')).toBe('false');
     act(() => button('Burned').click());
-    act(() => button('Remove the Special Condition').click());
+    act(() => button('Remove condition').click());
     // Written as v1's letters, which the keys' cycle reads too.
     expect(actions.submitSpecialConditionInput.mock.calls).toEqual([
       [cardId, 'B'],

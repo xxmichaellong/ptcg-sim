@@ -1442,7 +1442,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
   await discardAction.click();
   expect(await cancelledConfirmation).toEqual({
     type: 'confirm',
-    message: 'Are you sure you want to shuffle all cards into the deck?',
+    message: 'Shuffle all into the deck?',
   });
   await expect(zoneBrowser).toBeVisible();
   await expect(sort).toBeChecked();
@@ -1466,7 +1466,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
   await discardAction.click();
   expect(await acceptedConfirmation).toEqual({
     type: 'confirm',
-    message: 'Are you sure you want to shuffle all cards into the deck?',
+    message: 'Shuffle all into the deck?',
   });
   await expect(zoneBrowser).toHaveCount(0);
   await expect(discardTarget).toBeFocused();

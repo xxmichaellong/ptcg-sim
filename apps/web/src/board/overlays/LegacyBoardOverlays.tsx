@@ -348,7 +348,7 @@ export const selectLegacyContextEntries = (
   }
   if (location.kind === 'board') {
     entries.push(
-      header('board', t({ message: 'Playboard', context: 'zone' })),
+      header('board', t({ message: 'Board', context: 'zone' })),
       action('discardBoard', t`Discard all`),
       action('moveBoardToHand', t`Move all to hand`),
       action('shuffleBoardToDeck', t`Shuffle all to deck`),
@@ -1275,11 +1275,7 @@ const ShowBoardButton = ({
   return (
     // The eye says what "Board" does, and the tooltip says it in full. The
     // way back names itself.
-    <Tooltip
-      content={t`See the table without closing this`}
-      side="bottom"
-      disabled={showingBoard}
-    >
+    <Tooltip content={t`Show the table`} side="bottom" disabled={showingBoard}>
       <button
         type="button"
         className={`ptcgsim-overlay-button ptcgsim-show-board-button${showingBoard ? ' is-primary' : ' is-quiet'}`}
@@ -1622,8 +1618,7 @@ const Preview = ({
             data-preview-tabbable="true"
             onClick={() => setShowPieces(true)}
           >
-            <SquaresFourIcon aria-hidden="true" />{' '}
-            <Trans>View individual cards</Trans>
+            <SquaresFourIcon aria-hidden="true" /> <Trans>View each card</Trans>
           </button>
         </div>
         <div
@@ -1658,14 +1653,12 @@ const Preview = ({
                 message: `${shownPieces} of ${plural(totalPieces, {
                   one: '# piece',
                   other: '# pieces',
-                })} · Use View individual cards to inspect each piece and its attachments.`,
-                comment:
-                  'A card made of several pieces (a V-UNION); "View individual cards" is a button beside it.',
+                })}`,
+                comment: 'A card made of several pieces (a V-UNION).',
               })
             : t({
-                message:
-                  'Evolution and previous stage · Use View individual cards to inspect each piece and its attachments.',
-                comment: '"View individual cards" is a button beside it.',
+                message: 'Evolution and previous stage',
+                comment: 'A BREAK card laid over the Pokémon it evolved from.',
               })}
         </p>
       </div>
@@ -1745,7 +1738,7 @@ const Preview = ({
               data-preview-tabbable="true"
               onClick={() => setShowPieces(false)}
             >
-              <Trans>View assembled card</Trans>
+              <Trans>View whole card</Trans>
             </button>
             <OverlayCloseButton
               data-preview-tabbable="true"
@@ -1808,7 +1801,7 @@ const Preview = ({
             data-preview-tabbable="true"
             onClick={() => actions.separateCard?.(readingCard.id)}
           >
-            <Trans>Separate this card to hand</Trans>
+            <Trans>Move to hand</Trans>
           </button>
         ) : null}
         {individualCardId ? (
@@ -1821,7 +1814,7 @@ const Preview = ({
               setShowPieces(false);
             }}
           >
-            <Trans>View assembled card</Trans>
+            <Trans>View whole card</Trans>
           </button>
         ) : null}
       </div>
@@ -1891,7 +1884,7 @@ const zoneAction = (
         label: msg({ message: 'Shuffle', context: 'shuffle the deck' }),
       }
     : zone.kind === 'discard'
-      ? { id: 'shuffleDiscardToDeck', label: msg`Shuffle all to Deck` }
+      ? { id: 'shuffleDiscardToDeck', label: msg`Shuffle into deck` }
       : null;
 
 /**
@@ -2024,8 +2017,7 @@ const ZoneBrowser = ({
     const question = new AbortController();
     shuffleConfirmation.current = question;
     void confirmAction({
-      title: t`Shuffle all to Deck?`,
-      body: t`Are you sure you want to shuffle all cards into the deck?`,
+      title: t`Shuffle all into the deck?`,
       confirmLabel: t({ message: 'Shuffle', context: 'shuffle the deck' }),
       tone: 'danger',
       signal: question.signal,
@@ -2205,11 +2197,7 @@ const ZoneBrowser = ({
             </Tooltip>
             {copies.size > 0 ? (
               <Tooltip
-                content={
-                  stackCopies
-                    ? t`Show every copy on its own`
-                    : t`Stack copies of a card together`
-                }
+                content={stackCopies ? t`Unstack copies` : t`Stack copies`}
                 side="bottom"
               >
                 <button
@@ -2476,10 +2464,10 @@ const WorkAreaPanel = ({
   // The way back names the panel without its trailing dots.
   const [heading, panelName] =
     zone.kind === 'inspection'
-      ? [t`Looking at cards...`, t`Looking at cards`]
+      ? [t`Looking at cards`, t`Looking at cards`]
       : controls
         ? [t`Move attached cards`, t`Move attached cards`]
-        : [t`Opponent moving cards...`, t`Opponent moving cards`];
+        : [t`Opponent moving cards`, t`Opponent moving cards`];
   const emit = actions.emitCardIntent;
   const interactive = controls && state.canSubmitCommands && emit !== undefined;
   const drag = useOverlayCardDrag({
@@ -2505,11 +2493,8 @@ const WorkAreaPanel = ({
     controls && emit !== undefined
   );
   // Only whose cards these are, when they are not the viewer's to move.
-  const hint = controls
-    ? undefined
-    : zone.kind === 'inspection'
-      ? t`Your opponent is looking at these cards`
-      : t`Your opponent is moving these cards`;
+  const hint =
+    controls || zone.kind !== 'inspection' ? undefined : t`Opponent is looking`;
   const count = cards.length;
 
   return (
@@ -2669,9 +2654,7 @@ const CountPrompt = ({
     const question = new AbortController();
     const view = VIEW_COUNT_ACTIONS.has(input.action);
     void promptValue({
-      title: view
-        ? t`How many cards do you want to look at?`
-        : t`Draw how many cards?`,
+      title: view ? t`Look at how many cards?` : t`Draw how many cards?`,
       label: t`Number of cards`,
       defaultValue: input.initialValue,
       inputMode: 'numeric',
@@ -2680,9 +2663,7 @@ const CountPrompt = ({
         : t({ message: 'Draw', context: 'draw cards' }),
       validate: (value) =>
         parseLegacyCountInput(value, input.minimum) === undefined
-          ? view
-            ? t`Please enter a valid number for the view amount.`
-            : t`Please enter a valid number for the draw amount.`
+          ? t`Enter a number`
           : null,
       signal: question.signal,
     }).then((value) => {

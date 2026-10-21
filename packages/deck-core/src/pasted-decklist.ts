@@ -565,12 +565,7 @@ export const parsePastedDecklist = (
   if (source.length > MAX_PASTED_DECKLIST_CODE_UNITS) {
     return {
       ok: false,
-      issues: [
-        issue(
-          'input_too_large',
-          t`Decklist exceeds ${{ max: MAX_PASTED_DECKLIST_CODE_UNITS }} code units.`
-        ),
-      ],
+      issues: [issue('input_too_large', t`The decklist is too long.`)],
     };
   }
   const lines = source.split(/\r\n|\n|\r/u);
@@ -580,7 +575,7 @@ export const parsePastedDecklist = (
       issues: [
         issue(
           'too_many_lines',
-          t`Decklist contains more than ${{ max: MAX_PASTED_DECKLIST_LINES }} lines.`
+          t`The decklist has more than ${{ max: MAX_PASTED_DECKLIST_LINES }} lines.`
         ),
       ],
     };
@@ -593,13 +588,7 @@ export const parsePastedDecklist = (
     const line = oversizedLine + 1;
     return {
       ok: false,
-      issues: [
-        issue(
-          'line_too_long',
-          t`Line ${line} exceeds ${{ max: MAX_PASTED_DECKLIST_LINE_CODE_UNITS }} code units.`,
-          line
-        ),
-      ],
+      issues: [issue('line_too_long', t`Line ${line} is too long.`, line)],
     };
   }
 
@@ -618,7 +607,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'invalid_quantity',
-          t`Line ${{ line: row.line }} quantity must be an integer from 1 to ${{ max: MAX_DECK_CARD_QUANTITY }}.`,
+          t`Line ${{ line: row.line }}: quantity must be 1 to ${{ max: MAX_DECK_CARD_QUANTITY }}.`,
           row.line
         )
       );
@@ -629,7 +618,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'name_too_long',
-          t`Line ${{ line: row.line }} card name exceeds ${{ max: MAX_DECK_CARD_NAME_CODE_UNITS }} code units.`,
+          t`Line ${{ line: row.line }}: card name too long.`,
           row.line
         )
       );
@@ -639,7 +628,7 @@ export const parsePastedDecklist = (
         issues.push(
           issue(
             'token_too_long',
-            t`Line ${{ line: row.line }} set or card identifier exceeds ${{ max: MAX_PASTED_DECKLIST_TOKEN_CODE_UNITS }} code units.`,
+            t`Line ${{ line: row.line }}: set code too long.`,
             row.line
           )
         );
@@ -651,7 +640,7 @@ export const parsePastedDecklist = (
     issues.push(
       issue(
         'deck_too_large',
-        t`Decklist contains more than ${{ max: MAX_DECK_TOTAL_CARDS }} cards.`
+        t`The decklist has more than ${{ max: MAX_DECK_TOTAL_CARDS }} cards.`
       )
     );
   }
@@ -673,7 +662,7 @@ export const parsePastedDecklist = (
       issues.push(
         issue(
           'url_too_long',
-          t`Line ${{ line: row.line }} image URL exceeds ${{ max: MAX_DECK_IMAGE_URL_CODE_UNITS }} code units.`,
+          t`Line ${{ line: row.line }}: image URL too long.`,
           row.line
         )
       );

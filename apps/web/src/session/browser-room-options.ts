@@ -110,7 +110,6 @@ export const exitBrowserFullscreen = (
 export const fullscreenRefusedNotice = (): ToastOptions => ({
   id: 'fullscreen-refused',
   title: t`Full screen isn't available here`,
-  body: t`This browser keeps the table in its window.`,
   tone: 'warning',
 });
 

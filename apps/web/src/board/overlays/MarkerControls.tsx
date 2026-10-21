@@ -333,7 +333,7 @@ const DamageControls = ({
       </ControlButton>
       {invalid ? (
         <span className="ptcgsim-marker-controls__hint" role="alert">
-          {t`A whole number, up to 9990`}
+          {t`0 to 9990`}
         </span>
       ) : null}
     </>
@@ -501,7 +501,7 @@ export const MarkerControls = ({
         })}
         <span className="ptcgsim-marker-controls__divider" aria-hidden="true" />
         <ControlButton
-          label={t`Remove the Special Condition`}
+          label={t`Remove condition`}
           className="is-remove"
           onPress={() => actions.submitSpecialConditionInput(cardId, '')}
         >

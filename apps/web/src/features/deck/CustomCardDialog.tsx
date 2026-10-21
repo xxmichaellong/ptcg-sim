@@ -72,13 +72,11 @@ export const CustomCardDialog = ({
     const normalizedName = name.trim();
     const parsedQuantity = Number(quantity);
     if (!normalizedName) {
-      setError(t`Card Name is required.`);
+      setError(t`Enter a name.`);
       return;
     }
     if (normalizedName.length > CUSTOM_CARD_NAME_MAX) {
-      setError(
-        t`Card Name must be ${{ max: CUSTOM_CARD_NAME_MAX }} characters or less.`
-      );
+      setError(t`Name: up to ${{ max: CUSTOM_CARD_NAME_MAX }} characters.`);
       return;
     }
     if (
@@ -86,23 +84,21 @@ export const CustomCardDialog = ({
       parsedQuantity < 1 ||
       parsedQuantity > CUSTOM_CARD_QUANTITY_MAX
     ) {
-      setError(
-        t`Quantity must be between 1 and ${{ max: CUSTOM_CARD_QUANTITY_MAX }}.`
-      );
+      setError(t`Quantity: 1 to ${{ max: CUSTOM_CARD_QUANTITY_MAX }}.`);
       return;
     }
     if (!normalizedImage) {
-      setError(t`Image URL is required.`);
+      setError(t`Enter an image URL.`);
       return;
     }
     if (normalizedImage.length > MAX_IMAGE_URL_CODE_UNITS) {
       setError(
-        t`Image URL must be ${{ max: MAX_IMAGE_URL_CODE_UNITS }} characters or less.`
+        t`Image URL: up to ${{ max: MAX_IMAGE_URL_CODE_UNITS }} characters.`
       );
       return;
     }
     if (imageState !== 'loaded') {
-      setError(t`Image URL must point to a loadable image.`);
+      setError(t`That image didn't load.`);
       return;
     }
     const grid =
@@ -202,7 +198,7 @@ export const CustomCardDialog = ({
           id="nativeCustomCardTitle"
           className="native-deck-builder-modal-title"
         >
-          <Trans>Add Custom Card</Trans>
+          <Trans>Custom card</Trans>
         </div>
         <div className="native-deck-builder-modal-body">
           <div className="native-deck-builder-modal-fields">
@@ -219,7 +215,7 @@ export const CustomCardDialog = ({
               />
             </label>
             <label className="native-deck-builder-modal-label">
-              <Trans>Card Name</Trans>
+              <Trans>Name</Trans>
               <input
                 ref={nameRef}
                 id="nativeCustomCardName"
@@ -232,7 +228,7 @@ export const CustomCardDialog = ({
               />
             </label>
             <label className="native-deck-builder-modal-label">
-              <Trans>Card Type</Trans>
+              <Trans>Type</Trans>
               <select
                 id="nativeCustomCardType"
                 className="native-deck-builder-modal-input ds-select"
@@ -259,7 +255,7 @@ export const CustomCardDialog = ({
             </label>
             <details className="native-custom-card-layout">
               <summary>
-                <Trans>Card layout (optional)</Trans>
+                <Trans>Layout (optional)</Trans>
               </summary>
               <label className="native-deck-builder-modal-label">
                 <Trans context="card layout">Layout</Trans>
@@ -271,20 +267,14 @@ export const CustomCardDialog = ({
                     setPiece('0');
                   }}
                 >
-                  <option value="auto">{t`Recognize known card formats`}</option>
-                  <option value="portrait">{t`Ordinary portrait card`}</option>
-                  <option value="landscape">
-                    {t`Sideways scan · rotate to read`}
-                  </option>
-                  <option value="break">{t`Upper-half overlay · BREAK`}</option>
-                  <option value="legend">
-                    {t`Two landscape halves · LEGEND`}
-                  </option>
-                  <option value="pair">
-                    {t`Two side-by-side pieces · Stadium`}
-                  </option>
-                  <option value="trio">{t`Three side-by-side pieces`}</option>
-                  <option value="union">{t`Four-piece grid · V-UNION`}</option>
+                  <option value="auto">{t`Automatic`}</option>
+                  <option value="portrait">{t`Standard card`}</option>
+                  <option value="landscape">{t`Sideways scan`}</option>
+                  <option value="break">{t`BREAK`}</option>
+                  <option value="legend">{t`LEGEND · 2 halves`}</option>
+                  <option value="pair">{t`Stadium · 2 pieces`}</option>
+                  <option value="trio">{t`3 pieces in a row`}</option>
+                  <option value="union">{t`V-UNION · 4 pieces`}</option>
                 </select>
               </label>
               {['legend', 'pair', 'trio', 'union'].includes(cardLayout) ? (
@@ -371,9 +361,8 @@ export const CustomCardDialog = ({
                   </div>
                   <p>
                     <Trans>
-                      Use the same group for pieces from one illustration. Place
-                      Pokémon pieces in one stack, or Stadium pieces in the
-                      Stadium area.
+                      Put Pokémon pieces in one stack, Stadium pieces in the
+                      Stadium.
                     </Trans>
                   </p>
                 </>
@@ -381,7 +370,7 @@ export const CustomCardDialog = ({
             </details>
             <details className="native-custom-card-finish">
               <summary>
-                <Trans>Card finish (optional)</Trans>
+                <Trans>Finish (optional)</Trans>
               </summary>
               <label className="native-deck-builder-modal-label">
                 <Trans context="card surface">Finish</Trans>
@@ -391,7 +380,7 @@ export const CustomCardDialog = ({
                   value={finish}
                   onChange={(event) => setFinish(event.target.value)}
                 >
-                  <option value="auto">{t`Automatic treatment`}</option>
+                  <option value="auto">{t`Automatic`}</option>
                   <option value="matte">{t`Matte`}</option>
                   <option value="sheen">{t`Sleeve sheen`}</option>
                   <option value="holo">{t`Holographic`}</option>
@@ -412,12 +401,6 @@ export const CustomCardDialog = ({
                   <option value="none">{t`No foil`}</option>
                 </select>
               </label>
-              <p>
-                <Trans>
-                  Applies to this printing. Reading mode always removes
-                  reflections.
-                </Trans>
-              </p>
             </details>
           </div>
           <div className="native-deck-builder-modal-preview">
@@ -465,7 +448,7 @@ export const CustomCardDialog = ({
             className="ds-button ds-button--primary"
             onClick={submit}
           >
-            <Trans>Add to Deck</Trans>
+            <Trans>Add to deck</Trans>
           </button>
         </div>
       </div>

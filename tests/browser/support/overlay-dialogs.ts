@@ -64,7 +64,7 @@ export const answerOverlayPrompt = async (
 
 export interface OverlayConfirmAnswer {
   readonly type: 'confirm';
-  /** The question as v1 worded it: the dialog's description. */
+  /** The question: the dialog's description, or its title without one. */
   readonly message: string;
 }
 
@@ -78,9 +78,13 @@ export const answerOverlayConfirm = async (
 ): Promise<OverlayConfirmAnswer> => {
   const dialog = openOverlayConfirm(page);
   await dialog.waitFor({ state: 'visible' });
+  const description = dialog.locator('.ptcgsim-ui-dialog__description');
   const message =
-    (await dialog.locator('.ptcgsim-ui-dialog__description').textContent()) ??
-    '';
+    (await (
+      (await description.count()) > 0
+        ? description
+        : dialog.locator('.ptcgsim-ui-dialog__title')
+    ).textContent()) ?? '';
   await dialog
     .locator(`[data-dialog-action="${accept ? 'confirm' : 'cancel'}"]`)
     .click();

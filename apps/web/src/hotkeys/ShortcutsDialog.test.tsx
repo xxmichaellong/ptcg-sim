@@ -150,7 +150,7 @@ describe('ShortcutsDialog', () => {
     await click(keyButton('card.toBench'));
     await press(keyButton('card.toBench'), { key: '5', code: 'Digit5' });
     expect(row('card.toBench').textContent).toContain(
-      '5 is kept for add damage'
+      '5 is reserved for add damage'
     );
     expect(keyButton('card.toBench').dataset.recording).toBe('true');
     await press(keyButton('card.toBench'), { key: 'Escape', code: 'Escape' });

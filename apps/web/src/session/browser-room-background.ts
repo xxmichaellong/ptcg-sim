@@ -10,12 +10,12 @@ import {
 /** What the dialog asks. `blank` and `theme` are typed as they are. */
 export const roomBackgroundPrompt = (): string =>
   t({
-    message: "Paste your image URL, or type 'blank' or 'theme':",
+    message: "An image URL, 'blank' or 'theme'.",
     comment:
       "Keep 'blank' and 'theme' in English: they are what the player types",
   });
 export const invalidRoomBackgroundMessage = (): string =>
-  t`Please enter a valid image URL.`;
+  t`Enter a valid image URL.`;
 
 const THEME_BACKGROUND_URLS = Object.freeze([
   '/v2/assets/background1.jpg',

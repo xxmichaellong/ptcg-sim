@@ -406,9 +406,7 @@ describe('RemoteSessionBoard replay binding', () => {
     );
 
     const popup = host.querySelector<HTMLElement>('[data-legacy-popup]')!;
-    expect(popup.textContent).toContain(
-      'Press OK to stop revealing card to opponent'
-    );
+    expect(popup.textContent).toContain('Revealed to your opponent');
 
     // The room publishes the reveal; acknowledging then hides it again.
     const revealed: MatchViewState = {

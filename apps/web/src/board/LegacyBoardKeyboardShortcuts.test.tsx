@@ -527,7 +527,7 @@ describe('legacy board keyboard shortcut bridge', () => {
       message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Please enter a valid number for the draw amount.',
+      invalidMessage: 'Enter a number',
     });
     expect(document.body.dispatchEvent(altD())).toBe(true);
     expect(document.body.dispatchEvent(escape())).toBe(true);

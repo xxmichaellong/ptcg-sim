@@ -31,29 +31,29 @@ export const refusalNotice = (
     case 'precondition_failed':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That move didn't go through`,
-        body: t`The table changed before it arrived, so the card went back.`,
+        title: t`Move didn't go through`,
+        body: t`The table changed, so the card went back.`,
         tone: 'warning',
       };
     case 'rate_limited':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`Slow down a moment`,
-        body: t`Too many moves at once. That one was skipped.`,
+        title: t`Too many moves`,
+        body: t`That one was skipped.`,
         tone: 'warning',
       };
     case 'unauthorized':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That move isn't yours to make`,
+        title: t`Not your move`,
         body: t`The card went back.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That move didn't go through`,
-        body: t`The card went back. Try it again.`,
+        title: t`Move didn't go through`,
+        body: t`The card went back.`,
         tone: 'warning',
       };
   }
@@ -79,35 +79,35 @@ export const unsentNotice = (
         : {
             id: REFUSAL_TOAST_ID,
             title: t`One moment`,
-            body: t`The last move is still on its way.`,
+            body: t`The last move is still sending.`,
             tone: 'warning',
           };
     case 'queue_full':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`Slow down a moment`,
-        body: t`Moves are still on their way. Try again in a moment.`,
+        title: t`Too many moves`,
+        body: t`Try again in a moment.`,
         tone: 'warning',
       };
     case 'spectator':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`You're watching this table`,
-        body: t`Only the players can change it.`,
+        title: t`You're watching`,
+        body: t`Only players can change the table.`,
         tone: 'warning',
       };
     case 'too_large':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That's too much at once`,
-        body: t`Try it with fewer cards.`,
+        title: t`Too many cards at once`,
+        body: t`Try fewer cards.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`Not connected right now`,
-        body: t`The table is reconnecting. Try again in a moment.`,
+        title: t`Not connected`,
+        body: t`Reconnecting. Try again in a moment.`,
         tone: 'warning',
       };
   }
@@ -122,29 +122,29 @@ const tableActionNotice = (
     case 'precondition_failed':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That didn't go through`,
-        body: t`The table changed before it arrived. Try it again.`,
+        title: t`Didn't go through`,
+        body: t`The table changed. Try again.`,
         tone: 'warning',
       };
     case 'rate_limited':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`Slow down a moment`,
-        body: t`Too many actions at once. That one was skipped.`,
+        title: t`Too many actions`,
+        body: t`That one was skipped.`,
         tone: 'warning',
       };
     case 'unauthorized':
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That isn't yours to do`,
-        body: t`Only the player in that seat can.`,
+        title: t`Not yours to do`,
+        body: t`Only that seat's player can.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
-        title: t`That didn't go through`,
-        body: t`Try it again.`,
+        title: t`Didn't go through`,
+        body: t`Try again.`,
         tone: 'warning',
       };
   }

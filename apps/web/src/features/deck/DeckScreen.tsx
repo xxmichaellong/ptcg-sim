@@ -301,7 +301,7 @@ export const DeckScreen = ({
             title:
               result.reason === 'empty'
                 ? t`Nothing to import`
-                : t`That list didn't read`,
+                : t`Couldn't read that list`,
             body: result.message,
             tone: 'warning',
           });
@@ -338,10 +338,10 @@ export const DeckScreen = ({
           title: t`${name} is on ${seat}`,
           body:
             missingLines > 0
-              ? t`${plural(total, { one: '# card.', other: '# cards.' })} ${plural(missingLines, { one: "# line couldn't be found.", other: "# lines couldn't be found." })}`
+              ? t`${plural(total, { one: '# card', other: '# cards' })} · ${plural(missingLines, { one: '# line not found', other: '# lines not found' })}`
               : options.save
-                ? t`${plural(total, { one: '# card, saved to your decks.', other: '# cards, saved to your decks.' })}`
-                : t`${plural(total, { one: '# card.', other: '# cards.' })}`,
+                ? t`${plural(total, { one: '# card · saved', other: '# cards · saved' })}`
+                : t`${plural(total, { one: '# card', other: '# cards' })}`,
           tone: missingLines > 0 ? 'warning' : 'success',
         });
         return true;
@@ -359,11 +359,11 @@ export const DeckScreen = ({
       if (!read.ok) {
         if (read.reason !== 'aborted') {
           toast({
-            title: t`That file didn't open`,
+            title: t`Couldn't open that file`,
             body:
               read.reason === 'file_too_large'
-                ? t`It is too large to be a deck.`
-                : t`It could not be read.`,
+                ? t`Too large for a deck`
+                : t`Try a .txt or .csv file`,
             tone: 'warning',
           });
         }
@@ -388,8 +388,8 @@ export const DeckScreen = ({
     } catch {
       if (!controller.signal.aborted) {
         toast({
-          title: t`The clipboard can't be read here`,
-          body: t`Paste the list with Ctrl+V (⌘V on a Mac) instead.`,
+          title: t`Can't read the clipboard`,
+          body: t`Paste with Ctrl+V (⌘V) instead`,
           tone: 'warning',
         });
       }
@@ -639,7 +639,7 @@ export const DeckScreen = ({
         <div className="deck-screen__bar-actions">
           {reloading.length > 0 ? (
             <Tooltip
-              content={t`The table gets the changed deck when you go back to it, and that side starts over.`}
+              content={t`That side starts over with the new deck`}
               side="bottom"
             >
               <span
@@ -668,11 +668,7 @@ export const DeckScreen = ({
             </button>
           </Tooltip>
           <Tooltip
-            content={
-              anySeatDeck
-                ? t`Take the decks to the table`
-                : t`Choose a deck first`
-            }
+            content={anySeatDeck ? t`Play these decks` : t`Choose a deck first`}
             side="bottom"
           >
             <button
@@ -760,7 +756,7 @@ export const DeckScreen = ({
       </main>
       {dragging ? (
         <div className="deck-screen__drop" aria-hidden="true">
-          <Trans>Drop a decklist or deck file to import it</Trans>
+          <Trans>Drop to import</Trans>
         </div>
       ) : null}
     </div>

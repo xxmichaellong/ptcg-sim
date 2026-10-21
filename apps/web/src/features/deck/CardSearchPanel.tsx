@@ -609,7 +609,7 @@ export const CardSearchPanel = ({
               spellCheck={false}
               aria-label={t`Search cards`}
               aria-describedby="cardSearchHint"
-              placeholder={t`Search cards — try “t:fire hp>=100” or “is:ex”`}
+              placeholder={t`Search cards`}
               value={text}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={onSearchKeyDown}
@@ -652,8 +652,8 @@ export const CardSearchPanel = ({
           <Tooltip
             content={
               screenPreferences.allPrints
-                ? t`Showing every print; show one per card`
-                : t`Show every print of each card`
+                ? t`Show one per card`
+                : t`Show every print`
             }
           >
             <button
@@ -691,10 +691,7 @@ export const CardSearchPanel = ({
         {showHelp ? (
           <div className="card-search__help" role="note">
             <p>
-              <Trans>
-                Type words to search names, or combine filters — Limitless
-                TCG&apos;s search syntax works here.
-              </Trans>
+              <Trans>Uses Limitless TCG&apos;s search syntax.</Trans>
             </p>
             <dl>
               {SYNTAX_HELP.map(([example, meaning]) => (
@@ -865,9 +862,7 @@ export const CardSearchPanel = ({
               <Trans>Clear filters</Trans>
             </button>
           ) : null}
-          <Tooltip
-            content={t`A card that isn't in the list: a name and an image address`}
-          >
+          <Tooltip content={t`Add a card that isn't listed`}>
             <button
               id="nativeDeckBuilderAddCustomCard"
               type="button"
@@ -943,8 +938,8 @@ export const CardSearchPanel = ({
               ) : null}
               <p className="card-search__footer">
                 <Trans>
-                  Shift+click removes one · Right-click for details · Enter in
-                  the search adds the first card
+                  Shift+click removes one · Right-click for details · Enter adds
+                  the top result
                 </Trans>
               </p>
             </>
@@ -970,9 +965,7 @@ const CatalogStatus = ({
   state === 'failed' ? (
     <div className="card-search__empty" role="alert">
       <p>
-        <Trans>
-          The card list didn&apos;t load. Check your connection and try again.
-        </Trans>
+        <Trans>Cards didn&apos;t load.</Trans>
       </p>
       <button
         type="button"
@@ -986,7 +979,7 @@ const CatalogStatus = ({
   ) : (
     <div className="card-search__loading" role="status">
       <CircleNotchIcon {...decorative} weight="bold" className="ds-spin" />
-      <Trans>Getting every card ready…</Trans>
+      <Trans>Loading cards…</Trans>
       <div className="card-search__skeleton" aria-hidden="true">
         {Array.from({ length: 12 }, (_, index) => (
           <span key={index} />

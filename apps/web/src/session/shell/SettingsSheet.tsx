@@ -88,11 +88,7 @@ const MotionControls = () => {
         choices={animationSpeedChoices}
         value={motion.animationSpeed}
         onChange={(animationSpeed) => store.update({ animationSpeed })}
-      >
-        <span className="ptcgsim-form-hint">
-          <Trans>Instant keeps every action immediate, with no movement.</Trans>
-        </span>
-      </SegmentedControl>
+      />
     </>
   );
 };
@@ -175,8 +171,8 @@ const CardImageLanguageControl = () => {
       </select>
       <span className="ptcgsim-form-hint">
         <Trans>
-          Only you see this choice. A card not printed in that language shows as
-          its deck has it.
+          Only you see this. Cards without that printing keep the deck&apos;s
+          scan.
         </Trans>
       </span>
     </div>

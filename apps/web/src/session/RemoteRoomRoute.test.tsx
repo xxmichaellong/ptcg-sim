@@ -1079,9 +1079,7 @@ describe('RemoteRoomRoute', () => {
       await chooseMenuItem('leaveRoomButton');
       await settle();
       const alert = get('[role="alertdialog"]');
-      expect(alert.textContent).toContain(
-        'Are you sure you want to leave the room? Current game state will be lost.'
-      );
+      expect(alert.textContent).toContain('This game will be lost.');
       await click('[data-dialog-action="cancel"]');
       await settle();
       expect(onLeave).not.toHaveBeenCalled();
@@ -1701,7 +1699,7 @@ describe('RemoteRoomRoute', () => {
     expect(runtime.session.getSnapshot().phase).toBe('failed');
     // Said in the player's terms; the detail is kept for whoever asks.
     expect(get('#roomHeaderText').textContent).toBe(
-      'This table fell out of step with the room.'
+      'Out of sync with the room.'
     );
     expect(get('#roomHeaderText span').title).toBe(
       'Server frame rejected: invalid_json'
@@ -1733,9 +1731,7 @@ describe('RemoteRoomRoute', () => {
     await connect(socketFactory);
     await loseConnection(socketFactory, runTimers);
     expect(runtime.session.getSnapshot().phase).toBe('failed');
-    expect(get('#roomHeaderText').textContent).toBe(
-      'Lost the connection to the room.'
-    );
+    expect(get('#roomHeaderText').textContent).toBe('Connection lost.');
     expect(find('#roomNewTableButton')).toBeNull();
 
     // Leaving needs no question: the room is already gone from here.

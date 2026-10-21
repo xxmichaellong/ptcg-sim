@@ -373,7 +373,7 @@ export const CardDetails = ({
                 </Trans>
               </span>
               {count > 0 && shownId ? (
-                <Tooltip content={t`Picture the deck with this card`}>
+                <Tooltip content={t`Show this card on the deck`}>
                   <button
                     type="button"
                     className="ds-button ds-button--ghost"
@@ -396,10 +396,7 @@ export const CardDetails = ({
               </>
             ) : (
               <p className="deck-card-details__muted">
-                <Trans>
-                  Added by hand: the catalog doesn&apos;t know this card, so its
-                  legality isn&apos;t checked.
-                </Trans>
+                <Trans>Added by hand · legality not checked</Trans>
               </p>
             )}
             {prints.length > 1 ? (

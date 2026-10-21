@@ -290,8 +290,8 @@ export const DeckListPanel = ({
             <WarningCircleIcon {...decorative} weight="bold" />
             <strong>
               {t`${plural(missingLines, {
-                one: "# line from the list couldn't be found",
-                other: "# lines from the list couldn't be found",
+                one: '# line not found',
+                other: '# lines not found',
               })}`}
             </strong>
             <Tooltip content={t`Dismiss`}>
@@ -332,9 +332,7 @@ export const DeckListPanel = ({
       >
         {sorted.length === 0 ? (
           <p className="deck-panel__empty">
-            <Trans>
-              No cards yet. A whole list can be pasted anywhere on this screen.
-            </Trans>
+            <Trans>No cards yet. Paste a list anywhere here.</Trans>
           </p>
         ) : (
           GROUPS.map((category) => {
@@ -409,13 +407,13 @@ export const DeckListPanel = ({
           <dl>
             <div>
               <dt>
-                <Trans>No Basic in the opening 7 (mulligan)</Trans>
+                <Trans>Mulligan (no Basic in 7)</Trans>
               </dt>
               <dd className="ds-number">{mulligan}</dd>
             </div>
             <div>
               <dt>
-                <Trans>Exactly one Basic (it has to start)</Trans>
+                <Trans>Exactly one Basic</Trans>
               </dt>
               <dd className="ds-number">{percent(stats.oneBasic)}</dd>
             </div>
@@ -436,7 +434,7 @@ export const DeckListPanel = ({
             {stats.unknownPokemon > 0 ? (
               <div>
                 <dt>
-                  <Trans>Pokémon added by hand (stage unknown)</Trans>
+                  <Trans>Pokémon added by hand</Trans>
                 </dt>
                 <dd className="ds-number">{stats.unknownPokemon}</dd>
               </div>
@@ -473,7 +471,7 @@ const SampleHand = ({ cards }: { readonly cards: DeckList }) => {
           <p className="deck-sample__label">
             {opening.hand.some(isBasicPokemon)
               ? t({ message: 'Hand', context: 'a sample opening hand' })
-              : t`Hand · no Basic Pokémon: a mulligan`}
+              : t`Hand · mulligan`}
           </p>
           <ul className="deck-sample__cards" aria-label={t`Sample hand`}>
             {opening.hand.map((card, index) => (

@@ -302,9 +302,9 @@
     ],
     "translation": "{count, plural, one {{label}, # kart} other {{label}, # kart}}"
   },
-  "nlnwHS": {
-    "message": "{count, plural, one {# ACE SPEC card; a deck may have only one.} other {# ACE SPEC cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# ACE SPEC kartı; bir destede yalnızca bir tane olabilir.} other {# ACE SPEC kartı; bir destede yalnızca bir tane olabilir.}}"
+  "DXRXaL": {
+    "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
+    "translation": "{count, plural, one {# ACE SPEC kartı (en fazla 1).} other {# ACE SPEC kartı (en fazla 1).}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -346,17 +346,17 @@
     "message": "{count, plural, one {# card} other {# cards}}",
     "translation": "{count, plural, one {# kart} other {# kart}}"
   },
-  "bbkfGq": {
-    "message": "{count, plural, one {# copy of {name}; a Prism Star card is one per deck.} other {# copies of {name}; a Prism Star card is one per deck.}}",
-    "translation": "{count, plural, one {# adet {name}; Prism Star kartından destede yalnızca bir tane olabilir.} other {# adet {name}; Prism Star kartından destede yalnızca bir tane olabilir.}}"
+  "0Sz1PW": {
+    "message": "{count, plural, one {# copy of {name} (max {limit}).} other {# copies of {name} (max {limit}).}}",
+    "translation": "{count, plural, one {{name} kartından # kopya (en fazla {limit}).} other {{name} kartından # kopya (en fazla {limit}).}}"
   },
-  "aXq32o": {
-    "message": "{count, plural, one {# copy of {name}; the limit is {limit}.} other {# copies of {name}; the limit is {limit}.}}",
-    "translation": "{count, plural, one {# adet {name}; sınır {limit}.} other {# adet {name}; sınır {limit}.}}"
+  "gSD0Y4": {
+    "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
+    "translation": "{count, plural, one {{name} kartından # kopya (Prism Star: en fazla 1).} other {{name} kartından # kopya (Prism Star: en fazla 1).}}"
   },
-  "vyKAKc": {
-    "message": "{count, plural, one {# Pokémon ☆ card; a deck may have only one.} other {# Pokémon ☆ cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# Pokémon ☆ kartı; bir destede yalnızca bir tane olabilir.} other {# Pokémon ☆ kartı; bir destede yalnızca bir tane olabilir.}}"
+  "eFRg1z": {
+    "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
+    "translation": "{count, plural, one {# Pokémon ☆ kartı (en fazla 1).} other {# Pokémon ☆ kartı (en fazla 1).}}"
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
@@ -366,9 +366,9 @@
     "message": "{count, plural, one {# print} other {# prints}}",
     "translation": "{count, plural, one {# baskı} other {# baskı}}"
   },
-  "wfGt__": {
-    "message": "{count, plural, one {# Radiant card; a deck may have only one.} other {# Radiant cards; a deck may have only one.}}",
-    "translation": "{count, plural, one {# Radiant kart; bir destede yalnızca bir tane olabilir.} other {# Radiant kart; bir destede yalnızca bir tane olabilir.}}"
+  "AC9Ruq": {
+    "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
+    "translation": "{count, plural, one {# Radiant kart (en fazla 1).} other {# Radiant kart (en fazla 1).}}"
   },
   "JOORX1": {
     "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
@@ -454,12 +454,12 @@
     "message": "{hp} HP",
     "translation": "{hp} HP"
   },
-  "oPZoSX": {
-    "message": "{key} is kept for {action}. Number keys and Esc cannot be changed.",
+  "BwX3jA": {
+    "message": "{key} is reserved for {action}.",
     "comments": [
       "{key} is a key (\"5\"); {action} is the name of the shortcut that owns it, such as \"Add damage\"."
     ],
-    "translation": "{key} tuşu {action} için ayrılmış. Sayı tuşları ve Esc değiştirilemez."
+    "translation": "{key} tuşu {action} için ayrılmış."
   },
   "AIjjJ1": {
     "message": "{label}, {badge} new",
@@ -489,9 +489,9 @@
     ],
     "translation": "{minutes} dk önce"
   },
-  "tio4ij": {
-    "message": "{missingLines, plural, one {# line from the list couldn't be found} other {# lines from the list couldn't be found}}",
-    "translation": "{missingLines, plural, one {Listedeki # satır bulunamadı} other {Listedeki # satır bulunamadı}}"
+  "b3xCW_": {
+    "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{missingLines, plural, one {# satır bulunamadı} other {# satır bulunamadı}}"
   },
   "-man8P": {
     "message": "{name} (copy)",
@@ -817,12 +817,12 @@
     ],
     "translation": "{shown} ve {more} tane daha"
   },
-  "tJTbpm": {
-    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}} · Use View individual cards to inspect each piece and its attachments.",
+  "nzGgxO": {
+    "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}}",
     "comments": [
-      "A card made of several pieces (a V-UNION); \"View individual cards\" is a button beside it."
+      "A card made of several pieces (a V-UNION)."
     ],
-    "translation": "{shownPieces} / {totalPieces, plural, one {# parça} other {# parça}} · Her parçayı ve eklerini incelemek için Tek tek kartları göster düğmesini kullan."
+    "translation": "{shownPieces} / {totalPieces, plural, one {# parça} other {# parça}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -856,21 +856,17 @@
     "message": "{topName} deck",
     "translation": "{topName} destesi"
   },
-  "yt1NXK": {
-    "message": "{total, plural, one {# card, saved to your decks.} other {# cards, saved to your decks.}}",
-    "translation": "{total, plural, one {# kart, destelerine kaydedildi.} other {# kart, destelerine kaydedildi.}}"
-  },
-  "Yh3l8T": {
-    "message": "{total, plural, one {# card.} other {# cards.}}",
-    "translation": "{total, plural, one {# kart.} other {# kart.}}"
-  },
-  "HYXNQr": {
-    "message": "{total, plural, one {# card.} other {# cards.}} {missingLines, plural, one {# line couldn't be found.} other {# lines couldn't be found.}}",
-    "translation": "{total, plural, one {# kart.} other {# kart.}} {missingLines, plural, one {# satır bulunamadı.} other {# satır bulunamadı.}}"
+  "kJJvy7": {
+    "message": "{total, plural, one {# card · saved} other {# cards · saved}}",
+    "translation": "{total, plural, one {# kart · kaydedildi} other {# kart · kaydedildi}}"
   },
   "uaR_cz": {
     "message": "{total, plural, one {# card} other {# cards}}",
     "translation": "{total, plural, one {# kart} other {# kart}}"
+  },
+  "E7ddLG": {
+    "message": "{total, plural, one {# card} other {# cards}} · {missingLines, plural, one {# line not found} other {# lines not found}}",
+    "translation": "{total, plural, one {# kart} other {# kart}} · {missingLines, plural, one {# satır bulunamadı} other {# satır bulunamadı}}"
   },
   "OzYiNM": {
     "message": "{total} of {size} cards",
@@ -928,6 +924,13 @@
     ],
     "translation": "<0/> zaten <1>{clashNames}</1> işlevini yapıyor."
   },
+  "bD8iYt": {
+    "message": "<0/> opens this list.",
+    "comments": [
+      "The keys that open this list, drawn as keycaps (usually \"?\")."
+    ],
+    "translation": "<0/> bu listeyi açar."
+  },
   "C0rMdv": {
     "message": "− Damage",
     "context": "shortcut key caption",
@@ -937,6 +940,10 @@
     "message": "− Status",
     "context": "shortcut key caption",
     "translation": "− Durum"
+  },
+  "hfU12_": {
+    "message": "0 to 9990",
+    "translation": "0 ile 9990 arası"
   },
   "T0P06R": {
     "message": "1 adds 10, 9 adds 90",
@@ -960,17 +967,17 @@
     ],
     "translation": "3 tuşu üç kart çeker"
   },
-  "on4KUL": {
-    "message": "A big copy of the card under the pointer, beside the table.",
-    "translation": "İmlecin altındaki kartın masanın yanında büyük bir kopyası."
+  "eYUTBA": {
+    "message": "3 pieces in a row",
+    "translation": "Arka arkaya 3 parça"
+  },
+  "9bANS5": {
+    "message": "A .txt or .csv deck file",
+    "translation": ".txt veya .csv deste dosyası"
   },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "İçindeki bir kartın görseli yok."
-  },
-  "Fx5vYF": {
-    "message": "A card that isn't in the list: a name and an image address",
-    "translation": "Listede olmayan bir kart: bir ad ve bir görsel adresi"
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
@@ -984,21 +991,9 @@
     "message": "A deck needs a name.",
     "translation": "Destenin bir adı olmalı."
   },
-  "MoaF8K": {
-    "message": "A player invitation for the restored room was copied to your clipboard.",
-    "translation": "Geri yüklenen oda için bir oyuncu daveti panoya kopyalandı."
-  },
-  "8QR4GU": {
-    "message": "A tilted tabletop on a wide screen, flat on an upright phone.",
-    "translation": "Geniş ekranda eğik bir masa, dik telefonda düz."
-  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "{0} ile {1} arasında bir tam sayı"
-  },
-  "YbCAQH": {
-    "message": "A whole number, up to 9990",
-    "translation": "Bir tam sayı, en fazla 9990"
   },
   "Eaq0OT": {
     "message": "Ability",
@@ -1072,13 +1067,13 @@
     "message": "Add {count} damage",
     "translation": "{count} hasar ekle"
   },
+  "T-qRMv": {
+    "message": "Add a card that isn't listed",
+    "translation": "Listede olmayan bir kart ekle"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Başka bir stadyum parçası ekle"
-  },
-  "6qzNwA": {
-    "message": "Add Custom Card",
-    "translation": "Özel kart ekle"
   },
   "vz22MV": {
     "message": "Add damage",
@@ -1104,8 +1099,8 @@
     "message": "Add or switch special condition",
     "translation": "Özel durum ekle veya değiştir"
   },
-  "rAfNc2": {
-    "message": "Add to Deck",
+  "ZVI875": {
+    "message": "Add to deck",
     "translation": "Desteye ekle"
   },
   "V-b1Vx": {
@@ -1116,9 +1111,9 @@
     "message": "Added by hand",
     "translation": "Elle eklendi"
   },
-  "3TvVDg": {
-    "message": "Added by hand: the catalog doesn't know this card, so its legality isn't checked.",
-    "translation": "Elle eklendi: katalog bu kartı tanımıyor, bu yüzden geçerliliği denetlenmez."
+  "sVftpX": {
+    "message": "Added by hand · legality not checked",
+    "translation": "Elle eklendi · uygunluk denetlenmedi"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1130,18 +1125,40 @@
     "context": "shortcut key caption",
     "translation": "Hepsi ele"
   },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Tahta çevirmeye izin ver <0>(iki oyuncu için)</0>"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "kL-cR8": {
-    "message": "An <0>open-source</0> Pokémon TCG table. Practice both sides, or play a friend online.",
-    "translation": "<0>Açık kaynaklı</0> bir Pokémon TCG masası. İki tarafı da oynayarak pratik yap ya da bir arkadaşınla çevrimiçi oyna."
+  "JxKdEp": {
+    "message": "Always shown while it holds cards.",
+    "translation": "Kart içerdiği sürece hep görünür."
+  },
+  "Uu-7-8": {
+    "message": "An <0>open-source</0> Pokémon TCG table.",
+    "translation": "<0>Açık kaynaklı</0> bir Pokémon TCG masası."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
     "translation": "İki Enerji ile ödenebilen bir saldırı"
+  },
+  "bK6Mfx": {
+    "message": "An image URL, 'blank' or 'theme'.",
+    "comments": [
+      "Keep 'blank' and 'theme' in English: they are what the player types"
+    ],
+    "translation": "Bir görsel URL'si, 'blank' veya 'theme'."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Bir görsel URL'si veya 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1183,21 +1200,9 @@
     "message": "Appearance",
     "translation": "Görünüm"
   },
-  "o53iks": {
-    "message": "Applies to this printing. Reading mode always removes reflections.",
-    "translation": "Bu baskı için geçerlidir. Okuma modu yansımaları her zaman kaldırır."
-  },
-  "y-bSg4": {
-    "message": "Are you sure you want to leave the room? Current game state will be lost.",
-    "translation": "Odadan ayrılmak istediğine emin misin? Mevcut oyun durumu kaybolacak."
-  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Ayrılmak istediğine emin misin? Kaydedilmemiş oyun verileri kaybolacak."
-  },
-  "tljOLu": {
-    "message": "Are you sure you want to shuffle all cards into the deck?",
-    "translation": "Tüm kartları desteye karıştırmak istediğine emin misin?"
   },
   "8zanjC": {
     "message": "Artwork group",
@@ -1247,9 +1252,9 @@
     "context": "table depth setting",
     "translation": "Otomatik"
   },
-  "p69dsN": {
-    "message": "Automatic treatment",
-    "translation": "Otomatik işlem"
+  "Dnn2XG": {
+    "message": "Automatic",
+    "translation": "Otomatik"
   },
   "USi6Js": {
     "message": "Baby",
@@ -1329,21 +1334,6 @@
     "context": "zone on the table",
     "translation": "Yedek"
   },
-  "rHEH25": {
-    "message": "Beside each player's prizes, for formats with GX attacks.",
-    "translation": "Her oyuncunun ödül kartlarının yanında, GX atakları olan formatlar için."
-  },
-  "ok5NOi": {
-    "message": "Beside each player's prizes, for formats with VSTAR Powers.",
-    "translation": "Her oyuncunun ödül kartlarının yanında, VSTAR Güçleri olan formatlar için."
-  },
-  "bjriEy": {
-    "message": "Best top-8 finish of each archetype from <0>{sourceName}</0> online tournaments in the last two weeks, updated {updated}. Choosing one puts it on your seat without saving it.",
-    "comments": [
-      "sourceName is a tournament site (Limitless); updated is a short date"
-    ],
-    "translation": "Son iki haftadaki <0>{sourceName}</0> online turnuvalarında her arketipin en iyi ilk 8 derecesi, {updated} tarihinde güncellendi. Birini seçersen kaydetmeden koltuğuna yerleştirilir."
-  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -1394,6 +1384,10 @@
     "message": "Bottom right",
     "translation": "Sağ alt"
   },
+  "HLZuSl": {
+    "message": "BREAK",
+    "translation": "BREAK"
+  },
   "zcJuqD": {
     "message": "BREAK",
     "context": "shortcut key caption",
@@ -1414,6 +1408,14 @@
     "message": "Burned",
     "context": "special condition",
     "translation": "Yanık"
+  },
+  "2lorx9": {
+    "message": "Can't be changed",
+    "translation": "Değiştirilemez"
+  },
+  "Sq35G-": {
+    "message": "Can't read the clipboard",
+    "translation": "Pano okunamıyor"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -1444,10 +1446,6 @@
     "message": "Card back for {targetSeat}",
     "translation": "{targetSeat} için kart arkası"
   },
-  "lx0Lsc": {
-    "message": "Card finish (optional)",
-    "translation": "Kart yüzeyi (isteğe bağlı)"
-  },
   "tii3sv": {
     "message": "Card image language…",
     "translation": "Kart görseli dili…"
@@ -1455,22 +1453,6 @@
   "8xaYE9": {
     "message": "Card images",
     "translation": "Kart görselleri"
-  },
-  "-gounj": {
-    "message": "Card layout (optional)",
-    "translation": "Kart düzeni (isteğe bağlı)"
-  },
-  "0jQ5fa": {
-    "message": "Card Name",
-    "translation": "Kart adı"
-  },
-  "qiQZCD": {
-    "message": "Card Name is required.",
-    "translation": "Kart adı zorunludur."
-  },
-  "ME0Zmz": {
-    "message": "Card Name must be {max} characters or less.",
-    "translation": "Kart adı en fazla {max} karakter olabilir."
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1497,10 +1479,6 @@
     "message": "Card thickness",
     "translation": "Kart kalınlığı"
   },
-  "oZar_q": {
-    "message": "Card Type",
-    "translation": "Kart türü"
-  },
   "Ccpbzh": {
     "message": "Cards",
     "translation": "Kartlar"
@@ -1509,6 +1487,10 @@
     "message": "Cards being inspected",
     "translation": "İncelenen kartlar"
   },
+  "DvicXZ": {
+    "message": "Cards didn't load.",
+    "translation": "Kartlar yüklenemedi."
+  },
   "7oASui": {
     "message": "Cards found",
     "translation": "Bulunan kartlar"
@@ -1516,10 +1498,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Destedeki kartlar"
-  },
-  "xo_FAN": {
-    "message": "Cards rest a touch askew, as on a real table.",
-    "translation": "Kartlar, gerçek bir masadaki gibi hafif eğri durur."
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1563,6 +1541,14 @@
   "TEzuJ6": {
     "message": "Chat message",
     "translation": "Sohbet mesajı"
+  },
+  "0EVs3J": {
+    "message": "Check that it's a replay file.",
+    "translation": "Bunun bir tekrar dosyası olduğunu kontrol et."
+  },
+  "X2MPyW": {
+    "message": "Check the file and try again.",
+    "translation": "Dosyayı kontrol edip yeniden dene."
   },
   "RLe7Vk": {
     "message": "Checking…",
@@ -1621,13 +1607,9 @@
     "message": "Clear the log",
     "translation": "Kaydı temizle"
   },
-  "5HJTkJ": {
-    "message": "Click any shortcut to change its keys.",
-    "translation": "Tuşlarını değiştirmek için bir kısayola tıkla."
-  },
-  "XA9wiW": {
-    "message": "Clipboard access failed. Allow clipboard access and try again.",
-    "translation": "Panoya erişilemedi. Pano erişimine izin verip tekrar dene."
+  "MO489z": {
+    "message": "Click a shortcut to change it.",
+    "translation": "Değiştirmek için bir kısayola tıkla."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1707,6 +1689,10 @@
     "message": "Connecting…",
     "translation": "Bağlanılıyor…"
   },
+  "-MkffR": {
+    "message": "Connection lost.",
+    "translation": "Bağlantı koptu."
+  },
   "c0_6W9": {
     "message": "Copied",
     "context": "an invitation",
@@ -1728,53 +1714,57 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "Listeyi kopyala (Pokémon TCG Live)"
   },
-  "GUyeZd": {
-    "message": "Copy or download the list",
-    "translation": "Listeyi kopyala veya indir"
+  "7WsLH4": {
+    "message": "Couldn't check that. Try again.",
+    "translation": "Bu denetlenemedi. Yeniden dene."
   },
-  "cID6FV": {
-    "message": "Could not copy an invitation",
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
     "translation": "Davet kopyalanamadı"
   },
-  "z7b9Z8": {
-    "message": "Could not copy an invitation. Please try again.",
-    "translation": "Davet kopyalanamadı. Lütfen tekrar dene."
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "Davet kopyalanamadı. Yeniden dene."
   },
-  "_wTzvW": {
-    "message": "Could not generate a room. Please try again.",
-    "translation": "Oda oluşturulamadı. Lütfen tekrar dene."
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "Oda oluşturulamadı. Yeniden dene."
   },
-  "raqyCE": {
-    "message": "Could not join the room. Please try again.",
-    "translation": "Odaya katılınamadı. Lütfen tekrar dene."
+  "Glz9_Y": {
+    "message": "Couldn't join the room. Try again.",
+    "translation": "Odaya katılınamadı. Yeniden dene."
   },
-  "gYv4uD": {
-    "message": "Could not open the replay",
-    "translation": "Tekrar oynatma açılamadı"
+  "w--GsN": {
+    "message": "Couldn't open that file",
+    "translation": "Bu dosya açılamadı"
   },
-  "uVu3aq": {
-    "message": "Could not resume",
-    "translation": "Devam edilemedi"
-  },
-  "ZHbeNW": {
-    "message": "Could not resume this saved game. Please check the file and try again.",
-    "translation": "Kayıtlı oyuna devam edilemedi. Lütfen dosyayı kontrol edip tekrar dene."
-  },
-  "nx4kaN": {
-    "message": "Could not save",
-    "translation": "Kaydedilemedi"
-  },
-  "PafxzI": {
-    "message": "Could not save this online game. Please try again.",
-    "translation": "Bu çevrimiçi oyun kaydedilemedi. Lütfen tekrar dene."
-  },
-  "GvBw53": {
-    "message": "Could not start Solo mode. Please try again.",
-    "translation": "Solo modu başlatılamadı. Lütfen tekrar dene."
+  "D_pHKD": {
+    "message": "Couldn't open the replay",
+    "translation": "Tekrar açılamadı"
   },
   "p0WUR8": {
     "message": "Couldn't pick a deck",
     "translation": "Deste seçilemedi"
+  },
+  "iaCnbQ": {
+    "message": "Couldn't read that list",
+    "translation": "Bu liste okunamadı"
+  },
+  "heYM3E": {
+    "message": "Couldn't resume the game",
+    "translation": "Oyun devam ettirilemedi"
+  },
+  "ETE6Wl": {
+    "message": "Couldn't save the game",
+    "translation": "Oyun kaydedilemedi"
+  },
+  "hCQkU8": {
+    "message": "Couldn't start Solo mode. Try again.",
+    "translation": "Solo modu başlatılamadı. Tekrar dene."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Panoya erişilemedi. Erişime izin ver ve tekrar dene."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1869,25 +1859,9 @@
     "context": "shortcut key caption",
     "translation": "Destenin altı"
   },
-  "S_1qto": {
-    "message": "Deck contains more than {max} cards.",
-    "translation": "Deste {max} karttan fazla kart içeriyor."
-  },
   "sUVFl2": {
     "message": "Deck cover",
     "translation": "Deste kapağı"
-  },
-  "ggH9-D": {
-    "message": "Deck CSV contains more than {max} card rows.",
-    "translation": "Deste CSV dosyası {max} karttan fazla kart satırı içeriyor."
-  },
-  "V9Fr7P": {
-    "message": "Deck CSV exceeds {max} code units.",
-    "translation": "Deste CSV dosyası {max} kod birimini aşıyor."
-  },
-  "Qcg_ZU": {
-    "message": "Deck CSV must start with {header}.",
-    "translation": "Deste CSV dosyası {header} ile başlamalı."
   },
   "kemNRk": {
     "message": "Deck for each seat",
@@ -1902,21 +1876,9 @@
     "context": "shortcut key caption",
     "translation": "Destenin üstü"
   },
-  "fbC8eT": {
-    "message": "Decklist contains more than {max} cards.",
-    "translation": "Deste listesi {max} karttan fazla kart içeriyor."
-  },
-  "4NYLfk": {
-    "message": "Decklist contains more than {max} lines.",
-    "translation": "Deste listesi {max} satırdan fazla satır içeriyor."
-  },
   "9NwCxt": {
     "message": "Decklist copied",
     "translation": "Deste listesi kopyalandı"
-  },
-  "nb-LxT": {
-    "message": "Decklist exceeds {max} code units.",
-    "translation": "Deste listesi {max} kod birimini aşıyor."
   },
   "vUTt1I": {
     "message": "Decklist to import",
@@ -1957,6 +1919,10 @@
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Seçimi kaldır"
+  },
+  "cCCVzA": {
+    "message": "Didn't go through",
+    "translation": "İşlem gerçekleşmedi"
   },
   "95U7jt": {
     "message": "Direct access to me (I will give you my phone number).",
@@ -2005,6 +1971,10 @@
   "nV_lSY": {
     "message": "Discard your hand and draw…",
     "translation": "Elindeki kartları at ve çek…"
+  },
+  "OdPOhy": {
+    "message": "Discord",
+    "translation": "Discord"
   },
   "1QfxQT": {
     "message": "Dismiss",
@@ -2077,9 +2047,9 @@
     "message": "Draw how many cards?",
     "translation": "Kaç kart çekilsin?"
   },
-  "lFsCcN": {
-    "message": "Drop a decklist or deck file to import it",
-    "translation": "İçe aktarmak için bir deste listesi veya deste dosyası bırak"
+  "IsvGW6": {
+    "message": "Drop to import",
+    "translation": "İçe aktarmak için bırak"
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2117,13 +2087,13 @@
     "message": "Edit {name}",
     "translation": "{name} öğesini düzenle"
   },
+  "rFL-yb": {
+    "message": "Edit a copy",
+    "translation": "Kopyasını düzenle"
+  },
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "Desteyi düzenle"
-  },
-  "NgsKSL": {
-    "message": "Enable board flip <0>(both players must enable)</0>",
-    "translation": "Tahta çevirmeyi etkinleştir <0>(iki oyuncunun da etkinleştirmesi gerekir)</0>"
   },
   "1PBKgv": {
     "message": "End",
@@ -2154,25 +2124,37 @@
     "context": "keyboard key",
     "translation": "Enter"
   },
+  "KmFagX": {
+    "message": "Enter a name.",
+    "translation": "Bir ad gir."
+  },
+  "u2fAme": {
+    "message": "Enter a number",
+    "translation": "Bir sayı gir"
+  },
   "-cj58y": {
     "message": "Enter a number, then press Enter.",
     "translation": "Bir sayı gir, sonra Enter'a bas."
   },
-  "6EaZBW": {
-    "message": "Error reading file. Please make sure the file is valid.",
-    "translation": "Dosya okunurken hata oluştu. Lütfen dosyanın geçerli olduğundan emin ol."
+  "0jl-i6": {
+    "message": "Enter a valid image URL.",
+    "translation": "Geçerli bir görsel URL'si gir."
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Bir görsel URL'si gir."
   },
   "eVVWyt": {
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "FRlHpf": {
-    "message": "Evolution and previous stage · Use View individual cards to inspect each piece and its attachments.",
+  "yJW_id": {
+    "message": "Evolution and previous stage",
     "comments": [
-      "\"View individual cards\" is a button beside it."
+      "A BREAK card laid over the Pokémon it evolved from."
     ],
-    "translation": "Evrim ve önceki aşama · Her parçayı ve ona bağlı kartları incelemek için Tek tek kartları göster seçeneğini kullan."
+    "translation": "Evrim ve önceki evre"
   },
   "-J6iIV": {
     "message": "Evolve",
@@ -2199,9 +2181,9 @@
     "message": "Exact phrase in the rules text",
     "translation": "Kural metninde tam ifade"
   },
-  "cTmZ2_": {
-    "message": "Exactly one Basic (it has to start)",
-    "translation": "Tam olarak bir Basic (oyun onunla başlamalı)"
+  "HenzVD": {
+    "message": "Exactly one Basic",
+    "translation": "Tam olarak bir Basic"
   },
   "bMQxzZ": {
     "message": "Exit",
@@ -2289,6 +2271,10 @@
     "context": "card surface",
     "translation": "Bitir"
   },
+  "mDOjMG": {
+    "message": "Finish (optional)",
+    "translation": "Finish (isteğe bağlı)"
+  },
   "SN6Ocg": {
     "message": "Fire",
     "context": "Pokémon type",
@@ -2297,10 +2283,6 @@
   "RCEX87": {
     "message": "Fire type, Basic",
     "translation": "Ateş türü, Basic"
-  },
-  "L9TsVi": {
-    "message": "Fixed: number keys and Esc always work this way",
-    "translation": "Sabit: sayı tuşları ve Esc her zaman böyle çalışır"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2356,17 +2338,9 @@
     "context": "deck format",
     "translation": "Format"
   },
-  "kxDsuf": {
-    "message": "Four-piece grid · V-UNION",
-    "translation": "Dört parçalı ızgara · V-UNION"
-  },
   "N80CjQ": {
     "message": "From clipboard",
     "translation": "Panodan"
-  },
-  "QI8Idk": {
-    "message": "From the other card pool (TCG and Pocket don't mix): {cards}.",
-    "translation": "Diğer kart havuzundan (TCG ve Pocket birbirine karışmaz): {cards}."
   },
   "qIodFG": {
     "message": "Frost",
@@ -2397,11 +2371,6 @@
     "context": "Pokémon card mechanic",
     "translation": "Future"
   },
-  "726EAW": {
-    "message": "Game",
-    "context": "menu section heading",
-    "translation": "Oyun"
-  },
   "iDs75z": {
     "message": "Game actions",
     "translation": "Oyun eylemleri"
@@ -2410,22 +2379,26 @@
     "message": "Game board",
     "translation": "Oyun tahtası"
   },
+  "h8FbrQ": {
+    "message": "Game resumed",
+    "translation": "Oyun devam ediyor"
+  },
   "oP3kz7": {
     "message": "Generate",
     "context": "a room",
     "translation": "Oluştur"
   },
-  "B8xvzk": {
-    "message": "Generate a room before copying an invitation.",
-    "translation": "Davet kopyalamadan önce bir oda oluştur."
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Bir oda oluştur ve daveti gönder. <0>İzleyici olarak katıl</0> açıksa izleyici davet eder."
   },
-  "4L_sa2": {
-    "message": "Generate a room, copy an invitation and send it to your opponent. Turn on <0>Join as spectator</0> to copy a spectator invitation instead.",
-    "translation": "Bir oda oluştur, daveti kopyala ve rakibine gönder. Bunun yerine izleyici daveti kopyalamak için <0>İzleyici olarak katıl</0> seçeneğini aç."
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Önce bir oda oluştur."
   },
-  "VIzorr": {
-    "message": "Generate a room, then copy a temporary invitation for one player or spectator. They paste it into Room ID to join.",
-    "translation": "Bir oda oluştur, ardından bir oyuncu veya izleyici için geçici bir davet kopyala. Katılmak için bunu Oda Kimliği alanına yapıştırırlar."
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Bir oda oluştur, sonra daveti gönder."
   },
   "fQq7dv": {
     "message": "Generating…",
@@ -2435,10 +2408,6 @@
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "GitHub profilinde sponsor etiketi kazan (yalnızca GitHub üzerinden sponsor olanlar için geçerlidir, PayPal ile sponsor olanlar için geçerli değildir. GH sponsor sayfamın onaylanması şu an süreçte 😛)."
-  },
-  "X-I9hi": {
-    "message": "Getting every card ready…",
-    "translation": "Tüm kartlar hazırlanıyor…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2484,9 +2453,9 @@
     "context": "zone",
     "translation": "El"
   },
-  "74pFdB": {
-    "message": "Hand · no Basic Pokémon: a mulligan",
-    "translation": "El · Basic Pokémon yok: mulligan"
+  "wkJJTf": {
+    "message": "Hand · mulligan",
+    "translation": "El · mulligan"
   },
   "MMu3F-": {
     "message": "Hand to bottom",
@@ -2507,11 +2476,6 @@
     "context": "coin flip",
     "translation": "Yazı"
   },
-  "maRDnk": {
-    "message": "Help",
-    "context": "menu section heading",
-    "translation": "Yardım"
-  },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
     "comments": [
@@ -2524,6 +2488,11 @@
     "context": "shortcut key caption",
     "translation": "Gizle"
   },
+  "WEOf-a": {
+    "message": "Hide",
+    "context": "stop revealing a card",
+    "translation": "Gizle"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "Klavyeyi gizle"
@@ -2531,6 +2500,10 @@
   "o1ytqy": {
     "message": "Hide log",
     "translation": "Günlüğü gizle"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Lost Zone'u gizle"
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
@@ -2556,14 +2529,6 @@
   "geXprQ": {
     "message": "Host a room",
     "translation": "Oda kur"
-  },
-  "DDMiDe": {
-    "message": "Host a room and invite a friend, or join theirs.",
-    "translation": "Bir oda kur ve bir arkadaşını davet et ya da onun odasına katıl."
-  },
-  "_W9GYQ": {
-    "message": "How many cards do you want to look at?",
-    "translation": "Kaç karta bakmak istiyorsun?"
   },
   "_vIqw9": {
     "message": "How many cards?",
@@ -2638,21 +2603,13 @@
     "message": "Image URL",
     "translation": "Görsel URL'si"
   },
-  "ahLxtd": {
-    "message": "Image URL is required.",
-    "translation": "Görsel URL'si gerekli."
-  },
-  "X-Qb30": {
-    "message": "Image URL must be {max} characters or less.",
-    "translation": "Görsel URL'si en fazla {max} karakter olmalı."
-  },
-  "BsLWkA": {
-    "message": "Image URL must point to a loadable image.",
-    "translation": "Görsel URL'si yüklenebilir bir görseli göstermeli."
-  },
   "15ARIE": {
     "message": "Image URL too long",
     "translation": "Görsel URL'si çok uzun"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "Görsel URL'si: en fazla {max} karakter."
   },
   "EUsCHg": {
     "message": "Images",
@@ -2667,10 +2624,6 @@
   "EEh2f0": {
     "message": "Import a deck",
     "translation": "Deste içe aktar"
-  },
-  "wxDVVg": {
-    "message": "Import the list on your clipboard",
-    "translation": "Panodaki listeyi içe aktar"
   },
   "aWU0gR": {
     "message": "Imported deck",
@@ -2698,21 +2651,13 @@
     "context": "animation speed",
     "translation": "Anında"
   },
-  "N9_ykp": {
-    "message": "Instant keeps every action immediate, with no movement.",
-    "translation": "Anında seçeneği her eylemi hareket olmadan hemen gerçekleştirir."
-  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "Davet kopyalandı"
   },
-  "jP3hdw": {
-    "message": "It could not be read.",
-    "translation": "Okunamadı."
-  },
-  "HDd931": {
-    "message": "It is too large to be a deck.",
-    "translation": "Deste olamayacak kadar büyük."
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Davet panoya kopyalandı."
   },
   "5kNRW8": {
     "message": "Item",
@@ -2736,12 +2681,8 @@
     "message": "Join as spectator",
     "translation": "İzleyici olarak katıl"
   },
-  "31TuIx": {
-    "message": "Join our Discord",
-    "translation": "Discord'umuza katıl"
-  },
-  "xiRZec": {
-    "message": "Join Room",
+  "t5uRiA": {
+    "message": "Join room",
     "translation": "Odaya katıl"
   },
   "t8Lc2X": {
@@ -2799,6 +2740,10 @@
     "context": "card layout",
     "translation": "Yerleşim"
   },
+  "iZqrTt": {
+    "message": "Layout (optional)",
+    "translation": "Düzen (isteğe bağlı)"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Oyunda bırak"
@@ -2824,6 +2769,10 @@
     "message": "Legality not checked for cards added by hand: {cards}.",
     "translation": "Elle eklenen kartların geçerliliği kontrol edilmedi: {cards}."
   },
+  "xXagjO": {
+    "message": "LEGEND · 2 halves",
+    "translation": "LEGEND · 2 yarım"
+  },
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
@@ -2838,25 +2787,25 @@
     "context": "Pokémon type",
     "translation": "Elektrik"
   },
-  "L8YVpL": {
-    "message": "Line {line} card name exceeds {max} code units.",
-    "translation": "{line}. satırdaki kart adı {max} kod birimini aşıyor."
+  "BvrzrK": {
+    "message": "Line {line} is too long.",
+    "translation": "{line}. satır çok uzun."
   },
-  "qGY357": {
-    "message": "Line {line} exceeds {max} code units.",
-    "translation": "{line}. satır {max} kod birimini aşıyor."
+  "P7ovJ4": {
+    "message": "Line {line}: card name too long.",
+    "translation": "{line}. satır: kart adı çok uzun."
   },
-  "uUu0lO": {
-    "message": "Line {line} image URL exceeds {max} code units.",
-    "translation": "{line}. satırdaki görsel URL'si {max} kod birimini aşıyor."
+  "jZ7Cmx": {
+    "message": "Line {line}: image URL too long.",
+    "translation": "{line}. satır: görsel URL'si çok uzun."
   },
-  "WBB3Uk": {
-    "message": "Line {line} quantity must be an integer from 1 to {max}.",
-    "translation": "{line}. satırdaki adet 1 ile {max} arasında bir tam sayı olmalı."
+  "emtXNu": {
+    "message": "Line {line}: quantity must be 1 to {max}.",
+    "translation": "{line}. satır: adet 1 ile {max} arasında olmalı."
   },
-  "9r7EQl": {
-    "message": "Line {line} set or card identifier exceeds {max} code units.",
-    "translation": "{line}. satırdaki set veya kart tanımlayıcısı {max} kod birimini aşıyor."
+  "jleG-m": {
+    "message": "Line {line}: set code too long.",
+    "translation": "{line}. satır: set kodu çok uzun."
   },
   "Q8pDHq": {
     "message": "List",
@@ -2874,6 +2823,10 @@
   "GLOf7w": {
     "message": "Load the other side's deck",
     "translation": "Karşı tarafın destesini yükle"
+  },
+  "g7taAS": {
+    "message": "Loading cards…",
+    "translation": "Kartlar yükleniyor…"
   },
   "f55wdH": {
     "message": "Loading decks…",
@@ -2905,6 +2858,10 @@
     "message": "Look",
     "context": "shortcut key caption",
     "translation": "Bak"
+  },
+  "Q1s-WM": {
+    "message": "Look at how many cards?",
+    "translation": "Kaç karta bakılsın?"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
@@ -2958,13 +2915,9 @@
     "message": "Looking at cards",
     "translation": "Kartlara bakıyor"
   },
-  "08hCRK": {
-    "message": "Looking at cards...",
-    "translation": "Kartlara bakıyor..."
-  },
-  "8-pQrF": {
-    "message": "Lost the connection to the room.",
-    "translation": "Odayla bağlantı kesildi."
+  "cGgbAH": {
+    "message": "Lost the room during the replay.",
+    "translation": "Tekrar sırasında oda kayboldu."
   },
   "JgsnP-": {
     "message": "Lost Zone",
@@ -2989,9 +2942,9 @@
     "message": "Lost Zone all",
     "translation": "Hepsini Lost Zone'a gönder"
   },
-  "IHNoPs": {
-    "message": "Lost Zone, VSTAR and GX markers",
-    "translation": "Lost Zone, VSTAR ve GX işaretleri"
+  "eyE6CV": {
+    "message": "Lost Zone and markers",
+    "translation": "Lost Zone ve işaretçiler"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -3080,6 +3033,10 @@
     "context": "my half of the table",
     "translation": "Benim"
   },
+  "2FYpfJ": {
+    "message": "More",
+    "translation": "Daha fazla"
+  },
   "bnmSJm": {
     "message": "More",
     "context": "more actions",
@@ -3138,6 +3095,10 @@
     "message": "Move card...",
     "translation": "Kartı taşı..."
   },
+  "TvEhJE": {
+    "message": "Move didn't go through",
+    "translation": "Hamle gerçekleşmedi"
+  },
   "iwWOBz": {
     "message": "Move everything on your playboard to your hand",
     "translation": "Oyun alanındaki her şeyi eline al"
@@ -3151,14 +3112,18 @@
     "message": "Move to",
     "translation": "Şuraya taşı"
   },
-  "MlzKTm": {
-    "message": "Moves are still on their way. Try again in a moment.",
-    "translation": "Hamleler hâlâ yolda. Birazdan tekrar dene."
+  "rzLbnt": {
+    "message": "Move to hand",
+    "translation": "Ele al"
   },
   "mP7YPE": {
     "message": "Mulligan",
     "context": "shortcut key caption",
     "translation": "Mulligan"
+  },
+  "8GMjXa": {
+    "message": "Mulligan (no Basic in 7)",
+    "translation": "Mulligan (ilk 7'de Basic yok)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3192,6 +3157,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "Adda şu kelimeler geçiyor"
+  },
+  "4jBgrs": {
+    "message": "Name: up to {max} characters.",
+    "translation": "Ad: en fazla {max} karakter."
   },
   "OzETXo": {
     "message": "Natural card placement",
@@ -3240,20 +3209,20 @@
     "message": "No actions match",
     "translation": "Eşleşen eylem yok"
   },
-  "-iSsDL": {
-    "message": "No Basic in the opening 7 (mulligan)",
-    "translation": "İlk 7 kartta Basic yok (mulligan)"
-  },
-  "np6nz2": {
-    "message": "No card lines found. Lines look like \"4 Iono PAL 185\".",
+  "6n5psS": {
+    "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
-    "translation": "Kart satırı bulunamadı. Satırlar \"4 Iono PAL 185\" gibi görünür."
+    "translation": "Kart satırı bulunamadı. \"4 Iono PAL 185\" gibi satırlar dene."
   },
   "7Kn8aC": {
     "message": "No cards here",
     "translation": "Burada kart yok"
+  },
+  "7rmH0G": {
+    "message": "No cards in that list.",
+    "translation": "Bu listede kart yok."
   },
   "r1U_Vc": {
     "message": "No cards match “{text}”.",
@@ -3263,13 +3232,9 @@
     "message": "No cards match.",
     "translation": "Eşleşen kart yok."
   },
-  "ITmqK8": {
-    "message": "No cards yet. A whole list can be pasted anywhere on this screen.",
-    "translation": "Henüz kart yok. Bu ekranda herhangi bir yere komple bir liste yapıştırabilirsin."
-  },
-  "i13fcW": {
-    "message": "No current tournament decks right now.",
-    "translation": "Şu anda güncel turnuva destesi yok."
+  "bYysi5": {
+    "message": "No cards yet. Paste a list anywhere here.",
+    "translation": "Henüz kart yok. Buraya herhangi bir yere bir liste yapıştır."
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -3287,9 +3252,9 @@
     "message": "No image",
     "translation": "Görsel yok"
   },
-  "NX9V6M": {
-    "message": "No saved decks yet. Paste a list above, start a new deck, or try one of the decks below — anything you import or build is saved here automatically.",
-    "translation": "Henüz kayıtlı deste yok. Yukarıya bir liste yapıştır, yeni bir deste başlat ya da aşağıdaki desteleri dene — içe aktardığın veya oluşturduğun her şey buraya otomatik kaydedilir."
+  "f5zBYV": {
+    "message": "No saved decks yet. Decks you import or build are saved here.",
+    "translation": "Henüz kayıtlı deste yok. İçe aktardığın veya oluşturduğun desteler burada kaydedilir."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3298,6 +3263,10 @@
   "Psi2LF": {
     "message": "No Special Condition",
     "translation": "Özel durum yok"
+  },
+  "lChsa8": {
+    "message": "No tournament decks right now.",
+    "translation": "Şu anda turnuva destesi yok."
   },
   "6psMRl": {
     "message": "None",
@@ -3309,9 +3278,9 @@
     "context": "animation speed",
     "translation": "Normal"
   },
-  "2ZdbIi": {
-    "message": "Not connected right now",
-    "translation": "Şu anda bağlı değil"
+  "S33tz3": {
+    "message": "Not connected",
+    "translation": "Bağlı değil"
   },
   "aGy2Td": {
     "message": "not ex (minus = not)",
@@ -3334,6 +3303,14 @@
     "message": "Not set",
     "context": "a shortcut with no key",
     "translation": "Ayarlanmadı"
+  },
+  "6rbhdt": {
+    "message": "Not your move",
+    "translation": "Hamle sende değil"
+  },
+  "W8zlv3": {
+    "message": "Not yours to do",
+    "translation": "Bunu yapma sırası sende değil"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -3360,10 +3337,6 @@
     "context": "setting",
     "translation": "Kapalı"
   },
-  "KQpYbt": {
-    "message": "Off by default: few formats use it. A Lost Zone with cards always shows.",
-    "translation": "Varsayılan olarak kapalı: az sayıda format kullanıyor. İçinde kart olan Lost Zone her zaman görünür."
-  },
   "zga9sT": {
     "message": "OK",
     "translation": "Tamam"
@@ -3387,10 +3360,6 @@
     ],
     "translation": "{seat} üzerinde"
   },
-  "u-Fx9C": {
-    "message": "On the table",
-    "translation": "Masada"
-  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "Yarısı masayı kaplar"
@@ -3399,10 +3368,6 @@
     "message": "One moment",
     "translation": "Bir saniye"
   },
-  "Rz4QTI": {
-    "message": "Online Multiplayer Mode",
-    "translation": "Çevrimiçi çok oyunculu mod"
-  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -3410,25 +3375,21 @@
     ],
     "translation": "Yalnızca {formatLabel} için geçerli olanlar"
   },
-  "ycEBgW": {
-    "message": "Only the player in that seat can.",
-    "translation": "Bunu yalnızca o koltuktaki oyuncu yapabilir."
+  "XXBK3z": {
+    "message": "Only players can change the table.",
+    "translation": "Masayı yalnızca oyuncular değiştirebilir."
   },
-  "kpTM9V": {
-    "message": "Only the players can change it.",
-    "translation": "Bunu yalnızca oyuncular değiştirebilir."
+  "kQ0v6x": {
+    "message": "Only that seat's player can.",
+    "translation": "Yalnızca o koltuktaki oyuncu yapabilir."
   },
-  "RqCWii": {
-    "message": "Only you see this choice. A card not printed in that language shows as its deck has it.",
-    "translation": "Bu seçimi yalnızca sen görürsün. O dilde basılmamış bir kart, destede olduğu haliyle görünür."
+  "gbBPE1": {
+    "message": "Only you see this. Cards without that printing keep the deck's scan.",
+    "translation": "Bunu yalnızca sen görürsün. O basıma sahip olmayan kartlar destenin taramasını korur."
   },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Deste dosyası aç"
-  },
-  "w-3h5f": {
-    "message": "Open a decklist (.txt) or simulator file (.csv). You can also drop one here.",
-    "translation": "Bir deste listesi (.txt) veya simülatör dosyası (.csv) aç. Dosyayı buraya sürükleyip de bırakabilirsin."
   },
   "9npOH9": {
     "message": "Open file",
@@ -3490,21 +3451,17 @@
     "message": "Opens this list",
     "translation": "Bu listeyi açar"
   },
+  "WOApxE": {
+    "message": "Opponent is looking",
+    "translation": "Rakip bakıyor"
+  },
   "g88DaC": {
     "message": "Opponent moving cards",
     "translation": "Rakip kartları taşıyor"
   },
-  "sDZaPr": {
-    "message": "Opponent moving cards...",
-    "translation": "Rakip kartları taşıyor..."
-  },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
     "translation": "Rakibin kartları bana dönük"
-  },
-  "jmKDRE": {
-    "message": "Ordinary portrait card",
-    "translation": "Sıradan dikey kart"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3515,6 +3472,10 @@
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
     "translation": "Diğer Trainer'lar"
+  },
+  "zsicOH": {
+    "message": "Out of sync with the room.",
+    "translation": "Odayla senkron bozuldu."
   },
   "SFwfHx": {
     "message": "Page Down",
@@ -3551,43 +3512,33 @@
     "message": "Pass the turn",
     "translation": "Sırayı pas geç"
   },
-  "Y2Lyu8": {
-    "message": "Paste a decklist from Pokémon TCG Live, Limitless, or anywhere — or just press Ctrl+V on this screen",
-    "translation": "Pokémon TCG Live'dan, Limitless'ten ya da başka bir yerden bir deste listesi yapıştır — veya bu ekranda Ctrl+V'ye bas"
+  "BRnJkz": {
+    "message": "Paste a decklist first.",
+    "translation": "Önce bir deste listesi yapıştır."
   },
-  "XBx43W": {
-    "message": "Paste a temporary invitation into Room ID.",
-    "translation": "Oda Kimliği alanına geçici bir davet yapıştır."
+  "WXUbKm": {
+    "message": "Paste a decklist, or press Ctrl+V anywhere",
+    "translation": "Bir deste listesi yapıştır veya herhangi bir yerde Ctrl+V'ye bas"
   },
-  "i85ksQ": {
-    "message": "Paste a valid invitation into Room ID before joining.",
-    "translation": "Katılmadan önce Oda Kimliği alanına geçerli bir davet yapıştır."
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Oda kimliği alanına geçerli bir davet yapıştır."
   },
   "pJRgD4": {
     "message": "Paste an invitation",
     "translation": "Davet yapıştır"
   },
-  "IiTL4Z": {
-    "message": "Paste the invitation you were sent, or join the room you generated.",
-    "translation": "Sana gönderilen daveti yapıştır ya da oluşturduğun odaya katıl."
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Bir davet yapıştır veya kendi odana katıl."
   },
-  "pdondR": {
-    "message": "Paste the list with Ctrl+V (⌘V on a Mac) instead.",
-    "translation": "Bunun yerine listeyi Ctrl+V ile yapıştır (Mac'te ⌘V)."
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "Daveti Oda kimliği alanına yapıştır."
   },
-  "wialHB": {
-    "message": "Paste your image URL or type 'default':",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Görsel bağlantını yapıştır ya da 'default' yaz:"
-  },
-  "m1XBv-": {
-    "message": "Paste your image URL, or type 'blank' or 'theme':",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "Görsel bağlantını yapıştır ya da 'blank' veya 'theme' yaz:"
+  "MfH2NF": {
+    "message": "Paste with Ctrl+V (⌘V) instead",
+    "translation": "Bunun yerine Ctrl+V (⌘V) ile yapıştır"
   },
   "cfCrKd": {
     "message": "Paypal Donation Link",
@@ -3601,10 +3552,6 @@
     "message": "Pick random card",
     "translation": "Rastgele kart seç"
   },
-  "YTYMMV": {
-    "message": "Picture the deck with this card",
-    "translation": "Desteyi bu kartla göz önüne getir"
-  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Parça konumu"
@@ -3614,18 +3561,17 @@
     "context": "take the decks to the table",
     "translation": "Oyna"
   },
+  "7LIRc6": {
+    "message": "Play a random deck",
+    "translation": "Rastgele bir deste oyna"
+  },
   "VCIZc8": {
     "message": "Play online",
     "translation": "Çevrimiçi oyna"
   },
-  "-tOpDV": {
-    "message": "Play this deck as {seat}",
-    "translation": "Bu desteyle {seat} olarak oyna"
-  },
-  "RNRv6e": {
-    "message": "Playboard",
-    "context": "zone",
-    "translation": "Oyun alanı"
+  "hrmat7": {
+    "message": "Play these decks",
+    "translation": "Bu destelerle oyna"
   },
   "3Nh5cA": {
     "message": "Played last · {when}",
@@ -3647,21 +3593,13 @@
     "context": "unnamed seat",
     "translation": "Oyuncu"
   },
-  "NgXTKK": {
-    "message": "Please enter a valid image URL.",
-    "translation": "Lütfen geçerli bir görsel URL'si gir."
-  },
-  "3uFKp3": {
-    "message": "Please enter a valid number for the draw amount.",
-    "translation": "Lütfen çekme miktarı için geçerli bir sayı gir."
-  },
-  "gUhl4O": {
-    "message": "Please enter a valid number for the view amount.",
-    "translation": "Lütfen bakma miktarı için geçerli bir sayı gir."
-  },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket destelerinde Enerji kartı yoktur."
+  },
+  "S-nXVo": {
+    "message": "Pointer parallax",
+    "translation": "İmleç paralaksı"
   },
   "95vGpJ": {
     "message": "Poisoned",
@@ -3678,9 +3616,9 @@
     "context": "shortcut key caption",
     "translation": "Pokémon"
   },
-  "sKDCDc": {
-    "message": "Pokémon added by hand (stage unknown)",
-    "translation": "Elle eklenen Pokémon (evre bilinmiyor)"
+  "CA11_N": {
+    "message": "Pokémon added by hand",
+    "translation": "Elle eklenen Pokémon"
   },
   "RNaprm": {
     "message": "Pokémon cards",
@@ -3693,13 +3631,6 @@
     ],
     "translation": "<0>Kısayollar</0> için {keys} tuşuna bas."
   },
-  "WNZF5E": {
-    "message": "Press <0/> to open this list any time.",
-    "comments": [
-      "The keys that open this list, drawn as keycaps (usually \"?\")."
-    ],
-    "translation": "Bu listeyi istediğin zaman açmak için <0/> tuşuna bas."
-  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "Onaylamak için tekrar bas"
@@ -3711,10 +3642,6 @@
   "drY1M6": {
     "message": "Press keys…",
     "translation": "Tuşlara bas…"
-  },
-  "g9wm8H": {
-    "message": "Press OK to stop revealing card to opponent",
-    "translation": "Kartı rakibe göstermeyi durdurmak için Tamam'a bas"
   },
   "wCMulM": {
     "message": "Press the new keys for {label}. Escape cancels.",
@@ -3772,25 +3699,13 @@
     "message": "PTCG-sim tutorial",
     "translation": "PTCG-sim eğitimi"
   },
-  "3celTG": {
-    "message": "Put a random deck on your seat",
-    "translation": "Koltuğuna rastgele bir deste koy"
-  },
-  "wfCdi6": {
-    "message": "Put every shortcut back?",
-    "translation": "Tüm kısayollar eski haline döndürülsün mü?"
-  },
   "rFCOSV": {
     "message": "Put everything on your playboard in the Lost Zone",
     "translation": "Oyun alanındaki her şeyi Lost Zone'a koy"
   },
-  "Je1OLM": {
-    "message": "Put the empty Lost Zone away",
-    "translation": "Boş Lost Zone'u kaldır"
-  },
-  "Pep1YD": {
-    "message": "Put the Lost Zone away",
-    "translation": "Lost Zone'u kaldır"
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Pokémon parçalarını tek bir yığına, Stadyum parçalarını Stadyum alanına koy."
   },
   "eAnTYw": {
     "message": "Put your hand on the bottom of your deck and draw…",
@@ -3804,9 +3719,9 @@
     "message": "Quantity",
     "translation": "Adet"
   },
-  "ILC8sM": {
-    "message": "Quantity must be between 1 and {max}.",
-    "translation": "Adet 1 ile {max} arasında olmalı."
+  "8cBiju": {
+    "message": "Quantity: 1 to {max}.",
+    "translation": "Adet: 1 ile {max} arası."
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -3847,13 +3762,13 @@
     "message": "Receive all of the benefits of the previous tiers.",
     "translation": "Önceki kademelerin tüm avantajlarını al."
   },
-  "WKLnhx": {
-    "message": "Recognize known card formats",
-    "translation": "Bilinen kart biçimlerini tanı"
-  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Yeniden bağlan"
+  },
+  "MO2S6n": {
+    "message": "Reconnecting. Try again in a moment.",
+    "translation": "Yeniden bağlanılıyor. Birazdan tekrar dene."
   },
   "H3oH0g": {
     "message": "Redo",
@@ -3892,6 +3807,14 @@
     "message": "Remove all damage",
     "translation": "Tüm hasarı kaldır"
   },
+  "sR6lTH": {
+    "message": "Remove condition",
+    "translation": "Durumu kaldır"
+  },
+  "8IMRlK": {
+    "message": "Remove from {seat}",
+    "translation": "{seat} koltuğundan kaldır"
+  },
   "MS9-fZ": {
     "message": "Remove one",
     "translation": "Birini kaldır"
@@ -3908,10 +3831,6 @@
     "message": "Remove special condition",
     "translation": "Özel durumu kaldır"
   },
-  "cqopk0": {
-    "message": "Remove the Special Condition",
-    "translation": "Özel durumu kaldır"
-  },
   "XsrZAv": {
     "message": "Rename",
     "context": "button",
@@ -3926,14 +3845,14 @@
     "message": "Rename deck",
     "translation": "Desteyi yeniden adlandır"
   },
-  "nBPH-e": {
-    "message": "Rename, copy, export or delete",
-    "translation": "Yeniden adlandır, kopyala, dışa aktar veya sil"
-  },
   "cDnZvG": {
     "message": "Replay",
     "context": "the table is showing a replay",
     "translation": "Tekrar"
+  },
+  "3hz5zq": {
+    "message": "Replay interrupted. Try again.",
+    "translation": "Tekrar oynatma kesildi. Tekrar dene."
   },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
@@ -3969,6 +3888,10 @@
   "5FOB1h": {
     "message": "Reset all",
     "translation": "Tümünü sıfırla"
+  },
+  "dNFlsv": {
+    "message": "Reset all shortcuts?",
+    "translation": "Tüm kısayollar sıfırlansın mı?"
   },
   "JLLA3V": {
     "message": "Reset both sides",
@@ -4052,14 +3975,18 @@
     "message": "Reveal/hide prizes",
     "translation": "Ödül kartlarını göster/gizle"
   },
+  "fa6wL6": {
+    "message": "Revealed to your opponent",
+    "translation": "Rakibine gösterildi"
+  },
   "XGMYSt": {
     "message": "Right",
     "context": "piece position",
     "translation": "Sağ"
   },
-  "c3QPLj": {
-    "message": "Right-click a card for its actions.",
-    "translation": "Kartın işlemleri için sağ tıkla."
+  "gTK8h8": {
+    "message": "Right-click a card for actions.",
+    "translation": "İşlemler için karta sağ tıkla."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4085,61 +4012,61 @@
     "message": "Rotate card(s)",
     "translation": "Kartları döndür"
   },
-  "JAKwbT": {
-    "message": "Row {row} contains an unexpected quote.",
-    "translation": "{row}. satırda beklenmeyen bir tırnak işareti var."
+  "JRfxmI": {
+    "message": "Row {row}: text after a closing quote.",
+    "translation": "Satır {row}: kapanış tırnağından sonra metin var."
   },
-  "EHZjbS": {
-    "message": "Row {row} contains an unterminated quote.",
-    "translation": "{row}. satırda kapatılmamış bir tırnak işareti var."
+  "nmg9gB": {
+    "message": "Row {row}: unexpected quote.",
+    "translation": "Satır {row}: beklenmeyen tırnak."
   },
-  "qDnJ2U": {
-    "message": "Row {row} has text after a closing quote.",
-    "translation": "{row}. satırda kapanış tırnağından sonra metin var."
+  "GF2_ew": {
+    "message": "Row {row}: unterminated quote.",
+    "translation": "Satır {row}: tırnak kapatılmamış."
   },
-  "_Enj3q": {
-    "message": "Row {rowNumber} card name exceeds {max} code units.",
-    "translation": "{rowNumber}. satırdaki kart adı {max} kod birimini aşıyor."
+  "FxnMec": {
+    "message": "Row {rowNumber}: card name too long.",
+    "translation": "Satır {rowNumber}: kart adı çok uzun."
   },
-  "2ugzfk": {
-    "message": "Row {rowNumber} card type exceeds {max} code units.",
-    "translation": "{rowNumber}. satırdaki kart türü {max} kod birimini aşıyor."
+  "QfafSg": {
+    "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "translation": "Satır {rowNumber}: kart türü Pokémon, Trainer veya Energy olmalı."
   },
-  "RUenSk": {
-    "message": "Row {rowNumber} card type must be Pokémon, Trainer or Energy.",
-    "translation": "{rowNumber}. satırdaki kart türü Pokémon, Trainer veya Energy olmalı."
+  "jtuoO2": {
+    "message": "Row {rowNumber}: card type too long.",
+    "translation": "Satır {rowNumber}: kart türü çok uzun."
   },
-  "TxaPVN": {
-    "message": "Row {rowNumber} has invalid presentation JSON.",
-    "translation": "{rowNumber}. satırdaki sunum JSON'u geçersiz."
+  "gojF1j": {
+    "message": "Row {rowNumber}: image URL too long.",
+    "translation": "Satır {rowNumber}: görsel URL'si çok uzun."
   },
-  "YPNZeK": {
-    "message": "Row {rowNumber} image URL exceeds {max} code units.",
-    "translation": "{rowNumber}. satırdaki görsel URL'si {max} kod birimini aşıyor."
+  "DCuDdI": {
+    "message": "Row {rowNumber}: invalid presentation JSON.",
+    "translation": "Satır {rowNumber}: sunum JSON'u geçersiz."
   },
-  "nuW_Tl": {
-    "message": "Row {rowNumber} is missing a card name.",
-    "translation": "{rowNumber}. satırda kart adı eksik."
+  "tqYUyB": {
+    "message": "Row {rowNumber}: needs exactly five columns.",
+    "translation": "Satır {rowNumber}: tam olarak beş sütun olmalı."
   },
-  "Fa0pEa": {
-    "message": "Row {rowNumber} is missing a card type.",
-    "translation": "{rowNumber}. satırda kart türü eksik."
+  "GTr4h_": {
+    "message": "Row {rowNumber}: needs exactly four columns.",
+    "translation": "Satır {rowNumber}: tam olarak dört sütun olmalı."
   },
-  "RM5M7g": {
-    "message": "Row {rowNumber} is missing an image URL.",
-    "translation": "{rowNumber}. satırda görsel URL'si eksik."
+  "uC4XeA": {
+    "message": "Row {rowNumber}: no card name.",
+    "translation": "Satır {rowNumber}: kart adı yok."
   },
-  "GT_DsB": {
-    "message": "Row {rowNumber} must contain exactly five columns.",
-    "translation": "{rowNumber}. satırda tam olarak beş sütun olmalı."
+  "2DgRWI": {
+    "message": "Row {rowNumber}: no card type.",
+    "translation": "Satır {rowNumber}: kart türü yok."
   },
-  "ppjGSa": {
-    "message": "Row {rowNumber} must contain exactly four columns.",
-    "translation": "{rowNumber}. satırda tam olarak dört sütun olmalı."
+  "X-Ve84": {
+    "message": "Row {rowNumber}: no image URL.",
+    "translation": "Satır {rowNumber}: görsel URL'si yok."
   },
-  "g-Sgq0": {
-    "message": "Row {rowNumber} quantity must be an integer from 1 to {max}.",
-    "translation": "{rowNumber}. satırdaki adet, 1 ile {max} arasında bir tam sayı olmalı."
+  "JjTFWo": {
+    "message": "Row {rowNumber}: quantity must be 1 to {max}.",
+    "translation": "Satır {rowNumber}: adet 1 ile {max} arasında olmalı."
   },
   "duDNyy": {
     "message": "Rule Box",
@@ -4171,13 +4098,13 @@
     "message": "Sample Prizes",
     "translation": "Örnek ödül kartları"
   },
+  "tfDRzk": {
+    "message": "Save",
+    "translation": "Kaydet"
+  },
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "{name} kaydet"
-  },
-  "CE18C8": {
-    "message": "Save a copy and edit it",
-    "translation": "Bir kopya kaydet ve düzenle"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
@@ -4186,10 +4113,6 @@
   "4ibQSn": {
     "message": "Save online game",
     "translation": "Çevrim içi oyunu kaydet"
-  },
-  "DiYfve": {
-    "message": "Save to your decks",
-    "translation": "Destelerine kaydet"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -4200,10 +4123,6 @@
     "message": "Saved for this visit only",
     "translation": "Yalnızca bu ziyaret için kaydedildi"
   },
-  "MIgYaM": {
-    "message": "Saved game resumed",
-    "translation": "Kayıtlı oyun devam ettirildi"
-  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Söyle…"
@@ -4211,10 +4130,6 @@
   "JTYvAw": {
     "message": "Search cards",
     "translation": "Kart ara"
-  },
-  "LLBZnG": {
-    "message": "Search cards — try “t:fire hp>=100” or “is:ex”",
-    "translation": "Kart ara — “t:fire hp>=100” veya “is:ex” dene"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4248,10 +4163,6 @@
     "message": "Season",
     "translation": "Sezon"
   },
-  "p2nsKf": {
-    "message": "See the table without closing this",
-    "translation": "Bunu kapatmadan masayı gör"
-  },
   "gspMtn": {
     "message": "Selected card",
     "context": "shortcut group",
@@ -4269,10 +4180,6 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Mesaj gönder"
-  },
-  "5FsIcI": {
-    "message": "Separate this card to hand",
-    "translation": "Bu kartı ayırıp ele al"
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -4322,10 +4229,6 @@
     "message": "Set up both sides",
     "translation": "İki tarafı da kur"
   },
-  "KZqu6_": {
-    "message": "Set up: shuffle, draw 7, place 6 prizes",
-    "translation": "Kur: karıştır, 7 kart çek, 6 ödül kartı koy"
-  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Masa kuruluyor…"
@@ -4334,18 +4237,14 @@
     "message": "Settings",
     "translation": "Ayarlar"
   },
-  "oiLXI5": {
-    "message": "Share or export",
-    "translation": "Paylaş veya dışa aktar"
-  },
   "2D-NYE": {
     "message": "Shift",
     "context": "keyboard key",
     "translation": "Shift"
   },
-  "s0BhfF": {
-    "message": "Shift+click removes one · Right-click for details · Enter in the search adds the first card",
-    "translation": "Shift+tık bir kopyayı kaldırır · Ayrıntılar için sağ tık · Aramada Enter ilk kartı ekler"
+  "2ORd-n": {
+    "message": "Shift+click removes one · Right-click for details · Enter adds the top result",
+    "translation": "Shift+tık bir tane çıkarır · Ayrıntılar için sağ tık · Enter en üstteki sonucu ekler"
   },
   "CTqTgr": {
     "message": "Shortcuts",
@@ -4389,17 +4288,9 @@
     "message": "Show all {metaCount}",
     "translation": "Tümünü göster ({metaCount})"
   },
-  "SRR-Zw": {
-    "message": "Show every copy on its own",
-    "translation": "Her kopyayı ayrı göster"
-  },
   "wo4rGx": {
     "message": "Show every print",
     "translation": "Tüm basımları göster"
-  },
-  "UsDaAh": {
-    "message": "Show every print of each card",
-    "translation": "Her kartın tüm basımlarını göster"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4408,6 +4299,10 @@
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Klavyeyi göster"
+  },
+  "FBwNsr": {
+    "message": "Show one per card",
+    "translation": "Kart başına bir tane göster"
   },
   "etmouI": {
     "message": "Show the card",
@@ -4429,13 +4324,17 @@
     "message": "Show the keys for",
     "translation": "Şunun tuşlarını göster"
   },
+  "YtzfVy": {
+    "message": "Show the table",
+    "translation": "Masayı göster"
+  },
+  "UwltxX": {
+    "message": "Show this card on the deck",
+    "translation": "Bu kartı destede göster"
+  },
   "D_Orlv": {
     "message": "Show toolbar",
     "translation": "Araç çubuğunu göster"
-  },
-  "5uIbgt": {
-    "message": "Showing every print; show one per card",
-    "translation": "Tüm baskılar gösteriliyor; kart başına tek baskı göster"
   },
   "sf2cQK": {
     "message": "Shuffle",
@@ -4455,17 +4354,13 @@
     "message": "Shuffle all into deck",
     "translation": "Hepsini desteye karıştır"
   },
+  "Fnz7SK": {
+    "message": "Shuffle all into the deck?",
+    "translation": "Hepsi desteye karıştırılsın mı?"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "Hepsini desteye karıştır"
-  },
-  "0SEYuR": {
-    "message": "Shuffle all to Deck",
-    "translation": "Hepsini desteye karıştır"
-  },
-  "FmM1KF": {
-    "message": "Shuffle all to Deck?",
-    "translation": "Hepsi desteye karıştırılsın mı?"
   },
   "eFbm-5": {
     "message": "Shuffle deck",
@@ -4524,9 +4419,13 @@
     "message": "Shuffle your Prizes",
     "translation": "Ödül kartlarını karıştır"
   },
-  "4p1iGZ": {
-    "message": "Sideways scan · rotate to read",
-    "translation": "Yan taranmış kart · okumak için döndür"
+  "7cboVh": {
+    "message": "Shuffle, draw 7, set 6 prizes",
+    "translation": "Karıştır, 7 kart çek, 6 ödül kartı koy"
+  },
+  "lzdYF4": {
+    "message": "Sideways scan",
+    "translation": "Yatay tarama"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -4543,10 +4442,6 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Kılıf parıltısı"
-  },
-  "OoIo6S": {
-    "message": "Slow down a moment",
-    "translation": "Biraz yavaşla"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -4646,10 +4541,6 @@
     "message": "Stack copies",
     "translation": "Kopyaları üst üste diz"
   },
-  "Q1I0pL": {
-    "message": "Stack copies of a card together",
-    "translation": "Bir kartın kopyalarını üst üste diz"
-  },
   "GtR_fA": {
     "message": "Stadium",
     "context": "shortcut key caption",
@@ -4669,6 +4560,10 @@
     "message": "Stadium",
     "context": "zone on the table",
     "translation": "Stadyum"
+  },
+  "1TzAdj": {
+    "message": "Stadium · 2 pieces",
+    "translation": "Stadyum · 2 parça"
   },
   "ikMMp4": {
     "message": "Stadiums",
@@ -4690,6 +4585,10 @@
     "context": "deck format",
     "translation": "Standart"
   },
+  "Tg13WJ": {
+    "message": "Standard card",
+    "translation": "Standart kart"
+  },
   "7GpLGd": {
     "message": "Start turn",
     "translation": "Turu başlat"
@@ -4702,10 +4601,6 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Eli sıralamayı bırak"
-  },
-  "T7TOfh": {
-    "message": "Subtle pointer parallax",
-    "translation": "Hafif imleç paralaksı"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -4744,9 +4639,9 @@
     "context": "keyboard key",
     "translation": "Tab"
   },
-  "J_Ogyy": {
-    "message": "Tab moves between controls, so it cannot be a shortcut.",
-    "translation": "Tab kontroller arasında geçiş yapar, bu yüzden kısayol olamaz."
+  "bVbH4f": {
+    "message": "Tab can't be a shortcut.",
+    "translation": "Tab kısayol olamaz."
   },
   "4hJhzz": {
     "message": "Table",
@@ -4792,10 +4687,6 @@
     "context": "coin flip",
     "translation": "Yazı"
   },
-  "iyPm84": {
-    "message": "Take it off {seat}",
-    "translation": "{seat} oyuncusundan al"
-  },
   "2g01hc": {
     "message": "Take off {count} damage",
     "translation": "{count} hasarı kaldır"
@@ -4808,13 +4699,13 @@
     "message": "Take off damage…",
     "translation": "Hasarı kaldır…"
   },
-  "nzF90T": {
-    "message": "Take the decks to the table",
-    "translation": "Desteleri masaya götür"
+  "EyHJlN": {
+    "message": "Tap a card for actions; tap again to read it.",
+    "translation": "İşlemler için bir karta dokun; okumak için tekrar dokun."
   },
-  "3XeWNU": {
-    "message": "Tap a card for its actions; tap it again to read it.",
-    "translation": "Kartın eylemleri için dokun; okumak için tekrar dokun."
+  "pYu8i-": {
+    "message": "TCG and Pocket cards don't mix: {cards}.",
+    "translation": "TCG ve Pocket kartları karıştırılamaz: {cards}."
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -4834,61 +4725,29 @@
     "context": "Trainer cards by kind",
     "translation": "Technical Machine'ler"
   },
-  "Ii4b4s": {
-    "message": "That didn't go through",
-    "translation": "İşlem gerçekleşmedi"
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Bu görsel yüklenmedi."
   },
-  "nwCqoF": {
-    "message": "That file didn't open",
-    "translation": "Dosya açılmadı"
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Bu davetin süresi doldu. Yeni bir davet iste."
   },
-  "1_JXO-": {
-    "message": "That invitation has expired. Ask the room creator to copy a new one.",
-    "translation": "Bu davetin süresi dolmuş. Oda sahibinden yeni bir davet kopyalamasını iste."
-  },
-  "yrmUxD": {
-    "message": "That isn't yours to do",
-    "translation": "Bunu yapmak sana düşmez"
-  },
-  "z_e3P2": {
-    "message": "That list didn't read",
-    "translation": "Liste okunamadı"
-  },
-  "BYaTJ7": {
-    "message": "That move didn't go through",
-    "translation": "Hamle gerçekleşmedi"
-  },
-  "-w9ceH": {
-    "message": "That move isn't yours to make",
-    "translation": "Bu hamleyi yapma sırası sende değil"
+  "B4ZAXF": {
+    "message": "That one was skipped.",
+    "translation": "Bu atlandı."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "Bu tekrar dosyası açılamadı."
   },
-  "HgwclR": {
-    "message": "That value could not be checked. Please try again.",
-    "translation": "Bu değer denetlenemedi. Lütfen tekrar dene."
-  },
-  "l8VEIw": {
-    "message": "That's too much at once",
-    "translation": "Bir seferde çok fazla"
-  },
-  "GDqK1T": {
-    "message": "The card list didn't load. Check your connection and try again.",
-    "translation": "Kart listesi yüklenemedi. Bağlantını kontrol edip tekrar dene."
+  "6Z1wXH": {
+    "message": "That side starts over with the new deck",
+    "translation": "Bu taraf yeni desteyle baştan başlar"
   },
   "hPwR-j": {
     "message": "The card went back.",
     "translation": "Kart geri döndü."
-  },
-  "7f_XSS": {
-    "message": "The card went back. Try it again.",
-    "translation": "Kart geri döndü. Tekrar dene."
-  },
-  "n-Z0Nm": {
-    "message": "The clipboard can't be read here",
-    "translation": "Pano burada okunamıyor"
   },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
@@ -4898,33 +4757,49 @@
     "message": "The deck didn't go on the table",
     "translation": "Deste masaya konamadı"
   },
-  "H4nLW9": {
-    "message": "The deck is removed from this device. A deck already on a seat stays there.",
-    "translation": "Deste bu cihazdan kaldırıldı. Bir koltukta olan deste orada kalır."
+  "BUcC-2": {
+    "message": "The deck file has more than {max} rows.",
+    "translation": "Deste dosyasında {max} satırdan fazla var."
   },
-  "HThhKj": {
-    "message": "The deck is removed from this device. Decks already on a seat stay there.",
-    "translation": "Deste bu cihazdan kaldırıldı. Koltuklarda olan desteler orada kalır."
+  "sPLZ6Z": {
+    "message": "The deck file is too long.",
+    "translation": "Deste dosyası çok uzun."
+  },
+  "1zmjOY": {
+    "message": "The deck file must start with {header}.",
+    "translation": "Deste dosyası {header} ile başlamalı."
+  },
+  "fYn5Mi": {
+    "message": "The deck has more than {max} cards.",
+    "translation": "Destede {max} karttan fazla var."
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
     "translation": "Deste listeleri yüklenemedi."
   },
-  "E72uMQ": {
-    "message": "The deck screen didn't load, so decks can't be changed right now. Your game carries on.",
-    "translation": "Deste ekranı yüklenemedi, bu yüzden şu an desteler değiştirilemiyor. Oyunun devam ediyor."
+  "kuSCwh": {
+    "message": "The deck screen didn't load. Your game carries on.",
+    "translation": "Deste ekranı yüklenmedi. Oyunun devam ediyor."
+  },
+  "qDcPIt": {
+    "message": "The decklist has more than {max} cards.",
+    "translation": "Deste listesinde {max} karttan fazla var."
+  },
+  "9vVu1I": {
+    "message": "The decklist has more than {max} lines.",
+    "translation": "Deste listesinde {max} satırdan fazla var."
+  },
+  "SHzPH9": {
+    "message": "The decklist is too long.",
+    "translation": "Deste listesi çok uzun."
   },
   "K85iXe": {
     "message": "The file couldn't be saved",
     "translation": "Dosya kaydedilemedi"
   },
-  "GL-rhF": {
-    "message": "The last move is still on its way.",
-    "translation": "Son hamle hâlâ yolda."
-  },
-  "0WnzUW": {
-    "message": "The replay was interrupted. Try it again.",
-    "translation": "Tekrar yarıda kesildi. Yeniden dene."
+  "lom6tE": {
+    "message": "The last move is still sending.",
+    "translation": "Son hamle hâlâ gönderiliyor."
   },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
@@ -4934,25 +4809,13 @@
     "message": "The room no longer has this seat.",
     "translation": "Odada artık bu koltuk yok."
   },
-  "p93vUT": {
-    "message": "The table changed before it arrived, so the card went back.",
-    "translation": "Masa ulaşmadan önce değişti, bu yüzden kart geri döndü."
+  "m6ooXP": {
+    "message": "The table changed, so the card went back.",
+    "translation": "Masa değişti, bu yüzden kart geri döndü."
   },
-  "jMsjAg": {
-    "message": "The table changed before it arrived. Try it again.",
-    "translation": "Masa ulaşmadan önce değişti. Tekrar dene."
-  },
-  "aCAWXn": {
-    "message": "The table gets the changed deck when you go back to it, and that side starts over.",
-    "translation": "Masaya döndüğünde değişen desteyi alır ve o taraf baştan başlar."
-  },
-  "Dw1tmp": {
-    "message": "The table is reconnecting. Try again in a moment.",
-    "translation": "Masa yeniden bağlanıyor. Birazdan tekrar dene."
-  },
-  "_knf_O": {
-    "message": "The table lost the room during the replay.",
-    "translation": "Masa, tekrar sırasında odayı kaybetti."
+  "u1UbSB": {
+    "message": "The table changed. Try again.",
+    "translation": "Masa değişti. Tekrar dene."
   },
   "8vgo35": {
     "message": "The table takes at most {max} cards.",
@@ -4969,10 +4832,6 @@
   "x36RVi": {
     "message": "Their Bench",
     "translation": "Rakibin Yedek alanı"
-  },
-  "zLpI2X": {
-    "message": "Their cards read the right way up for you. Off, they face their owner, as across a real table.",
-    "translation": "Rakibin kartları sana doğru yönde görünür. Kapalıyken, gerçek bir masadaki gibi sahiplerine dönük durur."
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5025,29 +4884,17 @@
     ],
     "translation": "Sonra yüzü kapalı oynamak için Aktife bas"
   },
-  "mldgBW": {
-    "message": "There are no cards in that list.",
-    "translation": "Bu listede kart yok."
+  "WsAkgd": {
+    "message": "This browser won't keep your decks after you close the page.",
+    "translation": "Bu tarayıcı sayfayı kapattıktan sonra destelerini saklamaz."
   },
-  "aJCmnr": {
-    "message": "There is no list to import.",
-    "translation": "İçe aktarılacak liste yok."
+  "5PdIYU": {
+    "message": "This game will be lost.",
+    "translation": "Bu oyun kaybolacak."
   },
-  "tBciWT": {
-    "message": "This browser isn't keeping site data, so decks saved now last until you close the page.",
-    "translation": "Bu tarayıcı site verilerini saklamıyor, bu yüzden şimdi kaydedilen desteler sayfayı kapatana kadar durur."
-  },
-  "FFbU_V": {
-    "message": "This browser keeps the table in its window.",
-    "translation": "Bu tarayıcı masayı penceresinde tutar."
-  },
-  "bdOrGj": {
-    "message": "This table fell out of step with the room.",
-    "translation": "Bu masa odayla uyumunu kaybetti."
-  },
-  "AxFQH0": {
-    "message": "Three side-by-side pieces",
-    "translation": "Yan yana üç parça"
+  "YcMvP7": {
+    "message": "Tilted on wide screens, flat on phones.",
+    "translation": "Geniş ekranlarda eğik, telefonlarda düz."
   },
   "dPBKWL": {
     "message": "To active",
@@ -5144,13 +4991,21 @@
     "message": "Toggle ability/effect",
     "translation": "Yeteneği/etkiyi aç/kapat"
   },
-  "D5f6Or": {
-    "message": "Too many actions at once. That one was skipped.",
-    "translation": "Aynı anda çok fazla eylem yapıldı. Bu eylem atlandı."
+  "6QCyrU": {
+    "message": "Too large for a deck",
+    "translation": "Bir deste için çok büyük"
   },
-  "e41oD8": {
-    "message": "Too many moves at once. That one was skipped.",
-    "translation": "Aynı anda çok fazla hamle yapıldı. Bu hamle atlandı."
+  "ssfbci": {
+    "message": "Too many actions",
+    "translation": "Çok fazla işlem"
+  },
+  "4PUG0e": {
+    "message": "Too many cards at once",
+    "translation": "Aynı anda çok fazla kart"
+  },
+  "B3I8F_": {
+    "message": "Too many moves",
+    "translation": "Çok fazla hamle"
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -5177,6 +5032,13 @@
     "context": "shortcut key caption",
     "translation": "Üst"
   },
+  "20pFu_": {
+    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+    "comments": [
+      "sourceName is a tournament site (Limitless); updated is a short date"
+    ],
+    "translation": "Son iki haftadaki çevrimiçi {sourceName} turnuvalarından en iyi sonuçlar, <0>{sourceName}</0> · güncelleme: {updated}"
+  },
   "qssK_n": {
     "message": "Top left",
     "translation": "Sol üst"
@@ -5194,17 +5056,25 @@
     "message": "Trainer cards",
     "translation": "Trainer kartları"
   },
+  "JmQewY": {
+    "message": "Try a .txt or .csv file",
+    "translation": ".txt veya .csv dosyası dene"
+  },
   "KDw4GX": {
     "message": "Try again",
     "translation": "Tekrar dene"
   },
-  "iJ3n6j": {
-    "message": "Try it again.",
+  "u62wQ4": {
+    "message": "Try again in a moment.",
+    "translation": "Birazdan tekrar dene."
+  },
+  "v2Mz8J": {
+    "message": "Try again.",
     "translation": "Tekrar dene."
   },
-  "HOE-Jw": {
-    "message": "Try it with fewer cards.",
-    "translation": "Daha az kartla dene."
+  "x-E_50": {
+    "message": "Try fewer cards.",
+    "translation": "Daha az kart dene."
   },
   "JaA9mI": {
     "message": "Try other words, or press Escape to go back.",
@@ -5248,13 +5118,9 @@
     "message": "Tutorial",
     "translation": "Eğitim"
   },
-  "U-xsTc": {
-    "message": "Two landscape halves · LEGEND",
-    "translation": "İki yatay yarım · LEGEND"
-  },
-  "NgMCkj": {
-    "message": "Two side-by-side pieces · Stadium",
-    "translation": "Yan yana iki parça · Stadyum"
+  "-zy2Nq": {
+    "message": "Type",
+    "translation": "Tür"
   },
   "vnRpA8": {
     "message": "Type",
@@ -5273,10 +5139,6 @@
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "Önce bir şey yaz"
-  },
-  "1OX68x": {
-    "message": "Type words to search names, or combine filters — Limitless TCG's search syntax works here.",
-    "translation": "İsim aramak için kelime yaz ya da filtreleri birleştir — Limitless TCG arama sözdizimi burada da çalışır."
   },
   "gu8i-0": {
     "message": "Type, then press Enter.",
@@ -5308,13 +5170,13 @@
     "message": "Unsaved deck",
     "translation": "Kaydedilmemiş deste"
   },
+  "5Gx011": {
+    "message": "Unstack copies",
+    "translation": "Kopyaları ayır"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "Adsız deste"
-  },
-  "YcRCYR": {
-    "message": "Upper-half overlay · BREAK",
-    "translation": "Üst yarıya bindirme · BREAK"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -5341,10 +5203,6 @@
     "message": "Use the GX attack",
     "translation": "GX saldırısını kullan"
   },
-  "U9oALH": {
-    "message": "Use the same group for pieces from one illustration. Place Pokémon pieces in one stack, or Stadium pieces in the Stadium area.",
-    "translation": "Aynı illüstrasyondan gelen parçalar için aynı grubu kullan. Pokémon parçalarını tek bir yığına, Stadyum parçalarını Stadyum alanına yerleştir."
-  },
   "nG8vJk": {
     "message": "Use the VSTAR Power",
     "translation": "VSTAR Gücünü kullan"
@@ -5352,6 +5210,14 @@
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Bu baskıyı destedeki {deckCopies} için kullan"
+  },
+  "ZpWtmQ": {
+    "message": "Uses Limitless TCG's search syntax.",
+    "translation": "Limitless TCG'nin arama sözdizimini kullanır."
+  },
+  "uCehvK": {
+    "message": "V-UNION · 4 pieces",
+    "translation": "V-UNION · 4 parça"
   },
   "VO6wBK": {
     "message": "View",
@@ -5363,10 +5229,6 @@
     "context": "shortcut key caption",
     "translation": "Bak"
   },
-  "GTDWZr": {
-    "message": "View assembled card",
-    "translation": "Birleştirilmiş kartı görüntüle"
-  },
   "BqYI8B": {
     "message": "View bottom card(s)",
     "translation": "Alttaki kartlara bak"
@@ -5375,13 +5237,17 @@
     "message": "View card",
     "translation": "Kartı görüntüle"
   },
-  "C92-rQ": {
-    "message": "View individual cards",
-    "translation": "Tek tek kartları görüntüle"
+  "w3eDyf": {
+    "message": "View each card",
+    "translation": "Her kartı göster"
   },
   "VKXHWy": {
     "message": "View top card(s)",
     "translation": "Üstteki kartlara bak"
+  },
+  "s3cHPo": {
+    "message": "View whole card",
+    "translation": "Kartın tamamını göster"
   },
   "RVlHmr": {
     "message": "VSTAR marker",
@@ -5426,9 +5292,9 @@
     "context": "filter",
     "translation": "Evet"
   },
-  "16IAB8": {
-    "message": "You're watching this table",
-    "translation": "Bu masayı izliyorsun"
+  "VvkF_g": {
+    "message": "You're watching",
+    "translation": "İzliyorsun"
   },
   "wkv3p1": {
     "message": "Your Active Spot",
@@ -5463,17 +5329,9 @@
     "message": "Your Lost Zone",
     "translation": "Lost Zone'un"
   },
-  "w1h7J8": {
-    "message": "Your name changed. Generate a new room before joining.",
-    "translation": "Adın değişti. Katılmadan önce yeni bir oda oluştur."
-  },
-  "KQe92X": {
-    "message": "Your opponent is looking at these cards",
-    "translation": "Rakibin bu kartlara bakıyor"
-  },
-  "UTxtTT": {
-    "message": "Your opponent is moving these cards",
-    "translation": "Rakibin bu kartları taşıyor"
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Adın değişti. Yeni bir oda oluştur."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

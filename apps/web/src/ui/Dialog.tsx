@@ -314,7 +314,7 @@ export const PromptDialog = ({
   onClosed,
 }: PromptDialogProps) => {
   const { t } = useLingui();
-  const validationFailed = t`That value could not be checked. Please try again.`;
+  const validationFailed = t`Couldn't check that. Try again.`;
   const [value, setValue] = useState(defaultValue);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
