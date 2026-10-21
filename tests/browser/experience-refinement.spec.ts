@@ -133,7 +133,10 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     )
   ).toEqual(order);
   await expect(cards).toHaveCount(47);
-  await browser.locator('button[aria-label="Ember ex"]').first().dblclick();
+  // The deck is shuffled: the card opened is the first Ember ex, not
+  // necessarily the first card.
+  const opened = browser.locator('button[aria-label="Ember ex"]').first();
+  await opened.dblclick();
   const preview = page.locator('[data-preview-kind="card"]');
   const close = preview.getByRole('button', { name: 'Close card preview' });
   await expect(preview).toBeVisible();
@@ -171,7 +174,7 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     .toBe('0deg');
   await close.click();
   await expect(preview).toHaveCount(0);
-  await expect(cards.first()).toBeFocused();
+  await expect(opened).toBeFocused();
 
   // Narrow desktop: controls and card grid remain inside the table.
   await page.setViewportSize({ width: 1024, height: 768 });

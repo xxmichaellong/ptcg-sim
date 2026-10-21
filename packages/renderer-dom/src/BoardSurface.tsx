@@ -144,6 +144,9 @@ const MAT_SETTLE_MS = 180;
 /** How far a press on a marker or badge may wander and still be a tap. */
 const HINT_TAP_SLOP_PX = 8;
 
+/** A second press on the same marker this soon is a double press. */
+const MARKER_DOUBLE_PRESS_MS = 400;
+
 /** The size the mat is painted at: the table's, once it has held still. */
 const useSettledSize = (
   width: number,
@@ -741,7 +744,16 @@ const CardNode = memo(
             activate(event.detail);
           }
         }}
-        onDoubleClick={() => {
+        onDoubleClick={(event) => {
+          // A double press on a marker lying on the card is the marker's.
+          const surface = event.currentTarget.closest(
+            '.ptcgsim-board-surface, .ptcgsim-board-lift'
+          );
+          if (
+            surface &&
+            boardHintAt(surface, event.clientX, event.clientY)?.markerId
+          )
+            return;
           if (!card.primaryAction) {
             emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
           }
@@ -1081,6 +1093,11 @@ export const BoardSurface = ({
   hintShowingRef.current = hintShowing;
   const hints = useMemo(() => new BoardHintTimer(setHintShowing), []);
   useEffect(() => () => hints.dispose(), [hints]);
+  // The last marker pressed and when, so a double press counts once.
+  const lastMarkerPressRef = useRef<{
+    readonly id: string;
+    readonly at: number;
+  } | null>(null);
   // The marker or badge a press began on, answered when it lets go in place.
   const pressedHintRef = useRef<{
     readonly pointerId: number;
@@ -1846,10 +1863,18 @@ export const BoardSurface = ({
             dragController.suppressClick(pressed.id, pressed.renderKey);
           if (hint.target.markerId) {
             hints.hide();
-            adapters.emitIntent({
-              kind: 'MarkerPressed',
-              markerId: hint.target.markerId,
-            });
+            // A double press is one press: the controls open, and stay.
+            const last = lastMarkerPressRef.current;
+            const now = event.timeStamp;
+            lastMarkerPressRef.current = { id: hint.target.markerId, at: now };
+            if (
+              last?.id !== hint.target.markerId ||
+              now - last.at > MARKER_DOUBLE_PRESS_MS
+            )
+              adapters.emitIntent({
+                kind: 'MarkerPressed',
+                markerId: hint.target.markerId,
+              });
           } else {
             hints.tap(hint.target.element);
           }

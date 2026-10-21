@@ -40,7 +40,17 @@ const activeWithDamage = async (page: Page): Promise<string> => {
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
   ).toBeAttached();
+  const revision = () =>
+    page
+      .locator('.ptcgsim-board-surface')
+      .getAttribute('data-revision')
+      .then(Number);
+  await expect.poll(revision).toBeGreaterThan(0);
+  const loaded = await revision();
+  // Set up, the room's answer in and the deal finished, before the hand is
+  // measured: mid-deal a card is still on the deck.
   await chooseMoreAction(page, 'setupBothButton');
+  await expect.poll(revision).toBeGreaterThan(loaded);
   await idle(page);
   const pokemon = page
     .locator('[data-in-hand][data-card-side="local"]')
@@ -116,6 +126,19 @@ test('a damage counter names itself, and its controls step it by 10 or take it o
   await expect(damage(page)).toHaveCount(0);
   await expect(controls(page)).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("a double press on a counter opens its controls, not the card's preview", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await activeWithDamage(page);
+  const at = await centre(page);
+  await page.mouse.dblclick(at.x, at.y);
+  await expect(controls(page)).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.locator('[data-preview-kind]')).toHaveCount(0);
+  await expect(controls(page)).toBeVisible();
 });
 
 test.describe('on a touch screen', () => {
