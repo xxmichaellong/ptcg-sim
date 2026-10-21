@@ -6,7 +6,11 @@ import {
   arrangementOffsets,
   benchRearrangementTarget,
 } from './arrangement.js';
-import { heldCentreCardTarget, zoneDropTargetAt } from './drag.js';
+import {
+  heldCentreCardTarget,
+  joinedCardTargetAt,
+  zoneDropTargetAt,
+} from './drag.js';
 import type {
   BoardPreferences,
   BoardDepthPreferences,
@@ -730,6 +734,16 @@ export class BoardDepthProjection {
       return { point: local, targetId: card.parentId };
     }
     const local = this.boardPoint(point);
+    // Between the pieces of a card printed in pieces: the whole card.
+    const joined = joinedCardTargetAt(
+      this.scene,
+      sourceId,
+      local.x,
+      local.y,
+      detached,
+      true
+    );
+    if (joined) return { point: local, targetId: joined };
     const held =
       centre &&
       heldCentreCardTarget(this.scene, sourceId, local, centre, detached);

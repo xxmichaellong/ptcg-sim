@@ -1930,6 +1930,10 @@
               "kind": "value"
             },
             {
+              "name": "joinedCardTargetAt",
+              "kind": "value"
+            },
+            {
               "name": "layoutLegacyActiveQ0Markers",
               "kind": "value"
             },

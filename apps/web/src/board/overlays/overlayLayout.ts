@@ -267,3 +267,86 @@ export const stackPreviewLayout = (
     cardHeight,
   };
 };
+
+/** Cards in the stack's card-by-card view are read, so they may be larger. */
+export const STACK_CARDS_HEIGHT_RATIO = 0.46;
+export const STACK_CARDS_MAX_HEIGHT = 420;
+/** Room for the view's title bar: a card's name and two buttons. */
+export const STACK_CARDS_MIN_WIDTH = 440;
+
+/**
+ * A Pokémon's cards one by one (a V-UNION's pieces, say): a window centred
+ * on the board under a title bar, each group of cards starting its own row
+ * (the Pokémon's own cards, then what is attached to it), every card at the
+ * largest size that fits the whole set without scrolling. `groups` counts
+ * the cards in each group; `columns` is how many cards a row holds.
+ */
+export const stackCardsLayout = (
+  board: OverlayBoardSize,
+  groups: readonly number[]
+): OverlayPanelLayout & { readonly columns: number } => {
+  const sizes = groups.map(finiteCount).filter((size) => size > 0);
+  const counts = sizes.length > 0 ? sizes : [1];
+  const margin = overlayBoardMargin(board);
+  const chrome = 2 * OVERLAY_PANEL_PADDING + 2 * OVERLAY_PANEL_BORDER;
+  // One pixel of slack keeps sub-pixel rounding from wrapping a column.
+  const slack = 1;
+  const maxContentWidth = board.width - 2 * margin - chrome - slack;
+  const maxContentHeight =
+    board.height - 2 * margin - chrome - OVERLAY_HEADER_HEIGHT;
+  // Groups are a gap further apart than rows.
+  const groupGaps = (counts.length - 1) * OVERLAY_CARD_GAP;
+  const largest = Math.max(
+    OVERLAY_CARD_MIN_HEIGHT,
+    Math.min(board.height * STACK_CARDS_HEIGHT_RATIO, STACK_CARDS_MAX_HEIGHT)
+  );
+  const widest = Math.max(...counts);
+  let best = { cardHeight: 0, columns: widest, rows: counts.length };
+  for (let columns = 1; columns <= widest; columns += 1) {
+    const rows = counts.reduce(
+      (total, size) => total + Math.ceil(size / columns),
+      0
+    );
+    const byWidth =
+      (maxContentWidth - (columns - 1) * OVERLAY_CARD_GAP) /
+      columns /
+      CARD_ASPECT_RATIO;
+    const byHeight =
+      (maxContentHeight - (rows - 1) * OVERLAY_CARD_GAP - groupGaps) / rows;
+    const cardHeight = Math.min(largest, byWidth, byHeight);
+    if (cardHeight > best.cardHeight + 0.5)
+      best = { cardHeight, columns, rows };
+  }
+  const cardHeight = Math.max(OVERLAY_CARD_MIN_HEIGHT, best.cardHeight);
+  const used = Math.max(...counts.map((size) => Math.min(size, best.columns)));
+  const width = Math.min(
+    board.width - 2 * margin,
+    Math.max(
+      STACK_CARDS_MIN_WIDTH,
+      runLength(used, cardWidthFor(cardHeight)) + chrome + slack
+    )
+  );
+  const height = Math.min(
+    board.height - 2 * margin,
+    OVERLAY_HEADER_HEIGHT +
+      runLength(best.rows, cardHeight) +
+      groupGaps +
+      chrome
+  );
+  return {
+    left: clamp(
+      (board.width - width) / 2,
+      margin,
+      board.width - margin - width
+    ),
+    top: clamp(
+      (board.height - height) / 2,
+      margin,
+      board.height - margin - height
+    ),
+    width,
+    height,
+    cardHeight,
+    columns: best.columns,
+  };
+};

@@ -568,22 +568,47 @@
   color: var(--color-text-muted);
   font-size: 12px;
 }
-.ptcgsim-composition-piece-controls {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: 12px;
-}
+/* An assembled card taken apart (stackCardsLayout): a window over the
+   board, its title bar on top, the pieces on the first rows and what is
+   attached to them below. */
 .ptcgsim-legacy-stack-preview.is-piece-list {
-  inset: 64px 24px 24px !important;
-  width: auto !important;
-  height: auto !important;
-  max-height: none;
-  overflow: auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-content: stretch;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
   transform-origin: center;
 }
-.ptcgsim-legacy-stack-preview.is-piece-list .ptcgsim-legacy-stack-preview-card {
-  height: min(42vh, 340px);
+.ptcgsim-legacy-stack-preview.is-piece-list .ptcgsim-overlay-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  background: var(--color-surface-2);
+}
+.ptcgsim-stack-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Groups sit a gap further apart than rows (overlayLayout.ts). */
+  gap: 24px;
+  margin: auto 0;
+  padding: 16px;
+}
+.ptcgsim-stack-cards-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: calc(
+    var(--ptcgsim-stack-card-height, 200px) * 63 / 88 *
+      var(--ptcgsim-stack-columns, 4) + (var(--ptcgsim-stack-columns, 4) - 1) *
+      12px
+  );
 }
 
 .ptcgsim-preview-controls {

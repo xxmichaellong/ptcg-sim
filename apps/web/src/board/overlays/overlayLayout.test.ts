@@ -2,11 +2,16 @@ import { CARD_ASPECT_RATIO } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import {
+  OVERLAY_CARD_GAP,
   OVERLAY_CARD_MAX_HEIGHT,
   OVERLAY_CARD_MIN_HEIGHT,
+  OVERLAY_HEADER_HEIGHT,
   OVERLAY_PANEL_MAX_WIDTH,
+  STACK_CARDS_MAX_HEIGHT,
+  STACK_CARDS_MIN_WIDTH,
   overlayBoardMargin,
   overlayLargeCardHeight,
+  stackCardsLayout,
   stackPreviewLayout,
   workAreaPanelLayout,
   zoneBrowserLayout,
@@ -192,5 +197,54 @@ describe('overlay layout', () => {
     );
     expect(upper.top).toBeLessThan(pair.top);
     expectOnBoard(upper, LAPTOP);
+  });
+
+  it("lays an assembled card's pieces out over the board, each group on rows of its own, as large as all of them fit", () => {
+    for (const board of [LAPTOP, HD, SMALL, { width: 1440, height: 900 }]) {
+      // Four V-UNION pieces, then three Energy and a Tool.
+      const layout = stackCardsLayout(board, [4, 4]);
+      expectOnBoard(layout, board);
+      expect(layout.columns).toBe(4);
+      const cardWidth = layout.cardHeight * CARD_ASPECT_RATIO;
+      // Two rows of four, a gap further apart between the groups, under
+      // the title bar: the panel holds exactly that.
+      expect(layout.height).toBeCloseTo(
+        OVERLAY_HEADER_HEIGHT +
+          2 * layout.cardHeight +
+          2 * OVERLAY_CARD_GAP +
+          34,
+        6
+      );
+      expect(layout.width).toBeGreaterThanOrEqual(
+        4 * cardWidth + 3 * OVERLAY_CARD_GAP + 34
+      );
+      // Larger than the stack view draws them, for reading.
+      expect(layout.cardHeight).toBeGreaterThan(
+        stackPreviewLayout(
+          {
+            x: 0,
+            y: board.height / 2,
+            width: board.width,
+            height: board.height / 2,
+          },
+          board,
+          8
+        ).cardHeight - 1e-9
+      );
+      expect(layout.cardHeight).toBeLessThanOrEqual(STACK_CARDS_MAX_HEIGHT);
+      // Centred.
+      expect(layout.left + layout.width / 2).toBeCloseTo(board.width / 2, 6);
+    }
+    // Two pieces and nothing attached still leave the title bar its room.
+    const pair = stackCardsLayout(LAPTOP, [2, 0]);
+    expect(pair.width).toBeGreaterThanOrEqual(STACK_CARDS_MIN_WIDTH);
+    expect(pair.height).toBeCloseTo(
+      OVERLAY_HEADER_HEIGHT + pair.cardHeight + 34,
+      6
+    );
+    // Many attached cards wrap onto more rows and stay on the board.
+    const crowded = stackCardsLayout(SMALL, [4, 11]);
+    expectOnBoard(crowded, SMALL);
+    expect(crowded.cardHeight).toBeGreaterThanOrEqual(OVERLAY_CARD_MIN_HEIGHT);
   });
 });

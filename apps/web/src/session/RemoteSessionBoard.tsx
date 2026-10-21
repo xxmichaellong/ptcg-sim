@@ -55,6 +55,7 @@ import {
   type TableZoneAffordancesProps,
 } from '../board/TableZoneAffordances.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
+import { TableMotionStore } from '../board/table-motion.js';
 import { FacePreloader } from '../board/face-preload.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
@@ -326,6 +327,8 @@ export const RemoteSessionBoard = ({
   const runtimeRef = useRef<BoardSessionRuntime | null>(null);
   // The hovered card, for the inspector; never part of game state.
   const hoverStore = useMemo(() => new CardHoverStore(), []);
+  // Whether the table is still moving, for windows waiting on a landing.
+  const tableMotion = useMemo(() => new TableMotionStore(), []);
   const [sortedHandPlayerIds, setSortedHandPlayerIds] = useState<
     ReadonlySet<PlayerId>
   >(() => new Set());
@@ -650,6 +653,7 @@ export const RemoteSessionBoard = ({
             if (!disposed) setRendererStatus(status);
           },
           onCardHover: hoverStore.set,
+          onMotion: tableMotion.set,
         });
         runtimeRef.current = runtime;
         await runtime.mount(host);
@@ -1339,6 +1343,7 @@ export const RemoteSessionBoard = ({
             state={boardState}
             darkMode={preferences.darkMode}
             actions={overlayActions}
+            tableMotion={tableMotion}
           />
           <TurnBanner
             view={boardState.view}

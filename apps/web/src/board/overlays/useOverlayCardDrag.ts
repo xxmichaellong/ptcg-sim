@@ -8,6 +8,7 @@ import {
   type BoardScene,
   type CardGrip,
   type CardSceneNode,
+  type SettlingCard,
 } from '@ptcgsim/renderer-contract';
 import {
   useEffect,
@@ -16,6 +17,8 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+
+import type { TableMotionStore } from '../table-motion.js';
 
 interface Options {
   readonly scene: BoardScene | undefined;
@@ -30,6 +33,10 @@ interface Options {
    * picked up there (lit targets, a row making room, the landing).
    */
   readonly updateDrag?: (drag: BoardPresentation['drag']) => void;
+  /** The table's cards held where they were dropped (presentation.settling). */
+  readonly settling?: readonly SettlingCard[];
+  /** Whether the table is still moving, so a dropped card is seen to land. */
+  readonly tableMotion?: TableMotionStore;
 }
 
 interface Grip {
@@ -49,6 +56,8 @@ interface Grip {
 export const TOUCH_PICKUP_MS = 350;
 /** A finger that strays this far before then is scrolling. */
 const TOUCH_SLOP_PX = 8;
+/** However a drop goes, the viewer is back this long after it at the latest. */
+export const LANDING_MAX_MS = 4_000;
 
 /**
  * Cards shown outside the table -- a pile's viewer, a work area, the stack
@@ -56,7 +65,9 @@ const TOUCH_SLOP_PX = 8;
  * drag: the same controller, the same projected aim and room-making
  * (boardDragInput), and the table paints the held card (withHeldCards), so a
  * card leaving a viewer lifts, lights its targets, opens a gap and lands as
- * any card moved on the table does. The viewer steps aside while it is held.
+ * any card moved on the table does. The viewer steps aside while it is held,
+ * and stays aside until the card has landed: back at once, it would cover
+ * the card's way to where it was put.
  */
 export const useOverlayCardDrag = (options: Options) => {
   const latest = useRef(options);
@@ -72,11 +83,15 @@ export const useOverlayCardDrag = (options: Options) => {
   const grip = useRef<Grip | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [armedCardId, setArmedCardId] = useState<ViewCardId | null>(null);
+  /** Let go of here and still on its way to where it was put. */
+  const [landingCardId, setLandingCardId] = useState<ViewCardId | null>(null);
   const controller = useMemo(
     () =>
       new BoardDragController({
         emitIntent: (intent) => {
-          if (intent.kind === 'CardDropRequested') latest.current.emit(intent);
+          if (intent.kind !== 'CardDropRequested') return;
+          setLandingCardId(intent.cardId);
+          latest.current.emit(intent);
         },
         emitPresentationUpdate: (update) => {
           if (update.kind !== 'DragChanged') return;
@@ -267,6 +282,39 @@ export const useOverlayCardDrag = (options: Options) => {
     };
   }, [controller]);
 
+  // It has landed once the table has let go of it (the room has answered)
+  // and stopped moving; or, whatever happened to it, a little later.
+  const settlingLanding =
+    landingCardId !== null &&
+    (options.settling ?? []).some((entry) => entry.cardId === landingCardId);
+  useEffect(() => {
+    if (landingCardId === null) return;
+    const cap = window.setTimeout(() => setLandingCardId(null), LANDING_MAX_MS);
+    return () => clearTimeout(cap);
+  }, [landingCardId]);
+  useEffect(() => {
+    if (landingCardId === null || settlingLanding) return;
+    const motion = latest.current.tableMotion;
+    let unsubscribe = () => {};
+    // The table sets the card off on its next paint: ask once it has.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (!motion?.isMoving()) {
+          setLandingCardId(null);
+          return;
+        }
+        unsubscribe = motion.subscribe(() => {
+          if (!motion.isMoving()) setLandingCardId(null);
+        });
+      });
+    });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      unsubscribe();
+    };
+  }, [landingCardId, settlingLanding]);
+
   const context = JSON.stringify([
     options.scene?.viewport,
     options.depth?.camera,
@@ -293,6 +341,8 @@ export const useOverlayCardDrag = (options: Options) => {
 
   return {
     draggingCardId,
+    /** The card the viewer steps aside for: held, or let go and landing. */
+    asideCardId: draggingCardId ?? landingCardId,
     /** Touch: the card a held finger has just picked up. */
     armedCardId,
     consumeClick: (id: ViewCardId) => controller.consumeSuppressedClick(id),

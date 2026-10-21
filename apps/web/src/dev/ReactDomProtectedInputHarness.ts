@@ -27,7 +27,7 @@ import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntim
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import {
   LegacyBoardOverlays,
-  legacyStackPreviewOrder,
+  stackPreviewOrder,
   type LegacyBoardCategoryChoice,
   type LegacyBoardContextActionId,
   type LegacyBoardMoveChoice,
@@ -549,9 +549,9 @@ export const mountReactDomProtectedInputHarness = async (
     opponentDeckCount: view.zones[opponentDeckZoneId]!.cards.length,
     ownHandCount: view.zones[sourceZoneId]!.cards.length,
     unsupportedCardId: String(unsupportedCardId),
-    // v1's full view lists the top card, then attachments newest-first, then
-    // the lower stages newest-first.
-    unsupportedStackCardIds: legacyStackPreviewOrder(
+    // The stack view lists the Pokémon top card down, then its Energy, then
+    // anything else attached.
+    unsupportedStackCardIds: stackPreviewOrder(
       localActiveStack,
       scene.cards.filter((card) => card.parentId === localActiveStackId)
     ).map((card) => String(card.id)),

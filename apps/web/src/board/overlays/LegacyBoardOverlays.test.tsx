@@ -4,6 +4,7 @@ import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
+  type BoardPresentation,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import { act, createElement, StrictMode } from 'react';
@@ -12,7 +13,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cancelAllDialogRequests } from '../../ui/dialog-requests.js';
 import { preferences } from '../../preferences/preference-store.js';
-import { TOUCH_PICKUP_MS } from './useOverlayCardDrag.js';
+import { TableMotionStore } from '../table-motion.js';
+import { LANDING_MAX_MS, TOUCH_PICKUP_MS } from './useOverlayCardDrag.js';
 import { ZONE_BROWSER_PREFERENCES } from './zone-browser-preferences.js';
 import { OverlayHost } from '../../ui/OverlayHost.js';
 import {
@@ -21,11 +23,11 @@ import {
 } from '../BoardSessionController.js';
 import {
   LegacyBoardOverlays,
-  legacyStackPreviewOrder,
   resolveOpenedZoneDropTarget,
   selectLegacyContextEntries,
   sortRecipientSafeZoneCards,
   stackPreviewFrameStyle,
+  stackPreviewOrder,
   zoneCopyCounts,
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
@@ -74,6 +76,12 @@ const settleDialogs = async (): Promise<void> => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
   }
+};
+
+/** Two paints: long enough for the table to set a dropped card off. */
+const nextFrames = async (): Promise<void> => {
+  for (let frame = 0; frame < 2; frame += 1)
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 };
 
 const openDialogs = (): HTMLElement[] => [
@@ -1005,12 +1013,26 @@ describe('legacy board overlays', () => {
         button.textContent?.includes(label)
       )!;
     await act(async () => control('View individual cards').click());
-    // The previous stage is not the first card in the top-first piece list.
+    // A window of its own, named for the card, the pieces in reading order
+    // and then what is attached to them.
+    const pieces = host.querySelector('.ptcgsim-legacy-stack-preview')!;
+    expect(pieces.classList.contains('is-piece-list')).toBe(true);
+    expect(pieces.querySelector('.ptcgsim-overlay-title')?.textContent).toBe(
+      composedScene.cards.find((card) => card.id === selectedId)!.label
+    );
+    const attachments = view.stacks[stackId]!.attachmentCards;
     expect(
-      host
-        .querySelector('[data-stack-preview-card-id]')
-        ?.getAttribute('data-stack-preview-card-id')
-    ).not.toBe(selectedId);
+      [...pieces.querySelectorAll('.ptcgsim-stack-cards-group')].map((group) =>
+        [...group.querySelectorAll('[data-stack-preview-card-id]')].map(
+          (card) => card.getAttribute('data-stack-preview-card-id')
+        )
+      )
+    ).toEqual([
+      stages.map((stage) => String(stage.id)),
+      ...(attachments.length > 0
+        ? [[...attachments].reverse().map((card) => String(card.id))]
+        : []),
+    ]);
     await act(async () => {
       host
         .querySelector<HTMLButtonElement>(
@@ -1737,11 +1759,14 @@ describe('legacy board overlays', () => {
       y: expect.closeTo(targetY + (0.5 - 20 / 176) * held.height, 6),
     });
     expect(callbacks.updateDrag).toHaveBeenLastCalledWith(null);
-    expect(
-      host
-        .querySelector('[data-legacy-zone-browser]')
-        ?.hasAttribute('data-zone-dragging-card')
-    ).toBe(false);
+    // Let go, it is seen to land before the viewer comes back: here nothing
+    // holds it and the table is still, so that is the next paint or so.
+    const browser = () => host.querySelector('[data-legacy-zone-browser]');
+    expect(browser()?.getAttribute('data-zone-dragging-card')).toBe(
+      String(discardCards[0]!.id)
+    );
+    await act(nextFrames);
+    expect(browser()?.hasAttribute('data-zone-dragging-card')).toBe(false);
 
     expect(document.querySelectorAll('.ptcgsim-panel-drag-face')).toHaveLength(
       0
@@ -1833,6 +1858,114 @@ describe('legacy board overlays', () => {
     return dispatched;
   };
 
+  it('keeps a viewer aside until the card dropped out of it has landed, and never longer than a few seconds', async () => {
+    const callbacks = actions();
+    const motion = new TableMotionStore();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const card = scene.cards.find(
+      (candidate) => candidate.parentId === discard.id
+    )!;
+    const hand = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:hand`
+    )!;
+    const presentation = (settling: BoardPresentation['settling']) => ({
+      ...createInitialBoardSessionControllerState().presentation,
+      openedZoneId: discard.id,
+      settling,
+    });
+    const render = (settling: BoardPresentation['settling']) =>
+      act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({ presentation: presentation(settling) }),
+            darkMode: false,
+            actions: callbacks,
+            tableMotion: motion,
+          })
+        );
+      });
+    await render([]);
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({
+        width: scene.viewport.width,
+        height: scene.viewport.height,
+      })
+    );
+    const source = host.querySelector<HTMLElement>(
+      `[data-overlay-card-id="${card.id}"]`
+    )!;
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 20, y: 20, width: 126, height: 176 })
+    );
+    const event = (type: string, clientX = 40, clientY = 40): Event => {
+      const dispatched = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(dispatched, {
+        clientX: { value: clientX },
+        clientY: { value: clientY },
+        pointerId: { value: 9 },
+        button: { value: 0 },
+      });
+      return dispatched;
+    };
+    const drop = async () => {
+      await act(async () => source.dispatchEvent(event('pointerdown')));
+      await act(async () =>
+        document.dispatchEvent(event('pointermove', 80, 80))
+      );
+      await act(async () =>
+        document.dispatchEvent(
+          event(
+            'pointerup',
+            hand.bounds.x + hand.bounds.width / 2,
+            hand.bounds.y + hand.bounds.height / 2
+          )
+        )
+      );
+    };
+    const aside = () =>
+      host
+        .querySelector('[data-legacy-zone-browser]')
+        ?.getAttribute('data-zone-dragging-card') ?? null;
+    const scrimHidden = () =>
+      host
+        .querySelector('.ptcgsim-overlay-scrim')
+        ?.classList.contains('is-hidden');
+
+    await drop();
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledTimes(1);
+    // The table holds it where it was dropped until the room answers...
+    await render([{ cardId: card.id, x: 300, y: 600 }]);
+    await act(nextFrames);
+    expect(aside()).toBe(String(card.id));
+    expect(scrimHidden()).toBe(true);
+    // ...then it flies to where it was put; the viewer waits for it.
+    motion.set(true);
+    await render([]);
+    await act(nextFrames);
+    expect(aside()).toBe(String(card.id));
+    await act(async () => motion.set(false));
+    expect(aside()).toBeNull();
+    expect(scrimHidden()).toBe(false);
+
+    // A drop the room never answers still gives the viewer back.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await drop();
+      await render([{ cardId: card.id, x: 300, y: 600 }]);
+      expect(aside()).toBe(String(card.id));
+      await act(async () => vi.advanceTimersByTime(LANDING_MAX_MS - 1));
+      expect(aside()).toBe(String(card.id));
+      await act(async () => vi.advanceTimersByTime(1));
+      expect(aside()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('drags a card out of the stack view onto the table, and the view steps aside', async () => {
     const callbacks = { ...actions(), emitCardIntent: vi.fn() };
     const stackId = view.boards[firstPlayer]!.activeStackId!;
@@ -2531,25 +2664,35 @@ describe('legacy board overlays', () => {
     );
     expect(readOnly.querySelector('.ptcgsim-show-board-button')).not.toBeNull();
   });
-  it('lists a stack preview top card first and then its attachments newest-first, as v1 does', () => {
+  it('lists the stack view Pokémon first, top card down, then its Energy, then everything else attached', () => {
     const stackId = view.boards[firstPlayer]!.activeStackId!;
     const original = view.stacks[stackId]!;
-    // Give the fixture's active a second stage and a second attachment by
-    // borrowing two hand cards, then lay it out again.
+    // Give the fixture's active a second stage, a Tool and a second Energy
+    // by borrowing three hand cards, then lay it out again.
     const hand = view.zones[`zone:${firstPlayer}:hand`]!;
-    const [stage, extra] = hand.cards;
-    if (!stage || !extra) throw new Error('Fixture hand is too small');
+    const [stage, tool, energy] = hand.cards;
+    const oldEnergy = original.attachmentCards[0];
+    if (!stage || !tool || !energy || !oldEnergy)
+      throw new Error('Fixture is too small');
+    const as = <Card extends (typeof hand.cards)[number]>(
+      card: Card,
+      category: 'Energy' | 'Trainer'
+    ): Card => (card.kind === 'known' ? { ...card, category } : card);
     const stack = {
       ...original,
       evolutionCards: [...original.evolutionCards, stage],
-      attachmentCards: [...original.attachmentCards, extra],
+      attachmentCards: [
+        as(oldEnergy, 'Energy'),
+        as(tool, 'Trainer'),
+        as(energy, 'Energy'),
+      ],
     };
     const richScene = createBoardSceneForViewport(
       {
         ...view,
         zones: {
           ...view.zones,
-          [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+          [hand.id]: { ...hand, cards: hand.cards.slice(3) },
         },
         stacks: { ...view.stacks, [stackId]: stack },
       },
@@ -2564,16 +2707,13 @@ describe('legacy board overlays', () => {
     expect(cards).toHaveLength(
       stack.evolutionCards.length + stack.attachmentCards.length
     );
-    const ordered = legacyStackPreviewOrder(stack, cards).map(
-      (card) => card.id
-    );
-    expect(ordered).toEqual([
-      stack.evolutionCards.at(-1)!.id,
-      ...[...stack.attachmentCards].reverse().map((card) => card.id),
-      ...stack.evolutionCards
-        .slice(0, -1)
-        .reverse()
-        .map((card) => card.id),
+    expect(stackPreviewOrder(stack, cards).map((card) => card.id)).toEqual([
+      stage.id,
+      ...[...original.evolutionCards].reverse().map((card) => card.id),
+      // Energy newest first, then the Tool.
+      energy.id,
+      oldEnergy.id,
+      tool.id,
     ]);
   });
 });

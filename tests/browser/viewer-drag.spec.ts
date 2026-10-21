@@ -204,6 +204,7 @@ test('a card dragged out of the deck viewer is held by the table, makes room in 
       await page.evaluate((id) => {
         const record = window as unknown as {
           __afterRelease?: { x: number; y: number };
+          __asideAfterRelease?: boolean;
         };
         const known = new Set(
           [...document.querySelectorAll<HTMLElement>('[data-in-hand]')].map(
@@ -213,6 +214,11 @@ test('a card dragged out of the deck viewer is held by the table, makes room in 
         window.addEventListener(
           'pointerup',
           () => {
+            requestAnimationFrame(() => {
+              record.__asideAfterRelease = document
+                .querySelector('[data-legacy-zone-browser]')
+                ?.hasAttribute('data-zone-dragging-card');
+            });
             const look = () => {
               const card =
                 document.querySelector(`.ptcgsim-card[data-card-id="${id}"]`) ??
@@ -262,7 +268,15 @@ test('a card dragged out of the deck viewer is held by the table, makes room in 
     Math.hypot(released!.x - deck.x, released!.y - deck.y) / 3
   );
   expect((await zone(page, 'deck')).count).toBe(deckCount - 1);
-  // The viewer comes back, still open on the pile.
+  // The viewer stays aside while the card lands, then comes back, still
+  // open on the pile.
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { readonly __asideAfterRelease?: boolean })
+          .__asideAfterRelease
+    )
+  ).toBe(true);
   await expect(viewer).not.toHaveAttribute('data-zone-dragging-card', /.*/u);
   await expect(viewer).toBeVisible();
   await idle(page);

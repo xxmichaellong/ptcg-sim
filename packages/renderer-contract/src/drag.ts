@@ -158,6 +158,44 @@ export const zoneDropTargetAt = (
 };
 
 /**
+ * A card printed in pieces (a V-UNION, a LEGEND) takes a card dropped
+ * anywhere on the whole card its pieces make, missing pieces and all: a
+ * lone quarter of a V-UNION is a quarter of a card to aim at, and the rest
+ * of it goes where the missing quarters would be. Cards actually under the
+ * point come first; this only fills the gaps between them.
+ */
+export const joinedCardTargetAt = (
+  scene: BoardScene,
+  sourceCardId: ViewCardId,
+  x: number,
+  y: number,
+  detached = false,
+  /** Leave out the source's own Pokémon, which travels with it. */
+  skipOwnStack = false
+): string | null => {
+  const source = cardAt(scene, sourceCardId);
+  const card = topmostFirst(scene.cards).find(
+    (candidate) =>
+      candidate.id !== sourceCardId &&
+      candidate.interactive &&
+      candidate.role === 'stackEvolution' &&
+      candidate.composition?.kind === 'joined' &&
+      !(
+        skipOwnStack &&
+        source?.role === 'stackEvolution' &&
+        !detached &&
+        candidate.parentId === source.parentId
+      ) &&
+      containsPoint(candidate.composition.bounds, x, y)
+  );
+  if (!card) return null;
+  return (
+    benchRearrangementTarget(scene, sourceCardId, card, detached) ??
+    card.parentId
+  );
+};
+
+/**
  * The card under a held card's centre that it would join, when the
  * pointer itself is over bare felt: never the held card, nor a card of the
  * Pokémon it is part of, which travel with it.
@@ -191,7 +229,15 @@ export const heldCentreCardTarget = (
         centre.y
       )
   );
-  if (!card) return null;
+  if (!card)
+    return joinedCardTargetAt(
+      scene,
+      sourceCardId,
+      centre.x,
+      centre.y,
+      detached,
+      true
+    );
   return (
     benchRearrangementTarget(scene, sourceCardId, card, detached) ??
     card.parentId
@@ -200,9 +246,10 @@ export const heldCentreCardTarget = (
 
 /**
  * What a card dropped with the pointer at (x, y) lands on: the topmost card
- * under the pointer (its stack, to join it), else a zone. Players aim with
- * the pointer: a hand card is gripped by its visible top, its face hanging
- * below. Over bare felt, the held card's `centre` aims too.
+ * under the pointer (its stack, to join it), or the whole of a card printed
+ * in pieces, else a zone. Players aim with the pointer: a hand card is
+ * gripped by its visible top, its face hanging below. Over bare felt, the
+ * held card's `centre` aims too.
  */
 export const resolveBoardDropTarget = (
   scene: BoardScene,
@@ -229,6 +276,7 @@ export const resolveBoardDropTarget = (
       card.parentId
     );
   return (
+    joinedCardTargetAt(scene, sourceCardId, x, y, detached) ||
     (centre &&
       heldCentreCardTarget(scene, sourceCardId, { x, y }, centre, detached)) ||
     zoneDropTargetAt(scene, x, y, centre)

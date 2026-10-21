@@ -421,6 +421,12 @@ export interface BoardRendererAdapters {
    * pointer leaves the cards or a drag begins.
    */
   readonly reportCardHover?: (hover: BoardCardHover | null) => void;
+  /**
+   * Whether the table is moving on its own (cards flying, landing, turning
+   * over), each time that changes. A window that stepped aside for a card
+   * dragged out of it comes back once the card has landed.
+   */
+  readonly reportMotion?: (moving: boolean) => void;
 }
 
 export type BoardRendererStatus =

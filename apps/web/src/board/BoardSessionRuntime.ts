@@ -64,6 +64,8 @@ export interface BoardSessionRuntimeOptions {
   readonly reportRendererStatus?: (status: BoardRendererStatus) => void;
   /** The hovered card, for a route-owned inspector. Presentational only. */
   readonly onCardHover?: (hover: BoardCardHover | null) => void;
+  /** Whether the table is moving on its own, each time that changes. */
+  readonly onMotion?: (moving: boolean) => void;
 }
 
 const copyLayoutState = (state: BoardLayoutState): BoardLayoutState => ({
@@ -207,6 +209,13 @@ export class BoardSessionRuntime {
         reportCardHover: (hover) => {
           try {
             this.options.onCardHover?.(hover);
+          } catch (error) {
+            this.reportError(error);
+          }
+        },
+        reportMotion: (moving) => {
+          try {
+            this.options.onMotion?.(moving);
           } catch (error) {
             this.reportError(error);
           }

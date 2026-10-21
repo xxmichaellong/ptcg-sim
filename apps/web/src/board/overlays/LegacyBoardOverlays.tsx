@@ -100,6 +100,7 @@ import type { Keymap } from '../../hotkeys/keymap.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
+  stackCardsLayout,
   stackPreviewLayout,
   workAreaPanelLayout,
   zoneBrowserLayout,
@@ -114,6 +115,7 @@ import {
   type ClientRectLike,
 } from './overlayMotion.js';
 import './LegacyBoardOverlays.css';
+import type { TableMotionStore } from '../table-motion.js';
 import { useOverlayCardDrag } from './useOverlayCardDrag.js';
 import { ZONE_NAMES } from './zone-names.js';
 import {
@@ -1360,11 +1362,13 @@ const OverlayCardImage = ({
 };
 
 /**
- * v1's full view lists the play-container's images in DOM order: the top
- * card first, then every card attached to it newest-first, because each
- * attachment is inserted directly after its host.
+ * The stack view's order: the Pokémon first (its top card, then the stages
+ * under it; a card printed in pieces, piece by piece as it reads), then its
+ * Energy, then everything else attached to it. Attached cards keep v1's
+ * order among themselves, newest first. (v1 listed the top card, then every
+ * attached card, then the lower stages: its DOM order.)
  */
-export const legacyStackPreviewOrder = (
+export const stackPreviewOrder = (
   stack:
     | Pick<
         MatchViewState['stacks'][string],
@@ -1377,14 +1381,27 @@ export const legacyStackPreviewOrder = (
     return [...cards].sort((left, right) => right.zIndex - left.zIndex);
   }
   const byId = new Map(cards.map((card) => [card.id, card]));
+  const nodes = (
+    list: readonly (typeof stack.evolutionCards)[number][]
+  ): CardSceneNode[] =>
+    list.flatMap((card) => {
+      const node = byId.get(card.id);
+      return node ? [node] : [];
+    });
+  const pokemon = nodes([...stack.evolutionCards].reverse());
+  if (pokemon.length > 1 && pokemon.every((card) => card.presentation?.join))
+    pokemon.sort(
+      (left, right) =>
+        left.presentation!.join!.part - right.presentation!.join!.part
+    );
+  const attached = [...stack.attachmentCards].reverse();
+  const isEnergy = (card: (typeof attached)[number]) =>
+    card.kind === 'known' && card.category === 'Energy';
   const ordered = [
-    ...stack.evolutionCards.slice(-1),
-    ...[...stack.attachmentCards].reverse(),
-    ...stack.evolutionCards.slice(0, -1).reverse(),
-  ].flatMap((card) => {
-    const node = byId.get(card.id);
-    return node ? [node] : [];
-  });
+    ...pokemon,
+    ...nodes(attached.filter(isEnergy)),
+    ...nodes(attached.filter((card) => !isEnergy(card))),
+  ];
   const listed = new Set(ordered.map((card) => card.id));
   return [...ordered, ...cards.filter((card) => !listed.has(card.id))];
 };
@@ -1654,6 +1671,101 @@ const Preview = ({
       </div>
     );
   }
+  const stackCard = (card: CardSceneNode) => {
+    const cardName = card.label;
+    return (
+      <button
+        key={card.id}
+        type="button"
+        className="ptcgsim-legacy-stack-preview-card"
+        data-stack-preview-card-id={card.id}
+        data-motion-origin={card.id}
+        aria-label={t({
+          message: `Preview ${cardName}`,
+          comment: '{cardName} is a card; the button opens it large.',
+        })}
+        // Keep focus on the stack view itself (its keyboard boundary and
+        // Escape handling live there, and v1's stack view has no tab stops);
+        // a click still opens the card.
+        tabIndex={composition ? 0 : -1}
+        data-preview-tabbable={composition ? 'true' : undefined}
+        data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+        draggable={false}
+        onMouseDown={(event) => event.preventDefault()}
+        onPointerDown={(event) => drag.onPointerDown(event, card)}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (drag.consumeClick(card.id) && event.detail > 0) return;
+          if (composition) setIndividualCardId(card.id);
+          else actions.previewCard?.(card.id);
+        }}
+      >
+        <OverlayCardImage card={card} variant="stack" />
+      </button>
+    );
+  };
+
+  // An assembled card taken apart: its pieces, then what is attached to it,
+  // each card large enough to read and opening larger still.
+  if (composition && showPieces && !individualCardId) {
+    const pokemon = cards.filter((card) => card.role !== 'stackAttachment');
+    const attached = cards.filter((card) => card.role === 'stackAttachment');
+    const groups = [pokemon, attached].filter((group) => group.length > 0);
+    const layout = stackCardsLayout(
+      board,
+      groups.map((group) => group.length)
+    );
+    return (
+      <div
+        ref={container}
+        className={`ptcgsim-legacy-stack-preview is-${cards[0]?.side ?? 'local'} is-piece-list`}
+        data-legacy-card-preview="true"
+        data-preview-kind="stack"
+        data-preview-dragging-card={draggingCardId}
+        role="dialog"
+        aria-modal="true"
+        aria-label={pokemon[0]?.label ?? t`Card stack preview`}
+        data-overlay-side={cards[0]?.side}
+        tabIndex={-1}
+        data-preview-focus="true"
+        style={{
+          ...panelStyle(layout, '--ptcgsim-stack-card-height'),
+          ['--ptcgsim-stack-columns' as string]: layout.columns,
+        }}
+        onKeyDown={onKeyDown}
+      >
+        <header className="ptcgsim-overlay-header" dir={direction}>
+          <div className="ptcgsim-overlay-heading">
+            <h2 className="ptcgsim-overlay-title">{pokemon[0]?.label}</h2>
+          </div>
+          <div className="ptcgsim-overlay-actions">
+            <button
+              type="button"
+              className="ptcgsim-overlay-button"
+              data-preview-tabbable="true"
+              onClick={() => setShowPieces(false)}
+            >
+              <Trans>View assembled card</Trans>
+            </button>
+            <OverlayCloseButton
+              data-preview-tabbable="true"
+              onClick={dismiss}
+            />
+          </div>
+        </header>
+        <div className="ptcgsim-stack-cards">
+          {groups.map((group) => (
+            <div
+              key={group === pokemon ? 'pokemon' : 'attached'}
+              className="ptcgsim-stack-cards-group"
+            >
+              {group.map(stackCard)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return individualCardId || (kind === 'card' && !showPieces) ? (
     <div
       ref={container}
@@ -1762,52 +1874,7 @@ const Preview = ({
       }
       onKeyDown={onKeyDown}
     >
-      {composition ? (
-        <div className="ptcgsim-composition-piece-controls">
-          <button
-            type="button"
-            className="ptcgsim-overlay-button"
-            data-preview-tabbable="true"
-            onClick={() => setShowPieces(false)}
-          >
-            <Trans>View assembled card</Trans>
-          </button>
-          <OverlayCloseButton data-preview-tabbable="true" onClick={dismiss} />
-        </div>
-      ) : null}
-      {cards.map((card) => {
-        const cardName = card.label;
-        return (
-          <button
-            key={card.id}
-            type="button"
-            className="ptcgsim-legacy-stack-preview-card"
-            data-stack-preview-card-id={card.id}
-            data-motion-origin={card.id}
-            aria-label={t({
-              message: `Preview ${cardName}`,
-              comment: '{cardName} is a card; the button opens it large.',
-            })}
-            // Keep focus on the stack view itself (its keyboard boundary and
-            // Escape handling live there, and v1's stack view has no tab stops);
-            // a click still opens the card.
-            tabIndex={composition ? 0 : -1}
-            data-preview-tabbable={composition ? 'true' : undefined}
-            data-armed={drag.armedCardId === card.id ? 'true' : undefined}
-            draggable={false}
-            onMouseDown={(event) => event.preventDefault()}
-            onPointerDown={(event) => drag.onPointerDown(event, card)}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (drag.consumeClick(card.id) && event.detail > 0) return;
-              if (composition) setIndividualCardId(card.id);
-              else actions.previewCard?.(card.id);
-            }}
-          >
-            <OverlayCardImage card={card} variant="stack" />
-          </button>
-        );
-      })}
+      {cards.map(stackCard)}
     </div>
   );
 };
@@ -1906,6 +1973,7 @@ const copiesLabel = (cardName: string, copies: number): string =>
 const ZoneBrowser = ({
   state,
   depth,
+  tableMotion,
   zone,
   cards,
   board,
@@ -1915,6 +1983,7 @@ const ZoneBrowser = ({
 }: {
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
+  readonly tableMotion?: TableMotionStore;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
   readonly board: OverlayBoardSize;
@@ -2036,8 +2105,10 @@ const ZoneBrowser = ({
     enabled: state.canSubmitCommands && !obscured,
     emit: actions.emitOpenedZoneCardIntent,
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
+    settling: state.presentation.settling,
+    ...(tableMotion ? { tableMotion } : {}),
   });
-  const draggingCardId = drag.draggingCardId;
+  const asideCardId = drag.asideCardId;
   const tiles = useMemo(
     () => zoneBrowserTiles(renderedCards, stackCopies),
     [renderedCards, stackCopies]
@@ -2047,7 +2118,7 @@ const ZoneBrowser = ({
     <>
       <div
         ref={scrim}
-        className={`ptcgsim-overlay-scrim${draggingCardId !== null || showingBoard ? ' is-hidden' : ''}`}
+        className={`ptcgsim-overlay-scrim${asideCardId !== null || showingBoard ? ' is-hidden' : ''}`}
         aria-hidden="true"
       />
       <section
@@ -2056,7 +2127,7 @@ const ZoneBrowser = ({
         data-legacy-zone-browser="true"
         data-zone-browser-id={zone.id}
         data-zone-browser-kind={zone.kind}
-        data-zone-dragging-card={draggingCardId ?? undefined}
+        data-zone-dragging-card={asideCardId ?? undefined}
         role="dialog"
         aria-modal={obscured ? undefined : 'true'}
         aria-hidden={obscured ? 'true' : undefined}
@@ -2366,6 +2437,7 @@ const WORK_AREA_ACTION_ICONS: Readonly<
 const WorkAreaPanel = ({
   state,
   depth,
+  tableMotion,
   zone,
   cards,
   board,
@@ -2376,6 +2448,7 @@ const WorkAreaPanel = ({
   readonly allowOpponentResolution?: boolean;
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
+  readonly tableMotion?: TableMotionStore;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
   readonly board: OverlayBoardSize;
@@ -2416,8 +2489,10 @@ const WorkAreaPanel = ({
     enabled: interactive,
     emit: (intent) => emit?.(intent),
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
+    settling: state.presentation.settling,
+    ...(tableMotion ? { tableMotion } : {}),
   });
-  const draggingCardId = drag.draggingCardId;
+  const asideCardId = drag.asideCardId;
   const withActions =
     controls &&
     state.canSubmitCommands &&
@@ -2444,7 +2519,7 @@ const WorkAreaPanel = ({
       data-legacy-work-area={source}
       data-work-area-id={zone.id}
       data-overlay-side={zone.side}
-      data-work-area-dragging-card={draggingCardId ?? undefined}
+      data-work-area-dragging-card={asideCardId ?? undefined}
       aria-label={heading}
       style={panelStyle(layout, '--ptcgsim-work-card-height')}
     >
@@ -2635,6 +2710,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   depth,
   darkMode,
   actions,
+  tableMotion,
   allowOpponentResolution = false,
 }: {
   readonly allowOpponentResolution?: boolean;
@@ -2642,6 +2718,8 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   readonly depth?: BoardDepthProjection;
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
+  /** Whether the table is moving, for a window waiting on a card to land. */
+  readonly tableMotion?: TableMotionStore;
 }) {
   const cardImages = useCardImageLanguage();
   const [contextAnchor, setContextAnchor] = useState<{
@@ -2698,7 +2776,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
                 previewCard.composition &&
                 card.parentId === previewCard.parentId)
           )
-        : legacyStackPreviewOrder(
+        : stackPreviewOrder(
             state.view?.stacks[preview.stackId],
             scene.cards.filter((card) => card.parentId === preview.stackId)
           )
@@ -2760,6 +2838,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       {workAreaZones.map((zone) => (
         <WorkAreaPanel
           {...(depth ? { depth } : {})}
+          {...(tableMotion ? { tableMotion } : {})}
           key={zone.id}
           allowOpponentResolution={allowOpponentResolution}
           state={state}
@@ -2775,6 +2854,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       {openedZone ? (
         <ZoneBrowser
           {...(depth ? { depth } : {})}
+          {...(tableMotion ? { tableMotion } : {})}
           key={openedZone.id}
           state={state}
           zone={openedZone}

@@ -1226,6 +1226,7 @@ export const BoardSurface = ({
       if (surfaceRef.current) {
         surfaceRef.current.dataset.motion = active ? 'active' : 'idle';
       }
+      adapters.reportMotion?.(active);
     };
   });
   const animationSpeed = preferences.animationSpeed ?? 1;
@@ -1677,17 +1678,24 @@ export const BoardSurface = ({
     }
   };
   // A drag's target is the id of the stack or zone under the pointer; v1
-  // rings the stack's visible top card and tints a zone container.
+  // rings the stack's visible top card and tints a zone container. A card
+  // printed in pieces is one card, so every piece of it is lit.
   const dragTargetId = presentation.drag?.targetId ?? null;
-  const dropTargetCardId =
+  const targetPokemon =
     dragTargetId === null
-      ? null
-      : (scene.cards
+      ? []
+      : scene.cards
           .filter(
             (card) =>
               card.parentId === dragTargetId && card.role === 'stackEvolution'
           )
-          .sort((left, right) => right.zIndex - left.zIndex)[0]?.id ?? null);
+          .sort((left, right) => right.zIndex - left.zIndex);
+  const dropTargetCardIds = new Set(
+    (targetPokemon[0]?.composition?.kind === 'joined'
+      ? targetPokemon
+      : targetPokemon.slice(0, 1)
+    ).map((card) => card.id)
+  );
   // A drop that would swap two Pokémon says so on the card being held, where
   // it is always in view (the Pokémon it would trade with is under it).
   const swapCardId =
@@ -2061,7 +2069,7 @@ export const BoardSurface = ({
               card={card}
               selected={presentation.selectedCardId === card.id}
               targetable={presentation.targetableCardIds.includes(card.id)}
-              dropTarget={dropTargetCardId === card.id}
+              dropTarget={dropTargetCardIds.has(card.id)}
               {...(swapCardId === card.id
                 ? { dropAction: 'swap' as const }
                 : {})}

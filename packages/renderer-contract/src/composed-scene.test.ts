@@ -13,6 +13,10 @@ import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
 } from './layout-table.js';
 import { compositionHold, paintedCardBounds } from './card-composition.js';
+import { BoardDepthProjection, DEFAULT_BOARD_DEPTH } from './board-depth.js';
+import { DEFAULT_BOARD_PREFERENCES } from './defaults.js';
+import { resolveBoardDropTarget } from './drag.js';
+import { containsPointInRotatedRect } from './geometry.js';
 
 const fixture = () => {
   const base = createRendererSpikeView();
@@ -305,6 +309,63 @@ describe('composed board scenes', () => {
     expect(compositionHold(scene, grabbed, drag(zoneOf('discard')))).toEqual(
       drag(zoneOf('discard'))
     );
+  });
+
+  it('takes a card dropped anywhere on the whole card a lone piece starts, on the flat table and the tilted one', () => {
+    const { view, cards, stack, playerId } = fixture();
+    // Only the bottom-right quarter is in play so far.
+    const lone: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [stack.id]: { ...view.stacks[stack.id]!, evolutionCards: [cards[0]!] },
+      },
+    };
+    const scene = createBoardScene(
+      lone,
+      createTableLayoutSnapshot({
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        bottomPlayerId: playerId,
+        playerIds: view.playerOrder as [PlayerId, PlayerId],
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        geometryVersion: 2,
+      })
+    );
+    const piece = scene.cards.find((card) => card.parentId === stack.id)!;
+    const whole = piece.composition!.bounds;
+    // Where the top-left quarter will go: no card there yet.
+    const gap = {
+      x: whole.x + whole.width / 4,
+      y: whole.y + whole.height / 4,
+    };
+    expect(
+      containsPointInRotatedRect(
+        piece.bounds,
+        piece.rotationQuarterTurns,
+        gap.x,
+        gap.y
+      )
+    ).toBe(false);
+    expect(hitTestBoardScene(scene, gap.x, gap.y)?.id).not.toBe(piece.id);
+    const handCard = scene.cards.find(
+      (card) =>
+        card.parentId.endsWith(':hand') &&
+        card.side === 'local' &&
+        card.interactive
+    )!;
+    expect(resolveBoardDropTarget(scene, handCard.id, gap.x, gap.y)).toBe(
+      stack.id
+    );
+    // Past the edge of the whole card it is not the target.
+    expect(
+      resolveBoardDropTarget(scene, handCard.id, whole.x - 40, gap.y)
+    ).not.toBe(stack.id);
+    const tilted = new BoardDepthProjection(scene, {
+      ...DEFAULT_BOARD_PREFERENCES,
+      depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' },
+    });
+    expect(tilted.drop(tilted.point(gap), handCard.id).targetId).toBe(stack.id);
   });
 
   it('does not attach artwork metadata or composite geometry to concealed faces', () => {

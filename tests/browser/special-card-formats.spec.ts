@@ -158,6 +158,57 @@ const join = async (page: Page, piece: string, anchor: string) => {
   return (await sceneCard(page, piece)).id;
 };
 
+/**
+ * Drags a piece out of the deck's viewer and lets go of it at a point on the
+ * table (scene coordinates), wherever the table's camera shows that point.
+ */
+const dragFromDeck = async (
+  page: Page,
+  piece: string,
+  point: { readonly x: number; readonly y: number }
+) => {
+  const card = await sceneCard(page, piece);
+  if (!(await page.locator('[data-legacy-zone-browser]').isVisible())) {
+    await expect(
+      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    ).toHaveCount(1);
+    const cover = await page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__!.scene.cards.find(
+          (card) =>
+            card.side === 'local' &&
+            card.parentId.endsWith(':deck') &&
+            card.renderKey !== null
+        )!.id
+    );
+    await page.locator(`[data-card-id="${cover}"]`).dblclick();
+  }
+  const tile = (await page
+    .locator(
+      `[data-legacy-zone-browser] button[data-overlay-card-id="${card.id}"]`
+    )
+    .boundingBox())!;
+  const current = await page.evaluate(
+    () => window.__PTCG_RENDERER_SPIKE__!.scene
+  );
+  const projection = new BoardDepthProjection(current, {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: parseBoardDepth(
+      await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('ptcgsim.table-depth.v1')!)
+      )
+    ),
+  });
+  const projected = projection.point(point);
+  const host = (await page.locator('.renderer-surface-host').boundingBox())!;
+  await page.mouse.move(tile.x + tile.width / 2, tile.y + tile.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(host.x + projected.x, host.y + projected.y, {
+    steps: 12,
+  });
+  await page.mouse.up();
+};
+
 for (const mode of ['flat', 'table'] as const)
   test.describe(`${mode} table`, () => {
     test.beforeEach(async ({ page }) => {
@@ -178,7 +229,24 @@ for (const mode of ['flat', 'table'] as const)
       await start(page);
       let top = await fromDeck(page, 'union-3', 'b');
       const anchor = top;
-      for (const piece of ['union-0', 'union-2', 'union-1'])
+      // A lone piece is a whole card to aim at: dropped where the top-left
+      // quarter will go, with no card under the pointer, the next piece
+      // joins it.
+      await expect(
+        page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      ).toHaveCount(1);
+      const whole = (await sceneCard(page, 'union-3')).composition!.bounds;
+      await dragFromDeck(page, 'union-0', {
+        x: whole.x + whole.width / 4,
+        y: whole.y + whole.height / 4,
+      });
+      await expect
+        .poll(async () => (await sceneCard(page, 'union-0')).role)
+        .toBe('stackEvolution');
+      await expect
+        .poll(async () => (await sceneCard(page, 'union-0')).parentId)
+        .toBe((await sceneCard(page, 'union-3')).parentId);
+      for (const piece of ['union-2', 'union-1'])
         top = await join(page, piece, anchor);
       const cards = await page.evaluate(() =>
         window.__PTCG_RENDERER_SPIKE__!.scene.cards.filter(
