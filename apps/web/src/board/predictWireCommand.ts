@@ -1,4 +1,8 @@
-import { layOutPlayStackAcrossBoards } from '@ptcgsim/game-core';
+import {
+  activeWentAway,
+  layOutPlayStackAcrossBoards,
+  loneBenchedPromotions,
+} from '@ptcgsim/game-core';
 import type {
   ConcealedViewCard,
   MatchViewState,
@@ -37,7 +41,10 @@ export const predictWireCommand = (
   if (view.viewer.kind !== 'player') return null;
   const viewerId = view.viewer.playerId;
   try {
-    return predict(view, command, viewerId);
+    const next = predict(view, command, viewerId);
+    return next && command.type !== 'ApplySoloUndo'
+      ? withLoneBenchedPromoted(view, next)
+      : next;
   } catch {
     return null;
   }
@@ -414,6 +421,38 @@ const withBoardsRehomed = (
     }
   }
   return next;
+};
+
+/**
+ * A lone Benched Pokémon up in an Active Spot the command emptied, as the
+ * room brings it up in the same batch (game-core's loneBenchedPromotions).
+ */
+const withLoneBenchedPromoted = (
+  view: MatchViewState,
+  next: MatchViewState
+): MatchViewState | null => {
+  let promoted: MatchViewState | null = next;
+  for (const { boardPlayerId, stackId } of loneBenchedPromotions(
+    view.boards,
+    next.boards,
+    (playerId) =>
+      activeWentAway(
+        {
+          activeStackId: view.boards[playerId]?.activeStackId ?? null,
+          window: view.workAreas[playerId]?.attachmentResolution ?? null,
+        },
+        { window: next.workAreas[playerId]?.attachmentResolution ?? null }
+      )
+  )) {
+    promoted = withBoardsRehomed(promoted, [
+      {
+        playerId: boardPlayerId as PlayerId,
+        board: { activeStackId: stackId, benchStackIds: [] },
+      },
+    ]);
+    if (!promoted) return null;
+  }
+  return promoted;
 };
 
 const emptyStack = (

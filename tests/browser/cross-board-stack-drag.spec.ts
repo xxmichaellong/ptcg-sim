@@ -9,8 +9,9 @@ import {
 /**
  * Any card goes anywhere on the table: a whole Pokémon dragged onto the
  * other player's side lands there, on their Bench or in their Active Spot
- * (trading places with the one there, marked ⇄), and comes back the same
- * way. Solo, on the tilted table.
+ * (their Active giving way to their Bench, marked ⇄), and comes back the
+ * same way. Wherever an Active leaves, a lone Benched Pokémon comes up.
+ * Solo, on the tilted table.
  */
 
 /** A deck of Pokémon and Energy only, so a hand holds both. */
@@ -198,7 +199,10 @@ test("a whole Pokémon moves onto the other player's Bench and Active, and back"
   const active = await placement(page, first!);
   expect(active).toMatchObject({ side: 'local', slot: 'active' });
 
-  // The Active onto the other player's empty Bench.
+  const benched = await placement(page, second!);
+
+  // The Active onto the other player's empty Bench; the lone Benched one
+  // comes up behind it.
   await drag(
     page,
     await exposedPoint(page, first!),
@@ -207,16 +211,27 @@ test("a whole Pokémon moves onto the other player's Bench and Active, and back"
   await expect
     .poll(() => placement(page, first!))
     .toEqual({ stackId: active.stackId, side: 'opponent', slot: 'bench' });
+  await expect
+    .poll(() => placement(page, second!))
+    .toEqual({ stackId: benched.stackId, side: 'local', slot: 'active' });
 
-  // Back again, into the viewer's empty Active Spot.
+  // Back again, onto the viewer's Active, which goes to the Bench (⇄).
   await drag(
     page,
     await exposedPoint(page, first!),
-    await zoneCentre(page, 'active', 'local')
+    await exposedPoint(page, second!),
+    async () => {
+      await expect(
+        page.locator(`[data-card-id="${first!}"] [data-drop-action="swap"]`)
+      ).toBeVisible();
+    }
   );
   await expect
     .poll(() => placement(page, first!))
     .toEqual({ stackId: active.stackId, side: 'local', slot: 'active' });
+  await expect
+    .poll(() => placement(page, second!))
+    .toEqual({ stackId: benched.stackId, side: 'local', slot: 'bench' });
 
   // The benched one into the other player's empty Active Spot...
   await drag(
@@ -227,7 +242,8 @@ test("a whole Pokémon moves onto the other player's Bench and Active, and back"
   const theirs = await placement(page, second!);
   expect(theirs).toMatchObject({ side: 'opponent', slot: 'active' });
 
-  // ...and the Active onto it: the two trade places, marked ⇄ while held.
+  // ...and the Active onto it: it takes their Active Spot, and theirs goes
+  // to their Bench, marked ⇄ while held. Nothing comes back across.
   await drag(
     page,
     await exposedPoint(page, first!),
@@ -243,7 +259,7 @@ test("a whole Pokémon moves onto the other player's Bench and Active, and back"
     .toEqual({ stackId: active.stackId, side: 'opponent', slot: 'active' });
   await expect
     .poll(() => placement(page, second!))
-    .toEqual({ stackId: theirs.stackId, side: 'local', slot: 'active' });
+    .toEqual({ stackId: theirs.stackId, side: 'opponent', slot: 'bench' });
 
   await openActivity(page);
   await expect(page.locator('#chatbox')).toContainText(
@@ -297,5 +313,78 @@ test("held over one of the other player's Benched Pokémon, a Pokémon joins the
   await expect
     .poll(() => placement(page, second!))
     .toEqual({ stackId: theirs.stackId, side: 'opponent', slot: 'bench' });
+  expect(errors).toEqual([]);
+});
+
+test('a lone Benched Pokémon comes up when the Active goes to the discard pile; with two, the player picks', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await openSoloTable(page);
+  const [first, second, third] = await handPokemon(page, 3);
+  await drag(
+    page,
+    await exposedPoint(page, first!),
+    await zoneCentre(page, 'active', 'local')
+  );
+  await drag(
+    page,
+    await exposedPoint(page, second!),
+    await zoneCentre(page, 'bench', 'local')
+  );
+  const lone = await placement(page, second!);
+  await drag(
+    page,
+    await exposedPoint(page, first!),
+    await zoneCentre(page, 'discard', 'local')
+  );
+  await expect
+    .poll(() => placement(page, second!))
+    .toEqual({ stackId: lone.stackId, side: 'local', slot: 'active' });
+
+  // Two on the Bench: the Active Spot stays empty for the player to fill.
+  await drag(
+    page,
+    await exposedPoint(page, third!),
+    await zoneCentre(page, 'bench', 'local')
+  );
+  await drag(
+    page,
+    await exposedPoint(page, (await handPokemon(page, 1))[0]!),
+    await zoneCentre(page, 'bench', 'local')
+  );
+  await drag(
+    page,
+    await exposedPoint(page, second!),
+    await zoneCentre(page, 'discard', 'local')
+  );
+  await expect
+    .poll(() => placement(page, third!))
+    .toMatchObject({ side: 'local', slot: 'bench' });
+  await expect(
+    page.locator('[data-zone-kind="active"][data-zone-side="local"]')
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        window.__PTCG_RENDERER_SPIKE__?.scene.cards.filter((card) => {
+          const scene = window.__PTCG_RENDERER_SPIKE__!.scene;
+          const zone = scene.zones.find(
+            (entry) => entry.kind === 'active' && entry.side === 'local'
+          );
+          if (!zone || card.side !== 'local' || !card.parentId) return false;
+          const x = card.bounds.x + card.bounds.width / 2;
+          const y = card.bounds.y + card.bounds.height / 2;
+          return (
+            x >= zone.bounds.x &&
+            x <= zone.bounds.x + zone.bounds.width &&
+            y >= zone.bounds.y &&
+            y <= zone.bounds.y + zone.bounds.height
+          );
+        }).length
+    )
+  ).toBe(0);
   expect(errors).toEqual([]);
 });

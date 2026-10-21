@@ -529,7 +529,8 @@ export const processAuthorityCommand = async (
       const execution = executeCommand(
         current.state,
         resolution.command,
-        dependencies.commandContext
+        dependencies.commandContext,
+        { promoteLoneBenched: true }
       );
       if (
         execution.accepted &&

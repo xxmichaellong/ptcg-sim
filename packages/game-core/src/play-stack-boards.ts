@@ -8,15 +8,17 @@ export interface PlayStackBoardLayout<Id extends string = string> {
 
 /**
  * A Pokémon moved whole onto the other player's board, laid out on both
- * boards after: it leaves its own board, where nothing comes up in its
- * place, and lands where it was put on the other one --
- *   - onto a Pokémon (`targetStackId`): the two trade places, the other
- *     taking the spot this one left;
- *   - into the Active Spot: an Active already there goes to the end of that
- *     Bench, as when a Pokémon is played there;
- *   - onto the Bench: at `benchIndex` among the Benched ones, the end if none.
+ * boards after: it leaves its own board and lands where it was put on the
+ * other one, and nothing of theirs comes across in exchange --
+ *   - into the Active Spot (or onto the Active, `targetStackId`): an Active
+ *     already there goes to the end of that Bench, as when a Pokémon is
+ *     played there;
+ *   - onto the Bench: at `benchIndex` among the Benched ones (the place of
+ *     `targetStackId`, when dropped on one), the end if none.
  * Null when the move does not fit the boards as they are. The room
- * (MovePlayStack, RestoreStagedStack) and the client's prediction share it.
+ * (MovePlayStack, RestoreStagedStack) and the client's prediction share it;
+ * whether a Pokémon then comes up on the board it left is
+ * loneBenchedPromotions'.
  */
 export const layOutPlayStackAcrossBoards = <Id extends string>(move: {
   readonly stackId: Id;
@@ -39,34 +41,23 @@ export const layOutPlayStackAcrossBoards = <Id extends string>(move: {
   ) {
     return null;
   }
-  let sourceActive = fromActive ? null : source.activeStackId;
+  const sourceActive = fromActive ? null : source.activeStackId;
   const sourceBench = source.benchStackIds.filter((id) => id !== stackId);
   let destinationActive = destination.activeStackId;
   const destinationBench = [...destination.benchStackIds];
   const target = move.targetStackId;
-  if (target !== undefined) {
-    if (move.destinationSlot === 'active') {
-      if (destinationActive !== target) return null;
-      destinationActive = stackId;
-    } else {
-      const at = destinationBench.indexOf(target);
-      if (at < 0) return null;
-      destinationBench[at] = stackId;
-    }
-    if (fromActive) sourceActive = target;
-    else sourceBench.splice(sourceBenchIndex, 0, target);
-  } else if (move.destinationSlot === 'active') {
+  if (move.destinationSlot === 'active') {
+    if (target !== undefined && destinationActive !== target) return null;
     if (destinationActive !== null) destinationBench.push(destinationActive);
     destinationActive = stackId;
   } else {
+    const at =
+      target === undefined
+        ? (move.benchIndex ?? destinationBench.length)
+        : destinationBench.indexOf(target);
+    if (at < 0 && target !== undefined) return null;
     destinationBench.splice(
-      Math.max(
-        0,
-        Math.min(
-          move.benchIndex ?? destinationBench.length,
-          destinationBench.length
-        )
-      ),
+      Math.max(0, Math.min(at, destinationBench.length)),
       0,
       stackId
     );
@@ -79,3 +70,54 @@ export const layOutPlayStackAcrossBoards = <Id extends string>(move: {
     },
   };
 };
+
+/**
+ * The Pokémon that come up into an Active Spot a command left empty, one
+ * per board: where the Active went away (`activeWentAway`: to a pile, to the
+ * other board or to its own Bench, or its attached-card window was cleared
+ * without it going back) and exactly one Pokémon stays on that Bench, one
+ * that was already there, there is no choice to make, so it comes up. With
+ * more on the Bench the player picks, and a Pokémon just put on the Bench
+ * (the Active itself, or one put back together) stays where it was put.
+ */
+export const loneBenchedPromotions = <Id extends string>(
+  before: Readonly<Record<string, PlayStackBoardLayout<Id>>>,
+  after: Readonly<Record<string, PlayStackBoardLayout<Id>>>,
+  activeWentAway: (boardPlayerId: string) => boolean
+): readonly { readonly boardPlayerId: string; readonly stackId: Id }[] =>
+  Object.entries(after).flatMap(([boardPlayerId, board]) => {
+    const [lone, ...others] = board.benchStackIds;
+    return board.activeStackId === null &&
+      lone !== undefined &&
+      others.length === 0 &&
+      before[boardPlayerId]?.benchStackIds.includes(lone) === true &&
+      activeWentAway(boardPlayerId)
+      ? [{ boardPlayerId, stackId: lone }]
+      : [];
+  });
+
+/**
+ * Whether a board's Active went away in a command, for
+ * loneBenchedPromotions: it left the Active Spot without waiting, taken
+ * apart, in its attached-card window; or that window, opened when the
+ * Active was taken apart, closed. Works on the room's state and the
+ * client's view alike.
+ */
+export const activeWentAway = (
+  before: {
+    readonly activeStackId: string | null;
+    readonly window: ActiveWindow | null;
+  },
+  after: { readonly window: ActiveWindow | null }
+): boolean =>
+  before.activeStackId !== null
+    ? after.window?.sourceStackId !== before.activeStackId
+    : before.window?.suggestedSlot === 'active' &&
+      after.window?.id !== before.window.id;
+
+/** What activeWentAway reads of a player's attached-card window. */
+export interface ActiveWindow {
+  readonly id: string;
+  readonly sourceStackId: string;
+  readonly suggestedSlot: PlaySlot;
+}

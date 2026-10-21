@@ -602,6 +602,14 @@
           "source": "packages/game-core/src/index.ts",
           "symbols": [
             {
+              "name": "activeWentAway",
+              "kind": "value"
+            },
+            {
+              "name": "ActiveWindow",
+              "kind": "type"
+            },
+            {
               "name": "analyzePlayerReset",
               "kind": "value"
             },
@@ -798,6 +806,10 @@
               "kind": "value"
             },
             {
+              "name": "ExecuteOptions",
+              "kind": "type"
+            },
+            {
               "name": "findCardLocation",
               "kind": "value"
             },
@@ -831,6 +843,10 @@
             },
             {
               "name": "layOutPlayStackAcrossBoards",
+              "kind": "value"
+            },
+            {
+              "name": "loneBenchedPromotions",
               "kind": "value"
             },
             {

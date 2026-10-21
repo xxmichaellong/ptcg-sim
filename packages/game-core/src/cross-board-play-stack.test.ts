@@ -181,32 +181,50 @@ describe('a Pokémon moved onto the other board', () => {
       expect(moved.cards[cardId]!.ownerId).toBe(p1);
   });
 
-  it("trades places with the other player's Active, and keeps a Special Condition in the Active Spot", () => {
+  it("sends the other player's Active to their Bench when dropped on it, nothing coming back, and keeps a Special Condition in the Active Spot", () => {
     const { state, commandContext } = table();
     const blueActive = state.boards[p1]!.activeStackId!;
+    const [blueBench] = state.boards[p1]!.benchStackIds;
     const redActive = state.boards[p2]!.activeStackId!;
+    const [redBench] = state.boards[p2]!.benchStackIds;
     const burned = accepted(
       state,
       { type: 'SetSpecialCondition', stackId: blueActive, condition: 'burned' },
       commandContext
     );
-    const swapped = accepted(
+    const poisoned = accepted(
       burned,
-      moveAcross(burned, blueActive, p2, 'active', {
+      {
+        type: 'SetSpecialCondition',
+        stackId: redActive,
+        condition: 'poisoned',
+      },
+      commandContext
+    );
+    const moved = accepted(
+      poisoned,
+      moveAcross(poisoned, blueActive, p2, 'active', {
         targetStackId: redActive,
       }),
       commandContext
     );
-    expect(swapped.boards[p2]!.activeStackId).toBe(blueActive);
-    expect(swapped.boards[p1]!.activeStackId).toBe(redActive);
-    expect(swapped.stacks[blueActive]).toMatchObject({
+    expect(moved.boards[p2]).toEqual({
+      activeStackId: blueActive,
+      benchStackIds: [redBench, redActive],
+    });
+    expect(moved.boards[p1]).toEqual({
+      activeStackId: null,
+      benchStackIds: [blueBench],
+    });
+    expect(moved.stacks[blueActive]).toMatchObject({
       boardPlayerId: p2,
       slot: 'active',
       specialCondition: 'burned',
     });
-    expect(swapped.stacks[redActive]).toMatchObject({
-      boardPlayerId: p1,
-      slot: 'active',
+    expect(moved.stacks[redActive]).toMatchObject({
+      boardPlayerId: p2,
+      slot: 'bench',
+      specialCondition: null,
     });
   });
 
@@ -280,10 +298,7 @@ describe('a Pokémon moved onto the other board', () => {
     expect(() =>
       applyEvent(state, {
         ...event,
-        boards: [
-          { ...event.boards[0]!, activeStackId: null },
-          event.boards[1]!,
-        ],
+        boards: [event.boards[0]!, { ...event.boards[1]!, benchStackIds: [] }],
       })
     ).toThrow('set of stacks');
     expect(() =>
@@ -420,7 +435,7 @@ describe('layOutPlayStackAcrossBoards', () => {
     benchStackIds,
   });
 
-  it('takes the place asked for and leaves nothing behind', () => {
+  it('takes the place asked for, makes room there, and leaves nothing behind', () => {
     expect(
       layOutPlayStackAcrossBoards({
         stackId: 'a',
@@ -442,8 +457,20 @@ describe('layOutPlayStackAcrossBoards', () => {
         targetStackId: 'y',
       })
     ).toEqual({
-      source: board('a', 'y', 'c'),
-      destination: board('x', 'b'),
+      source: board('a', 'c'),
+      destination: board('x', 'b', 'y'),
+    });
+    expect(
+      layOutPlayStackAcrossBoards({
+        stackId: 'a',
+        source: board('a', 'b'),
+        destination: board('x', 'y'),
+        destinationSlot: 'active',
+        targetStackId: 'x',
+      })
+    ).toEqual({
+      source: board(null, 'b'),
+      destination: board('a', 'y', 'x'),
     });
     expect(
       layOutPlayStackAcrossBoards({

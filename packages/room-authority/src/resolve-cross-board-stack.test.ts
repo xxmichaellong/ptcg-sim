@@ -151,9 +151,12 @@ describe("a Pokémon moved onto the other player's board", () => {
       },
     });
     if (!resolution.accepted) throw new Error('refused');
-    const swapped = run(state, resolution.command);
-    expect(swapped.boards[red]!.activeStackId).toBe(blueActive);
-    expect(swapped.boards[blue]!.activeStackId).toBe(redActive);
+    const moved = run(state, resolution.command);
+    expect(moved.boards[red]).toEqual({
+      activeStackId: blueActive,
+      benchStackIds: [redActive],
+    });
+    expect(moved.boards[blue]!.activeStackId).toBeNull();
     // A target on its own board, not the one it goes to.
     expect(
       resolve(state, across(state, blueActive, red, 'active', blueActive))

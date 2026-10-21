@@ -129,19 +129,27 @@ describe('predictWireCommand', () => {
       boardPlayerId: red,
       slot: 'bench',
     });
-    // Onto their Active, the two trading places; then home again.
-    const swapped = across(view, active.id, red, 'active', {
+    // Onto their Active, which goes to their Bench; then home again, where
+    // their lone Benched Pokémon comes back up.
+    const pushed = across(view, active.id, red, 'active', {
       targetStackId: redActive.id,
     })!;
-    expect(swapped.boards[red]!.activeStackId).toBe(active.id);
-    expect(swapped.boards[blue]!.activeStackId).toBe(redActive.id);
-    expect(swapped.stacks[redActive.id]).toMatchObject({
-      boardPlayerId: blue,
-      slot: 'active',
+    expect(pushed.boards[red]).toEqual({
+      activeStackId: active.id,
+      benchStackIds: [redActive.id],
     });
-    const home = across(swapped, active.id, blue, 'bench')!;
+    expect(pushed.boards[blue]!.activeStackId).toBeNull();
+    expect(pushed.stacks[redActive.id]).toMatchObject({
+      boardPlayerId: red,
+      slot: 'bench',
+    });
+    const home = across(pushed, active.id, blue, 'bench')!;
     expect(home.boards[blue]!.benchStackIds).toEqual([active.id]);
-    expect(home.boards[red]!.activeStackId).toBeNull();
+    expect(home.boards[red]).toEqual({
+      activeStackId: redActive.id,
+      benchStackIds: [],
+    });
+    expect(home.stacks[redActive.id]!.slot).toBe('active');
     // A board that changed since is not predicted.
     expect(
       predictWireCommand(view, {
@@ -158,6 +166,29 @@ describe('predictWireCommand', () => {
         },
       })
     ).toBeNull();
+  });
+
+  it('brings up a lone Benched Pokémon when the Active goes to a pile, as the room will', () => {
+    const benched = predictWireCommand(view, {
+      type: 'MoveCardToPlay',
+      cardId: hand.cards[0]!.id,
+      expectedSourceZoneId: hand.id,
+      boardPlayerId: blue,
+      slot: 'bench',
+    })!;
+    const [lone] = benched.boards[blue]!.benchStackIds;
+    const knockedOut = predictWireCommand(benched, {
+      type: 'MovePlayStackToZone',
+      stackId: active.id,
+      expectedEvolutionCardIds: active.evolutionCards.map((card) => card.id),
+      expectedAttachmentCardIds: active.attachmentCards.map((card) => card.id),
+      destinationZoneId: discard.id,
+    })!;
+    expect(knockedOut.boards[blue]).toEqual({
+      activeStackId: lone,
+      benchStackIds: [],
+    });
+    expect(knockedOut.stacks[lone!]!.slot).toBe('active');
   });
 
   it('moves a card between zones and refuses when the card is not where the command says', () => {

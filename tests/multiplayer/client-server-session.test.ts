@@ -1424,26 +1424,13 @@ describe('client/server multiplayer contract', () => {
     ).toBe(true);
     await owner.factory.flush();
 
+    // The Active gone, the lone Benched Pokémon comes up by itself (PX-060).
     ownerView = owner.session.getSnapshot().view;
     const markedBenchStackId = initialAliases[0]!.stackAlias;
-    if (
-      !ownerView ||
-      ownerView.boards[ownerId]?.activeStackId !== null ||
-      ownerView.boards[ownerId]?.benchStackIds.length !== 1
-    ) {
-      throw new Error('Marker control departure did not leave one bench stack');
-    }
-    expect(
-      owner.session.submit({
-        type: 'MovePlayStack',
-        stackId: markedBenchStackId,
-        expectedSourceSlot: 'bench',
-        expectedActiveStackId: null,
-        expectedBenchStackIds: [markedBenchStackId],
-        destinationSlot: 'active',
-      }).queued
-    ).toBe(true);
-    await owner.factory.flush();
+    expect(ownerView?.boards[ownerId]).toEqual({
+      activeStackId: markedBenchStackId,
+      benchStackIds: [],
+    });
 
     const promoted = captureTransferredPhase();
     expectAliases(promoted, initialAliases);
@@ -1635,8 +1622,8 @@ describe('client/server multiplayer contract', () => {
         expect(serialized).not.toContain(privateId);
       }
     }
-    expect(recipientViews().map((view) => view.revision)).toEqual([20, 20, 20]);
-    expect(room.store.commandCommits).toHaveLength(20);
+    expect(recipientViews().map((view) => view.revision)).toEqual([19, 19, 19]);
+    expect(room.store.commandCommits).toHaveLength(19);
   });
 
   it('projects strict sole-bench q0 markers privately with stable recipient geometry', async () => {

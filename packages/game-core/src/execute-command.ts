@@ -1,9 +1,11 @@
 import { applyEventBatch } from './apply-events.js';
 import type { CommandContext, GameCommand } from './commands.js';
 import { decideCommand, type CommandDecision } from './decide-command.js';
-import type { EventBatch } from './events.js';
+import type { DomainEvent, EventBatch } from './events.js';
 import { assertMatchInvariants } from './invariants.js';
+import type { PlayerId } from './ids.js';
 import type { MatchState } from './model.js';
+import { activeWentAway, loneBenchedPromotions } from './play-stack-boards.js';
 
 export type CommandExecution =
   | {
@@ -53,19 +55,62 @@ const overfills = (current: MatchState, next: MatchState): boolean => {
   return false;
 };
 
+/**
+ * The lone Benched Pokémon that come up into Active Spots the command left
+ * empty (loneBenchedPromotions), as layout events to follow it.
+ */
+const promotionsAfter = (
+  state: MatchState,
+  next: MatchState
+): readonly DomainEvent[] =>
+  loneBenchedPromotions(state.boards, next.boards, (playerId) =>
+    activeWentAway(
+      {
+        activeStackId: state.boards[playerId]?.activeStackId ?? null,
+        window: state.workAreas[playerId]?.attachmentResolution ?? null,
+      },
+      { window: next.workAreas[playerId]?.attachmentResolution ?? null }
+    )
+  ).map(({ boardPlayerId, stackId }) => ({
+    type: 'PlayStackLayoutSet',
+    boardPlayerId: boardPlayerId as PlayerId,
+    expectedActiveStackId: null,
+    expectedBenchStackIds: [stackId],
+    activeStackId: stackId,
+    benchStackIds: [],
+  }));
+
+export interface ExecuteOptions {
+  /**
+   * Bring up a lone Benched Pokémon wherever the command emptied an Active
+   * Spot, in the same batch. The room plays this way; replaying a v1 log
+   * does not, since v1 only did it for an Active benched beside one.
+   * Never for a Solo undo, which puts the table back as it was.
+   */
+  readonly promoteLoneBenched?: boolean;
+}
+
 export const executeCommand = (
   state: MatchState,
   command: GameCommand,
-  context: CommandContext
+  context: CommandContext,
+  options: ExecuteOptions = {}
 ): CommandExecution => {
   assertMatchInvariants(state);
   const decision = decideCommand(state, command, context);
   if (!decision.accepted) return decision;
-  const batch: EventBatch = {
+  let batch: EventBatch = {
     revision: state.revision + 1,
     events: decision.events,
   };
-  const next = applyEventBatch(state, batch);
+  let next = applyEventBatch(state, batch);
+  if (options.promoteLoneBenched && command.type !== 'ApplySoloUndo') {
+    const promotions = promotionsAfter(state, next);
+    if (promotions.length > 0) {
+      batch = { ...batch, events: [...batch.events, ...promotions] };
+      next = applyEventBatch(state, batch);
+    }
+  }
   assertMatchInvariants(next);
   if (overfills(state, next)) {
     return {
