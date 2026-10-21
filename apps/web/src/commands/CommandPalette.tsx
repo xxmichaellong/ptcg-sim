@@ -348,6 +348,21 @@ export const CommandPalette = ({
     return () => window.removeEventListener('keydown', escape, true);
   }, []);
 
+  // The field keeps the focus while it is open: focus that leaves (a
+  // press on the page behind, a script) comes back, so no key reaches the
+  // table under the palette.
+  useEffect(() => {
+    const stray = (event: FocusEvent): void => {
+      // Closing, it hands the focus back to where it was.
+      if (!isCommandPaletteOpen()) return;
+      if (event.target instanceof Node && layer.current?.contains(event.target))
+        return;
+      field.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener('focusin', stray, true);
+    return () => document.removeEventListener('focusin', stray, true);
+  }, []);
+
   // Focus: the field while open; back where it was when closed.
   useLayoutEffect(() => {
     opener.current = document.activeElement;
@@ -700,6 +715,11 @@ export const CommandPalette = ({
       />
       <div
         className="ptcgsim-command-palette"
+        // A press on its rows, headings or edges leaves the focus in the
+        // field (a row's click still runs it).
+        onMouseDown={(event) => {
+          if (event.target !== field.current) event.preventDefault();
+        }}
         role="dialog"
         aria-modal="true"
         aria-label={t`Commands`}

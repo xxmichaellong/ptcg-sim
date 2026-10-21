@@ -364,6 +364,31 @@ describe('CommandPalette', () => {
     expect(isCommandPaletteOpen()).toBe(false);
   });
 
+  it('keeps the focus in its field, whatever is pressed or focused behind it', async () => {
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    await open();
+    const heading = document.querySelector(
+      '.ptcgsim-command-palette__heading'
+    )!;
+    const mousedown = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+    });
+    await act(async () => {
+      heading.dispatchEvent(mousedown);
+    });
+    expect(mousedown.defaultPrevented).toBe(true);
+    await act(async () => outside.focus());
+    expect(document.activeElement).toBe(field());
+    await press({ key: 'Escape' });
+    expect(isCommandPaletteOpen()).toBe(false);
+    // Closed, it lets the focus go.
+    await act(async () => outside.focus());
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
   it('keeps the table from hearing what is typed', async () => {
     await open();
     const heard = vi.fn();
