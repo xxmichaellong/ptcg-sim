@@ -13,9 +13,10 @@ import {
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   layoutTableHand,
+  layoutTablePrizes,
   TABLE_LAYOUT_GEOMETRY_VERSION,
 } from './layout-table.js';
-import type { BoardScene, CardSceneNode } from './model.js';
+import type { BoardScene, CardSceneNode, Rect } from './model.js';
 import { createBoardScene } from './scene.js';
 import { createRendererSpikeView } from './spike-fixture.js';
 
@@ -230,5 +231,184 @@ describe('free arrangement', () => {
         drag: { cardId: card.id, x: 0, y: 0, targetId: handId, index: 4 },
       })
     ).toEqual({ cardId: card.id, targetId: handId, index: 4 });
+  });
+});
+
+describe('the Prizes grid', () => {
+  const blueId = 'zone:spike-blue:prizes';
+  const redId = 'zone:spike-red:prizes';
+  /** A zone's cards in its own order (each painted over the one before). */
+  const inOrder = (scene: BoardScene, zoneId: string) =>
+    scene.cards
+      .filter((card) => card.parentId === zoneId)
+      .sort((left, right) => left.zIndex - right.zIndex);
+  const middle = (rect: Rect) => ({
+    x: rect.x + rect.width / 2,
+    y: rect.y + rect.height / 2,
+  });
+  const indexAt = (
+    scene: BoardScene,
+    cardId: CardSceneNode['id'],
+    zoneId: string,
+    rect: Rect
+  ) =>
+    arrangementIndexAt(scene, cardId, zoneId, middle(rect).x, middle(rect).y);
+  /** The spike table with `count` of Blue's Prizes (more from the deck). */
+  const withPrizes = (count: number): MatchViewState => {
+    const prizes = base.zones[blueId]!;
+    const deck = base.zones['zone:spike-blue:deck']!;
+    const extra = Math.max(0, count - prizes.cards.length);
+    return {
+      ...base,
+      zones: {
+        ...base.zones,
+        [blueId]: {
+          ...prizes,
+          cards: [...prizes.cards, ...deck.cards.slice(0, extra)].slice(
+            0,
+            count
+          ),
+        },
+        [deck.id]: { ...deck, cards: deck.cards.slice(extra) },
+      },
+    } as MatchViewState;
+  };
+
+  it("takes the cell under the pointer, row by row from its owner's top left", () => {
+    const scene = sceneOf(base);
+    const cards = inOrder(scene, blueId);
+    expect(cards).toHaveLength(6);
+    // Two across and three down, filled row by row.
+    expect(cards[1]!.bounds.x).toBeGreaterThan(cards[0]!.bounds.x);
+    expect(cards[1]!.bounds.y).toBeCloseTo(cards[0]!.bounds.y, 6);
+    expect(cards[2]!.bounds.y).toBeGreaterThan(cards[0]!.bounds.y);
+    expect(cards[2]!.bounds.x).toBeCloseTo(cards[0]!.bounds.x, 6);
+    // Each cell is the place it shows, its own included.
+    for (const moving of [cards[0]!, cards[3]!, cards[5]!]) {
+      cards.forEach((card, index) => {
+        expect(indexAt(scene, moving.id, blueId, card.bounds)).toBe(index);
+      });
+    }
+    // Between cells, the nearer one; beyond the grid, the nearest edge cell.
+    const zone = zoneOf(scene, 'prizes');
+    expect(
+      arrangementIndexAt(
+        scene,
+        cards[0]!.id,
+        blueId,
+        zone.bounds.x + zone.bounds.width + 40,
+        zone.bounds.y + zone.bounds.height + 40
+      )
+    ).toBe(5);
+  });
+
+  it("reads the opponent's grid as they see it, turned half way round", () => {
+    const scene = sceneOf(base);
+    const cards = inOrder(scene, redId);
+    // Their first Prize is at the far right of the bottom row on screen.
+    expect(cards[0]!.bounds.x).toBeGreaterThan(cards[1]!.bounds.x);
+    expect(cards[0]!.bounds.y).toBeGreaterThan(cards[2]!.bounds.y);
+    for (const moving of [cards[0]!, cards[4]!]) {
+      cards.forEach((card, index) => {
+        expect(indexAt(scene, moving.id, redId, card.bounds)).toBe(index);
+      });
+    }
+  });
+
+  it('takes its places among the cards left, however many there are', () => {
+    // Three left: the empty cells after them mean the last place.
+    const fewer = sceneOf(withPrizes(3));
+    const left = inOrder(fewer, blueId);
+    expect(left).toHaveLength(3);
+    const zone = zoneOf(fewer, 'prizes');
+    const cells = layoutTablePrizes(zone.contentBounds, 'local', 6);
+    expect(indexAt(fewer, left[0]!.id, blueId, cells[5]!)).toBe(2);
+    expect(indexAt(fewer, left[2]!.id, blueId, cells[1]!)).toBe(1);
+    // Eight: the grid grows a row, and every cell is still a place.
+    const more = sceneOf(withPrizes(8));
+    const all = inOrder(more, blueId);
+    expect(all).toHaveLength(8);
+    all.forEach((card, index) => {
+      expect(indexAt(more, all[7]!.id, blueId, card.bounds)).toBe(index);
+    });
+    // A card from the hand counts every Prize: past the last, the end.
+    const fromHand = inZone(fewer, handId)[0]!;
+    expect(indexAt(fewer, fromHand.id, blueId, cells[5]!)).toBe(3);
+    expect(indexAt(fewer, fromHand.id, blueId, cells[0]!)).toBe(0);
+  });
+
+  it('aims on the tilted table with the pointer, not the card the drop lands on', () => {
+    const scene = sceneOf(base);
+    const cards = inOrder(scene, blueId);
+    // The drop lands on the card painted under the pointer, which may be
+    // shown a cell away from its own place while the gap is open.
+    const landed = middle(cards[1]!.bounds);
+    expect(
+      arrangementIndexAt(
+        scene,
+        cards[0]!.id,
+        blueId,
+        landed.x,
+        landed.y,
+        middle(cards[4]!.bounds)
+      )
+    ).toBe(4);
+  });
+
+  it('reflows the grid round the gap, row by row', () => {
+    const scene = sceneOf(base);
+    const cards = inOrder(scene, blueId);
+    const cells = cards.map((card) => card.bounds);
+    const placed =
+      (offsets: ReturnType<typeof arrangementOffsets>) =>
+      (card: CardSceneNode) => {
+        const offset = offsets.get(card.id) ?? { x: 0, y: 0 };
+        return { x: card.bounds.x + offset.x, y: card.bounds.y + offset.y };
+      };
+    // The first Prize held over the fourth cell: the three after it move
+    // back a cell each (the second up a row), the last two stay.
+    const forward = placed(
+      arrangementOffsets(scene, {
+        cardId: cards[0]!.id,
+        targetId: blueId,
+        index: 3,
+      })
+    );
+    [1, 2, 3].forEach((position) => {
+      expect(forward(cards[position]!).x).toBeCloseTo(
+        cells[position - 1]!.x,
+        6
+      );
+      expect(forward(cards[position]!).y).toBeCloseTo(
+        cells[position - 1]!.y,
+        6
+      );
+    });
+    [4, 5].forEach((position) => {
+      expect(forward(cards[position]!)).toEqual({
+        x: cells[position]!.x,
+        y: cells[position]!.y,
+      });
+    });
+    // The opponent's last Prize held over their first cell: every other
+    // moves on a cell in their own order.
+    const red = inOrder(scene, redId);
+    const backward = placed(
+      arrangementOffsets(scene, {
+        cardId: red[5]!.id,
+        targetId: redId,
+        index: 0,
+      })
+    );
+    [0, 1, 2, 3, 4].forEach((position) => {
+      expect(backward(red[position]!).x).toBeCloseTo(
+        red[position + 1]!.bounds.x,
+        6
+      );
+      expect(backward(red[position]!).y).toBeCloseTo(
+        red[position + 1]!.bounds.y,
+        6
+      );
+    });
   });
 });

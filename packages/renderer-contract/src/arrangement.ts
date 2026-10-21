@@ -3,6 +3,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 import { containsPoint } from './geometry.js';
 import {
   layoutTableHand,
+  layoutTablePrizes,
   layoutTableRow,
   TABLE_LAYOUT_GEOMETRY_VERSION,
 } from './layout-table.js';
@@ -16,16 +17,20 @@ import type {
 
 /**
  * Free arrangement: where order carries no game meaning -- a hand, the
- * bench, the loose board -- a card goes exactly where it is put, as on a
- * real table. A drop into one of these zones takes its place from the
- * pointer, and while the card is held the zone opens a gap there.
+ * bench, the loose board, the Prizes -- a card goes exactly where it is
+ * put, as on a real table. A drop into one of these zones takes its place
+ * from the pointer, and while the card is held the zone opens a gap there.
  *
  * Indices count the zone's own order (its first card is 0, whichever way
  * its owner's half is turned) among the items that stay: a card moved
  * within its zone is not counted, which is what the game's moves expect.
+ *
+ * A row's place is worked out across it; the Prizes' grid (filled row by
+ * row from its owner's top left, `layoutTablePrizes`) takes the cell under
+ * the pointer, and its other cards reflow around the gap in that order.
  */
 
-const ARRANGED_KINDS = new Set(['hand', 'board', 'bench']);
+const ARRANGED_KINDS = new Set(['hand', 'board', 'bench', 'prizes']);
 
 /** One thing in a row: a card, or a benched Pokémon with what it holds. */
 interface RowItem {
@@ -95,6 +100,23 @@ const rowItems = (
   sourceCardId: ViewCardId
 ): RowItem[] => {
   const source = scene.cards.find((card) => card.id === sourceCardId);
+  if (zone.kind === 'prizes') {
+    // A grid's order is its own (row by row), not across the screen: a
+    // zone's cards are painted in it, one above the next.
+    return scene.cards
+      .filter(
+        (card) =>
+          card.parentId === zone.id &&
+          card.renderKey !== null &&
+          card.id !== sourceCardId
+      )
+      .sort((left, right) => left.zIndex - right.zIndex)
+      .map((card) => ({
+        key: String(card.id),
+        cardIds: [card.id],
+        rect: card.bounds,
+      }));
+  }
   const items =
     zone.kind === 'bench'
       ? benchItems(scene, zone).filter(
@@ -120,23 +142,62 @@ const rowItems = (
   );
 };
 
+/** The Prizes' cells for `count` cards, as the scene lays them out. */
+const prizeCells = (zone: ZoneSceneNode, count: number): Rect[] =>
+  layoutTablePrizes(
+    zone.contentBounds,
+    zone.side === 'opponent' ? 'opponent' : 'local',
+    count
+  );
+
+/**
+ * The cell nearest a point: the one it is in, within the grid (cells are
+ * alike and evenly spaced, so the nearest centre is the cell's own), else
+ * the closest -- past the last card, the last place.
+ */
+const nearestCell = (cells: readonly Rect[], x: number, y: number): number => {
+  let nearest = 0;
+  let distance = Infinity;
+  cells.forEach((cell, index) => {
+    const next = Math.hypot(
+      cell.x + cell.width / 2 - x,
+      cell.y + cell.height / 2 - y
+    );
+    if (next < distance) {
+      nearest = index;
+      distance = next;
+    }
+  });
+  return nearest;
+};
+
 /**
  * Where among the zone's items a card dropped at (x, y) goes, or null when
- * the zone keeps no order a player sets (a pile, the Active Spot, Prizes).
+ * the zone keeps no order a player sets (a pile, the Active Spot).
+ *
+ * On the tilted table (x, y) is where the drop lands on the card under the
+ * pointer, which may be painted aside from its place to open a gap; `aim`
+ * is the point on the mat under the pointer itself. A row compares the
+ * point with its cards' middles, which reads the same either way; a grid
+ * takes the cell the pointer is over, so it needs `aim`.
  */
 export const arrangementIndexAt = (
   scene: BoardScene,
   sourceCardId: ViewCardId,
   targetId: string | null | undefined,
   x: number,
-  _y: number
+  y: number,
+  aim?: { readonly x: number; readonly y: number }
 ): number | null => {
   const zone = arrangedZone(scene, targetId);
   if (!zone) return null;
+  const items = rowItems(scene, zone, sourceCardId);
+  if (zone.kind === 'prizes') {
+    const point = aim ?? { x, y };
+    return nearestCell(prizeCells(zone, items.length + 1), point.x, point.y);
+  }
   const forward = zone.side === 'local' ? 1 : -1;
-  return rowItems(scene, zone, sourceCardId).filter(
-    (item) => forward * (centreX(item.rect) - x) < 0
-  ).length;
+  return items.filter((item) => forward * (centreX(item.rect) - x) < 0).length;
 };
 
 /** A card being put into a place: held over a zone, or just let go there. */
@@ -191,6 +252,20 @@ export const arrangementOffsets = (
   const count = items.length + 1;
   const slotOf = (position: number) =>
     position < index ? position : position + 1;
+  if (zone.kind === 'prizes') {
+    // The grid as it will be: each card one cell on from the gap onwards.
+    const cells = prizeCells(zone, count);
+    items.forEach((item, position) => {
+      const cell = cells[slotOf(position)];
+      if (!cell) return;
+      for (const cardId of item.cardIds)
+        offsets.set(cardId, {
+          x: cell.x - item.rect.x,
+          y: cell.y - item.rect.y,
+        });
+    });
+    return offsets;
+  }
   if (zone.kind === 'hand' || zone.kind === 'board') {
     const side = zone.side === 'shared' ? 'local' : zone.side;
     const slots = (zone.kind === 'hand' ? layoutTableHand : layoutTableRow)(

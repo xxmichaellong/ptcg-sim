@@ -1547,7 +1547,8 @@ export const BoardSurface = ({
           source.id,
           hit.targetId,
           hit.point.x,
-          hit.point.y
+          hit.point.y,
+          depth.boardPoint(point)
         ),
       };
     }

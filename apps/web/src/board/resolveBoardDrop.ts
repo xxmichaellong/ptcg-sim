@@ -84,10 +84,11 @@ const containsCard = (
 ): boolean => cards.some((card) => card.id === cardId);
 
 /**
- * Zones whose order the player sets freely (arrangement.ts): a hand and the
- * loose board. Piles keep their order; a deck's is hidden.
+ * Zones whose order the player sets freely (arrangement.ts): a hand, the
+ * loose board and the Prizes' grid. Piles keep their order; a deck's is
+ * hidden.
  */
-const ARRANGED_ZONE_KINDS = new Set(['hand', 'board']);
+const ARRANGED_ZONE_KINDS = new Set(['hand', 'board', 'prizes']);
 
 /** The place asked for, where the destination keeps an order a player sets. */
 const placeIn = (

@@ -111,6 +111,45 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('rearranges a Prize card within its grid, and puts one there at a place', () => {
+    const input = fixture();
+    const prizes = input.view.zones['zone:spike-blue:prizes']!;
+    const first = prizes.cards[0]!.id;
+    const drop = (cardId: string, index?: number) =>
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId,
+        targetId: prizes.id,
+        x: 0,
+        y: 0,
+        ...(index === undefined ? {} : { index }),
+      });
+    expect(drop(first, 4)).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCard',
+        cardId: first,
+        expectedSourceZoneId: prizes.id,
+        destinationZoneId: prizes.id,
+        destinationIndex: 4,
+      },
+    });
+    // Its own cell, or no cell: nothing to do.
+    expect(drop(first, 0)).toEqual({ ok: false, reason: 'no_op' });
+    expect(drop(first)).toEqual({ ok: false, reason: 'no_op' });
+    // A card from the hand goes into the cell it is dropped on.
+    const fromHand = input.view.zones['zone:spike-blue:hand']!.cards[0]!.id;
+    expect(drop(fromHand, 2)).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MoveCard',
+        expectedSourceZoneId: 'zone:spike-blue:hand',
+        destinationZoneId: prizes.id,
+        destinationIndex: 2,
+      },
+    });
+  });
+
   it('resolves active, bench, and existing-stack play targets', () => {
     const input = fixture();
     const card = localHandCard(input);
