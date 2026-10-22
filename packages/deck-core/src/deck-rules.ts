@@ -131,8 +131,10 @@ export interface DeckCheck {
   readonly total: number;
 }
 
+// By type ("Basic Fire Energy") or by its symbol, as Pokémon TCG Live
+// writes it ("Basic {R} Energy").
 const BASIC_ENERGY_NAME =
-  /^(?:basic )?(?:grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy) energy$/u;
+  /^(?:basic )?(?:grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy|\{[grwlpfdmy]\}) energy$/u;
 
 /**
  * Basic Energy has no copy limit. A catalogued card says which it is; a card

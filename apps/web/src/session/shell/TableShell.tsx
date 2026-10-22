@@ -1,11 +1,12 @@
 import { useLingui } from '@lingui/react/macro';
-import { tableRailWidth } from '@ptcgsim/renderer-contract';
+import { APP_BAR_INSET_PX, tableRailWidth } from '@ptcgsim/renderer-contract';
 import {
   createContext,
   useContext,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type ReactNode,
   type RefObject,
@@ -18,6 +19,7 @@ import {
 import { usePageDirection } from '../../i18n/direction.js';
 import '../../design/panel-controls.css';
 import type { DockSlide } from './dock-slide.js';
+import { useAppBarReserve } from './AppMenu.js';
 import { useExitGhost } from './exit-ghost.js';
 import './table-shell.css';
 
@@ -167,6 +169,11 @@ export const TableBanner = ({
  * when `seam` (its height as a share of the window) is given, so the rail
  * stays in reach, or the middle of the window.
  */
+/** The upper area ends this far above the seam (table-shell.css). */
+const UPPER_AREA_SEAM_GAP_PX = 24;
+/** Between the app bar and what the table centres below it. */
+const CENTRE_BAR_GAP_PX = 8;
+
 export const TableCentre = ({
   seam,
   children,
@@ -192,15 +199,63 @@ export const TableCentre = ({
     paint();
     return slide?.subscribe(paint);
   }, [docked, slide]);
+  // Clear of the app bar where the two would meet (a phone, a narrow
+  // window), and above the seam where it fits there; otherwise over the
+  // whole table. The bar's corner is the one the table keeps for it.
+  const bar = useAppBarReserve();
+  const [placement, setPlacement] = useState<{
+    readonly fitsAbove: boolean;
+    readonly top?: number;
+  }>({ fitsAbove: true });
+  useLayoutEffect(() => {
+    const element = ref.current;
+    const child = element?.firstElementChild;
+    if (!element || !(child instanceof HTMLElement)) return;
+    const check = (): void => {
+      const barRight = element.getBoundingClientRect().right - APP_BAR_INSET_PX;
+      const card = child.getBoundingClientRect();
+      const top =
+        card.left < barRight && barRight - bar.width < card.right
+          ? APP_BAR_INSET_PX + bar.height + CENTRE_BAR_GAP_PX
+          : undefined;
+      const padding = Number.parseFloat(
+        getComputedStyle(element).paddingBottom
+      );
+      const room =
+        seam === undefined
+          ? Number.POSITIVE_INFINITY
+          : window.innerHeight * seam -
+            UPPER_AREA_SEAM_GAP_PX -
+            (top ?? padding) -
+            padding;
+      const fitsAbove = child.offsetHeight <= room;
+      setPlacement((current) =>
+        current.fitsAbove === fitsAbove && current.top === top
+          ? current
+          : { fitsAbove, ...(top === undefined ? {} : { top }) }
+      );
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(child);
+    window.addEventListener('resize', check);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', check);
+    };
+  }, [seam, bar]);
   return (
     <div
       ref={ref}
       className="ptcgsim-table-centre"
-      data-area={seam === undefined ? undefined : 'upper'}
+      data-area={
+        seam === undefined || !placement.fitsAbove ? undefined : 'upper'
+      }
       style={
-        seam === undefined
-          ? undefined
-          : ({ '--table-seam': String(seam) } as CSSProperties)
+        {
+          ...(seam === undefined ? {} : { '--table-seam': String(seam) }),
+          ...(placement.top === undefined ? {} : { paddingTop: placement.top }),
+        } as CSSProperties
       }
     >
       {children}

@@ -324,6 +324,15 @@ describe('deck rules', () => {
         image: 'x',
       })
     ).toBe(true);
+    // Pokémon TCG Live writes Basic Energy by its symbol.
+    expect(
+      isBasicEnergy({
+        id: 'custom:r',
+        name: 'Basic {R} Energy',
+        category: 'Energy',
+        image: 'x',
+      })
+    ).toBe(true);
     expect(
       isBasicEnergy({
         id: 'custom:y',

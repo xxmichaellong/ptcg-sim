@@ -179,6 +179,36 @@ test.describe('on a phone', () => {
     await expect(menu.locator('#deckImportButton')).toBeVisible();
     await expect(menu.locator('#settingsButton')).toBeVisible();
   });
+
+  for (const [width, height] of [
+    [360, 760],
+    [375, 667],
+  ] as const) {
+    test(`the welcome card leaves the bar clear at ${String(width)}x${String(height)}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/');
+      await expect(
+        page.locator(
+          '[data-app-route="remote-room"][data-session-phase="ready"]'
+        )
+      ).toBeVisible({ timeout: 30_000 });
+      const welcome = page.locator('.table-welcome');
+      await expect(welcome).toBeVisible();
+      expect(
+        overlaps(
+          await box(welcome),
+          await box(page.locator('.ptcgsim-app-bar'))
+        )
+      ).toBe(false);
+      // The menu answers its own button, not the card's close.
+      await page.locator('#appMenuButton').tap();
+      await expect(
+        page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
+      ).toBeVisible();
+    });
+  }
 });
 
 test('a zone’s hover name is centred, but an empty deck’s sits under its +', async ({
