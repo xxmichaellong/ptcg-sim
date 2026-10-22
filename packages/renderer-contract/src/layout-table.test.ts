@@ -516,6 +516,70 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     expect(box(rowed, 'hand').width).toBeGreaterThan(300);
   });
 
+  it('never puts the far markers or Lost Zone under the Stadium with the bar', () => {
+    const under = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
+      piece: 'markers' | 'lostZone'
+    ): number => {
+      const far = snapshot.players.find(
+        (player) => player.physicalSide === 'upper'
+      )!;
+      const rect =
+        piece === 'markers'
+          ? far.extras?.markers
+          : far.regions.find((region) => region.kind === 'lostZone')!
+              .physicalDeclaredBounds;
+      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+      if (!rect) return 0;
+      return (
+        Math.max(
+          0,
+          Math.min(rect.x + rect.width, stadium.x + stadium.width) -
+            Math.max(rect.x, stadium.x)
+        ) *
+        Math.max(
+          0,
+          Math.min(rect.y + rect.height, stadium.y + stadium.height) -
+            Math.max(rect.y, stadium.y)
+        )
+      );
+    };
+    // Where the bar shrank the far cards, the staging area came out from
+    // under the Stadium and the pieces beside the prizes went in (an iPad
+    // upright: the VSTAR marker, a live toggle, wholly under it).
+    for (let width = 560; width <= 1120; width += 40) {
+      for (const height of [632, 712, 760, 1024]) {
+        for (const lowerShare of [0.54, 0.66]) {
+          for (const touch of [false, true]) {
+            for (const markers of [0, 1]) {
+              for (const lost of [false, true]) {
+                const state = stateAt(width, height, {
+                  shellMode: 'fullscreen',
+                  vertical: tableVerticalLayout(lowerShare),
+                  seamBandPx: touch ? 46 : 42,
+                  ...(markers ? { oncePerGameMarkers: markers } : {}),
+                  ...(lost ? {} : { hideEmptyLostZone: true }),
+                });
+                const slots = width < 600 ? 3 : 6;
+                const button = touch ? 44 : 36;
+                const barred = createTableLayoutSnapshot({
+                  ...state,
+                  appBarPx: {
+                    width: slots * button + (slots - 1) * 4 + 6,
+                    height: button + 6,
+                  },
+                });
+                const at = `${String(width)}x${String(height)} split ${String(lowerShare)} ${touch ? 'touch' : 'mouse'} markers ${String(markers)} lost ${String(lost)}`;
+                expect(under(barred, 'markers'), at).toBeLessThan(0.5);
+                expect(under(barred, 'lostZone'), at).toBeLessThan(0.5);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('refuses a bar of no sensible size', () => {
     expect(() =>
       createTableLayoutSnapshot(

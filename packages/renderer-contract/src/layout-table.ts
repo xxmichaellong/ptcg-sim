@@ -234,6 +234,12 @@ interface HalfOptions {
    */
   readonly boardEndReservePx?: number;
   /**
+   * `false`: the markers and Lost Zone keep their old places rather than
+   * sit beside the prizes, where the Stadium would lie over them (its
+   * reserve not kept: the staging area would be under a card wide).
+   */
+  readonly piecesBesidePrizes?: boolean;
+  /**
    * The Lost Zone is on the table (not optional-and-hidden): it sits beside
    * the prizes toward the centre line rather than at the end of the outer
    * column.
@@ -318,6 +324,8 @@ const STADIUM_CLEARANCE_PX = 8;
 const FAR_REFIT_FLOOR = 0.8;
 /** The far half's refit tries its fits this far apart, then refines. */
 const FAR_REFIT_STEP = 0.01;
+/** Its first step, just below the fit found, is tried this finely. */
+const FAR_REFIT_FINE_STEPS = 10;
 /**
  * More of the far half under the Stadium than without the app bar, in
  * px², that is not worth refitting it for (a sliver).
@@ -435,8 +443,11 @@ const layoutHalf = (
   const piecesWidth =
     (options.lostZoneBeside ? pileWidth + gap : 0) +
     (markersBeside ? markerWidth + gap : 0);
+  // Nor where the Stadium would lie over them (`piecesBesidePrizes`).
   const besidePrizes =
-    piecesWidth > 0 && boardEnd - middleLeft - piecesWidth >= pileWidth;
+    options.piecesBesidePrizes !== false &&
+    piecesWidth > 0 &&
+    boardEnd - middleLeft - piecesWidth >= pileWidth;
   let boardLeft = middleLeft;
   let lostZone = pileAt(2);
   let markers: Rect | undefined;
@@ -1355,6 +1366,31 @@ export const createTableLayoutSnapshot = (
         width: stadiumWidth,
         height: stadiumHeight,
       };
+      // How much of the far half's board, and its markers, the Stadium
+      // lies over.
+      const coveredBy = (built: typeof far): number => {
+        let area = 0;
+        const markers = built.player.extras?.markers;
+        for (const box of [
+          ...built.player.regions
+            .filter((region) => region.kind !== 'hand')
+            .map((region) => region.physicalDeclaredBounds),
+          ...(markers ? [markers] : []),
+        ]) {
+          area +=
+            Math.max(
+              0,
+              Math.min(box.x + box.width, placed.x + placed.width) -
+                Math.max(box.x, placed.x)
+            ) *
+            Math.max(
+              0,
+              Math.min(box.y + box.height, placed.y + placed.height) -
+                Math.max(box.y, placed.y)
+            );
+        }
+        return area;
+      };
       // The far half's staging area lies beside its Active on the Stadium's
       // side of the table; it stops short of the Stadium instead of running
       // under it (layoutHalf keeps it whole where that would leave it less
@@ -1376,32 +1412,35 @@ export const createTableLayoutSnapshot = (
           ...farFit,
           boardEndReservePx: reserve,
         });
+        // The markers and Lost Zone beside the prizes are never under it (a
+        // press there would turn a marker over): they go back to their old
+        // places, and the staging area, which may run under its edge, takes
+        // their room.
+        const markersBox = far.player.extras?.markers;
+        const lostZoneBox = far.player.regions.find(
+          (region) => region.kind === 'lostZone'
+        )?.physicalDeclaredBounds;
+        if (
+          [markersBox, lostZoneBox].some(
+            (box) =>
+              box !== undefined &&
+              box.x < placed.x + placed.width &&
+              placed.x < box.x + box.width &&
+              box.y < placed.y + placed.height &&
+              placed.y < box.y + box.height
+          )
+        ) {
+          far = buildPlayer(semantics.players[1], frames.upper, {
+            ...farFit,
+            boardEndReservePx: reserve,
+            piecesBesidePrizes: false,
+          });
+        }
       }
       const staging =
         far.player.regions.find((region) => region.kind === 'board')
           ?.physicalDeclaredBounds.width ?? Infinity;
-      // How much of the far half's board, and its markers, the Stadium
-      // lies over.
-      let covered = 0;
-      const markers = far.player.extras?.markers;
-      for (const box of [
-        ...far.player.regions
-          .filter((region) => region.kind !== 'hand')
-          .map((region) => region.physicalDeclaredBounds),
-        ...(markers ? [markers] : []),
-      ]) {
-        covered +=
-          Math.max(
-            0,
-            Math.min(box.x + box.width, placed.x + placed.width) -
-              Math.max(box.x, placed.x)
-          ) *
-          Math.max(
-            0,
-            Math.min(box.y + box.height, placed.y + placed.height) -
-              Math.max(box.y, placed.y)
-          );
-      }
+      const covered = coveredBy(far);
       return {
         near,
         far,
@@ -1458,11 +1497,20 @@ export const createTableLayoutSnapshot = (
         let fallback = split;
         let above = scale;
         let found: number | undefined;
+        // Finely just below the fit found, where a clear window can be
+        // narrower than a step, then a step at a time.
+        const tries: number[] = [];
+        for (let fine = 1; fine < FAR_REFIT_FINE_STEPS; fine += 1) {
+          tries.push(scale - (FAR_REFIT_STEP * fine) / FAR_REFIT_FINE_STEPS);
+        }
         for (
           let farScale = scale - FAR_REFIT_STEP;
           farScale >= lowest - 1e-9;
           farScale -= FAR_REFIT_STEP
         ) {
+          tries.push(farScale);
+        }
+        for (const farScale of tries) {
           const candidate = splitAt(scale, true, farScale);
           if (clear(candidate)) {
             found = farScale;
@@ -1472,7 +1520,7 @@ export const createTableLayoutSnapshot = (
           if (
             (candidate.fits || !unfitted.fits) &&
             keepsRow(candidate) &&
-            candidate.covered < fallback.covered
+            candidate.covered < fallback.covered - STADIUM_OVERLAP_SLACK_PX2
           ) {
             fallback = candidate;
           }

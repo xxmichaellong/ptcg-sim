@@ -86,7 +86,10 @@ that clears it (its markers counted, its markers' row kept, its staging
 area still holding the Stadium), its portrait mat too, the near half kept
 as it was. Shorter is not steadily clearer, so the fits are tried downward
 and the first clear one refined; where none is, the far half takes the
-one covered least that is otherwise as good.
+one covered least that is otherwise as good. The markers and Lost Zone
+beside the far prizes are never under the Stadium (a press there would turn
+a marker over): where they would be, they keep their old places and the
+staging area, which may run under its edge, takes their room.
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 
