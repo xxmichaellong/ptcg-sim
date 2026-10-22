@@ -1474,6 +1474,10 @@ export const createTableLayoutSnapshot = (
         covered,
         // The markers were moved off the prizes, from under the Stadium.
         markersMoved,
+        // The far hand as it was with them still beside the prizes.
+        besideHand:
+          stagingFar.player.regions.find((region) => region.kind === 'hand')
+            ?.physicalDeclaredBounds.width ?? 0,
       };
     };
     let scale = 1;
@@ -1520,15 +1524,19 @@ export const createTableLayoutSnapshot = (
       const handOf = (candidate: typeof split): number =>
         candidate.far.player.regions.find((region) => region.kind === 'hand')
           ?.physicalDeclaredBounds.width ?? 0;
+      // Whether moving the markers cramped the hand by a fifth, judged once
+      // from the fit before they moved (judged per candidate, it became a
+      // target the search shrank the far half to reach).
+      const handCost =
+        unfitted.markersMoved && unfitted.besideHand > handOf(unfitted) * 1.25;
       // By the prizes in fact (a fit whose markers never fit there moved
       // none, but keeps none there either), and only where moving them
-      // cost the far half: a smaller Active, or a hand cramped by a fifth.
+      // cost the far half: a smaller Active, or that hand.
       const keepsMarkers = (candidate: typeof split): boolean =>
         !unfitted.markersMoved ||
         (candidate.far.player.extras?.markers !== undefined &&
           keepsActive(candidate) &&
-          (activeOf(candidate) > activeOf(unfitted) + 0.5 ||
-            handOf(candidate) > handOf(unfitted) * 1.25));
+          (activeOf(candidate) > activeOf(unfitted) + 0.5 || handCost));
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
         candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&

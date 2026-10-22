@@ -671,7 +671,8 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       height: number,
       touch: boolean,
       lowerShare: number,
-      markers: number
+      markers: number,
+      lost: boolean
     ) =>
       createTableLayoutSnapshot(
         stateAt(width, height, {
@@ -680,6 +681,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
           vertical: tableVerticalLayout(lowerShare),
           seamBandPx: touch ? 46 : 42,
           oncePerGameMarkers: markers,
+          ...(lost ? {} : { hideEmptyLostZone: true }),
         })
       )
         .players.find((player) => player.physicalSide === 'upper')!
@@ -687,21 +689,29 @@ describe('table layout: the app bar corner (ADR-036)', () => {
         .physicalDeclaredBounds.height;
     // A refit's narrow window missed on one pixel took a fifth off the far
     // Active there.
-    for (const [width, height, touch, lowerShare, markers] of [
-      [632, 640, false, 0.54, 2],
-      [703, 800, false, 0.6, 2],
-      [730, 844, true, 0.54, 2],
+    for (const [width, height, touch, lowerShare, markers, lost] of [
+      [632, 640, false, 0.54, 2, true],
+      [703, 800, false, 0.6, 2, true],
+      [730, 844, true, 0.54, 2, true],
+      // The app's own default: one marker, the empty Lost Zone hidden.
+      [940, 900, false, 0.54, 1, false],
+      [964, 932, false, 0.54, 1, false],
     ] as const) {
-      const here = active(width, height, touch, lowerShare, markers);
+      const here = active(width, height, touch, lowerShare, markers, lost);
       for (const beside of [width - 1, width + 1]) {
         expect(
           here,
           `${String(width)}x${String(height)} beside ${String(beside)}`
         ).toBeGreaterThan(
-          0.92 * active(beside, height, touch, lowerShare, markers)
+          0.92 * active(beside, height, touch, lowerShare, markers, lost)
         );
       }
     }
+    // Nor does the far Active shrink as the window widens (a hand target
+    // the search reached by shrinking it).
+    expect(active(961, 900, false, 0.54, 1, false)).toBeGreaterThan(
+      0.97 * active(929, 900, false, 0.54, 1, false)
+    );
   });
 
   it('refuses a bar of no sensible size', () => {
