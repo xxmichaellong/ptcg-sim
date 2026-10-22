@@ -370,37 +370,37 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# carta Radiante (máx. 1).} many {# de cartas Radiantes (máx. 1).} other {# cartas Radiantes (máx. 1).}}"
   },
-  "JOORX1": {
-    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
-    "translation": "{count, plural, one {Descartar sua mão e comprar # carta} many {Descartar sua mão e comprar # de cartas} other {Descartar sua mão e comprar # cartas}}"
+  "-gAzkm": {
+    "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
+    "translation": "{count, plural, one {Descartar a mão e comprar # carta} other {Descartar a mão e comprar # cartas}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {Comprar # carta} many {Comprar # de cartas} other {Comprar # cartas}}"
   },
-  "THq5XP": {
-    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
-    "translation": "{count, plural, one {Ver a carta do fundo do baralho dele} many {Ver as # de cartas do fundo do baralho dele} other {Ver as # cartas do fundo do baralho dele}}"
+  "UJXyU7": {
+    "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
+    "translation": "{count, plural, one {Ver a carta do fundo} other {Ver as # cartas do fundo}}"
   },
-  "zwThBB": {
-    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
-    "translation": "{count, plural, one {Ver a carta do fundo do seu baralho} many {Ver as # de cartas do fundo do seu baralho} other {Ver as # cartas do fundo do seu baralho}}"
+  "Obr1Rm": {
+    "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
+    "translation": "{count, plural, one {Ver a carta do fundo do oponente} other {Ver as # cartas do fundo do oponente}}"
   },
-  "TlYUk-": {
-    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
-    "translation": "{count, plural, one {Ver a carta do topo do baralho dele} many {Ver as # de cartas do topo do baralho dele} other {Ver as # cartas do topo do baralho dele}}"
+  "_GnfAn": {
+    "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
+    "translation": "{count, plural, one {Ver a carta do topo do oponente} other {Ver as # cartas do topo do oponente}}"
   },
-  "rQTxpl": {
-    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
-    "translation": "{count, plural, one {Ver a carta do topo do seu baralho} many {Ver as # de cartas do topo do seu baralho} other {Ver as # cartas do topo do seu baralho}}"
+  "CtVIm7": {
+    "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
+    "translation": "{count, plural, one {Ver a carta do topo} other {Ver as # cartas do topo}}"
   },
-  "lxhla5": {
-    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
-    "translation": "{count, plural, one {Colocar sua mão no fundo e comprar # carta} many {Colocar sua mão no fundo e comprar # de cartas} other {Colocar sua mão no fundo e comprar # cartas}}"
+  "-r4674": {
+    "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
+    "translation": "{count, plural, one {Embaralhar a mão no baralho e comprar # carta} other {Embaralhar a mão no baralho e comprar # cartas}}"
   },
-  "e7Cj3g": {
-    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
-    "translation": "{count, plural, one {Embaralhar sua mão no baralho e comprar # carta} many {Embaralhar sua mão no baralho e comprar # de cartas} other {Embaralhar sua mão no baralho e comprar # cartas}}"
+  "aN0Z_E": {
+    "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
+    "translation": "{count, plural, one {Embaralhar a mão no fundo e comprar # carta} other {Embaralhar a mão no fundo e comprar # cartas}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1603,10 +1603,6 @@
     "message": "Clear log",
     "translation": "Limpar registro"
   },
-  "CE38Hc": {
-    "message": "Clear the log",
-    "translation": "Limpar o registro"
-  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "Clique em um atalho para alterá-lo."
@@ -1638,10 +1634,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Fechar pop-ups"
-  },
-  "1e8UrT": {
-    "message": "Close the Log",
-    "translation": "Fechar o registro"
   },
   "HLSSB8": {
     "message": "code or name",
@@ -1803,10 +1795,6 @@
     "message": "Damage counter",
     "translation": "Contador de dano"
   },
-  "-BtPPD": {
-    "message": "Damage on the Pokémon",
-    "translation": "Dano no Pokémon"
-  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Modo escuro"
@@ -1950,9 +1938,9 @@
     "context": "shortcut key caption",
     "translation": "Descartar tudo"
   },
-  "p-Tj30": {
-    "message": "Discard everything on your playboard",
-    "translation": "Descartar tudo do seu tabuleiro"
+  "FQxE2Y": {
+    "message": "Discard all on playboard",
+    "translation": "Descartar tudo da mesa"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -1963,14 +1951,14 @@
     "context": "shortcut key caption",
     "translation": "Descartar mão"
   },
+  "Nx52uj": {
+    "message": "Discard hand and draw…",
+    "translation": "Descartar a mão e comprar…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
     "translation": "Pilha de descarte"
-  },
-  "nV_lSY": {
-    "message": "Discard your hand and draw…",
-    "translation": "Descartar sua mão e comprar…"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2008,10 +1996,6 @@
     "message": "Download the list instead.",
     "translation": "Baixe a lista em vez disso."
   },
-  "-P1EvR": {
-    "message": "Download the log",
-    "translation": "Baixar o registro"
-  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2045,6 +2029,10 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
+    "translation": "Quantas cartas comprar?"
+  },
+  "SP_Sjy": {
+    "message": "Draw how many?",
     "translation": "Quantas cartas comprar?"
   },
   "IsvGW6": {
@@ -2131,10 +2119,6 @@
   "u2fAme": {
     "message": "Enter a number",
     "translation": "Digite um número"
-  },
-  "-cj58y": {
-    "message": "Enter a number, then press Enter.",
-    "translation": "Digite um número e pressione Enter."
   },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
@@ -2314,13 +2298,13 @@
     "message": "Flip coin",
     "translation": "Lançar moeda"
   },
-  "ogz86X": {
-    "message": "Flip the other seat's coin",
-    "translation": "Lançar a moeda do outro assento"
-  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "Virar a mesa"
+  },
+  "CK2j9j": {
+    "message": "Flip their coin",
+    "translation": "Lançar a moeda do oponente"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2859,6 +2843,14 @@
     "context": "shortcut key caption",
     "translation": "Ver"
   },
+  "f55U3C": {
+    "message": "Look at bottom of deck…",
+    "translation": "Olhar o fundo do baralho…"
+  },
+  "RY4IrC": {
+    "message": "Look at bottom of their deck…",
+    "translation": "Olhar o fundo do baralho do oponente…"
+  },
   "Q1s-WM": {
     "message": "Look at how many cards?",
     "translation": "Olhar quantas cartas?"
@@ -2883,25 +2875,17 @@
     "message": "Look at the bottom cards",
     "translation": "Ver as cartas de baixo"
   },
-  "A-bTC5": {
-    "message": "Look at the bottom of their deck…",
-    "translation": "Ver o fundo do baralho dele…"
-  },
-  "HlUAnV": {
-    "message": "Look at the bottom of your deck…",
-    "translation": "Ver o fundo do seu baralho…"
-  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Ver as cartas de cima"
   },
-  "HgXGgm": {
-    "message": "Look at the top of their deck…",
-    "translation": "Ver o topo do baralho dele…"
+  "bIo9OM": {
+    "message": "Look at top of deck…",
+    "translation": "Olhar o topo do baralho…"
   },
-  "Iwo9SE": {
-    "message": "Look at the top of your deck…",
-    "translation": "Ver o topo do seu baralho…"
+  "dWUxHE": {
+    "message": "Look at top of their deck…",
+    "translation": "Olhar o topo do baralho do oponente…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2975,13 +2959,13 @@
     ],
     "translation": "Marcar como não usada"
   },
-  "Z4ljQt": {
-    "message": "Mark the GX attack unused",
-    "translation": "Marcar o ataque GX como não usado"
+  "IHU0N1": {
+    "message": "Mark GX attack unused",
+    "translation": "Marcar ataque de GX como não usado"
   },
-  "JQW_WK": {
-    "message": "Mark the VSTAR Power unused",
-    "translation": "Marcar o Poder V-ASTRO como não usado"
+  "IQ2DXR": {
+    "message": "Mark VSTAR Power unused",
+    "translation": "Marcar Poder V-ASTRO como não usado"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -3079,6 +3063,14 @@
     ],
     "translation": "Mover {cardName} para"
   },
+  "MnxTQZ": {
+    "message": "Move all on playboard to hand",
+    "translation": "Mover tudo da mesa para a mão"
+  },
+  "DUfTll": {
+    "message": "Move all on playboard to Lost Zone",
+    "translation": "Mover tudo da mesa para a Zona Perdida"
+  },
   "pcSzkk": {
     "message": "Move all to hand",
     "translation": "Mover tudo para a mão"
@@ -3098,10 +3090,6 @@
   "TvEhJE": {
     "message": "Move didn't go through",
     "translation": "A jogada não deu certo"
-  },
-  "iwWOBz": {
-    "message": "Move everything on your playboard to your hand",
-    "translation": "Mover tudo do seu tabuleiro para a sua mão"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3395,6 +3383,10 @@
     "message": "Open file",
     "translation": "Abrir arquivo"
   },
+  "E9wRDu": {
+    "message": "Open log",
+    "translation": "Abrir registro"
+  },
   "F37c1s": {
     "message": "Open Settings",
     "translation": "Abrir configurações"
@@ -3402,10 +3394,6 @@
   "0FO0f7": {
     "message": "Open the deck screen",
     "translation": "Abrir a tela de baralho"
-  },
-  "FzvzJz": {
-    "message": "Open the Log",
-    "translation": "Abrir o registro"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3699,21 +3687,9 @@
     "message": "PTCG-sim tutorial",
     "translation": "Tutorial do PTCG-sim"
   },
-  "rFCOSV": {
-    "message": "Put everything on your playboard in the Lost Zone",
-    "translation": "Colocar tudo do seu tabuleiro na Zona Perdida"
-  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Coloque as peças de Pokémon em uma pilha e as peças de Estádio no Estádio."
-  },
-  "eAnTYw": {
-    "message": "Put your hand on the bottom of your deck and draw…",
-    "translation": "Colocar sua mão no fundo do baralho e comprar…"
-  },
-  "YrhlVT": {
-    "message": "Put your Prizes on the bottom of your deck",
-    "translation": "Colocar suas cartas de Prêmio no fundo do seu baralho"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4131,6 +4107,10 @@
     "message": "Search cards",
     "translation": "Buscar cartas"
   },
+  "2FZsuF": {
+    "message": "Search cards…",
+    "translation": "Buscar cartas…"
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "Buscar em todos os formatos"
@@ -4150,14 +4130,6 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Sintaxe de busca"
-  },
-  "qucaF4": {
-    "message": "Search the cards on the table…",
-    "translation": "Buscar as cartas na mesa…"
-  },
-  "RtNLs_": {
-    "message": "Search your deck",
-    "translation": "Buscar no seu baralho"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4304,10 +4276,6 @@
     "message": "Show one per card",
     "translation": "Mostrar uma por carta"
   },
-  "etmouI": {
-    "message": "Show the card",
-    "translation": "Mostrar a carta"
-  },
   "NQ5xRS": {
     "message": "Show the deck as",
     "translation": "Mostrar o baralho como"
@@ -4358,6 +4326,10 @@
     "message": "Shuffle all into the deck?",
     "translation": "Embaralhar tudo no baralho?"
   },
+  "Ad3M_2": {
+    "message": "Shuffle all on playboard into deck",
+    "translation": "Embaralhar tudo da mesa no baralho"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "Embaralhar tudo no baralho"
@@ -4366,13 +4338,13 @@
     "message": "Shuffle deck",
     "translation": "Embaralhar baralho"
   },
-  "cEnSTR": {
-    "message": "Shuffle everything on your playboard into your deck",
-    "translation": "Embaralhar tudo do seu tabuleiro no seu baralho"
-  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Embaralhar mão no baralho"
+  },
+  "KpMslS": {
+    "message": "Shuffle hand into deck and draw…",
+    "translation": "Embaralhar a mão no baralho e comprar…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4381,6 +4353,10 @@
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
     "translation": "Colocar mão embaixo do baralho"
+  },
+  "8uWf-T": {
+    "message": "Shuffle hand to bottom of deck and draw…",
+    "translation": "Embaralhar a mão no fundo do baralho e comprar…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4399,6 +4375,14 @@
     "message": "Shuffle prizes",
     "translation": "Embaralhar cartas de Prêmio"
   },
+  "pYUbhf": {
+    "message": "Shuffle Prizes",
+    "translation": "Embaralhar cartas de Prêmio"
+  },
+  "nU9Ip_": {
+    "message": "Shuffle Prizes to bottom of deck",
+    "translation": "Embaralhar cartas de Prêmio no fundo do baralho"
+  },
   "SRsSL6": {
     "message": "Shuffle to bottom",
     "translation": "Colocar embaixo do baralho"
@@ -4406,18 +4390,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Colocar no baralho (embaixo)"
-  },
-  "HeR1Qt": {
-    "message": "Shuffle your deck",
-    "translation": "Embaralhar seu baralho"
-  },
-  "KRFctr": {
-    "message": "Shuffle your hand into your deck and draw…",
-    "translation": "Embaralhar sua mão no baralho e comprar…"
-  },
-  "aIML6N": {
-    "message": "Shuffle your Prizes",
-    "translation": "Embaralhar suas cartas de Prêmio"
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
@@ -4873,10 +4845,6 @@
     "message": "Then draw",
     "translation": "Depois compre"
   },
-  "hpAko0": {
-    "message": "Then draw how many cards?",
-    "translation": "Quantas cartas comprar depois?"
-  },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
     "comments": [
@@ -5076,10 +5044,6 @@
     "message": "Try fewer cards.",
     "translation": "Tente com menos cartas."
   },
-  "JaA9mI": {
-    "message": "Try other words, or press Escape to go back.",
-    "translation": "Tente outras palavras ou pressione Esc para voltar."
-  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -5132,17 +5096,9 @@
     "context": "sort cards by",
     "translation": "Tipo"
   },
-  "GgWUew": {
-    "message": "Type a message, then press Enter",
-    "translation": "Digite uma mensagem e pressione Enter"
-  },
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "Digite algo primeiro"
-  },
-  "gu8i-0": {
-    "message": "Type, then press Enter.",
-    "translation": "Digite e pressione Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -5186,6 +5142,10 @@
     "message": "Use default",
     "translation": "Usar padrão"
   },
+  "pEHkP7": {
+    "message": "Use GX attack",
+    "translation": "Usar ataque de GX"
+  },
   "Z4udqe": {
     "message": "Use here",
     "context": "give the keys to this shortcut",
@@ -5199,17 +5159,13 @@
     "message": "Use on {seat}",
     "translation": "Usar em {seat}"
   },
-  "yyidsc": {
-    "message": "Use the GX attack",
-    "translation": "Usar o ataque GX"
-  },
-  "nG8vJk": {
-    "message": "Use the VSTAR Power",
-    "translation": "Usar o Poder V-ASTRO"
-  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Usar esta impressão para {deckCopies} no baralho"
+  },
+  "9c8BhN": {
+    "message": "Use VSTAR Power",
+    "translation": "Usar Poder V-ASTRO"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5273,10 +5229,6 @@
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "Boas-vindas ao PTCG-sim"
-  },
-  "aEcdbE": {
-    "message": "What should {0} do?",
-    "translation": "O que {0} deve fazer?"
   },
   "3ePd3I": {
     "message": "What's new",

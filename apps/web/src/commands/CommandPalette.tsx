@@ -663,15 +663,13 @@ export const CommandPalette = ({
       role="status"
       data-problem={problem ? '' : undefined}
     >
+      {/* The field holds the number, so its question is said here. */}
       {problem ??
-        (asking.kind === 'count'
-          ? t`Enter a number, then press Enter.`
-          : t`Type, then press Enter.`)}
+        (asking.kind === 'count' ? asking.command.count!.label : null)}
     </div>
   ) : rows.length === 0 ? (
     <div className="ptcgsim-command-palette__empty" role="status">
       <strong>{t`No actions match`}</strong>
-      <span>{t`Try other words, or press Escape to go back.`}</span>
     </div>
   ) : sections ? (
     sections.map((section) => (

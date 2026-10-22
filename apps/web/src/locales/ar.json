@@ -370,37 +370,37 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, zero {# بطاقة Radiant (الحد الأقصى 1).} one {بطاقة Radiant واحدة (الحد الأقصى 1).} two {بطاقتا Radiant (الحد الأقصى 1).} few {# بطاقات Radiant (الحد الأقصى 1).} many {# بطاقة Radiant (الحد الأقصى 1).} other {# بطاقة Radiant (الحد الأقصى 1).}}"
   },
-  "JOORX1": {
-    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
-    "translation": "{count, plural, zero {تخلَّ عن يدك واسحب # بطاقة} one {تخلَّ عن يدك واسحب بطاقة} two {تخلَّ عن يدك واسحب بطاقتين} few {تخلَّ عن يدك واسحب # بطاقات} many {تخلَّ عن يدك واسحب # بطاقة} other {تخلَّ عن يدك واسحب # بطاقة}}"
+  "-gAzkm": {
+    "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
+    "translation": "{count, plural, one {تخلص من اليد واسحب بطاقة واحدة} two {تخلص من اليد واسحب بطاقتين} few {تخلص من اليد واسحب # بطاقات} many {تخلص من اليد واسحب # بطاقة} other {تخلص من اليد واسحب # بطاقة}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, zero {اسحب # بطاقة} one {اسحب بطاقة} two {اسحب بطاقتين} few {اسحب # بطاقات} many {اسحب # بطاقة} other {اسحب # بطاقة}}"
   },
-  "THq5XP": {
-    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
-    "translation": "{count, plural, zero {اطّلع على # بطاقة من أسفل مجموعة أوراقه} one {اطّلع على البطاقة السفلى من مجموعة أوراقه} two {اطّلع على البطاقتين السفليتين من مجموعة أوراقه} few {اطّلع على أسفل # بطاقات من مجموعة أوراقه} many {اطّلع على أسفل # بطاقة من مجموعة أوراقه} other {اطّلع على أسفل # بطاقة من مجموعة أوراقه}}"
+  "UJXyU7": {
+    "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
+    "translation": "{count, plural, one {اطلع على البطاقة السفلى} two {اطلع على البطاقتين السفليتين} few {اطلع على أسفل # بطاقات} many {اطلع على أسفل # بطاقة} other {اطلع على أسفل # بطاقة}}"
   },
-  "zwThBB": {
-    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
-    "translation": "{count, plural, zero {اطّلع على # بطاقة من أسفل مجموعة أوراقك} one {اطّلع على البطاقة السفلى من مجموعة أوراقك} two {اطّلع على البطاقتين السفليتين من مجموعة أوراقك} few {اطّلع على أسفل # بطاقات من مجموعة أوراقك} many {اطّلع على أسفل # بطاقة من مجموعة أوراقك} other {اطّلع على أسفل # بطاقة من مجموعة أوراقك}}"
+  "Obr1Rm": {
+    "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
+    "translation": "{count, plural, one {اطلع على بطاقته السفلى} two {اطلع على بطاقتيه السفليتين} few {اطلع على أسفل # بطاقات لديه} many {اطلع على أسفل # بطاقة لديه} other {اطلع على أسفل # بطاقة لديه}}"
   },
-  "TlYUk-": {
-    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
-    "translation": "{count, plural, zero {اطّلع على # بطاقة من أعلى مجموعة أوراقه} one {اطّلع على البطاقة العليا من مجموعة أوراقه} two {اطّلع على البطاقتين العلويتين من مجموعة أوراقه} few {اطّلع على أعلى # بطاقات من مجموعة أوراقه} many {اطّلع على أعلى # بطاقة من مجموعة أوراقه} other {اطّلع على أعلى # بطاقة من مجموعة أوراقه}}"
+  "_GnfAn": {
+    "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
+    "translation": "{count, plural, one {اطلع على بطاقته العليا} two {اطلع على بطاقتيه العلويتين} few {اطلع على أعلى # بطاقات لديه} many {اطلع على أعلى # بطاقة لديه} other {اطلع على أعلى # بطاقة لديه}}"
   },
-  "rQTxpl": {
-    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
-    "translation": "{count, plural, zero {اطّلع على # بطاقة من أعلى مجموعة أوراقك} one {اطّلع على البطاقة العليا من مجموعة أوراقك} two {اطّلع على البطاقتين العلويتين من مجموعة أوراقك} few {اطّلع على أعلى # بطاقات من مجموعة أوراقك} many {اطّلع على أعلى # بطاقة من مجموعة أوراقك} other {اطّلع على أعلى # بطاقة من مجموعة أوراقك}}"
+  "CtVIm7": {
+    "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
+    "translation": "{count, plural, one {اطلع على البطاقة العليا} two {اطلع على البطاقتين العلويتين} few {اطلع على أعلى # بطاقات} many {اطلع على أعلى # بطاقة} other {اطلع على أعلى # بطاقة}}"
   },
-  "lxhla5": {
-    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
-    "translation": "{count, plural, zero {ضع يدك أسفل المجموعة واسحب # بطاقة} one {ضع يدك أسفل المجموعة واسحب بطاقة} two {ضع يدك أسفل المجموعة واسحب بطاقتين} few {ضع يدك أسفل المجموعة واسحب # بطاقات} many {ضع يدك أسفل المجموعة واسحب # بطاقة} other {ضع يدك أسفل المجموعة واسحب # بطاقة}}"
+  "-r4674": {
+    "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
+    "translation": "{count, plural, one {اخلط اليد في الرزمة واسحب بطاقة واحدة} two {اخلط اليد في الرزمة واسحب بطاقتين} few {اخلط اليد في الرزمة واسحب # بطاقات} many {اخلط اليد في الرزمة واسحب # بطاقة} other {اخلط اليد في الرزمة واسحب # بطاقة}}"
   },
-  "e7Cj3g": {
-    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
-    "translation": "{count, plural, zero {اخلط يدك في المجموعة واسحب # بطاقة} one {اخلط يدك في المجموعة واسحب بطاقة} two {اخلط يدك في المجموعة واسحب بطاقتين} few {اخلط يدك في المجموعة واسحب # بطاقات} many {اخلط يدك في المجموعة واسحب # بطاقة} other {اخلط يدك في المجموعة واسحب # بطاقة}}"
+  "aN0Z_E": {
+    "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
+    "translation": "{count, plural, one {اخلط اليد أسفل الرزمة واسحب بطاقة واحدة} two {اخلط اليد أسفل الرزمة واسحب بطاقتين} few {اخلط اليد أسفل الرزمة واسحب # بطاقات} many {اخلط اليد أسفل الرزمة واسحب # بطاقة} other {اخلط اليد أسفل الرزمة واسحب # بطاقة}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1603,10 +1603,6 @@
     "message": "Clear log",
     "translation": "مسح السجل"
   },
-  "CE38Hc": {
-    "message": "Clear the log",
-    "translation": "مسح السجل"
-  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "انقر على اختصار لتغييره."
@@ -1638,10 +1634,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "إغلاق النوافذ المنبثقة"
-  },
-  "1e8UrT": {
-    "message": "Close the Log",
-    "translation": "إغلاق السجل"
   },
   "HLSSB8": {
     "message": "code or name",
@@ -1803,10 +1795,6 @@
     "message": "Damage counter",
     "translation": "عدّاد ضرر"
   },
-  "-BtPPD": {
-    "message": "Damage on the Pokémon",
-    "translation": "الضرر على الـ Pokémon"
-  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "الوضع الداكن"
@@ -1950,9 +1938,9 @@
     "context": "shortcut key caption",
     "translation": "تجاهل الكل"
   },
-  "p-Tj30": {
-    "message": "Discard everything on your playboard",
-    "translation": "التخلص من كل ما على لوحة لعبك"
+  "FQxE2Y": {
+    "message": "Discard all on playboard",
+    "translation": "تخلص من كل ما في ساحة اللعب"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -1963,14 +1951,14 @@
     "context": "shortcut key caption",
     "translation": "تجاهل اليد"
   },
+  "Nx52uj": {
+    "message": "Discard hand and draw…",
+    "translation": "تخلص من اليد واسحب…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
     "translation": "كومة التخلص"
-  },
-  "nV_lSY": {
-    "message": "Discard your hand and draw…",
-    "translation": "التخلص من اليد والسحب…"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2008,10 +1996,6 @@
     "message": "Download the list instead.",
     "translation": "نزّل القائمة بدلًا من ذلك."
   },
-  "-P1EvR": {
-    "message": "Download the log",
-    "translation": "تنزيل السجل"
-  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2046,6 +2030,10 @@
   "SAb30P": {
     "message": "Draw how many cards?",
     "translation": "كم بطاقة تريد سحبها؟"
+  },
+  "SP_Sjy": {
+    "message": "Draw how many?",
+    "translation": "كم بطاقة تسحب؟"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2131,10 +2119,6 @@
   "u2fAme": {
     "message": "Enter a number",
     "translation": "أدخل رقمًا"
-  },
-  "-cj58y": {
-    "message": "Enter a number, then press Enter.",
-    "translation": "أدخل رقمًا ثم اضغط Enter."
   },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
@@ -2314,13 +2298,13 @@
     "message": "Flip coin",
     "translation": "ارمِ العملة"
   },
-  "ogz86X": {
-    "message": "Flip the other seat's coin",
-    "translation": "رمي قطعة اللاعب الآخر"
-  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "اقلب الطاولة"
+  },
+  "CK2j9j": {
+    "message": "Flip their coin",
+    "translation": "اقلب عملته"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2859,6 +2843,14 @@
     "context": "shortcut key caption",
     "translation": "نظر"
   },
+  "f55U3C": {
+    "message": "Look at bottom of deck…",
+    "translation": "انظر إلى أسفل المجموعة…"
+  },
+  "RY4IrC": {
+    "message": "Look at bottom of their deck…",
+    "translation": "انظر إلى أسفل مجموعته…"
+  },
   "Q1s-WM": {
     "message": "Look at how many cards?",
     "translation": "كم بطاقة تريد أن تنظر إليها؟"
@@ -2883,25 +2875,17 @@
     "message": "Look at the bottom cards",
     "translation": "النظر إلى البطاقات السفلية"
   },
-  "A-bTC5": {
-    "message": "Look at the bottom of their deck…",
-    "translation": "انظر إلى أسفل مجموعة أوراقه…"
-  },
-  "HlUAnV": {
-    "message": "Look at the bottom of your deck…",
-    "translation": "انظر إلى أسفل مجموعة أوراقك…"
-  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "النظر إلى البطاقات العلوية"
   },
-  "HgXGgm": {
-    "message": "Look at the top of their deck…",
-    "translation": "انظر إلى أعلى مجموعة أوراقه…"
+  "bIo9OM": {
+    "message": "Look at top of deck…",
+    "translation": "انظر إلى أعلى المجموعة…"
   },
-  "Iwo9SE": {
-    "message": "Look at the top of your deck…",
-    "translation": "انظر إلى أعلى مجموعة أوراقك…"
+  "dWUxHE": {
+    "message": "Look at top of their deck…",
+    "translation": "انظر إلى أعلى مجموعته…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2975,13 +2959,13 @@
     ],
     "translation": "وضع علامة غير مستخدمة"
   },
-  "Z4ljQt": {
-    "message": "Mark the GX attack unused",
-    "translation": "وضع علامة «غير مستخدمة» على هجوم GX"
+  "IHU0N1": {
+    "message": "Mark GX attack unused",
+    "translation": "وسم هجوم GX كغير مستخدم"
   },
-  "JQW_WK": {
-    "message": "Mark the VSTAR Power unused",
-    "translation": "وضع علامة «غير مستخدمة» على قوة VSTAR"
+  "IQ2DXR": {
+    "message": "Mark VSTAR Power unused",
+    "translation": "وسم قدرة VSTAR كغير مستخدمة"
   },
   "42K-4o": {
     "message": "Match finish",
@@ -3079,6 +3063,14 @@
     ],
     "translation": "نقل {cardName} إلى"
   },
+  "MnxTQZ": {
+    "message": "Move all on playboard to hand",
+    "translation": "انقل كل ما في ساحة اللعب إلى اليد"
+  },
+  "DUfTll": {
+    "message": "Move all on playboard to Lost Zone",
+    "translation": "انقل كل ما في ساحة اللعب إلى Lost Zone"
+  },
   "pcSzkk": {
     "message": "Move all to hand",
     "translation": "نقل الكل إلى اليد"
@@ -3098,10 +3090,6 @@
   "TvEhJE": {
     "message": "Move didn't go through",
     "translation": "لم تتم النقلة"
-  },
-  "iwWOBz": {
-    "message": "Move everything on your playboard to your hand",
-    "translation": "انقل كل ما على لوحة اللعب إلى يدك"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3395,6 +3383,10 @@
     "message": "Open file",
     "translation": "فتح ملف"
   },
+  "E9wRDu": {
+    "message": "Open log",
+    "translation": "فتح السجل"
+  },
   "F37c1s": {
     "message": "Open Settings",
     "translation": "فتح الإعدادات"
@@ -3402,10 +3394,6 @@
   "0FO0f7": {
     "message": "Open the deck screen",
     "translation": "فتح شاشة المجموعة"
-  },
-  "FzvzJz": {
-    "message": "Open the Log",
-    "translation": "فتح السجل"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3699,21 +3687,9 @@
     "message": "PTCG-sim tutorial",
     "translation": "شرح PTCG-sim"
   },
-  "rFCOSV": {
-    "message": "Put everything on your playboard in the Lost Zone",
-    "translation": "ضع كل ما على لوحة اللعب في Lost Zone"
-  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "ضع قطع Pokémon في كومة واحدة، وقطع الملعب (Stadium) في موضع الملعب."
-  },
-  "eAnTYw": {
-    "message": "Put your hand on the bottom of your deck and draw…",
-    "translation": "ضع يدك أسفل مجموعة أوراقك واسحب…"
-  },
-  "YrhlVT": {
-    "message": "Put your Prizes on the bottom of your deck",
-    "translation": "ضع جوائزك أسفل مجموعة أوراقك"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4131,6 +4107,10 @@
     "message": "Search cards",
     "translation": "بحث عن البطاقات"
   },
+  "2FZsuF": {
+    "message": "Search cards…",
+    "translation": "ابحث عن البطاقات…"
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "البحث في كل الصيغ"
@@ -4150,14 +4130,6 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "صيغة البحث"
-  },
-  "qucaF4": {
-    "message": "Search the cards on the table…",
-    "translation": "ابحث في البطاقات على الطاولة…"
-  },
-  "RtNLs_": {
-    "message": "Search your deck",
-    "translation": "ابحث في مجموعة أوراقك"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4304,10 +4276,6 @@
     "message": "Show one per card",
     "translation": "عرض نسخة واحدة لكل بطاقة"
   },
-  "etmouI": {
-    "message": "Show the card",
-    "translation": "إظهار البطاقة"
-  },
   "NQ5xRS": {
     "message": "Show the deck as",
     "translation": "عرض الرزمة على شكل"
@@ -4358,6 +4326,10 @@
     "message": "Shuffle all into the deck?",
     "translation": "هل تريد خلط الكل في المجموعة؟"
   },
+  "Ad3M_2": {
+    "message": "Shuffle all on playboard into deck",
+    "translation": "اخلط كل ما في ساحة اللعب في الرزمة"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "خلط الكل في المجموعة"
@@ -4366,13 +4338,13 @@
     "message": "Shuffle deck",
     "translation": "خلط المجموعة"
   },
-  "cEnSTR": {
-    "message": "Shuffle everything on your playboard into your deck",
-    "translation": "اخلط كل ما على لوحة اللعب في مجموعة أوراقك"
-  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "خلط اليد في المجموعة"
+  },
+  "KpMslS": {
+    "message": "Shuffle hand into deck and draw…",
+    "translation": "اخلط اليد في الرزمة واسحب…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4381,6 +4353,10 @@
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
     "translation": "خلط اليد أسفل المجموعة"
+  },
+  "8uWf-T": {
+    "message": "Shuffle hand to bottom of deck and draw…",
+    "translation": "اخلط اليد في أسفل المجموعة واسحب…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4399,6 +4375,14 @@
     "message": "Shuffle prizes",
     "translation": "خلط الجوائز"
   },
+  "pYUbhf": {
+    "message": "Shuffle Prizes",
+    "translation": "اخلط بطاقات الجوائز"
+  },
+  "nU9Ip_": {
+    "message": "Shuffle Prizes to bottom of deck",
+    "translation": "اخلط بطاقات الجوائز أسفل الرزمة"
+  },
   "SRsSL6": {
     "message": "Shuffle to bottom",
     "translation": "خلط إلى الأسفل"
@@ -4406,18 +4390,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "خلط في المجموعة (الأسفل)"
-  },
-  "HeR1Qt": {
-    "message": "Shuffle your deck",
-    "translation": "اخلط مجموعة أوراقك"
-  },
-  "KRFctr": {
-    "message": "Shuffle your hand into your deck and draw…",
-    "translation": "اخلط يدك في مجموعة أوراقك ثم اسحب…"
-  },
-  "aIML6N": {
-    "message": "Shuffle your Prizes",
-    "translation": "اخلط بطاقات الجوائز"
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
@@ -4873,10 +4845,6 @@
     "message": "Then draw",
     "translation": "ثم اسحب"
   },
-  "hpAko0": {
-    "message": "Then draw how many cards?",
-    "translation": "كم بطاقة تسحب بعد ذلك؟"
-  },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
     "comments": [
@@ -5076,10 +5044,6 @@
     "message": "Try fewer cards.",
     "translation": "جرّب عددًا أقل من البطاقات."
   },
-  "JaA9mI": {
-    "message": "Try other words, or press Escape to go back.",
-    "translation": "جرّب كلمات أخرى، أو اضغط Escape للرجوع."
-  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -5132,17 +5096,9 @@
     "context": "sort cards by",
     "translation": "النوع"
   },
-  "GgWUew": {
-    "message": "Type a message, then press Enter",
-    "translation": "اكتب رسالة ثم اضغط Enter"
-  },
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "اكتب شيئًا أولًا"
-  },
-  "gu8i-0": {
-    "message": "Type, then press Enter.",
-    "translation": "اكتب ثم اضغط Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -5186,6 +5142,10 @@
     "message": "Use default",
     "translation": "استخدام الافتراضي"
   },
+  "pEHkP7": {
+    "message": "Use GX attack",
+    "translation": "استخدم هجوم GX"
+  },
   "Z4udqe": {
     "message": "Use here",
     "context": "give the keys to this shortcut",
@@ -5199,17 +5159,13 @@
     "message": "Use on {seat}",
     "translation": "استخدم على {seat}"
   },
-  "yyidsc": {
-    "message": "Use the GX attack",
-    "translation": "استخدام هجوم GX"
-  },
-  "nG8vJk": {
-    "message": "Use the VSTAR Power",
-    "translation": "استخدام قوة VSTAR"
-  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "استخدم هذه الطبعة لـ {deckCopies} في البنية"
+  },
+  "9c8BhN": {
+    "message": "Use VSTAR Power",
+    "translation": "استخدم قدرة VSTAR"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5273,10 +5229,6 @@
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "مرحبًا بك في PTCG-sim"
-  },
-  "aEcdbE": {
-    "message": "What should {0} do?",
-    "translation": "ماذا يجب أن يفعل {0}؟"
   },
   "3ePd3I": {
     "message": "What's new",

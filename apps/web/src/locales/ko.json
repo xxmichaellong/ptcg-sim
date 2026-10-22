@@ -370,37 +370,37 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, other {빛나는 카드 #장 (최대 1장).}}"
   },
-  "JOORX1": {
-    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
-    "translation": "{count, plural, other {패를 버리고 #장 뽑기}}"
+  "-gAzkm": {
+    "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
+    "translation": "{count, plural, other {패를 버리고 카드 #장 뽑기}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, other {#장 뽑기}}"
   },
-  "THq5XP": {
-    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
-    "translation": "{count, plural, other {상대 덱의 아래 #장 보기}}"
+  "UJXyU7": {
+    "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
+    "translation": "{count, plural, other {아래 카드 #장 보기}}"
   },
-  "zwThBB": {
-    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
-    "translation": "{count, plural, other {내 덱의 아래 #장 보기}}"
+  "Obr1Rm": {
+    "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
+    "translation": "{count, plural, other {상대 덱 아래 카드 #장 보기}}"
   },
-  "TlYUk-": {
-    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
-    "translation": "{count, plural, other {상대 덱의 위 #장 보기}}"
+  "_GnfAn": {
+    "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
+    "translation": "{count, plural, other {상대 덱 위 카드 #장 보기}}"
   },
-  "rQTxpl": {
-    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
-    "translation": "{count, plural, other {내 덱의 위 #장 보기}}"
+  "CtVIm7": {
+    "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
+    "translation": "{count, plural, other {위 카드 #장 보기}}"
   },
-  "lxhla5": {
-    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
-    "translation": "{count, plural, other {패를 덱 아래에 놓고 #장 뽑기}}"
+  "-r4674": {
+    "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
+    "translation": "{count, plural, other {패를 덱에 섞고 카드 #장 뽑기}}"
   },
-  "e7Cj3g": {
-    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
-    "translation": "{count, plural, other {패를 덱에 섞고 #장 뽑기}}"
+  "aN0Z_E": {
+    "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
+    "translation": "{count, plural, other {패를 덱 아래에 넣고 카드 #장 뽑기}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1603,10 +1603,6 @@
     "message": "Clear log",
     "translation": "로그 지우기"
   },
-  "CE38Hc": {
-    "message": "Clear the log",
-    "translation": "로그 지우기"
-  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "단축키를 클릭하면 변경할 수 있습니다."
@@ -1638,10 +1634,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "팝업 닫기"
-  },
-  "1e8UrT": {
-    "message": "Close the Log",
-    "translation": "로그 닫기"
   },
   "HLSSB8": {
     "message": "code or name",
@@ -1803,10 +1795,6 @@
     "message": "Damage counter",
     "translation": "데미지 카운터"
   },
-  "-BtPPD": {
-    "message": "Damage on the Pokémon",
-    "translation": "포켓몬의 데미지"
-  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "다크 모드"
@@ -1950,9 +1938,9 @@
     "context": "shortcut key caption",
     "translation": "모두 트래시"
   },
-  "p-Tj30": {
-    "message": "Discard everything on your playboard",
-    "translation": "플레이보드의 모든 카드 버리기"
+  "FQxE2Y": {
+    "message": "Discard all on playboard",
+    "translation": "배틀 영역의 모든 카드 트래시로 보내기"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -1963,14 +1951,14 @@
     "context": "shortcut key caption",
     "translation": "패 트래시"
   },
+  "Nx52uj": {
+    "message": "Discard hand and draw…",
+    "translation": "패를 버리고 뽑기…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
     "translation": "트래시"
-  },
-  "nV_lSY": {
-    "message": "Discard your hand and draw…",
-    "translation": "패를 버리고 뽑기…"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2008,10 +1996,6 @@
     "message": "Download the list instead.",
     "translation": "대신 리스트를 다운로드하세요."
   },
-  "-P1EvR": {
-    "message": "Download the log",
-    "translation": "로그 다운로드"
-  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2045,6 +2029,10 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
+    "translation": "몇 장을 뽑을까요?"
+  },
+  "SP_Sjy": {
+    "message": "Draw how many?",
     "translation": "몇 장을 뽑을까요?"
   },
   "IsvGW6": {
@@ -2131,10 +2119,6 @@
   "u2fAme": {
     "message": "Enter a number",
     "translation": "숫자를 입력하세요"
-  },
-  "-cj58y": {
-    "message": "Enter a number, then press Enter.",
-    "translation": "숫자를 입력한 다음 Enter를 누르세요."
   },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
@@ -2314,13 +2298,13 @@
     "message": "Flip coin",
     "translation": "동전 던지기"
   },
-  "ogz86X": {
-    "message": "Flip the other seat's coin",
-    "translation": "다른 자리의 코인 던지기"
-  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "테이블 뒤집기"
+  },
+  "CK2j9j": {
+    "message": "Flip their coin",
+    "translation": "상대 코인 던지기"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2859,6 +2843,14 @@
     "context": "shortcut key caption",
     "translation": "보기"
   },
+  "f55U3C": {
+    "message": "Look at bottom of deck…",
+    "translation": "덱 아래 보기…"
+  },
+  "RY4IrC": {
+    "message": "Look at bottom of their deck…",
+    "translation": "상대 덱 아래 보기…"
+  },
   "Q1s-WM": {
     "message": "Look at how many cards?",
     "translation": "몇 장을 확인할까요?"
@@ -2883,25 +2875,17 @@
     "message": "Look at the bottom cards",
     "translation": "아래쪽 카드 보기"
   },
-  "A-bTC5": {
-    "message": "Look at the bottom of their deck…",
-    "translation": "상대 덱의 맨 아래 보기…"
-  },
-  "HlUAnV": {
-    "message": "Look at the bottom of your deck…",
-    "translation": "내 덱의 맨 아래 보기…"
-  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "위쪽 카드 보기"
   },
-  "HgXGgm": {
-    "message": "Look at the top of their deck…",
-    "translation": "상대 덱의 맨 위 보기…"
+  "bIo9OM": {
+    "message": "Look at top of deck…",
+    "translation": "덱 위 보기…"
   },
-  "Iwo9SE": {
-    "message": "Look at the top of your deck…",
-    "translation": "내 덱의 맨 위 보기…"
+  "dWUxHE": {
+    "message": "Look at top of their deck…",
+    "translation": "상대 덱 위 보기…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2975,12 +2959,12 @@
     ],
     "translation": "미사용으로 표시"
   },
-  "Z4ljQt": {
-    "message": "Mark the GX attack unused",
+  "IHU0N1": {
+    "message": "Mark GX attack unused",
     "translation": "GX 기술 미사용으로 표시"
   },
-  "JQW_WK": {
-    "message": "Mark the VSTAR Power unused",
+  "IQ2DXR": {
+    "message": "Mark VSTAR Power unused",
     "translation": "VSTAR 파워 미사용으로 표시"
   },
   "42K-4o": {
@@ -3079,6 +3063,14 @@
     ],
     "translation": "{cardName} 이동 위치"
   },
+  "MnxTQZ": {
+    "message": "Move all on playboard to hand",
+    "translation": "플레이보드의 모든 카드 패로 이동"
+  },
+  "DUfTll": {
+    "message": "Move all on playboard to Lost Zone",
+    "translation": "플레이보드의 모든 카드 로스트존으로 이동"
+  },
   "pcSzkk": {
     "message": "Move all to hand",
     "translation": "모두 패로 이동"
@@ -3098,10 +3090,6 @@
   "TvEhJE": {
     "message": "Move didn't go through",
     "translation": "이동하지 못했습니다"
-  },
-  "iwWOBz": {
-    "message": "Move everything on your playboard to your hand",
-    "translation": "플레이보드의 모든 카드를 패로 가져오기"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3395,6 +3383,10 @@
     "message": "Open file",
     "translation": "파일 열기"
   },
+  "E9wRDu": {
+    "message": "Open log",
+    "translation": "로그 열기"
+  },
   "F37c1s": {
     "message": "Open Settings",
     "translation": "설정 열기"
@@ -3402,10 +3394,6 @@
   "0FO0f7": {
     "message": "Open the deck screen",
     "translation": "덱 화면 열기"
-  },
-  "FzvzJz": {
-    "message": "Open the Log",
-    "translation": "로그 열기"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3699,21 +3687,9 @@
     "message": "PTCG-sim tutorial",
     "translation": "PTCG-sim 튜토리얼"
   },
-  "rFCOSV": {
-    "message": "Put everything on your playboard in the Lost Zone",
-    "translation": "플레이보드의 모든 카드를 로스트존에 놓기"
-  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "포켓몬 말은 한 더미에, 스타디움 말은 스타디움에 놓으세요."
-  },
-  "eAnTYw": {
-    "message": "Put your hand on the bottom of your deck and draw…",
-    "translation": "내 패를 덱 맨 아래에 놓고 뽑기…"
-  },
-  "YrhlVT": {
-    "message": "Put your Prizes on the bottom of your deck",
-    "translation": "내 프라이즈 카드를 덱 맨 아래에 놓기"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4131,6 +4107,10 @@
     "message": "Search cards",
     "translation": "카드 검색"
   },
+  "2FZsuF": {
+    "message": "Search cards…",
+    "translation": "카드 검색…"
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "모든 포맷 검색"
@@ -4150,14 +4130,6 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "검색 구문"
-  },
-  "qucaF4": {
-    "message": "Search the cards on the table…",
-    "translation": "테이블 위의 카드 검색…"
-  },
-  "RtNLs_": {
-    "message": "Search your deck",
-    "translation": "내 덱 검색"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4304,10 +4276,6 @@
     "message": "Show one per card",
     "translation": "카드당 하나씩 보기"
   },
-  "etmouI": {
-    "message": "Show the card",
-    "translation": "카드 보여주기"
-  },
   "NQ5xRS": {
     "message": "Show the deck as",
     "translation": "덱 표시 방식"
@@ -4358,6 +4326,10 @@
     "message": "Shuffle all into the deck?",
     "translation": "모두 덱에 섞으시겠습니까?"
   },
+  "Ad3M_2": {
+    "message": "Shuffle all on playboard into deck",
+    "translation": "플레이보드의 모든 카드 덱에 섞기"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "모두 덱에 넣고 셔플"
@@ -4366,13 +4338,13 @@
     "message": "Shuffle deck",
     "translation": "덱 셔플"
   },
-  "cEnSTR": {
-    "message": "Shuffle everything on your playboard into your deck",
-    "translation": "플레이보드의 모든 카드를 덱에 섞어 넣기"
-  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "패를 덱에 넣고 셔플"
+  },
+  "KpMslS": {
+    "message": "Shuffle hand into deck and draw…",
+    "translation": "패를 덱에 섞고 뽑기…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4381,6 +4353,10 @@
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
     "translation": "패를 덱 맨 아래에 넣기"
+  },
+  "8uWf-T": {
+    "message": "Shuffle hand to bottom of deck and draw…",
+    "translation": "패를 덱 아래로 섞고 드로우…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4399,6 +4375,14 @@
     "message": "Shuffle prizes",
     "translation": "프라이즈 셔플"
   },
+  "pYUbhf": {
+    "message": "Shuffle Prizes",
+    "translation": "프라이즈 카드 섞기"
+  },
+  "nU9Ip_": {
+    "message": "Shuffle Prizes to bottom of deck",
+    "translation": "프라이즈 카드를 덱 아래로 섞기"
+  },
   "SRsSL6": {
     "message": "Shuffle to bottom",
     "translation": "맨 아래에 넣기"
@@ -4406,18 +4390,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "덱에 넣기(맨 아래)"
-  },
-  "HeR1Qt": {
-    "message": "Shuffle your deck",
-    "translation": "덱 섞기"
-  },
-  "KRFctr": {
-    "message": "Shuffle your hand into your deck and draw…",
-    "translation": "패를 덱에 섞고 뽑기…"
-  },
-  "aIML6N": {
-    "message": "Shuffle your Prizes",
-    "translation": "프라이즈 카드 섞기"
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
@@ -4873,10 +4845,6 @@
     "message": "Then draw",
     "translation": "그다음 뽑기"
   },
-  "hpAko0": {
-    "message": "Then draw how many cards?",
-    "translation": "그다음 몇 장을 뽑을까요?"
-  },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
     "comments": [
@@ -5076,10 +5044,6 @@
     "message": "Try fewer cards.",
     "translation": "카드 수를 줄여 보세요."
   },
-  "JaA9mI": {
-    "message": "Try other words, or press Escape to go back.",
-    "translation": "다른 단어를 입력하거나 Esc 키를 눌러 돌아가세요."
-  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -5132,17 +5096,9 @@
     "context": "sort cards by",
     "translation": "타입"
   },
-  "GgWUew": {
-    "message": "Type a message, then press Enter",
-    "translation": "메시지를 입력한 뒤 Enter 키를 누르세요"
-  },
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "먼저 내용을 입력하세요"
-  },
-  "gu8i-0": {
-    "message": "Type, then press Enter.",
-    "translation": "입력한 뒤 Enter 키를 누르세요."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -5186,6 +5142,10 @@
     "message": "Use default",
     "translation": "기본값 사용"
   },
+  "pEHkP7": {
+    "message": "Use GX attack",
+    "translation": "GX 기술 사용"
+  },
   "Z4udqe": {
     "message": "Use here",
     "context": "give the keys to this shortcut",
@@ -5199,17 +5159,13 @@
     "message": "Use on {seat}",
     "translation": "{seat}에 사용"
   },
-  "yyidsc": {
-    "message": "Use the GX attack",
-    "translation": "GX 기술 사용"
-  },
-  "nG8vJk": {
-    "message": "Use the VSTAR Power",
-    "translation": "VSTAR 파워 사용"
-  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "덱에 있는 {deckCopies}에 이 인쇄본 사용"
+  },
+  "9c8BhN": {
+    "message": "Use VSTAR Power",
+    "translation": "VSTAR 파워 사용"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5273,10 +5229,6 @@
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "PTCG-sim에 오신 것을 환영합니다"
-  },
-  "aEcdbE": {
-    "message": "What should {0} do?",
-    "translation": "{0}에게 무엇을 시킬까요?"
   },
   "3ePd3I": {
     "message": "What's new",

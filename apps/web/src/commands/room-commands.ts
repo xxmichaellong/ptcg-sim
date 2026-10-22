@@ -55,7 +55,7 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
   const { log } = context;
   commands.push({
     id: 'log.toggle',
-    title: log.open ? t`Close the Log` : t`Open the Log`,
+    title: log.open ? t`Close log` : t`Open log`,
     section: 'table',
     icon: ScrollIcon,
     keywords: ['log', 'chat', 'history', 'activity'],
@@ -64,7 +64,7 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
   if (log.download) {
     commands.push({
       id: 'log.download',
-      title: t`Download the log`,
+      title: t`Download log`,
       section: 'table',
       icon: DownloadSimpleIcon,
       keywords: ['log', 'download', 'export'],
@@ -74,7 +74,7 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
   if (log.clear) {
     commands.push({
       id: 'log.clear',
-      title: t`Clear the log`,
+      title: t`Clear log`,
       section: 'table',
       icon: BroomIcon,
       keywords: ['log', 'clear'],
@@ -92,7 +92,7 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
       keywords: ['chat', 'message', 'say', 'talk'],
       text: {
         label: t`Chat message`,
-        placeholder: t`Type a message, then press Enter`,
+        placeholder: t({ message: 'Message', context: 'chat' }),
         maxLength: 500,
       },
       run: ({ text }) => {

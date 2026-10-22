@@ -38,6 +38,8 @@ const crumbs = () =>
   [...document.querySelectorAll('.ptcgsim-command-palette__crumb')].map(
     (crumb) => crumb.textContent
   );
+const asked = () =>
+  document.querySelector('.ptcgsim-command-palette__asking')?.textContent;
 
 describe('CommandPalette', () => {
   let host: HTMLDivElement;
@@ -279,6 +281,9 @@ describe('CommandPalette', () => {
     await press({ key: 'Enter' });
     expect(crumbs()).toEqual(['Draw cards']);
     expect(field()?.value).toBe('1');
+    // The number hides the field's placeholder, so the question is said
+    // under it.
+    expect(asked()).toBe('How many?');
     await type('12');
     await press({ key: 'Enter' });
     expect(field()?.getAttribute('aria-invalid')).toBe('true');
@@ -338,6 +343,8 @@ describe('CommandPalette', () => {
     await open();
     await type('say');
     await press({ key: 'Enter' });
+    // The empty field shows its own placeholder; nothing repeats it.
+    expect(asked()).toBe('');
     await press({ key: 'Enter' });
     expect(said).not.toHaveBeenCalled();
     await type('good game');

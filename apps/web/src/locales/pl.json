@@ -370,37 +370,37 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# karta Radiant (maks. 1).} few {# karty Radiant (maks. 1).} many {# kart Radiant (maks. 1).} other {# karty Radiant (maks. 1).}}"
   },
-  "JOORX1": {
-    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
-    "translation": "{count, plural, one {Odrzuć rękę i dobierz # kartę} few {Odrzuć rękę i dobierz # karty} many {Odrzuć rękę i dobierz # kart} other {Odrzuć rękę i dobierz # karty}}"
+  "-gAzkm": {
+    "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
+    "translation": "{count, plural, one {Odrzuć rękę i dobierz # kartę} few {Odrzuć rękę i dobierz # karty} many {Odrzuć rękę i dobierz # kart} other {Odrzuć rękę i dobierz # kart}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {Dobierz # kartę} few {Dobierz # karty} many {Dobierz # kart} other {Dobierz # karty}}"
   },
-  "THq5XP": {
-    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
-    "translation": "{count, plural, one {Zobacz dolną kartę ich talii} few {Zobacz dolne # karty ich talii} many {Zobacz dolnych # kart ich talii} other {Zobacz dolne # karty ich talii}}"
+  "UJXyU7": {
+    "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
+    "translation": "{count, plural, one {Zobacz # kartę ze spodu talii} few {Zobacz # karty ze spodu talii} many {Zobacz # kart ze spodu talii} other {Zobacz # kart ze spodu talii}}"
   },
-  "zwThBB": {
-    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
-    "translation": "{count, plural, one {Zobacz dolną kartę swojej talii} few {Zobacz dolne # karty swojej talii} many {Zobacz dolnych # kart swojej talii} other {Zobacz dolne # karty swojej talii}}"
+  "Obr1Rm": {
+    "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
+    "translation": "{count, plural, one {Zobacz # kartę ze spodu talii przeciwnika} few {Zobacz # karty ze spodu talii przeciwnika} many {Zobacz # kart ze spodu talii przeciwnika} other {Zobacz # kart ze spodu talii przeciwnika}}"
   },
-  "TlYUk-": {
-    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
-    "translation": "{count, plural, one {Zobacz górną kartę ich talii} few {Zobacz górne # karty ich talii} many {Zobacz górnych # kart ich talii} other {Zobacz górne # karty ich talii}}"
+  "_GnfAn": {
+    "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
+    "translation": "{count, plural, one {Zobacz # kartę z wierzchu talii przeciwnika} few {Zobacz # karty z wierzchu talii przeciwnika} many {Zobacz # kart z wierzchu talii przeciwnika} other {Zobacz # kart z wierzchu talii przeciwnika}}"
   },
-  "rQTxpl": {
-    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
-    "translation": "{count, plural, one {Zobacz górną kartę swojej talii} few {Zobacz górne # karty swojej talii} many {Zobacz górnych # kart swojej talii} other {Zobacz górne # karty swojej talii}}"
+  "CtVIm7": {
+    "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
+    "translation": "{count, plural, one {Zobacz # kartę z wierzchu talii} few {Zobacz # karty z wierzchu talii} many {Zobacz # kart z wierzchu talii} other {Zobacz # kart z wierzchu talii}}"
   },
-  "lxhla5": {
-    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
-    "translation": "{count, plural, one {Połóż rękę na spód talii i dobierz # kartę} few {Połóż rękę na spód talii i dobierz # karty} many {Połóż rękę na spód talii i dobierz # kart} other {Połóż rękę na spód talii i dobierz # karty}}"
+  "-r4674": {
+    "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
+    "translation": "{count, plural, one {Przetasuj rękę do talii i dobierz # kartę} few {Przetasuj rękę do talii i dobierz # karty} many {Przetasuj rękę do talii i dobierz # kart} other {Przetasuj rękę do talii i dobierz # kart}}"
   },
-  "e7Cj3g": {
-    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
-    "translation": "{count, plural, one {Przetasuj rękę z talią i dobierz # kartę} few {Przetasuj rękę z talią i dobierz # karty} many {Przetasuj rękę z talią i dobierz # kart} other {Przetasuj rękę z talią i dobierz # karty}}"
+  "aN0Z_E": {
+    "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
+    "translation": "{count, plural, one {Włóż rękę na spód talii i dobierz # kartę} few {Włóż rękę na spód talii i dobierz # karty} many {Włóż rękę na spód talii i dobierz # kart} other {Włóż rękę na spód talii i dobierz # kart}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1603,10 +1603,6 @@
     "message": "Clear log",
     "translation": "Wyczyść dziennik"
   },
-  "CE38Hc": {
-    "message": "Clear the log",
-    "translation": "Wyczyść dziennik"
-  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "Kliknij skrót, aby go zmienić."
@@ -1638,10 +1634,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Zamknij okienka"
-  },
-  "1e8UrT": {
-    "message": "Close the Log",
-    "translation": "Zamknij dziennik"
   },
   "HLSSB8": {
     "message": "code or name",
@@ -1803,10 +1795,6 @@
     "message": "Damage counter",
     "translation": "Znacznik obrażeń"
   },
-  "-BtPPD": {
-    "message": "Damage on the Pokémon",
-    "translation": "Obrażenia na Pokémonie"
-  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Tryb ciemny"
@@ -1950,9 +1938,9 @@
     "context": "shortcut key caption",
     "translation": "Odrzuć wszystko"
   },
-  "p-Tj30": {
-    "message": "Discard everything on your playboard",
-    "translation": "Odrzuć wszystko ze swojej planszy"
+  "FQxE2Y": {
+    "message": "Discard all on playboard",
+    "translation": "Odrzuć wszystko z pola gry"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -1963,14 +1951,14 @@
     "context": "shortcut key caption",
     "translation": "Odrzuć rękę"
   },
+  "Nx52uj": {
+    "message": "Discard hand and draw…",
+    "translation": "Odrzuć rękę i dobierz…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
     "translation": "Stos odrzuconych"
-  },
-  "nV_lSY": {
-    "message": "Discard your hand and draw…",
-    "translation": "Odrzuć rękę i dobierz…"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2008,10 +1996,6 @@
     "message": "Download the list instead.",
     "translation": "Pobierz zamiast tego listę."
   },
-  "-P1EvR": {
-    "message": "Download the log",
-    "translation": "Pobierz dziennik"
-  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2045,6 +2029,10 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
+    "translation": "Ile kart dobrać?"
+  },
+  "SP_Sjy": {
+    "message": "Draw how many?",
     "translation": "Ile kart dobrać?"
   },
   "IsvGW6": {
@@ -2131,10 +2119,6 @@
   "u2fAme": {
     "message": "Enter a number",
     "translation": "Wpisz liczbę"
-  },
-  "-cj58y": {
-    "message": "Enter a number, then press Enter.",
-    "translation": "Wpisz liczbę i naciśnij Enter."
   },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
@@ -2314,13 +2298,13 @@
     "message": "Flip coin",
     "translation": "Rzuć monetą"
   },
-  "ogz86X": {
-    "message": "Flip the other seat's coin",
-    "translation": "Rzuć monetą za drugie miejsce"
-  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "Odwróć stół"
+  },
+  "CK2j9j": {
+    "message": "Flip their coin",
+    "translation": "Rzuć monetą przeciwnika"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2859,6 +2843,14 @@
     "context": "shortcut key caption",
     "translation": "Podejrzyj"
   },
+  "f55U3C": {
+    "message": "Look at bottom of deck…",
+    "translation": "Zobacz spód talii…"
+  },
+  "RY4IrC": {
+    "message": "Look at bottom of their deck…",
+    "translation": "Zobacz spód jego talii…"
+  },
   "Q1s-WM": {
     "message": "Look at how many cards?",
     "translation": "Ile kart obejrzeć?"
@@ -2883,25 +2875,17 @@
     "message": "Look at the bottom cards",
     "translation": "Podejrzyj dolne karty"
   },
-  "A-bTC5": {
-    "message": "Look at the bottom of their deck…",
-    "translation": "Podejrzyj spód jego talii…"
-  },
-  "HlUAnV": {
-    "message": "Look at the bottom of your deck…",
-    "translation": "Podejrzyj spód swojej talii…"
-  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "Podejrzyj górne karty"
   },
-  "HgXGgm": {
-    "message": "Look at the top of their deck…",
-    "translation": "Podejrzyj wierzch jego talii…"
+  "bIo9OM": {
+    "message": "Look at top of deck…",
+    "translation": "Zobacz wierzch talii…"
   },
-  "Iwo9SE": {
-    "message": "Look at the top of your deck…",
-    "translation": "Podejrzyj wierzch swojej talii…"
+  "dWUxHE": {
+    "message": "Look at top of their deck…",
+    "translation": "Zobacz wierzch jego talii…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2975,12 +2959,12 @@
     ],
     "translation": "Oznacz jako nieużytą"
   },
-  "Z4ljQt": {
-    "message": "Mark the GX attack unused",
+  "IHU0N1": {
+    "message": "Mark GX attack unused",
     "translation": "Oznacz atak GX jako niewykorzystany"
   },
-  "JQW_WK": {
-    "message": "Mark the VSTAR Power unused",
+  "IQ2DXR": {
+    "message": "Mark VSTAR Power unused",
     "translation": "Oznacz moc VSTAR jako niewykorzystaną"
   },
   "42K-4o": {
@@ -3079,6 +3063,14 @@
     ],
     "translation": "Przenieś {cardName} do"
   },
+  "MnxTQZ": {
+    "message": "Move all on playboard to hand",
+    "translation": "Przenieś wszystko z pola gry do ręki"
+  },
+  "DUfTll": {
+    "message": "Move all on playboard to Lost Zone",
+    "translation": "Przenieś wszystko z pola gry do Lost Zone"
+  },
   "pcSzkk": {
     "message": "Move all to hand",
     "translation": "Przenieś wszystko na rękę"
@@ -3098,10 +3090,6 @@
   "TvEhJE": {
     "message": "Move didn't go through",
     "translation": "Nie udało się wykonać ruchu"
-  },
-  "iwWOBz": {
-    "message": "Move everything on your playboard to your hand",
-    "translation": "Przenieś wszystko ze swojego pola gry na rękę"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3395,6 +3383,10 @@
     "message": "Open file",
     "translation": "Otwórz plik"
   },
+  "E9wRDu": {
+    "message": "Open log",
+    "translation": "Otwórz dziennik"
+  },
   "F37c1s": {
     "message": "Open Settings",
     "translation": "Otwórz ustawienia"
@@ -3402,10 +3394,6 @@
   "0FO0f7": {
     "message": "Open the deck screen",
     "translation": "Otwórz ekran talii"
-  },
-  "FzvzJz": {
-    "message": "Open the Log",
-    "translation": "Otwórz dziennik"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3699,21 +3687,9 @@
     "message": "PTCG-sim tutorial",
     "translation": "Samouczek PTCG-sim"
   },
-  "rFCOSV": {
-    "message": "Put everything on your playboard in the Lost Zone",
-    "translation": "Umieść wszystko ze swojego pola gry w Lost Zone"
-  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Połóż elementy Pokémon w jednym stosie, a elementy Stadionu na Stadionie."
-  },
-  "eAnTYw": {
-    "message": "Put your hand on the bottom of your deck and draw…",
-    "translation": "Umieść rękę pod spodem talii i dobierz…"
-  },
-  "YrhlVT": {
-    "message": "Put your Prizes on the bottom of your deck",
-    "translation": "Umieść swoje karty nagród pod spodem talii"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4131,6 +4107,10 @@
     "message": "Search cards",
     "translation": "Szukaj kart"
   },
+  "2FZsuF": {
+    "message": "Search cards…",
+    "translation": "Szukaj kart…"
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "Szukaj we wszystkich formatach"
@@ -4150,14 +4130,6 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Składnia wyszukiwania"
-  },
-  "qucaF4": {
-    "message": "Search the cards on the table…",
-    "translation": "Szukaj kart na stole…"
-  },
-  "RtNLs_": {
-    "message": "Search your deck",
-    "translation": "Przeszukaj swoją talię"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4304,10 +4276,6 @@
     "message": "Show one per card",
     "translation": "Pokaż po jednej z każdej karty"
   },
-  "etmouI": {
-    "message": "Show the card",
-    "translation": "Pokaż kartę"
-  },
   "NQ5xRS": {
     "message": "Show the deck as",
     "translation": "Pokaż talię jako"
@@ -4358,6 +4326,10 @@
     "message": "Shuffle all into the deck?",
     "translation": "Przetasować wszystko do talii?"
   },
+  "Ad3M_2": {
+    "message": "Shuffle all on playboard into deck",
+    "translation": "Przetasuj wszystko z pola gry do talii"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "Tasuj wszystko do talii"
@@ -4366,13 +4338,13 @@
     "message": "Shuffle deck",
     "translation": "Tasuj talię"
   },
-  "cEnSTR": {
-    "message": "Shuffle everything on your playboard into your deck",
-    "translation": "Przetasuj wszystko ze swojego pola gry do talii"
-  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "Tasuj rękę do talii"
+  },
+  "KpMslS": {
+    "message": "Shuffle hand into deck and draw…",
+    "translation": "Przetasuj rękę do talii i dobierz…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4381,6 +4353,10 @@
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
     "translation": "Tasuj rękę na spód talii"
+  },
+  "8uWf-T": {
+    "message": "Shuffle hand to bottom of deck and draw…",
+    "translation": "Przetasuj rękę na spód talii i dobierz…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4399,6 +4375,14 @@
     "message": "Shuffle prizes",
     "translation": "Tasuj nagrody"
   },
+  "pYUbhf": {
+    "message": "Shuffle Prizes",
+    "translation": "Przetasuj nagrody"
+  },
+  "nU9Ip_": {
+    "message": "Shuffle Prizes to bottom of deck",
+    "translation": "Włóż nagrody na spód talii"
+  },
   "SRsSL6": {
     "message": "Shuffle to bottom",
     "translation": "Tasuj na spód"
@@ -4406,18 +4390,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Tasuj do talii (na spód)"
-  },
-  "HeR1Qt": {
-    "message": "Shuffle your deck",
-    "translation": "Przetasuj talię"
-  },
-  "KRFctr": {
-    "message": "Shuffle your hand into your deck and draw…",
-    "translation": "Przetasuj rękę z talią i dobierz…"
-  },
-  "aIML6N": {
-    "message": "Shuffle your Prizes",
-    "translation": "Przetasuj karty nagród"
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
@@ -4873,10 +4845,6 @@
     "message": "Then draw",
     "translation": "Potem dobierz"
   },
-  "hpAko0": {
-    "message": "Then draw how many cards?",
-    "translation": "Ile kart dobrać potem?"
-  },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
     "comments": [
@@ -5076,10 +5044,6 @@
     "message": "Try fewer cards.",
     "translation": "Spróbuj z mniejszą liczbą kart."
   },
-  "JaA9mI": {
-    "message": "Try other words, or press Escape to go back.",
-    "translation": "Spróbuj innych słów lub naciśnij Escape, aby wrócić."
-  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -5132,17 +5096,9 @@
     "context": "sort cards by",
     "translation": "Typ"
   },
-  "GgWUew": {
-    "message": "Type a message, then press Enter",
-    "translation": "Wpisz wiadomość i naciśnij Enter"
-  },
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "Najpierw coś wpisz"
-  },
-  "gu8i-0": {
-    "message": "Type, then press Enter.",
-    "translation": "Wpisz tekst i naciśnij Enter."
   },
   "9uI_rE": {
     "message": "Undo",
@@ -5186,6 +5142,10 @@
     "message": "Use default",
     "translation": "Użyj domyślnego"
   },
+  "pEHkP7": {
+    "message": "Use GX attack",
+    "translation": "Użyj ataku GX"
+  },
   "Z4udqe": {
     "message": "Use here",
     "context": "give the keys to this shortcut",
@@ -5199,17 +5159,13 @@
     "message": "Use on {seat}",
     "translation": "Użyj dla: {seat}"
   },
-  "yyidsc": {
-    "message": "Use the GX attack",
-    "translation": "Użyj ataku GX"
-  },
-  "nG8vJk": {
-    "message": "Use the VSTAR Power",
-    "translation": "Użyj mocy VSTAR"
-  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Użyj tego wydruku dla: {deckCopies} w talii"
+  },
+  "9c8BhN": {
+    "message": "Use VSTAR Power",
+    "translation": "Użyj mocy VSTAR"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5273,10 +5229,6 @@
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "Witaj w PTCG-sim"
-  },
-  "aEcdbE": {
-    "message": "What should {0} do?",
-    "translation": "Co ma zrobić {0}?"
   },
   "3ePd3I": {
     "message": "What's new",

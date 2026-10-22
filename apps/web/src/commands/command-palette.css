@@ -333,6 +333,21 @@
   font-size: var(--text-md, 15px);
 }
 
+/* Still there, empty, to announce a problem when one comes; the field and
+   its placeholder are then all there is (Say…). */
+.ptcgsim-command-palette__asking:empty {
+  padding: 0;
+}
+
+.ptcgsim-command-palette__list:has(> .ptcgsim-command-palette__asking:empty) {
+  padding: 0;
+}
+
+.ptcgsim-command-palette:has(.ptcgsim-command-palette__asking:empty)
+  .ptcgsim-command-palette__search {
+  border-bottom-color: transparent;
+}
+
 .ptcgsim-command-palette__asking[data-problem] {
   color: var(--color-danger);
 }

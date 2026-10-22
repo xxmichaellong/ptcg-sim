@@ -370,37 +370,37 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, other {かがやくカードが#枚あります(最大1枚)。}}"
   },
-  "JOORX1": {
-    "message": "{count, plural, one {Discard your hand and draw # card} other {Discard your hand and draw # cards}}",
-    "translation": "{count, plural, other {手札をトラッシュして{count}枚引く}}"
+  "-gAzkm": {
+    "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
+    "translation": "{count, plural, other {手札をトラッシュして#枚引く}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, other {{count}枚引く}}"
   },
-  "THq5XP": {
-    "message": "{count, plural, one {Look at the bottom card of their deck} other {Look at the bottom # cards of their deck}}",
-    "translation": "{count, plural, other {相手の山札の下から{count}枚を見る}}"
+  "UJXyU7": {
+    "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
+    "translation": "{count, plural, other {山札の下から#枚見る}}"
   },
-  "zwThBB": {
-    "message": "{count, plural, one {Look at the bottom card of your deck} other {Look at the bottom # cards of your deck}}",
-    "translation": "{count, plural, other {自分の山札の下から{count}枚を見る}}"
+  "Obr1Rm": {
+    "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
+    "translation": "{count, plural, other {相手の山札の下から#枚見る}}"
   },
-  "TlYUk-": {
-    "message": "{count, plural, one {Look at the top card of their deck} other {Look at the top # cards of their deck}}",
-    "translation": "{count, plural, other {相手の山札の上から{count}枚を見る}}"
+  "_GnfAn": {
+    "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
+    "translation": "{count, plural, other {相手の山札の上から#枚見る}}"
   },
-  "rQTxpl": {
-    "message": "{count, plural, one {Look at the top card of your deck} other {Look at the top # cards of your deck}}",
-    "translation": "{count, plural, other {自分の山札の上から{count}枚を見る}}"
+  "CtVIm7": {
+    "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
+    "translation": "{count, plural, other {山札の上から#枚見る}}"
   },
-  "lxhla5": {
-    "message": "{count, plural, one {Put your hand on the bottom and draw # card} other {Put your hand on the bottom and draw # cards}}",
-    "translation": "{count, plural, other {手札を山札の下に置いて{count}枚引く}}"
+  "-r4674": {
+    "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
+    "translation": "{count, plural, other {手札を山札に戻して切り、#枚引く}}"
   },
-  "e7Cj3g": {
-    "message": "{count, plural, one {Shuffle your hand in and draw # card} other {Shuffle your hand in and draw # cards}}",
-    "translation": "{count, plural, other {手札を山札に戻して切り、{count}枚引く}}"
+  "aN0Z_E": {
+    "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
+    "translation": "{count, plural, other {手札を山札の下に戻して#枚引く}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1603,10 +1603,6 @@
     "message": "Clear log",
     "translation": "ログを消去"
   },
-  "CE38Hc": {
-    "message": "Clear the log",
-    "translation": "ログを消去"
-  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "ショートカットをクリックして変更します。"
@@ -1638,10 +1634,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "ポップアップを閉じる"
-  },
-  "1e8UrT": {
-    "message": "Close the Log",
-    "translation": "ログを閉じる"
   },
   "HLSSB8": {
     "message": "code or name",
@@ -1803,10 +1795,6 @@
     "message": "Damage counter",
     "translation": "ダメカン"
   },
-  "-BtPPD": {
-    "message": "Damage on the Pokémon",
-    "translation": "ポケモンのダメージ"
-  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "ダークモード"
@@ -1950,9 +1938,9 @@
     "context": "shortcut key caption",
     "translation": "すべてトラッシュ"
   },
-  "p-Tj30": {
-    "message": "Discard everything on your playboard",
-    "translation": "プレイボード上のカードをすべてトラッシュ"
+  "FQxE2Y": {
+    "message": "Discard all on playboard",
+    "translation": "場のカードをすべてトラッシュ"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -1963,14 +1951,14 @@
     "context": "shortcut key caption",
     "translation": "手札をトラッシュ"
   },
+  "Nx52uj": {
+    "message": "Discard hand and draw…",
+    "translation": "手札をトラッシュして引く…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
     "translation": "トラッシュ"
-  },
-  "nV_lSY": {
-    "message": "Discard your hand and draw…",
-    "translation": "手札をトラッシュして引く…"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2008,10 +1996,6 @@
     "message": "Download the list instead.",
     "translation": "代わりにリストをダウンロードします。"
   },
-  "-P1EvR": {
-    "message": "Download the log",
-    "translation": "ログをダウンロード"
-  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2045,6 +2029,10 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
+    "translation": "何枚引きますか?"
+  },
+  "SP_Sjy": {
+    "message": "Draw how many?",
     "translation": "何枚引きますか?"
   },
   "IsvGW6": {
@@ -2131,10 +2119,6 @@
   "u2fAme": {
     "message": "Enter a number",
     "translation": "数字を入力してください"
-  },
-  "-cj58y": {
-    "message": "Enter a number, then press Enter.",
-    "translation": "数字を入力して Enter を押してください。"
   },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
@@ -2314,13 +2298,13 @@
     "message": "Flip coin",
     "translation": "コインを投げる"
   },
-  "ogz86X": {
-    "message": "Flip the other seat's coin",
-    "translation": "もう一方の席のコインを投げる"
-  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "テーブルを反転"
+  },
+  "CK2j9j": {
+    "message": "Flip their coin",
+    "translation": "相手のコインを投げる"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2859,6 +2843,14 @@
     "context": "shortcut key caption",
     "translation": "見る"
   },
+  "f55U3C": {
+    "message": "Look at bottom of deck…",
+    "translation": "山札の下を見る…"
+  },
+  "RY4IrC": {
+    "message": "Look at bottom of their deck…",
+    "translation": "相手の山札の下を見る…"
+  },
   "Q1s-WM": {
     "message": "Look at how many cards?",
     "translation": "何枚見ますか?"
@@ -2883,25 +2875,17 @@
     "message": "Look at the bottom cards",
     "translation": "山札の下のカードを見る"
   },
-  "A-bTC5": {
-    "message": "Look at the bottom of their deck…",
-    "translation": "相手の山札の下を見る…"
-  },
-  "HlUAnV": {
-    "message": "Look at the bottom of your deck…",
-    "translation": "自分の山札の下を見る…"
-  },
   "sYYFby": {
     "message": "Look at the top cards",
     "translation": "山札の上のカードを見る"
   },
-  "HgXGgm": {
-    "message": "Look at the top of their deck…",
-    "translation": "相手の山札の上を見る…"
+  "bIo9OM": {
+    "message": "Look at top of deck…",
+    "translation": "山札の上を見る…"
   },
-  "Iwo9SE": {
-    "message": "Look at the top of your deck…",
-    "translation": "自分の山札の上を見る…"
+  "dWUxHE": {
+    "message": "Look at top of their deck…",
+    "translation": "相手の山札の上を見る…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -2975,12 +2959,12 @@
     ],
     "translation": "未使用にする"
   },
-  "Z4ljQt": {
-    "message": "Mark the GX attack unused",
+  "IHU0N1": {
+    "message": "Mark GX attack unused",
     "translation": "GXワザを未使用にする"
   },
-  "JQW_WK": {
-    "message": "Mark the VSTAR Power unused",
+  "IQ2DXR": {
+    "message": "Mark VSTAR Power unused",
     "translation": "VSTARパワーを未使用にする"
   },
   "42K-4o": {
@@ -3079,6 +3063,14 @@
     ],
     "translation": "{cardName}の移動先"
   },
+  "MnxTQZ": {
+    "message": "Move all on playboard to hand",
+    "translation": "場のカードをすべて手札に戻す"
+  },
+  "DUfTll": {
+    "message": "Move all on playboard to Lost Zone",
+    "translation": "場のカードをすべてロストゾーンへ"
+  },
   "pcSzkk": {
     "message": "Move all to hand",
     "translation": "すべて手札に移す"
@@ -3098,10 +3090,6 @@
   "TvEhJE": {
     "message": "Move didn't go through",
     "translation": "移動できませんでした"
-  },
-  "iwWOBz": {
-    "message": "Move everything on your playboard to your hand",
-    "translation": "自分のプレイボードのカードをすべて手札に戻す"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3395,6 +3383,10 @@
     "message": "Open file",
     "translation": "ファイルを開く"
   },
+  "E9wRDu": {
+    "message": "Open log",
+    "translation": "ログを開く"
+  },
   "F37c1s": {
     "message": "Open Settings",
     "translation": "設定を開く"
@@ -3402,10 +3394,6 @@
   "0FO0f7": {
     "message": "Open the deck screen",
     "translation": "デッキ画面を開く"
-  },
-  "FzvzJz": {
-    "message": "Open the Log",
-    "translation": "ログを開く"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3699,21 +3687,9 @@
     "message": "PTCG-sim tutorial",
     "translation": "PTCG-simチュートリアル"
   },
-  "rFCOSV": {
-    "message": "Put everything on your playboard in the Lost Zone",
-    "translation": "自分のプレイボードのカードをすべてロストゾーンに置く"
-  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "ポケモンのコマは1つの山にまとめ、スタジアムのコマはスタジアムに置いてください。"
-  },
-  "eAnTYw": {
-    "message": "Put your hand on the bottom of your deck and draw…",
-    "translation": "自分の手札を山札の下に置いて引く…"
-  },
-  "YrhlVT": {
-    "message": "Put your Prizes on the bottom of your deck",
-    "translation": "自分のサイドを山札の下に置く"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4131,6 +4107,10 @@
     "message": "Search cards",
     "translation": "カードを検索"
   },
+  "2FZsuF": {
+    "message": "Search cards…",
+    "translation": "カードを検索…"
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "すべてのフォーマットを検索"
@@ -4150,14 +4130,6 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "検索構文"
-  },
-  "qucaF4": {
-    "message": "Search the cards on the table…",
-    "translation": "テーブル上のカードを検索…"
-  },
-  "RtNLs_": {
-    "message": "Search your deck",
-    "translation": "自分の山札を探す"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4304,10 +4276,6 @@
     "message": "Show one per card",
     "translation": "カードごとに1枚表示"
   },
-  "etmouI": {
-    "message": "Show the card",
-    "translation": "カードを見せる"
-  },
   "NQ5xRS": {
     "message": "Show the deck as",
     "translation": "デッキの表示形式"
@@ -4358,6 +4326,10 @@
     "message": "Shuffle all into the deck?",
     "translation": "すべて山札に入れて切りますか?"
   },
+  "Ad3M_2": {
+    "message": "Shuffle all on playboard into deck",
+    "translation": "場のカードをすべて山札に戻して切る"
+  },
   "Es4EnS": {
     "message": "Shuffle all to deck",
     "translation": "すべて山札に切って戻す"
@@ -4366,13 +4338,13 @@
     "message": "Shuffle deck",
     "translation": "山札を切る"
   },
-  "cEnSTR": {
-    "message": "Shuffle everything on your playboard into your deck",
-    "translation": "自分のプレイボードのカードをすべて山札に入れて切る"
-  },
   "K3yK37": {
     "message": "Shuffle hand into deck",
     "translation": "手札を山札に入れて切る"
+  },
+  "KpMslS": {
+    "message": "Shuffle hand into deck and draw…",
+    "translation": "手札を山札に戻して切り、引く…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4381,6 +4353,10 @@
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
     "translation": "手札を山札の下に入れて切る"
+  },
+  "8uWf-T": {
+    "message": "Shuffle hand to bottom of deck and draw…",
+    "translation": "手札を山札の下に戻して引く…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4399,6 +4375,14 @@
     "message": "Shuffle prizes",
     "translation": "サイドを切る"
   },
+  "pYUbhf": {
+    "message": "Shuffle Prizes",
+    "translation": "サイドを切る"
+  },
+  "nU9Ip_": {
+    "message": "Shuffle Prizes to bottom of deck",
+    "translation": "サイドを山札の下に戻す"
+  },
   "SRsSL6": {
     "message": "Shuffle to bottom",
     "translation": "下に入れて切る"
@@ -4406,18 +4390,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "山札(下)に入れて切る"
-  },
-  "HeR1Qt": {
-    "message": "Shuffle your deck",
-    "translation": "山札を切る"
-  },
-  "KRFctr": {
-    "message": "Shuffle your hand into your deck and draw…",
-    "translation": "手札を山札に戻して切り、引く…"
-  },
-  "aIML6N": {
-    "message": "Shuffle your Prizes",
-    "translation": "サイドを切る"
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
@@ -4873,10 +4845,6 @@
     "message": "Then draw",
     "translation": "その後、引く"
   },
-  "hpAko0": {
-    "message": "Then draw how many cards?",
-    "translation": "その後、何枚引きますか?"
-  },
   "KAkiqg": {
     "message": "Then press To active to play it face down",
     "comments": [
@@ -5076,10 +5044,6 @@
     "message": "Try fewer cards.",
     "translation": "カード枚数を減らしてお試しください。"
   },
-  "JaA9mI": {
-    "message": "Try other words, or press Escape to go back.",
-    "translation": "別の言葉を試すか、Escキーで戻ります。"
-  },
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
@@ -5132,17 +5096,9 @@
     "context": "sort cards by",
     "translation": "タイプ"
   },
-  "GgWUew": {
-    "message": "Type a message, then press Enter",
-    "translation": "メッセージを入力してEnterキーを押してください"
-  },
   "Bq_7Gn": {
     "message": "Type something first",
     "translation": "先に何か入力してください"
-  },
-  "gu8i-0": {
-    "message": "Type, then press Enter.",
-    "translation": "入力してEnterキーを押してください。"
   },
   "9uI_rE": {
     "message": "Undo",
@@ -5186,6 +5142,10 @@
     "message": "Use default",
     "translation": "デフォルトを使用"
   },
+  "pEHkP7": {
+    "message": "Use GX attack",
+    "translation": "GXワザを使う"
+  },
   "Z4udqe": {
     "message": "Use here",
     "context": "give the keys to this shortcut",
@@ -5199,17 +5159,13 @@
     "message": "Use on {seat}",
     "translation": "{seat}で使用"
   },
-  "yyidsc": {
-    "message": "Use the GX attack",
-    "translation": "GXワザを使う"
-  },
-  "nG8vJk": {
-    "message": "Use the VSTAR Power",
-    "translation": "VSTARパワーを使う"
-  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "山札の{deckCopies}にこのプリントを使用"
+  },
+  "9c8BhN": {
+    "message": "Use VSTAR Power",
+    "translation": "VSTARパワーを使う"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5273,10 +5229,6 @@
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "PTCG-simへようこそ"
-  },
-  "aEcdbE": {
-    "message": "What should {0} do?",
-    "translation": "{0}に何をさせますか?"
   },
   "3ePd3I": {
     "message": "What's new",

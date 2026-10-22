@@ -1196,11 +1196,11 @@ export const RemoteSessionBoard = ({
           title:
             marker === 'vstar'
               ? used
-                ? t`Mark the VSTAR Power unused`
-                : t`Use the VSTAR Power`
+                ? t`Mark VSTAR Power unused`
+                : t`Use VSTAR Power`
               : used
-                ? t`Mark the GX attack unused`
-                : t`Use the GX attack`,
+                ? t`Mark GX attack unused`
+                : t`Use GX attack`,
           section: 'turn',
           ...detail,
           keywords: [marker, 'once per game', 'marker'],

@@ -178,7 +178,7 @@ export const boardCommands = (
     if (!card.concealed && (card.interactive || pile)) {
       commands.push({
         id: `${prefix}.view`,
-        title: t`Show the card`,
+        title: t`View card`,
         section,
         detail,
         icon: EyeIcon,
@@ -300,7 +300,7 @@ export const boardCommands = (
         icon: HeartBreakIcon,
         keywords: ['damage', 'counter', 'hp'],
         count: {
-          label: t`Damage on the Pokémon`,
+          label: t`How much damage?`,
           min: 0,
           max: MAX_DAMAGE,
           initial: 0,
@@ -426,7 +426,7 @@ export const boardCommands = (
       ),
       {
         id: 'deck.shuffle',
-        title: t`Shuffle your deck`,
+        title: t`Shuffle deck`,
         section: 'deck',
         ...(seat ? { detail: seat } : {}),
         icon: ShuffleIcon,
@@ -436,12 +436,12 @@ export const boardCommands = (
       },
       counted(
         'deck.lookTop',
-        t`Look at the top of your deck…`,
+        t`Look at top of deck…`,
         t`How many cards?`,
         (count) =>
           plural(count, {
-            one: 'Look at the top card of your deck',
-            other: 'Look at the top # cards of your deck',
+            one: 'Look at top card',
+            other: 'Look at top # cards',
           }),
         (count) => ({ action: 'inspectOwnDeck', count, edge: 'top' }),
         {
@@ -452,12 +452,12 @@ export const boardCommands = (
       ),
       counted(
         'deck.lookBottom',
-        t`Look at the bottom of your deck…`,
+        t`Look at bottom of deck…`,
         t`How many cards?`,
         (count) =>
           plural(count, {
-            one: 'Look at the bottom card of your deck',
-            other: 'Look at the bottom # cards of your deck',
+            one: 'Look at bottom card',
+            other: 'Look at bottom # cards',
           }),
         (count) => ({ action: 'inspectOwnDeck', count, edge: 'bottom' }),
         {
@@ -470,7 +470,7 @@ export const boardCommands = (
     if (deckZone?.interactive) {
       commands.push({
         id: 'deck.search',
-        title: t`Search your deck`,
+        title: t`Open your deck`,
         section: 'deck',
         ...(seat ? { detail: seat } : {}),
         icon: MagnifyingGlassIcon,
@@ -491,11 +491,11 @@ export const boardCommands = (
       {
         id: 'hand.discardAndDraw',
         action: 'discardOwnHandAndDraw',
-        title: t`Discard your hand and draw…`,
+        title: t`Discard hand and draw…`,
         named: (count: number) =>
           plural(count, {
-            one: 'Discard your hand and draw # card',
-            other: 'Discard your hand and draw # cards',
+            one: 'Discard hand and draw # card',
+            other: 'Discard hand and draw # cards',
           }),
         icon: TrashIcon,
         keywords: ['discard', 'hand', 'professor', 'draw'],
@@ -503,11 +503,11 @@ export const boardCommands = (
       {
         id: 'hand.shuffleAndDraw',
         action: 'shuffleOwnHandAndDraw',
-        title: t`Shuffle your hand into your deck and draw…`,
+        title: t`Shuffle hand into deck and draw…`,
         named: (count: number) =>
           plural(count, {
-            one: 'Shuffle your hand in and draw # card',
-            other: 'Shuffle your hand in and draw # cards',
+            one: 'Shuffle hand in and draw # card',
+            other: 'Shuffle hand in and draw # cards',
           }),
         icon: ShuffleIcon,
         keywords: ['shuffle', 'hand', 'draw'],
@@ -515,11 +515,11 @@ export const boardCommands = (
       {
         id: 'hand.shuffleToBottomAndDraw',
         action: 'shuffleOwnHandToDeckBottomAndDraw',
-        title: t`Put your hand on the bottom of your deck and draw…`,
+        title: t`Shuffle hand to bottom of deck and draw…`,
         named: (count: number) =>
           plural(count, {
-            one: 'Put your hand on the bottom and draw # card',
-            other: 'Put your hand on the bottom and draw # cards',
+            one: 'Shuffle hand to bottom and draw # card',
+            other: 'Shuffle hand to bottom and draw # cards',
           }),
         icon: ArrowsDownUpIcon,
         keywords: ['bottom', 'hand', 'draw'],
@@ -537,7 +537,7 @@ export const boardCommands = (
         hint: hint(refresh.id as HotkeyActionId),
         keywords: refresh.keywords,
         count: {
-          label: t`Then draw how many cards?`,
+          label: t`Draw how many?`,
           min: 0,
           max: MAX_COUNT,
           initial: 0,
@@ -620,7 +620,7 @@ export const boardCommands = (
       keywords: ['card', 'find', 'search', 'pokemon'],
       submenu: () => ({
         breadcrumb: t`Cards`,
-        placeholder: t`Search the cards on the table…`,
+        placeholder: t`Search cards…`,
         commands: rows.map((card): PaletteCommand => ({
           id: `cards.card.${card.id}`,
           title: card.label,
@@ -639,7 +639,6 @@ export const boardCommands = (
           nestedSearch: false,
           submenu: () => ({
             breadcrumb: card.label,
-            placeholder: t`What should ${card.label} do?`,
             commands: cardCommands(card, `cards.card.${card.id}`, 'cards'),
           }),
         })),
@@ -688,22 +687,17 @@ export const boardCommands = (
   if (live) {
     // What the loose board's cards can do, together: v1's Enter, Alt+Enter, /.
     const loose = [
-      [
-        'board.discardAll',
-        'discard',
-        t`Discard everything on your playboard`,
-        TrashIcon,
-      ],
+      ['board.discardAll', 'discard', t`Discard all on playboard`, TrashIcon],
       [
         'board.moveAllToHand',
         'hand',
-        t`Move everything on your playboard to your hand`,
+        t`Move all on playboard to hand`,
         HandIcon,
       ],
       [
         'board.shuffleAllIntoDeck',
         'shuffleIntoDeck',
-        t`Shuffle everything on your playboard into your deck`,
+        t`Shuffle all on playboard into deck`,
         ShuffleIcon,
       ],
     ] as const;
@@ -769,12 +763,12 @@ export const boardCommands = (
                   title: (count: number) =>
                     item.action === 'viewDeckBottom'
                       ? plural(count, {
-                          one: 'Look at the bottom card of their deck',
-                          other: 'Look at the bottom # cards of their deck',
+                          one: 'Look at their bottom card',
+                          other: 'Look at their bottom # cards',
                         })
                       : plural(count, {
-                          one: 'Look at the top card of their deck',
-                          other: 'Look at the top # cards of their deck',
+                          one: 'Look at their top card',
+                          other: 'Look at their top # cards',
                         }),
                 },
                 run: ({ count = 1 }) => overlay(request(String(count)))(),
@@ -797,13 +791,13 @@ export const boardCommands = (
             ? [
                 {
                   action: 'shufflePrizes' as const,
-                  title: t`Shuffle your Prizes`,
+                  title: t`Shuffle Prizes`,
                   icon: ShuffleIcon,
                   keywords: ['prize', 'shuffle'],
                 },
                 {
                   action: 'shufflePrizesToDeckBottom' as const,
-                  title: t`Put your Prizes on the bottom of your deck`,
+                  title: t`Shuffle Prizes to bottom of deck`,
                   icon: ArrowsDownUpIcon,
                   keywords: ['prize', 'bottom'],
                 },
@@ -854,14 +848,14 @@ export const boardCommands = (
           [
             {
               action: 'viewDeckTop',
-              title: t`Look at the top of their deck…`,
+              title: t`Look at top of their deck…`,
               icon: BinocularsIcon,
               count: true,
               keywords: ['look', 'top'],
             },
             {
               action: 'viewDeckBottom',
-              title: t`Look at the bottom of their deck…`,
+              title: t`Look at bottom of their deck…`,
               icon: BinocularsIcon,
               count: true,
               keywords: ['look', 'bottom'],
@@ -877,7 +871,7 @@ export const boardCommands = (
           ? [
               {
                 action: 'moveBoardToLostZone',
-                title: t`Put everything on your playboard in the Lost Zone`,
+                title: t`Move all on playboard to Lost Zone`,
                 icon: SparkleIcon,
                 keywords: ['lost zone', 'board', 'all'],
               },
@@ -896,7 +890,7 @@ export const boardCommands = (
       const own = playerId === acting;
       commands.push({
         id: own ? 'turn.coin' : 'turn.coinOther',
-        title: own ? t`Flip a coin` : t`Flip the other seat's coin`,
+        title: own ? t`Flip a coin` : t`Flip their coin`,
         section: 'turn',
         icon: CoinIcon,
         ...(seatName(playerId) ? { detail: seatName(playerId)! } : {}),
