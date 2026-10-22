@@ -488,7 +488,9 @@
 }
 
 .deck-paste__input {
-  flex: 1 1 300px;
+  /* Beside the icon down to the narrowest phone (320 px). */
+  flex: 1 1 160px;
+  min-width: 0;
   min-height: 44px;
   max-height: 40vh;
   box-sizing: border-box;
@@ -831,6 +833,11 @@
   line-height: var(--leading-tight);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Focused as the view opens, to say where the player is; not a control. */
+.deck-subhead__title h2:focus {
+  outline: none;
 }
 
 .deck-subhead__title p {

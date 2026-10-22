@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { deckBoxToneOf } from './DeckBox.js';
 import { finderMode } from './DeckHome.js';
+import { importDeckText } from './deck-import.js';
 import { finishName } from './TournamentDecks.js';
 
 const card = (
@@ -21,6 +22,40 @@ describe('a deck box', () => {
       { card: card('Jet Energy', 'Energy'), count: 4 },
     ];
     expect(deckBoxToneOf(deck)).toBe('Fire');
+  });
+
+  it('reads basic Energy however a list names it', async () => {
+    // Pokémon TCG Live's list, imported before the catalog is in: its
+    // names stay as written.
+    const live = await importDeckText(
+      [
+        'Pokémon: 1',
+        '4 Charmander MEW 4',
+        'Energy: 2',
+        '8 Basic {R} Energy SVE 2',
+        '3 Basic {P} Energy SVE 5',
+      ].join('\n'),
+      { fetch: () => Promise.reject(new Error('offline')) }
+    );
+    expect(live.ok).toBe(true);
+    if (!live.ok) return;
+    expect(live.cards.map(({ card }) => card.name)).toContain(
+      'Basic {R} Energy'
+    );
+    expect(deckBoxToneOf(live.cards)).toBe('Fire');
+    // Typed by hand: "Basic Fire Energy" counts as Fire.
+    expect(
+      deckBoxToneOf([
+        { card: card('Basic Fire Energy', 'Energy'), count: 8 },
+        { card: card('Water Energy', 'Energy'), count: 2 },
+      ])
+    ).toBe('Fire');
+    expect(
+      deckBoxToneOf([
+        { card: card('Basic {D} Energy Energy', 'Energy'), count: 4 },
+        { card: card('Basic Water Energy', 'Energy'), count: 2 },
+      ])
+    ).toBe('Darkness');
   });
 
   it('is plain for a deck with no basic Energy, or one not read yet', () => {

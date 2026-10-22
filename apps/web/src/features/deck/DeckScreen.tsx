@@ -19,6 +19,7 @@ import {
   useState,
   useSyncExternalStore,
   type DragEvent,
+  type KeyboardEvent,
 } from 'react';
 
 import { preferences } from '../../preferences/preference-store.js';
@@ -36,7 +37,7 @@ import type {
   DeckSlotLabel,
 } from './deck-builder-store.js';
 import { DeckEditor } from './DeckEditor.js';
-import { DeckHome, wordFinish } from './DeckHome.js';
+import { DeckHome, finderMode, wordFinish } from './DeckHome.js';
 import { importDeckText, type DeckImportLine } from './deck-import.js';
 import type {
   DeckLibrary,
@@ -566,7 +567,10 @@ export const DeckScreen = ({
     });
   }, [alternateRevision, mainRevision]);
 
-  // Paste anywhere on the screen (outside a text field) imports the list.
+  // Paste anywhere on the screen (outside a text field) imports the list;
+  // on the decks, a deck's name goes into the finder and is looked up, as
+  // it would pasted there.
+  const viewKind = view.kind;
   useEffect(() => {
     if (!open) return;
     // While the screen is open it covers the window, so a paste that isn't
@@ -576,11 +580,111 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
+      if (viewKind === 'home' && finderMode(text) === 'search') {
+        setFinderText(text.trim());
+        screen.current
+          ?.querySelector<HTMLTextAreaElement>('#deckPasteInput')
+          ?.focus({ preventScroll: true });
+        return;
+      }
       void runImport(text, { kind: 'paste' });
     };
     document.addEventListener('paste', onPaste);
     return () => document.removeEventListener('paste', onPaste);
-  }, [open, runImport]);
+  }, [open, runImport, viewKind]);
+
+  // A tournament or a deck's lists open with focus on their heading, and
+  // close back to the decks where they were: scrolled as they were, focus
+  // on what opened them once the decks have drawn it again (the finder
+  // until then). Focus never falls out of the screen, where Esc and the
+  // keys would go nowhere.
+  const returnTo = useRef<
+    { readonly opener: string; readonly scrollTop: number } | undefined
+  >(undefined);
+  const leaveDecks = useCallback((opener: string): void => {
+    returnTo.current = {
+      opener,
+      scrollTop:
+        screen.current?.querySelector<HTMLElement>('.deck-home')?.scrollTop ??
+        0,
+    };
+  }, []);
+  const openTournament = useCallback(
+    (tournament: TournamentSummary) => {
+      leaveDecks(`[data-open-tournament="${CSS.escape(tournament.id)}"]`);
+      setView({ kind: 'tournament', tournament });
+    },
+    [leaveDecks]
+  );
+  const openArchetype = useCallback(
+    (archetype: TournamentArchetype) => {
+      leaveDecks(`[data-open-archetype="${CSS.escape(archetype.id)}"]`);
+      setView({ kind: 'archetype', archetype });
+    },
+    [leaveDecks]
+  );
+  const backToDecks = useCallback(() => setView({ kind: 'home' }), []);
+  const subview = view.kind === 'tournament' || view.kind === 'archetype';
+  useEffect(() => {
+    const root = screen.current;
+    if (!root) return;
+    if (subview) {
+      root
+        .querySelector<HTMLElement>('.deck-subhead__title h2')
+        ?.focus({ preventScroll: true });
+      return;
+    }
+    const back = returnTo.current;
+    returnTo.current = undefined;
+    if (viewKind !== 'home' || back === undefined) return;
+    const home = root.querySelector<HTMLElement>('.deck-home');
+    if (home) home.scrollTop = back.scrollTop;
+    const lost = (): boolean =>
+      document.activeElement === null ||
+      document.activeElement === document.body;
+    const finder = root.querySelector<HTMLTextAreaElement>('#deckPasteInput');
+    if (lost()) finder?.focus({ preventScroll: true });
+    const held = finder?.value;
+    // The shelf and the results are fetched again: wait a few seconds for
+    // the opener, while the player hasn't moved on from the finder.
+    const until = performance.now() + 3_000;
+    let frame = 0;
+    const find = (): void => {
+      frame = 0;
+      const target = root.querySelector<HTMLElement>(back.opener);
+      if (target) {
+        if (
+          lost() ||
+          (document.activeElement === finder && finder?.value === held)
+        ) {
+          target.focus();
+        }
+        return;
+      }
+      if (performance.now() < until) frame = requestAnimationFrame(find);
+    };
+    find();
+    return () => {
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, [subview, viewKind]);
+  // Esc in a tournament or a deck's lists goes back to the decks, before it
+  // would leave the screen.
+  const onScreenKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (
+      !subview ||
+      event.key !== 'Escape' ||
+      event.defaultPrevented ||
+      (event.target instanceof Element &&
+        event.target.closest(
+          '[role="dialog"], [role="menu"], [role="listbox"]'
+        ) !== null)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    backToDecks();
+  };
 
   const newDeck = useCallback(
     (format: DeckFormatId = 'standard') => {
@@ -699,6 +803,7 @@ export const DeckScreen = ({
         if (event.currentTarget === event.target) setDragging(false);
       }}
       onDrop={onDrop}
+      onKeyDown={onScreenKeyDown}
     >
       <header className="deck-screen__bar">
         <button
@@ -923,7 +1028,7 @@ export const DeckScreen = ({
             key={view.tournament.id}
             tournament={view.tournament}
             pending={pendingList}
-            onBack={() => setView({ kind: 'home' })}
+            onBack={backToDecks}
             onLoad={loadTournamentList}
           />
         ) : view.kind === 'archetype' ? (
@@ -931,7 +1036,7 @@ export const DeckScreen = ({
             key={view.archetype.id}
             archetype={view.archetype}
             pending={pendingList}
-            onBack={() => setView({ kind: 'home' })}
+            onBack={backToDecks}
             onLoad={loadTournamentList}
           />
         ) : (
@@ -975,12 +1080,8 @@ export const DeckScreen = ({
             }}
             onLoadTournamentList={loadTournamentList}
             pendingList={pendingList}
-            onOpenTournament={(tournament) =>
-              setView({ kind: 'tournament', tournament })
-            }
-            onOpenArchetype={(archetype) =>
-              setView({ kind: 'archetype', archetype })
-            }
+            onOpenTournament={openTournament}
+            onOpenArchetype={openArchetype}
             finderText={finderText}
             onFinderTextChange={setFinderText}
           />

@@ -324,3 +324,99 @@ test('All lists for a deck with no recent finishes lists its older ones', async 
   expect(asked[0]).toBe('default');
   expect(asked.at(-1)).toBe('3650');
 });
+
+test('a tournament opens and closes from the keyboard, and Esc steps back before it leaves', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await stubIndex(page);
+  await openDeckScreen(page);
+  await page.locator('#deckTournamentsTitle').scrollIntoViewIfNeeded();
+  const event = page
+    .getByRole('list', { name: 'Tournaments' })
+    .getByRole('button', { name: /ASRcristiano # 197/u });
+  await event.focus();
+  await page.keyboard.press('Enter');
+  // The tournament's name, read first: focus stays on the screen.
+  await expect(page.locator('.deck-subhead__title h2')).toBeFocused();
+  await expect(
+    page.getByRole('list', { name: 'Standings' }).getByRole('listitem')
+  ).toHaveCount(2);
+  // Esc goes back to the decks, to the event that opened it.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
+  await expect(event).toBeFocused();
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="true"]')
+  ).toBeVisible();
+  // From the decks, Esc leaves the screen.
+  await page.keyboard.press('Escape');
+  await expect(
+    page.locator('.ptcgsim-deck-layer[data-open="false"]')
+  ).toBeAttached();
+});
+
+test("a deck's name pasted onto the screen is looked up", async ({ page }) => {
+  test.setTimeout(60_000);
+  const asked = await stubIndex(page);
+  await openDeckScreen(page);
+  // Pasted onto the screen itself, not into the finder.
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
+  await expect(async () => {
+    await page.evaluate(() => {
+      const data = new DataTransfer();
+      data.setData('text/plain', 'Dragapult');
+      document.body.dispatchEvent(
+        new ClipboardEvent('paste', {
+          clipboardData: data,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    await expect(page.locator('#deckPasteInput')).toHaveValue('Dragapult', {
+      timeout: 500,
+    });
+  }).toPass();
+  await expect(page.locator('#deckPasteInput')).toBeFocused();
+  await expect(
+    page
+      .getByRole('region', { name: 'Tournament decks' })
+      .getByText('Dragapult Dusknoir')
+  ).toBeVisible();
+  expect(asked).toEqual(['?q=Dragapult']);
+});
+
+test.describe('on a phone', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test("the finder's field sits beside its icon at every phone width", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await stubIndex(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
+      timeout: 30_000,
+    });
+    await openDeck(page);
+    for (const width of [320, 360, 375, 390, 430]) {
+      await page.setViewportSize({ width, height: 800 });
+      // The page lays out again at the new width: two frames on.
+      await page.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))
+          )
+      );
+      const icon = (await page.locator('.deck-paste__icon').boundingBox())!;
+      const field = (await page.locator('#deckPasteInput').boundingBox())!;
+      // One row: the field starts after the icon, beside it.
+      expect(
+        field.x > icon.x + icon.width && field.y < icon.y + icon.height,
+        `one row at ${String(width)}`
+      ).toBe(true);
+    }
+  });
+});

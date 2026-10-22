@@ -18,8 +18,52 @@ export type DeckBoxTone =
   | 'Metal'
   | 'Fairy';
 
+/**
+ * A basic Energy's name however a list writes it: "Fire Energy", "Basic
+ * Fire Energy", Pokémon TCG Live's "Basic {R} Energy" (PTCGO's adds another
+ * "Energy").
+ */
 const BASIC_ENERGY =
-  /^(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Fairy) Energy$/u;
+  /^(?:basic\s+)?(?:\{([grwlpfdmy])\}|(grass|fire|water|lightning|psychic|fighting|darkness|dark|metal|fairy))\s+energy(?:\s+energy)?$/iu;
+
+const TONE_BY_SYMBOL: Readonly<Record<string, DeckBoxTone>> = {
+  g: 'Grass',
+  r: 'Fire',
+  w: 'Water',
+  l: 'Lightning',
+  p: 'Psychic',
+  f: 'Fighting',
+  d: 'Darkness',
+  m: 'Metal',
+  y: 'Fairy',
+};
+
+const TONE_BY_NAME: Readonly<Record<string, DeckBoxTone>> = {
+  grass: 'Grass',
+  fire: 'Fire',
+  water: 'Water',
+  lightning: 'Lightning',
+  psychic: 'Psychic',
+  fighting: 'Fighting',
+  darkness: 'Darkness',
+  dark: 'Darkness',
+  metal: 'Metal',
+  fairy: 'Fairy',
+};
+
+const basicEnergyTone = (
+  card: DeckList[number]['card']
+): DeckBoxTone | undefined => {
+  if (card.category !== 'Energy' || card.facts?.energyType === 'Special') {
+    return undefined;
+  }
+  const match = BASIC_ENERGY.exec(card.name.trim());
+  if (!match) return undefined;
+  const [, symbol, name] = match;
+  return symbol
+    ? TONE_BY_SYMBOL[symbol.toLowerCase()]
+    : TONE_BY_NAME[(name ?? '').toLowerCase()];
+};
 
 /**
  * A deck's colour: the basic Energy it plays most of, as a real player
@@ -32,8 +76,7 @@ export const deckBoxToneOf = (
   if (!cards) return undefined;
   const counts = new Map<DeckBoxTone, number>();
   for (const { card, count } of cards) {
-    if (card.category !== 'Energy') continue;
-    const type = BASIC_ENERGY.exec(card.name)?.[1] as DeckBoxTone | undefined;
+    const type = basicEnergyTone(card);
     if (type) counts.set(type, (counts.get(type) ?? 0) + count);
   }
   let best: DeckBoxTone | undefined;

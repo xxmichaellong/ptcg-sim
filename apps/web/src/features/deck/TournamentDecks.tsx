@@ -312,6 +312,7 @@ export const DeckSearchResults = ({
                   <button
                     type="button"
                     className="ds-button ds-button--ghost deck-result__all"
+                    data-open-archetype={result.archetype.id}
                     onClick={() => onAllLists(result.archetype)}
                   >
                     <Trans>All lists</Trans>
@@ -438,6 +439,7 @@ export const TournamentsShelf = ({
                 <button
                   type="button"
                   className="deck-event"
+                  data-open-tournament={event.id}
                   data-lists={
                     event.hasLists === null ? undefined : String(event.hasLists)
                   }
@@ -560,7 +562,8 @@ const SubHead = ({
       </Tooltip>
       {icons ? <ArchetypeIcons icons={icons} /> : null}
       <div className="deck-subhead__title">
-        <h2>{title}</h2>
+        {/* Focused as the view opens: what it is, read out first. */}
+        <h2 tabIndex={-1}>{title}</h2>
         {meta ? <p>{meta}</p> : null}
       </div>
       {link ? (
