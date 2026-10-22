@@ -1,6 +1,13 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { openAppMenu, openDeck, useFlatTable } from './support/table-shell.js';
+import {
+  closeDeck,
+  closeSheet,
+  openAppMenu,
+  openDeck,
+  openSettings,
+  useFlatTable,
+} from './support/table-shell.js';
 
 /**
  * Tutorial mode (ADR-038): lessons on a practice table of their own, each
@@ -472,4 +479,35 @@ test('a lesson in the address starts at once, on both halves of the table', asyn
     box.y + box.height <= ring.y ||
     ring.y + ring.height <= box.y;
   expect(apart).toBe(true);
+});
+
+test('steps aside for the deck screen and sheets, and comes back after', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openTutorial(page, '/?tutorial=around');
+  await atStep(page, 'around:deck');
+  await openDeck(page);
+  await expect(coach(page)).toHaveCount(0);
+  await closeDeck(page);
+  await atStep(page, 'around:deck');
+  for (const id of ['online', 'log', 'settings', 'menu']) {
+    await coach(page)
+      .getByRole('button', { name: /^(Next|Done)$/u })
+      .click();
+    await atStep(page, `around:${id}`);
+  }
+  await coach(page).getByRole('button', { name: 'Done' }).click();
+  const done = page.locator('[data-tutorial-done]');
+  await expect(done).toBeVisible();
+  // The lesson's done card leaves the deck screen and Settings usable.
+  await openDeck(page);
+  await expect(done).toHaveCount(0);
+  await closeDeck(page);
+  await expect(done).toBeVisible();
+  await openSettings(page);
+  await expect(done).toHaveCount(0);
+  await closeSheet(page);
+  await expect(done).toBeVisible();
 });

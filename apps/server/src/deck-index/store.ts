@@ -284,8 +284,10 @@ export class DeckIndexStore {
 
   /**
    * Records a page of the tournament list: new rows join the queue (or are
-   * marked skipped), known ones take the list's latest name and player
-   * count. Returns the ids that were already known.
+   * marked skipped), known ones take the list's latest name, format and
+   * player count, and a skipped one that has since become worth reading
+   * (players registered, a format set) joins the queue. Returns the ids
+   * that were already known.
    */
   recordListed(
     rows: readonly ListedTournament[],
@@ -301,13 +303,26 @@ export class DeckIndexStore {
         if (existing) {
           known.add(row.id);
           this.sql.exec(
-            'UPDATE tournaments SET name = ?, players = ?, date = ? WHERE id = ?',
+            'UPDATE tournaments SET name = ?, players = ?, date = ?, format = COALESCE(?, format) WHERE id = ?',
             row.name,
             row.players,
             row.date,
+            row.format,
             row.id
           );
-          if (existing.state !== 'skipped' && existing.name !== row.name) {
+          if (existing.state === 'skipped') {
+            if (row.indexable) {
+              this.sql.exec(
+                `UPDATE tournaments SET state = 'listed' WHERE id = ?`,
+                row.id
+              );
+              this.sql.exec(
+                'INSERT INTO tournament_fts (rowid, text) VALUES (?, ?)',
+                number(existing.rid),
+                normalizeName(row.name)
+              );
+            }
+          } else if (existing.name !== row.name) {
             this.sql.exec(
               'UPDATE tournament_fts SET text = ? WHERE rowid = ?',
               normalizeName(row.name),

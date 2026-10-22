@@ -383,9 +383,10 @@ export const TutorialHost = ({
     () => (step?.drag && world ? step.drag(world) : null),
     [step, world]
   );
-  // Out of the way of the deck screen and sheets, and while the practice
-  // table reconnects (the lesson waits, as it was).
-  const hidden = screen.deckScreen || screen.sheet || state.phase !== 'ready';
+  // Out of the way of the deck screen and sheets, and the coach while the
+  // practice table reconnects (the lesson waits, as it was).
+  const covered = screen.deckScreen || screen.sheet;
+  const hidden = covered || state.phase !== 'ready';
   const showing = Boolean(playing && !playing.done && !hidden);
   const rects = useTargetRects(targets, showing);
   const dragRects = useTargetRects(
@@ -417,7 +418,7 @@ export const TutorialHost = ({
 
   return (
     <>
-      {phase.kind === 'lessons' ? (
+      {phase.kind === 'lessons' && !covered ? (
         <LessonList
           lessons={lessons}
           isDone={isDone}
@@ -427,7 +428,7 @@ export const TutorialHost = ({
           onExit={onExit}
         />
       ) : null}
-      {phase.kind === 'dealing' || phase.kind === 'failed' ? (
+      {(phase.kind === 'dealing' || phase.kind === 'failed') && !covered ? (
         <div className="tutorial-scrim" data-tutorial-dealing="true">
           <div className="tutorial-dealing" role="status">
             <span className="tutorial-dealing__title">
@@ -490,7 +491,7 @@ export const TutorialHost = ({
           />
         </>
       ) : null}
-      {phase.kind === 'finished' ? (
+      {phase.kind === 'finished' && !covered ? (
         <LessonDone
           lesson={phase.lesson}
           next={nextLesson(phase.lesson)}

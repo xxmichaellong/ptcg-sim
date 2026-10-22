@@ -510,8 +510,15 @@ for (const mode of ['flat', 'table'] as const)
       await expect
         .poll(async () => (await sceneCard(page, 'opponent'))?.parentId)
         .toMatch(/:hand$/);
-      const inHand = await sceneCard(page, 'opponent');
-      await page.locator(`[data-card-id="${inHand.id}"]`).click();
+      // The drawn card shows at once under the client's predicted id, which
+      // the room's answer replaces: once the table settles, it is clicked by
+      // its name.
+      await expect(
+        page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      ).toHaveCount(1);
+      await page
+        .locator('.ptcgsim-card[data-in-hand][aria-label="Opponent EX"]')
+        .click();
       await page.keyboard.press('a');
       await expect
         .poll(async () => (await sceneCard(page, 'opponent'))?.role)

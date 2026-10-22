@@ -266,6 +266,38 @@ describe('discovering tournaments', () => {
     ]);
   });
 
+  it('takes up a skipped tournament once it is worth reading', async () => {
+    // Listed while players were still registering, before its format was set.
+    limitless.tournaments = [
+      tournament(1, {
+        name: 'Late Cup',
+        players: 4,
+        format: null,
+        date: START - HOUR,
+      }),
+    ];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    expect(await index.tournament(id(1))).toEqual({ kind: 'not_found' });
+    limitless.tournaments = [
+      tournament(1, { name: 'Late Cup', players: 32, date: START - HOUR }),
+    ];
+    now += CRAWL_POLICY.discoveryEveryMs;
+    await crawlUntilIdle(index);
+    const browse = index.tournaments({
+      q: 'late',
+      format: 'STANDARD',
+      minimumPlayers: 0,
+      before: null,
+      pageSize: 10,
+    });
+    expect(browse.tournaments.map((row) => [row.id, row.players])).toEqual([
+      [id(1), 32],
+    ]);
+    expect(await index.tournament(id(1))).toMatchObject({ kind: 'ok' });
+  });
+
   it('discovers again at once when the daily cron asks', async () => {
     limitless.tournaments = [tournament(1, { players: 4 })];
     const index = createIndex();
