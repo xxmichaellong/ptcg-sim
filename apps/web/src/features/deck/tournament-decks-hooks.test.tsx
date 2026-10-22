@@ -152,17 +152,21 @@ describe('usePaged', () => {
   });
   it('starts over from the first page when the server refuses a cursor', async () => {
     const reads: Array<string | undefined> = [];
+    const caches: Array<RequestCache | undefined> = [];
     let refuse = true;
-    const readPage = vi.fn(async (cursor: string | undefined) => {
-      reads.push(cursor);
-      if (cursor && refuse) {
-        refuse = false;
-        throw new TournamentDataRefusedError(400);
+    const readPage = vi.fn(
+      async (cursor: string | undefined, options: { cache?: RequestCache }) => {
+        reads.push(cursor);
+        caches.push(options.cache);
+        if (cursor && refuse) {
+          refuse = false;
+          throw new TournamentDataRefusedError(400);
+        }
+        return cursor
+          ? { items: ['c'], nextCursor: null }
+          : { items: ['a', 'b'], nextCursor: 'stale' };
       }
-      return cursor
-        ? { items: ['c'], nextCursor: null }
-        : { items: ['a', 'b'], nextCursor: 'stale' };
-    });
+    );
     let latest: PagedRemote<string> | undefined;
     const Probe = () => {
       latest = usePaged('one', readPage);
@@ -178,6 +182,9 @@ describe('usePaged', () => {
       await vi.runAllTimersAsync();
     });
     expect(reads).toEqual([undefined, 'stale', undefined]);
+    // The first page again from the server, not the browser's copy that
+    // carried the refused cursor.
+    expect(caches).toEqual([undefined, undefined, 'no-cache']);
     expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b'] });
     expect(latest?.loadingMore).toBe(false);
     await act(async () => {

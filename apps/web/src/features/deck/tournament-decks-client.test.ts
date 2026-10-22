@@ -125,6 +125,13 @@ describe('tournament deck search', () => {
       fetch: respond({ error: 'oops' }, 500),
     }).catch((caught: unknown) => caught);
     expect(failed).not.toBeInstanceOf(TournamentDataRefusedError);
+    // Asked to, it skips the browser's copy.
+    const fresh = respond({ tournaments: [], nextCursor: null });
+    await fetchTournaments({ fetch: fresh, cache: 'no-cache' });
+    expect(fresh.mock.calls[0]![1]).toMatchObject({ cache: 'no-cache' });
+    const usual = respond({ tournaments: [], nextCursor: null });
+    await fetchTournaments({ fetch: usual });
+    expect(usual.mock.calls[0]![1]).not.toHaveProperty('cache');
   });
 
   it('reads a busy answer as busy, with how long to wait', async () => {

@@ -4,7 +4,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ArchetypeView } from './TournamentDecks.js';
+import {
+  ArchetypeView,
+  TournamentsShelf,
+  TournamentView,
+} from './TournamentDecks.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -130,5 +134,114 @@ describe('a deck’s lists from the keyboard', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
     expect(host.textContent).toContain('second');
+  });
+
+  it('keep the focus on a standing’s Load while its list loads', async () => {
+    const event = {
+      id: 'b'.repeat(24),
+      name: 'Cup',
+      date: '2026-10-10T19:00:00.000Z',
+      players: 64,
+      format: 'STANDARD',
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          tournament: {
+            ...event,
+            organizer: 'League',
+            hasLists: true,
+            url: `https://play.limitlesstcg.com/tournament/${event.id}/standings`,
+          },
+          standings: [
+            {
+              player: { id: 'winner', name: 'Winner' },
+              placing: 1,
+              record: { wins: 9, losses: 0, ties: 0 },
+              dropped: false,
+              archetype: ARCHETYPE,
+              hasList: true,
+            },
+          ],
+        })
+      )
+    );
+    const onLoad = vi.fn();
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    const draw = (pending: string | undefined) =>
+      act(async () =>
+        root!.render(
+          <TournamentView
+            tournament={event}
+            pending={pending}
+            onBack={() => undefined}
+            onLoad={onLoad}
+          />
+        )
+      );
+    await draw(undefined);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const load = host.querySelector<HTMLButtonElement>('.deck-standing__load')!;
+    load.focus();
+    await act(async () => load.click());
+    expect(onLoad).toHaveBeenCalledOnce();
+    await draw(`${event.id}/winner`);
+    // Loading: still focusable, and a second press asks for nothing more.
+    expect(load.disabled).toBe(false);
+    expect(load.getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement).toBe(load);
+    await act(async () => load.click());
+    expect(onLoad).toHaveBeenCalledOnce();
+  });
+
+  it('give the focus to the first event More brought once More goes', async () => {
+    const event = (n: number) => ({
+      id: `${'c'.repeat(23)}${String(n)}`,
+      name: `Event ${String(n)}`,
+      date: '2026-10-10T19:00:00.000Z',
+      players: 64,
+      format: 'STANDARD',
+      organizer: 'League',
+      hasLists: true,
+    });
+    vi.stubGlobal('IntersectionObserver', undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const cursor = new URL(String(input), 'http://x').searchParams.get(
+          'cursor'
+        );
+        return Response.json(
+          cursor === null
+            ? { tournaments: [event(1), event(2)], nextCursor: 'next' }
+            : { tournaments: [event(3)], nextCursor: null }
+        );
+      })
+    );
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(<TournamentsShelf open onOpen={() => undefined} />)
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const more = host.querySelector<HTMLButtonElement>('.deck-show-more')!;
+    more.focus();
+    await act(async () => more.click());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    // The last page is in: More has gone, and the focus with it would have.
+    expect(host.querySelector('.deck-show-more')).toBeNull();
+    expect(
+      (document.activeElement as HTMLElement | null)?.dataset.openTournament
+    ).toBe(event(3).id);
   });
 });

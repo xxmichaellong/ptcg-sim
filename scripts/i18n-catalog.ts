@@ -148,23 +148,52 @@ const ALSO_WRITES_LATIN: ReadonlySet<string> = new Set(['sr']);
  * Languages written in their own script, word by word, where a Latin word
  * is a name the English has too ("Esc", "Limitless TCG", "Trainer" for
  * "Trainers", a declined "Guelpha"): a Latin word the English lacks
- * ("Започни potez"), or Latin inside a word ("دecksك"), is a slip of the
- * translation. Arabic joins "و" and the like to a name ("وPocket").
+ * ("Започни potez"), or Latin inside a word ("دecksك", "deckك"), is a slip
+ * of the translation. Arabic joins "و" and the like before a name
+ * ("وPocket"), never an ending after one.
  */
 const SPACED_OWN_SCRIPT: Readonly<Record<string, RegExp>> = {
-  ar: /\p{Script=Arabic}\p{Script=Latin}+\p{Script=Arabic}/u,
+  ar: /\p{Script=Arabic}\p{Script=Latin}+\p{Script=Arabic}|\p{Script=Latin}\p{Script=Arabic}/u,
   ru: /\p{Script=Cyrillic}\p{Script=Latin}|\p{Script=Latin}\p{Script=Cyrillic}/u,
   sr: /\p{Script=Cyrillic}\p{Script=Latin}|\p{Script=Latin}\p{Script=Cyrillic}/u,
 };
 
-/** A message's words: no tags, placeholders, or ICU keywords and case keys. */
-const proseOf = (message: string): string =>
-  message
-    .replaceAll('Pokémon', ' ')
-    .replaceAll(/<\/?\d+\/?>/gu, ' ')
-    .replaceAll(/\{\s*\w+\s*,\s*\w+\s*,?/gu, ' ')
-    .replaceAll(/\{\s*\w+\s*\}/gu, ' ')
-    .replaceAll(/[\w=]+\s*\{/gu, ' ');
+/**
+ * A message's words: its text, every case's included, without tags,
+ * placeholders, or ICU keywords and case keys.
+ */
+const proseOf = (message: string): string => {
+  const text: string[] = [];
+  const walk = (tokens: readonly Token[]): void => {
+    for (const token of tokens) {
+      switch (token.type) {
+        case 'content':
+          text.push(token.value);
+          break;
+        case 'function':
+          if (token.param) walk(token.param);
+          break;
+        case 'plural':
+        case 'selectordinal':
+        case 'select':
+          for (const branch of token.cases) walk(branch.tokens);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+  try {
+    walk(parse(message));
+  } catch {
+    // Unparseable: `translationProblem` says so first.
+    return '';
+  }
+  return text
+    .join(' ')
+    .replaceAll(/<\/?\d+\s*\/?>/gu, ' ')
+    .replaceAll('Pokémon', ' ');
+};
 
 const strayLatin = (text: string, locale: string, source: string): boolean => {
   const mixed = SPACED_OWN_SCRIPT[locale];

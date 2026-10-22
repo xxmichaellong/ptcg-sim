@@ -400,6 +400,8 @@ export const archetypeIconUrl = (icon: string): string | undefined =>
 export interface TournamentRequestOptions {
   readonly signal?: AbortSignal;
   readonly fetch?: typeof globalThis.fetch;
+  /** `'no-cache'`: ask the server again, never the browser's copy. */
+  readonly cache?: RequestCache;
 }
 
 const getJson = async (
@@ -418,6 +420,7 @@ const getJson = async (
       credentials: 'omit',
       redirect: 'error',
       signal,
+      ...(options.cache ? { cache: options.cache } : {}),
     });
     if (response.status === 503) {
       let retryAfter = 30;

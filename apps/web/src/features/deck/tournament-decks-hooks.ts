@@ -112,6 +112,9 @@ export const usePaged = <T>(
   const reader = useRef(readPage);
   reader.current = readPage;
   const live = useRef<AbortController | undefined>(undefined);
+  // Starting over from a refused cursor: the first page the browser kept
+  // would carry that cursor again.
+  const fresh = useRef(false);
 
   useEffect(() => {
     if (key === undefined) {
@@ -123,16 +126,23 @@ export const usePaged = <T>(
     setState({ status: 'loading' });
     setCursor(null);
     setLoadingMore(false);
-    reader.current(undefined, { signal: controller.signal }).then(
-      (page) => {
-        if (controller.signal.aborted) return;
-        setState({ status: 'ready', value: page.items });
-        setCursor(page.nextCursor);
-      },
-      (error: unknown) => {
-        if (!controller.signal.aborted) setState(failureOf(error));
-      }
-    );
+    const cache = fresh.current ? ('no-cache' as const) : undefined;
+    fresh.current = false;
+    reader
+      .current(undefined, {
+        signal: controller.signal,
+        ...(cache ? { cache } : {}),
+      })
+      .then(
+        (page) => {
+          if (controller.signal.aborted) return;
+          setState({ status: 'ready', value: page.items });
+          setCursor(page.nextCursor);
+        },
+        (error: unknown) => {
+          if (!controller.signal.aborted) setState(failureOf(error));
+        }
+      );
     return () => {
       controller.abort();
       if (live.current === controller) live.current = undefined;
@@ -159,6 +169,7 @@ export const usePaged = <T>(
         // A cursor the server no longer takes (one from before an update):
         // the list starts over from its first page.
         if (error instanceof TournamentDataRefusedError) {
+          fresh.current = true;
           setAttempt((count) => count + 1);
         }
       }

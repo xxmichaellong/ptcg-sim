@@ -98,12 +98,14 @@ afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
   vi.mocked(toast).mockClear();
+  vi.unstubAllGlobals();
 });
 
 /** The screen, open or put away, around one library and store. */
 const screen = (
   onClose = vi.fn(),
-  library = new DeckLibrary({ backend: null })
+  library = new DeckLibrary({ backend: null }),
+  source: CardCatalogSource = catalog
 ) => {
   const store = new DeckBuilderStore();
   const draw = (open: boolean) =>
@@ -115,7 +117,7 @@ const screen = (
             alternateEnabled
             installOnSessionAttach={false}
             onRequestClose={onClose}
-            catalog={catalog}
+            catalog={source}
             library={library}
             samples={samples}
             digest={digest}
@@ -352,6 +354,42 @@ describe('the deck screen from the keyboard', () => {
       host.querySelector<HTMLButtonElement>('#deckEditorBackButton')!.click()
     );
     expect(library.getSnapshot().decks).toEqual([]);
+  });
+
+  it('puts away a new deck left as it started when a list pasted onto it opens its own', async () => {
+    const library = new DeckLibrary({ backend: null });
+    // No catalog to wait for, or network, so the list's unknown lines come
+    // back at once.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      })
+    );
+    const FAILED = { status: 'failed' } as const;
+    const failed = {
+      getSnapshot: () => FAILED,
+      subscribe: () => () => undefined,
+      load: vi.fn(),
+      retry: vi.fn(),
+    } as unknown as CardCatalogSource;
+    await screen(vi.fn(), library, failed).draw(true);
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
+      'Untitled deck',
+    ]);
+    host.querySelector<HTMLElement>('#deckEditorBackButton')!.focus();
+    await paste('4 Zzzzz XYZ 1\n4 Yyyyy ABC 2');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
+    // The list opened in the editor (its lines not found), in its place.
+    expect(host.querySelector('#deckEditorBackButton')).not.toBeNull();
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).not.toContain(
+      'Untitled deck'
+    );
   });
 
   it('clears what was typed in Find a deck on Esc before it leaves', async () => {

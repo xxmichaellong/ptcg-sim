@@ -103,6 +103,16 @@ describe('translationProblem', () => {
     // Latin inside an Arabic or Cyrillic word, or a Latin word the English
     // doesn't have; names the English has stay, declined too.
     assert.equal(looksGarbled('يخلط دecksك', 'ar', 'shuffles your deck'), true);
+    assert.equal(looksGarbled('يخلط deckك', 'ar', 'shuffles your deck'), true);
+    // A word only a case of the English has is a word of it too.
+    assert.equal(
+      looksGarbled(
+        '{kind, select, gx {маркер GX} other {маркер VSTAR}}',
+        'ru',
+        '{kind, select, gx {GX} other {VSTAR}} marker'
+      ),
+      false
+    );
     assert.equal(looksGarbled('Започни potez', 'sr', 'Start the turn'), true);
     assert.equal(
       looksGarbled(

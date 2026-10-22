@@ -579,7 +579,8 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
-      // In the editor a paste is always lines for the deck being edited.
+      // In the editor a paste is always a list, imported as any is (a new
+      // deck on the seat, ADR-033 §9), never a name for the decks' finder.
       if (viewKind !== 'edit' && finderMode(text) === 'search') {
         setFinderText(text.trim());
         // Into view too: pasted with the decks scrolled down, the name and
@@ -782,21 +783,25 @@ export const DeckScreen = ({
     [library, placeOnSeat, store, t]
   );
 
-  const leaveEditor = useCallback(() => {
-    if (view.kind === 'edit') {
-      const deck = library.get(view.deckId);
-      // A new deck left as it started is not kept.
-      if (
-        deck &&
-        deck.cards.length === 0 &&
-        deck.source?.kind === 'new' &&
-        deck.name === t`Untitled deck`
-      ) {
-        decks.remove(deck.id);
-      }
+  const leaveEditor = useCallback(() => setView({ kind: 'home' }), []);
+  // A new deck left as it started is not kept, however the editor is left:
+  // by Back, or by an import that opens its own deck in its place.
+  const editedDeck = view.kind === 'edit' ? view.deckId : undefined;
+  const lastEdited = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const left = lastEdited.current;
+    lastEdited.current = editedDeck;
+    if (left === undefined || left === editedDeck) return;
+    const deck = library.get(left);
+    if (
+      deck &&
+      deck.cards.length === 0 &&
+      deck.source?.kind === 'new' &&
+      deck.name === t`Untitled deck`
+    ) {
+      decks.remove(deck.id);
     }
-    setView({ kind: 'home' });
-  }, [decks, library, t, view]);
+  }, [decks, editedDeck, library, t]);
 
   useEffect(() => {
     if (

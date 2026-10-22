@@ -395,6 +395,32 @@ export const TournamentsShelf = ({
       }))
   );
   const events = paged.state.status === 'ready' ? paged.state.value : [];
+  // More goes once the last page is in (or the list starts over): focus
+  // that fell to the page with it goes to the first event it brought, or
+  // back to More, or the last event.
+  const moreFrom = useRef<number | undefined>(undefined);
+  const showMore = (): void => {
+    if (paged.loadingMore || !paged.hasMore) return;
+    moreFrom.current = events.length;
+    paged.more();
+  };
+  useEffect(() => {
+    const from = moreFrom.current;
+    if (from === undefined || paged.loadingMore) return;
+    if (paged.state.status !== 'ready') return;
+    moreFrom.current = undefined;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    const node = section.current;
+    const opened = node
+      ? [...node.querySelectorAll<HTMLElement>('[data-open-tournament]')]
+      : [];
+    (
+      opened[from] ??
+      node?.querySelector<HTMLElement>('.deck-show-more') ??
+      opened.at(-1)
+    )?.focus();
+  }, [events.length, paged.loadingMore, paged.state.status]);
   return (
     <section
       ref={section}
@@ -516,7 +542,7 @@ export const TournamentsShelf = ({
             className="ds-button ds-button--ghost deck-show-more"
             // Not disabled: a disabled button drops the focus to the page.
             aria-disabled={paged.loadingMore || undefined}
-            onClick={paged.more}
+            onClick={showMore}
           >
             {paged.loadingMore ? (
               <CircleNotchIcon
@@ -749,8 +775,11 @@ const StandingRow = ({
                 comment:
                   "A player's list in a tournament's standings: the deck, the placing, the player",
               })}
-              disabled={pending === key}
-              onClick={() => onLoad(request, 'try')}
+              // Not disabled: a disabled button drops the focus to the page.
+              aria-disabled={pending === key || undefined}
+              onClick={() => {
+                if (pending !== key) onLoad(request, 'try');
+              }}
             >
               {pending === key ? (
                 <CircleNotchIcon
