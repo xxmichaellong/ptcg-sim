@@ -78,7 +78,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -106,7 +106,7 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           for browser_install_attempt in 1 2 3; do
-            if corepack pnpm exec playwright install --with-deps chromium; then
+            if timeout 300 corepack pnpm exec playwright install --with-deps chromium; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
@@ -182,7 +182,7 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           for browser_install_attempt in 1 2 3; do
-            if corepack pnpm exec playwright install --with-deps chromium; then
+            if timeout 300 corepack pnpm exec playwright install --with-deps chromium; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
@@ -209,7 +209,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -241,7 +241,7 @@ jobs:
       - name: Install Playwright ${{ matrix.name }}
         run: |
           for browser_install_attempt in 1 2 3; do
-            if corepack pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+            if timeout 300 corepack pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
