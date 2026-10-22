@@ -331,6 +331,12 @@ const FAR_REFIT_FINE_STEPS = 10;
  * px², that is not worth refitting it for (a sliver).
  */
 const STADIUM_OVERLAP_SLACK_PX2 = 24;
+/**
+ * A shorter far fit that keeps the markers beside the prizes (rather than
+ * moved from under the Stadium) keeps at least this share of the far
+ * Active.
+ */
+const MOVED_MARKERS_ACTIVE_SHARE = 0.9;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
@@ -1351,6 +1357,8 @@ export const createTableLayoutSnapshot = (
           : { ...fit(frames.upper, farScale), fitPortrait: true }),
       };
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
+      let stagingFar = far;
+      let markersMoved = false;
       const stadiumHeight = Math.min(
         near.geometry.cardHeights.bench,
         far.geometry.cardHeights.bench
@@ -1412,33 +1420,48 @@ export const createTableLayoutSnapshot = (
           ...farFit,
           boardEndReservePx: reserve,
         });
-        // The markers and Lost Zone beside the prizes are never under it (a
-        // press there would turn a marker over): they go back to their old
-        // places, and the staging area, which may run under its edge, takes
-        // their room.
-        const markersBox = far.player.extras?.markers;
-        const lostZoneBox = far.player.regions.find(
-          (region) => region.kind === 'lostZone'
-        )?.physicalDeclaredBounds;
-        if (
-          [markersBox, lostZoneBox].some(
-            (box) =>
-              box !== undefined &&
-              box.x < placed.x + placed.width &&
-              placed.x < box.x + box.width &&
-              box.y < placed.y + placed.height &&
-              placed.y < box.y + box.height
-          )
-        ) {
+        // The staging area's room is read before the pieces below move:
+        // what they leave it lies under the Stadium.
+        stagingFar = far;
+        // The markers and Lost Zone beside the prizes are never under it
+        // beyond a sliver (a press there would turn a marker over): what is
+        // under goes back to its old place -- the Lost Zone to its column,
+        // the markers by the hand -- and the staging area, which may run
+        // under its edge, takes the room.
+        const under = (box: Rect | undefined): boolean => {
+          if (!box) return false;
+          const across =
+            Math.min(box.x + box.width, placed.x + placed.width) -
+            Math.max(box.x, placed.x);
+          const down =
+            Math.min(box.y + box.height, placed.y + placed.height) -
+            Math.max(box.y, placed.y);
+          return (
+            across > 0 && down > 0 && across * down > STADIUM_OVERLAP_SLACK_PX2
+          );
+        };
+        const lostZoneUnder = under(
+          far.player.regions.find((region) => region.kind === 'lostZone')
+            ?.physicalDeclaredBounds
+        );
+        if (!under(far.player.extras?.markers) && lostZoneUnder) {
+          far = buildPlayer(semantics.players[1], frames.upper, {
+            ...farFit,
+            boardEndReservePx: reserve,
+            lostZoneBeside: false,
+          });
+        }
+        if (under(far.player.extras?.markers)) {
           far = buildPlayer(semantics.players[1], frames.upper, {
             ...farFit,
             boardEndReservePx: reserve,
             piecesBesidePrizes: false,
           });
+          markersMoved = true;
         }
       }
       const staging =
-        far.player.regions.find((region) => region.kind === 'board')
+        stagingFar.player.regions.find((region) => region.kind === 'board')
           ?.physicalDeclaredBounds.width ?? Infinity;
       const covered = coveredBy(far);
       return {
@@ -1449,6 +1472,8 @@ export const createTableLayoutSnapshot = (
         // a hair to spare, so the search never settles a rounding short).
         fits: staging >= stadiumWidth + 0.5,
         covered,
+        // The markers were moved off the prizes, from under the Stadium.
+        markersMoved,
       };
     };
     let scale = 1;
@@ -1481,12 +1506,25 @@ export const createTableLayoutSnapshot = (
       const unfitted = split;
       const rowed = (candidate: typeof split): boolean =>
         candidate.far.player.extras?.markersRow === true;
+      // A row the markers took only because they were moved off the prizes
+      // is no row to keep.
       const keepsRow = (candidate: typeof split): boolean =>
-        !rowed(unfitted) || rowed(candidate);
+        !rowed(unfitted) || unfitted.markersMoved || rowed(candidate);
+      const activeOf = (candidate: typeof split): number =>
+        candidate.far.geometry.cardHeights.active;
+      // Markers moved off the prizes cost the far half its hand's room or
+      // a row: a slightly shorter fit that keeps them there, clear, is
+      // better, while it keeps most of the far Active.
+      const keepsMarkers = (candidate: typeof split): boolean =>
+        !unfitted.markersMoved ||
+        (!candidate.markersMoved &&
+          activeOf(candidate) >=
+            activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE);
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
         candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
-        keepsRow(candidate);
+        keepsRow(candidate) &&
+        keepsMarkers(candidate);
       if (!clear(split)) {
         // Shorter is not steadily clearer (piles shrink, the Lost Zone and
         // the markers move, the staging area's reserve comes and goes), so

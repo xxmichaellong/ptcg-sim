@@ -570,13 +570,88 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                   },
                 });
                 const at = `${String(width)}x${String(height)} split ${String(lowerShare)} ${touch ? 'touch' : 'mouse'} markers ${String(markers)} lost ${String(lost)}`;
-                expect(under(barred, 'markers'), at).toBeLessThan(0.5);
-                expect(under(barred, 'lostZone'), at).toBeLessThan(0.5);
+                // A sliver (24px²) at most, as the far half's refit allows.
+                expect(under(barred, 'markers'), at).toBeLessThan(24.5);
+                expect(under(barred, 'lostZone'), at).toBeLessThan(24.5);
               }
             }
           }
         }
       }
+    }
+  });
+
+  it('moves only what is under the Stadium, for more than a sliver, and keeps the staging area a clear card', () => {
+    const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+      snapshot.players.find((player) => player.physicalSide === 'upper')!;
+    const box = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
+      kind: string
+    ) =>
+      far(snapshot).regions.find((region) => region.kind === kind)!
+        .physicalDeclaredBounds;
+    // The staging area's widest stretch clear of the Stadium.
+    const clearOfStadium = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>
+    ) => {
+      const staging = box(snapshot, 'board');
+      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+      return Math.max(
+        Math.max(0, Math.min(staging.x + staging.width, stadium.x) - staging.x),
+        Math.max(
+          0,
+          staging.x +
+            staging.width -
+            Math.max(staging.x, stadium.x + stadium.width)
+        )
+      );
+    };
+    const at = (
+      width: number,
+      height: number,
+      overrides: Partial<BoardLayoutState>
+    ) =>
+      createTableLayoutSnapshot(
+        stateAt(width, height, { shellMode: 'fullscreen', ...overrides })
+      );
+    // Only the Lost Zone was under: the markers, clear, stay by the prizes
+    // and the hand keeps its room.
+    const lostZoneOnly = at(560, 568, {
+      appBarPx: { width: 122, height: 42 },
+      vertical: tableVerticalLayout(0.6),
+      seamBandPx: 42,
+      oncePerGameMarkers: 2,
+    });
+    expect(far(lostZoneOnly).extras?.markers).toBeDefined();
+    expect(box(lostZoneOnly, 'hand').width).toBeGreaterThan(250);
+    // A sliver under the Stadium takes no markers' row (the far Active a
+    // third smaller for it).
+    const sliver = at(416, 568, {
+      appBarPx: { width: 122, height: 42 },
+      vertical: tableVerticalLayout(0.66),
+      seamBandPx: 46,
+      oncePerGameMarkers: 1,
+      hideEmptyLostZone: true,
+    });
+    expect(far(sliver).extras?.markersRow).toBeUndefined();
+    expect(box(sliver, 'active').height).toBeGreaterThan(50);
+    // The room the pieces leave the staging area lies under the Stadium:
+    // the split never takes it for a card's clear width.
+    for (const snapshot of [
+      at(640, 600, {
+        vertical: tableVerticalLayout(0.6),
+        seamBandPx: 42,
+        oncePerGameMarkers: 1,
+      }),
+      at(800, 720, {
+        appBarPx: BAR,
+        vertical: tableVerticalLayout(0.54),
+        seamBandPx: 42,
+      }),
+    ]) {
+      expect(clearOfStadium(snapshot)).toBeGreaterThanOrEqual(
+        snapshot.shared.stadium.physicalDeclaredBounds.width
+      );
     }
   });
 

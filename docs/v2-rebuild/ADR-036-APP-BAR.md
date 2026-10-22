@@ -87,9 +87,14 @@ area still holding the Stadium), its portrait mat too, the near half kept
 as it was. Shorter is not steadily clearer, so the fits are tried downward
 and the first clear one refined; where none is, the far half takes the
 one covered least that is otherwise as good. The markers and Lost Zone
-beside the far prizes are never under the Stadium (a press there would turn
-a marker over): where they would be, they keep their old places and the
-staging area, which may run under its edge, takes their room.
+beside the far prizes are never under the Stadium beyond a sliver (a press
+there would turn a marker over): the one that would be keeps its old place
+-- the Lost Zone its column, the markers by the hand -- and the staging
+area, which may run under its edge, takes the room (the split is still
+judged by the staging area as it was before). Where moving the markers
+costs the far half its hand's room or a row, the refit prefers a slightly
+shorter fit that keeps them beside the prizes, clear, keeping most of the
+far Active.
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 
