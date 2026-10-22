@@ -160,6 +160,37 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   await page.keyboard.press('Escape');
 });
 
+test('the turn stays past the Stadium beside the docked log, the coin lying on the table', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await openTable(page);
+  await setUpBoth(page);
+  await openActivity(page);
+  // Once the table has moved over beside the log.
+  await expect
+    .poll(async () => {
+      const first = (await box(page.locator('.ptcgsim-app-bar'))).x;
+      await page.waitForTimeout(150);
+      const settled = (await box(page.locator('.ptcgsim-app-bar'))).x;
+      return first === settled && settled < 1920 - 300;
+    })
+    .toBe(true);
+  await expect(
+    page.locator('#boardButtonContainer #flipCoinButton')
+  ).toHaveCount(0);
+  await expect(page.locator('#boardButtonContainer')).toHaveAttribute(
+    'data-align',
+    'end'
+  );
+  const turn = await box(page.locator('#boardButtonContainer #turnButton'));
+  const stadium = await box(
+    page.locator('.ptcgsim-zone[data-zone-kind="stadium"]')
+  );
+  expect(turn.x).toBeGreaterThan(stadium.x + stadium.width);
+});
+
 test.describe('on a phone', () => {
   test.use({ hasTouch: true, isMobile: true });
 

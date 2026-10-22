@@ -1153,6 +1153,7 @@ export const RemoteSessionBoard = ({
     return {
       ...(rail.bar ? { bar: rail.bar } : {}),
       ...(rail.seat ? { seat: rail.seat } : {}),
+      ...(tableCoinShown ? { coinOnTable: true } : {}),
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
     };

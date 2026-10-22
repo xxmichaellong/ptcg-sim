@@ -123,6 +123,8 @@ export interface TableRailProps {
    * anchor.
    */
   readonly start?: number;
+  /** The coin lies on the table: a turn's rail holds no Coin. */
+  readonly coinOnTable?: boolean;
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
   readonly more?: readonly ActionMenuEntry[];
@@ -149,9 +151,9 @@ const GAP_PX = 6;
 const RIGHT_END_MIN_BUTTONS = 4;
 /**
  * The most buttons a turn's rail holds: Turn, Attack, Pass, Coin, Undo,
- * Switch side and More. The side is chosen for them, not for what the
- * stage shows now, so the actions stay put as the game moves on (set-up,
- * play, a reconnect).
+ * Switch side and More, one fewer where the coin lies on the table. The
+ * side is chosen for them, not for what the stage shows now, so the
+ * actions stay put as the game moves on (set-up, play, a reconnect).
  */
 const FULL_RAIL_BUTTONS = 7;
 
@@ -247,11 +249,19 @@ export const placeRailActions = ({
   avoid,
   end,
   start,
+  coinOnTable = false,
   actions,
   more,
 }: Pick<
   TableRailProps,
-  'anchor' | 'width' | 'avoid' | 'end' | 'start' | 'actions' | 'more'
+  | 'anchor'
+  | 'width'
+  | 'avoid'
+  | 'end'
+  | 'start'
+  | 'coinOnTable'
+  | 'actions'
+  | 'more'
 >): {
   readonly atRight: boolean;
   readonly start: number;
@@ -270,10 +280,10 @@ export const placeRailActions = ({
   const rightWidth = Math.max(0, rightEnd - rightStart);
   const leftWidth = Math.max(0, leftEnd - leftStart);
   const rightSlots = slotsIn(rightWidth, anchor.height);
+  const fullRail = FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0);
   const atRight =
     rightSlots >= RIGHT_END_MIN_BUTTONS &&
-    rightSlots >=
-      Math.min(slotsIn(leftWidth, anchor.height), FULL_RAIL_BUTTONS);
+    rightSlots >= Math.min(slotsIn(leftWidth, anchor.height), fullRail);
   return atRight
     ? {
         atRight,
@@ -302,6 +312,7 @@ export const TableRail = memo(function TableRail({
   avoid,
   end,
   start,
+  coinOnTable,
   actions,
   more,
   covered = false,
@@ -313,7 +324,16 @@ export const TableRail = memo(function TableRail({
     start: actionsStart,
     width: actionsWidth,
     fitted,
-  } = placeRailActions({ anchor, width, avoid, end, start, actions, more });
+  } = placeRailActions({
+    anchor,
+    width,
+    avoid,
+    end,
+    start,
+    coinOnTable,
+    actions,
+    more,
+  });
   return (
     <div
       className="ptcgsim-table-rail"

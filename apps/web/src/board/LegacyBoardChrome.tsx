@@ -92,6 +92,8 @@ export interface LegacyBoardChromeRail {
   readonly more?: readonly ActionMenuEntry[];
   /** Whose seat the actions act for. */
   readonly seat?: 'you' | 'opponent';
+  /** The coin lies on the table: a turn's actions hold no Coin. */
+  readonly coinOnTable?: boolean;
 }
 
 /** The resize pill's box; its seat colour comes from `data-player-side`. */
@@ -687,6 +689,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           avoid={stadium}
           end={railEnd}
           {...(railStart === undefined ? {} : { start: railStart })}
+          {...(rail.coinOnTable ? { coinOnTable: true } : {})}
           actions={rail.actions}
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}

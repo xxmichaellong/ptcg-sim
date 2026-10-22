@@ -28,6 +28,7 @@ import {
   type TableHandCount,
 } from './LegacyBoardChrome.js';
 import { oncePerGameTooltip } from './OncePerGameTile.js';
+import { tableCoinSpots } from './table-coin.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -517,6 +518,66 @@ describe('LegacyBoardChrome', () => {
     expect(px(actions.style.left)).toBeGreaterThanOrEqual(
       extras!.x + extras!.width
     );
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('puts a turn past the Stadium where it fits there, the coin lying on the table', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    // A desktop with the log docked beside the table.
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      viewport: { width: 1920, height: 1080, devicePixelRatio: 1 },
+      shellMode: 'sidebar',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+      seamBandPx: 42,
+      hideEmptyLostZone: true,
+      appBarPx: { width: 3 * 36 + 2 * 4 + 6, height: 42 },
+    });
+    expect(tableCoinSpots(layout).some((spot) => spot.own)).toBe(true);
+    const action = (id: string) => ({
+      id,
+      label: id,
+      icon: PlayIcon,
+      onSelect: vi.fn(),
+    });
+    // A Solo turn's fullest rail with the coin on the table.
+    const rail = (coinOnTable: boolean): LegacyBoardChromeRail => ({
+      actions: ['turn', 'attack', 'pass', 'undo', 'switch'].map(action),
+      more: ['a', 'b', 'c'].map((id) => ({
+        id,
+        label: id,
+        onSelect: vi.fn(),
+      })),
+      ...(coinOnTable ? { coinOnTable } : {}),
+    });
+    const align = async (coinOnTable: boolean) => {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode={false}
+            actions={{ toggleOncePerGame: vi.fn() }}
+            rail={rail(coinOnTable)}
+          />
+        )
+      );
+      const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
+      return {
+        align: actions.dataset.align,
+        shown: actions.querySelectorAll('.ptcgsim-rail-button').length,
+      };
+    };
+    // Six buttons fit past the Stadium: a rail that could hold a Coin as
+    // well stays before it, one that can't goes past it, losing nothing.
+    expect(await align(false)).toMatchObject({ align: 'start' });
+    expect(await align(true)).toEqual({ align: 'end', shown: 6 });
 
     await act(async () => root.unmount());
     host.remove();
