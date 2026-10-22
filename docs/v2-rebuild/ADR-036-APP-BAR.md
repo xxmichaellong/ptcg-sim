@@ -62,7 +62,8 @@ here):
   as the bar's corner, so on a short screen nothing else lies under it;
 - the far player's VSTAR/GX markers, where they have no room beside the
   Prize cards, get a corner of their own past the bar (`extras.corner`),
-  and the far hand starts after it;
+  and the far hand starts after it; where that would leave the hand less
+  than 128px (an upright phone), they take a row below the bar instead;
 - a tilted far hand draws its cards in as they grow, so its outer card
   ends where the strip does;
 - a half that fills the table keeps its top clear of the bar.
