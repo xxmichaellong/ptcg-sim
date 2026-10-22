@@ -100,26 +100,48 @@ afterEach(async () => {
   vi.mocked(toast).mockClear();
 });
 
+/** The screen, open or put away, around one library and store. */
+const screen = (onClose = vi.fn()) => {
+  const library = new DeckLibrary({ backend: null });
+  const store = new DeckBuilderStore();
+  const draw = (open: boolean) =>
+    act(async () =>
+      root.render(
+        <DeckLayer open={open} onClose={onClose}>
+          <DeckBuilderSession
+            open={open}
+            alternateEnabled
+            installOnSessionAttach={false}
+            onRequestClose={onClose}
+            catalog={catalog}
+            library={library}
+            samples={samples}
+            digest={digest}
+            store={store}
+          />
+        </DeckLayer>
+      )
+    );
+  return { onClose, draw };
+};
+
 const render = async (onClose = vi.fn()) => {
-  await act(async () =>
-    root.render(
-      <DeckLayer open onClose={onClose}>
-        <DeckBuilderSession
-          open
-          alternateEnabled
-          installOnSessionAttach={false}
-          onRequestClose={onClose}
-          catalog={catalog}
-          library={new DeckLibrary({ backend: null })}
-          samples={samples}
-          digest={digest}
-          store={new DeckBuilderStore()}
-        />
-      </DeckLayer>
-    )
-  );
+  await screen(onClose).draw(true);
   return onClose;
 };
+
+const frames = () =>
+  act(async () => {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+
+const openCup = () =>
+  act(async () =>
+    host
+      .querySelector<HTMLButtonElement>('[data-open-tournament="cup"]')!
+      .click()
+  );
 
 const finder = (): HTMLTextAreaElement =>
   host.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
@@ -214,5 +236,43 @@ describe('the deck screen from the keyboard', () => {
     );
     // Its pages still loaded, as the player left them.
     expect(more().dataset.shelfMore).toBe('3');
+  });
+
+  it('steps back from a tournament on Esc wherever the focus is on the screen', async () => {
+    const onClose = await render();
+    await openCup();
+    // A press on the standings' paper leaves the focus on the layer.
+    const layer = host.querySelector<HTMLElement>('.ptcgsim-deck-layer')!;
+    layer.focus();
+    await press('Escape');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(host.querySelector('#deckSubviewBackButton')).toBeNull();
+  });
+
+  it('reopened on a tournament, reads its heading and steps back on Esc', async () => {
+    const { onClose, draw } = screen();
+    await draw(true);
+    await openCup();
+    await draw(false);
+    await draw(true);
+    await frames();
+    expect(document.activeElement?.tagName).toBe('H2');
+    await press('Escape');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(host.querySelector('#deckSubviewBackButton')).toBeNull();
+  });
+
+  it('brings the finder into view for a name pasted onto the screen', async () => {
+    const scrolled = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrolled;
+    try {
+      await render();
+      await paste('Gardevoir ex');
+      expect(finder().value).toBe('Gardevoir ex');
+      expect(scrolled.mock.contexts).toContain(finder());
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
   });
 });

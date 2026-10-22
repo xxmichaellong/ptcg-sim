@@ -416,6 +416,14 @@ export const TournamentsShelf = ({
               aria-label={t`Find a tournament`}
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
+              // Esc clears what was typed first, as the finder does; only
+              // an empty field gives it to the screen.
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && filter !== '') {
+                  event.preventDefault();
+                  setFilter('');
+                }
+              }}
             />
           </label>
           <a

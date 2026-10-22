@@ -304,3 +304,38 @@ test("the deck screen's zoom opens to a card's left in Arabic", async ({
   test.setTimeout(120_000);
   expect(await deckZoomSide(page, 'ar')).toBe('left');
 });
+
+test("the deck finder's magnifier sits as far from the field's start in Arabic as in English", async ({
+  browser,
+  baseURL,
+}) => {
+  test.setTimeout(120_000);
+  const startGap = async (language: 'en' | 'ar'): Promise<number> => {
+    const context = await browser.newContext({
+      baseURL,
+      viewport: { width: 1440, height: 900 },
+    });
+    try {
+      const page = await context.newPage();
+      await routeCardCatalog(page);
+      await page.addInitScript((chosen) => {
+        localStorage.setItem(
+          'ptcgsim.language.v1',
+          JSON.stringify({ language: chosen })
+        );
+      }, language);
+      await openTable(page);
+      await openDeck(page);
+      const field = await box(page.locator('.deck-paste'));
+      const icon = await box(page.locator('.deck-paste__icon'));
+      return language === 'ar'
+        ? field.x + field.width - (icon.x + icon.width)
+        : icon.x - field.x;
+    } finally {
+      await context.close();
+    }
+  };
+  const english = await startGap('en');
+  expect(english).toBeGreaterThan(4);
+  expect(Math.abs((await startGap('ar')) - english)).toBeLessThan(1);
+});

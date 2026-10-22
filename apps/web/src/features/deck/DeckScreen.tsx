@@ -19,7 +19,6 @@ import {
   useState,
   useSyncExternalStore,
   type DragEvent,
-  type KeyboardEvent,
 } from 'react';
 
 import { preferences } from '../../preferences/preference-store.js';
@@ -582,9 +581,12 @@ export const DeckScreen = ({
       event.preventDefault();
       if (viewKind === 'home' && finderMode(text) === 'search') {
         setFinderText(text.trim());
-        screen.current
-          ?.querySelector<HTMLTextAreaElement>('#deckPasteInput')
-          ?.focus({ preventScroll: true });
+        // Into view too: pasted with the decks scrolled down, the name and
+        // what it finds would otherwise land out of sight.
+        const finder =
+          screen.current?.querySelector<HTMLTextAreaElement>('#deckPasteInput');
+        finder?.focus({ preventScroll: true });
+        finder?.scrollIntoView({ block: 'nearest' });
         return;
       }
       void runImport(text, { kind: 'paste' });
@@ -669,23 +671,57 @@ export const DeckScreen = ({
       if (frame !== 0) cancelAnimationFrame(frame);
     };
   }, [subview, viewKind]);
+  // Opened again on a tournament or a deck's lists (left there for the
+  // table), the screen reads its heading first, once the layer has taken
+  // the focus it takes on opening.
+  useEffect(() => {
+    if (!open || !subview) return;
+    const frame = requestAnimationFrame(() => {
+      const root = screen.current;
+      const active = document.activeElement;
+      if (
+        root &&
+        (active === null ||
+          active === document.body ||
+          active === root.closest('.ptcgsim-deck-layer'))
+      ) {
+        root
+          .querySelector<HTMLElement>('.deck-subhead__title h2')
+          ?.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+    // Only when it opens: the heading's focus on entering a view is the
+    // effect above's.
+  }, [open]);
   // Esc in a tournament or a deck's lists goes back to the decks, before it
-  // would leave the screen.
-  const onScreenKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (
-      !subview ||
-      event.key !== 'Escape' ||
-      event.defaultPrevented ||
-      (event.target instanceof Element &&
-        event.target.closest(
-          '[role="dialog"], [role="menu"], [role="listbox"]'
-        ) !== null)
-    ) {
-      return;
-    }
-    event.preventDefault();
-    backToDecks();
-  };
+  // would leave the screen -- wherever the focus is on the screen, the layer
+  // around it too (a press on the standings' paper focuses the layer, which
+  // would otherwise take Esc to the table). Heard before the layer, which
+  // leaves a key already handled alone.
+  useEffect(() => {
+    if (!open || !subview) return;
+    const onKey = (event: KeyboardEvent): void => {
+      const target = event.target;
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        !(target instanceof Element) ||
+        target.closest('.ptcgsim-deck-layer') === null ||
+        target.closest('[role="dialog"], [role="menu"], [role="listbox"]') !==
+          null ||
+        // A field with something typed clears it first.
+        (isTextEntry(target) &&
+          (target as HTMLInputElement | HTMLTextAreaElement).value !== '')
+      ) {
+        return;
+      }
+      event.preventDefault();
+      backToDecks();
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [open, subview, backToDecks]);
 
   const newDeck = useCallback(
     (format: DeckFormatId = 'standard') => {
@@ -804,7 +840,6 @@ export const DeckScreen = ({
         if (event.currentTarget === event.target) setDragging(false);
       }}
       onDrop={onDrop}
-      onKeyDown={onScreenKeyDown}
     >
       <header className="deck-screen__bar">
         <button
