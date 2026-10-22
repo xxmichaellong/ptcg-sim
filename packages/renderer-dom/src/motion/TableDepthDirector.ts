@@ -1088,17 +1088,22 @@ export class TableDepthDirector {
     const flip: Flip = { image, face, start, duration };
     this.flips.set(key, flip);
     const own = faceImageOf(face);
+    // Infinity: carried over from a node still waiting for its face, so it
+    // starts once this one's is ready -- at once if it is already.
+    const pending = start === Infinity;
     // Not yet begun and its face not ready: it waits, back up, and turns
     // once it is (or at once if that is already later than planned).
-    if (image && !(start < timestamp()) && !isFaceReady(own)) {
+    if (image && (pending || !(start < timestamp())) && !isFaceReady(own)) {
       flip.start = Infinity;
       flip.stopWaiting = whenFaceReady(own, () => {
         if (this.flips.get(key) !== flip) return;
         delete flip.stopWaiting;
-        flip.start = Math.max(timestamp(), start);
+        flip.start = pending ? timestamp() : Math.max(timestamp(), start);
         this.schedule();
       });
+      return;
     }
+    if (pending) flip.start = timestamp();
   }
   /**
    * The card was re-aliased mid-turn (the room answering a predicted move):

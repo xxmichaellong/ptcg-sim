@@ -81,8 +81,12 @@ table is under the bar at any size it fits in (layout-table and
 board-depth tests, app-bar.spec). Where the bar changes the far half so
 that the Stadium lies over more of it than it would without the bar (a
 cramped hand taking the mat, its cards bigger; a markers' row pushing its
-rows toward the seam), the far half alone is fitted shorter until it
-doesn't, its portrait mat too, the near half kept as it was.
+rows toward the seam), the far half alone takes the tallest shorter fit
+that clears it (its markers counted, its markers' row kept, its staging
+area still holding the Stadium), its portrait mat too, the near half kept
+as it was. Shorter is not steadily clearer, so the fits are tried downward
+and the first clear one refined; where none is, the far half takes the
+one covered least that is otherwise as good.
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 

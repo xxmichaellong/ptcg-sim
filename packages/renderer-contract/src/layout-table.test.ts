@@ -444,6 +444,78 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
+  it('refits the far half no shorter than it must, keeping its staging area, markers and markers\u2019 row clear', () => {
+    const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+      snapshot.players.find((player) => player.physicalSide === 'upper')!;
+    const box = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
+      kind: string
+    ) =>
+      far(snapshot).regions.find((candidate) => candidate.kind === kind)!
+        .physicalDeclaredBounds;
+    // The tallest clear fit, not wherever a bisection landed (it took the
+    // far Active from 111px to 90px here).
+    const tall = createTableLayoutSnapshot(
+      stateAt(656, 600, {
+        shellMode: 'fullscreen',
+        appBarPx: BAR,
+        vertical: tableVerticalLayout(0.5),
+        seamBandPx: 42,
+        oncePerGameMarkers: 1,
+      })
+    );
+    expect(box(tall, 'active').height).toBeGreaterThan(108);
+    // Never the shortest fit when none clears: the staging area still holds
+    // the Stadium.
+    for (const [width, height, bar, seamBandPx] of [
+      [640, 640, BAR, 42],
+      [720, 720, { width: 290, height: 50 }, 46],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: bar,
+          vertical: tableVerticalLayout(0.46),
+          seamBandPx,
+          oncePerGameMarkers: 2,
+        })
+      );
+      expect(box(snapshot, 'board').width).toBeGreaterThanOrEqual(
+        snapshot.shared.stadium.physicalDeclaredBounds.width
+      );
+    }
+    // The far markers count: none under the Stadium.
+    const marked = createTableLayoutSnapshot(
+      stateAt(1040, 768, {
+        shellMode: 'sidebar',
+        appBarPx: BAR,
+        vertical: tableVerticalLayout(0.54),
+        seamBandPx: 42,
+        oncePerGameMarkers: 1,
+        hideEmptyLostZone: true,
+      })
+    );
+    const markers = far(marked).extras?.markers;
+    if (markers) {
+      expect(
+        overlaps(markers, marked.shared.stadium.physicalDeclaredBounds)
+      ).toBe(false);
+    }
+    // The markers keep their row (the hand its width) over a sliver of
+    // Stadium.
+    const rowed = createTableLayoutSnapshot(
+      stateAt(688, 568, {
+        shellMode: 'fullscreen',
+        appBarPx: BAR,
+        vertical: tableVerticalLayout(0.54),
+        seamBandPx: 42,
+        oncePerGameMarkers: 2,
+      })
+    );
+    expect(far(rowed).extras?.markersRow).toBe(true);
+    expect(box(rowed, 'hand').width).toBeGreaterThan(300);
+  });
+
   it('refuses a bar of no sensible size', () => {
     expect(() =>
       createTableLayoutSnapshot(

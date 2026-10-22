@@ -1323,3 +1323,56 @@ it("turns a stand-in over to the face its card shows, set once, the deck's own s
   expect(set).toEqual([english]);
   director.destroy();
 });
+
+it('carries a turn still waiting for its face over to the new node, never from Infinity', () => {
+  const now = 1000;
+  vi.stubGlobal('performance', { now: () => now });
+  vi.stubGlobal('requestAnimationFrame', () => 1);
+  vi.stubGlobal('cancelAnimationFrame', () => {});
+  const node = (ready: boolean) => {
+    const element = document.createElement('button');
+    const face = document.createElement('span');
+    face.className = 'ptcgsim-card__face';
+    const image = document.createElement('img');
+    Object.defineProperty(image, 'complete', {
+      configurable: true,
+      get: () => ready,
+    });
+    face.append(image);
+    element.append(face);
+    document.body.append(element);
+    return { element, image };
+  };
+  const nodes = {
+    a: node(false),
+    b: node(true),
+    c: node(false),
+    d: node(false),
+  };
+  const director = new TableDepthDirector(
+    new Map(Object.entries(nodes).map(([key, { element }]) => [key, element]))
+  );
+  const internals = director as unknown as {
+    flipFace(
+      key: string,
+      fromImageUrl: string | null,
+      start: number,
+      duration: number
+    ): void;
+    carryFlip(from: string, to: string): void;
+    flips: Map<string, { start: number }>;
+  };
+  // Its face loading, the turn waits; re-aliased onto a node whose face is
+  // ready, it turns now.
+  internals.flipFace('a', 'back.png', now + 60, 420);
+  expect(internals.flips.get('a')!.start).toBe(Infinity);
+  internals.carryFlip('a', 'b');
+  expect(internals.flips.get('b')!.start).toBe(now);
+  // Onto one still loading: it turns once that face is ready (or failed).
+  internals.flipFace('c', 'back.png', now + 60, 420);
+  internals.carryFlip('c', 'd');
+  expect(internals.flips.get('d')!.start).toBe(Infinity);
+  nodes.d.image.dispatchEvent(new Event('error'));
+  expect(internals.flips.get('d')!.start).toBe(now);
+  director.destroy();
+});
