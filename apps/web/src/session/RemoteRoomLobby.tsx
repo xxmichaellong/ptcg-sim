@@ -74,6 +74,14 @@ import {
   type AppMenuModel,
   useAppBarReserve,
 } from './shell/AppMenu.js';
+import { toast } from '../ui/toast.js';
+import {
+  startTutorial,
+  takeTutorialRequest,
+  tutorialRequestFromUrl,
+  useTutorialRequest,
+  type TutorialRequest,
+} from '../tutorial/tutorial-state.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
@@ -127,7 +135,8 @@ const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Sycamore',
 ]);
 
-type LobbyOperation = 'solo' | 'generate' | 'copy' | 'join' | 'resume';
+type LobbyOperation =
+  'solo' | 'generate' | 'copy' | 'join' | 'resume' | 'tutorial';
 
 interface InvitationJoinCustody {
   readonly acceptPaste: RemoteRoomInvitationJoinCustody['acceptPaste'];
@@ -160,6 +169,8 @@ interface LobbyOwner {
   guestRuntime?: RemoteRoomRuntime;
   restoration?: RoomRestorationCustody;
   copyReset?: ReturnType<typeof setTimeout>;
+  /** The tutorial's practice table (ADR-038), while it is open. */
+  tutorial?: RemoteRoomCreationResult;
 }
 
 export interface RemoteRoomLobbyDependencies {
@@ -214,6 +225,7 @@ const disposeOwner = (owner: LobbyOwner): void => {
   } else {
     owner.guestRuntime?.dispose();
   }
+  owner.tutorial?.dispose();
 };
 
 const sanitizeRoomCodeInput = (value: string): string =>
@@ -247,6 +259,9 @@ const safeFailureMessage = (
   }
   if (operation === 'solo') {
     return msg`Couldn't start Solo mode. Try again.`;
+  }
+  if (operation === 'tutorial') {
+    return msg`Couldn't start the tutorial. Try again.`;
   }
   return msg`Couldn't generate a room. Try again.`;
 };
@@ -336,6 +351,13 @@ export const RemoteRoomLobby = ({
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
+  // The tutorial's practice table, shown in place of the player's own
+  // table, which stays live behind it until they come back (ADR-038).
+  const [tutorial, setTutorial] = useState<{
+    readonly room: ConnectedRoom;
+    readonly lesson?: string;
+    readonly serial: number;
+  }>();
   // 'solo' is the Solo table while its room is still being created (or has
   // failed): v1 opens on Solo, so the page must not flash Play online first.
   const [activePanel, setActivePanel] = useState<'lobby' | 'solo'>(
@@ -672,6 +694,102 @@ export const RemoteRoomLobby = ({
       endOperation(active.owner);
     }
   };
+
+  /**
+   * Opens the tutorial (ADR-038) on a practice table of its own: a fresh
+   * Solo room, while the player's own table -- whatever game is on it --
+   * waits live behind it. Asked again while it is open, it goes to the
+   * lesson asked for.
+   */
+  const handleTutorial = async (request: TutorialRequest): Promise<void> => {
+    if (tutorial) {
+      setTutorial({
+        ...tutorial,
+        serial: request.serial,
+        ...(request.lesson !== undefined ? { lesson: request.lesson } : {}),
+      });
+      return;
+    }
+    // A room's other player would be left waiting: the tutorial is for a
+    // Solo table.
+    if (connected?.mode === 'multiplayer') return;
+    const active = beginOperation('tutorial');
+    if (!active) return;
+    try {
+      const result = await dependencies.createRoom({
+        buildId,
+        displayName: 'Blue',
+        mode: 'solo',
+        rendererKind,
+        signal: active.abort.signal,
+      });
+      try {
+        await waitForAdmission(result.runtime, active.abort.signal);
+      } catch (error) {
+        result.dispose();
+        throw error;
+      }
+      const owner = active.owner;
+      if (owner.disposed || ownerRef.current !== owner) {
+        result.dispose();
+        return;
+      }
+      await handOffTable(() => {
+        if (owner.disposed || ownerRef.current !== owner) {
+          result.dispose();
+          return false;
+        }
+        owner.tutorial?.dispose();
+        owner.tutorial = result;
+        setTutorial({
+          room: { runtime: result.runtime, rendererKind, mode: 'solo' },
+          serial: request.serial,
+          ...(request.lesson !== undefined ? { lesson: request.lesson } : {}),
+        });
+        setActivePanel('solo');
+      });
+    } catch (error) {
+      if (!active.owner.disposed) {
+        toast({
+          id: 'tutorial-failed',
+          title: i18n._(safeFailureMessage('tutorial', error)),
+          tone: 'warning',
+        });
+      }
+    } finally {
+      endOperation(active.owner);
+    }
+  };
+
+  /** Back from the practice table to the player's own. */
+  const leaveTutorial = async (): Promise<void> => {
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed) return;
+    await handOffTable(() => {
+      owner.tutorial?.dispose();
+      delete owner.tutorial;
+      setTutorial(undefined);
+      // With no table of their own to go back to, the page makes one.
+      if (!connected && !parkedSolo) return false;
+    });
+    if (!connected && !parkedSolo) void handleSolo();
+  };
+
+  // A lesson in the page's address (`?tutorial=damage`) opens it once the
+  // table is ready; `?tutorial` alone opens the list.
+  useEffect(() => {
+    const lesson = tutorialRequestFromUrl(globalThis.location?.search ?? '');
+    if (lesson !== undefined) startTutorial(lesson === '' ? undefined : lesson);
+  }, []);
+
+  const tutorialRequest = useTutorialRequest();
+  useEffect(() => {
+    if (!tutorialRequest) return;
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed || owner.operation) return;
+    takeTutorialRequest(tutorialRequest);
+    void handleTutorial(tutorialRequest);
+  });
 
   const handleCopy = async (): Promise<void> => {
     const active = beginOperation('copy');
@@ -1206,6 +1324,55 @@ export const RemoteRoomLobby = ({
     </section>
   );
 
+  if (tutorial) {
+    // The practice table in place of the player's own, which stays live
+    // behind it. It installs none of the player's decks; Play online leaves
+    // the tutorial first.
+    const practice = tutorial.room;
+    return (
+      <RemoteRoomRoute
+        key={practice.runtime.roomCode}
+        runtime={practice.runtime}
+        rendererKind={practice.rendererKind}
+        roomMode="solo"
+        tutorial={{
+          ...(tutorial.lesson !== undefined ? { lesson: tutorial.lesson } : {}),
+          serial: tutorial.serial,
+          onExit: () => void leaveTutorial(),
+        }}
+        {...(deckCustody
+          ? {
+              deckStore: deckCustody.store,
+              cardBackStore: deckCustody.cardBackStore,
+            }
+          : {})}
+        deckSurfaceActivated={deckSurfaceActivated}
+        onDeckSurfaceActivate={() => setDeckSurfaceActivated(true)}
+        onDeckCustodyChange={setDeckCustody}
+        installDeckOnSessionAttach={false}
+        deckSessionPrepared
+        onTableSettledChange={handleGameTableSettled}
+        onNewSoloTable={() => void leaveTutorial()}
+        multiplayerPanel={renderMultiplayerPanel}
+        onMultiplayerPanelOpen={() => {
+          void leaveTutorial().then(() => setActivePanel('lobby'));
+        }}
+        {...(preferences ? { preferences } : {})}
+        onPreferencesChange={setPreferences}
+        {...(backgroundSelection.background
+          ? { background: backgroundSelection.background }
+          : {})}
+        onBackgroundChange={backgroundSelection.setBackground}
+        onBackgroundReset={restoreDefaultBackground}
+        {...(dependencies.requestBackground
+          ? { requestBackground: dependencies.requestBackground }
+          : {})}
+        {...(dependencies.requestCardBack
+          ? { requestCardBack: dependencies.requestCardBack }
+          : {})}
+      />
+    );
+  }
   if (connected) {
     return (
       <>
@@ -1287,6 +1454,7 @@ export const RemoteRoomLobby = ({
     onFullscreen: () => {
       requestBrowserFullscreen();
     },
+    onTutorial: () => startTutorial(),
   };
   const appBar = <AppBar model={menu} />;
   return (

@@ -1,0 +1,484 @@
+/*
+ * Tutorial mode (TutorialHost.tsx, ADR-038). Over the table, its docked log
+ * and the command palette (a lesson is read while the palette is open),
+ * under menus and notices; the coach hides itself under the deck screen
+ * and sheets. The coach and its rings take no presses but their own.
+ */
+
+.tutorial-scrim,
+.tutorial-spotlight,
+.tutorial-coach {
+  --tutorial-layer: calc(var(--layer-dialog) + 20);
+  --tutorial-glow: var(--color-gold, oklch(0.83 0.14 85));
+}
+
+/* ---- Between lessons: the list, or a lesson being dealt -------------------- */
+
+.tutorial-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tutorial-layer);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: oklch(0.12 0.01 50 / 0.5);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: tutorial-fade-in
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
+}
+
+@keyframes tutorial-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tutorial-lessons,
+.tutorial-dealing {
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+.tutorial-lessons {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  width: min(460px, 100%);
+  max-height: min(720px, calc(100dvh - 2 * var(--space-4)));
+  padding: var(--space-4);
+  animation: tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
+    var(--ease-snappy) both;
+}
+
+@keyframes tutorial-rise {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+    scale: 0.98;
+  }
+}
+
+.tutorial-lessons__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tutorial-lessons__head > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--tutorial-glow);
+}
+
+.tutorial-lessons__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.tutorial-lessons__count {
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-lessons__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+.tutorial-lesson {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tutorial-lesson:hover {
+    background: var(--color-surface-3);
+  }
+}
+
+.tutorial-lesson:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* The lesson to take next. */
+.tutorial-lesson[data-suggested='true'] {
+  border-color: color-mix(in oklab, var(--tutorial-glow) 55%, transparent);
+  background: color-mix(in oklab, var(--tutorial-glow) 9%, transparent);
+}
+
+.tutorial-lesson__mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-lesson[data-done='true'] .tutorial-lesson__mark {
+  border-color: transparent;
+  background: var(--color-success);
+  color: var(--color-text-on-accent);
+}
+
+.tutorial-lesson__mark svg {
+  width: 15px;
+  height: 15px;
+}
+
+.tutorial-lesson__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tutorial-lesson__title {
+  font-weight: var(--weight-semibold);
+}
+
+.tutorial-lesson__summary {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.tutorial-dealing {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+  padding: var(--space-5) var(--space-6);
+  text-align: center;
+}
+
+.tutorial-dealing__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.tutorial-dealing__spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid color-mix(in oklab, var(--color-text) 20%, transparent);
+  border-top-color: var(--tutorial-glow);
+  border-radius: 50%;
+  animation: tutorial-spin 0.8s linear infinite;
+}
+
+@keyframes tutorial-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+.tutorial-dealing__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* ---- The coach ------------------------------------------------------------ */
+
+.tutorial-coach {
+  position: fixed;
+  z-index: var(--tutorial-layer);
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 24px));
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  transition:
+    left calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-out),
+    top calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-out);
+  animation: tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
+    var(--ease-snappy) both;
+}
+
+.tutorial-coach__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: 28px;
+}
+
+.tutorial-coach__head > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--tutorial-glow);
+}
+
+.tutorial-coach__lesson {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutorial-coach__count {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--color-text-faint, var(--color-text-muted));
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.tutorial-coach__icon.ds-icon-button {
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+.tutorial-coach__progress {
+  height: 3px;
+  margin: var(--space-2) 0 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--color-text) 12%, transparent);
+}
+
+.tutorial-coach__progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tutorial-glow);
+  transition: width calc(var(--duration-slow) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+.tutorial-coach__text {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-md, 15px);
+  line-height: var(--leading-normal);
+  text-wrap: pretty;
+}
+
+.tutorial-coach__text strong {
+  color: var(--color-text);
+  font-weight: var(--weight-bold);
+}
+
+.tutorial-coach kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 0.35em;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--color-surface-3);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.86em;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* A step done: a tick, then the next step. */
+.tutorial-coach__tick {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 0.05em;
+  color: var(--color-success);
+  animation: tutorial-tick calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-snappy);
+}
+
+.tutorial-coach[data-done='true'] .tutorial-coach__text > span {
+  opacity: 0.6;
+}
+
+@keyframes tutorial-tick {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+.tutorial-coach__stuck {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: color-mix(
+    in oklab,
+    var(--color-warning, #d8a23a) 14%,
+    transparent
+  );
+  font-size: var(--text-sm);
+}
+
+.tutorial-coach__stuck .ds-link {
+  justify-self: start;
+}
+
+.tutorial-coach__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin-top: var(--space-3);
+}
+
+.tutorial-coach__actions .ds-button {
+  min-height: 32px;
+  padding-inline: var(--space-3);
+}
+
+.tutorial-coach__spacer {
+  flex: 1;
+}
+
+/* A lesson done: the coach, centred at the top of the table. */
+.tutorial-coach--done {
+  top: var(--space-4);
+  left: 50%;
+  translate: -50% 0;
+}
+
+.tutorial-done__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.tutorial-done__title svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--color-success);
+}
+
+/* ---- What a step points at -------------------------------------------------- */
+
+.tutorial-spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--tutorial-layer) - 1);
+  pointer-events: none;
+}
+
+/* A ring, breathing, round what to touch: a light rim inside a gold one,
+   so it reads on gold-bordered cards and dark buttons alike. */
+.tutorial-ring {
+  position: fixed;
+  box-sizing: border-box;
+  border: 3px solid var(--tutorial-glow);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 1.5px oklch(1 0 0 / 0.75),
+    0 0 0 1.5px oklch(0.2 0.02 60 / 0.55),
+    0 0 0 6px color-mix(in oklab, var(--tutorial-glow) 28%, transparent),
+    0 0 28px color-mix(in oklab, var(--tutorial-glow) 55%, transparent);
+  animation: tutorial-breathe 1.8s ease-in-out infinite;
+}
+
+/* Where a drag ends: dashed, so the two read as start and end. */
+.tutorial-ring--to {
+  border-style: dashed;
+  animation-delay: 0.45s;
+}
+
+@keyframes tutorial-breathe {
+  50% {
+    opacity: 0.7;
+    box-shadow:
+      inset 0 0 0 1.5px oklch(1 0 0 / 0.5),
+      0 0 0 1.5px oklch(0.2 0.02 60 / 0.4),
+      0 0 0 10px color-mix(in oklab, var(--tutorial-glow) 12%, transparent),
+      0 0 36px color-mix(in oklab, var(--tutorial-glow) 35%, transparent);
+  }
+}
+
+:root[data-motion='reduced'] .tutorial-ring,
+:root[data-motion='reduced'] .tutorial-coach,
+:root[data-motion='reduced'] .tutorial-lessons,
+:root[data-motion='reduced'] .tutorial-scrim {
+  animation: none;
+}
+
+/* The hand that shows a drag: the fingertip at the card's centre. */
+.tutorial-hand {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  margin: -6px 0 0 -14px;
+  color: oklch(0.98 0 0);
+  filter: drop-shadow(0 3px 6px oklch(0 0 0 / 0.55));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tutorial-hand svg {
+  width: 100%;
+  height: 100%;
+  rotate: -18deg;
+}
+
+.tutorial-path {
+  position: fixed;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tutorial-path line {
+  stroke: var(--tutorial-glow);
+  stroke-width: 3;
+  stroke-dasharray: 2 8;
+  stroke-linecap: round;
+}
+
+.tutorial-path marker path {
+  fill: var(--tutorial-glow);
+}

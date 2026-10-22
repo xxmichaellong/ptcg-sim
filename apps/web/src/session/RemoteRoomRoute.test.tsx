@@ -1384,7 +1384,8 @@ describe('RemoteRoomRoute', () => {
     expect(find('[data-table-welcome]')).toBeNull();
     await connect(socketFactory, emptyTableView());
     expect(find('[data-table-welcome]')).not.toBeNull();
-    expect(find('#tutorialButton')).not.toBeNull();
+    // The welcome offers the tutorial (ADR-038).
+    expect(find('#welcomeTutorialButton')).not.toBeNull();
 
     await click('#welcomeLoadDeckButton');
     await act(async () => {

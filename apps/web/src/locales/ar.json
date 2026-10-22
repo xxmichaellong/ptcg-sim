@@ -15,7 +15,7 @@
   },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
-    "translation": ""
+    "translation": "{0, plural, zero {# لاعب} one {لاعب واحد} two {لاعبان} few {# لاعبين} many {# لاعبًا} other {# لاعب}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -27,6 +27,24 @@
       "Tooltip of a damage counter on a Pokémon, e.g. \"60 damage\"."
     ],
     "translation": "{0} ضرر"
+  },
+  "glYGpK": {
+    "message": "{0} has left your hand.",
+    "translation": "{0} غادرت يدك."
+  },
+  "FGOUAP": {
+    "message": "{0} of {1}",
+    "comments": [
+      "The step of a tutorial lesson, like \"2 of 4\"."
+    ],
+    "translation": "{0} من {1}"
+  },
+  "szgBGr": {
+    "message": "{0} of {1} done",
+    "comments": [
+      "How many tutorial lessons are finished, like \"3 of 10 done\"."
+    ],
+    "translation": "اكتمل {0} من {1}"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -422,7 +440,7 @@
     "comments": [
       "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": ""
+    "translation": "{deck}، المركز {place}، {playerName}: جرّبها"
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
@@ -433,7 +451,7 @@
     "comments": [
       "A tournament list to load: the deck, its placing, the event size, the player"
     ],
-    "translation": ""
+    "translation": "{deckName}، المركز {place} من {players}، {playerName}: جرّبها"
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -763,7 +781,7 @@
     "comments": [
       "A tournament placing on a deck box sticker, as 1st"
     ],
-    "translation": ""
+    "translation": "{place, selectordinal, other {#}}"
   },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
@@ -777,7 +795,7 @@
     "comments": [
       "A tournament placing, as 1st"
     ],
-    "translation": ""
+    "translation": "{placing, selectordinal, other {#}}"
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -789,7 +807,7 @@
   },
   "xNCVW4": {
     "message": "{players, plural, one {# player} other {# players}}",
-    "translation": ""
+    "translation": "{players, plural, zero {# لاعب} one {لاعب واحد} two {لاعبان} few {# لاعبين} many {# لاعبًا} other {# لاعب}}"
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -844,7 +862,7 @@
     "comments": [
       "A seat's tray on the deck screen: the seat, its deck, its size"
     ],
-    "translation": ""
+    "translation": "{slotSeat}: {name}، {total, plural, zero {# بطاقة} one {بطاقة واحدة} two {بطاقتان} few {# بطاقات} many {# بطاقة} other {# بطاقة}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -874,12 +892,16 @@
     ],
     "translation": "{targetSeat}: {seatLabel}، {seatTotal, plural, zero {# بطاقة} one {بطاقة واحدة} two {بطاقتان} few {# بطاقات} many {# بطاقة} other {# بطاقة}}"
   },
+  "PX7pvD": {
+    "message": "{title}: done",
+    "translation": "{title}: اكتمل"
+  },
   "jBGEib": {
     "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
     "comments": [
       "How a deck has done: top 8 finishes and lists seen"
     ],
-    "translation": ""
+    "translation": "{top8s, plural, zero {# في أفضل 8} one {مرة واحدة في أفضل 8} two {مرتان في أفضل 8} few {# مرات في أفضل 8} many {# مرة في أفضل 8} other {# في أفضل 8}} · {lists, plural, zero {# قائمة} one {قائمة واحدة} two {قائمتان} few {# قوائم} many {# قائمة} other {# قائمة}}"
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -959,6 +981,30 @@
       "The keys that open this list, drawn as keycaps (usually \"?\")."
     ],
     "translation": "<0/> يفتح هذه القائمة."
+  },
+  "ieOTvn": {
+    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
+    "translation": "<0>الرزمة</0>: ابنِ رزمة أو استوردها أو اخترها لكل جانب."
+  },
+  "Pzyxb1": {
+    "message": "<0>Flip</0> back to your side.",
+    "translation": "<0>اقلب</0> الطاولة للعودة إلى جانبك."
+  },
+  "udHtRp": {
+    "message": "<0>Log</0>: every move, and the chat.",
+    "translation": "<0>السجل</0>: كل حركة، والدردشة."
+  },
+  "9MOdR4": {
+    "message": "<0>Play online</0>: send a friend a link to your table.",
+    "translation": "<0>العب عبر الإنترنت</0>: أرسل رابط طاولتك إلى صديق."
+  },
+  "u4cc98": {
+    "message": "<0>Settings</0>: the table's look, the theme and the language.",
+    "translation": "<0>الإعدادات</0>: مظهر الطاولة والسمة واللغة."
+  },
+  "Ni8ven": {
+    "message": "<0>Shuffle</0> your deck when you are done.",
+    "translation": "<0>اخلط</0> رزمتك عند الانتهاء."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1144,9 +1190,13 @@
     "message": "Added by hand · legality not checked",
     "translation": "أُضيفت يدويًا · لم يُتحقق من الشرعية"
   },
+  "wZthGJ": {
+    "message": "All lessons",
+    "translation": "كل الدروس"
+  },
   "qe9rVr": {
     "message": "All lists",
-    "translation": ""
+    "translation": "كل القوائم"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1237,6 +1287,10 @@
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "هل تريد فعلًا المغادرة؟ ستفقد أي بيانات لعبة غير محفوظة."
   },
+  "y_Uvam": {
+    "message": "Around the table",
+    "translation": "حول الطاولة"
+  },
   "8zanjC": {
     "message": "Artwork group",
     "translation": "مجموعة الصور"
@@ -1262,6 +1316,10 @@
     "message": "Attach",
     "context": "shortcut key caption",
     "translation": "إرفاق"
+  },
+  "jrzyuC": {
+    "message": "Attach and evolve",
+    "translation": "الإرفاق والتطوير"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1317,13 +1375,17 @@
     "message": "Back to 100%",
     "translation": "العودة إلى 100%"
   },
+  "XeBjQB": {
+    "message": "Back to my table",
+    "translation": "العودة إلى طاولتي"
+  },
   "IbTeP5": {
     "message": "Back to pile order",
     "translation": "العودة إلى ترتيب الكومة"
   },
   "JT4RmD": {
     "message": "Back to the decks",
-    "translation": ""
+    "translation": "العودة إلى الرزم"
   },
   "dOqLYu": {
     "message": "Back to the table",
@@ -1371,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "الاحتياط"
   },
+  "T1zt_m": {
+    "message": "Bench <0>{0}</0> too.",
+    "translation": "ضع <0>{0}</0> على الاحتياط أيضًا."
+  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -1402,6 +1468,10 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "كلاهما"
+  },
+  "7jOTCJ": {
+    "message": "Both sides",
+    "translation": "الجانبان"
   },
   "Mnzsfq": {
     "message": "Bottom",
@@ -1448,7 +1518,7 @@
   },
   "EhsQ9V": {
     "message": "Busy for a moment — try again shortly",
-    "translation": ""
+    "translation": "الخادم مشغول، حاول مجددًا بعد قليل"
   },
   "2lorx9": {
     "message": "Can't be changed",
@@ -1485,7 +1555,7 @@
   },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
-    "translation": ""
+    "translation": "ظهر البطاقة لـ {slotSeat}"
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1550,7 +1620,7 @@
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
-    "translation": ""
+    "translation": "تغيير ظهر البطاقة لـ {slotSeat}"
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1571,6 +1641,10 @@
   "mWj-hV": {
     "message": "Change type...",
     "translation": "تغيير النوع..."
+  },
+  "9dR8ka": {
+    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
+    "translation": "غيّرت رأيك؟ يتراجع <0>التراجع</0> عن آخر حركة لك."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -1602,6 +1676,10 @@
     ],
     "translation": "اختيار"
   },
+  "YY29zS": {
+    "message": "Choose <0>Damage counter</0>.",
+    "translation": "اختر <0>عدّاد الضرر</0>."
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "اختر دك أولًا"
@@ -1620,11 +1698,11 @@
   },
   "5rfWim": {
     "message": "Classics",
-    "translation": ""
+    "translation": "الكلاسيكية"
   },
   "xCJdfg": {
     "message": "Clear",
-    "translation": ""
+    "translation": "مسح"
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1648,9 +1726,21 @@
     "message": "Clear log",
     "translation": "مسح السجل"
   },
+  "vZwOAx": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
+    "translation": "انقر على <0>{0}</0> في يدك، ثم اضغط <1>B</1> لوضعها على الاحتياط."
+  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "انقر على اختصار لتغييره."
+  },
+  "XZq2Yt": {
+    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
+    "translation": "انقر خارج البطاقة أو اضغط <0>Esc</0> لإعادتها."
+  },
+  "e78sgl": {
+    "message": "Click your deck to look through it.",
+    "translation": "انقر على رزمتك لتصفحها."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1773,11 +1863,11 @@
   },
   "0htzp9": {
     "message": "Couldn't load that list",
-    "translation": ""
+    "translation": "تعذّر تحميل هذه القائمة"
   },
   "1Nv1R5": {
     "message": "Couldn't load this",
-    "translation": ""
+    "translation": "تعذّر تحميل هذا"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -1806,6 +1896,10 @@
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "تعذّر بدء وضع اللعب المنفرد. حاول مرة أخرى."
+  },
+  "eP7qeF": {
+    "message": "Couldn't start the tutorial. Try again.",
+    "translation": "تعذّر بدء الدرس التعليمي. حاول مجددًا."
   },
   "nzVItu": {
     "message": "Couldn't use the clipboard. Allow access and try again.",
@@ -1839,6 +1933,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "شارة مخصصة على Discord وحرية استخدام الألقاب الذاتية."
+  },
+  "UxNmvS": {
+    "message": "Damage and conditions",
+    "translation": "الضرر والحالات"
   },
   "omkQWV": {
     "message": "Damage at least",
@@ -1914,7 +2012,7 @@
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": ""
+    "translation": "البحث عن الدِّكات غير متاح"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -1932,7 +2030,11 @@
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": ""
+    "translation": "الدِّكات التي تستوردها أو تبنيها تُحفظ هنا"
+  },
+  "Ocbppt": {
+    "message": "Decks, playing online, the log and Settings",
+    "translation": "الدِّكات واللعب عبر الإنترنت والسجل والإعدادات"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -1982,6 +2084,10 @@
     ],
     "translation": "كومة التخلص"
   },
+  "c58XOp": {
+    "message": "Discard a Pokémon, take a Prize, bring up the next",
+    "translation": "تخلَّ عن Pokémon، وخذ بطاقة جائزة، وأحضر التالي"
+  },
   "u8xW5H": {
     "message": "Discard all",
     "translation": "تجاهل الكل"
@@ -2029,6 +2135,10 @@
     "message": "Done",
     "translation": "تم"
   },
+  "BDC29J": {
+    "message": "Double-click <0>{0}</0> in your hand to read it.",
+    "translation": "انقر مرتين على <0>{0}</0> في يدك لقراءتها."
+  },
   "O8KL2B": {
     "message": "Download list (.txt)",
     "translation": "تنزيل القائمة (.txt)"
@@ -2049,6 +2159,14 @@
     "message": "Download the list instead.",
     "translation": "نزّل القائمة بدلًا من ذلك."
   },
+  "IGqHX9": {
+    "message": "Drag a <0>{0}</0> onto {1} to attach it.",
+    "translation": "اسحب <0>{0}</0> إلى {1} لإرفاقها."
+  },
+  "bpYsP-": {
+    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "اسحب Pokémon من يدك إلى <0>المركز النشط</0>."
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2067,6 +2185,14 @@
   "yUNMoP": {
     "message": "Draw a card",
     "translation": "سحب بطاقة"
+  },
+  "68egXB": {
+    "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
+    "translation": "اسحب بطاقة: اسحب أعلى الدِّك إلى يدك، أو اضغط <0>1</0>."
+  },
+  "2o1D75": {
+    "message": "Draw a card: drag the top of your deck into your hand.",
+    "translation": "اسحب بطاقة: اسحب أعلى الدِّك إلى يدك."
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -2088,6 +2214,10 @@
     "message": "Draw how many?",
     "translation": "كم بطاقة تسحب؟"
   },
+  "b0MOy2": {
+    "message": "Draw, search and shuffle",
+    "translation": "السحب والبحث والخلط"
+  },
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "أفلِت للاستيراد"
@@ -2097,7 +2227,7 @@
     "comments": [
       "A player who left a tournament"
     ],
-    "translation": ""
+    "translation": "منسحب"
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2153,6 +2283,10 @@
     "context": "replay: go to the end",
     "translation": "النهاية"
   },
+  "ACdn17": {
+    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
+    "translation": "أنهِ دورك بـ<0>الهجوم</0>، أو <1>مرّر</1> بدونه."
+  },
   "0UuYtf": {
     "message": "Energy",
     "context": "card kind",
@@ -2166,6 +2300,10 @@
   "04Gro-": {
     "message": "Energy cards",
     "translation": "بطاقات الطاقة"
+  },
+  "i07JvD": {
+    "message": "Energy, evolutions, Trainers and the Bench",
+    "translation": "الطاقة والتطورات وبطاقات المدرب والمقاعد"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2208,6 +2346,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "تطوير"
+  },
+  "vb1XQU": {
+    "message": "Evolve it: drag <0>{0}</0> onto {1}.",
+    "translation": "طوِّره: اسحب <0>{0}</0> إلى {1}."
   },
   "GjFqb-": {
     "message": "Evolves from",
@@ -2282,6 +2424,10 @@
     "message": "Filters",
     "translation": "عوامل التصفية"
   },
+  "QEb-dG": {
+    "message": "Find <0>{0}</0> and drag it into your hand.",
+    "translation": "ابحث عن <0>{0}</0> واسحبها إلى يدك."
+  },
   "Vv3U3O": {
     "message": "Find a card…",
     "translation": "البحث عن بطاقة…"
@@ -2300,11 +2446,15 @@
   },
   "VmizBS": {
     "message": "Find a tournament",
-    "translation": ""
+    "translation": "ابحث عن بطولة"
   },
   "znQi8E": {
     "message": "Find an event",
-    "translation": ""
+    "translation": "ابحث عن حدث"
+  },
+  "8ju4RO": {
+    "message": "Find any action by name",
+    "translation": "ابحث عن أي إجراء بالاسم"
   },
   "STV_9c": {
     "message": "Find cards",
@@ -2361,6 +2511,10 @@
       "name is the player the coin is flipped for."
     ],
     "translation": "ارمِ عملة لـ {name}"
+  },
+  "euYJXw": {
+    "message": "Flip a coin: press your coin.",
+    "translation": "ارمِ عملة: اضغط على عملتك."
   },
   "9Bomz3": {
     "message": "Flip coin",
@@ -2582,10 +2736,6 @@
     "message": "How much damage?",
     "translation": "كم من الضرر؟"
   },
-  "OGUMes": {
-    "message": "How to play on PTCG-sim",
-    "translation": "كيفية اللعب على PTCG-sim"
-  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2699,6 +2849,14 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "تم نسخ الدعوة إلى الحافظة."
   },
+  "MJUoRP": {
+    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
+    "translation": "تبقى مفتوحة لسحبة أخرى. أغلقها بـ<0>Esc</0>."
+  },
+  "gC8g3J": {
+    "message": "It stays open for another draw. Tap outside to close it.",
+    "translation": "تبقى مفتوحة لسحبة أخرى. المس خارجها لإغلاقها."
+  },
   "5kNRW8": {
     "message": "Item",
     "context": "Trainer card kind",
@@ -2755,6 +2913,18 @@
     "context": "the keyboard map with no modifier held",
     "translation": "المفاتيح"
   },
+  "afjG8F": {
+    "message": "Keys and commands",
+    "translation": "المفاتيح والأوامر"
+  },
+  "_rugva": {
+    "message": "Knock Out",
+    "translation": "إقصاء"
+  },
+  "69MOGQ": {
+    "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
+    "translation": "أقصِ <0>{0}</0> الخاص بخصمك: اسحبه إلى كومة التخلص الخاصة به. تذهب طاقته معه."
+  },
   "vXIe7J": {
     "message": "Language",
     "translation": "اللغة"
@@ -2792,6 +2962,10 @@
     "message": "Leave the room?",
     "translation": "مغادرة الغرفة؟"
   },
+  "t4L8cu": {
+    "message": "Leave tutorial",
+    "translation": "مغادرة الدليل التعليمي"
+  },
   "dQqpoN": {
     "message": "Left",
     "context": "piece position",
@@ -2828,7 +3002,7 @@
     "comments": [
       "Open this on the site it comes from"
     ],
-    "translation": ""
+    "translation": "Limitless"
   },
   "BvrzrK": {
     "message": "Line {line} is too long.",
@@ -2857,12 +3031,12 @@
   },
   "k0WwcP": {
     "message": "Lists for {0}",
-    "translation": ""
+    "translation": "قوائم {0}"
   },
   "Ysygva": {
     "message": "Load",
     "context": "put a tournament list on the seat",
-    "translation": ""
+    "translation": "تحميل"
   },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
@@ -2886,7 +3060,7 @@
   },
   "l2O65x": {
     "message": "Loading events…",
-    "translation": ""
+    "translation": "جارٍ تحميل الأحداث…"
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2922,6 +3096,10 @@
   "RY4IrC": {
     "message": "Look at bottom of their deck…",
     "translation": "انظر إلى أسفل مجموعته…"
+  },
+  "C5D5j0": {
+    "message": "Look at cards",
+    "translation": "عرض البطاقات"
   },
   "Q1s-WM": {
     "message": "Look at how many cards?",
@@ -3007,7 +3185,7 @@
     "comments": [
       "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
     ],
-    "translation": ""
+    "translation": "البطولات الكبرى على Limitless"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -3016,6 +3194,10 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "إنشاء غطاء"
+  },
+  "v1g6xE": {
+    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
+    "translation": "اجعلها <0>60</0>: اكتبها، أو اضغط <1>+</1>."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3108,12 +3290,12 @@
   "tSBn7s": {
     "message": "More",
     "context": "show more lists",
-    "translation": ""
+    "translation": "المزيد"
   },
   "K7Y_ck": {
     "message": "More",
     "context": "show more tournaments",
-    "translation": ""
+    "translation": "المزيد"
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3251,6 +3433,10 @@
     "context": "sort cards by",
     "translation": "الأحدث"
   },
+  "hXzOVo": {
+    "message": "Next",
+    "translation": "التالي"
+  },
   "6PyZ5W": {
     "message": "Next",
     "context": "replay: one step on",
@@ -3317,18 +3503,18 @@
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": ""
+    "translation": "لا توجد دِكات مطابقة لـ “{query}”"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",
     "comments": [
       "An event search with no results"
     ],
-    "translation": ""
+    "translation": "لا توجد أحداث مطابقة لـ “{query}”"
   },
   "8zCZQf": {
     "message": "No events yet",
-    "translation": ""
+    "translation": "لا توجد أحداث بعد"
   },
   "SkSmET": {
     "message": "No foil",
@@ -3340,11 +3526,15 @@
   },
   "nivaRq": {
     "message": "No list",
-    "translation": ""
+    "translation": "لا توجد قائمة"
   },
   "hXMFoN": {
     "message": "No lists",
-    "translation": ""
+    "translation": "لا توجد قوائم"
+  },
+  "Oa7VCN": {
+    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "لا يوجد Pokémon في يدك: هذه إعادة توزيع (mulligan). اختر <0>الإعداد من جديد</0> ضمن المزيد."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3411,6 +3601,14 @@
     "message": "Nothing to import",
     "translation": "لا شيء للاستيراد"
   },
+  "toaK54": {
+    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
+    "translation": "الآن اجعله <0>مسمومًا</0>: <1>الإجراءات</1>، ثم <2>حالة خاصة</2>."
+  },
+  "-yh5EP": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
+    "translation": "الآن اجعله <0>مسمومًا</0>: انقر عليه بزر الماوس الأيمن، ثم <1>حالة خاصة</1>."
+  },
   "LFzr4S": {
     "message": "Number of cards",
     "translation": "عدد البطاقات"
@@ -3449,6 +3647,10 @@
       "The deck is on this seat (P1, P2)"
     ],
     "translation": "على {seat}"
+  },
+  "tgpY2G": {
+    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
+    "translation": "عند اللعب منفردًا تلعب الجانبين. <0>اقلب</0> الطاولة إلى جانبه."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3605,7 +3807,7 @@
   "sihBmP": {
     "message": "Paste",
     "context": "paste a list from the clipboard",
-    "translation": ""
+    "translation": "لصق"
   },
   "BRnJkz": {
     "message": "Paste a decklist first.",
@@ -3613,7 +3815,7 @@
   },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
-    "translation": ""
+    "translation": "الصق قائمة من الحافظة"
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3656,13 +3858,25 @@
     "context": "take the decks to the table",
     "translation": "لعب"
   },
+  "Sky344": {
+    "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
+    "translation": "العب <0>{0}</0>: اسحبها إلى البساط المفتوح. إنهاء دورك يزيلها."
+  },
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "العب بمجموعة عشوائية"
   },
+  "0wpoN_": {
+    "message": "Play faster from the keyboard",
+    "translation": "العب أسرع بلوحة المفاتيح"
+  },
   "VCIZc8": {
     "message": "Play online",
     "translation": "اللعب عبر الإنترنت"
+  },
+  "62Tg4V": {
+    "message": "Play the other side yourself",
+    "translation": "العب الجانب الآخر بنفسك"
   },
   "hrmat7": {
     "message": "Play these decks",
@@ -3673,7 +3887,7 @@
     "comments": [
       "The deck this seat played last"
     ],
-    "translation": ""
+    "translation": "آخر ما لُعب"
   },
   "ald_WV": {
     "message": "Player",
@@ -3725,6 +3939,22 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "اضغط {keys} لعرض <0>الاختصارات</0>."
+  },
+  "YZ6jO9": {
+    "message": "Press <0>?</0> any time for every key.",
+    "translation": "اضغط <0>?</0> في أي وقت لعرض كل المفاتيح."
+  },
+  "PJOyHg": {
+    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
+    "translation": "اضغط <0>`</0> لفتح <1>الأوامر</1>: كل إجراء باسمه."
+  },
+  "HUzhOi": {
+    "message": "Press <0>Esc</0> or click away to close it.",
+    "translation": "اضغط <0>Esc</0> أو انقر خارجها لإغلاقها."
+  },
+  "nhkDN0": {
+    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
+    "translation": "اضغط <0>الإعداد</0>: يخلط مجموعتك ويوزع يدك."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -3790,9 +4020,13 @@
     "context": "Pokémon type",
     "translation": "نفسي"
   },
-  "5pdveM": {
-    "message": "PTCG-sim tutorial",
-    "translation": "شرح PTCG-sim"
+  "jG4a_T": {
+    "message": "Put another on your <0>Bench</0>. Up to five fit there.",
+    "translation": "ضع آخر على <0>الاحتياط</0>. يتسع لخمسة كحد أقصى."
+  },
+  "5XURu8": {
+    "message": "Put damage and Poisoned on their Pokémon",
+    "translation": "ضع الضرر والتسمم على Pokémon الخصم"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -3833,6 +4067,10 @@
     "message": "Read",
     "context": "read a card up close",
     "translation": "قراءة"
+  },
+  "xs2rFL": {
+    "message": "Read a card, and open its actions",
+    "translation": "اقرأ بطاقة وافتح إجراءاتها"
   },
   "LAbKv2": {
     "message": "Ready for {format}",
@@ -4067,9 +4305,17 @@
     "context": "piece position",
     "translation": "يمين"
   },
+  "M4MBmF": {
+    "message": "Right-click <0>{0}</0>: everything a card can do.",
+    "translation": "انقر بزر الماوس الأيمن على <0>{0}</0>: كل ما تفعله البطاقة."
+  },
   "gTK8h8": {
     "message": "Right-click a card for actions.",
     "translation": "انقر بزر الماوس الأيمن على بطاقة لعرض الإجراءات."
+  },
+  "TKRCsY": {
+    "message": "Right-click their <0>{0}</0>.",
+    "translation": "انقر بزر الماوس الأيمن على <0>{0}</0> الخاص بالخصم."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4191,7 +4437,7 @@
   },
   "3zdJQY": {
     "message": "Save and edit {0}",
-    "translation": ""
+    "translation": "حفظ {0} وتحريره"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
@@ -4224,7 +4470,7 @@
   },
   "cJ3-3Z": {
     "message": "Search decks or paste a list",
-    "translation": ""
+    "translation": "ابحث عن مجموعات أو الصق قائمة"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4248,7 +4494,7 @@
   },
   "SBTElJ": {
     "message": "Searching…",
-    "translation": ""
+    "translation": "جارٍ البحث…"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4320,6 +4566,10 @@
     "message": "Set up both sides",
     "translation": "تجهيز الجانبين"
   },
+  "1KTKvb": {
+    "message": "Set up, then put your Pokémon in play",
+    "translation": "أعدّ اللعبة، ثم ضع Pokémon في اللعب"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "جارٍ تجهيز الطاولة…"
@@ -4390,6 +4640,10 @@
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "إظهار لوحة المفاتيح"
+  },
+  "1K069f": {
+    "message": "Show me",
+    "translation": "أرني"
   },
   "FBwNsr": {
     "message": "Show one per card",
@@ -4518,6 +4772,10 @@
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
     "translation": "Single Strike"
+  },
+  "6Uau97": {
+    "message": "Skip",
+    "translation": "تخطَّ"
   },
   "QIIV0m": {
     "message": "Slate",
@@ -4678,11 +4936,27 @@
   },
   "kGkZLk": {
     "message": "Standings",
-    "translation": ""
+    "translation": "الترتيب"
+  },
+  "WrLzY2": {
+    "message": "Start a game",
+    "translation": "ابدأ لعبة"
+  },
+  "YI2gvW": {
+    "message": "Start a turn, flip a coin, attack",
+    "translation": "ابدأ دورًا، اقلب عملة، هاجم"
+  },
+  "-cUaK9": {
+    "message": "Start the lesson over",
+    "translation": "أعد الدرس من البداية"
   },
   "7GpLGd": {
     "message": "Start turn",
     "translation": "بدء الدور"
+  },
+  "RC3jt2": {
+    "message": "Start your turn with <0>Turn</0>. It draws your card.",
+    "translation": "ابدأ دورك بـ<0>الدور</0>. يسحب لك بطاقة."
   },
   "p7o5f_": {
     "message": "Status",
@@ -4778,6 +5052,10 @@
     "context": "coin flip",
     "translation": "كتابة"
   },
+  "yJtTpT": {
+    "message": "Take a <0>Prize card</0>: drag one into your hand.",
+    "translation": "خذ <0>بطاقة جائزة</0>: اسحب واحدة إلى يدك."
+  },
   "2g01hc": {
     "message": "Take off {count} damage",
     "translation": "أزل {count} من الضرر"
@@ -4790,9 +5068,37 @@
     "message": "Take off damage…",
     "translation": "أزل الضرر…"
   },
+  "Tw8wp3": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
+    "translation": "المس <0>{0}</0> في يدك، ثم <1>قراءة</1>."
+  },
+  "gAdnTm": {
+    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
+    "translation": "المس <0>{0}</0>، ثم <1>الإجراءات</1>: كل ما تفعله البطاقة."
+  },
+  "WPv11L": {
+    "message": "Tap <0>Commands</0>: every action, by name.",
+    "translation": "المس <0>الأوامر</0>: كل إجراء باسمه."
+  },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "اضغط على بطاقة لعرض الإجراءات، واضغط مرة أخرى لقراءتها."
+  },
+  "muigTz": {
+    "message": "Tap outside the card to put it back.",
+    "translation": "المس خارج البطاقة لإعادتها."
+  },
+  "AARI3J": {
+    "message": "Tap outside the menu to close it.",
+    "translation": "المس خارج القائمة لإغلاقها."
+  },
+  "lnQomU": {
+    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
+    "translation": "المس <0>{0}</0> الخاص بالخصم، ثم <1>الإجراءات</1>."
+  },
+  "n_ll58": {
+    "message": "Tap your deck to look through it.",
+    "translation": "المس مجموعتك لتصفحها."
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
@@ -4815,6 +5121,10 @@
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
     "translation": "الآلات التقنية"
+  },
+  "4qLtJr": {
+    "message": "That Energy has left your hand.",
+    "translation": "لم تعد تلك الطاقة في يدك."
   },
   "ZMr878": {
     "message": "That image didn't load.",
@@ -4892,6 +5202,10 @@
     "message": "The last move is still sending.",
     "translation": "ما زالت آخر حركة قيد الإرسال."
   },
+  "pGaCJK": {
+    "message": "The practice table didn't answer.",
+    "translation": "لم تستجب طاولة التدريب."
+  },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
     "translation": "لم تقبل الغرفة ذلك. حاول مرة أخرى."
@@ -4948,6 +5262,10 @@
     "message": "Their Prizes",
     "translation": "جوائز الخصم"
   },
+  "IA90Ve": {
+    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
+    "translation": "أصبح جانبه جانبك الآن: ابدأ دوره بالضغط على <0>الدور</0>."
+  },
   "sMMsD3": {
     "message": "Theirs",
     "context": "the opponent's half of the table",
@@ -4971,6 +5289,10 @@
     ],
     "translation": "ثم اضغط «إلى النشط» للعبها مقلوبة"
   },
+  "DNMX9-": {
+    "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
+    "translation": "يُحضر التالي: اسحب <0>{0}</0> من مقعده الاحتياطي إلى مركزه النشط."
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "لن يحتفظ هذا المتصفح بمجموعاتك بعد إغلاق الصفحة."
@@ -4978,6 +5300,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "ستفقد هذه اللعبة."
+  },
+  "L7LU5x": {
+    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
+    "translation": "يبقى هذا الدرس في <0>القائمة</0> متى أردته."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -5124,7 +5450,7 @@
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": ""
+    "translation": "أفضل النتائج في <0>{sourceName}</0>، آخر أسبوعين · {updated}"
   },
   "qssK_n": {
     "message": "Top left",
@@ -5139,23 +5465,23 @@
     "comments": [
       "A credit line under tournament decks; source is a site's name (Limitless TCG)"
     ],
-    "translation": ""
+    "translation": "بيانات البطولات: <0>{0}</0>"
   },
   "HLA2HB": {
     "message": "Tournament decks",
-    "translation": ""
+    "translation": "أوراق البطولات"
   },
   "4Zz_OT": {
     "message": "Tournament decks aren't ready yet",
-    "translation": ""
+    "translation": "أوراق البطولات ليست جاهزة بعد"
   },
   "iPoLT-": {
     "message": "Tournaments",
-    "translation": ""
+    "translation": "البطولات"
   },
   "6NffFz": {
     "message": "Tournaments are offline",
-    "translation": ""
+    "translation": "البطولات غير متاحة حاليًا"
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5216,6 +5542,10 @@
     "message": "Turn the table around",
     "translation": "أدر الطاولة"
   },
+  "R3c2_s": {
+    "message": "Turns",
+    "translation": "الأدوار"
+  },
   "DHMk63": {
     "message": "Turns only the selected card",
     "translation": "يقلب البطاقة المحددة فقط"
@@ -5223,6 +5553,10 @@
   "T7w4KT": {
     "message": "Tutorial",
     "translation": "دليل تعليمي"
+  },
+  "XQ_0kk": {
+    "message": "Tutorial complete. You're ready to play.",
+    "translation": "اكتمل الدرس. أنت جاهز للعب."
   },
   "-zy2Nq": {
     "message": "Type",
@@ -5237,6 +5571,14 @@
     "message": "Type",
     "context": "sort cards by",
     "translation": "النوع"
+  },
+  "K3Z9Js": {
+    "message": "Type <0>draw</0> and press <1>Enter</1>.",
+    "translation": "اكتب <0>draw</0> ثم اضغط <1>Enter</1>."
+  },
+  "YA3nrH": {
+    "message": "Type <0>draw</0>, then tap the first row.",
+    "translation": "اكتب <0>draw</0> ثم المس الصف الأول."
   },
   "Bq_7Gn": {
     "message": "Type something first",
@@ -5261,7 +5603,7 @@
   },
   "EydT-n": {
     "message": "Unknown deck",
-    "translation": ""
+    "translation": "ورقة غير معروفة"
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5387,7 +5729,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": ""
+    "translation": "الأكثر فوزًا حاليًا"
   },
   "n1kezF": {
     "message": "Yes",
@@ -5426,6 +5768,10 @@
   "gUPT1q": {
     "message": "Your hand",
     "translation": "يدك"
+  },
+  "H5pi4B": {
+    "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
+    "translation": "يدك وبطاقات <0>الجوائز</0> الست الخاصة بك، مقلوبة."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

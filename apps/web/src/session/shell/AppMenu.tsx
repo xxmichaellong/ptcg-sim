@@ -10,11 +10,11 @@ import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
 import { FolderOpenIcon } from '@phosphor-icons/react/dist/csr/FolderOpen';
+import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
-import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
@@ -63,6 +63,10 @@ export interface AppMenuModel {
     readonly busy?: boolean;
   };
   readonly onLeave?: () => void;
+  /** Opens the tutorial (from a Solo table or Play online, not a room). */
+  readonly onTutorial?: () => void;
+  /** On the tutorial's practice table: back to the player's own table. */
+  readonly onExitTutorial?: () => void;
 }
 
 /** A toolbar button, and the same row in the narrow rail's menu. */
@@ -220,13 +224,22 @@ export const restEntries = (
   }
 
   if (entries.length > 0) entries.push({ kind: 'separator' });
-  entries.push(
-    {
+  if (model.onExitTutorial) {
+    entries.push({
+      id: 'tutorialButton',
+      label: t`Leave tutorial`,
+      icon: GraduationCapIcon,
+      onSelect: model.onExitTutorial,
+    });
+  } else if (model.onTutorial) {
+    entries.push({
       id: 'tutorialButton',
       label: t`Tutorial`,
-      icon: PlayCircleIcon,
-      onSelect: () => openHelpPage('tutorial'),
-    },
+      icon: GraduationCapIcon,
+      onSelect: model.onTutorial,
+    });
+  }
+  entries.push(
     {
       id: 'changelogButton',
       label: RELEASE_NAME,

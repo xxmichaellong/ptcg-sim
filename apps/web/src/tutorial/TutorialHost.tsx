@@ -1,0 +1,902 @@
+import { Trans, useLingui } from '@lingui/react/macro';
+import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
+import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
+import { CheckCircleIcon } from '@phosphor-icons/react/dist/csr/CheckCircle';
+import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap';
+import { HandPointingIcon } from '@phosphor-icons/react/dist/csr/HandPointing';
+import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
+import { XIcon } from '@phosphor-icons/react/dist/csr/X';
+import type { MatchViewState } from '@ptcgsim/game-core';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+
+import { motionSettings } from '../motion/motion-settings.js';
+import { preferences } from '../preferences/preference-store.js';
+import { usePreference } from '../preferences/usePreference.js';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
+import { TUTORIAL_IMAGE_URLS } from './tutorial-cards.js';
+import {
+  lessonsFor,
+  type TutorialLesson,
+  type TutorialStep,
+} from './tutorial-lessons.js';
+import {
+  dealScenario,
+  tutorialSeats,
+  type ScenarioSession,
+} from './scenario-runner.js';
+import { setTutorialActive, TUTORIAL_PREFERENCES } from './tutorial-state.js';
+import {
+  readScreen,
+  sameScreen,
+  type InputMode,
+  type TutorialScreen,
+  type TutorialWorld,
+} from './tutorial-world.js';
+import {
+  TutorialSpotlight,
+  useTargetRects,
+  type ScreenRect,
+} from './TutorialSpotlight.js';
+import './tutorial.css';
+
+const decorative = { 'aria-hidden': true, focusable: false } as const;
+
+/** What the host needs of the practice room. */
+export interface TutorialRoom {
+  readonly session: ScenarioSession;
+  readonly presentation: {
+    readonly activityFeed: {
+      readonly subscribe: (listener: () => void) => () => void;
+      readonly getSnapshot: () => {
+        readonly items: readonly {
+          readonly id: number;
+          readonly eventType: string;
+          readonly playerId?: string;
+        }[];
+        readonly newestItemId: number | null;
+      };
+    };
+    readonly clearActivity: () => boolean;
+  };
+}
+
+/** The hand at the table: a finger, or a mouse and keys; the last one used wins. */
+export const useInputMode = (): InputMode => {
+  const coarse = useMediaQuery(COARSE_POINTER_QUERY);
+  const [last, setLast] = useState<InputMode | null>(null);
+  useEffect(() => {
+    const onPointer = (event: PointerEvent): void => {
+      setLast(event.pointerType === 'touch' ? 'touch' : 'mouse');
+    };
+    window.addEventListener('pointerdown', onPointer, {
+      capture: true,
+      passive: true,
+    });
+    return () =>
+      window.removeEventListener('pointerdown', onPointer, { capture: true });
+  }, []);
+  return last ?? (coarse ? 'touch' : 'mouse');
+};
+
+const useReducedMotion = (): boolean =>
+  useSyncExternalStore(
+    motionSettings().subscribe,
+    () => motionSettings().getSnapshot().reduced,
+    () => false
+  );
+
+/** The page's open things, read again whenever the page changes. */
+const useScreen = (): TutorialScreen => {
+  const [screen, setScreen] = useState<TutorialScreen>(() =>
+    readScreen(document)
+  );
+  useEffect(() => {
+    let frame = 0;
+    let last = readScreen(document);
+    const read = (): void => {
+      frame = 0;
+      const next = readScreen(document);
+      if (!sameScreen(next, last)) {
+        last = next;
+        setScreen(next);
+      }
+    };
+    const observer = new MutationObserver(() => {
+      if (frame === 0) frame = requestAnimationFrame(read);
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        'data-open',
+        'data-context-card-id',
+        'data-marker-controls',
+        'data-zone-browser-kind',
+      ],
+    });
+    read();
+    return () => {
+      observer.disconnect();
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, []);
+  return screen;
+};
+
+/** Warms the practice cards' scans so the first lesson shows them at once. */
+const warmTutorialImages = (): void => {
+  for (const url of TUTORIAL_IMAGE_URLS) {
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = url;
+  }
+};
+
+type Phase =
+  | { readonly kind: 'lessons' }
+  | {
+      readonly kind: 'dealing';
+      readonly lesson: TutorialLesson;
+      /** Counts starts, so starting the same lesson again deals again. */
+      readonly attempt: number;
+    }
+  | {
+      readonly kind: 'failed';
+      readonly lesson: TutorialLesson;
+    }
+  | {
+      readonly kind: 'playing';
+      readonly lesson: TutorialLesson;
+      readonly step: number;
+      /** The table and the log as the step began. */
+      readonly start: MatchViewState;
+      readonly feedFrom: number;
+      /** The step just finished: shown done a moment before the next. */
+      readonly done: boolean;
+    }
+  | { readonly kind: 'finished'; readonly lesson: TutorialLesson };
+
+/** How long a finished step shows its tick before the next. */
+const STEP_DONE_MS = 650;
+
+/**
+ * Tutorial mode (ADR-038): the practice table's coach. It opens on the
+ * list of lessons (or straight into one asked for), deals each lesson's
+ * position with the room's own commands, then walks its steps: one line to
+ * do at a time, the thing to touch lit, a drag shown, each step done the
+ * moment the table shows it. Nothing here blocks the table; the player can
+ * do anything, and leave from the coach's X.
+ */
+export const TutorialHost = ({
+  room,
+  lesson: askedLesson,
+  serial,
+  flipped,
+  flipBoard,
+  onExit,
+}: {
+  readonly room: TutorialRoom;
+  /** A lesson asked for; absent, the list. */
+  readonly lesson?: string;
+  /** Counts each request, so asking again for the same lesson restarts it. */
+  readonly serial?: number;
+  readonly flipped: boolean;
+  readonly flipBoard: () => void;
+  readonly onExit: () => void;
+}) => {
+  const { t, i18n } = useLingui();
+  const mode = useInputMode();
+  const reducedMotion = useReducedMotion();
+  const screen = useScreen();
+  const progress = usePreference(TUTORIAL_PREFERENCES);
+  const lessons = useMemo(() => lessonsFor(mode), [mode]);
+  const [phase, setPhase] = useState<Phase>({ kind: 'lessons' });
+  const session = room.session;
+  const state = useSyncExternalStore(session.subscribe, session.getSnapshot);
+  const feed = useSyncExternalStore(
+    room.presentation.activityFeed.subscribe,
+    room.presentation.activityFeed.getSnapshot
+  );
+  const [demo, setDemo] = useState(0);
+  const flippedRef = useRef(flipped);
+  flippedRef.current = flipped;
+  // The route passes a fresh function each render; the deal must not restart.
+  const flipBoardRef = useRef(flipBoard);
+  flipBoardRef.current = flipBoard;
+
+  useEffect(() => {
+    setTutorialActive(true);
+    warmTutorialImages();
+    return () => {
+      setTutorialActive(false);
+    };
+  }, []);
+
+  const isDone = useCallback(
+    (lesson: TutorialLesson): boolean =>
+      (progress.completed[lesson.id] ?? 0) >= lesson.version,
+    [progress]
+  );
+
+  // Each start (or try again) of a lesson deals its position afresh.
+  const attempts = useRef(0);
+  const begin = useCallback((lesson: TutorialLesson): void => {
+    attempts.current += 1;
+    setPhase({ kind: 'dealing', lesson, attempt: attempts.current });
+  }, []);
+
+  // The deal belongs to the dealing phase: a remount (or StrictMode's
+  // rehearsal of one) aborts it and deals again, so it never stalls.
+  const dealingPhase = phase.kind === 'dealing' ? phase : null;
+  useEffect(() => {
+    if (!dealingPhase) return;
+    const { lesson } = dealingPhase;
+    const abort = new AbortController();
+    // Every lesson is played from its own seat, at the bottom.
+    if (flippedRef.current) flipBoardRef.current();
+    const settled = new Promise<void>((resolve) => setTimeout(resolve, 600));
+    void dealScenario(session, lesson.scenario, abort.signal)
+      .then(() => settled)
+      .then(
+        () => {
+          if (abort.signal.aborted) return;
+          // The deal's own moves are not the lesson's: the log starts clean.
+          room.presentation.clearActivity();
+          const view = session.getSnapshot().view;
+          if (!view) {
+            setPhase({ kind: 'failed', lesson });
+            return;
+          }
+          setPhase({
+            kind: 'playing',
+            lesson,
+            step: 0,
+            start: view,
+            feedFrom:
+              room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
+            done: false,
+          });
+        },
+        () => {
+          if (!abort.signal.aborted) setPhase({ kind: 'failed', lesson });
+        }
+      );
+    return () => abort.abort();
+  }, [dealingPhase, room.presentation, session]);
+
+  // A lesson asked for by name (the palette, a link) starts at once.
+  const askedRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (askedLesson === undefined || state.phase !== 'ready' || !state.view)
+      return;
+    if (askedRef.current === serial) return;
+    askedRef.current = serial;
+    const lesson = lessons.find((candidate) => candidate.id === askedLesson);
+    if (lesson) begin(lesson);
+  }, [askedLesson, serial, lessons, begin, state.phase, state.view]);
+
+  const playing = phase.kind === 'playing' ? phase : null;
+  const step: TutorialStep | null = playing
+    ? (playing.lesson.steps[playing.step] ?? null)
+    : null;
+  const world = useMemo((): TutorialWorld | null => {
+    if (!playing || !state.view) return null;
+    let seats;
+    try {
+      seats = tutorialSeats(state.view);
+    } catch {
+      return null;
+    }
+    return {
+      view: state.view,
+      start: playing.start,
+      you: seats.you,
+      them: seats.them,
+      mode,
+      events: feed.items
+        .filter((item) => item.id > playing.feedFrom)
+        .map((item) => ({
+          type: item.eventType,
+          ...(item.playerId ? { playerId: item.playerId } : {}),
+        })),
+      flipped,
+      screen,
+    };
+  }, [playing, state.view, mode, feed, flipped, screen]);
+
+  const markComplete = useCallback((lesson: TutorialLesson): void => {
+    preferences().patch(TUTORIAL_PREFERENCES, {
+      completed: {
+        ...preferences().get(TUTORIAL_PREFERENCES).completed,
+        [lesson.id]: lesson.version,
+      },
+    });
+  }, []);
+
+  const advance = useCallback((): void => {
+    setPhase((current) => {
+      if (current.kind !== 'playing') return current;
+      const next = current.step + 1;
+      if (next >= current.lesson.steps.length) {
+        markComplete(current.lesson);
+        return { kind: 'finished', lesson: current.lesson };
+      }
+      const view = session.getSnapshot().view ?? current.start;
+      return {
+        ...current,
+        step: next,
+        start: view,
+        feedFrom:
+          room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
+        done: false,
+      };
+    });
+    setDemo(0);
+  }, [markComplete, room.presentation, session]);
+
+  const back = (): void => {
+    setPhase((current) =>
+      current.kind === 'playing' && current.step > 0
+        ? {
+            ...current,
+            step: current.step - 1,
+            start: session.getSnapshot().view ?? current.start,
+            feedFrom:
+              room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
+            done: false,
+          }
+        : current
+    );
+  };
+
+  // A step is done the moment the table shows it.
+  const stepDone = Boolean(step?.done && world && step.done(world));
+  useEffect(() => {
+    if (!playing || playing.done || !stepDone) return;
+    setPhase({ ...playing, done: true });
+  }, [playing, stepDone]);
+  useEffect(() => {
+    if (!playing?.done) return;
+    const timer = setTimeout(advance, STEP_DONE_MS);
+    return () => clearTimeout(timer);
+  }, [playing?.done, playing?.step, advance]);
+
+  const stuck = step?.stuck && world && !stepDone ? step.stuck(world) : null;
+  const targets = useMemo(
+    () => (step?.targets && world ? step.targets(world) : []),
+    [step, world]
+  );
+  const drag = useMemo(
+    () => (step?.drag && world ? step.drag(world) : null),
+    [step, world]
+  );
+  // Out of the way of the deck screen and sheets, and while the practice
+  // table reconnects (the lesson waits, as it was).
+  const hidden = screen.deckScreen || screen.sheet || state.phase !== 'ready';
+  const showing = Boolean(playing && !playing.done && !hidden);
+  const rects = useTargetRects(targets, showing);
+  const dragRects = useTargetRects(
+    drag ? [drag.from, drag.to] : [],
+    showing && drag !== null
+  );
+  const dragShown =
+    drag && dragRects.length === 2
+      ? { from: dragRects[0] ?? null, to: dragRects[1] ?? null }
+      : null;
+
+  // The hand shows a drag again whenever its step starts.
+  const dragKey =
+    drag && playing ? `${playing.lesson.id}:${String(playing.step)}` : '';
+  useEffect(() => {
+    if (dragKey !== '') setDemo((count) => count + 1);
+  }, [dragKey]);
+
+  const nextLesson = (after: TutorialLesson): TutorialLesson | undefined => {
+    const index = lessons.indexOf(after);
+    return (
+      lessons.slice(index + 1).find((lesson) => !isDone(lesson)) ??
+      lessons[index + 1]
+    );
+  };
+
+  const firstUnfinished = lessons.find((lesson) => !isDone(lesson));
+  const finishedCount = lessons.filter(isDone).length;
+
+  return (
+    <>
+      {phase.kind === 'lessons' ? (
+        <LessonList
+          lessons={lessons}
+          isDone={isDone}
+          finishedCount={finishedCount}
+          suggested={firstUnfinished}
+          onStart={begin}
+          onExit={onExit}
+        />
+      ) : null}
+      {phase.kind === 'dealing' || phase.kind === 'failed' ? (
+        <div className="tutorial-scrim" data-tutorial-dealing="true">
+          <div className="tutorial-dealing" role="status">
+            <span className="tutorial-dealing__title">
+              {i18n._(phase.lesson.title)}
+            </span>
+            {phase.kind === 'dealing' ? (
+              <span className="tutorial-dealing__spinner" aria-hidden="true" />
+            ) : (
+              <>
+                <span>
+                  <Trans>The practice table didn't answer.</Trans>
+                </span>
+                <div className="tutorial-dealing__actions">
+                  <button
+                    type="button"
+                    className="ds-button ds-button--primary"
+                    onClick={() => begin(phase.lesson)}
+                  >
+                    <ArrowClockwiseIcon {...decorative} weight="bold" />
+                    <Trans>Try again</Trans>
+                  </button>
+                  <button
+                    type="button"
+                    className="ds-button ds-button--secondary"
+                    onClick={onExit}
+                  >
+                    <Trans>Leave tutorial</Trans>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+      {playing && step && world && !hidden ? (
+        <>
+          <TutorialSpotlight
+            rects={rects}
+            drag={dragShown}
+            demo={demo}
+            reducedMotion={reducedMotion}
+          />
+          <Coach
+            lesson={playing.lesson}
+            stepIndex={playing.step}
+            step={step}
+            world={world}
+            done={playing.done}
+            stuck={stuck}
+            avoid={[
+              ...rects,
+              ...(dragShown ? [dragShown.from, dragShown.to] : []),
+            ]}
+            onBack={playing.step > 0 ? back : undefined}
+            onNext={advance}
+            onShowMe={drag ? () => setDemo((count) => count + 1) : undefined}
+            onRestart={() => begin(playing.lesson)}
+            onLessons={() => setPhase({ kind: 'lessons' })}
+            onExit={onExit}
+          />
+        </>
+      ) : null}
+      {phase.kind === 'finished' ? (
+        <LessonDone
+          lesson={phase.lesson}
+          next={nextLesson(phase.lesson)}
+          allDone={lessons.every(isDone)}
+          onNext={begin}
+          onLessons={() => setPhase({ kind: 'lessons' })}
+          onExit={onExit}
+        />
+      ) : null}
+      {/* Read out each step as it comes, and each done. */}
+      <div className="ds-visually-hidden" role="status" aria-live="polite">
+        {playing?.done ? t`Done` : null}
+      </div>
+    </>
+  );
+};
+
+// ---- The coach ----------------------------------------------------------------
+
+const COACH_GAP_PX = 12;
+
+type Corner = 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
+
+const overlaps = (a: ScreenRect, b: ScreenRect): boolean =>
+  a.x < b.x + b.width &&
+  b.x < a.x + a.width &&
+  a.y < b.y + b.height &&
+  b.y < a.y + a.height;
+
+/**
+ * Where the coach sits: the first corner that covers nothing the step
+ * points at (nor the app bar), the top left by default. On a phone it
+ * spans the width at the top or the bottom.
+ */
+const placeCoach = (
+  size: { readonly width: number; readonly height: number },
+  avoid: readonly (ScreenRect | null)[],
+  compact: boolean
+): { readonly left: number; readonly top: number; readonly corner: Corner } => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const bar = document
+    .querySelector('.ptcgsim-app-bar')
+    ?.getBoundingClientRect();
+  const blockers = [
+    ...avoid.filter((rect): rect is ScreenRect => rect !== null),
+    ...(bar
+      ? [{ x: bar.x, y: bar.y, width: bar.width, height: bar.height }]
+      : []),
+  ];
+  const at = (corner: Corner) => {
+    const left = corner.endsWith('left')
+      ? COACH_GAP_PX
+      : width - size.width - COACH_GAP_PX;
+    const top = corner.startsWith('top')
+      ? COACH_GAP_PX + (compact && bar ? bar.y + bar.height : 0)
+      : height - size.height - COACH_GAP_PX;
+    return { left, top, corner };
+  };
+  const corners: readonly Corner[] = compact
+    ? ['top-left', 'bottom-left']
+    : ['top-left', 'bottom-left', 'top-right', 'bottom-right'];
+  for (const corner of corners) {
+    const place = at(corner);
+    const box = { x: place.left, y: place.top, ...size };
+    if (!blockers.some((rect) => overlaps(rect, box))) return place;
+  }
+  return at(corners[0]!);
+};
+
+const Coach = ({
+  lesson,
+  stepIndex,
+  step,
+  world,
+  done,
+  stuck,
+  avoid,
+  onBack,
+  onNext,
+  onShowMe,
+  onRestart,
+  onLessons,
+  onExit,
+}: {
+  readonly lesson: TutorialLesson;
+  readonly stepIndex: number;
+  readonly step: TutorialStep;
+  readonly world: TutorialWorld;
+  readonly done: boolean;
+  readonly stuck: ReactNode | null;
+  readonly avoid: readonly (ScreenRect | null)[];
+  readonly onBack: (() => void) | undefined;
+  readonly onNext: () => void;
+  readonly onShowMe: (() => void) | undefined;
+  readonly onRestart: () => void;
+  readonly onLessons: () => void;
+  readonly onExit: () => void;
+}) => {
+  const { t, i18n } = useLingui();
+  const ref = useRef<HTMLDivElement>(null);
+  const compact = useMediaQuery('(max-width: 599px)');
+  const [place, setPlace] = useState<{
+    left: number;
+    top: number;
+    corner: Corner;
+  }>({ left: COACH_GAP_PX, top: COACH_GAP_PX, corner: 'top-left' });
+  const avoidRef = useRef(avoid);
+  avoidRef.current = avoid;
+  const avoidKey = JSON.stringify(avoid);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = (): void => {
+      const next = placeCoach(
+        { width: element.offsetWidth, height: element.offsetHeight },
+        avoidRef.current,
+        compact
+      );
+      setPlace((current) =>
+        current.left === next.left &&
+        current.top === next.top &&
+        current.corner === next.corner
+          ? current
+          : next
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [avoidKey, compact, stepIndex, done]);
+  const count = lesson.steps.length;
+  const action = step.done === undefined;
+  const titleId = `tutorialCoachTitle-${lesson.id}`;
+  return (
+    <div
+      ref={ref}
+      className="tutorial-coach"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      data-tutorial-step={`${lesson.id}:${step.id}`}
+      data-done={done ? 'true' : undefined}
+      data-corner={place.corner}
+      style={{ left: place.left, top: place.top }}
+    >
+      <div className="tutorial-coach__head">
+        <GraduationCapIcon {...decorative} weight="fill" />
+        <span id={titleId} className="tutorial-coach__lesson">
+          {i18n._(lesson.title)}
+        </span>
+        <span className="tutorial-coach__count">
+          {t({
+            message: `${String(stepIndex + 1)} of ${String(count)}`,
+            comment: 'The step of a tutorial lesson, like "2 of 4".',
+          })}
+        </span>
+        <button
+          type="button"
+          className="ds-icon-button tutorial-coach__icon"
+          aria-label={t`All lessons`}
+          title={t`All lessons`}
+          onClick={onLessons}
+        >
+          <ListIcon {...decorative} weight="bold" />
+        </button>
+        <button
+          id="tutorialExitButton"
+          type="button"
+          className="ds-icon-button tutorial-coach__icon"
+          aria-label={t`Leave tutorial`}
+          title={t`Leave tutorial`}
+          onClick={onExit}
+        >
+          <XIcon {...decorative} weight="bold" />
+        </button>
+      </div>
+      <div className="tutorial-coach__progress" aria-hidden="true">
+        <span
+          style={{
+            width: `${String(((stepIndex + (done ? 1 : 0)) / count) * 100)}%`,
+          }}
+        />
+      </div>
+      <p className="tutorial-coach__text" aria-live="polite">
+        {done ? (
+          <CheckCircleIcon
+            {...decorative}
+            weight="fill"
+            className="tutorial-coach__tick"
+          />
+        ) : null}
+        <span>{step.text(world)}</span>
+      </p>
+      {stuck ? (
+        <p className="tutorial-coach__stuck">
+          <span>{stuck}</span>
+          <button type="button" className="ds-link" onClick={onRestart}>
+            <Trans>Start the lesson over</Trans>
+          </button>
+        </p>
+      ) : null}
+      <div className="tutorial-coach__actions">
+        {onBack ? (
+          <button
+            type="button"
+            className="ds-button ds-button--ghost"
+            onClick={onBack}
+          >
+            <Trans>Back</Trans>
+          </button>
+        ) : null}
+        <span className="tutorial-coach__spacer" />
+        {onShowMe && !done ? (
+          <button
+            type="button"
+            className="ds-button ds-button--ghost"
+            onClick={onShowMe}
+          >
+            <HandPointingIcon {...decorative} weight="bold" />
+            <Trans>Show me</Trans>
+          </button>
+        ) : null}
+        {action ? (
+          <button
+            type="button"
+            className="ds-button ds-button--primary tutorial-coach__next"
+            onClick={onNext}
+          >
+            {stepIndex + 1 === count ? (
+              <Trans>Done</Trans>
+            ) : (
+              <Trans>Next</Trans>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="ds-button ds-button--ghost tutorial-coach__skip"
+            disabled={done}
+            onClick={onNext}
+          >
+            {step.optional ? <Trans>Next</Trans> : <Trans>Skip</Trans>}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---- The list of lessons, and a lesson done ---------------------------------
+
+const LessonList = ({
+  lessons,
+  isDone,
+  finishedCount,
+  suggested,
+  onStart,
+  onExit,
+}: {
+  readonly lessons: readonly TutorialLesson[];
+  readonly isDone: (lesson: TutorialLesson) => boolean;
+  readonly finishedCount: number;
+  readonly suggested: TutorialLesson | undefined;
+  readonly onStart: (lesson: TutorialLesson) => void;
+  readonly onExit: () => void;
+}) => {
+  const { t, i18n } = useLingui();
+  const first = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    first.current?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <div className="tutorial-scrim">
+      <section
+        className="tutorial-lessons"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="tutorialLessonsTitle"
+        data-tutorial-lessons="true"
+      >
+        <header className="tutorial-lessons__head">
+          <GraduationCapIcon {...decorative} weight="fill" />
+          <h2 id="tutorialLessonsTitle">
+            <Trans>Tutorial</Trans>
+          </h2>
+          <span className="tutorial-lessons__count">
+            {t({
+              message: `${String(finishedCount)} of ${String(lessons.length)} done`,
+              comment:
+                'How many tutorial lessons are finished, like "3 of 10 done".',
+            })}
+          </span>
+          <button
+            type="button"
+            className="ds-icon-button"
+            aria-label={t`Leave tutorial`}
+            title={t`Leave tutorial`}
+            onClick={onExit}
+          >
+            <XIcon {...decorative} weight="bold" />
+          </button>
+        </header>
+        <ol className="tutorial-lessons__list">
+          {lessons.map((lesson, index) => {
+            const done = isDone(lesson);
+            return (
+              <li key={lesson.id}>
+                <button
+                  ref={lesson === (suggested ?? lessons[0]) ? first : undefined}
+                  type="button"
+                  className="tutorial-lesson"
+                  data-lesson={lesson.id}
+                  data-done={done ? 'true' : undefined}
+                  data-suggested={lesson === suggested ? 'true' : undefined}
+                  onClick={() => onStart(lesson)}
+                >
+                  <span className="tutorial-lesson__mark" aria-hidden="true">
+                    {done ? <CheckIcon weight="bold" /> : String(index + 1)}
+                  </span>
+                  <span className="tutorial-lesson__text">
+                    <span className="tutorial-lesson__title">
+                      {i18n._(lesson.title)}
+                    </span>
+                    <span className="tutorial-lesson__summary">
+                      {i18n._(lesson.summary)}
+                    </span>
+                  </span>
+                  {done ? (
+                    <span className="ds-visually-hidden">
+                      <Trans>Done</Trans>
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    </div>
+  );
+};
+
+const LessonDone = ({
+  lesson,
+  next,
+  allDone,
+  onNext,
+  onLessons,
+  onExit,
+}: {
+  readonly lesson: TutorialLesson;
+  readonly next: TutorialLesson | undefined;
+  readonly allDone: boolean;
+  readonly onNext: (lesson: TutorialLesson) => void;
+  readonly onLessons: () => void;
+  readonly onExit: () => void;
+}) => {
+  const { i18n } = useLingui();
+  const primary = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    primary.current?.focus({ preventScroll: true });
+  }, []);
+  const title = i18n._(lesson.title);
+  return (
+    <section
+      className="tutorial-coach tutorial-coach--done"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="tutorialDoneTitle"
+      data-tutorial-done={lesson.id}
+    >
+      <p className="tutorial-done__title" id="tutorialDoneTitle">
+        <CheckCircleIcon {...decorative} weight="fill" />
+        {allDone && !next ? (
+          <Trans>Tutorial complete. You're ready to play.</Trans>
+        ) : (
+          <Trans>{title}: done</Trans>
+        )}
+      </p>
+      <div className="tutorial-coach__actions">
+        <button
+          type="button"
+          className="ds-button ds-button--ghost"
+          onClick={onLessons}
+        >
+          <Trans>All lessons</Trans>
+        </button>
+        <span className="tutorial-coach__spacer" />
+        {next ? (
+          <button
+            ref={primary}
+            type="button"
+            className="ds-button ds-button--primary"
+            onClick={() => onNext(next)}
+          >
+            {i18n._(next.title)}
+          </button>
+        ) : (
+          <button
+            ref={primary}
+            type="button"
+            className="ds-button ds-button--primary"
+            onClick={onExit}
+          >
+            <Trans>Back to my table</Trans>
+          </button>
+        )}
+      </div>
+    </section>
+  );
+};

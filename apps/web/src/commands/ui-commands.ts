@@ -1,4 +1,5 @@
 import { t } from '@lingui/core/macro';
+import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap';
 import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
 
 import type { RailAction } from '../board/rail/TableRail.js';
@@ -193,7 +194,7 @@ const MENU_MEANINGS: Readonly<Record<string, () => Meaning>> = {
   }),
   tutorial: () => ({
     section: 'help',
-    keywords: ['help', 'tutorial', 'learn'],
+    keywords: ['help', 'tutorial', 'learn', 'lessons'],
   }),
   changelog: () => ({
     section: 'help',
@@ -262,3 +263,22 @@ export const menuCommands = (
   }
   return commands;
 };
+
+/**
+ * Each tutorial lesson as a command of its own (ADR-038), so "tutorial
+ * damage" goes straight to that lesson: from a Solo table, or on the
+ * practice table to change lesson.
+ */
+export const tutorialLessonCommands = (
+  lessons: readonly { readonly id: string; readonly title: string }[],
+  start: (lesson: string) => void
+): PaletteCommand[] =>
+  lessons.map((lesson) => ({
+    id: `tutorial.${lesson.id}`,
+    title: lesson.title,
+    section: 'help',
+    icon: GraduationCapIcon,
+    detail: t`Tutorial`,
+    keywords: ['tutorial', 'lesson', 'learn'],
+    run: () => start(lesson.id),
+  }));

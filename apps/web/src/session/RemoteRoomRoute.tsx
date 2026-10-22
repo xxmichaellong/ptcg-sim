@@ -85,6 +85,10 @@ import { SettingsSheet } from './shell/SettingsSheet.js';
 import { seatStage } from '../board/seat-stage.js';
 import { SHELL_PREFERENCES } from './shell/shell-preferences.js';
 import { TableWelcome } from './shell/TableWelcome.js';
+import { TutorialHost } from '../tutorial/TutorialHost.js';
+import { startTutorial } from '../tutorial/tutorial-state.js';
+import { lessonsFor } from '../tutorial/tutorial-lessons.js';
+import { useInputMode } from '../tutorial/TutorialHost.js';
 import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
@@ -93,6 +97,7 @@ import { toast } from '../ui/toast.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import { CommandSourceRegistration } from '../commands/registry.js';
 import { roomCommands } from '../commands/room-commands.js';
+import { tutorialLessonCommands } from '../commands/ui-commands.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
@@ -100,6 +105,15 @@ export interface RemoteRoomRouteProps {
   readonly runtime: RemoteRoomRuntime;
   readonly rendererKind: RendererKind;
   readonly roomMode?: 'solo' | 'multiplayer';
+  /**
+   * This Solo room is the tutorial's practice table (ADR-038): the coach
+   * runs over it, at the lesson asked for (or the list of lessons).
+   */
+  readonly tutorial?: {
+    readonly lesson?: string;
+    readonly serial: number;
+    readonly onExit: () => void;
+  };
   /** Retained above the route when lobby/room transitions share Deck custody. */
   readonly deckStore?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
@@ -221,6 +235,7 @@ export const RemoteRoomRoute = ({
   runtime,
   rendererKind,
   roomMode = 'multiplayer',
+  tutorial,
   deckStore,
   cardBackStore,
   requestCardBack,
@@ -252,6 +267,7 @@ export const RemoteRoomRoute = ({
 }: RemoteRoomRouteProps) => {
   const { t, i18n } = useLingui();
   const solo = roomMode === 'solo';
+  const inputMode = useInputMode();
   const backgroundSelection = useRoomBackground({
     ...(ownedBackground ? { background: ownedBackground } : {}),
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
@@ -586,7 +602,14 @@ export const RemoteRoomRoute = ({
         };
 
         const menu: AppMenuModel = {
-          heading: roomName,
+          heading: tutorial ? t`Tutorial` : roomName,
+          // The tutorial is for a Solo table: a room's other player would be
+          // left waiting.
+          ...(tutorial
+            ? { onExitTutorial: tutorial.onExit }
+            : solo && !replaying
+              ? { onTutorial: () => startTutorial() }
+              : {}),
           ...(openPlayOnline ? { onPlayOnline: openPlayOnline } : {}),
           // The toolbar's Deck is the acting seat's: P2's at a Solo table
           // turned around.
@@ -601,31 +624,34 @@ export const RemoteRoomRoute = ({
             ? { onCopyInvitation: () => void copyInvitation('player') }
             : {}),
           ...(live.leaveRoom && !replaying ? { onLeave: live.leaveRoom } : {}),
-          game: replaying
-            ? {
-                onExitReplay: exitReplay,
-                onExportState: () => {
-                  const artifact = runtime.replay.getReplayArtifact();
-                  if (artifact) downloadPerspectiveReplay(artifact);
+          // The practice table keeps no saves or replays of its own.
+          game: tutorial
+            ? {}
+            : replaying
+              ? {
+                  onExitReplay: exitReplay,
+                  onExportState: () => {
+                    const artifact = runtime.replay.getReplayArtifact();
+                    if (artifact) downloadPerspectiveReplay(artifact);
+                  },
+                }
+              : {
+                  ...(live.canImportReplay
+                    ? { onImportReplay: live.importReplay }
+                    : {}),
+                  ...(live.canSaveOnline
+                    ? { onSaveOnline: live.saveOnlineGame }
+                    : {}),
+                  ...(live.canResumeSaved
+                    ? { onResumeSaved: live.resumeSavedGame }
+                    : {}),
+                  ...(live.exportState
+                    ? { onExportState: live.exportState }
+                    : {}),
+                  busy:
+                    live.replayImportPending ||
+                    live.continuationPending !== undefined,
                 },
-              }
-            : {
-                ...(live.canImportReplay
-                  ? { onImportReplay: live.importReplay }
-                  : {}),
-                ...(live.canSaveOnline
-                  ? { onSaveOnline: live.saveOnlineGame }
-                  : {}),
-                ...(live.canResumeSaved
-                  ? { onResumeSaved: live.resumeSavedGame }
-                  : {}),
-                ...(live.exportState
-                  ? { onExportState: live.exportState }
-                  : {}),
-                busy:
-                  live.replayImportPending ||
-                  live.continuationPending !== undefined,
-              },
         };
 
         const rail: BoardRailModel = {
@@ -670,6 +696,7 @@ export const RemoteRoomRoute = ({
         );
         const welcome =
           soloLive &&
+          !tutorial &&
           state.sessionPhase === 'ready' &&
           tableEmpty &&
           !shellPreferences.welcomeDismissed &&
@@ -757,6 +784,18 @@ export const RemoteRoomRoute = ({
                 <SettledByFailure onSettledChange={onTableSettledChange} />
               </>
             ) : null}
+            {tutorial ? (
+              <TutorialHost
+                room={runtime}
+                {...(tutorial.lesson !== undefined
+                  ? { lesson: tutorial.lesson }
+                  : {})}
+                serial={tutorial.serial}
+                flipped={perspective.flipped}
+                flipBoard={() => boardCommands.current?.flipBoard()}
+                onExit={tutorial.onExit}
+              />
+            ) : null}
             {welcome ? (
               <TableCentre
                 {...(boardView.show === 'both'
@@ -767,6 +806,7 @@ export const RemoteRoomRoute = ({
                   {...(chrome.visibility.deckImport
                     ? { onLoadDeck: () => openDeck() }
                     : {})}
+                  onTutorial={() => startTutorial()}
                   {...(openPlayOnline ? { onPlayOnline: openPlayOnline } : {})}
                   onDismiss={() =>
                     pagePreferences().patch(SHELL_PREFERENCES, {
@@ -777,8 +817,8 @@ export const RemoteRoomRoute = ({
               </TableCentre>
             ) : null}
             <CommandSourceRegistration
-              list={() =>
-                roomCommands({
+              list={() => [
+                ...roomCommands({
                   menu,
                   shortcutsHint: hint('table.shortcuts'),
                   log: {
@@ -790,8 +830,18 @@ export const RemoteRoomRoute = ({
                   ...(!replaying && live.ready ? { say: live.say } : {}),
                   deckOpen,
                   closeDeck: closeSheet,
-                })
-              }
+                }),
+                // The tutorial's lessons, each by name (ADR-038).
+                ...(tutorial || (solo && !replaying)
+                  ? tutorialLessonCommands(
+                      lessonsFor(inputMode).map((lesson) => ({
+                        id: lesson.id,
+                        title: i18n._(lesson.title),
+                      })),
+                      (lesson) => startTutorial(lesson)
+                    )
+                  : []),
+              ]}
             />
             <ActivityPanel
               open={activity.open}

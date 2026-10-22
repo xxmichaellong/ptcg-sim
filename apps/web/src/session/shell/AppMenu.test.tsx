@@ -65,6 +65,7 @@ const model = (overrides: Partial<AppMenuModel> = {}): AppMenuModel => ({
   onDeck: vi.fn(),
   onSettings: vi.fn(),
   onFullscreen: vi.fn(),
+  onTutorial: vi.fn(),
   ...overrides,
 });
 
@@ -200,6 +201,30 @@ describe('AppBar', () => {
       width: 3 * 44 + 2 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
       height: 44 + 2 * APP_BAR_PAD_PX,
     });
+  });
+
+  it('opens the tutorial, or leaves it on the practice table, and has none where it is not offered', async () => {
+    const onTutorial = vi.fn();
+    await render(model({ onTutorial }));
+    await openMenu('#appMenuButton');
+    expect(
+      document.querySelector('[role="menu"] #tutorialButton')?.textContent
+    ).toBe('Tutorial');
+    await choose('tutorialButton');
+    expect(onTutorial).toHaveBeenCalledOnce();
+
+    const onExitTutorial = vi.fn();
+    await render(model({ onExitTutorial }));
+    await openMenu('#appMenuButton');
+    expect(
+      document.querySelector('[role="menu"] #tutorialButton')?.textContent
+    ).toBe('Leave tutorial');
+    await choose('tutorialButton');
+    expect(onExitTutorial).toHaveBeenCalledOnce();
+
+    // A room's menu: no tutorial, the other player would be left waiting.
+    await render({ onSettings: vi.fn() });
+    expect(await openMenu('#appMenuButton')).not.toContain('tutorialButton');
   });
 
   it('opens the community pages outside the table', async () => {

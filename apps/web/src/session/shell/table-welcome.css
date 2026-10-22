@@ -90,6 +90,12 @@
   flex: 1 1 140px;
 }
 
+/* Loading a deck leads, across the card; the tutorial and playing online
+   share the row under it. */
+.table-welcome__actions .ds-button--primary {
+  flex-basis: 100%;
+}
+
 .table-welcome__links {
   display: flex;
   flex-wrap: wrap;

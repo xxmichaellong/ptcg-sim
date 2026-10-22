@@ -6,14 +6,12 @@ import changelogMarkup from '../legacy-changelog.html?raw';
 import './help-pages.css';
 
 /**
- * The help pages (v1's tutorial video, release notes, and Sponsors &
- * Donations), opened from the menu, Settings or the table's welcome card.
- * One host for the page shows whichever is asked for.
+ * The help pages (release notes, and Sponsors & Donations), opened from the
+ * menu, Settings or the table's welcome card. One host for the page shows
+ * whichever is asked for. (v1's tutorial video gave way to tutorial mode,
+ * ADR-038.)
  */
-export type HelpPage = 'tutorial' | 'changelog' | 'donations';
-
-const TUTORIAL_EMBED_URL =
-  'https://www.youtube.com/embed/t3qAhO_p3mk?si=jxysgkLxaAoaSw1I';
+export type HelpPage = 'changelog' | 'donations';
 export const REPOSITORY_URL = 'https://github.com/xxmichaellong/ptcg-sim';
 export const DISCORD_URL = 'https://discord.gg/jMfhQa38mh';
 export const TWITTER_URL = 'https://x.com/xxmichaellong';
@@ -72,7 +70,6 @@ export const RELEASE_NAME =
   /<h2>\s*(v\d+(?:\.\d+)*)/u.exec(changelogMarkup)?.[1] ?? 'Release notes';
 
 const IDS: Readonly<Record<HelpPage, string>> = {
-  tutorial: 'videoContainer',
   changelog: 'changelog',
   donations: 'donationsPage',
 };
@@ -82,7 +79,6 @@ export const HelpSheetHost = () => {
   const { t } = useLingui();
   const page = useSyncExternalStore(subscribe, () => current);
   const titles: Readonly<Record<HelpPage, string>> = {
-    tutorial: t`How to play on PTCG-sim`,
     changelog: RELEASE_NAME,
     donations: t`Sponsors & Donations`,
   };
@@ -93,22 +89,10 @@ export const HelpSheetHost = () => {
         if (!open) closeHelpPage();
       }}
       title={page ? titles[page] : ''}
-      size={page === 'tutorial' ? 'lg' : 'md'}
+      size="md"
       className="ptcgsim-help-sheet"
       {...(page ? { id: IDS[page] } : {})}
     >
-      {page === 'tutorial' ? (
-        <div className="ptcgsim-help-video">
-          <iframe
-            title={t`PTCG-sim tutorial`}
-            width="560"
-            height="315"
-            src={TUTORIAL_EMBED_URL}
-            frameBorder="0"
-            allowFullScreen
-          />
-        </div>
-      ) : null}
       {page === 'changelog' ? (
         // v1's `#changelog` page: the shipped release notes, authored as
         // static markup in the repository.

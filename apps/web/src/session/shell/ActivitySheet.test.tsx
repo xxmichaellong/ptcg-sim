@@ -52,6 +52,11 @@ const feedSource = (initial: readonly ActivityFeedItem[] = []) => {
       snapshot = { items: next, newestItemId: next.at(-1)!.id };
       for (const listener of listeners) listener();
     },
+    /** The Log's Clear (or the tutorial dealing a lesson). */
+    clear: () => {
+      snapshot = { items: [], newestItemId: snapshot.newestItemId };
+      for (const listener of listeners) listener();
+    },
   };
 };
 
@@ -240,6 +245,17 @@ describe('ActivityLauncher', () => {
     await renderLauncher(source, { open: true });
     expect(tickerLines()).toEqual([]);
     await act(async () => source.push(move(OTHER, 'Red passed')));
+    expect(tickerLines()).toEqual([]);
+  });
+
+  it('takes the lines over the table away when the log is cleared', async () => {
+    const source = feedSource();
+    await renderLauncher(source, { solo: true });
+    await act(async () =>
+      source.push(item('DeckLoaded', 'announcement', 'Red loaded deck'))
+    );
+    expect(tickerLines()).toEqual(['Red loaded deck']);
+    await act(async () => source.clear());
     expect(tickerLines()).toEqual([]);
   });
 

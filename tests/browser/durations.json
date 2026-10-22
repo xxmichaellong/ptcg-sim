@@ -3,6 +3,7 @@
   "seconds": {
     "activity-slide.spec.ts": 16,
     "anonymous-invitation-handoff.spec.ts": 24,
+    "app-bar.spec.ts": 60,
     "board-stack-handling.spec.ts": 109,
     "board-view.spec.ts": 81,
     "current-decks.spec.ts": 18,
@@ -78,6 +79,8 @@
     "special-card-formats.spec.ts": 190,
     "table-depth-lab.spec.ts": 22,
     "table-depth-live.spec.ts": 231,
+    "tournament-decks.spec.ts": 40,
+    "tutorial.spec.ts": 420,
     "viewer-drag.spec.ts": 134,
     "whole-stack-drag.spec.ts": 97
   }

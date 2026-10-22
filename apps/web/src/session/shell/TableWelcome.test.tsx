@@ -73,11 +73,12 @@ const button = (selector: string): HTMLButtonElement =>
   host.querySelector<HTMLButtonElement>(selector)!;
 
 describe('TableWelcome', () => {
-  it('offers the two ways in and puts itself away', async () => {
+  it('offers the ways in, the tutorial among them, and puts itself away', async () => {
     const onLoadDeck = vi.fn();
+    const onTutorial = vi.fn();
     const onPlayOnline = vi.fn();
     const onDismiss = vi.fn();
-    await render({ onLoadDeck, onPlayOnline, onDismiss });
+    await render({ onLoadDeck, onTutorial, onPlayOnline, onDismiss });
     const card = host.querySelector('[data-table-welcome="true"]')!;
     expect(card.getAttribute('aria-labelledby')).toBe('tableWelcomeTitle');
     expect(host.querySelector('#tableWelcomeTitle')?.textContent).toBe(
@@ -91,6 +92,8 @@ describe('TableWelcome', () => {
 
     await act(async () => button('#welcomeLoadDeckButton').click());
     expect(onLoadDeck).toHaveBeenCalledOnce();
+    await act(async () => button('#welcomeTutorialButton').click());
+    expect(onTutorial).toHaveBeenCalledOnce();
     await act(async () =>
       [...host.querySelectorAll<HTMLButtonElement>('button')]
         .find((candidate) => candidate.textContent === 'Play online')!
@@ -104,6 +107,7 @@ describe('TableWelcome', () => {
   it('leaves out what its table cannot do', async () => {
     await render({});
     expect(host.querySelector('#welcomeLoadDeckButton')).toBeNull();
+    expect(host.querySelector('#welcomeTutorialButton')).toBeNull();
     expect(host.textContent).not.toContain('Play online');
     expect(host.querySelector('[aria-label="Hide welcome"]')).toBeNull();
   });
@@ -112,7 +116,6 @@ describe('TableWelcome', () => {
     await render({});
     for (const [trigger, page] of [
       ['#changelogLink', '#changelog'],
-      ['#tutorialButton', '#videoContainer'],
       ['#donationsLink', '#donationsPage'],
     ] as const) {
       await act(async () => button(trigger).click());

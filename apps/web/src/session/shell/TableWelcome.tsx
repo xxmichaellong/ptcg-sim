@@ -1,8 +1,8 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
+import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap';
 import { HandPointingIcon } from '@phosphor-icons/react/dist/csr/HandPointing';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
-import { PlayCircleIcon } from '@phosphor-icons/react/dist/csr/PlayCircle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
@@ -73,10 +73,13 @@ const PlayTip = () => {
  */
 export const TableWelcome = ({
   onLoadDeck,
+  onTutorial,
   onPlayOnline,
   onDismiss,
 }: {
   readonly onLoadDeck?: () => void;
+  /** Opens the tutorial's lessons (ADR-038). */
+  readonly onTutorial?: () => void;
   readonly onPlayOnline?: () => void;
   readonly onDismiss?: () => void;
 }) => {
@@ -168,6 +171,17 @@ export const TableWelcome = ({
             <Trans>Load a deck</Trans>
           </button>
         ) : null}
+        {onTutorial ? (
+          <button
+            id="welcomeTutorialButton"
+            type="button"
+            className="ds-button ds-button--secondary"
+            onClick={onTutorial}
+          >
+            <GraduationCapIcon {...decorative} weight="bold" />
+            <Trans>Tutorial</Trans>
+          </button>
+        ) : null}
         {onPlayOnline ? (
           <button
             type="button"
@@ -180,16 +194,6 @@ export const TableWelcome = ({
         ) : null}
       </div>
       <footer className="table-welcome__links">
-        <button
-          id="tutorialButton"
-          type="button"
-          className="ds-link"
-          aria-haspopup="dialog"
-          onClick={() => openHelpPage('tutorial')}
-        >
-          <PlayCircleIcon {...decorative} weight="bold" />
-          <Trans>Tutorial</Trans>
-        </button>
         <a
           id="discordLink"
           className="ds-link"

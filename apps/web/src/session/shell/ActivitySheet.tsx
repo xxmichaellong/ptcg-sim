@@ -320,9 +320,12 @@ export const ActivityLauncher = ({
     if (shown.length === 0) return;
     setTicker((current) => [...current, ...shown].slice(-TICKER_LINES));
   }, [feed, open, ownSeat, solo]);
+  // Opened, or cleared (the Log's Clear; the tutorial dealing a lesson),
+  // the lines over the table go too.
+  const cleared = feed.items.length === 0;
   useEffect(() => {
-    if (open) setTicker([]);
-  }, [open]);
+    if (open || cleared) setTicker([]);
+  }, [open, cleared]);
   useEffect(() => {
     const first = ticker[0];
     if (!first) return;

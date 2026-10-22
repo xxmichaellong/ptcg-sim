@@ -15,7 +15,7 @@
   },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
-    "translation": ""
+    "translation": "{0, plural, other {#명}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -27,6 +27,24 @@
       "Tooltip of a damage counter on a Pokémon, e.g. \"60 damage\"."
     ],
     "translation": "데미지 {0}"
+  },
+  "glYGpK": {
+    "message": "{0} has left your hand.",
+    "translation": "{0}이(가) 패에서 사라졌습니다."
+  },
+  "FGOUAP": {
+    "message": "{0} of {1}",
+    "comments": [
+      "The step of a tutorial lesson, like \"2 of 4\"."
+    ],
+    "translation": "{0}/{1}"
+  },
+  "szgBGr": {
+    "message": "{0} of {1} done",
+    "comments": [
+      "How many tutorial lessons are finished, like \"3 of 10 done\"."
+    ],
+    "translation": "{1}개 중 {0}개 완료"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -422,7 +440,7 @@
     "comments": [
       "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": ""
+    "translation": "{deck}, {place}, {playerName}: 사용해 보기"
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
@@ -433,7 +451,7 @@
     "comments": [
       "A tournament list to load: the deck, its placing, the event size, the player"
     ],
-    "translation": ""
+    "translation": "{deckName}, {players}명 중 {place}, {playerName}: 사용해 보기"
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -763,7 +781,7 @@
     "comments": [
       "A tournament placing on a deck box sticker, as 1st"
     ],
-    "translation": ""
+    "translation": "{place, selectordinal, other {#위}}"
   },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
@@ -777,7 +795,7 @@
     "comments": [
       "A tournament placing, as 1st"
     ],
-    "translation": ""
+    "translation": "{placing, selectordinal, other {#위}}"
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -789,7 +807,7 @@
   },
   "xNCVW4": {
     "message": "{players, plural, one {# player} other {# players}}",
-    "translation": ""
+    "translation": "{players, plural, other {#명}}"
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -844,7 +862,7 @@
     "comments": [
       "A seat's tray on the deck screen: the seat, its deck, its size"
     ],
-    "translation": ""
+    "translation": "{slotSeat}: {name}, {total, plural, other {#장}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -874,12 +892,16 @@
     ],
     "translation": "{targetSeat}: {seatLabel}, {seatTotal, plural, other {#장}}"
   },
+  "PX7pvD": {
+    "message": "{title}: done",
+    "translation": "{title}: 완료"
+  },
   "jBGEib": {
     "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
     "comments": [
       "How a deck has done: top 8 finishes and lists seen"
     ],
-    "translation": ""
+    "translation": "{top8s, plural, other {톱 8 #회}} · {lists, plural, other {리스트 #개}}"
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -959,6 +981,30 @@
       "The keys that open this list, drawn as keycaps (usually \"?\")."
     ],
     "translation": "<0/> 키로 이 목록을 엽니다."
+  },
+  "ieOTvn": {
+    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
+    "translation": "<0>덱</0>: 각 쪽의 덱을 만들거나 가져오거나 선택하세요."
+  },
+  "Pzyxb1": {
+    "message": "<0>Flip</0> back to your side.",
+    "translation": "내 쪽으로 <0>뒤집기</0>."
+  },
+  "udHtRp": {
+    "message": "<0>Log</0>: every move, and the chat.",
+    "translation": "<0>로그</0>: 모든 행동과 채팅."
+  },
+  "9MOdR4": {
+    "message": "<0>Play online</0>: send a friend a link to your table.",
+    "translation": "<0>온라인 플레이</0>: 친구에게 내 테이블 링크를 보내세요."
+  },
+  "u4cc98": {
+    "message": "<0>Settings</0>: the table's look, the theme and the language.",
+    "translation": "<0>설정</0>: 테이블 모양, 테마, 언어."
+  },
+  "Ni8ven": {
+    "message": "<0>Shuffle</0> your deck when you are done.",
+    "translation": "끝났으면 덱을 <0>섞으세요</0>."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1144,9 +1190,13 @@
     "message": "Added by hand · legality not checked",
     "translation": "직접 추가됨 · 사용 가능 여부 확인 안 됨"
   },
+  "wZthGJ": {
+    "message": "All lessons",
+    "translation": "모든 레슨"
+  },
   "qe9rVr": {
     "message": "All lists",
-    "translation": ""
+    "translation": "모든 리스트"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1237,6 +1287,10 @@
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "정말 나가시겠습니까? 저장하지 않은 게임 데이터가 사라집니다."
   },
+  "y_Uvam": {
+    "message": "Around the table",
+    "translation": "테이블 둘러보기"
+  },
   "8zanjC": {
     "message": "Artwork group",
     "translation": "일러스트 그룹"
@@ -1262,6 +1316,10 @@
     "message": "Attach",
     "context": "shortcut key caption",
     "translation": "붙이기"
+  },
+  "jrzyuC": {
+    "message": "Attach and evolve",
+    "translation": "붙이기와 진화"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1317,13 +1375,17 @@
     "message": "Back to 100%",
     "translation": "100%로 되돌리기"
   },
+  "XeBjQB": {
+    "message": "Back to my table",
+    "translation": "내 테이블로 돌아가기"
+  },
   "IbTeP5": {
     "message": "Back to pile order",
     "translation": "트래시 순서로 되돌리기"
   },
   "JT4RmD": {
     "message": "Back to the decks",
-    "translation": ""
+    "translation": "덱 목록으로 돌아가기"
   },
   "dOqLYu": {
     "message": "Back to the table",
@@ -1371,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "벤치"
   },
+  "T1zt_m": {
+    "message": "Bench <0>{0}</0> too.",
+    "translation": "<0>{0}</0>도 벤치에 내세요."
+  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -1402,6 +1468,10 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "둘 다"
+  },
+  "7jOTCJ": {
+    "message": "Both sides",
+    "translation": "양쪽"
   },
   "Mnzsfq": {
     "message": "Bottom",
@@ -1448,7 +1518,7 @@
   },
   "EhsQ9V": {
     "message": "Busy for a moment — try again shortly",
-    "translation": ""
+    "translation": "잠시 혼잡합니다. 잠시 후 다시 시도하세요"
   },
   "2lorx9": {
     "message": "Can't be changed",
@@ -1485,7 +1555,7 @@
   },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
-    "translation": ""
+    "translation": "{slotSeat}의 카드 뒷면"
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1550,7 +1620,7 @@
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
-    "translation": ""
+    "translation": "{slotSeat}의 카드 뒷면 변경"
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1571,6 +1641,10 @@
   "mWj-hV": {
     "message": "Change type...",
     "translation": "종류 변경..."
+  },
+  "9dR8ka": {
+    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
+    "translation": "마음이 바뀌셨나요? <0>되돌리기</0>로 마지막 행동을 취소할 수 있습니다."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -1602,6 +1676,10 @@
     ],
     "translation": "선택"
   },
+  "YY29zS": {
+    "message": "Choose <0>Damage counter</0>.",
+    "translation": "<0>데미지 카운터</0>를 선택하세요."
+  },
   "PetgPp": {
     "message": "Choose a deck first",
     "translation": "먼저 덱을 선택하세요"
@@ -1620,11 +1698,11 @@
   },
   "5rfWim": {
     "message": "Classics",
-    "translation": ""
+    "translation": "클래식"
   },
   "xCJdfg": {
     "message": "Clear",
-    "translation": ""
+    "translation": "지우기"
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1648,9 +1726,21 @@
     "message": "Clear log",
     "translation": "로그 지우기"
   },
+  "vZwOAx": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
+    "translation": "패에서 <0>{0}</0>을(를) 클릭한 다음 <1>B</1>를 눌러 벤치에 내세요."
+  },
   "MO489z": {
     "message": "Click a shortcut to change it.",
     "translation": "단축키를 클릭하면 변경할 수 있습니다."
+  },
+  "XZq2Yt": {
+    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
+    "translation": "카드 밖을 클릭하거나 <0>Esc</0>를 누르면 되돌립니다."
+  },
+  "e78sgl": {
+    "message": "Click your deck to look through it.",
+    "translation": "덱을 클릭하면 덱을 살펴볼 수 있습니다."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1773,11 +1863,11 @@
   },
   "0htzp9": {
     "message": "Couldn't load that list",
-    "translation": ""
+    "translation": "리스트를 불러올 수 없습니다"
   },
   "1Nv1R5": {
     "message": "Couldn't load this",
-    "translation": ""
+    "translation": "불러올 수 없습니다"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -1806,6 +1896,10 @@
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "솔로 모드를 시작하지 못했습니다. 다시 시도하세요."
+  },
+  "eP7qeF": {
+    "message": "Couldn't start the tutorial. Try again.",
+    "translation": "튜토리얼을 시작할 수 없습니다. 다시 시도하세요."
   },
   "nzVItu": {
     "message": "Couldn't use the clipboard. Allow access and try again.",
@@ -1839,6 +1933,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Discord에서 맞춤 플레어를 받고 닉네임을 자유롭게 설정할 수 있습니다."
+  },
+  "UxNmvS": {
+    "message": "Damage and conditions",
+    "translation": "데미지와 특수상태"
   },
   "omkQWV": {
     "message": "Damage at least",
@@ -1914,7 +2012,7 @@
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": ""
+    "translation": "덱 검색을 사용할 수 없습니다"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -1932,7 +2030,11 @@
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": ""
+    "translation": "가져오거나 만든 덱이 여기에 보관됩니다"
+  },
+  "Ocbppt": {
+    "message": "Decks, playing online, the log and Settings",
+    "translation": "덱, 온라인 플레이, 로그, 설정"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -1982,6 +2084,10 @@
     ],
     "translation": "트래시"
   },
+  "c58XOp": {
+    "message": "Discard a Pokémon, take a Prize, bring up the next",
+    "translation": "포켓몬을 트래시하고, 프라이즈 카드를 가져온 뒤 다음 포켓몬을 내세웁니다"
+  },
   "u8xW5H": {
     "message": "Discard all",
     "translation": "모두 트래시"
@@ -2029,6 +2135,10 @@
     "message": "Done",
     "translation": "완료"
   },
+  "BDC29J": {
+    "message": "Double-click <0>{0}</0> in your hand to read it.",
+    "translation": "패에 있는 <0>{0}</0>을(를) 더블클릭해서 읽어 보세요."
+  },
   "O8KL2B": {
     "message": "Download list (.txt)",
     "translation": "리스트 다운로드(.txt)"
@@ -2049,6 +2159,14 @@
     "message": "Download the list instead.",
     "translation": "대신 리스트를 다운로드하세요."
   },
+  "IGqHX9": {
+    "message": "Drag a <0>{0}</0> onto {1} to attach it.",
+    "translation": "<0>{0}</0>을(를) {1}에 끌어다 놓아 붙이세요."
+  },
+  "bpYsP-": {
+    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "패의 포켓몬을 <0>배틀필드</0>로 끌어다 놓으세요."
+  },
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
@@ -2067,6 +2185,14 @@
   "yUNMoP": {
     "message": "Draw a card",
     "translation": "카드 1장 뽑기"
+  },
+  "68egXB": {
+    "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
+    "translation": "카드 뽑기: 덱 맨 위를 패로 끌어다 놓거나 <0>1</0> 키를 누르세요."
+  },
+  "2o1D75": {
+    "message": "Draw a card: drag the top of your deck into your hand.",
+    "translation": "카드 뽑기: 덱 맨 위를 패로 끌어다 놓으세요."
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -2088,6 +2214,10 @@
     "message": "Draw how many?",
     "translation": "몇 장을 뽑을까요?"
   },
+  "b0MOy2": {
+    "message": "Draw, search and shuffle",
+    "translation": "뽑기, 찾기, 섞기"
+  },
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "놓아서 가져오기"
@@ -2097,7 +2227,7 @@
     "comments": [
       "A player who left a tournament"
     ],
-    "translation": ""
+    "translation": "기권"
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2153,6 +2283,10 @@
     "context": "replay: go to the end",
     "translation": "끝으로"
   },
+  "ACdn17": {
+    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
+    "translation": "<0>기술</0>로 턴을 끝내거나, 기술 없이 <1>패스</1>하세요."
+  },
   "0UuYtf": {
     "message": "Energy",
     "context": "card kind",
@@ -2166,6 +2300,10 @@
   "04Gro-": {
     "message": "Energy cards",
     "translation": "에너지 카드"
+  },
+  "i07JvD": {
+    "message": "Energy, evolutions, Trainers and the Bench",
+    "translation": "에너지, 진화, 트레이너스, 벤치"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2208,6 +2346,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "진화"
+  },
+  "vb1XQU": {
+    "message": "Evolve it: drag <0>{0}</0> onto {1}.",
+    "translation": "진화시키기: <0>{0}</0>을(를) {1}에 끌어다 놓으세요."
   },
   "GjFqb-": {
     "message": "Evolves from",
@@ -2282,6 +2424,10 @@
     "message": "Filters",
     "translation": "필터"
   },
+  "QEb-dG": {
+    "message": "Find <0>{0}</0> and drag it into your hand.",
+    "translation": "<0>{0}</0>을(를) 찾아 패로 끌어다 놓으세요."
+  },
   "Vv3U3O": {
     "message": "Find a card…",
     "translation": "카드 찾기…"
@@ -2300,11 +2446,15 @@
   },
   "VmizBS": {
     "message": "Find a tournament",
-    "translation": ""
+    "translation": "토너먼트 찾기"
   },
   "znQi8E": {
     "message": "Find an event",
-    "translation": ""
+    "translation": "이벤트 찾기"
+  },
+  "8ju4RO": {
+    "message": "Find any action by name",
+    "translation": "이름으로 동작 찾기"
   },
   "STV_9c": {
     "message": "Find cards",
@@ -2361,6 +2511,10 @@
       "name is the player the coin is flipped for."
     ],
     "translation": "{name}의 동전 던지기"
+  },
+  "euYJXw": {
+    "message": "Flip a coin: press your coin.",
+    "translation": "코인 던지기: 코인을 누르세요."
   },
   "9Bomz3": {
     "message": "Flip coin",
@@ -2582,10 +2736,6 @@
     "message": "How much damage?",
     "translation": "데미지는 얼마인가요?"
   },
-  "OGUMes": {
-    "message": "How to play on PTCG-sim",
-    "translation": "PTCG-sim 플레이 방법"
-  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2699,6 +2849,14 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "초대장이 클립보드에 복사되었습니다."
   },
+  "MJUoRP": {
+    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
+    "translation": "한 번 더 뽑을 수 있도록 열려 있습니다. <0>Esc</0>로 닫으세요."
+  },
+  "gC8g3J": {
+    "message": "It stays open for another draw. Tap outside to close it.",
+    "translation": "한 번 더 뽑을 수 있도록 열려 있습니다. 바깥을 탭하면 닫힙니다."
+  },
   "5kNRW8": {
     "message": "Item",
     "context": "Trainer card kind",
@@ -2755,6 +2913,18 @@
     "context": "the keyboard map with no modifier held",
     "translation": "키"
   },
+  "afjG8F": {
+    "message": "Keys and commands",
+    "translation": "키와 명령"
+  },
+  "_rugva": {
+    "message": "Knock Out",
+    "translation": "기절"
+  },
+  "69MOGQ": {
+    "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
+    "translation": "상대의 <0>{0}</0>을(를) 기절시키세요: 상대 트래시로 끌어다 놓으세요. 붙어 있던 에너지도 함께 이동합니다."
+  },
   "vXIe7J": {
     "message": "Language",
     "translation": "언어"
@@ -2792,6 +2962,10 @@
     "message": "Leave the room?",
     "translation": "방을 나가시겠습니까?"
   },
+  "t4L8cu": {
+    "message": "Leave tutorial",
+    "translation": "튜토리얼 나가기"
+  },
   "dQqpoN": {
     "message": "Left",
     "context": "piece position",
@@ -2828,7 +3002,7 @@
     "comments": [
       "Open this on the site it comes from"
     ],
-    "translation": ""
+    "translation": "Limitless"
   },
   "BvrzrK": {
     "message": "Line {line} is too long.",
@@ -2857,12 +3031,12 @@
   },
   "k0WwcP": {
     "message": "Lists for {0}",
-    "translation": ""
+    "translation": "{0}의 리스트"
   },
   "Ysygva": {
     "message": "Load",
     "context": "put a tournament list on the seat",
-    "translation": ""
+    "translation": "불러오기"
   },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
@@ -2886,7 +3060,7 @@
   },
   "l2O65x": {
     "message": "Loading events…",
-    "translation": ""
+    "translation": "이벤트 불러오는 중…"
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2922,6 +3096,10 @@
   "RY4IrC": {
     "message": "Look at bottom of their deck…",
     "translation": "상대 덱 아래 보기…"
+  },
+  "C5D5j0": {
+    "message": "Look at cards",
+    "translation": "카드 보기"
   },
   "Q1s-WM": {
     "message": "Look at how many cards?",
@@ -3007,7 +3185,7 @@
     "comments": [
       "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
     ],
-    "translation": ""
+    "translation": "Limitless의 메이저 대회"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -3016,6 +3194,10 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "덮기"
+  },
+  "v1g6xE": {
+    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
+    "translation": "<0>60</0>장으로 맞추세요: 직접 입력하거나 <1>+</1> 키를 누르세요."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3108,12 +3290,12 @@
   "tSBn7s": {
     "message": "More",
     "context": "show more lists",
-    "translation": ""
+    "translation": "더 보기"
   },
   "K7Y_ck": {
     "message": "More",
     "context": "show more tournaments",
-    "translation": ""
+    "translation": "더 보기"
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3251,6 +3433,10 @@
     "context": "sort cards by",
     "translation": "최신순"
   },
+  "hXzOVo": {
+    "message": "Next",
+    "translation": "다음"
+  },
   "6PyZ5W": {
     "message": "Next",
     "context": "replay: one step on",
@@ -3317,18 +3503,18 @@
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": ""
+    "translation": "“{query}”와(과) 일치하는 덱이 없습니다"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",
     "comments": [
       "An event search with no results"
     ],
-    "translation": ""
+    "translation": "“{query}”와(과) 일치하는 이벤트가 없습니다"
   },
   "8zCZQf": {
     "message": "No events yet",
-    "translation": ""
+    "translation": "아직 이벤트가 없습니다"
   },
   "SkSmET": {
     "message": "No foil",
@@ -3340,11 +3526,15 @@
   },
   "nivaRq": {
     "message": "No list",
-    "translation": ""
+    "translation": "리스트 없음"
   },
   "hXMFoN": {
     "message": "No lists",
-    "translation": ""
+    "translation": "리스트 없음"
+  },
+  "Oa7VCN": {
+    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "패에 포켓몬이 없습니다. 멀리건입니다. 더보기에서 <0>다시 준비</0>를 선택하세요."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3411,6 +3601,14 @@
     "message": "Nothing to import",
     "translation": "가져올 항목이 없습니다"
   },
+  "toaK54": {
+    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
+    "translation": "이제 <0>독</0> 상태로 만드세요: <1>동작</1>, <2>특수 상태</2> 순으로 선택합니다."
+  },
+  "-yh5EP": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
+    "translation": "이제 <0>독</0> 상태로 만드세요: 우클릭한 다음 <1>특수 상태</1>를 선택합니다."
+  },
   "LFzr4S": {
     "message": "Number of cards",
     "translation": "카드 수"
@@ -3449,6 +3647,10 @@
       "The deck is on this seat (P1, P2)"
     ],
     "translation": "{seat}에 있음"
+  },
+  "tgpY2G": {
+    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
+    "translation": "혼자 할 때는 양쪽을 모두 플레이합니다. 테이블을 <0>뒤집어</0> 상대편으로 전환하세요."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3605,7 +3807,7 @@
   "sihBmP": {
     "message": "Paste",
     "context": "paste a list from the clipboard",
-    "translation": ""
+    "translation": "붙여넣기"
   },
   "BRnJkz": {
     "message": "Paste a decklist first.",
@@ -3613,7 +3815,7 @@
   },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
-    "translation": ""
+    "translation": "클립보드에서 목록 붙여넣기"
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3656,13 +3858,25 @@
     "context": "take the decks to the table",
     "translation": "플레이"
   },
+  "Sky344": {
+    "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
+    "translation": "<0>{0}</0>을(를) 사용하세요: 열린 매트로 드래그합니다. 턴을 끝내면 치워집니다."
+  },
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "무작위 덱으로 플레이"
   },
+  "0wpoN_": {
+    "message": "Play faster from the keyboard",
+    "translation": "키보드로 더 빠르게 플레이"
+  },
   "VCIZc8": {
     "message": "Play online",
     "translation": "온라인 플레이"
+  },
+  "62Tg4V": {
+    "message": "Play the other side yourself",
+    "translation": "상대편을 직접 플레이"
   },
   "hrmat7": {
     "message": "Play these decks",
@@ -3673,7 +3887,7 @@
     "comments": [
       "The deck this seat played last"
     ],
-    "translation": ""
+    "translation": "최근 사용"
   },
   "ald_WV": {
     "message": "Player",
@@ -3725,6 +3939,22 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "{keys} 키를 누르면 <0>단축키</0>를 볼 수 있습니다."
+  },
+  "YZ6jO9": {
+    "message": "Press <0>?</0> any time for every key.",
+    "translation": "<0>?</0>를 누르면 언제든 모든 키를 볼 수 있습니다."
+  },
+  "PJOyHg": {
+    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
+    "translation": "<0>`</0>를 눌러 <1>명령</1>을 여세요: 모든 동작을 이름으로 찾을 수 있습니다."
+  },
+  "HUzhOi": {
+    "message": "Press <0>Esc</0> or click away to close it.",
+    "translation": "<0>Esc</0>를 누르거나 바깥을 클릭하면 닫힙니다."
+  },
+  "nhkDN0": {
+    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
+    "translation": "<0>준비</0>를 누르세요: 덱을 섞고 패를 나눠 줍니다."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -3790,9 +4020,13 @@
     "context": "Pokémon type",
     "translation": "초"
   },
-  "5pdveM": {
-    "message": "PTCG-sim tutorial",
-    "translation": "PTCG-sim 튜토리얼"
+  "jG4a_T": {
+    "message": "Put another on your <0>Bench</0>. Up to five fit there.",
+    "translation": "<0>벤치</0>에 한 장 더 놓으세요. 최대 다섯 장까지 놓을 수 있습니다."
+  },
+  "5XURu8": {
+    "message": "Put damage and Poisoned on their Pokémon",
+    "translation": "상대 포켓몬에 데미지와 독 올리기"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -3833,6 +4067,10 @@
     "message": "Read",
     "context": "read a card up close",
     "translation": "읽기"
+  },
+  "xs2rFL": {
+    "message": "Read a card, and open its actions",
+    "translation": "카드를 읽고 동작 열기"
   },
   "LAbKv2": {
     "message": "Ready for {format}",
@@ -4067,9 +4305,17 @@
     "context": "piece position",
     "translation": "오른쪽"
   },
+  "M4MBmF": {
+    "message": "Right-click <0>{0}</0>: everything a card can do.",
+    "translation": "<0>{0}</0>을(를) 우클릭하세요: 카드로 할 수 있는 모든 동작이 나옵니다."
+  },
   "gTK8h8": {
     "message": "Right-click a card for actions.",
     "translation": "카드를 마우스 오른쪽 버튼으로 클릭하면 동작이 표시됩니다."
+  },
+  "TKRCsY": {
+    "message": "Right-click their <0>{0}</0>.",
+    "translation": "상대의 <0>{0}</0>을(를) 우클릭하세요."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4191,7 +4437,7 @@
   },
   "3zdJQY": {
     "message": "Save and edit {0}",
-    "translation": ""
+    "translation": "{0} 저장 후 편집"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
@@ -4224,7 +4470,7 @@
   },
   "cJ3-3Z": {
     "message": "Search decks or paste a list",
-    "translation": ""
+    "translation": "덱 검색 또는 목록 붙여넣기"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4248,7 +4494,7 @@
   },
   "SBTElJ": {
     "message": "Searching…",
-    "translation": ""
+    "translation": "검색 중…"
   },
   "xcUq3U": {
     "message": "Season",
@@ -4320,6 +4566,10 @@
     "message": "Set up both sides",
     "translation": "양쪽 모두 세팅"
   },
+  "1KTKvb": {
+    "message": "Set up, then put your Pokémon in play",
+    "translation": "준비한 다음 포켓몬을 내놓기"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "테이블을 준비하는 중…"
@@ -4390,6 +4640,10 @@
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "키보드 표시"
+  },
+  "1K069f": {
+    "message": "Show me",
+    "translation": "보여 주세요"
   },
   "FBwNsr": {
     "message": "Show one per card",
@@ -4518,6 +4772,10 @@
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
     "translation": "일격"
+  },
+  "6Uau97": {
+    "message": "Skip",
+    "translation": "건너뛰기"
   },
   "QIIV0m": {
     "message": "Slate",
@@ -4678,11 +4936,27 @@
   },
   "kGkZLk": {
     "message": "Standings",
-    "translation": ""
+    "translation": "순위"
+  },
+  "WrLzY2": {
+    "message": "Start a game",
+    "translation": "게임 시작"
+  },
+  "YI2gvW": {
+    "message": "Start a turn, flip a coin, attack",
+    "translation": "턴 시작, 동전 던지기, 기술 사용"
+  },
+  "-cUaK9": {
+    "message": "Start the lesson over",
+    "translation": "레슨 다시 시작"
   },
   "7GpLGd": {
     "message": "Start turn",
     "translation": "턴 시작"
+  },
+  "RC3jt2": {
+    "message": "Start your turn with <0>Turn</0>. It draws your card.",
+    "translation": "<0>턴</0>으로 턴을 시작하세요. 카드를 한 장 뽑습니다."
   },
   "p7o5f_": {
     "message": "Status",
@@ -4778,6 +5052,10 @@
     "context": "coin flip",
     "translation": "뒷면"
   },
+  "yJtTpT": {
+    "message": "Take a <0>Prize card</0>: drag one into your hand.",
+    "translation": "<0>프라이즈 카드</0>를 가져오세요: 한 장을 패로 드래그합니다."
+  },
   "2g01hc": {
     "message": "Take off {count} damage",
     "translation": "데미지 {count} 제거"
@@ -4790,9 +5068,37 @@
     "message": "Take off damage…",
     "translation": "데미지 제거…"
   },
+  "Tw8wp3": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
+    "translation": "패에서 <0>{0}</0>을(를) 탭한 다음 <1>읽기</1>를 탭하세요."
+  },
+  "gAdnTm": {
+    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
+    "translation": "<0>{0}</0>을(를) 탭한 다음 <1>동작</1>을 탭하세요: 카드로 할 수 있는 모든 동작이 나옵니다."
+  },
+  "WPv11L": {
+    "message": "Tap <0>Commands</0>: every action, by name.",
+    "translation": "<0>명령</0>을 탭하세요: 모든 동작을 이름으로 찾을 수 있습니다."
+  },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "카드를 탭하면 동작이 표시되고, 다시 탭하면 카드를 읽을 수 있습니다."
+  },
+  "muigTz": {
+    "message": "Tap outside the card to put it back.",
+    "translation": "카드 바깥을 탭하면 되돌립니다."
+  },
+  "AARI3J": {
+    "message": "Tap outside the menu to close it.",
+    "translation": "메뉴 바깥을 탭하면 닫힙니다."
+  },
+  "lnQomU": {
+    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
+    "translation": "상대의 <0>{0}</0>을(를) 탭한 다음 <1>동작</1>을 탭하세요."
+  },
+  "n_ll58": {
+    "message": "Tap your deck to look through it.",
+    "translation": "덱을 탭하면 내용을 볼 수 있습니다."
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
@@ -4815,6 +5121,10 @@
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
     "translation": "기술머신"
+  },
+  "4qLtJr": {
+    "message": "That Energy has left your hand.",
+    "translation": "그 에너지는 패를 떠났습니다."
   },
   "ZMr878": {
     "message": "That image didn't load.",
@@ -4892,6 +5202,10 @@
     "message": "The last move is still sending.",
     "translation": "마지막 동작을 아직 전송 중입니다."
   },
+  "pGaCJK": {
+    "message": "The practice table didn't answer.",
+    "translation": "연습 테이블이 응답하지 않았습니다."
+  },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
     "translation": "방에서 받아들이지 못했습니다. 다시 시도하세요."
@@ -4948,6 +5262,10 @@
     "message": "Their Prizes",
     "translation": "상대 프라이즈 카드"
   },
+  "IA90Ve": {
+    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
+    "translation": "이제 상대편은 내 차지입니다. <0>턴</0>으로 상대 턴을 시작하세요."
+  },
   "sMMsD3": {
     "message": "Theirs",
     "context": "the opponent's half of the table",
@@ -4971,6 +5289,10 @@
     ],
     "translation": "그다음 배틀필드로를 눌러 뒷면으로 내려놓으세요"
   },
+  "DNMX9-": {
+    "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
+    "translation": "상대가 다음 포켓몬을 내보냅니다. 상대 벤치의 <0>{0}</0>을(를) 상대 배틀필드로 드래그하세요."
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "이 브라우저는 페이지를 닫으면 덱을 보관하지 않습니다."
@@ -4978,6 +5300,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "이 게임은 사라집니다."
+  },
+  "L7LU5x": {
+    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
+    "translation": "이 튜토리얼은 필요할 때 언제든 <0>메뉴</0>에서 볼 수 있습니다."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -5124,7 +5450,7 @@
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": ""
+    "translation": "<0>{sourceName}</0>의 최근 2주 상위 입상 덱 · {updated}"
   },
   "qssK_n": {
     "message": "Top left",
@@ -5139,23 +5465,23 @@
     "comments": [
       "A credit line under tournament decks; source is a site's name (Limitless TCG)"
     ],
-    "translation": ""
+    "translation": "대회 데이터: <0>{0}</0>"
   },
   "HLA2HB": {
     "message": "Tournament decks",
-    "translation": ""
+    "translation": "대회 덱"
   },
   "4Zz_OT": {
     "message": "Tournament decks aren't ready yet",
-    "translation": ""
+    "translation": "대회 덱이 아직 준비되지 않았습니다"
   },
   "iPoLT-": {
     "message": "Tournaments",
-    "translation": ""
+    "translation": "대회"
   },
   "6NffFz": {
     "message": "Tournaments are offline",
-    "translation": ""
+    "translation": "대회를 불러올 수 없습니다"
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5216,6 +5542,10 @@
     "message": "Turn the table around",
     "translation": "테이블 돌리기"
   },
+  "R3c2_s": {
+    "message": "Turns",
+    "translation": "턴"
+  },
   "DHMk63": {
     "message": "Turns only the selected card",
     "translation": "선택한 카드만 뒤집습니다"
@@ -5223,6 +5553,10 @@
   "T7w4KT": {
     "message": "Tutorial",
     "translation": "튜토리얼"
+  },
+  "XQ_0kk": {
+    "message": "Tutorial complete. You're ready to play.",
+    "translation": "튜토리얼을 완료했습니다. 이제 플레이할 준비가 되었습니다."
   },
   "-zy2Nq": {
     "message": "Type",
@@ -5237,6 +5571,14 @@
     "message": "Type",
     "context": "sort cards by",
     "translation": "타입"
+  },
+  "K3Z9Js": {
+    "message": "Type <0>draw</0> and press <1>Enter</1>.",
+    "translation": "<0>draw</0>를 입력하고 <1>Enter</1>를 누르세요."
+  },
+  "YA3nrH": {
+    "message": "Type <0>draw</0>, then tap the first row.",
+    "translation": "<0>draw</0>를 입력한 다음 첫 번째 행을 탭하세요."
   },
   "Bq_7Gn": {
     "message": "Type something first",
@@ -5261,7 +5603,7 @@
   },
   "EydT-n": {
     "message": "Unknown deck",
-    "translation": ""
+    "translation": "알 수 없는 덱"
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5387,7 +5729,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": ""
+    "translation": "현재 승리 중"
   },
   "n1kezF": {
     "message": "Yes",
@@ -5426,6 +5768,10 @@
   "gUPT1q": {
     "message": "Your hand",
     "translation": "내 패"
+  },
+  "H5pi4B": {
+    "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
+    "translation": "내 패와 뒷면으로 놓인 6장의 <0>프라이즈 카드</0>입니다."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",
