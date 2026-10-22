@@ -215,9 +215,18 @@ test('a deck chosen while an import still reads keeps the seat', async ({
   test.setTimeout(90_000);
   // The catalog still building: a list import waits for it a moment.
   await routeCardCatalog(page, { building: true });
-  await page.route('https://limitlesstcg.com/api/dm/import', (route) =>
-    route.fulfill({ json: { cards: [], errors: [] } })
-  );
+  // Limitless answers only once the deck is chosen, so the import is
+  // still reading when the choice is made however slow the run.
+  let answer = (): void => undefined;
+  const chosen = new Promise<void>((resolve) => {
+    answer = resolve;
+  });
+  await page.route('https://limitlesstcg.com/api/dm/import', async (route) => {
+    await chosen;
+    await route
+      .fulfill({ json: { cards: [], errors: [] } })
+      .catch(() => undefined);
+  });
   await openSoloDeckScreen(page);
   // A simulator file imports at once: a saved deck to choose.
   await pasteOnScreen(
@@ -234,8 +243,10 @@ test('a deck chosen while an import still reads keeps the seat', async ({
   // A list starts importing, then the player picks the saved deck.
   await pasteOnScreen(page, LIST);
   await dreepy.getByRole('button', { name: /put on P1/u }).click();
-  // Past the import's wait: the choice stands.
+  // Past the import's wait, and Limitless answered: the choice stands.
   await page.waitForTimeout(3_500);
+  answer();
+  await page.waitForTimeout(1_000);
   await expect(seatCount(page)).toHaveAttribute('data-card-count', '4');
   await expect(
     page.getByRole('list', { name: 'Your decks' }).getByRole('listitem')
