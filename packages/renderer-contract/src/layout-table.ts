@@ -728,9 +728,11 @@ const benchCardHeightOf = (geometry: HalfGeometry): number =>
       (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
 
+const handWidthOf = (geometry: HalfGeometry): number =>
+  geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0;
+
 const handCrampedIn = (geometry: HalfGeometry): boolean =>
-  (geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0) <
-  MIN_FAR_HAND_PX;
+  handWidthOf(geometry) < MIN_FAR_HAND_PX;
 
 /**
  * Whichever of the mat (columns down the sides) and the portrait mat (rows
@@ -738,7 +740,7 @@ const handCrampedIn = (geometry: HalfGeometry): boolean =>
  * a tablet or phone held sideways -- get the mat; tall ones, the portrait.
  * Either way the hand keeps room to hold its cards apart: across the table,
  * past the app bar, one that leaves it cramped gives way to one that
- * doesn't.
+ * doesn't, and of two cramped (the narrowest phones) the wider hand wins.
  */
 const bestOf = (
   landscape: HalfGeometry,
@@ -747,6 +749,10 @@ const bestOf = (
   const cramped = handCrampedIn(landscape);
   if (cramped !== handCrampedIn(portrait)) {
     return cramped ? portrait : landscape;
+  }
+  if (cramped) {
+    const difference = handWidthOf(portrait) - handWidthOf(landscape);
+    if (Math.abs(difference) >= 1) return difference > 0 ? portrait : landscape;
   }
   return benchCardHeightOf(portrait) > benchCardHeightOf(landscape)
     ? portrait

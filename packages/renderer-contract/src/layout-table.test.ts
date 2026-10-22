@@ -147,6 +147,8 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     // On a phone the bar keeps three buttons, a finger's size.
     const PHONE_BAR = { width: 146, height: 50 };
     for (const [width, height] of [
+      [320, 480],
+      [320, 568],
       [360, 640],
       [390, 667],
       [390, 844],
@@ -233,6 +235,15 @@ describe('table layout: the app bar corner (ADR-036)', () => {
             expect(hand.width, at).toBeGreaterThanOrEqual(
               Math.min(128, bare.width) - 0.01
             );
+            // On a phone, at least what the upright mat leaves past the
+            // bar (the hand from the bar to its count badge).
+            if (bar === PHONE_BAR && height > width) {
+              const edge = Math.max(8, Math.min(16, width * 0.02));
+              const pastBar = bar.width + 2 * APP_BAR_INSET_PX;
+              expect(hand.width, at).toBeGreaterThanOrEqual(
+                Math.min(128, width - edge - 44 - pastBar) - 0.01
+              );
+            }
             const corner = far.extras?.corner;
             if (corner && Math.abs(corner.y - hand.y) < 1e-6) {
               // The corner runs the hand strip's depth, past the bar, and

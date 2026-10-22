@@ -1,6 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import { openDeck } from './support/table-shell.js';
+
+// Each test opens the table (twice in development's StrictMode): its own
+// room budget, whatever ran before it (support/room-budget.ts).
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 /**
  * Tournament decks on the deck screen (ADR-037): a deck's name typed in the

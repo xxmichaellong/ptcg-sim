@@ -5,6 +5,13 @@ import {
   openActivity,
   openDeck,
 } from './support/table-shell.js';
+import { ownRoomBudget } from './support/room-budget.js';
+
+// Each test opens the table (twice in development's StrictMode): its own
+// room budget, whatever ran before it (support/room-budget.ts).
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 /**
  * The app bar (ADR-036): the app's controls in the table's top-right
